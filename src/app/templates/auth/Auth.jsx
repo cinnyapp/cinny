@@ -13,7 +13,7 @@ import Spinner from '../../atoms/spinner/Spinner';
 
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 
-const USERNAME_REGEX = /^[a-z0-9_-]+$/;
+const USERNAME_REGEX = /^[a-z0-9_\-.=/]+$/;
 const BAD_USERNAME_ERROR = 'Username must contain only lowercase letters, numbers, dashes and underscores.';
 
 const PASSWORD_REGEX = /.+/;
