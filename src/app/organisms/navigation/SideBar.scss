@@ -1,0 +1,70 @@
+.sidebar__flexBox {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.sidebar {
+  @extend .sidebar__flexBox;
+  width: var(--navigation-sidebar-width);
+  height: 100%;
+  border-right: 1px solid var(--bg-surface-border);
+
+  [dir=rtl] & {
+    border-right: none;
+    border-left: 1px solid var(--bg-surface-border);
+  }
+
+  &__scrollable,
+  &__sticky {
+    width: 100%;
+  }
+
+  &__scrollable {
+    flex: 1;
+    min-height: 0px;
+  }
+
+  &__sticky {
+    align-items: center;
+  }
+}
+
+.scrollable-content {
+  &::after {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 8px;
+
+    background: transparent;
+    // background-image: linear-gradient(to top,  var(--bg-surface-low), transparent);
+    // It produce bug in safari
+    // To fix it, we have to set the color as a fully transparent version of that exact color. like:
+    // background-image: linear-gradient(to top,  rgb(255, 255, 255), rgba(255, 255, 255, 0));
+    // TODO: fix this bug while implementing spaces
+    position: sticky;
+    bottom: 0;
+    left: 0;
+  }
+}
+
+.featured-container,
+.space-container,
+.sticky-container {
+  @extend .sidebar__flexBox;
+  
+  padding: var(--sp-ultra-tight) 0;
+
+  & > .sidebar-avatar,
+  & > .avatar-container {
+    margin: calc(var(--sp-tight) / 2) 0;
+  }
+}
+.sidebar-divider {
+  margin: auto;
+  width: 24px;
+  height: 1px;
+  background-color: var(--bg-surface-border);
+}

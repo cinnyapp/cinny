@@ -1,0 +1,83 @@
+@use 'state';
+
+.btn-surface,
+.btn-primary,
+.btn-caution,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 80px;
+  padding: var(--sp-extra-tight) var(--sp-normal);
+  background-color: transparent;
+  border: none;
+  border-radius: var(--bo-radius);
+  cursor: pointer;
+  @include state.disabled;
+
+  &--icon {
+    padding: {
+      left: var(--sp-tight);
+      right: var(--sp-loose);
+    }
+
+    [dir=rtl] & {
+      padding: {
+        left: var(--sp-loose);
+        right: var(--sp-tight);
+      }
+    }
+
+    .ic-raw {
+      margin-right: var(--sp-extra-tight);
+
+      [dir=rtl] & {
+        margin: {
+          right: 0;
+          left: var(--sp-extra-tight);
+        }
+      }
+    }
+  }
+}
+
+@mixin color($textColor, $iconColor) {
+  .text {
+    color: $textColor;
+  }
+  .ic-raw {
+    background-color: $iconColor;
+  }
+}
+
+
+.btn-surface {
+  box-shadow: var(--bs-surface-border);
+  @include color(var(--tc-surface-high), var(--ic-surface-normal));
+  @include state.hover(var(--bg-surface-hover));
+  @include state.focus(var(--bs-surface-outline));
+  @include state.active(var(--bg-surface-active));
+}
+
+.btn-primary {
+  background-color: var(--bg-primary);
+  @include color(var(--tc-primary-high), var(--ic-primary-normal));
+  @include state.hover(var(--bg-primary-hover));
+  @include state.focus(var(--bs-primary-outline));
+  @include state.active(var(--bg-primary-active));
+}
+.btn-caution {
+  box-shadow: var(--bs-caution-border);
+  @include color(var(--tc-caution-high), var(--ic-caution-normal));
+  @include state.hover(var(--bg-caution-hover));
+  @include state.focus(var(--bs-caution-outline));
+  @include state.active(var(--bg-caution-active));
+}
+.btn-danger {
+  box-shadow: var(--bs-danger-border);
+  @include color(var(--tc-danger-high), var(--ic-danger-normal));
+  @include state.hover(var(--bg-danger-hover));
+  @include state.focus(var(--bs-danger-outline));
+  @include state.active(var(--bg-danger-active));
+}

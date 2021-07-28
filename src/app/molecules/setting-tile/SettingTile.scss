@@ -1,0 +1,16 @@
+.setting-tile {
+  &__title__wrapper {
+    display: flex;
+    align-items: center;
+  }
+  &__title {
+    flex: 1;
+    min-width: 0;
+    margin-right: var(--sp-normal);
+    [dir=rtl] & {
+      margin-right: 0;
+      margin-left: var(--sp-normal);
+    }
+  }
+
+}

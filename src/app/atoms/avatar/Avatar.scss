@@ -1,0 +1,52 @@
+.avatar-container {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--bo-radius);
+  position: relative;
+
+  &__large {
+    width: var(--av-large);
+    height: var(--av-large);
+  }
+  &__normal {
+    width: var(--av-normal);
+    height: var(--av-normal);
+  }
+
+  &__small {
+    width: var(--av-small);
+    height: var(--av-small);
+  }
+
+  &__extra-small {
+    width: var(--av-extra-small);
+    height: var(--av-extra-small);
+  }
+
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+  }
+
+  .avatar__bordered {
+    box-shadow: var(--bs-surface-border);
+  }
+
+  .avatar__border {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+
+    .text {
+      color: var(--tc-primary-high);
+    }
+  }
+}

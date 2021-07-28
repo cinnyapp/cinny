@@ -1,0 +1,39 @@
+.toggle {
+  width: 44px;
+  height: 24px;
+  padding: 0 var(--sp-ultra-tight);
+  display: flex;
+  align-items: center;
+  border-radius: var(--bo-radius);
+  box-shadow: var(--bs-surface-border);
+  cursor: pointer;
+  background-color: var(--bg-surface-low);
+
+  transition: background 200ms ease-in-out;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-color: var(--tc-surface-low);
+    border-radius: calc(var(--bo-radius) / 2);
+    transition: transform 200ms ease-in-out,
+      opacity 200ms ease-in-out;
+    opacity: 0.6;
+  }
+
+  &--active {
+    background-color: var(--bg-positive);
+
+    &::before {
+      background-color: white;
+      transform: translateX(calc(125%));
+      opacity: 1;
+
+      [dir=rtl] & {
+        transform: translateX(calc(-125%));
+      }
+    }
+  }
+}

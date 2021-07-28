@@ -1,0 +1,25 @@
+@mixin icSize($size) {
+  width: $size;
+  height: $size;
+}
+
+.ic-raw {
+  display: inline-block;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  background-color: var(--ic-surface-normal);
+}
+.ic-raw-large {
+  @include icSize(var(--ic-large));
+}
+.ic-raw-normal {
+  @include icSize(var(--ic-normal));
+}
+.ic-raw-small {
+  @include icSize(var(--ic-small));
+}
+.ic-raw-extra-small {
+  @include icSize(var(--ic-extra-small));
+}

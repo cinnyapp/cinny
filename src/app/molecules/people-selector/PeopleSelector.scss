@@ -1,0 +1,40 @@
+.people-selector {
+  width: 100%;
+  padding: var(--sp-extra-tight);
+  padding-left: var(--sp-normal);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  
+  [dir=rtl] & {
+    padding: {
+      left: var(--sp-extra-tight);
+      right: var(--sp-normal);
+    }
+  }
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--bg-surface-hover);
+    }
+  }
+  &:focus {
+    outline: none;
+    background-color: var(--bg-surface-hover);
+  }
+  &:active {
+    background-color: var(--bg-surface-active);
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    margin: 0 var(--sp-tight);
+    color: var(--tc-surface-normal);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  &__role {
+    color: var(--tc-surface-low);
+  }
+}

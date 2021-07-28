@@ -1,0 +1,25 @@
+
+@mixin hover($color) {
+  @media (hover: hover) {
+    &:hover {
+      background-color: $color;
+    }
+  }
+}
+@mixin focus($outline) {
+  &:focus {
+    outline: none;
+    box-shadow: $outline;
+  }
+}
+@mixin active($color) {
+  &:active {
+    background-color: $color !important;
+  }
+}
+@mixin disabled {
+  &:disabled {
+    opacity: 0.4;
+    cursor: no-drop;
+  }
+}

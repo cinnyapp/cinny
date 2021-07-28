@@ -1,0 +1,22 @@
+@use '_scrollbar';
+
+.scrollbar {
+  width: 100%;
+  height: 100%;
+  @include scrollbar.scroll;
+
+  &__h {
+    @include scrollbar.scroll__h;
+  }
+
+  &__v {
+    @include scrollbar.scroll__v;
+  }
+
+  &--auto-hide {
+    @include scrollbar.scroll--auto-hide;
+  }
+  &--invisible {
+    @include scrollbar.scroll--invisible;
+  }
+}

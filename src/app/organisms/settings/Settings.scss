@@ -1,0 +1,22 @@
+.settings-window {
+  & .pw__content-container {
+    height: 100%;
+  }
+}
+
+.settings-content {
+  margin: 0 var(--sp-normal);
+  margin-right: var(--sp-extra-tight);
+  [dir=rtl] & {
+    margin-left: var(--sp-extra-tight);
+    margin-right: var(--sp-normal);
+  }
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.settings__about {
+  text-align: center;
+}

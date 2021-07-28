@@ -1,0 +1,39 @@
+.invites-content {
+  margin: 0 var(--sp-normal);
+  margin-right: var(--sp-extra-tight);
+
+  &__subheading {
+    margin-top: var(--sp-extra-loose);
+
+    & .text {
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    &:first-child {
+      margin-top: var(--sp-tight);
+    }
+  }
+
+  & .channel-tile {
+    margin-top: var(--sp-normal);
+    &__options {
+      align-self: flex-end;
+    }
+  }
+  & .invite-btn__container .btn-surface {
+    margin-right: var(--sp-normal);
+    [dir=rtl] & {
+      margin: {
+        right: 0;
+        left: var(--sp-normal);
+      }
+    }
+  }
+
+  [dir=rtl] & {
+    margin: {
+      left: var(--sp-extra-tight);
+      right: var(--sp-normal);
+    }
+  }
+}

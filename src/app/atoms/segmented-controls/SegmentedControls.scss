@@ -1,0 +1,61 @@
+@use '../button/state';
+
+.segmented-controls {
+  background-color: var(--bg-surface-low);
+  border-radius: var(--bo-radius);
+  border: 1px solid var(--bg-surface-border);
+
+  display: inline-flex;
+  overflow: hidden;
+}
+
+.segment-btn {
+  padding: var(--sp-extra-tight) 0;
+  cursor: pointer;
+  @include state.hover(var(--bg-surface-hover));
+  @include state.active(var(--bg-surface-active));
+
+  &__base {
+    padding: 0 var(--sp-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid var(--bg-surface-border);
+    
+    [dir=rtl] & {
+      border-left: none;
+      border-right: 1px solid var(--bg-surface-border);
+    }
+
+    & .text:nth-child(2) {
+      margin: 0 var(--sp-extra-tight);
+    }
+  }
+  &:first-child &__base {
+    border: none;
+  }
+
+  &--active {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--bg-surface-border);
+    border-width: 0 1px 0 1px;
+
+    & .segment-btn__base,
+    & + .segment-btn .segment-btn__base {
+      border: none;
+    }
+    &:first-child{
+      border-left: none;
+    }
+    &:last-child {
+      border-right: none;
+    }
+    [dir=rtl] & {
+      border-left: 1px solid var(--bg-surface-border);
+      border-right: 1px solid var(--bg-surface-border);
+
+      &:first-child { border-right: none;}
+      &:last-child { border-left: none;}
+    }
+  }
+}

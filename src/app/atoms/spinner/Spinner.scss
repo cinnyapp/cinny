@@ -1,0 +1,22 @@
+.donut-spinner {
+  display: inline-block;
+  border: 4px solid var(--bg-surface-border);
+  border-left-color: var(--tc-surface-normal);
+  border-radius: 50%;
+  animation: donut-spin 1.2s cubic-bezier(0.73, 0.32, 0.67, 0.86) infinite;
+
+  &--normal {
+    width: 40px;
+    height: 40px;
+  }
+  &--small {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@keyframes donut-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}

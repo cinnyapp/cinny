@@ -1,0 +1,62 @@
+.firefox-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-surface-hover) transparent;
+  &--transparent {
+    scrollbar-color: transparent transparent;
+  }
+}
+.webkit-scrollbar {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+}
+.webkit-scrollbar-track {
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+}
+.webkit-scrollbar-thumb {
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--bg-surface-hover);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--bg-surface-active);
+  }
+  &--transparent {
+    &::-webkit-scrollbar-thumb {
+      background-color: transparent;
+    }
+  }
+}
+
+@mixin scroll {
+  overflow: hidden;
+  @extend .firefox-scrollbar;
+  @extend .webkit-scrollbar;
+  @extend .webkit-scrollbar-track;
+  @extend .webkit-scrollbar-thumb;
+}
+
+@mixin scroll__h {
+  overflow-x: scroll;
+}
+@mixin scroll__v {
+  overflow-y: scroll;
+}
+@mixin scroll--auto-hide {
+  @extend .firefox-scrollbar--transparent;
+  @extend .webkit-scrollbar-thumb--transparent;
+
+  &:hover {
+    @extend .firefox-scrollbar;
+    @extend .webkit-scrollbar-thumb;
+  }
+}
+@mixin scroll--invisible {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

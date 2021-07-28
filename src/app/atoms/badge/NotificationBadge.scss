@@ -1,0 +1,18 @@
+.notification-badge {
+  min-width: 18px;
+  padding: 1px var(--sp-ultra-tight);
+  background-color: var(--tc-surface-low);
+  border-radius: 9px;
+
+  .text {
+    color: var(--bg-surface-low);
+    text-align: center;
+  }
+
+  &--alert {
+    background-color: var(--bg-positive);
+    .text {
+      color: white;
+    }
+  }
+}

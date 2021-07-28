@@ -1,0 +1,34 @@
+.client-container {
+  display: flex;
+  height: 100%;
+}
+
+.navigation__wrapper {
+  width: var(--navigation-width);
+}
+.channel__wrapper {
+  flex: 1;
+  min-width: 0;
+  background-color: var(--bg-surface);
+}
+
+
+.loading-display {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.loading__message {
+  margin-top: var(--sp-normal);
+}
+.loading__appname {
+  position: absolute;
+  bottom: var(--sp-normal);
+}

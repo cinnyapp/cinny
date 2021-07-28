@@ -1,0 +1,39 @@
+.timeline-change {
+  padding: var(--sp-ultra-tight) var(--sp-normal);
+  padding-right: var(--sp-extra-tight);
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    background-color: var(--bg-surface-hover);
+  }
+
+  [dir=rtl] & {
+    padding: {
+      left: var(--sp-extra-tight);
+      right: var(--sp-normal);
+    }
+  }
+
+  &__avatar-container {
+    width: var(--av-small);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.38;
+    .ic-raw {
+      background-color: var(--tc-surface-low);
+    }
+  }
+
+  & .text {
+    color: var(--tc-surface-low);
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+
+    margin: 0 var(--sp-tight);
+  }
+}

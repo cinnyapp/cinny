@@ -1,0 +1,45 @@
+@use 'state';
+
+.ic-btn-surface,
+.ic-btn-primary,
+.ic-btn-caution,
+.ic-btn-danger {
+  padding: var(--sp-extra-tight);
+  border: none;
+  border-radius: var(--bo-radius);
+  background-color: transparent;
+  font-size: 0;
+  line-height: 0;
+  cursor: pointer;
+  @include state.disabled;
+}
+
+@mixin color($color) {
+  .ic-raw {
+    background-color: $color;
+  }
+}
+@mixin focus($color) {
+  &:focus {
+    outline: none;
+    background-color: $color;
+  }
+}
+
+.ic-btn-surface {
+  @include color(var(--ic-surface-normal));
+  @include state.hover(var(--bg-surface-hover));
+  @include focus(var(--bg-surface-hover));
+  @include state.active(var(--bg-surface-active));
+}
+
+.ic-btn-tippy {
+  padding: var(--sp-extra-tight) var(--sp-normal);
+  background-color: var(--bg-tooltip);
+  border-radius: var(--bo-radius);
+  box-shadow: var(--bs-popup);
+
+  .text {
+    color: var(--tc-tooltip);
+  }
+}

@@ -1,0 +1,31 @@
+.channel-intro {
+  margin-top: calc(2 * var(--sp-extra-loose));
+  margin-bottom: var(--sp-extra-loose);
+  padding-left: calc(var(--sp-normal) + var(--av-small) + var(--sp-tight));
+  padding-right: var(--sp-extra-tight);
+
+  [dir=rtl] & {
+    padding: {
+      left: var(--sp-extra-tight);
+      right: calc(var(--sp-normal) + var(--av-small) + var(--sp-tight));
+    }
+  }
+
+  .channel-intro__content {
+    margin-top: var(--sp-extra-loose);
+    max-width: 640px;
+  }
+  &__name {
+    color: var(--tc-surface-high);
+  }
+  &__desc {
+    color: var(--tc-surface-normal);
+    margin: var(--sp-tight) 0 var(--sp-extra-tight);
+    & a {
+      word-break: break-all;
+    }
+  }
+  &__time {
+    color: var(--tc-surface-low);
+  }
+}
