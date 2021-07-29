@@ -5,7 +5,7 @@ import EventEmitter from 'events';
 import initMatrix from '../../../client/initMatrix';
 import decryptMegolmKeyFile from '../../../util/decryptE2ERoomKeys';
 
-import Text from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';
 import Input from '../../atoms/input/Input';

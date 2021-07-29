@@ -5,7 +5,7 @@ import './Settings.scss';
 import initMatrix from '../../../client/initMatrix';
 import settings from '../../../client/state/settings';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';
 import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls';

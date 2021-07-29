@@ -8,7 +8,7 @@ import gfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import Avatar from '../../atoms/avatar/Avatar';
 

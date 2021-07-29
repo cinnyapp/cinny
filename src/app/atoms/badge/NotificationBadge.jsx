@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './NotificationBadge.scss';
 
-import Text from '../text/Text';
+import {Text} from '../text/Text';
 
 function NotificationBadge({ alert, children }) {
   const notificationClass = alert ? ' notification-badge--alert' : '';

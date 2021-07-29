@@ -10,7 +10,7 @@ import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { emojiGroups, searchEmoji } from './emoji';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import IconButton from '../../atoms/button/IconButton';
 import Input from '../../atoms/input/Input';

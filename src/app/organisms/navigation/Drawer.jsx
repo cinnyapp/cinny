@@ -11,7 +11,7 @@ import {
 import navigation from '../../../client/state/navigation';
 
 import Header, { TitleWrapper } from '../../atoms/header/Header';
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/ContextMenu';

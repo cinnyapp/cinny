@@ -5,7 +5,7 @@ import './IconButton.scss';
 import Tippy from '@tippyjs/react';
 import RawIcon from '../system-icons/RawIcon';
 import { blurOnBubbling } from './script';
-import Text from '../text/Text';
+import {Text} from '../text/Text';
 
 // TODO:
 // 1. [done] an icon only button have "src"

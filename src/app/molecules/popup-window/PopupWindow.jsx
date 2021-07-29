@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './PopupWindow.scss';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import { MenuItem } from '../../atoms/context-menu/ContextMenu';
 import Header, { TitleWrapper } from '../../atoms/header/Header';

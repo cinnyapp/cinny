@@ -6,7 +6,7 @@ import { togglePeopleDrawer, openInviteUser } from '../../../client/action/navig
 import * as roomActions from '../../../client/action/room';
 import colorMXID from '../../../util/colorMXID';
 
-import Text from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import Avatar from '../../atoms/avatar/Avatar';

@@ -6,7 +6,7 @@ import initMatrix from '../../../client/initMatrix';
 import { isRoomAliasAvailable } from '../../../util/matrixUtil';
 import * as roomActions from '../../../client/action/room';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import Toggle from '../../atoms/button/Toggle';
 import IconButton from '../../atoms/button/IconButton';

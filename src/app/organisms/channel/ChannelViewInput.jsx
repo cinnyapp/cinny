@@ -9,7 +9,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { bytesToSize } from '../../../util/common';
 
-import Text from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import IconButton from '../../atoms/button/IconButton';
 import ContextMenu from '../../atoms/context-menu/ContextMenu';

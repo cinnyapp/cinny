@@ -6,7 +6,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { Link } from "react-router-dom";
 import * as auth from "../../../client/action/auth";
 
-import Text from "../../atoms/text/Text";
+import { Text } from "../../atoms/text/Text";
 import Button from "../../atoms/button/Button";
 import Input from "../../atoms/input/Input";
 import Spinner from "../../atoms/spinner/Spinner";

@@ -7,7 +7,7 @@ import { getUsername } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { openInviteUser } from '../../../client/action/navigation';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import IconButton from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';

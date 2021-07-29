@@ -1,7 +1,7 @@
 import React from 'react';
 import './Welcome.scss';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 

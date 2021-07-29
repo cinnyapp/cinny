@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Client.scss';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import Spinner from '../../atoms/spinner/Spinner';
 import Navigation from '../../organisms/navigation/Navigation';
 import Channel from '../../organisms/channel/Channel';

@@ -7,7 +7,7 @@ import cons from '../../../client/state/cons';
 import { selectRoom } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';

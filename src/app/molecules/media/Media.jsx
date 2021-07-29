@@ -4,7 +4,7 @@ import './Media.scss';
 
 import encrypt from 'browser-encrypt-attachment';
 
-import Text from '../../atoms/text/Text';
+import {Text} from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
 

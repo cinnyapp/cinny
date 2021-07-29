@@ -4,7 +4,7 @@ import './SegmentedControls.scss';
 
 import { blurOnBubbling } from '../button/script';
 
-import Text from '../text/Text';
+import {Text} from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 
 function SegmentedControls({
