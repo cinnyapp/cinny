@@ -23,7 +23,7 @@ async function login(username, homeserver, password) {
   localStorage.setItem(cons.secretKey.ACCESS_TOKEN, response.access_token);
   localStorage.setItem(cons.secretKey.DEVICE_ID, response.device_id);
   localStorage.setItem(cons.secretKey.USER_ID, response.user_id);
-  localStorage.setItem(cons.secretKey.BASE_URL, response.well_known['m.homeserver'].base_url);
+  localStorage.setItem(cons.secretKey.BASE_URL, response?.well_known?.['m.homeserver']?.base_url || baseUrl);
 }
 
 async function getAdditionalInfo(baseUrl, content) {
@@ -90,7 +90,6 @@ async function register(username, homeserver, password, email, recaptchaValue, t
   } else if (verified !== true) {
     session = null;
     clientSecret = client.generateClientSecret();
-    console.log(clientSecret);
     const verifyData = await verifyEmail(baseUrl, {
       email,
       client_secret: clientSecret,
