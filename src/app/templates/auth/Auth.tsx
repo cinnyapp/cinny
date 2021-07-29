@@ -1,29 +1,21 @@
-import React, { FunctionComponent, useRef, useState } from "react";
-import PropTypes from "prop-types";
-import "./Auth.scss";
-import ReCAPTCHA from "react-google-recaptcha";
+import React, { FunctionComponent, useState } from 'react';
+import './Auth.scss';
+import ReCAPTCHA from 'react-google-recaptcha';
 
-import { Link } from "react-router-dom";
-import * as auth from "../../../client/action/auth";
+import { Link } from 'react-router-dom';
+import { Formik } from 'formik';
+import * as auth from '../../../client/action/auth';
 
-import { Text } from "../../atoms/text/Text";
-import Button from "../../atoms/button/Button";
-import Input from "../../atoms/input/Input";
-import Spinner from "../../atoms/spinner/Spinner";
+import { Text } from '../../atoms/text/Text';
+import Button from '../../atoms/button/Button';
+import Input from '../../atoms/input/Input';
+import Spinner from '../../atoms/spinner/Spinner';
 
-import CinnySvg from "../../../../public/res/svg/cinny.svg";
+import CinnySvg from '../../../../public/res/svg/cinny.svg';
 import {
   isUserIdValidForLogin,
   isUserIdValidForSignup,
-} from "../../../util/matrix/auth";
-import { Field, Formik } from "formik";
-
-type inputEvent =
-  | React.FormEvent<HTMLTextAreaElement>
-  | React.ChangeEvent<HTMLInputElement>;
-type inputEventHandler =
-  | React.FormEventHandler<HTMLTextAreaElement>
-  | React.ChangeEventHandler<HTMLInputElement>;
+} from '../../../util/matrix/auth';
 
 const PASSWORD_STRENGTH_REGEX =
   /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,127}$/;
@@ -31,34 +23,40 @@ const BAD_PASSWORD_ERROR =
   "Password must contain at least 1 number, 1 uppercase letter, 1 lowercase letter, 1 non-alphanumeric character. Passwords can range from 8-127 characters with no whitespaces.";
 const CONFIRM_PASSWORD_ERROR = "Passwords don't match.";
 
-const EMAIL_REGEX =
-  /([a-z0-9]+[_a-z0-9.-][a-z0-9]+)@([a-z0-9-]+(?:.[a-z0-9-]+).[a-z]{2,4})/;
-const BAD_EMAIL_ERROR = "Invalid email address";
+const EMAIL_REGEX = /([a-z0-9]+[_a-z0-9.-][a-z0-9]+)@([a-z0-9-]+(?:.[a-z0-9-]+).[a-z]{2,4})/;
+const BAD_EMAIL_ERROR = 'Invalid email address';
+
+type LoginValues = {
+  localpart: string;
+  homeserver: string;
+  password: string;
+  confirmPassword: string;
+  email: string;
+};
 
 /**
  * Normalizes a localpart into a standard format.
  *
  * Removes leading and trailing whitespaces and leading "@" symbols.
- * @param raw_localpart A raw-input localpart, which may include invalid characters.
+ * @param rawLocalpart A raw-input localpart, which may include invalid characters.
  * @returns
  */
-const normalizeUsername = (raw_localpart: string): string => {
-  const noLeadingAt =
-    raw_localpart.indexOf("@") === 0 ? raw_localpart.substr(1) : raw_localpart;
+const normalizeUsername = (rawLocalpart: string): string => {
+  const noLeadingAt = rawLocalpart.indexOf('@') === 0 ? rawLocalpart.substr(1) : rawLocalpart;
   return noLeadingAt.trim();
 };
 
 type AuthStep = {
-  type: "start" | "recaptcha" | "terms" | "email" | "complete" | "loading";
+  type: 'start' | 'recaptcha' | 'terms' | 'email' | 'complete' | 'loading';
   message?: string;
   sitekey?: string;
-  en?: Record<"url", string>;
+  en?: Record<'url', string>;
 };
 
 type AuthProps = {
   type: string;
 };
-export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
+export const Auth: FunctionComponent<AuthProps> = ({ type }: AuthProps) => {
   const [authStep, setAuthStep] = useState<AuthStep>(null);
   const [submittedEmail, setSubmittedEmail] = useState(undefined);
 
@@ -75,22 +73,22 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
         values.email,
         recaptchaValue,
         terms,
-        verified
+        verified,
       )
       .then((res) => {
         setAuthError(true);
-        if (res.type === "recaptcha") {
+        if (res.type === 'recaptcha') {
           setAuthStep({ type: res.type, sitekey: res.public_key });
           return;
         }
-        if (res.type === "terms") {
+        if (res.type === 'terms') {
           setAuthStep({ type: res.type, en: res.en });
         }
-        if (res.type === "email") {
+        if (res.type === 'email') {
           setAuthStep({ type: res.type });
         }
-        if (res.type === "done") {
-          window.location.replace("/");
+        if (res.type === 'done') {
+          window.location.replace('/');
         }
       })
       .catch((error) => {
@@ -99,44 +97,37 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
       });
     if (terms) {
       setAuthStep({
-        type: "loading",
-        message: "Sending email verification link...",
+        type: 'loading',
+        message: 'Sending email verification link...',
       });
-    } else
+    } else {
       setAuthStep({
-        type: "loading",
-        message: "Registration in progress...",
+        type: 'loading',
+        message: 'Registration in progress...',
       });
+    }
   }
-
-  type LoginValues = {
-    localpart: string;
-    homeserver: string;
-    password: string;
-    confirmPassword: string;
-    email: string;
-  };
 
   function handleLogin(values: LoginValues) {
     setAuthError(undefined);
 
-    const raw_localpart: string = values.localpart;
-    const raw_homeserver: string = values.homeserver;
-    const raw_password: string = values.password;
+    const rawLocalpart: string = values.localpart;
+    const rawHomeserver: string = values.homeserver;
+    const rawPassword: string = values.password;
 
-    const normalizedUsername = normalizeUsername(raw_localpart);
+    const normalizedUsername = normalizeUsername(rawLocalpart);
 
     auth
-      .login(normalizedUsername, raw_homeserver, raw_password)
+      .login(normalizedUsername, rawHomeserver, rawPassword)
       .then(() => {
         setAuthError(false);
-        window.location.replace("/");
+        window.location.replace('/');
       })
       .catch((error) => {
         setAuthStep(null);
         setAuthError(`${error}`);
       });
-    setAuthStep({ type: "loading", message: "Login in progress..." });
+    setAuthStep({ type: 'loading', message: 'Login in progress...' });
   }
 
   function handleRegister(values: LoginValues) {
@@ -146,28 +137,32 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
 
   return (
     <>
-      {authStep?.type === "loading" && (
+      {authStep?.type === 'loading' && (
         <LoadingScreen message={authStep.message} />
       )}
-      {authStep?.type === "recaptcha" && (
+      {authStep?.type === 'recaptcha' && (
         <Recaptcha
           message="Please check the box below to proceed."
           sitekey={authStep.sitekey}
           onChange={(v) => {
-            if (typeof v === "string") register(v);
+            if (typeof v === 'string') register(v);
           }}
         />
       )}
-      {authStep?.type === "terms" && (
+      {authStep?.type === 'terms' && (
         <Terms url={authStep.en.url} onSubmit={register} />
       )}
-      {authStep?.type === "email" && (
+      {authStep?.type === 'email' && (
         <ProcessWrapper>
-          <div style={{ margin: "var(--sp-normal)", maxWidth: "450px" }}>
+          <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
             <Text variant="h2">Verify email</Text>
-            <div style={{ margin: "var(--sp-normal) 0" }}>
+            <div style={{ margin: 'var(--sp-normal) 0' }}>
               <Text variant="b1">
-                Please check your email <b>{`(${submittedEmail})`}</b> and
+                Please check your email
+                {' '}
+                <b>{`(${submittedEmail})`}</b>
+                {' '}
+                and
                 validate before continuing further.
               </Text>
             </div>
@@ -184,92 +179,85 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
         <div className="auth-form__wrapper flex-v--center">
           <Formik
             initialValues={{
-              localpart: "",
-              homeserver: "matrix.org",
-              password: "",
-              confirmPassword: "",
-              email: "",
+              localpart: '',
+              homeserver: 'matrix.org',
+              password: '',
+              confirmPassword: '',
+              email: '',
             }}
             validate={(values) => {
               setAuthError(undefined);
               const errors = {};
-              const normalized_localpart = normalizeUsername(values.localpart);
+              const normalizedLocalpart = normalizeUsername(values.localpart);
 
-              if (type === "login") {
+              if (type === 'login') {
                 // Check local part and home server for LOGIN (more relaxed than
                 // sign up)
-                if (normalized_localpart !== "" && values.homeserver !== "") {
+                if (normalizedLocalpart !== '' && values.homeserver !== '') {
                   const userIdValidation = isUserIdValidForLogin(
-                    normalized_localpart,
-                    values.homeserver
+                    normalizedLocalpart,
+                    values.homeserver,
                   );
-                  if (userIdValidation.isErr())
+                  if (userIdValidation.isErr()) {
                     // @ts-ignore for now! TODO
                     errors.localpart = userIdValidation.get();
+                  }
                 }
               } else {
-                console.log(values);
-
                 // Check local part and home server for SIGNUP
-                if (normalized_localpart !== "" && values.homeserver !== "") {
+                if (normalizedLocalpart !== '' && values.homeserver !== '') {
                   const userIdValidation = isUserIdValidForSignup(
-                    normalized_localpart,
-                    values.homeserver
+                    normalizedLocalpart,
+                    values.homeserver,
                   );
-                  if (userIdValidation.isErr())
+                  if (userIdValidation.isErr()) {
                     // @ts-ignore for now! TODO
                     errors.localpart = userIdValidation.get();
+                  }
                 }
                 if (
-                  values.password !== "" &&
-                  !PASSWORD_STRENGTH_REGEX.test(values.password)
-                )
+                  values.password !== ''
+                  && !PASSWORD_STRENGTH_REGEX.test(values.password)
+                ) {
                   // @ts-ignore for now! TODO
                   errors.password = BAD_PASSWORD_ERROR;
+                }
 
                 if (
-                  values.password !== "" &&
-                  values.confirmPassword !== "" &&
-                  values.password !== values.confirmPassword
-                )
+                  values.password !== ''
+                  && values.confirmPassword !== ''
+                  && values.password !== values.confirmPassword
+                ) {
                   // @ts-ignore for now! TODO
                   errors.confirmPassword = CONFIRM_PASSWORD_ERROR;
+                }
 
-                if (values.email !== "" && !EMAIL_REGEX.test(values.email))
+                if (values.email !== '' && !EMAIL_REGEX.test(values.email)) {
                   // @ts-ignore for now! TODO
                   errors.email = BAD_EMAIL_ERROR;
+                }
               }
               setAuthError(Object.values(errors)[0]);
-              console.log("Hi world!", errors);
               return errors;
             }}
             onSubmit={(values, { setSubmitting }) => {
               const submissionValues = values;
               submissionValues.localpart = normalizeUsername(
-                submissionValues.localpart
+                submissionValues.localpart,
               );
-
-              setTimeout(() => {
-                alert(JSON.stringify(values, null, 2));
-
-                setSubmitting(false);
-              }, 400);
-              type === "login" ? handleLogin(values) : handleRegister(values);
+              setSubmitting(false);
+              if (type === 'login') handleLogin(values);
+              else handleRegister(values);
             }}
             validateOnChange={false}
-            validateOnBlur={true}
+            validateOnBlur
           >
             {({
-              values,
-              errors,
-              handleChange,
-              handleBlur,
-              handleSubmit,
-              isSubmitting,
+              values, errors, handleChange, handleBlur, handleSubmit,
             }) => (
               <form onSubmit={handleSubmit} className="auth-form">
                 <Text variant="h2">
-                  {type === "login" ? "Login" : "Register"}
+                  {type === 'login' ? 'Login' : 'Register'}
                 </Text>
                 <div className="username__wrapper">
                   <Input
@@ -278,7 +266,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
                     id="auth_username"
                     label="Username"
                     name="localpart"
-                    state={errors.localpart ? "error" : "normal"}
+                    state={errors.localpart ? 'error' : 'normal'}
                     required
                   />
                   <Input
@@ -288,7 +276,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
                     placeholder="Homeserver"
                     value={values.homeserver}
                     name="homeserver"
-                    state={errors.homeserver ? "error" : "normal"}
+                    state={errors.homeserver ? 'error' : 'normal'}
                     required
                   />
                 </div>
@@ -299,10 +287,10 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
                   type="password"
                   label="Password"
                   name="password"
-                  state={errors.password ? "error" : "normal"}
+                  state={errors.password ? 'error' : 'normal'}
                   required
                 />
-                {type === "register" && (
+                {type === 'register' && (
                   <>
                     <Input
                       onBlur={handleBlur}
@@ -311,7 +299,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
                       type="password"
                       label="Confirm password"
                       name="confirmPassword"
-                      state={errors.confirmPassword ? "error" : "normal"}
+                      state={errors.confirmPassword ? 'error' : 'normal'}
                       required
                     />
                     <Input
@@ -321,7 +309,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
                       type="email"
                       label="Email"
                       name="email"
-                      state={errors.email ? "error" : "normal"}
+                      state={errors.email ? 'error' : 'normal'}
                       required
                     />
                   </>
@@ -340,7 +328,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
                     type="submit"
                     disabled={authError !== undefined}
                   >
-                    {type === "login" ? "Login" : "Register"}
+                    {type === 'login' ? 'Login' : 'Register'}
                   </Button>
                 </div>
               </form>
@@ -350,9 +338,9 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
 
         <div className="flex--center">
           <Text variant="b2">
-            {`${type === "login" ? "Don't have" : "Already have"} an account?`}
-            <Link to={type === "login" ? "/register" : "/login"}>
-              {type === "login" ? " Register" : " Login"}
+            {`${type === 'login' ? 'Don\'t have' : 'Already have'} an account?`}
+            <Link to={type === 'login' ? '/register' : '/login'}>
+              {type === 'login' ? ' Register' : ' Login'}
             </Link>
           </Text>
         </div>
@@ -377,11 +365,11 @@ export const StaticWrapper: FunctionComponent = ({ children }) => {
               <Text variant="b2">Yet another matrix client</Text>
             </div>
           </div>
-          {children}
         </div>
+        {children}
       </div>
     </div>
-  );
+  )
 };
 
 type LoadingScreenProps = {
@@ -390,16 +378,14 @@ type LoadingScreenProps = {
 
 export const LoadingScreen: FunctionComponent<LoadingScreenProps> = ({
   message,
-}) => {
-  return (
-    <ProcessWrapper>
-      <Spinner />
-      <div style={{ marginTop: "var(--sp-normal)" }}>
-        <Text variant="b1">{message}</Text>
-      </div>
-    </ProcessWrapper>
-  );
-};
+}: LoadingScreenProps) => (
+  <ProcessWrapper>
+    <Spinner />
+    <div style={{ marginTop: 'var(--sp-normal)' }}>
+      <Text variant="b1">{message}</Text>
+    </div>
+  </ProcessWrapper>
+);
 
 type RecaptchaProps = {
   message: string;
@@ -410,16 +396,14 @@ export const Recaptcha: FunctionComponent<RecaptchaProps> = ({
   message,
   sitekey,
   onChange,
-}) => {
-  return (
-    <ProcessWrapper>
-      <div style={{ marginBottom: "var(--sp-normal)" }}>
-        <Text variant="s1">{message}</Text>
-      </div>
-      <ReCAPTCHA sitekey={sitekey} onChange={onChange} />
-    </ProcessWrapper>
-  );
-};
+}: RecaptchaProps) => (
+  <ProcessWrapper>
+    <div style={{ marginBottom: 'var(--sp-normal)' }}>
+      <Text variant="s1">{message}</Text>
+    </div>
+    <ReCAPTCHA sitekey={sitekey} onChange={onChange} />
+  </ProcessWrapper>
+);
 
 type TermsProps = {
   url: string;
@@ -429,48 +413,42 @@ type TermsProps = {
     verified?: unknown
   ) => void;
 };
-export const Terms: FunctionComponent<TermsProps> = ({ url, onSubmit }) => {
-  return (
-    <ProcessWrapper>
-      <form onSubmit={() => onSubmit(undefined, true)}>
-        <div style={{ margin: "var(--sp-normal)", maxWidth: "450px" }}>
-          <Text variant="h2">Agree with terms</Text>
-          <div style={{ marginBottom: "var(--sp-normal)" }} />
+export const Terms: FunctionComponent<TermsProps> = ({ url, onSubmit }: TermsProps) => (
+  <ProcessWrapper>
+    <form onSubmit={() => onSubmit(undefined, true)}>
+      <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
+        <Text variant="h2">Agree with terms</Text>
+        <div style={{ marginBottom: 'var(--sp-normal)' }} />
+        <Text variant="b1">
+          In order to complete registration, you need to agree with terms and
+          conditions.
+        </Text>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: 'var(--sp-normal) 0',
+          }}
+        >
+          <input id="termsCheckbox" type="checkbox" required />
           <Text variant="b1">
-            In order to complete registration, you need to agree to the terms and
-            conditions.
+            {'I accept '}
+            <a
+              style={{ cursor: 'pointer' }}
+              href={url}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Terms and Conditions
+            </a>
           </Text>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              margin: "var(--sp-normal) 0",
-            }}
-          >
-            <input id="termsCheckbox" type="checkbox" required />
-            <Text variant="b1">
-              {"I accept "}
-              <a
-                style={{ cursor: "pointer" }}
-                href={url}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Terms and Conditions
-              </a>
-            </Text>
-          </div>
-          <Button id="termsBtn" type="submit" variant="primary">
-            Submit
-          </Button>
         </div>
-      </form>
-    </ProcessWrapper>
-  );
-};
-
-export const ProcessWrapper: FunctionComponent = ({ children }) => {
-  return <div className="process-wrapper">{children}</div>;
-};
+        <Button id="termsBtn" type="submit" variant="primary">
+          Submit
+        </Button>
+      </div>
+    </form>
+  </ProcessWrapper>
+);
 
 export default Auth;
