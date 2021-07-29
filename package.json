@@ -4,8 +4,8 @@
   "description": "Organized and powerful matrix client.",
   "main": "index.js",
   "engines": {
-    "npm": "6.14.11",
-    "node": "14.6.0"
+    "npm": ">=6.14.11",
+    "node": ">=14.6.0"
   },
   "scripts": {
     "start": "webpack serve --config ./webpack.dev.js --open",
