@@ -1,4 +1,4 @@
-// import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { InputHTMLAttributes, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import "./Auth.scss";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -12,9 +12,7 @@ import Input from "../../atoms/input/Input";
 import Spinner from "../../atoms/spinner/Spinner";
 
 import CinnySvg from "../../../../public/res/svg/cinny.svg";
-import * as React from "react";
 import { isLoginUserIdValid } from "../../../util/matrix/auth";
-import { useRef, useState } from "react";
 
 type inputEvent =
   | React.FormEvent<HTMLTextAreaElement>
@@ -54,15 +52,22 @@ function highlightErrorField($input: HTMLElement) {
   myInput.style.boxShadow = "none";
 }
 
-function validateOnChange(e: inputEvent, regex: RegExp, error: string) {
-  if (!isValidInput(e.target.value, regex) && e.target.value) {
-    highlightErrorField(e.target, error);
+function validateOnChange(
+  e: inputEvent,
+  regex: RegExp,
+  error: string,
+  setErrMsg: (string) => void
+) {
+  const field = e.target as HTMLInputElement;
+  const fieldValue = field.value.toString();
+  if (fieldValue && !isValidInput(fieldValue, regex)) {
+    setErrMsg(error);
+    highlightErrorField(field);
     return;
   }
-  document.getElementById("auth_error").style.display = "none";
-  e.target.style.removeProperty("border");
-  e.target.style.removeProperty("box-shadow");
-  setAuthDisabled(true);
+  setErrMsg(undefined);
+  field.style.removeProperty("border");
+  field.style.removeProperty("box-shadow");
 }
 
 /**
@@ -78,8 +83,15 @@ function normalizeUsername(rawUsername: string): string {
   return noLeadingAt.trim();
 }
 
+type AuthStep = {
+  type: "start" | "recaptcha" | "terms" | "email" | "complete" | "loading";
+  message?: string;
+  sitekey?: string;
+  en?: Record<"url", string>;
+};
+
 function Auth({ type }) {
-  const [process, changeProcess] = useState(null);
+  const [authStep, setAuthStep] = useState<AuthStep>(null);
   const usernameRef = useRef(null);
   const homeserverRef = useRef(null);
   const passwordRef = useRef(null);
@@ -88,7 +100,7 @@ function Auth({ type }) {
 
   const [authError, setAuthError] = useState(undefined);
 
-  function register(recaptchaValue, terms, verified) {
+  function register(recaptchaValue?, terms?, verified?) {
     auth
       .register(
         usernameRef.current.value,
@@ -102,30 +114,30 @@ function Auth({ type }) {
       .then((res) => {
         setAuthError(true);
         if (res.type === "recaptcha") {
-          changeProcess({ type: res.type, sitekey: res.public_key });
+          setAuthStep({ type: res.type, sitekey: res.public_key });
           return;
         }
         if (res.type === "terms") {
-          changeProcess({ type: res.type, en: res.en });
+          setAuthStep({ type: res.type, en: res.en });
         }
         if (res.type === "email") {
-          changeProcess({ type: res.type });
+          setAuthStep({ type: res.type });
         }
         if (res.type === "done") {
           window.location.replace("/");
         }
       })
       .catch((error) => {
-        changeProcess(null);
-        setAuthError(error);
+        setAuthStep(null);
+        setAuthError(`${error}`);
       });
     if (terms) {
-      changeProcess({
+      setAuthStep({
         type: "loading",
         message: "Sending email verification link...",
       });
     } else
-      changeProcess({
+      setAuthStep({
         type: "loading",
         message: "Registration in progress...",
       });
@@ -158,16 +170,15 @@ function Auth({ type }) {
         window.location.replace("/");
       })
       .catch((error) => {
-        changeProcess(null);
-        setAuthError(error);
+        setAuthStep(null);
+        setAuthError(`${error}`);
       });
-    changeProcess({ type: "loading", message: "Login in progress..." });
+    setAuthStep({ type: "loading", message: "Login in progress..." });
   }
 
   function handleRegister(e) {
     e.preventDefault();
-    setAuthError(true);
-    document.getElementById("auth_error").style.display = "none";
+    setAuthError(undefined);
 
     if (!isValidInput(usernameRef.current.value, LOCALPART_SIGNUP_REGEX)) {
       setAuthError(BAD_LOCALPART_ERROR);
@@ -202,22 +213,22 @@ function Auth({ type }) {
   const handleAuth = type === "login" ? handleLogin : handleRegister;
   return (
     <>
-      {process?.type === "loading" && (
-        <LoadingScreen message={process.message} />
+      {authStep?.type === "loading" && (
+        <LoadingScreen message={authStep.message} />
       )}
-      {process?.type === "recaptcha" && (
+      {authStep?.type === "recaptcha" && (
         <Recaptcha
           message="Please check the box below to proceed."
-          sitekey={process.sitekey}
+          sitekey={authStep.sitekey}
           onChange={(v) => {
             if (typeof v === "string") register(v);
           }}
         />
       )}
-      {process?.type === "terms" && (
-        <Terms url={process.en.url} onSubmit={register} />
+      {authStep?.type === "terms" && (
+        <Terms url={authStep.en.url} onSubmit={register} />
       )}
-      {process?.type === "email" && (
+      {authStep?.type === "email" && (
         <ProcessWrapper>
           <div style={{ margin: "var(--sp-normal)", maxWidth: "450px" }}>
             <Text variant="h2">Verify email</Text>
@@ -248,12 +259,14 @@ function Auth({ type }) {
                     ? validateOnChange(
                         e,
                         LOCALPART_LOGIN_REGEX,
-                        BAD_LOCALPART_ERROR
+                        BAD_LOCALPART_ERROR,
+                        setAuthError
                       )
                     : validateOnChange(
                         e,
                         LOCALPART_SIGNUP_REGEX,
-                        BAD_LOCALPART_ERROR
+                        BAD_LOCALPART_ERROR,
+                        setAuthError
                       )
                 }
                 id="auth_username"
@@ -274,7 +287,8 @@ function Auth({ type }) {
                 validateOnChange(
                   e,
                   type === "login" ? PASSWORD_REGEX : PASSWORD_STRENGHT_REGEX,
-                  BAD_PASSWORD_ERROR
+                  BAD_PASSWORD_ERROR,
+                  setAuthError
                 )
               }
               id="auth_password"
@@ -290,7 +304,8 @@ function Auth({ type }) {
                     validateOnChange(
                       e,
                       new RegExp(`^(${passwordRef.current.value})$`),
-                      CONFIRM_PASSWORD_ERROR
+                      CONFIRM_PASSWORD_ERROR,
+                      setAuthError
                     )
                   }
                   id="auth_confirmPassword"
@@ -301,7 +316,12 @@ function Auth({ type }) {
                 <Input
                   forwardRef={emailRef}
                   onChange={(e) =>
-                    validateOnChange(e, EMAIL_REGEX, BAD_EMAIL_ERROR)
+                    validateOnChange(
+                      e,
+                      EMAIL_REGEX,
+                      BAD_EMAIL_ERROR,
+                      setAuthError
+                    )
                   }
                   id="auth_email"
                   type="email"
