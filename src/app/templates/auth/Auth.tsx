@@ -1,4 +1,8 @@
-import React, { InputHTMLAttributes, useRef, useState } from "react";
+import React, {
+  FunctionComponent,
+  useRef,
+  useState,
+} from "react";
 import PropTypes from "prop-types";
 import "./Auth.scss";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -41,23 +45,23 @@ const EMAIL_REGEX =
   /([a-z0-9]+[_a-z0-9.-][a-z0-9]+)@([a-z0-9-]+(?:.[a-z0-9-]+).[a-z]{2,4})/;
 const BAD_EMAIL_ERROR = "Invalid email address";
 
-function isValidInput(value: string, regex: RegExp) {
+const isValidInput = (value: string, regex: RegExp) => {
   return regex.test(value);
-}
+};
 
-function highlightErrorField($input: HTMLElement) {
+const highlightErrorField = ($input: HTMLElement) => {
   $input.focus();
   const myInput = $input;
   myInput.style.border = "1px solid var(--bg-danger)";
   myInput.style.boxShadow = "none";
-}
+};
 
-function validateOnChange(
+const validateOnChange = (
   e: inputEvent,
   regex: RegExp,
   error: string,
   setErrMsg: (string) => void
-) {
+) => {
   const field = e.target as HTMLInputElement;
   const fieldValue = field.value.toString();
   if (fieldValue && !isValidInput(fieldValue, regex)) {
@@ -68,7 +72,7 @@ function validateOnChange(
   setErrMsg(undefined);
   field.style.removeProperty("border");
   field.style.removeProperty("box-shadow");
-}
+};
 
 /**
  * Normalizes a username into a standard format.
@@ -77,11 +81,11 @@ function validateOnChange(
  * @param rawUsername A raw-input username, which may include invalid characters.
  * @returns
  */
-function normalizeUsername(rawUsername: string): string {
+const normalizeUsername = (rawUsername: string): string => {
   const noLeadingAt =
     rawUsername.indexOf("@") === 0 ? rawUsername.substr(1) : rawUsername;
   return noLeadingAt.trim();
-}
+};
 
 type AuthStep = {
   type: "start" | "recaptcha" | "terms" | "email" | "complete" | "loading";
@@ -90,7 +94,10 @@ type AuthStep = {
   en?: Record<"url", string>;
 };
 
-function Auth({ type }) {
+type AuthProps = {
+  type: string;
+};
+export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
   const [authStep, setAuthStep] = useState<AuthStep>(null);
   const usernameRef = useRef(null);
   const homeserverRef = useRef(null);
@@ -361,13 +368,9 @@ function Auth({ type }) {
       </StaticWrapper>
     </>
   );
-}
-
-Auth.propTypes = {
-  type: PropTypes.string.isRequired,
 };
 
-function StaticWrapper({ children }) {
+export const StaticWrapper: FunctionComponent = ({ children }) => {
   return (
     <div className="auth__wrapper flex--center">
       <div className="auth-card">
@@ -388,13 +391,15 @@ function StaticWrapper({ children }) {
       </div>
     </div>
   );
-}
-
-StaticWrapper.propTypes = {
-  children: PropTypes.node.isRequired,
 };
 
-function LoadingScreen({ message }) {
+type LoadingScreenProps = {
+  message: string;
+};
+
+export const LoadingScreen: FunctionComponent<LoadingScreenProps> = ({
+  message,
+}) => {
   return (
     <ProcessWrapper>
       <Spinner />
@@ -403,12 +408,18 @@ function LoadingScreen({ message }) {
       </div>
     </ProcessWrapper>
   );
-}
-LoadingScreen.propTypes = {
-  message: PropTypes.string.isRequired,
 };
 
-function Recaptcha({ message, sitekey, onChange }) {
+type RecaptchaProps = {
+  message: string;
+  sitekey: string;
+  onChange: (token: string | null) => void;
+};
+export const Recaptcha: FunctionComponent<RecaptchaProps> = ({
+  message,
+  sitekey,
+  onChange,
+}) => {
   return (
     <ProcessWrapper>
       <div style={{ marginBottom: "var(--sp-normal)" }}>
@@ -417,14 +428,17 @@ function Recaptcha({ message, sitekey, onChange }) {
       <ReCAPTCHA sitekey={sitekey} onChange={onChange} />
     </ProcessWrapper>
   );
-}
-Recaptcha.propTypes = {
-  message: PropTypes.string.isRequired,
-  sitekey: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
 };
 
-function Terms({ url, onSubmit }) {
+type TermsProps = {
+  url: string;
+  onSubmit: (
+    recaptchaValue: undefined,
+    termsAccepted: boolean,
+    verified?: unknown
+  ) => void;
+};
+export const Terms: FunctionComponent<TermsProps> = ({ url, onSubmit }) => {
   return (
     <ProcessWrapper>
       <form onSubmit={() => onSubmit(undefined, true)}>
@@ -462,17 +476,10 @@ function Terms({ url, onSubmit }) {
       </form>
     </ProcessWrapper>
   );
-}
-Terms.propTypes = {
-  url: PropTypes.string.isRequired,
-  onSubmit: PropTypes.func.isRequired,
 };
 
-function ProcessWrapper({ children }) {
+export const ProcessWrapper: FunctionComponent = ({ children }) => {
   return <div className="process-wrapper">{children}</div>;
-}
-ProcessWrapper.propTypes = {
-  children: PropTypes.node.isRequired,
 };
 
 export default Auth;
