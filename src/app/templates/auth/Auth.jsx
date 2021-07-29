@@ -13,8 +13,12 @@ import Spinner from '../../atoms/spinner/Spinner';
 
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 
-const USERNAME_REGEX = /^[a-z0-9_\-.=/]+$/;
-const BAD_USERNAME_ERROR = 'Username must contain only lowercase letters, numbers, dashes and underscores.';
+// This regex validates historical usernames, which don't satisy today's username requirements.
+// See https://matrix.org/docs/spec/appendices#id13 for more info.
+const LOCALPART_LOGIN_REGEX = /^[!-9|;-~]+$/;
+const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
+const BAD_LOCALPART_ERROR = 'Username must contain only a-z, 0-9, ., _, =, -, and /.';
+const USER_ID_TOO_LONG_ERROR = 'Your user ID, including the hostname, can\'t be more than 255 characters long.';
 
 const PASSWORD_REGEX = /.+/;
 const PASSWORD_STRENGHT_REGEX = /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,16}$/;
@@ -50,6 +54,18 @@ function validateOnChange(e, regex, error) {
   e.target.style.removeProperty('border');
   e.target.style.removeProperty('box-shadow');
   document.getElementById('auth_submit-btn').disabled = false;
+}
+
+/**
+ * Normalizes a username into a standard format.
+ *
+ * Removes leading and trailing whitespaces and leading "@" symbols.
+ * @param {string} rawUsername A raw-input username, which may include invalid characters.
+ * @returns {string}
+ */
+function normalizeUsername(rawUsername) {
+  const noLeadingAt = rawUsername.indexOf('@') === 0 ? rawUsername.substr(1) : rawUsername;
+  return noLeadingAt.trim();
 }
 
 function Auth({ type }) {
@@ -99,12 +115,17 @@ function Auth({ type }) {
     document.getElementById('auth_submit-btn').disabled = true;
     document.getElementById('auth_error').style.display = 'none';
 
-    if (!isValidInput(usernameRef.current.value, USERNAME_REGEX)) {
-      showBadInputError(usernameRef.current, BAD_USERNAME_ERROR);
+    /** @type {string} */
+    const rawUsername = usernameRef.current.value;
+    /** @type {string} */
+    const normalizedUsername = normalizeUsername(rawUsername);
+
+    if (!isValidInput(normalizedUsername, LOCALPART_LOGIN_REGEX)) {
+      showBadInputError(usernameRef.current, BAD_LOCALPART_ERROR);
       return;
     }
 
-    auth.login(usernameRef.current.value, homeserverRef.current.value, passwordRef.current.value)
+    auth.login(normalizedUsername, homeserverRef.current.value, passwordRef.current.value)
       .then(() => {
         document.getElementById('auth_submit-btn').disabled = false;
         window.location.replace('/');
@@ -122,8 +143,8 @@ function Auth({ type }) {
     document.getElementById('auth_submit-btn').disabled = true;
     document.getElementById('auth_error').style.display = 'none';
 
-    if (!isValidInput(usernameRef.current.value, USERNAME_REGEX)) {
-      showBadInputError(usernameRef.current, BAD_USERNAME_ERROR);
+    if (!isValidInput(usernameRef.current.value, LOCALPART_SIGNUP_REGEX)) {
+      showBadInputError(usernameRef.current, BAD_LOCALPART_ERROR);
       return;
     }
     if (!isValidInput(passwordRef.current.value, PASSWORD_STRENGHT_REGEX)) {
@@ -136,6 +157,10 @@ function Auth({ type }) {
     }
     if (!isValidInput(emailRef.current.value, EMAIL_REGEX)) {
       showBadInputError(emailRef.current, BAD_EMAIL_ERROR);
+      return;
+    }
+    if (`@${usernameRef.current.value}:${homeserverRef.current.value}`.length > 255) {
+      showBadInputError(usernameRef.current, USER_ID_TOO_LONG_ERROR);
       return;
     }
     register();
@@ -171,7 +196,9 @@ function Auth({ type }) {
             <div className="username__wrapper">
               <Input
                 forwardRef={usernameRef}
-                onChange={(e) => validateOnChange(e, USERNAME_REGEX, BAD_USERNAME_ERROR)}
+                onChange={(e) => (type === 'login'
+                  ? validateOnChange(e, LOCALPART_LOGIN_REGEX, BAD_LOCALPART_ERROR)
+                  : validateOnChange(e, LOCALPART_SIGNUP_REGEX, BAD_LOCALPART_ERROR))}
                 id="auth_username"
                 label="Username"
                 required
