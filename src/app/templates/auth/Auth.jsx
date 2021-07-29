@@ -16,8 +16,8 @@ import CinnySvg from '../../../../public/res/svg/cinny.svg';
 // This regex validates historical usernames, which don't satisy today's username requirements.
 // See https://matrix.org/docs/spec/appendices#id13 for more info.
 const LOCALPART_LOGIN_REGEX = /^[!-9|;-~]+$/;
-const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-+./]+$/;
-const BAD_LOCALPART_ERROR = 'Username must contain only lowercase letters, numbers, dashes and underscores.';
+const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
+const BAD_LOCALPART_ERROR = 'Username must contain only a-z, 0-9, ., _, =, -, and /.';
 const USER_ID_TOO_LONG_ERROR = 'Your user ID, including the hostname, can\'t be more than 255 characters long.';
 
 const PASSWORD_REGEX = /.+/;
