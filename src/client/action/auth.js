@@ -3,7 +3,12 @@ import cons from '../state/cons';
 import { getBaseUrl } from '../../util/matrixUtil';
 
 async function login(username, homeserver, password) {
-  const baseUrl = await getBaseUrl(homeserver);
+  let baseUrl = null;
+  try {
+    baseUrl = await getBaseUrl(homeserver);
+  } catch (e) {
+    baseUrl = `https://${homeserver}`;
+  }
 
   if (typeof baseUrl === 'undefined') throw new Error('Homeserver not found');
 
