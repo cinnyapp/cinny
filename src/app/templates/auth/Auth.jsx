@@ -21,8 +21,8 @@ const BAD_LOCALPART_ERROR = 'Username must contain only a-z, 0-9, ., _, =, -, an
 const USER_ID_TOO_LONG_ERROR = 'Your user ID, including the hostname, can\'t be more than 255 characters long.';
 
 const PASSWORD_REGEX = /.+/;
-const PASSWORD_STRENGHT_REGEX = /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,16}$/;
-const BAD_PASSWORD_ERROR = 'Password must contain 1 number, 1 uppercase letters, 1 lowercase letters, 1 non-alpha numeric number, 8-16 characters with no space.';
+const PASSWORD_STRENGHT_REGEX = /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,127}$/;
+const BAD_PASSWORD_ERROR = 'Password must contain 1 number, 1 uppercase letters, 1 lowercase letters, 1 non-alpha numeric number, 8-127 characters with no space.';
 const CONFIRM_PASSWORD_ERROR = 'Password don\'t match.';
 
 const EMAIL_REGEX = /([a-z0-9]+[_a-z0-9.-][a-z0-9]+)@([a-z0-9-]+(?:.[a-z0-9-]+).[a-z]{2,4})/;
