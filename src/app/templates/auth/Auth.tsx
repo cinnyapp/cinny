@@ -16,7 +16,10 @@ import Input from "../../atoms/input/Input";
 import Spinner from "../../atoms/spinner/Spinner";
 
 import CinnySvg from "../../../../public/res/svg/cinny.svg";
-import { isLoginUserIdValid } from "../../../util/matrix/auth";
+import {
+  isUserIdValidForLogin,
+  isUserIdValidForSignup,
+} from "../../../util/matrix/auth";
 
 type inputEvent =
   | React.FormEvent<HTMLTextAreaElement>
@@ -75,15 +78,15 @@ const validateOnChange = (
 };
 
 /**
- * Normalizes a username into a standard format.
+ * Normalizes a localpart into a standard format.
  *
  * Removes leading and trailing whitespaces and leading "@" symbols.
- * @param rawUsername A raw-input username, which may include invalid characters.
+ * @param raw_localpart A raw-input localpart, which may include invalid characters.
  * @returns
  */
-const normalizeUsername = (rawUsername: string): string => {
+const normalizeUsername = (raw_localpart: string): string => {
   const noLeadingAt =
-    rawUsername.indexOf("@") === 0 ? rawUsername.substr(1) : rawUsername;
+    raw_localpart.indexOf("@") === 0 ? raw_localpart.substr(1) : raw_localpart;
   return noLeadingAt.trim();
 };
 
@@ -99,7 +102,7 @@ type AuthProps = {
 };
 export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
   const [authStep, setAuthStep] = useState<AuthStep>(null);
-  const usernameRef = useRef(null);
+  const localpartRef = useRef(null);
   const homeserverRef = useRef(null);
   const passwordRef = useRef(null);
   const confirmPasswordRef = useRef(null);
@@ -110,7 +113,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
   function register(recaptchaValue?, terms?, verified?) {
     auth
       .register(
-        usernameRef.current.value,
+        localpartRef.current.value,
         homeserverRef.current.value,
         passwordRef.current.value,
         emailRef.current.value,
@@ -154,19 +157,19 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
     e.preventDefault();
     setAuthError(undefined);
 
-    const raw_username: string = usernameRef.current.value;
+    const raw_localpart: string = localpartRef.current.value;
     const raw_homeserver: string = homeserverRef.current.value;
     const raw_password: string = passwordRef.current.value;
 
-    const normalizedUsername = normalizeUsername(raw_username);
+    const normalizedUsername = normalizeUsername(raw_localpart);
 
-    const usernameValidation = isLoginUserIdValid(
+    const userIdValidation = isUserIdValidForLogin(
       normalizedUsername,
       raw_homeserver
     );
-    if (usernameValidation.isErr()) {
-      setAuthError(usernameValidation.get());
-      highlightErrorField(usernameRef.current);
+    if (userIdValidation.isErr()) {
+      setAuthError(userIdValidation.get());
+      highlightErrorField(localpartRef.current);
       return;
     }
 
@@ -187,33 +190,39 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
     e.preventDefault();
     setAuthError(undefined);
 
-    if (!isValidInput(usernameRef.current.value, LOCALPART_SIGNUP_REGEX)) {
-      setAuthError(BAD_LOCALPART_ERROR);
-      highlightErrorField(usernameRef.current);
+    const raw_localpart: string = localpartRef.current.value;
+    const raw_homeserver: string = homeserverRef.current.value;
+    const raw_password: string = passwordRef.current.value;
+    const raw_conf_password: string = passwordRef.current.value;
+    const raw_email: string = passwordRef.current.value;
+
+    const normalizedLocalpart = normalizeUsername(raw_localpart);
+
+    const userIdValidation = isUserIdValidForSignup(
+      normalizedLocalpart,
+      raw_homeserver
+    );
+    if (userIdValidation.isErr()) {
+      setAuthError(userIdValidation.get());
+      highlightErrorField(localpartRef.current);
       return;
     }
-    if (!isValidInput(passwordRef.current.value, PASSWORD_STRENGHT_REGEX)) {
+    if (!isValidInput(raw_password, PASSWORD_STRENGHT_REGEX)) {
       setAuthError(BAD_PASSWORD_ERROR);
       highlightErrorField(passwordRef.current);
       return;
     }
-    if (passwordRef.current.value !== confirmPasswordRef.current.value) {
+    if (raw_password !== raw_conf_password) {
       setAuthError(CONFIRM_PASSWORD_ERROR);
       highlightErrorField(confirmPasswordRef.current);
       return;
     }
-    if (!isValidInput(emailRef.current.value, EMAIL_REGEX)) {
+    if (!isValidInput(raw_email, EMAIL_REGEX)) {
       setAuthError(BAD_EMAIL_ERROR);
       highlightErrorField(emailRef.current);
       return;
     }
-    if (
-      `@${usernameRef.current.value}:${homeserverRef.current.value}`.length >
-      255
-    ) {
-      setAuthError(USER_ID_TOO_LONG_ERROR);
-      highlightErrorField(usernameRef.current);
-    }
+
     register();
   }
 
@@ -260,7 +269,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
             <Text variant="h2">{type === "login" ? "Login" : "Register"}</Text>
             <div className="username__wrapper">
               <Input
-                forwardRef={usernameRef}
+                forwardRef={localpartRef}
                 onChange={(e) =>
                   type === "login"
                     ? validateOnChange(
