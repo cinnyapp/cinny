@@ -1,8 +1,4 @@
-import React, {
-  FunctionComponent,
-  useRef,
-  useState,
-} from "react";
+import React, { FunctionComponent, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import "./Auth.scss";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -20,6 +16,7 @@ import {
   isUserIdValidForLogin,
   isUserIdValidForSignup,
 } from "../../../util/matrix/auth";
+import { Field, Formik } from "formik";
 
 type inputEvent =
   | React.FormEvent<HTMLTextAreaElement>
@@ -28,54 +25,15 @@ type inputEventHandler =
   | React.FormEventHandler<HTMLTextAreaElement>
   | React.ChangeEventHandler<HTMLInputElement>;
 
-// This regex validates historical usernames, which don't satisy today's username requirements.
-// See https://matrix.org/docs/spec/appendices#id13 for more info.
-const LOCALPART_LOGIN_REGEX = /^[!-9|;-~]+$/;
-const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
-const BAD_LOCALPART_ERROR =
-  "Username must contain only a-z, 0-9, ., _, =, -, and /.";
-const USER_ID_TOO_LONG_ERROR =
-  "Your user ID, including the hostname, can't be more than 255 characters long.";
-
-const PASSWORD_REGEX = /.+/;
-const PASSWORD_STRENGHT_REGEX =
+const PASSWORD_STRENGTH_REGEX =
   /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,127}$/;
 const BAD_PASSWORD_ERROR =
   "Password must contain at least 1 number, 1 uppercase letter, 1 lowercase letter, 1 non-alphanumeric character. Passwords can range from 8-127 characters with no whitespaces.";
-const CONFIRM_PASSWORD_ERROR = "Password don't match.";
+const CONFIRM_PASSWORD_ERROR = "Passwords don't match.";
 
 const EMAIL_REGEX =
   /([a-z0-9]+[_a-z0-9.-][a-z0-9]+)@([a-z0-9-]+(?:.[a-z0-9-]+).[a-z]{2,4})/;
 const BAD_EMAIL_ERROR = "Invalid email address";
-
-const isValidInput = (value: string, regex: RegExp) => {
-  return regex.test(value);
-};
-
-const highlightErrorField = ($input: HTMLElement) => {
-  $input.focus();
-  const myInput = $input;
-  myInput.style.border = "1px solid var(--bg-danger)";
-  myInput.style.boxShadow = "none";
-};
-
-const validateOnChange = (
-  e: inputEvent,
-  regex: RegExp,
-  error: string,
-  setErrMsg: (string) => void
-) => {
-  const field = e.target as HTMLInputElement;
-  const fieldValue = field.value.toString();
-  if (fieldValue && !isValidInput(fieldValue, regex)) {
-    setErrMsg(error);
-    highlightErrorField(field);
-    return;
-  }
-  setErrMsg(undefined);
-  field.style.removeProperty("border");
-  field.style.removeProperty("box-shadow");
-};
 
 /**
  * Normalizes a localpart into a standard format.
@@ -102,21 +60,19 @@ type AuthProps = {
 };
 export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
   const [authStep, setAuthStep] = useState<AuthStep>(null);
-  const localpartRef = useRef(null);
-  const homeserverRef = useRef(null);
-  const passwordRef = useRef(null);
-  const confirmPasswordRef = useRef(null);
-  const emailRef = useRef(null);
+  const [submittedEmail, setSubmittedEmail] = useState(undefined);
 
   const [authError, setAuthError] = useState(undefined);
 
-  function register(recaptchaValue?, terms?, verified?) {
+  function register(recaptchaValue?, terms?, verified?, values?: LoginValues) {
+    if (values !== undefined) setSubmittedEmail(values.email);
+
     auth
       .register(
-        localpartRef.current.value,
-        homeserverRef.current.value,
-        passwordRef.current.value,
-        emailRef.current.value,
+        values.localpart,
+        values.homeserver,
+        values.password,
+        values.email,
         recaptchaValue,
         terms,
         verified
@@ -153,28 +109,25 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
       });
   }
 
-  function handleLogin(e) {
-    e.preventDefault();
+  type LoginValues = {
+    localpart: string;
+    homeserver: string;
+    password: string;
+    confirmPassword: string;
+    email: string;
+  };
+
+  function handleLogin(values: LoginValues) {
     setAuthError(undefined);
 
-    const raw_localpart: string = localpartRef.current.value;
-    const raw_homeserver: string = homeserverRef.current.value;
-    const raw_password: string = passwordRef.current.value;
+    const raw_localpart: string = values.localpart;
+    const raw_homeserver: string = values.homeserver;
+    const raw_password: string = values.password;
 
     const normalizedUsername = normalizeUsername(raw_localpart);
 
-    const userIdValidation = isUserIdValidForLogin(
-      normalizedUsername,
-      raw_homeserver
-    );
-    if (userIdValidation.isErr()) {
-      setAuthError(userIdValidation.get());
-      highlightErrorField(localpartRef.current);
-      return;
-    }
-
     auth
-      .login(normalizeUsername, raw_homeserver, raw_password)
+      .login(normalizedUsername, raw_homeserver, raw_password)
       .then(() => {
         setAuthError(false);
         window.location.replace("/");
@@ -186,47 +139,11 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
     setAuthStep({ type: "loading", message: "Login in progress..." });
   }
 
-  function handleRegister(e) {
-    e.preventDefault();
+  function handleRegister(values: LoginValues) {
     setAuthError(undefined);
-
-    const raw_localpart: string = localpartRef.current.value;
-    const raw_homeserver: string = homeserverRef.current.value;
-    const raw_password: string = passwordRef.current.value;
-    const raw_conf_password: string = passwordRef.current.value;
-    const raw_email: string = passwordRef.current.value;
-
-    const normalizedLocalpart = normalizeUsername(raw_localpart);
-
-    const userIdValidation = isUserIdValidForSignup(
-      normalizedLocalpart,
-      raw_homeserver
-    );
-    if (userIdValidation.isErr()) {
-      setAuthError(userIdValidation.get());
-      highlightErrorField(localpartRef.current);
-      return;
-    }
-    if (!isValidInput(raw_password, PASSWORD_STRENGHT_REGEX)) {
-      setAuthError(BAD_PASSWORD_ERROR);
-      highlightErrorField(passwordRef.current);
-      return;
-    }
-    if (raw_password !== raw_conf_password) {
-      setAuthError(CONFIRM_PASSWORD_ERROR);
-      highlightErrorField(confirmPasswordRef.current);
-      return;
-    }
-    if (!isValidInput(raw_email, EMAIL_REGEX)) {
-      setAuthError(BAD_EMAIL_ERROR);
-      highlightErrorField(emailRef.current);
-      return;
-    }
-
-    register();
+    register(null, null, null, values);
   }
 
-  const handleAuth = type === "login" ? handleLogin : handleRegister;
   return (
     <>
       {authStep?.type === "loading" && (
@@ -250,8 +167,8 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
             <Text variant="h2">Verify email</Text>
             <div style={{ margin: "var(--sp-normal) 0" }}>
               <Text variant="b1">
-                Please check your email <b>{`(${emailRef.current.value})`}</b>{" "}
-                and validate before continuing further.
+                Please check your email <b>{`(${submittedEmail})`}</b> and
+                validate before continuing further.
               </Text>
             </div>
             <Button
@@ -265,105 +182,170 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }) => {
       )}
       <StaticWrapper>
         <div className="auth-form__wrapper flex-v--center">
-          <form onSubmit={handleAuth} className="auth-form">
-            <Text variant="h2">{type === "login" ? "Login" : "Register"}</Text>
-            <div className="username__wrapper">
-              <Input
-                forwardRef={localpartRef}
-                onChange={(e) =>
-                  type === "login"
-                    ? validateOnChange(
-                        e,
-                        LOCALPART_LOGIN_REGEX,
-                        BAD_LOCALPART_ERROR,
-                        setAuthError
-                      )
-                    : validateOnChange(
-                        e,
-                        LOCALPART_SIGNUP_REGEX,
-                        BAD_LOCALPART_ERROR,
-                        setAuthError
-                      )
+          <Formik
+            initialValues={{
+              localpart: "",
+              homeserver: "matrix.org",
+              password: "",
+              confirmPassword: "",
+              email: "",
+            }}
+            validate={(values) => {
+              setAuthError(undefined);
+              const errors = {};
+              const normalized_localpart = normalizeUsername(values.localpart);
+
+              if (type === "login") {
+                // Check local part and home server for LOGIN (more relaxed than
+                // sign up)
+                if (normalized_localpart !== "" && values.homeserver !== "") {
+                  const userIdValidation = isUserIdValidForLogin(
+                    normalized_localpart,
+                    values.homeserver
+                  );
+                  if (userIdValidation.isErr())
+                    // @ts-ignore for now! TODO
+                    errors.localpart = userIdValidation.get();
                 }
-                id="auth_username"
-                label="Username"
-                required
-              />
-              <Input
-                forwardRef={homeserverRef}
-                id="auth_homeserver"
-                placeholder="Homeserver"
-                value="matrix.org"
-                required
-              />
-            </div>
-            <Input
-              forwardRef={passwordRef}
-              onChange={(e: inputEvent) =>
-                validateOnChange(
-                  e,
-                  type === "login" ? PASSWORD_REGEX : PASSWORD_STRENGHT_REGEX,
-                  BAD_PASSWORD_ERROR,
-                  setAuthError
+              } else {
+                console.log(values);
+
+                // Check local part and home server for SIGNUP
+                if (normalized_localpart !== "" && values.homeserver !== "") {
+                  const userIdValidation = isUserIdValidForSignup(
+                    normalized_localpart,
+                    values.homeserver
+                  );
+                  if (userIdValidation.isErr())
+                    // @ts-ignore for now! TODO
+                    errors.localpart = userIdValidation.get();
+                }
+                if (
+                  values.password !== "" &&
+                  !PASSWORD_STRENGTH_REGEX.test(values.password)
                 )
+                  // @ts-ignore for now! TODO
+                  errors.password = BAD_PASSWORD_ERROR;
+
+                if (
+                  values.password !== "" &&
+                  values.confirmPassword !== "" &&
+                  values.password !== values.confirmPassword
+                )
+                  // @ts-ignore for now! TODO
+                  errors.confirmPassword = CONFIRM_PASSWORD_ERROR;
+
+                if (values.email !== "" && !EMAIL_REGEX.test(values.email))
+                  // @ts-ignore for now! TODO
+                  errors.email = BAD_EMAIL_ERROR;
               }
-              id="auth_password"
-              type="password"
-              label="Password"
-              required
-            />
-            {type === "register" && (
-              <>
+              setAuthError(Object.values(errors)[0]);
+              console.log("Hi world!", errors);
+              return errors;
+            }}
+            onSubmit={(values, { setSubmitting }) => {
+              const submissionValues = values;
+              submissionValues.localpart = normalizeUsername(
+                submissionValues.localpart
+              );
+
+              setTimeout(() => {
+                alert(JSON.stringify(values, null, 2));
+
+                setSubmitting(false);
+              }, 400);
+              type === "login" ? handleLogin(values) : handleRegister(values);
+            }}
+            validateOnChange={false}
+            validateOnBlur={true}
+          >
+            {({
+              values,
+              errors,
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              isSubmitting,
+            }) => (
+              <form onSubmit={handleSubmit} className="auth-form">
+                <Text variant="h2">
+                  {type === "login" ? "Login" : "Register"}
+                </Text>
+                <div className="username__wrapper">
+                  <Input
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    id="auth_username"
+                    label="Username"
+                    name="localpart"
+                    state={errors.localpart ? "error" : "normal"}
+                    required
+                  />
+                  <Input
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    id="auth_homeserver"
+                    placeholder="Homeserver"
+                    value={values.homeserver}
+                    name="homeserver"
+                    state={errors.homeserver ? "error" : "normal"}
+                    required
+                  />
+                </div>
                 <Input
-                  forwardRef={confirmPasswordRef}
-                  onChange={(e) =>
-                    validateOnChange(
-                      e,
-                      new RegExp(`^(${passwordRef.current.value})$`),
-                      CONFIRM_PASSWORD_ERROR,
-                      setAuthError
-                    )
-                  }
-                  id="auth_confirmPassword"
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  id="auth_password"
                   type="password"
-                  label="Confirm password"
+                  label="Password"
+                  name="password"
+                  state={errors.password ? "error" : "normal"}
                   required
                 />
-                <Input
-                  forwardRef={emailRef}
-                  onChange={(e) =>
-                    validateOnChange(
-                      e,
-                      EMAIL_REGEX,
-                      BAD_EMAIL_ERROR,
-                      setAuthError
-                    )
-                  }
-                  id="auth_email"
-                  type="email"
-                  label="Email"
-                  required
-                />
-              </>
+                {type === "register" && (
+                  <>
+                    <Input
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      id="auth_confirmPassword"
+                      type="password"
+                      label="Confirm password"
+                      name="confirmPassword"
+                      state={errors.confirmPassword ? "error" : "normal"}
+                      required
+                    />
+                    <Input
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      id="auth_email"
+                      type="email"
+                      label="Email"
+                      name="email"
+                      state={errors.email ? "error" : "normal"}
+                      required
+                    />
+                  </>
+                )}
+                <div className="submit-btn__wrapper flex--end">
+                  <Text
+                    id="auth_error"
+                    className="error-message"
+                    variant="b3"
+                    hidden={authError === undefined}
+                  >
+                    {authError}
+                  </Text>
+                  <Button
+                    variant="primary"
+                    type="submit"
+                    disabled={authError !== undefined}
+                  >
+                    {type === "login" ? "Login" : "Register"}
+                  </Button>
+                </div>
+              </form>
             )}
-            <div className="submit-btn__wrapper flex--end">
-              <Text
-                id="auth_error"
-                className="error-message"
-                variant="b3"
-                hidden={authError === undefined}
-              >
-                {authError}
-              </Text>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={authError !== undefined}
-              >
-                {type === "login" ? "Login" : "Register"}
-              </Button>
-            </div>
-          </form>
+          </Formik>
         </div>
 
         <div className="flex--center">

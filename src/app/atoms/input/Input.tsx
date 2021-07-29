@@ -12,7 +12,10 @@ type InputProps = {
   required?: boolean;
   type?: string;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
   state?: "normal" | "success" | "error";
+  name?: string;
+  isInvalid?: boolean,
 };
 
 type ResizableInputProps = InputProps & {
@@ -32,7 +35,9 @@ export const Input: FunctionComponent<InputProps> = ({
   type = "text",
   required = false,
   onChange = null,
+  onBlur = null,
   state = "normal",
+  name = "",
 }) => {
   return (
     <div className="input-container">
@@ -49,7 +54,9 @@ export const Input: FunctionComponent<InputProps> = ({
         required={required}
         defaultValue={value}
         autoComplete="off"
+        name={name}
         onChange={onChange}
+        onBlur={onBlur}
       />
     </div>
   );
@@ -66,7 +73,9 @@ export const ResizableInput: FunctionComponent<ResizableInputProps> = ({
   type = "text",
   required = false,
   onChange = null,
+  onBlur = null,
   state = "normal",
+  name = "",
   minHeight = 46,
   onResize = null,
 }) => {
@@ -88,6 +97,7 @@ export const ResizableInput: FunctionComponent<ResizableInputProps> = ({
         required={required}
         defaultValue={value}
         autoComplete="off"
+        name={name}
         onChange={onChange}
         onResize={onResize}
       />

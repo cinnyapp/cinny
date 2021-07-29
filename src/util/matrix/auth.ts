@@ -1,5 +1,7 @@
 import { Err, Ok, Result } from "../../types/result";
 
+// This regex validates historical usernames, which don't satisy today's username requirements.
+// See https://matrix.org/docs/spec/appendices#id13 for more info.
 const historical_localpart_regex = /^[!-9|;-~]+$/;
 const signup_localpart_regex = /^[a-z0-9_\-.=/]+$/;
 
