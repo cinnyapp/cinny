@@ -2,10 +2,10 @@ import React, { FunctionComponent } from "react";
 import "./Text.scss";
 
 type TextProps = {
-  id: string;
-  className: "";
-  variant: "h1" | "h2" | "s1" | "b1" | "b2" | "b3";
-  hidden: boolean;
+  id?: string;
+  className?: string;
+  variant?: "h1" | "h2" | "s1" | "b1" | "b2" | "b3";
+  hidden?: boolean;
 };
 
 export const Text: FunctionComponent<TextProps> = ({
