@@ -8,7 +8,7 @@ import * as auth from '../../../client/action/auth';
 
 import { Text } from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
-import Input from '../../atoms/input/Input';
+import { Input } from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
@@ -45,6 +45,112 @@ const normalizeUsername = (rawLocalpart: string): string => {
   const noLeadingAt = rawLocalpart.indexOf('@') === 0 ? rawLocalpart.substr(1) : rawLocalpart;
   return noLeadingAt.trim();
 };
+
+export const ProcessWrapper: FunctionComponent = ({ children }) => <div className="process-wrapper">{children}</div>;
+
+type LoadingScreenProps = {
+  message: string;
+};
+
+export const LoadingScreen: FunctionComponent<LoadingScreenProps> = ({
+  message,
+}: LoadingScreenProps) => (
+  <ProcessWrapper>
+    <Spinner />
+    <div style={{ marginTop: 'var(--sp-normal)' }}>
+      <Text variant="b1">{message}</Text>
+    </div>
+  </ProcessWrapper>
+);
+
+type RecaptchaProps = {
+  message: string;
+  sitekey: string;
+  onChange: (token: string | null) => void;
+};
+export const Recaptcha: FunctionComponent<RecaptchaProps> = ({
+  message,
+  sitekey,
+  onChange,
+}: RecaptchaProps) => (
+  <ProcessWrapper>
+    <div style={{ marginBottom: 'var(--sp-normal)' }}>
+      <Text variant="s1">{message}</Text>
+    </div>
+    <ReCAPTCHA sitekey={sitekey} onChange={onChange} />
+  </ProcessWrapper>
+);
+
+type TermsProps = {
+  url: string;
+  onSubmit: (
+    recaptchaValue: undefined,
+    termsAccepted: boolean,
+    verified?: unknown
+  ) => void;
+};
+
+export const Terms: FunctionComponent<TermsProps> = ({
+  url,
+  onSubmit,
+}: TermsProps) => (
+  <ProcessWrapper>
+    <form onSubmit={() => onSubmit(undefined, true)}>
+      <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
+        <Text variant="h2">Agree with terms</Text>
+        <div style={{ marginBottom: 'var(--sp-normal)' }} />
+        <Text variant="b1">
+          In order to complete registration, you need to agree with terms and
+          conditions.
+        </Text>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: 'var(--sp-normal) 0',
+          }}
+        >
+          <input id="termsCheckbox" type="checkbox" required />
+          <Text variant="b1">
+            {'I accept '}
+            <a
+              style={{ cursor: 'pointer' }}
+              href={url}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Terms and Conditions
+            </a>
+          </Text>
+        </div>
+        <Button id="termsBtn" type="submit" variant="primary">
+          Submit
+        </Button>
+      </div>
+    </form>
+  </ProcessWrapper>
+);
+
+export const StaticWrapper: FunctionComponent = ({ children }) => (
+  <div className="auth__wrapper flex--center">
+    <div className="auth-card">
+      <div className="auth-card__interactive flex-v">
+        <div className="app-ident flex">
+          <img
+            className="app-ident__logo noselect"
+            src={CinnySvg}
+            alt="Cinny logo"
+          />
+          <div className="app-ident__text flex-v--center">
+            <Text variant="h2">Cinny</Text>
+            <Text variant="b2">Yet another matrix client</Text>
+          </div>
+        </div>
+      </div>
+      {children}
+    </div>
+  </div>
+);
 
 type AuthStep = {
   type: 'start' | 'recaptcha' | 'terms' | 'email' | 'complete' | 'loading';
@@ -348,107 +454,5 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }: AuthProps) => {
     </>
   );
 };
-
-export const StaticWrapper: FunctionComponent = ({ children }) => {
-  return (
-    <div className="auth__wrapper flex--center">
-      <div className="auth-card">
-        <div className="auth-card__interactive flex-v">
-          <div className="app-ident flex">
-            <img
-              className="app-ident__logo noselect"
-              src={CinnySvg}
-              alt="Cinny logo"
-            />
-            <div className="app-ident__text flex-v--center">
-              <Text variant="h2">Cinny</Text>
-              <Text variant="b2">Yet another matrix client</Text>
-            </div>
-          </div>
-        </div>
-        {children}
-      </div>
-    </div>
-  )
-};
-
-type LoadingScreenProps = {
-  message: string;
-};
-
-export const LoadingScreen: FunctionComponent<LoadingScreenProps> = ({
-  message,
-}: LoadingScreenProps) => (
-  <ProcessWrapper>
-    <Spinner />
-    <div style={{ marginTop: 'var(--sp-normal)' }}>
-      <Text variant="b1">{message}</Text>
-    </div>
-  </ProcessWrapper>
-);
-
-type RecaptchaProps = {
-  message: string;
-  sitekey: string;
-  onChange: (token: string | null) => void;
-};
-export const Recaptcha: FunctionComponent<RecaptchaProps> = ({
-  message,
-  sitekey,
-  onChange,
-}: RecaptchaProps) => (
-  <ProcessWrapper>
-    <div style={{ marginBottom: 'var(--sp-normal)' }}>
-      <Text variant="s1">{message}</Text>
-    </div>
-    <ReCAPTCHA sitekey={sitekey} onChange={onChange} />
-  </ProcessWrapper>
-);
-
-type TermsProps = {
-  url: string;
-  onSubmit: (
-    recaptchaValue: undefined,
-    termsAccepted: boolean,
-    verified?: unknown
-  ) => void;
-};
-export const Terms: FunctionComponent<TermsProps> = ({ url, onSubmit }: TermsProps) => (
-  <ProcessWrapper>
-    <form onSubmit={() => onSubmit(undefined, true)}>
-      <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
-        <Text variant="h2">Agree with terms</Text>
-        <div style={{ marginBottom: 'var(--sp-normal)' }} />
-        <Text variant="b1">
-          In order to complete registration, you need to agree with terms and
-          conditions.
-        </Text>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            margin: 'var(--sp-normal) 0',
-          }}
-        >
-          <input id="termsCheckbox" type="checkbox" required />
-          <Text variant="b1">
-            {'I accept '}
-            <a
-              style={{ cursor: 'pointer' }}
-              href={url}
-              rel="noreferrer"
-              target="_blank"
-            >
-              Terms and Conditions
-            </a>
-          </Text>
-        </div>
-        <Button id="termsBtn" type="submit" variant="primary">
-          Submit
-        </Button>
-      </div>
-    </form>
-  </ProcessWrapper>
-);
 
 export default Auth;
