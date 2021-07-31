@@ -65,7 +65,7 @@
   margin: 0 var(--sp-extra-tight);
   border-radius: var(--bo-radius);
   &--selected {
-    border: 1px solid var(--bg-surface-border);
+    box-shadow: var(--bs-surface-border);
     background-color: var(--bg-surface);
 
     & .context-menu__item > button {
