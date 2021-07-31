@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Settings.scss';
 
+import initMatrix from '../../../client/initMatrix';
 import settings from '../../../client/state/settings';
 
 import Text from '../../atoms/text/Text';
@@ -43,6 +44,7 @@ function Settings({ isOpen, onRequestClose }) {
           <a href="https://cinny.in/#about" target="_blank" rel="noreferrer">About</a>
         </Text>
         <Text className="settings__about">Version: 1.0.0</Text>
+        <Text className="settings__about">{`Device ID: ${initMatrix.matrixClient.getDeviceId()}`}</Text>
       </div>
     </PopupWindow>
   );
