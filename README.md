@@ -8,4 +8,4 @@
 
 ## About <a name = "about"></a>
 
-Cinny is a [matrix](https://matrix.org) client focusing primarily on simple, elegant and secure interface.
+Cinny is a [Matrix](https://matrix.org) client focusing primarily on a simple, elegant and secure interface.
