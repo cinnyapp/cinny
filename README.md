@@ -30,7 +30,8 @@ npm install #installs all dependencies
 npm build #compiles the app into the dist/ directory
 ```
 
-To serve a development version of the app for testing, you may also use the command `npm start`.
+You can then copy the files to a webserver's webroot of your choosing as noted above. 
+To serve a development version of the app locally for testing, you may also use the command `npm start`.
 
 ### Running with Docker
 
