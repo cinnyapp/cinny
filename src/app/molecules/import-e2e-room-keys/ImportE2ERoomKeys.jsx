@@ -49,7 +49,7 @@ function ImportE2ERoomKeys() {
     return () => {
       viewEvent.removeListener('importing', handleIsImporting);
       viewEvent.removeListener('status', handleStatus);
-    }
+    };
   }, []);
 
   function importE2ERoomKeys() {
