@@ -278,7 +278,7 @@ function StaticWrapper({ children }) {
             <img className="app-ident__logo noselect" src={CinnySvg} alt="Cinny logo" />
             <div className="app-ident__text flex-v--center">
               <Text variant="h2">Cinny</Text>
-              <Text variant="b2">Yet another Matrix client.</Text>
+              <Text variant="b2">Yet another matrix client</Text>
             </div>
           </div>
           { children }
