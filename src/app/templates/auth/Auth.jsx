@@ -22,8 +22,8 @@ const USER_ID_TOO_LONG_ERROR = 'Your user ID, including the hostname, can\'t be 
 
 const PASSWORD_REGEX = /.+/;
 const PASSWORD_STRENGHT_REGEX = /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,127}$/;
-const BAD_PASSWORD_ERROR = 'Password must contain 1 number, 1 uppercase letters, 1 lowercase letters, 1 non-alpha numeric number, 8-127 characters with no space.';
-const CONFIRM_PASSWORD_ERROR = 'Password don\'t match.';
+const BAD_PASSWORD_ERROR = 'Password must contain at least 1 number, 1 uppercase letter, 1 lowercase letter, 1 non-alphanumeric character. Passwords can range from 8-127 characters with no whitespaces.';
+const CONFIRM_PASSWORD_ERROR = 'Passwords don\'t match.';
 
 const EMAIL_REGEX = /([a-z0-9]+[_a-z0-9.-][a-z0-9]+)@([a-z0-9-]+(?:.[a-z0-9-]+).[a-z]{2,4})/;
 const BAD_EMAIL_ERROR = 'Invalid email address';
@@ -278,7 +278,7 @@ function StaticWrapper({ children }) {
             <img className="app-ident__logo noselect" src={CinnySvg} alt="Cinny logo" />
             <div className="app-ident__text flex-v--center">
               <Text variant="h2">Cinny</Text>
-              <Text variant="b2">Yet another matrix client.</Text>
+              <Text variant="b2">Yet another Matrix client.</Text>
             </div>
           </div>
           { children }
@@ -329,7 +329,7 @@ function Terms({ url, onSubmit }) {
         <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
           <Text variant="h2">Agree with terms</Text>
           <div style={{ marginBottom: 'var(--sp-normal)' }} />
-          <Text variant="b1">In order to complete registration, you need to agree with terms and conditions.</Text>
+          <Text variant="b1">In order to complete registration, you need to agree to the terms and conditions.</Text>
           <div style={{ display: 'flex', alignItems: 'center', margin: 'var(--sp-normal) 0' }}>
             <input id="termsCheckbox" type="checkbox" required />
             <Text variant="b1">

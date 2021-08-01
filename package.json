@@ -1,7 +1,7 @@
 {
   "name": "cinny",
   "version": "1.0.0",
-  "description": "Organized and powerful matrix client.",
+  "description": "Organized and powerful Matrix client.",
   "main": "index.js",
   "engines": {
     "npm": ">=6.14.11",

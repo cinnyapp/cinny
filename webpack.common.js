@@ -55,7 +55,7 @@ module.exports = {
       devMode: 'light',
       favicons: {
         appName: 'Cinny',
-        appDescription: 'A matrix client',
+        appDescription: 'A Matrix client',
         developerName: 'ajbura, 1997kB',
         developerURL: null,
         icons: {
