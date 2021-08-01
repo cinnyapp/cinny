@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import './Settings.scss';
 
@@ -12,6 +12,7 @@ import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls'
 
 import PopupWindow, { PWContentSelector } from '../../molecules/popup-window/PopupWindow';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
+import ImportE2ERoomKeys from '../../molecules/import-e2e-room-keys/ImportE2ERoomKeys';
 
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
@@ -44,8 +45,20 @@ function AppearanceSection() {
 
 function SecuritySection() {
   return (
-    <div className="settings-content">
-      <Text>{`Device ID: ${initMatrix.matrixClient.getDeviceId()}`}</Text>
+    <div className="set-security settings-content">
+      <SettingTile
+        title={`Device ID: ${initMatrix.matrixClient.getDeviceId()}`}
+        content={<Text variant="b3">Use this device ID to verify or manage this session from Element client.</Text>}
+      />
+      <SettingTile
+        title="Import E2E room keys"
+        content={(
+          <>
+            <Text variant="b3">{'To decrypt older messages, Export E2EE room keys from Element (Settings > Security & Privacy > Encryption > Cryptography) and import them here. Imported keys are also encrypted so you have to enter account password.'}</Text>
+            <ImportE2ERoomKeys />
+          </>
+        )}
+      />
     </div>
   );
 }
@@ -53,7 +66,7 @@ function SecuritySection() {
 function AboutSection() {
   return (
     <div className="settings-content settings__about">
-      <div className="settings__about__branding">
+      <div className="set-about__branding">
         <img width="60" height="60" src={CinnySVG} alt="Cinny logo" />
         <div>
           <Text variant="h2">
@@ -62,7 +75,7 @@ function AboutSection() {
           </Text>
           <Text>Yet another matrix client</Text>
 
-          <div className="settings__about__btns">
+          <div className="set-about__btns">
             <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>Source code</Button>
             <Button onClick={() => window.open('https://liberapay.com/ajbura/donate')}>Support</Button>
           </div>

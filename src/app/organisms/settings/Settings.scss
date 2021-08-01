@@ -14,10 +14,15 @@
 
   & .setting-tile {
     margin-top: var(--sp-normal);
+    border-bottom: 1px solid var(--bg-surface-border);
+    padding-bottom: 16px;
+    &__title__wrapper {
+      margin-bottom: var(--sp-ultra-tight);
+    }
   }
 }
 
-.settings__about {
+.set-about {
   &__branding {
     margin-top: var(--sp-extra-tight);
     margin-bottom: var(--sp-normal);
