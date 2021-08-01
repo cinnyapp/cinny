@@ -1,6 +1,6 @@
 .settings-window {
   & .pw__content-container {
-    height: 100%;
+    min-height: 100%;
   }
 }
 
@@ -12,11 +12,27 @@
     margin-right: var(--sp-normal);
   }
 
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  & .setting-tile {
+    margin-top: var(--sp-normal);
+  }
 }
 
 .settings__about {
-  text-align: center;
+  &__branding {
+    margin-top: var(--sp-extra-tight);
+    margin-bottom: var(--sp-normal);
+    display: flex;
+
+    & > div {
+      margin: 0 calc(var(--sp-loose) + var(--sp-ultra-tight));
+    }
+
+  }
+  &__btns {
+    margin: 0;
+    margin-top: var(--sp-normal);
+    & button:last-child {
+      margin: 0 var(--sp-tight)
+    }
+  }
 }

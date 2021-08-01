@@ -12,7 +12,7 @@
     "build": "webpack --config ./webpack.prod.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Ajay Bura",
   "license": "ISC",
   "dependencies": {
     "@tippyjs/react": "^4.2.5",
