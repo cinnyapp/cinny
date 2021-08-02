@@ -1,16 +1,16 @@
-import { Err, Ok, Result } from "../../types/result";
+import { Err, Ok, Result } from '../../types/result';
 
 // This regex validates historical usernames, which don't satisy today's username requirements.
 // See https://matrix.org/docs/spec/appendices#id13 for more info.
-const historical_localpart_regex = /^[!-9|;-~]+$/;
-const signup_localpart_regex = /^[a-z0-9_\-.=/]+$/;
+const historicalLocalpartRegex = /^[!-9|;-~]+$/;
+const signupLocalpartRegex = /^[a-z0-9_\-.=/]+$/;
 
 const STRINGS = {
   validation_errors: {
-    bad_login_username: "Username must contain only a-z, 0-9 and . _ + - /",
-    bad_signup_username: "Username must contain only a-z, 0-9 and . _ + - /",
-    user_id_too_long:
-      "Your user ID, including the hostname, can't be more than 255 characters long.",
+    badLoginUsername: 'Username must contain only a-z, 0-9 and . _ + - /',
+    badSignupUsername: 'Username must contain only a-z, 0-9 and . _ + - /',
+    userIdTooLong:
+      'Your user ID, including the hostname, can\'t be more than 255 characters long.',
   },
 };
 
@@ -27,15 +27,14 @@ type UserIdValid = Result<string, boolean>;
  * requirements.
  *
  * @param localpart The raw user input for their localpart
- * @param homeserver The raw user input for their homeserver.
  * @returns
  */
 export const isUserIdValidForLogin = (
   localpart: string,
-  homeserver: string
 ): UserIdValid => {
-  if (!historical_localpart_regex.test(localpart))
-    return Err(STRINGS.validation_errors.bad_login_username);
+  if (!historicalLocalpartRegex.test(localpart)) {
+    return Err(STRINGS.validation_errors.badLoginUsername);
+  }
 
   return Ok(true);
 };
@@ -49,12 +48,12 @@ export const isUserIdValidForLogin = (
  */
 export const isUserIdValidForSignup = (
   localpart: string,
-  homeserver: string
+  homeserver: string,
 ): UserIdValid => {
-  if (!signup_localpart_regex.test(localpart))
-    return Err(STRINGS.validation_errors.bad_login_username);
-  if (`@${localpart}:${homeserver}`.length > 255)
-    return Err(STRINGS.validation_errors.user_id_too_long);
+  if (!signupLocalpartRegex.test(localpart)) {
+    return Err(STRINGS.validation_errors.badLoginUsername);
+  }
+  if (`@${localpart}:${homeserver}`.length > 255) return Err(STRINGS.validation_errors.userIdTooLong);
 
   return Ok(true);
 };

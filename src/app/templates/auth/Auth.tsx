@@ -168,6 +168,14 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }: AuthProps) => {
 
   const [authError, setAuthError] = useState(undefined);
 
+  const authInitialValues = {
+    localpart: '',
+    homeserver: 'matrix.org',
+    password: '',
+    confirmPassword: '',
+    email: '',
+  };
+
   function register(recaptchaValue?, terms?, verified?, values?: LoginValues) {
     if (values !== undefined) setSubmittedEmail(values.email);
 
@@ -284,13 +292,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }: AuthProps) => {
       <StaticWrapper>
         <div className="auth-form__wrapper flex-v--center">
           <Formik
-            initialValues={{
-              localpart: '',
-              homeserver: 'matrix.org',
-              password: '',
-              confirmPassword: '',
-              email: '',
-            }}
+            initialValues={authInitialValues}
             validate={(values) => {
               setAuthError(undefined);
               const errors = {};
@@ -302,7 +304,6 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }: AuthProps) => {
                 if (normalizedLocalpart !== '' && values.homeserver !== '') {
                   const userIdValidation = isUserIdValidForLogin(
                     normalizedLocalpart,
-                    values.homeserver,
                   );
                   if (userIdValidation.isErr()) {
                     // @ts-ignore for now! TODO
@@ -325,7 +326,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }: AuthProps) => {
                   values.password !== ''
                   && !PASSWORD_STRENGTH_REGEX.test(values.password)
                 ) {
-                  // @ts-ignore for now! TODO
+                    // @ts-ignore for now! TODO
                   errors.password = BAD_PASSWORD_ERROR;
                 }
 
