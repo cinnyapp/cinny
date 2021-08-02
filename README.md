@@ -25,9 +25,9 @@ by simply copying these files to the webroot:
 
 Execute the following commands to compile the app from its source code:
 
-```
-npm install #installs all dependencies
-npm build #compiles the app into the dist/ directory
+```sh
+npm install # Installs all dependencies
+npm run build # Compiles the app into the dist/ directory
 ```
 
 You can then copy the files to a webserver's webroot of your choosing as noted above. 
