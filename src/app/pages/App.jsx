@@ -12,15 +12,7 @@ function App() {
   return (
     <BrowserRouter>
       <Switch>
-        <Route exact path="/">
-          { isAuthanticated() ? <Client /> : <Redirect to="/login" />}
-        </Route>
-        <Route path="/login">
-          { isAuthanticated() ? <Redirect to="/" /> : <Auth type="login" />}
-        </Route>
-        <Route path="/register">
-          { isAuthanticated() ? <Redirect to="/" /> : <Auth type="register" />}
-        </Route>
+         { isAuthanticated() ? <Client /> : <Auth type="login" />}
       </Switch>
     </BrowserRouter>
   );
