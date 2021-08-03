@@ -15,7 +15,10 @@ async function login(username, homeserver, password) {
   const client = sdk.createClient({ baseUrl });
 
   const response = await client.login('m.login.password', {
-    user: `@${username}:${homeserver}`,
+    identifier: {
+      type: 'm.id.user',
+      user: username,
+    },
     password,
     initial_device_display_name: cons.DEVICE_DISPLAY_NAME,
   });
