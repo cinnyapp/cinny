@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "author": "Ajay Bura",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@tippyjs/react": "^4.2.5",
     "babel-polyfill": "^6.26.0",
