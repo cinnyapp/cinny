@@ -12,15 +12,6 @@ Cinny is a [Matrix](https://matrix.org) client focusing primarily on simple, ele
 
 ## Building and Running
 
-### Running pre-compiled
-
-A pre-compiled version of the app exists in this repo. You can serve the application with a webserver of your choosing
-by simply copying these files to the webroot:
-
-  - `olm.wasm`
-  - `_redirects`
-  - all files in the `dist/` directory
-
 ### Building from source
 
 Execute the following commands to compile the app from its source code:
