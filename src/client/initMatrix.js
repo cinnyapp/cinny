@@ -5,7 +5,7 @@ import { secret } from './state/auth';
 import RoomList from './state/RoomList';
 import RoomsInput from './state/RoomsInput';
 
-global.Olm = require('olm');
+global.Olm = require('@matrix-org/olm');
 
 class InitMatrix extends EventEmitter {
   async init() {

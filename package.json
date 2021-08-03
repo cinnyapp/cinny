@@ -15,6 +15,7 @@
   "author": "Ajay Bura",
   "license": "MIT",
   "dependencies": {
+    "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.4.tgz",
     "@tippyjs/react": "^4.2.5",
     "babel-polyfill": "^6.26.0",
     "browser-encrypt-attachment": "^0.3.0",
@@ -25,7 +26,6 @@
     "html-react-parser": "^1.2.7",
     "linkifyjs": "^3.0.0-beta.3",
     "matrix-js-sdk": "^11.2.0",
-    "olm": "https://packages.matrix.org/npm/olm/olm-3.2.1.tgz",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
     "react-autosize-textarea": "^7.1.0",
