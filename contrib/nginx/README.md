@@ -4,7 +4,9 @@
 
 `/etc/nginx/mime.types`:
 ```
+types {
 ..
     application/wasm                      wasm;
 ..
+}
 ```
