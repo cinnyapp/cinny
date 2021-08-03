@@ -21,7 +21,7 @@ npm install # Installs all dependencies
 npm run build # Compiles the app into the dist/ directory
 ```
 
-You can then copy the files to a webserver's webroot of your choosing as noted above. 
+You can then copy the files to a webserver's webroot of your choice. 
 To serve a development version of the app locally for testing, you may also use the command `npm start`.
 
 ### Running with Docker
