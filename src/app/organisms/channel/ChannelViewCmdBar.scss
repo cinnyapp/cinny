@@ -1,0 +1,22 @@
+.channel-cmd-bar {
+  --cmd-bar-height: 28px;
+  min-height: var(--cmd-bar-height);
+
+  & .timeline-change {
+    justify-content: flex-end;
+    padding: var(--sp-ultra-tight) var(--sp-normal);
+
+    &__content {
+      margin: 0;
+      flex: unset;
+      & > .text {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        & b {
+          color: var(--tc-surface-normal);
+        }
+      }
+    }
+  }
+}
