@@ -47,7 +47,7 @@ async function getAdditionalInfo(baseUrl, content) {
 }
 async function verifyEmail(baseUrl, content) {
   try {
-    const res = await fetch(`${baseUrl}/_matrix/client/r0/register/email/requestToken           `, {
+    const res = await fetch(`${baseUrl}/_matrix/client/r0/register/email/requestToken`, {
       method: 'POST',
       body: JSON.stringify(content),
       headers: {
