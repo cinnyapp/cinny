@@ -3,11 +3,13 @@
   width: calc(100% - var(--sp-extra-tight));
   margin-left: auto;
   padding: var(--sp-extra-tight) var(--sp-extra-tight);
+  
   border: 1px solid transparent;
   border-radius:  var(--bo-radius);
   cursor: pointer;
 
   [dir=rtl] & {
+    
     margin: {
       left: 0;
       right: auto;
@@ -56,7 +58,7 @@
   margin: 0 var(--sp-ultra-tight);
   height: 8px;
   width: 8px;
-  background-color: var(--tc-surface-low);
+  background-color: var(--tc-surface-normal);
   border-radius: 50%;
   opacity: .4;
 }
