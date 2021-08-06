@@ -5,8 +5,8 @@ import './Settings.scss';
 import initMatrix from '../../../client/initMatrix';
 import settings from '../../../client/state/settings';
 
-import {Text} from '../../atoms/text/Text';
-import IconButton from '../../atoms/button/IconButton';
+import { Text } from '../../atoms/text/Text';
+import { IconButton } from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';
 import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls';
 
@@ -20,6 +20,7 @@ import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
+import { formatCryptoKey } from '../../../util/formattingUtils';
 
 function AppearanceSection() {
   return (
@@ -47,8 +48,22 @@ function SecuritySection() {
   return (
     <div className="set-security settings-content">
       <SettingTile
-        title={`Device ID: ${initMatrix.matrixClient.getDeviceId()}`}
-        content={<Text variant="b3">Use this device ID to verify or manage this session from Element client.</Text>}
+        title="Cryptography"
+        content={(
+          <>
+            <Text variant="b2">Use this device&apos;s ID and key to verify or manage this session from Element client.</Text>
+            <Text variant="b3">
+              Device ID:
+              {' '}
+              {initMatrix.matrixClient.getDeviceId()}
+            </Text>
+            <Text variant="b3">
+              Device key:
+              {' '}
+              {formatCryptoKey(initMatrix.matrixClient.getDeviceEd25519Key())}
+            </Text>
+          </>
+)}
       />
       <SettingTile
         title="Import E2E room keys"

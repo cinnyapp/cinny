@@ -1,3 +1,4 @@
+// @ts-check
 import React, { useState, useEffect, useRef } from 'react';
 import './ImportE2ERoomKeys.scss';
 import EventEmitter from 'events';
@@ -6,9 +7,9 @@ import initMatrix from '../../../client/initMatrix';
 import decryptMegolmKeyFile from '../../../util/decryptE2ERoomKeys';
 
 import { Text } from '../../atoms/text/Text';
-import IconButton from '../../atoms/button/IconButton';
+import { IconButton } from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';
-import Input from '../../atoms/input/Input';
+import { Input } from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
@@ -34,11 +35,11 @@ async function tryDecrypt(file, password) {
 }
 
 function ImportE2ERoomKeys() {
+  const [password, setPassword] = useState('');
   const [keyFile, setKeyFile] = useState(null);
   const [status, setStatus] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const inputRef = useRef(null);
-  const passwordRef = useRef(null);
 
   useEffect(() => {
     const handleIsImporting = (isImp) => setIsImporting(isImp);
@@ -53,7 +54,6 @@ function ImportE2ERoomKeys() {
   }, []);
 
   function importE2ERoomKeys() {
-    const password = passwordRef.current.value;
     if (password === '' || keyFile === null) return;
     if (isImporting) return;
 
@@ -62,13 +62,13 @@ function ImportE2ERoomKeys() {
 
   function handleFileChange(e) {
     const file = e.target.files.item(0);
-    passwordRef.current.value = '';
+    setPassword('');
     setKeyFile(file);
     setStatus(null);
   }
   function removeImportKeysFile() {
     inputRef.current.value = null;
-    passwordRef.current.value = null;
+    setPassword('');
     setKeyFile(null);
     setStatus(null);
   }
@@ -91,7 +91,7 @@ function ImportE2ERoomKeys() {
           </div>
         )}
         {keyFile === null && <Button onClick={() => inputRef.current.click()}>Import keys</Button>}
-        <Input forwardRef={passwordRef} type="password" placeholder="password" required />
+        <Input onBlur={(e) => { setPassword(e.target.value); }} type="password" placeholder="password" required />
         <Button disabled={isImporting} variant="primary" type="submit">Decrypt</Button>
       </form>
       { isImporting && status !== null && (
