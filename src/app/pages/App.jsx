@@ -5,7 +5,7 @@ import {
 
 import { isAuthanticated } from '../../client/state/auth';
 
-import Auth from '../templates/auth/Auth';
+import { Auth } from '../templates/auth/Auth';
 import Client from '../templates/client/Client';
 
 function App() {
