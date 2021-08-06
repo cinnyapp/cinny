@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Divider.scss';
 
-import {Text} from '../text/Text';
+import { Text } from '../text/Text';
 
 function Divider({ text, variant }) {
   const dividerClass = ` divider--${variant}`;

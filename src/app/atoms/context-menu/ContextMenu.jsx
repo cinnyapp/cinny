@@ -5,7 +5,7 @@ import './ContextMenu.scss';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/animations/scale-extreme.css';
 
-import {Text} from '../text/Text';
+import { Text } from '../text/Text';
 import Button from '../button/Button';
 import ScrollView from '../scroll/ScrollView';
 

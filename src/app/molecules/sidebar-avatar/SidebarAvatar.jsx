@@ -4,7 +4,7 @@ import './SidebarAvatar.scss';
 
 import Tippy from '@tippyjs/react';
 import Avatar from '../../atoms/avatar/Avatar';
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 

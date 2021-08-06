@@ -4,7 +4,7 @@ import './TimelineChange.scss';
 
 // import Linkify from 'linkifyjs/react';
 
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 
 import JoinArraowIC from '../../../../public/res/ic/outlined/join-arrow.svg';

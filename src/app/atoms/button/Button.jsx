@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Button.scss';
 
-import {Text} from '../text/Text';
+import { Text } from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 import { blurOnBubbling } from './script';
 

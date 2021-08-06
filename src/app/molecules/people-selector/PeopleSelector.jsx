@@ -4,7 +4,7 @@ import './PeopleSelector.scss';
 
 import { blurOnBubbling } from '../../atoms/button/script';
 
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
 
 function PeopleSelector({

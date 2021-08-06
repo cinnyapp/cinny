@@ -10,10 +10,10 @@ import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { emojiGroups, searchEmoji } from './emoji';
 
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
-import IconButton from '../../atoms/button/IconButton';
-import Input from '../../atoms/input/Input';
+import { IconButton } from '../../atoms/button/IconButton';
+import { Input } from '../../atoms/input/Input';
 import ScrollView from '../../atoms/scroll/ScrollView';
 
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';

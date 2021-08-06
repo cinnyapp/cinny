@@ -4,8 +4,8 @@ import './Media.scss';
 
 import encrypt from 'browser-encrypt-attachment';
 
-import {Text} from '../../atoms/text/Text';
-import IconButton from '../../atoms/button/IconButton';
+import { Text } from '../../atoms/text/Text';
+import { IconButton } from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
 
 import DownloadSVG from '../../../../public/res/ic/outlined/download.svg';

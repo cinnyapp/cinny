@@ -5,7 +5,7 @@ import './ChannelTile.scss';
 import Linkify from 'linkifyjs/react';
 import colorMXID from '../../../util/colorMXID';
 
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
 
 function linkifyContent(content) {

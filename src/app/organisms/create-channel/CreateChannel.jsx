@@ -6,11 +6,11 @@ import initMatrix from '../../../client/initMatrix';
 import { isRoomAliasAvailable } from '../../../util/matrixUtil';
 import * as roomActions from '../../../client/action/room';
 
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import Toggle from '../../atoms/button/Toggle';
-import IconButton from '../../atoms/button/IconButton';
-import Input from '../../atoms/input/Input';
+import { IconButton } from '../../atoms/button/IconButton';
+import { Input } from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 import PopupWindow from '../../molecules/popup-window/PopupWindow';
 import SettingTile from '../../molecules/setting-tile/SettingTile';

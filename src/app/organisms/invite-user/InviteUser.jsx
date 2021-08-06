@@ -7,11 +7,11 @@ import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
 import { selectRoom } from '../../../client/action/navigation';
 
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
-import IconButton from '../../atoms/button/IconButton';
+import { IconButton } from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
-import Input from '../../atoms/input/Input';
+import { Input } from '../../atoms/input/Input';
 import PopupWindow from '../../molecules/popup-window/PopupWindow';
 import ChannelTile from '../../molecules/channel-tile/ChannelTile';
 

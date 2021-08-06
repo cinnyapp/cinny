@@ -7,12 +7,12 @@ import { getUsername } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { openInviteUser } from '../../../client/action/navigation';
 
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
-import IconButton from '../../atoms/button/IconButton';
+import { IconButton } from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';
 import ScrollView from '../../atoms/scroll/ScrollView';
-import Input from '../../atoms/input/Input';
+import { Input } from '../../atoms/input/Input';
 import PeopleSelector from '../../molecules/people-selector/PeopleSelector';
 
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';

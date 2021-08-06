@@ -4,7 +4,7 @@ import './ChannelSelector.scss';
 
 import colorMXID from '../../../util/colorMXID';
 
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
 import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';

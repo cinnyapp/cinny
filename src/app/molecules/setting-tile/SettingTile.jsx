@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './SettingTile.scss';
 
-import {Text} from '../../atoms/text/Text';
+import { Text } from '../../atoms/text/Text';
 
 function SettingTile({ title, options, content }) {
   return (
