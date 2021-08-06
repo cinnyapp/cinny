@@ -2,3 +2,9 @@ experiment
 dist
 node_modules
 devAssets
+
+.vscode/
+yarn.lock
+
+# Build output
+dist/
