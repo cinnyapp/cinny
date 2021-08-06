@@ -5,7 +5,6 @@ import './IconButton.scss';
 
 import Tippy from '@tippyjs/react';
 import RawIcon from '../system-icons/RawIcon';
-import { blurOnBubbling } from './script';
 import { Text } from '../text/Text';
 
 // TODO:
@@ -24,7 +23,8 @@ type IconButtonProps = {
   onClick: MouseEventHandler<HTMLButtonElement>,
 }
 
-export const IconButton: FunctionComponent<IconButtonProps> = ({
+// eslint-disable-next-line max-len
+export const IconButton: FunctionComponent<IconButtonProps> = React.forwardRef<HTMLButtonElement, IconButtonProps>(({
   variant = 'surface',
   size = 'normal',
   type = 'button',
@@ -32,7 +32,7 @@ export const IconButton: FunctionComponent<IconButtonProps> = ({
   tooltipPlacement = 'top',
   src = '',
   onClick = () => undefined,
-}: IconButtonProps) => (
+}: IconButtonProps, ref) => (
   <Tippy
     content={<Text variant="b2">{tooltip}</Text>}
     className="ic-btn-tippy"
@@ -45,11 +45,14 @@ export const IconButton: FunctionComponent<IconButtonProps> = ({
   >
     <button
       className={`ic-btn-${variant}`}
-      // onMouseUp={(e) => blurOnBubbling(e, `.ic-btn-${variant}`)}
-      onClick={onClick}
+      ref={ref}
+      onClick={(e) => {
+        e.preventDefault();
+        onClick(e);
+      }}
       type={type === 'button' ? 'button' : 'submit'}
     >
       <RawIcon size={size} src={src} />
     </button>
   </Tippy>
-);
+));
