@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-use-before-define
 import React, { FunctionComponent, useState } from 'react';
 import './Auth.scss';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -17,11 +18,9 @@ import {
   isUserIdValidForSignup,
 } from '../../../util/matrix/auth';
 
-const PASSWORD_STRENGTH_REGEX =
-  /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,127}$/;
-const BAD_PASSWORD_ERROR =
-  "Password must contain at least 1 number, 1 uppercase letter, 1 lowercase letter, 1 non-alphanumeric character. Passwords can range from 8-127 characters with no whitespaces.";
-const CONFIRM_PASSWORD_ERROR = "Passwords don't match.";
+const PASSWORD_STRENGTH_REGEX = /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,127}$/;
+const BAD_PASSWORD_ERROR = 'Password must contain at least 1 number, 1 uppercase letter, 1 lowercase letter, 1 non-alphanumeric character. Passwords can range from 8-127 characters with no whitespaces.';
+const CONFIRM_PASSWORD_ERROR = 'Passwords don\'t match.';
 
 const EMAIL_REGEX = /([a-z0-9]+[_a-z0-9.-][a-z0-9]+)@([a-z0-9-]+(?:.[a-z0-9-]+).[a-z]{2,4})/;
 const BAD_EMAIL_ERROR = 'Invalid email address';
@@ -326,7 +325,7 @@ export const Auth: FunctionComponent<AuthProps> = ({ type }: AuthProps) => {
                   values.password !== ''
                   && !PASSWORD_STRENGTH_REGEX.test(values.password)
                 ) {
-                    // @ts-ignore for now! TODO
+                  // @ts-ignore for now! TODO
                   errors.password = BAD_PASSWORD_ERROR;
                 }
 
