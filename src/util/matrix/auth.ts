@@ -1,4 +1,6 @@
-import { Err, Ok, Result } from '../../types/result';
+import {
+  err, ok, Result,
+} from '../../types/result';
 
 // This regex validates historical usernames, which don't satisy today's username requirements.
 // See https://matrix.org/docs/spec/appendices#id13 for more info.
@@ -15,10 +17,10 @@ const STRINGS = {
 };
 
 /**
- * An `Err` will contain a user-facing error explanation. An `Ok` will contain
- * true.
+ * An `Ok` will contain true. An `Err` will contain a user-facing error
+ * explanation.
  */
-type UserIdValid = Result<string, boolean>;
+type UserIdValid = Result<boolean, string>;
 
 /**
  * Returns a Result of whether the user ID is valid for login or not.
@@ -33,10 +35,10 @@ export const isUserIdValidForLogin = (
   localpart: string,
 ): UserIdValid => {
   if (!historicalLocalpartRegex.test(localpart)) {
-    return Err(STRINGS.validation_errors.badLoginUsername);
+    return err(STRINGS.validation_errors.badLoginUsername);
   }
 
-  return Ok(true);
+  return ok(true);
 };
 
 /**
@@ -51,9 +53,9 @@ export const isUserIdValidForSignup = (
   homeserver: string,
 ): UserIdValid => {
   if (!signupLocalpartRegex.test(localpart)) {
-    return Err(STRINGS.validation_errors.badLoginUsername);
+    return err(STRINGS.validation_errors.badLoginUsername);
   }
-  if (`@${localpart}:${homeserver}`.length > 255) return Err(STRINGS.validation_errors.userIdTooLong);
+  if (`@${localpart}:${homeserver}`.length > 255) return err(STRINGS.validation_errors.userIdTooLong);
 
-  return Ok(true);
+  return ok(true);
 };
