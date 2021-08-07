@@ -11,7 +11,7 @@ import { bytesToSize } from '../../../util/common';
 
 import { Text } from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
-import IconButton from '../../atoms/button/IconButton';
+import { IconButton } from '../../atoms/button/IconButton';
 import ContextMenu from '../../atoms/context-menu/ContextMenu';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import EmojiBoard from '../emoji-board/EmojiBoard';

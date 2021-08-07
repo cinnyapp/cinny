@@ -7,7 +7,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 
 import { Text } from '../../atoms/text/Text';
-import IconButton from '../../atoms/button/IconButton';
+import { IconButton } from '../../atoms/button/IconButton';
 
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 
