@@ -145,8 +145,8 @@ export const StaticWrapper: FunctionComponent = ({ children }) => (
             <Text variant="b2">Yet another matrix client</Text>
           </div>
         </div>
+        {children}
       </div>
-      {children}
     </div>
   </div>
 );
