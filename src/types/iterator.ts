@@ -1,5 +1,4 @@
-export const iteratorSymbol =
-  (typeof Symbol === "function" && Symbol.iterator) || "@@iterator";
+export const iteratorSymbol = (typeof Symbol === 'function' && Symbol.iterator) || '@@iterator';
 
 export function singleValueIterator(getValue: (self: any) => any) {
   return function (this: any) {

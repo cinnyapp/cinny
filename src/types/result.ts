@@ -1,4 +1,4 @@
-import { Option, Some, None } from "./option";
+import { Option, Some, None } from './option';
 
 export interface ResultOps<E, A> {
   /**
@@ -238,12 +238,12 @@ export interface ResultObject {
 }
 
 export interface Ok<E, T> extends ResultOps<E, T> {
-  type: "ok";
+  type: 'ok';
   get: () => T;
 }
 
 export interface Err<E, T> extends ResultOps<E, T> {
-  type: "err";
+  type: 'err';
   get: () => E;
 }
 
@@ -256,7 +256,7 @@ ResultObject.all = (arr: any[]): any => {
   let currentResult;
 
   for (let i = 0; i < arr.length; i++) {
-    let currentResult = arr[i];
+    const currentResult = arr[i];
     if (!currentResult.isOk()) return currentResult;
     okValues.push(currentResult.get());
   }
@@ -265,7 +265,7 @@ ResultObject.all = (arr: any[]): any => {
 };
 
 ResultObject.isResult = function (value: any): value is Result<{}, {}> {
-  return !!value && (value.type === "ok" || value.type === "err");
+  return !!value && (value.type === 'ok' || value.type === 'err');
 };
 
 function _Ok<T>(this: Ok<{}, T> & { _value: T }, value: T) {
@@ -273,7 +273,7 @@ function _Ok<T>(this: Ok<{}, T> & { _value: T }, value: T) {
 }
 
 _Ok.prototype = {
-  type: "ok",
+  type: 'ok',
 
   isOk() {
     return true;
@@ -317,7 +317,7 @@ function _Err<E>(this: Ok<E, {}> & { _error: E }, error: E) {
 }
 
 _Err.prototype = {
-  type: "err",
+  type: 'err',
 
   isOk() {
     return false;
