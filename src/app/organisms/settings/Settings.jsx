@@ -54,7 +54,7 @@ function SecuritySection() {
         title="Import E2E room keys"
         content={(
           <>
-            <Text variant="b3">{'To decrypt older messages, Export E2EE room keys from Element (Settings > Security & Privacy > Encryption > Cryptography) and import them here. Imported keys are also encrypted so you have to enter account password.'}</Text>
+            <Text variant="b3">{'To decrypt older messages, Export E2EE room keys from Element (Settings > Security & Privacy > Encryption > Cryptography) and import them here. Imported keys are encrypted so you\'ll have to enter the password you set in order to decrypt it.'}</Text>
             <ImportE2ERoomKeys />
           </>
         )}
