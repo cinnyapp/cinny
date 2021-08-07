@@ -27,6 +27,8 @@ module.exports = {
     'import/extensions': ['error', 'ignorePackages', {
       js: 'never', jsx: 'never', ts: 'never', tsx: 'never',
     }],
+    'react/require-default-props': [0],
+    'import/prefer-default-export': [0],
   },
   settings: {
     'import/parsers': {
