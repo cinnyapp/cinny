@@ -11,7 +11,9 @@ import Settings from '../settings/Settings';
 
 function Windows() {
   const [isInviteList, changeInviteList] = useState(false);
-  const [isPubilcChannels, changePubilcChannels] = useState(false);
+  const [publicChannels, changePublicChannels] = useState({
+    isOpen: false, searchTerm: undefined,
+  });
   const [isCreateChannel, changeCreateChannel] = useState(false);
   const [inviteUser, changeInviteUser] = useState({
     isOpen: false, roomId: undefined, term: undefined,
@@ -21,8 +23,11 @@ function Windows() {
   function openInviteList() {
     changeInviteList(true);
   }
-  function openPublicChannels() {
-    changePubilcChannels(true);
+  function openPublicChannels(searchTerm) {
+    changePublicChannels({
+      isOpen: true,
+      searchTerm,
+    });
   }
   function openCreateChannel() {
     changeCreateChannel(true);
@@ -60,8 +65,9 @@ function Windows() {
         onRequestClose={() => changeInviteList(false)}
       />
       <PublicChannels
-        isOpen={isPubilcChannels}
-        onRequestClose={() => changePubilcChannels(false)}
+        isOpen={publicChannels.isOpen}
+        searchTerm={publicChannels.searchTerm}
+        onRequestClose={() => changePublicChannels({ isOpen: false, searchTerm: undefined })}
       />
       <CreateChannel
         isOpen={isCreateChannel}

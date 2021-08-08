@@ -27,9 +27,10 @@ function openInviteList() {
   });
 }
 
-function openPublicChannels() {
+function openPublicChannels(searchTerm) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_PUBLIC_CHANNELS,
+    searchTerm,
   });
 }
 

@@ -84,7 +84,7 @@ TryJoinWithAlias.propTypes = {
   onRequestClose: PropTypes.func.isRequired,
 };
 
-function PublicChannels({ isOpen, onRequestClose }) {
+function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
   const [isSearching, updateIsSearching] = useState(false);
   const [isViewMore, updateIsViewMore] = useState(false);
   const [publicChannels, updatePublicChannels] = useState([]);
@@ -97,7 +97,7 @@ function PublicChannels({ isOpen, onRequestClose }) {
   const userId = initMatrix.matrixClient.getUserId();
 
   async function searchChannels(viewMore) {
-    let inputChannelName = channelNameRef?.current?.value;
+    let inputChannelName = channelNameRef?.current?.value || searchTerm;
     let isInputAlias = false;
     if (typeof inputChannelName === 'string') {
       isInputAlias = inputChannelName[0] === '#' && inputChannelName.indexOf(':') > 1;
@@ -214,7 +214,7 @@ function PublicChannels({ isOpen, onRequestClose }) {
       <div className="public-channels">
         <form className="public-channels__form" onSubmit={(e) => { e.preventDefault(); searchChannels(); }}>
           <div className="public-channels__input-wrapper">
-            <Input forwardRef={channelNameRef} label="Channel name or alias" />
+            <Input value={searchTerm} forwardRef={channelNameRef} label="Channel name or alias" />
             <Input forwardRef={hsRef} value={userId.slice(userId.indexOf(':') + 1)} label="Homeserver" required />
           </div>
           <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">Search</Button>
@@ -271,8 +271,13 @@ function PublicChannels({ isOpen, onRequestClose }) {
   );
 }
 
+PublicChannels.defaultProps = {
+  searchTerm: undefined,
+};
+
 PublicChannels.propTypes = {
   isOpen: PropTypes.bool.isRequired,
+  searchTerm: PropTypes.string,
   onRequestClose: PropTypes.func.isRequired,
 };
 
