@@ -14,7 +14,10 @@
   --bg-primary-active: rgba(83, 110, 234, 70%);
   --bg-primary-border: rgba(83, 110, 234, 38%);
 
-  --bg-positive: #45B83B;
+  --bg-positive: rgb(69, 184, 59);
+  --bg-positive-hover: rgba(69, 184, 59, 8%);
+  --bg-positive-active: rgba(69, 184, 59, 15%);
+  --bg-positive-border: rgba(69, 184, 59, 40%);
   
   --bg-caution: rgb(255, 179, 0);
   --bg-caution-hover: rgba(255, 179, 0, 8%);
@@ -37,6 +40,10 @@
   --tc-primary-normal: rgba(255, 255, 255, 68%);
   --tc-primary-low: rgba(255, 255, 255, 40%);
   
+  --tc-positive-high: var(--bg-positive);
+  --tc-positive-normal: rgb(69, 184, 59, 80%);
+  --tc-positive-low: rgb(69, 184, 59, 60%);
+
   --tc-caution-high: var(--bg-caution);
   --tc-caution-normal: rgb(255, 179, 0, 80%);
   --tc-caution-low: rgb(255, 179, 0, 60%);
@@ -53,6 +60,7 @@
   /* system icons | --ic-[background type]-[priority]: value */
   --ic-surface-normal: #626262;
   --ic-primary-normal: #ffffff;
+  --ic-positive-normal: rgba(69, 184, 59, 80%);
   --ic-caution-normal: rgba(255, 179, 0, 80%);
   --ic-danger-normal: rgba(240, 71, 71, 0.7);
 
@@ -80,6 +88,9 @@
 
   --bs-primary-border: inset 0 0 0 1px var(--bg-primary-border);
   --bs-primary-outline: 0 0 0 2px var(--bg-primary-border);
+
+  --bs-positive-border: inset 0 0 0 1px var(--bg-positive-border);
+  --bs-positive-outline: 0 0 0 2px var(--bg-positive-border);
 
   --bs-caution-border: inset 0 0 0 1px var(--bg-caution-border);
   --bs-caution-outline: 0 0 0 2px var(--bg-caution-border);
