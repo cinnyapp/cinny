@@ -39,10 +39,11 @@ function openCreateChannel() {
   });
 }
 
-function openInviteUser(roomId) {
+function openInviteUser(roomId, searchTerm) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_INVITE_USER,
     roomId,
+    searchTerm,
   });
 }
 

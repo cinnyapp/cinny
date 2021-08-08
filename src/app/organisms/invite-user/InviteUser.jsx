@@ -18,7 +18,9 @@ import ChannelTile from '../../molecules/channel-tile/ChannelTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 
-function InviteUser({ isOpen, roomId, onRequestClose }) {
+function InviteUser({
+  isOpen, roomId, searchTerm, onRequestClose,
+}) {
   const [isSearching, updateIsSearching] = useState(false);
   const [searchQuery, updateSearchQuery] = useState({});
   const [users, updateUsers] = useState([]);
@@ -63,26 +65,8 @@ function InviteUser({ isOpen, roomId, onRequestClose }) {
     updateRoomIdToUserId(getMapCopy(roomIdToUserId));
   }
 
-  useEffect(() => () => {
-    updateIsSearching(false);
-    updateSearchQuery({});
-    updateUsers([]);
-    updateProcUsers(new Set());
-    updateUserProcError(new Map());
-    updateCreatedDM(new Map());
-    updateRoomIdToUserId(new Map());
-    updateInvitedUserIds(new Set());
-  }, [isOpen]);
-
-  useEffect(() => {
-    initMatrix.roomList.on(cons.events.roomList.ROOM_CREATED, onDMCreated);
-    return () => {
-      initMatrix.roomList.removeListener(cons.events.roomList.ROOM_CREATED, onDMCreated);
-    };
-  }, [isOpen, procUsers, createdDM, roomIdToUserId]);
-
-  async function searchUser() {
-    const inputUsername = usernameRef.current.value.trim();
+  async function searchUser(username) {
+    const inputUsername = username.trim();
     if (isSearching || inputUsername === '' || inputUsername === searchQuery.username) return;
     const isInputUserId = inputUsername[0] === '@' && inputUsername.indexOf(':') > 1;
     updateIsSearching(true);
@@ -216,6 +200,27 @@ function InviteUser({ isOpen, roomId, onRequestClose }) {
     });
   }
 
+  useEffect(() => {
+    if (isOpen && typeof searchTerm === 'string') searchUser(searchTerm);
+    return () => {
+      updateIsSearching(false);
+      updateSearchQuery({});
+      updateUsers([]);
+      updateProcUsers(new Set());
+      updateUserProcError(new Map());
+      updateCreatedDM(new Map());
+      updateRoomIdToUserId(new Map());
+      updateInvitedUserIds(new Set());
+    };
+  }, [isOpen, searchTerm]);
+
+  useEffect(() => {
+    initMatrix.roomList.on(cons.events.roomList.ROOM_CREATED, onDMCreated);
+    return () => {
+      initMatrix.roomList.removeListener(cons.events.roomList.ROOM_CREATED, onDMCreated);
+    };
+  }, [isOpen, procUsers, createdDM, roomIdToUserId]);
+
   return (
     <PopupWindow
       isOpen={isOpen}
@@ -224,8 +229,8 @@ function InviteUser({ isOpen, roomId, onRequestClose }) {
       onRequestClose={onRequestClose}
     >
       <div className="invite-user">
-        <form className="invite-user__form" onSubmit={(e) => { e.preventDefault(); searchUser(); }}>
-          <Input forwardRef={usernameRef} label="Username or userId" />
+        <form className="invite-user__form" onSubmit={(e) => { e.preventDefault(); searchUser(usernameRef.current.value); }}>
+          <Input value={searchTerm} forwardRef={usernameRef} label="Username or userId" />
           <Button disabled={isSearching} iconSrc={UserIC} variant="primary" type="submit">Search</Button>
         </form>
         <div className="invite-user__search-status">
@@ -258,11 +263,13 @@ function InviteUser({ isOpen, roomId, onRequestClose }) {
 
 InviteUser.defaultProps = {
   roomId: undefined,
+  searchTerm: undefined,
 };
 
 InviteUser.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   roomId: PropTypes.string,
+  searchTerm: PropTypes.string,
   onRequestClose: PropTypes.func.isRequired,
 };
 

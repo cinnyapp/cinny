@@ -13,7 +13,9 @@ function Windows() {
   const [isInviteList, changeInviteList] = useState(false);
   const [isPubilcChannels, changePubilcChannels] = useState(false);
   const [isCreateChannel, changeCreateChannel] = useState(false);
-  const [inviteUser, changeInviteUser] = useState({ isOpen: false, roomId: undefined });
+  const [inviteUser, changeInviteUser] = useState({
+    isOpen: false, roomId: undefined, term: undefined,
+  });
   const [settings, changeSettings] = useState(false);
 
   function openInviteList() {
@@ -25,10 +27,11 @@ function Windows() {
   function openCreateChannel() {
     changeCreateChannel(true);
   }
-  function openInviteUser(roomId) {
+  function openInviteUser(roomId, searchTerm) {
     changeInviteUser({
       isOpen: true,
       roomId,
+      searchTerm,
     });
   }
   function openSettings() {
@@ -67,6 +70,7 @@ function Windows() {
       <InviteUser
         isOpen={inviteUser.isOpen}
         roomId={inviteUser.roomId}
+        searchTerm={inviteUser.searchTerm}
         onRequestClose={() => changeInviteUser({ isOpen: false, roomId: undefined })}
       />
       <Settings

@@ -43,7 +43,7 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.CREATE_CHANNEL_OPENED);
       },
       [cons.actions.navigation.OPEN_INVITE_USER]: () => {
-        this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId);
+        this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId, action.searchTerm);
       },
       [cons.actions.navigation.OPEN_SETTINGS]: () => {
         this.emit(cons.events.navigation.SETTINGS_OPENED);
