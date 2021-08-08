@@ -68,7 +68,7 @@ function searchEmoji(term) {
 
   let result = fuse.search(term);
   if (result.length > 20) result = result.slice(0, 20);
-  return result.map((finding) => finding.item);
+  return result;
 }
 
 export {

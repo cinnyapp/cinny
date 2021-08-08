@@ -22,8 +22,11 @@ const cons = {
       LEAVE: 'LEAVE',
       CREATE: 'CREATE',
       error: {
-        CREATE: 'CREATE',
+        CREATE: 'ERROR_CREATE',
       },
+    },
+    settings: {
+      TOGGLE_MARKDOWN: 'TOGGLE_MARKDOWN',
     },
   },
   events: {
@@ -56,6 +59,9 @@ const cons = {
       UPLOAD_PROGRESS_CHANGES: 'UPLOAD_PROGRESS_CHANGES',
       FILE_UPLOAD_CANCELED: 'FILE_UPLOAD_CANCELED',
       ATTACHMENT_CANCELED: 'ATTACHMENT_CANCELED',
+    },
+    settings: {
+      MARKDOWN_TOGGLED: 'MARKDOWN_TOGGLED',
     },
   },
 };

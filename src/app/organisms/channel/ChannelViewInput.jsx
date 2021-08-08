@@ -7,6 +7,7 @@ import TextareaAutosize from 'react-autosize-textarea';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
+import settings from '../../../client/state/settings';
 import { bytesToSize } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
@@ -22,22 +23,35 @@ import SendIC from '../../../../public/res/ic/outlined/send.svg';
 import ShieldIC from '../../../../public/res/ic/outlined/shield.svg';
 import VLCIC from '../../../../public/res/ic/outlined/vlc.svg';
 import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
+import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 
+const CMD_REGEX = /(\/|>[#*@]|:)(\S*)$/;
 let isTyping = false;
+let isCmdActivated = false;
+let cmdCursorPos = null;
 function ChannelViewInput({
   roomId, roomTimeline, timelineScroll, viewEvent,
 }) {
   const [attachment, setAttachment] = useState(null);
+  const [isMarkdown, setIsMarkdown] = useState(settings.isMarkdown);
 
   const textAreaRef = useRef(null);
   const inputBaseRef = useRef(null);
   const uploadInputRef = useRef(null);
   const uploadProgressRef = useRef(null);
+  const rightOptionsRef = useRef(null);
 
   const TYPING_TIMEOUT = 5000;
   const mx = initMatrix.matrixClient;
   const { roomsInput } = initMatrix;
+
+  useEffect(() => {
+    settings.on(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
+    return () => {
+      settings.removeListener(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
+    };
+  }, []);
 
   const sendIsTyping = (isT) => {
     mx.sendTyping(roomId, isT, isT ? TYPING_TIMEOUT : undefined);
@@ -63,10 +77,58 @@ function ChannelViewInput({
     uploadInputRef.current.value = null;
   }
 
+  function rightOptionsA11Y(A11Y) {
+    const rightOptions = rightOptionsRef.current.children;
+    for (let index = 0; index < rightOptions.length; index += 1) {
+      rightOptions[index].disabled = !A11Y;
+    }
+  }
+
+  function activateCmd(prefix) {
+    isCmdActivated = true;
+    inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-positive)';
+    rightOptionsA11Y(false);
+    viewEvent.emit('cmd_activate', prefix);
+  }
+  function deactivateCmd() {
+    if (inputBaseRef.current !== null) {
+      inputBaseRef.current.style.boxShadow = 'var(--bs-surface-border)';
+      rightOptionsA11Y(true);
+    }
+    isCmdActivated = false;
+    cmdCursorPos = null;
+  }
+  function errorCmd() {
+    inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-danger)';
+  }
+  function setCursorPosition(pos) {
+    setTimeout(() => {
+      textAreaRef.current.focus();
+      textAreaRef.current.setSelectionRange(pos, pos);
+    }, 0);
+  }
+  function replaceCmdWith(msg, cursor, replacement) {
+    if (msg === null) return null;
+    const targetInput = msg.slice(0, cursor);
+    const cmdParts = targetInput.match(CMD_REGEX);
+    const leadingInput = msg.slice(0, cmdParts.index);
+    if (replacement.length > 0) setCursorPosition(leadingInput.length + replacement.length);
+    return leadingInput + replacement + msg.slice(cursor);
+  }
+  function firedCmd(cmdData) {
+    const msg = textAreaRef.current.value;
+    textAreaRef.current.value = replaceCmdWith(
+      msg, cmdCursorPos, typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '',
+    );
+    deactivateCmd();
+  }
+
   useEffect(() => {
     roomsInput.on(cons.events.roomsInput.UPLOAD_PROGRESS_CHANGES, uploadingProgress);
     roomsInput.on(cons.events.roomsInput.ATTACHMENT_CANCELED, clearAttachment);
     roomsInput.on(cons.events.roomsInput.FILE_UPLOADED, clearAttachment);
+    viewEvent.on('cmd_error', errorCmd);
+    viewEvent.on('cmd_fired', firedCmd);
     if (textAreaRef?.current !== null) {
       isTyping = false;
       textAreaRef.current.focus();
@@ -77,6 +139,9 @@ function ChannelViewInput({
       roomsInput.removeListener(cons.events.roomsInput.UPLOAD_PROGRESS_CHANGES, uploadingProgress);
       roomsInput.removeListener(cons.events.roomsInput.ATTACHMENT_CANCELED, clearAttachment);
       roomsInput.removeListener(cons.events.roomsInput.FILE_UPLOADED, clearAttachment);
+      viewEvent.removeListener('cmd_error', errorCmd);
+      viewEvent.removeListener('cmd_fired', firedCmd);
+      if (isCmdActivated) deactivateCmd();
       if (textAreaRef?.current === null) return;
 
       const msg = textAreaRef.current.value;
@@ -90,6 +155,11 @@ function ChannelViewInput({
   }, [roomId]);
 
   async function sendMessage() {
+    if (isCmdActivated) {
+      viewEvent.emit('cmd_exe');
+      return;
+    }
+
     const msgBody = textAreaRef.current.value;
     if (roomsInput.isSending(roomId)) return;
     if (msgBody.trim() === '' && attachment === null) return;
@@ -124,9 +194,39 @@ function ChannelViewInput({
     }
   }
 
+  function getCursorPosition() {
+    return textAreaRef.current.selectionStart;
+  }
+
+  function recognizeCmd(rawInput) {
+    const cursor = getCursorPosition();
+    const targetInput = rawInput.slice(0, cursor);
+
+    const cmdParts = targetInput.match(CMD_REGEX);
+    if (cmdParts === null) {
+      if (isCmdActivated) {
+        deactivateCmd();
+        viewEvent.emit('cmd_deactivate');
+      }
+      return;
+    }
+    const cmdPrefix = cmdParts[1];
+    const cmdSlug = cmdParts[2];
+
+    cmdCursorPos = cursor;
+    if (cmdSlug === '') {
+      activateCmd(cmdPrefix);
+      return;
+    }
+    if (!isCmdActivated) activateCmd(cmdPrefix);
+    inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-caution)';
+    viewEvent.emit('cmd_process', cmdPrefix, cmdSlug);
+  }
+
   function handleMsgTyping(e) {
     const msg = e.target.value;
-    processTyping(msg);
+    recognizeCmd(e.target.value);
+    if (!isCmdActivated) processTyping(msg);
   }
 
   function handleKeyDown(e) {
@@ -172,8 +272,9 @@ function ChannelViewInput({
               />
             </Text>
           </ScrollView>
+          {isMarkdown && <RawIcon size="extra-small" src={MarkdownIC} />}
         </div>
-        <div className="channel-input__option-container">
+        <div ref={rightOptionsRef} className="channel-input__option-container">
           <ContextMenu
             placement="top"
             content={(

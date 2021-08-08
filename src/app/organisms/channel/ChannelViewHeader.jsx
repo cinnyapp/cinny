@@ -21,7 +21,6 @@ function ChannelViewHeader({ roomId }) {
   const mx = initMatrix.matrixClient;
   const avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
   const roomName = mx.getRoom(roomId).name;
-  const isDM = initMatrix.roomList.directs.has(roomId);
   const roomTopic = mx.getRoom(roomId).currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
 
   return (
@@ -46,7 +45,7 @@ function ChannelViewHeader({ roomId }) {
             >
               Invite
             </MenuItem>
-            <MenuItem iconSrc={LeaveArrowIC} variant="danger" onClick={() => roomActions.leave(roomId, isDM)}>Leave</MenuItem>
+            <MenuItem iconSrc={LeaveArrowIC} variant="danger" onClick={() => roomActions.leave(roomId)}>Leave</MenuItem>
           </>
         )}
         render={(toggleMenu) => <IconButton onClick={toggleMenu} tooltip="Options" src={VerticalMenuIC} />}

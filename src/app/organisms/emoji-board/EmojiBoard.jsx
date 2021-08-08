@@ -88,7 +88,7 @@ function SearchedEmoji() {
       setSearchedEmojis([]);
       return;
     }
-    setSearchedEmojis(searchEmoji(term));
+    setSearchedEmojis(searchEmoji(term).map((finding) => finding.item));
   }
 
   useEffect(() => {
