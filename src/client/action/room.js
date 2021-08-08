@@ -83,20 +83,24 @@ function guessDMRoomTargetId(room, myUserId) {
  * @param {string} roomId
  * @param {boolean} isDM
  */
-function join(roomId, isDM) {
+async function join(roomIdOrAlias, isDM) {
   const mx = initMatrix.matrixClient;
-  mx.joinRoom(roomId)
-    .then(async () => {
-      if (isDM) {
-        const targetUserId = guessDMRoomTargetId(mx.getRoom(roomId), mx.getUserId());
-        await addRoomToMDirect(roomId, targetUserId);
-      }
-      appDispatcher.dispatch({
-        type: cons.actions.room.JOIN,
-        roomId,
-        isDM,
-      });
-    }).catch();
+  try {
+    const resultRoom = await mx.joinRoom(roomIdOrAlias);
+
+    if (isDM) {
+      const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom.roomId), mx.getUserId());
+      await addRoomToMDirect(resultRoom.roomId, targetUserId);
+    }
+    appDispatcher.dispatch({
+      type: cons.actions.room.JOIN,
+      roomId: resultRoom.roomId,
+      isDM,
+    });
+    return resultRoom.roomId;
+  } catch (e) {
+    throw new Error(e);
+  }
 }
 
 /**
@@ -104,8 +108,9 @@ function join(roomId, isDM) {
  * @param {string} roomId
  * @param {boolean} isDM
  */
-function leave(roomId, isDM) {
+function leave(roomId) {
   const mx = initMatrix.matrixClient;
+  const isDM = initMatrix.roomList.directs.has(roomId);
   mx.leave(roomId)
     .then(() => {
       appDispatcher.dispatch({

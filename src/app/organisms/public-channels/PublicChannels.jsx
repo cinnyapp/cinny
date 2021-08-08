@@ -20,6 +20,70 @@ import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
 
 const SEARCH_LIMIT = 20;
 
+function TryJoinWithAlias({ alias, onRequestClose }) {
+  const [status, setStatus] = useState({
+    isJoining: false,
+    error: null,
+    roomId: null,
+    tempRoomId: null,
+  });
+  function handleOnRoomAdded(roomId) {
+    if (status.tempRoomId !== null && status.tempRoomId !== roomId) return;
+    setStatus({
+      isJoining: false, error: null, roomId, tempRoomId: null,
+    });
+  }
+
+  useEffect(() => {
+    initMatrix.roomList.on(cons.events.roomList.ROOM_JOINED, handleOnRoomAdded);
+    return () => {
+      initMatrix.roomList.removeListener(cons.events.roomList.ROOM_JOINED, handleOnRoomAdded);
+    };
+  }, [status]);
+
+  async function joinWithAlias() {
+    setStatus({
+      isJoining: true, error: null, roomId: null, tempRoomId: null,
+    });
+    try {
+      const roomId = await roomActions.join(alias, false);
+      setStatus({
+        isJoining: true, error: null, roomId: null, tempRoomId: roomId,
+      });
+    } catch (e) {
+      setStatus({
+        isJoining: false,
+        error: `Unable to join ${alias}. Either room is private or doesn't exist.`,
+        roomId: null,
+        tempRoomId: null,
+      });
+    }
+  }
+
+  return (
+    <div className="try-join-with-alias">
+      {status.roomId === null && !status.isJoining && status.error === null && (
+        <Button onClick={() => joinWithAlias()}>{`Try joining ${alias}`}</Button>
+      )}
+      {status.isJoining && (
+        <>
+          <Spinner size="small" />
+          <Text>{`Joining ${alias}...`}</Text>
+        </>
+      )}
+      {status.roomId !== null && (
+        <Button onClick={() => { onRequestClose(); selectRoom(status.roomId); }}>Open</Button>
+      )}
+      {status.error !== null && <Text variant="b2"><span style={{ color: 'var(--bg-danger)' }}>{status.error}</span></Text>}
+    </div>
+  );
+}
+
+TryJoinWithAlias.propTypes = {
+  alias: PropTypes.string.isRequired,
+  onRequestClose: PropTypes.func.isRequired,
+};
+
 function PublicChannels({ isOpen, onRequestClose }) {
   const [isSearching, updateIsSearching] = useState(false);
   const [isViewMore, updateIsViewMore] = useState(false);
@@ -33,8 +97,13 @@ function PublicChannels({ isOpen, onRequestClose }) {
   const userId = initMatrix.matrixClient.getUserId();
 
   async function searchChannels(viewMore) {
-    let inputHs = hsRef?.current?.value;
     let inputChannelName = channelNameRef?.current?.value;
+    let isInputAlias = false;
+    if (typeof inputChannelName === 'string') {
+      isInputAlias = inputChannelName[0] === '#' && inputChannelName.indexOf(':') > 1;
+    }
+    const hsFromAlias = (isInputAlias) ? inputChannelName.slice(inputChannelName.indexOf(':') + 1) : null;
+    let inputHs = hsFromAlias || hsRef?.current?.value;
 
     if (typeof inputHs !== 'string') inputHs = userId.slice(userId.indexOf(':') + 1);
     if (typeof inputChannelName !== 'string') inputChannelName = '';
@@ -68,6 +137,12 @@ function PublicChannels({ isOpen, onRequestClose }) {
       updateNextBatch(result.next_batch);
       updateIsSearching(false);
       updateIsViewMore(false);
+      if (totalChannels.length === 0) {
+        updateSearchQuery({
+          error: `No result found for "${inputChannelName}" on ${inputHs}`,
+          alias: isInputAlias ? inputChannelName : null,
+        });
+      }
     } catch (e) {
       updatePublicChannels([]);
       updateSearchQuery({ error: 'Something went wrong!' });
@@ -139,7 +214,7 @@ function PublicChannels({ isOpen, onRequestClose }) {
       <div className="public-channels">
         <form className="public-channels__form" onSubmit={(e) => { e.preventDefault(); searchChannels(); }}>
           <div className="public-channels__input-wrapper">
-            <Input forwardRef={channelNameRef} label="Channel name" />
+            <Input forwardRef={channelNameRef} label="Channel name or alias" />
             <Input forwardRef={hsRef} value={userId.slice(userId.indexOf(':') + 1)} label="Homeserver" required />
           </div>
           <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">Search</Button>
@@ -169,9 +244,14 @@ function PublicChannels({ isOpen, onRequestClose }) {
                 : <Text variant="b2">{`Search result for "${searchQuery.name}" on ${searchQuery.homeserver}.`}</Text>
             )
           }
-          {
-            searchQuery.error && <Text className="public-channels__search-error" variant="b2">{searchQuery.error}</Text>
-          }
+          { searchQuery.error && (
+            <>
+              <Text className="public-channels__search-error" variant="b2">{searchQuery.error}</Text>
+              {searchQuery.alias !== null && (
+                <TryJoinWithAlias onRequestClose={onRequestClose} alias={searchQuery.alias} />
+              )}
+            </>
+          )}
         </div>
         { publicChannels.length !== 0 && (
           <div className="public-channels__content">
