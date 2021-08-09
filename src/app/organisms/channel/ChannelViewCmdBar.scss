@@ -122,11 +122,16 @@
     margin-left: var(--sp-extra-tight);
   }
 
+  & .emoji {
+    width: 20px;
+    height: 20px;
+  }
+
   &:hover {
     background-color: var(--bg-caution-hover);
   }
   &:focus {
-    background-color: var(--bg-caution-hover);
+    background-color: var(--bg-caution-active);
     box-shadow: var(--cmd-item-bar);
     border-bottom: 2px solid transparent;
     outline: none;

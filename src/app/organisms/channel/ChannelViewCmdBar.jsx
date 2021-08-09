@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './ChannelViewCmdBar.scss';
 import Fuse from 'fuse.js';
+import parse from 'html-react-parser';
+import twemoji from 'twemoji';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -290,7 +292,17 @@ function getCmdSuggestions({ prefix, slug }, fireCmd, viewEvent) {
           result: finding.item,
         })}
       >
-        <Text variant="b2">{finding.item.unicode}</Text>
+        {
+          parse(twemoji.parse(
+            finding.item.unicode,
+            {
+              attributes: () => ({
+                unicode: finding.item.unicode,
+                shortcodes: finding.item.shortcodes?.toString(),
+              }),
+            },
+          ))
+        }
       </CmdItem>
     ));
   }
