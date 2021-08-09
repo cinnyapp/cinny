@@ -1,6 +1,8 @@
 import EventEmitter from 'events';
+import { Parser, HtmlRenderer } from 'commonmark';
 import encrypt from 'browser-encrypt-attachment';
 import cons from './cons';
+import settings from './settings';
 
 function getImageDimension(file) {
   return new Promise((resolve) => {
@@ -76,6 +78,13 @@ function getVideoThumbnail(video, width, height, mimeType) {
       });
     }, mimeType);
   });
+}
+
+function getFormatedBody(markdown) {
+  const reader = new Parser();
+  const writer = new HtmlRenderer();
+  const parsed = reader.parse(markdown);
+  return writer.render(parsed);
 }
 
 class RoomsInput extends EventEmitter {
@@ -163,6 +172,10 @@ class RoomsInput extends EventEmitter {
         body: input.message,
         msgtype: 'm.text',
       };
+      if (settings.isMarkdown) {
+        content.format = 'org.matrix.custom.html';
+        content.formatted_body = getFormatedBody(input.message);
+      }
       this.matrixClient.sendMessage(roomId, content);
     }
 
