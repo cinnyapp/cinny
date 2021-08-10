@@ -77,6 +77,7 @@ class InitMatrix extends EventEmitter {
 
   listenEvents() {
     this.matrixClient.on('Session.logged_out', () => {
+      this.matrixClient.stopClient();
       this.matrixClient.clearStores();
       window.localStorage.clear();
       window.location.reload();
