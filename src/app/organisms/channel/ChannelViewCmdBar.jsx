@@ -276,7 +276,22 @@ function getCmdSuggestions({ prefix, slug }, fireCmd, viewEvent) {
   }
 
   function getEmojiSuggestion(emPrefix, shortcutSlug) {
-    const result = searchEmoji(shortcutSlug);
+    let searchTerm = shortcutSlug;
+    if (searchTerm.length <= 3) {
+      if (searchTerm.match(/^[-]?(\))/)) searchTerm = 'smile';
+      else if (searchTerm.match(/^[-]?(s|S)/)) searchTerm = 'confused';
+      else if (searchTerm.match(/^[-]?(o|O|0)/)) searchTerm = 'astonished';
+      else if (searchTerm.match(/^[-]?(\|)/)) searchTerm = 'neutral_face';
+      else if (searchTerm.match(/^[-]?(d|D)/)) searchTerm = 'grin';
+      else if (searchTerm.match(/^[-]?(\/)/)) searchTerm = 'frown';
+      else if (searchTerm.match(/^[-]?(p|P)/)) searchTerm = 'stick_out_tongue';
+      else if (searchTerm.match(/^'[-]?(\()/)) searchTerm = 'cry';
+      else if (searchTerm.match(/^[-]?(x|X)/)) searchTerm = 'dizzy_face';
+      else if (searchTerm.match(/^[-]?(\()/)) searchTerm = 'pleading_face';
+      else if (searchTerm.match(/^[-]?(\$)/)) searchTerm = 'money';
+      else if (searchTerm.match(/^(<3)/)) searchTerm = 'heart';
+    }
+    const result = searchEmoji(searchTerm);
     if (result.length === 0) viewEvent.emit('cmd_error');
     perfectMatchCmd = {
       prefix: emPrefix,

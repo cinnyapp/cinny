@@ -213,6 +213,16 @@ function ChannelViewInput({
     const cmdPrefix = cmdParts[1];
     const cmdSlug = cmdParts[2];
 
+    if (cmdPrefix === ':') {
+      // skip emoji autofill command if link is suspected.
+      const checkForLink = targetInput.slice(0, cmdParts.index);
+      if (checkForLink.match(/(http|https|mailto|matrix|ircs|irc)$/)) {
+        deactivateCmd();
+        viewEvent.emit('cmd_deactivate');
+        return;
+      }
+    }
+
     cmdCursorPos = cursor;
     if (cmdSlug === '') {
       activateCmd(cmdPrefix);
