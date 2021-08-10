@@ -7,10 +7,14 @@ import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import parse from 'html-react-parser';
+import twemoji from 'twemoji';
+import { getUsername } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import Avatar from '../../atoms/avatar/Avatar';
+import Tooltip from '../../atoms/tooltip/Tooltip';
 
 import ReplyArrowIC from '../../../../public/res/ic/outlined/reply-arrow.svg';
 
@@ -61,89 +65,158 @@ function PlaceholderMessage() {
   );
 }
 
-function Message({
-  color, avatarSrc, name, content,
-  time, markdown, contentOnly, reply,
-  edited, reactions,
+function MessageHeader({
+  userId, name, color, time,
 }) {
-  const msgClass = contentOnly ? 'message--content-only' : 'message--full';
   return (
-    <div className={`message ${msgClass}`}>
-      <div className="message__avatar-container">
-        {!contentOnly && <Avatar imageSrc={avatarSrc} text={name.slice(0, 1)} bgColor={color} size="small" />}
+    <div className="message__header">
+      <div style={{ color }} className="message__profile">
+        <Text variant="b1">{name}</Text>
       </div>
-      <div className="message__main-container">
-        { !contentOnly && (
-          <div className="message__header">
-            <div style={{ color }} className="message__profile">
-              <Text variant="b1">{name}</Text>
-            </div>
-            <div className="message__time">
-              <Text variant="b3">{time}</Text>
-            </div>
-          </div>
-        )}
-        <div className="message__content">
-          { reply !== null && (
-            <div className="message__reply-content">
-              <Text variant="b2">
-                <RawIcon color={reply.color} size="extra-small" src={ReplyArrowIC} />
-                <span style={{ color: reply.color }}>{reply.to}</span>
-                <>{` ${reply.content}`}</>
-              </Text>
-            </div>
-          )}
-          <div className="text text-b1">
-            { markdown ? genMarkdown(content) : linkifyContent(content) }
-          </div>
-          { edited && <Text className="message__edited" variant="b3">(edited)</Text>}
-          { reactions && (
-            <div className="message__reactions text text-b3 noselect">
-              {
-                reactions.map((reaction) => (
-                  <button key={reaction.id} onClick={() => alert('Sending reactions is yet to be implemented.')} type="button" className={`msg__reaction${reaction.active ? ' msg__reaction--active' : ''}`}>
-                    {`${reaction.key} ${reaction.count}`}
-                  </button>
-                ))
-              }
-            </div>
-          )}
-        </div>
+      <div className="message__time">
+        <Text variant="b3">{time}</Text>
       </div>
     </div>
   );
 }
+MessageHeader.propTypes = {
+  userId: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  color: PropTypes.string.isRequired,
+  time: PropTypes.string.isRequired,
+};
 
+function MessageReply({
+  userId, name, color, content,
+}) {
+  return (
+    <div className="message__reply">
+      <Text variant="b2">
+        <RawIcon color={color} size="extra-small" src={ReplyArrowIC} />
+        <span style={{ color }}>{name}</span>
+        <>{` ${content}`}</>
+      </Text>
+    </div>
+  );
+}
+
+MessageReply.propTypes = {
+  userId: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  color: PropTypes.string.isRequired,
+  content: PropTypes.string.isRequired,
+};
+
+function MessageContent({ content, isMarkdown, isEdited }) {
+  return (
+    <div className="message__content">
+      <div className="text text-b1">
+        { isMarkdown ? genMarkdown(content) : linkifyContent(content) }
+      </div>
+      { isEdited && <Text className="message__edited" variant="b3">(edited)</Text>}
+    </div>
+  );
+}
+MessageContent.defaultProps = {
+  isMarkdown: false,
+  isEdited: false,
+};
+MessageContent.propTypes = {
+  content: PropTypes.node.isRequired,
+  isMarkdown: PropTypes.bool,
+  isEdited: PropTypes.bool,
+};
+
+function MessageReactionGroup({ children }) {
+  return (
+    <div className="message__reactions text text-b3 noselect">
+      { children }
+    </div>
+  );
+}
+MessageReactionGroup.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+function genReactionMsg(userIds, reaction) {
+  let msg = '';
+  userIds.forEach((userId, index) => {
+    if (index === 0) msg += getUsername(userId);
+    else if (index === userIds.length - 1) msg += ` and ${getUsername(userId)}`;
+    else msg += `, ${getUsername(userId)}`;
+  });
+  return (
+    <>
+      {`${msg} reacted with`}
+      {parse(twemoji.parse(reaction))}
+    </>
+  );
+}
+
+function MessageReaction({
+  reaction, users, isActive, onClick,
+}) {
+  return (
+    <Tooltip
+      className="msg__reaction-tooltip"
+      content={<Text variant="b2">{genReactionMsg(users, reaction)}</Text>}
+    >
+      <button
+        onClick={onClick}
+        type="button"
+        className={`msg__reaction${isActive ? ' msg__reaction--active' : ''}`}
+      >
+        { parse(twemoji.parse(reaction)) }
+        <Text variant="b3" className="msg__reaction-count">{users.length}</Text>
+      </button>
+    </Tooltip>
+  );
+}
+MessageReaction.propTypes = {
+  reaction: PropTypes.node.isRequired,
+  users: PropTypes.arrayOf(PropTypes.string).isRequired,
+  isActive: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+};
+
+function Message({
+  avatar, header, reply, content, reactions,
+}) {
+  const msgClass = header === null ? ' message--content-only' : ' message--full';
+  return (
+    <div className={`message${msgClass}`}>
+      <div className="message__avatar-container">
+        {avatar !== null && avatar}
+      </div>
+      <div className="message__main-container">
+        {header !== null && header}
+        {reply !== null && reply}
+        {content}
+        {reactions !== null && reactions}
+      </div>
+    </div>
+  );
+}
 Message.defaultProps = {
-  color: 'var(--tc-surface-high)',
-  avatarSrc: null,
-  markdown: false,
-  contentOnly: false,
+  avatar: null,
+  header: null,
   reply: null,
-  edited: false,
   reactions: null,
 };
-
 Message.propTypes = {
-  color: PropTypes.string,
-  avatarSrc: PropTypes.string,
-  name: PropTypes.string.isRequired,
+  avatar: PropTypes.node,
+  header: PropTypes.node,
+  reply: PropTypes.node,
   content: PropTypes.node.isRequired,
-  time: PropTypes.string.isRequired,
-  markdown: PropTypes.bool,
-  contentOnly: PropTypes.bool,
-  reply: PropTypes.shape({
-    color: PropTypes.string.isRequired,
-    to: PropTypes.string.isRequired,
-    content: PropTypes.string.isRequired,
-  }),
-  edited: PropTypes.bool,
-  reactions: PropTypes.arrayOf(PropTypes.exact({
-    id: PropTypes.string,
-    key: PropTypes.string,
-    count: PropTypes.number,
-    active: PropTypes.bool,
-  })),
+  reactions: PropTypes.node,
 };
 
-export { Message as default, PlaceholderMessage };
+export {
+  Message,
+  MessageHeader,
+  MessageReply,
+  MessageContent,
+  MessageReactionGroup,
+  MessageReaction,
+  PlaceholderMessage,
+};

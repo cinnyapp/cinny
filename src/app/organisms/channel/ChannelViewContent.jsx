@@ -12,7 +12,16 @@ import colorMXID from '../../../util/colorMXID';
 import { diffMinutes, isNotInSameDay } from '../../../util/common';
 
 import Divider from '../../atoms/divider/Divider';
-import Message, { PlaceholderMessage } from '../../molecules/message/Message';
+import Avatar from '../../atoms/avatar/Avatar';
+import {
+  Message,
+  MessageHeader,
+  MessageReply,
+  MessageContent,
+  MessageReactionGroup,
+  MessageReaction,
+  PlaceholderMessage,
+} from '../../molecules/message/Message';
 import * as Media from '../../molecules/media/Media';
 import ChannelIntro from '../../molecules/channel-intro/ChannelIntro';
 import TimelineChange from '../../molecules/message/TimelineChange';
@@ -224,6 +233,7 @@ function ChannelViewContent({
         if (parsedContent !== null) {
           const username = getUsername(parsedContent.userId);
           reply = {
+            userId: parsedContent.userId,
             color: colorMXID(parsedContent.userId),
             to: username,
             content: parsedContent.replyContent,
@@ -259,9 +269,10 @@ function ChannelViewContent({
           if (alreadyHaveThisReaction(rEvent)) {
             for (let i = 0; i < reactions.length; i += 1) {
               if (reactions[i].key === rEvent.getRelation().key) {
-                reactions[i].count += 1;
-                if (reactions[i].active !== true) {
-                  reactions[i].active = rEvent.getSender() === initMatrix.matrixClient.getUserId();
+                reactions[i].users.push(rEvent.getSender());
+                if (reactions[i].isActive !== true) {
+                  const myUserId = initMatrix.matrixClient.getUserId();
+                  reactions[i].isActive = rEvent.getSender() === myUserId;
                 }
                 break;
               }
@@ -270,46 +281,70 @@ function ChannelViewContent({
             reactions.push({
               id: rEvent.getId(),
               key: rEvent.getRelation().key,
-              count: 1,
-              active: (rEvent.getSender() === initMatrix.matrixClient.getUserId()),
+              users: [rEvent.getSender()],
+              isActive: (rEvent.getSender() === initMatrix.matrixClient.getUserId()),
             });
           }
         });
       }
 
+      const userMXIDColor = colorMXID(mEvent.sender.userId);
+      const userAvatar = isContentOnly ? null : (
+        <Avatar
+          imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
+          text={getUsername(mEvent.sender.userId).slice(0, 1)}
+          bgColor={userMXIDColor}
+          size="small"
+        />
+      );
+      const userHeader = isContentOnly ? null : (
+        <MessageHeader
+          userId={mEvent.sender.userId}
+          name={getUsername(mEvent.sender.userId)}
+          color={userMXIDColor}
+          time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
+        />
+      );
+      const userReply = reply === null ? null : (
+        <MessageReply
+          userId={reply.userId}
+          name={reply.to}
+          color={reply.color}
+          content={reply.content}
+        />
+      );
+      const userContent = (
+        <MessageContent
+          isMarkdown={isMarkdown}
+          content={isMedia(mEvent) ? genMediaContent(mEvent) : content}
+          isEdited={isEdited}
+        />
+      );
+      const userReactions = reactions === null ? null : (
+        <MessageReactionGroup>
+          {
+            reactions.map((reaction) => (
+              <MessageReaction
+                key={reaction.id}
+                reaction={reaction.key}
+                users={reaction.users}
+                isActive={reaction.isActive}
+                onClick={() => alert('Sending reactions is yet to be implemented.')}
+              />
+            ))
+          }
+        </MessageReactionGroup>
+      );
+
       const myMessageEl = (
-        <React.Fragment key={`box-${mEvent.getId()}`}>
-          {divider}
-          { isMedia(mEvent) ? (
-            <Message
-              key={mEvent.getId()}
-              contentOnly={isContentOnly}
-              markdown={isMarkdown}
-              avatarSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
-              color={colorMXID(mEvent.sender.userId)}
-              name={getUsername(mEvent.sender.userId)}
-              content={genMediaContent(mEvent)}
-              reply={reply}
-              time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
-              edited={isEdited}
-              reactions={reactions}
-            />
-          ) : (
-            <Message
-              key={mEvent.getId()}
-              contentOnly={isContentOnly}
-              markdown={isMarkdown}
-              avatarSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
-              color={colorMXID(mEvent.sender.userId)}
-              name={getUsername(mEvent.sender.userId)}
-              content={content}
-              reply={reply}
-              time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
-              edited={isEdited}
-              reactions={reactions}
-            />
-          )}
-        </React.Fragment>
+        <Message
+          key={mEvent.getId()}
+          avatar={userAvatar}
+          header={userHeader}
+          reply={userReply}
+          content={userContent}
+          reactions={userReactions}
+        />
       );
 
       prevMEvent = mEvent;

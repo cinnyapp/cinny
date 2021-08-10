@@ -49,23 +49,8 @@
   &__avatar-container {
     width: var(--av-small);
   }
-  &__reply-content {
-    .text {
-      color: var(--tc-surface-low);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .ic-raw {
-      width: 16px;
-      height: 14px;
-    }
-  }
   &__edited {
     color: var(--tc-surface-low);
-  }
-  &__reactions {
-    margin-top: var(--sp-ultra-tight);
   }
 }
 
@@ -106,6 +91,13 @@
   }
 }
 
+.message__reply,
+.message__content,
+.message__reactions {
+  max-width: 640px;
+}
+
+
 .message__header {
   display: flex;
   align-items: baseline;
@@ -130,8 +122,19 @@
     }
   }
 }
+.message__reply {
+  .text {
+    color: var(--tc-surface-low);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ic-raw {
+    width: 16px;
+    height: 14px;
+  }
+}
 .message__content {
-  max-width: 640px;
   word-break: break-word;
   
   & > .text > * {
@@ -142,20 +145,36 @@
     word-break: break-all;
   }
 }
+.message__reactions {
+  display: flex;
+}
 .msg__reaction {
-  --reaction-height: 24px;
-  --reaction-padding: 6px;
-  --reaction-radius: calc(var(--bo-radius) / 2);
+  margin: var(--sp-extra-tight) var(--sp-extra-tight) 0 0;
+  padding: 0 var(--sp-ultra-tight);
+  min-height: 26px;
   display: inline-flex;
   align-items: center;
   color: var(--tc-surface-normal);
+  background-color: var(--bg-surface-low);
   border: 1px solid var(--bg-surface-border);
-  padding: 0 var(--reaction-padding);
-  border-radius: var(--reaction-radius);
+  border-radius: 4px;
   cursor: pointer;
-  height: var(--reaction-height);
 
-  margin-right: var(--sp-extra-tight);
+  & .emoji {
+    width: 14px;
+    height: 14px;
+    margin: 2px;
+  }
+  &-count {
+    margin: 0 var(--sp-ultra-tight);
+    color: var(--tc-surface-normal)
+  }
+  &-tooltip .emoji {
+    width: 14px;
+    height: 14px;
+    margin: 0 var(--sp-ultra-tight);
+    margin-bottom: -2px;
+  }
 
   [dir=rtl] & {
     margin: {
@@ -188,7 +207,7 @@
 }
 
 // markdown formating
-.message {
+.message__content {
   & h1,
   & h2 {
     color: var(--tc-surface-high);
