@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './IconButton.scss';
 
-import Tippy from '@tippyjs/react';
 import RawIcon from '../system-icons/RawIcon';
+import Tooltip from '../tooltip/Tooltip';
 import { blurOnBubbling } from './script';
 import Text from '../text/Text';
 
@@ -17,15 +17,9 @@ const IconButton = React.forwardRef(({
   variant, size, type,
   tooltip, tooltipPlacement, src, onClick,
 }, ref) => (
-  <Tippy
-    content={<Text variant="b2">{tooltip}</Text>}
-    className="ic-btn-tippy"
-    touch="hold"
-    arrow={false}
-    maxWidth={250}
+  <Tooltip
     placement={tooltipPlacement}
-    delay={[0, 0]}
-    duration={[100, 0]}
+    content={<Text variant="b2">{tooltip}</Text>}
   >
     <button
       ref={ref}
@@ -36,7 +30,7 @@ const IconButton = React.forwardRef(({
     >
       <RawIcon size={size} src={src} />
     </button>
-  </Tippy>
+  </Tooltip>
 ));
 
 IconButton.defaultProps = {
