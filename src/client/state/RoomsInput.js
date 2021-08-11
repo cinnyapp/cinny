@@ -80,11 +80,30 @@ function getVideoThumbnail(video, width, height, mimeType) {
   });
 }
 
-function getFormatedBody(markdown) {
+function getFormattedBody(markdown) {
   const reader = new Parser();
   const writer = new HtmlRenderer();
   const parsed = reader.parse(markdown);
   return writer.render(parsed);
+}
+
+function getReplyFormattedBody(roomId, reply) {
+  const replyToLink = `<a href="https://matrix.to/#/${roomId}/${reply.eventId}">In reply to</a>`;
+  const userLink = `<a href="https://matrix.to/#/${reply.userId}">${reply.userId}</a>`;
+  return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${reply.content}</blockquote></mx-reply>`;
+}
+
+function bindReplyToContent(roomId, reply, content) {
+  const newContent = { ...content };
+  newContent.body = `> <${reply.userId}> ${reply.content}`;
+  newContent.body += `\n\n${content.body}`;
+  newContent.format = 'org.matrix.custom.html';
+  newContent['m.relates_to'] = content['m.relates_to'] || {};
+  newContent['m.relates_to']['m.in_reply_to'] = { event_id: reply.eventId };
+
+  const formattedReply = getReplyFormattedBody(roomId, reply);
+  newContent.formatted_body = formattedReply + (content.formatted_body || content.body);
+  return newContent;
 }
 
 class RoomsInput extends EventEmitter {
@@ -98,6 +117,7 @@ class RoomsInput extends EventEmitter {
   cleanEmptyEntry(roomId) {
     const input = this.getInput(roomId);
     const isEmpty = typeof input.attachment === 'undefined'
+      && typeof input.replyTo === 'undefined'
       && (typeof input.message === 'undefined' || input.message === '');
     if (isEmpty) {
       this.roomIdToInput.delete(roomId);
@@ -119,6 +139,25 @@ class RoomsInput extends EventEmitter {
     const input = this.getInput(roomId);
     if (typeof input.message === 'undefined') return '';
     return input.message;
+  }
+
+  setReplyTo(roomId, replyTo) {
+    const input = this.getInput(roomId);
+    input.replyTo = replyTo;
+    this.roomIdToInput.set(roomId, input);
+  }
+
+  getReplyTo(roomId) {
+    const input = this.getInput(roomId);
+    if (typeof input.replyTo === 'undefined') return null;
+    return input.replyTo;
+  }
+
+  cancelReplyTo(roomId) {
+    const input = this.getInput(roomId);
+    if (typeof input.replyTo === 'undefined') return;
+    delete input.replyTo;
+    this.roomIdToInput.set(roomId, input);
   }
 
   setAttachment(roomId, file) {
@@ -145,13 +184,9 @@ class RoomsInput extends EventEmitter {
       this.matrixClient.cancelUpload(uploadingPromise);
       delete input.attachment.uploadingPromise;
     }
-    if (input.message) {
-      delete input.attachment;
-      delete input.isSending;
-      this.roomIdToInput.set(roomId, input);
-    } else {
-      this.roomIdToInput.delete(roomId);
-    }
+    delete input.attachment;
+    delete input.isSending;
+    this.roomIdToInput.set(roomId, input);
     this.emit(cons.events.roomsInput.ATTACHMENT_CANCELED, roomId);
   }
 
@@ -168,13 +203,16 @@ class RoomsInput extends EventEmitter {
     }
 
     if (this.getMessage(roomId).trim() !== '') {
-      const content = {
+      let content = {
         body: input.message,
         msgtype: 'm.text',
       };
       if (settings.isMarkdown) {
         content.format = 'org.matrix.custom.html';
-        content.formatted_body = getFormatedBody(input.message);
+        content.formatted_body = getFormattedBody(input.message);
+      }
+      if (typeof input.replyTo !== 'undefined') {
+        content = bindReplyToContent(roomId, input.replyTo, content);
       }
       this.matrixClient.sendMessage(roomId, content);
     }

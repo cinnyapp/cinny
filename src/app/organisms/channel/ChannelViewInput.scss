@@ -99,3 +99,18 @@
     }
   }
 }
+
+.channel-reply {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-surface-low);
+  border-bottom: 1px solid var(--bg-surface-border);
+
+  & .ic-btn-surface {
+    margin: 0 13px 0 17px;
+    border-radius: 0;
+    [dir=rtl] & {
+      margin: 0 17px 0 13px;
+    }
+  }
+}

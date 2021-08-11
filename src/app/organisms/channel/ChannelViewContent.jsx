@@ -13,6 +13,7 @@ import { diffMinutes, isNotInSameDay } from '../../../util/common';
 
 import Divider from '../../atoms/divider/Divider';
 import Avatar from '../../atoms/avatar/Avatar';
+import IconButton from '../../atoms/button/IconButton';
 import {
   Message,
   MessageHeader,
@@ -20,11 +21,15 @@ import {
   MessageContent,
   MessageReactionGroup,
   MessageReaction,
+  MessageOptions,
   PlaceholderMessage,
 } from '../../molecules/message/Message';
 import * as Media from '../../molecules/media/Media';
 import ChannelIntro from '../../molecules/channel-intro/ChannelIntro';
 import TimelineChange from '../../molecules/message/TimelineChange';
+
+import ReplyArrowIC from '../../../../public/res/ic/outlined/reply-arrow.svg';
+import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { parseReply, parseTimelineChange } from './common';
 
@@ -335,6 +340,19 @@ function ChannelViewContent({
           }
         </MessageReactionGroup>
       );
+      const userOptions = (
+        <MessageOptions>
+          <IconButton
+            onClick={() => {
+              viewEvent.emit('reply_to', mEvent.getSender(), mEvent.getId(), isMedia(mEvent) ? mEvent.getContent().body : content);
+            }}
+            src={ReplyArrowIC}
+            size="extra-small"
+            tooltip="Reply"
+          />
+          <IconButton src={BinIC} size="extra-small" tooltip="Delete" />
+        </MessageOptions>
+      );
 
       const myMessageEl = (
         <Message
@@ -344,6 +362,7 @@ function ChannelViewContent({
           reply={userReply}
           content={userContent}
           reactions={userReactions}
+          options={userOptions}
         />
       );
 

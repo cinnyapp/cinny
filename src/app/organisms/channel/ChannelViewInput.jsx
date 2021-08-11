@@ -9,12 +9,15 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import { bytesToSize } from '../../../util/common';
+import { getUsername } from '../../../util/matrixUtil';
+import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import IconButton from '../../atoms/button/IconButton';
 import ContextMenu from '../../atoms/context-menu/ContextMenu';
 import ScrollView from '../../atoms/scroll/ScrollView';
+import { MessageReply } from '../../molecules/message/Message';
 import EmojiBoard from '../emoji-board/EmojiBoard';
 
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
@@ -25,6 +28,7 @@ import VLCIC from '../../../../public/res/ic/outlined/vlc.svg';
 import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
 import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
+import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 const CMD_REGEX = /(\/|>[#*@]|:)(\S*)$/;
 let isTyping = false;
@@ -35,6 +39,7 @@ function ChannelViewInput({
 }) {
   const [attachment, setAttachment] = useState(null);
   const [isMarkdown, setIsMarkdown] = useState(settings.isMarkdown);
+  const [replyTo, setReplyTo] = useState(null);
 
   const textAreaRef = useRef(null);
   const inputBaseRef = useRef(null);
@@ -123,17 +128,24 @@ function ChannelViewInput({
     deactivateCmd();
   }
 
+  function setUpReply(userId, eventId, content) {
+    setReplyTo({ userId, eventId, content });
+    roomsInput.setReplyTo(roomId, { userId, eventId, content });
+  }
+
   useEffect(() => {
     roomsInput.on(cons.events.roomsInput.UPLOAD_PROGRESS_CHANGES, uploadingProgress);
     roomsInput.on(cons.events.roomsInput.ATTACHMENT_CANCELED, clearAttachment);
     roomsInput.on(cons.events.roomsInput.FILE_UPLOADED, clearAttachment);
     viewEvent.on('cmd_error', errorCmd);
     viewEvent.on('cmd_fired', firedCmd);
+    viewEvent.on('reply_to', setUpReply);
     if (textAreaRef?.current !== null) {
       isTyping = false;
       textAreaRef.current.focus();
       textAreaRef.current.value = roomsInput.getMessage(roomId);
       setAttachment(roomsInput.getAttachment(roomId));
+      setReplyTo(roomsInput.getReplyTo(roomId));
     }
     return () => {
       roomsInput.removeListener(cons.events.roomsInput.UPLOAD_PROGRESS_CHANGES, uploadingProgress);
@@ -141,6 +153,7 @@ function ChannelViewInput({
       roomsInput.removeListener(cons.events.roomsInput.FILE_UPLOADED, clearAttachment);
       viewEvent.removeListener('cmd_error', errorCmd);
       viewEvent.removeListener('cmd_fired', firedCmd);
+      viewEvent.removeListener('reply_to', setUpReply);
       if (isCmdActivated) deactivateCmd();
       if (textAreaRef?.current === null) return;
 
@@ -180,6 +193,7 @@ function ChannelViewInput({
     timelineScroll.reachBottom();
     viewEvent.emit('message_sent');
     textAreaRef.current.style.height = 'unset';
+    if (replyTo !== null) setReplyTo(null);
   }
 
   function processTyping(msg) {
@@ -316,8 +330,31 @@ function ChannelViewInput({
     );
   }
 
+  function attachReply() {
+    return (
+      <div className="channel-reply">
+        <IconButton
+          onClick={() => {
+            roomsInput.cancelReplyTo(roomId);
+            setReplyTo(null);
+          }}
+          src={CrossIC}
+          tooltip="Cancel reply"
+          size="extra-small"
+        />
+        <MessageReply
+          userId={replyTo.userId}
+          name={getUsername(replyTo.userId)}
+          color={colorMXID(replyTo.userId)}
+          content={replyTo.content}
+        />
+      </div>
+    );
+  }
+
   return (
     <>
+      { replyTo !== null && attachReply()}
       { attachment !== null && attachFile() }
       <form className="channel-input" onSubmit={(e) => { e.preventDefault(); }}>
         {

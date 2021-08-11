@@ -113,7 +113,7 @@ function MessageContent({ content, isMarkdown, isEdited }) {
       <div className="text text-b1">
         { isMarkdown ? genMarkdown(content) : linkifyContent(content) }
       </div>
-      { isEdited && <Text className="message__edited" variant="b3">(edited)</Text>}
+      { isEdited && <Text className="message__content-edited" variant="b3">(edited)</Text>}
     </div>
   );
 }
@@ -139,15 +139,19 @@ MessageReactionGroup.propTypes = {
 };
 
 function genReactionMsg(userIds, reaction) {
-  let msg = '';
+  const genLessContText = (text) => <span style={{ opacity: '.6' }}>{text}</span>;
+  let msg = <></>;
   userIds.forEach((userId, index) => {
-    if (index === 0) msg += getUsername(userId);
-    else if (index === userIds.length - 1) msg += ` and ${getUsername(userId)}`;
-    else msg += `, ${getUsername(userId)}`;
+    if (index === 0) msg = <>{getUsername(userId)}</>;
+    // eslint-disable-next-line react/jsx-one-expression-per-line
+    else if (index === userIds.length - 1) msg = <>{msg}{genLessContText(' and ')}{getUsername(userId)}</>;
+    // eslint-disable-next-line react/jsx-one-expression-per-line
+    else msg = <>{msg}{genLessContText(', ')}{getUsername(userId)}</>;
   });
   return (
     <>
-      {`${msg} reacted with`}
+      {msg}
+      {genLessContText(' reacted with')}
       {parse(twemoji.parse(reaction))}
     </>
   );
@@ -179,8 +183,19 @@ MessageReaction.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
+function MessageOptions({ children }) {
+  return (
+    <div className="message__options">
+      {children}
+    </div>
+  );
+}
+MessageOptions.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 function Message({
-  avatar, header, reply, content, reactions,
+  avatar, header, reply, content, reactions, options,
 }) {
   const msgClass = header === null ? ' message--content-only' : ' message--full';
   return (
@@ -193,6 +208,7 @@ function Message({
         {reply !== null && reply}
         {content}
         {reactions !== null && reactions}
+        {options !== null && options}
       </div>
     </div>
   );
@@ -202,6 +218,7 @@ Message.defaultProps = {
   header: null,
   reply: null,
   reactions: null,
+  options: null,
 };
 Message.propTypes = {
   avatar: PropTypes.node,
@@ -209,6 +226,7 @@ Message.propTypes = {
   reply: PropTypes.node,
   content: PropTypes.node.isRequired,
   reactions: PropTypes.node,
+  options: PropTypes.node,
 };
 
 export {
@@ -218,5 +236,6 @@ export {
   MessageContent,
   MessageReactionGroup,
   MessageReaction,
+  MessageOptions,
   PlaceholderMessage,
 };
