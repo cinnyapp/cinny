@@ -72,6 +72,7 @@ function MessageHeader({
     <div className="message__header">
       <div style={{ color }} className="message__profile">
         <Text variant="b1">{name}</Text>
+        <Text variant="b1">{userId}</Text>
       </div>
       <div className="message__time">
         <Text variant="b3">{time}</Text>

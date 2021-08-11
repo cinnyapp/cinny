@@ -104,7 +104,6 @@
   align-items: baseline;
 
   & .message__profile {
-    flex: 1;
     min-width: 0;
     color: var(--tc-surface-high);
     margin-right: var(--sp-tight);
@@ -121,10 +120,19 @@
       white-space: nowrap;
       text-overflow: ellipsis;
     }
+    & > .text:last-child { display: none; }
+    &:hover {
+      & > .text:first-child { display: none; }
+      & > .text:last-child { display: block; }
+    }
   }
 
   & .message__time {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
     & > .text {
+      white-space: nowrap;
       color: var(--tc-surface-low);
     }
   }
