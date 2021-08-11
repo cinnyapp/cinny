@@ -53,7 +53,7 @@ function TryJoinWithAlias({ alias, onRequestClose }) {
     } catch (e) {
       setStatus({
         isJoining: false,
-        error: `Unable to join ${alias}. Either room is private or doesn't exist.`,
+        error: `Unable to join ${alias}. Either channel is private or doesn't exist.`,
         roomId: null,
         tempRoomId: null,
       });
@@ -145,7 +145,10 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
       }
     } catch (e) {
       updatePublicChannels([]);
-      updateSearchQuery({ error: 'Something went wrong!' });
+      updateSearchQuery({
+        error: 'Something went wrong!',
+        alias: isInputAlias ? inputChannelName : null,
+      });
       updateIsSearching(false);
       updateNextBatch(undefined);
       updateIsViewMore(false);
@@ -247,7 +250,7 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
           { searchQuery.error && (
             <>
               <Text className="public-channels__search-error" variant="b2">{searchQuery.error}</Text>
-              {searchQuery.alias !== null && (
+              {typeof searchQuery.alias === 'string' && (
                 <TryJoinWithAlias onRequestClose={onRequestClose} alias={searchQuery.alias} />
               )}
             </>
