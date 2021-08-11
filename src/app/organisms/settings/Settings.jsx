@@ -4,10 +4,12 @@ import './Settings.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import settings from '../../../client/state/settings';
+import { toggleMarkdown } from '../../../client/action/settings';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';
+import Toggle from '../../atoms/button/Toggle';
 import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls';
 
 import PopupWindow, { PWContentSelector } from '../../molecules/popup-window/PopupWindow';
@@ -22,6 +24,8 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 
 function AppearanceSection() {
+  const [, updateState] = useState({});
+
   return (
     <div className="settings-content">
       <SettingTile
@@ -38,6 +42,16 @@ function AppearanceSection() {
             onSelect={(index) => settings.setTheme(index)}
           />
         )}
+      />
+      <SettingTile
+        title="Markdown formatting"
+        options={(
+          <Toggle
+            isActive={settings.isMarkdown}
+            onToggle={(isMarkdown) => { toggleMarkdown(isMarkdown); updateState({}); }}
+          />
+        )}
+        content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
       />
     </div>
   );
