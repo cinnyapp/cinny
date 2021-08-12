@@ -189,6 +189,19 @@ async function invite(roomId, userId) {
   }
 }
 
+async function redact(roomId, eventId, reason) {
+  const mx = initMatrix.matrixClient;
+
+  try {
+    await mx.redactEvent(roomId, eventId, undefined, typeof reason === 'undefined' ? undefined : { reason });
+    return true;
+  } catch (e) {
+    throw new Error(e);
+  }
+}
+
 export {
-  join, leave, create, invite,
+  join, leave,
+  create, invite,
+  redact,
 };

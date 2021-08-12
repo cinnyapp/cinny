@@ -7,6 +7,7 @@ import dateFormat from 'dateformat';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
+import { redact } from '../../../client/action/room';
 import { getUsername, doesRoomHaveUnread } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { diffMinutes, isNotInSameDay } from '../../../util/common';
@@ -223,6 +224,9 @@ function ChannelViewContent({
         && prevMEvent.getSender() === mEvent.getSender()
       );
 
+      const myPowerlevel = roomTimeline.room.getMember(mx.getUserId()).powerLevel;
+      const canIRedact = roomTimeline.room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
+
       let content = mEvent.getContent().body;
       if (typeof content === 'undefined') return null;
       let reply = null;
@@ -293,12 +297,12 @@ function ChannelViewContent({
         });
       }
 
-      const userMXIDColor = colorMXID(mEvent.sender.userId);
+      const senderMXIDColor = colorMXID(mEvent.sender.userId);
       const userAvatar = isContentOnly ? null : (
         <Avatar
           imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
           text={getUsername(mEvent.sender.userId).slice(0, 1)}
-          bgColor={userMXIDColor}
+          bgColor={senderMXIDColor}
           size="small"
         />
       );
@@ -306,7 +310,7 @@ function ChannelViewContent({
         <MessageHeader
           userId={mEvent.sender.userId}
           name={getUsername(mEvent.sender.userId)}
-          color={userMXIDColor}
+          color={senderMXIDColor}
           time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
         />
       );
@@ -350,7 +354,18 @@ function ChannelViewContent({
             size="extra-small"
             tooltip="Reply"
           />
-          <IconButton src={BinIC} size="extra-small" tooltip="Delete" />
+          {(canIRedact || mEvent.getSender() === mx.getUserId()) && (
+            <IconButton
+              onClick={() => {
+                if (window.confirm('Are you sure you want to delete this event')) {
+                  redact(roomId, mEvent.getId());
+                }
+              }}
+              src={BinIC}
+              size="extra-small"
+              tooltip="Delete"
+            />
+          )}
         </MessageOptions>
       );
 

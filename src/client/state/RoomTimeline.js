@@ -35,6 +35,11 @@ class RoomTimeline extends EventEmitter {
       this.emit(cons.events.roomTimeline.EVENT);
     };
 
+    this._listenRedaction = (event, room) => {
+      if (room.roomId !== this.roomId) return;
+      this.emit(cons.events.roomTimeline.EVENT);
+    };
+
     this._listenDecryptEvent = (event) => {
       if (event.getRoomId() !== this.roomId) return;
 
@@ -67,6 +72,7 @@ class RoomTimeline extends EventEmitter {
     };
 
     this.matrixClient.on('Room.timeline', this._listenRoomTimeline);
+    this.matrixClient.on('Room.redaction', this._listenRedaction);
     this.matrixClient.on('Event.decrypted', this._listenDecryptEvent);
     this.matrixClient.on('RoomMember.typing', this._listenTypingEvent);
     this.matrixClient.on('Room.receipt', this._listenReciptEvent);
@@ -152,6 +158,7 @@ class RoomTimeline extends EventEmitter {
 
   removeInternalListeners() {
     this.matrixClient.removeListener('Room.timeline', this._listenRoomTimeline);
+    this.matrixClient.removeListener('Room.redaction', this._listenRedaction);
     this.matrixClient.removeListener('Event.decrypted', this._listenDecryptEvent);
     this.matrixClient.removeListener('RoomMember.typing', this._listenTypingEvent);
     this.matrixClient.removeListener('Room.receipt', this._listenReciptEvent);
