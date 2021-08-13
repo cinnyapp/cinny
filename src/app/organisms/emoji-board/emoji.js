@@ -47,7 +47,7 @@ function addToGroup(emoji) {
   else if (emoji.group === 6) addEmoji(emoji, 3);
   else if (emoji.group === 5) addEmoji(emoji, 4);
   else if (emoji.group === 7) addEmoji(emoji, 5);
-  else if (emoji.group === 8) addEmoji(emoji, 6);
+  else if (emoji.group === 8 || typeof emoji.group === 'undefined') addEmoji(emoji, 6);
   else if (emoji.group === 9) addEmoji(emoji, 7);
 }
 
@@ -70,7 +70,6 @@ function searchEmoji(term) {
   if (result.length > 20) result = result.slice(0, 20);
   return result;
 }
-
 export {
   emojis, emojiGroups, searchEmoji,
 };

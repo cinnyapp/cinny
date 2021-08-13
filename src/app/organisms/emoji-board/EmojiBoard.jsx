@@ -30,14 +30,14 @@ const viewEvent = new EventEmitter();
 
 function EmojiGroup({ name, emojis }) {
   function getEmojiBoard() {
+    const emojiBoard = [];
     const ROW_EMOJIS_COUNT = 7;
-    const emojiRows = [];
     const totalEmojis = emojis.length;
 
     for (let r = 0; r < totalEmojis; r += ROW_EMOJIS_COUNT) {
       const emojiRow = [];
       for (let c = r; c < r + ROW_EMOJIS_COUNT; c += 1) {
-        const emojiIndex = r + c;
+        const emojiIndex = c;
         if (emojiIndex >= totalEmojis) break;
         const emoji = emojis[emojiIndex];
         emojiRow.push(
@@ -49,6 +49,7 @@ function EmojiGroup({ name, emojis }) {
                   attributes: () => ({
                     unicode: emoji.unicode,
                     shortcodes: emoji.shortcodes?.toString(),
+                    hexcode: emoji.hexcode,
                   }),
                 },
               ))
@@ -56,9 +57,9 @@ function EmojiGroup({ name, emojis }) {
           </span>,
         );
       }
-      emojiRows.push(<div key={r} className="emoji-row">{emojiRow}</div>);
+      emojiBoard.push(<div key={r} className="emoji-row">{emojiRow}</div>);
     }
-    return emojiRows;
+    return emojiBoard;
   }
 
   return (
@@ -73,6 +74,7 @@ EmojiGroup.propTypes = {
   emojis: PropTypes.arrayOf(PropTypes.shape({
     length: PropTypes.number,
     unicode: PropTypes.string,
+    hexcode: PropTypes.string,
     shortcodes: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.arrayOf(PropTypes.string),
@@ -104,16 +106,18 @@ function SearchedEmoji() {
 function EmojiBoard({ onSelect }) {
   const searchRef = useRef(null);
   const scrollEmojisRef = useRef(null);
+  const emojiInfo = useRef(null);
 
   function isTargetNotEmoji(target) {
     return target.classList.contains('emoji') === false;
   }
   function getEmojiDataFromTarget(target) {
     const unicode = target.getAttribute('unicode');
+    const hexcode = target.getAttribute('hexcode');
     let shortcodes = target.getAttribute('shortcodes');
     if (typeof shortcodes === 'undefined') shortcodes = undefined;
     else shortcodes = shortcodes.split(',');
-    return { unicode, shortcodes };
+    return { unicode, hexcode, shortcodes };
   }
 
   function selectEmoji(e) {
@@ -123,18 +127,29 @@ function EmojiBoard({ onSelect }) {
     onSelect(getEmojiDataFromTarget(emoji));
   }
 
+  function setEmojiInfo(emoji) {
+    const infoEmoji = emojiInfo.current.firstElementChild.firstElementChild;
+    const infoShortcode = emojiInfo.current.lastElementChild;
+
+    const emojiSrc = infoEmoji.src;
+    infoEmoji.src = `${emojiSrc.slice(0, emojiSrc.lastIndexOf('/') + 1)}${emoji.hexcode.toLowerCase()}.png`;
+    infoShortcode.textContent = `:${emoji.shortcode}:`;
+  }
+
   function hoverEmoji(e) {
     if (isTargetNotEmoji(e.target)) return;
 
     const emoji = e.target;
-    const { shortcodes } = getEmojiDataFromTarget(emoji);
+    const { shortcodes, hexcode } = getEmojiDataFromTarget(emoji);
 
     if (typeof shortcodes === 'undefined') {
       searchRef.current.placeholder = 'Search';
+      setEmojiInfo({ hexcode: '1f643', shortcode: 'slight_smile' });
       return;
     }
     if (searchRef.current.placeholder === shortcodes[0]) return;
     searchRef.current.setAttribute('placeholder', `:${shortcodes[0]}:`);
+    setEmojiInfo({ hexcode, shortcode: shortcodes[0] });
   }
 
   function handleSearchChange(e) {
@@ -157,7 +172,11 @@ function EmojiBoard({ onSelect }) {
   return (
     <div id="emoji-board" className="emoji-board">
       <div className="emoji-board__content">
-        <div className="emoji-board__emojis">
+        <div className="emoji-board__content__search">
+          <RawIcon size="small" src={SearchIC} />
+          <Input onChange={handleSearchChange} forwardRef={searchRef} placeholder="Search" />
+        </div>
+        <div className="emoji-board__content__emojis">
           <ScrollView ref={scrollEmojisRef} autoHide>
             <div onMouseMove={hoverEmoji} onClick={selectEmoji}>
               <SearchedEmoji />
@@ -169,9 +188,9 @@ function EmojiBoard({ onSelect }) {
             </div>
           </ScrollView>
         </div>
-        <div className="emoji-board__search">
-          <RawIcon size="small" src={SearchIC} />
-          <Input onChange={handleSearchChange} forwardRef={searchRef} placeholder="Search" />
+        <div ref={emojiInfo} className="emoji-board__content__info">
+          <div>{ parse(twemoji.parse('🙂')) }</div>
+          <Text>:slight_smile:</Text>
         </div>
       </div>
       <div className="emoji-board__nav">
