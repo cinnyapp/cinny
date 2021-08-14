@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './ContextMenu.scss';
 
@@ -10,11 +10,15 @@ import Button from '../button/Button';
 import ScrollView from '../scroll/ScrollView';
 
 function ContextMenu({
-  content, placement, maxWidth, render,
+  content, placement, maxWidth, render, afterToggle,
 }) {
   const [isVisible, setVisibility] = useState(false);
   const showMenu = () => setVisibility(true);
   const hideMenu = () => setVisibility(false);
+
+  useEffect(() => {
+    if (afterToggle !== null) afterToggle(isVisible);
+  }, [isVisible]);
 
   return (
     <Tippy
@@ -36,6 +40,7 @@ function ContextMenu({
 ContextMenu.defaultProps = {
   maxWidth: 'unset',
   placement: 'right',
+  afterToggle: null,
 };
 
 ContextMenu.propTypes = {
@@ -49,6 +54,7 @@ ContextMenu.propTypes = {
     PropTypes.number,
   ]),
   render: PropTypes.func.isRequired,
+  afterToggle: PropTypes.func,
 };
 
 function MenuHeader({ children }) {

@@ -8,6 +8,7 @@ import TextareaAutosize from 'react-autosize-textarea';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
+import { openEmojiBoard } from '../../../client/action/navigation';
 import { bytesToSize } from '../../../util/common';
 import { getUsername } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
@@ -299,12 +300,17 @@ function ChannelViewInput({
           {isMarkdown && <RawIcon size="extra-small" src={MarkdownIC} />}
         </div>
         <div ref={rightOptionsRef} className="channel-input__option-container">
-          <ContextMenu
-            placement="top"
-            content={(
-              <EmojiBoard onSelect={addEmoji} />
-            )}
-            render={(toggleMenu) => <IconButton onClick={toggleMenu} tooltip="Emoji" src={EmojiIC} />}
+          <IconButton
+            onClick={(e) => {
+              openEmojiBoard({
+                x: e.detail ? e.clientX + 40 : '10%',
+                y: e.detail ? e.clientY - 240 : 300,
+                isReverse: !e.detail,
+                detail: e.detail,
+              }, addEmoji);
+            }}
+            tooltip="Emoji"
+            src={EmojiIC}
           />
           <IconButton onClick={sendMessage} tooltip="Send" src={SendIC} />
         </div>

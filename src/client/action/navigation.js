@@ -54,6 +54,14 @@ function openSettings() {
   });
 }
 
+function openEmojiBoard(cords, requestEmojiCallback) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_EMOJIBOARD,
+    cords,
+    requestEmojiCallback,
+  });
+}
+
 export {
   handleTabChange,
   selectRoom,
@@ -63,4 +71,5 @@ export {
   openCreateChannel,
   openInviteUser,
   openSettings,
+  openEmojiBoard,
 };

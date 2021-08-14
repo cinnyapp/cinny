@@ -48,6 +48,12 @@ class Navigation extends EventEmitter {
       [cons.actions.navigation.OPEN_SETTINGS]: () => {
         this.emit(cons.events.navigation.SETTINGS_OPENED);
       },
+      [cons.actions.navigation.OPEN_EMOJIBOARD]: () => {
+        this.emit(
+          cons.events.navigation.EMOJIBOARD_OPENED,
+          action.cords, action.requestEmojiCallback,
+        );
+      },
     };
     actions[action.type]?.();
   }
