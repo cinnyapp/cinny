@@ -7,12 +7,12 @@ import ContextMenu from '../../atoms/context-menu/ContextMenu';
 import EmojiBoard from './EmojiBoard';
 
 let requestCallback = null;
+let isEmojiBoardVisible = false;
 function EmojiBoardOpener() {
   const openerRef = useRef(null);
 
   function openEmojiBoard(cords, requestEmojiCallback) {
-    console.log(requestCallback);
-    if (requestCallback !== null) {
+    if (requestCallback !== null || isEmojiBoardVisible) {
       requestCallback = null;
       if (cords.detail === 0) openerRef.current.click();
       return;
@@ -30,10 +30,10 @@ function EmojiBoardOpener() {
   }
 
   function afterEmojiBoardToggle(isVisible) {
-    console.log(isVisible);
+    isEmojiBoardVisible = isVisible;
     if (!isVisible) {
       setTimeout(() => {
-        requestCallback = null;
+        if (!isEmojiBoardVisible) requestCallback = null;
       }, 500);
     }
   }
@@ -55,7 +55,7 @@ function EmojiBoardOpener() {
         <EmojiBoard onSelect={addEmoji} />
       )}
       afterToggle={afterEmojiBoardToggle}
-      render={(toggleMenu, isVisible) => (
+      render={(toggleMenu) => (
         <input
           ref={openerRef}
           onClick={toggleMenu}
