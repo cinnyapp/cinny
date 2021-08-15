@@ -13,7 +13,6 @@ import { getUsername } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
-import Avatar from '../../atoms/avatar/Avatar';
 import Tooltip from '../../atoms/tooltip/Tooltip';
 
 import ReplyArrowIC from '../../../../public/res/ic/outlined/reply-arrow.svg';

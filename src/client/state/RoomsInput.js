@@ -201,6 +201,7 @@ class RoomsInput extends EventEmitter {
     this.roomIdToInput.set(roomId, input);
     if (input.attachment) {
       await this.sendFile(roomId, input.attachment.file);
+      if (!this.isSending(roomId)) return;
     }
 
     if (this.getMessage(roomId).trim() !== '') {
