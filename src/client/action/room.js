@@ -85,8 +85,9 @@ function guessDMRoomTargetId(room, myUserId) {
  */
 async function join(roomIdOrAlias, isDM) {
   const mx = initMatrix.matrixClient;
+  const roomIdParts = roomIdOrAlias.split(':');
   try {
-    const resultRoom = await mx.joinRoom(roomIdOrAlias);
+    const resultRoom = await mx.joinRoom(roomIdOrAlias, { viaServers: [roomIdParts[1]] });
 
     if (isDM) {
       const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom.roomId), mx.getUserId());

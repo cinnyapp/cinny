@@ -177,10 +177,10 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
     onRequestClose();
   }
 
-  function joinChannel(roomId) {
-    joiningChannels.add(roomId);
+  function joinChannel(roomIdOrAlias) {
+    joiningChannels.add(roomIdOrAlias);
     updateJoiningChannels(new Set(Array.from(joiningChannels)));
-    roomActions.join(roomId, false);
+    roomActions.join(roomIdOrAlias, false);
   }
 
   function renderChannelList(channels) {
@@ -199,7 +199,7 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
           options={(
             <>
               {isJoined && <Button onClick={() => handleViewChannel(channel.room_id)}>Open</Button>}
-              {!isJoined && (joiningChannels.has(channel.room_id) ? <Spinner size="small" /> : <Button onClick={() => joinChannel(channel.room_id)} variant="primary">Join</Button>)}
+              {!isJoined && (joiningChannels.has(channel.room_id) ? <Spinner size="small" /> : <Button onClick={() => joinChannel(channel.aliases?.[0] || channel.room_id)} variant="primary">Join</Button>)}
             </>
           )}
         />

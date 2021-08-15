@@ -230,7 +230,7 @@ function InviteUser({
     >
       <div className="invite-user">
         <form className="invite-user__form" onSubmit={(e) => { e.preventDefault(); searchUser(usernameRef.current.value); }}>
-          <Input value={searchTerm} forwardRef={usernameRef} label="Username or userId" />
+          <Input value={searchTerm} forwardRef={usernameRef} label="Name or userId" />
           <Button disabled={isSearching} iconSrc={UserIC} variant="primary" type="submit">Search</Button>
         </form>
         <div className="invite-user__search-status">
