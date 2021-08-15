@@ -16,10 +16,8 @@ import colorMXID from '../../../util/colorMXID';
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import IconButton from '../../atoms/button/IconButton';
-import ContextMenu from '../../atoms/context-menu/ContextMenu';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import { MessageReply } from '../../molecules/message/Message';
-import EmojiBoard from '../emoji-board/EmojiBoard';
 
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
@@ -303,9 +301,9 @@ function ChannelViewInput({
           <IconButton
             onClick={(e) => {
               openEmojiBoard({
-                x: e.detail ? e.clientX + 40 : '10%',
-                y: e.detail ? e.clientY - 240 : 300,
-                isReverse: !e.detail,
+                x: '10%',
+                y: 300,
+                isReverse: true,
                 detail: e.detail,
               }, addEmoji);
             }}

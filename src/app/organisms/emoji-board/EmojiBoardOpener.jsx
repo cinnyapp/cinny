@@ -61,8 +61,9 @@ function EmojiBoardOpener() {
           onClick={toggleMenu}
           type="button"
           style={{
-            width: '0',
-            height: '0',
+            width: '32px',
+            height: '32px',
+            backgroundColor: 'transparent',
             position: 'absolute',
             top: 0,
             left: 0,

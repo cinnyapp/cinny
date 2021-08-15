@@ -166,6 +166,16 @@
 }
 .message__reactions {
   display: flex;
+  flex-wrap: wrap;
+
+  & .ic-btn-surface {
+    display: none;
+    padding: var(--sp-ultra-tight);
+    margin-top: var(--sp-extra-tight);
+  }
+  &:hover .ic-btn-surface {
+    display: block;
+  }
 }
 .msg__reaction {
   margin: var(--sp-extra-tight) var(--sp-extra-tight) 0 0;
