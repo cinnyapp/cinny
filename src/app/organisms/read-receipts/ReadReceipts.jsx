@@ -65,7 +65,7 @@ function ReadReceipts() {
   return (
     <Dialog
       isOpen={isOpen}
-      title="Read receipts"
+      title="Seen by"
       onRequestClose={() => setIsOpen(false)}
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
     >
