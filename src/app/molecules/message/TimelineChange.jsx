@@ -14,7 +14,7 @@ import InviteCancelArraowIC from '../../../../public/res/ic/outlined/invite-canc
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
-function TimelineChange({ variant, content, time }) {
+function TimelineChange({ variant, content, time, onClick }) {
   let iconSrc;
 
   switch (variant) {
@@ -42,7 +42,7 @@ function TimelineChange({ variant, content, time }) {
   }
 
   return (
-    <div className="timeline-change">
+    <button style={{ cursor: onClick === null ? 'default' : 'pointer' }} onClick={onClick} type="button" className="timeline-change">
       <div className="timeline-change__avatar-container">
         <RawIcon src={iconSrc} size="extra-small" />
       </div>
@@ -55,12 +55,13 @@ function TimelineChange({ variant, content, time }) {
       <div className="timeline-change__time">
         <Text variant="b3">{time}</Text>
       </div>
-    </div>
+    </button>
   );
 }
 
 TimelineChange.defaultProps = {
   variant: 'other',
+  onClick: null,
 };
 
 TimelineChange.propTypes = {
@@ -74,6 +75,7 @@ TimelineChange.propTypes = {
     PropTypes.node,
   ]).isRequired,
   time: PropTypes.string.isRequired,
+  onClick: PropTypes.func,
 };
 
 export default TimelineChange;

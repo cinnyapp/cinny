@@ -11,7 +11,7 @@ import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
 import { getUsername, doesRoomHaveUnread } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { diffMinutes, isNotInSameDay } from '../../../util/common';
-import { openEmojiBoard } from '../../../client/action/navigation';
+import { openEmojiBoard, openReadReceipts } from '../../../client/action/navigation';
 
 import Divider from '../../atoms/divider/Divider';
 import Avatar from '../../atoms/avatar/Avatar';
@@ -32,6 +32,7 @@ import TimelineChange from '../../molecules/message/TimelineChange';
 
 import ReplyArrowIC from '../../../../public/res/ic/outlined/reply-arrow.svg';
 import EmojiAddIC from '../../../../public/res/ic/outlined/emoji-add.svg';
+import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { parseReply, parseTimelineChange } from './common';
@@ -320,6 +321,12 @@ function genMessage(roomId, prevMEvent, mEvent, roomTimeline, viewEvent) {
         src={ReplyArrowIC}
         size="extra-small"
         tooltip="Reply"
+      />
+      <IconButton
+        onClick={() => openReadReceipts(roomId, mEvent.getId())}
+        src={TickMarkIC}
+        size="extra-small"
+        tooltip="Read receipts"
       />
       {(canIRedact || mEvent.getSender() === mx.getUserId()) && (
         <IconButton

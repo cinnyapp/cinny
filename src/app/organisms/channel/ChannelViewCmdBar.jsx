@@ -15,6 +15,7 @@ import {
   openCreateChannel,
   openPublicChannels,
   openInviteUser,
+  openReadReceipts,
 } from '../../../client/action/navigation';
 import { searchEmoji } from '../emoji-board/emoji';
 
@@ -143,11 +144,13 @@ function FollowingMembers({ roomId, roomTimeline, viewEvent }) {
     };
   }, [roomTimeline]);
 
+  const lastMEvent = roomTimeline.timeline[roomTimeline.timeline.length - 1];
   return followingMembers.length !== 0 && (
     <TimelineChange
       variant="follow"
       content={getUsersActionJsx(followingMembers, 'following the conversation.')}
       time=""
+      onClick={() => openReadReceipts(roomId, lastMEvent.getId())}
     />
   );
 }
