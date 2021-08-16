@@ -62,6 +62,14 @@ function openEmojiBoard(cords, requestEmojiCallback) {
   });
 }
 
+function openReadReceipts(roomId, eventId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_READRECEIPTS,
+    roomId,
+    eventId,
+  });
+}
+
 export {
   handleTabChange,
   selectRoom,
@@ -72,4 +80,5 @@ export {
   openInviteUser,
   openSettings,
   openEmojiBoard,
+  openReadReceipts,
 };

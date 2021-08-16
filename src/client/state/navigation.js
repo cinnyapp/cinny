@@ -54,6 +54,13 @@ class Navigation extends EventEmitter {
           action.cords, action.requestEmojiCallback,
         );
       },
+      [cons.actions.navigation.OPEN_READRECEIPTS]: () => {
+        this.emit(
+          cons.events.navigation.READRECEIPTS_OPENED,
+          action.roomId,
+          action.eventId,
+        );
+      },
     };
     actions[action.type]?.();
   }

@@ -6,6 +6,7 @@ import Spinner from '../../atoms/spinner/Spinner';
 import Navigation from '../../organisms/navigation/Navigation';
 import Channel from '../../organisms/channel/Channel';
 import Windows from '../../organisms/pw/Windows';
+import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 
 import initMatrix from '../../../client/initMatrix';
@@ -41,6 +42,7 @@ function Client() {
         <Channel />
       </div>
       <Windows />
+      <Dialogs />
       <EmojiBoardOpener />
     </div>
   );
