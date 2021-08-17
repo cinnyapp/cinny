@@ -13,11 +13,11 @@ function linkifyContent(content) {
 }
 
 function ChannelIntro({
-  avatarSrc, name, heading, desc, time,
+  roomId, avatarSrc, name, heading, desc, time,
 }) {
   return (
     <div className="channel-intro">
-      <Avatar imageSrc={avatarSrc} text={name.slice(0, 1)} bgColor={colorMXID(name)} size="large" />
+      <Avatar imageSrc={avatarSrc} text={name.slice(0, 1)} bgColor={colorMXID(roomId)} size="large" />
       <div className="channel-intro__content">
         <Text className="channel-intro__name" variant="h1">{heading}</Text>
         <Text className="channel-intro__desc" variant="b1">{linkifyContent(desc)}</Text>
@@ -33,6 +33,7 @@ ChannelIntro.defaultProps = {
 };
 
 ChannelIntro.propTypes = {
+  roomId: PropTypes.string.isRequired,
   avatarSrc: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.bool,

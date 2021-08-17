@@ -127,6 +127,7 @@ function genChannelIntro(mEvent, roomTimeline) {
   return (
     <ChannelIntro
       key={mEvent ? mEvent.getId() : Math.random().toString(20).substr(2, 6)}
+      roomId={roomTimeline.roomId}
       avatarSrc={avatarSrc}
       name={roomTimeline.room.name}
       heading={`Welcome to ${roomTimeline.room.name}`}
