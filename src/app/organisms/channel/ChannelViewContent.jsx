@@ -119,11 +119,15 @@ function genMediaContent(mE) {
 }
 
 function genChannelIntro(mEvent, roomTimeline) {
+  const mx = initMatrix.matrixClient;
   const roomTopic = roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
+  const isDM = initMatrix.roomList.directs.has(roomTimeline.roomId);
+  let avatarSrc = roomTimeline.room.getAvatarUrl(mx.baseUrl, 80, 80, 'crop');
+  avatarSrc = isDM ? roomTimeline.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
   return (
     <ChannelIntro
       key={mEvent ? mEvent.getId() : Math.random().toString(20).substr(2, 6)}
-      avatarSrc={roomTimeline.room.getAvatarUrl(initMatrix.matrixClient.baseUrl, 80, 80, 'crop')}
+      avatarSrc={avatarSrc}
       name={roomTimeline.room.name}
       heading={`Welcome to ${roomTimeline.room.name}`}
       desc={`This is the beginning of ${roomTimeline.room.name} channel.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
