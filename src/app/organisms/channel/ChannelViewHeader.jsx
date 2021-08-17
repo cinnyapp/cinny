@@ -19,7 +19,9 @@ import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 
 function ChannelViewHeader({ roomId }) {
   const mx = initMatrix.matrixClient;
-  const avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
+  const isDM = initMatrix.roomList.directs.has(roomId);
+  let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
+  avatarSrc = isDM ? mx.getRoom(roomId).getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') : avatarSrc;
   const roomName = mx.getRoom(roomId).name;
   const roomTopic = mx.getRoom(roomId).currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
 
