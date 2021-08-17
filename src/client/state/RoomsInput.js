@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
-import { Parser, HtmlRenderer } from 'commonmark';
+import { micromark } from 'micromark';
+import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
 import cons from './cons';
 import settings from './settings';
@@ -81,10 +82,11 @@ function getVideoThumbnail(video, width, height, mimeType) {
 }
 
 function getFormattedBody(markdown) {
-  const reader = new Parser();
-  const writer = new HtmlRenderer();
-  const parsed = reader.parse(markdown);
-  return writer.render(parsed);
+  const result = micromark(markdown, {
+    extensions: [gfm()],
+    htmlExtensions: [gfmHtml],
+  });
+  return result;
 }
 
 function getReplyFormattedBody(roomId, reply) {

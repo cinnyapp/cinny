@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
   entry: {
@@ -14,6 +15,7 @@ module.exports = {
       'fs': require.resolve('browserify-fs'),
       'stream': require.resolve('stream-browserify'),
       'util': require.resolve('util/'),
+      'assert': require.resolve('assert/'),
     }
   },
   node: {
@@ -64,6 +66,9 @@ module.exports = {
           appleStartup: false,
         }
       }
-    })
+    }),
+    new webpack.DefinePlugin({
+      'process.env': JSON.stringify(process.env),
+    }),
   ],
 };
