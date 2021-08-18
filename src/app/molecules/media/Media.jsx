@@ -137,11 +137,12 @@ function File({
 }
 File.defaultProps = {
   file: null,
+  type: '',
 };
 File.propTypes = {
   name: PropTypes.string.isRequired,
   link: PropTypes.string.isRequired,
-  type: PropTypes.string.isRequired,
+  type: PropTypes.string,
   file: PropTypes.shape({}),
 };
 
@@ -176,6 +177,7 @@ Image.defaultProps = {
   file: null,
   width: null,
   height: null,
+  type: '',
 };
 Image.propTypes = {
   name: PropTypes.string.isRequired,
@@ -183,7 +185,7 @@ Image.propTypes = {
   height: PropTypes.number,
   link: PropTypes.string.isRequired,
   file: PropTypes.shape({}),
-  type: PropTypes.string.isRequired,
+  type: PropTypes.string,
 };
 
 function Audio({
@@ -220,11 +222,12 @@ function Audio({
 }
 Audio.defaultProps = {
   file: null,
+  type: '',
 };
 Audio.propTypes = {
   name: PropTypes.string.isRequired,
   link: PropTypes.string.isRequired,
-  type: PropTypes.string.isRequired,
+  type: PropTypes.string,
   file: PropTypes.shape({}),
 };
 
@@ -287,6 +290,7 @@ Video.defaultProps = {
   height: null,
   file: null,
   thumbnail: null,
+  type: '',
   thumbnailType: null,
   thumbnailFile: null,
 };
@@ -297,7 +301,7 @@ Video.propTypes = {
   width: PropTypes.number,
   height: PropTypes.number,
   file: PropTypes.shape({}),
-  type: PropTypes.string.isRequired,
+  type: PropTypes.string,
   thumbnailFile: PropTypes.shape({}),
   thumbnailType: PropTypes.string,
 };

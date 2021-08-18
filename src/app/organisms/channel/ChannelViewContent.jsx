@@ -61,10 +61,15 @@ function isMedia(mE) {
 function genMediaContent(mE) {
   const mx = initMatrix.matrixClient;
   const mContent = mE.getContent();
-  let mediaMXC = mContent.url;
-  let thumbnailMXC = mContent?.info?.thumbnail_url;
+  if (!mContent || !mContent.body) return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
+
+  let mediaMXC = mContent?.url;
   const isEncryptedFile = typeof mediaMXC === 'undefined';
-  if (isEncryptedFile) mediaMXC = mContent.file.url;
+  if (isEncryptedFile) mediaMXC = mContent?.file?.url;
+
+  let thumbnailMXC = mContent?.info?.thumbnail_url;
+
+  if (typeof mediaMXC === 'undefined' || mediaMXC === '') return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
 
   switch (mE.getContent()?.msgtype) {
     case 'm.file':
@@ -72,19 +77,19 @@ function genMediaContent(mE) {
         <Media.File
           name={mContent.body}
           link={mx.mxcUrlToHttp(mediaMXC)}
-          file={mContent.file}
-          type={mContent.info.mimetype}
+          type={mContent.info?.mimetype}
+          file={mContent.file || null}
         />
       );
     case 'm.image':
       return (
         <Media.Image
           name={mContent.body}
-          width={mContent.info.w || null}
-          height={mContent.info.h || null}
+          width={typeof mContent.info?.w === 'number' ? mContent.info?.w : null}
+          height={typeof mContent.info?.h === 'number' ? mContent.info?.h : null}
           link={mx.mxcUrlToHttp(mediaMXC)}
           file={isEncryptedFile ? mContent.file : null}
-          type={mContent.info.mimetype}
+          type={mContent.info?.mimetype}
         />
       );
     case 'm.audio':
@@ -92,8 +97,8 @@ function genMediaContent(mE) {
         <Media.Audio
           name={mContent.body}
           link={mx.mxcUrlToHttp(mediaMXC)}
-          type={mContent.info.mimetype}
-          file={mContent.file}
+          type={mContent.info?.mimetype}
+          file={mContent.file || null}
         />
       );
     case 'm.video':
@@ -105,16 +110,16 @@ function genMediaContent(mE) {
           name={mContent.body}
           link={mx.mxcUrlToHttp(mediaMXC)}
           thumbnail={thumbnailMXC === null ? null : mx.mxcUrlToHttp(thumbnailMXC)}
-          thumbnailFile={isEncryptedFile ? mContent.info.thumbnail_file : null}
-          thumbnailType={mContent.info.thumbnail_info?.mimetype || null}
-          width={mContent.info.w || null}
-          height={mContent.info.h || null}
+          thumbnailFile={isEncryptedFile ? mContent.info?.thumbnail_file : null}
+          thumbnailType={mContent.info?.thumbnail_info?.mimetype || null}
+          width={typeof mContent.info?.w === 'number' ? mContent.info?.w : null}
+          height={typeof mContent.info?.h === 'number' ? mContent.info?.h : null}
           file={isEncryptedFile ? mContent.file : null}
-          type={mContent.info.mimetype}
+          type={mContent.info?.mimetype}
         />
       );
     default:
-      return 'Unable to attach media file!';
+      return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
   }
 }
 
