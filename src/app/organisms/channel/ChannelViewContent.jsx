@@ -55,6 +55,7 @@ function isMedia(mE) {
     || mE.getContent()?.msgtype === 'm.image'
     || mE.getContent()?.msgtype === 'm.audio'
     || mE.getContent()?.msgtype === 'm.video'
+    || mE.getType() === 'm.sticker'
   );
 }
 
@@ -71,7 +72,10 @@ function genMediaContent(mE) {
 
   if (typeof mediaMXC === 'undefined' || mediaMXC === '') return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
 
-  switch (mE.getContent()?.msgtype) {
+  let msgType = mE.getContent()?.msgtype;
+  if (mE.getType() === 'm.sticker') msgType = 'm.image';
+
+  switch (msgType) {
     case 'm.file':
       return (
         <Media.File
@@ -457,6 +461,7 @@ function ChannelViewContent({
       mEvent.getType() !== 'm.room.message'
       && mEvent.getType() !== 'm.room.encrypted'
       && mEvent.getType() !== 'm.room.member'
+      && mEvent.getType() !== 'm.sticker'
     ) return false;
     if (mEvent.getRelation()?.rel_type === 'm.replace') return false;
 
