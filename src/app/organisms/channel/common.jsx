@@ -12,11 +12,13 @@ function getTimelineJSXMessages() {
         </>
       );
     },
-    leave(user) {
+    leave(user, reason) {
+      const reasonMsg = (typeof reason === 'string') ? `: ${reason}` : '';
       return (
         <>
           <b>{user}</b>
           {' left the channel'}
+          {reasonMsg}
         </>
       );
     },
@@ -48,7 +50,7 @@ function getTimelineJSXMessages() {
       );
     },
     kick(actor, user, reason) {
-      const reasonMsg = (typeof reason === 'string') ? ` for ${reason}` : '';
+      const reasonMsg = (typeof reason === 'string') ? `: ${reason}` : '';
       return (
         <>
           <b>{actor}</b>
@@ -59,7 +61,7 @@ function getTimelineJSXMessages() {
       );
     },
     ban(actor, user, reason) {
-      const reasonMsg = (typeof reason === 'string') ? ` for ${reason}` : '';
+      const reasonMsg = (typeof reason === 'string') ? `: ${reason}` : '';
       return (
         <>
           <b>{actor}</b>
@@ -209,7 +211,7 @@ function parseTimelineChange(mEvent) {
       if (sender === mEvent.getStateKey()) {
         switch (prevContent.membership) {
           case 'invite': return makeReturnObj('invite-cancel', tJSXMsgs.rejectInvite(senderName));
-          default: return makeReturnObj('leave', tJSXMsgs.leave(senderName));
+          default: return makeReturnObj('leave', tJSXMsgs.leave(senderName, content.reason));
         }
       }
       switch (prevContent.membership) {
