@@ -161,17 +161,20 @@ function getUsersActionJsx(userIds, actionStr) {
 
 function parseReply(rawContent) {
   if (rawContent.indexOf('>') !== 0) return null;
-  let content = rawContent.slice(rawContent.indexOf('@'));
-  const userId = content.slice(0, content.indexOf('>'));
+  let content = rawContent.slice(rawContent.indexOf('<') + 1);
+  const user = content.slice(0, content.indexOf('>'));
 
   content = content.slice(content.indexOf('>') + 2);
   const replyContent = content.slice(0, content.indexOf('\n\n'));
   content = content.slice(content.indexOf('\n\n') + 2);
 
-  if (userId === '') return null;
+  if (user === '') return null;
+
+  const isUserId = user.match(/^@.+:.+/);
 
   return {
-    userId,
+    userId: isUserId ? user : null,
+    displayName: isUserId ? null : user,
     replyContent,
     content,
   };

@@ -205,13 +205,12 @@ function genMessage(roomId, prevMEvent, mEvent, roomTimeline, viewEvent) {
 
   if (isReply) {
     const parsedContent = parseReply(content);
-
     if (parsedContent !== null) {
-      const username = getUsername(parsedContent.userId);
+      const c = roomTimeline.room.currentState;
+      const ID = parsedContent.userId || c.getUserIdsWithDisplayName(parsedContent.displayName)[0];
       reply = {
-        userId: parsedContent.userId,
-        color: colorMXID(parsedContent.userId),
-        to: username,
+        color: colorMXID(ID || parsedContent.displayName),
+        to: parsedContent.displayName || getUsername(parsedContent.userId),
         content: parsedContent.replyContent,
       };
       content = parsedContent.content;
@@ -284,7 +283,6 @@ function genMessage(roomId, prevMEvent, mEvent, roomTimeline, viewEvent) {
   );
   const userReply = reply === null ? null : (
     <MessageReply
-      userId={reply.userId}
       name={reply.to}
       color={reply.color}
       content={reply.content}

@@ -86,9 +86,7 @@ MessageHeader.propTypes = {
   time: PropTypes.string.isRequired,
 };
 
-function MessageReply({
-  userId, name, color, content,
-}) {
+function MessageReply({ name, color, content }) {
   return (
     <div className="message__reply">
       <Text variant="b2">
@@ -101,7 +99,6 @@ function MessageReply({
 }
 
 MessageReply.propTypes = {
-  userId: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   color: PropTypes.string.isRequired,
   content: PropTypes.string.isRequired,
