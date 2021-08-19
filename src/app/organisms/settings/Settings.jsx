@@ -62,7 +62,10 @@ function SecuritySection() {
     <div className="set-security settings-content">
       <SettingTile
         title={`Device ID: ${initMatrix.matrixClient.getDeviceId()}`}
-        content={<Text variant="b3">Use this device ID to verify or manage this session from Element client.</Text>}
+      />
+      <SettingTile
+        title={`Device key: ${initMatrix.matrixClient.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
+        content={<Text variant="b3">Use this device ID-key combo to verify or manage this session from Element client.</Text>}
       />
       <SettingTile
         title="Import E2E room keys"
