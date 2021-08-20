@@ -86,7 +86,10 @@ function getFormattedBody(markdown) {
     extensions: [gfm()],
     htmlExtensions: [gfmHtml],
   });
-  return result;
+  const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
+  if (bodyParts === null) return result;
+  if (bodyParts[2].indexOf('</p>') >= 0) return result;
+  return bodyParts[2];
 }
 
 function getReplyFormattedBody(roomId, reply) {
@@ -212,8 +215,11 @@ class RoomsInput extends EventEmitter {
         msgtype: 'm.text',
       };
       if (settings.isMarkdown) {
-        content.format = 'org.matrix.custom.html';
-        content.formatted_body = getFormattedBody(input.message);
+        const formattedBody = getFormattedBody(input.message);
+        if (formattedBody !== input.message) {
+          content.format = 'org.matrix.custom.html';
+          content.formatted_body = formattedBody;
+        }
       }
       if (typeof input.replyTo !== 'undefined') {
         content = bindReplyToContent(roomId, input.replyTo, content);
@@ -325,6 +331,45 @@ class RoomsInput extends EventEmitter {
       return { file: encryptInfo };
     }
     return { url };
+  }
+
+  async sendEditedMessage(roomId, mEvent, editedBody) {
+    const isReply = typeof mEvent.getWireContent()['m.relates_to']?.['m.in_reply_to'] !== 'undefined';
+
+    const content = {
+      body: ` * ${editedBody}`,
+      msgtype: 'm.text',
+      'm.new_content': {
+        body: editedBody,
+        msgtype: 'm.text',
+      },
+      'm.relates_to': {
+        event_id: mEvent.getId(),
+        rel_type: 'm.replace',
+      },
+    };
+    if (settings.isMarkdown) {
+      const formattedBody = getFormattedBody(editedBody);
+      if (formattedBody !== editedBody) {
+        content.formatted_body = ` * ${formattedBody}`;
+        content.format = 'org.matrix.custom.html';
+        content['m.new_content'].formatted_body = formattedBody;
+        content['m.new_content'].format = 'org.matrix.custom.html';
+      }
+    }
+    if (isReply) {
+      const evBody = mEvent.getContent().body;
+      const replyHead = evBody.slice(0, evBody.indexOf('\n\n'));
+      const evFBody = mEvent.getContent().formatted_body;
+      const fReplyHead = evFBody.slice(0, evFBody.indexOf('</mx-reply>'));
+
+      content.format = 'org.matrix.custom.html';
+      content.formatted_body = `${fReplyHead}</mx-reply>${(content.formatted_body || content.body)}`;
+
+      content.body = `${replyHead}\n\n${content.body}`;
+    }
+
+    this.matrixClient.sendMessage(roomId, content);
   }
 }
 

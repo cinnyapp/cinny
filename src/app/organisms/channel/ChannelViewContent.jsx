@@ -16,11 +16,13 @@ import { openEmojiBoard, openReadReceipts } from '../../../client/action/navigat
 import Divider from '../../atoms/divider/Divider';
 import Avatar from '../../atoms/avatar/Avatar';
 import IconButton from '../../atoms/button/IconButton';
+import ContextMenu, { MenuHeader, MenuItem, MenuBorder } from '../../atoms/context-menu/ContextMenu';
 import {
   Message,
   MessageHeader,
   MessageReply,
   MessageContent,
+  MessageEdit,
   MessageReactionGroup,
   MessageReaction,
   MessageOptions,
@@ -32,6 +34,8 @@ import TimelineChange from '../../molecules/message/TimelineChange';
 
 import ReplyArrowIC from '../../../../public/res/ic/outlined/reply-arrow.svg';
 import EmojiAddIC from '../../../../public/res/ic/outlined/emoji-add.svg';
+import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
+import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
@@ -182,193 +186,6 @@ function pickEmoji(e, roomId, eventId, roomTimeline) {
   });
 }
 
-function genMessage(roomId, prevMEvent, mEvent, roomTimeline, viewEvent) {
-  const mx = initMatrix.matrixClient;
-  const myPowerlevel = roomTimeline.room.getMember(mx.getUserId()).powerLevel;
-  const canIRedact = roomTimeline.room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
-
-  const isContentOnly = (
-    prevMEvent !== null
-    && prevMEvent.getType() !== 'm.room.member'
-    && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
-    && prevMEvent.getSender() === mEvent.getSender()
-  );
-
-  let content = mEvent.getContent().body;
-  if (typeof content === 'undefined') return null;
-  let reply = null;
-  let reactions = null;
-  let isMarkdown = mEvent.getContent().format === 'org.matrix.custom.html';
-  const isReply = typeof mEvent.getWireContent()['m.relates_to']?.['m.in_reply_to'] !== 'undefined';
-  const isEdited = roomTimeline.editedTimeline.has(mEvent.getId());
-  const haveReactions = roomTimeline.reactionTimeline.has(mEvent.getId());
-
-  if (isReply) {
-    const parsedContent = parseReply(content);
-    if (parsedContent !== null) {
-      const c = roomTimeline.room.currentState;
-      const ID = parsedContent.userId || c.getUserIdsWithDisplayName(parsedContent.displayName)[0];
-      reply = {
-        color: colorMXID(ID || parsedContent.displayName),
-        to: parsedContent.displayName || getUsername(parsedContent.userId),
-        content: parsedContent.replyContent,
-      };
-      content = parsedContent.content;
-    }
-  }
-
-  if (isEdited) {
-    const editedList = roomTimeline.editedTimeline.get(mEvent.getId());
-    const latestEdited = editedList[editedList.length - 1];
-    if (typeof latestEdited.getContent()['m.new_content'] === 'undefined') return null;
-    const latestEditBody = latestEdited.getContent()['m.new_content'].body;
-    const parsedEditedContent = parseReply(latestEditBody);
-    isMarkdown = latestEdited.getContent()['m.new_content'].format === 'org.matrix.custom.html';
-    if (parsedEditedContent === null) {
-      content = latestEditBody;
-    } else {
-      content = parsedEditedContent.content;
-    }
-  }
-
-  if (haveReactions) {
-    reactions = [];
-    roomTimeline.reactionTimeline.get(mEvent.getId()).forEach((rEvent) => {
-      if (rEvent.getRelation() === null) return;
-      function alreadyHaveThisReaction(rE) {
-        for (let i = 0; i < reactions.length; i += 1) {
-          if (reactions[i].key === rE.getRelation().key) return true;
-        }
-        return false;
-      }
-      if (alreadyHaveThisReaction(rEvent)) {
-        for (let i = 0; i < reactions.length; i += 1) {
-          if (reactions[i].key === rEvent.getRelation().key) {
-            reactions[i].users.push(rEvent.getSender());
-            if (reactions[i].isActive !== true) {
-              const myUserId = initMatrix.matrixClient.getUserId();
-              reactions[i].isActive = rEvent.getSender() === myUserId;
-              if (reactions[i].isActive) reactions[i].id = rEvent.getId();
-            }
-            break;
-          }
-        }
-      } else {
-        reactions.push({
-          id: rEvent.getId(),
-          key: rEvent.getRelation().key,
-          users: [rEvent.getSender()],
-          isActive: (rEvent.getSender() === initMatrix.matrixClient.getUserId()),
-        });
-      }
-    });
-  }
-
-  const senderMXIDColor = colorMXID(mEvent.sender.userId);
-  const userAvatar = isContentOnly ? null : (
-    <Avatar
-      imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
-      text={getUsername(mEvent.sender.userId).slice(0, 1)}
-      bgColor={senderMXIDColor}
-      size="small"
-    />
-  );
-  const userHeader = isContentOnly ? null : (
-    <MessageHeader
-      userId={mEvent.sender.userId}
-      name={getUsername(mEvent.sender.userId)}
-      color={senderMXIDColor}
-      time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
-    />
-  );
-  const userReply = reply === null ? null : (
-    <MessageReply
-      name={reply.to}
-      color={reply.color}
-      content={reply.content}
-    />
-  );
-  const userContent = (
-    <MessageContent
-      isMarkdown={isMarkdown}
-      content={isMedia(mEvent) ? genMediaContent(mEvent) : content}
-      isEdited={isEdited}
-    />
-  );
-  const userReactions = reactions === null ? null : (
-    <MessageReactionGroup>
-      {
-        reactions.map((reaction) => (
-          <MessageReaction
-            key={reaction.id}
-            reaction={reaction.key}
-            users={reaction.users}
-            isActive={reaction.isActive}
-            onClick={() => {
-              toggleEmoji(roomId, mEvent.getId(), reaction.key, roomTimeline);
-            }}
-          />
-        ))
-      }
-      <IconButton
-        onClick={(e) => pickEmoji(e, roomId, mEvent.getId(), roomTimeline)}
-        src={EmojiAddIC}
-        size="extra-small"
-        tooltip="Add reaction"
-      />
-    </MessageReactionGroup>
-  );
-  const userOptions = (
-    <MessageOptions>
-      <IconButton
-        onClick={(e) => pickEmoji(e, roomId, mEvent.getId(), roomTimeline)}
-        src={EmojiAddIC}
-        size="extra-small"
-        tooltip="Add reaction"
-      />
-      <IconButton
-        onClick={() => {
-          viewEvent.emit('reply_to', mEvent.getSender(), mEvent.getId(), isMedia(mEvent) ? mEvent.getContent().body : content);
-        }}
-        src={ReplyArrowIC}
-        size="extra-small"
-        tooltip="Reply"
-      />
-      <IconButton
-        onClick={() => openReadReceipts(roomId, mEvent.getId())}
-        src={TickMarkIC}
-        size="extra-small"
-        tooltip="Read receipts"
-      />
-      {(canIRedact || mEvent.getSender() === mx.getUserId()) && (
-        <IconButton
-          onClick={() => {
-            if (window.confirm('Are you sure you want to delete this event')) {
-              redactEvent(roomId, mEvent.getId());
-            }
-          }}
-          src={BinIC}
-          size="extra-small"
-          tooltip="Delete"
-        />
-      )}
-    </MessageOptions>
-  );
-
-  const myMessageEl = (
-    <Message
-      key={mEvent.getId()}
-      avatar={userAvatar}
-      header={userHeader}
-      reply={userReply}
-      content={userContent}
-      reactions={userReactions}
-      options={userOptions}
-    />
-  );
-  return myMessageEl;
-}
-
 let wasAtBottom = true;
 function ChannelViewContent({
   roomId, roomTimeline, timelineScroll, viewEvent,
@@ -376,6 +193,7 @@ function ChannelViewContent({
   const [isReachedTimelineEnd, setIsReachedTimelineEnd] = useState(false);
   const [onStateUpdate, updateState] = useState(null);
   const [onPagination, setOnPagination] = useState(null);
+  const [editEvent, setEditEvent] = useState(null);
   const mx = initMatrix.matrixClient;
 
   function autoLoadTimeline() {
@@ -453,6 +271,250 @@ function ChannelViewContent({
   }, [onStateUpdate]);
 
   let prevMEvent = null;
+  function genMessage(mEvent) {
+    const myPowerlevel = roomTimeline.room.getMember(mx.getUserId()).powerLevel;
+    const canIRedact = roomTimeline.room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
+
+    const isContentOnly = (
+      prevMEvent !== null
+      && prevMEvent.getType() !== 'm.room.member'
+      && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
+      && prevMEvent.getSender() === mEvent.getSender()
+    );
+
+    let content = mEvent.getContent().body;
+    if (typeof content === 'undefined') return null;
+    let reply = null;
+    let reactions = null;
+    let isMarkdown = mEvent.getContent().format === 'org.matrix.custom.html';
+    const isReply = typeof mEvent.getWireContent()['m.relates_to']?.['m.in_reply_to'] !== 'undefined';
+    const isEdited = roomTimeline.editedTimeline.has(mEvent.getId());
+    const haveReactions = roomTimeline.reactionTimeline.has(mEvent.getId());
+
+    if (isReply) {
+      const parsedContent = parseReply(content);
+      if (parsedContent !== null) {
+        const c = roomTimeline.room.currentState;
+        const displayNameToUserIds = c.getUserIdsWithDisplayName(parsedContent.displayName);
+        const ID = parsedContent.userId || displayNameToUserIds[0];
+        reply = {
+          color: colorMXID(ID || parsedContent.displayName),
+          to: parsedContent.displayName || getUsername(parsedContent.userId),
+          content: parsedContent.replyContent,
+        };
+        content = parsedContent.content;
+      }
+    }
+
+    if (isEdited) {
+      const editedList = roomTimeline.editedTimeline.get(mEvent.getId());
+      const latestEdited = editedList[editedList.length - 1];
+      if (typeof latestEdited.getContent()['m.new_content'] === 'undefined') return null;
+      const latestEditBody = latestEdited.getContent()['m.new_content'].body;
+      const parsedEditedContent = parseReply(latestEditBody);
+      isMarkdown = latestEdited.getContent()['m.new_content'].format === 'org.matrix.custom.html';
+      if (parsedEditedContent === null) {
+        content = latestEditBody;
+      } else {
+        content = parsedEditedContent.content;
+      }
+    }
+
+    if (haveReactions) {
+      reactions = [];
+      roomTimeline.reactionTimeline.get(mEvent.getId()).forEach((rEvent) => {
+        if (rEvent.getRelation() === null) return;
+        function alreadyHaveThisReaction(rE) {
+          for (let i = 0; i < reactions.length; i += 1) {
+            if (reactions[i].key === rE.getRelation().key) return true;
+          }
+          return false;
+        }
+        if (alreadyHaveThisReaction(rEvent)) {
+          for (let i = 0; i < reactions.length; i += 1) {
+            if (reactions[i].key === rEvent.getRelation().key) {
+              reactions[i].users.push(rEvent.getSender());
+              if (reactions[i].isActive !== true) {
+                const myUserId = initMatrix.matrixClient.getUserId();
+                reactions[i].isActive = rEvent.getSender() === myUserId;
+                if (reactions[i].isActive) reactions[i].id = rEvent.getId();
+              }
+              break;
+            }
+          }
+        } else {
+          reactions.push({
+            id: rEvent.getId(),
+            key: rEvent.getRelation().key,
+            users: [rEvent.getSender()],
+            isActive: (rEvent.getSender() === initMatrix.matrixClient.getUserId()),
+          });
+        }
+      });
+    }
+
+    const senderMXIDColor = colorMXID(mEvent.sender.userId);
+    const userAvatar = isContentOnly ? null : (
+      <Avatar
+        imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
+        text={getUsername(mEvent.sender.userId).slice(0, 1)}
+        bgColor={senderMXIDColor}
+        size="small"
+      />
+    );
+    const userHeader = isContentOnly ? null : (
+      <MessageHeader
+        userId={mEvent.sender.userId}
+        name={getUsername(mEvent.sender.userId)}
+        color={senderMXIDColor}
+        time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
+      />
+    );
+    const userReply = reply === null ? null : (
+      <MessageReply
+        name={reply.to}
+        color={reply.color}
+        content={reply.content}
+      />
+    );
+    const userContent = (
+      <MessageContent
+        isMarkdown={isMarkdown}
+        content={isMedia(mEvent) ? genMediaContent(mEvent) : content}
+        isEdited={isEdited}
+      />
+    );
+    const userReactions = reactions === null ? null : (
+      <MessageReactionGroup>
+        {
+          reactions.map((reaction) => (
+            <MessageReaction
+              key={reaction.id}
+              reaction={reaction.key}
+              users={reaction.users}
+              isActive={reaction.isActive}
+              onClick={() => {
+                toggleEmoji(roomId, mEvent.getId(), reaction.key, roomTimeline);
+              }}
+            />
+          ))
+        }
+        <IconButton
+          onClick={(e) => pickEmoji(e, roomId, mEvent.getId(), roomTimeline)}
+          src={EmojiAddIC}
+          size="extra-small"
+          tooltip="Add reaction"
+        />
+      </MessageReactionGroup>
+    );
+    const userOptions = (
+      <MessageOptions>
+        <IconButton
+          onClick={(e) => pickEmoji(e, roomId, mEvent.getId(), roomTimeline)}
+          src={EmojiAddIC}
+          size="extra-small"
+          tooltip="Add reaction"
+        />
+        <IconButton
+          onClick={() => {
+            viewEvent.emit('reply_to', mEvent.getSender(), mEvent.getId(), isMedia(mEvent) ? mEvent.getContent().body : content);
+          }}
+          src={ReplyArrowIC}
+          size="extra-small"
+          tooltip="Reply"
+        />
+        {(mEvent.getSender() === mx.getUserId() && !isMedia(mEvent)) && (
+          <IconButton
+            onClick={() => setEditEvent(mEvent)}
+            src={PencilIC}
+            size="extra-small"
+            tooltip="Edit"
+          />
+        )}
+        <ContextMenu
+          content={() => (
+            <>
+              <MenuHeader>Options</MenuHeader>
+              <MenuItem
+                iconSrc={EmojiAddIC}
+                onClick={(e) => pickEmoji(e, roomId, mEvent.getId(), roomTimeline)}
+              >
+                Add reaciton
+              </MenuItem>
+              <MenuItem
+                iconSrc={ReplyArrowIC}
+                onClick={() => {
+                  viewEvent.emit('reply_to', mEvent.getSender(), mEvent.getId(), isMedia(mEvent) ? mEvent.getContent().body : content);
+                }}
+              >
+                Reply
+              </MenuItem>
+              {(mEvent.getSender() === mx.getUserId() && !isMedia(mEvent)) && (
+                <MenuItem iconSrc={PencilIC} onClick={() => setEditEvent(mEvent)}>Edit</MenuItem>
+              )}
+              <MenuItem
+                iconSrc={TickMarkIC}
+                onClick={() => openReadReceipts(roomId, mEvent.getId())}
+              >
+                Read receipts
+              </MenuItem>
+              {(canIRedact || mEvent.getSender() === mx.getUserId()) && (
+                <>
+                  <MenuBorder />
+                  <MenuItem
+                    variant="danger"
+                    iconSrc={BinIC}
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete this event')) {
+                        redactEvent(roomId, mEvent.getId());
+                      }
+                    }}
+                  >
+                    Delete
+                  </MenuItem>
+                </>
+              )}
+            </>
+          )}
+          render={(toggleMenu) => (
+            <IconButton
+              onClick={toggleMenu}
+              src={VerticalMenuIC}
+              size="extra-small"
+              tooltip="Options"
+            />
+          )}
+        />
+      </MessageOptions>
+    );
+
+    const isEditingEvent = editEvent?.getId() === mEvent.getId();
+    const myMessageEl = (
+      <Message
+        key={mEvent.getId()}
+        avatar={userAvatar}
+        header={userHeader}
+        reply={userReply}
+        content={editEvent !== null && isEditingEvent ? null : userContent}
+        editContent={editEvent !== null && isEditingEvent ? (
+          <MessageEdit
+            content={content}
+            onSave={(newBody) => {
+              if (newBody !== content) {
+                initMatrix.roomsInput.sendEditedMessage(roomId, mEvent, newBody);
+              }
+              setEditEvent(null);
+            }}
+            onCancel={() => setEditEvent(null)}
+          />
+        ) : null}
+        reactions={userReactions}
+        options={editEvent !== null && isEditingEvent ? null : userOptions}
+      />
+    );
+    return myMessageEl;
+  }
+
   function renderMessage(mEvent) {
     if (mEvent.getType() === 'm.room.create') return genChannelIntro(mEvent, roomTimeline);
     if (
@@ -472,7 +534,7 @@ function ChannelViewContent({
     }
 
     if (mEvent.getType() !== 'm.room.member') {
-      const messageComp = genMessage(roomId, prevMEvent, mEvent, roomTimeline, viewEvent);
+      const messageComp = genMessage(mEvent);
       prevMEvent = mEvent;
       return (
         <React.Fragment key={`box-${mEvent.getId()}`}>
