@@ -94,6 +94,7 @@
 
 .message__reply,
 .message__content,
+.message__edit,
 .message__reactions {
   max-width: 640px;
   min-width: 0;
@@ -162,6 +163,15 @@
   }
   &-edited {
     color: var(--tc-surface-low);
+  }
+}
+.message__edit {
+  padding: var(--sp-extra-tight) 0;
+  &-btns button {
+    margin: var(--sp-tight) var(--sp-tight) 0 0;
+    [dir=rtl] & {
+      margin: 0 0 var(--sp-tight) var(--sp-tight);
+    }
   }
 }
 .message__reactions {
@@ -238,6 +248,7 @@
   position: absolute;
   top: 0;
   right: 60px;
+  z-index: 999;
   transform: translateY(-50%);
 
   border-radius: var(--bo-radius);

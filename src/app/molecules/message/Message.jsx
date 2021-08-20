@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
@@ -13,7 +13,9 @@ import { getUsername } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
+import Button from '../../atoms/button/Button';
 import Tooltip from '../../atoms/tooltip/Tooltip';
+import Input from '../../atoms/input/Input';
 
 import ReplyArrowIC from '../../../../public/res/ic/outlined/reply-arrow.svg';
 
@@ -124,6 +126,30 @@ MessageContent.propTypes = {
   isEdited: PropTypes.bool,
 };
 
+function MessageEdit({ content, onSave, onCancel }) {
+  const editInputRef = useRef(null);
+  return (
+    <form className="message__edit" onSubmit={(e) => { e.preventDefault(); onSave(editInputRef.current.value); }}>
+      <Input
+        forwardRef={editInputRef}
+        value={content}
+        placeholder="Edit message"
+        required
+        resizable
+      />
+      <div className="message__edit-btns">
+        <Button type="submit" variant="primary">Save</Button>
+        <Button onClick={onCancel}>Cancel</Button>
+      </div>
+    </form>
+  );
+}
+MessageEdit.propTypes = {
+  content: PropTypes.string.isRequired,
+  onSave: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};
+
 function MessageReactionGroup({ children }) {
   return (
     <div className="message__reactions text text-b3 noselect">
@@ -192,7 +218,7 @@ MessageOptions.propTypes = {
 };
 
 function Message({
-  avatar, header, reply, content, reactions, options,
+  avatar, header, reply, content, editContent, reactions, options,
 }) {
   const msgClass = header === null ? ' message--content-only' : ' message--full';
   return (
@@ -203,7 +229,8 @@ function Message({
       <div className="message__main-container">
         {header !== null && header}
         {reply !== null && reply}
-        {content}
+        {content !== null && content}
+        {editContent !== null && editContent}
         {reactions !== null && reactions}
         {options !== null && options}
       </div>
@@ -214,6 +241,8 @@ Message.defaultProps = {
   avatar: null,
   header: null,
   reply: null,
+  content: null,
+  editContent: null,
   reactions: null,
   options: null,
 };
@@ -221,7 +250,8 @@ Message.propTypes = {
   avatar: PropTypes.node,
   header: PropTypes.node,
   reply: PropTypes.node,
-  content: PropTypes.node.isRequired,
+  content: PropTypes.node,
+  editContent: PropTypes.node,
   reactions: PropTypes.node,
   options: PropTypes.node,
 };
@@ -231,6 +261,7 @@ export {
   MessageHeader,
   MessageReply,
   MessageContent,
+  MessageEdit,
   MessageReactionGroup,
   MessageReaction,
   MessageOptions,
