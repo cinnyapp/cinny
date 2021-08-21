@@ -170,7 +170,7 @@
   &-btns button {
     margin: var(--sp-tight) var(--sp-tight) 0 0;
     [dir=rtl] & {
-      margin: 0 0 var(--sp-tight) var(--sp-tight);
+      margin: var(--sp-tight) 0 0 var(--sp-tight);
     }
   }
 }

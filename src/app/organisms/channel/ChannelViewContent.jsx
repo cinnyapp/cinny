@@ -46,9 +46,9 @@ const MAX_MSG_DIFF_MINUTES = 5;
 function genPlaceholders() {
   return (
     <>
-      <PlaceholderMessage key={Math.random().toString(20).substr(2, 6)} />
-      <PlaceholderMessage key={Math.random().toString(20).substr(2, 6)} />
-      <PlaceholderMessage key={Math.random().toString(20).substr(2, 6)} />
+      <PlaceholderMessage key="placeholder-1" />
+      <PlaceholderMessage key="placeholder-2" />
+      <PlaceholderMessage key="placeholder-3" />
     </>
   );
 }
@@ -139,7 +139,7 @@ function genChannelIntro(mEvent, roomTimeline) {
   avatarSrc = isDM ? roomTimeline.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
   return (
     <ChannelIntro
-      key={mEvent ? mEvent.getId() : Math.random().toString(20).substr(2, 6)}
+      key={mEvent ? mEvent.getId() : 'channel-intro'}
       roomId={roomTimeline.roomId}
       avatarSrc={avatarSrc}
       name={roomTimeline.room.name}
