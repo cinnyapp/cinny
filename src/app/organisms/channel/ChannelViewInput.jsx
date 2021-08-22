@@ -300,10 +300,10 @@ function ChannelViewInput({
         <div ref={rightOptionsRef} className="channel-input__option-container">
           <IconButton
             onClick={(e) => {
+              const boxInfo = e.target.getBoundingClientRect();
               openEmojiBoard({
-                x: '10%',
-                y: 300,
-                isReverse: true,
+                x: boxInfo.x + (document.dir === 'rtl' ? -80 : 80),
+                y: boxInfo.y - 250,
                 detail: e.detail,
               }, addEmoji);
             }}

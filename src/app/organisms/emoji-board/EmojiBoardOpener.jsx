@@ -18,13 +18,7 @@ function EmojiBoardOpener() {
       return;
     }
 
-    const x = typeof cords.x === 'string' ? cords.x : `${cords.x}px`;
-    const y = typeof cords.y === 'string' ? cords.y : `${cords.y}px`;
-
-    openerRef.current.style.left = cords.isReverse ? 'unset' : x;
-    openerRef.current.style.top = cords.isReverse ? 'unset' : y;
-    openerRef.current.style.right = cords.isReverse ? x : 'unset';
-    openerRef.current.style.bottom = cords.isReverse ? y : 'unset';
+    openerRef.current.style.transform = `translate(${cords.x}px, ${cords.y}px)`;
     requestCallback = requestEmojiCallback;
     openerRef.current.click();
   }

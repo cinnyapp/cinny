@@ -176,9 +176,10 @@ function toggleEmoji(roomId, eventId, emojiKey, roomTimeline) {
 }
 
 function pickEmoji(e, roomId, eventId, roomTimeline) {
+  const boxInfo = e.target.getBoundingClientRect();
   openEmojiBoard({
-    x: e.detail ? e.clientX : '50%',
-    y: e.detail ? e.clientY : '50%',
+    x: boxInfo.x,
+    y: boxInfo.y,
     detail: e.detail,
   }, (emoji) => {
     toggleEmoji(roomId, eventId, emoji.unicode, roomTimeline);
@@ -439,7 +440,7 @@ function ChannelViewContent({
                 iconSrc={EmojiAddIC}
                 onClick={(e) => pickEmoji(e, roomId, mEvent.getId(), roomTimeline)}
               >
-                Add reaciton
+                Add reaction
               </MenuItem>
               <MenuItem
                 iconSrc={ReplyArrowIC}
