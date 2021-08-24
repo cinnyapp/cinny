@@ -7,6 +7,7 @@ import TextareaAutosize from 'react-autosize-textarea';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
+import { isMobile } from '../../../client/state/screen';
 import settings from '../../../client/state/settings';
 import { openEmojiBoard } from '../../../client/action/navigation';
 import { bytesToSize } from '../../../util/common';
@@ -49,6 +50,7 @@ function ChannelViewInput({
   const TYPING_TIMEOUT = 5000;
   const mx = initMatrix.matrixClient;
   const { roomsInput } = initMatrix;
+  const mobile = isMobile();
 
   useEffect(() => {
     settings.on(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
@@ -141,8 +143,10 @@ function ChannelViewInput({
     viewEvent.on('reply_to', setUpReply);
     if (textAreaRef?.current !== null) {
       isTyping = false;
-      textAreaRef.current.focus();
       textAreaRef.current.value = roomsInput.getMessage(roomId);
+      if (mobile === null || textAreaRef.current.value !== '') {
+        textAreaRef.current.focus();
+      }
       setAttachment(roomsInput.getAttachment(roomId));
       setReplyTo(roomsInput.getReplyTo(roomId));
     }

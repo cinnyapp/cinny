@@ -35,6 +35,7 @@
     "react-google-recaptcha": "^2.1.0",
     "react-markdown": "^6.0.1",
     "react-modal": "^3.13.1",
+    "react-responsive": "^9.0.0-beta.3",
     "react-router-dom": "^5.2.0",
     "react-syntax-highlighter": "^15.4.3",
     "remark-gfm": "^1.0.0",
