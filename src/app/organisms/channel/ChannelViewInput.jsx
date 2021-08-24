@@ -29,7 +29,7 @@ import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-const CMD_REGEX = /(\/|>[#*@]|:)(\S*)$/;
+const CMD_REGEX = /(\/|>[#*@]|:|@)(\S*)$/;
 let isTyping = false;
 let isCmdActivated = false;
 let cmdCursorPos = null;
@@ -90,20 +90,26 @@ function ChannelViewInput({
 
   function activateCmd(prefix) {
     isCmdActivated = true;
-    inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-positive)';
+    requestAnimationFrame(() => {
+      inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-positive)';
+    });
     rightOptionsA11Y(false);
     viewEvent.emit('cmd_activate', prefix);
   }
   function deactivateCmd() {
     if (inputBaseRef.current !== null) {
-      inputBaseRef.current.style.boxShadow = 'var(--bs-surface-border)';
+      requestAnimationFrame(() => {
+        inputBaseRef.current.style.boxShadow = 'var(--bs-surface-border)';
+      });
       rightOptionsA11Y(true);
     }
     isCmdActivated = false;
     cmdCursorPos = null;
   }
   function errorCmd() {
-    inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-danger)';
+    requestAnimationFrame(() => {
+      inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-danger)';
+    });
   }
   function setCursorPosition(pos) {
     setTimeout(() => {
@@ -242,7 +248,9 @@ function ChannelViewInput({
       return;
     }
     if (!isCmdActivated) activateCmd(cmdPrefix);
-    inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-caution)';
+    requestAnimationFrame(() => {
+      inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-caution)';
+    });
     viewEvent.emit('cmd_process', cmdPrefix, cmdSlug);
   }
 

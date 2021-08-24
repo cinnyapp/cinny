@@ -7,7 +7,7 @@ class Navigation extends EventEmitter {
     super();
 
     this.activeTab = 'channels';
-    this.selectedRoom = null;
+    this.activeRoomId = null;
     this.isPeopleDrawerVisible = true;
   }
 
@@ -15,8 +15,8 @@ class Navigation extends EventEmitter {
     return this.activeTab;
   }
 
-  getActiveRoom() {
-    return this.selectedRoom;
+  getActiveRoomId() {
+    return this.activeRoomId;
   }
 
   navigate(action) {
@@ -26,8 +26,8 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.TAB_CHANGED, this.activeTab);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
-        this.selectedRoom = action.roomId;
-        this.emit(cons.events.navigation.ROOM_SELECTED, this.selectedRoom);
+        this.activeRoomId = action.roomId;
+        this.emit(cons.events.navigation.ROOM_SELECTED, this.activeRoomId);
       },
       [cons.actions.navigation.TOGGLE_PEOPLE_DRAWER]: () => {
         this.isPeopleDrawerVisible = !this.isPeopleDrawerVisible;

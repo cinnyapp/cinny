@@ -117,14 +117,10 @@
   border-radius: var(--bo-radius) var(--bo-radius) 0 0;
   cursor: pointer;
 
-  [dir=rtl] & {
-    margin-right: 0;
-    margin-left: var(--sp-extra-tight);
-  }
-
   & .emoji {
     width: 20px;
     height: 20px;
+    margin-right: var(--sp-ultra-tight);
   }
 
   &:hover {
@@ -135,5 +131,14 @@
     box-shadow: var(--cmd-item-bar);
     border-bottom: 2px solid transparent;
     outline: none;
+  }
+  
+  [dir=rtl] & {
+    margin-right: 0;
+    margin-left: var(--sp-extra-tight);
+    & .emoji {
+      margin-right: 0;
+      margin-left: var(--sp-ultra-tight);
+    }
   }
 }

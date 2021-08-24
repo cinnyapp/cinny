@@ -53,11 +53,15 @@ function addToGroup(emoji) {
 
 const emojis = [];
 emojisData.forEach((emoji) => {
-  const em = { ...emoji, shortcodes: shortcodes[emoji.hexcode] };
+  const myShortCodes = shortcodes[emoji.hexcode];
+  const em = {
+    ...emoji,
+    shortcode: Array.isArray(myShortCodes) ? myShortCodes[0] : myShortCodes,
+    shortcodes: myShortCodes,
+  };
   addToGroup(em);
   emojis.push(em);
 });
-
 function searchEmoji(term) {
   const options = {
     includeScore: true,

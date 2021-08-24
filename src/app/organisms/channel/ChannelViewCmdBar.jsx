@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './ChannelViewCmdBar.scss';
-import Fuse from 'fuse.js';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 
@@ -17,7 +16,8 @@ import {
   openInviteUser,
   openReadReceipts,
 } from '../../../client/action/navigation';
-import { searchEmoji } from '../emoji-board/emoji';
+import { emojis } from '../emoji-board/emoji';
+import AsyncSearch from '../../../util/AsyncSearch';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -74,6 +74,7 @@ function CmdHelp() {
           <Text variant="b2">{'>@people_name'}</Text>
           <MenuHeader>Autofill command</MenuHeader>
           <Text variant="b2">:emoji_name:</Text>
+          <Text variant="b2">@name</Text>
         </>
       )}
       render={(toggleMenu) => (
@@ -176,6 +177,7 @@ function getCmdActivationMessage(prefix) {
     '>#': () => genMessage('Go-to command mode activated. ', 'Type channel name for suggestions.'),
     '>@': () => genMessage('Go-to command mode activated. ', 'Type people name for suggestions.'),
     ':': () => genMessage('Emoji autofill command mode activated. ', 'Type emoji shortcut for suggestions.'),
+    '@': () => genMessage('Name autofill command mode activated. ', 'Type name for suggestions.'),
   };
   return cmd[prefix]?.();
 }
@@ -192,163 +194,166 @@ CmdItem.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-function searchInRoomIds(roomIds, term) {
-  const rooms = roomIds.map((rId) => {
-    const room = initMatrix.matrixClient.getRoom(rId);
-    return {
-      name: room.name,
-      roomId: room.roomId,
-    };
-  });
-  const fuse = new Fuse(rooms, {
-    includeScore: true,
-    keys: ['name'],
-    threshold: '0.3',
-  });
-  return fuse.search(term);
-}
-
-function searchCommands(term) {
-  const fuse = new Fuse(commands, {
-    includeScore: true,
-    keys: ['name'],
-    threshold: '0.3',
-  });
-  return fuse.search(term);
-}
-
-let perfectMatchCmd = null;
-function getCmdSuggestions({ prefix, slug }, fireCmd, viewEvent) {
-  function getRoomsSuggestion(cmdPrefix, rooms, roomSlug) {
-    const result = searchInRoomIds(rooms, roomSlug);
-    if (result.length === 0) viewEvent.emit('cmd_error');
-    perfectMatchCmd = {
-      prefix: cmdPrefix,
-      slug: roomSlug,
-      result: result[0]?.item || null,
-    };
-    return result.map((finding) => (
+function getCmdSuggestions({ prefix, option, suggestions }, fireCmd) {
+  function getGenCmdSuggestions(cmdPrefix, cmds) {
+    const cmdOptString = (typeof option === 'string') ? `/${option}` : '/?';
+    return cmds.map((cmd) => (
       <CmdItem
-        key={finding.item.roomId}
+        key={cmd.name}
         onClick={() => {
           fireCmd({
             prefix: cmdPrefix,
-            slug: roomSlug,
-            result: finding.item,
+            option,
+            result: cmd,
           });
         }}
       >
-        <Text variant="b2">{finding.item.name}</Text>
+        <Text variant="b2">{`${cmd.name}${cmd.isOptions ? cmdOptString : ''}`}</Text>
       </CmdItem>
     ));
   }
 
-  function getGenCmdSuggestions(cmdPrefix, cmdSlug) {
-    const cmdSlugParts = cmdSlug.split('/');
-    const cmdSlugOption = cmdSlugParts[1];
-    const result = searchCommands(cmdSlugParts[0]);
-    if (result.length === 0) viewEvent.emit('cmd_error');
-    perfectMatchCmd = {
-      prefix: cmdPrefix,
-      slug: cmdSlug,
-      option: cmdSlugOption,
-      result: result[0]?.item || null,
-    };
-    return result.map((finding) => {
-      let option = '';
-      if (finding.item.isOptions) {
-        if (typeof cmdSlugOption === 'string') option = `/${cmdSlugOption}`;
-        else option = '/?';
-      }
-      return (
-        <CmdItem
-          key={finding.item.name}
-          onClick={() => {
-            fireCmd({
-              prefix: cmdPrefix,
-              slug: cmdSlug,
-              option: cmdSlugOption,
-              result: finding.item,
-            });
-          }}
-        >
-          <Text variant="b2">{`${finding.item.name}${option}`}</Text>
-        </CmdItem>
-      );
-    });
+  function getRoomsSuggestion(cmdPrefix, rooms) {
+    return rooms.map((room) => (
+      <CmdItem
+        key={room.roomId}
+        onClick={() => {
+          fireCmd({
+            prefix: cmdPrefix,
+            result: room,
+          });
+        }}
+      >
+        <Text variant="b2">{room.name}</Text>
+      </CmdItem>
+    ));
   }
 
-  function getEmojiSuggestion(emPrefix, shortcutSlug) {
-    let searchTerm = shortcutSlug;
-    if (searchTerm.length <= 3) {
-      if (searchTerm.match(/^[-]?(\))/)) searchTerm = 'smile';
-      else if (searchTerm.match(/^[-]?(s|S)/)) searchTerm = 'confused';
-      else if (searchTerm.match(/^[-]?(o|O|0)/)) searchTerm = 'astonished';
-      else if (searchTerm.match(/^[-]?(\|)/)) searchTerm = 'neutral_face';
-      else if (searchTerm.match(/^[-]?(d|D)/)) searchTerm = 'grin';
-      else if (searchTerm.match(/^[-]?(\/)/)) searchTerm = 'frown';
-      else if (searchTerm.match(/^[-]?(p|P)/)) searchTerm = 'stick_out_tongue';
-      else if (searchTerm.match(/^'[-]?(\()/)) searchTerm = 'cry';
-      else if (searchTerm.match(/^[-]?(x|X)/)) searchTerm = 'dizzy_face';
-      else if (searchTerm.match(/^[-]?(\()/)) searchTerm = 'pleading_face';
-      else if (searchTerm.match(/^[-]?(\$)/)) searchTerm = 'money';
-      else if (searchTerm.match(/^(<3)/)) searchTerm = 'heart';
-    }
-    const result = searchEmoji(searchTerm);
-    if (result.length === 0) viewEvent.emit('cmd_error');
-    perfectMatchCmd = {
-      prefix: emPrefix,
-      slug: shortcutSlug,
-      result: result[0]?.item || null,
-    };
-    return result.map((finding) => (
+  function getEmojiSuggestion(emPrefix, emos) {
+    return emos.map((emoji) => (
       <CmdItem
-        key={finding.item.hexcode}
+        key={emoji.hexcode}
         onClick={() => fireCmd({
           prefix: emPrefix,
-          slug: shortcutSlug,
-          result: finding.item,
+          result: emoji,
         })}
       >
         {
           parse(twemoji.parse(
-            finding.item.unicode,
+            emoji.unicode,
             {
               attributes: () => ({
-                unicode: finding.item.unicode,
-                shortcodes: finding.item.shortcodes?.toString(),
+                unicode: emoji.unicode,
+                shortcodes: emoji.shortcodes?.toString(),
               }),
             },
           ))
         }
+        <Text variant="b2">{`:${emoji.shortcode}:`}</Text>
       </CmdItem>
     ));
   }
 
-  const { roomList } = initMatrix;
+  function getNameSuggestion(namePrefix, members) {
+    return members.map((member) => (
+      <CmdItem
+        key={member.userId}
+        onClick={() => {
+          fireCmd({
+            prefix: namePrefix,
+            result: member,
+          });
+        }}
+      >
+        <Text variant="b2">{member.name}</Text>
+      </CmdItem>
+    ));
+  }
+
   const cmd = {
-    '/': (command) => getGenCmdSuggestions(prefix, command),
-    '>*': (space) => getRoomsSuggestion(prefix, [...roomList.spaces], space),
-    '>#': (channel) => getRoomsSuggestion(prefix, [...roomList.rooms], channel),
-    '>@': (people) => getRoomsSuggestion(prefix, [...roomList.directs], people),
-    ':': (emojiShortcut) => getEmojiSuggestion(prefix, emojiShortcut),
+    '/': (cmds) => getGenCmdSuggestions(prefix, cmds),
+    '>*': (spaces) => getRoomsSuggestion(prefix, spaces),
+    '>#': (channels) => getRoomsSuggestion(prefix, channels),
+    '>@': (peoples) => getRoomsSuggestion(prefix, peoples),
+    ':': (emos) => getEmojiSuggestion(prefix, emos),
+    '@': (members) => getNameSuggestion(prefix, members),
   };
-  return cmd[prefix]?.(slug);
+  return cmd[prefix]?.(suggestions);
 }
 
+const asyncSearch = new AsyncSearch();
+let cmdPrefix;
+let cmdOption;
 function ChannelViewCmdBar({ roomId, roomTimeline, viewEvent }) {
   const [cmd, setCmd] = useState(null);
 
+  function displaySuggestions(suggestions) {
+    if (suggestions.length === 0) {
+      setCmd({ prefix: cmd?.prefix || cmdPrefix, error: 'No suggestion found.' });
+      viewEvent.emit('cmd_error');
+      return;
+    }
+    setCmd({ prefix: cmd?.prefix || cmdPrefix, suggestions, option: cmdOption });
+  }
+
   function processCmd(prefix, slug) {
-    setCmd({ prefix, slug });
+    let searchTerm = slug;
+    cmdOption = undefined;
+    cmdPrefix = prefix;
+    if (prefix === '/') {
+      const cmdSlugParts = slug.split('/');
+      [searchTerm, cmdOption] = cmdSlugParts;
+    }
+    if (prefix === ':') {
+      if (searchTerm.length <= 3) {
+        if (searchTerm.match(/^[-]?(\))$/)) searchTerm = 'smile';
+        else if (searchTerm.match(/^[-]?(s|S)$/)) searchTerm = 'confused';
+        else if (searchTerm.match(/^[-]?(o|O|0)$/)) searchTerm = 'astonished';
+        else if (searchTerm.match(/^[-]?(\|)$/)) searchTerm = 'neutral_face';
+        else if (searchTerm.match(/^[-]?(d|D)$/)) searchTerm = 'grin';
+        else if (searchTerm.match(/^[-]?(\/)$/)) searchTerm = 'frown';
+        else if (searchTerm.match(/^[-]?(p|P)$/)) searchTerm = 'stick_out_tongue';
+        else if (searchTerm.match(/^'[-]?(\()$/)) searchTerm = 'cry';
+        else if (searchTerm.match(/^[-]?(x|X)$/)) searchTerm = 'dizzy_face';
+        else if (searchTerm.match(/^[-]?(\()$/)) searchTerm = 'pleading_face';
+        else if (searchTerm.match(/^[-]?(\$)$/)) searchTerm = 'money';
+        else if (searchTerm.match(/^(<3)$/)) searchTerm = 'heart';
+      }
+    }
+
+    asyncSearch.search(searchTerm);
   }
   function activateCmd(prefix) {
     setCmd({ prefix });
-    perfectMatchCmd = null;
+    cmdPrefix = prefix;
+
+    const { roomList, matrixClient } = initMatrix;
+    function getRooms(roomIds) {
+      return roomIds.map((rId) => {
+        const room = matrixClient.getRoom(rId);
+        return {
+          name: room.name,
+          roomId: room.roomId,
+        };
+      });
+    }
+    const setupSearch = {
+      '/': () => asyncSearch.setup(commands, { keys: ['name'], isContain: true }),
+      '>*': () => asyncSearch.setup(getRooms([...roomList.spaces]), { keys: ['name'], limit: 20 }),
+      '>#': () => asyncSearch.setup(getRooms([...roomList.rooms]), { keys: ['name'], limit: 20 }),
+      '>@': () => asyncSearch.setup(getRooms([...roomList.directs]), { keys: ['name'], limit: 20 }),
+      ':': () => asyncSearch.setup(emojis, { keys: ['shortcode'], limit: 20 }),
+      '@': () => asyncSearch.setup(matrixClient.getRoom(roomId).getJoinedMembers().map((member) => ({
+        name: member.name,
+        userId: member.userId.slice(1),
+      })), { keys: ['name', 'userId'], limit: 20 }),
+    };
+    setupSearch[prefix]?.();
   }
   function deactivateCmd() {
     setCmd(null);
-    perfectMatchCmd = null;
+    cmdOption = undefined;
+    cmdPrefix = undefined;
   }
   function fireCmd(myCmd) {
     if (myCmd.prefix.match(/^>[*#@]$/)) {
@@ -364,34 +369,44 @@ function ChannelViewCmdBar({ roomId, roomTimeline, viewEvent }) {
         replace: myCmd.result.unicode,
       });
     }
+    if (myCmd.prefix === '@') {
+      viewEvent.emit('cmd_fired', {
+        replace: myCmd.result.name,
+      });
+    }
     deactivateCmd();
   }
   function executeCmd() {
-    if (perfectMatchCmd === null) return;
-    if (perfectMatchCmd.result === null) return;
-    fireCmd(perfectMatchCmd);
-  }
-  function errorCmd() {
-    setCmd({ error: 'No suggestion found.' });
+    if (cmd.suggestions.length === 0) return;
+    fireCmd({
+      prefix: cmd.prefix,
+      option: cmd.option,
+      result: cmd.suggestions[0],
+    });
   }
 
   useEffect(() => {
     viewEvent.on('cmd_activate', activateCmd);
-    viewEvent.on('cmd_process', processCmd);
     viewEvent.on('cmd_deactivate', deactivateCmd);
-    viewEvent.on('cmd_exe', executeCmd);
-    viewEvent.on('cmd_error', errorCmd);
     return () => {
       deactivateCmd();
       viewEvent.removeListener('cmd_activate', activateCmd);
-      viewEvent.removeListener('cmd_process', processCmd);
       viewEvent.removeListener('cmd_deactivate', deactivateCmd);
-      viewEvent.removeListener('cmd_exe', executeCmd);
-      viewEvent.removeListener('cmd_error', errorCmd);
     };
   }, [roomId]);
 
-  if (cmd !== null && typeof cmd.error !== 'undefined') {
+  useEffect(() => {
+    viewEvent.on('cmd_process', processCmd);
+    viewEvent.on('cmd_exe', executeCmd);
+    asyncSearch.on(asyncSearch.RESULT_SENT, displaySuggestions);
+    return () => {
+      viewEvent.removeListener('cmd_process', processCmd);
+      viewEvent.removeListener('cmd_exe', executeCmd);
+      asyncSearch.removeListener(asyncSearch.RESULT_SENT, displaySuggestions);
+    };
+  }, [cmd]);
+
+  if (typeof cmd?.error === 'string') {
     return (
       <div className="cmd-bar">
         <div className="cmd-bar__info">
@@ -408,8 +423,8 @@ function ChannelViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     <div className="cmd-bar">
       <div className="cmd-bar__info">
         {cmd === null && <CmdHelp />}
-        {cmd !== null && typeof cmd.slug === 'undefined' && <div className="cmd-bar__info-indicator" /> }
-        {cmd !== null && typeof cmd.slug === 'string' && <Text variant="b3">TAB</Text>}
+        {cmd !== null && typeof cmd.suggestions === 'undefined' && <div className="cmd-bar__info-indicator" /> }
+        {cmd !== null && typeof cmd.suggestions !== 'undefined' && <Text variant="b3">TAB</Text>}
       </div>
       <div className="cmd-bar__content">
         {cmd === null && (
@@ -419,10 +434,10 @@ function ChannelViewCmdBar({ roomId, roomTimeline, viewEvent }) {
             viewEvent={viewEvent}
           />
         )}
-        {cmd !== null && typeof cmd.slug === 'undefined' && <Text className="cmd-bar__content-help" variant="b2">{getCmdActivationMessage(cmd.prefix)}</Text>}
-        {cmd !== null && typeof cmd.slug === 'string' && (
+        {cmd !== null && typeof cmd.suggestions === 'undefined' && <Text className="cmd-bar__content-help" variant="b2">{getCmdActivationMessage(cmd.prefix)}</Text>}
+        {cmd !== null && typeof cmd.suggestions !== 'undefined' && (
           <ScrollView horizontal vertical={false} invisible>
-            <div className="cmd-bar__content__suggestions">{getCmdSuggestions(cmd, fireCmd, viewEvent)}</div>
+            <div className="cmd-bar__content__suggestions">{getCmdSuggestions(cmd, fireCmd)}</div>
           </ScrollView>
         )}
       </div>

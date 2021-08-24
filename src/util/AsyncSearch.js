@@ -82,7 +82,7 @@ class AsyncSearch extends EventEmitter {
         if (lastFindingCount !== thisFindingCount) this._sendFindings();
 
         this.searchUptoIndex = searchIndex + 1;
-        queueMicrotask(() => this._find(thisSessionTimestamp, thisFindingCount));
+        setTimeout(() => this._find(thisSessionTimestamp, thisFindingCount));
         return;
       }
     }
