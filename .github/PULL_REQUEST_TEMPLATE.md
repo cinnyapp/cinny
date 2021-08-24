@@ -1,12 +1,12 @@
 <!-- Please read https://github.com/ajbura/cinny/CONTRIBUTING.md before submitting your pull request -->
 
-# Description
+### Description
 
 Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.
 
 Fixes # (issue)
 
-## Type of change
+#### Type of change
 
 Please delete options that are not relevant.
 
@@ -15,7 +15,7 @@ Please delete options that are not relevant.
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] This change requires a documentation update
 
-# Checklist:
+### Checklist:
 
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
