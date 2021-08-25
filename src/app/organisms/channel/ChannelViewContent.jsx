@@ -8,7 +8,7 @@ import dateFormat from 'dateformat';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
-import { getUsername, doesRoomHaveUnread } from '../../../util/matrixUtil';
+import { getUsername, getUsernameOfRoomMember, doesRoomHaveUnread } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { diffMinutes, isNotInSameDay } from '../../../util/common';
 import { openEmojiBoard, openReadReceipts } from '../../../client/action/navigation';
@@ -358,7 +358,7 @@ function ChannelViewContent({
     const userAvatar = isContentOnly ? null : (
       <Avatar
         imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
-        text={getUsername(mEvent.sender.userId).slice(0, 1)}
+        text={getUsernameOfRoomMember(mEvent.sender).slice(0, 1)}
         bgColor={senderMXIDColor}
         size="small"
       />
@@ -366,7 +366,7 @@ function ChannelViewContent({
     const userHeader = isContentOnly ? null : (
       <MessageHeader
         userId={mEvent.sender.userId}
-        name={getUsername(mEvent.sender.userId)}
+        name={getUsernameOfRoomMember(mEvent.sender)}
         color={senderMXIDColor}
         time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
       />

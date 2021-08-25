@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import './PeopleDrawer.scss';
 
 import initMatrix from '../../../client/initMatrix';
-import { getUsername } from '../../../util/matrixUtil';
+import { getUsernameOfRoomMember } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { openInviteUser } from '../../../client/action/navigation';
 
@@ -105,7 +105,7 @@ function PeopleDrawer({ roomId }) {
                     key={member.userId}
                     onClick={() => alert('Viewing profile is yet to be implemented')}
                     avatarSrc={member.getAvatarUrl(initMatrix.matrixClient.baseUrl, 24, 24, 'crop')}
-                    name={getUsername(member.userId)}
+                    name={getUsernameOfRoomMember(member)}
                     color={colorMXID(member.userId)}
                     peopleRole={getPowerLabel(member.powerLevel)}
                   />

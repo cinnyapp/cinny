@@ -25,6 +25,10 @@ function getUsername(userId) {
   return username;
 }
 
+function getUsernameOfRoomMember(roomMember) {
+  return roomMember.name || roomMember.userId;
+}
+
 async function isRoomAliasAvailable(alias) {
   try {
     const myUserId = initMatrix.matrixClient.getUserId();
@@ -62,6 +66,6 @@ function doesRoomHaveUnread(room) {
 }
 
 export {
-  getBaseUrl, getUsername,
+  getBaseUrl, getUsername, getUsernameOfRoomMember,
   isRoomAliasAvailable, doesRoomHaveUnread,
 };
