@@ -134,6 +134,7 @@ function ChannelViewInput({
   }
 
   function focusInput() {
+    if (settings.isTouchScreenDevice) return;
     textAreaRef.current.focus();
   }
 

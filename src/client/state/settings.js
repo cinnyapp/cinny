@@ -24,6 +24,8 @@ class Settings extends EventEmitter {
     this.themeIndex = this.getThemeIndex();
 
     this.isMarkdown = this.getIsMarkdown();
+
+    this.isTouchScreenDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
   }
 
   getThemeIndex() {
