@@ -133,9 +133,14 @@ function ChannelViewInput({
     deactivateCmd();
   }
 
+  function focusInput() {
+    textAreaRef.current.focus();
+  }
+
   function setUpReply(userId, eventId, content) {
     setReplyTo({ userId, eventId, content });
     roomsInput.setReplyTo(roomId, { userId, eventId, content });
+    focusInput();
   }
 
   useEffect(() => {
@@ -147,7 +152,7 @@ function ChannelViewInput({
     viewEvent.on('reply_to', setUpReply);
     if (textAreaRef?.current !== null) {
       isTyping = false;
-      textAreaRef.current.focus();
+      focusInput();
       textAreaRef.current.value = roomsInput.getMessage(roomId);
       setAttachment(roomsInput.getAttachment(roomId));
       setReplyTo(roomsInput.getReplyTo(roomId));
@@ -192,7 +197,7 @@ function ChannelViewInput({
     await roomsInput.sendInput(roomId);
     textAreaRef.current.disabled = false;
     textAreaRef.current.style.cursor = 'unset';
-    textAreaRef.current.focus();
+    focusInput();
 
     textAreaRef.current.value = roomsInput.getMessage(roomId);
     timelineScroll.reachBottom();
