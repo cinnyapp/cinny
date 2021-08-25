@@ -57,6 +57,10 @@ class AsyncSearch extends EventEmitter {
 
     this.term = (this.isCaseSensitive) ? term : term.toLocaleLowerCase();
     if (this.ignoreWhitespace) this.term = this.term.replace(' ', '');
+    if (this.term === '') {
+      this._sendFindings();
+      return;
+    }
 
     this._find(this.sessionStartTimestamp, 0);
   }
@@ -117,7 +121,7 @@ class AsyncSearch extends EventEmitter {
   }
 
   _sendFindings() {
-    this.emit(this.RESULT_SENT, this.findingList);
+    this.emit(this.RESULT_SENT, this.findingList, this.term);
   }
 }
 

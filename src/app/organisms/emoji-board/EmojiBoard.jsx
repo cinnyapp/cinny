@@ -4,11 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './EmojiBoard.scss';
 
-import EventEmitter from 'events';
-
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
-import { emojiGroups, searchEmoji } from './emoji';
+import { emojiGroups, emojis } from './emoji';
+import AsyncSearch from '../../../util/AsyncSearch';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
@@ -26,20 +25,18 @@ import BulbIC from '../../../../public/res/ic/outlined/bulb.svg';
 import PeaceIC from '../../../../public/res/ic/outlined/peace.svg';
 import FlagIC from '../../../../public/res/ic/outlined/flag.svg';
 
-const viewEvent = new EventEmitter();
-
-function EmojiGroup({ name, emojis }) {
+function EmojiGroup({ name, groupEmojis }) {
   function getEmojiBoard() {
     const emojiBoard = [];
     const ROW_EMOJIS_COUNT = 7;
-    const totalEmojis = emojis.length;
+    const totalEmojis = groupEmojis.length;
 
     for (let r = 0; r < totalEmojis; r += ROW_EMOJIS_COUNT) {
       const emojiRow = [];
       for (let c = r; c < r + ROW_EMOJIS_COUNT; c += 1) {
         const emojiIndex = c;
         if (emojiIndex >= totalEmojis) break;
-        const emoji = emojis[emojiIndex];
+        const emoji = groupEmojis[emojiIndex];
         emojiRow.push(
           <span key={emojiIndex}>
             {
@@ -65,13 +62,13 @@ function EmojiGroup({ name, emojis }) {
   return (
     <div className="emoji-group">
       <Text className="emoji-group__header" variant="b2">{name}</Text>
-      <div className="emoji-set">{getEmojiBoard()}</div>
+      {groupEmojis.length !== 0 && <div className="emoji-set">{getEmojiBoard()}</div>}
     </div>
   );
 }
 EmojiGroup.propTypes = {
   name: PropTypes.string.isRequired,
-  emojis: PropTypes.arrayOf(PropTypes.shape({
+  groupEmojis: PropTypes.arrayOf(PropTypes.shape({
     length: PropTypes.number,
     unicode: PropTypes.string,
     hexcode: PropTypes.string,
@@ -82,25 +79,30 @@ EmojiGroup.propTypes = {
   })).isRequired,
 };
 
+const asyncSearch = new AsyncSearch();
+asyncSearch.setup(emojis, { keys: ['shortcode'], limit: 30 });
 function SearchedEmoji() {
-  const [searchedEmojis, setSearchedEmojis] = useState([]);
+  const [searchedEmojis, setSearchedEmojis] = useState(null);
 
-  function handleSearchEmoji(term) {
-    if (term.trim() === '') {
-      setSearchedEmojis([]);
+  function handleSearchEmoji(resultEmojis, term) {
+    if (term === '' || resultEmojis.length === 0) {
+      if (term === '') setSearchedEmojis(null);
+      else setSearchedEmojis([]);
       return;
     }
-    setSearchedEmojis(searchEmoji(term).map((finding) => finding.item));
+    setSearchedEmojis(resultEmojis);
   }
 
   useEffect(() => {
-    viewEvent.on('search-emoji', handleSearchEmoji);
+    asyncSearch.on(asyncSearch.RESULT_SENT, handleSearchEmoji);
     return () => {
-      viewEvent.removeListener('search-emoji', handleSearchEmoji);
+      asyncSearch.removeListener(asyncSearch.RESULT_SENT, handleSearchEmoji);
     };
   }, []);
 
-  return searchedEmojis.length !== 0 && <EmojiGroup key="-1" name="Search results" emojis={searchedEmojis} />;
+  if (searchedEmojis === null) return false;
+
+  return <EmojiGroup key="-1" name={searchedEmojis.length === 0 ? 'No search result found' : 'Search results'} groupEmojis={searchedEmojis} />;
 }
 
 function EmojiBoard({ onSelect }) {
@@ -148,17 +150,14 @@ function EmojiBoard({ onSelect }) {
       return;
     }
     if (searchRef.current.placeholder === shortcodes[0]) return;
-    searchRef.current.setAttribute('placeholder', `:${shortcodes[0]}:`);
+    searchRef.current.setAttribute('placeholder', shortcodes[0]);
     setEmojiInfo({ hexcode, shortcode: shortcodes[0] });
   }
 
   function handleSearchChange(e) {
     const term = e.target.value;
-    setTimeout(() => {
-      if (e.target.value !== term) return;
-      viewEvent.emit('search-emoji', term);
-      scrollEmojisRef.current.scrollTop = 0;
-    }, 500);
+    asyncSearch.search(term);
+    scrollEmojisRef.current.scrollTop = 0;
   }
 
   function openGroup(groupOrder) {
@@ -182,7 +181,7 @@ function EmojiBoard({ onSelect }) {
               <SearchedEmoji />
               {
                 emojiGroups.map((group) => (
-                  <EmojiGroup key={group.name} name={group.name} emojis={group.emojis} />
+                  <EmojiGroup key={group.name} name={group.name} groupEmojis={group.emojis} />
                 ))
               }
             </div>

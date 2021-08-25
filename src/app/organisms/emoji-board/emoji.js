@@ -1,6 +1,5 @@
 import emojisData from 'emojibase-data/en/compact.json';
 import shortcodes from 'emojibase-data/en/shortcodes/joypixels.json';
-import Fuse from 'fuse.js';
 
 const emojiGroups = [{
   name: 'Smileys & people',
@@ -62,18 +61,7 @@ emojisData.forEach((emoji) => {
   addToGroup(em);
   emojis.push(em);
 });
-function searchEmoji(term) {
-  const options = {
-    includeScore: true,
-    keys: ['shortcodes', 'annotation', 'tags'],
-    threshold: '0.3',
-  };
-  const fuse = new Fuse(emojis, options);
 
-  let result = fuse.search(term);
-  if (result.length > 20) result = result.slice(0, 20);
-  return result;
-}
 export {
-  emojis, emojiGroups, searchEmoji,
+  emojis, emojiGroups,
 };
