@@ -45,6 +45,7 @@ function ChannelViewInput({
   const uploadInputRef = useRef(null);
   const uploadProgressRef = useRef(null);
   const rightOptionsRef = useRef(null);
+  const escBtnRef = useRef(null);
 
   const TYPING_TIMEOUT = 5000;
   const mx = initMatrix.matrixClient;
@@ -99,6 +100,7 @@ function ChannelViewInput({
     isCmdActivated = true;
     requestAnimationFrame(() => {
       inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-positive)';
+      escBtnRef.current.style.display = 'block';
     });
     rightOptionsA11Y(false);
     viewEvent.emit('cmd_activate', prefix);
@@ -107,11 +109,16 @@ function ChannelViewInput({
     if (inputBaseRef.current !== null) {
       requestAnimationFrame(() => {
         inputBaseRef.current.style.boxShadow = 'var(--bs-surface-border)';
+        escBtnRef.current.style.display = 'none';
       });
       rightOptionsA11Y(true);
     }
     isCmdActivated = false;
     cmdCursorPos = null;
+  }
+  function deactivateCmdAndEmit() {
+    deactivateCmd();
+    viewEvent.emit('cmd_deactivate');
   }
   function errorCmd() {
     requestAnimationFrame(() => {
@@ -186,11 +193,6 @@ function ChannelViewInput({
   }, [roomId]);
 
   async function sendMessage() {
-    if (isCmdActivated) {
-      viewEvent.emit('cmd_exe');
-      return;
-    }
-
     const msgBody = textAreaRef.current.value;
     if (roomsInput.isSending(roomId)) return;
     if (msgBody.trim() === '' && attachment === null) return;
@@ -236,10 +238,7 @@ function ChannelViewInput({
 
     const cmdParts = targetInput.match(CMD_REGEX);
     if (cmdParts === null) {
-      if (isCmdActivated) {
-        deactivateCmd();
-        viewEvent.emit('cmd_deactivate');
-      }
+      if (isCmdActivated) deactivateCmdAndEmit();
       return;
     }
     const cmdPrefix = cmdParts[1];
@@ -249,8 +248,7 @@ function ChannelViewInput({
       // skip emoji autofill command if link is suspected.
       const checkForLink = targetInput.slice(0, cmdParts.index);
       if (checkForLink.match(/(http|https|mailto|matrix|ircs|irc)$/)) {
-        deactivateCmd();
-        viewEvent.emit('cmd_deactivate');
+        deactivateCmdAndEmit();
         return;
       }
     }
@@ -276,7 +274,14 @@ function ChannelViewInput({
   function handleKeyDown(e) {
     if (e.keyCode === 13 && e.shiftKey === false) {
       e.preventDefault();
-      sendMessage();
+
+      if (isCmdActivated) {
+        viewEvent.emit('cmd_exe');
+      } else sendMessage();
+    }
+    if (e.keyCode === 27 && isCmdActivated) {
+      deactivateCmdAndEmit();
+      e.preventDefault();
     }
   }
 
@@ -317,6 +322,7 @@ function ChannelViewInput({
             </Text>
           </ScrollView>
           {isMarkdown && <RawIcon size="extra-small" src={MarkdownIC} />}
+          <button ref={escBtnRef} tabIndex="-1" onClick={deactivateCmdAndEmit} className="btn-cmd-esc" type="button"><Text variant="b3">ESC</Text></button>
         </div>
         <div ref={rightOptionsRef} className="channel-input__option-container">
           <IconButton

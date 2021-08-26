@@ -25,6 +25,17 @@
       transform: scale(0.8);
       margin: 0 var(--sp-extra-tight);
     }
+
+    & .btn-cmd-esc {
+      display: none;
+      margin: 0 var(--sp-extra-tight);
+      padding: var(--sp-ultra-tight) var(--sp-tight);
+      border-radius: calc(var(--bo-radius) / 2);
+      box-shadow: var(--bs-surface-border);
+      cursor: pointer;
+      & .text { color: var(--tc-surface-normal); }
+    }
+ 
     & .scrollbar {
       max-height: 50vh;
       flex: 1;
