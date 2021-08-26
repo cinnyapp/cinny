@@ -312,7 +312,7 @@ function ChannelViewCmdBar({ roomId, roomTimeline, viewEvent }) {
         else if (searchTerm.match(/^[-]?(\|)$/)) searchTerm = 'neutral_face';
         else if (searchTerm.match(/^[-]?(d|D)$/)) searchTerm = 'grin';
         else if (searchTerm.match(/^[-]?(\/)$/)) searchTerm = 'frown';
-        else if (searchTerm.match(/^[-]?(p|P)$/)) searchTerm = 'stick_out_tongue';
+        else if (searchTerm.match(/^[-]?(p|P)$/)) searchTerm = 'stuck_out_tongue';
         else if (searchTerm.match(/^'[-]?(\()$/)) searchTerm = 'cry';
         else if (searchTerm.match(/^[-]?(x|X)$/)) searchTerm = 'dizzy_face';
         else if (searchTerm.match(/^[-]?(\()$/)) searchTerm = 'pleading_face';

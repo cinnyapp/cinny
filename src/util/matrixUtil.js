@@ -48,6 +48,7 @@ async function isRoomAliasAvailable(alias) {
 function doesRoomHaveUnread(room) {
   const userId = initMatrix.matrixClient.getUserId();
   const readUpToId = room.getEventReadUpTo(userId);
+  const supportEvents = ['m.room.message', 'm.room.encrypted', 'm.sticker'];
 
   if (room.timeline.length
     && room.timeline[room.timeline.length - 1].sender
@@ -60,7 +61,10 @@ function doesRoomHaveUnread(room) {
     const event = room.timeline[i];
 
     if (event.getId() === readUpToId) return false;
-    return true;
+
+    if (supportEvents.includes(event.getType())) {
+      return true;
+    }
   }
   return true;
 }
