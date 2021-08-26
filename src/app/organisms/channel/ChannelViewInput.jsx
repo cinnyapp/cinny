@@ -50,10 +50,17 @@ function ChannelViewInput({
   const mx = initMatrix.matrixClient;
   const { roomsInput } = initMatrix;
 
+  function requestFocusInput() {
+    if (textAreaRef === null) return;
+    textAreaRef.current.focus();
+  }
+
   useEffect(() => {
     settings.on(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
+    viewEvent.on('focus_msg_input', requestFocusInput);
     return () => {
       settings.removeListener(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
+      viewEvent.removeListener('focus_msg_input', requestFocusInput);
     };
   }, []);
 

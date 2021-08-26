@@ -385,6 +385,22 @@ function ChannelViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     });
   }
 
+  function listenKeyboard(event) {
+    const { activeElement } = document;
+    const lastCmdItem = document.activeElement.parentNode.lastElementChild;
+    if (event.keyCode === 27) {
+      if (activeElement.className !== 'cmd-item') return;
+      viewEvent.emit('focus_msg_input');
+    }
+    if (event.keyCode === 9) {
+      if (lastCmdItem.className !== 'cmd-item') return;
+      if (lastCmdItem !== activeElement) return;
+      if (event.shiftKey) return;
+      viewEvent.emit('focus_msg_input');
+      event.preventDefault();
+    }
+  }
+
   useEffect(() => {
     viewEvent.on('cmd_activate', activateCmd);
     viewEvent.on('cmd_deactivate', deactivateCmd);
@@ -396,10 +412,13 @@ function ChannelViewCmdBar({ roomId, roomTimeline, viewEvent }) {
   }, [roomId]);
 
   useEffect(() => {
+    if (cmd !== null) document.body.addEventListener('keydown', listenKeyboard);
     viewEvent.on('cmd_process', processCmd);
     viewEvent.on('cmd_exe', executeCmd);
     asyncSearch.on(asyncSearch.RESULT_SENT, displaySuggestions);
     return () => {
+      if (cmd !== null) document.body.removeEventListener('keydown', listenKeyboard);
+
       viewEvent.removeListener('cmd_process', processCmd);
       viewEvent.removeListener('cmd_exe', executeCmd);
       asyncSearch.removeListener(asyncSearch.RESULT_SENT, displaySuggestions);
