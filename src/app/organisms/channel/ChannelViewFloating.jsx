@@ -30,7 +30,7 @@ function ChannelViewFloating({
   function getTypingMessage(members) {
     const userIds = members;
     userIds.delete(mx.getUserId());
-    return getUsersActionJsx([...userIds], 'typing...');
+    return getUsersActionJsx(roomId, [...userIds], 'typing...');
   }
 
   function updateTyping(members) {

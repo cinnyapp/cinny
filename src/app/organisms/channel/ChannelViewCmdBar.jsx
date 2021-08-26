@@ -149,7 +149,7 @@ function FollowingMembers({ roomId, roomTimeline, viewEvent }) {
   return followingMembers.length !== 0 && (
     <TimelineChange
       variant="follow"
-      content={getUsersActionJsx(followingMembers, 'following the conversation.')}
+      content={getUsersActionJsx(roomId, followingMembers, 'following the conversation.')}
       time=""
       onClick={() => openReadReceipts(roomId, lastMEvent.getId())}
     />

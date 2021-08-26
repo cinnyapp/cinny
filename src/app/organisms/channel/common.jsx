@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { getUsername } from '../../../util/matrixUtil';
+import initMatrix from '../../../client/initMatrix';
+import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 
 function getTimelineJSXMessages() {
   return {
@@ -134,8 +135,13 @@ function getTimelineJSXMessages() {
   };
 }
 
-function getUsersActionJsx(userIds, actionStr) {
-  const getUserJSX = (username) => <b>{getUsername(username)}</b>;
+function getUsersActionJsx(roomId, userIds, actionStr) {
+  const room = initMatrix.matrixClient.getRoom(roomId);
+  const getUserDisplayName = (userId) => {
+    if (room?.getMember(userId)) return getUsernameOfRoomMember(room.getMember(userId));
+    return getUsername(userId);
+  };
+  const getUserJSX = (userId) => <b>{getUserDisplayName(userId)}</b>;
   if (!Array.isArray(userIds)) return 'Idle';
   if (userIds.length === 0) return 'Idle';
   const MAX_VISIBLE_COUNT = 3;

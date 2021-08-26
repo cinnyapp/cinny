@@ -29,7 +29,7 @@
     & .btn-cmd-esc {
       display: none;
       margin: 0 var(--sp-extra-tight);
-      padding: var(--sp-ultra-tight) var(--sp-tight);
+      padding: var(--sp-ultra-tight) var(--sp-extra-tight);
       border-radius: calc(var(--bo-radius) / 2);
       box-shadow: var(--bs-surface-border);
       cursor: pointer;

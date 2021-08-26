@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { getUsername } from '../../../util/matrixUtil';
+import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 
 import IconButton from '../../atoms/button/IconButton';
@@ -51,12 +51,16 @@ function ReadReceipts() {
   function renderPeople(receipt) {
     const room = initMatrix.matrixClient.getRoom(roomId);
     const member = room.getMember(receipt.userId);
+    const getUserDisplayName = (userId) => {
+      if (room?.getMember(userId)) return getUsernameOfRoomMember(room.getMember(userId));
+      return getUsername(userId);
+    };
     return (
       <PeopleSelector
         key={receipt.userId}
         onClick={() => alert('Viewing profile is yet to be implemented')}
         avatarSrc={member?.getAvatarUrl(initMatrix.matrixClient.baseUrl, 24, 24, 'crop')}
-        name={getUsername(receipt.userId)}
+        name={getUserDisplayName(receipt.userId)}
         color={colorMXID(receipt.userId)}
       />
     );
