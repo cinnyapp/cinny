@@ -30,6 +30,7 @@
       display: none;
       margin: 0 var(--sp-extra-tight);
       padding: var(--sp-ultra-tight) var(--sp-extra-tight);
+      background-color: var(--bg-surface);
       border-radius: calc(var(--bo-radius) / 2);
       box-shadow: var(--bs-surface-border);
       cursor: pointer;
