@@ -1,19 +1,22 @@
 .notification-badge {
-  min-width: 18px;
-  padding: 1px var(--sp-ultra-tight);
+  min-width: 16px;
+  min-height: 8px;
+  padding: 0 var(--sp-ultra-tight);
   background-color: var(--tc-surface-low);
-  border-radius: 9px;
+  border-radius: var(--bo-radius);
 
   .text {
-    color: var(--bg-surface-low);
+    color: white;
     text-align: center;
     font-weight: 700;
   }
 
   &--alert {
-    background-color: var(--bg-positive);
-    .text {
-      color: white;
-    }
+    background-color: var(--bg-danger);
+  }
+
+  &:empty {
+    min-width: 8px;
+    margin: 0 var(--sp-ultra-tight);
   }
 }

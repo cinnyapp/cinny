@@ -40,7 +40,7 @@ const SidebarAvatar = React.forwardRef(({
           iconSrc={iconSrc}
           size="normal"
         />
-        { notifyCount !== null && <NotificationBadge alert>{notifyCount}</NotificationBadge> }
+        { notifyCount !== null && <NotificationBadge alert content={notifyCount} /> }
       </button>
     </Tippy>
   );

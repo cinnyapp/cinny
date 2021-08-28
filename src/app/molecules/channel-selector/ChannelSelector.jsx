@@ -34,15 +34,12 @@ function ChannelSelector({
           <Text variant="b1">{children}</Text>
         </div>
         <div className="channel-selector__badge-container">
-          {
-            notificationCount !== 0
-              ? unread && (
-                <NotificationBadge alert={alert}>
-                  {notificationCount}
-                </NotificationBadge>
-              )
-              : unread && <div className="channel-selector--unread" />
-          }
+          { unread && (
+            <NotificationBadge
+              alert={alert}
+              content={notificationCount !== 0 ? notificationCount : null}
+            />
+          )}
         </div>
       </div>
     </button>

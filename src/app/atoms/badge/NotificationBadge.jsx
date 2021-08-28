@@ -4,25 +4,26 @@ import './NotificationBadge.scss';
 
 import Text from '../text/Text';
 
-function NotificationBadge({ alert, children }) {
+function NotificationBadge({ alert, content }) {
   const notificationClass = alert ? ' notification-badge--alert' : '';
   return (
     <div className={`notification-badge${notificationClass}`}>
-      <Text variant="b3">{children}</Text>
+      {content && <Text variant="b3">{content}</Text>}
     </div>
   );
 }
 
 NotificationBadge.defaultProps = {
   alert: false,
+  content: null,
 };
 
 NotificationBadge.propTypes = {
   alert: PropTypes.bool,
-  children: PropTypes.oneOfType([
+  content: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
-  ]).isRequired,
+  ]),
 };
 
 export default NotificationBadge;

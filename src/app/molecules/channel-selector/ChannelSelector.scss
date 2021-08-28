@@ -54,14 +54,6 @@
   }
 }
 
-.channel-selector--unread {
-  margin: 0 var(--sp-ultra-tight);
-  height: 8px;
-  width: 8px;
-  background-color: var(--tc-surface-normal);
-  border-radius: 50%;
-  opacity: .4;
-}
 .channel-selector--selected {
   background-color: var(--bg-surface);
   border-color: var(--bg-surface-border);
