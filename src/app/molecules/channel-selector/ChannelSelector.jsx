@@ -9,62 +9,80 @@ import Avatar from '../../atoms/avatar/Avatar';
 import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 
-function ChannelSelector({
-  selected, unread, notificationCount, alert,
-  iconSrc, imageSrc, roomId, onClick, children,
+function ChannelSelectorWrapper({
+  isSelected, onClick, content, options,
 }) {
   return (
-    <button
-      className={`channel-selector__button-wrapper${selected ? ' channel-selector--selected' : ''}`}
-      type="button"
-      onClick={onClick}
-      onMouseUp={(e) => blurOnBubbling(e, '.channel-selector__button-wrapper')}
-    >
-      <div className="channel-selector">
-        <div className="channel-selector__icon flex--center">
+    <div className={`channel-selector${isSelected ? ' channel-selector--selected' : ''}`}>
+      <button
+        className="channel-selector__content"
+        type="button"
+        onClick={onClick}
+        onMouseUp={(e) => blurOnBubbling(e, '.channel-selector__wrapper')}
+      >
+        {content}
+      </button>
+      <div className="channel-selector__options">{options}</div>
+    </div>
+  );
+}
+ChannelSelectorWrapper.defaultProps = {
+  options: null,
+};
+ChannelSelectorWrapper.propTypes = {
+  isSelected: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+  content: PropTypes.node.isRequired,
+  options: PropTypes.node,
+};
+
+function ChannelSelector({
+  name, roomId, imageSrc, iconSrc,
+  isSelected, isUnread, notificationCount, isAlert,
+  options, onClick,
+}) {
+  return (
+    <ChannelSelectorWrapper
+      isSelected={isSelected}
+      content={(
+        <>
           <Avatar
-            text={children.slice(0, 1)}
+            text={name.slice(0, 1)}
             bgColor={colorMXID(roomId)}
             imageSrc={imageSrc}
             iconSrc={iconSrc}
             size="extra-small"
           />
-        </div>
-        <div className="channel-selector__text-container">
-          <Text variant="b1">{children}</Text>
-        </div>
-        <div className="channel-selector__badge-container">
-          { unread && (
+          <Text variant="b1">{name}</Text>
+          { isUnread && (
             <NotificationBadge
-              alert={alert}
+              alert={isAlert}
               content={notificationCount !== 0 ? notificationCount : null}
             />
           )}
-        </div>
-      </div>
-    </button>
+        </>
+      )}
+      options={options}
+      onClick={onClick}
+    />
   );
 }
-
 ChannelSelector.defaultProps = {
-  selected: false,
-  unread: false,
-  notificationCount: 0,
-  alert: false,
-  iconSrc: null,
   imageSrc: null,
+  iconSrc: null,
+  options: null,
 };
-
 ChannelSelector.propTypes = {
-  selected: PropTypes.bool,
-  unread: PropTypes.bool,
-  notificationCount: PropTypes.number,
-  alert: PropTypes.bool,
-  iconSrc: PropTypes.string,
-  imageSrc: PropTypes.string,
+  name: PropTypes.string.isRequired,
   roomId: PropTypes.string.isRequired,
+  imageSrc: PropTypes.string,
+  iconSrc: PropTypes.string,
+  isSelected: PropTypes.bool.isRequired,
+  isUnread: PropTypes.bool.isRequired,
+  notificationCount: PropTypes.number.isRequired,
+  isAlert: PropTypes.bool.isRequired,
+  options: PropTypes.node,
   onClick: PropTypes.func.isRequired,
-  children: PropTypes.string.isRequired,
 };
 
 export default ChannelSelector;

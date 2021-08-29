@@ -102,6 +102,9 @@ function renderSelector(room, roomId, isSelected, isDM) {
   return (
     <ChannelSelector
       key={roomId}
+      name={room.name}
+      roomId={roomId}
+      imageSrc={isDM ? imageSrc : null}
       iconSrc={
         isDM
           ? null
@@ -112,16 +115,12 @@ function renderSelector(room, roomId, isSelected, isDM) {
             return (room.getJoinRule() === 'invite' ? HashLockIC : HashIC);
           })()
       }
-      imageSrc={isDM ? imageSrc : null}
-      roomId={roomId}
-      unread={doesRoomHaveUnread(room)}
-      onClick={() => selectRoom(roomId)}
+      isSelected={isSelected}
+      isUnread={doesRoomHaveUnread(room)}
       notificationCount={room.getUnreadNotificationCount('total')}
-      alert={room.getUnreadNotificationCount('highlight') !== 0}
-      selected={isSelected}
-    >
-      {room.name}
-    </ChannelSelector>
+      isAlert={room.getUnreadNotificationCount('highlight') !== 0}
+      onClick={() => selectRoom(roomId)}
+    />
   );
 }
 

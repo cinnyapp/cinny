@@ -35,7 +35,18 @@
 .channels-container {
   padding-bottom: var(--sp-extra-loose);
 
-  & > .channel-selector__button-wrapper:first-child {
+  & > .channel-selector {
+    width: calc(100% - var(--sp-extra-tight));
+    margin-left: auto;
+
+    [dir=rtl] & {
+      margin-left: 0;
+      margin-right: auto;
+    }
+
+  }
+
+  & > .channel-selector:first-child {
     margin-top: var(--sp-extra-tight);
   }
 
