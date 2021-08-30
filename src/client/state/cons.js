@@ -50,6 +50,8 @@ const cons = {
       ROOM_JOINED: 'ROOM_JOINED',
       ROOM_LEAVED: 'ROOM_LEAVED',
       ROOM_CREATED: 'ROOM_CREATED',
+      MY_RECEIPT_ARRIVED: 'MY_RECEIPT_ARRIVED',
+      EVENT_ARRIVED: 'EVENT_ARRIVED',
     },
     roomTimeline: {
       EVENT: 'EVENT',

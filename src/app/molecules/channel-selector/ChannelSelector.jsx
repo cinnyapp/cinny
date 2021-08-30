@@ -18,7 +18,7 @@ function ChannelSelectorWrapper({
         className="channel-selector__content"
         type="button"
         onClick={onClick}
-        onMouseUp={(e) => blurOnBubbling(e, '.channel-selector__wrapper')}
+        onMouseUp={(e) => blurOnBubbling(e, '.channel-selector')}
       >
         {content}
       </button>

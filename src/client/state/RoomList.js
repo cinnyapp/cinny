@@ -155,12 +155,13 @@ class RoomList extends EventEmitter {
     this.matrixClient.on('Room.name', () => {
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
     });
-    this.matrixClient.on('Room.receipt', (event) => {
+    this.matrixClient.on('Room.receipt', (event, room) => {
       if (event.getType() === 'm.receipt') {
-        const evContent = event.getContent();
-        const userId = Object.keys(evContent[Object.keys(evContent)[0]]['m.read'])[0];
-        if (userId !== this.matrixClient.getUserId()) return;
-        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        const content = event.getContent();
+        const userReadEventId = Object.keys(content)[0];
+        const eventReaderUserId = Object.keys(content[userReadEventId]['m.read'])[0];
+        if (eventReaderUserId !== this.matrixClient.getUserId()) return;
+        this.emit(cons.events.roomList.MY_RECEIPT_ARRIVED, room.roomId);
       }
     });
 
@@ -280,8 +281,13 @@ class RoomList extends EventEmitter {
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
     });
 
-    this.matrixClient.on('Room.timeline', () => {
-      this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+    this.matrixClient.on('Room.timeline', (event, room) => {
+      const supportEvents = ['m.room.message', 'm.room.encrypted', 'm.sticker'];
+      if (!supportEvents.includes(event.getType())) return;
+
+      const lastTimelineEvent = room.timeline[room.timeline.length - 1];
+      if (lastTimelineEvent.getId() !== event.getId()) return;
+      this.emit(cons.events.roomList.EVENT_ARRIVED, room.roomId);
     });
   }
 }

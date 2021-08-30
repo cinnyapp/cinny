@@ -6,7 +6,7 @@ class Navigation extends EventEmitter {
   constructor() {
     super();
 
-    this.activeTab = 'channels';
+    this.activeTab = 'home';
     this.activeRoomId = null;
     this.isPeopleDrawerVisible = true;
   }
@@ -26,8 +26,9 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.TAB_CHANGED, this.activeTab);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
+        const prevActiveRoomId = this.activeRoomId;
         this.activeRoomId = action.roomId;
-        this.emit(cons.events.navigation.ROOM_SELECTED, this.activeRoomId);
+        this.emit(cons.events.navigation.ROOM_SELECTED, this.activeRoomId, prevActiveRoomId);
       },
       [cons.actions.navigation.TOGGLE_PEOPLE_DRAWER]: () => {
         this.isPeopleDrawerVisible = !this.isPeopleDrawerVisible;
