@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import './SideBar.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import colorMXID from '../../../util/colorMXID';
 import logout from '../../../client/action/logout';
-import { openInviteList, openPublicChannels, openSettings } from '../../../client/action/navigation';
+import {
+  changeTab, openInviteList, openPublicChannels, openSettings,
+} from '../../../client/action/navigation';
+import navigation from '../../../client/state/navigation';
 
 import ScrollView from '../../atoms/scroll/ScrollView';
 import SidebarAvatar from '../../molecules/sidebar-avatar/SidebarAvatar';
@@ -52,24 +54,30 @@ function ProfileAvatarMenu() {
   );
 }
 
-function SideBar({ tabId, changeTab }) {
+function SideBar() {
   const totalInviteCount = () => initMatrix.roomList.inviteRooms.size
     + initMatrix.roomList.inviteSpaces.size
     + initMatrix.roomList.inviteDirects.size;
 
   const [totalInvites, updateTotalInvites] = useState(totalInviteCount());
+  const [activeTab, setActiveTab] = useState('home');
 
+  function onTabChanged(tabId) {
+    setActiveTab(tabId);
+  }
   function onInviteListChange() {
     updateTotalInvites(totalInviteCount());
   }
 
   useEffect(() => {
+    navigation.on(cons.events.navigation.TAB_CHANGED, onTabChanged);
     initMatrix.roomList.on(
       cons.events.roomList.INVITELIST_UPDATED,
       onInviteListChange,
     );
 
     return () => {
+      navigation.removeListener(cons.events.navigation.TAB_CHANGED, onTabChanged);
       initMatrix.roomList.removeListener(
         cons.events.roomList.INVITELIST_UPDATED,
         onInviteListChange,
@@ -83,8 +91,8 @@ function SideBar({ tabId, changeTab }) {
         <ScrollView invisible>
           <div className="scrollable-content">
             <div className="featured-container">
-              <SidebarAvatar active={tabId === 'channels'} onClick={() => changeTab('channels')} tooltip="Home" iconSrc={HomeIC} />
-              <SidebarAvatar active={tabId === 'dm'} onClick={() => changeTab('dm')} tooltip="People" iconSrc={UserIC} />
+              <SidebarAvatar active={activeTab === 'home'} onClick={() => changeTab('home')} tooltip="Home" iconSrc={HomeIC} />
+              <SidebarAvatar active={activeTab === 'dms'} onClick={() => changeTab('dms')} tooltip="People" iconSrc={UserIC} />
               <SidebarAvatar onClick={() => openPublicChannels()} tooltip="Public channels" iconSrc={HashSearchIC} />
             </div>
             <div className="sidebar-divider" />
@@ -109,10 +117,5 @@ function SideBar({ tabId, changeTab }) {
     </div>
   );
 }
-
-SideBar.propTypes = {
-  tabId: PropTypes.string.isRequired,
-  changeTab: PropTypes.func.isRequired,
-};
 
 export default SideBar;

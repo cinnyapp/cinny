@@ -1,7 +1,7 @@
 import appDispatcher from '../dispatcher';
 import cons from '../state/cons';
 
-function handleTabChange(tabId) {
+function changeTab(tabId) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.CHANGE_TAB,
     tabId,
@@ -71,7 +71,7 @@ function openReadReceipts(roomId, eventId) {
 }
 
 export {
-  handleTabChange,
+  changeTab,
   selectRoom,
   togglePeopleDrawer,
   openInviteList,

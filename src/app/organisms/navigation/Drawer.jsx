@@ -44,13 +44,13 @@ function AtoZ(aId, bId) {
   return 0;
 }
 
-function DrawerHeader({ tabId }) {
+function DrawerHeader({ activeTab }) {
   return (
     <Header>
       <TitleWrapper>
-        <Text variant="s1">{(tabId === 'channels' ? 'Home' : 'Direct messages')}</Text>
+        <Text variant="s1">{(activeTab === 'home' ? 'Home' : 'Direct messages')}</Text>
       </TitleWrapper>
-      {(tabId === 'dm')
+      {(activeTab === 'dm')
         ? <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="normal" />
         : (
           <ContextMenu
@@ -79,7 +79,7 @@ function DrawerHeader({ tabId }) {
   );
 }
 DrawerHeader.propTypes = {
-  tabId: PropTypes.string.isRequired,
+  activeTab: PropTypes.string.isRequired,
 };
 
 function DrawerBradcrumb() {
@@ -150,7 +150,7 @@ function Home({ selectedRoomId }) {
 Home.defaultProps = { selectedRoomId: null };
 Home.propTypes = { selectedRoomId: PropTypes.string };
 
-function Channels({ tabId }) {
+function Channels({ activeTab }) {
   const [selectedRoomId, changeSelectedRoomId] = useState(null);
   const [, updateState] = useState();
 
@@ -188,7 +188,7 @@ function Channels({ tabId }) {
   return (
     <div className="channels-container">
       {
-        tabId === 'channels'
+        activeTab === 'home'
           ? <Home selectedRoomId={selectedRoomId} />
           : <Directs selectedRoomId={selectedRoomId} />
       }
@@ -196,27 +196,35 @@ function Channels({ tabId }) {
   );
 }
 Channels.propTypes = {
-  tabId: PropTypes.string.isRequired,
+  activeTab: PropTypes.string.isRequired,
 };
 
-function Drawer({ tabId }) {
+function Drawer() {
+  const [activeTab, setActiveTab] = useState('home');
+
+  function onTabChanged(tabId) {
+    setActiveTab(tabId);
+  }
+
+  useEffect(() => {
+    navigation.on(cons.events.navigation.TAB_CHANGED, onTabChanged);
+    return () => {
+      navigation.removeListener(cons.events.navigation.TAB_CHANGED, onTabChanged);
+    };
+  }, []);
   return (
     <div className="drawer">
-      <DrawerHeader tabId={tabId} />
+      <DrawerHeader activeTab={activeTab} />
       <div className="drawer__content-wrapper">
         <DrawerBradcrumb />
         <div className="channels__wrapper">
           <ScrollView autoHide>
-            <Channels tabId={tabId} />
+            <Channels activeTab={activeTab} />
           </ScrollView>
         </div>
       </div>
     </div>
   );
 }
-
-Drawer.propTypes = {
-  tabId: PropTypes.string.isRequired,
-};
 
 export default Drawer;
