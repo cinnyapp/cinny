@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import './ChannelIntro.scss';
+import './RoomIntro.scss';
 
 import Linkify from 'linkifyjs/react';
 import colorMXID from '../../../util/colorMXID';
@@ -12,27 +12,27 @@ function linkifyContent(content) {
   return <Linkify options={{ target: { url: '_blank' } }}>{content}</Linkify>;
 }
 
-function ChannelIntro({
+function RoomIntro({
   roomId, avatarSrc, name, heading, desc, time,
 }) {
   return (
-    <div className="channel-intro">
+    <div className="room-intro">
       <Avatar imageSrc={avatarSrc} text={name.slice(0, 1)} bgColor={colorMXID(roomId)} size="large" />
-      <div className="channel-intro__content">
-        <Text className="channel-intro__name" variant="h1">{heading}</Text>
-        <Text className="channel-intro__desc" variant="b1">{linkifyContent(desc)}</Text>
-        { time !== null && <Text className="channel-intro__time" variant="b3">{time}</Text>}
+      <div className="room-intro__content">
+        <Text className="room-intro__name" variant="h1">{heading}</Text>
+        <Text className="room-intro__desc" variant="b1">{linkifyContent(desc)}</Text>
+        { time !== null && <Text className="room-intro__time" variant="b3">{time}</Text>}
       </div>
     </div>
   );
 }
 
-ChannelIntro.defaultProps = {
+RoomIntro.defaultProps = {
   avatarSrc: false,
   time: null,
 };
 
-ChannelIntro.propTypes = {
+RoomIntro.propTypes = {
   roomId: PropTypes.string.isRequired,
   avatarSrc: PropTypes.oneOfType([
     PropTypes.string,
@@ -44,4 +44,4 @@ ChannelIntro.propTypes = {
   time: PropTypes.string,
 };
 
-export default ChannelIntro;
+export default RoomIntro;

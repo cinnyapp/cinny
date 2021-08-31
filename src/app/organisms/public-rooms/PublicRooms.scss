@@ -1,4 +1,4 @@
-.public-channels {
+.public-rooms {
   margin: 0 var(--sp-normal);
   margin-right: var(--sp-extra-tight);
   margin-top: var(--sp-extra-tight);
@@ -75,7 +75,7 @@
     }
   }
   
-  & .channel-tile {
+  & .room-tile {
     margin-top: var(--sp-normal);
     &__options {
       align-self: flex-end;

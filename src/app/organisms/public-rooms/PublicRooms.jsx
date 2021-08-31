@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import './PublicChannels.scss';
+import './PublicRooms.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -13,7 +13,7 @@ import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
 import Input from '../../atoms/input/Input';
 import PopupWindow from '../../molecules/popup-window/PopupWindow';
-import ChannelTile from '../../molecules/channel-tile/ChannelTile';
+import RoomTile from '../../molecules/room-tile/RoomTile';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
@@ -53,7 +53,7 @@ function TryJoinWithAlias({ alias, onRequestClose }) {
     } catch (e) {
       setStatus({
         isJoining: false,
-        error: `Unable to join ${alias}. Either channel is private or doesn't exist.`,
+        error: `Unable to join ${alias}. Either room is private or doesn't exist.`,
         roomId: null,
         tempRoomId: null,
       });
@@ -84,38 +84,38 @@ TryJoinWithAlias.propTypes = {
   onRequestClose: PropTypes.func.isRequired,
 };
 
-function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
+function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
   const [isSearching, updateIsSearching] = useState(false);
   const [isViewMore, updateIsViewMore] = useState(false);
-  const [publicChannels, updatePublicChannels] = useState([]);
+  const [publicRooms, updatePublicRooms] = useState([]);
   const [nextBatch, updateNextBatch] = useState(undefined);
   const [searchQuery, updateSearchQuery] = useState({});
-  const [joiningChannels, updateJoiningChannels] = useState(new Set());
+  const [joiningRooms, updateJoiningRooms] = useState(new Set());
 
-  const channelNameRef = useRef(null);
+  const roomNameRef = useRef(null);
   const hsRef = useRef(null);
   const userId = initMatrix.matrixClient.getUserId();
 
-  async function searchChannels(viewMore) {
-    let inputChannelName = channelNameRef?.current?.value || searchTerm;
+  async function searchRooms(viewMore) {
+    let inputRoomName = roomNameRef?.current?.value || searchTerm;
     let isInputAlias = false;
-    if (typeof inputChannelName === 'string') {
-      isInputAlias = inputChannelName[0] === '#' && inputChannelName.indexOf(':') > 1;
+    if (typeof inputRoomName === 'string') {
+      isInputAlias = inputRoomName[0] === '#' && inputRoomName.indexOf(':') > 1;
     }
-    const hsFromAlias = (isInputAlias) ? inputChannelName.slice(inputChannelName.indexOf(':') + 1) : null;
+    const hsFromAlias = (isInputAlias) ? inputRoomName.slice(inputRoomName.indexOf(':') + 1) : null;
     let inputHs = hsFromAlias || hsRef?.current?.value;
 
     if (typeof inputHs !== 'string') inputHs = userId.slice(userId.indexOf(':') + 1);
-    if (typeof inputChannelName !== 'string') inputChannelName = '';
+    if (typeof inputRoomName !== 'string') inputRoomName = '';
 
     if (isSearching) return;
     if (viewMore !== true
-      && inputChannelName === searchQuery.name
+      && inputRoomName === searchQuery.name
       && inputHs === searchQuery.homeserver
     ) return;
 
     updateSearchQuery({
-      name: inputChannelName,
+      name: inputRoomName,
       homeserver: inputHs,
     });
     if (isViewMore !== viewMore) updateIsViewMore(viewMore);
@@ -128,26 +128,26 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
         since: viewMore ? nextBatch : undefined,
         include_all_networks: true,
         filter: {
-          generic_search_term: inputChannelName,
+          generic_search_term: inputRoomName,
         },
       });
 
-      const totalChannels = viewMore ? publicChannels.concat(result.chunk) : result.chunk;
-      updatePublicChannels(totalChannels);
+      const totalRooms = viewMore ? publicRooms.concat(result.chunk) : result.chunk;
+      updatePublicRooms(totalRooms);
       updateNextBatch(result.next_batch);
       updateIsSearching(false);
       updateIsViewMore(false);
-      if (totalChannels.length === 0) {
+      if (totalRooms.length === 0) {
         updateSearchQuery({
-          error: `No result found for "${inputChannelName}" on ${inputHs}`,
-          alias: isInputAlias ? inputChannelName : null,
+          error: `No result found for "${inputRoomName}" on ${inputHs}`,
+          alias: isInputAlias ? inputRoomName : null,
         });
       }
     } catch (e) {
-      updatePublicChannels([]);
+      updatePublicRooms([]);
       updateSearchQuery({
         error: 'Something went wrong!',
-        alias: isInputAlias ? inputChannelName : null,
+        alias: isInputAlias ? inputRoomName : null,
       });
       updateIsSearching(false);
       updateNextBatch(undefined);
@@ -156,13 +156,13 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
   }
 
   useEffect(() => {
-    if (isOpen) searchChannels();
+    if (isOpen) searchRooms();
   }, [isOpen]);
 
   function handleOnRoomAdded(roomId) {
-    if (joiningChannels.has(roomId)) {
-      joiningChannels.delete(roomId);
-      updateJoiningChannels(new Set(Array.from(joiningChannels)));
+    if (joiningRooms.has(roomId)) {
+      joiningRooms.delete(roomId);
+      updateJoiningRooms(new Set(Array.from(joiningRooms)));
     }
   }
   useEffect(() => {
@@ -170,36 +170,36 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
     return () => {
       initMatrix.roomList.removeListener(cons.events.roomList.ROOM_JOINED, handleOnRoomAdded);
     };
-  }, [joiningChannels]);
+  }, [joiningRooms]);
 
-  function handleViewChannel(roomId) {
+  function handleViewRoom(roomId) {
     selectRoom(roomId);
     onRequestClose();
   }
 
-  function joinChannel(roomIdOrAlias) {
-    joiningChannels.add(roomIdOrAlias);
-    updateJoiningChannels(new Set(Array.from(joiningChannels)));
+  function joinRoom(roomIdOrAlias) {
+    joiningRooms.add(roomIdOrAlias);
+    updateJoiningRooms(new Set(Array.from(joiningRooms)));
     roomActions.join(roomIdOrAlias, false);
   }
 
-  function renderChannelList(channels) {
-    return channels.map((channel) => {
-      const alias = typeof channel.canonical_alias === 'string' ? channel.canonical_alias : channel.room_id;
-      const name = typeof channel.name === 'string' ? channel.name : alias;
-      const isJoined = initMatrix.roomList.rooms.has(channel.room_id);
+  function renderRoomList(rooms) {
+    return rooms.map((room) => {
+      const alias = typeof room.canonical_alias === 'string' ? room.canonical_alias : room.room_id;
+      const name = typeof room.name === 'string' ? room.name : alias;
+      const isJoined = initMatrix.roomList.rooms.has(room.room_id);
       return (
-        <ChannelTile
-          key={channel.room_id}
-          avatarSrc={typeof channel.avatar_url === 'string' ? initMatrix.matrixClient.mxcUrlToHttp(channel.avatar_url, 42, 42, 'crop') : null}
+        <RoomTile
+          key={room.room_id}
+          avatarSrc={typeof room.avatar_url === 'string' ? initMatrix.matrixClient.mxcUrlToHttp(room.avatar_url, 42, 42, 'crop') : null}
           name={name}
           id={alias}
-          memberCount={channel.num_joined_members}
-          desc={typeof channel.topic === 'string' ? channel.topic : null}
+          memberCount={room.num_joined_members}
+          desc={typeof room.topic === 'string' ? room.topic : null}
           options={(
             <>
-              {isJoined && <Button onClick={() => handleViewChannel(channel.room_id)}>Open</Button>}
-              {!isJoined && (joiningChannels.has(channel.room_id) ? <Spinner size="small" /> : <Button onClick={() => joinChannel(channel.aliases?.[0] || channel.room_id)} variant="primary">Join</Button>)}
+              {isJoined && <Button onClick={() => handleViewRoom(room.room_id)}>Open</Button>}
+              {!isJoined && (joiningRooms.has(room.room_id) ? <Spinner size="small" /> : <Button onClick={() => joinRoom(room.aliases?.[0] || room.room_id)} variant="primary">Join</Button>)}
             </>
           )}
         />
@@ -210,26 +210,26 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
   return (
     <PopupWindow
       isOpen={isOpen}
-      title="Public channels"
+      title="Public rooms"
       contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip="Close" />}
       onRequestClose={onRequestClose}
     >
-      <div className="public-channels">
-        <form className="public-channels__form" onSubmit={(e) => { e.preventDefault(); searchChannels(); }}>
-          <div className="public-channels__input-wrapper">
-            <Input value={searchTerm} forwardRef={channelNameRef} label="Channel name or alias" />
+      <div className="public-rooms">
+        <form className="public-rooms__form" onSubmit={(e) => { e.preventDefault(); searchRooms(); }}>
+          <div className="public-rooms__input-wrapper">
+            <Input value={searchTerm} forwardRef={roomNameRef} label="Room name or alias" />
             <Input forwardRef={hsRef} value={userId.slice(userId.indexOf(':') + 1)} label="Homeserver" required />
           </div>
           <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">Search</Button>
         </form>
-        <div className="public-channels__search-status">
+        <div className="public-rooms__search-status">
           {
             typeof searchQuery.name !== 'undefined' && isSearching && (
               searchQuery.name === ''
                 ? (
                   <div className="flex--center">
                     <Spinner size="small" />
-                    <Text variant="b2">{`Loading public channels from ${searchQuery.homeserver}...`}</Text>
+                    <Text variant="b2">{`Loading public rooms from ${searchQuery.homeserver}...`}</Text>
                   </div>
                 )
                 : (
@@ -243,28 +243,28 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
           {
             typeof searchQuery.name !== 'undefined' && !isSearching && (
               searchQuery.name === ''
-                ? <Text variant="b2">{`Public channels on ${searchQuery.homeserver}.`}</Text>
+                ? <Text variant="b2">{`Public rooms on ${searchQuery.homeserver}.`}</Text>
                 : <Text variant="b2">{`Search result for "${searchQuery.name}" on ${searchQuery.homeserver}.`}</Text>
             )
           }
           { searchQuery.error && (
             <>
-              <Text className="public-channels__search-error" variant="b2">{searchQuery.error}</Text>
+              <Text className="public-rooms__search-error" variant="b2">{searchQuery.error}</Text>
               {typeof searchQuery.alias === 'string' && (
                 <TryJoinWithAlias onRequestClose={onRequestClose} alias={searchQuery.alias} />
               )}
             </>
           )}
         </div>
-        { publicChannels.length !== 0 && (
-          <div className="public-channels__content">
-            { renderChannelList(publicChannels) }
+        { publicRooms.length !== 0 && (
+          <div className="public-rooms__content">
+            { renderRoomList(publicRooms) }
           </div>
         )}
-        { publicChannels.length !== 0 && publicChannels.length % SEARCH_LIMIT === 0 && (
-          <div className="public-channels__view-more">
+        { publicRooms.length !== 0 && publicRooms.length % SEARCH_LIMIT === 0 && (
+          <div className="public-rooms__view-more">
             { isViewMore !== true && (
-              <Button onClick={() => searchChannels(true)}>View more</Button>
+              <Button onClick={() => searchRooms(true)}>View more</Button>
             )}
             { isViewMore && <Spinner /> }
           </div>
@@ -274,14 +274,14 @@ function PublicChannels({ isOpen, searchTerm, onRequestClose }) {
   );
 }
 
-PublicChannels.defaultProps = {
+PublicRooms.defaultProps = {
   searchTerm: undefined,
 };
 
-PublicChannels.propTypes = {
+PublicRooms.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   searchTerm: PropTypes.string,
   onRequestClose: PropTypes.func.isRequired,
 };
 
-export default PublicChannels;
+export default PublicRooms;

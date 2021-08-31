@@ -1,4 +1,4 @@
-.channel-intro {
+.room-intro {
   margin-top: calc(2 * var(--sp-extra-loose));
   margin-bottom: var(--sp-extra-loose);
   padding-left: calc(var(--sp-normal) + var(--av-small) + var(--sp-tight));
@@ -11,7 +11,7 @@
     }
   }
 
-  .channel-intro__content {
+  .room-intro__content {
     margin-top: var(--sp-extra-loose);
     max-width: 640px;
   }

@@ -7,7 +7,7 @@ import { doesRoomHaveUnread } from '../../../util/matrixUtil';
 import { selectRoom } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
 
-import ChannelSelector from '../../molecules/channel-selector/ChannelSelector';
+import RoomSelector from '../../molecules/room-selector/RoomSelector';
 
 import HashIC from '../../../../public/res/ic/outlined/hash.svg';
 import HashLockIC from '../../../../public/res/ic/outlined/hash-lock.svg';
@@ -39,7 +39,7 @@ function Selector({ roomId, isDM, drawerPostie }) {
   }, []);
 
   return (
-    <ChannelSelector
+    <RoomSelector
       key={roomId}
       name={room.name}
       roomId={roomId}

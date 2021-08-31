@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import './ChannelViewCmdBar.scss';
+import './RoomViewCmdBar.scss';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 
@@ -11,8 +11,8 @@ import { toggleMarkdown } from '../../../client/action/settings';
 import * as roomActions from '../../../client/action/room';
 import {
   selectRoom,
-  openCreateChannel,
-  openPublicChannels,
+  openCreateRoom,
+  openPublicRooms,
   openInviteUser,
   openReadReceipts,
 } from '../../../client/action/navigation';
@@ -41,17 +41,17 @@ const commands = [{
   description: 'Start direct message with user. Example: /startDM/@johndoe.matrix.org',
   exe: (roomId, searchTerm) => openInviteUser(undefined, searchTerm),
 }, {
-  name: 'createChannel',
-  description: 'Create new channel',
-  exe: () => openCreateChannel(),
+  name: 'createRoom',
+  description: 'Create new room',
+  exe: () => openCreateRoom(),
 }, {
   name: 'join',
   isOptions: true,
-  description: 'Join channel with alias. Example: /join/#cinny:matrix.org',
-  exe: (roomId, searchTerm) => openPublicChannels(searchTerm),
+  description: 'Join room with alias. Example: /join/#cinny:matrix.org',
+  exe: (roomId, searchTerm) => openPublicRooms(searchTerm),
 }, {
   name: 'leave',
-  description: 'Leave current channel',
+  description: 'Leave current room',
   exe: (roomId) => roomActions.leave(roomId),
 }, {
   name: 'invite',
@@ -70,10 +70,10 @@ function CmdHelp() {
           <Text variant="b2">/command_name</Text>
           <MenuHeader>Go-to commands</MenuHeader>
           <Text variant="b2">{'>*space_name'}</Text>
-          <Text variant="b2">{'>#channel_name'}</Text>
+          <Text variant="b2">{'>#room_name'}</Text>
           <Text variant="b2">{'>@people_name'}</Text>
-          <MenuHeader>Autofill command</MenuHeader>
-          <Text variant="b2">:emoji_name:</Text>
+          <MenuHeader>Autofill commands</MenuHeader>
+          <Text variant="b2">:emoji_name</Text>
           <Text variant="b2">@name</Text>
         </>
       )}
@@ -174,7 +174,7 @@ function getCmdActivationMessage(prefix) {
   const cmd = {
     '/': () => genMessage('General command mode activated. ', 'Type command name for suggestions.'),
     '>*': () => genMessage('Go-to command mode activated. ', 'Type space name for suggestions.'),
-    '>#': () => genMessage('Go-to command mode activated. ', 'Type channel name for suggestions.'),
+    '>#': () => genMessage('Go-to command mode activated. ', 'Type room name for suggestions.'),
     '>@': () => genMessage('Go-to command mode activated. ', 'Type people name for suggestions.'),
     ':': () => genMessage('Emoji autofill command mode activated. ', 'Type emoji shortcut for suggestions.'),
     '@': () => genMessage('Name autofill command mode activated. ', 'Type name for suggestions.'),
@@ -273,7 +273,7 @@ function getCmdSuggestions({ prefix, option, suggestions }, fireCmd) {
   const cmd = {
     '/': (cmds) => getGenCmdSuggestions(prefix, cmds),
     '>*': (spaces) => getRoomsSuggestion(prefix, spaces),
-    '>#': (channels) => getRoomsSuggestion(prefix, channels),
+    '>#': (rooms) => getRoomsSuggestion(prefix, rooms),
     '>@': (peoples) => getRoomsSuggestion(prefix, peoples),
     ':': (emos) => getEmojiSuggestion(prefix, emos),
     '@': (members) => getNameSuggestion(prefix, members),
@@ -284,7 +284,7 @@ function getCmdSuggestions({ prefix, option, suggestions }, fireCmd) {
 const asyncSearch = new AsyncSearch();
 let cmdPrefix;
 let cmdOption;
-function ChannelViewCmdBar({ roomId, roomTimeline, viewEvent }) {
+function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
   const [cmd, setCmd] = useState(null);
 
   function displaySuggestions(suggestions) {
@@ -466,10 +466,10 @@ function ChannelViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     </div>
   );
 }
-ChannelViewCmdBar.propTypes = {
+RoomViewCmdBar.propTypes = {
   roomId: PropTypes.string.isRequired,
   roomTimeline: PropTypes.shape({}).isRequired,
   viewEvent: PropTypes.shape({}).isRequired,
 };
 
-export default ChannelViewCmdBar;
+export default RoomViewCmdBar;

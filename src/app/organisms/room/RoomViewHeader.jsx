@@ -17,7 +17,7 @@ import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 
-function ChannelViewHeader({ roomId }) {
+function RoomViewHeader({ roomId }) {
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
   let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
@@ -55,8 +55,8 @@ function ChannelViewHeader({ roomId }) {
     </Header>
   );
 }
-ChannelViewHeader.propTypes = {
+RoomViewHeader.propTypes = {
   roomId: PropTypes.string.isRequired,
 };
 
-export default ChannelViewHeader;
+export default RoomViewHeader;

@@ -70,7 +70,7 @@ function Home() {
         />
       ))}
 
-      { roomIds.length !== 0 && <Text className="cat-header" variant="b3">Channels</Text> }
+      { roomIds.length !== 0 && <Text className="cat-header" variant="b3">Rooms</Text> }
       { roomIds.map((id) => (
         <Selector
           key={id}

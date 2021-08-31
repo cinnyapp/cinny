@@ -1,24 +1,24 @@
-.channel-view-flexBox {
+.room-view-flexBox {
   display: flex;
   flex-direction: column;
 }
-.channel-view-flexItem {
+.room-view-flexItem {
   flex: 1;
   min-height: 0;
   min-width: 0;
 }
 
-.channel-view {
-  @extend .channel-view-flexItem;
-  @extend .channel-view-flexBox;
+.room-view {
+  @extend .room-view-flexItem;
+  @extend .room-view-flexBox;
 
   &__content-wrapper {
-    @extend .channel-view-flexItem;
-    @extend .channel-view-flexBox;
+    @extend .room-view-flexItem;
+    @extend .room-view-flexBox;
   }
 
   &__scrollable {
-    @extend .channel-view-flexItem;
+    @extend .room-view-flexItem;
     position: relative;
   }
   

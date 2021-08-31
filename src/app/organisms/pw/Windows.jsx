@@ -4,17 +4,17 @@ import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 
 import InviteList from '../invite-list/InviteList';
-import PublicChannels from '../public-channels/PublicChannels';
-import CreateChannel from '../create-channel/CreateChannel';
+import PublicRooms from '../public-rooms/PublicRooms';
+import CreateRoom from '../create-room/CreateRoom';
 import InviteUser from '../invite-user/InviteUser';
 import Settings from '../settings/Settings';
 
 function Windows() {
   const [isInviteList, changeInviteList] = useState(false);
-  const [publicChannels, changePublicChannels] = useState({
+  const [publicRooms, changePublicRooms] = useState({
     isOpen: false, searchTerm: undefined,
   });
-  const [isCreateChannel, changeCreateChannel] = useState(false);
+  const [isCreateRoom, changeCreateRoom] = useState(false);
   const [inviteUser, changeInviteUser] = useState({
     isOpen: false, roomId: undefined, term: undefined,
   });
@@ -23,14 +23,14 @@ function Windows() {
   function openInviteList() {
     changeInviteList(true);
   }
-  function openPublicChannels(searchTerm) {
-    changePublicChannels({
+  function openPublicRooms(searchTerm) {
+    changePublicRooms({
       isOpen: true,
       searchTerm,
     });
   }
-  function openCreateChannel() {
-    changeCreateChannel(true);
+  function openCreateRoom() {
+    changeCreateRoom(true);
   }
   function openInviteUser(roomId, searchTerm) {
     changeInviteUser({
@@ -45,14 +45,14 @@ function Windows() {
 
   useEffect(() => {
     navigation.on(cons.events.navigation.INVITE_LIST_OPENED, openInviteList);
-    navigation.on(cons.events.navigation.PUBLIC_CHANNELS_OPENED, openPublicChannels);
-    navigation.on(cons.events.navigation.CREATE_CHANNEL_OPENED, openCreateChannel);
+    navigation.on(cons.events.navigation.PUBLIC_ROOMS_OPENED, openPublicRooms);
+    navigation.on(cons.events.navigation.CREATE_ROOM_OPENED, openCreateRoom);
     navigation.on(cons.events.navigation.INVITE_USER_OPENED, openInviteUser);
     navigation.on(cons.events.navigation.SETTINGS_OPENED, openSettings);
     return () => {
       navigation.removeListener(cons.events.navigation.INVITE_LIST_OPENED, openInviteList);
-      navigation.removeListener(cons.events.navigation.PUBLIC_CHANNELS_OPENED, openPublicChannels);
-      navigation.removeListener(cons.events.navigation.CREATE_CHANNEL_OPENED, openCreateChannel);
+      navigation.removeListener(cons.events.navigation.PUBLIC_ROOMS_OPENED, openPublicRooms);
+      navigation.removeListener(cons.events.navigation.CREATE_ROOM_OPENED, openCreateRoom);
       navigation.removeListener(cons.events.navigation.INVITE_USER_OPENED, openInviteUser);
       navigation.removeListener(cons.events.navigation.SETTINGS_OPENED, openSettings);
     };
@@ -64,14 +64,14 @@ function Windows() {
         isOpen={isInviteList}
         onRequestClose={() => changeInviteList(false)}
       />
-      <PublicChannels
-        isOpen={publicChannels.isOpen}
-        searchTerm={publicChannels.searchTerm}
-        onRequestClose={() => changePublicChannels({ isOpen: false, searchTerm: undefined })}
+      <PublicRooms
+        isOpen={publicRooms.isOpen}
+        searchTerm={publicRooms.searchTerm}
+        onRequestClose={() => changePublicRooms({ isOpen: false, searchTerm: undefined })}
       />
-      <CreateChannel
-        isOpen={isCreateChannel}
-        onRequestClose={() => changeCreateChannel(false)}
+      <CreateRoom
+        isOpen={isCreateRoom}
+        onRequestClose={() => changeCreateRoom(false)}
       />
       <InviteUser
         isOpen={inviteUser.isOpen}

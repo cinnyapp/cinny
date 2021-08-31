@@ -27,16 +27,16 @@ function openInviteList() {
   });
 }
 
-function openPublicChannels(searchTerm) {
+function openPublicRooms(searchTerm) {
   appDispatcher.dispatch({
-    type: cons.actions.navigation.OPEN_PUBLIC_CHANNELS,
+    type: cons.actions.navigation.OPEN_PUBLIC_ROOMS,
     searchTerm,
   });
 }
 
-function openCreateChannel() {
+function openCreateRoom() {
   appDispatcher.dispatch({
-    type: cons.actions.navigation.OPEN_CREATE_CHANNEL,
+    type: cons.actions.navigation.OPEN_CREATE_ROOM,
   });
 }
 
@@ -75,8 +75,8 @@ export {
   selectRoom,
   togglePeopleDrawer,
   openInviteList,
-  openPublicChannels,
-  openCreateChannel,
+  openPublicRooms,
+  openCreateRoom,
   openInviteUser,
   openSettings,
   openEmojiBoard,

@@ -9,7 +9,7 @@ function getTimelineJSXMessages() {
       return (
         <>
           <b>{user}</b>
-          {' joined the channel'}
+          {' joined the room'}
         </>
       );
     },
@@ -18,7 +18,7 @@ function getTimelineJSXMessages() {
       return (
         <>
           <b>{user}</b>
-          {' left the channel'}
+          {' left the room'}
           {reasonMsg}
         </>
       );

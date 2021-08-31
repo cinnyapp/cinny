@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import './ChannelViewFloating.scss';
+import './RoomViewFloating.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -13,7 +13,7 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 
 import { getUsersActionJsx } from './common';
 
-function ChannelViewFloating({
+function RoomViewFloating({
   roomId, roomTimeline, timelineScroll, viewEvent,
 }) {
   const [reachedBottom, setReachedBottom] = useState(true);
@@ -53,11 +53,11 @@ function ChannelViewFloating({
 
   return (
     <>
-      <div className={`channel-view__typing${isSomeoneTyping(typingMembers) ? ' channel-view__typing--open' : ''}`}>
+      <div className={`room-view__typing${isSomeoneTyping(typingMembers) ? ' room-view__typing--open' : ''}`}>
         <div className="bouncingLoader"><div /></div>
         <Text variant="b2">{getTypingMessage(typingMembers)}</Text>
       </div>
-      <div className={`channel-view__STB${reachedBottom ? '' : ' channel-view__STB--open'}`}>
+      <div className={`room-view__STB${reachedBottom ? '' : ' room-view__STB--open'}`}>
         <IconButton
           onClick={() => {
             timelineScroll.enableSmoothScroll();
@@ -71,7 +71,7 @@ function ChannelViewFloating({
     </>
   );
 }
-ChannelViewFloating.propTypes = {
+RoomViewFloating.propTypes = {
   roomId: PropTypes.string.isRequired,
   roomTimeline: PropTypes.shape({}).isRequired,
   timelineScroll: PropTypes.shape({
@@ -80,4 +80,4 @@ ChannelViewFloating.propTypes = {
   viewEvent: PropTypes.shape({}).isRequired,
 };
 
-export default ChannelViewFloating;
+export default RoomViewFloating;

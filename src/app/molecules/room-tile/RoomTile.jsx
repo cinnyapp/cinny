@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import './ChannelTile.scss';
+import './RoomTile.scss';
 
 import Linkify from 'linkifyjs/react';
 import colorMXID from '../../../util/colorMXID';
@@ -12,20 +12,20 @@ function linkifyContent(content) {
   return <Linkify options={{ target: { url: '_blank' } }}>{content}</Linkify>;
 }
 
-function ChannelTile({
+function RoomTile({
   avatarSrc, name, id,
   inviterName, memberCount, desc, options,
 }) {
   return (
-    <div className="channel-tile">
-      <div className="channel-tile__avatar">
+    <div className="room-tile">
+      <div className="room-tile__avatar">
         <Avatar
           imageSrc={avatarSrc}
           bgColor={colorMXID(id)}
           text={name.slice(0, 1)}
         />
       </div>
-      <div className="channel-tile__content">
+      <div className="room-tile__content">
         <Text variant="s1">{name}</Text>
         <Text variant="b3">
           {
@@ -36,12 +36,12 @@ function ChannelTile({
         </Text>
         {
           desc !== null && (typeof desc === 'string')
-            ? <Text className="channel-tile__content__desc" variant="b2">{linkifyContent(desc)}</Text>
+            ? <Text className="room-tile__content__desc" variant="b2">{linkifyContent(desc)}</Text>
             : desc
         }
       </div>
       { options !== null && (
-        <div className="channel-tile__options">
+        <div className="room-tile__options">
           {options}
         </div>
       )}
@@ -49,14 +49,14 @@ function ChannelTile({
   );
 }
 
-ChannelTile.defaultProps = {
+RoomTile.defaultProps = {
   avatarSrc: null,
   inviterName: null,
   options: null,
   desc: null,
   memberCount: null,
 };
-ChannelTile.propTypes = {
+RoomTile.propTypes = {
   avatarSrc: PropTypes.string,
   name: PropTypes.string.isRequired,
   id: PropTypes.string.isRequired,
@@ -69,4 +69,4 @@ ChannelTile.propTypes = {
   options: PropTypes.node,
 };
 
-export default ChannelTile;
+export default RoomTile;

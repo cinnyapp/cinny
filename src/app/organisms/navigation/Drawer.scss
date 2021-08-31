@@ -28,14 +28,14 @@
   display: none;
   height: var(--header-height);
 }
-.channels__wrapper {
+.rooms__wrapper {
   @extend .drawer-flexItem;
 }
 
-.channels-container {
+.rooms-container {
   padding-bottom: var(--sp-extra-loose);
 
-  & > .channel-selector {
+  & > .room-selector {
     width: calc(100% - var(--sp-extra-tight));
     margin-left: auto;
 
@@ -46,7 +46,7 @@
 
   }
 
-  & > .channel-selector:first-child {
+  & > .room-selector:first-child {
     margin-top: var(--sp-extra-tight);
   }
 

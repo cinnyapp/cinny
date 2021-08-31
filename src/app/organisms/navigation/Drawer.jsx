@@ -40,9 +40,9 @@ function Drawer() {
       <DrawerHeader activeTab={activeTab} />
       <div className="drawer__content-wrapper">
         <DrawerBradcrumb />
-        <div className="channels__wrapper">
+        <div className="rooms__wrapper">
           <ScrollView autoHide>
-            <div className="channels-container">
+            <div className="rooms-container">
               {
                 activeTab === 'home'
                   ? <Home />

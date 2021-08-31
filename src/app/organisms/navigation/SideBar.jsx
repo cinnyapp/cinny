@@ -6,7 +6,7 @@ import cons from '../../../client/state/cons';
 import colorMXID from '../../../util/colorMXID';
 import logout from '../../../client/action/logout';
 import {
-  changeTab, openInviteList, openPublicChannels, openSettings,
+  changeTab, openInviteList, openPublicRooms, openSettings,
 } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
 
@@ -92,8 +92,8 @@ function SideBar() {
           <div className="scrollable-content">
             <div className="featured-container">
               <SidebarAvatar active={activeTab === 'home'} onClick={() => changeTab('home')} tooltip="Home" iconSrc={HomeIC} />
-              <SidebarAvatar active={activeTab === 'dms'} onClick={() => changeTab('dms')} tooltip="People" iconSrc={UserIC} />
-              <SidebarAvatar onClick={() => openPublicChannels()} tooltip="Public channels" iconSrc={HashSearchIC} />
+              <SidebarAvatar active={activeTab === 'dm'} onClick={() => changeTab('dm')} tooltip="People" iconSrc={UserIC} />
+              <SidebarAvatar onClick={() => openPublicRooms()} tooltip="Public rooms" iconSrc={HashSearchIC} />
             </div>
             <div className="sidebar-divider" />
             <div className="space-container" />

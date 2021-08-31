@@ -13,7 +13,7 @@ import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
 import Input from '../../atoms/input/Input';
 import PopupWindow from '../../molecules/popup-window/PopupWindow';
-import ChannelTile from '../../molecules/channel-tile/ChannelTile';
+import RoomTile from '../../molecules/room-tile/RoomTile';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
@@ -188,7 +188,7 @@ function InviteUser({
       const userId = user.user_id;
       const name = typeof user.display_name === 'string' ? user.display_name : userId;
       return (
-        <ChannelTile
+        <RoomTile
           key={userId}
           avatarSrc={typeof user.avatar_url === 'string' ? mx.mxcUrlToHttp(user.avatar_url, 42, 42, 'crop') : null}
           name={name}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import './ChannelView.scss';
+import './RoomView.scss';
 
 import EventEmitter from 'events';
 
@@ -8,11 +8,11 @@ import RoomTimeline from '../../../client/state/RoomTimeline';
 
 import ScrollView from '../../atoms/scroll/ScrollView';
 
-import ChannelViewHeader from './ChannelViewHeader';
-import ChannelViewContent from './ChannelViewContent';
-import ChannelViewFloating from './ChannelViewFloating';
-import ChannelViewInput from './ChannelViewInput';
-import ChannelViewCmdBar from './ChannelViewCmdBar';
+import RoomViewHeader from './RoomViewHeader';
+import RoomViewContent from './RoomViewContent';
+import RoomViewFloating from './RoomViewFloating';
+import RoomViewInput from './RoomViewInput';
+import RoomViewCmdBar from './RoomViewCmdBar';
 
 import { scrollToBottom, isAtBottom, autoScrollToBottom } from './common';
 
@@ -22,7 +22,7 @@ let lastScrollTop = 0;
 let lastScrollHeight = 0;
 let isReachedBottom = true;
 let isReachedTop = false;
-function ChannelView({ roomId }) {
+function RoomView({ roomId }) {
   const [roomTimeline, updateRoomTimeline] = useState(null);
   const timelineSVRef = useRef(null);
 
@@ -101,13 +101,13 @@ function ChannelView({ roomId }) {
   }
 
   return (
-    <div className="channel-view">
-      <ChannelViewHeader roomId={roomId} />
-      <div className="channel-view__content-wrapper">
-        <div className="channel-view__scrollable">
+    <div className="room-view">
+      <RoomViewHeader roomId={roomId} />
+      <div className="room-view__content-wrapper">
+        <div className="room-view__scrollable">
           <ScrollView onScroll={onTimelineScroll} ref={timelineSVRef} autoHide>
             {roomTimeline !== null && (
-              <ChannelViewContent
+              <RoomViewContent
                 roomId={roomId}
                 roomTimeline={roomTimeline}
                 timelineScroll={timelineScroll}
@@ -116,7 +116,7 @@ function ChannelView({ roomId }) {
             )}
           </ScrollView>
           {roomTimeline !== null && (
-            <ChannelViewFloating
+            <RoomViewFloating
               roomId={roomId}
               roomTimeline={roomTimeline}
               timelineScroll={timelineScroll}
@@ -125,14 +125,14 @@ function ChannelView({ roomId }) {
           )}
         </div>
         {roomTimeline !== null && (
-          <div className="channel-view__sticky">
-            <ChannelViewInput
+          <div className="room-view__sticky">
+            <RoomViewInput
               roomId={roomId}
               roomTimeline={roomTimeline}
               timelineScroll={timelineScroll}
               viewEvent={viewEvent}
             />
-            <ChannelViewCmdBar
+            <RoomViewCmdBar
               roomId={roomId}
               roomTimeline={roomTimeline}
               viewEvent={viewEvent}
@@ -143,8 +143,8 @@ function ChannelView({ roomId }) {
     </div>
   );
 }
-ChannelView.propTypes = {
+RoomView.propTypes = {
   roomId: PropTypes.string.isRequired,
 };
 
-export default ChannelView;
+export default RoomView;

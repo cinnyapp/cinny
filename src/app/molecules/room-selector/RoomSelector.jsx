@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import './ChannelSelector.scss';
+import './RoomSelector.scss';
 
 import colorMXID from '../../../util/colorMXID';
 
@@ -9,40 +9,40 @@ import Avatar from '../../atoms/avatar/Avatar';
 import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 
-function ChannelSelectorWrapper({
+function RoomSelectorWrapper({
   isSelected, onClick, content, options,
 }) {
   return (
-    <div className={`channel-selector${isSelected ? ' channel-selector--selected' : ''}`}>
+    <div className={`room-selector${isSelected ? ' room-selector--selected' : ''}`}>
       <button
-        className="channel-selector__content"
+        className="room-selector__content"
         type="button"
         onClick={onClick}
-        onMouseUp={(e) => blurOnBubbling(e, '.channel-selector')}
+        onMouseUp={(e) => blurOnBubbling(e, '.room-selector')}
       >
         {content}
       </button>
-      <div className="channel-selector__options">{options}</div>
+      <div className="room-selector__options">{options}</div>
     </div>
   );
 }
-ChannelSelectorWrapper.defaultProps = {
+RoomSelectorWrapper.defaultProps = {
   options: null,
 };
-ChannelSelectorWrapper.propTypes = {
+RoomSelectorWrapper.propTypes = {
   isSelected: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
   content: PropTypes.node.isRequired,
   options: PropTypes.node,
 };
 
-function ChannelSelector({
+function RoomSelector({
   name, roomId, imageSrc, iconSrc,
   isSelected, isUnread, notificationCount, isAlert,
   options, onClick,
 }) {
   return (
-    <ChannelSelectorWrapper
+    <RoomSelectorWrapper
       isSelected={isSelected}
       content={(
         <>
@@ -67,12 +67,12 @@ function ChannelSelector({
     />
   );
 }
-ChannelSelector.defaultProps = {
+RoomSelector.defaultProps = {
   imageSrc: null,
   iconSrc: null,
   options: null,
 };
-ChannelSelector.propTypes = {
+RoomSelector.propTypes = {
   name: PropTypes.string.isRequired,
   roomId: PropTypes.string.isRequired,
   imageSrc: PropTypes.string,
@@ -85,4 +85,4 @@ ChannelSelector.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
-export default ChannelSelector;
+export default RoomSelector;

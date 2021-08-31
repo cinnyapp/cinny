@@ -37,11 +37,11 @@ class Navigation extends EventEmitter {
       [cons.actions.navigation.OPEN_INVITE_LIST]: () => {
         this.emit(cons.events.navigation.INVITE_LIST_OPENED);
       },
-      [cons.actions.navigation.OPEN_PUBLIC_CHANNELS]: () => {
-        this.emit(cons.events.navigation.PUBLIC_CHANNELS_OPENED, action.searchTerm);
+      [cons.actions.navigation.OPEN_PUBLIC_ROOMS]: () => {
+        this.emit(cons.events.navigation.PUBLIC_ROOMS_OPENED, action.searchTerm);
       },
-      [cons.actions.navigation.OPEN_CREATE_CHANNEL]: () => {
-        this.emit(cons.events.navigation.CREATE_CHANNEL_OPENED);
+      [cons.actions.navigation.OPEN_CREATE_ROOM]: () => {
+        this.emit(cons.events.navigation.CREATE_ROOM_OPENED);
       },
       [cons.actions.navigation.OPEN_INVITE_USER]: () => {
         this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId, action.searchTerm);

@@ -1,4 +1,4 @@
-.channel-input {
+.room-input {
   padding: var(--sp-extra-tight) calc(var(--sp-normal) - 2px);
   display: flex;
   min-height: 48px;
@@ -73,7 +73,7 @@
   }
 }
 
-.channel-attachment {
+.room-attachment {
   --side-spacing: calc(var(--sp-normal) + var(--av-small) + var(--sp-tight));
   display: flex;
   align-items: center;
@@ -112,7 +112,7 @@
   }
 }
 
-.channel-reply {
+.room-reply {
   display: flex;
   align-items: center;
   background-color: var(--bg-surface-low);

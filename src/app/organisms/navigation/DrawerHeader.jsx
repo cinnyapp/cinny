@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  openPublicChannels, openCreateChannel, openInviteUser,
+  openPublicRooms, openCreateRoom, openInviteUser,
 } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
@@ -26,22 +26,22 @@ function DrawerHeader({ activeTab }) {
           <ContextMenu
             content={(hideMenu) => (
               <>
-                <MenuHeader>Add channel</MenuHeader>
+                <MenuHeader>Add room</MenuHeader>
                 <MenuItem
                   iconSrc={HashPlusIC}
-                  onClick={() => { hideMenu(); openCreateChannel(); }}
+                  onClick={() => { hideMenu(); openCreateRoom(); }}
                 >
-                  Create new channel
+                  Create new room
                 </MenuItem>
                 <MenuItem
                   iconSrc={HashSearchIC}
-                  onClick={() => { hideMenu(); openPublicChannels(); }}
+                  onClick={() => { hideMenu(); openPublicRooms(); }}
                 >
-                  Add Public channel
+                  Add public room
                 </MenuItem>
               </>
             )}
-            render={(toggleMenu) => (<IconButton onClick={toggleMenu} tooltip="Add channel" src={PlusIC} size="normal" />)}
+            render={(toggleMenu) => (<IconButton onClick={toggleMenu} tooltip="Add room" src={PlusIC} size="normal" />)}
           />
         )}
       {/* <IconButton onClick={() => ''} tooltip="Menu" src={VerticalMenuIC} size="normal" /> */}

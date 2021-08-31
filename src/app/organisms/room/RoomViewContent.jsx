@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import PropTypes from 'prop-types';
-import './ChannelViewContent.scss';
+import './RoomViewContent.scss';
 
 import dateFormat from 'dateformat';
 
@@ -29,7 +29,7 @@ import {
   PlaceholderMessage,
 } from '../../molecules/message/Message';
 import * as Media from '../../molecules/media/Media';
-import ChannelIntro from '../../molecules/channel-intro/ChannelIntro';
+import RoomIntro from '../../molecules/room-intro/RoomIntro';
 import TimelineChange from '../../molecules/message/TimelineChange';
 
 import ReplyArrowIC from '../../../../public/res/ic/outlined/reply-arrow.svg';
@@ -131,20 +131,20 @@ function genMediaContent(mE) {
   }
 }
 
-function genChannelIntro(mEvent, roomTimeline) {
+function genRoomIntro(mEvent, roomTimeline) {
   const mx = initMatrix.matrixClient;
   const roomTopic = roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
   const isDM = initMatrix.roomList.directs.has(roomTimeline.roomId);
   let avatarSrc = roomTimeline.room.getAvatarUrl(mx.baseUrl, 80, 80, 'crop');
   avatarSrc = isDM ? roomTimeline.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
   return (
-    <ChannelIntro
-      key={mEvent ? mEvent.getId() : 'channel-intro'}
+    <RoomIntro
+      key={mEvent ? mEvent.getId() : 'room-intro'}
       roomId={roomTimeline.roomId}
       avatarSrc={avatarSrc}
       name={roomTimeline.room.name}
       heading={`Welcome to ${roomTimeline.room.name}`}
-      desc={`This is the beginning of ${roomTimeline.room.name} channel.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
+      desc={`This is the beginning of ${roomTimeline.room.name} room.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
       time={mEvent ? `Created at ${dateFormat(mEvent.getDate(), 'dd mmmm yyyy, hh:MM TT')}` : null}
     />
   );
@@ -188,7 +188,7 @@ function pickEmoji(e, roomId, eventId, roomTimeline) {
 }
 
 let wasAtBottom = true;
-function ChannelViewContent({
+function RoomViewContent({
   roomId, roomTimeline, timelineScroll, viewEvent,
 }) {
   const [isReachedTimelineEnd, setIsReachedTimelineEnd] = useState(false);
@@ -517,7 +517,7 @@ function ChannelViewContent({
   }
 
   function renderMessage(mEvent) {
-    if (mEvent.getType() === 'm.room.create') return genChannelIntro(mEvent, roomTimeline);
+    if (mEvent.getType() === 'm.room.create') return genRoomIntro(mEvent, roomTimeline);
     if (
       mEvent.getType() !== 'm.room.message'
       && mEvent.getType() !== 'm.room.encrypted'
@@ -562,20 +562,20 @@ function ChannelViewContent({
   }
 
   return (
-    <div className="channel-view__content">
+    <div className="room-view__content">
       <div className="timeline__wrapper">
         { roomTimeline.timeline[0].getType() !== 'm.room.create' && !isReachedTimelineEnd && genPlaceholders() }
-        { roomTimeline.timeline[0].getType() !== 'm.room.create' && isReachedTimelineEnd && genChannelIntro(undefined, roomTimeline)}
+        { roomTimeline.timeline[0].getType() !== 'm.room.create' && isReachedTimelineEnd && genRoomIntro(undefined, roomTimeline)}
         { roomTimeline.timeline.map(renderMessage) }
       </div>
     </div>
   );
 }
-ChannelViewContent.propTypes = {
+RoomViewContent.propTypes = {
   roomId: PropTypes.string.isRequired,
   roomTimeline: PropTypes.shape({}).isRequired,
   timelineScroll: PropTypes.shape({}).isRequired,
   viewEvent: PropTypes.shape({}).isRequired,
 };
 
-export default ChannelViewContent;
+export default RoomViewContent;

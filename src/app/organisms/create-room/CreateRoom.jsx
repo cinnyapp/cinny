@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import './CreateChannel.scss';
+import './CreateRoom.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import { isRoomAliasAvailable } from '../../../util/matrixUtil';
@@ -18,7 +18,7 @@ import SettingTile from '../../molecules/setting-tile/SettingTile';
 import HashPlusIC from '../../../../public/res/ic/outlined/hash-plus.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-function CreateChannel({ isOpen, onRequestClose }) {
+function CreateRoom({ isOpen, onRequestClose }) {
   const [isPublic, togglePublic] = useState(false);
   const [isEncrypted, toggleEncrypted] = useState(true);
   const [isValidAddress, updateIsValidAddress] = useState(null);
@@ -69,10 +69,10 @@ function CreateChannel({ isOpen, onRequestClose }) {
       onRequestClose();
     } catch (e) {
       if (e.message === 'M_UNKNOWN: Invalid characters in room alias') {
-        updateCreatingError('ERROR: Invalid characters in channel address');
+        updateCreatingError('ERROR: Invalid characters in room address');
         updateIsValidAddress(false);
       } else if (e.message === 'M_ROOM_IN_USE: Room alias already taken') {
-        updateCreatingError('ERROR: Channel address is already in use');
+        updateCreatingError('ERROR: Room address is already in use');
         updateIsValidAddress(false);
       } else updateCreatingError(e.message);
     }
@@ -110,26 +110,26 @@ function CreateChannel({ isOpen, onRequestClose }) {
   return (
     <PopupWindow
       isOpen={isOpen}
-      title="Create channel"
+      title="Create room"
       contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip="Close" />}
       onRequestClose={onRequestClose}
     >
-      <div className="create-channel">
-        <form className="create-channel__form" onSubmit={(e) => { e.preventDefault(); createRoom(); }}>
+      <div className="create-room">
+        <form className="create-room__form" onSubmit={(e) => { e.preventDefault(); createRoom(); }}>
           <SettingTile
-            title="Make channel public"
+            title="Make room public"
             options={<Toggle isActive={isPublic} onToggle={togglePublic} />}
-            content={<Text variant="b3">Public channel can be joined by anyone.</Text>}
+            content={<Text variant="b3">Public room can be joined by anyone.</Text>}
           />
           {isPublic && (
             <div>
-              <Text className="create-channel__address__label" variant="b2">Channel address</Text>
-              <div className="create-channel__address">
+              <Text className="create-room__address__label" variant="b2">Room address</Text>
+              <div className="create-room__address">
                 <Text variant="b1">#</Text>
                 <Input value={addressValue} onChange={validateAddress} state={(isValidAddress === false) ? 'error' : 'normal'} forwardRef={addressRef} placeholder="my_room" required />
                 <Text variant="b1">{hsString}</Text>
               </div>
-              {isValidAddress === false && <Text className="create-channel__address__tip" variant="b3"><span style={{ color: 'var(--bg-danger)' }}>{`#${addressValue}${hsString} is already in use`}</span></Text>}
+              {isValidAddress === false && <Text className="create-room__address__tip" variant="b3"><span style={{ color: 'var(--bg-danger)' }}>{`#${addressValue}${hsString} is already in use`}</span></Text>}
             </div>
           )}
           {!isPublic && (
@@ -140,26 +140,26 @@ function CreateChannel({ isOpen, onRequestClose }) {
             />
           )}
           <Input value={topicValue} onChange={handleTopicChange} forwardRef={topicRef} minHeight={174} resizable label="Topic (optional)" />
-          <div className="create-channel__name-wrapper">
-            <Input value={titleValue} onChange={handleTitleChange} forwardRef={nameRef} label="Channel name" required />
+          <div className="create-room__name-wrapper">
+            <Input value={titleValue} onChange={handleTitleChange} forwardRef={nameRef} label="Room name" required />
             <Button disabled={isValidAddress === false || isCreatingRoom} iconSrc={HashPlusIC} type="submit" variant="primary">Create</Button>
           </div>
           {isCreatingRoom && (
-            <div className="create-channel__loading">
+            <div className="create-room__loading">
               <Spinner size="small" />
-              <Text>Creating channel...</Text>
+              <Text>Creating room...</Text>
             </div>
           )}
-          {typeof creatingError === 'string' && <Text className="create-channel__error" variant="b3">{creatingError}</Text>}
+          {typeof creatingError === 'string' && <Text className="create-room__error" variant="b3">{creatingError}</Text>}
         </form>
       </div>
     </PopupWindow>
   );
 }
 
-CreateChannel.propTypes = {
+CreateRoom.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onRequestClose: PropTypes.func.isRequired,
 };
 
-export default CreateChannel;
+export default CreateRoom;

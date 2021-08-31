@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import './Channel.scss';
+import './Room.scss';
 
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 
 import Welcome from '../welcome/Welcome';
-import ChannelView from './ChannelView';
+import RoomView from './RoomView';
 import PeopleDrawer from './PeopleDrawer';
 
-function Channel() {
+function Room() {
   const [selectedRoomId, changeSelectedRoomId] = useState(null);
   const [isDrawerVisible, toggleDrawerVisiblity] = useState(navigation.isPeopleDrawerVisible);
   useEffect(() => {
@@ -30,11 +30,11 @@ function Channel() {
   if (selectedRoomId === null) return <Welcome />;
 
   return (
-    <div className="channel-container">
-      <ChannelView roomId={selectedRoomId} />
+    <div className="room-container">
+      <RoomView roomId={selectedRoomId} />
       { isDrawerVisible && <PeopleDrawer roomId={selectedRoomId} />}
     </div>
   );
 }
 
-export default Channel;
+export default Room;

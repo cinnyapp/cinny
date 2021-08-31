@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import './ChannelViewInput.scss';
+import './RoomViewInput.scss';
 
 import TextareaAutosize from 'react-autosize-textarea';
 
@@ -33,7 +33,7 @@ const CMD_REGEX = /(\/|>[#*@]|:|@)(\S*)$/;
 let isTyping = false;
 let isCmdActivated = false;
 let cmdCursorPos = null;
-function ChannelViewInput({
+function RoomViewInput({
   roomId, roomTimeline, timelineScroll, viewEvent,
 }) {
   const [attachment, setAttachment] = useState(null);
@@ -304,14 +304,14 @@ function ChannelViewInput({
   function renderInputs() {
     return (
       <>
-        <div className={`channel-input__option-container${attachment === null ? '' : ' channel-attachment__option'}`}>
+        <div className={`room-input__option-container${attachment === null ? '' : ' room-attachment__option'}`}>
           <input onChange={uploadFileChange} style={{ display: 'none' }} ref={uploadInputRef} type="file" />
           <IconButton onClick={handleUploadClick} tooltip={attachment === null ? 'Upload' : 'Cancel'} src={CirclePlusIC} />
         </div>
-        <div ref={inputBaseRef} className="channel-input__input-container">
+        <div ref={inputBaseRef} className="room-input__input-container">
           {roomTimeline.isEncryptedRoom() && <RawIcon size="extra-small" src={ShieldIC} />}
           <ScrollView autoHide>
-            <Text className="channel-input__textarea-wrapper">
+            <Text className="room-input__textarea-wrapper">
               <TextareaAutosize
                 ref={textAreaRef}
                 onChange={handleMsgTyping}
@@ -324,7 +324,7 @@ function ChannelViewInput({
           {isMarkdown && <RawIcon size="extra-small" src={MarkdownIC} />}
           <button ref={escBtnRef} tabIndex="-1" onClick={deactivateCmdAndEmit} className="btn-cmd-esc" type="button"><Text variant="b3">ESC</Text></button>
         </div>
-        <div ref={rightOptionsRef} className="channel-input__option-container">
+        <div ref={rightOptionsRef} className="room-input__option-container">
           <IconButton
             onClick={(e) => {
               const boxInfo = e.target.getBoundingClientRect();
@@ -346,14 +346,14 @@ function ChannelViewInput({
   function attachFile() {
     const fileType = attachment.type.slice(0, attachment.type.indexOf('/'));
     return (
-      <div className="channel-attachment">
-        <div className={`channel-attachment__preview${fileType !== 'image' ? ' channel-attachment__icon' : ''}`}>
+      <div className="room-attachment">
+        <div className={`room-attachment__preview${fileType !== 'image' ? ' room-attachment__icon' : ''}`}>
           {fileType === 'image' && <img alt={attachment.name} src={URL.createObjectURL(attachment)} />}
           {fileType === 'video' && <RawIcon src={VLCIC} />}
           {fileType === 'audio' && <RawIcon src={VolumeFullIC} />}
           {fileType !== 'image' && fileType !== 'video' && fileType !== 'audio' && <RawIcon src={FileIC} />}
         </div>
-        <div className="channel-attachment__info">
+        <div className="room-attachment__info">
           <Text variant="b1">{attachment.name}</Text>
           <Text variant="b3"><span ref={uploadProgressRef}>{`size: ${bytesToSize(attachment.size)}`}</span></Text>
         </div>
@@ -363,7 +363,7 @@ function ChannelViewInput({
 
   function attachReply() {
     return (
-      <div className="channel-reply">
+      <div className="room-reply">
         <IconButton
           onClick={() => {
             roomsInput.cancelReplyTo(roomId);
@@ -387,17 +387,17 @@ function ChannelViewInput({
     <>
       { replyTo !== null && attachReply()}
       { attachment !== null && attachFile() }
-      <form className="channel-input" onSubmit={(e) => { e.preventDefault(); }}>
+      <form className="room-input" onSubmit={(e) => { e.preventDefault(); }}>
         {
           roomTimeline.room.isSpaceRoom()
-            ? <Text className="channel-input__space" variant="b1">Spaces are yet to be implemented</Text>
+            ? <Text className="room-input__space" variant="b1">Spaces are yet to be implemented</Text>
             : renderInputs()
         }
       </form>
     </>
   );
 }
-ChannelViewInput.propTypes = {
+RoomViewInput.propTypes = {
   roomId: PropTypes.string.isRequired,
   roomTimeline: PropTypes.shape({}).isRequired,
   timelineScroll: PropTypes.shape({
@@ -410,4 +410,4 @@ ChannelViewInput.propTypes = {
   viewEvent: PropTypes.shape({}).isRequired,
 };
 
-export default ChannelViewInput;
+export default RoomViewInput;
