@@ -1,9 +1,14 @@
 ## Builder
 FROM node:14-alpine as builder
 
+ENV default_server=matrix.org
+
 WORKDIR /src
 
 COPY . /src
+
+RUN sed -i 's/value="matrix.org"/value="'$default_server'"/' /src/src/app/templates/auth/Auth.jsx
+
 RUN npm install \
   && npm run build
 
