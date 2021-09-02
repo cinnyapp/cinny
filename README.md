@@ -29,6 +29,8 @@ To serve a development version of the app locally for testing, you may also use 
 This repository includes a Dockerfile, which builds the application from source and serves it with Nginx on port 80. To
 use this locally, you can build the container like so:
 
+To set a custom homeserver url change the default_server variable in the Dockerfile.
+
 ```
 docker build -t cinny:latest .
 ```
