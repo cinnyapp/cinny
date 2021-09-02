@@ -7,26 +7,29 @@ import RawIcon from '../system-icons/RawIcon';
 import { blurOnBubbling } from './script';
 
 function Button({
-  id, variant, iconSrc, type, onClick, children, disabled,
+  id, className, variant, iconSrc,
+  type, onClick, children, disabled,
 }) {
   const iconClass = (iconSrc === null) ? '' : `btn-${variant}--icon`;
   return (
     <button
       id={id === '' ? undefined : id}
-      className={`btn-${variant} ${iconClass} noselect`}
+      className={`${className ? `${className} ` : ''}btn-${variant} ${iconClass} noselect`}
       onMouseUp={(e) => blurOnBubbling(e, `.btn-${variant}`)}
       onClick={onClick}
       type={type === 'button' ? 'button' : 'submit'}
       disabled={disabled}
     >
       {iconSrc !== null && <RawIcon size="small" src={iconSrc} />}
-      <Text variant="b1">{ children }</Text>
+      {typeof children === 'string' && <Text variant="b1">{ children }</Text>}
+      {typeof children !== 'string' && children }
     </button>
   );
 }
 
 Button.defaultProps = {
   id: '',
+  className: null,
   variant: 'surface',
   iconSrc: null,
   type: 'button',
@@ -36,6 +39,7 @@ Button.defaultProps = {
 
 Button.propTypes = {
   id: PropTypes.string,
+  className: PropTypes.string,
   variant: PropTypes.oneOf(['surface', 'primary', 'caution', 'danger']),
   iconSrc: PropTypes.string,
   type: PropTypes.oneOf(['button', 'submit']),
