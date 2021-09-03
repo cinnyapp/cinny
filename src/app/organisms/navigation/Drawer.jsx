@@ -7,45 +7,40 @@ import navigation from '../../../client/state/navigation';
 import ScrollView from '../../atoms/scroll/ScrollView';
 
 import DrawerHeader from './DrawerHeader';
+import DrawerBreadcrumb from './DrawerBreadcrumb';
 import Home from './Home';
 import Directs from './Directs';
 
-function DrawerBradcrumb() {
-  return (
-    <div className="breadcrumb__wrapper">
-      <ScrollView horizontal vertical={false}>
-        <div>
-          {/* TODO: bradcrumb space paths when spaces become a thing */}
-        </div>
-      </ScrollView>
-    </div>
-  );
-}
-
 function Drawer() {
-  const [activeTab, setActiveTab] = useState('home');
+  const [selectedTab, setSelectedTab] = useState('home');
+  const [spaceId, setSpaceId] = useState(navigation.selectedSpaceId);
 
   function onTabChanged(tabId) {
-    setActiveTab(tabId);
+    setSelectedTab(tabId);
+  }
+  function onSpaceSelected(roomId) {
+    setSpaceId(roomId);
   }
 
   useEffect(() => {
     navigation.on(cons.events.navigation.TAB_CHANGED, onTabChanged);
+    navigation.on(cons.events.navigation.SPACE_SELECTED, onSpaceSelected);
     return () => {
       navigation.removeListener(cons.events.navigation.TAB_CHANGED, onTabChanged);
+      navigation.removeListener(cons.events.navigation.SPACE_SELECTED, onSpaceSelected);
     };
   }, []);
   return (
     <div className="drawer">
-      <DrawerHeader activeTab={activeTab} />
+      <DrawerHeader selectedTab={selectedTab} spaceId={spaceId} />
       <div className="drawer__content-wrapper">
-        <DrawerBradcrumb />
+        {selectedTab === 'home' && <DrawerBreadcrumb />}
         <div className="rooms__wrapper">
           <ScrollView autoHide>
             <div className="rooms-container">
               {
-                activeTab === 'home'
-                  ? <Home />
+                selectedTab === 'home'
+                  ? <Home spaceId={spaceId} />
                   : <Directs />
               }
             </div>

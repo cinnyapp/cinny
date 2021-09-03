@@ -8,6 +8,13 @@ function changeTab(tabId) {
   });
 }
 
+function selectSpace(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.SELECT_SPACE,
+    roomId,
+  });
+}
+
 function selectRoom(roomId) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.SELECT_ROOM,
@@ -72,6 +79,7 @@ function openReadReceipts(roomId, eventId) {
 
 export {
   changeTab,
+  selectSpace,
   selectRoom,
   togglePeopleDrawer,
   openInviteList,

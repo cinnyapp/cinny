@@ -9,6 +9,7 @@ const cons = {
   actions: {
     navigation: {
       CHANGE_TAB: 'CHANGE_TAB',
+      SELECT_SPACE: 'SELECT_SPACE',
       SELECT_ROOM: 'SELECT_ROOM',
       TOGGLE_PEOPLE_DRAWER: 'TOGGLE_PEOPLE_DRAWER',
       OPEN_INVITE_LIST: 'OPEN_INVITE_LIST',
@@ -34,6 +35,7 @@ const cons = {
   events: {
     navigation: {
       TAB_CHANGED: 'TAB_CHANGED',
+      SPACE_SELECTED: 'SPACE_SELECTED',
       ROOM_SELECTED: 'ROOM_SELECTED',
       PEOPLE_DRAWER_TOGGLED: 'PEOPLE_DRAWER_TOGGLED',
       INVITE_LIST_OPENED: 'INVITE_LIST_OPENED',

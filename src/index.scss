@@ -4,7 +4,9 @@
 
   /* background color | --bg-[background type]: value */
   --bg-surface: #FFFFFF;
+  --bg-surface-transparent: #FFFFFF00;
   --bg-surface-low: #F6F6F6;
+  --bg-surface-low-transparent: #F6F6F600;
   --bg-surface-hover: rgba(0, 0, 0, 3%);
   --bg-surface-active: rgba(0, 0, 0, 5%);
   --bg-surface-border: rgba(0, 0, 0, 6%);
@@ -155,14 +157,18 @@
 .silver-theme {
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(0, 0%, 95%);
+  --bg-surface-transparent: hsla(0, 0%, 95%, 0);
   --bg-surface-low: hsl(0, 0%, 91%);
+  --bg-surface-low-transparent: hsla(0, 0%, 91%, 0);
 }
 
 .dark-theme,
 .butter-theme {
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(208, 8%, 20%);
+  --bg-surface-transparent: hsla(208, 8%, 20%, 0);
   --bg-surface-low: hsl(208, 8%, 16%);
+  --bg-surface-low-transparent: hsla(208, 8%, 16%, 0);
   --bg-surface-hover: rgba(255, 255, 255, 3%);
   --bg-surface-active: rgba(255, 255, 255, 5%);
   --bg-surface-border: rgba(0, 0, 0, 20%);
@@ -206,7 +212,9 @@
 .butter-theme {
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(64, 6%, 14%);
+  --bg-surface-transparent: hsla(64, 6%, 14%, 0);
   --bg-surface-low: hsl(64, 6%, 10%);
+  --bg-surface-low-transparent: hsla(64, 6%, 14%, 0);
 
   
   /* text color | --tc-[background type]-[priority]: value */

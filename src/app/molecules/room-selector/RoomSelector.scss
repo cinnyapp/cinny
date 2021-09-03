@@ -32,9 +32,11 @@
       }
     }
   }
-  &:focus {
-    outline: none;
+  &:focus-within {
     background-color: var(--bg-surface-hover);
+    & button {
+      outline: none;
+    }
   }
   &:active {
     background-color: var(--bg-surface-active);

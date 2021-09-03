@@ -60,10 +60,10 @@ function SideBar() {
     + initMatrix.roomList.inviteDirects.size;
 
   const [totalInvites, updateTotalInvites] = useState(totalInviteCount());
-  const [activeTab, setActiveTab] = useState('home');
+  const [selectedTab, setSelectedTab] = useState('home');
 
   function onTabChanged(tabId) {
-    setActiveTab(tabId);
+    setSelectedTab(tabId);
   }
   function onInviteListChange() {
     updateTotalInvites(totalInviteCount());
@@ -91,8 +91,8 @@ function SideBar() {
         <ScrollView invisible>
           <div className="scrollable-content">
             <div className="featured-container">
-              <SidebarAvatar active={activeTab === 'home'} onClick={() => changeTab('home')} tooltip="Home" iconSrc={HomeIC} />
-              <SidebarAvatar active={activeTab === 'dm'} onClick={() => changeTab('dm')} tooltip="People" iconSrc={UserIC} />
+              <SidebarAvatar active={selectedTab === 'home'} onClick={() => changeTab('home')} tooltip="Home" iconSrc={HomeIC} />
+              <SidebarAvatar active={selectedTab === 'dm'} onClick={() => changeTab('dm')} tooltip="People" iconSrc={UserIC} />
               <SidebarAvatar onClick={() => openPublicRooms()} tooltip="Public rooms" iconSrc={HashSearchIC} />
             </div>
             <div className="sidebar-divider" />

@@ -7,6 +7,7 @@ class RoomList extends EventEmitter {
     super();
     this.matrixClient = matrixClient;
     this.mDirects = this.getMDirects();
+    this.roomIdToParents = new Map();
 
     this.inviteDirects = new Set();
     this.inviteSpaces = new Set();
@@ -24,13 +25,54 @@ class RoomList extends EventEmitter {
     appDispatcher.register(this.roomActions.bind(this));
   }
 
+  getSpaceChildren(roomId) {
+    const space = this.matrixClient.getRoom(roomId);
+    const mSpaceChild = space?.currentState.getStateEvents('m.space.child');
+    const children = mSpaceChild?.map((mEvent) => {
+      if (Object.keys(mEvent.event.content).length === 0) return null;
+      return mEvent.event.state_key;
+    });
+    return children?.filter((child) => child !== null);
+  }
+
+  addToRoomIdToParents(roomId, parentRoomId) {
+    if (!this.roomIdToParents.has(roomId)) {
+      this.roomIdToParents.set(roomId, new Set());
+    }
+    const parents = this.roomIdToParents.get(roomId);
+    parents.add(parentRoomId);
+  }
+
+  removeFromRoomIdToParents(roomId, parentRoomId) {
+    if (!this.roomIdToParents.has(roomId)) return;
+    const parents = this.roomIdToParents.get(roomId);
+    parents.delete(parentRoomId);
+    if (parents.size === 0) this.roomIdToParents.delete(roomId);
+  }
+
+  addToSpaces(roomId) {
+    this.spaces.add(roomId);
+    const spaceChildren = this.getSpaceChildren(roomId);
+    spaceChildren?.forEach((childRoomId) => {
+      this.addToRoomIdToParents(childRoomId, roomId);
+    });
+  }
+
+  deleteFromSpaces(roomId) {
+    this.spaces.delete(roomId);
+    const spaceChildren = this.getSpaceChildren(roomId);
+    spaceChildren?.forEach((childRoomId) => {
+      this.removeFromRoomIdToParents(childRoomId, roomId);
+    });
+  }
+
   roomActions(action) {
     const addRoom = (roomId, isDM) => {
       const myRoom = this.matrixClient.getRoom(roomId);
       if (myRoom === null) return false;
 
       if (isDM) this.directs.add(roomId);
-      else if (myRoom.isSpaceRoom()) this.spaces.add(roomId);
+      else if (myRoom.isSpaceRoom()) this.addToSpaces(roomId);
       else this.rooms.add(roomId);
       return true;
     };
@@ -85,6 +127,7 @@ class RoomList extends EventEmitter {
 
   _populateRooms() {
     this.directs.clear();
+    this.roomIdToParents.clear();
     this.spaces.clear();
     this.rooms.clear();
     this.inviteDirects.clear();
@@ -109,7 +152,7 @@ class RoomList extends EventEmitter {
       if (room.getMyMembership() !== 'join') return;
 
       if (this.mDirects.has(roomId)) this.directs.add(roomId);
-      else if (room.isSpaceRoom()) this.spaces.add(roomId);
+      else if (room.isSpaceRoom()) this.addToSpaces(roomId);
       else this.rooms.add(roomId);
     });
   }
@@ -165,8 +208,16 @@ class RoomList extends EventEmitter {
       }
     });
 
-    this.matrixClient.on('RoomState.events', (event) => {
-      if (event.getType() !== 'm.room.join_rules') return;
+    this.matrixClient.on('RoomState.events', (mEvent) => {
+      if (mEvent.getType() === 'm.space.child') {
+        const { event } = mEvent;
+        const isRoomAdded = Object.keys(event.content).length > 0;
+        if (isRoomAdded) this.addToRoomIdToParents(event.state_key, event.room_id);
+        else this.removeFromRoomIdToParents(event.state_key, event.room_id);
+        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        return;
+      }
+      if (mEvent.getType() !== 'm.room.join_rules') return;
 
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
     });
@@ -207,7 +258,7 @@ class RoomList extends EventEmitter {
           const procRoomInfo = this.processingRooms.get(roomId);
 
           if (procRoomInfo.isDM) this.directs.add(roomId);
-          else if (room.isSpaceRoom()) this.spaces.add(roomId);
+          else if (room.isSpaceRoom()) this.addToSpaces(roomId);
           else this.rooms.add(roomId);
 
           if (procRoomInfo.task === 'CREATE') this.emit(cons.events.roomList.ROOM_CREATED, roomId);
@@ -218,7 +269,7 @@ class RoomList extends EventEmitter {
           return;
         }
         if (room.isSpaceRoom()) {
-          this.spaces.add(roomId);
+          this.addToSpaces(roomId);
 
           this.emit(cons.events.roomList.ROOM_JOINED, roomId);
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);
@@ -269,12 +320,12 @@ class RoomList extends EventEmitter {
       }
       // when room is not a DM add/remove it from rooms.
       if (membership === 'leave' || membership === 'kick' || membership === 'ban') {
-        if (room.isSpaceRoom()) this.spaces.delete(roomId);
+        if (room.isSpaceRoom()) this.deleteFromSpaces(roomId);
         else this.rooms.delete(roomId);
         this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
       }
       if (membership === 'join') {
-        if (room.isSpaceRoom()) this.spaces.add(roomId);
+        if (room.isSpaceRoom()) this.addToSpaces(roomId);
         else this.rooms.add(roomId);
         this.emit(cons.events.roomList.ROOM_JOINED, roomId);
       }

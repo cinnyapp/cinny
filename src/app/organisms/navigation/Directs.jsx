@@ -17,13 +17,13 @@ function Directs() {
 
   const [, forceUpdate] = useState({});
 
-  function selectorChanged(activeRoomID, prevActiveRoomId) {
+  function selectorChanged(selectedRoomId, prevSelectedRoomId) {
     if (!drawerPostie.hasTopic('selector-change')) return;
     const addresses = [];
-    if (drawerPostie.hasSubscriber('selector-change', activeRoomID)) addresses.push(activeRoomID);
-    if (drawerPostie.hasSubscriber('selector-change', prevActiveRoomId)) addresses.push(prevActiveRoomId);
+    if (drawerPostie.hasSubscriber('selector-change', selectedRoomId)) addresses.push(selectedRoomId);
+    if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId)) addresses.push(prevSelectedRoomId);
     if (addresses.length === 0) return;
-    drawerPostie.post('selector-change', addresses, activeRoomID);
+    drawerPostie.post('selector-change', addresses, selectedRoomId);
   }
 
   function unreadChanged(roomId) {
@@ -35,9 +35,9 @@ function Directs() {
   function roomListUpdated() {
     const { spaces, rooms, directs } = initMatrix.roomList;
     if (!(
-      spaces.has(navigation.getActiveRoomId())
-      || rooms.has(navigation.getActiveRoomId())
-      || directs.has(navigation.getActiveRoomId()))
+      spaces.has(navigation.selectedRoomId)
+      || rooms.has(navigation.selectedRoomId)
+      || directs.has(navigation.selectedRoomId))
     ) {
       selectRoom(null);
     }
@@ -62,6 +62,7 @@ function Directs() {
       key={id}
       roomId={id}
       drawerPostie={drawerPostie}
+      onClick={() => selectRoom(id)}
     />
   ));
 }

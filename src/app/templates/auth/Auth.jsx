@@ -13,7 +13,7 @@ import Spinner from '../../atoms/spinner/Spinner';
 
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 
-// This regex validates historical usernames, which don't satisy today's username requirements.
+// This regex validates historical usernames, which don't satisfy today's username requirements.
 // See https://matrix.org/docs/spec/appendices#id13 for more info.
 const LOCALPART_LOGIN_REGEX = /.*/;
 const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
