@@ -1,8 +1,9 @@
 name: 'Deploy to Netlify'
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+       - master
 
 jobs:
   deploy:
