@@ -7,12 +7,6 @@ import Tooltip from '../tooltip/Tooltip';
 import { blurOnBubbling } from './script';
 import Text from '../text/Text';
 
-// TODO:
-// 1. [done] an icon only button have "src"
-// 2. have multiple variant
-// 3. [done] should have a smart accessibility "label" arial-label
-// 4. [done] have size as RawIcon
-
 const IconButton = React.forwardRef(({
   variant, size, type,
   tooltip, tooltipPlacement, src, onClick,
@@ -20,7 +14,7 @@ const IconButton = React.forwardRef(({
   const btn = (
     <button
       ref={ref}
-      className={`ic-btn-${variant}`}
+      className={`ic-btn ic-btn-${variant}`}
       onMouseUp={(e) => blurOnBubbling(e, `.ic-btn-${variant}`)}
       onClick={onClick}
       type={type === 'button' ? 'button' : 'submit'}
@@ -49,7 +43,7 @@ IconButton.defaultProps = {
 };
 
 IconButton.propTypes = {
-  variant: PropTypes.oneOf(['surface']),
+  variant: PropTypes.oneOf(['surface', 'positive', 'caution', 'danger']),
   size: PropTypes.oneOf(['normal', 'small', 'extra-small']),
   type: PropTypes.oneOf(['button', 'submit']),
   tooltip: PropTypes.string,

@@ -1,9 +1,6 @@
 @use 'state';
 
-.ic-btn-surface,
-.ic-btn-primary,
-.ic-btn-caution,
-.ic-btn-danger {
+.ic-btn {
   padding: var(--sp-extra-tight);
   border: none;
   border-radius: var(--bo-radius);
@@ -31,4 +28,22 @@
   @include state.hover(var(--bg-surface-hover));
   @include focus(var(--bg-surface-hover));
   @include state.active(var(--bg-surface-active));
+}
+.ic-btn-positive {
+  @include color(var(--ic-positive-normal));
+  @include state.hover(var(--bg-positive-hover));
+  @include focus(var(--bg-positive-hover));
+  @include state.active(var(--bg-positive-active));
+}
+.ic-btn-caution {
+  @include color(var(--ic-caution-normal));
+  @include state.hover(var(--bg-caution-hover));
+  @include focus(var(--bg-caution-hover));
+  @include state.active(var(--bg-caution-active));
+}
+.ic-btn-danger {
+  @include color(var(--ic-danger-normal));
+  @include state.hover(var(--bg-danger-hover));
+  @include focus(var(--bg-danger-hover));
+  @include state.active(var(--bg-danger-active));
 }
