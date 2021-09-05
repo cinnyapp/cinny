@@ -18,23 +18,15 @@ import PeopleSelector from '../../molecules/people-selector/PeopleSelector';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 
 function getPowerLabel(powerLevel) {
-  switch (powerLevel) {
-    case 100:
-      return 'Admin';
-    case 50:
-      return 'Mod';
-    default:
-      return null;
-  }
+  if (powerLevel > 9000) return 'Goku';
+  if (powerLevel > 100) return 'Founder';
+  if (powerLevel === 100) return 'Admin';
+  if (powerLevel >= 50) return 'Mod';
+  return null;
 }
-function compare(m1, m2) {
-  let aName = m1.name;
-  let bName = m2.name;
-
-  // remove "#" from the room name
-  // To ignore it in sorting
-  aName = aName.replaceAll('#', '');
-  bName = bName.replaceAll('#', '');
+function AtoZ(m1, m2) {
+  const aName = m1.name;
+  const bName = m2.name;
 
   if (aName.toLowerCase() < bName.toLowerCase()) {
     return -1;
@@ -45,25 +37,18 @@ function compare(m1, m2) {
   return 0;
 }
 function sortByPowerLevel(m1, m2) {
-  let pl1 = String(m1.powerLevel);
-  let pl2 = String(m2.powerLevel);
+  const pl1 = m1.powerLevel;
+  const pl2 = m2.powerLevel;
 
-  if (pl1 === '100') pl1 = '90.9';
-  if (pl2 === '100') pl2 = '90.9';
-
-  if (pl1.toLowerCase() > pl2.toLowerCase()) {
-    return -1;
-  }
-  if (pl1.toLowerCase() < pl2.toLowerCase()) {
-    return 1;
-  }
+  if (pl1 > pl2) return -1;
+  if (pl1 < pl2) return 1;
   return 0;
 }
 
 function PeopleDrawer({ roomId }) {
   const PER_PAGE_MEMBER = 50;
   const room = initMatrix.matrixClient.getRoom(roomId);
-  const totalMemberList = room.getJoinedMembers().sort(compare).sort(sortByPowerLevel);
+  const totalMemberList = room.getJoinedMembers().sort(AtoZ).sort(sortByPowerLevel);
   const [memberList, updateMemberList] = useState([]);
   let isRoomChanged = false;
 
@@ -75,7 +60,7 @@ function PeopleDrawer({ roomId }) {
     updateMemberList(totalMemberList.slice(0, PER_PAGE_MEMBER));
     room.loadMembersIfNeeded().then(() => {
       if (isRoomChanged) return;
-      const newTotalMemberList = room.getJoinedMembers().sort(compare).sort(sortByPowerLevel);
+      const newTotalMemberList = room.getJoinedMembers().sort(AtoZ).sort(sortByPowerLevel);
       updateMemberList(newTotalMemberList.slice(0, PER_PAGE_MEMBER));
     });
 

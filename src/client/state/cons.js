@@ -6,9 +6,14 @@ const cons = {
     BASE_URL: 'cinny_hs_base_url',
   },
   DEVICE_DISPLAY_NAME: 'Cinny Web',
+  'in.cinny.spaces': 'in.cinny.spaces',
+  tabs: {
+    HOME: 'home',
+    DIRECTS: 'dm',
+  },
   actions: {
     navigation: {
-      CHANGE_TAB: 'CHANGE_TAB',
+      SELECT_TAB: 'SELECT_TAB',
       SELECT_SPACE: 'SELECT_SPACE',
       SELECT_ROOM: 'SELECT_ROOM',
       TOGGLE_PEOPLE_DRAWER: 'TOGGLE_PEOPLE_DRAWER',
@@ -24,6 +29,8 @@ const cons = {
       JOIN: 'JOIN',
       LEAVE: 'LEAVE',
       CREATE: 'CREATE',
+      CREATE_SPACE_SHORTCUT: 'CREATE_SPACE_SHORTCUT',
+      DELETE_SPACE_SHORTCUT: 'DELETE_SPACE_SHORTCUT',
       error: {
         CREATE: 'ERROR_CREATE',
       },
@@ -34,7 +41,7 @@ const cons = {
   },
   events: {
     navigation: {
-      TAB_CHANGED: 'TAB_CHANGED',
+      TAB_SELECTED: 'TAB_SELECTED',
       SPACE_SELECTED: 'SPACE_SELECTED',
       ROOM_SELECTED: 'ROOM_SELECTED',
       PEOPLE_DRAWER_TOGGLED: 'PEOPLE_DRAWER_TOGGLED',
@@ -54,6 +61,7 @@ const cons = {
       ROOM_CREATED: 'ROOM_CREATED',
       MY_RECEIPT_ARRIVED: 'MY_RECEIPT_ARRIVED',
       EVENT_ARRIVED: 'EVENT_ARRIVED',
+      SPACE_SHORTCUT_UPDATED: 'SPACE_SHORTCUT_UPDATED',
     },
     roomTimeline: {
       EVENT: 'EVENT',

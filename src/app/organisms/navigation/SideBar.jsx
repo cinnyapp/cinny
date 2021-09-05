@@ -6,7 +6,7 @@ import cons from '../../../client/state/cons';
 import colorMXID from '../../../util/colorMXID';
 import logout from '../../../client/action/logout';
 import {
-  changeTab, openInviteList, openPublicRooms, openSettings,
+  selectTab, openInviteList, openPublicRooms, openSettings,
 } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
 
@@ -55,29 +55,37 @@ function ProfileAvatarMenu() {
 }
 
 function SideBar() {
-  const totalInviteCount = () => initMatrix.roomList.inviteRooms.size
-    + initMatrix.roomList.inviteSpaces.size
-    + initMatrix.roomList.inviteDirects.size;
+  const { roomList } = initMatrix;
+  const mx = initMatrix.matrixClient;
+  const totalInviteCount = () => roomList.inviteRooms.size
+    + roomList.inviteSpaces.size
+    + roomList.inviteDirects.size;
 
   const [totalInvites, updateTotalInvites] = useState(totalInviteCount());
-  const [selectedTab, setSelectedTab] = useState('home');
+  const [selectedTab, setSelectedTab] = useState(navigation.selectedTab);
+  const [, forceUpdate] = useState({});
 
-  function onTabChanged(tabId) {
+  function onTabSelected(tabId) {
     setSelectedTab(tabId);
   }
   function onInviteListChange() {
     updateTotalInvites(totalInviteCount());
   }
+  function onSpaceShortcutUpdated() {
+    forceUpdate({});
+  }
 
   useEffect(() => {
-    navigation.on(cons.events.navigation.TAB_CHANGED, onTabChanged);
+    navigation.on(cons.events.navigation.TAB_SELECTED, onTabSelected);
+    roomList.on(cons.events.roomList.SPACE_SHORTCUT_UPDATED, onSpaceShortcutUpdated);
     initMatrix.roomList.on(
       cons.events.roomList.INVITELIST_UPDATED,
       onInviteListChange,
     );
 
     return () => {
-      navigation.removeListener(cons.events.navigation.TAB_CHANGED, onTabChanged);
+      navigation.removeListener(cons.events.navigation.TAB_SELECTED, onTabSelected);
+      roomList.removeListener(cons.events.roomList.SPACE_SHORTCUT_UPDATED, onSpaceShortcutUpdated);
       initMatrix.roomList.removeListener(
         cons.events.roomList.INVITELIST_UPDATED,
         onInviteListChange,
@@ -91,12 +99,30 @@ function SideBar() {
         <ScrollView invisible>
           <div className="scrollable-content">
             <div className="featured-container">
-              <SidebarAvatar active={selectedTab === 'home'} onClick={() => changeTab('home')} tooltip="Home" iconSrc={HomeIC} />
-              <SidebarAvatar active={selectedTab === 'dm'} onClick={() => changeTab('dm')} tooltip="People" iconSrc={UserIC} />
+              <SidebarAvatar active={selectedTab === cons.tabs.HOME} onClick={() => selectTab(cons.tabs.HOME)} tooltip="Home" iconSrc={HomeIC} />
+              <SidebarAvatar active={selectedTab === cons.tabs.DIRECTS} onClick={() => selectTab(cons.tabs.DIRECTS)} tooltip="People" iconSrc={UserIC} />
               <SidebarAvatar onClick={() => openPublicRooms()} tooltip="Public rooms" iconSrc={HashSearchIC} />
             </div>
             <div className="sidebar-divider" />
-            <div className="space-container" />
+            <div className="space-container">
+              {
+                [...roomList.spaceShortcut].map((shortcut) => {
+                  const sRoomId = shortcut;
+                  const room = mx.getRoom(sRoomId);
+                  return (
+                    <SidebarAvatar
+                      active={selectedTab === sRoomId}
+                      key={sRoomId}
+                      tooltip={room.name}
+                      bgColor={colorMXID(room.roomId)}
+                      imageSrc={room.getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop') || null}
+                      text={room.name.slice(0, 1)}
+                      onClick={() => selectTab(shortcut)}
+                    />
+                  );
+                })
+              }
+            </div>
           </div>
         </ScrollView>
       </div>

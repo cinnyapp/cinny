@@ -18,6 +18,10 @@
     border-left: 1px solid var(--bg-surface-border);
   }
 
+  & .header__title-wrapper .text {
+    font-weight: 500;
+  }
+
   &__content-wrapper {
     @extend .drawer-flexItem;
     @extend .drawer-flexBox;

@@ -9,6 +9,8 @@ class RoomList extends EventEmitter {
     this.mDirects = this.getMDirects();
     this.roomIdToParents = new Map();
 
+    this.spaceShortcut = new Set();
+
     this.inviteDirects = new Set();
     this.inviteSpaces = new Set();
     this.inviteRooms = new Set();
@@ -20,9 +22,16 @@ class RoomList extends EventEmitter {
     this.processingRooms = new Map();
 
     this._populateRooms();
+    this._populateSpaceShortcut();
     this._listenEvents();
 
     appDispatcher.register(this.roomActions.bind(this));
+  }
+
+  _updateSpaceShortcutData(shortcutList) {
+    const spaceContent = this.matrixClient.getAccountData(cons['in.cinny.spaces'])?.getContent() || {};
+    spaceContent.shortcut = shortcutList;
+    this.matrixClient.setAccountData(cons['in.cinny.spaces'], spaceContent);
   }
 
   getSpaceChildren(roomId) {
@@ -64,6 +73,12 @@ class RoomList extends EventEmitter {
     spaceChildren?.forEach((childRoomId) => {
       this.removeFromRoomIdToParents(childRoomId, roomId);
     });
+
+    if (this.spaceShortcut.has(roomId)) {
+      // if delete space has shortcut remove it.
+      this.spaceShortcut.delete(roomId);
+      this._updateSpaceShortcutData([...this.spaceShortcut]);
+    }
   }
 
   roomActions(action) {
@@ -106,6 +121,18 @@ class RoomList extends EventEmitter {
           });
         }
       },
+      [cons.actions.room.CREATE_SPACE_SHORTCUT]: () => {
+        if (this.spaceShortcut.has(action.roomId)) return;
+        this.spaceShortcut.add(action.roomId);
+        this._updateSpaceShortcutData([...this.spaceShortcut]);
+        this.emit(cons.events.roomList.SPACE_SHORTCUT_UPDATED, action.roomId);
+      },
+      [cons.actions.room.DELETE_SPACE_SHORTCUT]: () => {
+        if (!this.spaceShortcut.has(action.roomId)) return;
+        this.spaceShortcut.delete(action.roomId);
+        this._updateSpaceShortcutData([...this.spaceShortcut]);
+        this.emit(cons.events.roomList.SPACE_SHORTCUT_UPDATED, action.roomId);
+      },
     };
     actions[action.type]?.();
   }
@@ -123,6 +150,21 @@ class RoomList extends EventEmitter {
     });
 
     return mDirectsId;
+  }
+
+  _populateSpaceShortcut() {
+    this.spaceShortcut.clear();
+    const spacesContent = this.matrixClient.getAccountData(cons['in.cinny.spaces'])?.getContent();
+
+    if (spacesContent && Array.isArray(spacesContent?.shortcut)) {
+      spacesContent.shortcut.forEach((shortcut) => {
+        if (this.spaces.has(shortcut)) this.spaceShortcut.add(shortcut);
+      });
+      if (spacesContent.shortcut.length !== this.spaceShortcut.size) {
+        // update shortcut list from account data if shortcut space doesn't exist.
+        this._updateSpaceShortcutData([...this.spaceShortcut]);
+      }
+    }
   }
 
   _populateRooms() {
@@ -166,6 +208,12 @@ class RoomList extends EventEmitter {
   _listenEvents() {
     // Update roomList when m.direct changes
     this.matrixClient.on('accountData', (event) => {
+      if (event.getType() === cons['in.cinny.spaces']) {
+        this._populateSpaceShortcut();
+        this.emit(cons.events.roomList.SPACE_SHORTCUT_UPDATED);
+        return;
+      }
+
       if (event.getType() !== 'm.direct') return;
 
       const latestMDirects = this.getMDirects();

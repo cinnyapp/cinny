@@ -6,19 +6,17 @@ class Navigation extends EventEmitter {
   constructor() {
     super();
 
-    this.selectedTab = 'home';
+    this.selectedTab = cons.tabs.HOME;
     this.selectedSpaceId = null;
-    this.selectedSpacePath = [];
+    this.selectedSpacePath = [cons.tabs.HOME];
+
     this.selectedRoomId = null;
     this.isPeopleDrawerVisible = true;
-
-    // TODO:
-    window.navigation = this;
   }
 
   _setSpacePath(roomId) {
-    if (roomId === null) {
-      this.selectedSpacePath = [];
+    if (roomId === null || roomId === cons.tabs.HOME) {
+      this.selectedSpacePath = [cons.tabs.HOME];
       return;
     }
     if (this.selectedSpacePath.includes(roomId)) {
@@ -31,14 +29,24 @@ class Navigation extends EventEmitter {
 
   navigate(action) {
     const actions = {
-      [cons.actions.navigation.CHANGE_TAB]: () => {
+      [cons.actions.navigation.SELECT_TAB]: () => {
         this.selectedTab = action.tabId;
-        this.emit(cons.events.navigation.TAB_CHANGED, this.selectedTab);
+        if (this.selectedTab !== cons.tabs.DIRECTS) {
+          if (this.selectedTab === cons.tabs.HOME) {
+            this.selectedSpacePath = [cons.tabs.HOME];
+            this.selectedSpaceId = null;
+          } else {
+            this.selectedSpacePath = [this.selectedTab];
+            this.selectedSpaceId = this.selectedTab;
+          }
+          this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
+        } else this.selectedSpaceId = null;
+        this.emit(cons.events.navigation.TAB_SELECTED, this.selectedTab);
       },
       [cons.actions.navigation.SELECT_SPACE]: () => {
         this._setSpacePath(action.roomId);
         this.selectedSpaceId = action.roomId;
-        this.emit(cons.events.navigation.SPACE_SELECTED, action.roomId);
+        this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
         const prevSelectedRoomId = this.selectedRoomId;

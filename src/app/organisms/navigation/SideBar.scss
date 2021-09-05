@@ -44,7 +44,7 @@
       var(--bg-surface-low),
       var(--bg-surface-low-transparent));
     position: sticky;
-    bottom: 0;
+    bottom: -1px;
     left: 0;
   }
 }

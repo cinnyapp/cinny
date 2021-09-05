@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
+import cons from '../../../client/state/cons';
 import {
-  selectSpace, openPublicRooms, openCreateRoom, openInviteUser,
+  openPublicRooms, openCreateRoom, openInviteUser,
 } from '../../../client/action/navigation';
-import navigation from '../../../client/state/navigation';
+import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
 
 import Text from '../../atoms/text/Text';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
@@ -15,32 +16,37 @@ import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/Cont
 import PlusIC from '../../../../public/res/ic/outlined/plus.svg';
 import HashPlusIC from '../../../../public/res/ic/outlined/hash-plus.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
-import ChevronLeftIC from '../../../../public/res/ic/outlined/chevron-left.svg';
+import StarIC from '../../../../public/res/ic/outlined/star.svg';
+import FilledStarIC from '../../../../public/res/ic/filled/star.svg';
 
 function DrawerHeader({ selectedTab, spaceId }) {
+  const [, forceUpdate] = useState({});
   const mx = initMatrix.matrixClient;
-  const tabName = selectedTab === 'home' ? 'Home' : 'Direct messages';
+  const tabName = selectedTab !== cons.tabs.DIRECTS ? 'Home' : 'Direct messages';
 
   const room = mx.getRoom(spaceId);
-  const spaceName = selectedTab === 'dm' ? null : (room?.name || null);
-
-  function handleBackClick() {
-    const spacePath = navigation.selectedSpacePath;
-    if (spacePath.length === 1) {
-      selectSpace(null);
-      return;
-    }
-    selectSpace(spacePath[spacePath.length - 2]);
-  }
+  const spaceName = selectedTab === cons.tabs.DIRECTS ? null : (room?.name || null);
 
   return (
     <Header>
       <TitleWrapper>
         <Text variant="s1">{spaceName || tabName}</Text>
       </TitleWrapper>
-      { spaceName && <IconButton onClick={handleBackClick} tooltip="Back" src={ChevronLeftIC} size="normal" /> }
-      { selectedTab === 'dm' && <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="normal" /> }
-      { selectSpace !== 'dm' && !spaceName && (
+      {spaceName && (
+        <IconButton
+          size="extra-small"
+          variant={initMatrix.roomList.spaceShortcut.has(spaceId) ? 'positive' : 'surface'}
+          tooltip={initMatrix.roomList.spaceShortcut.has(spaceId) ? 'Remove favourite' : 'Favourite'}
+          src={initMatrix.roomList.spaceShortcut.has(spaceId) ? FilledStarIC : StarIC}
+          onClick={() => {
+            if (initMatrix.roomList.spaceShortcut.has(spaceId)) deleteSpaceShortcut(spaceId);
+            else createSpaceShortcut(spaceId);
+            forceUpdate({});
+          }}
+        />
+      )}
+      { selectedTab === cons.tabs.DIRECTS && <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="normal" /> }
+      { selectedTab !== cons.tabs.DIRECTS && !spaceName && (
         <>
           <ContextMenu
             content={(hideMenu) => (
