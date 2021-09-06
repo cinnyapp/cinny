@@ -10,6 +10,8 @@
 
 Cinny is a [Matrix](https://matrix.org) client focusing primarily on simple, elegant and secure interface.
 
+![preview](./preview-light.png)
+
 ## Building and Running
 
 ### Building from source
