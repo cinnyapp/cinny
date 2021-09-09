@@ -5,7 +5,9 @@ import PropTypes from 'prop-types';
 import initMatrix from '../../../client/initMatrix';
 import { doesRoomHaveUnread } from '../../../util/matrixUtil';
 import navigation from '../../../client/state/navigation';
+import { openRoomOptions } from '../../../client/action/navigation';
 import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
+import { getEventCords } from '../../../util/common';
 
 import IconButton from '../../atoms/button/IconButton';
 import RoomSelector from '../../molecules/room-selector/RoomSelector';
@@ -16,6 +18,7 @@ import SpaceIC from '../../../../public/res/ic/outlined/space.svg';
 import SpaceLockIC from '../../../../public/res/ic/outlined/space-lock.svg';
 import StarIC from '../../../../public/res/ic/outlined/star.svg';
 import FilledStarIC from '../../../../public/res/ic/filled/star.svg';
+import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 
 function Selector({
   roomId, isDM, drawerPostie, onClick,
@@ -44,43 +47,56 @@ function Selector({
     };
   }, []);
 
+  if (room.isSpaceRoom()) {
+    return (
+      <RoomSelector
+        key={roomId}
+        name={room.name}
+        roomId={roomId}
+        iconSrc={room.getJoinRule() === 'invite' ? SpaceLockIC : SpaceIC}
+        isUnread={doesRoomHaveUnread(room)}
+        notificationCount={room.getUnreadNotificationCount('total') || 0}
+        isAlert={room.getUnreadNotificationCount('highlight') !== 0}
+        onClick={onClick}
+        options={(
+          <IconButton
+            size="extra-small"
+            variant={initMatrix.roomList.spaceShortcut.has(roomId) ? 'positive' : 'surface'}
+            tooltip={initMatrix.roomList.spaceShortcut.has(roomId) ? 'Remove favourite' : 'Favourite'}
+            tooltipPlacement="right"
+            src={initMatrix.roomList.spaceShortcut.has(roomId) ? FilledStarIC : StarIC}
+            onClick={() => {
+              if (initMatrix.roomList.spaceShortcut.has(roomId)) deleteSpaceShortcut(roomId);
+              else createSpaceShortcut(roomId);
+              forceUpdate({});
+            }}
+          />
+        )}
+      />
+    );
+  }
+
   return (
     <RoomSelector
       key={roomId}
       name={room.name}
       roomId={roomId}
       imageSrc={isDM ? imageSrc : null}
-      iconSrc={
-        isDM
-          ? null
-          : (() => {
-            if (room.isSpaceRoom()) {
-              return (room.getJoinRule() === 'invite' ? SpaceLockIC : SpaceIC);
-            }
-            return (room.getJoinRule() === 'invite' ? HashLockIC : HashIC);
-          })()
-      }
+      // eslint-disable-next-line no-nested-ternary
+      iconSrc={isDM ? null : room.getJoinRule() === 'invite' ? HashLockIC : HashIC}
       isSelected={isSelected}
       isUnread={doesRoomHaveUnread(room)}
       notificationCount={room.getUnreadNotificationCount('total') || 0}
       isAlert={room.getUnreadNotificationCount('highlight') !== 0}
       onClick={onClick}
       options={(
-        !room.isSpaceRoom()
-          ? null
-          : (
-            <IconButton
-              size="extra-small"
-              variant={initMatrix.roomList.spaceShortcut.has(roomId) ? 'positive' : 'surface'}
-              tooltip={initMatrix.roomList.spaceShortcut.has(roomId) ? 'Remove favourite' : 'Favourite'}
-              src={initMatrix.roomList.spaceShortcut.has(roomId) ? FilledStarIC : StarIC}
-              onClick={() => {
-                if (initMatrix.roomList.spaceShortcut.has(roomId)) deleteSpaceShortcut(roomId);
-                else createSpaceShortcut(roomId);
-                forceUpdate({});
-              }}
-            />
-          )
+        <IconButton
+          size="extra-small"
+          tooltip="Options"
+          tooltipPlacement="right"
+          src={VerticalMenuIC}
+          onClick={(e) => openRoomOptions(getEventCords(e), roomId)}
+        />
       )}
     />
   );
