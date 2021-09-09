@@ -93,7 +93,7 @@ MenuItem.defaultProps = {
 };
 
 MenuItem.propTypes = {
-  variant: PropTypes.oneOf(['surface', 'caution', 'danger']),
+  variant: PropTypes.oneOf(['surface', 'positive', 'caution', 'danger']),
   iconSrc: PropTypes.string,
   type: PropTypes.oneOf(['button', 'submit']),
   onClick: PropTypes.func.isRequired,
