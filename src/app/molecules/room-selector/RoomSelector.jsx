@@ -10,10 +10,12 @@ import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 
 function RoomSelectorWrapper({
-  isSelected, onClick, content, options,
+  isSelected, isUnread, onClick, content, options,
 }) {
+  let myClass = isUnread ? ' room-selector--unread' : '';
+  myClass += isSelected ? ' room-selector--selected' : '';
   return (
-    <div className={`room-selector${isSelected ? ' room-selector--selected' : ''}`}>
+    <div className={`room-selector${myClass}`}>
       <button
         className="room-selector__content"
         type="button"
@@ -31,6 +33,7 @@ RoomSelectorWrapper.defaultProps = {
 };
 RoomSelectorWrapper.propTypes = {
   isSelected: PropTypes.bool.isRequired,
+  isUnread: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
   content: PropTypes.node.isRequired,
   options: PropTypes.node,
@@ -44,6 +47,7 @@ function RoomSelector({
   return (
     <RoomSelectorWrapper
       isSelected={isSelected}
+      isUnread={isUnread}
       content={(
         <>
           <Avatar
@@ -68,6 +72,7 @@ function RoomSelector({
   );
 }
 RoomSelector.defaultProps = {
+  isSelected: false,
   imageSrc: null,
   iconSrc: null,
   options: null,
@@ -77,7 +82,7 @@ RoomSelector.propTypes = {
   roomId: PropTypes.string.isRequired,
   imageSrc: PropTypes.string,
   iconSrc: PropTypes.string,
-  isSelected: PropTypes.bool.isRequired,
+  isSelected: PropTypes.bool,
   isUnread: PropTypes.bool.isRequired,
   notificationCount: PropTypes.number.isRequired,
   isAlert: PropTypes.bool.isRequired,
