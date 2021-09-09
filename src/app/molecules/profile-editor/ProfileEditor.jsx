@@ -37,7 +37,7 @@ function ProfileEditor({
     }
   }
 
-  // Enables/disables save button depending on whether or not the username is different than the current.
+  // Enables/disables button depending on if the typed displayname is different than the current.
   function onDisplayNameInputChange() {
     setDisabled((username === displayNameRef.current.value) || displayNameRef.current.value === '' || displayNameRef.current.value == null);
   }

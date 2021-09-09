@@ -14,7 +14,7 @@ function ImageUpload({
 }) {
   const uploadImageRef = useRef(null);
 
-  // Uploads the selected image and passes the resulting URI to the onUpload function provided in component props.
+  // Uploads image and passes resulting URI to onUpload function provided in component props.
   function uploadImage(e) {
     const file = e.target.files.item(0);
     if (file !== null) { // TODO Add upload progress spinner
