@@ -23,6 +23,7 @@ function ProfileEditor({
 
   let username = mx.getUser(mx.getUserId()).displayName;
 
+  // Sets avatar URL and updates the avatar component in profile editor to reflect new upload
   function handleUpload(e) {
     mx.setAvatarUrl(e.content_uri);
     updateImgSrc(mx.mxcUrlToHttp(e.content_uri));
@@ -36,6 +37,7 @@ function ProfileEditor({
     }
   }
 
+  // Enables/disables save button depending on whether or not the username is different than the current.
   function onDisplayNameInputChange() {
     setDisabled((username === displayNameRef.current.value) || displayNameRef.current.value === '' || displayNameRef.current.value == null);
   }
