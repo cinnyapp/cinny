@@ -11,6 +11,12 @@ const cons = {
     HOME: 'home',
     DIRECTS: 'dm',
   },
+  notifs: {
+    DEFAULT: 'default',
+    ALL_MESSAGES: 'all_messages',
+    MENTIONS_AND_KEYWORDS: 'mentions_and_keywords',
+    MUTE: 'mute',
+  },
   actions: {
     navigation: {
       SELECT_TAB: 'SELECT_TAB',
@@ -24,6 +30,7 @@ const cons = {
       OPEN_SETTINGS: 'OPEN_SETTINGS',
       OPEN_EMOJIBOARD: 'OPEN_EMOJIBOARD',
       OPEN_READRECEIPTS: 'OPEN_READRECEIPTS',
+      OPEN_ROOMOPTIONS: 'OPEN_ROOMOPTIONS',
     },
     room: {
       JOIN: 'JOIN',
@@ -52,6 +59,7 @@ const cons = {
       SETTINGS_OPENED: 'SETTINGS_OPENED',
       EMOJIBOARD_OPENED: 'EMOJIBOARD_OPENED',
       READRECEIPTS_OPENED: 'READRECEIPTS_OPENED',
+      ROOMOPTIONS_OPENED: 'ROOMOPTIONS_OPENED',
     },
     roomList: {
       ROOMLIST_UPDATED: 'ROOMLIST_UPDATED',

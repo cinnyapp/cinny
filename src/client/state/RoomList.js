@@ -386,6 +386,7 @@ class RoomList extends EventEmitter {
 
       const lastTimelineEvent = room.timeline[room.timeline.length - 1];
       if (lastTimelineEvent.getId() !== event.getId()) return;
+      if (event.getSender() === this.matrixClient.getUserId()) return;
       this.emit(cons.events.roomList.EVENT_ARRIVED, room.roomId);
     });
   }
