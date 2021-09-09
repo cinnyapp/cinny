@@ -14,14 +14,29 @@ import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls'
 
 import PopupWindow, { PWContentSelector } from '../../molecules/popup-window/PopupWindow';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
+import ProfileEditor from '../../molecules/profile-editor/ProfileEditor';
 import ImportE2ERoomKeys from '../../molecules/import-e2e-room-keys/ImportE2ERoomKeys';
 
+import GenIC from '../../../../public/res/ic/outlined/settings.svg';
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
+
+function GeneralSection() {
+  return (
+    <div className="settings-content">
+      <SettingTile
+        title="Profile"
+        content={(
+          <ProfileEditor userId={initMatrix.matrixClient.getUserId()} />
+        )}
+      />
+    </div>
+  );
+}
 
 function AppearanceSection() {
   const [, updateState] = useState({});
@@ -104,6 +119,12 @@ function AboutSection() {
 
 function Settings({ isOpen, onRequestClose }) {
   const settingSections = [{
+    name: 'General',
+    iconSrc: GenIC,
+    render() {
+      return <GeneralSection />;
+    },
+  }, {
     name: 'Appearance',
     iconSrc: SunIC,
     render() {

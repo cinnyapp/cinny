@@ -1,0 +1,24 @@
+.profile-editor {
+  display: flex;
+  align-items: end;
+}
+
+.img-upload-container {
+  margin-right: var(--sp-normal)
+}
+
+.display-name-input-container {
+  display: flex;
+  flex-direction: column;
+  margin-right: var(--sp-normal);
+  width: 100%;
+  max-width: 400px;
+}
+
+.display-name-input-container > .text-b3 {
+  margin-bottom: var(--sp-ultra-tight)
+}
+
+.profile-editor > .btn-primary {
+  height: 46px;
+}

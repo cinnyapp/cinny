@@ -1,0 +1,20 @@
+.img-upload-container {
+	display: flex;
+	flex-direction: row-reverse;
+	width: 80px;
+	height: 80px;
+}
+
+.img-upload-container:hover {
+	cursor: pointer;
+}
+
+.img-upload-mask {
+	mask: url('../../../../public/res/svg/avatar-clip.svg');
+	//width: 80px;
+}
+
+.img-upload-icon {
+  z-index: 1;
+  position: absolute;
+}
