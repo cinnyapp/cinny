@@ -24,7 +24,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ajbura/cinny
+          images: kfiven/cinny
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
