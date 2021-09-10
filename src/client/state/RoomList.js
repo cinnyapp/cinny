@@ -2,11 +2,18 @@ import EventEmitter from 'events';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
 
+function isMEventSpaceChild(mEvent) {
+  return mEvent.getType() === 'm.space.child' && Object.keys(mEvent.getContent()).length > 0;
+}
+
 class RoomList extends EventEmitter {
   constructor(matrixClient) {
     super();
     this.matrixClient = matrixClient;
     this.mDirects = this.getMDirects();
+
+    // Contains roomId to parent spaces roomId mapping of all spaces children.
+    // No matter if you have joined those children rooms or not.
     this.roomIdToParents = new Map();
 
     this.spaceShortcut = new Set();
@@ -38,10 +45,11 @@ class RoomList extends EventEmitter {
     const space = this.matrixClient.getRoom(roomId);
     const mSpaceChild = space?.currentState.getStateEvents('m.space.child');
     const children = mSpaceChild?.map((mEvent) => {
-      if (Object.keys(mEvent.event.content).length === 0) return null;
-      return mEvent.event.state_key;
+      const childId = mEvent.event.state_key;
+      if (isMEventSpaceChild(mEvent)) return childId;
+      return null;
     });
-    return children?.filter((child) => child !== null);
+    return children?.filter((childId) => childId !== null);
   }
 
   addToRoomIdToParents(roomId, parentRoomId) {
@@ -259,9 +267,9 @@ class RoomList extends EventEmitter {
     this.matrixClient.on('RoomState.events', (mEvent) => {
       if (mEvent.getType() === 'm.space.child') {
         const { event } = mEvent;
-        const isRoomAdded = Object.keys(event.content).length > 0;
-        if (isRoomAdded) this.addToRoomIdToParents(event.state_key, event.room_id);
-        else this.removeFromRoomIdToParents(event.state_key, event.room_id);
+        if (isMEventSpaceChild(mEvent)) {
+          this.addToRoomIdToParents(event.state_key, event.room_id);
+        } else this.removeFromRoomIdToParents(event.state_key, event.room_id);
         this.emit(cons.events.roomList.ROOMLIST_UPDATED);
         return;
       }
