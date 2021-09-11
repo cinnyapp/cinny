@@ -71,6 +71,10 @@ const cons = {
       EVENT_ARRIVED: 'EVENT_ARRIVED',
       SPACE_SHORTCUT_UPDATED: 'SPACE_SHORTCUT_UPDATED',
     },
+    notification: {
+      NOTI_CHANGED: 'NOTI_CHANGED',
+      FULL_READ: 'FULL_READ',
+    },
     roomTimeline: {
       EVENT: 'EVENT',
       PAGINATED: 'PAGINATED',
