@@ -2,17 +2,18 @@
   min-width: 16px;
   min-height: 8px;
   padding: 0 var(--sp-ultra-tight);
-  background-color: var(--tc-surface-low);
+  background-color: var(--bg-badge);
   border-radius: var(--bo-radius);
 
   .text {
-    color: white;
+    color: var(--tc-badge);
     text-align: center;
     font-weight: 700;
   }
 
   &--alert {
     background-color: var(--bg-danger);
+    & .text { color: white }
   }
 
   &:empty {
