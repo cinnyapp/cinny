@@ -28,3 +28,8 @@ export function getEventCords(ev) {
     detail: ev.detail,
   };
 }
+
+export function abbreviateNumber(number) {
+  if (number > 99) return '99+';
+  return number;
+}
