@@ -58,11 +58,27 @@ class Notifications extends EventEmitter {
     return this.roomIdToNoti.get(roomId) || { total: 0, highlight: 0, from: null };
   }
 
+  getTotalNoti(roomId) {
+    const { total } = this.getNoti(roomId);
+    return total;
+  }
+
+  getHighlightNoti(roomId) {
+    const { highlight } = this.getNoti(roomId);
+    return highlight;
+  }
+
+  getFromNoti(roomId) {
+    const { from } = this.getNoti(roomId);
+    return from;
+  }
+
   hasNoti(roomId) {
     return this.roomIdToNoti.has(roomId);
   }
 
   _setNoti(roomId, total, highlight, childId) {
+    const prevTotal = this.roomIdToNoti.get(roomId)?.total ?? null;
     const noti = this.getNoti(roomId);
 
     noti.total += total;
@@ -73,7 +89,7 @@ class Notifications extends EventEmitter {
     }
 
     this.roomIdToNoti.set(roomId, noti);
-    this.emit(cons.events.notification.NOTI_CHANGED, roomId);
+    this.emit(cons.events.notifications.NOTI_CHANGED, roomId, noti.total, prevTotal);
 
     const parentIds = this.roomList.roomIdToParents.get(roomId);
     if (typeof parentIds === 'undefined') return;
@@ -84,6 +100,7 @@ class Notifications extends EventEmitter {
     if (this.roomIdToNoti.has(roomId) === false) return;
 
     const noti = this.getNoti(roomId);
+    const prevTotal = noti.total;
     noti.total -= total;
     noti.highlight -= highlight;
     if (childId && noti.from !== null) {
@@ -91,10 +108,11 @@ class Notifications extends EventEmitter {
     }
     if (noti.from === null || noti.from.size === 0) {
       this.roomIdToNoti.delete(roomId);
-      this.emit(cons.events.notification.FULL_READ, roomId);
+      this.emit(cons.events.notifications.FULL_READ, roomId);
+      this.emit(cons.events.notifications.NOTI_CHANGED, roomId, null, prevTotal);
     } else {
       this.roomIdToNoti.set(roomId, noti);
-      this.emit(cons.events.notification.NOTI_CHANGED, roomId);
+      this.emit(cons.events.notifications.NOTI_CHANGED, roomId, noti.total, prevTotal);
     }
 
     const parentIds = this.roomList.roomIdToParents.get(roomId);
@@ -120,8 +138,6 @@ class Notifications extends EventEmitter {
 
     this.matrixClient.on('Room.receipt', (mEvent, room) => {
       if (mEvent.getType() === 'm.receipt') {
-        if (typeof mEvent.event.room_id === 'string') return;
-
         const content = mEvent.getContent();
         const readedEventId = Object.keys(content)[0];
         const readerUserId = Object.keys(content[readedEventId]['m.read'])[0];

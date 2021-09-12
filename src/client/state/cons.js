@@ -67,11 +67,9 @@ const cons = {
       ROOM_JOINED: 'ROOM_JOINED',
       ROOM_LEAVED: 'ROOM_LEAVED',
       ROOM_CREATED: 'ROOM_CREATED',
-      MY_RECEIPT_ARRIVED: 'MY_RECEIPT_ARRIVED',
-      EVENT_ARRIVED: 'EVENT_ARRIVED',
       SPACE_SHORTCUT_UPDATED: 'SPACE_SHORTCUT_UPDATED',
     },
-    notification: {
+    notifications: {
       NOTI_CHANGED: 'NOTI_CHANGED',
       FULL_READ: 'FULL_READ',
     },

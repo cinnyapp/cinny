@@ -2,29 +2,22 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './SidebarAvatar.scss';
 
-import Tippy from '@tippyjs/react';
 import Avatar from '../../atoms/avatar/Avatar';
 import Text from '../../atoms/text/Text';
+import Tooltip from '../../atoms/tooltip/Tooltip';
 import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 
 const SidebarAvatar = React.forwardRef(({
   tooltip, text, bgColor, imageSrc,
-  iconSrc, active, onClick, notifyCount,
+  iconSrc, active, onClick, isUnread, notificationCount, isAlert,
 }, ref) => {
   let activeClass = '';
   if (active) activeClass = ' sidebar-avatar--active';
   return (
-    <Tippy
+    <Tooltip
       content={<Text variant="b1">{tooltip}</Text>}
-      className="sidebar-avatar-tippy"
-      touch="hold"
-      arrow={false}
       placement="right"
-      maxWidth={200}
-      delay={[0, 0]}
-      duration={[100, 0]}
-      offset={[0, 0]}
     >
       <button
         ref={ref}
@@ -40,9 +33,14 @@ const SidebarAvatar = React.forwardRef(({
           iconSrc={iconSrc}
           size="normal"
         />
-        { notifyCount !== null && <NotificationBadge alert content={notifyCount} /> }
+        { isUnread && (
+          <NotificationBadge
+            alert={isAlert}
+            content={notificationCount !== 0 ? notificationCount : null}
+          />
+        )}
       </button>
-    </Tippy>
+    </Tooltip>
   );
 });
 SidebarAvatar.defaultProps = {
@@ -52,7 +50,9 @@ SidebarAvatar.defaultProps = {
   imageSrc: null,
   active: false,
   onClick: null,
-  notifyCount: null,
+  isUnread: false,
+  notificationCount: 0,
+  isAlert: false,
 };
 
 SidebarAvatar.propTypes = {
@@ -63,10 +63,12 @@ SidebarAvatar.propTypes = {
   iconSrc: PropTypes.string,
   active: PropTypes.bool,
   onClick: PropTypes.func,
-  notifyCount: PropTypes.oneOfType([
+  isUnread: PropTypes.bool,
+  notificationCount: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
   ]),
+  isAlert: PropTypes.bool,
 };
 
 export default SidebarAvatar;

@@ -41,6 +41,15 @@ class RoomList extends EventEmitter {
     this.matrixClient.setAccountData(cons['in.cinny.spaces'], spaceContent);
   }
 
+  isOrphan(roomId) {
+    return !this.roomIdToParents.has(roomId);
+  }
+
+  getOrphans() {
+    const rooms = [...this.spaces].concat([...this.rooms]);
+    return rooms.filter((roomId) => !this.roomIdToParents.has(roomId));
+  }
+
   getSpaceChildren(roomId) {
     const space = this.matrixClient.getRoom(roomId);
     const mSpaceChild = space?.currentState.getStateEvents('m.space.child');
@@ -254,15 +263,6 @@ class RoomList extends EventEmitter {
     this.matrixClient.on('Room.name', () => {
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
     });
-    this.matrixClient.on('Room.receipt', (event, room) => {
-      if (event.getType() === 'm.receipt') {
-        const content = event.getContent();
-        const userReadEventId = Object.keys(content)[0];
-        const eventReaderUserId = Object.keys(content[userReadEventId]['m.read'])[0];
-        if (eventReaderUserId !== this.matrixClient.getUserId()) return;
-        this.emit(cons.events.roomList.MY_RECEIPT_ARRIVED, room.roomId);
-      }
-    });
 
     this.matrixClient.on('RoomState.events', (mEvent) => {
       if (mEvent.getType() === 'm.space.child') {
@@ -386,16 +386,6 @@ class RoomList extends EventEmitter {
         this.emit(cons.events.roomList.ROOM_JOINED, roomId);
       }
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-    });
-
-    this.matrixClient.on('Room.timeline', (event, room) => {
-      const supportEvents = ['m.room.message', 'm.room.encrypted', 'm.sticker'];
-      if (!supportEvents.includes(event.getType())) return;
-
-      const lastTimelineEvent = room.timeline[room.timeline.length - 1];
-      if (lastTimelineEvent.getId() !== event.getId()) return;
-      if (event.getSender() === this.matrixClient.getUserId()) return;
-      this.emit(cons.events.roomList.EVENT_ARRIVED, room.roomId);
     });
   }
 }

@@ -3,11 +3,10 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
-import { doesRoomHaveUnread } from '../../../util/matrixUtil';
 import navigation from '../../../client/state/navigation';
 import { openRoomOptions } from '../../../client/action/navigation';
 import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
-import { getEventCords } from '../../../util/common';
+import { getEventCords, abbreviateNumber } from '../../../util/common';
 
 import IconButton from '../../atoms/button/IconButton';
 import RoomSelector from '../../molecules/room-selector/RoomSelector';
@@ -24,6 +23,7 @@ function Selector({
   roomId, isDM, drawerPostie, onClick,
 }) {
   const mx = initMatrix.matrixClient;
+  const noti = initMatrix.notifications;
   const room = mx.getRoom(roomId);
   let imageSrc = room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
   if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
@@ -54,9 +54,9 @@ function Selector({
         name={room.name}
         roomId={roomId}
         iconSrc={room.getJoinRule() === 'invite' ? SpaceLockIC : SpaceIC}
-        isUnread={doesRoomHaveUnread(room)}
-        notificationCount={room.getUnreadNotificationCount('total') || 0}
-        isAlert={room.getUnreadNotificationCount('highlight') !== 0}
+        isUnread={noti.hasNoti(roomId)}
+        notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
+        isAlert={noti.getHighlightNoti(roomId) !== 0}
         onClick={onClick}
         options={(
           <IconButton
@@ -85,9 +85,9 @@ function Selector({
       // eslint-disable-next-line no-nested-ternary
       iconSrc={isDM ? null : room.getJoinRule() === 'invite' ? HashLockIC : HashIC}
       isSelected={isSelected}
-      isUnread={doesRoomHaveUnread(room)}
-      notificationCount={room.getUnreadNotificationCount('total') || 0}
-      isAlert={room.getUnreadNotificationCount('highlight') !== 0}
+      isUnread={noti.hasNoti(roomId)}
+      notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
+      isAlert={noti.getHighlightNoti(roomId) !== 0}
       onClick={onClick}
       options={(
         <IconButton

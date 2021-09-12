@@ -84,7 +84,10 @@ RoomSelector.propTypes = {
   iconSrc: PropTypes.string,
   isSelected: PropTypes.bool,
   isUnread: PropTypes.bool.isRequired,
-  notificationCount: PropTypes.number.isRequired,
+  notificationCount: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]).isRequired,
   isAlert: PropTypes.bool.isRequired,
   options: PropTypes.node,
   onClick: PropTypes.func.isRequired,
