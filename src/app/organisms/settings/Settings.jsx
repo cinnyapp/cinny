@@ -14,10 +14,11 @@ import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls'
 
 import PopupWindow, { PWContentSelector } from '../../molecules/popup-window/PopupWindow';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
-import ProfileEditor from '../../molecules/profile-editor/ProfileEditor';
 import ImportE2ERoomKeys from '../../molecules/import-e2e-room-keys/ImportE2ERoomKeys';
 
-import GenIC from '../../../../public/res/ic/outlined/settings.svg';
+import ProfileEditor from '../profile-editor/ProfileEditor';
+
+import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
@@ -120,7 +121,7 @@ function AboutSection() {
 function Settings({ isOpen, onRequestClose }) {
   const settingSections = [{
     name: 'General',
-    iconSrc: GenIC,
+    iconSrc: SettingsIC,
     render() {
       return <GeneralSection />;
     },

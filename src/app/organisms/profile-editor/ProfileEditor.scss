@@ -3,11 +3,11 @@
   align-items: end;
 }
 
-.img-upload-container {
+.img-upload {
   margin-right: var(--sp-normal)
 }
 
-.display-name-input-container {
+.profile-editor__input-container {
   display: flex;
   flex-direction: column;
   margin-right: var(--sp-normal);
@@ -15,7 +15,7 @@
   max-width: 400px;
 }
 
-.display-name-input-container > .text-b3 {
+.profile-editor__input-container > .text-b3 {
   margin-bottom: var(--sp-ultra-tight)
 }
 

@@ -5,7 +5,7 @@ import initMatrix from '../../../client/initMatrix';
 import colorMXID from '../../../util/colorMXID';
 
 import Button from '../../atoms/button/Button';
-import ImageUpload from '../../atoms/image-upload/ImageUpload';
+import ImageUpload from '../../molecules/image-upload/ImageUpload';
 import Input from '../../atoms/input/Input';
 import Text from '../../atoms/text/Text';
 
@@ -45,12 +45,12 @@ function ProfileEditor({
   return (
     <form className="profile-editor">
       <ImageUpload text={username} bgColor={bgColor} imageSrc={imageSrc} onUpload={handleUpload} />
-      <div className="display-name-input-container">
+      <div className="profile-editor__input-container">
         <Text variant="b3">
           Display name of&nbsp;
           {mx.getUserId()}
         </Text>
-        <Input id="display-name-input" onChange={onDisplayNameInputChange} placeholder={mx.getUser(mx.getUserId()).displayName} forwardRef={displayNameRef} />
+        <Input id="profile-editor__input" onChange={onDisplayNameInputChange} placeholder={mx.getUser(mx.getUserId()).displayName} forwardRef={displayNameRef} />
       </div>
       <Button variant="primary" onClick={saveDisplayName} disabled={disabled}>Save</Button>
     </form>

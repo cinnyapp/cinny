@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
 
-import GenIC from '../../../../public/res/ic/outlined/settings.svg';
-import Avatar from '../avatar/Avatar';
+import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
+import Avatar from '../../atoms/avatar/Avatar';
 
-import RawIcon from '../system-icons/RawIcon';
+import RawIcon from '../../atoms/system-icons/RawIcon';
 import './ImageUpload.scss';
 
 function ImageUpload({
@@ -29,8 +29,8 @@ function ImageUpload({
   }
 
   return (
-    <button type="button" className="img-upload-container" onClick={() => { uploadImageRef.current.click(); }}>
-      <div className="img-upload-mask">
+    <button type="button" className="img-upload" onClick={() => { uploadImageRef.current.click(); }}>
+      <div className="img-upload__mask">
         <Avatar
           imageSrc={imageSrc}
           text={text.slice(0, 1)}
@@ -38,8 +38,8 @@ function ImageUpload({
           size="large"
         />
       </div>
-      <div className="img-upload-icon">
-        <RawIcon size="small" src={GenIC} />
+      <div className="img-upload__icon">
+        <RawIcon size="small" src={SettingsIC} />
       </div>
       <input onChange={uploadImage} style={{ display: 'none' }} ref={uploadImageRef} type="file" />
     </button>
