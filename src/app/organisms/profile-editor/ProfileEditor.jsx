@@ -18,15 +18,22 @@ function ProfileEditor({
   const mx = initMatrix.matrixClient;
   const displayNameRef = useRef(null);
   const bgColor = colorMXID(userId);
-  const [imageSrc, updateImgSrc] = useState(mx.mxcUrlToHttp(mx.getUser(mx.getUserId()).avatarUrl));
+  const [avatarSrc, setAvatarSrc] = useState(mx.mxcUrlToHttp(mx.getUser(mx.getUserId()).avatarUrl, 80, 80, 'crop') || null);
   const [disabled, setDisabled] = useState(true);
 
   let username = mx.getUser(mx.getUserId()).displayName;
 
   // Sets avatar URL and updates the avatar component in profile editor to reflect new upload
-  function handleUpload(e) {
-    mx.setAvatarUrl(e.content_uri);
-    updateImgSrc(mx.mxcUrlToHttp(e.content_uri));
+  function handleAvatarUpload(url) {
+    if (url === null) {
+      if (confirm('Are you sure you want to remove avatar?')) {
+        mx.setAvatarUrl('');
+        setAvatarSrc(null);
+      }
+      return;
+    }
+    mx.setAvatarUrl(url);
+    setAvatarSrc(mx.mxcUrlToHttp(url, 80, 80, 'crop'));
   }
 
   function saveDisplayName() {
@@ -44,7 +51,13 @@ function ProfileEditor({
 
   return (
     <form className="profile-editor">
-      <ImageUpload text={username} bgColor={bgColor} imageSrc={imageSrc} onUpload={handleUpload} />
+      <ImageUpload
+        text={username}
+        bgColor={bgColor}
+        imageSrc={avatarSrc}
+        onUpload={handleAvatarUpload}
+        onRequestRemove={() => handleAvatarUpload(null)}
+      />
       <div className="profile-editor__input-container">
         <Text variant="b3">
           Display name of&nbsp;

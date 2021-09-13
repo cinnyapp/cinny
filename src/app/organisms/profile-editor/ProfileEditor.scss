@@ -3,14 +3,10 @@
   align-items: end;
 }
 
-.img-upload {
-  margin-right: var(--sp-normal)
-}
-
 .profile-editor__input-container {
   display: flex;
   flex-direction: column;
-  margin-right: var(--sp-normal);
+  margin: 0 var(--sp-normal);
   width: 100%;
   max-width: 400px;
 }

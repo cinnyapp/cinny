@@ -30,7 +30,7 @@ function GeneralSection() {
   return (
     <div className="settings-content">
       <SettingTile
-        title="Profile"
+        title=""
         content={(
           <ProfileEditor userId={initMatrix.matrixClient.getUserId()} />
         )}
