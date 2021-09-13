@@ -7,7 +7,6 @@ import colorMXID from '../../../util/colorMXID';
 import Button from '../../atoms/button/Button';
 import ImageUpload from '../../molecules/image-upload/ImageUpload';
 import Input from '../../atoms/input/Input';
-import Text from '../../atoms/text/Text';
 
 import './ProfileEditor.scss';
 
