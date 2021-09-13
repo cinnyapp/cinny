@@ -285,6 +285,32 @@ function RoomViewInput({
     }
   }
 
+  function handlePaste(e) {
+    if (e.clipboardData === false) {
+      return;
+    }
+
+    if (e.clipboardData.items === undefined) {
+      return;
+    }
+
+    for (let i = 0; i < e.clipboardData.items.length; i += 1) {
+      const item = e.clipboardData.items[i];
+      if (item.type.indexOf('image') !== -1) {
+        const image = item.getAsFile();
+        if (attachment === null) {
+          setAttachment(image);
+          if (image !== null) {
+            roomsInput.setAttachment(roomId, image);
+            return;
+          }
+        } else {
+          return;
+        }
+      }
+    }
+  }
+
   function addEmoji(emoji) {
     textAreaRef.current.value += emoji.unicode;
   }
@@ -315,6 +341,7 @@ function RoomViewInput({
               <TextareaAutosize
                 ref={textAreaRef}
                 onChange={handleMsgTyping}
+                onPaste={handlePaste}
                 onResize={() => timelineScroll.autoReachBottom()}
                 onKeyDown={handleKeyDown}
                 placeholder="Send a message..."
