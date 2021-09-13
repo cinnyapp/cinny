@@ -1,0 +1,20 @@
+.context-menu__item {
+  position: relative;
+}
+
+.context-menu__item .btn-positive::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 12px;
+  background: var(--bg-positive);
+  border-radius: 0 4px 4px 0;
+  position: absolute;
+  left: 0;
+
+  [dir=rtl] & {
+    left: unset;
+    right: 0;
+    border-radius: 4px 0 0 4px;
+  }
+}

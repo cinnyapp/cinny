@@ -9,7 +9,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import { openEmojiBoard } from '../../../client/action/navigation';
-import { bytesToSize } from '../../../util/common';
+import { bytesToSize, getEventCords } from '../../../util/common';
 import { getUsername } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 
@@ -327,12 +327,10 @@ function RoomViewInput({
         <div ref={rightOptionsRef} className="room-input__option-container">
           <IconButton
             onClick={(e) => {
-              const boxInfo = e.target.getBoundingClientRect();
-              openEmojiBoard({
-                x: boxInfo.x + (document.dir === 'rtl' ? -80 : 80),
-                y: boxInfo.y - 250,
-                detail: e.detail,
-              }, addEmoji);
+              const cords = getEventCords(e);
+              cords.x += (document.dir === 'rtl' ? -80 : 80);
+              cords.y -= 250;
+              openEmojiBoard(cords, addEmoji);
             }}
             tooltip="Emoji"
             src={EmojiIC}

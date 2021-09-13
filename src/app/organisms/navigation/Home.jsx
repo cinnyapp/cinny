@@ -15,7 +15,7 @@ import { AtoZ } from './common';
 const drawerPostie = new Postie();
 function Home({ spaceId }) {
   const [, forceUpdate] = useState({});
-  const { roomList } = initMatrix;
+  const { roomList, notifications } = initMatrix;
   let spaceIds = [];
   let roomIds = [];
   let directIds = [];
@@ -40,10 +40,11 @@ function Home({ spaceId }) {
     if (addresses.length === 0) return;
     drawerPostie.post('selector-change', addresses, selectedRoomId);
   }
-  function unreadChanged(roomId) {
-    if (!drawerPostie.hasTopic('unread-change')) return;
-    if (!drawerPostie.hasSubscriber('unread-change', roomId)) return;
-    drawerPostie.post('unread-change', roomId);
+  function notiChanged(roomId, total, prevTotal) {
+    if (total === prevTotal) return;
+    if (drawerPostie.hasTopicAndSubscriber('unread-change', roomId)) {
+      drawerPostie.post('unread-change', roomId);
+    }
   }
 
   function roomListUpdated() {
@@ -61,13 +62,11 @@ function Home({ spaceId }) {
   useEffect(() => {
     roomList.on(cons.events.roomList.ROOMLIST_UPDATED, roomListUpdated);
     navigation.on(cons.events.navigation.ROOM_SELECTED, selectorChanged);
-    roomList.on(cons.events.roomList.MY_RECEIPT_ARRIVED, unreadChanged);
-    roomList.on(cons.events.roomList.EVENT_ARRIVED, unreadChanged);
+    notifications.on(cons.events.notifications.NOTI_CHANGED, notiChanged);
     return () => {
       roomList.removeListener(cons.events.roomList.ROOMLIST_UPDATED, roomListUpdated);
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, selectorChanged);
-      roomList.removeListener(cons.events.roomList.MY_RECEIPT_ARRIVED, unreadChanged);
-      roomList.removeListener(cons.events.roomList.EVENT_ARRIVED, unreadChanged);
+      notifications.removeListener(cons.events.notifications.NOTI_CHANGED, notiChanged);
     };
   }, []);
 

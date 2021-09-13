@@ -32,6 +32,7 @@
   --bg-danger-border: rgba(240, 71, 71, 20%);
 
   --bg-tooltip: #353535;
+  --bg-badge: #989898;
 
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: #000000;
@@ -57,6 +58,7 @@
   --tc-code: #e62498;
 
   --tc-tooltip: white;
+  --tc-badge: white;
 
 
   /* system icons | --ic-[background type]-[priority]: value */
@@ -179,6 +181,7 @@
   --bg-primary-border: rgba(59, 119, 191, 38%);
 
   --bg-tooltip: #000;
+  --bg-badge: hsl(0, 0%, 75%);
 
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: rgba(255, 255, 255, 94%);
@@ -190,6 +193,7 @@
   --tc-primary-low: rgba(255, 255, 255, 0.4);
 
   --tc-code: #e565b1;
+  --tc-badge: black;
 
   /* system icons | --ic-[background type]-[priority]: value */
   --ic-surface-normal: rgba(255, 255, 255, 68%);
@@ -215,6 +219,8 @@
   --bg-surface-transparent: hsla(64, 6%, 14%, 0);
   --bg-surface-low: hsl(64, 6%, 10%);
   --bg-surface-low-transparent: hsla(64, 6%, 14%, 0);
+
+  --bg-badge: #c4c1ab;
 
   
   /* text color | --tc-[background type]-[priority]: value */

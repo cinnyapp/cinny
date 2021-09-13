@@ -8,6 +8,7 @@ import Room from '../../organisms/room/Room';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
+import RoomOptions from '../../organisms/room-optons/RoomOptions';
 
 import initMatrix from '../../../client/initMatrix';
 
@@ -44,6 +45,7 @@ function Client() {
       <Windows />
       <Dialogs />
       <EmojiBoardOpener />
+      <RoomOptions />
     </div>
   );
 }

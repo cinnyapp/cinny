@@ -77,6 +77,14 @@ function openReadReceipts(roomId, eventId) {
   });
 }
 
+function openRoomOptions(cords, roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_ROOMOPTIONS,
+    cords,
+    roomId,
+  });
+}
+
 export {
   selectTab,
   selectSpace,
@@ -89,4 +97,5 @@ export {
   openSettings,
   openEmojiBoard,
   openReadReceipts,
+  openRoomOptions,
 };

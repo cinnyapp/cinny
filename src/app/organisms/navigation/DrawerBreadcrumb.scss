@@ -51,6 +51,14 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    & .notification-badge {
+      margin-left: var(--sp-extra-tight);
+      [dir=rtl] & {
+        margin-left: 0;
+        margin-right: var(--sp-extra-tight);
+      }
+    }
   }
 
   &__btn--selected {

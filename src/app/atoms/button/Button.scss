@@ -2,6 +2,7 @@
 
 .btn-surface,
 .btn-primary,
+.btn-positive,
 .btn-caution,
 .btn-danger {
   display: inline-flex;
@@ -66,6 +67,13 @@
   @include state.hover(var(--bg-primary-hover));
   @include state.focus(var(--bs-primary-outline));
   @include state.active(var(--bg-primary-active));
+}
+.btn-positive {
+  box-shadow: var(--bs-positive-border);
+  @include color(var(--tc-positive-high), var(--ic-positive-normal));
+  @include state.hover(var(--bg-positive-hover));
+  @include state.focus(var(--bs-positive-outline));
+  @include state.active(var(--bg-positive-active));
 }
 .btn-caution {
   box-shadow: var(--bs-caution-border);
