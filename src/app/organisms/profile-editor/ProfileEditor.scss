@@ -1,20 +1,30 @@
 .profile-editor {
   display: flex;
-  align-items: end;
+  align-items: flex-start;
 }
 
-.profile-editor__input-container {
+.profile-editor__input-wrapper {
+  flex: 1;
+  min-width: 0;
+  margin-top: 10px;
+  
   display: flex;
-  flex-direction: column;
-  margin: 0 var(--sp-normal);
-  width: 100%;
-  max-width: 400px;
-}
+  align-items: flex-end;
+  flex-wrap: wrap;
 
-.profile-editor__input-container > .text-b3 {
-  margin-bottom: var(--sp-ultra-tight)
-}
+  & > .input-container  {
+    flex: 1;
+  }
+  & > button {
+    height: 46px;
+    margin-top: var(--sp-normal);
+  }
 
-.profile-editor > .btn-primary {
-  height: 46px;
+  & > * {
+    margin-left: var(--sp-normal);
+    [dir=rtl] & {
+      margin-left: 0;
+      margin-right: var(--sp-normal);
+    }
+  }
 }

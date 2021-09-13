@@ -37,20 +37,27 @@ function ProfileEditor({
   }
 
   function saveDisplayName() {
-    if (displayNameRef.current.value !== null && displayNameRef.current.value !== '') {
-      mx.setDisplayName(displayNameRef.current.value);
-      username = displayNameRef.current.value;
+    const newDisplayName = displayNameRef.current.value;
+    if (newDisplayName !== null && newDisplayName !== username) {
+      mx.setDisplayName(newDisplayName);
+      username = newDisplayName;
       setDisabled(true);
     }
   }
 
-  // Enables/disables button depending on if the typed displayname is different than the current.
   function onDisplayNameInputChange() {
-    setDisabled((username === displayNameRef.current.value) || displayNameRef.current.value === '' || displayNameRef.current.value == null);
+    setDisabled(username === displayNameRef.current.value || displayNameRef.current.value == null);
+  }
+  function cancelDisplayNameChanges() {
+    displayNameRef.current.value = username;
+    onDisplayNameInputChange();
   }
 
   return (
-    <form className="profile-editor">
+    <form
+      className="profile-editor"
+      onSubmit={(e) => { e.preventDefault(); saveDisplayName(); }}
+    >
       <ImageUpload
         text={username}
         bgColor={bgColor}
@@ -58,14 +65,16 @@ function ProfileEditor({
         onUpload={handleAvatarUpload}
         onRequestRemove={() => handleAvatarUpload(null)}
       />
-      <div className="profile-editor__input-container">
-        <Text variant="b3">
-          Display name of&nbsp;
-          {mx.getUserId()}
-        </Text>
-        <Input id="profile-editor__input" onChange={onDisplayNameInputChange} placeholder={mx.getUser(mx.getUserId()).displayName} forwardRef={displayNameRef} />
+      <div className="profile-editor__input-wrapper">
+        <Input
+          label={`Display name of ${mx.getUserId()}`}
+          onChange={onDisplayNameInputChange}
+          value={mx.getUser(mx.getUserId()).displayName}
+          forwardRef={displayNameRef}
+        />
+        <Button variant="primary" type="submit" disabled={disabled}>Save</Button>
+        <Button onClick={cancelDisplayNameChanges}>Cancel</Button>
       </div>
-      <Button variant="primary" onClick={saveDisplayName} disabled={disabled}>Save</Button>
     </form>
   );
 }
