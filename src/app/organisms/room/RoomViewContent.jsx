@@ -198,7 +198,9 @@ function RoomViewContent({
   }
   function trySendingReadReceipt() {
     const { room, timeline } = roomTimeline;
-    if (doesRoomHaveUnread(room) && timeline.length !== 0) {
+    if (
+      (doesRoomHaveUnread(room) || initMatrix.notifications.hasNoti(roomId))
+      && timeline.length !== 0) {
       mx.sendReadReceipt(timeline[timeline.length - 1]);
     }
   }
