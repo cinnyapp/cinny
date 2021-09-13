@@ -20,7 +20,7 @@ function DrawerHeader({ activeTab }) {
       <TitleWrapper>
         <Text variant="s1">{(activeTab === 'home' ? 'Home' : 'Direct messages')}</Text>
       </TitleWrapper>
-      {(activeTab === 'dm')
+      {(activeTab === 'dms')
         ? <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="normal" />
         : (
           <ContextMenu
