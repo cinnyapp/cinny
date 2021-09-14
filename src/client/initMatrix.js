@@ -4,6 +4,7 @@ import * as sdk from 'matrix-js-sdk';
 import { secret } from './state/auth';
 import RoomList from './state/RoomList';
 import RoomsInput from './state/RoomsInput';
+import Notifications from './state/Notifications';
 
 global.Olm = require('@matrix-org/olm');
 
@@ -56,6 +57,7 @@ class InitMatrix extends EventEmitter {
         if (prevState === null) {
           this.roomList = new RoomList(this.matrixClient);
           this.roomsInput = new RoomsInput(this.matrixClient);
+          this.notifications = new Notifications(this.roomList);
           this.emit('init_loading_finished');
         }
       },

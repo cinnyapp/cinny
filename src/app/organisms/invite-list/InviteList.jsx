@@ -11,7 +11,7 @@ import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
 import PopupWindow from '../../molecules/popup-window/PopupWindow';
-import ChannelTile from '../../molecules/channel-tile/ChannelTile';
+import RoomTile from '../../molecules/room-tile/RoomTile';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
@@ -47,13 +47,13 @@ function InviteList({ isOpen, onRequestClose }) {
     };
   }, [procInvite]);
 
-  function renderChannelTile(roomId) {
+  function renderRoomTile(roomId) {
     const myRoom = initMatrix.matrixClient.getRoom(roomId);
     const roomName = myRoom.name;
     let roomAlias = myRoom.getCanonicalAlias();
     if (roomAlias === null) roomAlias = myRoom.roomId;
     return (
-      <ChannelTile
+      <RoomTile
         key={myRoom.roomId}
         name={roomName}
         avatarSrc={initMatrix.matrixClient.getRoom(roomId).getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop')}
@@ -91,7 +91,7 @@ function InviteList({ isOpen, onRequestClose }) {
             const myRoom = initMatrix.matrixClient.getRoom(roomId);
             const roomName = myRoom.name;
             return (
-              <ChannelTile
+              <RoomTile
                 key={myRoom.roomId}
                 name={roomName}
                 id={myRoom.getDMInviter()}
@@ -114,14 +114,14 @@ function InviteList({ isOpen, onRequestClose }) {
             <Text variant="b3">Spaces</Text>
           </div>
         )}
-        { Array.from(initMatrix.roomList.inviteSpaces).map(renderChannelTile) }
+        { Array.from(initMatrix.roomList.inviteSpaces).map(renderRoomTile) }
 
         { initMatrix.roomList.inviteRooms.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3">Channels</Text>
+            <Text variant="b3">Rooms</Text>
           </div>
         )}
-        { Array.from(initMatrix.roomList.inviteRooms).map(renderChannelTile) }
+        { Array.from(initMatrix.roomList.inviteRooms).map(renderRoomTile) }
       </div>
     </PopupWindow>
   );

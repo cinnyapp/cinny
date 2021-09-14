@@ -128,10 +128,19 @@ MessageContent.propTypes = {
 
 function MessageEdit({ content, onSave, onCancel }) {
   const editInputRef = useRef(null);
+
+  function handleKeyDown(e) {
+    if (e.keyCode === 13 && e.shiftKey === false) {
+      e.preventDefault();
+      onSave(editInputRef.current.value);
+    }
+  }
+
   return (
     <form className="message__edit" onSubmit={(e) => { e.preventDefault(); onSave(editInputRef.current.value); }}>
       <Input
         forwardRef={editInputRef}
+        onKeyDown={handleKeyDown}
         value={content}
         placeholder="Edit message"
         required

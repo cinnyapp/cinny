@@ -4,10 +4,11 @@ import './Client.scss';
 import Text from '../../atoms/text/Text';
 import Spinner from '../../atoms/spinner/Spinner';
 import Navigation from '../../organisms/navigation/Navigation';
-import Channel from '../../organisms/channel/Channel';
+import Room from '../../organisms/room/Room';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
+import RoomOptions from '../../organisms/room-optons/RoomOptions';
 
 import initMatrix from '../../../client/initMatrix';
 
@@ -38,12 +39,13 @@ function Client() {
       <div className="navigation__wrapper">
         <Navigation />
       </div>
-      <div className="channel__wrapper">
-        <Channel />
+      <div className="room__wrapper">
+        <Room />
       </div>
       <Windows />
       <Dialogs />
       <EmojiBoardOpener />
+      <RoomOptions />
     </div>
   );
 }

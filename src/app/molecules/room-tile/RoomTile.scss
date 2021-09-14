@@ -1,0 +1,21 @@
+.room-tile {
+  display: flex;
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+
+    margin: 0 var(--sp-normal);
+
+    &__desc {
+      white-space: pre-wrap;
+      & a {
+        white-space: wrap;
+      }
+    }
+
+    & .text:not(:first-child) {
+      margin-top: var(--sp-ultra-tight);
+    }
+  }
+}

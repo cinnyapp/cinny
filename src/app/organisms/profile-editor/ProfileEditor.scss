@@ -1,0 +1,30 @@
+.profile-editor {
+  display: flex;
+  align-items: flex-start;
+}
+
+.profile-editor__input-wrapper {
+  flex: 1;
+  min-width: 0;
+  margin-top: 10px;
+  
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+
+  & > .input-container  {
+    flex: 1;
+  }
+  & > button {
+    height: 46px;
+    margin-top: var(--sp-normal);
+  }
+
+  & > * {
+    margin-left: var(--sp-normal);
+    [dir=rtl] & {
+      margin-left: 0;
+      margin-right: var(--sp-normal);
+    }
+  }
+}

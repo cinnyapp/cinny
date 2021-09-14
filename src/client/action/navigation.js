@@ -1,10 +1,17 @@
 import appDispatcher from '../dispatcher';
 import cons from '../state/cons';
 
-function changeTab(tabId) {
+function selectTab(tabId) {
   appDispatcher.dispatch({
-    type: cons.actions.navigation.CHANGE_TAB,
+    type: cons.actions.navigation.SELECT_TAB,
     tabId,
+  });
+}
+
+function selectSpace(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.SELECT_SPACE,
+    roomId,
   });
 }
 
@@ -27,16 +34,16 @@ function openInviteList() {
   });
 }
 
-function openPublicChannels(searchTerm) {
+function openPublicRooms(searchTerm) {
   appDispatcher.dispatch({
-    type: cons.actions.navigation.OPEN_PUBLIC_CHANNELS,
+    type: cons.actions.navigation.OPEN_PUBLIC_ROOMS,
     searchTerm,
   });
 }
 
-function openCreateChannel() {
+function openCreateRoom() {
   appDispatcher.dispatch({
-    type: cons.actions.navigation.OPEN_CREATE_CHANNEL,
+    type: cons.actions.navigation.OPEN_CREATE_ROOM,
   });
 }
 
@@ -70,15 +77,25 @@ function openReadReceipts(roomId, eventId) {
   });
 }
 
+function openRoomOptions(cords, roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_ROOMOPTIONS,
+    cords,
+    roomId,
+  });
+}
+
 export {
-  changeTab,
+  selectTab,
+  selectSpace,
   selectRoom,
   togglePeopleDrawer,
   openInviteList,
-  openPublicChannels,
-  openCreateChannel,
+  openPublicRooms,
+  openCreateRoom,
   openInviteUser,
   openSettings,
   openEmojiBoard,
   openReadReceipts,
+  openRoomOptions,
 };

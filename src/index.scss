@@ -4,7 +4,9 @@
 
   /* background color | --bg-[background type]: value */
   --bg-surface: #FFFFFF;
+  --bg-surface-transparent: #FFFFFF00;
   --bg-surface-low: #F6F6F6;
+  --bg-surface-low-transparent: #F6F6F600;
   --bg-surface-hover: rgba(0, 0, 0, 3%);
   --bg-surface-active: rgba(0, 0, 0, 5%);
   --bg-surface-border: rgba(0, 0, 0, 6%);
@@ -30,6 +32,7 @@
   --bg-danger-border: rgba(240, 71, 71, 20%);
 
   --bg-tooltip: #353535;
+  --bg-badge: #989898;
 
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: #000000;
@@ -55,6 +58,7 @@
   --tc-code: #e62498;
 
   --tc-tooltip: white;
+  --tc-badge: white;
 
 
   /* system icons | --ic-[background type]-[priority]: value */
@@ -155,14 +159,18 @@
 .silver-theme {
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(0, 0%, 95%);
+  --bg-surface-transparent: hsla(0, 0%, 95%, 0);
   --bg-surface-low: hsl(0, 0%, 91%);
+  --bg-surface-low-transparent: hsla(0, 0%, 91%, 0);
 }
 
 .dark-theme,
 .butter-theme {
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(208, 8%, 20%);
+  --bg-surface-transparent: hsla(208, 8%, 20%, 0);
   --bg-surface-low: hsl(208, 8%, 16%);
+  --bg-surface-low-transparent: hsla(208, 8%, 16%, 0);
   --bg-surface-hover: rgba(255, 255, 255, 3%);
   --bg-surface-active: rgba(255, 255, 255, 5%);
   --bg-surface-border: rgba(0, 0, 0, 20%);
@@ -173,6 +181,7 @@
   --bg-primary-border: rgba(59, 119, 191, 38%);
 
   --bg-tooltip: #000;
+  --bg-badge: hsl(0, 0%, 75%);
 
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: rgba(255, 255, 255, 94%);
@@ -184,6 +193,7 @@
   --tc-primary-low: rgba(255, 255, 255, 0.4);
 
   --tc-code: #e565b1;
+  --tc-badge: black;
 
   /* system icons | --ic-[background type]-[priority]: value */
   --ic-surface-normal: rgba(255, 255, 255, 68%);
@@ -206,7 +216,11 @@
 .butter-theme {
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(64, 6%, 14%);
+  --bg-surface-transparent: hsla(64, 6%, 14%, 0);
   --bg-surface-low: hsl(64, 6%, 10%);
+  --bg-surface-low-transparent: hsla(64, 6%, 14%, 0);
+
+  --bg-badge: #c4c1ab;
 
   
   /* text color | --tc-[background type]-[priority]: value */

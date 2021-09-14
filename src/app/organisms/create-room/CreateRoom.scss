@@ -1,0 +1,103 @@
+.create-room {
+  margin: 0 var(--sp-normal);
+  margin-right: var(--sp-extra-tight);
+
+  &__form > * {
+    margin-top: var(--sp-normal);
+    &:first-child {
+      margin-top: var(--sp-extra-tight);
+    }
+  }
+
+  &__address {
+    display: flex;
+    &__label {
+      color: var(--tc-surface-low);
+      margin-bottom: var(--sp-ultra-tight);
+    }
+    &__tip {
+      margin-left: 46px;
+      margin-top: var(--sp-ultra-tight);
+      [dir=rtl] & {
+        margin-left: 0;
+        margin-right: 46px;
+      }
+    }
+    & .text {
+      display: flex;
+      align-items: center;
+      padding: 0 var(--sp-normal);
+      border: 1px solid var(--bg-surface-border);
+      border-radius: var(--bo-radius);
+      color: var(--tc-surface-low);
+    }
+    & *:nth-child(2) {
+      flex: 1;
+      min-width: 0;
+      & .input {
+        border-radius: 0;
+      }
+    }
+    & .text:first-child {
+      border-right-width: 0;
+      border-radius: var(--bo-radius) 0 0 var(--bo-radius);
+    }
+    & .text:last-child {
+      border-left-width: 0;
+      border-radius: 0 var(--bo-radius) var(--bo-radius) 0;
+    }
+    [dir=rtl] & {
+      & .text:first-child {
+        border-left-width: 0;
+        border-right-width: 1px;
+        border-radius: 0 var(--bo-radius) var(--bo-radius) 0;
+      }
+      & .text:last-child {
+        border-right-width: 0;
+        border-left-width: 1px;
+        border-radius: var(--bo-radius) 0 0 var(--bo-radius);
+      }
+    }
+  }
+
+  &__name-wrapper {
+    display: flex;
+    align-items: flex-end;
+
+    & .input-container {
+      flex: 1;
+      min-width: 0;
+      margin-right: var(--sp-normal);
+      [dir=rtl] & {
+        margin-right: 0;
+        margin-left: var(--sp-normal);
+      }
+    }
+    & .btn-primary {
+      padding-top: 11px;
+      padding-bottom: 11px;
+    }
+  }
+
+  &__loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    & .text {
+      margin-left: var(--sp-normal);
+      [dir=rtl] & {
+        margin-left: 0;
+        margin-right: var(--sp-normal);
+      }
+    }
+  }
+  &__error {
+    text-align: center;
+    color: var(--bg-danger) !important;
+  }
+
+  [dir=rtl] & {
+    margin-right: var(--sp-normal);
+    margin-left: var(--sp-extra-tight);
+  }
+}

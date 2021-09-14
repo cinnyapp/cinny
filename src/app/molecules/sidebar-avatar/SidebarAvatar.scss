@@ -1,28 +1,18 @@
-
-.sidebar-avatar-tippy {
-  padding: var(--sp-extra-tight) var(--sp-normal);
-  background-color: var(--bg-tooltip);
-  border-radius: var(--bo-radius);
-  box-shadow: var(--bs-popup);
-
-  .text {
-    color: var(--tc-tooltip);
-  }
-}
-
 .sidebar-avatar {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
   cursor: pointer;
   
   & .notification-badge {
     position: absolute;
-    right: var(--sp-extra-tight);
-    top: calc(-1 * var(--sp-ultra-tight));
+    right: 0;
+    top: 0;
     box-shadow: 0 0 0 2px var(--bg-surface-low);
+    transform: translate(20%, -20%);
+
+    margin: 0 !important;
   }
   &:focus {
     outline: none;
@@ -37,7 +27,7 @@
     content: "";
     display: block;
     position: absolute;
-    left: 0;
+    left: -11px;
     top: 50%;
     transform: translateY(-50%);
 
@@ -48,7 +38,8 @@
     transition: height 200ms linear;
 
     [dir=rtl] & {
-      right: 0;
+      left: unset;
+      right: -11px;
       border-radius: 4px 0 0 4px;
     }
   }

@@ -16,12 +16,28 @@ import PopupWindow, { PWContentSelector } from '../../molecules/popup-window/Pop
 import SettingTile from '../../molecules/setting-tile/SettingTile';
 import ImportE2ERoomKeys from '../../molecules/import-e2e-room-keys/ImportE2ERoomKeys';
 
+import ProfileEditor from '../profile-editor/ProfileEditor';
+
+import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
+
+function GeneralSection() {
+  return (
+    <div className="settings-content">
+      <SettingTile
+        title=""
+        content={(
+          <ProfileEditor userId={initMatrix.matrixClient.getUserId()} />
+        )}
+      />
+    </div>
+  );
+}
 
 function AppearanceSection() {
   const [, updateState] = useState({});
@@ -88,7 +104,7 @@ function AboutSection() {
         <div>
           <Text variant="h2">
             Cinny
-            <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>v1.2.1</span>
+            <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>v1.3.0</span>
           </Text>
           <Text>Yet another matrix client</Text>
 
@@ -104,6 +120,12 @@ function AboutSection() {
 
 function Settings({ isOpen, onRequestClose }) {
   const settingSections = [{
+    name: 'General',
+    iconSrc: SettingsIC,
+    render() {
+      return <GeneralSection />;
+    },
+  }, {
     name: 'Appearance',
     iconSrc: SunIC,
     render() {

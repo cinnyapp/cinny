@@ -190,7 +190,22 @@ async function invite(roomId, userId) {
   }
 }
 
+function createSpaceShortcut(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.room.CREATE_SPACE_SHORTCUT,
+    roomId,
+  });
+}
+
+function deleteSpaceShortcut(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.room.DELETE_SPACE_SHORTCUT,
+    roomId,
+  });
+}
+
 export {
   join, leave,
   create, invite,
+  createSpaceShortcut, deleteSpaceShortcut,
 };

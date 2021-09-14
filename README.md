@@ -10,6 +10,8 @@
 
 Cinny is a [Matrix](https://matrix.org) client focusing primarily on simple, elegant and secure interface.
 
+![preview](https://github.com/ajbura/cinny-site/blob/master/assets/preview-light.png)
+
 ## Building and Running
 
 ### Building from source
@@ -42,4 +44,10 @@ docker run -p 8080:80 cinny:latest
 This will forward your `localhost` port 8080 to the container's port 80. You can visit the app in your browser by
 navigating to `http://localhost:8080`.
 
+## License
 
+Copyright (c) 2021 Ajay Bura (ajbura) and other contributors
+
+Code licensed under the MIT License: <http://opensource.org/licenses/MIT>
+
+Graphics licensed under CC-BY 4.0: <https://creativecommons.org/licenses/by/4.0/>

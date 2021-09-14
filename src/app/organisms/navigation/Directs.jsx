@@ -12,32 +12,33 @@ import { AtoZ } from './common';
 
 const drawerPostie = new Postie();
 function Directs() {
-  const { roomList } = initMatrix;
+  const { roomList, notifications } = initMatrix;
   const directIds = [...roomList.directs].sort(AtoZ);
 
   const [, forceUpdate] = useState({});
 
-  function selectorChanged(activeRoomID, prevActiveRoomId) {
+  function selectorChanged(selectedRoomId, prevSelectedRoomId) {
     if (!drawerPostie.hasTopic('selector-change')) return;
     const addresses = [];
-    if (drawerPostie.hasSubscriber('selector-change', activeRoomID)) addresses.push(activeRoomID);
-    if (drawerPostie.hasSubscriber('selector-change', prevActiveRoomId)) addresses.push(prevActiveRoomId);
+    if (drawerPostie.hasSubscriber('selector-change', selectedRoomId)) addresses.push(selectedRoomId);
+    if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId)) addresses.push(prevSelectedRoomId);
     if (addresses.length === 0) return;
-    drawerPostie.post('selector-change', addresses, activeRoomID);
+    drawerPostie.post('selector-change', addresses, selectedRoomId);
   }
 
-  function unreadChanged(roomId) {
-    if (!drawerPostie.hasTopic('unread-change')) return;
-    if (!drawerPostie.hasSubscriber('unread-change', roomId)) return;
-    drawerPostie.post('unread-change', roomId);
+  function notiChanged(roomId, total, prevTotal) {
+    if (total === prevTotal) return;
+    if (drawerPostie.hasTopicAndSubscriber('unread-change', roomId)) {
+      drawerPostie.post('unread-change', roomId);
+    }
   }
 
   function roomListUpdated() {
     const { spaces, rooms, directs } = initMatrix.roomList;
     if (!(
-      spaces.has(navigation.getActiveRoomId())
-      || rooms.has(navigation.getActiveRoomId())
-      || directs.has(navigation.getActiveRoomId()))
+      spaces.has(navigation.selectedRoomId)
+      || rooms.has(navigation.selectedRoomId)
+      || directs.has(navigation.selectedRoomId))
     ) {
       selectRoom(null);
     }
@@ -47,13 +48,11 @@ function Directs() {
   useEffect(() => {
     roomList.on(cons.events.roomList.ROOMLIST_UPDATED, roomListUpdated);
     navigation.on(cons.events.navigation.ROOM_SELECTED, selectorChanged);
-    roomList.on(cons.events.roomList.MY_RECEIPT_ARRIVED, unreadChanged);
-    roomList.on(cons.events.roomList.EVENT_ARRIVED, unreadChanged);
+    notifications.on(cons.events.notifications.NOTI_CHANGED, notiChanged);
     return () => {
       roomList.removeListener(cons.events.roomList.ROOMLIST_UPDATED, roomListUpdated);
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, selectorChanged);
-      roomList.removeListener(cons.events.roomList.MY_RECEIPT_ARRIVED, unreadChanged);
-      roomList.removeListener(cons.events.roomList.EVENT_ARRIVED, unreadChanged);
+      notifications.removeListener(cons.events.notifications.NOTI_CHANGED, notiChanged);
     };
   }, []);
 
@@ -62,6 +61,7 @@ function Directs() {
       key={id}
       roomId={id}
       drawerPostie={drawerPostie}
+      onClick={() => selectRoom(id)}
     />
   ));
 }

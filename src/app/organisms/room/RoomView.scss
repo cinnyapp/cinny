@@ -1,0 +1,31 @@
+.room-view-flexBox {
+  display: flex;
+  flex-direction: column;
+}
+.room-view-flexItem {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.room-view {
+  @extend .room-view-flexItem;
+  @extend .room-view-flexBox;
+
+  &__content-wrapper {
+    @extend .room-view-flexItem;
+    @extend .room-view-flexBox;
+  }
+
+  &__scrollable {
+    @extend .room-view-flexItem;
+    position: relative;
+  }
+  
+  &__sticky {
+    min-height: 85px;
+    position: relative;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--bg-surface-border);
+  }
+}
