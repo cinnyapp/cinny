@@ -10,6 +10,7 @@ import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
+import ScrollView from '../../atoms/scroll/ScrollView';
 
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 
@@ -266,20 +267,22 @@ Auth.propTypes = {
 
 function StaticWrapper({ children }) {
   return (
-    <div className="auth__wrapper flex--center">
-      <div className="auth-card">
-        <div className="auth-card__interactive flex-v">
-          <div className="app-ident flex">
-            <img className="app-ident__logo noselect" src={CinnySvg} alt="Cinny logo" />
-            <div className="app-ident__text flex-v--center">
-              <Text variant="h2">Cinny</Text>
-              <Text variant="b2">Yet another matrix client</Text>
+    <ScrollView invisible>
+      <div className="auth__wrapper flex--center">
+        <div className="auth-card">
+          <div className="auth-card__interactive flex-v">
+            <div className="app-ident flex">
+              <img className="app-ident__logo noselect" src={CinnySvg} alt="Cinny logo" />
+              <div className="app-ident__text flex-v--center">
+                <Text variant="h2">Cinny</Text>
+                <Text variant="b2">Yet another matrix client</Text>
+              </div>
             </div>
+            { children }
           </div>
-          { children }
         </div>
       </div>
-    </div>
+    </ScrollView>
   );
 }
 
