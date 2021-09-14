@@ -19,3 +19,17 @@ export function isNotInSameDay(dt2, dt1) {
     || dt2.getYear() !== dt1.getYear()
   );
 }
+
+export function getEventCords(ev) {
+  const boxInfo = ev.target.getBoundingClientRect();
+  return {
+    x: boxInfo.x,
+    y: boxInfo.y,
+    detail: ev.detail,
+  };
+}
+
+export function abbreviateNumber(number) {
+  if (number > 99) return '99+';
+  return number;
+}

@@ -30,8 +30,8 @@ class Postie {
   }
 
   hasTopicAndSubscriber(topic, address) {
-    return (this.isTopicExist(topic))
-      ? this.isSubscriberExist(topic, address)
+    return (this.hasTopic(topic))
+      ? this.hasSubscriber(topic, address)
       : false;
   }
 

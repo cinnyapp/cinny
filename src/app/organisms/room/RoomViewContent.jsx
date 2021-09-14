@@ -10,7 +10,7 @@ import cons from '../../../client/state/cons';
 import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
 import { getUsername, getUsernameOfRoomMember, doesRoomHaveUnread } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
-import { diffMinutes, isNotInSameDay } from '../../../util/common';
+import { diffMinutes, isNotInSameDay, getEventCords } from '../../../util/common';
 import { openEmojiBoard, openReadReceipts } from '../../../client/action/navigation';
 
 import Divider from '../../atoms/divider/Divider';
@@ -176,12 +176,7 @@ function toggleEmoji(roomId, eventId, emojiKey, roomTimeline) {
 }
 
 function pickEmoji(e, roomId, eventId, roomTimeline) {
-  const boxInfo = e.target.getBoundingClientRect();
-  openEmojiBoard({
-    x: boxInfo.x,
-    y: boxInfo.y,
-    detail: e.detail,
-  }, (emoji) => {
+  openEmojiBoard(getEventCords(e), (emoji) => {
     toggleEmoji(roomId, eventId, emoji.unicode, roomTimeline);
     e.target.click();
   });
@@ -203,7 +198,9 @@ function RoomViewContent({
   }
   function trySendingReadReceipt() {
     const { room, timeline } = roomTimeline;
-    if (doesRoomHaveUnread(room) && timeline.length !== 0) {
+    if (
+      (doesRoomHaveUnread(room) || initMatrix.notifications.hasNoti(roomId))
+      && timeline.length !== 0) {
       mx.sendReadReceipt(timeline[timeline.length - 1]);
     }
   }

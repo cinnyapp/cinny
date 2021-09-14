@@ -2,20 +2,17 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
-import { togglePeopleDrawer, openInviteUser } from '../../../client/action/navigation';
-import * as roomActions from '../../../client/action/room';
+import { togglePeopleDrawer, openRoomOptions } from '../../../client/action/navigation';
 import colorMXID from '../../../util/colorMXID';
+import { getEventCords } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import Avatar from '../../atoms/avatar/Avatar';
-import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/ContextMenu';
 
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
-import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
-import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 
 function RoomViewHeader({ roomId }) {
   const mx = initMatrix.matrixClient;
@@ -33,24 +30,10 @@ function RoomViewHeader({ roomId }) {
         { typeof roomTopic !== 'undefined' && <p title={roomTopic} className="text text-b3">{roomTopic}</p>}
       </TitleWrapper>
       <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
-      <ContextMenu
-        placement="bottom"
-        content={(toogleMenu) => (
-          <>
-            <MenuHeader>Options</MenuHeader>
-            {/* <MenuBorder /> */}
-            <MenuItem
-              iconSrc={AddUserIC}
-              onClick={() => {
-                openInviteUser(roomId); toogleMenu();
-              }}
-            >
-              Invite
-            </MenuItem>
-            <MenuItem iconSrc={LeaveArrowIC} variant="danger" onClick={() => roomActions.leave(roomId)}>Leave</MenuItem>
-          </>
-        )}
-        render={(toggleMenu) => <IconButton onClick={toggleMenu} tooltip="Options" src={VerticalMenuIC} />}
+      <IconButton
+        onClick={(e) => openRoomOptions(getEventCords(e), roomId)}
+        tooltip="Options"
+        src={VerticalMenuIC}
       />
     </Header>
   );

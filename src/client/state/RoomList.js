@@ -2,11 +2,21 @@ import EventEmitter from 'events';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
 
+function isMEventSpaceChild(mEvent) {
+  return mEvent.getType() === 'm.space.child' && Object.keys(mEvent.getContent()).length > 0;
+}
+
 class RoomList extends EventEmitter {
   constructor(matrixClient) {
     super();
     this.matrixClient = matrixClient;
     this.mDirects = this.getMDirects();
+
+    // Contains roomId to parent spaces roomId mapping of all spaces children.
+    // No matter if you have joined those children rooms or not.
+    this.roomIdToParents = new Map();
+
+    this.spaceShortcut = new Set();
 
     this.inviteDirects = new Set();
     this.inviteSpaces = new Set();
@@ -19,9 +29,73 @@ class RoomList extends EventEmitter {
     this.processingRooms = new Map();
 
     this._populateRooms();
+    this._populateSpaceShortcut();
     this._listenEvents();
 
     appDispatcher.register(this.roomActions.bind(this));
+  }
+
+  _updateSpaceShortcutData(shortcutList) {
+    const spaceContent = this.matrixClient.getAccountData(cons['in.cinny.spaces'])?.getContent() || {};
+    spaceContent.shortcut = shortcutList;
+    this.matrixClient.setAccountData(cons['in.cinny.spaces'], spaceContent);
+  }
+
+  isOrphan(roomId) {
+    return !this.roomIdToParents.has(roomId);
+  }
+
+  getOrphans() {
+    const rooms = [...this.spaces].concat([...this.rooms]);
+    return rooms.filter((roomId) => !this.roomIdToParents.has(roomId));
+  }
+
+  getSpaceChildren(roomId) {
+    const space = this.matrixClient.getRoom(roomId);
+    const mSpaceChild = space?.currentState.getStateEvents('m.space.child');
+    const children = mSpaceChild?.map((mEvent) => {
+      const childId = mEvent.event.state_key;
+      if (isMEventSpaceChild(mEvent)) return childId;
+      return null;
+    });
+    return children?.filter((childId) => childId !== null);
+  }
+
+  addToRoomIdToParents(roomId, parentRoomId) {
+    if (!this.roomIdToParents.has(roomId)) {
+      this.roomIdToParents.set(roomId, new Set());
+    }
+    const parents = this.roomIdToParents.get(roomId);
+    parents.add(parentRoomId);
+  }
+
+  removeFromRoomIdToParents(roomId, parentRoomId) {
+    if (!this.roomIdToParents.has(roomId)) return;
+    const parents = this.roomIdToParents.get(roomId);
+    parents.delete(parentRoomId);
+    if (parents.size === 0) this.roomIdToParents.delete(roomId);
+  }
+
+  addToSpaces(roomId) {
+    this.spaces.add(roomId);
+    const spaceChildren = this.getSpaceChildren(roomId);
+    spaceChildren?.forEach((childRoomId) => {
+      this.addToRoomIdToParents(childRoomId, roomId);
+    });
+  }
+
+  deleteFromSpaces(roomId) {
+    this.spaces.delete(roomId);
+    const spaceChildren = this.getSpaceChildren(roomId);
+    spaceChildren?.forEach((childRoomId) => {
+      this.removeFromRoomIdToParents(childRoomId, roomId);
+    });
+
+    if (this.spaceShortcut.has(roomId)) {
+      // if delete space has shortcut remove it.
+      this.spaceShortcut.delete(roomId);
+      this._updateSpaceShortcutData([...this.spaceShortcut]);
+    }
   }
 
   roomActions(action) {
@@ -30,7 +104,7 @@ class RoomList extends EventEmitter {
       if (myRoom === null) return false;
 
       if (isDM) this.directs.add(roomId);
-      else if (myRoom.isSpaceRoom()) this.spaces.add(roomId);
+      else if (myRoom.isSpaceRoom()) this.addToSpaces(roomId);
       else this.rooms.add(roomId);
       return true;
     };
@@ -64,6 +138,18 @@ class RoomList extends EventEmitter {
           });
         }
       },
+      [cons.actions.room.CREATE_SPACE_SHORTCUT]: () => {
+        if (this.spaceShortcut.has(action.roomId)) return;
+        this.spaceShortcut.add(action.roomId);
+        this._updateSpaceShortcutData([...this.spaceShortcut]);
+        this.emit(cons.events.roomList.SPACE_SHORTCUT_UPDATED, action.roomId);
+      },
+      [cons.actions.room.DELETE_SPACE_SHORTCUT]: () => {
+        if (!this.spaceShortcut.has(action.roomId)) return;
+        this.spaceShortcut.delete(action.roomId);
+        this._updateSpaceShortcutData([...this.spaceShortcut]);
+        this.emit(cons.events.roomList.SPACE_SHORTCUT_UPDATED, action.roomId);
+      },
     };
     actions[action.type]?.();
   }
@@ -83,8 +169,24 @@ class RoomList extends EventEmitter {
     return mDirectsId;
   }
 
+  _populateSpaceShortcut() {
+    this.spaceShortcut.clear();
+    const spacesContent = this.matrixClient.getAccountData(cons['in.cinny.spaces'])?.getContent();
+
+    if (spacesContent && Array.isArray(spacesContent?.shortcut)) {
+      spacesContent.shortcut.forEach((shortcut) => {
+        if (this.spaces.has(shortcut)) this.spaceShortcut.add(shortcut);
+      });
+      if (spacesContent.shortcut.length !== this.spaceShortcut.size) {
+        // update shortcut list from account data if shortcut space doesn't exist.
+        this._updateSpaceShortcutData([...this.spaceShortcut]);
+      }
+    }
+  }
+
   _populateRooms() {
     this.directs.clear();
+    this.roomIdToParents.clear();
     this.spaces.clear();
     this.rooms.clear();
     this.inviteDirects.clear();
@@ -109,7 +211,7 @@ class RoomList extends EventEmitter {
       if (room.getMyMembership() !== 'join') return;
 
       if (this.mDirects.has(roomId)) this.directs.add(roomId);
-      else if (room.isSpaceRoom()) this.spaces.add(roomId);
+      else if (room.isSpaceRoom()) this.addToSpaces(roomId);
       else this.rooms.add(roomId);
     });
   }
@@ -123,6 +225,12 @@ class RoomList extends EventEmitter {
   _listenEvents() {
     // Update roomList when m.direct changes
     this.matrixClient.on('accountData', (event) => {
+      if (event.getType() === cons['in.cinny.spaces']) {
+        this._populateSpaceShortcut();
+        this.emit(cons.events.roomList.SPACE_SHORTCUT_UPDATED);
+        return;
+      }
+
       if (event.getType() !== 'm.direct') return;
 
       const latestMDirects = this.getMDirects();
@@ -155,18 +263,17 @@ class RoomList extends EventEmitter {
     this.matrixClient.on('Room.name', () => {
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
     });
-    this.matrixClient.on('Room.receipt', (event, room) => {
-      if (event.getType() === 'm.receipt') {
-        const content = event.getContent();
-        const userReadEventId = Object.keys(content)[0];
-        const eventReaderUserId = Object.keys(content[userReadEventId]['m.read'])[0];
-        if (eventReaderUserId !== this.matrixClient.getUserId()) return;
-        this.emit(cons.events.roomList.MY_RECEIPT_ARRIVED, room.roomId);
-      }
-    });
 
-    this.matrixClient.on('RoomState.events', (event) => {
-      if (event.getType() !== 'm.room.join_rules') return;
+    this.matrixClient.on('RoomState.events', (mEvent) => {
+      if (mEvent.getType() === 'm.space.child') {
+        const { event } = mEvent;
+        if (isMEventSpaceChild(mEvent)) {
+          this.addToRoomIdToParents(event.state_key, event.room_id);
+        } else this.removeFromRoomIdToParents(event.state_key, event.room_id);
+        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        return;
+      }
+      if (mEvent.getType() !== 'm.room.join_rules') return;
 
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
     });
@@ -207,7 +314,7 @@ class RoomList extends EventEmitter {
           const procRoomInfo = this.processingRooms.get(roomId);
 
           if (procRoomInfo.isDM) this.directs.add(roomId);
-          else if (room.isSpaceRoom()) this.spaces.add(roomId);
+          else if (room.isSpaceRoom()) this.addToSpaces(roomId);
           else this.rooms.add(roomId);
 
           if (procRoomInfo.task === 'CREATE') this.emit(cons.events.roomList.ROOM_CREATED, roomId);
@@ -218,7 +325,7 @@ class RoomList extends EventEmitter {
           return;
         }
         if (room.isSpaceRoom()) {
-          this.spaces.add(roomId);
+          this.addToSpaces(roomId);
 
           this.emit(cons.events.roomList.ROOM_JOINED, roomId);
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);
@@ -269,25 +376,16 @@ class RoomList extends EventEmitter {
       }
       // when room is not a DM add/remove it from rooms.
       if (membership === 'leave' || membership === 'kick' || membership === 'ban') {
-        if (room.isSpaceRoom()) this.spaces.delete(roomId);
+        if (room.isSpaceRoom()) this.deleteFromSpaces(roomId);
         else this.rooms.delete(roomId);
         this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
       }
       if (membership === 'join') {
-        if (room.isSpaceRoom()) this.spaces.add(roomId);
+        if (room.isSpaceRoom()) this.addToSpaces(roomId);
         else this.rooms.add(roomId);
         this.emit(cons.events.roomList.ROOM_JOINED, roomId);
       }
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-    });
-
-    this.matrixClient.on('Room.timeline', (event, room) => {
-      const supportEvents = ['m.room.message', 'm.room.encrypted', 'm.sticker'];
-      if (!supportEvents.includes(event.getType())) return;
-
-      const lastTimelineEvent = room.timeline[room.timeline.length - 1];
-      if (lastTimelineEvent.getId() !== event.getId()) return;
-      this.emit(cons.events.roomList.EVENT_ARRIVED, room.roomId);
     });
   }
 }

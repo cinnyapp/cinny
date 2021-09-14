@@ -30,6 +30,9 @@
 
   .text {
     color: var(--tc-surface-low);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &:not(:first-child) {

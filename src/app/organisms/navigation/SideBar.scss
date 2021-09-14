@@ -39,13 +39,12 @@
     height: 8px;
 
     background: transparent;
-    // background-image: linear-gradient(to top,  var(--bg-surface-low), transparent);
-    // It produce bug in safari
-    // To fix it, we have to set the color as a fully transparent version of that exact color. like:
-    // background-image: linear-gradient(to top,  rgb(255, 255, 255), rgba(255, 255, 255, 0));
-    // TODO: fix this bug while implementing spaces
+    background-image: linear-gradient(
+      to top,
+      var(--bg-surface-low),
+      var(--bg-surface-low-transparent));
     position: sticky;
-    bottom: 0;
+    bottom: -1px;
     left: 0;
   }
 }

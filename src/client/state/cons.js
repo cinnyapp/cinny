@@ -6,9 +6,21 @@ const cons = {
     BASE_URL: 'cinny_hs_base_url',
   },
   DEVICE_DISPLAY_NAME: 'Cinny Web',
+  'in.cinny.spaces': 'in.cinny.spaces',
+  tabs: {
+    HOME: 'home',
+    DIRECTS: 'dm',
+  },
+  notifs: {
+    DEFAULT: 'default',
+    ALL_MESSAGES: 'all_messages',
+    MENTIONS_AND_KEYWORDS: 'mentions_and_keywords',
+    MUTE: 'mute',
+  },
   actions: {
     navigation: {
-      CHANGE_TAB: 'CHANGE_TAB',
+      SELECT_TAB: 'SELECT_TAB',
+      SELECT_SPACE: 'SELECT_SPACE',
       SELECT_ROOM: 'SELECT_ROOM',
       TOGGLE_PEOPLE_DRAWER: 'TOGGLE_PEOPLE_DRAWER',
       OPEN_INVITE_LIST: 'OPEN_INVITE_LIST',
@@ -18,11 +30,14 @@ const cons = {
       OPEN_SETTINGS: 'OPEN_SETTINGS',
       OPEN_EMOJIBOARD: 'OPEN_EMOJIBOARD',
       OPEN_READRECEIPTS: 'OPEN_READRECEIPTS',
+      OPEN_ROOMOPTIONS: 'OPEN_ROOMOPTIONS',
     },
     room: {
       JOIN: 'JOIN',
       LEAVE: 'LEAVE',
       CREATE: 'CREATE',
+      CREATE_SPACE_SHORTCUT: 'CREATE_SPACE_SHORTCUT',
+      DELETE_SPACE_SHORTCUT: 'DELETE_SPACE_SHORTCUT',
       error: {
         CREATE: 'ERROR_CREATE',
       },
@@ -33,7 +48,8 @@ const cons = {
   },
   events: {
     navigation: {
-      TAB_CHANGED: 'TAB_CHANGED',
+      TAB_SELECTED: 'TAB_SELECTED',
+      SPACE_SELECTED: 'SPACE_SELECTED',
       ROOM_SELECTED: 'ROOM_SELECTED',
       PEOPLE_DRAWER_TOGGLED: 'PEOPLE_DRAWER_TOGGLED',
       INVITE_LIST_OPENED: 'INVITE_LIST_OPENED',
@@ -43,6 +59,7 @@ const cons = {
       SETTINGS_OPENED: 'SETTINGS_OPENED',
       EMOJIBOARD_OPENED: 'EMOJIBOARD_OPENED',
       READRECEIPTS_OPENED: 'READRECEIPTS_OPENED',
+      ROOMOPTIONS_OPENED: 'ROOMOPTIONS_OPENED',
     },
     roomList: {
       ROOMLIST_UPDATED: 'ROOMLIST_UPDATED',
@@ -50,8 +67,11 @@ const cons = {
       ROOM_JOINED: 'ROOM_JOINED',
       ROOM_LEAVED: 'ROOM_LEAVED',
       ROOM_CREATED: 'ROOM_CREATED',
-      MY_RECEIPT_ARRIVED: 'MY_RECEIPT_ARRIVED',
-      EVENT_ARRIVED: 'EVENT_ARRIVED',
+      SPACE_SHORTCUT_UPDATED: 'SPACE_SHORTCUT_UPDATED',
+    },
+    notifications: {
+      NOTI_CHANGED: 'NOTI_CHANGED',
+      FULL_READ: 'FULL_READ',
     },
     roomTimeline: {
       EVENT: 'EVENT',

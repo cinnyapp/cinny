@@ -8,7 +8,7 @@ function NotificationBadge({ alert, content }) {
   const notificationClass = alert ? ' notification-badge--alert' : '';
   return (
     <div className={`notification-badge${notificationClass}`}>
-      {content && <Text variant="b3">{content}</Text>}
+      {content !== null && <Text variant="b3">{content}</Text>}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import { openEmojiBoard } from '../../../client/action/navigation';
-import { bytesToSize } from '../../../util/common';
+import { bytesToSize, getEventCords } from '../../../util/common';
 import { getUsername } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 
@@ -285,6 +285,32 @@ function RoomViewInput({
     }
   }
 
+  function handlePaste(e) {
+    if (e.clipboardData === false) {
+      return;
+    }
+
+    if (e.clipboardData.items === undefined) {
+      return;
+    }
+
+    for (let i = 0; i < e.clipboardData.items.length; i += 1) {
+      const item = e.clipboardData.items[i];
+      if (item.type.indexOf('image') !== -1) {
+        const image = item.getAsFile();
+        if (attachment === null) {
+          setAttachment(image);
+          if (image !== null) {
+            roomsInput.setAttachment(roomId, image);
+            return;
+          }
+        } else {
+          return;
+        }
+      }
+    }
+  }
+
   function addEmoji(emoji) {
     textAreaRef.current.value += emoji.unicode;
   }
@@ -315,6 +341,7 @@ function RoomViewInput({
               <TextareaAutosize
                 ref={textAreaRef}
                 onChange={handleMsgTyping}
+                onPaste={handlePaste}
                 onResize={() => timelineScroll.autoReachBottom()}
                 onKeyDown={handleKeyDown}
                 placeholder="Send a message..."
@@ -327,12 +354,10 @@ function RoomViewInput({
         <div ref={rightOptionsRef} className="room-input__option-container">
           <IconButton
             onClick={(e) => {
-              const boxInfo = e.target.getBoundingClientRect();
-              openEmojiBoard({
-                x: boxInfo.x + (document.dir === 'rtl' ? -80 : 80),
-                y: boxInfo.y - 250,
-                detail: e.detail,
-              }, addEmoji);
+              const cords = getEventCords(e);
+              cords.x += (document.dir === 'rtl' ? -80 : 80);
+              cords.y -= 250;
+              openEmojiBoard(cords, addEmoji);
             }}
             tooltip="Emoji"
             src={EmojiIC}

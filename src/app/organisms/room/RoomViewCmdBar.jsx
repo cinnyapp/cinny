@@ -10,6 +10,7 @@ import cons from '../../../client/state/cons';
 import { toggleMarkdown } from '../../../client/action/settings';
 import * as roomActions from '../../../client/action/room';
 import {
+  selectTab,
   selectRoom,
   openCreateRoom,
   openPublicRooms,
@@ -357,7 +358,8 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
   }
   function fireCmd(myCmd) {
     if (myCmd.prefix.match(/^>[*#@]$/)) {
-      selectRoom(myCmd.result.roomId);
+      if (cmd.prefix === '>*') selectTab(myCmd.result.roomId);
+      else selectRoom(myCmd.result.roomId);
       viewEvent.emit('cmd_fired');
     }
     if (myCmd.prefix === '/') {

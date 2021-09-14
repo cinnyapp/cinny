@@ -1,10 +1,17 @@
 import appDispatcher from '../dispatcher';
 import cons from '../state/cons';
 
-function changeTab(tabId) {
+function selectTab(tabId) {
   appDispatcher.dispatch({
-    type: cons.actions.navigation.CHANGE_TAB,
+    type: cons.actions.navigation.SELECT_TAB,
     tabId,
+  });
+}
+
+function selectSpace(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.SELECT_SPACE,
+    roomId,
   });
 }
 
@@ -70,8 +77,17 @@ function openReadReceipts(roomId, eventId) {
   });
 }
 
+function openRoomOptions(cords, roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_ROOMOPTIONS,
+    cords,
+    roomId,
+  });
+}
+
 export {
-  changeTab,
+  selectTab,
+  selectSpace,
   selectRoom,
   togglePeopleDrawer,
   openInviteList,
@@ -81,4 +97,5 @@ export {
   openSettings,
   openEmojiBoard,
   openReadReceipts,
+  openRoomOptions,
 };

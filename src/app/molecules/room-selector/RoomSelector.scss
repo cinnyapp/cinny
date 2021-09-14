@@ -14,6 +14,13 @@
   border: 1px solid transparent;
   border-radius: var(--bo-radius);
   cursor: pointer;
+
+  &--unread {
+    .room-selector__content > .text {
+      font-weight: 500;
+      color: var(--tc-surface-high);
+    }
+  }
   
   &--selected {
     background-color: var(--bg-surface);
@@ -32,9 +39,11 @@
       }
     }
   }
-  &:focus {
-    outline: none;
+  &:focus-within {
     background-color: var(--bg-surface-hover);
+    & button {
+      outline: none;
+    }
   }
   &:active {
     background-color: var(--bg-surface-active);
@@ -81,7 +90,7 @@
     margin: 0 !important;
   }
 
-  & .ic-btn-surface {
+  & .ic-btn {
     padding: 6px;
     border-radius: calc(var(--bo-radius) / 2);
   }
