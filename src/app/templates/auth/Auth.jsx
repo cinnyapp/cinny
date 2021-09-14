@@ -8,10 +8,12 @@ import * as auth from '../../../client/action/auth';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
+import IconButton from '../../atoms/button/IconButton';
 import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 import ScrollView from '../../atoms/scroll/ScrollView';
 
+import EyeIC from '../../../../public/res/ic/outlined/eye.svg';
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 
 // This regex validates historical usernames, which don't satisfy today's username requirements.
@@ -207,24 +209,46 @@ function Auth({ type }) {
                 required
               />
             </div>
-            <Input
-              forwardRef={passwordRef}
-              onChange={(e) => validateOnChange(e, ((type === 'login') ? PASSWORD_REGEX : PASSWORD_STRENGHT_REGEX), BAD_PASSWORD_ERROR)}
-              id="auth_password"
-              type="password"
-              label="Password"
-              required
-            />
+            <div className="password__wrapper">
+              <Input
+                forwardRef={passwordRef}
+                onChange={(e) => validateOnChange(e, ((type === 'login') ? PASSWORD_REGEX : PASSWORD_STRENGHT_REGEX), BAD_PASSWORD_ERROR)}
+                id="auth_password"
+                type="password"
+                label="Password"
+                required
+              />
+              <IconButton
+                onClick={() => {
+                  if (passwordRef.current.type === 'password') {
+                    passwordRef.current.type = 'text';
+                  } else passwordRef.current.type = 'password';
+                }}
+                size="extra-small"
+                src={EyeIC}
+              />
+            </div>
             {type === 'register' && (
               <>
-                <Input
-                  forwardRef={confirmPasswordRef}
-                  onChange={(e) => validateOnChange(e, new RegExp(`^(${passwordRef.current.value})$`), CONFIRM_PASSWORD_ERROR)}
-                  id="auth_confirmPassword"
-                  type="password"
-                  label="Confirm password"
-                  required
-                />
+                <div className="password__wrapper">
+                  <Input
+                    forwardRef={confirmPasswordRef}
+                    onChange={(e) => validateOnChange(e, new RegExp(`^(${passwordRef.current.value})$`), CONFIRM_PASSWORD_ERROR)}
+                    id="auth_confirmPassword"
+                    type="password"
+                    label="Confirm password"
+                    required
+                  />
+                  <IconButton
+                    onClick={() => {
+                      if (confirmPasswordRef.current.type === 'password') {
+                        confirmPasswordRef.current.type = 'text';
+                      } else confirmPasswordRef.current.type = 'password';
+                    }}
+                    size="extra-small"
+                    src={EyeIC}
+                  />
+                </div>
                 <Input
                   forwardRef={emailRef}
                   onChange={(e) => validateOnChange(e, EMAIL_REGEX, BAD_EMAIL_ERROR)}

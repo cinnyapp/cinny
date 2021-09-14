@@ -122,6 +122,22 @@
   }
 }
 
+.password__wrapper {
+  margin-top: var(--sp-tight);
+  position: relative;
+
+  & .ic-btn {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    border-radius: calc(var(--bo-radius) / 2);
+    [dir=rtl] & {
+      left: 6px;
+      right: unset;
+    }
+  }
+}
+
 @media (max-width: 462px) {
   .auth__wrapper {
     padding: 0;
