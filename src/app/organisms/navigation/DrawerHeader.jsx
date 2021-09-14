@@ -16,8 +16,8 @@ import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/Cont
 import PlusIC from '../../../../public/res/ic/outlined/plus.svg';
 import HashPlusIC from '../../../../public/res/ic/outlined/hash-plus.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
-import StarIC from '../../../../public/res/ic/outlined/star.svg';
-import FilledStarIC from '../../../../public/res/ic/filled/star.svg';
+import PinIC from '../../../../public/res/ic/outlined/pin.svg';
+import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
 
 function DrawerHeader({ selectedTab, spaceId }) {
   const [, forceUpdate] = useState({});
@@ -35,9 +35,9 @@ function DrawerHeader({ selectedTab, spaceId }) {
       {spaceName && (
         <IconButton
           size="extra-small"
-          variant={initMatrix.roomList.spaceShortcut.has(spaceId) ? 'positive' : 'surface'}
-          tooltip={initMatrix.roomList.spaceShortcut.has(spaceId) ? 'Remove favourite' : 'Favourite'}
-          src={initMatrix.roomList.spaceShortcut.has(spaceId) ? FilledStarIC : StarIC}
+          variant="surface"
+          tooltip={initMatrix.roomList.spaceShortcut.has(spaceId) ? 'Unpin' : 'Pin to sidebar'}
+          src={initMatrix.roomList.spaceShortcut.has(spaceId) ? PinFilledIC : PinIC}
           onClick={() => {
             if (initMatrix.roomList.spaceShortcut.has(spaceId)) deleteSpaceShortcut(spaceId);
             else createSpaceShortcut(spaceId);

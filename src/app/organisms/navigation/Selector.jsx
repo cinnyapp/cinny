@@ -15,8 +15,8 @@ import HashIC from '../../../../public/res/ic/outlined/hash.svg';
 import HashLockIC from '../../../../public/res/ic/outlined/hash-lock.svg';
 import SpaceIC from '../../../../public/res/ic/outlined/space.svg';
 import SpaceLockIC from '../../../../public/res/ic/outlined/space-lock.svg';
-import StarIC from '../../../../public/res/ic/outlined/star.svg';
-import FilledStarIC from '../../../../public/res/ic/filled/star.svg';
+import PinIC from '../../../../public/res/ic/outlined/pin.svg';
+import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 
 function Selector({
@@ -61,10 +61,10 @@ function Selector({
         options={(
           <IconButton
             size="extra-small"
-            variant={initMatrix.roomList.spaceShortcut.has(roomId) ? 'positive' : 'surface'}
-            tooltip={initMatrix.roomList.spaceShortcut.has(roomId) ? 'Remove favourite' : 'Favourite'}
+            variant="surface"
+            tooltip={initMatrix.roomList.spaceShortcut.has(roomId) ? 'Unpin' : 'Pin to sidebar'}
             tooltipPlacement="right"
-            src={initMatrix.roomList.spaceShortcut.has(roomId) ? FilledStarIC : StarIC}
+            src={initMatrix.roomList.spaceShortcut.has(roomId) ? PinFilledIC : PinIC}
             onClick={() => {
               if (initMatrix.roomList.spaceShortcut.has(roomId)) deleteSpaceShortcut(roomId);
               else createSpaceShortcut(roomId);
