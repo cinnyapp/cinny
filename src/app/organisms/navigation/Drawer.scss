@@ -26,6 +26,17 @@
     @extend .drawer-flexItem;
     @extend .drawer-flexBox;
   }
+
+  &__state {
+    padding: var(--sp-extra-tight);
+    border-top: 1px solid var(--bg-surface-border);
+    display: flex;
+    justify-content: center;
+
+    & .text {
+      color: var(--tc-danger-high);
+    }
+  }
 }
 .rooms__wrapper {
   @extend .drawer-flexItem;
