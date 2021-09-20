@@ -1,0 +1,23 @@
+.chip {
+  height: 28px;
+  width: fit-content;
+  width: -moz-fit-content;
+  background: var(--bg-surface-low);
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  padding: var(--sp-ultra-tight) var(--sp-extra-tight);
+  box-sizing: border-box;
+  border-radius: var(--bo-radius);
+  border: 1px solid var(--bg-surface-border);
+
+  & .text-b2 {
+    color: var(--tc-surface-high);
+  }
+
+  & .ic-raw-small {
+    margin-right: var(--sp-extra-tight);
+  }
+}
