@@ -1,0 +1,19 @@
+.chip {
+  padding: var(--sp-ultra-tight) var(--sp-extra-tight);
+  
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  
+  background: var(--bg-surface-low);
+  border-radius: var(--bo-radius);
+  border: 1px solid var(--bg-surface-border);
+
+  & > .ic-raw {
+    margin-right: var(--sp-extra-tight);
+    [dir=rtl] & {
+      margin-right: 0;
+      margin-left: var(--sp-extra-tight);
+    }
+  }
+}
