@@ -76,10 +76,23 @@ class RoomList extends EventEmitter {
     if (parents.size === 0) this.roomIdToParents.delete(roomId);
   }
 
+  getParentSpaces(roomId) {
+    let parentIds = this.roomIdToParents.get(roomId);
+    if (parentIds) {
+      [...parentIds].forEach((parentId) => {
+        parentIds = new Set([...parentIds, ...this.getParentSpaces(parentId)]);
+      });
+    }
+    return parentIds || new Set();
+  }
+
   addToSpaces(roomId) {
     this.spaces.add(roomId);
+    const allParentSpaces = this.getParentSpaces(roomId);
+
     const spaceChildren = this.getSpaceChildren(roomId);
     spaceChildren?.forEach((childRoomId) => {
+      if (allParentSpaces.has(childRoomId)) return;
       this.addToRoomIdToParents(childRoomId, roomId);
     });
   }
@@ -268,6 +281,8 @@ class RoomList extends EventEmitter {
       if (mEvent.getType() === 'm.space.child') {
         const { event } = mEvent;
         if (isMEventSpaceChild(mEvent)) {
+          const allParentSpaces = this.getParentSpaces(event.room_id);
+          if (allParentSpaces.has(event.state_key)) return;
           this.addToRoomIdToParents(event.state_key, event.room_id);
         } else this.removeFromRoomIdToParents(event.state_key, event.room_id);
         this.emit(cons.events.roomList.ROOMLIST_UPDATED);
