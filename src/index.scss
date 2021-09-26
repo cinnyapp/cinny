@@ -37,6 +37,7 @@
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: #000000;
   --tc-surface-normal: rgba(0, 0, 0, 68%);
+  --tc-surface-normal-low: rgba(0, 0, 0, 60%);
   --tc-surface-low: rgba(0, 0, 0, 38%);
   
   --tc-primary-high: #ffffff;
@@ -56,7 +57,7 @@
   --tc-danger-low: rgba(240, 71, 71, 60%);
 
   --tc-code: #e62498;
-
+  --tc-link: hsl(213deg 76% 56%);
   --tc-tooltip: white;
   --tc-badge: white;
 
@@ -167,32 +168,34 @@
 .dark-theme,
 .butter-theme {
   /* background color | --bg-[background type]: value */
-  --bg-surface: hsl(208, 8%, 20%);
-  --bg-surface-transparent: hsla(208, 8%, 20%, 0);
-  --bg-surface-low: hsl(208, 8%, 16%);
-  --bg-surface-low-transparent: hsla(208, 8%, 16%, 0);
+  --bg-surface: hsl(208, 8%, 16%);
+  --bg-surface-transparent: hsla(208, 8%, 16%, 0);
+  --bg-surface-low: hsl(208, 8%, 12%);
+  --bg-surface-low-transparent: hsla(208, 8%, 12%, 0);
   --bg-surface-hover: rgba(255, 255, 255, 3%);
   --bg-surface-active: rgba(255, 255, 255, 5%);
   --bg-surface-border: rgba(0, 0, 0, 20%);
 
-  --bg-primary: rgb(59, 119, 191);
-  --bg-primary-hover: rgba(59, 119, 191, 80%);
-  --bg-primary-active: rgba(59, 119, 191, 70%);
-  --bg-primary-border: rgba(59, 119, 191, 38%);
+  --bg-primary: rgb(42, 98, 166);
+  --bg-primary-hover: rgba(42, 98, 166, 80%);
+  --bg-primary-active: rgba(42, 98, 166, 70%);
+  --bg-primary-border: rgba(42, 98, 166, 38%);
 
   --bg-tooltip: #000;
   --bg-badge: hsl(0, 0%, 75%);
 
   /* text color | --tc-[background type]-[priority]: value */
-  --tc-surface-high: rgba(255, 255, 255, 94%);
-  --tc-surface-normal: rgba(255, 255, 255, 74%);
-  --tc-surface-low: rgba(255, 255, 255, 38%);
+  --tc-surface-high: rgba(255, 255, 255, 98%);
+  --tc-surface-normal: rgba(255, 255, 255, 84%);
+  --tc-surface-normal-low: rgba(255, 255, 255, 60%);
+  --tc-surface-low: rgba(255, 255, 255, 48%);
   
   --tc-primary-high: #ffffff;
   --tc-primary-normal: rgba(255, 255, 255, 0.68);
   --tc-primary-low: rgba(255, 255, 255, 0.4);
 
   --tc-code: #e565b1;
+  --tc-link: hsl(213deg 94% 73%);
   --tc-badge: black;
 
   /* system icons | --ic-[background type]-[priority]: value */
@@ -226,6 +229,7 @@
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: rgb(255, 251, 222, 94%);
   --tc-surface-normal: rgba(255, 251, 222, 74%);
+  --tc-surface-normal-low: rgba(255, 251, 222, 60%); 
   --tc-surface-low: rgba(255, 251, 222, 38%);
 
 
@@ -257,7 +261,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 a {
-  color: var(--bg-primary);
+  color: var(--tc-link);
   text-decoration: none;
 }
 b {
