@@ -54,7 +54,7 @@ function RoomViewFloating({
   return (
     <>
       <div className={`room-view__typing${isSomeoneTyping(typingMembers) ? ' room-view__typing--open' : ''}`}>
-        <div className="bouncingLoader"><div /></div>
+        <div className="bouncing-loader"><div /></div>
         <Text variant="b2">{getTypingMessage(typingMembers)}</Text>
       </div>
       <div className={`room-view__STB${reachedBottom ? '' : ' room-view__STB--open'}`}>
