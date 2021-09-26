@@ -104,7 +104,7 @@ function AboutSection() {
         <div>
           <Text variant="h2">
             Cinny
-            <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>v1.3.0</span>
+            <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>v1.3.1</span>
           </Text>
           <Text>Yet another matrix client</Text>
 
