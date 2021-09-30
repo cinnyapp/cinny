@@ -137,7 +137,7 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
       updateNextBatch(result.next_batch);
       updateIsSearching(false);
       updateIsViewMore(false);
-      if (totalRooms.length === 0) {
+      if (totalRooms.length === 0 && inputRoomName !== '') {
         updateSearchQuery({
           error: `No result found for "${inputRoomName}" on ${inputHs}`,
           alias: isInputAlias ? inputRoomName : null,
@@ -241,11 +241,19 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
             )
           }
           {
-            typeof searchQuery.name !== 'undefined' && !isSearching && (
+            typeof searchQuery.name !== 'undefined' && !isSearching && publicRooms.length !== 0 && (
               searchQuery.name === ''
                 ? <Text variant="b2">{`Public rooms on ${searchQuery.homeserver}.`}</Text>
                 : <Text variant="b2">{`Search result for "${searchQuery.name}" on ${searchQuery.homeserver}.`}</Text>
             )
+          }
+          {
+             typeof searchQuery.name !== 'undefined' && !isSearching && publicRooms.length === 0
+              && (
+              <div className="flex--center">
+                <Text variant="b2">{`There are no public rooms on ${searchQuery.homeserver}.`}</Text>
+              </div>
+              )
           }
           { searchQuery.error && (
             <>
