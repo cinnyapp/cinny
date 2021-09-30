@@ -327,7 +327,15 @@ function RoomViewInput({
     if (file !== null) roomsInput.setAttachment(roomId, file);
   }
 
+  const myPowerlevel = roomTimeline.room.getMember(mx.getUserId()).powerLevel;
+  const canISend = roomTimeline.room.currentState.hasSufficientPowerLevelFor('events_default', myPowerlevel);
+
   function renderInputs() {
+    if (!canISend) {
+      return (
+        <p className="room-input__disallowed">You do not have permission to post to this room</p>
+      );
+    }
     return (
       <>
         <div className={`room-input__option-container${attachment === null ? '' : ' room-attachment__option'}`}>
