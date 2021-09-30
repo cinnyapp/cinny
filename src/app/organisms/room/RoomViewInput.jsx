@@ -333,7 +333,7 @@ function RoomViewInput({
   function renderInputs() {
     if (!canISend) {
       return (
-        <p className="room-input__disallowed">You do not have permission to post to this room</p>
+        <Text className="room-input__disallowed">You do not have permission to post to this room</Text>
       );
     }
     return (
