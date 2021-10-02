@@ -24,6 +24,9 @@
     height: var(--av-extra-small);
   }
 
+  &.clickable {
+    cursor: pointer;
+  }
 
   img {
     width: 100%;

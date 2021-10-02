@@ -8,6 +8,7 @@ function Text({
   const cName = className !== '' ? `${className} ` : '';
   if (variant === 'h1') return <h1 id={id === '' ? undefined : id} className={`${cName}text text-h1`}>{ children }</h1>;
   if (variant === 'h2') return <h2 id={id === '' ? undefined : id} className={`${cName}text text-h2`}>{ children }</h2>;
+  if (variant === 'h2') return <h3 id={id === '' ? undefined : id} className={`${cName}text text-h3`}>{ children }</h3>;
   if (variant === 's1') return <h4 id={id === '' ? undefined : id} className={`${cName}text text-s1`}>{ children }</h4>;
   return <p id={id === '' ? undefined : id} className={`${cName}text text-${variant}`}>{ children }</p>;
 }

@@ -41,7 +41,7 @@ function ProfileViewer({
     setBlockedUsers(newIgnoredUsers);
     mx.setIgnoredUsers(newIgnoredUsers);
   };
-  const isUserBlocked = React.useCallback(() => blockedUsers.includes(userId), [blockedUsers]);
+  const isUserBlocked = blockedUsers.includes(userId);
 
   return (
     <PopupWindow
@@ -55,6 +55,11 @@ function ProfileViewer({
         <Text variant="h2">
           {username}
         </Text>
+        {username !== userId && (
+        <Text variant="h3">
+          {userId}
+        </Text>
+        )}
         {roomMember && roomMember.powerLevel >= 50 && (
         <Text>
           {getPowerLabel(roomMember.powerLevel)}
