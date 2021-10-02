@@ -1,0 +1,22 @@
+.profile-viewer {
+    margin: 0 var(--sp-normal);
+    margin-right: var(--sp-extra-tight);
+    margin-top: var(--sp-extra-tight);
+
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+      
+    &__buttons {
+        display: flex;
+        gap: var(--sp-normal);
+        margin-top: var(--sp-normal);
+
+        & .btn-primary, & .btn-danger {
+            padding: {
+                top: 11px;
+                bottom: 11px;
+            }
+        }
+    }
+}

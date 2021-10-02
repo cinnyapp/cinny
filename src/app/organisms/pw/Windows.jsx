@@ -8,6 +8,7 @@ import PublicRooms from '../public-rooms/PublicRooms';
 import CreateRoom from '../create-room/CreateRoom';
 import InviteUser from '../invite-user/InviteUser';
 import Settings from '../settings/Settings';
+import ProfileViewer from '../profile-viewer/ProfileViewer';
 
 function Windows() {
   const [isInviteList, changeInviteList] = useState(false);
@@ -19,6 +20,9 @@ function Windows() {
     isOpen: false, roomId: undefined, term: undefined,
   });
   const [settings, changeSettings] = useState(false);
+  const [profileViewer, changeProfileViewer] = useState({
+    isOpen: false, userId: undefined, roomId: undefined,
+  });
 
   function openInviteList() {
     changeInviteList(true);
@@ -43,18 +47,28 @@ function Windows() {
     changeSettings(true);
   }
 
+  function openProfileViewer(userId, roomId) {
+    changeProfileViewer({
+      isOpen: true,
+      userId,
+      roomId,
+    });
+  }
+
   useEffect(() => {
     navigation.on(cons.events.navigation.INVITE_LIST_OPENED, openInviteList);
     navigation.on(cons.events.navigation.PUBLIC_ROOMS_OPENED, openPublicRooms);
     navigation.on(cons.events.navigation.CREATE_ROOM_OPENED, openCreateRoom);
     navigation.on(cons.events.navigation.INVITE_USER_OPENED, openInviteUser);
     navigation.on(cons.events.navigation.SETTINGS_OPENED, openSettings);
+    navigation.on(cons.events.navigation.PROFILE_VIEWER_OPENED, openProfileViewer);
     return () => {
       navigation.removeListener(cons.events.navigation.INVITE_LIST_OPENED, openInviteList);
       navigation.removeListener(cons.events.navigation.PUBLIC_ROOMS_OPENED, openPublicRooms);
       navigation.removeListener(cons.events.navigation.CREATE_ROOM_OPENED, openCreateRoom);
       navigation.removeListener(cons.events.navigation.INVITE_USER_OPENED, openInviteUser);
       navigation.removeListener(cons.events.navigation.SETTINGS_OPENED, openSettings);
+      navigation.removeListener(cons.events.navigation.PROFILE_VIEWER_OPENED, openProfileViewer);
     };
   }, []);
 
@@ -82,6 +96,16 @@ function Windows() {
       <Settings
         isOpen={settings}
         onRequestClose={() => changeSettings(false)}
+      />
+      <ProfileViewer
+        isOpen={profileViewer.isOpen}
+        userId={profileViewer.userId}
+        roomId={profileViewer.roomId}
+        onRequestClose={() => changeProfileViewer({
+          isOpen: false,
+          userId: undefined,
+          roomId: undefined,
+        })}
       />
     </>
   );

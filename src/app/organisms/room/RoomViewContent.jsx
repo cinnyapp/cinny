@@ -11,7 +11,7 @@ import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
 import { getUsername, getUsernameOfRoomMember, doesRoomHaveUnread } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { diffMinutes, isNotInSameDay, getEventCords } from '../../../util/common';
-import { openEmojiBoard, openReadReceipts } from '../../../client/action/navigation';
+import { openEmojiBoard, openProfileViewer, openReadReceipts } from '../../../client/action/navigation';
 
 import Divider from '../../atoms/divider/Divider';
 import Avatar from '../../atoms/avatar/Avatar';
@@ -358,6 +358,7 @@ function RoomViewContent({
         text={getUsernameOfRoomMember(mEvent.sender).slice(0, 1)}
         bgColor={senderMXIDColor}
         size="small"
+        onClick={() => openProfileViewer(mEvent.sender.userId, roomId)}
       />
     );
     const userHeader = isContentOnly ? null : (

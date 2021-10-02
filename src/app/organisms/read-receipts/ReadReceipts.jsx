@@ -11,6 +11,7 @@ import PeopleSelector from '../../molecules/people-selector/PeopleSelector';
 import Dialog from '../../molecules/dialog/Dialog';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+import { openProfileViewer } from '../../../client/action/navigation';
 
 function ReadReceipts() {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,7 +59,10 @@ function ReadReceipts() {
     return (
       <PeopleSelector
         key={receipt.userId}
-        onClick={() => alert('Viewing profile is yet to be implemented')}
+        onClick={() => {
+          setIsOpen(false);
+          openProfileViewer(receipt.userId, roomId);
+        }}
         avatarSrc={member?.getAvatarUrl(initMatrix.matrixClient.baseUrl, 24, 24, 'crop')}
         name={getUserDisplayName(receipt.userId)}
         color={colorMXID(receipt.userId)}
