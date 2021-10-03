@@ -137,16 +137,22 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
       updateNextBatch(result.next_batch);
       updateIsSearching(false);
       updateIsViewMore(false);
-      if (totalRooms.length === 0 && inputRoomName !== '') {
+      if (totalRooms.length === 0) {
         updateSearchQuery({
-          error: `No result found for "${inputRoomName}" on ${inputHs}`,
+          error: inputRoomName === ''
+            ? `No public rooms on ${inputHs}`
+            : `No result found for "${inputRoomName}" on ${inputHs}`,
           alias: isInputAlias ? inputRoomName : null,
         });
       }
     } catch (e) {
       updatePublicRooms([]);
+      let err = 'Something went wrong!';
+      if (e?.httpStatus >= 400 && e?.httpStatus < 500) {
+        err = e.message;
+      }
       updateSearchQuery({
-        error: 'Something went wrong!',
+        error: err,
         alias: isInputAlias ? inputRoomName : null,
       });
       updateIsSearching(false);
@@ -241,19 +247,11 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
             )
           }
           {
-            typeof searchQuery.name !== 'undefined' && !isSearching && publicRooms.length !== 0 && (
+            typeof searchQuery.name !== 'undefined' && !isSearching && (
               searchQuery.name === ''
                 ? <Text variant="b2">{`Public rooms on ${searchQuery.homeserver}.`}</Text>
                 : <Text variant="b2">{`Search result for "${searchQuery.name}" on ${searchQuery.homeserver}.`}</Text>
             )
-          }
-          {
-             typeof searchQuery.name !== 'undefined' && !isSearching && publicRooms.length === 0
-              && (
-              <div className="flex--center">
-                <Text variant="b2">{`There are no public rooms on ${searchQuery.homeserver}.`}</Text>
-              </div>
-              )
           }
           { searchQuery.error && (
             <>
