@@ -40,6 +40,7 @@ import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { parseReply, parseTimelineChange } from './common';
+import Button from '../../atoms/button/Button';
 
 const MAX_MSG_DIFF_MINUTES = 5;
 
@@ -353,13 +354,14 @@ function RoomViewContent({
 
     const senderMXIDColor = colorMXID(mEvent.sender.userId);
     const userAvatar = isContentOnly ? null : (
-      <Avatar
-        imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
-        text={getUsernameOfRoomMember(mEvent.sender).slice(0, 1)}
-        bgColor={senderMXIDColor}
-        size="small"
-        onClick={() => openProfileViewer(mEvent.sender.userId, roomId)}
-      />
+      <button type="button" onClick={() => openProfileViewer(mEvent.sender.userId, roomId)}>
+        <Avatar
+          imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
+          text={getUsernameOfRoomMember(mEvent.sender).slice(0, 1)}
+          bgColor={senderMXIDColor}
+          size="small"
+        />
+      </button>
     );
     const userHeader = isContentOnly ? null : (
       <MessageHeader

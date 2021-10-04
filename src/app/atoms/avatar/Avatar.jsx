@@ -6,7 +6,7 @@ import Text from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 
 function Avatar({
-  text, bgColor, iconSrc, imageSrc, size, onClick,
+  text, bgColor, iconSrc, imageSrc, size,
 }) {
   const [image, updateImage] = useState(imageSrc);
   let textSize = 's1';
@@ -16,17 +16,9 @@ function Avatar({
 
   useEffect(() => updateImage(imageSrc), [imageSrc]);
 
-  const clickProps = onClick ? {
-    onClick,
-    onKeyPress: onClick,
-    role: 'button',
-    tabIndex: 0,
-  } : {};
-  const clickableClassName = onClick ? 'clickable' : '';
-
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
-    <div className={`avatar-container avatar-container__${size} noselect ${clickableClassName}`} {...clickProps}>
+    <div className={`avatar-container avatar-container__${size} noselect`}>
       {
         image !== null
           ? <img src={image} onError={() => updateImage(null)} alt="avatar" />
@@ -53,7 +45,6 @@ Avatar.defaultProps = {
   iconSrc: null,
   imageSrc: null,
   size: 'normal',
-  onClick: null,
 };
 
 Avatar.propTypes = {
@@ -62,7 +53,6 @@ Avatar.propTypes = {
   iconSrc: PropTypes.string,
   imageSrc: PropTypes.string,
   size: PropTypes.oneOf(['large', 'normal', 'small', 'extra-small']),
-  onClick: PropTypes.func,
 };
 
 export default Avatar;

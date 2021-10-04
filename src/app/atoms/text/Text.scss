@@ -20,10 +20,6 @@
   @extend %text;
   @include font(h2, 500);
 }
-.text-h3 {
-  @extend %text;
-  @include font(h3, 500);
-}
 .text-s1 {
   @extend %text;
   @include font(s1, 400);
