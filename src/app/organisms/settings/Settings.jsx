@@ -110,7 +110,7 @@ function AboutSection() {
 
           <div className="set-about__btns">
             <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>Source code</Button>
-            <Button onClick={() => window.open('https://liberapay.com/ajbura/donate')}>Support</Button>
+            <Button onClick={() => window.open('https://cinny.in/#sponsor')}>Support</Button>
           </div>
         </div>
       </div>
