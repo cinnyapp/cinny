@@ -22,10 +22,11 @@
   
   &__avatar-container {
     padding-top: 6px;
-  }
-  
-  &__avatar-container{
     margin-right: var(--sp-tight);
+
+    & button {
+      cursor: pointer;
+    }
 
     [dir=rtl] & {
       margin: {

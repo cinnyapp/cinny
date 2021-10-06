@@ -40,7 +40,6 @@ import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { parseReply, parseTimelineChange } from './common';
-import Button from '../../atoms/button/Button';
 
 const MAX_MSG_DIFF_MINUTES = 5;
 
