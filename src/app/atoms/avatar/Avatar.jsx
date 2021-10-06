@@ -17,7 +17,6 @@ function Avatar({
   useEffect(() => updateImage(imageSrc), [imageSrc]);
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
     <div className={`avatar-container avatar-container__${size} noselect`}>
       {
         image !== null
