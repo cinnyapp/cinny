@@ -15,6 +15,11 @@
             flex-direction: column;
             align-self: end;
         }
+
+        &-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
     }
 }
 
@@ -25,33 +30,19 @@
 
     padding: var(--sp-ultra-tight) var(--sp-extra-tight);
     margin: 0 var(--sp-extra-tight) var(--sp-extra-tight) 0;
-    background-color: var();
+    background-color: var(--bg-surface-low);
     border-radius: var(--bo-radius);
     box-shadow: var(--bs-surface-border);
 
     max-width: max-content;
 
-    &__ring {
-        padding: {
-            left: var(--sp-tight);
-            right: var(--sp-loose);
-        }
+    & .ic-raw {
+        margin-right: var(--sp-extra-tight);
     
         [dir=rtl] & {
-            padding: {
-            left: var(--sp-loose);
-            right: var(--sp-tight);
-            }
-        }
-    
-        .ic-raw {
-            margin-right: var(--sp-extra-tight);
-    
-            [dir=rtl] & {
             margin: {
                 right: 0;
                 left: var(--sp-extra-tight);
-            }
             }
         }
      }

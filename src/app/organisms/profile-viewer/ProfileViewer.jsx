@@ -24,7 +24,7 @@ function SessionChip({
 }) {
   return (
     <div className="session-chip">
-      <RawIcon className="session-chip__ring" src={RingIC} color={deviceInfo.verified ? 'red' : 'green'} size="extra-small" />
+      <RawIcon src={RingIC} color={deviceInfo.verified ? 'red' : 'green'} size="extra-small" />
       <Text>
         {deviceInfo.unsigned.device_display_name}
       </Text>
@@ -105,22 +105,24 @@ function ProfileViewer({
         </div>
         <Divider text={false} />
         <div className="profile-viewer__buttons">
-          <Button
-            variant="primary"
-            onClick={async () => {
-              const result = await roomActions.create({
-                isPublic: false,
-                isEncrypted: true,
-                isDirect: true,
-                invite: [userId],
-              });
-              selectRoom(result.room_id);
-              onRequestClose();
-            }}
-          >
-            Direct Message
-          </Button>
-          <Button variant="primary">Mention</Button>
+          <div>
+            <Button
+              variant="primary"
+              onClick={async () => {
+                const result = await roomActions.create({
+                  isPublic: false,
+                  isEncrypted: true,
+                  isDirect: true,
+                  invite: [userId],
+                });
+                selectRoom(result.room_id);
+                onRequestClose();
+              }}
+            >
+              Message
+            </Button>
+            <Button>Mention</Button>
+          </div>
           <Button
             variant="danger"
             onClick={isUserBlocked ? unblockUser : blockUser}
