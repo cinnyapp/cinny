@@ -32,6 +32,7 @@ const EMAIL_REGEX = /([a-z0-9]+[_a-z0-9.-][a-z0-9]+)@([a-z0-9-]+(?:.[a-z0-9-]+).
 const BAD_EMAIL_ERROR = 'Invalid email address';
 
 function isValidInput(value, regex) {
+  if (typeof regex === 'string') return regex === value;
   return regex.test(value);
 }
 function renderErrorMessage(error) {
@@ -39,24 +40,25 @@ function renderErrorMessage(error) {
   $error.textContent = error;
   $error.style.display = 'block';
 }
-function showBadInputError($input, error) {
+function showBadInputError($input, error, stopAutoFocus) {
   renderErrorMessage(error);
-  $input.focus();
+  if (!stopAutoFocus) $input.focus();
   const myInput = $input;
   myInput.style.border = '1px solid var(--bg-danger)';
   myInput.style.boxShadow = 'none';
   document.getElementById('auth_submit-btn').disabled = true;
 }
 
-function validateOnChange(e, regex, error) {
-  if (!isValidInput(e.target.value, regex) && e.target.value) {
-    showBadInputError(e.target, error);
-    return;
+function validateOnChange(targetInput, regex, error, stopAutoFocus) {
+  if (!isValidInput(targetInput.value, regex) && targetInput.value) {
+    showBadInputError(targetInput, error, stopAutoFocus);
+    return false;
   }
   document.getElementById('auth_error').style.display = 'none';
-  e.target.style.removeProperty('border');
-  e.target.style.removeProperty('box-shadow');
+  targetInput.style.removeProperty('border');
+  targetInput.style.removeProperty('box-shadow');
   document.getElementById('auth_submit-btn').disabled = false;
+  return true;
 }
 
 /**
@@ -195,8 +197,8 @@ function Auth({ type }) {
               <Input
                 forwardRef={usernameRef}
                 onChange={(e) => (type === 'login'
-                  ? validateOnChange(e, LOCALPART_LOGIN_REGEX, BAD_LOCALPART_ERROR)
-                  : validateOnChange(e, LOCALPART_SIGNUP_REGEX, BAD_LOCALPART_ERROR))}
+                  ? validateOnChange(e.target, LOCALPART_LOGIN_REGEX, BAD_LOCALPART_ERROR)
+                  : validateOnChange(e.target, LOCALPART_SIGNUP_REGEX, BAD_LOCALPART_ERROR))}
                 id="auth_username"
                 label="Username"
                 required
@@ -212,7 +214,15 @@ function Auth({ type }) {
             <div className="password__wrapper">
               <Input
                 forwardRef={passwordRef}
-                onChange={(e) => validateOnChange(e, ((type === 'login') ? PASSWORD_REGEX : PASSWORD_STRENGHT_REGEX), BAD_PASSWORD_ERROR)}
+                onChange={(e) => {
+                  const isValidPass = validateOnChange(e.target, ((type === 'login') ? PASSWORD_REGEX : PASSWORD_STRENGHT_REGEX), BAD_PASSWORD_ERROR);
+                  if (type === 'register' && isValidPass) {
+                    validateOnChange(
+                      confirmPasswordRef.current, passwordRef.current.value,
+                      CONFIRM_PASSWORD_ERROR, true,
+                    );
+                  }
+                }}
                 id="auth_password"
                 type="password"
                 label="Password"
@@ -233,7 +243,9 @@ function Auth({ type }) {
                 <div className="password__wrapper">
                   <Input
                     forwardRef={confirmPasswordRef}
-                    onChange={(e) => validateOnChange(e, new RegExp(`^(${passwordRef.current.value})$`), CONFIRM_PASSWORD_ERROR)}
+                    onChange={(e) => {
+                      validateOnChange(e.target, passwordRef.current.value, CONFIRM_PASSWORD_ERROR);
+                    }}
                     id="auth_confirmPassword"
                     type="password"
                     label="Confirm password"
@@ -251,7 +263,7 @@ function Auth({ type }) {
                 </div>
                 <Input
                   forwardRef={emailRef}
-                  onChange={(e) => validateOnChange(e, EMAIL_REGEX, BAD_EMAIL_ERROR)}
+                  onChange={(e) => validateOnChange(e.target, EMAIL_REGEX, BAD_EMAIL_ERROR)}
                   id="auth_email"
                   type="email"
                   label="Email"

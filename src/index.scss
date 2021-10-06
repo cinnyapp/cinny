@@ -168,10 +168,10 @@
 .dark-theme,
 .butter-theme {
   /* background color | --bg-[background type]: value */
-  --bg-surface: hsl(208, 8%, 16%);
-  --bg-surface-transparent: hsla(208, 8%, 16%, 0);
-  --bg-surface-low: hsl(208, 8%, 12%);
-  --bg-surface-low-transparent: hsla(208, 8%, 12%, 0);
+  --bg-surface: hsl(208, 8%, 20%);
+  --bg-surface-transparent: hsla(208, 8%, 20%, 0);
+  --bg-surface-low: hsl(208, 8%, 16%);
+  --bg-surface-low-transparent: hsla(208, 8%, 16%, 0);
   --bg-surface-hover: rgba(255, 255, 255, 3%);
   --bg-surface-active: rgba(255, 255, 255, 5%);
   --bg-surface-border: rgba(0, 0, 0, 20%);

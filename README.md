@@ -14,6 +14,11 @@ Cinny is a [Matrix](https://matrix.org) client focusing primarily on simple, ele
 
 ## Building and Running
 
+### Running pre-compiled
+
+A tarball of pre-compiled version of the app is provided with each [release](https://github.com/ajbura/cinny/releases).
+You can serve the application with a webserver of your choosing by simply copying `dist/` directory to the webroot.
+
 ### Building from source
 
 Execute the following commands to compile the app from its source code:
@@ -43,6 +48,8 @@ docker run -p 8080:80 cinny:latest
 
 This will forward your `localhost` port 8080 to the container's port 80. You can visit the app in your browser by
 navigating to `http://localhost:8080`.
+
+Alternatively you can just pull the [DockerHub image](https://hub.docker.com/r/ajbura/cinny) by `docker pull ajbura/cinny`.
 
 ## License
 
