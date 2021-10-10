@@ -327,8 +327,7 @@ function RoomViewInput({
     if (file !== null) roomsInput.setAttachment(roomId, file);
   }
 
-  const myPowerlevel = roomTimeline.room.getMember(mx.getUserId()).powerLevel;
-  const canISend = roomTimeline.room.currentState.hasSufficientPowerLevelFor('events_default', myPowerlevel);
+  const canISend = roomTimeline.room.currentState.maySendMessage(mx.getUserId());
 
   function renderInputs() {
     if (!canISend) {
