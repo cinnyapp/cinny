@@ -3,8 +3,9 @@ import PropTypes from 'prop-types';
 import './Auth.scss';
 import ReCAPTCHA from 'react-google-recaptcha';
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import * as auth from '../../../client/action/auth';
+import cons from '../../../client/state/cons';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -15,6 +16,7 @@ import ScrollView from '../../atoms/scroll/ScrollView';
 
 import EyeIC from '../../../../public/res/ic/outlined/eye.svg';
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
+import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
 
 // This regex validates historical usernames, which don't satisfy today's username requirements.
 // See https://matrix.org/docs/spec/appendices#id13 for more info.
@@ -75,11 +77,34 @@ function normalizeUsername(rawUsername) {
 
 function Auth({ type }) {
   const [process, changeProcess] = useState(null);
+  const [homeserver, changeHomeserver] = useState('matrix.org');
+
   const usernameRef = useRef(null);
   const homeserverRef = useRef(null);
   const passwordRef = useRef(null);
   const confirmPasswordRef = useRef(null);
   const emailRef = useRef(null);
+
+  const { search } = useLocation();
+  const searchParams = new URLSearchParams(search);
+  if (searchParams.has('loginToken')) {
+    const loginToken = searchParams.get('loginToken');
+    if (loginToken !== undefined) {
+      if (localStorage.getItem(cons.secretKey.BASE_URL) !== undefined) {
+        const baseUrl = localStorage.getItem(cons.secretKey.BASE_URL);
+        auth.loginWithToken(baseUrl, loginToken)
+          .then(() => {
+            window.location.replace('/');
+          })
+          .catch((error) => {
+            changeProcess(null);
+            if (!error.contains('CORS request rejected')) {
+              renderErrorMessage(error);
+            }
+          });
+      }
+    }
+  }
 
   function register(recaptchaValue, terms, verified) {
     auth.register(
@@ -205,6 +230,7 @@ function Auth({ type }) {
               />
               <Input
                 forwardRef={homeserverRef}
+                onChange={(e) => changeHomeserver(e.target.value)}
                 id="auth_homeserver"
                 placeholder="Homeserver"
                 value="matrix.org"
@@ -281,6 +307,9 @@ function Auth({ type }) {
                 {type === 'login' ? 'Login' : 'Register' }
               </Button>
             </div>
+            {type === 'login' && (
+              <SSOButtons homeserver={homeserver} />
+            )}
           </form>
         </div>
 
