@@ -31,6 +31,7 @@ function ContextMenu({
       interactive
       arrow={false}
       maxWidth={maxWidth}
+      duration={200}
     >
       {render(isVisible ? hideMenu : showMenu)}
     </Tippy>

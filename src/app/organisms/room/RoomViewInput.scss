@@ -3,6 +3,11 @@
   display: flex;
   min-height: 48px;
 
+  &__disallowed {
+    flex: 1;
+    text-align: center;
+  }
+
   &__space {
     min-width: 0;
     align-self: center;

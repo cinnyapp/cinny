@@ -139,14 +139,20 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
       updateIsViewMore(false);
       if (totalRooms.length === 0) {
         updateSearchQuery({
-          error: `No result found for "${inputRoomName}" on ${inputHs}`,
+          error: inputRoomName === ''
+            ? `No public rooms on ${inputHs}`
+            : `No result found for "${inputRoomName}" on ${inputHs}`,
           alias: isInputAlias ? inputRoomName : null,
         });
       }
     } catch (e) {
       updatePublicRooms([]);
+      let err = 'Something went wrong!';
+      if (e?.httpStatus >= 400 && e?.httpStatus < 500) {
+        err = e.message;
+      }
       updateSearchQuery({
-        error: 'Something went wrong!',
+        error: err,
         alias: isInputAlias ? inputRoomName : null,
       });
       updateIsSearching(false);
