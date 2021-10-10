@@ -2,7 +2,8 @@ import * as sdk from 'matrix-js-sdk';
 import cons from '../state/cons';
 import { getBaseUrl } from '../../util/matrixUtil';
 
-async function login(username, homeserver, password) {
+// This method inspired by a similar one in matrix-react-sdk
+async function createTemporaryClient(homeserver) {
   let baseUrl = null;
   try {
     baseUrl = await getBaseUrl(homeserver);
@@ -12,7 +13,25 @@ async function login(username, homeserver, password) {
 
   if (typeof baseUrl === 'undefined') throw new Error('Homeserver not found');
 
-  const client = sdk.createClient({ baseUrl });
+  return sdk.createClient({ baseUrl });
+}
+
+async function getLoginFlows(client) {
+  const flows = await client.loginFlows();
+  if (flows !== undefined) {
+    return flows;
+  }
+  return null;
+}
+
+async function startSsoLogin(homeserver, type, idpId) {
+  const client = await createTemporaryClient(homeserver);
+  localStorage.setItem(cons.secretKey.BASE_URL, client.baseUrl);
+  window.location.href = client.getSsoLoginUrl(window.location.href, type, idpId);
+}
+
+async function login(username, homeserver, password) {
+  const client = await createTemporaryClient(homeserver);
 
   const response = await client.login('m.login.password', {
     identifier: {
@@ -26,7 +45,21 @@ async function login(username, homeserver, password) {
   localStorage.setItem(cons.secretKey.ACCESS_TOKEN, response.access_token);
   localStorage.setItem(cons.secretKey.DEVICE_ID, response.device_id);
   localStorage.setItem(cons.secretKey.USER_ID, response.user_id);
-  localStorage.setItem(cons.secretKey.BASE_URL, response?.well_known?.['m.homeserver']?.base_url || baseUrl);
+  localStorage.setItem(cons.secretKey.BASE_URL, response?.well_known?.['m.homeserver']?.base_url || client.baseUrl);
+}
+
+async function loginWithToken(baseUrl, token) {
+  const client = sdk.createClient(baseUrl);
+
+  const response = await client.login('m.login.token', {
+    token,
+    initial_device_display_name: cons.DEVICE_DISPLAY_NAME,
+  });
+
+  localStorage.setItem(cons.secretKey.ACCESS_TOKEN, response.access_token);
+  localStorage.setItem(cons.secretKey.DEVICE_ID, response.device_id);
+  localStorage.setItem(cons.secretKey.USER_ID, response.user_id);
+  localStorage.setItem(cons.secretKey.BASE_URL, response?.well_known?.['m.homeserver']?.base_url || client.baseUrl);
 }
 
 async function getAdditionalInfo(baseUrl, content) {
@@ -45,6 +78,7 @@ async function getAdditionalInfo(baseUrl, content) {
     throw new Error(e);
   }
 }
+
 async function verifyEmail(baseUrl, content) {
   try {
     const res = await fetch(`${baseUrl}/_matrix/client/r0/register/email/requestToken`, {
@@ -149,4 +183,7 @@ async function register(username, homeserver, password, email, recaptchaValue, t
   return {};
 }
 
-export { login, register };
+export {
+  createTemporaryClient, getLoginFlows, login,
+  loginWithToken, register, startSsoLogin,
+};

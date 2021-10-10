@@ -1,0 +1,31 @@
+.sso-buttons {
+  margin-top: var(--sp-extra-loose);
+
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  &__fallback-text {
+    margin: var(--sp-tight) 0px;
+
+    flex-basis: 100%;
+    text-align: center;
+
+    color: var(--bg-primary);
+    cursor: pointer;
+  }
+}
+
+.sso-button {
+  margin-bottom: var(--sp-normal);
+
+  display: flex;
+  justify-content: center;
+  flex-basis: 20%;
+
+  cursor: pointer;
+
+  &__img {
+    height: var(--av-normal);
+  }
+}
