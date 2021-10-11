@@ -143,6 +143,7 @@ async function create(opts) {
     is_direct: opts.isDirect === true,
     invite: opts.invite || [],
     initial_state: [],
+    preset: opts.isDirect === true ? 'trusted_private_chat' : undefined,
   };
 
   if (opts.isPublic !== true && opts.isEncrypted === true) {
