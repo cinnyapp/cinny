@@ -39,3 +39,12 @@
   @include font(b3, 400);
   color: var(--tc-surface-low);
 }
+
+.text-h1, .text-h2,
+.text-s1,
+.text-b1, .text-b2, .text-b3,
+p {
+direction: ltr;
+unicode-bidi: plaintext;
+text-align: initial;
+}
