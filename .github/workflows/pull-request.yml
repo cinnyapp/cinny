@@ -2,7 +2,7 @@ name: 'Netlify Preview Deploy'
 
 on:
   pull_request_target:
-    types: ['opened', 'synchronize']
+    types: ['opened', 'edited', 'synchronize']
 
 jobs:
   deploy:
