@@ -9,7 +9,7 @@ function SSOButtons({ homeserver }) {
 
   useEffect(() => {
     // If the homeserver passed in is not a fully-qualified domain name, do not update.
-    if (!homeserver.match('(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-).)+[a-zA-Z]{2,63}$)')) {
+    if (!homeserver.match('^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\\.[a-zA-Z]{2,})+$')) {
       return;
     }
 
