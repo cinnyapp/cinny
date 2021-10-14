@@ -1,7 +1,7 @@
 name: 'Netlify Preview Deploy'
 
 on:
-  pull_request:
+  pull_request_target:
     types: ['opened', 'synchronize']
 
 jobs:
@@ -13,10 +13,10 @@ jobs:
       - uses: actions/checkout@v1      
       - uses: jsmrcaga/action-netlify-deploy@master
         with:          
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH2_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE3_ID }}
           BUILD_DIRECTORY: "dist"
-      - name: Deploy to Netlify
+      - name: Post on PR
         uses: nwtgck/actions-netlify@v1.1
         with:
           publish-dir: "dist"
@@ -26,5 +26,5 @@ jobs:
           enable-commit-comment: false
           overwrites-pull-request-comment: true
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH2_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE3_ID }}
