@@ -5,6 +5,8 @@ import './ProfileViewer.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
+import { selectRoom } from '../../../client/action/navigation';
+import * as roomActions from '../../../client/action/room';
 
 import { getUsername, getUsernameOfRoomMember, getPowerLabel } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
@@ -80,6 +82,7 @@ function ProfileViewer() {
   const [isOpen, setIsOpen] = useState(false);
   const [roomId, setRoomId] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [isCreatingDM, setIsCreatingDM] = useState(false);
 
   const mx = initMatrix.matrixClient;
   const room = roomId ? mx.getRoom(roomId) : null;
@@ -109,6 +112,33 @@ function ProfileViewer() {
     setRoomId(null);
   }, [isOpen]);
 
+  async function openDM() {
+    const directIds = [...initMatrix.roomList.directs];
+    for (let i = 0; i < directIds.length; i += 1) {
+      const dRoom = mx.getRoom(directIds[i]);
+      const roomMembers = dRoom.getMembers();
+      if (roomMembers.length <= 2 && dRoom.currentState.members[userId]) {
+        selectRoom(directIds[i]);
+        setIsOpen(false);
+        return;
+      }
+    }
+
+    try {
+      setIsCreatingDM(true);
+      const result = await roomActions.create({
+        isEncrypted: true,
+        isDirect: true,
+        invite: [userId],
+      });
+      setIsCreatingDM(false);
+      selectRoom(result.room_id);
+      setIsOpen(false);
+    } catch {
+      setIsCreatingDM(false);
+    }
+  }
+
   function renderProfile() {
     const member = room.getMember(userId) || mx.getUser(userId);
     const avatarMxc = member.getMxcAvatarUrl() || member.avatarUrl;
@@ -132,13 +162,21 @@ function ProfileViewer() {
           </div>
         </div>
         <SessionInfo userId={userId} />
-        <div className="profile-viewer__buttons">
-          <Button variant="primary">Message</Button>
-          <Button>Mention</Button>
-          <Button variant="danger">
-            {false ? 'Unignore' : 'Ignore'}
-          </Button>
-        </div>
+        { userId !== mx.getUserId() && (
+          <div className="profile-viewer__buttons">
+            <Button
+              variant="primary"
+              onClick={() => openDM(userId)}
+              disabled={isCreatingDM}
+            >
+              {isCreatingDM ? 'Creating room...' : 'Message'}
+            </Button>
+            <Button>Mention</Button>
+            <Button variant="danger">
+              {false ? 'Unignore' : 'Ignore'}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
