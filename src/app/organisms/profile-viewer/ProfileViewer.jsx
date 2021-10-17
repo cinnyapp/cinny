@@ -1,149 +1,159 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './ProfileViewer.scss';
 
 import initMatrix from '../../../client/initMatrix';
-import * as roomActions from '../../../client/action/room';
+import cons from '../../../client/state/cons';
+import navigation from '../../../client/state/navigation';
 
-import IconButton from '../../atoms/button/IconButton';
-
-import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
-import RingIC from '../../../../public/res/ic/outlined/ring.svg';
-import Avatar from '../../atoms/avatar/Avatar';
-import Text from '../../atoms/text/Text';
+import { getUsername, getUsernameOfRoomMember, getPowerLabel } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
-import Button from '../../atoms/button/Button';
-import { getPowerLabel } from '../../../util/matrixUtil';
-import { selectRoom } from '../../../client/action/navigation';
-import Dialog from '../../molecules/dialog/Dialog';
-import RawIcon from '../../atoms/system-icons/RawIcon';
-import Divider from '../../atoms/divider/Divider';
 
-function SessionChip({
-  deviceInfo,
-}) {
+import Text from '../../atoms/text/Text';
+import Chip from '../../atoms/chip/Chip';
+import IconButton from '../../atoms/button/IconButton';
+import Avatar from '../../atoms/avatar/Avatar';
+import Button from '../../atoms/button/Button';
+import Dialog from '../../molecules/dialog/Dialog';
+import SettingTile from '../../molecules/setting-tile/SettingTile';
+
+import ShieldEmptyIC from '../../../../public/res/ic/outlined/shield-empty.svg';
+import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+
+function SessionInfo({ userId }) {
+  const [devices, setDevices] = useState(null);
+  const mx = initMatrix.matrixClient;
+
+  useEffect(() => {
+    let isUnmounted = false;
+
+    async function loadDevices() {
+      try {
+        await mx.downloadKeys([userId], true);
+        const myDevices = mx.getStoredDevicesForUser(userId);
+
+        if (isUnmounted) return;
+        setDevices(myDevices);
+      } catch {
+        setDevices([]);
+      }
+    }
+    loadDevices();
+
+    return () => {
+      isUnmounted = true;
+    };
+  }, [userId]);
+
+  function renderSessionChips() {
+    return (
+      <div className="session-info__chips">
+        {devices === null && <Text variant="b3">Loading sessions...</Text>}
+        {devices?.length === 0 && <Text variant="b3">No session found.</Text>}
+        {devices !== null && (devices.map((device) => (
+          <Chip
+            key={device.deviceId}
+            iconSrc={ShieldEmptyIC}
+            text={device.getDisplayName() || device.deviceId}
+          />
+        )))}
+      </div>
+    );
+  }
+
   return (
-    <div className="session-chip">
-      <RawIcon src={RingIC} color={deviceInfo.verified ? 'red' : 'green'} size="extra-small" />
-      <Text>
-        {deviceInfo.unsigned.device_display_name}
-      </Text>
+    <div className="session-info">
+      <SettingTile
+        title="Sessions"
+        content={renderSessionChips()}
+      />
     </div>
   );
 }
 
-SessionChip.propTypes = {
-  deviceInfo: PropTypes.shape.isRequired,
+SessionInfo.propTypes = {
+  userId: PropTypes.string.isRequired,
 };
 
-function ProfileViewer({
-  isOpen, userId, roomId, onRequestClose,
-}) {
+function ProfileViewer() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [roomId, setRoomId] = useState(null);
+  const [userId, setUserId] = useState(null);
+
   const mx = initMatrix.matrixClient;
-
-  const user = mx.getUser(userId);
-  const username = user?.displayName ?? '';
-  const profilePicture = mx.mxcUrlToHttp(user?.avatarUrl) ?? '';
-  const userColor = userId ? colorMXID(userId) : 'white';
-
   const room = roomId ? mx.getRoom(roomId) : null;
-  const roomMember = room ? room.getMember(userId) : null;
+  let username = '';
+  if (room !== null) {
+    const roomMember = room.getMember(userId);
+    if (roomMember) username = getUsernameOfRoomMember(roomMember);
+    else username = getUsername(userId);
+  }
 
-  const [blockedUsers, setBlockedUsers] = React.useState(mx.getIgnoredUsers());
+  function loadProfile(uId, rId) {
+    setIsOpen(true);
+    setUserId(uId);
+    setRoomId(rId);
+  }
 
-  const blockUser = () => {
-    const newBlocks = [...blockedUsers, userId];
-    setBlockedUsers(newBlocks);
-    mx.setIgnoredUsers(newBlocks);
-  };
-  const unblockUser = () => {
-    const newIgnoredUsers = blockedUsers.filter((blockedUser) => blockedUser !== userId);
-    setBlockedUsers(newIgnoredUsers);
-    mx.setIgnoredUsers(newIgnoredUsers);
-  };
-  const isUserBlocked = blockedUsers.includes(userId);
+  useEffect(() => {
+    navigation.on(cons.events.navigation.PROFILE_VIEWER_OPENED, loadProfile);
+    return () => {
+      navigation.removeListener(cons.events.navigation.PROFILE_VIEWER_OPENED, loadProfile);
+    };
+  }, []);
 
-  return (
-    <Dialog
-      isOpen={isOpen}
-      title={`${username} in ${room?.name ?? ''}`}
-      contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip="Close" />}
-      onRequestClose={onRequestClose}
-      className="profile-viewer"
-    >
-      <div className="profile-viewer__content">
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          <Avatar imageSrc={profilePicture} text={username.slice(0, 1)} bgColor={userColor} size="large" />
-          <div className="profile-viewer__content-usernames">
-            <Text variant="h2">
-              {username}
-            </Text>
-            {username !== userId && (
-            <Text>
-              {userId}
-            </Text>
-            )}
+  useEffect(() => {
+    if (isOpen) return;
+    setUserId(null);
+    setRoomId(null);
+  }, [isOpen]);
+
+  function renderProfile() {
+    const member = room.getMember(userId) || mx.getUser(userId);
+    const avatarMxc = member.getMxcAvatarUrl() || member.avatarUrl;
+
+    return (
+      <div className="profile-viewer">
+        <div className="profile-viewer__user">
+          <Avatar
+            imageSrc={!avatarMxc ? null : mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop')}
+            text={username.slice(0, 1)}
+            bgColor={colorMXID(userId)}
+            size="large"
+          />
+          <div className="profile-viewer__user__info">
+            <Text variant="s1">{username}</Text>
+            <Text variant="b2">{userId}</Text>
+          </div>
+          <div className="profile-viewer__user__role">
+            <Text variant="b3">Role</Text>
+            <Button iconSrc={ChevronBottomIC}>{getPowerLabel(member.powerLevel) || 'Member'}</Button>
           </div>
         </div>
-        <Divider text={false} />
-        <Text>Sessions</Text>
-        {/* {roomMember && roomMember.powerLevel >= 50 && (
-        <Text>
-          {getPowerLabel(roomMember.powerLevel)}
-          {' '}
-          in
-            {' '}
-          {room.name}
-        </Text>
-        )} */}
-        <div className="profile-viewer__content-sessions">
-          {
-          mx.getStoredDevicesForUser(userId).map((device) => (
-            <SessionChip deviceInfo={device} />
-          ))
-        }
-        </div>
-        <Divider text={false} />
+        <SessionInfo userId={userId} />
         <div className="profile-viewer__buttons">
-          <div>
-            <Button
-              variant="primary"
-              onClick={async () => {
-                const result = await roomActions.create({
-                  isPublic: false,
-                  isEncrypted: true,
-                  isDirect: true,
-                  invite: [userId],
-                });
-                selectRoom(result.room_id);
-                onRequestClose();
-              }}
-            >
-              Message
-            </Button>
-            <Button>Mention</Button>
-          </div>
-          <Button
-            variant="danger"
-            onClick={isUserBlocked ? unblockUser : blockUser}
-          >
-            {isUserBlocked ? 'Unblock' : 'Block'}
+          <Button variant="primary">Message</Button>
+          <Button>Mention</Button>
+          <Button variant="danger">
+            {false ? 'Unignore' : 'Ignore'}
           </Button>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <Dialog
+      className="profile-viewer__dialog"
+      isOpen={isOpen}
+      title={`${username} in ${room?.name ?? ''}`}
+      onRequestClose={() => setIsOpen(false)}
+      contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
+    >
+      {isOpen && renderProfile()}
     </Dialog>
   );
 }
-
-ProfileViewer.defaultProps = {
-  roomId: null,
-};
-
-ProfileViewer.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  userId: PropTypes.string.isRequired,
-  onRequestClose: PropTypes.func.isRequired,
-  roomId: PropTypes.string,
-};
 
 export default ProfileViewer;
