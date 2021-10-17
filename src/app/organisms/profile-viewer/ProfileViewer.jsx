@@ -83,6 +83,8 @@ function ProfileViewer() {
   const [roomId, setRoomId] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isCreatingDM, setIsCreatingDM] = useState(false);
+  const [isIgnoring, setIsIgnoring] = useState(false);
+  const [isUserIgnored, setIsUserIgnored] = useState(initMatrix.matrixClient.isUserIgnored(userId));
 
   const mx = initMatrix.matrixClient;
   const room = roomId ? mx.getRoom(roomId) : null;
@@ -139,6 +141,24 @@ function ProfileViewer() {
     }
   }
 
+  async function toggleIgnore() {
+    const ignoredUsers = mx.getIgnoredUsers();
+    const uIndex = ignoredUsers.indexOf(userId);
+    if (uIndex >= 0) {
+      if (uIndex === -1) return;
+      ignoredUsers.splice(uIndex, 1);
+    } else ignoredUsers.push(userId);
+
+    try {
+      setIsIgnoring(true);
+      await mx.setIgnoredUsers(ignoredUsers);
+      setIsUserIgnored(uIndex < 0);
+      setIsIgnoring(false);
+    } catch {
+      setIsIgnoring(false);
+    }
+  }
+
   function renderProfile() {
     const member = room.getMember(userId) || mx.getUser(userId);
     const avatarMxc = member.getMxcAvatarUrl() || member.avatarUrl;
@@ -166,14 +186,22 @@ function ProfileViewer() {
           <div className="profile-viewer__buttons">
             <Button
               variant="primary"
-              onClick={() => openDM(userId)}
+              onClick={openDM}
               disabled={isCreatingDM}
             >
               {isCreatingDM ? 'Creating room...' : 'Message'}
             </Button>
             <Button>Mention</Button>
-            <Button variant="danger">
-              {false ? 'Unignore' : 'Ignore'}
+            <Button
+              variant={isUserIgnored ? 'positive' : 'danger'}
+              onClick={toggleIgnore}
+              disabled={isIgnoring}
+            >
+              {
+                isUserIgnored
+                  ? `${isIgnoring ? 'Unignoring...' : 'Unignore'}`
+                  : `${isIgnoring ? 'Ignoring...' : 'Ignore'}`
+              }
             </Button>
           </div>
         )}
