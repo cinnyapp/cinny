@@ -7,13 +7,28 @@
   
   background: var(--bg-surface-low);
   border-radius: var(--bo-radius);
-  border: 1px solid var(--bg-surface-border);
+  // border: 1px solid var(--bg-surface-border);
+  box-shadow: var(--bs-surface-border);
+  cursor: pointer;
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--bg-surface-hover);
+    }
+  }
+
+  & > .text {
+    flex: 1;
+    color: var(--tc-surface-high);
+  }
 
   & > .ic-raw {
-    margin-right: var(--sp-extra-tight);
+    width: 16px;
+    height: 16px;
+    margin-right: var(--sp-ultra-tight);
     [dir=rtl] & {
       margin-right: 0;
-      margin-left: var(--sp-extra-tight);
+      margin-left: var(--sp-ultra-tight);
     }
   }
 }
