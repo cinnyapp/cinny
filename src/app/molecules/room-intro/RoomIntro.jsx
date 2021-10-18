@@ -28,7 +28,7 @@ function RoomIntro({
 }
 
 RoomIntro.defaultProps = {
-  avatarSrc: false,
+  avatarSrc: null,
   time: null,
 };
 

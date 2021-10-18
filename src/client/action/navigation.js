@@ -55,6 +55,14 @@ function openInviteUser(roomId, searchTerm) {
   });
 }
 
+function openProfileViewer(userId, roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_PROFILE_VIEWER,
+    userId,
+    roomId,
+  });
+}
+
 function openSettings() {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SETTINGS,
@@ -94,6 +102,7 @@ export {
   openPublicRooms,
   openCreateRoom,
   openInviteUser,
+  openProfileViewer,
   openSettings,
   openEmojiBoard,
   openReadReceipts,

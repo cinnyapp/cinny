@@ -7,13 +7,14 @@ import RawIcon from '../system-icons/RawIcon';
 
 function Chip({
   iconSrc, iconColor, text, children,
+  onClick,
 }) {
   return (
-    <div className="chip">
-      {iconSrc != null && <RawIcon src={iconSrc} color={iconColor} size="small" />}
-      {(text != null && text !== '') && <Text variant="b2">{text}</Text>}
+    <button className="chip" type="button" onClick={onClick}>
+      {iconSrc != null && <RawIcon src={iconSrc} color={iconColor} size="extra-small" />}
+      {(text != null && text !== '') && <Text variant="b3">{text}</Text>}
       {children}
-    </div>
+    </button>
   );
 }
 
@@ -22,6 +23,7 @@ Chip.propTypes = {
   iconColor: PropTypes.string,
   text: PropTypes.string,
   children: PropTypes.element,
+  onClick: PropTypes.func,
 };
 
 Chip.defaultProps = {
@@ -29,6 +31,7 @@ Chip.defaultProps = {
   iconColor: null,
   text: null,
   children: null,
+  onClick: null,
 };
 
 export default Chip;

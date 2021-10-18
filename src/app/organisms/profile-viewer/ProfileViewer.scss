@@ -1,0 +1,89 @@
+.profile-viewer__dialog {
+  & .dialog__content__wrapper {
+    position: relative;
+  }
+  & .dialog__content-container {
+    padding: var(--sp-normal);
+    padding-bottom: 89px;
+    padding-right: var(--sp-extra-tight);
+    [dir=rtl] & {
+      padding-right: var(--sp-normal);
+      padding-left: var(--sp-extra-tight);
+    }
+  }
+}
+
+.profile-viewer {
+  &__user {
+    display: flex;
+    padding-bottom: var(--sp-normal);
+    border-bottom: 1px solid var(--bg-surface-border);
+
+    &__info {
+      align-self: end;
+      flex: 1;
+      min-width: 0;
+
+      margin: 0 var(--sp-normal);
+
+      & .text-s1 {
+        font-weight: 500;
+      }
+      & .text {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    }
+    &__role {
+      align-self: end;
+      & > .text {
+        margin-bottom: var(--sp-ultra-tight);
+      }
+    }
+  }
+  
+  & .session-info {
+    margin-top: var(--sp-normal);
+  }
+
+  &__buttons {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    
+    width: 100%;
+    padding: var(--sp-normal);
+    background-color: var(--bg-surface);
+    border-top: 1px solid var(--bg-surface-border);
+    display: flex;
+
+    & > *:nth-child(2n) {
+      margin: 0 var(--sp-normal)
+    }
+    & > *:last-child {
+      margin-left: auto;
+      [dir=rtl] & {
+        margin-left: 0;
+        margin-right: auto;
+      }
+    }
+  }
+}
+
+.session-info {
+  & .setting-tile__title .text {
+    color: var(--tc-surface-high);
+  }
+  &__chips {
+    padding-top: var(--sp-ultra-tight);
+    & .chip {
+      margin: {
+        top: var(--sp-extra-tight);
+        right: var(--sp-extra-tight);
+      }
+      [dir=rtl] & {
+        margin: 0 0 var(--sp-extra-tight) var(--sp-extra-tight);
+      }
+    }
+  } 
+}

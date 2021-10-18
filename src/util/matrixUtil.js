@@ -69,7 +69,15 @@ function doesRoomHaveUnread(room) {
   return true;
 }
 
+function getPowerLabel(powerLevel) {
+  if (powerLevel > 9000) return 'Goku';
+  if (powerLevel > 100) return 'Founder';
+  if (powerLevel === 100) return 'Admin';
+  if (powerLevel >= 50) return 'Mod';
+  return null;
+}
+
 export {
   getBaseUrl, getUsername, getUsernameOfRoomMember,
-  isRoomAliasAvailable, doesRoomHaveUnread,
+  isRoomAliasAvailable, doesRoomHaveUnread, getPowerLabel,
 };
