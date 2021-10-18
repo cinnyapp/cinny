@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './ProfileViewer.scss';
 
@@ -78,13 +78,105 @@ SessionInfo.propTypes = {
   userId: PropTypes.string.isRequired,
 };
 
+function ProfileFooter({ userId, onRequestClose }) {
+  const [isCreatingDM, setIsCreatingDM] = useState(false);
+  const [isIgnoring, setIsIgnoring] = useState(false);
+  const [isUserIgnored, setIsUserIgnored] = useState(initMatrix.matrixClient.isUserIgnored(userId));
+
+  const mx = initMatrix.matrixClient;
+  const isMountedRef = useRef(true);
+
+  useEffect(() => () => {
+    isMountedRef.current = false;
+  }, []);
+  useEffect(() => {
+    setIsUserIgnored(initMatrix.matrixClient.isUserIgnored(userId));
+  }, [userId]);
+
+  async function openDM() {
+    const directIds = [...initMatrix.roomList.directs];
+
+    // Check and open if user already have a DM with userId.
+    for (let i = 0; i < directIds.length; i += 1) {
+      const dRoom = mx.getRoom(directIds[i]);
+      const roomMembers = dRoom.getMembers();
+      if (roomMembers.length <= 2 && dRoom.currentState.members[userId]) {
+        selectRoom(directIds[i]);
+        onRequestClose();
+        return;
+      }
+    }
+
+    // Create new DM
+    try {
+      setIsCreatingDM(true);
+      const result = await roomActions.create({
+        isEncrypted: true,
+        isDirect: true,
+        invite: [userId],
+      });
+
+      if (isMountedRef.current === false) return;
+      setIsCreatingDM(false);
+      selectRoom(result.room_id);
+      onRequestClose();
+    } catch {
+      setIsCreatingDM(false);
+    }
+  }
+
+  async function toggleIgnore() {
+    const ignoredUsers = mx.getIgnoredUsers();
+    const uIndex = ignoredUsers.indexOf(userId);
+    if (uIndex >= 0) {
+      if (uIndex === -1) return;
+      ignoredUsers.splice(uIndex, 1);
+    } else ignoredUsers.push(userId);
+
+    try {
+      setIsIgnoring(true);
+      await mx.setIgnoredUsers(ignoredUsers);
+
+      if (isMountedRef.current === false) return;
+      setIsUserIgnored(uIndex < 0);
+      setIsIgnoring(false);
+    } catch {
+      setIsIgnoring(false);
+    }
+  }
+  return (
+    <div className="profile-viewer__buttons">
+      <Button
+        variant="primary"
+        onClick={openDM}
+        disabled={isCreatingDM}
+      >
+        {isCreatingDM ? 'Creating room...' : 'Message'}
+      </Button>
+      <Button>Mention</Button>
+      <Button
+        variant={isUserIgnored ? 'positive' : 'danger'}
+        onClick={toggleIgnore}
+        disabled={isIgnoring}
+      >
+        {
+          isUserIgnored
+            ? `${isIgnoring ? 'Unignoring...' : 'Unignore'}`
+            : `${isIgnoring ? 'Ignoring...' : 'Ignore'}`
+        }
+      </Button>
+    </div>
+  );
+}
+ProfileFooter.propTypes = {
+  userId: PropTypes.string.isRequired,
+  onRequestClose: PropTypes.func.isRequired,
+};
+
 function ProfileViewer() {
   const [isOpen, setIsOpen] = useState(false);
   const [roomId, setRoomId] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [isCreatingDM, setIsCreatingDM] = useState(false);
-  const [isIgnoring, setIsIgnoring] = useState(false);
-  const [isUserIgnored, setIsUserIgnored] = useState(initMatrix.matrixClient.isUserIgnored(userId));
 
   const mx = initMatrix.matrixClient;
   const room = roomId ? mx.getRoom(roomId) : null;
@@ -109,58 +201,10 @@ function ProfileViewer() {
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      setIsUserIgnored(initMatrix.matrixClient.isUserIgnored(userId));
-      return;
-    }
+    if (isOpen) return;
     setUserId(null);
     setRoomId(null);
   }, [isOpen]);
-
-  async function openDM() {
-    const directIds = [...initMatrix.roomList.directs];
-    for (let i = 0; i < directIds.length; i += 1) {
-      const dRoom = mx.getRoom(directIds[i]);
-      const roomMembers = dRoom.getMembers();
-      if (roomMembers.length <= 2 && dRoom.currentState.members[userId]) {
-        selectRoom(directIds[i]);
-        setIsOpen(false);
-        return;
-      }
-    }
-
-    try {
-      setIsCreatingDM(true);
-      const result = await roomActions.create({
-        isEncrypted: true,
-        isDirect: true,
-        invite: [userId],
-      });
-      setIsCreatingDM(false);
-      selectRoom(result.room_id);
-      setIsOpen(false);
-    } catch {
-      setIsCreatingDM(false);
-    }
-  }
-
-  async function toggleIgnore() {
-    const ignoredUsers = mx.getIgnoredUsers();
-    const uIndex = ignoredUsers.indexOf(userId);
-    if (uIndex >= 0) {
-      if (uIndex === -1) return;
-      ignoredUsers.splice(uIndex, 1);
-    } else ignoredUsers.push(userId);
-
-    try {
-      setIsIgnoring(true);
-      await mx.setIgnoredUsers(ignoredUsers);
-      setIsUserIgnored(uIndex < 0);
-      setIsIgnoring(false);
-    } catch {
-      setIsIgnoring(false);
-    }
-  }
 
   function renderProfile() {
     const member = room.getMember(userId) || mx.getUser(userId);
@@ -186,27 +230,10 @@ function ProfileViewer() {
         </div>
         <SessionInfo userId={userId} />
         { userId !== mx.getUserId() && (
-          <div className="profile-viewer__buttons">
-            <Button
-              variant="primary"
-              onClick={openDM}
-              disabled={isCreatingDM}
-            >
-              {isCreatingDM ? 'Creating room...' : 'Message'}
-            </Button>
-            <Button>Mention</Button>
-            <Button
-              variant={isUserIgnored ? 'positive' : 'danger'}
-              onClick={toggleIgnore}
-              disabled={isIgnoring}
-            >
-              {
-                isUserIgnored
-                  ? `${isIgnoring ? 'Unignoring...' : 'Unignore'}`
-                  : `${isIgnoring ? 'Ignoring...' : 'Ignore'}`
-              }
-            </Button>
-          </div>
+          <ProfileFooter
+            userId={userId}
+            onRequestClose={() => setIsOpen(false)}
+          />
         )}
       </div>
     );
