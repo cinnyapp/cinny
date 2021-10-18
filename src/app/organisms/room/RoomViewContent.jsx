@@ -11,7 +11,7 @@ import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
 import { getUsername, getUsernameOfRoomMember, doesRoomHaveUnread } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { diffMinutes, isNotInSameDay, getEventCords } from '../../../util/common';
-import { openEmojiBoard, openReadReceipts } from '../../../client/action/navigation';
+import { openEmojiBoard, openProfileViewer, openReadReceipts } from '../../../client/action/navigation';
 
 import Divider from '../../atoms/divider/Divider';
 import Avatar from '../../atoms/avatar/Avatar';
@@ -353,12 +353,14 @@ function RoomViewContent({
 
     const senderMXIDColor = colorMXID(mEvent.sender.userId);
     const userAvatar = isContentOnly ? null : (
-      <Avatar
-        imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
-        text={getUsernameOfRoomMember(mEvent.sender).slice(0, 1)}
-        bgColor={senderMXIDColor}
-        size="small"
-      />
+      <button type="button" onClick={() => openProfileViewer(mEvent.sender.userId, roomId)}>
+        <Avatar
+          imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
+          text={getUsernameOfRoomMember(mEvent.sender).slice(0, 1)}
+          bgColor={senderMXIDColor}
+          size="small"
+        />
+      </button>
     );
     const userHeader = isContentOnly ? null : (
       <MessageHeader

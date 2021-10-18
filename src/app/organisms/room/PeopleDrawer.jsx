@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import './PeopleDrawer.scss';
 
 import initMatrix from '../../../client/initMatrix';
-import { getUsernameOfRoomMember } from '../../../util/matrixUtil';
+import { getPowerLabel, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
-import { openInviteUser } from '../../../client/action/navigation';
+import { openInviteUser, openProfileViewer } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
@@ -17,13 +17,6 @@ import PeopleSelector from '../../molecules/people-selector/PeopleSelector';
 
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 
-function getPowerLabel(powerLevel) {
-  if (powerLevel > 9000) return 'Goku';
-  if (powerLevel > 100) return 'Founder';
-  if (powerLevel === 100) return 'Admin';
-  if (powerLevel >= 50) return 'Mod';
-  return null;
-}
 function AtoZ(m1, m2) {
   const aName = m1.name;
   const bName = m2.name;
@@ -88,7 +81,7 @@ function PeopleDrawer({ roomId }) {
                 memberList.map((member) => (
                   <PeopleSelector
                     key={member.userId}
-                    onClick={() => alert('Viewing profile is yet to be implemented')}
+                    onClick={() => openProfileViewer(member.userId, roomId)}
                     avatarSrc={member.getAvatarUrl(initMatrix.matrixClient.baseUrl, 24, 24, 'crop')}
                     name={getUsernameOfRoomMember(member)}
                     color={colorMXID(member.userId)}

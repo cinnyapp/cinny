@@ -69,6 +69,9 @@ class Navigation extends EventEmitter {
       [cons.actions.navigation.OPEN_INVITE_USER]: () => {
         this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId, action.searchTerm);
       },
+      [cons.actions.navigation.OPEN_PROFILE_VIEWER]: () => {
+        this.emit(cons.events.navigation.PROFILE_VIEWER_OPENED, action.userId, action.roomId);
+      },
       [cons.actions.navigation.OPEN_SETTINGS]: () => {
         this.emit(cons.events.navigation.SETTINGS_OPENED);
       },
