@@ -109,7 +109,10 @@ function ProfileViewer() {
   }, []);
 
   useEffect(() => {
-    if (isOpen) return;
+    if (isOpen) {
+      setIsUserIgnored(initMatrix.matrixClient.isUserIgnored(userId));
+      return;
+    }
     setUserId(null);
     setRoomId(null);
   }, [isOpen]);
