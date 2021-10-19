@@ -95,7 +95,8 @@ function Auth() {
         const baseUrl = localStorage.getItem(cons.secretKey.BASE_URL);
         auth.loginWithToken(baseUrl, loginToken)
           .then(() => {
-            window.location.replace('/');
+            const { href } = window.location;
+            window.location.replace(href.slice(0, href.indexOf('?')));
           })
           .catch((error) => {
             changeProcess(null);
@@ -314,7 +315,7 @@ function Auth() {
           </form>
         </div>
 
-        <div className="flex--center">
+        <div style={{ flexDirection: 'column' }} className="flex--center">
           <Text variant="b2">
             {`${(type === 'login' ? 'Don\'t have' : 'Already have')} an account?`}
             <button
@@ -328,6 +329,9 @@ function Auth() {
               { type === 'login' ? ' Register' : ' Login' }
             </button>
           </Text>
+          <span style={{ marginTop: 'var(--sp-extra-tight)' }}>
+            <Text variant="b3">v1.3.2</Text>
+          </span>
         </div>
       </StaticWrapper>
     </>
