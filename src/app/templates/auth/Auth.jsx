@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import './Auth.scss';
 import ReCAPTCHA from 'react-google-recaptcha';
 
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import * as auth from '../../../client/action/auth';
 import cons from '../../../client/state/cons';
 
@@ -75,7 +75,8 @@ function normalizeUsername(rawUsername) {
   return noLeadingAt.trim();
 }
 
-function Auth({ type }) {
+function Auth() {
+  const [type, setType] = useState('login');
   const [process, changeProcess] = useState(null);
   const [homeserver, changeHomeserver] = useState('matrix.org');
 
@@ -316,19 +317,22 @@ function Auth({ type }) {
         <div className="flex--center">
           <Text variant="b2">
             {`${(type === 'login' ? 'Don\'t have' : 'Already have')} an account?`}
-            <Link to={type === 'login' ? '/register' : '/login'}>
+            <button
+              type="button"
+              style={{ color: 'var(--tc-link)', cursor: 'pointer', margin: '0 var(--sp-ultra-tight)' }}
+              onClick={() => {
+                if (type === 'login') setType('register');
+                else setType('login');
+              }}
+            >
               { type === 'login' ? ' Register' : ' Login' }
-            </Link>
+            </button>
           </Text>
         </div>
       </StaticWrapper>
     </>
   );
 }
-
-Auth.propTypes = {
-  type: PropTypes.string.isRequired,
-};
 
 function StaticWrapper({ children }) {
   return (

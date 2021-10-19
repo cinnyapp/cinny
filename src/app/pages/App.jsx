@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  BrowserRouter, Switch, Route, Redirect,
+  BrowserRouter,
 } from 'react-router-dom';
 
 import { isAuthenticated } from '../../client/state/auth';
@@ -11,17 +11,7 @@ import Client from '../templates/client/Client';
 function App() {
   return (
     <BrowserRouter>
-      <Switch>
-        <Route exact path="/">
-          { isAuthenticated() ? <Client /> : <Redirect to="/login" />}
-        </Route>
-        <Route path="/login">
-          { isAuthenticated() ? <Redirect to="/" /> : <Auth type="login" />}
-        </Route>
-        <Route path="/register">
-          { isAuthenticated() ? <Redirect to="/" /> : <Auth type="register" />}
-        </Route>
-      </Switch>
+      { isAuthenticated() ? <Client /> : <Auth />}
     </BrowserRouter>
   );
 }
