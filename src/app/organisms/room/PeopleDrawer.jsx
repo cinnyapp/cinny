@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './PeopleDrawer.scss';
 
@@ -6,6 +6,7 @@ import initMatrix from '../../../client/initMatrix';
 import { getPowerLabel, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { openInviteUser, openProfileViewer } from '../../../client/action/navigation';
+import AsyncSearch from '../../../util/AsyncSearch';
 
 import Text from '../../atoms/text/Text';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
@@ -37,31 +38,88 @@ function sortByPowerLevel(m1, m2) {
   if (pl1 < pl2) return 1;
   return 0;
 }
+function simplyfiMembers(members) {
+  const mx = initMatrix.matrixClient;
+  return members.map((member) => ({
+    userId: member.userId,
+    name: getUsernameOfRoomMember(member),
+    username: member.userId.slice(1, member.userId.indexOf(':')),
+    avatarSrc: member.getAvatarUrl(mx.baseUrl, 24, 24, 'crop'),
+    peopleRole: getPowerLabel(member.powerLevel),
+    powerLevel: members.powerLevel,
+  }));
+}
 
+const asyncSearch = new AsyncSearch();
 function PeopleDrawer({ roomId }) {
   const PER_PAGE_MEMBER = 50;
-  const room = initMatrix.matrixClient.getRoom(roomId);
-  const totalMemberList = room.getJoinedMembers().sort(AtoZ).sort(sortByPowerLevel);
-  const [memberList, updateMemberList] = useState([]);
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
   let isRoomChanged = false;
 
+  const [itemCount, setItemCount] = useState(PER_PAGE_MEMBER);
+  const [membership, setMembership] = useState('join');
+  const [memberList, setMemberList] = useState([]);
+  const [searchedMembers, setSearchedMembers] = useState(null);
+
+  const getMembersWithMembership = useCallback(
+    (mship) => room.getMembersWithMembership(mship),
+    [roomId, membership],
+  );
+
   function loadMorePeople() {
-    updateMemberList(totalMemberList.slice(0, memberList.length + PER_PAGE_MEMBER));
+    setItemCount(itemCount + PER_PAGE_MEMBER);
+  }
+
+  function handleSearchData(data) {
+    // NOTICE: data is passed as object property
+    // because react sucks at handling state update with array.
+    setSearchedMembers({ data });
+    setItemCount(PER_PAGE_MEMBER);
+  }
+
+  function handleSearch(e) {
+    if (e.target.value === '') {
+      setSearchedMembers(null);
+      setItemCount(PER_PAGE_MEMBER);
+    } else asyncSearch.search(e.target.value);
   }
 
   useEffect(() => {
-    updateMemberList(totalMemberList.slice(0, PER_PAGE_MEMBER));
+    asyncSearch.setup(memberList, {
+      keys: ['name', 'username', 'userId'],
+      limit: PER_PAGE_MEMBER,
+    });
+  }, [memberList]);
+
+  useEffect(() => {
+    setMemberList(
+      simplyfiMembers(
+        getMembersWithMembership(membership)
+          .sort(AtoZ).sort(sortByPowerLevel),
+      ),
+    );
     room.loadMembersIfNeeded().then(() => {
       if (isRoomChanged) return;
-      const newTotalMemberList = room.getJoinedMembers().sort(AtoZ).sort(sortByPowerLevel);
-      updateMemberList(newTotalMemberList.slice(0, PER_PAGE_MEMBER));
+      setMemberList(
+        simplyfiMembers(
+          getMembersWithMembership(membership)
+            .sort(AtoZ).sort(sortByPowerLevel),
+        ),
+      );
     });
 
+    asyncSearch.on(asyncSearch.RESULT_SENT, handleSearchData);
     return () => {
       isRoomChanged = true;
+      setMemberList([]);
+      setSearchedMembers(null);
+      setItemCount(PER_PAGE_MEMBER);
+      asyncSearch.removeListener(asyncSearch.RESULT_SENT, handleSearchData);
     };
   }, [roomId]);
 
+  const mList = searchedMembers !== null ? searchedMembers.data : memberList.slice(0, itemCount);
   return (
     <div className="people-drawer">
       <Header>
@@ -78,20 +136,20 @@ function PeopleDrawer({ roomId }) {
           <ScrollView autoHide>
             <div className="people-drawer__content">
               {
-                memberList.map((member) => (
+                mList.map((member) => (
                   <PeopleSelector
                     key={member.userId}
                     onClick={() => openProfileViewer(member.userId, roomId)}
-                    avatarSrc={member.getAvatarUrl(initMatrix.matrixClient.baseUrl, 24, 24, 'crop')}
-                    name={getUsernameOfRoomMember(member)}
+                    avatarSrc={member.avatarSrc}
+                    name={member.name}
                     color={colorMXID(member.userId)}
-                    peopleRole={getPowerLabel(member.powerLevel)}
+                    peopleRole={member.peopleRole}
                   />
                 ))
               }
               <div className="people-drawer__load-more">
                 {
-                  memberList.length !== totalMemberList.length && (
+                  mList.length !== 0 && mList.length > itemCount && (
                     <Button onClick={loadMorePeople}>View more</Button>
                   )
                 }
@@ -101,7 +159,7 @@ function PeopleDrawer({ roomId }) {
         </div>
         <div className="people-drawer__sticky">
           <form onSubmit={(e) => e.preventDefault()} className="people-search">
-            <Input type="text" placeholder="Search" required />
+            <Input type="text" onChange={handleSearch} placeholder="Search" required />
           </form>
         </div>
       </div>

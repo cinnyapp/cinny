@@ -36,10 +36,9 @@
   }
 
   &__sticky {
-    display: none;
-
     & .people-search {
-      min-height: 48px;
+      --search-input-height: 40px;
+      min-height: var(--search-input-height);
   
       margin: 0 var(--sp-normal);
 
@@ -47,7 +46,7 @@
       bottom: var(--sp-normal);
 
       & .input {
-        height: 48px;
+        height: var(--search-input-height);
       }
     }
   }
@@ -55,7 +54,7 @@
 
 .people-drawer__content {
   padding-top: var(--sp-extra-tight);
-  padding-bottom: calc( var(--sp-extra-tight) + var(--sp-normal));
+  padding-bottom: calc(2 * var(--sp-normal));
 }
 .people-drawer__load-more {
   padding: var(--sp-normal);
