@@ -35,6 +35,11 @@
     @extend .people-drawer-flexItem;
   }
 
+  &__noresult {
+    padding: var(--sp-extra-tight) var(--sp-normal);
+    text-align: center;
+  }
+
   &__sticky {
     & .people-search {
       --search-input-height: 40px;
@@ -44,8 +49,33 @@
 
       position: relative;
       bottom: var(--sp-normal);
+      display: flex;
+      align-items: center;
 
+      & > .ic-raw,
+      & > .ic-btn {
+        position: absolute;
+        z-index: 99;
+      }
+      & > .ic-raw {
+        left: var(--sp-tight);
+        [dir=rtl] & {
+          right: var(--sp-tight);
+          left: unset;
+        }
+      }
+      & > .ic-btn {
+        right: 2px;
+        [dir=rtl] & {
+          left: 2px;
+          right: unset;
+        }
+      }
+      & .input-container {
+        flex: 1;
+      }
       & .input {
+        padding: 0 calc(var(--sp-loose) + var(--sp-normal));
         height: var(--search-input-height);
       }
     }
