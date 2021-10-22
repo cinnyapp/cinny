@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState, useEffect, useCallback, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import './PeopleDrawer.scss';
 
@@ -10,6 +12,7 @@ import AsyncSearch from '../../../util/AsyncSearch';
 
 import Text from '../../atoms/text/Text';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
+import RawIcon from '../../atoms/system-icons/RawIcon';
 import IconButton from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';
 import ScrollView from '../../atoms/scroll/ScrollView';
@@ -17,6 +20,8 @@ import Input from '../../atoms/input/Input';
 import PeopleSelector from '../../molecules/people-selector/PeopleSelector';
 
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
+import SearchIC from '../../../../public/res/ic/outlined/search.svg';
+import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 function AtoZ(m1, m2) {
   const aName = m1.name;
@@ -61,6 +66,7 @@ function PeopleDrawer({ roomId }) {
   const [membership, setMembership] = useState('join');
   const [memberList, setMemberList] = useState([]);
   const [searchedMembers, setSearchedMembers] = useState(null);
+  const searchRef = useRef(null);
 
   const getMembersWithMembership = useCallback(
     (mship) => room.getMembersWithMembership(mship),
@@ -79,10 +85,13 @@ function PeopleDrawer({ roomId }) {
   }
 
   function handleSearch(e) {
-    if (e.target.value === '') {
+    const term = e.target.value;
+    if (term === '' || term === undefined) {
+      searchRef.current.value = '';
+      searchRef.current.focus();
       setSearchedMembers(null);
       setItemCount(PER_PAGE_MEMBER);
-    } else asyncSearch.search(e.target.value);
+    } else asyncSearch.search(term);
   }
 
   useEffect(() => {
@@ -93,6 +102,7 @@ function PeopleDrawer({ roomId }) {
   }, [memberList]);
 
   useEffect(() => {
+    searchRef.current.value = '';
     setMemberList(
       simplyfiMembers(
         getMembersWithMembership(membership)
@@ -147,9 +157,20 @@ function PeopleDrawer({ roomId }) {
                   />
                 ))
               }
+              {
+                searchedMembers?.data.length === 0
+                && (
+                  <div className="people-drawer__noresult">
+                    <Text variant="b2">No result found!</Text>
+                  </div>
+                )
+              }
               <div className="people-drawer__load-more">
                 {
-                  mList.length !== 0 && memberList.length > itemCount && (
+                  mList.length !== 0
+                  && memberList.length > itemCount
+                  && searchedMembers === null
+                  && (
                     <Button onClick={loadMorePeople}>View more</Button>
                   )
                 }
@@ -159,7 +180,12 @@ function PeopleDrawer({ roomId }) {
         </div>
         <div className="people-drawer__sticky">
           <form onSubmit={(e) => e.preventDefault()} className="people-search">
-            <Input type="text" onChange={handleSearch} placeholder="Search" required />
+            <RawIcon size="small" src={SearchIC} />
+            <Input forwardRef={searchRef} type="text" onChange={handleSearch} placeholder="Search" required />
+            {
+              searchedMembers !== null
+              && <IconButton onClick={handleSearch} size="small" src={CrossIC} />
+            }
           </form>
         </div>
       </div>
