@@ -17,7 +17,8 @@ const IconButton = React.forwardRef(({
       className={`ic-btn ic-btn-${variant}`}
       onMouseUp={(e) => blurOnBubbling(e, `.ic-btn-${variant}`)}
       onClick={onClick}
-      type={type === 'button' ? 'button' : 'submit'}
+      // eslint-disable-next-line react/button-has-type
+      type={type}
     >
       <RawIcon size={size} src={src} />
     </button>
@@ -45,7 +46,7 @@ IconButton.defaultProps = {
 IconButton.propTypes = {
   variant: PropTypes.oneOf(['surface', 'positive', 'caution', 'danger']),
   size: PropTypes.oneOf(['normal', 'small', 'extra-small']),
-  type: PropTypes.oneOf(['button', 'submit']),
+  type: PropTypes.oneOf(['button', 'submit', 'reset']),
   tooltip: PropTypes.string,
   tooltipPlacement: PropTypes.oneOf(['top', 'right', 'bottom', 'left']),
   src: PropTypes.string.isRequired,
