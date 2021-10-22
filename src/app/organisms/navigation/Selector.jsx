@@ -89,13 +89,25 @@ function Selector({
       notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
       isAlert={noti.getHighlightNoti(roomId) !== 0}
       onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        openRoomOptions(
+          {x: e.clientX, y: e.clientY},
+          roomId,
+          {placement: 'bottom', offset: {x: 100}},
+        );
+      }}
       options={(
         <IconButton
           size="extra-small"
           tooltip="Options"
           tooltipPlacement="right"
           src={VerticalMenuIC}
-          onClick={(e) => openRoomOptions(getEventCords(e), roomId)}
+          onClick={(e) => openRoomOptions(
+            getEventCords(e),
+            roomId,
+            {offset: {x: 32, y: 32}},
+          )}
         />
       )}
     />

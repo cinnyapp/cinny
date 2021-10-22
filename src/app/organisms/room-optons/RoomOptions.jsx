@@ -117,13 +117,17 @@ let roomId = null;
 function RoomOptions() {
   const openerRef = useRef(null);
   const [notifState, setNotifState] = useState(cons.notifs.DEFAULT);
+  const [placement, setPlacement] = useState(null);
 
-  function openRoomOptions(cords, rId) {
+  function openRoomOptions(cords, rId, {placement, offset}) {
     if (roomId !== null || isRoomOptionVisible) {
       roomId = null;
       if (cords.detail === 0) openerRef.current.click();
       return;
     }
+    setPlacement(placement);
+    cords.x += offset?.x ?? 0;
+    cords.y += offset?.y ?? 0;
     openerRef.current.style.transform = `translate(${cords.x}px, ${cords.y}px)`;
     roomId = rId;
     setNotifState(getNotifState(roomId));
@@ -159,6 +163,7 @@ function RoomOptions() {
 
   return (
     <ContextMenu
+      placement={placement}
       afterToggle={afterRoomOptionsToggle}
       maxWidth={298}
       content={(toggleMenu) => (
@@ -210,8 +215,8 @@ function RoomOptions() {
           onClick={toggleMenu}
           type="button"
           style={{
-            width: '32px',
-            height: '32px',
+            width: '0',
+            height: '0',
             backgroundColor: 'transparent',
             position: 'absolute',
             top: 0,

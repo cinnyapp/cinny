@@ -93,6 +93,7 @@ class Navigation extends EventEmitter {
           cons.events.navigation.ROOMOPTIONS_OPENED,
           action.cords,
           action.roomId,
+          action.options,
         );
       },
     };

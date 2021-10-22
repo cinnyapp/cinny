@@ -85,11 +85,12 @@ function openReadReceipts(roomId, eventId) {
   });
 }
 
-function openRoomOptions(cords, roomId) {
+function openRoomOptions(cords, roomId, options) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_ROOMOPTIONS,
     cords,
     roomId,
+    options,
   });
 }
 
