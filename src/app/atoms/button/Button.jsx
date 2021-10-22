@@ -17,7 +17,8 @@ function Button({
       className={`${className ? `${className} ` : ''}btn-${variant} ${iconClass} noselect`}
       onMouseUp={(e) => blurOnBubbling(e, `.btn-${variant}`)}
       onClick={onClick}
-      type={type === 'button' ? 'button' : 'submit'}
+      // eslint-disable-next-line react/button-has-type
+      type={type}
       disabled={disabled}
     >
       {iconSrc !== null && <RawIcon size="small" src={iconSrc} />}
@@ -42,7 +43,7 @@ Button.propTypes = {
   className: PropTypes.string,
   variant: PropTypes.oneOf(['surface', 'primary', 'positive', 'caution', 'danger']),
   iconSrc: PropTypes.string,
-  type: PropTypes.oneOf(['button', 'submit']),
+  type: PropTypes.oneOf(['button', 'submit', 'reset']),
   onClick: PropTypes.func,
   children: PropTypes.node.isRequired,
   disabled: PropTypes.bool,
