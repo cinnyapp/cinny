@@ -149,7 +149,7 @@ function PeopleDrawer({ roomId }) {
               }
               <div className="people-drawer__load-more">
                 {
-                  mList.length !== 0 && mList.length > itemCount && (
+                  mList.length !== 0 && memberList.length > itemCount && (
                     <Button onClick={loadMorePeople}>View more</Button>
                   )
                 }

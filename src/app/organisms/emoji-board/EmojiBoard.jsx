@@ -87,10 +87,10 @@ function SearchedEmoji() {
   function handleSearchEmoji(resultEmojis, term) {
     if (term === '' || resultEmojis.length === 0) {
       if (term === '') setSearchedEmojis(null);
-      else setSearchedEmojis([]);
+      else setSearchedEmojis({ emojis: [] });
       return;
     }
-    setSearchedEmojis(resultEmojis);
+    setSearchedEmojis({ emojis: resultEmojis });
   }
 
   useEffect(() => {
@@ -102,7 +102,7 @@ function SearchedEmoji() {
 
   if (searchedEmojis === null) return false;
 
-  return <EmojiGroup key="-1" name={searchedEmojis.length === 0 ? 'No search result found' : 'Search results'} groupEmojis={searchedEmojis} />;
+  return <EmojiGroup key="-1" name={searchedEmojis.emojis.length === 0 ? 'No search result found' : 'Search results'} groupEmojis={searchedEmojis.emojis} />;
 }
 
 function EmojiBoard({ onSelect }) {
