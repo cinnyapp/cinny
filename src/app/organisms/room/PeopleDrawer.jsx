@@ -17,6 +17,7 @@ import IconButton from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import Input from '../../atoms/input/Input';
+import SegmentedControl from '../../atoms/segmented-controls/SegmentedControls';
 import PeopleSelector from '../../molecules/people-selector/PeopleSelector';
 
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
@@ -64,6 +65,7 @@ function PeopleDrawer({ roomId }) {
 
   const [itemCount, setItemCount] = useState(PER_PAGE_MEMBER);
   const [membership, setMembership] = useState('join');
+  window.setMemberShip = setMembership;
   const [memberList, setMemberList] = useState([]);
   const [searchedMembers, setSearchedMembers] = useState(null);
   const searchRef = useRef(null);
@@ -127,6 +129,10 @@ function PeopleDrawer({ roomId }) {
       setItemCount(PER_PAGE_MEMBER);
       asyncSearch.removeListener(asyncSearch.RESULT_SENT, handleSearchData);
     };
+  }, [roomId, membership]);
+
+  useEffect(() => {
+    setMembership('join');
   }, [roomId]);
 
   const mList = searchedMembers !== null ? searchedMembers.data : memberList.slice(0, itemCount);
@@ -145,6 +151,27 @@ function PeopleDrawer({ roomId }) {
         <div className="people-drawer__scrollable">
           <ScrollView autoHide>
             <div className="people-drawer__content">
+              <SegmentedControl
+                selected={
+                  (() => {
+                    const getSegmentIndex = {
+                      join: 0,
+                      invite: 1,
+                      ban: 2,
+                    };
+                    return getSegmentIndex[membership];
+                  })()
+                }
+                segments={[{ text: 'Joined' }, { text: 'Invited' }, { text: 'Banned' }]}
+                onSelect={(index) => {
+                  const selectSegment = [
+                    () => setMembership('join'),
+                    () => setMembership('invite'),
+                    () => setMembership('ban'),
+                  ];
+                  selectSegment[index]?.();
+                }}
+              />
               {
                 mList.map((member) => (
                   <PeopleSelector
@@ -158,7 +185,7 @@ function PeopleDrawer({ roomId }) {
                 ))
               }
               {
-                searchedMembers?.data.length === 0
+                (searchedMembers?.data.length === 0 || memberList.length === 0)
                 && (
                   <div className="people-drawer__noresult">
                     <Text variant="b2">No result found!</Text>

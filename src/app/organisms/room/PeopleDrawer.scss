@@ -85,6 +85,20 @@
 .people-drawer__content {
   padding-top: var(--sp-extra-tight);
   padding-bottom: calc(2 * var(--sp-normal));
+  
+  & .segmented-controls {
+    display: flex;
+    margin-bottom: var(--sp-extra-tight);
+    margin-left: var(--sp-extra-tight);
+    [dir=rtl] & {
+      margin-left: unset;
+      margin-right: var(--sp-extra-tight);
+    }
+  }
+  & .segment-btn {
+    flex: 1;
+    padding: var(--sp-ultra-tight) 0;
+  }
 }
 .people-drawer__load-more {
   padding: var(--sp-normal);
