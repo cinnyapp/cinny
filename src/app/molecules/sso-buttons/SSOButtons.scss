@@ -1,31 +1,43 @@
 .sso-buttons {
-  margin-top: var(--sp-extra-loose);
+  &__divider {
+    display: flex;
+    align-items: center;
 
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-
-  &__fallback-text {
-    margin: var(--sp-tight) 0px;
-
-    flex-basis: 100%;
-    text-align: center;
-
-    color: var(--bg-primary);
-    cursor: pointer;
+    &::before,
+    &::after {
+      flex: 1;
+      content: '';
+      margin: var(--sp-tight);
+      border-bottom: 1px solid var(--bg-surface-border);
+    }
+  }
+  &__container {
+    margin-bottom: var(--sp-extra-loose);
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;  
   }
 }
 
-.sso-button {
-  margin-bottom: var(--sp-normal);
-
-  display: flex;
+.sso-btn {
+  margin: var(--sp-tight);
+  display: inline-flex;
   justify-content: center;
-  flex-basis: 20%;
 
   cursor: pointer;
 
   &__img {
-    height: var(--av-normal);
+    height: var(--av-small);
+    width: var(--av-small);
+  }
+  &__text-only {
+    flex-basis: 100%;
+    text-align: center;
+
+    margin: var(--sp-tight) 0px;
+    cursor: pointer;
+    & .text {
+      color: var(--tc-link);
+    }
   }
 }

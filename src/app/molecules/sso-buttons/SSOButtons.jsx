@@ -4,6 +4,8 @@ import './SSOButtons.scss';
 
 import { createTemporaryClient, getLoginFlows, startSsoLogin } from '../../../client/action/auth';
 
+import Text from '../../atoms/text/Text';
+
 function SSOButtons({ homeserver }) {
   const [identityProviders, setIdentityProviders] = useState([]);
 
@@ -39,23 +41,15 @@ function SSOButtons({ homeserver }) {
     });
   }, [homeserver]);
 
-  // TODO Render all non-icon providers at the end so that they are never inbetween icons.
+  if (identityProviders.length === 0) return <></>;
+
   return (
     <div className="sso-buttons">
-      {identityProviders.map((idp) => {
-        if (idp.imageSrc == null || idp.imageSrc === undefined || idp.imageSrc === '') {
-          return (
-            <button
-              key={idp.id}
-              type="button"
-              onClick={() => { startSsoLogin(homeserver, idp.type, idp.id); }}
-              className="sso-buttons__fallback-text text-b1"
-            >
-              {`Log in with ${idp.name}`}
-            </button>
-          );
-        }
-        return (
+      <div className="sso-buttons__divider">
+        <Text>OR</Text>
+      </div>
+      <div className="sso-buttons__container">
+        {identityProviders.sort((idp) => !!idp.imageSrc).map((idp) => (
           <SSOButton
             key={idp.id}
             homeserver={idp.homeserver}
@@ -64,8 +58,8 @@ function SSOButtons({ homeserver }) {
             type={idp.type}
             imageSrc={idp.imageSrc}
           />
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
@@ -73,12 +67,18 @@ function SSOButtons({ homeserver }) {
 function SSOButton({
   homeserver, id, name, type, imageSrc,
 }) {
+  const isImageAvail = !!imageSrc;
   function handleClick() {
     startSsoLogin(homeserver, type, id);
   }
   return (
-    <button type="button" className="sso-button" onClick={handleClick}>
-      <img className="sso-button__img" src={imageSrc} alt={name} />
+    <button
+      type="button"
+      className={`sso-btn${!isImageAvail ? ' sso-btn__text-only' : ''}`}
+      onClick={handleClick}
+    >
+      {isImageAvail && <img className="sso-btn__img" src={imageSrc} alt={name} />}
+      {!isImageAvail && <Text>{`Login with ${name}`}</Text>}
     </button>
   );
 }
