@@ -313,6 +313,7 @@ function RoomViewInput({
 
   function addEmoji(emoji) {
     textAreaRef.current.value += emoji.unicode;
+    textAreaRef.current.focus();
   }
 
   function handleUploadClick() {
