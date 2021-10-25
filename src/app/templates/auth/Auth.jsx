@@ -330,7 +330,7 @@ function Auth() {
             </button>
           </Text>
           <span style={{ marginTop: 'var(--sp-extra-tight)' }}>
-            <Text variant="b3">v1.3.2</Text>
+            <Text variant="b3">v1.4.0</Text>
           </span>
         </div>
       </StaticWrapper>
