@@ -319,6 +319,7 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
         else if (searchTerm.match(/^[-]?(\()$/)) searchTerm = 'pleading_face';
         else if (searchTerm.match(/^[-]?(\$)$/)) searchTerm = 'money';
         else if (searchTerm.match(/^(<3)$/)) searchTerm = 'heart';
+        else if (searchTerm.match(/^(c|ca|cat)$/)) searchTerm = '_cat';
       }
     }
 
@@ -343,7 +344,7 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
       '>*': () => asyncSearch.setup(getRooms([...roomList.spaces]), { keys: ['name'], limit: 20 }),
       '>#': () => asyncSearch.setup(getRooms([...roomList.rooms]), { keys: ['name'], limit: 20 }),
       '>@': () => asyncSearch.setup(getRooms([...roomList.directs]), { keys: ['name'], limit: 20 }),
-      ':': () => asyncSearch.setup(emojis, { keys: ['shortcode'], limit: 20 }),
+      ':': () => asyncSearch.setup(emojis, { keys: ['shortcode'], isContain: true, limit: 20 }),
       '@': () => asyncSearch.setup(matrixClient.getRoom(roomId).getJoinedMembers().map((member) => ({
         name: member.name,
         userId: member.userId.slice(1),

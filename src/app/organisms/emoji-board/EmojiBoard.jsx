@@ -80,7 +80,7 @@ EmojiGroup.propTypes = {
 };
 
 const asyncSearch = new AsyncSearch();
-asyncSearch.setup(emojis, { keys: ['shortcode'], limit: 30 });
+asyncSearch.setup(emojis, { keys: ['shortcode'], isContain: true, limit: 40 });
 function SearchedEmoji() {
   const [searchedEmojis, setSearchedEmojis] = useState(null);
 
