@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
@@ -17,10 +17,16 @@ function ProfileEditor({
   const mx = initMatrix.matrixClient;
   const displayNameRef = useRef(null);
   const bgColor = colorMXID(userId);
-  const [avatarSrc, setAvatarSrc] = useState(mx.mxcUrlToHttp(mx.getUser(mx.getUserId()).avatarUrl, 80, 80, 'crop') || null);
+  const [avatarSrc, setAvatarSrc] = useState(null);
   const [disabled, setDisabled] = useState(true);
 
   let username = mx.getUser(mx.getUserId()).displayName;
+
+  useEffect(() => {
+    mx.getProfileInfo(mx.getUserId()).then((info) => {
+      setAvatarSrc(info.avatar_url ? mx.mxcUrlToHttp(info.avatar_url, 80, 80, 'crop') : null);
+    });
+  }, [userId]);
 
   // Sets avatar URL and updates the avatar component in profile editor to reflect new upload
   function handleAvatarUpload(url) {
