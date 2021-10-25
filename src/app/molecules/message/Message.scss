@@ -262,6 +262,16 @@
     right: unset;
   }
 }
+@media (min-width: 1620px) {
+  .message__options {
+    right: unset;
+    left: 770px;
+    [dir=rtl] {
+      left: unset;
+      right: 770px
+    }
+  }
+}
 
 // markdown formating
 .message__content {
