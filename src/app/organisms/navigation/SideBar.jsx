@@ -24,6 +24,28 @@ import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 
 function ProfileAvatarMenu() {
   const mx = initMatrix.matrixClient;
+  const [profile, setProfile] = useState({
+    avatarUrl: null,
+    displayName: mx.getUser(mx.getUserId()).displayName,
+  });
+
+  useEffect(() => {
+    const user = mx.getUser(mx.getUserId());
+    const setNewProfile = (avatarUrl, displayName) => setProfile({
+      avatarUrl: avatarUrl || null,
+      displayName: displayName || profile.displayName,
+    });
+    const onAvatarChange = (event, myUser) => {
+      setNewProfile(myUser.avatarUrl, myUser.displayName);
+    };
+    mx.getProfileInfo(mx.getUserId()).then((info) => {
+      setNewProfile(info.avatar_url, info.displayname);
+    });
+    user.on('User.avatarUrl', onAvatarChange);
+    return () => {
+      user.removeListener('User.avatarUrl', onAvatarChange);
+    };
+  }, []);
 
   return (
     <ContextMenu
@@ -45,10 +67,10 @@ function ProfileAvatarMenu() {
       render={(toggleMenu) => (
         <SidebarAvatar
           onClick={toggleMenu}
-          tooltip={mx.getUser(mx.getUserId()).displayName}
-          imageSrc={mx.getUser(mx.getUserId()).avatarUrl !== null ? mx.mxcUrlToHttp(mx.getUser(mx.getUserId()).avatarUrl, 42, 42, 'crop') : null}
+          tooltip={profile.displayName}
+          imageSrc={profile.avatarUrl !== null ? mx.mxcUrlToHttp(profile.avatarUrl, 42, 42, 'crop') : null}
           bgColor={colorMXID(mx.getUserId())}
-          text={mx.getUser(mx.getUserId()).displayName.slice(0, 1)}
+          text={profile.displayName.slice(0, 1)}
         />
       )}
     />
