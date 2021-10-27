@@ -5,6 +5,7 @@ import './InviteList.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
+import { selectRoom, selectSpace } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -29,13 +30,18 @@ function InviteList({ isOpen, onRequestClose }) {
     roomActions.leave(roomId, isDM);
   }
   function updateInviteList(roomId) {
-    if (procInvite.has(roomId)) {
-      procInvite.delete(roomId);
-      changeProcInvite(new Set(Array.from(procInvite)));
-    } else changeProcInvite(new Set(Array.from(procInvite)));
+    if (procInvite.has(roomId)) procInvite.delete(roomId);
+    changeProcInvite(new Set(Array.from(procInvite)));
 
     const rl = initMatrix.roomList;
-    const totalInvites = rl.inviteDirects.size + rl.inviteRooms.size;
+    const totalInvites = rl.inviteDirects.size + rl.inviteRooms.size + rl.inviteSpaces.size;
+    const room = initMatrix.matrixClient.getRoom(roomId);
+    const isRejected = room === null || room?.getMyMembership() !== 'join';
+    if (!isRejected) {
+      if (room.isSpaceRoom()) selectSpace(roomId);
+      else selectRoom(roomId);
+      onRequestClose();
+    }
     if (totalInvites === 0) onRequestClose();
   }
 
