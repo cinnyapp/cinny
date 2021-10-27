@@ -27,6 +27,8 @@
 }
 .loading__message {
   margin-top: var(--sp-normal);
+  max-width: 350px;
+  text-align: center;
 }
 .loading__appname {
   position: absolute;

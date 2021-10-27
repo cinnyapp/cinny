@@ -15,9 +15,25 @@ import initMatrix from '../../../client/initMatrix';
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
+  const [loadingMsg, setLoadingMsg] = useState('Heating up');
 
   useEffect(() => {
+    let counter = 0;
+    const iId = setInterval(() => {
+      const msgList = [
+        'Sometimes it takes a while...',
+        'Looks like you have a lot of stuff to heat up!',
+      ];
+      if (counter === msgList.length - 1) {
+        setLoadingMsg(msgList[msgList.length - 1]);
+        clearInterval(iId);
+        return;
+      }
+      setLoadingMsg(msgList[counter]);
+      counter += 1;
+    }, 9000);
     initMatrix.once('init_loading_finished', () => {
+      clearInterval(iId);
       changeLoading(false);
     });
     initMatrix.init();
@@ -30,7 +46,7 @@ function Client() {
           <Text variant="b3">Logout</Text>
         </button>
         <Spinner />
-        <Text className="loading__message" variant="b2">Heating up</Text>
+        <Text className="loading__message" variant="b2">{loadingMsg}</Text>
 
         <div className="loading__appname">
           <Text variant="h2">Cinny</Text>
