@@ -10,6 +10,9 @@ function SSOButtons({ homeserver }) {
   const [identityProviders, setIdentityProviders] = useState([]);
 
   useEffect(() => {
+    // Reset sso proviers to avoid displaying sso icons if the homeserver is not valid
+    setIdentityProviders([]);
+
     // If the homeserver passed in is not a fully-qualified domain name, do not update.
     if (!homeserver.match('^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\\.[a-zA-Z]{2,})+$')) {
       return;
@@ -49,16 +52,19 @@ function SSOButtons({ homeserver }) {
         <Text>OR</Text>
       </div>
       <div className="sso-buttons__container">
-        {identityProviders.sort((idp) => !!idp.imageSrc).map((idp) => (
-          <SSOButton
-            key={idp.id}
-            homeserver={idp.homeserver}
-            id={idp.id}
-            name={idp.name}
-            type={idp.type}
-            imageSrc={idp.imageSrc}
-          />
-        ))}
+        {identityProviders
+          // Sort by alphabetical order
+          .sort((idp, idp2) => !!idp.imageSrc && idp.name > idp2.name)
+          .map((idp) => (
+            <SSOButton
+              key={idp.id}
+              homeserver={idp.homeserver}
+              id={idp.id}
+              name={idp.name}
+              type={idp.type}
+              imageSrc={idp.imageSrc}
+            />
+          ))}
       </div>
     </div>
   );
