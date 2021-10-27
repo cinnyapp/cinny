@@ -103,6 +103,10 @@ class Notifications extends EventEmitter {
     const prevTotal = noti.total;
     noti.total -= total;
     noti.highlight -= highlight;
+    if (noti.total < 0) {
+      noti.total = 0;
+      noti.highlight = 0;
+    }
     if (childId && noti.from !== null) {
       noti.from.delete(childId);
     }
