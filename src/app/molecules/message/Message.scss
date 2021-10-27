@@ -160,7 +160,7 @@
   }
 
   & a {
-    word-break: break-all;
+    word-break: break-word;
   }
   &-edited {
     color: var(--tc-surface-low);
