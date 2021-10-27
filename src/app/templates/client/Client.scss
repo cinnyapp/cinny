@@ -32,3 +32,12 @@
   position: absolute;
   bottom: var(--sp-normal);
 }
+.loading__logout {
+  position: absolute;
+  bottom: var(--sp-extra-tight);
+  right: var(--sp-extra-tight);
+  cursor: pointer;
+  .text {
+    color: var(--tc-link);
+  }
+}

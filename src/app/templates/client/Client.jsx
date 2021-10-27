@@ -9,6 +9,7 @@ import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 import RoomOptions from '../../organisms/room-optons/RoomOptions';
+import logout from '../../../client/action/logout';
 
 import initMatrix from '../../../client/initMatrix';
 
@@ -25,6 +26,9 @@ function Client() {
   if (isLoading) {
     return (
       <div className="loading-display">
+        <button className="loading__logout" onClick={logout} type="button">
+          <Text variant="b3">Logout</Text>
+        </button>
         <Spinner />
         <Text className="loading__message" variant="b2">Heating up</Text>
 
