@@ -54,7 +54,10 @@ function SSOButtons({ homeserver }) {
       <div className="sso-buttons__container">
         {identityProviders
           // Sort by alphabetical order
-          .sort((idp, idp2) => !!idp.imageSrc && idp.name > idp2.name)
+          .sort((idp, idp2) => {
+            if (typeof idp.imageSrc !== 'string') return -1;
+            return idp.name.toLowerCase() > idp2.name.toLowerCase() ? 1 : -1;
+          })
           .map((idp) => (
             <SSOButton
               key={idp.id}
