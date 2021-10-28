@@ -77,12 +77,28 @@ class Notifications extends EventEmitter {
     return this.roomIdToNoti.has(roomId);
   }
 
+  _getAllParentIds(roomId) {
+    let allParentIds = this.roomList.roomIdToParents.get(roomId);
+    if (allParentIds === undefined) return new Set();
+    const parentIds = [...allParentIds];
+
+    parentIds.forEach((pId) => {
+      allParentIds = new Set(
+        [...allParentIds, ...this._getAllParentIds(pId)],
+      );
+    });
+
+    return allParentIds;
+  }
+
   _setNoti(roomId, total, highlight, childId) {
     const prevTotal = this.roomIdToNoti.get(roomId)?.total ?? null;
     const noti = this.getNoti(roomId);
 
-    noti.total += total;
-    noti.highlight += highlight;
+    if (!childId || this._remainingParentIds?.has(roomId)) {
+      noti.total += total;
+      noti.highlight += highlight;
+    }
     if (childId) {
       if (noti.from === null) noti.from = new Set();
       noti.from.add(childId);
@@ -91,9 +107,16 @@ class Notifications extends EventEmitter {
     this.roomIdToNoti.set(roomId, noti);
     this.emit(cons.events.notifications.NOTI_CHANGED, roomId, noti.total, prevTotal);
 
+    if (!childId) this._remainingParentIds = this._getAllParentIds(roomId);
+    else this._remainingParentIds.delete(roomId);
+
     const parentIds = this.roomList.roomIdToParents.get(roomId);
-    if (typeof parentIds === 'undefined') return;
+    if (typeof parentIds === 'undefined') {
+      if (!childId) this._remainingParentIds = undefined;
+      return;
+    }
     [...parentIds].forEach((parentId) => this._setNoti(parentId, total, highlight, roomId));
+    if (!childId) this._remainingParentIds = undefined;
   }
 
   _deleteNoti(roomId, total, highlight, childId) {
@@ -108,7 +131,7 @@ class Notifications extends EventEmitter {
       noti.highlight = 0;
     }
     if (childId && noti.from !== null) {
-      noti.from.delete(childId);
+      if (!this.hasNoti(childId)) noti.from.delete(childId);
     }
     if (noti.from === null || noti.from.size === 0) {
       this.roomIdToNoti.delete(roomId);
