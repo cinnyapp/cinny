@@ -127,6 +127,13 @@ function SideBar() {
       noti.total += childNoti.total;
       noti.highlight += childNoti.highlight;
     });
+    if (noti === null) return noti;
+
+    [...roomList.spaceShortcut].forEach((spaceId) => {
+      const shortcutNoti = notifications.getNoti(spaceId);
+      noti.total -= shortcutNoti.total;
+      noti.highlight -= shortcutNoti.highlight;
+    });
 
     return noti;
   }
