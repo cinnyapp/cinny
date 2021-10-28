@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "webpack serve --config ./webpack.dev.js --open",
-    "build": "webpack --config ./webpack.prod.js"
+    "build": "export NODE_OPTIONS=--openssl-legacy-provider; webpack --config ./webpack.prod.js"
   },
   "keywords": [],
   "author": "Ajay Bura",
@@ -23,7 +23,7 @@
     "emojibase-data": "^6.2.0",
     "flux": "^4.0.1",
     "html-react-parser": "^1.2.7",
-    "linkifyjs": "^3.0.0-beta.3",
+    "linkify-react": "^3.0.3",
     "matrix-js-sdk": "^12.4.1",
     "micromark": "^3.0.3",
     "micromark-extension-gfm": "^1.0.0",

@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
-import Linkify from 'linkifyjs/react';
+import Linkify from 'linkify-react';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';

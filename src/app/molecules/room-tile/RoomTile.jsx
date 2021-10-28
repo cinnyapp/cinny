@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './RoomTile.scss';
 
-import Linkify from 'linkifyjs/react';
+import Linkify from 'linkify-react';
 import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
