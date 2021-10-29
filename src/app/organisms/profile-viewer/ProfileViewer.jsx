@@ -78,19 +78,27 @@ SessionInfo.propTypes = {
   userId: PropTypes.string.isRequired,
 };
 
-function ProfileFooter({ userId, onRequestClose }) {
+function ProfileFooter({ roomId, userId, onRequestClose }) {
   const [isCreatingDM, setIsCreatingDM] = useState(false);
   const [isIgnoring, setIsIgnoring] = useState(false);
   const [isUserIgnored, setIsUserIgnored] = useState(initMatrix.matrixClient.isUserIgnored(userId));
 
-  const mx = initMatrix.matrixClient;
   const isMountedRef = useRef(true);
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
+  const member = room.getMember(userId);
+  const isInvitable = member?.membership !== 'join' && member?.membership !== 'ban';
+
+  const [isInviting, setIsInviting] = useState(false);
+  const [isInvited, setIsInvited] = useState(member?.membership === 'invite');
 
   useEffect(() => () => {
     isMountedRef.current = false;
   }, []);
   useEffect(() => {
     setIsUserIgnored(initMatrix.matrixClient.isUserIgnored(userId));
+    setIsIgnoring(false);
+    setIsInviting(false);
   }, [userId]);
 
   async function openDM() {
@@ -144,6 +152,24 @@ function ProfileFooter({ userId, onRequestClose }) {
       setIsIgnoring(false);
     }
   }
+
+  async function toggleInvite() {
+    try {
+      setIsInviting(true);
+      let isInviteSent = false;
+      if (isInvited) await roomActions.kick(roomId, userId);
+      else {
+        await roomActions.invite(roomId, userId);
+        isInviteSent = true;
+      }
+      if (isMountedRef.current === false) return;
+      setIsInvited(isInviteSent);
+      setIsInviting(false);
+    } catch {
+      setIsInviting(false);
+    }
+  }
+
   return (
     <div className="profile-viewer__buttons">
       <Button
@@ -153,7 +179,16 @@ function ProfileFooter({ userId, onRequestClose }) {
       >
         {isCreatingDM ? 'Creating room...' : 'Message'}
       </Button>
-      <Button>Mention</Button>
+      { member?.membership === 'join' && <Button>Mention</Button>}
+      {room.canInvite(mx.getUserId()) && isInvitable && (
+        <Button onClick={toggleInvite}>
+          {
+            isInvited
+              ? `${isInviting ? 'Disinviting...' : 'Disinvite'}`
+              : `${isInviting ? 'Inviting...' : 'Invite'}`
+          }
+        </Button>
+      )}
       <Button
         variant={isUserIgnored ? 'positive' : 'danger'}
         onClick={toggleIgnore}
@@ -169,6 +204,7 @@ function ProfileFooter({ userId, onRequestClose }) {
   );
 }
 ProfileFooter.propTypes = {
+  roomId: PropTypes.string.isRequired,
   userId: PropTypes.string.isRequired,
   onRequestClose: PropTypes.func.isRequired,
 };
@@ -231,6 +267,7 @@ function ProfileViewer() {
         <SessionInfo userId={userId} />
         { userId !== mx.getUserId() && (
           <ProfileFooter
+            roomId={roomId}
             userId={userId}
             onRequestClose={() => setIsOpen(false)}
           />

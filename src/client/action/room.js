@@ -188,12 +188,15 @@ async function create(opts) {
 async function invite(roomId, userId) {
   const mx = initMatrix.matrixClient;
 
-  try {
-    const result = await mx.invite(roomId, userId);
-    return result;
-  } catch (e) {
-    throw new Error(e);
-  }
+  const result = await mx.invite(roomId, userId);
+  return result;
+}
+
+async function kick(roomId, userId) {
+  const mx = initMatrix.matrixClient;
+
+  const result = await mx.kick(roomId, userId);
+  return result;
 }
 
 function createSpaceShortcut(roomId) {
@@ -212,6 +215,6 @@ function deleteSpaceShortcut(roomId) {
 
 export {
   join, leave,
-  create, invite,
+  create, invite, kick,
   createSpaceShortcut, deleteSpaceShortcut,
 };
