@@ -121,18 +121,12 @@ function SideBar() {
     let noti = null;
 
     orphans.forEach((roomId) => {
+      if (roomList.spaceShortcut.has(roomId)) return;
       if (!notifications.hasNoti(roomId)) return;
       if (noti === null) noti = { total: 0, highlight: 0 };
       const childNoti = notifications.getNoti(roomId);
       noti.total += childNoti.total;
       noti.highlight += childNoti.highlight;
-    });
-    if (noti === null) return noti;
-
-    [...roomList.spaceShortcut].forEach((spaceId) => {
-      const shortcutNoti = notifications.getNoti(spaceId);
-      noti.total -= shortcutNoti.total;
-      noti.highlight -= shortcutNoti.highlight;
     });
 
     return noti;
