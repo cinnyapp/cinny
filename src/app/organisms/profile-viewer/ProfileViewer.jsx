@@ -92,6 +92,9 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   const [isInviting, setIsInviting] = useState(false);
   const [isInvited, setIsInvited] = useState(member?.membership === 'invite');
 
+  const myPowerlevel = room.getMember(mx.getUserId()).powerLevel;
+  const canIKick = room.currentState.hasSufficientPowerLevelFor('kick', myPowerlevel);
+
   useEffect(() => () => {
     isMountedRef.current = false;
   }, []);
@@ -180,8 +183,11 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
         {isCreatingDM ? 'Creating room...' : 'Message'}
       </Button>
       { member?.membership === 'join' && <Button>Mention</Button>}
-      {room.canInvite(mx.getUserId()) && isInvitable && (
-        <Button onClick={toggleInvite}>
+      { (isInvited ? canIKick : room.canInvite(mx.getUserId())) && isInvitable && (
+        <Button
+          onClick={toggleInvite}
+          disabled={isInviting}
+        >
           {
             isInvited
               ? `${isInviting ? 'Disinviting...' : 'Disinvite'}`

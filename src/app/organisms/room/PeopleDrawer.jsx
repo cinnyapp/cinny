@@ -103,30 +103,35 @@ function PeopleDrawer({ roomId }) {
   }, [memberList]);
 
   useEffect(() => {
-    searchRef.current.value = '';
-    setMemberList(
-      simplyfiMembers(
-        getMembersWithMembership(membership)
-          .sort(AtoZ).sort(sortByPowerLevel),
-      ),
-    );
-    room.loadMembersIfNeeded().then(() => {
-      if (isRoomChanged) return;
+    let isGettingMembers = true;
+    const updateMemberList = (event) => {
+      if (isGettingMembers) return;
+      console.log(event?.event?.room_id);
+      if (event && event?.event?.room_id !== roomId) return;
       setMemberList(
         simplyfiMembers(
           getMembersWithMembership(membership)
             .sort(AtoZ).sort(sortByPowerLevel),
         ),
       );
+    };
+    searchRef.current.value = '';
+    updateMemberList();
+    room.loadMembersIfNeeded().then(() => {
+      isGettingMembers = false;
+      if (isRoomChanged) return;
+      updateMemberList();
     });
 
     asyncSearch.on(asyncSearch.RESULT_SENT, handleSearchData);
+    mx.on('RoomMember.membership', updateMemberList);
     return () => {
       isRoomChanged = true;
       setMemberList([]);
       setSearchedMembers(null);
       setItemCount(PER_PAGE_MEMBER);
       asyncSearch.removeListener(asyncSearch.RESULT_SENT, handleSearchData);
+      mx.removeListener('RoomMember.membership', updateMemberList);
     };
   }, [roomId, membership]);
 
