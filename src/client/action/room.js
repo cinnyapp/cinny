@@ -132,9 +132,11 @@ function leave(roomId) {
  * @param {boolean} [opts.isEncrypted=false] Makes room encrypted
  * @param {boolean} [opts.isDirect=false] Makes room as direct message
  * @param {string[]} [opts.invite=[]] An array of userId's to invite
+ * @param{number} [opts.powerLevel=100] My power level
  */
 async function create(opts) {
   const mx = initMatrix.matrixClient;
+  const customPowerLevels = [101];
   const options = {
     name: opts.name,
     topic: opts.topic,
@@ -144,6 +146,9 @@ async function create(opts) {
     invite: opts.invite || [],
     initial_state: [],
     preset: opts.isDirect === true ? 'trusted_private_chat' : undefined,
+    power_level_content_override: customPowerLevels.indexOf(opts.powerLevel) === -1 ? undefined : {
+      users: { [initMatrix.matrixClient.getUserId()]: opts.powerLevel },
+    },
   };
 
   if (opts.isPublic !== true && opts.isEncrypted === true) {

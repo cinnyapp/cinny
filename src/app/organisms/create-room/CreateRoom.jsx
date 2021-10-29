@@ -5,6 +5,7 @@ import './CreateRoom.scss';
 import initMatrix from '../../../client/initMatrix';
 import { isRoomAliasAvailable } from '../../../util/matrixUtil';
 import * as roomActions from '../../../client/action/room';
+import { selectRoom } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -12,6 +13,7 @@ import Toggle from '../../atoms/button/Toggle';
 import IconButton from '../../atoms/button/IconButton';
 import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
+import SegmentControl from '../../atoms/segmented-controls/SegmentedControls';
 import PopupWindow from '../../molecules/popup-window/PopupWindow';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
 
@@ -28,6 +30,7 @@ function CreateRoom({ isOpen, onRequestClose }) {
   const [titleValue, updateTitleValue] = useState(undefined);
   const [topicValue, updateTopicValue] = useState(undefined);
   const [addressValue, updateAddressValue] = useState(undefined);
+  const [roleIndex, setRoleIndex] = useState(0);
 
   const addressRef = useRef(null);
   const topicRef = useRef(null);
@@ -45,6 +48,7 @@ function CreateRoom({ isOpen, onRequestClose }) {
     updateTitleValue(undefined);
     updateTopicValue(undefined);
     updateAddressValue(undefined);
+    setRoleIndex(0);
   }
 
   async function createRoom() {
@@ -60,12 +64,15 @@ function CreateRoom({ isOpen, onRequestClose }) {
       if (roomAlias.trim() === '') roomAlias = undefined;
     }
 
+    const powerLevel = roleIndex === 1 ? 101 : undefined;
+
     try {
-      await roomActions.create({
-        name, topic, isPublic, roomAlias, isEncrypted,
+      const result = await roomActions.create({
+        name, topic, isPublic, roomAlias, isEncrypted, powerLevel,
       });
 
       resetForm();
+      selectRoom(result.room_id);
       onRequestClose();
     } catch (e) {
       if (e.message === 'M_UNKNOWN: Invalid characters in room alias') {
@@ -139,6 +146,19 @@ function CreateRoom({ isOpen, onRequestClose }) {
               content={<Text variant="b3">You can’t disable this later. Bridges & most bots won’t work yet.</Text>}
             />
           )}
+          <SettingTile
+            title="Select your role"
+            options={(
+              <SegmentControl
+                selected={roleIndex}
+                segments={[{ text: 'Admin' }, { text: 'Founder' }]}
+                onSelect={setRoleIndex}
+              />
+            )}
+            content={(
+              <Text variant="b3">Override the default (100) power level.</Text>
+            )}
+          />
           <Input value={topicValue} onChange={handleTopicChange} forwardRef={topicRef} minHeight={174} resizable label="Topic (optional)" />
           <div className="create-room__name-wrapper">
             <Input value={titleValue} onChange={handleTitleChange} forwardRef={nameRef} label="Room name" required />

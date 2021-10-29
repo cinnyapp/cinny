@@ -9,6 +9,13 @@
     }
   }
 
+  & .segment-btn {
+    padding: var(--sp-ultra-tight) 0;
+    &__base {
+      padding: 0 var(--sp-tight);
+    }
+  }
+
   &__address {
     display: flex;
     &__label {
