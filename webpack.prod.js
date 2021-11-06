@@ -40,6 +40,7 @@ module.exports = merge(common, {
       patterns: [
         { from: 'olm.wasm' },
         { from: '_redirects' },
+        { from: 'config.json' },
       ],
     }),
   ],

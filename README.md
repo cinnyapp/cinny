@@ -51,6 +51,10 @@ navigating to `http://localhost:8080`.
 
 Alternatively you can just pull the [DockerHub image](https://hub.docker.com/r/ajbura/cinny) by `docker pull ajbura/cinny`.
 
+### Configuring default Homeserver
+
+To set default Homeserver on login and register page, place a customized [`config.json`](config.json) in webroot of your choice.
+
 ## License
 
 Copyright (c) 2021 Ajay Bura (ajbura) and other contributors
