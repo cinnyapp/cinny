@@ -56,9 +56,10 @@
 .homeserver-form {
   display: flex;
   margin-bottom: var(--sp-extra-tight);
-  line-height: 0;
+  align-items: flex-end;
   & > .input-container {
     flex: 1;
+    line-height: 0;
     & .input {
       border-right: unset;
       border-radius: var(--bo-radius) 0 0 var(--bo-radius);
@@ -67,7 +68,6 @@
   }
   & .ic-btn {
     height: 46px;
-    align-self: flex-end;
     border: 1px solid var(--bg-surface-border);
     border-radius: 0 var(--bo-radius) var(--bo-radius) 0;
   }

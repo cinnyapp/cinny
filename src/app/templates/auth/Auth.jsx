@@ -87,7 +87,8 @@ function Homeserver({ onChange }) {
   }, [hs]);
 
   useEffect(async () => {
-    const configFileUrl = `${window.location.href}/config.json`;
+    const link = window.location.href;
+    const configFileUrl = `${link}${link[link.length - 1] === '/' ? '' : '/'}config.json`;
     try {
       const result = await (await fetch(configFileUrl, { method: 'GET' })).json();
       const selectedHs = result?.defaultHomeserver;
