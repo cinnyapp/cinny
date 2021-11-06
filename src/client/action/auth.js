@@ -1,189 +1,101 @@
 import * as sdk from 'matrix-js-sdk';
 import cons from '../state/cons';
-import { getBaseUrl } from '../../util/matrixUtil';
 
-// This method inspired by a similar one in matrix-react-sdk
-async function createTemporaryClient(homeserver) {
-  let baseUrl = null;
-  try {
-    baseUrl = await getBaseUrl(homeserver);
-  } catch (e) {
-    baseUrl = `https://${homeserver}`;
-  }
+function updateLocalStore(accessToken, deviceId, userId, baseUrl) {
+  localStorage.setItem(cons.secretKey.ACCESS_TOKEN, accessToken);
+  localStorage.setItem(cons.secretKey.DEVICE_ID, deviceId);
+  localStorage.setItem(cons.secretKey.USER_ID, userId);
+  localStorage.setItem(cons.secretKey.BASE_URL, baseUrl);
+}
 
-  if (typeof baseUrl === 'undefined') throw new Error('Homeserver not found');
-
+function createTemporaryClient(baseUrl) {
   return sdk.createClient({ baseUrl });
 }
 
-async function getLoginFlows(client) {
-  const flows = await client.loginFlows();
-  if (flows !== undefined) {
-    return flows;
-  }
-  return null;
-}
-
-async function startSsoLogin(homeserver, type, idpId) {
-  const client = await createTemporaryClient(homeserver);
+async function startSsoLogin(baseUrl, type, idpId) {
+  const client = createTemporaryClient(baseUrl);
   localStorage.setItem(cons.secretKey.BASE_URL, client.baseUrl);
   window.location.href = client.getSsoLoginUrl(window.location.href, type, idpId);
 }
 
-async function login(username, homeserver, password) {
-  const client = await createTemporaryClient(homeserver);
+async function login(baseUrl, username, email, password) {
+  const identifier = {};
+  if (username) {
+    identifier.type = 'm.id.user';
+    identifier.user = username;
+  } else if (email) {
+    identifier.type = 'm.id.thirdparty';
+    identifier.medium = 'email';
+    identifier.address = email;
+  } else throw new Error('Bad Input');
 
-  const response = await client.login('m.login.password', {
-    identifier: {
-      type: 'm.id.user',
-      user: username,
-    },
+  const client = createTemporaryClient(baseUrl);
+  const res = await client.login('m.login.password', {
+    identifier,
     password,
     initial_device_display_name: cons.DEVICE_DISPLAY_NAME,
   });
 
-  localStorage.setItem(cons.secretKey.ACCESS_TOKEN, response.access_token);
-  localStorage.setItem(cons.secretKey.DEVICE_ID, response.device_id);
-  localStorage.setItem(cons.secretKey.USER_ID, response.user_id);
-  localStorage.setItem(cons.secretKey.BASE_URL, response?.well_known?.['m.homeserver']?.base_url || client.baseUrl);
+  const myBaseUrl = res?.well_known?.['m.homeserver']?.base_url || client.baseUrl;
+  updateLocalStore(res.access_token, res.device_id, res.user_id, myBaseUrl);
 }
 
 async function loginWithToken(baseUrl, token) {
-  const client = sdk.createClient(baseUrl);
+  const client = createTemporaryClient(baseUrl);
 
-  const response = await client.login('m.login.token', {
+  const res = await client.login('m.login.token', {
     token,
     initial_device_display_name: cons.DEVICE_DISPLAY_NAME,
   });
 
-  localStorage.setItem(cons.secretKey.ACCESS_TOKEN, response.access_token);
-  localStorage.setItem(cons.secretKey.DEVICE_ID, response.device_id);
-  localStorage.setItem(cons.secretKey.USER_ID, response.user_id);
-  localStorage.setItem(cons.secretKey.BASE_URL, response?.well_known?.['m.homeserver']?.base_url || client.baseUrl);
+  const myBaseUrl = res?.well_known?.['m.homeserver']?.base_url || client.baseUrl;
+  updateLocalStore(res.access_token, res.device_id, res.user_id, myBaseUrl);
 }
 
-async function getAdditionalInfo(baseUrl, content) {
-  try {
-    const res = await fetch(`${baseUrl}/_matrix/client/r0/register`, {
-      method: 'POST',
-      body: JSON.stringify(content),
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-      credentials: 'same-origin',
-    });
-    const data = await res.json();
-    return data;
-  } catch (e) {
-    throw new Error(e);
-  }
-}
-
-async function verifyEmail(baseUrl, content) {
-  try {
-    const res = await fetch(`${baseUrl}/_matrix/client/r0/register/email/requestToken`, {
-      method: 'POST',
-      body: JSON.stringify(content),
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-      credentials: 'same-origin',
-    });
-    const data = await res.json();
-    return data;
-  } catch (e) {
-    throw new Error(e);
-  }
-}
-
-let session = null;
-let clientSecret = null;
-let sid = null;
-async function register(username, homeserver, password, email, recaptchaValue, terms, verified) {
-  const baseUrl = await getBaseUrl(homeserver);
-
-  if (typeof baseUrl === 'undefined') throw new Error('Homeserver not found');
-
-  const client = sdk.createClient({ baseUrl });
-
-  const isAvailable = await client.isUsernameAvailable(username);
-  if (!isAvailable) throw new Error('Username not available');
-
-  if (typeof recaptchaValue === 'string') {
-    await getAdditionalInfo(baseUrl, {
-      auth: {
-        type: 'm.login.recaptcha',
-        session,
-        response: recaptchaValue,
-      },
-    });
-  } else if (terms === true) {
-    await getAdditionalInfo(baseUrl, {
-      auth: {
-        type: 'm.login.terms',
-        session,
-      },
-    });
-  } else if (verified !== true) {
-    session = null;
-    clientSecret = client.generateClientSecret();
-    const verifyData = await verifyEmail(baseUrl, {
-      email,
-      client_secret: clientSecret,
-      send_attempt: 1,
-    });
-    if (typeof verifyData.error === 'string') {
-      throw new Error(verifyData.error);
-    }
-    sid = verifyData.sid;
-  }
-
-  const additionalInfo = await getAdditionalInfo(baseUrl, {
-    auth: { session: (session !== null) ? session : undefined },
+// eslint-disable-next-line camelcase
+async function verifyEmail(baseUrl, email, client_secret, send_attempt, next_link) {
+  const res = await fetch(`${baseUrl}/_matrix/client/r0/register/email/requestToken`, {
+    method: 'POST',
+    body: JSON.stringify({
+      email, client_secret, send_attempt, next_link,
+    }),
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    credentials: 'same-origin',
   });
-  session = additionalInfo.session;
-  if (typeof additionalInfo.completed === 'undefined' || additionalInfo.completed.length === 0) {
-    return ({
-      type: 'recaptcha',
-      public_key: additionalInfo.params['m.login.recaptcha'].public_key,
-    });
-  }
-  if (additionalInfo.completed.find((process) => process === 'm.login.recaptcha') === 'm.login.recaptcha'
-    && !additionalInfo.completed.find((process) => process === 'm.login.terms')) {
-    return ({
-      type: 'terms',
-      en: additionalInfo.params['m.login.terms'].policies.privacy_policy.en,
-    });
-  }
-  if (verified || additionalInfo.completed.find((process) => process === 'm.login.terms') === 'm.login.terms') {
-    const tpc = {
-      client_secret: clientSecret,
-      sid,
-    };
-    const verifyData = await getAdditionalInfo(baseUrl, {
-      auth: {
-        session,
-        type: 'm.login.email.identity',
-        threepidCreds: tpc,
-        threepid_creds: tpc,
-      },
-      username,
-      password,
-    });
-    if (verifyData.errcode === 'M_UNAUTHORIZED') {
-      return { type: 'email' };
-    }
+  const data = await res.json();
+  return data;
+}
 
-    localStorage.setItem(cons.secretKey.ACCESS_TOKEN, verifyData.access_token);
-    localStorage.setItem(cons.secretKey.DEVICE_ID, verifyData.device_id);
-    localStorage.setItem(cons.secretKey.USER_ID, verifyData.user_id);
-    localStorage.setItem(cons.secretKey.BASE_URL, baseUrl);
-    return { type: 'done' };
+async function completeRegisterStage(
+  baseUrl, username, password, auth,
+) {
+  const tempClient = createTemporaryClient(baseUrl);
+
+  try {
+    const result = await tempClient.registerRequest({
+      username, password, auth,
+    });
+    const data = { completed: result.completed || [] };
+    if (result.access_token) {
+      data.done = true;
+      updateLocalStore(result.access_token, result.device_id, result.user_id, baseUrl);
+    }
+    return data;
+  } catch (e) {
+    const result = e.data;
+    const data = { completed: result.completed || [] };
+    if (result.access_token) {
+      data.done = true;
+      updateLocalStore(result.access_token, result.device_id, result.user_id, baseUrl);
+    }
+    return data;
   }
-  return {};
 }
 
 export {
-  createTemporaryClient, getLoginFlows, login,
-  loginWithToken, register, startSsoLogin,
+  createTemporaryClient, login, verifyEmail,
+  loginWithToken, startSsoLogin,
+  completeRegisterStage,
 };

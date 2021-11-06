@@ -22,6 +22,7 @@
     "dateformat": "^4.5.1",
     "emojibase-data": "^6.2.0",
     "flux": "^4.0.1",
+    "formik": "^2.2.9",
     "html-react-parser": "^1.2.7",
     "linkify-react": "^3.0.3",
     "matrix-js-sdk": "^12.4.1",

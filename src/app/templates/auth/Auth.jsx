@@ -1,11 +1,14 @@
-import React, { useState, useRef } from 'react';
+/* eslint-disable react/prop-types */
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Auth.scss';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { Formik } from 'formik';
 
-import { useLocation } from 'react-router-dom';
 import * as auth from '../../../client/action/auth';
 import cons from '../../../client/state/cons';
+import { Debounce, getUrlPrams } from '../../../util/common';
+import { getBaseUrl } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -13,355 +16,551 @@ import IconButton from '../../atoms/button/IconButton';
 import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 import ScrollView from '../../atoms/scroll/ScrollView';
+import Header, { TitleWrapper } from '../../atoms/header/Header';
+import Avatar from '../../atoms/avatar/Avatar';
+import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/ContextMenu';
 
-import EyeIC from '../../../../public/res/ic/outlined/eye.svg';
+import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
 
-// This regex validates historical usernames, which don't satisfy today's username requirements.
-// See https://matrix.org/docs/spec/appendices#id13 for more info.
-const LOCALPART_LOGIN_REGEX = /.*/;
 const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
-const BAD_LOCALPART_ERROR = 'Username must contain only a-z, 0-9, ., _, =, -, and /.';
+const BAD_LOCALPART_ERROR = 'Username can only contain characters a-z, 0-9, or \'=_-./\'';
 const USER_ID_TOO_LONG_ERROR = 'Your user ID, including the hostname, can\'t be more than 255 characters long.';
 
-const PASSWORD_REGEX = /.+/;
 const PASSWORD_STRENGHT_REGEX = /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,127}$/;
-const BAD_PASSWORD_ERROR = 'Password must contain at least 1 number, 1 uppercase letter, 1 lowercase letter, 1 non-alphanumeric character. Passwords can range from 8-127 characters with no whitespaces.';
+const BAD_PASSWORD_ERROR = 'Password must contain at least 1 lowercase, 1 uppercase, 1 number, 1 non-alphanumeric character, 8-127 characters with no space.';
 const CONFIRM_PASSWORD_ERROR = 'Passwords don\'t match.';
 
-const EMAIL_REGEX = /([a-z0-9]+[_a-z0-9.-][a-z0-9]+)@([a-z0-9-]+(?:.[a-z0-9-]+).[a-z]{2,4})/;
+const EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const BAD_EMAIL_ERROR = 'Invalid email address';
 
 function isValidInput(value, regex) {
   if (typeof regex === 'string') return regex === value;
   return regex.test(value);
 }
-function renderErrorMessage(error) {
-  const $error = document.getElementById('auth_error');
-  $error.textContent = error;
-  $error.style.display = 'block';
-}
-function showBadInputError($input, error, stopAutoFocus) {
-  renderErrorMessage(error);
-  if (!stopAutoFocus) $input.focus();
-  const myInput = $input;
-  myInput.style.border = '1px solid var(--bg-danger)';
-  myInput.style.boxShadow = 'none';
-  document.getElementById('auth_submit-btn').disabled = true;
-}
-
-function validateOnChange(targetInput, regex, error, stopAutoFocus) {
-  if (!isValidInput(targetInput.value, regex) && targetInput.value) {
-    showBadInputError(targetInput, error, stopAutoFocus);
-    return false;
-  }
-  document.getElementById('auth_error').style.display = 'none';
-  targetInput.style.removeProperty('border');
-  targetInput.style.removeProperty('box-shadow');
-  document.getElementById('auth_submit-btn').disabled = false;
-  return true;
-}
-
-/**
- * Normalizes a username into a standard format.
- *
- * Removes leading and trailing whitespaces and leading "@" symbols.
- * @param {string} rawUsername A raw-input username, which may include invalid characters.
- * @returns {string}
- */
 function normalizeUsername(rawUsername) {
   const noLeadingAt = rawUsername.indexOf('@') === 0 ? rawUsername.substr(1) : rawUsername;
   return noLeadingAt.trim();
 }
 
-function Auth() {
-  const [type, setType] = useState('login');
-  const [process, changeProcess] = useState(null);
-  const [homeserver, changeHomeserver] = useState('matrix.org');
+let searchingHs = null;
+function Homeserver({ onChange }) {
+  const [hs, setHs] = useState(null);
+  const [debounce] = useState(new Debounce());
+  const [process, setProcess] = useState({ isLoading: true, message: 'Loading homeserver list...' });
+  const hsRef = useRef();
 
-  const usernameRef = useRef(null);
-  const homeserverRef = useRef(null);
-  const passwordRef = useRef(null);
-  const confirmPasswordRef = useRef(null);
-  const emailRef = useRef(null);
-
-  const { search } = useLocation();
-  const searchParams = new URLSearchParams(search);
-  if (searchParams.has('loginToken')) {
-    const loginToken = searchParams.get('loginToken');
-    if (loginToken !== undefined) {
-      if (localStorage.getItem(cons.secretKey.BASE_URL) !== undefined) {
-        const baseUrl = localStorage.getItem(cons.secretKey.BASE_URL);
-        auth.loginWithToken(baseUrl, loginToken)
-          .then(() => {
-            const { href } = window.location;
-            window.location.replace(href.slice(0, href.indexOf('?')));
-          })
-          .catch((error) => {
-            changeProcess(null);
-            if (!error.contains('CORS request rejected')) {
-              renderErrorMessage(error);
-            }
-          });
-      }
+  const setupHsConfig = async (servername) => {
+    setProcess({ isLoading: true, message: 'Looking for homeserver...' });
+    let baseUrl = null;
+    try {
+      baseUrl = await getBaseUrl(servername);
+    } catch (e) {
+      baseUrl = e.message;
     }
-  }
+    if (searchingHs !== servername) return;
+    setProcess({ isLoading: true, message: `Connecting to ${baseUrl}...` });
+    const tempClient = auth.createTemporaryClient(baseUrl);
 
-  function register(recaptchaValue, terms, verified) {
-    auth.register(
-      usernameRef.current.value,
-      homeserverRef.current.value,
-      passwordRef.current.value,
-      emailRef.current.value,
-      recaptchaValue,
-      terms,
-      verified,
-    ).then((res) => {
-      document.getElementById('auth_submit-btn').disabled = false;
-      if (res.type === 'recaptcha') {
-        changeProcess({ type: res.type, sitekey: res.public_key });
-        return;
-      }
-      if (res.type === 'terms') {
-        changeProcess({ type: res.type, en: res.en });
-      }
-      if (res.type === 'email') {
-        changeProcess({ type: res.type });
-      }
-      if (res.type === 'done') {
-        window.location.replace('/');
-      }
-    }).catch((error) => {
-      changeProcess(null);
-      renderErrorMessage(error);
-      document.getElementById('auth_submit-btn').disabled = false;
-    });
-    if (terms) {
-      changeProcess({ type: 'loading', message: 'Sending email verification link...' });
-    } else changeProcess({ type: 'loading', message: 'Registration in progress...' });
-  }
+    Promise.allSettled([tempClient.loginFlows(), tempClient.register()])
+      .then((values) => {
+        const loginFlow = values[0].status === 'fulfilled' ? values[0]?.value : undefined;
+        const registerFlow = values[1].status === 'rejected' ? values[1]?.reason?.data : undefined;
+        if (loginFlow === undefined || registerFlow === undefined) throw new Error();
 
-  function handleLogin(e) {
-    e.preventDefault();
-    document.getElementById('auth_submit-btn').disabled = true;
-    document.getElementById('auth_error').style.display = 'none';
-
-    /** @type {string} */
-    const rawUsername = usernameRef.current.value;
-    /** @type {string} */
-    const normalizedUsername = normalizeUsername(rawUsername);
-
-    auth.login(normalizedUsername, homeserverRef.current.value, passwordRef.current.value)
-      .then(() => {
-        document.getElementById('auth_submit-btn').disabled = false;
-        window.location.replace('/');
-      })
-      .catch((error) => {
-        changeProcess(null);
-        renderErrorMessage(error);
-        document.getElementById('auth_submit-btn').disabled = false;
+        if (searchingHs !== servername) return;
+        onChange({ baseUrl, login: loginFlow, register: registerFlow });
+        setProcess({ isLoading: false });
+      }).catch(() => {
+        if (searchingHs !== servername) return;
+        onChange(null);
+        setProcess({ isLoading: false, error: 'Unable to connect. Please check your input.' });
       });
-    changeProcess({ type: 'loading', message: 'Login in progress...' });
-  }
+  };
 
-  function handleRegister(e) {
-    e.preventDefault();
-    document.getElementById('auth_submit-btn').disabled = true;
-    document.getElementById('auth_error').style.display = 'none';
+  useEffect(() => {
+    onChange(null);
+    if (hs === null || hs?.selected.trim() === '') return;
+    searchingHs = hs.selected;
+    setupHsConfig(hs.selected);
+  }, [hs]);
 
-    if (!isValidInput(usernameRef.current.value, LOCALPART_SIGNUP_REGEX)) {
-      showBadInputError(usernameRef.current, BAD_LOCALPART_ERROR);
-      return;
+  useEffect(async () => {
+    const configFileUrl = `${window.location.href}/config.json`;
+    try {
+      const result = await (await fetch(configFileUrl, { method: 'GET' })).json();
+      const selectedHs = result?.defaultHomeserver;
+      const hsList = result?.homeserverList;
+      if (!hsList?.length > 0 || selectedHs < 0 || selectedHs >= hsList?.length) {
+        throw new Error();
+      }
+      setHs({ selected: hsList[selectedHs], list: hsList });
+    } catch {
+      setHs({ selected: 'matrix.org', list: ['matrix.org'] });
     }
-    if (!isValidInput(passwordRef.current.value, PASSWORD_STRENGHT_REGEX)) {
-      showBadInputError(passwordRef.current, BAD_PASSWORD_ERROR);
-      return;
-    }
-    if (passwordRef.current.value !== confirmPasswordRef.current.value) {
-      showBadInputError(confirmPasswordRef.current, CONFIRM_PASSWORD_ERROR);
-      return;
-    }
-    if (!isValidInput(emailRef.current.value, EMAIL_REGEX)) {
-      showBadInputError(emailRef.current, BAD_EMAIL_ERROR);
-      return;
-    }
-    if (`@${usernameRef.current.value}:${homeserverRef.current.value}`.length > 255) {
-      showBadInputError(usernameRef.current, USER_ID_TOO_LONG_ERROR);
-      return;
-    }
-    register();
-  }
+  }, []);
 
-  const handleAuth = (type === 'login') ? handleLogin : handleRegister;
+  const handleHsInput = (e) => {
+    const { value } = e.target;
+    setProcess({ isLoading: false });
+    debounce._(async () => {
+      setHs({ selected: value, list: hs.list });
+    }, 700)();
+  };
+
   return (
     <>
-      {process?.type === 'loading' && <LoadingScreen message={process.message} />}
-      {process?.type === 'recaptcha' && <Recaptcha message="Please check the box below to proceed." sitekey={process.sitekey} onChange={(v) => { if (typeof v === 'string') register(v); }} />}
-      {process?.type === 'terms' && <Terms url={process.en.url} onSubmit={register} />}
-      {process?.type === 'email' && (
-        <ProcessWrapper>
-          <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
-            <Text variant="h2">Verify email</Text>
-            <div style={{ margin: 'var(--sp-normal) 0' }}>
-              <Text variant="b1">
-                Please check your email
-                {' '}
-                <b>{`(${emailRef.current.value})`}</b>
-                {' '}
-                and validate before continuing further.
-              </Text>
-            </div>
-            <Button variant="primary" onClick={() => register(undefined, undefined, true)}>Continue</Button>
-          </div>
-        </ProcessWrapper>
-      )}
-      <StaticWrapper>
-        <div className="auth-form__wrapper flex-v--center">
-          <form onSubmit={handleAuth} className="auth-form">
-            <Text variant="h2">{ type === 'login' ? 'Login' : 'Register' }</Text>
-            <div className="username__wrapper">
-              <Input
-                forwardRef={usernameRef}
-                onChange={(e) => (type === 'login'
-                  ? validateOnChange(e.target, LOCALPART_LOGIN_REGEX, BAD_LOCALPART_ERROR)
-                  : validateOnChange(e.target, LOCALPART_SIGNUP_REGEX, BAD_LOCALPART_ERROR))}
-                id="auth_username"
-                label="Username"
-                required
-              />
-              <Input
-                forwardRef={homeserverRef}
-                onChange={(e) => changeHomeserver(e.target.value)}
-                id="auth_homeserver"
-                placeholder="Homeserver"
-                value="matrix.org"
-                required
-              />
-            </div>
-            <div className="password__wrapper">
-              <Input
-                forwardRef={passwordRef}
-                onChange={(e) => {
-                  const isValidPass = validateOnChange(e.target, ((type === 'login') ? PASSWORD_REGEX : PASSWORD_STRENGHT_REGEX), BAD_PASSWORD_ERROR);
-                  if (type === 'register' && isValidPass) {
-                    validateOnChange(
-                      confirmPasswordRef.current, passwordRef.current.value,
-                      CONFIRM_PASSWORD_ERROR, true,
-                    );
-                  }
-                }}
-                id="auth_password"
-                type="password"
-                label="Password"
-                required
-              />
-              <IconButton
-                onClick={() => {
-                  if (passwordRef.current.type === 'password') {
-                    passwordRef.current.type = 'text';
-                  } else passwordRef.current.type = 'password';
-                }}
-                size="extra-small"
-                src={EyeIC}
-              />
-            </div>
-            {type === 'register' && (
-              <>
-                <div className="password__wrapper">
-                  <Input
-                    forwardRef={confirmPasswordRef}
-                    onChange={(e) => {
-                      validateOnChange(e.target, passwordRef.current.value, CONFIRM_PASSWORD_ERROR);
-                    }}
-                    id="auth_confirmPassword"
-                    type="password"
-                    label="Confirm password"
-                    required
-                  />
-                  <IconButton
+      <div className="homeserver-form">
+        <Input name="homeserver" onChange={handleHsInput} value={hs?.selected} forwardRef={hsRef} label="Homeserver" />
+        <ContextMenu
+          placement="right"
+          content={(hideMenu) => (
+            <>
+              <MenuHeader>Homeserver list</MenuHeader>
+              {
+                hs?.list.map((hsName) => (
+                  <MenuItem
+                    key={hsName}
                     onClick={() => {
-                      if (confirmPasswordRef.current.type === 'password') {
-                        confirmPasswordRef.current.type = 'text';
-                      } else confirmPasswordRef.current.type = 'password';
+                      hideMenu();
+                      hsRef.current.value = hsName;
+                      setHs({ selected: hsName, list: hs.list });
                     }}
-                    size="extra-small"
-                    src={EyeIC}
-                  />
-                </div>
-                <Input
-                  forwardRef={emailRef}
-                  onChange={(e) => validateOnChange(e.target, EMAIL_REGEX, BAD_EMAIL_ERROR)}
-                  id="auth_email"
-                  type="email"
-                  label="Email"
-                  required
-                />
-              </>
-            )}
-            <div className="submit-btn__wrapper flex--end">
-              <Text id="auth_error" className="error-message" variant="b3">Error</Text>
-              <Button
-                id="auth_submit-btn"
-                variant="primary"
-                type="submit"
-              >
-                {type === 'login' ? 'Login' : 'Register' }
-              </Button>
-            </div>
-            {type === 'login' && (
-              <SSOButtons homeserver={homeserver} />
-            )}
-          </form>
+                  >
+                    {hsName}
+                  </MenuItem>
+                ))
+              }
+            </>
+          )}
+          render={(toggleMenu) => <IconButton onClick={toggleMenu} src={ChevronBottomIC} />}
+        />
+      </div>
+      {process.error !== undefined && <Text className="homeserver-form__error" variant="b3">{process.error}</Text>}
+      {process.isLoading && (
+        <div className="homeserver-form__status flex--center">
+          <Spinner size="small" />
+          <Text variant="b2">{process.message}</Text>
         </div>
+      )}
+    </>
+  );
+}
+Homeserver.propTypes = {
+  onChange: PropTypes.func.isRequired,
+};
 
-        <div style={{ flexDirection: 'column' }} className="flex--center">
-          <Text variant="b2">
-            {`${(type === 'login' ? 'Don\'t have' : 'Already have')} an account?`}
-            <button
-              type="button"
-              style={{ color: 'var(--tc-link)', cursor: 'pointer', margin: '0 var(--sp-ultra-tight)' }}
-              onClick={() => {
-                if (type === 'login') setType('register');
-                else setType('login');
-              }}
-            >
-              { type === 'login' ? ' Register' : ' Login' }
-            </button>
-          </Text>
-          <span style={{ marginTop: 'var(--sp-extra-tight)' }}>
-            <Text variant="b3">v1.4.0</Text>
-          </span>
-        </div>
-      </StaticWrapper>
+function Login({ loginFlow, baseUrl }) {
+  const [typeIndex, setTypeIndex] = useState(0);
+  const loginTypes = ['Username', 'Email'];
+  const isPassword = loginFlow?.filter((flow) => flow.type === 'm.login.password')[0];
+  const ssoProviders = loginFlow?.filter((flow) => flow.type.match(/^m.login.(sso|cas)$/))[0];
+
+  const initialValues = {
+    username: '', password: '', email: '', other: '',
+  };
+
+  const validator = (values) => {
+    const errors = {};
+    if (typeIndex === 0 && values.username.length > 0 && values.username.indexOf(':') > -1) {
+      errors.username = 'Username must contain local-part only';
+    }
+    if (typeIndex === 1 && values.email.length > 0 && !isValidInput(values.email, EMAIL_REGEX)) {
+      errors.email = BAD_EMAIL_ERROR;
+    }
+    return errors;
+  };
+  const submitter = (values, actions) => auth.login(
+    baseUrl,
+    typeIndex === 0 ? normalizeUsername(values.username) : undefined,
+    typeIndex === 1 ? values.email : undefined,
+    values.password,
+  ).then(() => {
+    actions.setSubmitting(true);
+    window.location.reload();
+  }).catch((error) => {
+    let msg = error.message;
+    if (msg === 'Unknown message') msg = 'Please check your credentials';
+    actions.setErrors({
+      password: msg === 'Invalid password' ? msg : undefined,
+      other: msg !== 'Invalid password' ? msg : undefined,
+    });
+    actions.setSubmitting(false);
+  });
+
+  return (
+    <>
+      <div className="auth-form__heading">
+        <Text variant="h2">Login</Text>
+        {isPassword && (
+          <ContextMenu
+            placement="right"
+            content={(hideMenu) => (
+              loginTypes.map((type, index) => (
+                <MenuItem
+                  key={type}
+                  onClick={() => {
+                    hideMenu();
+                    setTypeIndex(index);
+                  }}
+                >
+                  {type}
+                </MenuItem>
+              ))
+            )}
+            render={(toggleMenu) => (
+              <Button onClick={toggleMenu} iconSrc={ChevronBottomIC}>
+                {loginTypes[typeIndex]}
+              </Button>
+            )}
+          />
+        )}
+      </div>
+      {isPassword && (
+        <Formik
+          initialValues={initialValues}
+          onSubmit={submitter}
+          validate={validator}
+        >
+          {({
+            values, errors, handleChange, handleSubmit, isSubmitting,
+          }) => (
+            <>
+              {isSubmitting && <LoadingScreen message="Login in progress..." />}
+              <form className="auth-form" onSubmit={handleSubmit}>
+                {typeIndex === 0 && <Input values={values.username} name="username" onChange={handleChange} label="Username" type="username" required />}
+                {errors.username && <Text className="auth-form__error" variant="b3">{errors.username}</Text>}
+                {typeIndex === 1 && <Input values={values.email} name="email" onChange={handleChange} label="Email" type="email" required />}
+                {errors.email && <Text className="auth-form__error" variant="b3">{errors.email}</Text>}
+                <Input values={values.password} name="password" onChange={handleChange} label="Password" type="password" required />
+                {errors.password && <Text className="auth-form__error" variant="b3">{errors.password}</Text>}
+                {errors.other && <Text className="auth-form__error" variant="b3">{errors.other}</Text>}
+                <div className="auth-form__btns">
+                  <Button variant="primary" type="submit" disabled={isSubmitting}>Login</Button>
+                </div>
+              </form>
+            </>
+          )}
+        </Formik>
+      )}
+      {ssoProviders && isPassword && <Text className="sso__divider">OR</Text>}
+      {ssoProviders && (
+        <SSOButtons
+          type={ssoProviders.type.match(/^m.login.(sso|cas)$/)[1]}
+          identityProviders={ssoProviders.identity_providers}
+          baseUrl={baseUrl}
+        />
+      )}
+    </>
+  );
+}
+Login.propTypes = {
+  loginFlow: PropTypes.arrayOf(
+    PropTypes.shape({}),
+  ).isRequired,
+  baseUrl: PropTypes.string.isRequired,
+};
+
+let sid;
+let clientSecret;
+function Register({ registerInfo, loginFlow, baseUrl }) {
+  const [process, setProcess] = useState({});
+  const formRef = useRef();
+
+  const ssoProviders = loginFlow?.filter((flow) => flow.type.match(/^m.login.(sso|cas)$/))[0];
+  const isDisabled = registerInfo.errcode !== undefined;
+  const { flows, params, session } = registerInfo;
+
+  let isEmail = false;
+  let isEmailRequired = true;
+  let isRecaptcha = false;
+  let isTerms = false;
+  let isDummy = false;
+
+  flows?.forEach((flow) => {
+    if (isEmailRequired && flow.stages.indexOf('m.login.email.identity') === -1) isEmailRequired = false;
+    if (!isEmail) isEmail = flow.stages.indexOf('m.login.email.identity') > -1;
+    if (!isRecaptcha) isRecaptcha = flow.stages.indexOf('m.login.recaptcha') > -1;
+    if (!isTerms) isTerms = flow.stages.indexOf('m.login.terms') > -1;
+    if (!isDummy) isDummy = flow.stages.indexOf('m.login.dummy') > -1;
+  });
+
+  const initialValues = {
+    username: '', password: '', confirmPassword: '', email: '', other: '',
+  };
+
+  const validator = (values) => {
+    const errors = {};
+    if (values.username.list > 255) errors.username = USER_ID_TOO_LONG_ERROR;
+    if (values.username.length > 0 && !isValidInput(values.username, LOCALPART_SIGNUP_REGEX)) {
+      errors.username = BAD_LOCALPART_ERROR;
+    }
+    if (values.password.length > 0 && !isValidInput(values.password, PASSWORD_STRENGHT_REGEX)) {
+      errors.password = BAD_PASSWORD_ERROR;
+    }
+    if (values.confirmPassword.length > 0
+      && !isValidInput(values.confirmPassword, values.password)) {
+      errors.confirmPassword = CONFIRM_PASSWORD_ERROR;
+    }
+    if (values.email.length > 0 && !isValidInput(values.email, EMAIL_REGEX)) {
+      errors.email = BAD_EMAIL_ERROR;
+    }
+    return errors;
+  };
+  const submitter = (values, actions) => {
+    const tempClient = auth.createTemporaryClient(baseUrl);
+    clientSecret = tempClient.generateClientSecret();
+    return tempClient.isUsernameAvailable(values.username)
+      .then(async (isAvail) => {
+        if (!isAvail) {
+          actions.setErrors({ username: 'Username is already taken' });
+          actions.setSubmitting(false);
+        }
+        if (isEmail && values.email.length > 0) {
+          const result = await auth.verifyEmail(baseUrl, values.email, clientSecret, 1);
+          if (result.errcode) {
+            if (result.errcode === 'M_THREEPID_IN_USE') actions.setErrors({ email: result.error });
+            else actions.setErrors({ others: result.error || result.message });
+            actions.setSubmitting(false);
+            return;
+          }
+          sid = result.sid;
+        }
+        setProcess({ type: 'processing', message: 'Registration in progress....' });
+        actions.setSubmitting(false);
+      }).catch((err) => {
+        const msg = err.message || err.error;
+        if (['M_USER_IN_USE', 'M_INVALID_USERNAME', 'M_EXCLUSIVE'].indexOf(err.errcode) > 0) {
+          actions.setErrors({ username: err.errCode === 'M_USER_IN_USE' ? 'Username is already taken' : msg });
+        } else if (msg) actions.setErrors({ other: msg });
+
+        actions.setSubmitting(false);
+      });
+  };
+
+  const refreshWindow = () => window.location.reload();
+
+  const getInputs = () => {
+    const f = formRef.current;
+    return [f.username.value, f.password.value, f?.email?.value];
+  };
+
+  useEffect(() => {
+    if (process.type !== 'processing') return;
+    const asyncProcess = async () => {
+      const [username, password, email] = getInputs();
+      const d = await auth.completeRegisterStage(baseUrl, username, password, { session });
+
+      if (isRecaptcha && !d.completed.includes('m.login.recaptcha')) {
+        const sitekey = params['m.login.recaptcha'].public_key;
+        setProcess({ type: 'm.login.recaptcha', sitekey });
+        return;
+      }
+      if (isTerms && !d.completed.includes('m.login.terms')) {
+        const pp = params['m.login.terms'].policies.privacy_policy;
+        const url = pp?.en.url || pp[Object.keys(pp)[0]].url;
+        setProcess({ type: 'm.login.terms', url });
+        return;
+      }
+      if (isEmail && email.length > 0) {
+        setProcess({ type: 'm.login.email.identity', email });
+        return;
+      }
+      if (isDummy) {
+        const data = await auth.completeRegisterStage(baseUrl, username, password, {
+          type: 'm.login.dummy',
+          session,
+        });
+        if (data.done) refreshWindow();
+      }
+    };
+    asyncProcess();
+  }, [process]);
+
+  const handleRecaptcha = async (value) => {
+    if (typeof value !== 'string') return;
+    const [username, password] = getInputs();
+    const d = await auth.completeRegisterStage(baseUrl, username, password, {
+      type: 'm.login.recaptcha',
+      response: value,
+      session,
+    });
+    if (d.done) refreshWindow();
+    else setProcess({ type: 'processing', message: 'Registration in progress....' });
+  };
+  const handleTerms = async () => {
+    const [username, password] = getInputs();
+    const d = await auth.completeRegisterStage(baseUrl, username, password, {
+      type: 'm.login.terms',
+      session,
+    });
+    if (d.done) refreshWindow();
+    else setProcess({ type: 'processing', message: 'Registration in progress....' });
+  };
+  const handleEmailVerify = async () => {
+    const [username, password] = getInputs();
+    const d = await auth.completeRegisterStage(baseUrl, username, password, {
+      type: 'm.login.email.identity',
+      threepidCreds: { sid, client_secret: clientSecret },
+      threepid_creds: { sid, client_secret: clientSecret },
+      session,
+    });
+    if (d.done) refreshWindow();
+    else setProcess({ type: 'processing', message: 'Registration in progress....' });
+  };
+
+  return (
+    <>
+      {process.type === 'processing' && <LoadingScreen message={process.message} />}
+      {process.type === 'm.login.recaptcha' && <Recaptcha message="Please check the box below to proceed." sitekey={process.sitekey} onChange={handleRecaptcha} />}
+      {process.type === 'm.login.terms' && <Terms url={process.url} onSubmit={handleTerms} />}
+      {process.type === 'm.login.email.identity' && <EmailVerify email={process.email} onContinue={handleEmailVerify} />}
+      <div className="auth-form__heading">
+        {!isDisabled && <Text variant="h2">Register</Text>}
+        {isDisabled && <Text className="auth-form__error">{registerInfo.error}</Text>}
+      </div>
+      {!isDisabled && (
+        <Formik
+          initialValues={initialValues}
+          onSubmit={submitter}
+          validate={validator}
+        >
+          {({
+            values, errors, handleChange, handleSubmit, isSubmitting,
+          }) => (
+            <>
+              {process.type === undefined && isSubmitting && <LoadingScreen message="Registration in progress..." />}
+              <form className="auth-form" ref={formRef} onSubmit={handleSubmit}>
+                <Input values={values.username} name="username" onChange={handleChange} label="Username" type="username" required />
+                {errors.username && <Text className="auth-form__error" variant="b3">{errors.username}</Text>}
+                <Input values={values.password} name="password" onChange={handleChange} label="Password" type="password" required />
+                {errors.password && <Text className="auth-form__error" variant="b3">{errors.password}</Text>}
+                <Input values={values.confirmPassword} name="confirmPassword" onChange={handleChange} label="Confirm password" type="password" required />
+                {errors.confirmPassword && <Text className="auth-form__error" variant="b3">{errors.confirmPassword}</Text>}
+                {isEmail && <Input values={values.email} name="email" onChange={handleChange} label={`Email${isEmailRequired ? '' : ' (optional)'}`} type="email" required={isEmailRequired} />}
+                {errors.email && <Text className="auth-form__error" variant="b3">{errors.email}</Text>}
+                {errors.other && <Text className="auth-form__error" variant="b3">{errors.other}</Text>}
+                <div className="auth-form__btns">
+                  <Button variant="primary" type="submit" disabled={isSubmitting}>Register</Button>
+                </div>
+              </form>
+            </>
+          )}
+        </Formik>
+      )}
+      {isDisabled && ssoProviders && (
+        <SSOButtons
+          type={ssoProviders.type.match(/^m.login.(sso|cas)$/)[1]}
+          identityProviders={ssoProviders.identity_providers}
+          baseUrl={baseUrl}
+        />
+      )}
+    </>
+  );
+}
+Register.propTypes = {
+  registerInfo: PropTypes.shape({}).isRequired,
+  loginFlow: PropTypes.arrayOf(
+    PropTypes.shape({}),
+  ).isRequired,
+  baseUrl: PropTypes.string.isRequired,
+};
+
+function AuthCardCopy() {
+  const [hsConfig, setHsConfig] = useState(null);
+  const [type, setType] = useState('login');
+
+  const handleHsChange = (info) => setHsConfig(info);
+
+  return (
+    <>
+      <Homeserver onChange={handleHsChange} />
+      { hsConfig !== null && (
+        type === 'login'
+          ? <Login loginFlow={hsConfig.login.flows} baseUrl={hsConfig.baseUrl} />
+          : (
+            <Register
+              registerInfo={hsConfig.register}
+              loginFlow={hsConfig.login.flows}
+              baseUrl={hsConfig.baseUrl}
+            />
+          )
+      )}
+      { hsConfig !== null && (
+        <Text variant="b2" className="auth-card__switch flex--center">
+          {`${(type === 'login' ? 'Don\'t have' : 'Already have')} an account?`}
+          <button
+            type="button"
+            style={{ color: 'var(--tc-link)', cursor: 'pointer', margin: '0 var(--sp-ultra-tight)' }}
+            onClick={() => setType((type === 'login') ? 'register' : 'login')}
+          >
+            { type === 'login' ? ' Register' : ' Login' }
+          </button>
+        </Text>
+      )}
     </>
   );
 }
 
-function StaticWrapper({ children }) {
+function Auth() {
+  const [loginToken, setLoginToken] = useState(getUrlPrams('loginToken'));
+
+  useEffect(async () => {
+    if (!loginToken) return;
+    if (localStorage.getItem(cons.secretKey.BASE_URL) === undefined) {
+      setLoginToken(null);
+      return;
+    }
+    const baseUrl = localStorage.getItem(cons.secretKey.BASE_URL);
+    try {
+      await auth.loginWithToken(baseUrl, loginToken);
+
+      const { href } = window.location;
+      window.location.replace(href.slice(0, href.indexOf('?')));
+    } catch {
+      setLoginToken(null);
+    }
+  }, []);
+
   return (
     <ScrollView invisible>
-      <div className="auth__wrapper flex--center">
-        <div className="auth-card">
-          <div className="auth-card__interactive flex-v">
-            <div className="app-ident flex">
-              <img className="app-ident__logo noselect" src={CinnySvg} alt="Cinny logo" />
-              <div className="app-ident__text flex-v--center">
-                <Text variant="h2">Cinny</Text>
-                <Text variant="b2">Yet another matrix client</Text>
+      <div className="auth__base">
+        <div className="auth__wrapper">
+          {loginToken && <LoadingScreen message="Redirecting..." />}
+          {!loginToken && (
+            <div className="auth-card flex-v">
+              <Header>
+                <Avatar size="extra-small" imageSrc={CinnySvg} />
+                <TitleWrapper>
+                  <Text variant="h2">Cinny</Text>
+                </TitleWrapper>
+              </Header>
+              <div className="auth-card__content">
+                <AuthCardCopy />
               </div>
             </div>
-            { children }
-          </div>
+          )}
+        </div>
+
+        <div className="auth-footer">
+          <Text variant="b2">
+            <a href="https://cinny.in" target="_blank" rel="noreferrer">About</a>
+          </Text>
+          <Text variant="b2">
+            <a href="https://github.com/ajbura/cinny/releases" target="_blank" rel="noreferrer">{`v${cons.version}`}</a>
+          </Text>
+          <Text variant="b2">
+            <a href="https://twitter.com/cinnyapp" target="_blank" rel="noreferrer">Twitter</a>
+          </Text>
+          <Text variant="b2">
+            <a href="https://matrix.org" target="_blank" rel="noreferrer">Powered by Matrix</a>
+          </Text>
         </div>
       </div>
     </ScrollView>
   );
 }
-
-StaticWrapper.propTypes = {
-  children: PropTypes.node.isRequired,
-};
 
 function LoadingScreen({ message }) {
   return (
@@ -396,7 +595,7 @@ Recaptcha.propTypes = {
 function Terms({ url, onSubmit }) {
   return (
     <ProcessWrapper>
-      <form onSubmit={() => onSubmit(undefined, true)}>
+      <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
         <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
           <Text variant="h2">Agree with terms</Text>
           <div style={{ marginBottom: 'var(--sp-normal)' }} />
@@ -417,6 +616,27 @@ function Terms({ url, onSubmit }) {
 Terms.propTypes = {
   url: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
+};
+
+function EmailVerify({ email, onContinue }) {
+  return (
+    <ProcessWrapper>
+      <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
+        <Text variant="h2">Verify email</Text>
+        <div style={{ margin: 'var(--sp-normal) 0' }}>
+          <Text variant="b1">
+            {'Please check your email '}
+            <b>{`(${email})`}</b>
+            {' and validate before continuing further.'}
+          </Text>
+        </div>
+        <Button variant="primary" onClick={onContinue}>Continue</Button>
+      </div>
+    </ProcessWrapper>
+  );
+}
+EmailVerify.propTypes = {
+  email: PropTypes.string.isRequired,
 };
 
 function ProcessWrapper({ children }) {

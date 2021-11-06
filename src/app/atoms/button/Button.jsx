@@ -6,13 +6,14 @@ import Text from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 import { blurOnBubbling } from './script';
 
-function Button({
+const Button = React.forwardRef(({
   id, className, variant, iconSrc,
   type, onClick, children, disabled,
-}) {
+}, ref) => {
   const iconClass = (iconSrc === null) ? '' : `btn-${variant}--icon`;
   return (
     <button
+      ref={ref}
       id={id === '' ? undefined : id}
       className={`${className ? `${className} ` : ''}btn-${variant} ${iconClass} noselect`}
       onMouseUp={(e) => blurOnBubbling(e, `.btn-${variant}`)}
@@ -26,7 +27,7 @@ function Button({
       {typeof children !== 'string' && children }
     </button>
   );
-}
+});
 
 Button.defaultProps = {
   id: '',

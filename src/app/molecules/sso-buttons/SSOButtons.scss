@@ -1,22 +1,7 @@
 .sso-buttons {
-  &__divider {
-    display: flex;
-    align-items: center;
-
-    &::before,
-    &::after {
-      flex: 1;
-      content: '';
-      margin: var(--sp-tight);
-      border-bottom: 1px solid var(--bg-surface-border);
-    }
-  }
-  &__container {
-    margin-bottom: var(--sp-extra-loose);
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;  
-  }
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;  
 }
 
 .sso-btn {
@@ -31,11 +16,8 @@
     width: var(--av-small);
   }
   &__text-only {
+    margin-top: var(--sp-normal);
     flex-basis: 100%;
-    text-align: center;
-
-    margin: var(--sp-tight) 0px;
-    cursor: pointer;
     & .text {
       color: var(--tc-link);
     }

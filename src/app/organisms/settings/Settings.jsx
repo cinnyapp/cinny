@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import './Settings.scss';
 
 import initMatrix from '../../../client/initMatrix';
+import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import { toggleMarkdown } from '../../../client/action/settings';
 
@@ -104,7 +105,7 @@ function AboutSection() {
         <div>
           <Text variant="h2">
             Cinny
-            <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>v1.4.0</span>
+            <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>{`v${cons.version}`}</span>
           </Text>
           <Text>Yet another matrix client</Text>
 

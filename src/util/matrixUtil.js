@@ -2,15 +2,18 @@ import initMatrix from '../client/initMatrix';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
-async function getBaseUrl(homeserver) {
-  const serverDiscoveryUrl = `https://${homeserver}${WELL_KNOWN_URI}`;
+async function getBaseUrl(servername) {
+  let protocol = 'https://';
+  if (servername.match(/^https?:\/\//) !== null) protocol = '';
+  const serverDiscoveryUrl = `${protocol}${servername}${WELL_KNOWN_URI}`;
   try {
-    const result = await fetch(serverDiscoveryUrl, { method: 'GET' });
-    const data = await result.json();
+    const result = await (await fetch(serverDiscoveryUrl, { method: 'GET' })).json();
 
-    return data?.['m.homeserver']?.base_url;
+    const baseUrl = result?.['m.homeserver']?.base_url;
+    if (baseUrl === undefined) throw new Error();
+    return baseUrl;
   } catch (e) {
-    throw new Error('Homeserver not found');
+    throw new Error(`${protocol}${servername}`);
   }
 }
 

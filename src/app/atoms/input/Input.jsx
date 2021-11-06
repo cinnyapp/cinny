@@ -5,7 +5,7 @@ import './Input.scss';
 import TextareaAutosize from 'react-autosize-textarea';
 
 function Input({
-  id, label, value, placeholder,
+  id, label, name, value, placeholder,
   required, type, onChange, forwardRef,
   resizable, minHeight, onResize, state,
   onKeyDown,
@@ -17,6 +17,7 @@ function Input({
         ? (
           <TextareaAutosize
             style={{ minHeight: `${minHeight}px` }}
+            name={name}
             id={id}
             className={`input input--resizable${state !== 'normal' ? ` input--${state}` : ''}`}
             ref={forwardRef}
@@ -33,6 +34,7 @@ function Input({
           <input
             ref={forwardRef}
             id={id}
+            name={name}
             className={`input ${state !== 'normal' ? ` input--${state}` : ''}`}
             type={type}
             placeholder={placeholder}
@@ -49,6 +51,7 @@ function Input({
 
 Input.defaultProps = {
   id: null,
+  name: '',
   label: '',
   value: '',
   placeholder: '',
@@ -65,6 +68,7 @@ Input.defaultProps = {
 
 Input.propTypes = {
   id: PropTypes.string,
+  name: PropTypes.string,
   label: PropTypes.string,
   value: PropTypes.string,
   placeholder: PropTypes.string,
