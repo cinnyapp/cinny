@@ -1,6 +1,7 @@
 const path = require('path');
 const common = require('./webpack.common');
 const { merge } = require('webpack-merge');
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = merge(common, {
   mode: 'development',
@@ -24,4 +25,11 @@ module.exports = merge(common, {
       },
     ],
   },
+  plugins: [
+    new CopyPlugin({
+      patterns: [
+        { from: 'olm.wasm' },
+      ],
+    }),
+  ]
 });

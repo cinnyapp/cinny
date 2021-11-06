@@ -9,13 +9,15 @@
   },
   "scripts": {
     "start": "webpack serve --config ./webpack.dev.js --open",
-    "build": "export NODE_OPTIONS=--openssl-legacy-provider; webpack --config ./webpack.prod.js"
+    "build": "export NODE_OPTIONS=--openssl-legacy-provider; webpack --config ./webpack.prod.js",
+    "tauri": "tauri"
   },
   "keywords": [],
   "author": "Ajay Bura",
   "license": "MIT",
   "dependencies": {
     "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.4.tgz",
+    "@tauri-apps/api": "^1.0.0-beta.8",
     "@tippyjs/react": "^4.2.5",
     "babel-polyfill": "^6.26.0",
     "browser-encrypt-attachment": "^0.3.0",
@@ -46,6 +48,7 @@
     "@babel/core": "^7.15.5",
     "@babel/preset-env": "^7.13.12",
     "@babel/preset-react": "^7.13.13",
+    "@tauri-apps/cli": "^1.0.0-beta.10",
     "assert": "^2.0.0",
     "babel-loader": "^8.2.2",
     "browserify-fs": "^1.0.0",
