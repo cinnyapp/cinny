@@ -59,7 +59,6 @@
   align-items: flex-end;
   & > .input-container {
     flex: 1;
-    line-height: 0;
     & .input {
       border-right: unset;
       border-radius: var(--bo-radius) 0 0 var(--bo-radius);
