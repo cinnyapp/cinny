@@ -56,6 +56,7 @@
 .homeserver-form {
   display: flex;
   margin-bottom: var(--sp-extra-tight);
+  line-height: 0;
   & > .input-container {
     flex: 1;
     & .input {

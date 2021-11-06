@@ -5,11 +5,11 @@
   "main": "index.js",
   "engines": {
     "npm": ">=6.14.11",
-    "node": "16.3.0"
+    "node": ">=14.6.0"
   },
   "scripts": {
     "start": "webpack serve --config ./webpack.dev.js --open",
-    "build": "webpack --config ./webpack.prod.js"
+    "build": "export NODE_OPTIONS=--openssl-legacy-provider; webpack --config ./webpack.prod.js"
   },
   "keywords": [],
   "author": "Ajay Bura",

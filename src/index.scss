@@ -290,6 +290,11 @@ button {
   overflow: visible;
   -webkit-appearance: button;
 }
+textarea, input[type="text"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
 textarea {
   color: inherit;
   word-spacing: inherit;
