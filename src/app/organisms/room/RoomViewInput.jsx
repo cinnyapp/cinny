@@ -29,7 +29,7 @@ import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-const CMD_REGEX = /(^\/|>[#*@]|:|@)(\S*)$/;
+const CMD_REGEX = /(^\/|^>[#*@]|:|@)(\S*)$/;
 let isTyping = false;
 let isCmdActivated = false;
 let cmdCursorPos = null;
