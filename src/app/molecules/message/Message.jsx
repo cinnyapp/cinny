@@ -106,10 +106,17 @@ MessageReply.propTypes = {
   content: PropTypes.string.isRequired,
 };
 
-function MessageContent({ content, isMarkdown, isEdited }) {
+function MessageContent({
+  senderName,
+  content,
+  isMarkdown,
+  isEdited,
+  msgType,
+}) {
   return (
     <div className="message__content">
       <div className="text text-b1">
+        { msgType === 'm.emote' && `* ${senderName} ` }
         { isMarkdown ? genMarkdown(content) : linkifyContent(content) }
       </div>
       { isEdited && <Text className="message__content-edited" variant="b3">(edited)</Text>}
@@ -121,9 +128,11 @@ MessageContent.defaultProps = {
   isEdited: false,
 };
 MessageContent.propTypes = {
+  senderName: PropTypes.string.isRequired,
   content: PropTypes.node.isRequired,
   isMarkdown: PropTypes.bool,
   isEdited: PropTypes.bool,
+  msgType: PropTypes.string.isRequired,
 };
 
 function MessageEdit({ content, onSave, onCancel }) {
@@ -228,10 +237,27 @@ MessageOptions.propTypes = {
 
 function Message({
   avatar, header, reply, content, editContent, reactions, options,
+  msgType,
 }) {
-  const msgClass = header === null ? ' message--content-only' : ' message--full';
+  const className = [
+    'message',
+    header === null ? ' message--content-only' : ' message--full',
+  ];
+  switch (msgType) {
+    case 'm.text':
+      className.push('message--type-text');
+      break;
+    case 'm.emote':
+      className.push('message--type-emote');
+      break;
+    case 'm.notice':
+      className.push('message--type-notice');
+      break;
+    default:
+  }
+
   return (
-    <div className={`message${msgClass}`}>
+    <div className={className.join(' ')}>
       <div className="message__avatar-container">
         {avatar !== null && avatar}
       </div>
@@ -254,6 +280,7 @@ Message.defaultProps = {
   editContent: null,
   reactions: null,
   options: null,
+  msgType: 'm.text',
 };
 Message.propTypes = {
   avatar: PropTypes.node,
@@ -263,6 +290,7 @@ Message.propTypes = {
   editContent: PropTypes.node,
   reactions: PropTypes.node,
   options: PropTypes.node,
+  msgType: PropTypes.string,
 };
 
 export {
