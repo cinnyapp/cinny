@@ -5,7 +5,7 @@
   "main": "index.js",
   "engines": {
     "npm": ">=6.14.11",
-    "node": ">=14.6.0"
+    "node": "16.3.0"
   },
   "scripts": {
     "start": "webpack serve --config ./webpack.dev.js --open",
@@ -25,6 +25,7 @@
     "formik": "^2.2.9",
     "html-react-parser": "^1.2.7",
     "linkify-react": "^3.0.3",
+    "linkifyjs": "^3.0.3",
     "matrix-js-sdk": "^12.4.1",
     "micromark": "^3.0.3",
     "micromark-extension-gfm": "^1.0.0",
