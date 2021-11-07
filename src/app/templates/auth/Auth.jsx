@@ -388,7 +388,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       session,
     });
     if (d.done) refreshWindow();
-    else setProcess({ type: 'processing', message: 'Registration in progress....' });
+    else setProcess({ type: 'processing', message: 'Registration in progress...' });
   };
   const handleTerms = async () => {
     const [username, password] = getInputs();
@@ -397,7 +397,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       session,
     });
     if (d.done) refreshWindow();
-    else setProcess({ type: 'processing', message: 'Registration in progress....' });
+    else setProcess({ type: 'processing', message: 'Registration in progress...' });
   };
   const handleEmailVerify = async () => {
     const [username, password] = getInputs();
@@ -408,7 +408,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       session,
     });
     if (d.done) refreshWindow();
-    else setProcess({ type: 'processing', message: 'Registration in progress....' });
+    else setProcess({ type: 'processing', message: 'Registration in progress...' });
   };
 
   return (
