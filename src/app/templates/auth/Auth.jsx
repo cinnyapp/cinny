@@ -468,11 +468,14 @@ Register.propTypes = {
   baseUrl: PropTypes.string.isRequired,
 };
 
-function AuthCardCopy() {
+function AuthCard() {
   const [hsConfig, setHsConfig] = useState(null);
   const [type, setType] = useState('login');
 
-  const handleHsChange = (info) => setHsConfig(info);
+  const handleHsChange = (info) => {
+    console.log(info);
+    setHsConfig(info);
+  };
 
   return (
     <>
@@ -538,7 +541,7 @@ function Auth() {
                 </TitleWrapper>
               </Header>
               <div className="auth-card__content">
-                <AuthCardCopy />
+                <AuthCard />
               </div>
             </div>
           )}

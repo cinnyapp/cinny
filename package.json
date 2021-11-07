@@ -1,6 +1,6 @@
 {
   "name": "cinny",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Yet another matrix client",
   "main": "index.js",
   "engines": {
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "webpack serve --config ./webpack.dev.js --open",
-    "build": "export NODE_OPTIONS=--openssl-legacy-provider; webpack --config ./webpack.prod.js"
+    "build": "webpack --config ./webpack.prod.js"
   },
   "keywords": [],
   "author": "Ajay Bura",
@@ -74,8 +74,8 @@
     "style-loader": "^2.0.0",
     "util": "^0.12.4",
     "webpack": "^5.62.1",
-    "webpack-cli": "^4.5.0",
-    "webpack-dev-server": "^3.11.2",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.4.0",
     "webpack-merge": "^5.7.3"
   }
 }

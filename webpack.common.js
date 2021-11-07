@@ -1,6 +1,7 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 const webpack = require('webpack');
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: {
@@ -38,15 +39,13 @@ module.exports = {
         use: ['html-loader'],
       },
       {
-        test: /\.(svg|png|jpe?g|gif|otf|ttf)$/,
-        use: {
-          loader: 'file-loader',
-          options: {
-            name: '[name].[hash].[ext]',
-            outputPath: 'assets',
-          },
-        },
+        test: /\.(png|jpe?g|gif|otf|ttf)$/,
+        type: 'asset/resource',
       },
+      {
+        test: /\.svg$/,
+        type: 'asset/inline',
+      }
     ],
   },
   plugins: [
@@ -69,6 +68,13 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       'process.env': JSON.stringify(process.env),
+    }),
+    new CopyPlugin({
+      patterns: [
+        { from: 'olm.wasm' },
+        { from: '_redirects' },
+        { from: 'config.json' },
+      ],
     }),
   ],
 };

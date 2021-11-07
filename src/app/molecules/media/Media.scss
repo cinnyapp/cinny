@@ -11,6 +11,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  & a {
+    line-height: 0;
+  }
 }
 
 .file-container {

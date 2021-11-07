@@ -4,7 +4,6 @@ const { merge } = require('webpack-merge');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = merge(common, {
   mode: 'production',
@@ -35,13 +34,6 @@ module.exports = merge(common, {
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].bundle.css',
-    }),
-    new CopyPlugin({
-      patterns: [
-        { from: 'olm.wasm' },
-        { from: '_redirects' },
-        { from: 'config.json' },
-      ],
     }),
   ],
 });

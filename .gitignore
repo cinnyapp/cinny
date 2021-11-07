@@ -2,5 +2,6 @@ experiment
 dist
 node_modules
 devAssets
+package-lock.json
 
 .DS_Store
