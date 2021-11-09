@@ -48,7 +48,7 @@ function ImageUpload({
       >
         <Avatar
           imageSrc={imageSrc}
-          text={text.slice(0, 1)}
+          text={text}
           bgColor={bgColor}
           size="large"
         />

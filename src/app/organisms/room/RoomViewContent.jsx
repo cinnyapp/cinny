@@ -356,7 +356,7 @@ function RoomViewContent({
       <button type="button" onClick={() => openProfileViewer(mEvent.sender.userId, roomId)}>
         <Avatar
           imageSrc={mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop')}
-          text={getUsernameOfRoomMember(mEvent.sender).slice(0, 1)}
+          text={getUsernameOfRoomMember(mEvent.sender)}
           bgColor={senderMXIDColor}
           size="small"
         />

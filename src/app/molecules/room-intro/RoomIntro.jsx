@@ -17,7 +17,7 @@ function RoomIntro({
 }) {
   return (
     <div className="room-intro">
-      <Avatar imageSrc={avatarSrc} text={name.slice(0, 1)} bgColor={colorMXID(roomId)} size="large" />
+      <Avatar imageSrc={avatarSrc} text={name} bgColor={colorMXID(roomId)} size="large" />
       <div className="room-intro__content">
         <Text className="room-intro__name" variant="h1">{heading}</Text>
         <Text className="room-intro__desc" variant="b1">{linkifyContent(desc)}</Text>
