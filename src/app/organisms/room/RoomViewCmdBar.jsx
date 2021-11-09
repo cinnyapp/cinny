@@ -163,26 +163,6 @@ FollowingMembers.propTypes = {
   viewEvent: PropTypes.shape({}).isRequired,
 };
 
-function getCmdActivationMessage(prefix) {
-  function genMessage(prime, secondary) {
-    return (
-      <>
-        <span>{prime}</span>
-        <span>{secondary}</span>
-      </>
-    );
-  }
-  const cmd = {
-    '/': () => genMessage('General command mode activated. ', 'Type command name for suggestions.'),
-    '>*': () => genMessage('Go-to command mode activated. ', 'Type space name for suggestions.'),
-    '>#': () => genMessage('Go-to command mode activated. ', 'Type room name for suggestions.'),
-    '>@': () => genMessage('Go-to command mode activated. ', 'Type people name for suggestions.'),
-    ':': () => genMessage('Emoji autofill command mode activated. ', 'Type emoji shortcut for suggestions.'),
-    '@': () => genMessage('Name autofill command mode activated. ', 'Type name for suggestions.'),
-  };
-  return cmd[prefix]?.();
-}
-
 function CmdItem({ onClick, children }) {
   return (
     <button className="cmd-item" onClick={onClick} type="button">
@@ -297,6 +277,26 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     setCmd({ prefix: cmd?.prefix || cmdPrefix, suggestions, option: cmdOption });
   }
 
+  function getCmdActivationMessage(prefix) {
+    function genMessage(prime, secondary) {
+      return (
+        <>
+          <span>{prime}</span>
+          <span>{secondary}</span>
+        </>
+      );
+    }
+    const cmd = {
+      '/': () => getCmdSuggestions(cmd, fireCmd),
+      '>*': () => genMessage('Go-to command mode activated. ', 'Type space name for suggestions.'),
+      '>#': () => genMessage('Go-to command mode activated. ', 'Type room name for suggestions.'),
+      '>@': () => genMessage('Go-to command mode activated. ', 'Type people name for suggestions.'),
+      ':': () => genMessage('Emoji autofill command mode activated. ', 'Type emoji shortcut for suggestions.'),
+      '@': () => genMessage('Name autofill command mode activated. ', 'Type name for suggestions.'),
+    };
+    return cmd[prefix]?.();
+  }
+
   function processCmd(prefix, slug) {
     let searchTerm = slug;
     cmdOption = undefined;
@@ -340,7 +340,7 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
       });
     }
     const setupSearch = {
-      '/': () => asyncSearch.setup(commands, { keys: ['name'], isContain: true }),
+      '/': () => asyncSearch.setup(commands, { keys: ['name'], isContain: true, suggestAllOnEmpty: true }),
       '>*': () => asyncSearch.setup(getRooms([...roomList.spaces]), { keys: ['name'], limit: 20 }),
       '>#': () => asyncSearch.setup(getRooms([...roomList.rooms]), { keys: ['name'], limit: 20 }),
       '>@': () => asyncSearch.setup(getRooms([...roomList.directs]), { keys: ['name'], limit: 20 }),

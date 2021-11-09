@@ -16,6 +16,7 @@ class AsyncSearch extends EventEmitter {
     this.isContain = false;
     this.isCaseSensitive = false;
     this.ignoreWhitespace = true;
+    this.suggestAllOnEmpty = false;
     this.limit = null;
     this.findingList = [];
 
@@ -40,6 +41,7 @@ class AsyncSearch extends EventEmitter {
    * @param {boolean} [opts.isContain=false] - Add finding to result if it contain search term
    * @param {boolean} [opts.isCaseSensitive=false]
    * @param {boolean} [opts.ignoreWhitespace=true]
+   * @param {boolean} [opts.suggestAllOnEmpty=false]
    * @param {number} [opts.limit=null] - Stop search after limit
    */
   setup(dataList, opts) {
@@ -49,6 +51,7 @@ class AsyncSearch extends EventEmitter {
     this.isContain = opts?.isContain || false;
     this.isCaseSensitive = opts?.isCaseSensitive || false;
     this.ignoreWhitespace = opts?.ignoreWhitespace || true;
+    this.suggestAllOnEmpty = opts?.suggestAllOnEmpty || false;
     this.limit = opts?.limit || null;
   }
 
@@ -57,7 +60,7 @@ class AsyncSearch extends EventEmitter {
 
     this.term = (this.isCaseSensitive) ? term : term.toLocaleLowerCase();
     if (this.ignoreWhitespace) this.term = this.term.replace(' ', '');
-    if (this.term === '') {
+    if (this.term === '' && !this.suggestAllOnEmpty) {
       this._sendFindings();
       return;
     }

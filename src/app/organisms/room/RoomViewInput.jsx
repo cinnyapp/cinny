@@ -256,7 +256,6 @@ function RoomViewInput({
     cmdCursorPos = cursor;
     if (cmdSlug === '') {
       activateCmd(cmdPrefix);
-      return;
     }
     if (!isCmdActivated) activateCmd(cmdPrefix);
     requestAnimationFrame(() => {
