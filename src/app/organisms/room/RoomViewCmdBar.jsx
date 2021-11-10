@@ -441,30 +441,33 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     );
   }
 
+  const inSuggestionMode = cmd !== null;
+  const hasSuggestions = inSuggestionMode && (typeof cmd.suggestions === 'undefined' || cmd.suggestions?.length > 0);
+
   return (
     <div className="cmd-bar">
       <div className="cmd-bar__info">
-        {cmd === null && <CmdHelp />}
-        {cmd !== null && typeof cmd.suggestions === 'undefined' && <div className="cmd-bar__info-indicator" /> }
-        {cmd !== null && typeof cmd.suggestions !== 'undefined' && <Text variant="b3">TAB</Text>}
+        {!inSuggestionMode && <CmdHelp />}
+        {inSuggestionMode && !hasSuggestions && <div className="cmd-bar__info-indicator" /> }
+        {inSuggestionMode && hasSuggestions && <Text variant="b3">TAB</Text>}
       </div>
       <div className="cmd-bar__content">
-        {cmd === null && (
+        {!inSuggestionMode && (
           <FollowingMembers
             roomId={roomId}
             roomTimeline={roomTimeline}
             viewEvent={viewEvent}
           />
         )}
-        {cmd !== null && typeof cmd.suggestions === 'undefined' && <Text className="cmd-bar__content-help" variant="b2">{getCmdActivationMessage(cmd.prefix)}</Text>}
-        {cmd !== null && typeof cmd.suggestions !== 'undefined' && (
+        {inSuggestionMode && !hasSuggestions && <Text className="cmd-bar__content-help" variant="b2">{getCmdActivationMessage(cmd.prefix)}</Text>}
+        {inSuggestionMode && hasSuggestions && (
           <ScrollView horizontal vertical={false} invisible>
             <div className="cmd-bar__content__suggestions">{getCmdSuggestions(cmd, fireCmd)}</div>
           </ScrollView>
         )}
       </div>
       <div className="cmd-bar__more">
-        {cmd !== null && cmd.prefix === '/' && <ViewCmd />}
+        {inSuggestionMode && cmd.prefix === '/' && <ViewCmd />}
       </div>
     </div>
   );
