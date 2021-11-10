@@ -257,7 +257,7 @@ function ProfileViewer() {
         <div className="profile-viewer__user">
           <Avatar
             imageSrc={!avatarMxc ? null : mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop')}
-            text={username.slice(0, 1)}
+            text={username}
             bgColor={colorMXID(userId)}
             size="large"
           />

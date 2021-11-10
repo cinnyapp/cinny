@@ -24,7 +24,7 @@ function RoomViewHeader({ roomId }) {
 
   return (
     <Header>
-      <Avatar imageSrc={avatarSrc} text={roomName.slice(0, 1)} bgColor={colorMXID(roomId)} size="small" />
+      <Avatar imageSrc={avatarSrc} text={roomName} bgColor={colorMXID(roomId)} size="small" />
       <TitleWrapper>
         <Text variant="h2">{roomName}</Text>
         { typeof roomTopic !== 'undefined' && <p title={roomTopic} className="text text-b3">{roomTopic}</p>}

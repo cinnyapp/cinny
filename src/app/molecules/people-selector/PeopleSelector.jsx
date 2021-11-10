@@ -18,7 +18,7 @@ function PeopleSelector({
         onClick={onClick}
         type="button"
       >
-        <Avatar imageSrc={avatarSrc} text={name.slice(0, 1)} bgColor={color} size="extra-small" />
+        <Avatar imageSrc={avatarSrc} text={name} bgColor={color} size="extra-small" />
         <Text className="people-selector__name" variant="b1">{name}</Text>
         {peopleRole !== null && <Text className="people-selector__role" variant="b3">{peopleRole}</Text>}
       </button>

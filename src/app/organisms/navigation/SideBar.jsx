@@ -70,7 +70,7 @@ function ProfileAvatarMenu() {
           tooltip={profile.displayName}
           imageSrc={profile.avatarUrl !== null ? mx.mxcUrlToHttp(profile.avatarUrl, 42, 42, 'crop') : null}
           bgColor={colorMXID(mx.getUserId())}
-          text={profile.displayName.slice(0, 1)}
+          text={profile.displayName}
         />
       )}
     />
@@ -190,7 +190,7 @@ function SideBar() {
                       tooltip={room.name}
                       bgColor={colorMXID(room.roomId)}
                       imageSrc={room.getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop') || null}
-                      text={room.name.slice(0, 1)}
+                      text={room.name}
                       isUnread={notifications.hasNoti(sRoomId)}
                       notificationCount={abbreviateNumber(notifications.getTotalNoti(sRoomId))}
                       isAlert={notifications.getHighlightNoti(sRoomId) !== 0}

@@ -51,7 +51,7 @@ function RoomSelector({
       content={(
         <>
           <Avatar
-            text={name.slice(0, 1)}
+            text={name}
             bgColor={colorMXID(roomId)}
             imageSrc={imageSrc}
             iconSrc={iconSrc}

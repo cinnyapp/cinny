@@ -22,7 +22,7 @@ function RoomTile({
         <Avatar
           imageSrc={avatarSrc}
           bgColor={colorMXID(id)}
-          text={name.slice(0, 1)}
+          text={name}
         />
       </div>
       <div className="room-tile__content">
