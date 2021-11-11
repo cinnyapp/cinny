@@ -1,6 +1,5 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
-const webpack = require('webpack');
 const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
@@ -65,9 +64,6 @@ module.exports = {
           appleStartup: false,
         }
       }
-    }),
-    new webpack.DefinePlugin({
-      'process.env': JSON.stringify(process.env),
     }),
     new CopyPlugin({
       patterns: [
