@@ -75,7 +75,10 @@ async function completeRegisterStage(
 
   try {
     const result = await tempClient.registerRequest({
-      username, password, auth,
+      username,
+      password,
+      auth,
+      initial_device_display_name: cons.DEVICE_DISPLAY_NAME,
     });
     const data = { completed: result.completed || [] };
     if (result.access_token) {
