@@ -249,8 +249,8 @@ function ProfileViewer() {
   }, [isOpen]);
 
   function renderProfile() {
-    const member = room.getMember(userId) || mx.getUser(userId);
-    const avatarMxc = member.getMxcAvatarUrl() || member.avatarUrl;
+    const member = room.getMember(userId) || mx.getUser(userId) || {};
+    const avatarMxc = member.getMxcAvatarUrl?.() || member.avatarUrl;
 
     return (
       <div className="profile-viewer">
