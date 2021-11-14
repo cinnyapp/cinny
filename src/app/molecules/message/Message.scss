@@ -410,3 +410,14 @@
     }
   }
 }
+
+.message.message--type-emote {
+  .message__content {
+    font-style: italic;
+
+    // Remove blockness of first `<p>` so that markdown emotes stay on one line.
+    p:first-of-type {
+      display: inline;
+    }
+  }
+}
