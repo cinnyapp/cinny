@@ -8,7 +8,7 @@ import dateFormat from 'dateformat';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
-import { getUsername, getUsernameOfRoomMember, doesRoomHaveUnread } from '../../../util/matrixUtil';
+import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { diffMinutes, isNotInSameDay, getEventCords } from '../../../util/common';
 import { openEmojiBoard, openProfileViewer, openReadReceipts } from '../../../client/action/navigation';
@@ -191,6 +191,7 @@ function RoomViewContent({
   const [onPagination, setOnPagination] = useState(null);
   const [editEvent, setEditEvent] = useState(null);
   const mx = initMatrix.matrixClient;
+  const noti = initMatrix.notifications;
 
   function autoLoadTimeline() {
     if (timelineScroll.isScrollable() === true) return;
@@ -199,7 +200,7 @@ function RoomViewContent({
   function trySendingReadReceipt() {
     const { room, timeline } = roomTimeline;
     if (
-      (doesRoomHaveUnread(room) || initMatrix.notifications.hasNoti(roomId))
+      (noti.doesRoomHaveUnread(room) || noti.hasNoti(roomId))
       && timeline.length !== 0) {
       mx.sendReadReceipt(timeline[timeline.length - 1]);
     }

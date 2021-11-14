@@ -31,6 +31,7 @@ class InitMatrix extends EventEmitter {
       sessionStore: new sdk.WebStorageSessionStore(global.localStorage),
       cryptoStore: new sdk.IndexedDBCryptoStore(global.indexedDB, 'crypto-store'),
       deviceId: secret.deviceId,
+      timelineSupport: true,
     });
 
     await this.matrixClient.initCrypto();

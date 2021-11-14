@@ -48,30 +48,6 @@ async function isRoomAliasAvailable(alias) {
   }
 }
 
-function doesRoomHaveUnread(room) {
-  const userId = initMatrix.matrixClient.getUserId();
-  const readUpToId = room.getEventReadUpTo(userId);
-  const supportEvents = ['m.room.message', 'm.room.encrypted', 'm.sticker'];
-
-  if (room.timeline.length
-    && room.timeline[room.timeline.length - 1].sender
-    && room.timeline[room.timeline.length - 1].sender.userId === userId
-    && room.timeline[room.timeline.length - 1].getType() !== 'm.room.member') {
-    return false;
-  }
-
-  for (let i = room.timeline.length - 1; i >= 0; i -= 1) {
-    const event = room.timeline[i];
-
-    if (event.getId() === readUpToId) return false;
-
-    if (supportEvents.includes(event.getType())) {
-      return true;
-    }
-  }
-  return true;
-}
-
 function getPowerLabel(powerLevel) {
   if (powerLevel > 9000) return 'Goku';
   if (powerLevel > 100) return 'Founder';
@@ -82,5 +58,5 @@ function getPowerLabel(powerLevel) {
 
 export {
   getBaseUrl, getUsername, getUsernameOfRoomMember,
-  isRoomAliasAvailable, doesRoomHaveUnread, getPowerLabel,
+  isRoomAliasAvailable, getPowerLabel,
 };

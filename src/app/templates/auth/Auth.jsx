@@ -333,7 +333,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       }).catch((err) => {
         const msg = err.message || err.error;
         if (['M_USER_IN_USE', 'M_INVALID_USERNAME', 'M_EXCLUSIVE'].indexOf(err.errcode) > -1) {
-          actions.setErrors({ username: err.errCode === 'M_USER_IN_USE' ? 'Username is already taken' : msg });
+          actions.setErrors({ username: err.errcode === 'M_USER_IN_USE' ? 'Username is already taken' : msg });
         } else if (msg) actions.setErrors({ other: msg });
 
         actions.setSubmitting(false);

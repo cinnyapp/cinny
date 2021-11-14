@@ -290,7 +290,12 @@ button {
   overflow: visible;
   -webkit-appearance: button;
 }
-textarea, input[type="text"] {
+textarea,
+input,
+input[type=text]
+input[type=username]
+input[type=password]
+input[type=email] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;

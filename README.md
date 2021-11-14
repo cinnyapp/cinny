@@ -57,7 +57,7 @@ To set default Homeserver on login and register page, place a customized [`confi
 
 ## License
 
-Copyright (c) 2021 Ajay Bura (ajbura) and other contributors
+Copyright (c) 2021 Ajay Bura (ajbura) and contributors
 
 Code licensed under the MIT License: <http://opensource.org/licenses/MIT>
 
