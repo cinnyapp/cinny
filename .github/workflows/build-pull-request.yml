@@ -1,0 +1,32 @@
+name: 'Build PR'
+
+on:
+  pull_request:
+    types: ['opened', 'synchronize']
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        env:
+          PR_NUMBER: ${{github.event.number}}
+        steps:
+            - uses: actions/checkout@v2
+            - name: Build
+              run: npm install && npm run build
+            - name: Upload Artifact
+              uses: actions/upload-artifact@v2
+              with:
+                  name: previewbuild
+                  path: dist
+                  retention-days: 1
+            - uses: actions/github-script@v3.1.0
+              with:
+                script: |
+                    var fs = require('fs');
+                    fs.writeFileSync('${{github.workspace}}/pr.json', JSON.stringify(context.payload.pull_request));
+            - name: Upload PR Info
+              uses: actions/upload-artifact@v2
+              with:
+                  name: pr.json
+                  path: pr.json
+                  retention-days: 1
