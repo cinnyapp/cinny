@@ -156,7 +156,7 @@ function Login({ loginFlow, baseUrl }) {
   const [typeIndex, setTypeIndex] = useState(0);
   const loginTypes = ['Username', 'Email'];
   const isPassword = loginFlow?.filter((flow) => flow.type === 'm.login.password')[0];
-  const ssoProviders = loginFlow?.filter((flow) => flow.type.match(/^m.login.(sso|cas)$/))[0];
+  const ssoProviders = loginFlow?.filter((flow) => flow.type === 'm.login.sso')[0];
 
   const initialValues = {
     username: '', password: '', email: '', other: '',
@@ -248,7 +248,7 @@ function Login({ loginFlow, baseUrl }) {
       {ssoProviders && isPassword && <Text className="sso__divider">OR</Text>}
       {ssoProviders && (
         <SSOButtons
-          type={ssoProviders.type.match(/^m.login.(sso|cas)$/)[1]}
+          type="sso"
           identityProviders={ssoProviders.identity_providers}
           baseUrl={baseUrl}
         />
@@ -269,7 +269,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
   const [process, setProcess] = useState({});
   const formRef = useRef();
 
-  const ssoProviders = loginFlow?.filter((flow) => flow.type.match(/^m.login.(sso|cas)$/))[0];
+  const ssoProviders = loginFlow?.filter((flow) => flow.type === 'm.login.sso')[0];
   const isDisabled = registerInfo.errcode !== undefined;
   const { flows, params, session } = registerInfo;
 
@@ -452,7 +452,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       )}
       {isDisabled && ssoProviders && (
         <SSOButtons
-          type={ssoProviders.type.match(/^m.login.(sso|cas)$/)[1]}
+          type="sso"
           identityProviders={ssoProviders.identity_providers}
           baseUrl={baseUrl}
         />
