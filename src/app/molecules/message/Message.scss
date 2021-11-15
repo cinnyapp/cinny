@@ -97,7 +97,7 @@
 .message__content,
 .message__edit,
 .message__reactions {
-  max-width: 640px;
+  max-width: calc(100% - 88px);
   min-width: 0;
 }
 
@@ -260,16 +260,6 @@
   [dir=rtl] & {
     left: 60px;
     right: unset;
-  }
-}
-@media (min-width: 1620px) {
-  .message__options {
-    right: unset;
-    left: 770px;
-    [dir=rtl] {
-      left: unset;
-      right: 770px
-    }
   }
 }
 
