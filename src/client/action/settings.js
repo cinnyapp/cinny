@@ -7,6 +7,13 @@ function toggleMarkdown() {
   });
 }
 
+function togglePeopleDrawer() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_PEOPLE_DRAWER,
+  });
+}
+
 export {
   toggleMarkdown,
+  togglePeopleDrawer,
 };

@@ -11,7 +11,6 @@ class Navigation extends EventEmitter {
     this.selectedSpacePath = [cons.tabs.HOME];
 
     this.selectedRoomId = null;
-    this.isPeopleDrawerVisible = true;
   }
 
   _setSpacePath(roomId) {
@@ -52,10 +51,6 @@ class Navigation extends EventEmitter {
         const prevSelectedRoomId = this.selectedRoomId;
         this.selectedRoomId = action.roomId;
         this.emit(cons.events.navigation.ROOM_SELECTED, this.selectedRoomId, prevSelectedRoomId);
-      },
-      [cons.actions.navigation.TOGGLE_PEOPLE_DRAWER]: () => {
-        this.isPeopleDrawerVisible = !this.isPeopleDrawerVisible;
-        this.emit(cons.events.navigation.PEOPLE_DRAWER_TOGGLED, this.isPeopleDrawerVisible);
       },
       [cons.actions.navigation.OPEN_INVITE_LIST]: () => {
         this.emit(cons.events.navigation.INVITE_LIST_OPENED);

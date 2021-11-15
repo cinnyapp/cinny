@@ -2,7 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
-import { togglePeopleDrawer, openRoomOptions } from '../../../client/action/navigation';
+import { openRoomOptions } from '../../../client/action/navigation';
+import { togglePeopleDrawer } from '../../../client/action/settings';
 import colorMXID from '../../../util/colorMXID';
 import { getEventCords } from '../../../util/common';
 

@@ -46,6 +46,7 @@ const cons = {
     },
     settings: {
       TOGGLE_MARKDOWN: 'TOGGLE_MARKDOWN',
+      TOGGLE_PEOPLE_DRAWER: 'TOGGLE_PEOPLE_DRAWER',
     },
   },
   events: {
@@ -91,6 +92,7 @@ const cons = {
     },
     settings: {
       MARKDOWN_TOGGLED: 'MARKDOWN_TOGGLED',
+      PEOPLE_DRAWER_TOGGLED: 'PEOPLE_DRAWER_TOGGLED',
     },
   },
 };

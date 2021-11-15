@@ -22,12 +22,6 @@ function selectRoom(roomId) {
   });
 }
 
-function togglePeopleDrawer() {
-  appDispatcher.dispatch({
-    type: cons.actions.navigation.TOGGLE_PEOPLE_DRAWER,
-  });
-}
-
 function openInviteList() {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_INVITE_LIST,
@@ -97,7 +91,6 @@ export {
   selectTab,
   selectSpace,
   selectRoom,
-  togglePeopleDrawer,
   openInviteList,
   openPublicRooms,
   openCreateRoom,
