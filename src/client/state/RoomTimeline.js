@@ -2,15 +2,39 @@ import EventEmitter from 'events';
 import initMatrix from '../initMatrix';
 import cons from './cons';
 
+function isEdited(mEvent) {
+  return mEvent.getRelation()?.rel_type === 'm.replace';
+}
+
+function isReaction(mEvent) {
+  return mEvent.getType() === 'm.reaction';
+}
+
+function getRelateToId(mEvent) {
+  const relation = mEvent.getRelation();
+  return relation && relation.event_id;
+}
+
+function addToMap(myMap, mEvent) {
+  const relateToId = getRelateToId(mEvent);
+  if (relateToId === null) return null;
+
+  if (typeof myMap.get(relateToId) === 'undefined') myMap.set(relateToId, []);
+  myMap.get(relateToId).push(mEvent);
+  return mEvent;
+}
+
 class RoomTimeline extends EventEmitter {
   constructor(roomId) {
     super();
     this.matrixClient = initMatrix.matrixClient;
     this.roomId = roomId;
     this.room = this.matrixClient.getRoom(roomId);
-    this.timeline = this.room.timeline;
-    this.editedTimeline = this.getEditedTimeline();
-    this.reactionTimeline = this.getReactionTimeline();
+
+    this.timeline = new Map();
+    this.editedTimeline = new Map();
+    this.reactionTimeline = new Map();
+
     this.isOngoingPagination = false;
     this.ongoingDecryptionCount = 0;
     this.typingMembers = new Set();
@@ -23,31 +47,30 @@ class RoomTimeline extends EventEmitter {
         return;
       }
 
-      this.timeline = this.room.timeline;
-      if (this.isEdited(event)) {
-        this.addToMap(this.editedTimeline, event);
-      }
-      if (this.isReaction(event)) {
-        this.addToMap(this.reactionTimeline, event);
-      }
-
       if (this.ongoingDecryptionCount !== 0) return;
       if (this.isOngoingPagination) return;
-      this.emit(cons.events.roomTimeline.EVENT);
-    };
 
-    this._listenRedaction = (event, room) => {
-      if (room.roomId !== this.roomId) return;
+      this.addToTimeline(event);
       this.emit(cons.events.roomTimeline.EVENT);
     };
 
     this._listenDecryptEvent = (event) => {
       if (event.getRoomId() !== this.roomId) return;
 
-      if (this.ongoingDecryptionCount > 0) this.ongoingDecryptionCount -= 1;
-      this.timeline = this.room.timeline;
+      if (this.ongoingDecryptionCount > 0) {
+        this.ongoingDecryptionCount -= 1;
+      }
+      if (this.ongoingDecryptionCount > 0) return;
 
-      if (this.ongoingDecryptionCount !== 0) return;
+      if (this.isOngoingPagination) return;
+      this.emit(cons.events.roomTimeline.EVENT);
+    };
+
+    this._listenRedaction = (event, room) => {
+      if (room.roomId !== this.roomId) return;
+      this.timeline.delete(event.getId());
+      this.editedTimeline.delete(event.getId());
+      this.reactionTimeline.delete(event.getId());
       this.emit(cons.events.roomTimeline.EVENT);
     };
 
@@ -63,7 +86,7 @@ class RoomTimeline extends EventEmitter {
       if (room.roomId !== this.roomId) return;
       const receiptContent = event.getContent();
       if (this.timeline.length === 0) return;
-      const tmlLastEvent = this.timeline[this.timeline.length - 1];
+      const tmlLastEvent = room.timeline[room.timeline.length - 1];
       const lastEventId = tmlLastEvent.getId();
       const lastEventRecipt = receiptContent[lastEventId];
       if (typeof lastEventRecipt === 'undefined') return;
@@ -82,78 +105,53 @@ class RoomTimeline extends EventEmitter {
     window.selectedRoom = this;
 
     if (this.isEncryptedRoom()) this.room.decryptAllEvents();
+    this._populateTimelines();
   }
 
   isEncryptedRoom() {
     return this.matrixClient.isRoomEncrypted(this.roomId);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  isEdited(mEvent) {
-    return mEvent.getRelation()?.rel_type === 'm.replace';
+  addToTimeline(mEvent) {
+    if (isReaction(mEvent)) {
+      addToMap(this.reactionTimeline, mEvent);
+      return;
+    }
+    if (!cons.supportEventTypes.includes(mEvent.getType())) return;
+    if (isEdited(mEvent)) {
+      addToMap(this.editedTimeline, mEvent);
+      return;
+    }
+    this.timeline.set(mEvent.getId(), mEvent);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  getRelateToId(mEvent) {
-    const relation = mEvent.getRelation();
-    return relation && relation.event_id;
-  }
-
-  addToMap(myMap, mEvent) {
-    const relateToId = this.getRelateToId(mEvent);
-    if (relateToId === null) return null;
-
-    if (typeof myMap.get(relateToId) === 'undefined') myMap.set(relateToId, []);
-    myMap.get(relateToId).push(mEvent);
-    return mEvent;
-  }
-
-  getEditedTimeline() {
-    const mReplace = new Map();
-    this.timeline.forEach((mEvent) => {
-      if (this.isEdited(mEvent)) {
-        this.addToMap(mReplace, mEvent);
-      }
-    });
-
-    return mReplace;
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  isReaction(mEvent) {
-    return mEvent.getType() === 'm.reaction';
-  }
-
-  getReactionTimeline() {
-    const mReaction = new Map();
-    this.timeline.forEach((mEvent) => {
-      if (this.isReaction(mEvent)) {
-        this.addToMap(mReaction, mEvent);
-      }
-    });
-
-    return mReaction;
+  _populateTimelines() {
+    this.timeline.clear();
+    this.reactionTimeline.clear();
+    this.editedTimeline.clear();
+    this.room.timeline.forEach((mEvent) => this.addToTimeline(mEvent));
   }
 
   paginateBack() {
     if (this.isOngoingPagination) return;
     this.isOngoingPagination = true;
 
+    const oldSize = this.timeline.size;
     const MSG_LIMIT = 30;
     this.matrixClient.scrollback(this.room, MSG_LIMIT).then(async (room) => {
       if (room.oldState.paginationToken === null) {
         // We have reached start of the timeline
         this.isOngoingPagination = false;
         if (this.isEncryptedRoom()) await this.room.decryptAllEvents();
-        this.emit(cons.events.roomTimeline.PAGINATED, false);
+        this.emit(cons.events.roomTimeline.PAGINATED, false, 0);
         return;
       }
-      this.editedTimeline = this.getEditedTimeline();
-      this.reactionTimeline = this.getReactionTimeline();
+      this._populateTimelines();
+      const loaded = this.timeline.size - oldSize;
 
-      this.isOngoingPagination = false;
       if (this.isEncryptedRoom()) await this.room.decryptAllEvents();
-      this.emit(cons.events.roomTimeline.PAGINATED, true);
+      this.isOngoingPagination = false;
+      this.emit(cons.events.roomTimeline.PAGINATED, true, loaded);
     });
   }
 

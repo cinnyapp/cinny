@@ -210,7 +210,7 @@ function RoomViewInput({
     focusInput();
 
     textAreaRef.current.value = roomsInput.getMessage(roomId);
-    timelineScroll.reachBottom();
+    viewEvent.emit('scroll-to-live');
     viewEvent.emit('message_sent');
     textAreaRef.current.style.height = 'unset';
     if (replyTo !== null) setReplyTo(null);
@@ -433,13 +433,7 @@ function RoomViewInput({
 RoomViewInput.propTypes = {
   roomId: PropTypes.string.isRequired,
   roomTimeline: PropTypes.shape({}).isRequired,
-  timelineScroll: PropTypes.shape({
-    reachBottom: PropTypes.func,
-    autoReachBottom: PropTypes.func,
-    tryRestoringScroll: PropTypes.func,
-    enableSmoothScroll: PropTypes.func,
-    disableSmoothScroll: PropTypes.func,
-  }).isRequired,
+  timelineScroll: PropTypes.shape({}).isRequired,
   viewEvent: PropTypes.shape({}).isRequired,
 };
 

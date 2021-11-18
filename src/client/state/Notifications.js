@@ -5,6 +5,7 @@ class Notifications extends EventEmitter {
   constructor(roomList) {
     super();
 
+    this.supportEvents = ['m.room.message', 'm.room.encrypted', 'm.sticker'];
     this.matrixClient = roomList.matrixClient;
     this.roomList = roomList;
 
@@ -33,7 +34,6 @@ class Notifications extends EventEmitter {
   doesRoomHaveUnread(room) {
     const userId = this.matrixClient.getUserId();
     const readUpToId = room.getEventReadUpTo(userId);
-    const supportEvents = ['m.room.message', 'm.room.encrypted', 'm.sticker'];
 
     if (room.timeline.length
       && room.timeline[room.timeline.length - 1].sender
@@ -47,7 +47,7 @@ class Notifications extends EventEmitter {
 
       if (event.getId() === readUpToId) return false;
 
-      if (supportEvents.includes(event.getType())) {
+      if (this.supportEvents.includes(event.getType())) {
         return true;
       }
     }
@@ -149,8 +149,7 @@ class Notifications extends EventEmitter {
 
   _listenEvents() {
     this.matrixClient.on('Room.timeline', (mEvent, room) => {
-      const supportEvents = ['m.room.message', 'm.room.encrypted', 'm.sticker'];
-      if (!supportEvents.includes(mEvent.getType())) return;
+      if (!this.supportEvents.includes(mEvent.getType())) return;
 
       const lastTimelineEvent = room.timeline[room.timeline.length - 1];
       if (lastTimelineEvent.getId() !== mEvent.getId()) return;

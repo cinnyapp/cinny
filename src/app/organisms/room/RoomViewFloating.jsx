@@ -14,7 +14,7 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 import { getUsersActionJsx } from './common';
 
 function RoomViewFloating({
-  roomId, roomTimeline, timelineScroll, viewEvent,
+  roomId, roomTimeline, viewEvent,
 }) {
   const [reachedBottom, setReachedBottom] = useState(true);
   const [typingMembers, setTypingMembers] = useState(new Set());
@@ -36,12 +36,15 @@ function RoomViewFloating({
   function updateTyping(members) {
     setTypingMembers(members);
   }
+  const handleTimelineScroll = (position) => {
+    setReachedBottom(position === 'BOTTOM');
+  };
 
   useEffect(() => {
     setReachedBottom(true);
     setTypingMembers(new Set());
-    viewEvent.on('toggle-reached-bottom', setReachedBottom);
-    return () => viewEvent.removeListener('toggle-reached-bottom', setReachedBottom);
+    viewEvent.on('timeline-scroll', handleTimelineScroll);
+    return () => viewEvent.removeListener('timeline-scroll', handleTimelineScroll);
   }, [roomId]);
 
   useEffect(() => {
@@ -60,9 +63,8 @@ function RoomViewFloating({
       <div className={`room-view__STB${reachedBottom ? '' : ' room-view__STB--open'}`}>
         <IconButton
           onClick={() => {
-            timelineScroll.enableSmoothScroll();
-            timelineScroll.reachBottom();
-            timelineScroll.disableSmoothScroll();
+            viewEvent.emit('scroll-to-live');
+            setReachedBottom(true);
           }}
           src={ChevronBottomIC}
           tooltip="Scroll to Bottom"
@@ -74,9 +76,6 @@ function RoomViewFloating({
 RoomViewFloating.propTypes = {
   roomId: PropTypes.string.isRequired,
   roomTimeline: PropTypes.shape({}).isRequired,
-  timelineScroll: PropTypes.shape({
-    reachBottom: PropTypes.func,
-  }).isRequired,
   viewEvent: PropTypes.shape({}).isRequired,
 };
 

@@ -234,39 +234,9 @@ function parseTimelineChange(mEvent) {
   }
 }
 
-function scrollToBottom(ref) {
-  const maxScrollTop = ref.current.scrollHeight - ref.current.offsetHeight;
-  // eslint-disable-next-line no-param-reassign
-  ref.current.scrollTop = maxScrollTop;
-}
-
-function isAtBottom(ref) {
-  const { scrollHeight, scrollTop, offsetHeight } = ref.current;
-  const scrollUptoBottom = scrollTop + offsetHeight;
-
-  // scroll view have to div inside div which contains messages
-  const lastMessage = ref.current.lastElementChild.lastElementChild.lastElementChild;
-  const lastChildHeight = lastMessage.offsetHeight;
-
-  // auto scroll to bottom even if user has EXTRA_SPACE left to scroll
-  const EXTRA_SPACE = 48;
-
-  if (scrollHeight - scrollUptoBottom <= lastChildHeight + EXTRA_SPACE) {
-    return true;
-  }
-  return false;
-}
-
-function autoScrollToBottom(ref) {
-  if (isAtBottom(ref)) scrollToBottom(ref);
-}
-
 export {
   getTimelineJSXMessages,
   getUsersActionJsx,
   parseReply,
   parseTimelineChange,
-  scrollToBottom,
-  isAtBottom,
-  autoScrollToBottom,
 };

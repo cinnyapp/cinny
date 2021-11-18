@@ -26,6 +26,7 @@
 
     & button {
       cursor: pointer;
+      display: flex;
     }
 
     [dir=rtl] & {

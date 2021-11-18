@@ -146,7 +146,8 @@ function FollowingMembers({ roomId, roomTimeline, viewEvent }) {
     };
   }, [roomTimeline]);
 
-  const lastMEvent = roomTimeline.timeline[roomTimeline.timeline.length - 1];
+  const { timeline } = roomTimeline.room;
+  const lastMEvent = timeline[timeline.length - 1];
   return followingMembers.length !== 0 && (
     <TimelineChange
       variant="follow"
