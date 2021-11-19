@@ -44,7 +44,7 @@
 .context-menu__item {
   button[class^="btn"] {
     width: 100%;
-    justify-content: start;
+    justify-content: flex-start;
     border-radius: 0;
     box-shadow: none;
     white-space: nowrap;

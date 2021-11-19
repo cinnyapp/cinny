@@ -20,7 +20,7 @@
     border-bottom: 1px solid var(--bg-surface-border);
 
     &__info {
-      align-self: end;
+      align-self: flex-end;
       flex: 1;
       min-width: 0;
 
@@ -35,7 +35,7 @@
       }
     }
     &__role {
-      align-self: end;
+      align-self: flex-end;
       & > .text {
         margin-bottom: var(--sp-ultra-tight);
       }
