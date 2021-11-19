@@ -271,6 +271,7 @@ function RoomViewContent({
   };
 
   const handleScrollToLive = () => {
+    trySendingReadReceipt();
     scroll.from = roomTimeline.timeline.size - scroll.limit - 1;
     if (scroll.from < 0) scroll.from = 0;
     scroll.isNewEvent = true;
