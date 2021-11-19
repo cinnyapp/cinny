@@ -63,6 +63,7 @@ class RoomTimeline extends EventEmitter {
       if (this.ongoingDecryptionCount > 0) return;
 
       if (this.isOngoingPagination) return;
+      this.addToTimeline(event);
       this.emit(cons.events.roomTimeline.EVENT);
     };
 
