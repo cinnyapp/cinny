@@ -87,6 +87,15 @@ function openRoomOptions(cords, roomId) {
   });
 }
 
+function replyTo(userId, eventId, body) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.CLICK_REPLY_TO,
+    userId,
+    eventId,
+    body,
+  });
+}
+
 export {
   selectTab,
   selectSpace,
@@ -100,4 +109,5 @@ export {
   openEmojiBoard,
   openReadReceipts,
   openRoomOptions,
+  replyTo,
 };

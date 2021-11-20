@@ -165,27 +165,6 @@ function getUsersActionJsx(roomId, userIds, actionStr) {
   return <>{u1Jsx}, {u2Jsx}, {u3Jsx} and {othersCount} other are {actionStr}</>;
 }
 
-function parseReply(rawContent) {
-  if (rawContent.indexOf('>') !== 0) return null;
-  let content = rawContent.slice(rawContent.indexOf('<') + 1);
-  const user = content.slice(0, content.indexOf('>'));
-
-  content = content.slice(content.indexOf('>') + 2);
-  const replyContent = content.slice(0, content.indexOf('\n\n'));
-  content = content.slice(content.indexOf('\n\n') + 2);
-
-  if (user === '') return null;
-
-  const isUserId = user.match(/^@.+:.+/);
-
-  return {
-    userId: isUserId ? user : null,
-    displayName: isUserId ? null : user,
-    replyContent,
-    content,
-  };
-}
-
 function parseTimelineChange(mEvent) {
   const tJSXMsgs = getTimelineJSXMessages();
   const makeReturnObj = (variant, content) => ({
@@ -237,6 +216,5 @@ function parseTimelineChange(mEvent) {
 export {
   getTimelineJSXMessages,
   getUsersActionJsx,
-  parseReply,
   parseTimelineChange,
 };

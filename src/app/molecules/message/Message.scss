@@ -47,7 +47,7 @@
 
 .message {
   &--full + &--full,
-  &--content-only + &--full,
+  &--body-only + &--full,
   & + .timeline-change,
   .timeline-change + & {
     margin-top: var(--sp-normal);
@@ -66,7 +66,7 @@
   }
 
   &__header,
-  &__content > div {
+  &__body > div {
     margin: var(--sp-ultra-tight) 0;
     margin-right: var(--sp-extra-tight);
     height: var(--fs-b1);
@@ -82,20 +82,20 @@
       }
     }
   }
-  &__content {
+  &__body {
     display: flex;
     flex-wrap: wrap;
   }
-  &__content > div:nth-child(1n) {
+  &__body > div:nth-child(1n) {
     max-width: 10%;
   }
-  &__content > div:nth-child(2n) {
+  &__body > div:nth-child(2n) {
     max-width: 50%;
   }
 }
 
 .message__reply,
-.message__content,
+.message__body,
 .message__edit,
 .message__reactions {
   max-width: calc(100% - 88px);
@@ -153,7 +153,7 @@
     height: 14px;
   }
 }
-.message__content {
+.message__body {
   word-break: break-word;
   
   & > .text > * {
@@ -265,7 +265,7 @@
 }
 
 // markdown formating
-.message__content {
+.message__body {
   & h1,
   & h2 {
     color: var(--tc-surface-high);
@@ -403,7 +403,7 @@
 }
 
 .message.message--type-emote {
-  .message__content {
+  .message__body {
     font-style: italic;
 
     // Remove blockness of first `<p>` so that markdown emotes stay on one line.

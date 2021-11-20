@@ -95,13 +95,13 @@ function getFormattedBody(markdown) {
 function getReplyFormattedBody(roomId, reply) {
   const replyToLink = `<a href="https://matrix.to/#/${roomId}/${reply.eventId}">In reply to</a>`;
   const userLink = `<a href="https://matrix.to/#/${reply.userId}">${reply.userId}</a>`;
-  const formattedReply = getFormattedBody(reply.content.replaceAll('\n', '\n> '));
+  const formattedReply = getFormattedBody(reply.body.replaceAll('\n', '\n> '));
   return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${formattedReply}</blockquote></mx-reply>`;
 }
 
 function bindReplyToContent(roomId, reply, content) {
   const newContent = { ...content };
-  newContent.body = `> <${reply.userId}> ${reply.content.replaceAll('\n', '\n> ')}`;
+  newContent.body = `> <${reply.userId}> ${reply.body.replaceAll('\n', '\n> ')}`;
   newContent.body += `\n\n${content.body}`;
   newContent.format = 'org.matrix.custom.html';
   newContent['m.relates_to'] = content['m.relates_to'] || {};

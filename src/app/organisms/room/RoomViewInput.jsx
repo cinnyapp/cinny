@@ -9,6 +9,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import { openEmojiBoard } from '../../../client/action/navigation';
+import navigation from '../../../client/state/navigation';
 import { bytesToSize, getEventCords } from '../../../util/common';
 import { getUsername } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
@@ -152,9 +153,9 @@ function RoomViewInput({
     textAreaRef.current.focus();
   }
 
-  function setUpReply(userId, eventId, content) {
-    setReplyTo({ userId, eventId, content });
-    roomsInput.setReplyTo(roomId, { userId, eventId, content });
+  function setUpReply(userId, eventId, body) {
+    setReplyTo({ userId, eventId, body });
+    roomsInput.setReplyTo(roomId, { userId, eventId, body });
     focusInput();
   }
 
@@ -164,7 +165,7 @@ function RoomViewInput({
     roomsInput.on(cons.events.roomsInput.FILE_UPLOADED, clearAttachment);
     viewEvent.on('cmd_error', errorCmd);
     viewEvent.on('cmd_fired', firedCmd);
-    viewEvent.on('reply_to', setUpReply);
+    navigation.on(cons.events.navigation.REPLY_TO_CLICKED, setUpReply);
     if (textAreaRef?.current !== null) {
       isTyping = false;
       focusInput();
@@ -178,7 +179,7 @@ function RoomViewInput({
       roomsInput.removeListener(cons.events.roomsInput.FILE_UPLOADED, clearAttachment);
       viewEvent.removeListener('cmd_error', errorCmd);
       viewEvent.removeListener('cmd_fired', firedCmd);
-      viewEvent.removeListener('reply_to', setUpReply);
+      navigation.removeListener(cons.events.navigation.REPLY_TO_CLICKED, setUpReply);
       if (isCmdActivated) deactivateCmd();
       if (textAreaRef?.current === null) return;
 
@@ -410,7 +411,7 @@ function RoomViewInput({
           userId={replyTo.userId}
           name={getUsername(replyTo.userId)}
           color={colorMXID(replyTo.userId)}
-          content={replyTo.content}
+          body={replyTo.body}
         />
       </div>
     );

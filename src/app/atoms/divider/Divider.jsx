@@ -8,21 +8,18 @@ function Divider({ text, variant }) {
   const dividerClass = ` divider--${variant}`;
   return (
     <div className={`divider${dividerClass}`}>
-      {text !== false && <Text className="divider__text" variant="b3">{text}</Text>}
+      {text !== null && <Text className="divider__text" variant="b3">{text}</Text>}
     </div>
   );
 }
 
 Divider.defaultProps = {
-  text: false,
+  text: null,
   variant: 'surface',
 };
 
 Divider.propTypes = {
-  text: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.bool,
-  ]),
+  text: PropTypes.string,
   variant: PropTypes.oneOf(['surface', 'primary', 'caution', 'danger']),
 };
 

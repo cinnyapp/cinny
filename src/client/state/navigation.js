@@ -90,6 +90,14 @@ class Navigation extends EventEmitter {
           action.roomId,
         );
       },
+      [cons.actions.navigation.CLICK_REPLY_TO]: () => {
+        this.emit(
+          cons.events.navigation.REPLY_TO_CLICKED,
+          action.userId,
+          action.eventId,
+          action.body,
+        );
+      },
     };
     actions[action.type]?.();
   }
