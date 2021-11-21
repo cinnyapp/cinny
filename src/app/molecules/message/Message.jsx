@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
-import linkifyHtml from 'linkify-html';
+import linkifyHtml from 'linkifyjs/html';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import dateFormat from 'dateformat';
@@ -106,8 +106,8 @@ function MessageBody({
   if (typeof body !== 'string') return <div className="message__body">{body}</div>;
 
   let content = isCustomHTML ? sanitizeCustomHtml(body) : body;
-  content = linkifyHtml(content, { target: '_blank', rel: 'noreferrer noopener' });
   if (!isCustomHTML) content = sanitizeText(body);
+  content = linkifyHtml(content, { target: '_blank', rel: 'noreferrer noopener' });
   content = twemoji.parse(content);
 
   const parsed = parse(content);
