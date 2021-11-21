@@ -67,7 +67,7 @@ function sanitizeImgTag(tagName, attributes) {
   return { tagName, attribs };
 }
 
-export default function sanitize(body) {
+export function sanitizeCustomHtml(body) {
   return sanitizeHtml(body, {
     allowedTags: [
       'font',
@@ -141,4 +141,13 @@ export default function sanitize(body) {
       span: sanitizeColorizedTag,
     },
   });
+}
+
+export function sanitizeText(body) {
+  const tagsToReplace = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+  };
+  return body.replace(/[&<>]/g, (tag) => tagsToReplace[tag] || tag);
 }

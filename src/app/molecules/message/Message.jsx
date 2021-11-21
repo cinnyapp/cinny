@@ -34,7 +34,7 @@ import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
-import sanitize from './sanitize';
+import { sanitizeCustomHtml, sanitizeText } from './sanitize';
 
 function PlaceholderMessage() {
   return (
@@ -102,16 +102,20 @@ function MessageBody({
   isEdited,
   msgType,
 }) {
-  // if body is not string it is a React( element.
+  // if body is not string it is a React element.
   if (typeof body !== 'string') return <div className="message__body">{body}</div>;
 
-  const content = twemoji.parse(isCustomHTML ? sanitize(body) : body);
-  const linkified = linkifyHtml(content, { target: '_blank', rel: 'noreferrer noopener' });
+  let content = isCustomHTML ? sanitizeCustomHtml(body) : body;
+  content = linkifyHtml(content, { target: '_blank', rel: 'noreferrer noopener' });
+  if (!isCustomHTML) content = sanitizeText(body);
+  content = twemoji.parse(content);
+
+  const parsed = parse(content);
   return (
     <div className="message__body">
       <div className="text text-b1">
         { msgType === 'm.emote' && `* ${senderName} ` }
-        { parse(linkified) }
+        { parsed }
       </div>
       { isEdited && <Text className="message__body-edited" variant="b3">(edited)</Text>}
     </div>
