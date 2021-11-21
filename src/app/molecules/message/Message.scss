@@ -438,8 +438,9 @@
     list-style: none;
   }
   & table {
-    display: -webkit-box;
-    width: 100%;
+    display: inline-block;
+    max-width: 100%;
+    white-space: normal !important;
     background-color: var(--bg-surface-hover);
     border-radius: calc(var(--bo-radius) / 2);
     border-spacing: 0;
