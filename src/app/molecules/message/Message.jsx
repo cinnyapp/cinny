@@ -3,11 +3,7 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
-import Linkify from 'linkify-react';
-import ReactMarkdown from 'react-markdown';
-import gfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import linkifyHtml from 'linkify-html';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import dateFormat from 'dateformat';
@@ -38,33 +34,7 @@ import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
-const components = {
-  code({
-    // eslint-disable-next-line react/prop-types
-    inline, className, children,
-  }) {
-    const match = /language-(\w+)/.exec(className || '');
-    return !inline && match ? (
-      <SyntaxHighlighter
-        style={coy}
-        language={match[1]}
-        PreTag="div"
-        showLineNumbers
-      >
-        {String(children).replace(/\n$/, '')}
-      </SyntaxHighlighter>
-    ) : (
-      <code className={className}>{String(children)}</code>
-    );
-  },
-};
-
-function linkifyContent(content) {
-  return <Linkify options={{ target: { url: '_blank' } }}>{content}</Linkify>;
-}
-function genMarkdown(content) {
-  return <ReactMarkdown remarkPlugins={[gfm]} components={components} linkTarget="_blank">{content}</ReactMarkdown>;
-}
+import sanitize from './sanitize';
 
 function PlaceholderMessage() {
   return (
@@ -91,7 +61,7 @@ function MessageHeader({
   return (
     <div className="message__header">
       <div style={{ color }} className="message__profile">
-        <Text variant="b1">{name}</Text>
+        <Text variant="b1">{parse(twemoji.parse(name))}</Text>
         <Text variant="b1">{userId}</Text>
       </div>
       <div className="message__time">
@@ -112,7 +82,7 @@ function MessageReply({ name, color, body }) {
     <div className="message__reply">
       <Text variant="b2">
         <RawIcon color={color} size="extra-small" src={ReplyArrowIC} />
-        <span style={{ color }}>{name}</span>
+        <span style={{ color }}>{parse(twemoji.parse(name))}</span>
         <>{` ${body}`}</>
       </Text>
     </div>
@@ -132,11 +102,16 @@ function MessageBody({
   isEdited,
   msgType,
 }) {
+  // if body is not string it is a React( element.
+  if (typeof body !== 'string') return <div className="message__body">{body}</div>;
+
+  const content = twemoji.parse(isCustomHTML ? sanitize(body) : body);
+  const linkified = linkifyHtml(content, { target: '_blank', rel: 'noreferrer noopener' });
   return (
     <div className="message__body">
       <div className="text text-b1">
         { msgType === 'm.emote' && `* ${senderName} ` }
-        { isCustomHTML ? genMarkdown(body) : linkifyContent(body) }
+        { parse(linkified) }
       </div>
       { isEdited && <Text className="message__body-edited" variant="b3">(edited)</Text>}
     </div>
@@ -383,18 +358,16 @@ function parseReply(rawBody) {
     body,
   };
 }
-function getEditedBody(eventId, editedTimeline) {
-  const editedList = editedTimeline.get(eventId);
-  const editedMEvent = editedList[editedList.length - 1];
+function getEditedBody(editedMEvent) {
   const newContent = editedMEvent.getContent()['m.new_content'];
-  if (typeof newContent === 'undefined') return [null, false];
+  if (typeof newContent === 'undefined') return [null, false, null];
 
   const isCustomHTML = newContent.format === 'org.matrix.custom.html';
   const parsedContent = parseReply(newContent.body);
   if (parsedContent === null) {
-    return [newContent.body, isCustomHTML];
+    return [newContent.body, isCustomHTML, newContent.formatted_body ?? null];
   }
-  return [parsedContent.body, isCustomHTML];
+  return [parsedContent.body, isCustomHTML, newContent.formatted_body ?? null];
 }
 
 function Message({ mEvent, isBodyOnly, roomTimeline }) {
@@ -406,7 +379,7 @@ function Message({ mEvent, isBodyOnly, roomTimeline }) {
   } = roomTimeline;
 
   const className = ['message', (isBodyOnly ? 'message--body-only' : 'message--full')];
-  const content = mEvent.getWireContent();
+  const content = mEvent.getContent();
   const eventId = mEvent.getId();
   const msgType = content?.msgtype;
   const senderId = mEvent.getSender();
@@ -419,16 +392,18 @@ function Message({ mEvent, isBodyOnly, roomTimeline }) {
   if (typeof body === 'undefined') return null;
   if (msgType === 'm.emote') className.push('message--type-emote');
 
-  // TODO: these line can be moved to option menu
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel;
   const canIRedact = room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
 
   let [reply, reactions, isCustomHTML] = [null, null, content.format === 'org.matrix.custom.html'];
   const [isEdited, haveReactions] = [editedTimeline.has(eventId), reactionTimeline.has(eventId)];
   const isReply = typeof content['m.relates_to']?.['m.in_reply_to'] !== 'undefined';
+  let customHTML = isCustomHTML ? content.formatted_body : null;
 
   if (isEdited) {
-    [body, isCustomHTML] = getEditedBody(eventId, editedTimeline);
+    const editedList = editedTimeline.get(eventId);
+    const editedMEvent = editedList[editedList.length - 1];
+    [body, isCustomHTML, customHTML] = getEditedBody(editedMEvent);
     if (typeof body !== 'string') return null;
   }
 
@@ -500,7 +475,7 @@ function Message({ mEvent, isBodyOnly, roomTimeline }) {
           <MessageBody
             senderName={username}
             isCustomHTML={isCustomHTML}
-            body={isMedia(mEvent) ? genMediaContent(mEvent) : body}
+            body={isMedia(mEvent) ? genMediaContent(mEvent) : customHTML ?? body}
             msgType={msgType}
             isEdited={isEdited}
           />

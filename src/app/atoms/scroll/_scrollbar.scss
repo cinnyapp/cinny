@@ -32,7 +32,8 @@
 
 @mixin scroll {
   overflow: hidden;
-  overscroll-behavior: none;
+  // Below code stop scroll when x-scrollable content come in timeline
+  // overscroll-behavior: none;
   @extend .firefox-scrollbar;
   @extend .webkit-scrollbar;
   @extend .webkit-scrollbar-track;

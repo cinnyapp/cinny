@@ -13,7 +13,7 @@
 
   .room-intro__content {
     margin-top: var(--sp-extra-loose);
-    max-width: 640px;
+    width: calc(100% - 88px);
   }
   &__name {
     color: var(--tc-surface-high);

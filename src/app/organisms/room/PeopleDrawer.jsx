@@ -106,7 +106,6 @@ function PeopleDrawer({ roomId }) {
     let isGettingMembers = true;
     const updateMemberList = (event) => {
       if (isGettingMembers) return;
-      console.log(event?.event?.room_id);
       if (event && event?.event?.room_id !== roomId) return;
       setMemberList(
         simplyfiMembers(

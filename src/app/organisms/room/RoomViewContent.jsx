@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import PropTypes from 'prop-types';
@@ -8,6 +10,7 @@ import dateFormat from 'dateformat';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { diffMinutes, isNotInSameDay } from '../../../util/common';
+import { openProfileViewer } from '../../../client/action/navigation';
 
 import Divider from '../../atoms/divider/Divider';
 import { Message, PlaceholderMessage } from '../../molecules/message/Message';
@@ -188,8 +191,16 @@ function RoomViewContent({
     }
   }, [onStateUpdate]);
 
+  const handleOnClickCapture = (e) => {
+    const { target } = e;
+    const userId = target.getAttribute('data-mx-pill');
+    if (!userId) return;
+
+    openProfileViewer(userId, roomId);
+  };
+
   let prevMEvent = null;
-  function renderMessage(mEvent) {
+  const renderMessage = (mEvent) => {
     const isContentOnly = (prevMEvent !== null && prevMEvent.getType() !== 'm.room.member'
       && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
       && prevMEvent.getSender() === mEvent.getSender()
@@ -222,7 +233,7 @@ function RoomViewContent({
         <Message mEvent={mEvent} isBodyOnly={isContentOnly} roomTimeline={roomTimeline} />
       </React.Fragment>
     );
-  }
+  };
 
   const renderTimeline = () => {
     const { timeline } = roomTimeline;
@@ -249,7 +260,7 @@ function RoomViewContent({
   };
 
   return (
-    <div className="room-view__content">
+    <div className="room-view__content" onClick={handleOnClickCapture}>
       <div className="timeline__wrapper">
         { renderTimeline() }
       </div>

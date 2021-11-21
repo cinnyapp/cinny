@@ -1,5 +1,14 @@
 @use '../../atoms/scroll/scrollbar';
 
+.custom-emoji {
+  height: var(--fs-b1);
+  margin: 0 !important;
+  margin-right: 2px !important;
+  padding: 0 !important;
+  position: relative;
+  top: 2px;
+}
+
 .message,
 .ph-msg {
   padding: var(--sp-ultra-tight) var(--sp-normal);
@@ -107,6 +116,10 @@
   display: flex;
   align-items: baseline;
 
+  & img.emoji {
+    @extend .custom-emoji;
+  }
+
   & .message__profile {
     min-width: 0;
     color: var(--tc-surface-high);
@@ -142,6 +155,10 @@
   }
 }
 .message__reply {
+  & img.emoji {
+    @extend .custom-emoji;
+    height: 14px;
+  }
   .text {
     color: var(--tc-surface-low);
     white-space: nowrap;
@@ -162,6 +179,45 @@
 
   & a {
     word-break: break-word;
+  }
+  & img.emoji,
+  & img[data-mx-emoticon] {
+    @extend .custom-emoji;
+  }
+  & span[data-mx-pill] {
+    background-color: hsla(0, 0%, 64%, 0.15);
+    padding: 0 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    &:hover {
+      background-color: hsla(0, 0%, 64%, 0.3);
+      color: var(--tc-surface-high);
+    }
+  }
+
+  & span[data-mx-spoiler] {
+    border-radius: 4px;
+    background-color: rgba(124, 124, 124, 0.5);
+    color:transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    & > * {
+      opacity: 0;
+    }
+    &:focus, &:hover {
+      background-color: transparent;
+      color: inherit;
+      user-select: initial;
+      & > * {
+        opacity: inherit;
+      }
+    }
+
   }
   &-edited {
     color: var(--tc-surface-low);
@@ -327,10 +383,20 @@
     @include scrollbar.scroll__h;
     @include scrollbar.scroll--auto-hide;
   }
-  & pre code {
-    color: var(--tc-surface-normal) !important;
+  & pre {
+    display: inline-block;
+    max-width: 100%;
+    @include scrollbar.scroll;
+    @include scrollbar.scroll__h;
+    @include scrollbar.scroll--auto-hide;
+    & code {
+      color: var(--tc-surface-normal) !important;
+      white-space: pre;
+    }
   }
   & blockquote {
+    display: inline-block;
+    max-width: 100%;
     padding-left: var(--sp-extra-tight);
     border-left: 4px solid var(--bg-surface-active);
     white-space: initial !important;
@@ -372,15 +438,21 @@
     list-style: none;
   }
   & table {
+    display: -webkit-box;
+    width: 100%;
     background-color: var(--bg-surface-hover);
     border-radius: calc(var(--bo-radius) / 2);
     border-spacing: 0;
     border: 1px solid var(--bg-surface-border);
+    @include scrollbar.scroll;
+    @include scrollbar.scroll__h;
+    @include scrollbar.scroll--auto-hide;
 
     & td, & th {
       padding: var(--sp-extra-tight);
       border: 1px solid var(--bg-surface-border);
       border-width: 0 1px 1px 0;
+      white-space: pre;
       &:last-child {
         border-width: 0;
         border-bottom-width: 1px;
