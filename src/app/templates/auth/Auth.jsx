@@ -605,7 +605,7 @@ function Terms({ url, onSubmit }) {
           <div style={{ marginBottom: 'var(--sp-normal)' }} />
           <Text variant="b1">In order to complete registration, you need to agree to the terms and conditions.</Text>
           <div style={{ display: 'flex', alignItems: 'center', margin: 'var(--sp-normal) 0' }}>
-            <input id="termsCheckbox" type="checkbox" required />
+            <input style={{ marginRight: '8px' }} id="termsCheckbox" type="checkbox" required />
             <Text variant="b1">
               {'I accept '}
               <a style={{ cursor: 'pointer' }} href={url} rel="noreferrer" target="_blank">Terms and Conditions</a>

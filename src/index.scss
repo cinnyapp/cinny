@@ -296,11 +296,37 @@ input[type],
 input[type=text],
 input[type=username],
 input[type=password],
-input[type=email] {
+input[type=email],
+input[type=checkbox] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
 }
+input[type=checkbox] {
+  margin: 0;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  box-shadow: var(--bs-primary-border);
+  background-color: var(--bg-surface);
+  cursor: pointer;
+  @extend .flex--center;
+
+  &:checked {
+    background-color: var(--bg-primary);
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 6px;
+      border: 6px solid white;
+      border-width: 0 0 3px 3px;
+      transform: rotateZ(-45deg) translate(1px, -1px);
+    }
+  }
+}
+
 textarea {
   color: inherit;
   word-spacing: inherit;
