@@ -3,10 +3,8 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
-import linkifyHtml from 'linkifyjs/html';
-import parse from 'html-react-parser';
-import twemoji from 'twemoji';
 import dateFormat from 'dateformat';
+import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
@@ -16,6 +14,7 @@ import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
 import {
   openEmojiBoard, openProfileViewer, openReadReceipts, replyTo,
 } from '../../../client/action/navigation';
+import { sanitizeCustomHtml } from '../../../util/sanitize';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
@@ -33,8 +32,6 @@ import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
-
-import { sanitizeCustomHtml, sanitizeText } from './sanitize';
 
 function PlaceholderMessage() {
   return (
@@ -61,8 +58,8 @@ function MessageHeader({
   return (
     <div className="message__header">
       <div style={{ color }} className="message__profile">
-        <Text variant="b1">{parse(twemoji.parse(name))}</Text>
-        <Text variant="b1">{userId}</Text>
+        <Text variant="b1">{twemojify(name)}</Text>
+        <Text variant="b1">{twemojify(userId)}</Text>
       </div>
       <div className="message__time">
         <Text variant="b3">{time}</Text>
@@ -82,8 +79,9 @@ function MessageReply({ name, color, body }) {
     <div className="message__reply">
       <Text variant="b2">
         <RawIcon color={color} size="extra-small" src={ReplyArrowIC} />
-        <span style={{ color }}>{parse(twemoji.parse(name))}</span>
-        <>{` ${body}`}</>
+        <span style={{ color }}>{twemojify(name)}</span>
+        {' '}
+        {twemojify(body)}
       </Text>
     </div>
   );
@@ -105,17 +103,21 @@ function MessageBody({
   // if body is not string it is a React element.
   if (typeof body !== 'string') return <div className="message__body">{body}</div>;
 
-  let content = isCustomHTML ? sanitizeCustomHtml(body) : body;
-  if (!isCustomHTML) content = sanitizeText(body);
-  content = linkifyHtml(content, { target: '_blank', rel: 'noreferrer noopener' });
-  content = twemoji.parse(content);
+  const content = isCustomHTML
+    ? twemojify(sanitizeCustomHtml(body), undefined, true, false)
+    : twemojify(body, undefined, true);
 
-  const parsed = parse(content);
   return (
     <div className="message__body">
       <div className="text text-b1">
-        { msgType === 'm.emote' && `* ${senderName} ` }
-        { parsed }
+        { msgType === 'm.emote' && (
+          <>
+            {'* '}
+            {twemojify(senderName)}
+            {' '}
+          </>
+        )}
+        { content }
       </div>
       { isEdited && <Text className="message__body-edited" variant="b3">(edited)</Text>}
     </div>
@@ -191,7 +193,7 @@ function genReactionMsg(userIds, reaction) {
     <>
       {msg}
       {genLessContText(' reacted with')}
-      {parse(twemoji.parse(reaction))}
+      {twemojify(reaction, { className: 'react-emoji' })}
     </>
   );
 }
@@ -209,7 +211,7 @@ function MessageReaction({
         type="button"
         className={`msg__reaction${isActive ? ' msg__reaction--active' : ''}`}
       >
-        { parse(twemoji.parse(reaction)) }
+        { twemojify(reaction, { className: 'react-emoji' }) }
         <Text variant="b3" className="msg__reaction-count">{users.length}</Text>
       </button>
     </Tooltip>

@@ -1,14 +1,5 @@
 @use '../../atoms/scroll/scrollbar';
 
-.custom-emoji {
-  height: var(--fs-b1);
-  margin: 0 !important;
-  margin-right: 2px !important;
-  padding: 0 !important;
-  position: relative;
-  top: 2px;
-}
-
 .message,
 .ph-msg {
   padding: var(--sp-ultra-tight) var(--sp-normal);
@@ -116,10 +107,6 @@
   display: flex;
   align-items: baseline;
 
-  & img.emoji {
-    @extend .custom-emoji;
-  }
-
   & .message__profile {
     min-width: 0;
     color: var(--tc-surface-high);
@@ -155,10 +142,6 @@
   }
 }
 .message__reply {
-  & img.emoji {
-    @extend .custom-emoji;
-    height: 14px;
-  }
   .text {
     color: var(--tc-surface-low);
     white-space: nowrap;
@@ -172,17 +155,9 @@
 }
 .message__body {
   word-break: break-word;
-  
-  & > .text > * {
-    white-space: pre-wrap;
-  }
 
   & a {
     word-break: break-word;
-  }
-  & img.emoji,
-  & img[data-mx-emoticon] {
-    @extend .custom-emoji;
   }
   & span[data-mx-pill] {
     background-color: hsla(0, 0%, 64%, 0.15);
@@ -193,6 +168,13 @@
     &:hover {
       background-color: hsla(0, 0%, 64%, 0.3);
       color: var(--tc-surface-high);
+    }
+
+    &[data-mx-ping] {
+      background-color: var(--bg-ping);
+      &:hover {
+        background-color: var(--bg-ping-hover);
+      }
     }
   }
 
@@ -257,7 +239,7 @@
   border-radius: 4px;
   cursor: pointer;
 
-  & .emoji {
+  & .react-emoji {
     width: 14px;
     height: 14px;
     margin: 2px;
@@ -266,7 +248,7 @@
     margin: 0 var(--sp-ultra-tight);
     color: var(--tc-surface-normal)
   }
-  &-tooltip .emoji {
+  &-tooltip .react-emoji  {
     width: 14px;
     height: 14px;
     margin: 0 var(--sp-ultra-tight);

@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './PeopleSelector.scss';
 
+import { twemojify } from '../../../util/twemojify';
+
 import { blurOnBubbling } from '../../atoms/button/script';
 
 import Text from '../../atoms/text/Text';
@@ -19,7 +21,7 @@ function PeopleSelector({
         type="button"
       >
         <Avatar imageSrc={avatarSrc} text={name} bgColor={color} size="extra-small" />
-        <Text className="people-selector__name" variant="b1">{name}</Text>
+        <Text className="people-selector__name" variant="b1">{twemojify(name)}</Text>
         {peopleRole !== null && <Text className="people-selector__role" variant="b3">{peopleRole}</Text>}
       </button>
     </div>

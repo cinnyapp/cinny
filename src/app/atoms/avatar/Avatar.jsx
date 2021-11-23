@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './Avatar.scss';
 
+import { twemojify } from '../../../util/twemojify';
+
 import Text from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 
@@ -29,7 +31,11 @@ function Avatar({
               {
                 iconSrc !== null
                   ? <RawIcon size={size} src={iconSrc} />
-                  : text !== null && <Text variant={textSize}>{[...text][0]}</Text>
+                  : text !== null && (
+                    <Text variant={textSize}>
+                      {twemojify([...text][0])}
+                    </Text>
+                  )
               }
             </span>
           )

@@ -2,15 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './RoomIntro.scss';
 
-import Linkify from 'linkifyjs/react';
+import { twemojify } from '../../../util/twemojify';
 import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
-
-function linkifyContent(content) {
-  return <Linkify options={{ target: { url: '_blank' } }}>{content}</Linkify>;
-}
 
 function RoomIntro({
   roomId, avatarSrc, name, heading, desc, time,
@@ -19,8 +15,8 @@ function RoomIntro({
     <div className="room-intro">
       <Avatar imageSrc={avatarSrc} text={name} bgColor={colorMXID(roomId)} size="large" />
       <div className="room-intro__content">
-        <Text className="room-intro__name" variant="h1">{heading}</Text>
-        <Text className="room-intro__desc" variant="b1">{linkifyContent(desc)}</Text>
+        <Text className="room-intro__name" variant="h1">{twemojify(heading)}</Text>
+        <Text className="room-intro__desc" variant="b1">{twemojify(desc, undefined, true)}</Text>
         { time !== null && <Text className="room-intro__time" variant="b3">{time}</Text>}
       </div>
     </div>

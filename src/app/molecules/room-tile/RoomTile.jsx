@@ -2,15 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './RoomTile.scss';
 
-import Linkify from 'linkifyjs/react';
+import { twemojify } from '../../../util/twemojify';
+import { sanitizeText } from '../../../util/sanitize';
+
 import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
-
-function linkifyContent(content) {
-  return <Linkify options={{ target: { url: '_blank' } }}>{content}</Linkify>;
-}
 
 function RoomTile({
   avatarSrc, name, id,
@@ -26,7 +24,7 @@ function RoomTile({
         />
       </div>
       <div className="room-tile__content">
-        <Text variant="s1">{name}</Text>
+        <Text variant="s1">{twemojify(name)}</Text>
         <Text variant="b3">
           {
             inviterName !== null
@@ -36,7 +34,7 @@ function RoomTile({
         </Text>
         {
           desc !== null && (typeof desc === 'string')
-            ? <Text className="room-tile__content__desc" variant="b2">{linkifyContent(desc)}</Text>
+            ? <Text className="room-tile__content__desc" variant="b2">{twemojify(desc, undefined, true)}</Text>
             : desc
         }
       </div>

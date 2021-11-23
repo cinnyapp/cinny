@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Dialog.scss';
 
+import { twemojify } from '../../../util/twemojify';
+
 import Text from '../../atoms/text/Text';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import ScrollView from '../../atoms/scroll/ScrollView';
@@ -22,7 +24,7 @@ function Dialog({
         <div className="dialog__content">
           <Header>
             <TitleWrapper>
-              <Text variant="h2">{title}</Text>
+              <Text variant="h2">{twemojify(title)}</Text>
             </TitleWrapper>
             {contentOptions}
           </Header>

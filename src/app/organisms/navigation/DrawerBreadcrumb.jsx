@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './DrawerBreadcrumb.scss';
 
+import { twemojify } from '../../../util/twemojify';
+
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { selectSpace } from '../../../client/action/navigation';
@@ -101,7 +103,7 @@ function DrawerBreadcrumb({ spaceId }) {
                     className={index === spacePath.length - 1 ? 'breadcrumb__btn--selected' : ''}
                     onClick={() => selectSpace(id)}
                   >
-                    <Text variant="b2">{id === cons.tabs.HOME ? 'Home' : mx.getRoom(id).name}</Text>
+                    <Text variant="b2">{id === cons.tabs.HOME ? 'Home' : twemojify(mx.getRoom(id).name)}</Text>
                     { noti !== null && (
                       <NotificationBadge
                         alert={noti.highlight !== 0}

@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './RoomSelector.scss';
 
+import { twemojify } from '../../../util/twemojify';
 import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
@@ -57,7 +58,7 @@ function RoomSelector({
             iconSrc={iconSrc}
             size="extra-small"
           />
-          <Text variant="b1">{name}</Text>
+          <Text variant="b1">{twemojify(name)}</Text>
           { isUnread && (
             <NotificationBadge
               alert={isAlert}

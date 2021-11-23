@@ -4,12 +4,26 @@
   font-weight: $weight;
   letter-spacing: var(--ls-#{$type});
   line-height: var(--lh-#{$type});
+
+  & img.emoji,
+  & img[data-mx-emoticon] {
+    height: var(--fs-#{$type});
+  }
 }
 
 %text {
   margin: 0;
   padding: 0;
   color: var(--tc-surface-high);
+
+  & img.emoji,
+  & img[data-mx-emoticon] {
+    margin: 0 !important;
+    margin-right: 2px !important;
+    padding: 0 !important;
+    position: relative;
+    top: 2px;
+  }
 }
 
 .text-h1 {

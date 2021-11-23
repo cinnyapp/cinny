@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
+import { twemojify } from '../../../util/twemojify';
+
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import {
@@ -30,7 +32,7 @@ function DrawerHeader({ selectedTab, spaceId }) {
   return (
     <Header>
       <TitleWrapper>
-        <Text variant="s1">{spaceName || tabName}</Text>
+        <Text variant="s1">{twemojify(spaceName) || tabName}</Text>
       </TitleWrapper>
       {spaceName && (
         <IconButton

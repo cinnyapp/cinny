@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './ProfileViewer.scss';
 
+import { twemojify } from '../../../util/twemojify';
+
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
@@ -262,8 +264,8 @@ function ProfileViewer() {
             size="large"
           />
           <div className="profile-viewer__user__info">
-            <Text variant="s1">{username}</Text>
-            <Text variant="b2">{userId}</Text>
+            <Text variant="s1">{twemojify(username)}</Text>
+            <Text variant="b2">{twemojify(userId)}</Text>
           </div>
           <div className="profile-viewer__user__role">
             <Text variant="b3">Role</Text>

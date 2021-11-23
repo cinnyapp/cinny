@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { twemojify } from '../../../util/twemojify';
+
 import initMatrix from '../../../client/initMatrix';
 import { openRoomOptions } from '../../../client/action/navigation';
 import { togglePeopleDrawer } from '../../../client/action/settings';
@@ -27,8 +29,8 @@ function RoomViewHeader({ roomId }) {
     <Header>
       <Avatar imageSrc={avatarSrc} text={roomName} bgColor={colorMXID(roomId)} size="small" />
       <TitleWrapper>
-        <Text variant="h2">{roomName}</Text>
-        { typeof roomTopic !== 'undefined' && <p title={roomTopic} className="text text-b3">{roomTopic}</p>}
+        <Text variant="h2">{twemojify(roomName)}</Text>
+        { typeof roomTopic !== 'undefined' && <p title={roomTopic} className="text text-b3">{twemojify(roomTopic)}</p>}
       </TitleWrapper>
       <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
       <IconButton
