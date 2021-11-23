@@ -5,7 +5,7 @@ import './InviteList.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
-import { selectRoom, selectSpace } from '../../../client/action/navigation';
+import { selectRoom, selectTab } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -38,7 +38,7 @@ function InviteList({ isOpen, onRequestClose }) {
     const room = initMatrix.matrixClient.getRoom(roomId);
     const isRejected = room === null || room?.getMyMembership() !== 'join';
     if (!isRejected) {
-      if (room.isSpaceRoom()) selectSpace(roomId);
+      if (room.isSpaceRoom()) selectTab(roomId);
       else selectRoom(roomId);
       onRequestClose();
     }
