@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './CreateRoom.scss';
 
 import initMatrix from '../../../client/initMatrix';
+import cons from '../../../client/state/cons';
 import { isRoomAliasAvailable } from '../../../util/matrixUtil';
 import * as roomActions from '../../../client/action/room';
 import { selectRoom } from '../../../client/action/navigation';
@@ -51,6 +52,20 @@ function CreateRoom({ isOpen, onRequestClose }) {
     setRoleIndex(0);
   }
 
+  const onCreated = (roomId) => {
+    resetForm();
+    selectRoom(roomId);
+    onRequestClose();
+  };
+
+  useEffect(() => {
+    const { roomList } = initMatrix;
+    roomList.on(cons.events.roomList.ROOM_CREATED, onCreated);
+    return () => {
+      roomList.removeListener(cons.events.roomList.ROOM_CREATED, onCreated);
+    };
+  }, []);
+
   async function createRoom() {
     if (isCreatingRoom) return;
     updateIsCreatingRoom(true);
@@ -67,13 +82,9 @@ function CreateRoom({ isOpen, onRequestClose }) {
     const powerLevel = roleIndex === 1 ? 101 : undefined;
 
     try {
-      const result = await roomActions.create({
+      await roomActions.create({
         name, topic, isPublic, roomAlias, isEncrypted, powerLevel,
       });
-
-      resetForm();
-      selectRoom(result.room_id);
-      onRequestClose();
     } catch (e) {
       if (e.message === 'M_UNKNOWN: Invalid characters in room alias') {
         updateCreatingError('ERROR: Invalid characters in room address');
@@ -82,8 +93,8 @@ function CreateRoom({ isOpen, onRequestClose }) {
         updateCreatingError('ERROR: Room address is already in use');
         updateIsValidAddress(false);
       } else updateCreatingError(e.message);
+      updateIsCreatingRoom(false);
     }
-    updateIsCreatingRoom(false);
   }
 
   function validateAddress(e) {

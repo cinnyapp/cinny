@@ -97,8 +97,20 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   const myPowerlevel = room.getMember(mx.getUserId()).powerLevel;
   const canIKick = room.currentState.hasSufficientPowerLevelFor('kick', myPowerlevel);
 
+  const onCreated = (dmRoomId) => {
+    if (isMountedRef.current === false) return;
+    setIsCreatingDM(false);
+    selectRoom(dmRoomId);
+    onRequestClose();
+  };
+
   useEffect(() => () => {
     isMountedRef.current = false;
+    const { roomList } = initMatrix;
+    roomList.on(cons.events.roomList.ROOM_CREATED, onCreated);
+    return () => {
+      roomList.removeListener(cons.events.roomList.ROOM_CREATED, onCreated);
+    };
   }, []);
   useEffect(() => {
     setIsUserIgnored(initMatrix.matrixClient.isUserIgnored(userId));
@@ -113,7 +125,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     for (let i = 0; i < directIds.length; i += 1) {
       const dRoom = mx.getRoom(directIds[i]);
       const roomMembers = dRoom.getMembers();
-      if (roomMembers.length <= 2 && dRoom.currentState.members[userId]) {
+      if (roomMembers.length <= 2 && dRoom.getMember(userId)) {
         selectRoom(directIds[i]);
         onRequestClose();
         return;
@@ -123,17 +135,13 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     // Create new DM
     try {
       setIsCreatingDM(true);
-      const result = await roomActions.create({
+      await roomActions.create({
         isEncrypted: true,
         isDirect: true,
         invite: [userId],
       });
-
-      if (isMountedRef.current === false) return;
-      setIsCreatingDM(false);
-      selectRoom(result.room_id);
-      onRequestClose();
     } catch {
+      if (isMountedRef.current === false) return;
       setIsCreatingDM(false);
     }
   }

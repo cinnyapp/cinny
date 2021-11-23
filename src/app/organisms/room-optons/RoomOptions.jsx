@@ -147,8 +147,11 @@ function RoomOptions() {
   }, []);
 
   const handleInviteClick = () => openInviteUser(roomId);
-  const handleLeaveClick = () => {
-    if (confirm('Are you really want to leave this room?')) roomActions.leave(roomId);
+  const handleLeaveClick = (toggleMenu) => {
+    if (confirm('Are you really want to leave this room?')) {
+      roomActions.leave(roomId);
+      toggleMenu();
+    }
   };
 
   function setNotif(nState, currentNState) {
@@ -172,7 +175,7 @@ function RoomOptions() {
           >
             Invite
           </MenuItem>
-          <MenuItem iconSrc={LeaveArrowIC} variant="danger" onClick={handleLeaveClick}>Leave</MenuItem>
+          <MenuItem iconSrc={LeaveArrowIC} variant="danger" onClick={() => handleLeaveClick(toggleMenu)}>Leave</MenuItem>
           <MenuHeader>Notification</MenuHeader>
           <MenuItem
             variant={notifState === cons.notifs.DEFAULT ? 'positive' : 'surface'}
