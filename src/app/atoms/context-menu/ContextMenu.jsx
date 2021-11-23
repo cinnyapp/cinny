@@ -67,7 +67,7 @@ function MenuHeader({ children }) {
 }
 
 MenuHeader.propTypes = {
-  children: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 function MenuItem({

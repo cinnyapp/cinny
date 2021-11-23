@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './RoomOptions.scss';
 
+import { twemojify } from '../../../util/twemojify';
+
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
@@ -166,7 +168,7 @@ function RoomOptions() {
       maxWidth={298}
       content={(toggleMenu) => (
         <>
-          <MenuHeader>{`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`}</MenuHeader>
+          <MenuHeader>{twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}</MenuHeader>
           <MenuItem
             iconSrc={AddUserIC}
             onClick={() => {

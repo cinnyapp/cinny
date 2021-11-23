@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './SidebarAvatar.scss';
 
+import { twemojify } from '../../../util/twemojify';
+
 import Avatar from '../../atoms/avatar/Avatar';
 import Text from '../../atoms/text/Text';
 import Tooltip from '../../atoms/tooltip/Tooltip';
@@ -16,7 +18,7 @@ const SidebarAvatar = React.forwardRef(({
   if (active) activeClass = ' sidebar-avatar--active';
   return (
     <Tooltip
-      content={<Text variant="b1">{tooltip}</Text>}
+      content={<Text variant="b1">{twemojify(tooltip)}</Text>}
       placement="right"
     >
       <button
