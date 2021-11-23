@@ -124,5 +124,5 @@ export function sanitizeText(body) {
     '"': '&quot;',
     "'": '&#39;',
   };
-  return body.replace(/[&<>]/g, (tag) => tagsToReplace[tag] || tag);
+  return body.replace(/[&<>'"]/g, (tag) => tagsToReplace[tag] || tag);
 }
