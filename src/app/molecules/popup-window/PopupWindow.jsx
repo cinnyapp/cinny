@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './PopupWindow.scss';
 
+import { twemojify } from '../../../util/twemojify';
+
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import { MenuItem } from '../../atoms/context-menu/ContextMenu';
@@ -66,7 +68,7 @@ function PopupWindow({
             <Header>
               <IconButton size="small" src={ChevronLeftIC} onClick={onRequestClose} tooltip="Back" />
               <TitleWrapper>
-                <Text variant="s1">{title}</Text>
+                <Text variant="s1">{twemojify(title)}</Text>
               </TitleWrapper>
               {drawerOptions}
             </Header>
@@ -82,7 +84,7 @@ function PopupWindow({
         <div className="pw__content">
           <Header>
             <TitleWrapper>
-              <Text variant="h2">{contentTitle !== null ? contentTitle : title}</Text>
+              <Text variant="h2">{twemojify(contentTitle !== null ? contentTitle : title)}</Text>
             </TitleWrapper>
             {contentOptions}
           </Header>
