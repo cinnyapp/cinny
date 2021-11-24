@@ -95,7 +95,8 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   const [isInvited, setIsInvited] = useState(member?.membership === 'invite');
 
   const myPowerlevel = room.getMember(mx.getUserId()).powerLevel;
-  const canIKick = room.currentState.hasSufficientPowerLevelFor('kick', myPowerlevel);
+  const userPL = room.getMember(userId).powerLevel || 0;
+  const canIKick = room.currentState.hasSufficientPowerLevelFor('kick', myPowerlevel) && userPL < myPowerlevel;
 
   const onCreated = (dmRoomId) => {
     if (isMountedRef.current === false) return;
@@ -104,11 +105,11 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     onRequestClose();
   };
 
-  useEffect(() => () => {
-    isMountedRef.current = false;
+  useEffect(() => {
     const { roomList } = initMatrix;
     roomList.on(cons.events.roomList.ROOM_CREATED, onCreated);
     return () => {
+      isMountedRef.current = false;
       roomList.removeListener(cons.events.roomList.ROOM_CREATED, onCreated);
     };
   }, []);
