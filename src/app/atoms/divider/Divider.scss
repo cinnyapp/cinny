@@ -1,68 +1,69 @@
-.divider {
-  --local-divider-color: var(--bg-surface-border);
+.divider-line {
+  content: '';
+  display: inline-block;
+  flex: 1;
+  border-bottom: 1px solid var(--local-divider-color);
+  opacity: var(--local-divider-opacity);
+}
 
-  margin: var(--sp-extra-tight) var(--sp-normal);
-  margin-right: var(--sp-extra-tight);
+.divider {
   display: flex;
   align-items: center;
-  position: relative;
 
-  &::before {
-    content: "";
-    display: inline-block;
-    flex: 1;
-    margin-left: calc(var(--av-small) + var(--sp-tight));
-    border-bottom: 1px solid var(--local-divider-color);
-    opacity: 0.18;
-
-    [dir=rtl] & {
-      margin: {
-        left: 0;
-        right: calc(var(--av-small) + var(--sp-tight));
-      }
-    }
+  &--center::before,
+  &--right::before {
+    @extend .divider-line;
+  }
+  &--center::after,
+  &--left::after {
+    @extend .divider-line;
   }
 
   &__text {
-    margin-left: var(--sp-normal);
-  }
-
-  [dir=rtl] & {
-    margin: {
-      left: var(--sp-extra-tight);
-      right: var(--sp-normal);
-    }
-
-    &__text {
-      margin: {
-        left: 0;
-        right: var(--sp-normal);
-      }
-    }
+    padding: 2px var(--sp-extra-tight);
+    border-radius: calc(var(--bo-radius) / 2);
+    font-weight: 500;
   }
 }
 
 .divider--surface {
-  --local-divider-color: var(--tc-surface-low);
+  --local-divider-color: var(--bg-divider);
+  --local-divider-opacity: 1;
+
   .divider__text {
     color: var(--tc-surface-low);
+    border: 1px solid var(--bg-divider);
   }
 }
 .divider--primary {
   --local-divider-color: var(--bg-primary);
+  --local-divider-opacity: .8;
   .divider__text {
-    color: var(--bg-primary);
+    color: var(--tc-primary-high);
+    background-color: var(--bg-primary);
+  }
+}
+.divider--positive {
+  --local-divider-color: var(--bg-positive);
+  --local-divider-opacity: .8;
+  .divider__text {
+    color: var(--bg-surface);
+    background-color: var(--bg-positive);
   }
 }
 .divider--danger {
   --local-divider-color: var(--bg-danger);
+  --local-divider-opacity: .8;
   .divider__text {
-    color: var(--bg-danger);
+    color: var(--bg-surface);
+    background-color: var(--bg-danger);
   }
 }
 .divider--caution {
   --local-divider-color: var(--bg-caution);
+  --local-divider-opacity: .8;
   .divider__text {
-    color: var(--bg-caution);
+    color: var(--bg-surface);
+    background-color: var(--bg-caution);
   }
 }
