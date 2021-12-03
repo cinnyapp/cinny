@@ -55,6 +55,10 @@
   &__avatar-container {
     width: var(--av-small);
   }
+  &--focus {
+    box-shadow: inset 2px 0 0 var(--bg-caution);
+    background-color: var(--bg-caution-hover);
+  }
 }
 
 .ph-msg {
@@ -96,6 +100,7 @@
 
 .message__reply,
 .message__body,
+.message__body__wrapper,
 .message__edit,
 .message__reactions {
   max-width: calc(100% - 88px);
@@ -142,6 +147,19 @@
   }
 }
 .message__reply {
+  &-wrapper {
+    min-height: 20px;
+    cursor: pointer;
+    &:empty {
+      border-radius: calc(var(--bo-radius) / 2);
+      background-color: var(--bg-surface-hover);
+      max-width: 200px;
+      cursor: auto;
+    }
+    &:hover .text {
+      color: var(--tc-surface-high);
+    }
+  }
   .text {
     color: var(--tc-surface-low);
     white-space: nowrap;
@@ -288,7 +306,7 @@
   position: absolute;
   top: 0;
   right: 60px;
-  z-index: 999;
+  z-index: 99;
   transform: translateY(-50%);
 
   border-radius: var(--bo-radius);
@@ -323,7 +341,7 @@
     line-height: var(--lh-s1);
   }
   & hr {
-    border-color: var(--bg-surface-border);
+    border-color: var(--bg-divider);
   }
 
   .text img {

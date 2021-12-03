@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
@@ -7,7 +7,7 @@ import dateFormat from 'dateformat';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
-import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
+import { getUsername, getUsernameOfRoomMember, parseReply } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { getEventCords } from '../../../util/common';
 import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
@@ -93,6 +93,60 @@ MessageReply.propTypes = {
   body: PropTypes.string.isRequired,
 };
 
+function MessageReplyWrapper({ roomTimeline, eventId }) {
+  const [reply, setReply] = useState(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    const mx = initMatrix.matrixClient;
+    const timelineSet = roomTimeline.getUnfilteredTimelineSet();
+    const loadReply = async () => {
+      const eTimeline = await mx.getEventTimeline(timelineSet, eventId);
+      await roomTimeline.decryptAllEventsOfTimeline(eTimeline);
+
+      const mEvent = eTimeline.getTimelineSet().findEventById(eventId);
+
+      const rawBody = mEvent.getContent().body;
+      const username = getUsernameOfRoomMember(mEvent.sender);
+
+      if (isMountedRef.current === false) return;
+      const fallbackBody = mEvent.isRedacted() ? '*** This message has been deleted ***' : '*** Unable to load reply content ***';
+      setReply({
+        to: username,
+        color: colorMXID(mEvent.getSender()),
+        body: parseReply(rawBody)?.body ?? rawBody ?? fallbackBody,
+        event: mEvent,
+      });
+    };
+    loadReply();
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const focusReply = () => {
+    if (reply?.event.isRedacted()) return;
+    roomTimeline.loadEventTimeline(eventId);
+  };
+
+  return (
+    <div
+      className="message__reply-wrapper"
+      onClick={focusReply}
+      onKeyDown={focusReply}
+      role="button"
+      tabIndex="0"
+    >
+      {reply !== null && <MessageReply name={reply.to} color={reply.color} body={reply.body} />}
+    </div>
+  );
+}
+MessageReplyWrapper.propTypes = {
+  roomTimeline: PropTypes.shape({}).isRequired,
+  eventId: PropTypes.string.isRequired,
+};
+
 function MessageBody({
   senderName,
   body,
@@ -126,13 +180,14 @@ function MessageBody({
 MessageBody.defaultProps = {
   isCustomHTML: false,
   isEdited: false,
+  msgType: null,
 };
 MessageBody.propTypes = {
   senderName: PropTypes.string.isRequired,
   body: PropTypes.node.isRequired,
   isCustomHTML: PropTypes.bool,
   isEdited: PropTypes.bool,
-  msgType: PropTypes.string.isRequired,
+  msgType: PropTypes.string,
 };
 
 function MessageEdit({ body, onSave, onCancel }) {
@@ -344,26 +399,6 @@ function pickEmoji(e, roomId, eventId, roomTimeline) {
   });
 }
 
-function parseReply(rawBody) {
-  if (rawBody.indexOf('>') !== 0) return null;
-  let body = rawBody.slice(rawBody.indexOf('<') + 1);
-  const user = body.slice(0, body.indexOf('>'));
-
-  body = body.slice(body.indexOf('>') + 2);
-  const replyBody = body.slice(0, body.indexOf('\n\n'));
-  body = body.slice(body.indexOf('\n\n') + 2);
-
-  if (user === '') return null;
-
-  const isUserId = user.match(/^@.+:.+/);
-
-  return {
-    userId: isUserId ? user : null,
-    displayName: isUserId ? null : user,
-    replyBody,
-    body,
-  };
-}
 function getEditedBody(editedMEvent) {
   const newContent = editedMEvent.getContent()['m.new_content'];
   if (typeof newContent === 'undefined') return [null, false, null];
@@ -376,7 +411,9 @@ function getEditedBody(editedMEvent) {
   return [parsedContent.body, isCustomHTML, newContent.formatted_body ?? null];
 }
 
-function Message({ mEvent, isBodyOnly, roomTimeline }) {
+function Message({
+  mEvent, isBodyOnly, roomTimeline, focus,
+}) {
   const [isEditing, setIsEditing] = useState(false);
 
   const mx = initMatrix.matrixClient;
@@ -385,6 +422,7 @@ function Message({ mEvent, isBodyOnly, roomTimeline }) {
   } = roomTimeline;
 
   const className = ['message', (isBodyOnly ? 'message--body-only' : 'message--full')];
+  if (focus) className.push('message--focus');
   const content = mEvent.getContent();
   const eventId = mEvent.getId();
   const msgType = content?.msgtype;
@@ -401,9 +439,9 @@ function Message({ mEvent, isBodyOnly, roomTimeline }) {
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel;
   const canIRedact = room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
 
-  let [reply, reactions, isCustomHTML] = [null, null, content.format === 'org.matrix.custom.html'];
+  let [reactions, isCustomHTML] = [null, content.format === 'org.matrix.custom.html'];
   const [isEdited, haveReactions] = [editedTimeline.has(eventId), reactionTimeline.has(eventId)];
-  const isReply = typeof content['m.relates_to']?.['m.in_reply_to'] !== 'undefined';
+  const isReply = !!mEvent.replyEventId;
   let customHTML = isCustomHTML ? content.formatted_body : null;
 
   if (isEdited) {
@@ -447,18 +485,7 @@ function Message({ mEvent, isBodyOnly, roomTimeline }) {
   }
 
   if (isReply) {
-    const parsedContent = parseReply(body);
-    if (parsedContent !== null) {
-      const c = room.currentState;
-      const displayNameToUserIds = c.getUserIdsWithDisplayName(parsedContent.displayName);
-      const ID = parsedContent.userId || displayNameToUserIds[0];
-      reply = {
-        color: colorMXID(ID || parsedContent.displayName),
-        to: parsedContent.displayName || getUsername(parsedContent.userId),
-        body: parsedContent.replyBody,
-      };
-      body = parsedContent.body;
-    }
+    body = parseReply(body)?.body ?? body;
   }
 
   return (
@@ -474,8 +501,11 @@ function Message({ mEvent, isBodyOnly, roomTimeline }) {
         {!isBodyOnly && (
           <MessageHeader userId={senderId} name={username} color={mxidColor} time={time} />
         )}
-        {reply !== null && (
-          <MessageReply name={reply.to} color={reply.color} body={reply.body} />
+        {isReply && (
+          <MessageReplyWrapper
+            roomTimeline={roomTimeline}
+            eventId={mEvent.replyEventId}
+          />
         )}
         {!isEditing && (
           <MessageBody
@@ -551,7 +581,7 @@ function Message({ mEvent, isBodyOnly, roomTimeline }) {
                   <MenuHeader>Options</MenuHeader>
                   <MenuItem
                     iconSrc={TickMarkIC}
-                    onClick={() => openReadReceipts(roomId, eventId)}
+                    onClick={() => openReadReceipts(roomId, roomTimeline.getEventReaders(eventId))}
                   >
                     Read receipts
                   </MenuItem>
@@ -590,11 +620,13 @@ function Message({ mEvent, isBodyOnly, roomTimeline }) {
 }
 Message.defaultProps = {
   isBodyOnly: false,
+  focus: false,
 };
 Message.propTypes = {
   mEvent: PropTypes.shape({}).isRequired,
   isBodyOnly: PropTypes.bool,
   roomTimeline: PropTypes.shape({}).isRequired,
+  focus: PropTypes.bool,
 };
 
 export { Message, MessageReply, PlaceholderMessage };
