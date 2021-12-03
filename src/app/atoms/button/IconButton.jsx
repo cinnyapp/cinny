@@ -44,7 +44,7 @@ IconButton.defaultProps = {
 };
 
 IconButton.propTypes = {
-  variant: PropTypes.oneOf(['surface', 'positive', 'caution', 'danger']),
+  variant: PropTypes.oneOf(['surface', 'primary', 'positive', 'caution', 'danger']),
   size: PropTypes.oneOf(['normal', 'small', 'extra-small']),
   type: PropTypes.oneOf(['button', 'submit', 'reset']),
   tooltip: PropTypes.string,
