@@ -56,7 +56,28 @@ function getPowerLabel(powerLevel) {
   return null;
 }
 
+function parseReply(rawBody) {
+  if (rawBody?.indexOf('>') !== 0) return null;
+  let body = rawBody.slice(rawBody.indexOf('<') + 1);
+  const user = body.slice(0, body.indexOf('>'));
+
+  body = body.slice(body.indexOf('>') + 2);
+  const replyBody = body.slice(0, body.indexOf('\n\n'));
+  body = body.slice(body.indexOf('\n\n') + 2);
+
+  if (user === '') return null;
+
+  const isUserId = user.match(/^@.+:.+/);
+
+  return {
+    userId: isUserId ? user : null,
+    displayName: isUserId ? null : user,
+    replyBody,
+    body,
+  };
+}
+
 export {
   getBaseUrl, getUsername, getUsernameOfRoomMember,
-  isRoomAliasAvailable, getPowerLabel,
+  isRoomAliasAvailable, getPowerLabel, parseReply,
 };

@@ -9,5 +9,30 @@
     min-height: 0;
     min-width: 0;
     padding-bottom: var(--typing-noti-height);
+
+    & .message,
+    & .ph-msg,
+    & .timeline-change {
+      border-radius: 0 var(--bo-radius) var(--bo-radius) 0;
+      [dir=rtl] & {
+        border-radius: var(--bo-radius) 0 0 var(--bo-radius);
+      }
+    }
+    
+    & > .divider {
+      margin: var(--sp-extra-tight) var(--sp-normal);
+      margin-right: var(--sp-extra-tight);
+      padding-left: calc(var(--av-small) + var(--sp-tight));
+      [dir=rtl] & {
+        padding: {
+          left: 0;
+          right: calc(var(--av-small) + var(--sp-tight));
+        }
+        margin: {
+          left: var(--sp-extra-tight);
+          right: var(--sp-normal);
+        }
+      }
+    }
   }
 }

@@ -90,7 +90,6 @@ export function getScrollInfo(target) {
   scroll.top = Math.round(target.scrollTop);
   scroll.height = Math.round(target.scrollHeight);
   scroll.viewHeight = Math.round(target.offsetHeight);
-  scroll.bottom = Math.round(scroll.top + scroll.viewHeight);
   scroll.isScrollable = scroll.height > scroll.viewHeight;
   return scroll;
 }

@@ -123,37 +123,29 @@ function FollowingMembers({ roomId, roomTimeline, viewEvent }) {
   const [followingMembers, setFollowingMembers] = useState([]);
   const mx = initMatrix.matrixClient;
 
-  function handleOnMessageSent() {
-    setFollowingMembers([]);
-  }
+  const handleOnMessageSent = () => setFollowingMembers([]);
 
-  function updateFollowingMembers() {
-    const room = mx.getRoom(roomId);
-    const { timeline } = room;
-    const userIds = room.getUsersReadUpTo(timeline[timeline.length - 1]);
+  const updateFollowingMembers = () => {
     const myUserId = mx.getUserId();
-    setFollowingMembers(userIds.filter((userId) => userId !== myUserId));
-  }
-
-  useEffect(() => updateFollowingMembers(), [roomId]);
+    setFollowingMembers(roomTimeline.getLiveReaders().filter((userId) => userId !== myUserId));
+  };
 
   useEffect(() => {
-    roomTimeline.on(cons.events.roomTimeline.READ_RECEIPT, updateFollowingMembers);
+    updateFollowingMembers();
+    roomTimeline.on(cons.events.roomTimeline.LIVE_RECEIPT, updateFollowingMembers);
     viewEvent.on('message_sent', handleOnMessageSent);
     return () => {
-      roomTimeline.removeListener(cons.events.roomTimeline.READ_RECEIPT, updateFollowingMembers);
+      roomTimeline.removeListener(cons.events.roomTimeline.LIVE_RECEIPT, updateFollowingMembers);
       viewEvent.removeListener('message_sent', handleOnMessageSent);
     };
   }, [roomTimeline]);
 
-  const { timeline } = roomTimeline.room;
-  const lastMEvent = timeline[timeline.length - 1];
   return followingMembers.length !== 0 && (
     <TimelineChange
       variant="follow"
       content={getUsersActionJsx(roomId, followingMembers, 'following the conversation.')}
       time=""
-      onClick={() => openReadReceipts(roomId, lastMEvent.getId())}
+      onClick={() => openReadReceipts(roomId, followingMembers)}
     />
   );
 }

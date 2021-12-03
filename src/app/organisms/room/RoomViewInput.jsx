@@ -35,7 +35,7 @@ let isTyping = false;
 let isCmdActivated = false;
 let cmdCursorPos = null;
 function RoomViewInput({
-  roomId, roomTimeline, timelineScroll, viewEvent,
+  roomId, roomTimeline, viewEvent,
 }) {
   const [attachment, setAttachment] = useState(null);
   const [isMarkdown, setIsMarkdown] = useState(settings.isMarkdown);
@@ -211,7 +211,6 @@ function RoomViewInput({
     focusInput();
 
     textAreaRef.current.value = roomsInput.getMessage(roomId);
-    viewEvent.emit('scroll-to-live');
     viewEvent.emit('message_sent');
     textAreaRef.current.style.height = 'unset';
     if (replyTo !== null) setReplyTo(null);
@@ -344,14 +343,13 @@ function RoomViewInput({
           <IconButton onClick={handleUploadClick} tooltip={attachment === null ? 'Upload' : 'Cancel'} src={CirclePlusIC} />
         </div>
         <div ref={inputBaseRef} className="room-input__input-container">
-          {roomTimeline.isEncryptedRoom() && <RawIcon size="extra-small" src={ShieldIC} />}
+          {roomTimeline.isEncrypted() && <RawIcon size="extra-small" src={ShieldIC} />}
           <ScrollView autoHide>
             <Text className="room-input__textarea-wrapper">
               <TextareaAutosize
                 ref={textAreaRef}
                 onChange={handleMsgTyping}
                 onPaste={handlePaste}
-                onResize={() => timelineScroll.autoReachBottom()}
                 onKeyDown={handleKeyDown}
                 placeholder="Send a message..."
               />
@@ -434,7 +432,6 @@ function RoomViewInput({
 RoomViewInput.propTypes = {
   roomId: PropTypes.string.isRequired,
   roomTimeline: PropTypes.shape({}).isRequired,
-  timelineScroll: PropTypes.shape({}).isRequired,
   viewEvent: PropTypes.shape({}).isRequired,
 };
 

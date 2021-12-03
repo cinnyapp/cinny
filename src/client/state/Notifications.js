@@ -34,16 +34,17 @@ class Notifications extends EventEmitter {
   doesRoomHaveUnread(room) {
     const userId = this.matrixClient.getUserId();
     const readUpToId = room.getEventReadUpTo(userId);
+    const liveEvents = room.getLiveTimeline().getEvents();
 
-    if (room.timeline.length
-      && room.timeline[room.timeline.length - 1].sender
-      && room.timeline[room.timeline.length - 1].sender.userId === userId
-      && room.timeline[room.timeline.length - 1].getType() !== 'm.room.member') {
+    if (liveEvents.length
+      && liveEvents[liveEvents.length - 1].sender
+      && liveEvents[liveEvents.length - 1].sender.userId === userId
+      && liveEvents[liveEvents.length - 1].getType() !== 'm.room.member') {
       return false;
     }
 
-    for (let i = room.timeline.length - 1; i >= 0; i -= 1) {
-      const event = room.timeline[i];
+    for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
+      const event = liveEvents[i];
 
       if (event.getId() === readUpToId) return false;
 
@@ -150,8 +151,9 @@ class Notifications extends EventEmitter {
   _listenEvents() {
     this.matrixClient.on('Room.timeline', (mEvent, room) => {
       if (!this.supportEvents.includes(mEvent.getType())) return;
+      const liveEvents = room.getLiveTimeline().getEvents();
 
-      const lastTimelineEvent = room.timeline[room.timeline.length - 1];
+      const lastTimelineEvent = liveEvents[liveEvents.length - 1];
       if (lastTimelineEvent.getId() !== mEvent.getId()) return;
       if (mEvent.getSender() === this.matrixClient.getUserId()) return;
 

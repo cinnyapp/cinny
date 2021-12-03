@@ -15,10 +15,11 @@ function selectSpace(roomId) {
   });
 }
 
-function selectRoom(roomId) {
+function selectRoom(roomId, eventId) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.SELECT_ROOM,
     roomId,
+    eventId,
   });
 }
 
@@ -71,11 +72,11 @@ function openEmojiBoard(cords, requestEmojiCallback) {
   });
 }
 
-function openReadReceipts(roomId, eventId) {
+function openReadReceipts(roomId, userIds) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_READRECEIPTS,
     roomId,
-    eventId,
+    userIds,
   });
 }
 

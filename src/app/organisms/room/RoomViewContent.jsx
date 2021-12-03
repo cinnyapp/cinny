@@ -1,31 +1,52 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, {
+  useState, useEffect, useLayoutEffect, useCallback, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import './RoomViewContent.scss';
 
+import EventEmitter from 'events';
 import dateFormat from 'dateformat';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
-import { diffMinutes, isNotInSameDay } from '../../../util/common';
+import navigation from '../../../client/state/navigation';
 import { openProfileViewer } from '../../../client/action/navigation';
+import {
+  diffMinutes, isNotInSameDay, Throttle, getScrollInfo,
+} from '../../../util/common';
 
 import Divider from '../../atoms/divider/Divider';
+import ScrollView from '../../atoms/scroll/ScrollView';
 import { Message, PlaceholderMessage } from '../../molecules/message/Message';
 import RoomIntro from '../../molecules/room-intro/RoomIntro';
 import TimelineChange from '../../molecules/message/TimelineChange';
 
+import { useStore } from '../../hooks/useStore';
 import { parseTimelineChange } from './common';
 
 const MAX_MSG_DIFF_MINUTES = 5;
+const PLACEHOLDER_COUNT = 2;
+const PLACEHOLDERS_HEIGHT = 96 * PLACEHOLDER_COUNT;
+const SCROLL_TRIGGER_POS = PLACEHOLDERS_HEIGHT * 4;
 
-function genPlaceholders(key) {
+const SMALLEST_MSG_HEIGHT = 32;
+const PAGES_COUNT = 4;
+
+function loadingMsgPlaceholders(key, count = 2) {
+  const pl = [];
+  const genPlaceholders = () => {
+    for (let i = 0; i < count; i += 1) {
+      pl.push(<PlaceholderMessage key={`placeholder-${i}${key}`} />);
+    }
+    return pl;
+  };
+
   return (
     <React.Fragment key={`placeholder-container${key}`}>
-      <PlaceholderMessage key={`placeholder-1${key}`} />
-      <PlaceholderMessage key={`placeholder-2${key}`} />
+      {genPlaceholders()}
     </React.Fragment>
   );
 }
@@ -49,228 +70,421 @@ function genRoomIntro(mEvent, roomTimeline) {
   );
 }
 
-const scroll = {
-  from: 0,
-  limit: 0,
-  getEndIndex() {
-    return (this.from + this.limit);
-  },
-  isNewEvent: false,
-};
-function RoomViewContent({
-  roomId, roomTimeline, timelineScroll, viewEvent,
-}) {
-  const [isReachedTimelineEnd, setIsReachedTimelineEnd] = useState(false);
-  const [onStateUpdate, updateState] = useState(null);
+function handleOnClickCapture(e) {
+  const { target } = e;
+  const userId = target.getAttribute('data-mx-pill');
+  if (!userId) return;
 
-  const mx = initMatrix.matrixClient;
-  const noti = initMatrix.notifications;
+  const roomId = navigation.selectedRoomId;
+  openProfileViewer(userId, roomId);
+}
 
-  if (scroll.limit === 0) {
-    const from = roomTimeline.timeline.size - timelineScroll.maxEvents;
-    scroll.from = (from < 0) ? 0 : from;
-    scroll.limit = timelineScroll.maxEvents;
+function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
+  const isBodyOnly = (prevMEvent !== null && prevMEvent.getType() !== 'm.room.member'
+    && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
+    && prevMEvent.getSender() === mEvent.getSender()
+  );
+
+  if (mEvent.getType() === 'm.room.member') {
+    const timelineChange = parseTimelineChange(mEvent);
+    if (timelineChange === null) return false;
+    return (
+      <TimelineChange
+        key={mEvent.getId()}
+        variant={timelineChange.variant}
+        content={timelineChange.content}
+        time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
+      />
+    );
   }
+  return (
+    <Message
+      key={mEvent.getId()}
+      mEvent={mEvent}
+      isBodyOnly={isBodyOnly}
+      roomTimeline={roomTimeline}
+      focus={isFocus}
+    />
+  );
+}
 
-  function autoLoadTimeline() {
-    if (timelineScroll.isScrollable === true) return;
-    roomTimeline.paginateBack();
-  }
-  function trySendingReadReceipt() {
-    const { timeline } = roomTimeline.room;
-    if (
-      (noti.doesRoomHaveUnread(roomTimeline.room) || noti.hasNoti(roomId))
-      && timeline.length !== 0) {
-      mx.sendReadReceipt(timeline[timeline.length - 1]);
+class TimelineScroll extends EventEmitter {
+  constructor(target) {
+    super();
+    if (target === null) {
+      throw new Error('Can not initialize TimelineScroll, target HTMLElement in null');
     }
+    this.scroll = target;
+
+    this.backwards = false;
+    this.inTopHalf = false;
+    this.maxEvents = 50;
+
+    this.isScrollable = false;
+    this.top = 0;
+    this.bottom = 0;
+    this.height = 0;
+    this.viewHeight = 0;
+
+    this.topMsg = null;
+    this.bottomMsg = null;
+    this.diff = 0;
   }
 
-  const getNewFrom = (position) => {
-    let newFrom = scroll.from;
-    const tSize = roomTimeline.timeline.size;
-    const doPaginate = tSize > timelineScroll.maxEvents;
-    if (!doPaginate || scroll.from < 0) newFrom = 0;
-    const newEventCount = Math.round(timelineScroll.maxEvents / 2);
-    scroll.limit = timelineScroll.maxEvents;
+  scrollToBottom() {
+    const scrollInfo = getScrollInfo(this.scroll);
+    const maxScrollTop = scrollInfo.height - scrollInfo.viewHeight;
 
-    if (position === 'TOP' && doPaginate) newFrom -= newEventCount;
-    if (position === 'BOTTOM' && doPaginate) newFrom += newEventCount;
+    this._scrollTo(scrollInfo, maxScrollTop);
+  }
 
-    if (newFrom >= tSize || scroll.getEndIndex() >= tSize) newFrom = tSize - scroll.limit - 1;
-    if (newFrom < 0) newFrom = 0;
-    return newFrom;
-  };
+  // restore scroll using previous calc by this._updateTopBottomMsg() and this._calcDiff.
+  tryRestoringScroll() {
+    const scrollInfo = getScrollInfo(this.scroll);
 
-  const handleTimelineScroll = (position) => {
-    const tSize = roomTimeline.timeline.size;
-    if (position === 'BETWEEN') return;
-    if (position === 'BOTTOM' && scroll.getEndIndex() + 1 === tSize) return;
+    let scrollTop = 0;
+    const ot = this.inTopHalf ? this.topMsg?.offsetTop : this.bottomMsg?.offsetTop;
+    if (!ot) scrollTop = this.top;
+    else scrollTop = ot - this.diff;
 
-    if (scroll.from === 0 && position === 'TOP') {
-      // Fetch back history.
-      if (roomTimeline.isOngoingPagination || isReachedTimelineEnd) return;
-      roomTimeline.paginateBack();
+    this._scrollTo(scrollInfo, scrollTop);
+  }
+
+  scrollToIndex(index, offset = 0) {
+    const scrollInfo = getScrollInfo(this.scroll);
+    const msgs = this.scroll.lastElementChild.lastElementChild.children;
+    const offsetTop = msgs[index]?.offsetTop;
+
+    if (offsetTop === undefined) return;
+    // if msg is already in visible are we don't need to scroll to that
+    if (offsetTop > scrollInfo.top && offsetTop < (scrollInfo.top + scrollInfo.viewHeight)) return;
+    const to = offsetTop - offset;
+
+    this._scrollTo(scrollInfo, to);
+  }
+
+  _scrollTo(scrollInfo, scrollTop) {
+    this.scroll.scrollTop = scrollTop;
+
+    // browser emit 'onscroll' event only if the 'element.scrollTop' value changes.
+    // so here we flag that the upcoming 'onscroll' event is
+    // emitted as side effect of assigning 'this.scroll.scrollTop' above
+    // only if it's changes.
+    // by doing so we prevent this._updateCalc() from calc again.
+    if (scrollTop !== this.top) {
+      this.scrolledByCode = true;
+    }
+    const sInfo = { ...scrollInfo };
+
+    const maxScrollTop = scrollInfo.height - scrollInfo.viewHeight;
+
+    sInfo.top = (scrollTop > maxScrollTop) ? maxScrollTop : scrollTop;
+    this._updateCalc(sInfo);
+  }
+
+  // we maintain reference of top and bottom messages
+  // to restore the scroll position when
+  // messages gets removed from either end and added to other.
+  _updateTopBottomMsg() {
+    const msgs = this.scroll.lastElementChild.lastElementChild.children;
+    const lMsgIndex = msgs.length - 1;
+
+    this.topMsg = msgs[0]?.className === 'ph-msg'
+      ? msgs[PLACEHOLDER_COUNT]
+      : msgs[0];
+    this.bottomMsg = msgs[lMsgIndex]?.className === 'ph-msg'
+      ? msgs[lMsgIndex - PLACEHOLDER_COUNT]
+      : msgs[lMsgIndex];
+  }
+
+  // we calculate the difference between first/last message and current scrollTop.
+  // if we are going above we calc diff between first and scrollTop
+  // else otherwise.
+  // NOTE: This will help to restore the scroll when msgs get's removed
+  // from one end and added to other end
+  _calcDiff(scrollInfo) {
+    if (!this.topMsg || !this.bottomMsg) return 0;
+    if (this.inTopHalf) {
+      return this.topMsg.offsetTop - scrollInfo.top;
+    }
+    return this.bottomMsg.offsetTop - scrollInfo.top;
+  }
+
+  _calcMaxEvents(scrollInfo) {
+    return Math.round(scrollInfo.viewHeight / SMALLEST_MSG_HEIGHT) * PAGES_COUNT;
+  }
+
+  _updateCalc(scrollInfo) {
+    const halfViewHeight = Math.round(scrollInfo.viewHeight / 2);
+    const scrollMiddle = scrollInfo.top + halfViewHeight;
+    const lastMiddle = this.top + halfViewHeight;
+
+    this.backwards = scrollMiddle < lastMiddle;
+    this.inTopHalf = scrollMiddle < scrollInfo.height / 2;
+
+    this.isScrollable = scrollInfo.isScrollable;
+    this.top = scrollInfo.top;
+    this.bottom = scrollInfo.height - (scrollInfo.top + scrollInfo.viewHeight);
+    this.height = scrollInfo.height;
+
+    // only calculate maxEvents if viewHeight change
+    if (this.viewHeight !== scrollInfo.viewHeight) {
+      this.maxEvents = this._calcMaxEvents(scrollInfo);
+      this.viewHeight = scrollInfo.viewHeight;
+    }
+
+    this._updateTopBottomMsg();
+    this.diff = this._calcDiff(scrollInfo);
+  }
+
+  calcScroll() {
+    if (this.scrolledByCode) {
+      this.scrolledByCode = false;
       return;
     }
 
-    scroll.from = getNewFrom(position);
-    updateState({});
+    const scrollInfo = getScrollInfo(this.scroll);
+    this._updateCalc(scrollInfo);
 
-    if (scroll.getEndIndex() + 1 >= tSize) {
-      trySendingReadReceipt();
+    this.emit('scroll', this.backwards);
+  }
+}
+
+let timelineScroll = null;
+let focusEventIndex = null;
+const throttle = new Throttle();
+
+function useTimeline(roomTimeline, eventId) {
+  const [timelineInfo, setTimelineInfo] = useState(null);
+
+  const initTimeline = (eId) => {
+    setTimelineInfo({
+      focusEventId: eId,
+    });
+  };
+
+  const setEventTimeline = async (eId) => {
+    if (typeof eId === 'string') {
+      const isLoaded = await roomTimeline.loadEventTimeline(eId);
+      if (isLoaded) return;
+      // if eventTimeline failed to load,
+      // we will load live timeline as fallback.
     }
-  };
-
-  const updatePAG = (canPagMore, loaded) => {
-    if (canPagMore) {
-      scroll.from += loaded;
-      scroll.from = getNewFrom(timelineScroll.position);
-      if (roomTimeline.ongoingDecryptionCount === 0) updateState({});
-    } else setIsReachedTimelineEnd(true);
-  };
-  // force update RoomTimeline
-  const updateRT = () => {
-    if (timelineScroll.position === 'BOTTOM') {
-      trySendingReadReceipt();
-      scroll.from = roomTimeline.timeline.size - scroll.limit - 1;
-      if (scroll.from < 0) scroll.from = 0;
-      scroll.isNewEvent = true;
-    }
-    updateState({});
-  };
-
-  const handleScrollToLive = () => {
-    trySendingReadReceipt();
-    scroll.from = roomTimeline.timeline.size - scroll.limit - 1;
-    if (scroll.from < 0) scroll.from = 0;
-    scroll.isNewEvent = true;
-    updateState({});
+    roomTimeline.loadLiveTimeline();
   };
 
   useEffect(() => {
-    trySendingReadReceipt();
+    roomTimeline.on(cons.events.roomTimeline.READY, initTimeline);
+    setEventTimeline(eventId);
     return () => {
-      setIsReachedTimelineEnd(false);
-      scroll.limit = 0;
+      roomTimeline.removeListener(cons.events.roomTimeline.READY, initTimeline);
+      roomTimeline.removeInternalListeners();
     };
-  }, [roomId]);
+  }, [roomTimeline, eventId]);
 
-  // init room setup completed.
-  // listen for future. setup stateUpdate listener.
+  return timelineInfo;
+}
+
+function useOnPaginate(roomTimeline) {
+  const [info, setInfo] = useState(null);
+
   useEffect(() => {
-    roomTimeline.on(cons.events.roomTimeline.EVENT, updateRT);
-    roomTimeline.on(cons.events.roomTimeline.PAGINATED, updatePAG);
-    viewEvent.on('timeline-scroll', handleTimelineScroll);
-    viewEvent.on('scroll-to-live', handleScrollToLive);
-
-    return () => {
-      roomTimeline.removeListener(cons.events.roomTimeline.EVENT, updateRT);
-      roomTimeline.removeListener(cons.events.roomTimeline.PAGINATED, updatePAG);
-      viewEvent.removeListener('timeline-scroll', handleTimelineScroll);
-      viewEvent.removeListener('scroll-to-live', handleScrollToLive);
+    const handleOnPagination = (backwards, loaded, canLoadMore) => {
+      setInfo({
+        backwards,
+        loaded,
+        canLoadMore,
+      });
     };
-  }, [roomTimeline, isReachedTimelineEnd]);
+    roomTimeline.on(cons.events.roomTimeline.PAGINATED, handleOnPagination);
+    return () => {
+      roomTimeline.on(cons.events.roomTimeline.PAGINATED, handleOnPagination);
+    };
+  }, [roomTimeline]);
 
-  useLayoutEffect(() => {
-    timelineScroll.reachBottom();
-    autoLoadTimeline();
-    trySendingReadReceipt();
+  return info;
+}
+
+function useAutoPaginate(roomTimeline) {
+  return useCallback(() => {
+    if (roomTimeline.isOngoingPagination) return;
+
+    if (timelineScroll.bottom < SCROLL_TRIGGER_POS && roomTimeline.canPaginateForward()) {
+      roomTimeline.paginateTimeline(false);
+      return;
+    }
+    if (timelineScroll.top < SCROLL_TRIGGER_POS && roomTimeline.canPaginateBackward()) {
+      roomTimeline.paginateTimeline(true);
+    }
+  }, [roomTimeline]);
+}
+
+function useHandleScroll(roomTimeline, autoPaginate, viewEvent) {
+  return useCallback(() => {
+    requestAnimationFrame(() => {
+      // emit event to toggle scrollToBottom button visibility
+      const isAtBottom = timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward();
+      viewEvent.emit('at-bottom', isAtBottom);
+    });
+    autoPaginate();
+  }, [roomTimeline]);
+}
+
+function useEventArrive(roomTimeline) {
+  const [newEvent, setEvent] = useState(null);
+  useEffect(() => {
+    const handleEvent = (event) => {
+      setEvent(event);
+    };
+    roomTimeline.on(cons.events.roomTimeline.EVENT, handleEvent);
+    return () => {
+      roomTimeline.removeListener(cons.events.roomTimeline.EVENT, handleEvent);
+    };
   }, [roomTimeline]);
 
   useLayoutEffect(() => {
-    if (onStateUpdate === null || scroll.isNewEvent) {
-      scroll.isNewEvent = false;
-      timelineScroll.reachBottom();
+    if (!roomTimeline.initialized) return;
+    if (timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward()) {
+      timelineScroll.scrollToBottom();
+    }
+  }, [newEvent, roomTimeline]);
+}
+
+function RoomViewContent({
+  eventId, roomTimeline, viewEvent,
+}) {
+  const timelineSVRef = useRef(null);
+  const timelineInfo = useTimeline(roomTimeline, eventId);
+  const readEventStore = useStore(roomTimeline);
+  const paginateInfo = useOnPaginate(roomTimeline);
+  const autoPaginate = useAutoPaginate(roomTimeline);
+  const handleScroll = useHandleScroll(roomTimeline, autoPaginate, viewEvent);
+  useEventArrive(roomTimeline);
+  const { timeline } = roomTimeline;
+
+  const handleScrollToLive = useCallback(() => {
+    if (roomTimeline.isServingLiveTimeline()) {
+      timelineScroll.scrollToBottom();
       return;
     }
-    if (timelineScroll.isScrollable) {
-      timelineScroll.tryRestoringScroll();
-    } else {
-      timelineScroll.reachBottom();
-      autoLoadTimeline();
+    roomTimeline.loadLiveTimeline();
+  }, [roomTimeline]);
+
+  useLayoutEffect(() => {
+    if (!roomTimeline.initialized) {
+      timelineScroll = new TimelineScroll(timelineSVRef.current);
+      return undefined;
     }
-  }, [onStateUpdate]);
 
-  const handleOnClickCapture = (e) => {
-    const { target } = e;
-    const userId = target.getAttribute('data-mx-pill');
-    if (!userId) return;
+    if (timeline.length > 0) {
+      if (focusEventIndex === null) timelineScroll.scrollToBottom();
+      else timelineScroll.scrollToIndex(focusEventIndex, 80);
+      focusEventIndex = null;
+    }
+    autoPaginate();
 
-    openProfileViewer(userId, roomId);
+    timelineScroll.on('scroll', handleScroll);
+    viewEvent.on('scroll-to-live', handleScrollToLive);
+    return () => {
+      if (timelineSVRef.current === null) return;
+      timelineScroll.removeListener('scroll', handleScroll);
+      viewEvent.removeListener('scroll-to-live', handleScrollToLive);
+    };
+  }, [timelineInfo]);
+
+  useLayoutEffect(() => {
+    if (!roomTimeline.initialized) return;
+    // TODO: decide is restore scroll
+    timelineScroll.tryRestoringScroll();
+    autoPaginate();
+  }, [paginateInfo]);
+
+  const handleTimelineScroll = (event) => {
+    const { target } = event;
+    if (!target) return;
+    throttle._(() => timelineScroll?.calcScroll(), 200)(target);
   };
 
-  let prevMEvent = null;
-  const renderMessage = (mEvent) => {
-    const isContentOnly = (prevMEvent !== null && prevMEvent.getType() !== 'm.room.member'
-      && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
-      && prevMEvent.getSender() === mEvent.getSender()
-    );
-
-    let DividerComp = null;
-    if (prevMEvent !== null && isNotInSameDay(mEvent.getDate(), prevMEvent.getDate())) {
-      DividerComp = <Divider key={`divider-${mEvent.getId()}`} text={`${dateFormat(mEvent.getDate(), 'mmmm dd, yyyy')}`} />;
+  const getReadEvent = () => {
+    const readEventId = roomTimeline.getReadUpToEventId();
+    if (readEventStore.getItem()?.getId() === readEventId) {
+      return readEventStore.getItem();
     }
-    prevMEvent = mEvent;
-
-    if (mEvent.getType() === 'm.room.member') {
-      const timelineChange = parseTimelineChange(mEvent);
-      if (timelineChange === null) return false;
-      return (
-        <React.Fragment key={`box-${mEvent.getId()}`}>
-          {DividerComp}
-          <TimelineChange
-            key={mEvent.getId()}
-            variant={timelineChange.variant}
-            content={timelineChange.content}
-            time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
-          />
-        </React.Fragment>
+    if (roomTimeline.hasEventInActiveTimeline(readEventId)) {
+      return readEventStore.setItem(
+        roomTimeline.findEventByIdInTimelineSet(readEventId),
       );
     }
-    return (
-      <React.Fragment key={`box-${mEvent.getId()}`}>
-        {DividerComp}
-        <Message mEvent={mEvent} isBodyOnly={isContentOnly} roomTimeline={roomTimeline} />
-      </React.Fragment>
-    );
+    return readEventStore.setItem(null);
   };
 
   const renderTimeline = () => {
-    const { timeline } = roomTimeline;
     const tl = [];
-    if (timeline.size === 0) return tl;
 
-    let i = 0;
-    // eslint-disable-next-line no-restricted-syntax
-    for (const [, mEvent] of timeline.entries()) {
-      if (i >= scroll.from) {
-        if (i === scroll.from) {
-          if (mEvent.getType() !== 'm.room.create' && !isReachedTimelineEnd) tl.push(genPlaceholders(1));
-          if (mEvent.getType() !== 'm.room.create' && isReachedTimelineEnd) tl.push(genRoomIntro(undefined, roomTimeline));
-        }
-        if (mEvent.getType() === 'm.room.create') tl.push(genRoomIntro(mEvent, roomTimeline));
-        else tl.push(renderMessage(mEvent));
-      }
-      i += 1;
-      if (i > scroll.getEndIndex()) break;
+    const readEvent = getReadEvent();
+    let extraItemCount = 0;
+    focusEventIndex = null;
+
+    if (roomTimeline.canPaginateBackward()) {
+      tl.push(loadingMsgPlaceholders(1, PLACEHOLDER_COUNT));
+      extraItemCount += PLACEHOLDER_COUNT;
     }
-    if (i < timeline.size) tl.push(genPlaceholders(2));
+    for (let i = 0; i < timeline.length; i += 1) {
+      const mEvent = timeline[i];
+      const prevMEvent = timeline[i - 1] ?? null;
+
+      if (i === 0 && !roomTimeline.canPaginateBackward()) {
+        if (mEvent.getType() === 'm.room.create') {
+          tl.push(genRoomIntro(mEvent, roomTimeline));
+          // eslint-disable-next-line no-continue
+          continue;
+        } else {
+          tl.push(genRoomIntro(undefined, roomTimeline));
+          extraItemCount += 1;
+        }
+      }
+      const unreadDivider = (readEvent
+        && prevMEvent?.getTs() <= readEvent.getTs()
+        && readEvent.getTs() < mEvent.getTs());
+      if (unreadDivider) {
+        tl.push(<Divider key={`new-${readEvent.getId()}`} variant="positive" text="Unread messages" />);
+        if (focusEventIndex === null) focusEventIndex = i + extraItemCount;
+      }
+      const dayDivider = prevMEvent && isNotInSameDay(mEvent.getDate(), prevMEvent.getDate());
+      if (dayDivider) {
+        tl.push(<Divider key={`divider-${mEvent.getId()}`} text={`${dateFormat(mEvent.getDate(), 'mmmm dd, yyyy')}`} />);
+        extraItemCount += 1;
+      }
+      const focusId = timelineInfo.focusEventId;
+      const isFocus = focusId === mEvent.getId() && focusId !== readEvent?.getId();
+      if (isFocus) focusEventIndex = i + extraItemCount;
+
+      tl.push(renderEvent(roomTimeline, mEvent, prevMEvent, isFocus));
+    }
+    if (roomTimeline.canPaginateForward()) {
+      tl.push(loadingMsgPlaceholders(2, PLACEHOLDER_COUNT));
+    }
 
     return tl;
   };
 
   return (
-    <div className="room-view__content" onClick={handleOnClickCapture}>
-      <div className="timeline__wrapper">
-        { renderTimeline() }
+    <ScrollView onScroll={handleTimelineScroll} ref={timelineSVRef} autoHide>
+      <div className="room-view__content" onClick={handleOnClickCapture}>
+        <div className="timeline__wrapper">
+          { roomTimeline.initialized ? renderTimeline() : loadingMsgPlaceholders('loading', 3) }
+        </div>
       </div>
-    </div>
+    </ScrollView>
   );
 }
+
+RoomViewContent.defaultProps = {
+  eventId: null,
+};
 RoomViewContent.propTypes = {
-  roomId: PropTypes.string.isRequired,
+  eventId: PropTypes.string,
   roomTimeline: PropTypes.shape({}).isRequired,
-  timelineScroll: PropTypes.shape({}).isRequired,
   viewEvent: PropTypes.shape({}).isRequired,
 };
 

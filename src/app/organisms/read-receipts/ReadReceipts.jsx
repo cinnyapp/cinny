@@ -15,27 +15,15 @@ import { openProfileViewer } from '../../../client/action/navigation';
 
 function ReadReceipts() {
   const [isOpen, setIsOpen] = useState(false);
+  const [readers, setReaders] = useState([]);
   const [roomId, setRoomId] = useState(null);
-  const [readReceipts, setReadReceipts] = useState([]);
-
-  function loadReadReceipts(myRoomId, eventId) {
-    const mx = initMatrix.matrixClient;
-    const room = mx.getRoom(myRoomId);
-    const { timeline } = room;
-    const myReadReceipts = [];
-
-    const myEventIndex = timeline.findIndex((mEvent) => mEvent.getId() === eventId);
-
-    for (let eventIndex = myEventIndex; eventIndex < timeline.length; eventIndex += 1) {
-      myReadReceipts.push(...room.getReceiptsForEvent(timeline[eventIndex]));
-    }
-
-    setReadReceipts(myReadReceipts);
-    setRoomId(myRoomId);
-    setIsOpen(true);
-  }
 
   useEffect(() => {
+    const loadReadReceipts = (rId, userIds) => {
+      setReaders(userIds);
+      setRoomId(rId);
+      setIsOpen(true);
+    };
     navigation.on(cons.events.navigation.READRECEIPTS_OPENED, loadReadReceipts);
     return () => {
       navigation.removeListener(cons.events.navigation.READRECEIPTS_OPENED, loadReadReceipts);
@@ -44,28 +32,28 @@ function ReadReceipts() {
 
   useEffect(() => {
     if (isOpen === false) {
+      setReaders([]);
       setRoomId(null);
-      setReadReceipts([]);
     }
   }, [isOpen]);
 
-  function renderPeople(receipt) {
+  function renderPeople(userId) {
     const room = initMatrix.matrixClient.getRoom(roomId);
-    const member = room.getMember(receipt.userId);
-    const getUserDisplayName = (userId) => {
+    const member = room.getMember(userId);
+    const getUserDisplayName = () => {
       if (room?.getMember(userId)) return getUsernameOfRoomMember(room.getMember(userId));
       return getUsername(userId);
     };
     return (
       <PeopleSelector
-        key={receipt.userId}
+        key={userId}
         onClick={() => {
           setIsOpen(false);
-          openProfileViewer(receipt.userId, roomId);
+          openProfileViewer(userId, roomId);
         }}
         avatarSrc={member?.getAvatarUrl(initMatrix.matrixClient.baseUrl, 24, 24, 'crop')}
-        name={getUserDisplayName(receipt.userId)}
-        color={colorMXID(receipt.userId)}
+        name={getUserDisplayName(userId)}
+        color={colorMXID(userId)}
       />
     );
   }
@@ -78,7 +66,7 @@ function ReadReceipts() {
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
     >
       {
-        readReceipts.map(renderPeople)
+        readers.map(renderPeople)
       }
     </Dialog>
   );

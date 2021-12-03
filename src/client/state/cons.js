@@ -81,10 +81,11 @@ const cons = {
       FULL_READ: 'FULL_READ',
     },
     roomTimeline: {
+      READY: 'READY',
       EVENT: 'EVENT',
       PAGINATED: 'PAGINATED',
       TYPING_MEMBERS_UPDATED: 'TYPING_MEMBERS_UPDATED',
-      READ_RECEIPT: 'READ_RECEIPT',
+      LIVE_RECEIPT: 'LIVE_RECEIPT',
     },
     roomsInput: {
       MESSAGE_SENT: 'MESSAGE_SENT',

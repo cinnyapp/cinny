@@ -50,7 +50,12 @@ class Navigation extends EventEmitter {
       [cons.actions.navigation.SELECT_ROOM]: () => {
         const prevSelectedRoomId = this.selectedRoomId;
         this.selectedRoomId = action.roomId;
-        this.emit(cons.events.navigation.ROOM_SELECTED, this.selectedRoomId, prevSelectedRoomId);
+        this.emit(
+          cons.events.navigation.ROOM_SELECTED,
+          this.selectedRoomId,
+          prevSelectedRoomId,
+          action.eventId,
+        );
       },
       [cons.actions.navigation.OPEN_INVITE_LIST]: () => {
         this.emit(cons.events.navigation.INVITE_LIST_OPENED);
@@ -80,7 +85,7 @@ class Navigation extends EventEmitter {
         this.emit(
           cons.events.navigation.READRECEIPTS_OPENED,
           action.roomId,
-          action.eventId,
+          action.userIds,
         );
       },
       [cons.actions.navigation.OPEN_ROOMOPTIONS]: () => {

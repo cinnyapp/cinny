@@ -95,7 +95,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   const [isInvited, setIsInvited] = useState(member?.membership === 'invite');
 
   const myPowerlevel = room.getMember(mx.getUserId()).powerLevel;
-  const userPL = room.getMember(userId).powerLevel || 0;
+  const userPL = room.getMember(userId)?.powerLevel || 0;
   const canIKick = room.currentState.hasSufficientPowerLevelFor('kick', myPowerlevel) && userPL < myPowerlevel;
 
   const onCreated = (dmRoomId) => {
