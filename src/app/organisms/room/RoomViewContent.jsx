@@ -25,8 +25,11 @@ import RoomIntro from '../../molecules/room-intro/RoomIntro';
 import TimelineChange from '../../molecules/message/TimelineChange';
 
 import { useStore } from '../../hooks/useStore';
+import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { parseTimelineChange } from './common';
 
+const DEFAULT_MAX_EVENTS = 50;
+const PAG_LIMIT = 30;
 const MAX_MSG_DIFF_MINUTES = 5;
 const PLACEHOLDER_COUNT = 2;
 const PLACEHOLDERS_HEIGHT = 96 * PLACEHOLDER_COUNT;
@@ -118,7 +121,7 @@ class TimelineScroll extends EventEmitter {
 
     this.backwards = false;
     this.inTopHalf = false;
-    this.maxEvents = 50;
+    this.maxEvents = DEFAULT_MAX_EVENTS;
 
     this.isScrollable = false;
     this.top = 0;
@@ -253,11 +256,44 @@ class TimelineScroll extends EventEmitter {
 let timelineScroll = null;
 let focusEventIndex = null;
 const throttle = new Throttle();
+const limit = {
+  from: 0,
+  getMaxEvents() {
+    return timelineScroll?.maxEvents ?? DEFAULT_MAX_EVENTS;
+  },
+  getEndIndex() {
+    return this.from + this.getMaxEvents();
+  },
+  calcNextFrom(backwards, tLength) {
+    let newFrom = backwards ? this.from - PAG_LIMIT : this.from + PAG_LIMIT;
+    if (!backwards && newFrom + this.getMaxEvents() > tLength) {
+      newFrom = tLength - this.getMaxEvents();
+    }
+    if (newFrom < 0) newFrom = 0;
+    return newFrom;
+  },
+  setFrom(from) {
+    if (from < 0) {
+      this.from = 0;
+      return;
+    }
+    this.from = from;
+  },
+};
 
 function useTimeline(roomTimeline, eventId) {
   const [timelineInfo, setTimelineInfo] = useState(null);
 
+  // TODO:
+  // open specific event.
+  // 1. readUpTo event is in specific timeline
+  // 2. readUpTo event isn't in specific timeline
+  // 3. readUpTo event is specific event
+  // open live timeline.
+  // 1. readUpTo event is in live timeline
+  // 2. readUpTo event isn't in live timeline
   const initTimeline = (eId) => {
+    limit.setFrom(roomTimeline.timeline.length - limit.getMaxEvents());
     setTimelineInfo({
       focusEventId: eId,
     });
@@ -279,17 +315,20 @@ function useTimeline(roomTimeline, eventId) {
     return () => {
       roomTimeline.removeListener(cons.events.roomTimeline.READY, initTimeline);
       roomTimeline.removeInternalListeners();
+      limit.setFrom(0);
     };
   }, [roomTimeline, eventId]);
 
   return timelineInfo;
 }
 
-function useOnPaginate(roomTimeline) {
+function usePaginate(roomTimeline, forceUpdateLimit) {
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
     const handleOnPagination = (backwards, loaded, canLoadMore) => {
+      if (loaded === 0) return;
+      limit.setFrom(limit.calcNextFrom(backwards, roomTimeline.timeline.length));
       setInfo({
         backwards,
         loaded,
@@ -302,28 +341,45 @@ function useOnPaginate(roomTimeline) {
     };
   }, [roomTimeline]);
 
-  return info;
-}
-
-function useAutoPaginate(roomTimeline) {
-  return useCallback(() => {
+  const autoPaginate = useCallback(() => {
     if (roomTimeline.isOngoingPagination) return;
+    const tLength = roomTimeline.timeline.length;
 
-    if (timelineScroll.bottom < SCROLL_TRIGGER_POS && roomTimeline.canPaginateForward()) {
-      roomTimeline.paginateTimeline(false);
-      return;
+    if (timelineScroll.bottom < SCROLL_TRIGGER_POS) {
+      if (limit.getEndIndex() < tLength) {
+        // paginate from memory
+        limit.setFrom(limit.calcNextFrom(false, tLength));
+        forceUpdateLimit();
+      } else if (roomTimeline.canPaginateForward()) {
+        // paginate from server.
+        roomTimeline.paginateTimeline(false, PAG_LIMIT);
+        return;
+      }
     }
-    if (timelineScroll.top < SCROLL_TRIGGER_POS && roomTimeline.canPaginateBackward()) {
-      roomTimeline.paginateTimeline(true);
+    if (timelineScroll.top < SCROLL_TRIGGER_POS) {
+      if (limit.from > 0) {
+        // paginate from memory
+        limit.setFrom(limit.calcNextFrom(true, tLength));
+        forceUpdateLimit();
+      } else if (roomTimeline.canPaginateBackward()) {
+        // paginate from server.
+        roomTimeline.paginateTimeline(true, PAG_LIMIT);
+      }
     }
   }, [roomTimeline]);
+
+  return [info, autoPaginate];
 }
 
 function useHandleScroll(roomTimeline, autoPaginate, viewEvent) {
   return useCallback(() => {
     requestAnimationFrame(() => {
       // emit event to toggle scrollToBottom button visibility
-      const isAtBottom = timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward();
+      const isAtBottom = (
+        timelineScroll.bottom < 16
+        && !roomTimeline.canPaginateForward()
+        && limit.getEndIndex() === roomTimeline.length
+      );
       viewEvent.emit('at-bottom', isAtBottom);
     });
     autoPaginate();
@@ -334,6 +390,10 @@ function useEventArrive(roomTimeline) {
   const [newEvent, setEvent] = useState(null);
   useEffect(() => {
     const handleEvent = (event) => {
+      const tLength = roomTimeline.timeline.length;
+      if (roomTimeline.isServingLiveTimeline() && tLength - 1 === limit.getEndIndex()) {
+        limit.setFrom(tLength - limit.getMaxEvents());
+      }
       setEvent(event);
     };
     roomTimeline.on(cons.events.roomTimeline.EVENT, handleEvent);
@@ -354,10 +414,10 @@ function RoomViewContent({
   eventId, roomTimeline, viewEvent,
 }) {
   const timelineSVRef = useRef(null);
-  const timelineInfo = useTimeline(roomTimeline, eventId);
   const readEventStore = useStore(roomTimeline);
-  const paginateInfo = useOnPaginate(roomTimeline);
-  const autoPaginate = useAutoPaginate(roomTimeline);
+  const [onLimitUpdate, forceUpdateLimit] = useForceUpdate();
+  const timelineInfo = useTimeline(roomTimeline, eventId);
+  const [paginateInfo, autoPaginate] = usePaginate(roomTimeline, forceUpdateLimit);
   const handleScroll = useHandleScroll(roomTimeline, autoPaginate, viewEvent);
   useEventArrive(roomTimeline);
   const { timeline } = roomTimeline;
@@ -394,15 +454,19 @@ function RoomViewContent({
 
   useLayoutEffect(() => {
     if (!roomTimeline.initialized) return;
-    // TODO: decide is restore scroll
     timelineScroll.tryRestoringScroll();
     autoPaginate();
   }, [paginateInfo]);
 
+  useLayoutEffect(() => {
+    if (!roomTimeline.initialized) return;
+    timelineScroll.tryRestoringScroll();
+  }, [onLimitUpdate]);
+
   const handleTimelineScroll = (event) => {
     const { target } = event;
     if (!target) return;
-    throttle._(() => timelineScroll?.calcScroll(), 200)(target);
+    throttle._(() => timelineScroll?.calcScroll(), 400)(target);
   };
 
   const getReadEvent = () => {
@@ -425,11 +489,12 @@ function RoomViewContent({
     let extraItemCount = 0;
     focusEventIndex = null;
 
-    if (roomTimeline.canPaginateBackward()) {
+    if (roomTimeline.canPaginateBackward() || limit.from > 0) {
       tl.push(loadingMsgPlaceholders(1, PLACEHOLDER_COUNT));
       extraItemCount += PLACEHOLDER_COUNT;
     }
-    for (let i = 0; i < timeline.length; i += 1) {
+    for (let i = limit.from; i < limit.getEndIndex(); i += 1) {
+      if (i >= timeline.length) break;
       const mEvent = timeline[i];
       const prevMEvent = timeline[i - 1] ?? null;
 
@@ -461,7 +526,7 @@ function RoomViewContent({
 
       tl.push(renderEvent(roomTimeline, mEvent, prevMEvent, isFocus));
     }
-    if (roomTimeline.canPaginateForward()) {
+    if (roomTimeline.canPaginateForward() || limit.getEndIndex() < timeline.length) {
       tl.push(loadingMsgPlaceholders(2, PLACEHOLDER_COUNT));
     }
 

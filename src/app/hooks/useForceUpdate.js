@@ -2,7 +2,7 @@
 import { useState } from 'react';
 
 export function useForceUpdate() {
-  const [, setData] = useState(null);
+  const [data, setData] = useState(null);
 
-  return () => setData({});
+  return [data, () => setData({})];
 }

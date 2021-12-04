@@ -91,8 +91,10 @@ class RoomTimeline extends EventEmitter {
 
   clearLocalTimelines() {
     this.timeline = [];
-    this.reactionTimeline.clear();
-    this.editedTimeline.clear();
+
+    // TODO: don't clear these timeline cause there data can be used in other timeline
+    // this.reactionTimeline.clear();
+    // this.editedTimeline.clear();
   }
 
   addToTimeline(mEvent) {
