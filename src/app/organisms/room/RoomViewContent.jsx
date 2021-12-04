@@ -213,6 +213,7 @@ class TimelineScroll extends EventEmitter {
     return this.bottomMsg.offsetTop - scrollInfo.top;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   _calcMaxEvents(scrollInfo) {
     return Math.round(scrollInfo.viewHeight / SMALLEST_MSG_HEIGHT) * PAGES_COUNT;
   }
@@ -402,7 +403,7 @@ function useEventArrive(roomTimeline) {
     };
   }, [roomTimeline]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!roomTimeline.initialized) return;
     if (timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward()) {
       timelineScroll.scrollToBottom();
@@ -415,8 +416,8 @@ function RoomViewContent({
 }) {
   const timelineSVRef = useRef(null);
   const readEventStore = useStore(roomTimeline);
-  const [onLimitUpdate, forceUpdateLimit] = useForceUpdate();
   const timelineInfo = useTimeline(roomTimeline, eventId);
+  const [onLimitUpdate, forceUpdateLimit] = useForceUpdate();
   const [paginateInfo, autoPaginate] = usePaginate(roomTimeline, forceUpdateLimit);
   const handleScroll = useHandleScroll(roomTimeline, autoPaginate, viewEvent);
   useEventArrive(roomTimeline);
@@ -433,8 +434,11 @@ function RoomViewContent({
   useLayoutEffect(() => {
     if (!roomTimeline.initialized) {
       timelineScroll = new TimelineScroll(timelineSVRef.current);
-      return undefined;
     }
+  });
+
+  useEffect(() => {
+    if (!roomTimeline.initialized) return undefined;
 
     if (timeline.length > 0) {
       if (focusEventIndex === null) timelineScroll.scrollToBottom();
@@ -452,13 +456,13 @@ function RoomViewContent({
     };
   }, [timelineInfo]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!roomTimeline.initialized) return;
     timelineScroll.tryRestoringScroll();
     autoPaginate();
   }, [paginateInfo]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!roomTimeline.initialized) return;
     timelineScroll.tryRestoringScroll();
   }, [onLimitUpdate]);

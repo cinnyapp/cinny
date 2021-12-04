@@ -16,7 +16,6 @@ function RoomView({ roomTimeline, eventId }) {
   // eslint-disable-next-line react/prop-types
   const { roomId } = roomTimeline;
 
-  console.log('----roomId changed');
   return (
     <div className="room-view">
       <RoomViewHeader roomId={roomId} />
