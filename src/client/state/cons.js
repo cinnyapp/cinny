@@ -19,6 +19,12 @@ const cons = {
     MENTIONS_AND_KEYWORDS: 'mentions_and_keywords',
     MUTE: 'mute',
   },
+  status: {
+    PRE_FLIGHT: 'pre-flight',
+    IN_FLIGHT: 'in-flight',
+    SUCCESS: 'success',
+    ERROR: 'error',
+  },
   actions: {
     navigation: {
       SELECT_TAB: 'SELECT_TAB',

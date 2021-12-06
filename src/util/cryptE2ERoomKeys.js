@@ -108,6 +108,19 @@ function decodeBase64(base64) {
   return uint8Array;
 }
 
+/**
+ * Encode a typed array of uint8 as base64.
+ * @param {Uint8Array} uint8Array The data to encode.
+ * @return {string} The base64.
+ */
+function encodeBase64(uint8Array) {
+  // Misinterpt the Uint8Array as Latin-1.
+  // window.btoa expects a unicode string with codepoints in the range 0-255.
+  const latin1String = String.fromCharCode.apply(null, uint8Array);
+  // Use the builtin base64 encoder.
+  return window.btoa(latin1String);
+}
+
 const HEADER_LINE = '-----BEGIN MEGOLM SESSION DATA-----';
 const TRAILER_LINE = '-----END MEGOLM SESSION DATA-----';
 
@@ -164,7 +177,35 @@ function unpackMegolmKeyFile(data) {
   return decodeBase64(fileStr.slice(dataStart, dataEnd));
 }
 
-export default async function decryptMegolmKeyFile(data, password) {
+
+/**
+ * ascii-armour a  megolm key file
+ *
+ * base64s the content, and adds header and trailer lines
+ *
+ * @param {Uint8Array} data  raw data
+ * @return {ArrayBuffer} formatted file
+ */
+function packMegolmKeyFile(data) {
+  // we split into lines before base64ing, because encodeBase64 doesn't deal
+  // terribly well with large arrays.
+  const LINE_LENGTH = ((72 * 4) / 3);
+  const nLines = Math.ceil(data.length / LINE_LENGTH);
+  const lines = new Array(nLines + 3);
+  lines[0] = HEADER_LINE;
+  let o = 0;
+  let i;
+  for (i = 1; i <= nLines; i += 1) {
+    lines[i] = encodeBase64(data.subarray(o, o+LINE_LENGTH));
+    o += LINE_LENGTH;
+  }
+  lines[i] = TRAILER_LINE;
+  i += 1;
+  lines[i] = '';
+  return (new TextEncoder().encode(lines.join('\n'))).buffer;
+}
+
+export async function decryptMegolmKeyFile(data, password) {
   const body = unpackMegolmKeyFile(data);
 
   // check we have a version byte
@@ -222,4 +263,78 @@ export default async function decryptMegolmKeyFile(data, password) {
   }
 
   return new TextDecoder().decode(new Uint8Array(plaintext));
+}
+
+/**
+ * Encrypt a megolm key file
+ *
+ * @param {String} data
+ * @param {String} password
+ * @param {Object=} options
+ * @param {Number=} options.kdf_rounds Number of iterations to perform of the
+ *    key-derivation function.
+ * @return {Promise<ArrayBuffer>} promise for encrypted output
+ */
+export async function encryptMegolmKeyFile(data, password, options) {
+  options = options || {};
+  const kdfRounds = options.kdf_rounds || 500000;
+
+  const salt = new Uint8Array(16);
+  window.crypto.getRandomValues(salt);
+
+  const iv = new Uint8Array(16);
+  window.crypto.getRandomValues(iv);
+
+  // clear bit 63 of the IV to stop us hitting the 64-bit counter boundary
+  // (which would mean we wouldn't be able to decrypt on Android). The loss
+  // of a single bit of iv is a price we have to pay.
+  iv[8] &= 0x7f;
+
+  const [aesKey, hmacKey] = await deriveKeys(salt, kdfRounds, password);
+  const encodedData = new TextEncoder().encode(data);
+
+  let ciphertext;
+  try {
+    ciphertext = await subtleCrypto.encrypt(
+      {
+        name: 'AES-CTR',
+        counter: iv,
+        length: 64,
+      },
+      aesKey,
+      encodedData,
+    );
+  } catch (e) {
+    throw friendlyError('subtleCrypto.encrypt failed: ' + e, cryptoFailMsg());
+  }
+
+  const cipherArray = new Uint8Array(ciphertext);
+  const bodyLength = (1+salt.length+iv.length+4+cipherArray.length+32);
+  const resultBuffer = new Uint8Array(bodyLength);
+  let idx = 0;
+  resultBuffer[idx++] = 1; // version
+  resultBuffer.set(salt, idx); idx += salt.length;
+  resultBuffer.set(iv, idx); idx += iv.length;
+  resultBuffer[idx++] = kdfRounds >> 24;
+  resultBuffer[idx++] = (kdfRounds >> 16) & 0xff;
+  resultBuffer[idx++] = (kdfRounds >> 8) & 0xff;
+  resultBuffer[idx++] = kdfRounds & 0xff;
+  resultBuffer.set(cipherArray, idx); idx += cipherArray.length;
+
+  const toSign = resultBuffer.subarray(0, idx);
+
+  let hmac;
+  try {
+    hmac = await subtleCrypto.sign(
+      { name: 'HMAC' },
+      hmacKey,
+      toSign,
+    );
+  } catch (e) {
+    throw friendlyError('subtleCrypto.sign failed: ' + e, cryptoFailMsg());
+  }
+
+  const hmacArray = new Uint8Array(hmac);
+  resultBuffer.set(hmacArray, idx);
+  return packMegolmKeyFile(resultBuffer);
 }

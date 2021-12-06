@@ -58,6 +58,10 @@
   }
   &__error {
     margin-top: var(--sp-tight);
-    color: var(--bg-danger);
+    color: var(--tc-danger-high);
+  }
+  &__success {
+    margin-top: var(--sp-tight);
+    color: var(--tc-positive-high);
   }
 }

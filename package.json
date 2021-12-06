@@ -21,6 +21,7 @@
     "browser-encrypt-attachment": "^0.3.0",
     "dateformat": "^4.5.1",
     "emojibase-data": "^6.2.0",
+    "file-saver": "^2.0.5",
     "flux": "^4.0.1",
     "formik": "^2.2.9",
     "html-react-parser": "^1.2.7",
