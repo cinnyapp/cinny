@@ -11,6 +11,7 @@ import * as roomActions from '../../../client/action/room';
 
 import ContextMenu, { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
+import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import BellIC from '../../../../public/res/ic/outlined/bell.svg';
 import BellRingIC from '../../../../public/res/ic/outlined/bell-ring.svg';
 import BellPingIC from '../../../../public/res/ic/outlined/bell-ping.svg';
@@ -148,6 +149,14 @@ function RoomOptions() {
     };
   }, []);
 
+  const handleMarkAsRead = () => {
+    const mx = initMatrix.matrixClient;
+    const room = mx.getRoom(roomId);
+    if (!room) return;
+    const events = room.getLiveTimeline().getEvents();
+    mx.sendReadReceipt(events[events.length - 1]);
+  };
+
   const handleInviteClick = () => openInviteUser(roomId);
   const handleLeaveClick = (toggleMenu) => {
     if (confirm('Are you really want to leave this room?')) {
@@ -169,6 +178,14 @@ function RoomOptions() {
       content={(toggleMenu) => (
         <>
           <MenuHeader>{twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}</MenuHeader>
+          <MenuItem
+            iconSrc={TickMarkIC}
+            onClick={() => {
+              handleMarkAsRead(); toggleMenu();
+            }}
+          >
+            Mark as read
+          </MenuItem>
           <MenuItem
             iconSrc={AddUserIC}
             onClick={() => {

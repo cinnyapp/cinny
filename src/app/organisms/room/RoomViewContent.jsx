@@ -90,7 +90,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
 
   if (mEvent.getType() === 'm.room.member') {
     const timelineChange = parseTimelineChange(mEvent);
-    if (timelineChange === null) return false;
+    if (timelineChange === null) return <div key={mEvent.getId()} />;
     return (
       <TimelineChange
         key={mEvent.getId()}
@@ -147,7 +147,7 @@ class TimelineScroll extends EventEmitter {
 
     let scrollTop = 0;
     const ot = this.inTopHalf ? this.topMsg?.offsetTop : this.bottomMsg?.offsetTop;
-    if (!ot) scrollTop = this.top;
+    if (!ot) scrollTop = Math.round(this.height - this.viewHeight);
     else scrollTop = ot - this.diff;
 
     this._scrollTo(scrollInfo, scrollTop);
@@ -255,7 +255,7 @@ class TimelineScroll extends EventEmitter {
 }
 
 let timelineScroll = null;
-let focusEventIndex = null;
+let jumpToItemIndex = -1;
 const throttle = new Throttle();
 const limit = {
   from: 0,
@@ -282,23 +282,8 @@ const limit = {
   },
 };
 
-function useTimeline(roomTimeline, eventId) {
+function useTimeline(roomTimeline, eventId, readEventStore) {
   const [timelineInfo, setTimelineInfo] = useState(null);
-
-  // TODO:
-  // open specific event.
-  // 1. readUpTo event is in specific timeline
-  // 2. readUpTo event isn't in specific timeline
-  // 3. readUpTo event is specific event
-  // open live timeline.
-  // 1. readUpTo event is in live timeline
-  // 2. readUpTo event isn't in live timeline
-  const initTimeline = (eId) => {
-    limit.setFrom(roomTimeline.timeline.length - limit.getMaxEvents());
-    setTimelineInfo({
-      focusEventId: eId,
-    });
-  };
 
   const setEventTimeline = async (eId) => {
     if (typeof eId === 'string') {
@@ -311,6 +296,35 @@ function useTimeline(roomTimeline, eventId) {
   };
 
   useEffect(() => {
+    const initTimeline = (eId) => {
+      // NOTICE: eId can be id of readUpto, reply or specific event.
+      // readUpTo: when user click jump to unread message button.
+      // reply: when user click reply from timeline.
+      // specific event when user open a link of event. behave same as ^^^^
+      const readUpToId = roomTimeline.getReadUpToEventId();
+      let focusEventIndex = -1;
+      const isSpecificEvent = eId && eId !== readUpToId;
+
+      if (isSpecificEvent) {
+        focusEventIndex = roomTimeline.getEventIndex(eId);
+      } else if (!readEventStore.getItem()) {
+        // either opening live timeline or jump to unread.
+        focusEventIndex = roomTimeline.getUnreadEventIndex(readUpToId);
+        if (roomTimeline.hasEventInTimeline(readUpToId)) {
+          readEventStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
+        }
+      } else {
+        focusEventIndex = roomTimeline.getUnreadEventIndex(readEventStore.getItem().getId());
+      }
+
+      if (focusEventIndex > -1) {
+        limit.setFrom(focusEventIndex - Math.round(limit.getMaxEvents() / 2));
+      } else {
+        limit.setFrom(roomTimeline.timeline.length - limit.getMaxEvents());
+      }
+      setTimelineInfo({ focusEventId: isSpecificEvent ? eId : null });
+    };
+
     roomTimeline.on(cons.events.roomTimeline.READY, initTimeline);
     setEventTimeline(eventId);
     return () => {
@@ -323,12 +337,16 @@ function useTimeline(roomTimeline, eventId) {
   return timelineInfo;
 }
 
-function usePaginate(roomTimeline, forceUpdateLimit) {
+function usePaginate(roomTimeline, readEventStore, forceUpdateLimit) {
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
     const handleOnPagination = (backwards, loaded, canLoadMore) => {
       if (loaded === 0) return;
+      if (!readEventStore.getItem()) {
+        const readUpToId = roomTimeline.getReadUpToEventId();
+        readEventStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
+      }
       limit.setFrom(limit.calcNextFrom(backwards, roomTimeline.timeline.length));
       setInfo({
         backwards,
@@ -372,64 +390,104 @@ function usePaginate(roomTimeline, forceUpdateLimit) {
   return [info, autoPaginate];
 }
 
-function useHandleScroll(roomTimeline, autoPaginate, viewEvent) {
-  return useCallback(() => {
+function useHandleScroll(roomTimeline, autoPaginate, readEventStore, forceUpdateLimit) {
+  const handleScroll = useCallback(() => {
     requestAnimationFrame(() => {
       // emit event to toggle scrollToBottom button visibility
       const isAtBottom = (
-        timelineScroll.bottom < 16
-        && !roomTimeline.canPaginateForward()
-        && limit.getEndIndex() === roomTimeline.length
+        timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward()
+        && limit.getEndIndex() >= roomTimeline.timeline.length
       );
-      viewEvent.emit('at-bottom', isAtBottom);
+      roomTimeline.emit(cons.events.roomTimeline.AT_BOTTOM, isAtBottom);
+      if (isAtBottom && readEventStore.getItem()) {
+        requestAnimationFrame(() => roomTimeline.markAllAsRead());
+      }
     });
     autoPaginate();
   }, [roomTimeline]);
+
+  const handleScrollToLive = useCallback(() => {
+    if (readEventStore.getItem()) {
+      requestAnimationFrame(() => roomTimeline.markAllAsRead());
+    }
+    if (roomTimeline.isServingLiveTimeline()) {
+      limit.setFrom(roomTimeline.timeline.length - limit.getMaxEvents());
+      timelineScroll.scrollToBottom();
+      forceUpdateLimit();
+      return;
+    }
+    roomTimeline.loadLiveTimeline();
+  }, [roomTimeline]);
+
+  return [handleScroll, handleScrollToLive];
 }
 
-function useEventArrive(roomTimeline) {
+function useEventArrive(roomTimeline, readEventStore) {
+  const myUserId = initMatrix.matrixClient.getUserId();
   const [newEvent, setEvent] = useState(null);
   useEffect(() => {
+    const sendReadReceipt = (event) => {
+      if (event.isSending()) return;
+      if (myUserId === event.getSender()) {
+        roomTimeline.markAllAsRead();
+        return;
+      }
+      const readUpToEvent = readEventStore.getItem();
+      const readUpToId = roomTimeline.getReadUpToEventId();
+
+      // if user doesn't have focus on app don't mark messages as read.
+      if (document.visibilityState === 'hidden' || timelineScroll.bottom >= 16) {
+        if (readUpToEvent === readUpToId) return;
+        readEventStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
+        return;
+      }
+      if (readUpToEvent?.getId() !== readUpToId) {
+        roomTimeline.markAllAsRead();
+      }
+    };
+
     const handleEvent = (event) => {
       const tLength = roomTimeline.timeline.length;
-      if (roomTimeline.isServingLiveTimeline() && tLength - 1 === limit.getEndIndex()) {
+      if (roomTimeline.isServingLiveTimeline()
+        && limit.getEndIndex() >= tLength - 1
+        && timelineScroll.bottom < SCROLL_TRIGGER_POS) {
         limit.setFrom(tLength - limit.getMaxEvents());
+        sendReadReceipt(event);
+        setEvent(event);
       }
-      setEvent(event);
     };
+
+    const handleEventRedact = (event) => setEvent(event);
+
     roomTimeline.on(cons.events.roomTimeline.EVENT, handleEvent);
+    roomTimeline.on(cons.events.roomTimeline.EVENT_REDACTED, handleEventRedact);
     return () => {
       roomTimeline.removeListener(cons.events.roomTimeline.EVENT, handleEvent);
+      roomTimeline.removeListener(cons.events.roomTimeline.EVENT_REDACTED, handleEventRedact);
     };
   }, [roomTimeline]);
 
   useEffect(() => {
     if (!roomTimeline.initialized) return;
-    if (timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward()) {
+    if (timelineScroll.bottom < 16
+      && !roomTimeline.canPaginateForward()
+      && document.visibilityState === 'visible') {
       timelineScroll.scrollToBottom();
     }
   }, [newEvent, roomTimeline]);
 }
 
-function RoomViewContent({
-  eventId, roomTimeline, viewEvent,
-}) {
+function RoomViewContent({ eventId, roomTimeline }) {
   const timelineSVRef = useRef(null);
   const readEventStore = useStore(roomTimeline);
-  const timelineInfo = useTimeline(roomTimeline, eventId);
+  const timelineInfo = useTimeline(roomTimeline, eventId, readEventStore);
   const [onLimitUpdate, forceUpdateLimit] = useForceUpdate();
-  const [paginateInfo, autoPaginate] = usePaginate(roomTimeline, forceUpdateLimit);
-  const handleScroll = useHandleScroll(roomTimeline, autoPaginate, viewEvent);
-  useEventArrive(roomTimeline);
+  const [paginateInfo, autoPaginate] = usePaginate(roomTimeline, readEventStore, forceUpdateLimit);
+  const [handleScroll, handleScrollToLive] = useHandleScroll(
+    roomTimeline, autoPaginate, readEventStore, forceUpdateLimit,
+  );
+  useEventArrive(roomTimeline, readEventStore);
   const { timeline } = roomTimeline;
-
-  const handleScrollToLive = useCallback(() => {
-    if (roomTimeline.isServingLiveTimeline()) {
-      timelineScroll.scrollToBottom();
-      return;
-    }
-    roomTimeline.loadLiveTimeline();
-  }, [roomTimeline]);
 
   useLayoutEffect(() => {
     if (!roomTimeline.initialized) {
@@ -437,31 +495,42 @@ function RoomViewContent({
     }
   });
 
+  // when active timeline changes
   useEffect(() => {
     if (!roomTimeline.initialized) return undefined;
 
     if (timeline.length > 0) {
-      if (focusEventIndex === null) timelineScroll.scrollToBottom();
-      else timelineScroll.scrollToIndex(focusEventIndex, 80);
-      focusEventIndex = null;
+      if (jumpToItemIndex === -1) {
+        timelineScroll.scrollToBottom();
+      } else {
+        timelineScroll.scrollToIndex(jumpToItemIndex, 80);
+      }
+      if (timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward()) {
+        if (readEventStore.getItem()?.getId() === roomTimeline.getReadUpToEventId()) {
+          requestAnimationFrame(() => roomTimeline.markAllAsRead());
+        }
+      }
+      jumpToItemIndex = -1;
     }
     autoPaginate();
 
     timelineScroll.on('scroll', handleScroll);
-    viewEvent.on('scroll-to-live', handleScrollToLive);
+    roomTimeline.on(cons.events.roomTimeline.SCROLL_TO_LIVE, handleScrollToLive);
     return () => {
       if (timelineSVRef.current === null) return;
       timelineScroll.removeListener('scroll', handleScroll);
-      viewEvent.removeListener('scroll-to-live', handleScrollToLive);
+      roomTimeline.removeListener(cons.events.roomTimeline.SCROLL_TO_LIVE, handleScrollToLive);
     };
   }, [timelineInfo]);
 
+  // when paginating from server
   useEffect(() => {
     if (!roomTimeline.initialized) return;
     timelineScroll.tryRestoringScroll();
     autoPaginate();
   }, [paginateInfo]);
 
+  // when paginating locally
   useEffect(() => {
     if (!roomTimeline.initialized) return;
     timelineScroll.tryRestoringScroll();
@@ -473,29 +542,16 @@ function RoomViewContent({
     throttle._(() => timelineScroll?.calcScroll(), 400)(target);
   };
 
-  const getReadEvent = () => {
-    const readEventId = roomTimeline.getReadUpToEventId();
-    if (readEventStore.getItem()?.getId() === readEventId) {
-      return readEventStore.getItem();
-    }
-    if (roomTimeline.hasEventInActiveTimeline(readEventId)) {
-      return readEventStore.setItem(
-        roomTimeline.findEventByIdInTimelineSet(readEventId),
-      );
-    }
-    return readEventStore.setItem(null);
-  };
-
   const renderTimeline = () => {
     const tl = [];
 
-    const readEvent = getReadEvent();
-    let extraItemCount = 0;
-    focusEventIndex = null;
+    let itemCountIndex = 0;
+    jumpToItemIndex = -1;
+    const readEvent = readEventStore.getItem();
 
     if (roomTimeline.canPaginateBackward() || limit.from > 0) {
       tl.push(loadingMsgPlaceholders(1, PLACEHOLDER_COUNT));
-      extraItemCount += PLACEHOLDER_COUNT;
+      itemCountIndex += PLACEHOLDER_COUNT;
     }
     for (let i = limit.from; i < limit.getEndIndex(); i += 1) {
       if (i >= timeline.length) break;
@@ -505,30 +561,35 @@ function RoomViewContent({
       if (i === 0 && !roomTimeline.canPaginateBackward()) {
         if (mEvent.getType() === 'm.room.create') {
           tl.push(genRoomIntro(mEvent, roomTimeline));
+          itemCountIndex += 1;
           // eslint-disable-next-line no-continue
           continue;
         } else {
           tl.push(genRoomIntro(undefined, roomTimeline));
-          extraItemCount += 1;
+          itemCountIndex += 1;
         }
       }
+
       const unreadDivider = (readEvent
         && prevMEvent?.getTs() <= readEvent.getTs()
         && readEvent.getTs() < mEvent.getTs());
       if (unreadDivider) {
-        tl.push(<Divider key={`new-${readEvent.getId()}`} variant="positive" text="Unread messages" />);
-        if (focusEventIndex === null) focusEventIndex = i + extraItemCount;
+        tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text="New messages" />);
+        itemCountIndex += 1;
+        if (jumpToItemIndex === -1) jumpToItemIndex = itemCountIndex;
       }
       const dayDivider = prevMEvent && isNotInSameDay(mEvent.getDate(), prevMEvent.getDate());
       if (dayDivider) {
         tl.push(<Divider key={`divider-${mEvent.getId()}`} text={`${dateFormat(mEvent.getDate(), 'mmmm dd, yyyy')}`} />);
-        extraItemCount += 1;
+        itemCountIndex += 1;
       }
+
       const focusId = timelineInfo.focusEventId;
-      const isFocus = focusId === mEvent.getId() && focusId !== readEvent?.getId();
-      if (isFocus) focusEventIndex = i + extraItemCount;
+      const isFocus = focusId === mEvent.getId();
+      if (isFocus) jumpToItemIndex = itemCountIndex;
 
       tl.push(renderEvent(roomTimeline, mEvent, prevMEvent, isFocus));
+      itemCountIndex += 1;
     }
     if (roomTimeline.canPaginateForward() || limit.getEndIndex() < timeline.length) {
       tl.push(loadingMsgPlaceholders(2, PLACEHOLDER_COUNT));
@@ -554,7 +615,6 @@ RoomViewContent.defaultProps = {
 RoomViewContent.propTypes = {
   eventId: PropTypes.string,
   roomTimeline: PropTypes.shape({}).isRequired,
-  viewEvent: PropTypes.shape({}).isRequired,
 };
 
 export default RoomViewContent;

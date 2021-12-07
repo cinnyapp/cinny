@@ -1,11 +1,21 @@
 import EventEmitter from 'events';
 import cons from './cons';
 
+function isNotifEvent(mEvent) {
+  const eType = mEvent.getType();
+  if (!cons.supportEventTypes.includes(eType)) return false;
+  if (eType === 'm.room.member') return false;
+
+  if (mEvent.isRedacted()) return false;
+  if (mEvent.getRelation()?.rel_type === 'm.replace') return false;
+
+  return true;
+}
+
 class Notifications extends EventEmitter {
   constructor(roomList) {
     super();
 
-    this.supportEvents = ['m.room.message', 'm.room.encrypted', 'm.sticker'];
     this.matrixClient = roomList.matrixClient;
     this.roomList = roomList;
 
@@ -36,21 +46,14 @@ class Notifications extends EventEmitter {
     const readUpToId = room.getEventReadUpTo(userId);
     const liveEvents = room.getLiveTimeline().getEvents();
 
-    if (liveEvents.length
-      && liveEvents[liveEvents.length - 1].sender
-      && liveEvents[liveEvents.length - 1].sender.userId === userId
-      && liveEvents[liveEvents.length - 1].getType() !== 'm.room.member') {
+    if (liveEvents[liveEvents.length - 1]?.getSender() === userId) {
       return false;
     }
 
     for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
       const event = liveEvents[i];
-
       if (event.getId() === readUpToId) return false;
-
-      if (this.supportEvents.includes(event.getType())) {
-        return true;
-      }
+      if (isNotifEvent(event)) return true;
     }
     return true;
   }
@@ -150,7 +153,7 @@ class Notifications extends EventEmitter {
 
   _listenEvents() {
     this.matrixClient.on('Room.timeline', (mEvent, room) => {
-      if (!this.supportEvents.includes(mEvent.getType())) return;
+      if (!isNotifEvent(mEvent)) return;
       const liveEvents = room.getLiveTimeline().getEvents();
 
       const lastTimelineEvent = liveEvents[liveEvents.length - 1];

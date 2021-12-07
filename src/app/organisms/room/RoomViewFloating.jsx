@@ -11,7 +11,7 @@ import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
 
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
-import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
 import { getUsersActionJsx } from './common';
 
@@ -20,28 +20,25 @@ function useJumpToEvent(roomTimeline) {
 
   const jumpToEvent = () => {
     roomTimeline.loadEventTimeline(eventId);
-    setEventId(null);
   };
 
-  const cancelJumpToEvent = () => {
+  const cancelJumpToEvent = (mEvent) => {
     setEventId(null);
-    roomTimeline.markAsRead();
+    if (!mEvent) roomTimeline.markAllAsRead();
   };
-
-  // TODO: if user reaches the unread messages with other ways
-  // like by paginating, or loading timeline for that event by other ways ex: clicking on reply.
-  // then setEventId(null);
 
   useEffect(() => {
     const readEventId = roomTimeline.getReadUpToEventId();
-    // we only show "Jump to unread" btn only if the event is not in live timeline.
-    // if event is in live timeline
-    // we will automatically open the timeline from that event
-    if (!roomTimeline.hasEventInLiveTimeline(readEventId)) {
+    // we only show "Jump to unread" btn only if the event is not in timeline.
+    // if event is in timeline
+    // we will automatically open the timeline from that event position
+    if (!readEventId.startsWith('~') && !roomTimeline.hasEventInTimeline(readEventId)) {
       setEventId(readEventId);
     }
+    roomTimeline.on(cons.events.roomTimeline.MARKED_AS_READ, cancelJumpToEvent);
 
     return () => {
+      roomTimeline.removeListener(cons.events.roomTimeline.MARKED_AS_READ, cancelJumpToEvent);
       setEventId(null);
     };
   }, [roomTimeline]);
@@ -69,28 +66,28 @@ function useTypingMembers(roomTimeline) {
   return [typingMembers];
 }
 
-function useScrollToBottom(roomId, viewEvent) {
+function useScrollToBottom(roomTimeline) {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const handleAtBottom = (atBottom) => setIsAtBottom(atBottom);
 
   useEffect(() => {
     setIsAtBottom(true);
-    viewEvent.on('at-bottom', handleAtBottom);
-    return () => viewEvent.removeListener('at-bottom', handleAtBottom);
-  }, [roomId]);
+    roomTimeline.on(cons.events.roomTimeline.AT_BOTTOM, handleAtBottom);
+    return () => roomTimeline.removeListener(cons.events.roomTimeline.AT_BOTTOM, handleAtBottom);
+  }, [roomTimeline]);
 
   return [isAtBottom, setIsAtBottom];
 }
 
 function RoomViewFloating({
-  roomId, roomTimeline, viewEvent,
+  roomId, roomTimeline,
 }) {
-  const [isJumpToEvent, jumpToEvent, cancelJumpToEvent] = useJumpToEvent(roomTimeline, viewEvent);
+  const [isJumpToEvent, jumpToEvent, cancelJumpToEvent] = useJumpToEvent(roomTimeline);
   const [typingMembers] = useTypingMembers(roomTimeline);
-  const [isAtBottom, setIsAtBottom] = useScrollToBottom(roomId, viewEvent);
+  const [isAtBottom, setIsAtBottom] = useScrollToBottom(roomTimeline);
 
   const handleScrollToBottom = () => {
-    viewEvent.emit('scroll-to-live');
+    roomTimeline.emit(cons.events.roomTimeline.SCROLL_TO_LIVE);
     setIsAtBottom(true);
   };
 
@@ -104,9 +101,9 @@ function RoomViewFloating({
           onClick={cancelJumpToEvent}
           variant="primary"
           size="extra-small"
-          src={CrossIC}
+          src={TickMarkIC}
           tooltipPlacement="bottom"
-          tooltip="Cancel"
+          tooltip="Mark as read"
         />
       </div>
       <div className={`room-view__typing${typingMembers.size > 0 ? ' room-view__typing--open' : ''}`}>
@@ -126,7 +123,6 @@ function RoomViewFloating({
 RoomViewFloating.propTypes = {
   roomId: PropTypes.string.isRequired,
   roomTimeline: PropTypes.shape({}).isRequired,
-  viewEvent: PropTypes.shape({}).isRequired,
 };
 
 export default RoomViewFloating;

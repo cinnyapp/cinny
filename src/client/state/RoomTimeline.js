@@ -48,6 +48,15 @@ function iterateLinkedTimelines(timeline, backwards, callback) {
   }
 }
 
+function isTimelineLinked(tm1, tm2) {
+  let tm = getFirstLinkedTimeline(tm1);
+  while (tm) {
+    if (tm === tm2) return true;
+    tm = tm.nextTimeline;
+  }
+  return false;
+}
+
 class RoomTimeline extends EventEmitter {
   constructor(roomId) {
     super();
@@ -93,8 +102,8 @@ class RoomTimeline extends EventEmitter {
     this.timeline = [];
 
     // TODO: don't clear these timeline cause there data can be used in other timeline
-    // this.reactionTimeline.clear();
-    // this.editedTimeline.clear();
+    this.reactionTimeline.clear();
+    this.editedTimeline.clear();
   }
 
   addToTimeline(mEvent) {
@@ -197,22 +206,29 @@ class RoomTimeline extends EventEmitter {
     return Promise.allSettled(decryptionPromises);
   }
 
-  markAsRead() {
+  markAllAsRead() {
     const readEventId = this.getReadUpToEventId();
     if (this.timeline.length === 0) return;
     const latestEvent = this.timeline[this.timeline.length - 1];
     if (readEventId === latestEvent.getId()) return;
     this.matrixClient.sendReadReceipt(latestEvent);
+    this.emit(cons.events.roomTimeline.MARKED_AS_READ, latestEvent);
   }
 
-  hasEventInLiveTimeline(eventId) {
-    const timelineSet = this.getUnfilteredTimelineSet();
-    return timelineSet.getTimelineForEvent(eventId) === this.liveTimeline;
+  markAsRead(eventId) {
+    if (this.hasEventInTimeline(eventId)) {
+      const mEvent = this.findEventById(eventId);
+      if (!mEvent) return;
+      this.matrixClient.sendReadReceipt(mEvent);
+      this.emit(cons.events.roomTimeline.MARKED_AS_READ, mEvent);
+    }
   }
 
-  hasEventInActiveTimeline(eventId) {
+  hasEventInTimeline(eventId, timeline = this.activeTimeline) {
     const timelineSet = this.getUnfilteredTimelineSet();
-    return timelineSet.getTimelineForEvent(eventId) === this.activeTimeline;
+    const eventTimeline = timelineSet.getTimelineForEvent(eventId);
+    if (!eventTimeline) return false;
+    return isTimelineLinked(eventTimeline, timeline);
   }
 
   getUnfilteredTimelineSet() {
@@ -242,6 +258,22 @@ class RoomTimeline extends EventEmitter {
     return [...new Set(readers)];
   }
 
+  getUnreadEventIndex(readUpToEventId) {
+    if (!this.hasEventInTimeline(readUpToEventId)) return -1;
+
+    const readUpToEvent = this.findEventByIdInTimelineSet(readUpToEventId);
+    if (!readUpToEvent) return -1;
+    const rTs = readUpToEvent.getTs();
+
+    const tLength = this.timeline.length;
+
+    for (let i = 0; i < tLength; i += 1) {
+      const mEvent = this.timeline[i];
+      if (mEvent.getTs() > rTs) return i;
+    }
+    return -1;
+  }
+
   getReadUpToEventId() {
     return this.room.getEventReadUpTo(this.matrixClient.getUserId());
   }
@@ -261,7 +293,7 @@ class RoomTimeline extends EventEmitter {
   deleteFromTimeline(eventId) {
     const i = this.getEventIndex(eventId);
     if (i === -1) return undefined;
-    return this.timeline.splice(i, 1);
+    return this.timeline.splice(i, 1)[0];
   }
 
   _listenEvents() {
@@ -306,12 +338,12 @@ class RoomTimeline extends EventEmitter {
       this.emit(cons.events.roomTimeline.EVENT, event);
     };
 
-    this._listenRedaction = (event, room) => {
+    this._listenRedaction = (mEvent, room) => {
       if (room.roomId !== this.roomId) return;
-      this.deleteFromTimeline(event.getId());
-      this.editedTimeline.delete(event.getId());
-      this.reactionTimeline.delete(event.getId());
-      this.emit(cons.events.roomTimeline.EVENT);
+      const rEvent = this.deleteFromTimeline(mEvent.event.redacts);
+      this.editedTimeline.delete(mEvent.event.redacts);
+      this.reactionTimeline.delete(mEvent.event.redacts);
+      this.emit(cons.events.roomTimeline.EVENT_REDACTED, rEvent, mEvent);
     };
 
     this._listenTypingEvent = (event, member) => {

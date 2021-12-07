@@ -122,15 +122,14 @@ function ViewCmd() {
 function FollowingMembers({ roomId, roomTimeline, viewEvent }) {
   const [followingMembers, setFollowingMembers] = useState([]);
   const mx = initMatrix.matrixClient;
+  const myUserId = mx.getUserId();
 
   const handleOnMessageSent = () => setFollowingMembers([]);
 
-  const updateFollowingMembers = () => {
-    const myUserId = mx.getUserId();
-    setFollowingMembers(roomTimeline.getLiveReaders().filter((userId) => userId !== myUserId));
-  };
-
   useEffect(() => {
+    const updateFollowingMembers = () => {
+      setFollowingMembers(roomTimeline.getLiveReaders());
+    };
     updateFollowingMembers();
     roomTimeline.on(cons.events.roomTimeline.LIVE_RECEIPT, updateFollowingMembers);
     viewEvent.on('message_sent', handleOnMessageSent);
@@ -140,10 +139,11 @@ function FollowingMembers({ roomId, roomTimeline, viewEvent }) {
     };
   }, [roomTimeline]);
 
-  return followingMembers.length !== 0 && (
+  const filteredM = followingMembers.filter((userId) => userId !== myUserId);
+  return filteredM.length !== 0 && (
     <TimelineChange
       variant="follow"
-      content={getUsersActionJsx(roomId, followingMembers, 'following the conversation.')}
+      content={getUsersActionJsx(roomId, filteredM, 'following the conversation.')}
       time=""
       onClick={() => openReadReceipts(roomId, followingMembers)}
     />

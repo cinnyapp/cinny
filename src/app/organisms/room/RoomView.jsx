@@ -24,12 +24,10 @@ function RoomView({ roomTimeline, eventId }) {
           <RoomViewContent
             eventId={eventId}
             roomTimeline={roomTimeline}
-            viewEvent={viewEvent}
           />
           <RoomViewFloating
             roomId={roomId}
             roomTimeline={roomTimeline}
-            viewEvent={viewEvent}
           />
         </div>
         <div className="room-view__sticky">
