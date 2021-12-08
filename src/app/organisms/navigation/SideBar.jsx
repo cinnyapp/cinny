@@ -175,7 +175,6 @@ function SideBar() {
                 notificationCount={dmsNoti !== null ? abbreviateNumber(dmsNoti.total) : 0}
                 isAlert={dmsNoti?.highlight > 0}
               />
-              <SidebarAvatar onClick={() => openPublicRooms()} tooltip="Public rooms" iconSrc={HashSearchIC} />
             </div>
             <div className="sidebar-divider" />
             <div className="space-container">

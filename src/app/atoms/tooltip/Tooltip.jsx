@@ -4,7 +4,7 @@ import './Tooltip.scss';
 import Tippy from '@tippyjs/react';
 
 function Tooltip({
-  className, placement, content, children,
+  className, placement, content, delay, children,
 }) {
   return (
     <Tippy
@@ -14,7 +14,7 @@ function Tooltip({
       arrow={false}
       maxWidth={250}
       placement={placement}
-      delay={[0, 0]}
+      delay={delay}
       duration={[100, 0]}
     >
       {children}
@@ -25,12 +25,14 @@ function Tooltip({
 Tooltip.defaultProps = {
   placement: 'top',
   className: '',
+  delay: [200, 0],
 };
 
 Tooltip.propTypes = {
   className: PropTypes.string,
   placement: PropTypes.string,
   content: PropTypes.node.isRequired,
+  delay: PropTypes.arrayOf(PropTypes.number),
   children: PropTypes.node.isRequired,
 };
 
