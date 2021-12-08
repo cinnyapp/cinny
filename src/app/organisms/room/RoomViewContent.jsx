@@ -15,7 +15,7 @@ import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { openProfileViewer } from '../../../client/action/navigation';
 import {
-  diffMinutes, isNotInSameDay, Throttle, getScrollInfo,
+  diffMinutes, isInSameDay, Throttle, getScrollInfo,
 } from '../../../util/common';
 
 import Divider from '../../atoms/divider/Divider';
@@ -87,6 +87,10 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
     && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
     && prevMEvent.getSender() === mEvent.getSender()
   );
+  const mDate = mEvent.getDate();
+  const isToday = isInSameDay(mDate, new Date());
+
+  const time = dateFormat(mDate, isToday ? 'hh:MM TT' : 'dd/mm/yyyy');
 
   if (mEvent.getType() === 'm.room.member') {
     const timelineChange = parseTimelineChange(mEvent);
@@ -96,7 +100,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
         key={mEvent.getId()}
         variant={timelineChange.variant}
         content={timelineChange.content}
-        time={`${dateFormat(mEvent.getDate(), 'hh:MM TT')}`}
+        time={time}
       />
     );
   }
@@ -107,6 +111,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
       isBodyOnly={isBodyOnly}
       roomTimeline={roomTimeline}
       focus={isFocus}
+      time={time}
     />
   );
 }
@@ -578,7 +583,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
         itemCountIndex += 1;
         if (jumpToItemIndex === -1) jumpToItemIndex = itemCountIndex;
       }
-      const dayDivider = prevMEvent && isNotInSameDay(mEvent.getDate(), prevMEvent.getDate());
+      const dayDivider = prevMEvent && !isInSameDay(mEvent.getDate(), prevMEvent.getDate());
       if (dayDivider) {
         tl.push(<Divider key={`divider-${mEvent.getId()}`} text={`${dateFormat(mEvent.getDate(), 'mmmm dd, yyyy')}`} />);
         itemCountIndex += 1;

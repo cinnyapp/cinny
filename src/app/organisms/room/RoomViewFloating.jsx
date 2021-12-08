@@ -22,9 +22,9 @@ function useJumpToEvent(roomTimeline) {
     roomTimeline.loadEventTimeline(eventId);
   };
 
-  const cancelJumpToEvent = (mEvent) => {
+  const cancelJumpToEvent = () => {
+    roomTimeline.markAllAsRead();
     setEventId(null);
-    if (!mEvent) roomTimeline.markAllAsRead();
   };
 
   useEffect(() => {
@@ -35,10 +35,12 @@ function useJumpToEvent(roomTimeline) {
     if (!readEventId.startsWith('~') && !roomTimeline.hasEventInTimeline(readEventId)) {
       setEventId(readEventId);
     }
-    roomTimeline.on(cons.events.roomTimeline.MARKED_AS_READ, cancelJumpToEvent);
+
+    const handleMarkAsRead = () => setEventId(null);
+    roomTimeline.on(cons.events.roomTimeline.MARKED_AS_READ, handleMarkAsRead);
 
     return () => {
-      roomTimeline.removeListener(cons.events.roomTimeline.MARKED_AS_READ, cancelJumpToEvent);
+      roomTimeline.removeListener(cons.events.roomTimeline.MARKED_AS_READ, handleMarkAsRead);
       setEventId(null);
     };
   }, [roomTimeline]);

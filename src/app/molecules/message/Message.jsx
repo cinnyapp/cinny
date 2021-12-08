@@ -412,7 +412,7 @@ function getEditedBody(editedMEvent) {
 }
 
 function Message({
-  mEvent, isBodyOnly, roomTimeline, focus,
+  mEvent, isBodyOnly, roomTimeline, focus, time
 }) {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -431,7 +431,6 @@ function Message({
   let { body } = content;
   const avatarSrc = mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop');
   const username = getUsernameOfRoomMember(mEvent.sender);
-  const time = `${dateFormat(mEvent.getDate(), 'hh:MM TT')}`;
 
   if (typeof body === 'undefined') return null;
   if (msgType === 'm.emote') className.push('message--type-emote');
@@ -627,6 +626,7 @@ Message.propTypes = {
   isBodyOnly: PropTypes.bool,
   roomTimeline: PropTypes.shape({}).isRequired,
   focus: PropTypes.bool,
+  time: PropTypes.string.isRequired,
 };
 
 export { Message, MessageReply, PlaceholderMessage };
