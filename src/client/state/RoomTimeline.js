@@ -90,6 +90,7 @@ class RoomTimeline extends EventEmitter {
   }
 
   canPaginateBackward() {
+    if (this.timeline[0].getType() === 'm.room.create') return false;
     const tm = getFirstLinkedTimeline(this.activeTimeline);
     return tm.getPaginationToken('b') !== null;
   }
