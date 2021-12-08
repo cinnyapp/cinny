@@ -446,18 +446,42 @@ function useEventArrive(roomTimeline, readEventStore) {
         readEventStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
         return;
       }
-      if (readUpToEvent?.getId() !== readUpToId) {
+      const isUnreadMsg = readUpToEvent?.getId() === readUpToId;
+      if (!isUnreadMsg) {
+        roomTimeline.markAllAsRead();
+      }
+      const { timeline } = roomTimeline;
+      const unreadMsgIsLast = timeline[timeline.length - 2].getId() === readUpToEvent?.getId();
+      if (unreadMsgIsLast) {
         roomTimeline.markAllAsRead();
       }
     };
 
     const handleEvent = (event) => {
       const tLength = roomTimeline.timeline.length;
-      if (roomTimeline.isServingLiveTimeline()
+      const isUserViewingLive = (
+        roomTimeline.isServingLiveTimeline()
         && limit.getEndIndex() >= tLength - 1
-        && timelineScroll.bottom < SCROLL_TRIGGER_POS) {
+        && timelineScroll.bottom < SCROLL_TRIGGER_POS
+      );
+      if (isUserViewingLive) {
         limit.setFrom(tLength - limit.getMaxEvents());
         sendReadReceipt(event);
+        setEvent(event);
+        return;
+      }
+      const isRelates = (event.getType() === 'm.reaction' || event.getRelation()?.rel_type === 'm.replace');
+      if (isRelates) {
+        setEvent(event);
+        return;
+      }
+      const isUserDitchedLive = (
+        roomTimeline.isServingLiveTimeline()
+        && limit.getEndIndex() >= tLength - 1
+      );
+      if (isUserDitchedLive) {
+        // This stateUpdate will help to put the
+        // loading msg placeholder at bottom
         setEvent(event);
       }
     };

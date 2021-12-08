@@ -18,9 +18,12 @@ function getRelateToId(mEvent) {
 function addToMap(myMap, mEvent) {
   const relateToId = getRelateToId(mEvent);
   if (relateToId === null) return null;
+  const mEventId = mEvent.getId();
 
   if (typeof myMap.get(relateToId) === 'undefined') myMap.set(relateToId, []);
-  myMap.get(relateToId).push(mEvent);
+  const mEvents = myMap.get(relateToId);
+  if (mEvents.find((ev) => ev.getId() === mEventId)) return mEvent;
+  mEvents.push(mEvent);
   return mEvent;
 }
 
@@ -101,10 +104,6 @@ class RoomTimeline extends EventEmitter {
 
   clearLocalTimelines() {
     this.timeline = [];
-
-    // TODO: don't clear these timeline cause there data can be used in other timeline
-    this.reactionTimeline.clear();
-    this.editedTimeline.clear();
   }
 
   addToTimeline(mEvent) {
@@ -295,8 +294,11 @@ class RoomTimeline extends EventEmitter {
       if (this.isOngoingPagination) return;
 
       // User is currently viewing the old events probably
-      // no need to add this event and emit changes.
-      if (this.isServingLiveTimeline() === false) return;
+      // no need to add new event and emit changes.
+      // only add reactions and edited messages
+      if (this.isServingLiveTimeline() === false) {
+        if (!isReaction(event) && !isEdited(event)) return;
+      }
 
       // We only process live events here
       if (!data.liveEvent) return;

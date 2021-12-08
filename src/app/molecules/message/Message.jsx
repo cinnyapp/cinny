@@ -223,16 +223,38 @@ MessageEdit.propTypes = {
   onCancel: PropTypes.func.isRequired,
 };
 
-function MessageReactionGroup({ children }) {
-  return (
-    <div className="message__reactions text text-b3 noselect">
-      { children }
-    </div>
-  );
+function getMyEmojiEvent(emojiKey, eventId, roomTimeline) {
+  const mx = initMatrix.matrixClient;
+  const rEvents = roomTimeline.reactionTimeline.get(eventId);
+  let rEvent = null;
+  rEvents?.find((rE) => {
+    if (rE.getRelation() === null) return false;
+    if (rE.getRelation().key === emojiKey && rE.getSender() === mx.getUserId()) {
+      rEvent = rE;
+      return true;
+    }
+    return false;
+  });
+  return rEvent;
 }
-MessageReactionGroup.propTypes = {
-  children: PropTypes.node.isRequired,
-};
+
+function toggleEmoji(roomId, eventId, emojiKey, roomTimeline) {
+  const myAlreadyReactEvent = getMyEmojiEvent(emojiKey, eventId, roomTimeline);
+  if (myAlreadyReactEvent) {
+    const rId = myAlreadyReactEvent.getId();
+    if (rId.startsWith('~')) return;
+    redactEvent(roomId, rId);
+    return;
+  }
+  sendReaction(roomId, eventId, emojiKey);
+}
+
+function pickEmoji(e, roomId, eventId, roomTimeline) {
+  openEmojiBoard(getEventCords(e), (emoji) => {
+    toggleEmoji(roomId, eventId, emoji.unicode, roomTimeline);
+    e.target.click();
+  });
+}
 
 function genReactionMsg(userIds, reaction) {
   const genLessContText = (text) => <span style={{ opacity: '.6' }}>{text}</span>;
@@ -254,12 +276,12 @@ function genReactionMsg(userIds, reaction) {
 }
 
 function MessageReaction({
-  reaction, users, isActive, onClick,
+  reaction, count, users, isActive, onClick,
 }) {
   return (
     <Tooltip
       className="msg__reaction-tooltip"
-      content={<Text variant="b2">{genReactionMsg(users, reaction)}</Text>}
+      content={<Text variant="b2">{users.length > 0 ? genReactionMsg(users, reaction) : 'Unable to load who has reacted'}</Text>}
     >
       <button
         onClick={onClick}
@@ -267,16 +289,94 @@ function MessageReaction({
         className={`msg__reaction${isActive ? ' msg__reaction--active' : ''}`}
       >
         { twemojify(reaction, { className: 'react-emoji' }) }
-        <Text variant="b3" className="msg__reaction-count">{users.length}</Text>
+        <Text variant="b3" className="msg__reaction-count">{count}</Text>
       </button>
     </Tooltip>
   );
 }
 MessageReaction.propTypes = {
   reaction: PropTypes.node.isRequired,
+  count: PropTypes.number.isRequired,
   users: PropTypes.arrayOf(PropTypes.string).isRequired,
   isActive: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
+};
+
+function MessageReactionGroup({ roomTimeline, mEvent }) {
+  const { roomId, reactionTimeline } = roomTimeline;
+  const eventId = mEvent.getId();
+  const mx = initMatrix.matrixClient;
+  const reactions = {};
+
+  const eventReactions = reactionTimeline.get(eventId);
+  const addReaction = (key, count, senderId, isActive) => {
+    let reaction = reactions[key];
+    if (reaction === undefined) {
+      reaction = {
+        count: 0,
+        users: [],
+        isActive: false,
+      };
+    }
+    if (count) {
+      reaction.count = count;
+    } else {
+      reaction.users.push(senderId);
+      reaction.count = reaction.users.length;
+      reaction.isActive = isActive;
+    }
+
+    reactions[key] = reaction;
+  };
+  if (eventReactions) {
+    eventReactions.forEach((rEvent) => {
+      if (rEvent.getRelation() === null) return;
+      const reaction = rEvent.getRelation();
+      const senderId = rEvent.getSender();
+      const isActive = senderId === mx.getUserId();
+
+      addReaction(reaction.key, undefined, senderId, isActive);
+    });
+  } else {
+    // Use aggregated reactions
+    const aggregatedReaction = mEvent.getServerAggregatedRelation('m.annotation')?.chunk;
+    if (!aggregatedReaction) return null;
+    aggregatedReaction.forEach((reaction) => {
+      if (reaction.type !== 'm.reaction') return;
+      addReaction(reaction.key, reaction.count, undefined, false);
+    });
+  }
+
+  return (
+    <div className="message__reactions text text-b3 noselect">
+      {
+        Object.keys(reactions).map((key) => (
+          <MessageReaction
+            key={key}
+            reaction={key}
+            count={reactions[key].count}
+            users={reactions[key].users}
+            isActive={reactions[key].isActive}
+            onClick={() => {
+              toggleEmoji(roomId, eventId, key, roomTimeline);
+            }}
+          />
+        ))
+      }
+      <IconButton
+        onClick={(e) => {
+          pickEmoji(e, roomId, eventId, roomTimeline);
+        }}
+        src={EmojiAddIC}
+        size="extra-small"
+        tooltip="Add reaction"
+      />
+    </div>
+  );
+}
+MessageReactionGroup.propTypes = {
+  roomTimeline: PropTypes.shape({}).isRequired,
+  mEvent: PropTypes.shape({}).isRequired,
 };
 
 function MessageOptions({ children }) {
@@ -367,37 +467,6 @@ function genMediaContent(mE) {
       return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
   }
 }
-function getMyEmojiEventId(emojiKey, eventId, roomTimeline) {
-  const mx = initMatrix.matrixClient;
-  const rEvents = roomTimeline.reactionTimeline.get(eventId);
-  let rEventId = null;
-  rEvents?.find((rE) => {
-    if (rE.getRelation() === null) return false;
-    if (rE.getRelation().key === emojiKey && rE.getSender() === mx.getUserId()) {
-      rEventId = rE.getId();
-      return true;
-    }
-    return false;
-  });
-  return rEventId;
-}
-
-function toggleEmoji(roomId, eventId, emojiKey, roomTimeline) {
-  const myAlreadyReactEventId = getMyEmojiEventId(emojiKey, eventId, roomTimeline);
-  if (typeof myAlreadyReactEventId === 'string') {
-    if (myAlreadyReactEventId.indexOf('~') === 0) return;
-    redactEvent(roomId, myAlreadyReactEventId);
-    return;
-  }
-  sendReaction(roomId, eventId, emojiKey);
-}
-
-function pickEmoji(e, roomId, eventId, roomTimeline) {
-  openEmojiBoard(getEventCords(e), (emoji) => {
-    toggleEmoji(roomId, eventId, emoji.unicode, roomTimeline);
-    e.target.click();
-  });
-}
 
 function getEditedBody(editedMEvent) {
   const newContent = editedMEvent.getContent()['m.new_content'];
@@ -438,8 +507,9 @@ function Message({
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel;
   const canIRedact = room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
 
-  let [reactions, isCustomHTML] = [null, content.format === 'org.matrix.custom.html'];
-  const [isEdited, haveReactions] = [editedTimeline.has(eventId), reactionTimeline.has(eventId)];
+  let isCustomHTML = content.format === 'org.matrix.custom.html';
+  const isEdited = editedTimeline.has(eventId);
+  const haveReactions = reactionTimeline.has(eventId) || !!mEvent.getServerAggregatedRelation('m.annotation');
   const isReply = !!mEvent.replyEventId;
   let customHTML = isCustomHTML ? content.formatted_body : null;
 
@@ -448,39 +518,6 @@ function Message({
     const editedMEvent = editedList[editedList.length - 1];
     [body, isCustomHTML, customHTML] = getEditedBody(editedMEvent);
     if (typeof body !== 'string') return null;
-  }
-
-  if (haveReactions) {
-    reactions = [];
-    reactionTimeline.get(eventId).forEach((rEvent) => {
-      if (rEvent.getRelation() === null) return;
-      function alreadyHaveThisReaction(rE) {
-        for (let i = 0; i < reactions.length; i += 1) {
-          if (reactions[i].key === rE.getRelation().key) return true;
-        }
-        return false;
-      }
-      if (alreadyHaveThisReaction(rEvent)) {
-        for (let i = 0; i < reactions.length; i += 1) {
-          if (reactions[i].key === rEvent.getRelation().key) {
-            reactions[i].users.push(rEvent.getSender());
-            if (reactions[i].isActive !== true) {
-              const myUserId = mx.getUserId();
-              reactions[i].isActive = rEvent.getSender() === myUserId;
-              if (reactions[i].isActive) reactions[i].id = rEvent.getId();
-            }
-            break;
-          }
-        }
-      } else {
-        reactions.push({
-          id: rEvent.getId(),
-          key: rEvent.getRelation().key,
-          users: [rEvent.getSender()],
-          isActive: (rEvent.getSender() === mx.getUserId()),
-        });
-      }
-    });
   }
 
   if (isReply) {
@@ -528,29 +565,7 @@ function Message({
           />
         )}
         {haveReactions && (
-          <MessageReactionGroup>
-            {
-              reactions.map((reaction) => (
-                <MessageReaction
-                  key={reaction.id}
-                  reaction={reaction.key}
-                  users={reaction.users}
-                  isActive={reaction.isActive}
-                  onClick={() => {
-                    toggleEmoji(roomId, eventId, reaction.key, roomTimeline);
-                  }}
-                />
-              ))
-            }
-            <IconButton
-              onClick={(e) => {
-                pickEmoji(e, roomId, eventId, roomTimeline);
-              }}
-              src={EmojiAddIC}
-              size="extra-small"
-              tooltip="Add reaction"
-            />
-          </MessageReactionGroup>
+          <MessageReactionGroup roomTimeline={roomTimeline} mEvent={mEvent} />
         )}
         {!isEditing && (
           <MessageOptions>
