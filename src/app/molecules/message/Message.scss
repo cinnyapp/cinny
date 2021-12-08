@@ -23,6 +23,12 @@
   &__avatar-container {
     padding-top: 6px;
     margin-right: var(--sp-tight);
+    & .avatar-container {
+      transition: transform 200ms var(--fluid-push);
+      &:hover {
+        transform: translateY(-4px);
+      }
+    }
 
     & button {
       cursor: pointer;

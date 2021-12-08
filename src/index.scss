@@ -157,6 +157,9 @@
   // large size nav drawer & people drawer width => 326px, 312px
   // medium size nav drawer & people drawer width => 280, 268
 
+  /* transition curves */
+  --fluid-push: cubic-bezier(0, 0.8, 0.67, 0.97);
+  
   --font-family: 'Roboto', 'Supreme', sans-serif;
 }
 
