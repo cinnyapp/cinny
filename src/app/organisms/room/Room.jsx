@@ -19,7 +19,7 @@ function Room() {
   const mx = initMatrix.matrixClient;
   const handleRoomSelected = (rId, pRoomId, eId) => {
     if (mx.getRoom(rId)) {
-      setRoomTimeline(new RoomTimeline(rId));
+      setRoomTimeline(new RoomTimeline(rId, initMatrix.notifications));
       setEventId(eId);
     } else {
       // TODO: add ability to join room if roomId is invalid

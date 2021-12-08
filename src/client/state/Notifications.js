@@ -81,6 +81,13 @@ class Notifications extends EventEmitter {
     return this.roomIdToNoti.has(roomId);
   }
 
+  deleteNoti(roomId) {
+    if (this.hasNoti(roomId)) {
+      const noti = this.getNoti(roomId);
+      this._deleteNoti(roomId, noti.total, noti.highlight);
+    }
+  }
+
   _getAllParentIds(roomId) {
     let allParentIds = this.roomList.roomIdToParents.get(roomId);
     if (allParentIds === undefined) return new Set();
@@ -174,17 +181,13 @@ class Notifications extends EventEmitter {
         const readerUserId = Object.keys(content[readedEventId]['m.read'])[0];
         if (readerUserId !== this.matrixClient.getUserId()) return;
 
-        if (this.hasNoti(room.roomId)) {
-          const noti = this.getNoti(room.roomId);
-          this._deleteNoti(room.roomId, noti.total, noti.highlight);
-        }
+        this.deleteNoti(room.roomId);
       }
     });
 
     this.matrixClient.on('Room.myMembership', (room, membership) => {
       if (membership === 'leave' && this.hasNoti(room.roomId)) {
-        const noti = this.getNoti(room.roomId);
-        this._deleteNoti(room.roomId, noti.total, noti.highlight);
+        this.deleteNoti(room.roomId);
       }
     });
   }
