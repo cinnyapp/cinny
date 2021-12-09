@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
@@ -52,25 +52,35 @@ function PlaceholderMessage() {
   );
 }
 
-function MessageHeader({
-  userId, name, color, time,
-}) {
+const MessageAvatar = React.memo(({
+  roomId, mEvent, userId, username,
+}) => {
+  const avatarSrc = mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop');
   return (
-    <div className="message__header">
-      <div style={{ color }} className="message__profile">
-        <Text variant="b1">{twemojify(name)}</Text>
-        <Text variant="b1">{twemojify(userId)}</Text>
-      </div>
-      <div className="message__time">
-        <Text variant="b3">{time}</Text>
-      </div>
+    <div className="message__avatar-container">
+      <button type="button" onClick={() => openProfileViewer(userId, roomId)}>
+        <Avatar imageSrc={avatarSrc} text={username} bgColor={colorMXID(userId)} size="small" />
+      </button>
     </div>
   );
-}
+});
+
+const MessageHeader = React.memo(({
+  userId, username, time,
+}) => (
+  <div className="message__header">
+    <div style={{ color: colorMXID(userId) }} className="message__profile">
+      <Text variant="b1">{twemojify(username)}</Text>
+      <Text variant="b1">{twemojify(userId)}</Text>
+    </div>
+    <div className="message__time">
+      <Text variant="b3">{time}</Text>
+    </div>
+  </div>
+));
 MessageHeader.propTypes = {
   userId: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
-  color: PropTypes.string.isRequired,
+  username: PropTypes.string.isRequired,
   time: PropTypes.string.isRequired,
 };
 
@@ -93,7 +103,7 @@ MessageReply.propTypes = {
   body: PropTypes.string.isRequired,
 };
 
-function MessageReplyWrapper({ roomTimeline, eventId }) {
+const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
   const [reply, setReply] = useState(null);
   const isMountedRef = useRef(true);
 
@@ -141,19 +151,19 @@ function MessageReplyWrapper({ roomTimeline, eventId }) {
       {reply !== null && <MessageReply name={reply.to} color={reply.color} body={reply.body} />}
     </div>
   );
-}
+});
 MessageReplyWrapper.propTypes = {
   roomTimeline: PropTypes.shape({}).isRequired,
   eventId: PropTypes.string.isRequired,
 };
 
-function MessageBody({
+const MessageBody = React.memo(({
   senderName,
   body,
   isCustomHTML,
   isEdited,
   msgType,
-}) {
+}) => {
   // if body is not string it is a React element.
   if (typeof body !== 'string') return <div className="message__body">{body}</div>;
 
@@ -176,7 +186,7 @@ function MessageBody({
       { isEdited && <Text className="message__body-edited" variant="b3">(edited)</Text>}
     </div>
   );
-}
+});
 MessageBody.defaultProps = {
   isCustomHTML: false,
   isEdited: false,
@@ -379,17 +389,6 @@ MessageReactionGroup.propTypes = {
   mEvent: PropTypes.shape({}).isRequired,
 };
 
-function MessageOptions({ children }) {
-  return (
-    <div className="message__options">
-      {children}
-    </div>
-  );
-}
-MessageOptions.propTypes = {
-  children: PropTypes.node.isRequired,
-};
-
 function isMedia(mE) {
   return (
     mE.getContent()?.msgtype === 'm.file'
@@ -399,6 +398,86 @@ function isMedia(mE) {
     || mE.getType() === 'm.sticker'
   );
 }
+
+const MessageOptions = React.memo(({
+  roomTimeline, mEvent, edit, reply,
+}) => {
+  const { roomId, room } = roomTimeline;
+  const mx = initMatrix.matrixClient;
+  const eventId = mEvent.getId();
+  const senderId = mEvent.getSender();
+
+  const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel;
+  const canIRedact = room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
+
+  return (
+    <div className="message__options">
+      <IconButton
+        onClick={(e) => pickEmoji(e, roomId, eventId, roomTimeline)}
+        src={EmojiAddIC}
+        size="extra-small"
+        tooltip="Add reaction"
+      />
+      <IconButton
+        onClick={() => reply()}
+        src={ReplyArrowIC}
+        size="extra-small"
+        tooltip="Reply"
+      />
+      {(senderId === mx.getUserId() && !isMedia(mEvent)) && (
+        <IconButton
+          onClick={() => edit(true)}
+          src={PencilIC}
+          size="extra-small"
+          tooltip="Edit"
+        />
+      )}
+      <ContextMenu
+        content={() => (
+          <>
+            <MenuHeader>Options</MenuHeader>
+            <MenuItem
+              iconSrc={TickMarkIC}
+              onClick={() => openReadReceipts(roomId, roomTimeline.getEventReaders(eventId))}
+            >
+              Read receipts
+            </MenuItem>
+            {(canIRedact || senderId === mx.getUserId()) && (
+              <>
+                <MenuBorder />
+                <MenuItem
+                  variant="danger"
+                  iconSrc={BinIC}
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this event')) {
+                      redactEvent(roomId, eventId);
+                    }
+                  }}
+                >
+                  Delete
+                </MenuItem>
+              </>
+            )}
+          </>
+        )}
+        render={(toggleMenu) => (
+          <IconButton
+            onClick={toggleMenu}
+            src={VerticalMenuIC}
+            size="extra-small"
+            tooltip="Options"
+          />
+        )}
+      />
+    </div>
+  );
+});
+MessageOptions.propTypes = {
+  roomTimeline: PropTypes.shape({}).isRequired,
+  mEvent: PropTypes.shape({}).isRequired,
+  edit: PropTypes.func.isRequired,
+  reply: PropTypes.func.isRequired,
+};
 
 function genMediaContent(mE) {
   const mx = initMatrix.matrixClient;
@@ -481,14 +560,10 @@ function getEditedBody(editedMEvent) {
 }
 
 function Message({
-  mEvent, isBodyOnly, roomTimeline, focus, time
+  mEvent, isBodyOnly, roomTimeline, focus, time,
 }) {
   const [isEditing, setIsEditing] = useState(false);
-
-  const mx = initMatrix.matrixClient;
-  const {
-    room, roomId, editedTimeline, reactionTimeline,
-  } = roomTimeline;
+  const { roomId, editedTimeline, reactionTimeline } = roomTimeline;
 
   const className = ['message', (isBodyOnly ? 'message--body-only' : 'message--full')];
   if (focus) className.push('message--focus');
@@ -496,16 +571,11 @@ function Message({
   const eventId = mEvent.getId();
   const msgType = content?.msgtype;
   const senderId = mEvent.getSender();
-  const mxidColor = colorMXID(senderId);
   let { body } = content;
-  const avatarSrc = mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop');
   const username = getUsernameOfRoomMember(mEvent.sender);
 
   if (typeof body === 'undefined') return null;
   if (msgType === 'm.emote') className.push('message--type-emote');
-
-  const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel;
-  const canIRedact = room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
 
   let isCustomHTML = content.format === 'org.matrix.custom.html';
   const isEdited = editedTimeline.has(eventId);
@@ -524,18 +594,23 @@ function Message({
     body = parseReply(body)?.body ?? body;
   }
 
+  const edit = useCallback(() => {
+    setIsEditing(true);
+  }, []);
+  const reply = useCallback(() => {
+    replyTo(senderId, eventId, body);
+  }, [body]);
+
   return (
     <div className={className.join(' ')}>
-      <div className="message__avatar-container">
-        {!isBodyOnly && (
-          <button type="button" onClick={() => openProfileViewer(senderId, roomId)}>
-            <Avatar imageSrc={avatarSrc} text={username} bgColor={mxidColor} size="small" />
-          </button>
-        )}
-      </div>
+      {
+        isBodyOnly
+          ? <div className="message__avatar-container" />
+          : <MessageAvatar roomId={roomId} mEvent={mEvent} userId={senderId} username={username} />
+      }
       <div className="message__main-container">
         {!isBodyOnly && (
-          <MessageHeader userId={senderId} name={username} color={mxidColor} time={time} />
+          <MessageHeader userId={senderId} username={username} time={time} />
         )}
         {isReply && (
           <MessageReplyWrapper
@@ -568,65 +643,12 @@ function Message({
           <MessageReactionGroup roomTimeline={roomTimeline} mEvent={mEvent} />
         )}
         {!isEditing && (
-          <MessageOptions>
-            <IconButton
-              onClick={(e) => pickEmoji(e, roomId, eventId, roomTimeline)}
-              src={EmojiAddIC}
-              size="extra-small"
-              tooltip="Add reaction"
-            />
-            <IconButton
-              onClick={() => replyTo(senderId, eventId, body)}
-              src={ReplyArrowIC}
-              size="extra-small"
-              tooltip="Reply"
-            />
-            {(senderId === mx.getUserId() && !isMedia(mEvent)) && (
-              <IconButton
-                onClick={() => setIsEditing(true)}
-                src={PencilIC}
-                size="extra-small"
-                tooltip="Edit"
-              />
-            )}
-            <ContextMenu
-              content={() => (
-                <>
-                  <MenuHeader>Options</MenuHeader>
-                  <MenuItem
-                    iconSrc={TickMarkIC}
-                    onClick={() => openReadReceipts(roomId, roomTimeline.getEventReaders(eventId))}
-                  >
-                    Read receipts
-                  </MenuItem>
-                  {(canIRedact || senderId === mx.getUserId()) && (
-                    <>
-                      <MenuBorder />
-                      <MenuItem
-                        variant="danger"
-                        iconSrc={BinIC}
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to delete this event')) {
-                            redactEvent(roomId, eventId);
-                          }
-                        }}
-                      >
-                        Delete
-                      </MenuItem>
-                    </>
-                  )}
-                </>
-              )}
-              render={(toggleMenu) => (
-                <IconButton
-                  onClick={toggleMenu}
-                  src={VerticalMenuIC}
-                  size="extra-small"
-                  tooltip="Options"
-                />
-              )}
-            />
-          </MessageOptions>
+          <MessageOptions
+            roomTimeline={roomTimeline}
+            mEvent={mEvent}
+            edit={edit}
+            reply={reply}
+          />
         )}
       </div>
     </div>
