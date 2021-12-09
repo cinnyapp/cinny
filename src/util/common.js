@@ -14,7 +14,11 @@ export function diffMinutes(dt2, dt1) {
 }
 
 export function isInSameDay(dt2, dt1) {
-  return (dt2.setHours(0, 0, 0, 0) === dt1.setHours(0, 0, 0, 0));
+  return (
+    dt2.getFullYear() === dt1.getFullYear()
+    && dt2.getMonth() === dt1.getMonth()
+    && dt2.getDate() === dt1.getDate()
+  );
 }
 
 export function getEventCords(ev) {
