@@ -574,7 +574,14 @@ function Message({
   let { body } = content;
   const username = getUsernameOfRoomMember(mEvent.sender);
 
-  if (typeof body === 'undefined') return null;
+  const edit = useCallback(() => {
+    setIsEditing(true);
+  }, []);
+  const reply = useCallback(() => {
+    replyTo(senderId, eventId, body);
+  }, [body]);
+
+  if (body === undefined) return null;
   if (msgType === 'm.emote') className.push('message--type-emote');
 
   let isCustomHTML = content.format === 'org.matrix.custom.html';
@@ -593,13 +600,6 @@ function Message({
   if (isReply) {
     body = parseReply(body)?.body ?? body;
   }
-
-  const edit = useCallback(() => {
-    setIsEditing(true);
-  }, []);
-  const reply = useCallback(() => {
-    replyTo(senderId, eventId, body);
-  }, [body]);
 
   return (
     <div className={className.join(' ')}>
