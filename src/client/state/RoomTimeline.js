@@ -90,7 +90,7 @@ class RoomTimeline extends EventEmitter {
   }
 
   canPaginateBackward() {
-    if (this.timeline[0].getType() === 'm.room.create') return false;
+    if (this.timeline[0]?.getType() === 'm.room.create') return false;
     const tm = getFirstLinkedTimeline(this.activeTimeline);
     return tm.getPaginationToken('b') !== null;
   }
@@ -173,26 +173,25 @@ class RoomTimeline extends EventEmitter {
       : getLastLinkedTimeline(this.activeTimeline);
 
     if (timelineToPaginate.getPaginationToken(backwards ? 'b' : 'f') === null) {
+      this.emit(cons.events.roomTimeline.PAGINATED, backwards, 0);
       this.isOngoingPagination = false;
-      this.emit(cons.events.roomTimeline.PAGINATED, backwards, 0, false);
       return false;
     }
 
     const oldSize = this.timeline.length;
     try {
-      const canPaginateMore = await this.matrixClient
-        .paginateEventTimeline(timelineToPaginate, { backwards, limit });
+      await this.matrixClient.paginateEventTimeline(timelineToPaginate, { backwards, limit });
 
       if (this.isEncrypted()) await this.decryptAllEventsOfTimeline(this.activeTimeline);
       this._populateTimelines();
 
       const loaded = this.timeline.length - oldSize;
+      this.emit(cons.events.roomTimeline.PAGINATED, backwards, loaded);
       this.isOngoingPagination = false;
-      this.emit(cons.events.roomTimeline.PAGINATED, backwards, loaded, canPaginateMore);
       return true;
     } catch {
+      this.emit(cons.events.roomTimeline.PAGINATED, backwards, 0);
       this.isOngoingPagination = false;
-      this.emit(cons.events.roomTimeline.PAGINATED, backwards, 0, true);
       return false;
     }
   }

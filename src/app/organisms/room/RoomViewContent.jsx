@@ -346,18 +346,17 @@ function usePaginate(roomTimeline, readEventStore, forceUpdateLimit) {
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
-    const handleOnPagination = (backwards, loaded, canLoadMore) => {
+    const handleOnPagination = (backwards, loaded) => {
       if (loaded === 0) return;
       if (!readEventStore.getItem()) {
         const readUpToId = roomTimeline.getReadUpToEventId();
         readEventStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
       }
       limit.setFrom(limit.calcNextFrom(backwards, roomTimeline.timeline.length));
-      setInfo({
+      setTimeout(() => setInfo({
         backwards,
         loaded,
-        canLoadMore,
-      });
+      }));
     };
     roomTimeline.on(cons.events.roomTimeline.PAGINATED, handleOnPagination);
     return () => {
@@ -365,7 +364,7 @@ function usePaginate(roomTimeline, readEventStore, forceUpdateLimit) {
     };
   }, [roomTimeline]);
 
-  const autoPaginate = useCallback(() => {
+  const autoPaginate = useCallback(async () => {
     if (roomTimeline.isOngoingPagination) return;
     const tLength = roomTimeline.timeline.length;
 
@@ -376,7 +375,7 @@ function usePaginate(roomTimeline, readEventStore, forceUpdateLimit) {
         forceUpdateLimit();
       } else if (roomTimeline.canPaginateForward()) {
         // paginate from server.
-        roomTimeline.paginateTimeline(false, PAG_LIMIT);
+        await roomTimeline.paginateTimeline(false, PAG_LIMIT);
         return;
       }
     }
@@ -387,7 +386,7 @@ function usePaginate(roomTimeline, readEventStore, forceUpdateLimit) {
         forceUpdateLimit();
       } else if (roomTimeline.canPaginateBackward()) {
         // paginate from server.
-        roomTimeline.paginateTimeline(true, PAG_LIMIT);
+        await roomTimeline.paginateTimeline(true, PAG_LIMIT);
       }
     }
   }, [roomTimeline]);
