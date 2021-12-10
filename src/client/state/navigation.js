@@ -103,6 +103,12 @@ class Navigation extends EventEmitter {
           action.body,
         );
       },
+      [cons.actions.navigation.OPEN_SEARCH]: () => {
+        this.emit(
+          cons.events.navigation.SEARCH_OPENED,
+          action.term,
+        );
+      },
     };
     actions[action.type]?.();
   }

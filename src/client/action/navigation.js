@@ -97,6 +97,13 @@ function replyTo(userId, eventId, body) {
   });
 }
 
+function openSearch(term) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_SEARCH,
+    term,
+  });
+}
+
 export {
   selectTab,
   selectSpace,
@@ -111,4 +118,5 @@ export {
   openReadReceipts,
   openRoomOptions,
   replyTo,
+  openSearch,
 };

@@ -6,7 +6,7 @@ import cons from '../../../client/state/cons';
 import colorMXID from '../../../util/colorMXID';
 import logout from '../../../client/action/logout';
 import {
-  selectTab, openInviteList, openPublicRooms, openSettings,
+  selectTab, openInviteList, openSearch, openSettings,
 } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
 import { abbreviateNumber } from '../../../util/common';
@@ -17,7 +17,7 @@ import ContextMenu, { MenuItem, MenuHeader, MenuBorder } from '../../atoms/conte
 
 import HomeIC from '../../../../public/res/ic/outlined/home.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
-import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
+import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import InviteIC from '../../../../public/res/ic/outlined/invite.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import PowerIC from '../../../../public/res/ic/outlined/power.svg';
@@ -205,6 +205,11 @@ function SideBar() {
       <div className="sidebar__sticky">
         <div className="sidebar-divider" />
         <div className="sticky-container">
+          <SidebarAvatar
+            onClick={() => openSearch()}
+            tooltip="Search"
+            iconSrc={SearchIC}
+          />
           { totalInvites !== 0 && (
             <SidebarAvatar
               isUnread

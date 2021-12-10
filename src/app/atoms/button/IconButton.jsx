@@ -9,7 +9,7 @@ import Text from '../text/Text';
 
 const IconButton = React.forwardRef(({
   variant, size, type,
-  tooltip, tooltipPlacement, src, onClick,
+  tooltip, tooltipPlacement, src, onClick, tabIndex,
 }, ref) => {
   const btn = (
     <button
@@ -19,6 +19,7 @@ const IconButton = React.forwardRef(({
       onClick={onClick}
       // eslint-disable-next-line react/button-has-type
       type={type}
+      tabIndex={tabIndex}
     >
       <RawIcon size={size} src={src} />
     </button>
@@ -41,6 +42,7 @@ IconButton.defaultProps = {
   tooltip: null,
   tooltipPlacement: 'top',
   onClick: null,
+  tabIndex: 0,
 };
 
 IconButton.propTypes = {
@@ -51,6 +53,7 @@ IconButton.propTypes = {
   tooltipPlacement: PropTypes.oneOf(['top', 'right', 'bottom', 'left']),
   src: PropTypes.string.isRequired,
   onClick: PropTypes.func,
+  tabIndex: PropTypes.number,
 };
 
 export default IconButton;

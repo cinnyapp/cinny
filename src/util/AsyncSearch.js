@@ -56,7 +56,7 @@ class AsyncSearch extends EventEmitter {
     this._softReset();
 
     this.term = (this.isCaseSensitive) ? term : term.toLocaleLowerCase();
-    if (this.ignoreWhitespace) this.term = this.term.replace(' ', '');
+    if (this.ignoreWhitespace) this.term = this.term.replaceAll(' ', '');
     if (this.term === '') {
       this._sendFindings();
       return;
@@ -114,7 +114,7 @@ class AsyncSearch extends EventEmitter {
   _compare(item) {
     if (typeof item !== 'string') return false;
     let myItem = (this.isCaseSensitive) ? item : item.toLocaleLowerCase();
-    if (this.ignoreWhitespace) myItem = myItem.replace(' ', '');
+    if (this.ignoreWhitespace) myItem = myItem.replaceAll(' ', '');
 
     if (this.isContain) return myItem.indexOf(this.term) !== -1;
     return myItem.startsWith(this.term);
