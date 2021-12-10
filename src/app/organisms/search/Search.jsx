@@ -177,7 +177,7 @@ function Search() {
         iconSrc={iconSrc}
         isUnread={isUnread}
         notificationCount={noti.total}
-        isAlert={noti.total > 0}
+        isAlert={noti.highlight > 0}
         onClick={() => openItem(item.roomId, item.type)}
       />
     );
