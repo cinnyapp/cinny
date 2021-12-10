@@ -81,6 +81,8 @@ class RoomTimeline extends EventEmitter {
     this.ongoingDecryptionCount = 0;
     this.initialized = false;
 
+    setTimeout(() => this.room.loadMembersIfNeeded());
+
     // TODO: remove below line
     window.selectedRoom = this;
   }
