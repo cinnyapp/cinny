@@ -534,7 +534,8 @@ function RoomViewContent({ eventId, roomTimeline }) {
         timelineScroll.scrollToIndex(jumpToItemIndex, 80);
       }
       if (timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward()) {
-        if (readEventStore.getItem()?.getId() === roomTimeline.getReadUpToEventId()) {
+        const readUpToId = roomTimeline.getReadUpToEventId();
+        if (readEventStore.getItem()?.getId() === readUpToId || readUpToId === null) {
           requestAnimationFrame(() => roomTimeline.markAllAsRead());
         }
       }

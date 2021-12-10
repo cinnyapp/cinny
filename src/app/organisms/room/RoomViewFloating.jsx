@@ -32,7 +32,7 @@ function useJumpToEvent(roomTimeline) {
     // we only show "Jump to unread" btn only if the event is not in timeline.
     // if event is in timeline
     // we will automatically open the timeline from that event position
-    if (!readEventId.startsWith('~') && !roomTimeline.hasEventInTimeline(readEventId)) {
+    if (!readEventId?.startsWith('~') && !roomTimeline.hasEventInTimeline(readEventId)) {
       setEventId(readEventId);
     }
 
