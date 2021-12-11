@@ -4,6 +4,8 @@ import './RawModal.scss';
 
 import Modal from 'react-modal';
 
+import navigation from '../../../client/state/navigation';
+
 Modal.setAppElement('#root');
 
 function RawModal({
@@ -23,6 +25,9 @@ function RawModal({
     default:
       modalClass += 'raw-modal__small ';
   }
+
+  navigation.setIsRawModalVisible(isOpen);
+
   const modalOverlayClass = (overlayClassName !== null) ? `${overlayClassName} ` : '';
   return (
     <Modal

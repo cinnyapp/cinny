@@ -12,6 +12,8 @@ class Navigation extends EventEmitter {
 
     this.selectedRoomId = null;
     this.recentRooms = [];
+
+    this.isRawModalVisible = false;
   }
 
   _setSpacePath(roomId) {
@@ -38,11 +40,14 @@ class Navigation extends EventEmitter {
   addRecentRoom(roomId) {
     if (typeof roomId !== 'string') return;
 
-    this.removeRecentRoom(roomId);
     this.recentRooms.push(roomId);
     if (this.recentRooms.length > 10) {
       this.recentRooms.splice(0, 1);
     }
+  }
+
+  setIsRawModalVisible(visible) {
+    this.isRawModalVisible = visible;
   }
 
   navigate(action) {
@@ -69,6 +74,7 @@ class Navigation extends EventEmitter {
       [cons.actions.navigation.SELECT_ROOM]: () => {
         const prevSelectedRoomId = this.selectedRoomId;
         this.selectedRoomId = action.roomId;
+        this.removeRecentRoom(prevSelectedRoomId);
         this.addRecentRoom(prevSelectedRoomId);
         this.removeRecentRoom(this.selectedRoomId);
         this.emit(
