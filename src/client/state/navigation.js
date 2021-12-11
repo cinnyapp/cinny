@@ -11,6 +11,7 @@ class Navigation extends EventEmitter {
     this.selectedSpacePath = [cons.tabs.HOME];
 
     this.selectedRoomId = null;
+    this.recentRooms = [];
   }
 
   _setSpacePath(roomId) {
@@ -24,6 +25,24 @@ class Navigation extends EventEmitter {
       return;
     }
     this.selectedSpacePath.push(roomId);
+  }
+
+  removeRecentRoom(roomId) {
+    if (typeof roomId !== 'string') return;
+    const roomIdIndex = this.recentRooms.indexOf(roomId);
+    if (roomIdIndex >= 0) {
+      this.recentRooms.splice(roomIdIndex, 1);
+    }
+  }
+
+  addRecentRoom(roomId) {
+    if (typeof roomId !== 'string') return;
+
+    this.removeRecentRoom(roomId);
+    this.recentRooms.push(roomId);
+    if (this.recentRooms.length > 10) {
+      this.recentRooms.splice(0, 1);
+    }
   }
 
   navigate(action) {
@@ -50,6 +69,8 @@ class Navigation extends EventEmitter {
       [cons.actions.navigation.SELECT_ROOM]: () => {
         const prevSelectedRoomId = this.selectedRoomId;
         this.selectedRoomId = action.roomId;
+        this.addRecentRoom(prevSelectedRoomId);
+        this.removeRecentRoom(this.selectedRoomId);
         this.emit(
           cons.events.navigation.ROOM_SELECTED,
           this.selectedRoomId,

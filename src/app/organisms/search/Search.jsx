@@ -13,7 +13,6 @@ import IconButton from '../../atoms/button/IconButton';
 import Input from '../../atoms/input/Input';
 import RawModal from '../../atoms/modal/RawModal';
 import ScrollView from '../../atoms/scroll/ScrollView';
-import Divider from '../../atoms/divider/Divider';
 import RoomSelector from '../../molecules/room-selector/RoomSelector';
 
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
@@ -51,6 +50,35 @@ function useVisiblityToggle(setResult) {
   return [isOpen, requestClose];
 }
 
+function mapRoomIds(roomIds, type) {
+  const mx = initMatrix.matrixClient;
+  const { directs, roomIdToParents } = initMatrix.roomList;
+
+  return roomIds.map((roomId) => {
+    let roomType = type;
+
+    if (!roomType) {
+      roomType = directs.has(roomId) ? 'direct' : 'room';
+    }
+
+    const room = mx.getRoom(roomId);
+    const parentSet = roomIdToParents.get(roomId);
+    const parentNames = parentSet
+      ? [...parentSet].map((parentId) => mx.getRoom(parentId).name)
+      : undefined;
+
+    const parents = parentNames ? parentNames.join(', ') : null;
+
+    return ({
+      type: roomType,
+      name: room.name,
+      parents,
+      roomId,
+      room,
+    });
+  });
+}
+
 function Search() {
   const [result, setResult] = useState(null);
   const [asyncSearch] = useState(new AsyncSearch());
@@ -67,25 +95,6 @@ function Search() {
 
   const generateResults = (term) => {
     const prefix = term.match(/^[#@*]/)?.[0];
-    const { roomIdToParents } = initMatrix.roomList;
-
-    const mapRoomIds = (roomIds, type) => roomIds.map((roomId) => {
-      const room = mx.getRoom(roomId);
-      const parentSet = roomIdToParents.get(roomId);
-      const parentNames = parentSet
-        ? [...parentSet].map((parentId) => mx.getRoom(parentId).name)
-        : undefined;
-
-      const parents = parentNames ? parentNames.join(', ') : null;
-
-      return ({
-        type,
-        name: room.name,
-        parents,
-        roomId,
-        room,
-      });
-    });
 
     if (term.length === 1) {
       const { roomList } = initMatrix;
@@ -112,8 +121,14 @@ function Search() {
     }
   };
 
+  const loadRecentRooms = () => {
+    const { recentRooms } = navigation;
+    handleSearchResults(mapRoomIds(recentRooms).reverse(), '');
+  };
+
   const handleAfterOpen = () => {
     searchRef.current.focus();
+    loadRecentRooms();
     asyncSearch.on(asyncSearch.RESULT_SENT, handleSearchResults);
 
     if (typeof result.term === 'string') {
@@ -128,6 +143,10 @@ function Search() {
 
   const handleOnChange = () => {
     const { value } = searchRef.current;
+    if (value.length === 0) {
+      loadRecentRooms();
+      return;
+    }
     generateResults(value);
   };
 
