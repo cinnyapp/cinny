@@ -6,31 +6,19 @@ import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 
 import initMatrix from '../../../client/initMatrix';
-import cons from '../../../client/state/cons';
 import { toggleMarkdown } from '../../../client/action/settings';
 import * as roomActions from '../../../client/action/room';
 import {
-  selectTab,
-  selectRoom,
   openCreateRoom,
   openPublicRooms,
   openInviteUser,
-  openReadReceipts,
 } from '../../../client/action/navigation';
 import { emojis } from '../emoji-board/emoji';
 import AsyncSearch from '../../../util/AsyncSearch';
 
 import Text from '../../atoms/text/Text';
-import Button from '../../atoms/button/Button';
-import IconButton from '../../atoms/button/IconButton';
-import ContextMenu, { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import ScrollView from '../../atoms/scroll/ScrollView';
-import SettingTile from '../../molecules/setting-tile/SettingTile';
-import TimelineChange from '../../molecules/message/TimelineChange';
-
-import CmdIC from '../../../../public/res/ic/outlined/cmd.svg';
-
-import { getUsersActionJsx } from './common';
+import FollowingMembers from '../../molecules/following-members/FollowingMembers';
 
 const commands = [{
   name: 'markdown',
@@ -61,121 +49,6 @@ const commands = [{
   exe: (roomId, searchTerm) => openInviteUser(roomId, searchTerm),
 }];
 
-function CmdHelp() {
-  return (
-    <ContextMenu
-      placement="top"
-      content={(
-        <>
-          <MenuHeader>General command</MenuHeader>
-          <Text variant="b2">/command_name</Text>
-          <MenuHeader>Go-to commands</MenuHeader>
-          <Text variant="b2">{'>*space_name'}</Text>
-          <Text variant="b2">{'>#room_name'}</Text>
-          <Text variant="b2">{'>@people_name'}</Text>
-          <MenuHeader>Autofill commands</MenuHeader>
-          <Text variant="b2">:emoji_name</Text>
-          <Text variant="b2">@name</Text>
-        </>
-      )}
-      render={(toggleMenu) => (
-        <IconButton
-          src={CmdIC}
-          size="extra-small"
-          onClick={toggleMenu}
-          tooltip="Commands"
-        />
-      )}
-    />
-  );
-}
-
-function ViewCmd() {
-  function renderAllCmds() {
-    return commands.map((command) => (
-      <SettingTile
-        key={command.name}
-        title={command.name}
-        content={(<Text variant="b3">{command.description}</Text>)}
-      />
-    ));
-  }
-  return (
-    <ContextMenu
-      maxWidth={250}
-      placement="top"
-      content={(
-        <>
-          <MenuHeader>General commands</MenuHeader>
-          {renderAllCmds()}
-        </>
-      )}
-      render={(toggleMenu) => (
-        <span>
-          <Button onClick={toggleMenu}><span className="text text-b3">View all</span></Button>
-        </span>
-      )}
-    />
-  );
-}
-
-function FollowingMembers({ roomId, roomTimeline, viewEvent }) {
-  const [followingMembers, setFollowingMembers] = useState([]);
-  const mx = initMatrix.matrixClient;
-  const myUserId = mx.getUserId();
-
-  const handleOnMessageSent = () => setFollowingMembers([]);
-
-  useEffect(() => {
-    const updateFollowingMembers = () => {
-      setFollowingMembers(roomTimeline.getLiveReaders());
-    };
-    updateFollowingMembers();
-    roomTimeline.on(cons.events.roomTimeline.LIVE_RECEIPT, updateFollowingMembers);
-    viewEvent.on('message_sent', handleOnMessageSent);
-    return () => {
-      roomTimeline.removeListener(cons.events.roomTimeline.LIVE_RECEIPT, updateFollowingMembers);
-      viewEvent.removeListener('message_sent', handleOnMessageSent);
-    };
-  }, [roomTimeline]);
-
-  const filteredM = followingMembers.filter((userId) => userId !== myUserId);
-  return filteredM.length !== 0 && (
-    <TimelineChange
-      variant="follow"
-      content={getUsersActionJsx(roomId, filteredM, 'following the conversation.')}
-      time=""
-      onClick={() => openReadReceipts(roomId, followingMembers)}
-    />
-  );
-}
-
-FollowingMembers.propTypes = {
-  roomId: PropTypes.string.isRequired,
-  roomTimeline: PropTypes.shape({}).isRequired,
-  viewEvent: PropTypes.shape({}).isRequired,
-};
-
-function getCmdActivationMessage(prefix) {
-  function genMessage(prime, secondary) {
-    return (
-      <>
-        <span>{prime}</span>
-        <span>{secondary}</span>
-      </>
-    );
-  }
-  const cmd = {
-    '/': () => genMessage('General command mode activated. ', 'Type command name for suggestions.'),
-    '>*': () => genMessage('Go-to command mode activated. ', 'Type space name for suggestions.'),
-    '>#': () => genMessage('Go-to command mode activated. ', 'Type room name for suggestions.'),
-    '>@': () => genMessage('Go-to command mode activated. ', 'Type people name for suggestions.'),
-    ':': () => genMessage('Emoji autofill command mode activated. ', 'Type emoji shortcut for suggestions.'),
-    '@': () => genMessage('Name autofill command mode activated. ', 'Type name for suggestions.'),
-  };
-  return cmd[prefix]?.();
-}
-
 function CmdItem({ onClick, children }) {
   return (
     <button className="cmd-item" onClick={onClick} type="button">
@@ -188,8 +61,8 @@ CmdItem.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-function getCmdSuggestions({ prefix, option, suggestions }, fireCmd) {
-  function getGenCmdSuggestions(cmdPrefix, cmds) {
+function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
+  function renderCmdSuggestions(cmdPrefix, cmds) {
     const cmdOptString = (typeof option === 'string') ? `/${option}` : '/?';
     return cmds.map((cmd) => (
       <CmdItem
@@ -207,23 +80,7 @@ function getCmdSuggestions({ prefix, option, suggestions }, fireCmd) {
     ));
   }
 
-  function getRoomsSuggestion(cmdPrefix, rooms) {
-    return rooms.map((room) => (
-      <CmdItem
-        key={room.roomId}
-        onClick={() => {
-          fireCmd({
-            prefix: cmdPrefix,
-            result: room,
-          });
-        }}
-      >
-        <Text variant="b2">{room.name}</Text>
-      </CmdItem>
-    ));
-  }
-
-  function getEmojiSuggestion(emPrefix, emos) {
+  function renderEmojiSuggestion(emPrefix, emos) {
     return emos.map((emoji) => (
       <CmdItem
         key={emoji.hexcode}
@@ -248,7 +105,7 @@ function getCmdSuggestions({ prefix, option, suggestions }, fireCmd) {
     ));
   }
 
-  function getNameSuggestion(namePrefix, members) {
+  function renderNameSuggestion(namePrefix, members) {
     return members.map((member) => (
       <CmdItem
         key={member.userId}
@@ -265,12 +122,9 @@ function getCmdSuggestions({ prefix, option, suggestions }, fireCmd) {
   }
 
   const cmd = {
-    '/': (cmds) => getGenCmdSuggestions(prefix, cmds),
-    '>*': (spaces) => getRoomsSuggestion(prefix, spaces),
-    '>#': (rooms) => getRoomsSuggestion(prefix, rooms),
-    '>@': (peoples) => getRoomsSuggestion(prefix, peoples),
-    ':': (emos) => getEmojiSuggestion(prefix, emos),
-    '@': (members) => getNameSuggestion(prefix, members),
+    '/': (cmds) => renderCmdSuggestions(prefix, cmds),
+    ':': (emos) => renderEmojiSuggestion(prefix, emos),
+    '@': (members) => renderNameSuggestion(prefix, members),
   };
   return cmd[prefix]?.(suggestions);
 }
@@ -319,29 +173,28 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     asyncSearch.search(searchTerm);
   }
   function activateCmd(prefix) {
-    setCmd({ prefix });
     cmdPrefix = prefix;
+    cmdPrefix = undefined;
 
-    const { roomList, matrixClient } = initMatrix;
-    function getRooms(roomIds) {
-      return roomIds.map((rId) => {
-        const room = matrixClient.getRoom(rId);
-        return {
-          name: room.name,
-          roomId: room.roomId,
-        };
-      });
-    }
+    const mx = initMatrix.matrixClient;
     const setupSearch = {
-      '/': () => asyncSearch.setup(commands, { keys: ['name'], isContain: true }),
-      '>*': () => asyncSearch.setup(getRooms([...roomList.spaces]), { keys: ['name'], limit: 20 }),
-      '>#': () => asyncSearch.setup(getRooms([...roomList.rooms]), { keys: ['name'], limit: 20 }),
-      '>@': () => asyncSearch.setup(getRooms([...roomList.directs]), { keys: ['name'], limit: 20 }),
-      ':': () => asyncSearch.setup(emojis, { keys: ['shortcode'], isContain: true, limit: 20 }),
-      '@': () => asyncSearch.setup(matrixClient.getRoom(roomId).getJoinedMembers().map((member) => ({
-        name: member.name,
-        userId: member.userId.slice(1),
-      })), { keys: ['name', 'userId'], limit: 20 }),
+      '/': () => {
+        asyncSearch.setup(commands, { keys: ['name'], isContain: true });
+        setCmd({ prefix, suggestions: commands });
+      },
+      ':': () => {
+        asyncSearch.setup(emojis, { keys: ['shortcode'], isContain: true, limit: 20 });
+        setCmd({ prefix, suggestions: emojis.slice(26, 46) });
+      },
+      '@': () => {
+        const members = mx.getRoom(roomId).getJoinedMembers().map((member) => ({
+          name: member.name,
+          userId: member.userId.slice(1),
+        }));
+        asyncSearch.setup(members, { keys: ['name', 'userId'], limit: 20 });
+        const endIndex = members.length > 20 ? 20 : members.length;
+        setCmd({ prefix, suggestions: members.slice(0, endIndex) });
+      },
     };
     setupSearch[prefix]?.();
   }
@@ -351,11 +204,6 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     cmdPrefix = undefined;
   }
   function fireCmd(myCmd) {
-    if (myCmd.prefix.match(/^>[*#@]$/)) {
-      if (cmd.prefix === '>*') selectTab(myCmd.result.roomId);
-      else selectRoom(myCmd.result.roomId);
-      viewEvent.emit('cmd_fired');
-    }
     if (myCmd.prefix === '/') {
       myCmd.result.exe(roomId, myCmd.option);
       viewEvent.emit('cmd_fired');
@@ -421,15 +269,11 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     };
   }, [cmd]);
 
-  if (typeof cmd?.error === 'string') {
+  const isError = typeof cmd?.error === 'string';
+  if (cmd === null || isError) {
     return (
       <div className="cmd-bar">
-        <div className="cmd-bar__info">
-          <div className="cmd-bar__info-indicator--error" />
-        </div>
-        <div className="cmd-bar__content">
-          <Text className="cmd-bar__content-error" variant="b2">{cmd.error}</Text>
-        </div>
+        <FollowingMembers roomTimeline={roomTimeline} />
       </div>
     );
   }
@@ -437,27 +281,14 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
   return (
     <div className="cmd-bar">
       <div className="cmd-bar__info">
-        {cmd === null && <CmdHelp />}
-        {cmd !== null && typeof cmd.suggestions === 'undefined' && <div className="cmd-bar__info-indicator" /> }
-        {cmd !== null && typeof cmd.suggestions !== 'undefined' && <Text variant="b3">TAB</Text>}
+        <Text variant="b3">TAB</Text>
       </div>
       <div className="cmd-bar__content">
-        {cmd === null && (
-          <FollowingMembers
-            roomId={roomId}
-            roomTimeline={roomTimeline}
-            viewEvent={viewEvent}
-          />
-        )}
-        {cmd !== null && typeof cmd.suggestions === 'undefined' && <Text className="cmd-bar__content-help" variant="b2">{getCmdActivationMessage(cmd.prefix)}</Text>}
-        {cmd !== null && typeof cmd.suggestions !== 'undefined' && (
-          <ScrollView horizontal vertical={false} invisible>
-            <div className="cmd-bar__content__suggestions">{getCmdSuggestions(cmd, fireCmd)}</div>
-          </ScrollView>
-        )}
-      </div>
-      <div className="cmd-bar__more">
-        {cmd !== null && cmd.prefix === '/' && <ViewCmd />}
+        <ScrollView horizontal vertical={false} invisible>
+          <div className="cmd-bar__content-suggestions">
+            { renderSuggestions(cmd, fireCmd) }
+          </div>
+        </ScrollView>
       </div>
     </div>
   );

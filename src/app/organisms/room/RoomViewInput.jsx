@@ -30,7 +30,7 @@ import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-const CMD_REGEX = /(^\/|^>[#*@]|:|@)(\S*)$/;
+const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
 let isCmdActivated = false;
 let cmdCursorPos = null;
@@ -45,8 +45,6 @@ function RoomViewInput({
   const inputBaseRef = useRef(null);
   const uploadInputRef = useRef(null);
   const uploadProgressRef = useRef(null);
-  const rightOptionsRef = useRef(null);
-  const escBtnRef = useRef(null);
 
   const TYPING_TIMEOUT = 5000;
   const mx = initMatrix.matrixClient;
@@ -90,41 +88,17 @@ function RoomViewInput({
     uploadInputRef.current.value = null;
   }
 
-  function rightOptionsA11Y(A11Y) {
-    const rightOptions = rightOptionsRef.current.children;
-    for (let index = 0; index < rightOptions.length; index += 1) {
-      rightOptions[index].disabled = !A11Y;
-    }
-  }
-
   function activateCmd(prefix) {
     isCmdActivated = true;
-    requestAnimationFrame(() => {
-      inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-positive)';
-      escBtnRef.current.style.display = 'block';
-    });
-    rightOptionsA11Y(false);
     viewEvent.emit('cmd_activate', prefix);
   }
   function deactivateCmd() {
-    if (inputBaseRef.current !== null) {
-      requestAnimationFrame(() => {
-        inputBaseRef.current.style.boxShadow = 'var(--bs-surface-border)';
-        escBtnRef.current.style.display = 'none';
-      });
-      rightOptionsA11Y(true);
-    }
     isCmdActivated = false;
     cmdCursorPos = null;
   }
   function deactivateCmdAndEmit() {
     deactivateCmd();
     viewEvent.emit('cmd_deactivate');
-  }
-  function errorCmd() {
-    requestAnimationFrame(() => {
-      inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-danger)';
-    });
   }
   function setCursorPosition(pos) {
     setTimeout(() => {
@@ -163,7 +137,6 @@ function RoomViewInput({
     roomsInput.on(cons.events.roomsInput.UPLOAD_PROGRESS_CHANGES, uploadingProgress);
     roomsInput.on(cons.events.roomsInput.ATTACHMENT_CANCELED, clearAttachment);
     roomsInput.on(cons.events.roomsInput.FILE_UPLOADED, clearAttachment);
-    viewEvent.on('cmd_error', errorCmd);
     viewEvent.on('cmd_fired', firedCmd);
     navigation.on(cons.events.navigation.REPLY_TO_CLICKED, setUpReply);
     if (textAreaRef?.current !== null) {
@@ -177,7 +150,6 @@ function RoomViewInput({
       roomsInput.removeListener(cons.events.roomsInput.UPLOAD_PROGRESS_CHANGES, uploadingProgress);
       roomsInput.removeListener(cons.events.roomsInput.ATTACHMENT_CANCELED, clearAttachment);
       roomsInput.removeListener(cons.events.roomsInput.FILE_UPLOADED, clearAttachment);
-      viewEvent.removeListener('cmd_error', errorCmd);
       viewEvent.removeListener('cmd_fired', firedCmd);
       navigation.removeListener(cons.events.navigation.REPLY_TO_CLICKED, setUpReply);
       if (isCmdActivated) deactivateCmd();
@@ -193,7 +165,7 @@ function RoomViewInput({
     };
   }, [roomId]);
 
-  async function sendMessage() {
+  const sendMessage = async () => {
     const msgBody = textAreaRef.current.value;
     if (roomsInput.isSending(roomId)) return;
     if (msgBody.trim() === '' && attachment === null) return;
@@ -214,7 +186,7 @@ function RoomViewInput({
     viewEvent.emit('message_sent');
     textAreaRef.current.style.height = 'unset';
     if (replyTo !== null) setReplyTo(null);
-  }
+  };
 
   function processTyping(msg) {
     const isEmptyMsg = msg === '';
@@ -259,19 +231,16 @@ function RoomViewInput({
       return;
     }
     if (!isCmdActivated) activateCmd(cmdPrefix);
-    requestAnimationFrame(() => {
-      inputBaseRef.current.style.boxShadow = '0 0 0 1px var(--bg-caution)';
-    });
     viewEvent.emit('cmd_process', cmdPrefix, cmdSlug);
   }
 
-  function handleMsgTyping(e) {
+  const handleMsgTyping = (e) => {
     const msg = e.target.value;
     recognizeCmd(e.target.value);
     if (!isCmdActivated) processTyping(msg);
-  }
+  };
 
-  function handleKeyDown(e) {
+  const handleKeyDown = (e) => {
     if (e.keyCode === 13 && e.shiftKey === false) {
       e.preventDefault();
 
@@ -279,13 +248,9 @@ function RoomViewInput({
         viewEvent.emit('cmd_exe');
       } else sendMessage();
     }
-    if (e.keyCode === 27 && isCmdActivated) {
-      deactivateCmdAndEmit();
-      e.preventDefault();
-    }
-  }
+  };
 
-  function handlePaste(e) {
+  const handlePaste = (e) => {
     if (e.clipboardData === false) {
       return;
     }
@@ -309,19 +274,19 @@ function RoomViewInput({
         }
       }
     }
-  }
+  };
 
   function addEmoji(emoji) {
     textAreaRef.current.value += emoji.unicode;
     textAreaRef.current.focus();
   }
 
-  function handleUploadClick() {
+  const handleUploadClick = () => {
     if (attachment === null) uploadInputRef.current.click();
     else {
       roomsInput.cancelAttachment(roomId);
     }
-  }
+  };
   function uploadFileChange(e) {
     const file = e.target.files.item(0);
     setAttachment(file);
@@ -356,9 +321,8 @@ function RoomViewInput({
             </Text>
           </ScrollView>
           {isMarkdown && <RawIcon size="extra-small" src={MarkdownIC} />}
-          <button ref={escBtnRef} tabIndex="-1" onClick={deactivateCmdAndEmit} className="btn-cmd-esc" type="button"><Text variant="b3">ESC</Text></button>
         </div>
-        <div ref={rightOptionsRef} className="room-input__option-container">
+        <div className="room-input__option-container">
           <IconButton
             onClick={(e) => {
               const cords = getEventCords(e);
