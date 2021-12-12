@@ -25,6 +25,8 @@ class Settings extends EventEmitter {
 
     this.isMarkdown = this.getIsMarkdown();
     this.isPeopleDrawer = this.getIsPeopleDrawer();
+    this.hideMembershipEvents = this.getHideMembershipEvents();
+    this.hideNickAvatarEvents = this.getHideNickAvatarEvents();
 
     this.isTouchScreenDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
   }
@@ -63,6 +65,24 @@ class Settings extends EventEmitter {
     return settings.isMarkdown;
   }
 
+  getHideMembershipEvents() {
+    if (typeof this.hideMembershipEvents === 'boolean') return this.hideMembershipEvents;
+
+    const settings = getSettings();
+    if (settings === null) return false;
+    if (typeof settings.hideMembershipEvents === 'undefined') return false;
+    return settings.hideMembershipEvents;
+  }
+
+  getHideNickAvatarEvents() {
+    if (typeof this.hideNickAvatarEvents === 'boolean') return this.hideNickAvatarEvents;
+
+    const settings = getSettings();
+    if (settings === null) return false;
+    if (typeof settings.hideNickAvatarEvents === 'undefined') return false;
+    return settings.hideNickAvatarEvents;
+  }
+
   getIsPeopleDrawer() {
     if (typeof this.isPeopleDrawer === 'boolean') return this.isPeopleDrawer;
 
@@ -83,6 +103,16 @@ class Settings extends EventEmitter {
         this.isPeopleDrawer = !this.isPeopleDrawer;
         setSettings('isPeopleDrawer', this.isPeopleDrawer);
         this.emit(cons.events.settings.PEOPLE_DRAWER_TOGGLED, this.isPeopleDrawer);
+      },
+      [cons.actions.settings.TOGGLE_MEMBERSHIP_EVENT]: () => {
+        this.hideMembershipEvents = !this.hideMembershipEvents;
+        setSettings('hideMembershipEvents', this.hideMembershipEvents);
+        this.emit(cons.events.settings.MEMBERSHIP_EVENTS_TOGGLED, this.hideMembershipEvents);
+      },
+      [cons.actions.settings.TOGGLE_NICKAVATAR_EVENT]: () => {
+        this.hideNickAvatarEvents = !this.hideNickAvatarEvents;
+        setSettings('hideNickAvatarEvents', this.hideNickAvatarEvents);
+        this.emit(cons.events.settings.NICKAVATAR_EVENTS_TOGGLED, this.hideNickAvatarEvents);
       },
     };
 

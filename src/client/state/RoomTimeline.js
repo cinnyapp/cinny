@@ -2,6 +2,8 @@ import EventEmitter from 'events';
 import initMatrix from '../initMatrix';
 import cons from './cons';
 
+import settings from './settings';
+
 function isEdited(mEvent) {
   return mEvent.getRelation()?.rel_type === 'm.replace';
 }
@@ -110,6 +112,19 @@ class RoomTimeline extends EventEmitter {
   }
 
   addToTimeline(mEvent) {
+    if (mEvent.getType() === 'm.room.member' && (settings.hideMembershipEvents || settings.hideNickAvatarEvents)) {
+      const content = mEvent.getContent();
+      const prevContent = mEvent.getPrevContent();
+      const { membership } = content;
+
+      if (settings.hideMembershipEvents) {
+        if (membership === 'invite' || membership === 'ban' || membership === 'leave') return;
+        if (prevContent.membership !== 'join') return;
+      }
+      if (settings.hideNickAvatarEvents) {
+        if (membership === 'join' && prevContent.membership === 'join') return;
+      }
+    }
     if (mEvent.isRedacted()) return;
     if (isReaction(mEvent)) {
       addToMap(this.reactionTimeline, mEvent);

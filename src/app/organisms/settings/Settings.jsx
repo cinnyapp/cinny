@@ -5,7 +5,7 @@ import './Settings.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
-import { toggleMarkdown } from '../../../client/action/settings';
+import { toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents } from '../../../client/action/settings';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -66,10 +66,30 @@ function AppearanceSection() {
         options={(
           <Toggle
             isActive={settings.isMarkdown}
-            onToggle={(isMarkdown) => { toggleMarkdown(isMarkdown); updateState({}); }}
+            onToggle={() => { toggleMarkdown(); updateState({}); }}
           />
         )}
         content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
+      />
+      <SettingTile
+        title="Hide membership events"
+        options={(
+          <Toggle
+            isActive={settings.hideMembershipEvents}
+            onToggle={() => { toggleMembershipEvents(); updateState({}); }}
+          />
+        )}
+        content={<Text variant="b3">Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and Ban)</Text>}
+      />
+      <SettingTile
+        title="Hide nick/avatar events"
+        options={(
+          <Toggle
+            isActive={settings.hideNickAvatarEvents}
+            onToggle={() => { toggleNickAvatarEvents(); updateState({}); }}
+          />
+        )}
+        content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
       />
     </div>
   );
