@@ -10,6 +10,7 @@
   width: var(--navigation-sidebar-width);
   height: 100%;
   border-right: 1px solid var(--bg-surface-border);
+  background-color: var(--bg-surface-extra-low);
 
   [dir=rtl] & {
     border-right: none;
@@ -41,8 +42,8 @@
     background: transparent;
     background-image: linear-gradient(
       to top,
-      var(--bg-surface-low),
-      var(--bg-surface-low-transparent));
+      var(--bg-surface-extra-low),
+      var(--bg-surface-extra-low-transparent));
     position: sticky;
     bottom: -1px;
     left: 0;

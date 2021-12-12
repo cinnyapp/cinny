@@ -7,6 +7,8 @@
   --bg-surface-transparent: #FFFFFF00;
   --bg-surface-low: #F6F6F6;
   --bg-surface-low-transparent: #F6F6F600;
+  --bg-surface-extra-low: #F6F6F6;
+  --bg-surface-extra-low-transparent: #F6F6F600;
   --bg-surface-hover: rgba(0, 0, 0, 3%);
   --bg-surface-active: rgba(0, 0, 0, 5%);
   --bg-surface-border: rgba(0, 0, 0, 6%);
@@ -39,7 +41,7 @@
 
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: #000000;
-  --tc-surface-normal: rgba(0, 0, 0, 68%);
+  --tc-surface-normal: rgba(0, 0, 0, 78%);
   --tc-surface-normal-low: rgba(0, 0, 0, 60%);
   --tc-surface-low: rgba(0, 0, 0, 38%);
   
@@ -169,6 +171,8 @@
   --bg-surface-transparent: hsla(0, 0%, 95%, 0);
   --bg-surface-low: hsl(0, 0%, 91%);
   --bg-surface-low-transparent: hsla(0, 0%, 91%, 0);
+  --bg-surface-extra-low: hsl(0, 0%, 91%);
+  --bg-surface-extra-low-transparent: hsla(0, 0%, 91%, 0);
 }
 
 .dark-theme,
@@ -178,6 +182,8 @@
   --bg-surface-transparent: hsla(208, 8%, 20%, 0);
   --bg-surface-low: hsl(208, 8%, 16%);
   --bg-surface-low-transparent: hsla(208, 8%, 16%, 0);
+  --bg-surface-extra-low: hsl(208, 8%, 14%);
+  --bg-surface-extra-low-transparent: hsla(208, 8%, 14%, 0);
   --bg-surface-hover: rgba(255, 255, 255, 3%);
   --bg-surface-active: rgba(255, 255, 255, 5%);
   --bg-surface-border: rgba(0, 0, 0, 20%);
@@ -196,9 +202,9 @@
 
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: rgba(255, 255, 255, 98%);
-  --tc-surface-normal: rgba(255, 255, 255, 84%);
+  --tc-surface-normal: rgba(255, 255, 255, 94%);
   --tc-surface-normal-low: rgba(255, 255, 255, 60%);
-  --tc-surface-low: rgba(255, 255, 255, 48%);
+  --tc-surface-low: rgba(255, 255, 255, 58%);
   
   --tc-primary-high: #ffffff;
   --tc-primary-normal: rgba(255, 255, 255, 0.68);
@@ -209,7 +215,7 @@
   --tc-badge: black;
 
   /* system icons | --ic-[background type]-[priority]: value */
-  --ic-surface-normal: rgba(255, 255, 255, 68%);
+  --ic-surface-normal: rgba(255, 255, 255, 84%);
   --ic-primary-normal: #ffffff;
   
   /* shadow and overlay */
@@ -231,20 +237,22 @@
   --bg-surface: hsl(64, 6%, 14%);
   --bg-surface-transparent: hsla(64, 6%, 14%, 0);
   --bg-surface-low: hsl(64, 6%, 10%);
-  --bg-surface-low-transparent: hsla(64, 6%, 14%, 0);
+  --bg-surface-low-transparent: hsla(64, 6%, 10%, 0);
+  --bg-surface-extra-low: hsl(64, 6%, 8%);
+  --bg-surface-extra-low-transparent: hsla(64, 6%, 8%, 0);
 
   --bg-badge: #c4c1ab;
 
   
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: rgb(255, 251, 222, 94%);
-  --tc-surface-normal: rgba(255, 251, 222, 74%);
+  --tc-surface-normal: rgba(255, 251, 222, 94%);
   --tc-surface-normal-low: rgba(255, 251, 222, 60%); 
-  --tc-surface-low: rgba(255, 251, 222, 38%);
+  --tc-surface-low: rgba(255, 251, 222, 58%);
 
 
   /* system icons | --ic-[background type]-[priority]: value */
-  --ic-surface-normal: rgb(255 251 222 / 68%);
+  --ic-surface-normal: rgb(255, 251, 222, 84%);
 }
 
 html {
