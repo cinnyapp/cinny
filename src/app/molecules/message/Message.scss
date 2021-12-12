@@ -180,6 +180,10 @@
 .message__body {
   word-break: break-word;
 
+  & > .text > * {
+    white-space: pre-wrap;
+  }
+
   & a {
     word-break: break-word;
   }
@@ -331,19 +335,19 @@
   & h1,
   & h2 {
     color: var(--tc-surface-high);
-    margin: var(--sp-extra-loose) 0 var(--sp-normal);
+    margin: var(--sp-loose) 0 var(--sp-normal);
     line-height: var(--lh-h1);
   }
   & h3,
   & h4 {
     color: var(--tc-surface-high);
-    margin: var(--sp-loose) 0 var(--sp-tight);
+    margin: var(--sp-normal) 0 var(--sp-tight);
     line-height: var(--lh-h2);
   }
   & h5,
   & h6 {
     color: var(--tc-surface-high);
-    margin: var(--sp-normal) 0 var(--sp-extra-tight);
+    margin: var(--sp-tight) 0 var(--sp-extra-tight);
     line-height: var(--lh-s1);
   }
   & hr {

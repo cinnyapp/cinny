@@ -169,7 +169,7 @@ const MessageBody = React.memo(({
 
   const content = isCustomHTML
     ? twemojify(sanitizeCustomHtml(body), undefined, true, false)
-    : twemojify(body, undefined, true);
+    : <p>{twemojify(body, undefined, true)}</p>;
 
   return (
     <div className="message__body">
