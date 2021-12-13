@@ -83,7 +83,9 @@ function handleOnClickCapture(e) {
 }
 
 function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
-  const isBodyOnly = (prevMEvent !== null && prevMEvent.getType() !== 'm.room.member'
+  const isBodyOnly = (prevMEvent !== null
+    && prevMEvent.getType() !== 'm.room.member'
+    && prevMEvent.getType() !== 'm.room.create'
     && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
     && prevMEvent.getSender() === mEvent.getSender()
   );
@@ -577,6 +579,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
     let itemCountIndex = 0;
     jumpToItemIndex = -1;
     const readEvent = readEventStore.getItem();
+    let unreadDivider = false;
 
     if (roomTimeline.canPaginateBackward() || limit.from > 0) {
       tl.push(loadingMsgPlaceholders(1, PLACEHOLDER_COUNT));
@@ -599,7 +602,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
         }
       }
 
-      const unreadDivider = (readEvent
+      unreadDivider = (readEvent && !unreadDivider
         && prevMEvent?.getTs() <= readEvent.getTs()
         && readEvent.getTs() < mEvent.getTs());
       if (unreadDivider) {
