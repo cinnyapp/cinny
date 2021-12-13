@@ -176,6 +176,7 @@ function RoomViewInput({
   }, [roomId]);
 
   const sendMessage = async () => {
+    requestAnimationFrame(() => deactivateCmdAndEmit());
     const msgBody = textAreaRef.current.value;
     if (roomsInput.isSending(roomId)) return;
     if (msgBody.trim() === '' && attachment === null) return;
