@@ -608,11 +608,9 @@ function RoomViewContent({ eventId, roomTimeline }) {
         }
       }
 
-      if (!unreadDivider) {
-        unreadDivider = (readEvent
-          && prevMEvent?.getTs() <= readEvent.getTs()
-          && readEvent.getTs() < mEvent.getTs());
-      }
+      unreadDivider = (readEvent && !unreadDivider
+        && prevMEvent?.getTs() <= readEvent.getTs()
+        && readEvent.getTs() < mEvent.getTs());
       if (unreadDivider) {
         tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text="New messages" />);
         itemCountIndex += 1;
