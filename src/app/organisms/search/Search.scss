@@ -54,6 +54,7 @@
     &::after {
       position: absolute;
       top: 0;
+      z-index: 99;
       content: "";
       display: inline-block;
       width: 100%;

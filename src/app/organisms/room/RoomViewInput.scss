@@ -1,18 +1,12 @@
 .room-input {
   padding: var(--sp-extra-tight) calc(var(--sp-normal) - 2px);
   display: flex;
-  min-height: 48px;
+  min-height: 56px;
 
-  &__disallowed {
-    flex: 1;
-    text-align: center;
-  }
-
-  &__space {
-    min-width: 0;
-    align-self: center;
+  &__alert {
     margin: auto;
     padding: 0 var(--sp-tight);
+    text-align: center;
   }
 
   &__input-container {
@@ -29,17 +23,6 @@
     & > .ic-raw {
       transform: scale(0.8);
       margin: 0 var(--sp-extra-tight);
-    }
-
-    & .btn-cmd-esc {
-      display: none;
-      margin: 0 var(--sp-extra-tight);
-      padding: var(--sp-ultra-tight) var(--sp-extra-tight);
-      background-color: var(--bg-surface);
-      border-radius: calc(var(--bo-radius) / 2);
-      box-shadow: var(--bs-surface-border);
-      cursor: pointer;
-      & .text { color: var(--tc-surface-normal); }
     }
  
     & .scrollbar {

@@ -220,14 +220,6 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     }
     deactivateCmd();
   }
-  function executeCmd() {
-    if (cmd.suggestions.length === 0) return;
-    fireCmd({
-      prefix: cmd.prefix,
-      option: cmd.option,
-      result: cmd.suggestions[0],
-    });
-  }
 
   function listenKeyboard(event) {
     const { activeElement } = document;
@@ -258,13 +250,11 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
   useEffect(() => {
     if (cmd !== null) document.body.addEventListener('keydown', listenKeyboard);
     viewEvent.on('cmd_process', processCmd);
-    viewEvent.on('cmd_exe', executeCmd);
     asyncSearch.on(asyncSearch.RESULT_SENT, displaySuggestions);
     return () => {
       if (cmd !== null) document.body.removeEventListener('keydown', listenKeyboard);
 
       viewEvent.removeListener('cmd_process', processCmd);
-      viewEvent.removeListener('cmd_exe', executeCmd);
       asyncSearch.removeListener(asyncSearch.RESULT_SENT, displaySuggestions);
     };
   }, [cmd]);

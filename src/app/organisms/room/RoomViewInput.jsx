@@ -243,10 +243,7 @@ function RoomViewInput({
   const handleKeyDown = (e) => {
     if (e.keyCode === 13 && e.shiftKey === false) {
       e.preventDefault();
-
-      if (isCmdActivated) {
-        viewEvent.emit('cmd_exe');
-      } else sendMessage();
+      sendMessage();
     }
   };
 
@@ -298,7 +295,7 @@ function RoomViewInput({
   function renderInputs() {
     if (!canISend) {
       return (
-        <Text className="room-input__disallowed">You do not have permission to post to this room</Text>
+        <Text className="room-input__alert">You do not have permission to post to this room</Text>
       );
     }
     return (
@@ -312,6 +309,7 @@ function RoomViewInput({
           <ScrollView autoHide>
             <Text className="room-input__textarea-wrapper">
               <TextareaAutosize
+                id="message-textarea"
                 ref={textAreaRef}
                 onChange={handleMsgTyping}
                 onPaste={handlePaste}
@@ -385,9 +383,7 @@ function RoomViewInput({
       { attachment !== null && attachFile() }
       <form className="room-input" onSubmit={(e) => { e.preventDefault(); }}>
         {
-          roomTimeline.room.isSpaceRoom()
-            ? <Text className="room-input__space" variant="b1">Spaces are yet to be implemented</Text>
-            : renderInputs()
+          renderInputs()
         }
       </form>
     </>
