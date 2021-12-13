@@ -15,7 +15,7 @@
   "author": "Ajay Bura",
   "license": "MIT",
   "dependencies": {
-    "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.4.tgz",
+    "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.7.tgz",
     "@tippyjs/react": "^4.2.5",
     "babel-polyfill": "^6.26.0",
     "browser-encrypt-attachment": "^0.3.0",
