@@ -166,6 +166,7 @@ function RoomViewInput({
       if (textAreaRef?.current === null) return;
 
       const msg = textAreaRef.current.value;
+      textAreaRef.current.style.height = 'unset';
       inputBaseRef.current.style.backgroundImage = 'unset';
       if (msg.trim() === '') {
         roomsInput.setMessage(roomId, '');

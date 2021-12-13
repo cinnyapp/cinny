@@ -13,7 +13,7 @@ function listenKeyboard(event) {
   }
   if (!event.ctrlKey && !event.altKey) {
     if (navigation.isRawModalVisible) return;
-    if (['input', 'textarea'].includes(document.activeElement.type)) {
+    if (['text', 'textarea'].includes(document.activeElement.type)) {
       return;
     }
     if (event.keyCode < 48
