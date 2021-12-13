@@ -74,12 +74,18 @@ function genRoomIntro(mEvent, roomTimeline) {
 }
 
 function handleOnClickCapture(e) {
-  const { target } = e;
-  const userId = target.getAttribute('data-mx-pill');
-  if (!userId) return;
+  const { target, nativeEvent } = e;
 
-  const roomId = navigation.selectedRoomId;
-  openProfileViewer(userId, roomId);
+  const userId = target.getAttribute('data-mx-pill');
+  if (userId) {
+    const roomId = navigation.selectedRoomId;
+    openProfileViewer(userId, roomId);
+  }
+
+  const spoiler = nativeEvent.path.find((el) => el?.hasAttribute?.('data-mx-spoiler'));
+  if (spoiler) {
+    spoiler.classList.toggle('data-mx-spoiler--visible');
+  }
 }
 
 function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {

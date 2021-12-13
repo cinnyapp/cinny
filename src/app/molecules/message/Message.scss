@@ -210,6 +210,7 @@
     border-radius: 4px;
     background-color: rgba(124, 124, 124, 0.5);
     color:transparent;
+    cursor: pointer;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -219,15 +220,14 @@
     & > * {
       opacity: 0;
     }
-    &:focus, &:hover {
-      background-color: transparent;
-      color: inherit;
-      user-select: initial;
-      & > * {
-        opacity: inherit;
-      }
+  }
+  .data-mx-spoiler--visible {
+    background-color: var(--bg-surface-active) !important;
+    color: inherit !important;
+    user-select: initial !important;
+    & > * {
+      opacity: inherit !important;
     }
-
   }
   &-edited {
     color: var(--tc-surface-low);
