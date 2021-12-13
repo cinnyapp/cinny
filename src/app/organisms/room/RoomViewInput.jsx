@@ -45,6 +45,7 @@ function RoomViewInput({
   const inputBaseRef = useRef(null);
   const uploadInputRef = useRef(null);
   const uploadProgressRef = useRef(null);
+  const rightOptionsRef = useRef(null);
 
   const TYPING_TIMEOUT = 5000;
   const mx = initMatrix.matrixClient;
@@ -88,13 +89,22 @@ function RoomViewInput({
     uploadInputRef.current.value = null;
   }
 
+  function rightOptionsA11Y(A11Y) {
+    const rightOptions = rightOptionsRef.current.children;
+    for (let index = 0; index < rightOptions.length; index += 1) {
+      rightOptions[index].tabIndex = A11Y ? 0 : -1;
+    }
+  }
+
   function activateCmd(prefix) {
     isCmdActivated = true;
+    rightOptionsA11Y(false);
     viewEvent.emit('cmd_activate', prefix);
   }
   function deactivateCmd() {
     isCmdActivated = false;
     cmdCursorPos = null;
+    rightOptionsA11Y(true);
   }
   function deactivateCmdAndEmit() {
     deactivateCmd();
@@ -320,7 +330,7 @@ function RoomViewInput({
           </ScrollView>
           {isMarkdown && <RawIcon size="extra-small" src={MarkdownIC} />}
         </div>
-        <div className="room-input__option-container">
+        <div ref={rightOptionsRef} className="room-input__option-container">
           <IconButton
             onClick={(e) => {
               const cords = getEventCords(e);
