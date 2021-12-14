@@ -333,7 +333,7 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
     } else {
       reaction.users.push(senderId);
       reaction.count = reaction.users.length;
-      reaction.isActive = isActive;
+      if (isActive) reaction.isActive = isActive;
     }
 
     reactions[key] = reaction;
