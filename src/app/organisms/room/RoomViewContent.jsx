@@ -608,13 +608,15 @@ function RoomViewContent({ eventId, roomTimeline }) {
         }
       }
 
-      unreadDivider = (readEvent && !unreadDivider
-        && prevMEvent?.getTs() <= readEvent.getTs()
-        && readEvent.getTs() < mEvent.getTs());
-      if (unreadDivider) {
-        tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text="New messages" />);
-        itemCountIndex += 1;
-        if (jumpToItemIndex === -1) jumpToItemIndex = itemCountIndex;
+      if (!unreadDivider) {
+        unreadDivider = (readEvent
+          && prevMEvent?.getTs() <= readEvent.getTs()
+          && readEvent.getTs() < mEvent.getTs());
+        if (unreadDivider) {
+          tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text="New messages" />);
+          itemCountIndex += 1;
+          if (jumpToItemIndex === -1) jumpToItemIndex = itemCountIndex;
+        }
       }
       const dayDivider = prevMEvent && !isInSameDay(mEvent.getDate(), prevMEvent.getDate());
       if (dayDivider) {
