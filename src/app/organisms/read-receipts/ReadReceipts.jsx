@@ -30,12 +30,10 @@ function ReadReceipts() {
     };
   }, []);
 
-  useEffect(() => {
-    if (isOpen === false) {
-      setReaders([]);
-      setRoomId(null);
-    }
-  }, [isOpen]);
+  const handleAfterClose = () => {
+    setReaders([]);
+    setRoomId(null);
+  };
 
   function renderPeople(userId) {
     const room = initMatrix.matrixClient.getRoom(roomId);
@@ -62,6 +60,7 @@ function ReadReceipts() {
     <Dialog
       isOpen={isOpen}
       title="Seen by"
+      onAfterClose={handleAfterClose}
       onRequestClose={() => setIsOpen(false)}
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
     >

@@ -253,11 +253,10 @@ function ProfileViewer() {
     };
   }, []);
 
-  useEffect(() => {
-    if (isOpen) return;
+  const handleAfterClose = () => {
     setUserId(null);
     setRoomId(null);
-  }, [isOpen]);
+  };
 
   function renderProfile() {
     const member = room.getMember(userId) || mx.getUser(userId) || {};
@@ -298,10 +297,11 @@ function ProfileViewer() {
       className="profile-viewer__dialog"
       isOpen={isOpen}
       title={`${username} in ${room?.name ?? ''}`}
+      onAfterClose={handleAfterClose}
       onRequestClose={() => setIsOpen(false)}
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
     >
-      {isOpen && renderProfile()}
+      {roomId ? renderProfile() : <div />}
     </Dialog>
   );
 }
