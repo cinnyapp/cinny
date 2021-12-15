@@ -453,6 +453,8 @@ function useEventArrive(roomTimeline, readEventStore) {
         readEventStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
         return;
       }
+
+      // user has not mark room as read
       const isUnreadMsg = readUpToEvent?.getId() === readUpToId;
       if (!isUnreadMsg) {
         roomTimeline.markAllAsRead();
@@ -509,6 +511,8 @@ function useEventArrive(roomTimeline, readEventStore) {
       && !roomTimeline.canPaginateForward()
       && document.visibilityState === 'visible') {
       timelineScroll.scrollToBottom();
+    } else {
+      timelineScroll.tryRestoringScroll();
     }
   }, [newEvent, roomTimeline]);
 }
