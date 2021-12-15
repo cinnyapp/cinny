@@ -90,10 +90,10 @@ function handleOnClickCapture(e) {
 
 function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
   const isBodyOnly = (prevMEvent !== null
+    && prevMEvent.getSender() === mEvent.getSender()
     && prevMEvent.getType() !== 'm.room.member'
     && prevMEvent.getType() !== 'm.room.create'
     && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
-    && prevMEvent.getSender() === mEvent.getSender()
   );
   const mDate = mEvent.getDate();
   const isToday = isInSameDay(mDate, new Date());
@@ -608,11 +608,13 @@ function RoomViewContent({ eventId, roomTimeline }) {
         }
       }
 
+      let isNewEvent = false;
       if (!unreadDivider) {
         unreadDivider = (readEvent
           && prevMEvent?.getTs() <= readEvent.getTs()
           && readEvent.getTs() < mEvent.getTs());
         if (unreadDivider) {
+          isNewEvent = true;
           tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text="New messages" />);
           itemCountIndex += 1;
           if (jumpToItemIndex === -1) jumpToItemIndex = itemCountIndex;
@@ -628,7 +630,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
       const isFocus = focusId === mEvent.getId();
       if (isFocus) jumpToItemIndex = itemCountIndex;
 
-      tl.push(renderEvent(roomTimeline, mEvent, prevMEvent, isFocus));
+      tl.push(renderEvent(roomTimeline, mEvent, isNewEvent ? null : prevMEvent, isFocus));
       itemCountIndex += 1;
     }
     if (roomTimeline.canPaginateForward() || limit.getEndIndex() < timeline.length) {
