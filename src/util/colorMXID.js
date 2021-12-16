@@ -1,6 +1,15 @@
 // https://github.com/cloudrac3r/cadencegq/blob/master/pug/mxid.pug
 
-const colors = ['#368bd6', '#ac3ba8', '#03b381', '#e64f7a', '#ff812d', '#2dc2c5', '#5c56f5', '#74d12c'];
+const colors = [
+  'var(--mx-uc-1)',
+  'var(--mx-uc-2)',
+  'var(--mx-uc-3)',
+  'var(--mx-uc-4)',
+  'var(--mx-uc-5)',
+  'var(--mx-uc-6)',
+  'var(--mx-uc-7)',
+  'var(--mx-uc-8)',
+];
 function hashCode(str) {
   let hash = 0;
   let i;

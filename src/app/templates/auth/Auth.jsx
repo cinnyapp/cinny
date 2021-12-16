@@ -193,7 +193,7 @@ function Login({ loginFlow, baseUrl }) {
   return (
     <>
       <div className="auth-form__heading">
-        <Text variant="h2">Login</Text>
+        <Text variant="h2" weight="medium">Login</Text>
         {isPassword && (
           <ContextMenu
             placement="right"
@@ -418,7 +418,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       {process.type === 'm.login.terms' && <Terms url={process.url} onSubmit={handleTerms} />}
       {process.type === 'm.login.email.identity' && <EmailVerify email={process.email} onContinue={handleEmailVerify} />}
       <div className="auth-form__heading">
-        {!isDisabled && <Text variant="h2">Register</Text>}
+        {!isDisabled && <Text variant="h2" weight="medium">Register</Text>}
         {isDisabled && <Text className="auth-form__error">{registerInfo.error}</Text>}
       </div>
       {!isDisabled && (
@@ -537,7 +537,7 @@ function Auth() {
               <Header>
                 <Avatar size="extra-small" imageSrc={CinnySvg} />
                 <TitleWrapper>
-                  <Text variant="h2">Cinny</Text>
+                  <Text variant="h2" weight="medium">Cinny</Text>
                 </TitleWrapper>
               </Header>
               <div className="auth-card__content">
@@ -584,7 +584,7 @@ function Recaptcha({ message, sitekey, onChange }) {
   return (
     <ProcessWrapper>
       <div style={{ marginBottom: 'var(--sp-normal)' }}>
-        <Text variant="s1">{message}</Text>
+        <Text variant="s1" weight="medium">{message}</Text>
       </div>
       <ReCAPTCHA sitekey={sitekey} onChange={onChange} />
     </ProcessWrapper>
@@ -601,7 +601,7 @@ function Terms({ url, onSubmit }) {
     <ProcessWrapper>
       <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
         <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
-          <Text variant="h2">Agree with terms</Text>
+          <Text variant="h2" weight="medium">Agree with terms</Text>
           <div style={{ marginBottom: 'var(--sp-normal)' }} />
           <Text variant="b1">In order to complete registration, you need to agree to the terms and conditions.</Text>
           <div style={{ display: 'flex', alignItems: 'center', margin: 'var(--sp-normal) 0' }}>
@@ -626,7 +626,7 @@ function EmailVerify({ email, onContinue }) {
   return (
     <ProcessWrapper>
       <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
-        <Text variant="h2">Verify email</Text>
+        <Text variant="h2" weight="medium">Verify email</Text>
         <div style={{ margin: 'var(--sp-normal) 0' }}>
           <Text variant="b1">
             {'Please check your email '}
