@@ -1,7 +1,5 @@
-@mixin font($type, $weight) {
-  
+@mixin font($type) {
   font-size: var(--fs-#{$type});
-  font-weight: $weight;
   letter-spacing: var(--ls-#{$type});
   line-height: var(--lh-#{$type});
 
@@ -11,7 +9,7 @@
   }
 }
 
-%text {
+.text {
   margin: 0;
   padding: 0;
   color: var(--tc-surface-high);
@@ -26,30 +24,45 @@
   }
 }
 
+.text-primary {
+  font-family: var(--font-primary);
+  
+  --fw-light: var(--p-fw-light);
+  --fw-normal: var(--p-fw-normal);
+  --fw-medium: var(--p-fw-medium);
+  --fw-bold: var(--p-fw-bold);
+}
+.text-light {
+  font-weight: var(--fw-light);
+}
+.text-normal {
+  font-weight: var(--fw-normal);
+}
+.text-medium {
+  font-weight: var(--fw-medium);
+}
+.text-bold {
+  font-weight: var(--fw-bold);
+}
+
 .text-h1 {
-  @extend %text;
-  @include font(h1, 500);
+  @include font(h1);
 }
 .text-h2 {
-  @extend %text;
-  @include font(h2, 500);
+  @include font(h2);
 }
 .text-s1 {
-  @extend %text;
-  @include font(s1, 400);
+  @include font(s1);
 }
 .text-b1 {
-  @extend %text;
-  @include font(b1, 400);
+  @include font(b1);
   color: var(--tc-surface-normal);
 }
 .text-b2 {
-  @extend %text;
-  @include font(b2, 400);
+  @include font(b2);
   color: var(--tc-surface-normal);
 }
 .text-b3 {
-  @extend %text;
-  @include font(b3, 400);
+  @include font(b3);
   color: var(--tc-surface-low);
 }

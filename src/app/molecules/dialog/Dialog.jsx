@@ -27,7 +27,7 @@ function Dialog({
         <div className="dialog__content">
           <Header>
             <TitleWrapper>
-              <Text variant="h2">{twemojify(title)}</Text>
+              <Text variant="h2" weight="medium" primary>{twemojify(title)}</Text>
             </TitleWrapper>
             {contentOptions}
           </Header>

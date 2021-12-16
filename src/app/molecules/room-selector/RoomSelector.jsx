@@ -58,13 +58,13 @@ function RoomSelector({
             iconSrc={iconSrc}
             size="extra-small"
           />
-          <Text variant="b1">
+          <Text variant="b1" weight={isUnread ? 'medium' : 'normal'}>
             {twemojify(name)}
             {parentName && (
-              <span className="text text-b3">
+              <Text variant="b3" span>
                 {' — '}
                 {twemojify(parentName)}
-              </span>
+              </Text>
             )}
           </Text>
           { isUnread && (

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+@import url(./font-face.css);
 
 :root {
 
@@ -43,7 +43,7 @@
   --tc-surface-high: #000000;
   --tc-surface-normal: rgba(0, 0, 0, 78%);
   --tc-surface-normal-low: rgba(0, 0, 0, 60%);
-  --tc-surface-low: rgba(0, 0, 0, 38%);
+  --tc-surface-low: rgba(0, 0, 0, 48%);
   
   --tc-primary-high: #ffffff;
   --tc-primary-normal: rgba(255, 255, 255, 68%);
@@ -113,7 +113,7 @@
   --bo-radius: 8px;
 
 
-  /* font syles */
+  /* font styles: font-size, letter-spacing, line-hight */
   --fs-h1: 36px;
   --ls-h1: -1.5px;
   --lh-h1: 38px;
@@ -137,6 +137,17 @@
   --fs-b3: 12px;
   --ls-b3: 0px;
   --lh-b3: 16px;
+
+  /* font-weight */
+  --p-fw-light: 300;
+  --p-fw-normal: 400;
+  --p-fw-medium: 500;
+  --p-fw-bold: 600;
+
+  --fw-light: 300;
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-bold: 600;
 
 
   /* spacing | --sp-[space]: value */
@@ -162,7 +173,8 @@
   /* transition curves */
   --fluid-push: cubic-bezier(0, 0.8, 0.67, 0.97);
   
-  --font-family: 'Roboto', 'Supreme', sans-serif;
+  --font-primary: 'Roboto', sans-serif;
+  --font-secondary: 'Roboto', sans-serif;
 }
 
 .silver-theme {
@@ -228,8 +240,25 @@
 
   --bs-primary-border: inset 0 0 0 1px var(--bg-primary-border);
   --bs-primary-outline: 0 0 0 2px var(--bg-primary-border);
+  
+  /* font styles: font-size, letter-spacing, line-hight */
+  --fs-h1: 35.6px;
 
-  --font-family: 'Supreme', 'Roboto', sans-serif;
+  --fs-h2: 23.6px;
+
+  --fs-s1: 17.6px;
+
+  --fs-b1: 14.6px;
+  --ls-b1: 0.14px;
+
+  --fs-b2: 13.6px;
+
+  --fs-b3: 11.6px;
+
+  /* override normal font weight for dark mode */
+  --fw-normal: 380;
+
+  --font-secondary: 'Inter', 'Roboto', sans-serif;
 }
 
 .butter-theme {
@@ -264,8 +293,9 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: var(--font-family);
+  font-family: var(--font-secondary);
   font-size: 16px;
+  font-weight: var(--fw-normal);
   background-color: var(--bg-surface-low);
 }
 #root {
@@ -283,7 +313,7 @@ a {
   text-decoration: none;
 }
 b {
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 label {
   margin: 0;

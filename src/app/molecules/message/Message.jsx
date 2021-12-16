@@ -70,8 +70,8 @@ const MessageHeader = React.memo(({
 }) => (
   <div className="message__header">
     <div style={{ color: colorMXID(userId) }} className="message__profile">
-      <Text variant="b1">{twemojify(username)}</Text>
-      <Text variant="b1">{twemojify(userId)}</Text>
+      <Text variant="b1" weight="medium">{twemojify(username)}</Text>
+      <Text variant="b1" weight="medium">{twemojify(userId)}</Text>
     </div>
     <div className="message__time">
       <Text variant="b3">{time}</Text>

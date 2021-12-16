@@ -32,7 +32,7 @@ function DrawerHeader({ selectedTab, spaceId }) {
   return (
     <Header>
       <TitleWrapper>
-        <Text variant="s1">{twemojify(spaceName) || tabName}</Text>
+        <Text variant="s1" weight="medium" primary>{twemojify(spaceName) || tabName}</Text>
       </TitleWrapper>
       {spaceName && (
         <IconButton

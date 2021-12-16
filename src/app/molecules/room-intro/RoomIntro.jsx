@@ -15,7 +15,7 @@ function RoomIntro({
     <div className="room-intro">
       <Avatar imageSrc={avatarSrc} text={name} bgColor={colorMXID(roomId)} size="large" />
       <div className="room-intro__content">
-        <Text className="room-intro__name" variant="h1">{twemojify(heading)}</Text>
+        <Text className="room-intro__name" variant="h1" weight="medium" primary>{twemojify(heading)}</Text>
         <Text className="room-intro__desc" variant="b1">{twemojify(desc, undefined, true)}</Text>
         { time !== null && <Text className="room-intro__time" variant="b3">{time}</Text>}
       </div>

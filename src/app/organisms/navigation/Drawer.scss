@@ -18,10 +18,6 @@
     border-left: 1px solid var(--bg-surface-border);
   }
 
-  & .header__title-wrapper .text {
-    font-weight: 500;
-  }
-
   &__content-wrapper {
     @extend .drawer-flexItem;
     @extend .drawer-flexBox;
@@ -79,6 +75,5 @@
     margin: var(--sp-normal);
     margin-bottom: var(--sp-extra-tight);
     text-transform: uppercase;
-    font-weight: 600;
   }
 }

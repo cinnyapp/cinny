@@ -32,7 +32,7 @@ function Avatar({
                 iconSrc !== null
                   ? <RawIcon size={size} src={iconSrc} />
                   : text !== null && (
-                    <Text variant={textSize}>
+                    <Text variant={textSize} primary>
                       {twemojify([...text][0])}
                     </Text>
                   )

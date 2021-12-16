@@ -72,7 +72,7 @@ function Home({ spaceId }) {
 
   return (
     <>
-      { spaceIds.length !== 0 && <Text className="cat-header" variant="b3">Spaces</Text> }
+      { spaceIds.length !== 0 && <Text className="cat-header" variant="b3" weight="bold">Spaces</Text> }
       { spaceIds.map((id) => (
         <Selector
           key={id}
@@ -83,7 +83,7 @@ function Home({ spaceId }) {
         />
       ))}
 
-      { roomIds.length !== 0 && <Text className="cat-header" variant="b3">Rooms</Text> }
+      { roomIds.length !== 0 && <Text className="cat-header" variant="b3" weight="bold">Rooms</Text> }
       { roomIds.map((id) => (
         <Selector
           key={id}
@@ -94,7 +94,7 @@ function Home({ spaceId }) {
         />
       )) }
 
-      { directIds.length !== 0 && <Text className="cat-header" variant="b3">People</Text> }
+      { directIds.length !== 0 && <Text className="cat-header" variant="b3" weight="bold">People</Text> }
       { directIds.map((id) => (
         <Selector
           key={id}

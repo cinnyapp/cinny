@@ -272,7 +272,7 @@ function ProfileViewer() {
             size="large"
           />
           <div className="profile-viewer__user__info">
-            <Text variant="s1">{twemojify(username)}</Text>
+            <Text variant="s1" weight="medium">{twemojify(username)}</Text>
             <Text variant="b2">{twemojify(userId)}</Text>
           </div>
           <div className="profile-viewer__user__role">

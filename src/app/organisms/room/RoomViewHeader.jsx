@@ -29,7 +29,7 @@ function RoomViewHeader({ roomId }) {
     <Header>
       <Avatar imageSrc={avatarSrc} text={roomName} bgColor={colorMXID(roomId)} size="small" />
       <TitleWrapper>
-        <Text variant="h2">{twemojify(roomName)}</Text>
+        <Text variant="h2" weight="medium" primary>{twemojify(roomName)}</Text>
         { typeof roomTopic !== 'undefined' && <p title={roomTopic} className="text text-b3">{twemojify(roomTopic)}</p>}
       </TitleWrapper>
       <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />

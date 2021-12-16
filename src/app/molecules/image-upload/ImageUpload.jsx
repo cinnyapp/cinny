@@ -53,7 +53,7 @@ function ImageUpload({
           size="large"
         />
         <div className={`img-upload__process ${uploadPromise === null ? ' img-upload__process--stopped' : ''}`}>
-          {uploadPromise === null && <Text variant="b3">Upload</Text>}
+          {uploadPromise === null && <Text variant="b3" weight="bold">Upload</Text>}
           {uploadPromise !== null && <Spinner size="small" />}
         </div>
       </button>

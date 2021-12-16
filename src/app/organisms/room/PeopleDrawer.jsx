@@ -143,7 +143,7 @@ function PeopleDrawer({ roomId }) {
     <div className="people-drawer">
       <Header>
         <TitleWrapper>
-          <Text variant="s1">
+          <Text variant="s1" primary>
             People
             <Text className="people-drawer__member-count" variant="b3">{`${room.getJoinedMemberCount()} members`}</Text>
           </Text>

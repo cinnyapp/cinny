@@ -68,7 +68,7 @@ function PopupWindow({
             <Header>
               <IconButton size="small" src={ChevronLeftIC} onClick={onRequestClose} tooltip="Back" />
               <TitleWrapper>
-                <Text variant="s1">{twemojify(title)}</Text>
+                <Text variant="s1" weight="medium" primary>{twemojify(title)}</Text>
               </TitleWrapper>
               {drawerOptions}
             </Header>
@@ -84,7 +84,7 @@ function PopupWindow({
         <div className="pw__content">
           <Header>
             <TitleWrapper>
-              <Text variant="h2">{twemojify(contentTitle !== null ? contentTitle : title)}</Text>
+              <Text variant="h2" weight="medium" primary>{twemojify(contentTitle !== null ? contentTitle : title)}</Text>
             </TitleWrapper>
             {contentOptions}
           </Header>

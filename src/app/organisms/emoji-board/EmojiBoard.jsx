@@ -61,7 +61,7 @@ function EmojiGroup({ name, groupEmojis }) {
 
   return (
     <div className="emoji-group">
-      <Text className="emoji-group__header" variant="b2">{name}</Text>
+      <Text className="emoji-group__header" variant="b2" weight="bold">{name}</Text>
       {groupEmojis.length !== 0 && <div className="emoji-set">{getEmojiBoard()}</div>}
     </div>
   );

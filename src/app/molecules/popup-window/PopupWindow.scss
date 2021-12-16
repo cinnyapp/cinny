@@ -53,10 +53,11 @@
   & .header {
     padding-left: var(--sp-tight);
     & .header__title-wrapper {
-      margin: 0 var(--sp-extra-tight);
+      margin: 0 var(--sp-extra-tight) 0 var(--sp-ultra-tight);
     }
     [dir=rtl] & {
-        padding-right: var(--sp-tight);
+      padding-right: var(--sp-tight);
+      margin: 0 var(--sp-ultra-tight) 0 var(--sp-extra-tight);
     }
   }
 }
