@@ -247,23 +247,26 @@ class RoomTimeline extends EventEmitter {
   getLiveReaders() {
     const lastEvent = this.timeline[this.timeline.length - 1];
     const liveEvents = this.liveTimeline.getEvents();
-    const lastLiveEvent = liveEvents[liveEvents.length - 1];
 
-    let readers = [];
-    if (lastEvent) readers = this.room.getUsersReadUpTo(lastEvent);
-    if (lastLiveEvent !== lastEvent) {
-      readers.splice(readers.length, 0, ...this.room.getUsersReadUpTo(lastLiveEvent));
+    const readers = [];
+
+    for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
+      readers.splice(readers.length, 0, ...this.room.getUsersReadUpTo(liveEvents[i]));
+      if (lastEvent === liveEvents[i]) break;
     }
+
     return [...new Set(readers)];
   }
 
-  getEventReaders(eventId) {
+  getEventReaders(mEvent) {
+    const liveEvents = this.liveTimeline.getEvents();
     const readers = [];
-    let eventIndex = this.getEventIndex(eventId);
-    if (eventIndex < 0) return this.getLiveReaders();
-    for (; eventIndex < this.timeline.length; eventIndex += 1) {
-      readers.splice(readers.length, 0, ...this.room.getUsersReadUpTo(this.timeline[eventIndex]));
+
+    for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
+      readers.splice(readers.length, 0, ...this.room.getUsersReadUpTo(liveEvents[i]));
+      if (mEvent === liveEvents[i]) break;
     }
+
     return [...new Set(readers)];
   }
 

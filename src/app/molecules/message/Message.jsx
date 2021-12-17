@@ -438,7 +438,7 @@ const MessageOptions = React.memo(({
             <MenuHeader>Options</MenuHeader>
             <MenuItem
               iconSrc={TickMarkIC}
-              onClick={() => openReadReceipts(roomId, roomTimeline.getEventReaders(eventId))}
+              onClick={() => openReadReceipts(roomId, roomTimeline.getEventReaders(mEvent))}
             >
               Read receipts
             </MenuItem>
