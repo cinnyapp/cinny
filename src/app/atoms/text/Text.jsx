@@ -10,7 +10,7 @@ function Text({
   if (className) classes.push(className);
 
   classes.push(`text text-${variant} text-${weight}`);
-  if (primary) classes.push('text-primary');
+  if (primary) classes.push('font-primary');
 
   const textClass = classes.join(' ');
   if (span) return <span className={classes.join(' ')}>{ children }</span>;

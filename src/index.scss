@@ -69,6 +69,7 @@
 
   /* system icons | --ic-[background type]-[priority]: value */
   --ic-surface-normal: #626262;
+  --ic-surface-low: #7c7c7c;
   --ic-primary-normal: #ffffff;
   --ic-positive-normal: rgba(69, 184, 59, 80%);
   --ic-caution-normal: rgba(255, 179, 0, 80%);
@@ -148,11 +149,6 @@
   --lh-b3: 16px;
 
   /* font-weight */
-  --p-fw-light: 300;
-  --p-fw-normal: 400;
-  --p-fw-medium: 500;
-  --p-fw-bold: 600;
-
   --fw-light: 300;
   --fw-normal: 400;
   --fw-medium: 500;
@@ -199,12 +195,12 @@
 .dark-theme,
 .butter-theme {
   /* background color | --bg-[background type]: value */
-  --bg-surface: hsl(230, 8%, 20%);
-  --bg-surface-transparent: hsla(230, 8%, 20%, 0);
-  --bg-surface-low: hsl(230, 8%, 16%);
-  --bg-surface-low-transparent: hsla(230, 8%, 16%, 0);
-  --bg-surface-extra-low: hsl(230, 8%, 14%);
-  --bg-surface-extra-low-transparent: hsla(230, 8%, 14%, 0);
+  --bg-surface: hsl(208, 8%, 20%);
+  --bg-surface-transparent: hsla(208, 8%, 20%, 0);
+  --bg-surface-low: hsl(208, 8%, 16%);
+  --bg-surface-low-transparent: hsla(208, 8%, 16%, 0);
+  --bg-surface-extra-low: hsl(208, 8%, 14%);
+  --bg-surface-extra-low-transparent: hsla(208, 8%, 14%, 0);
   --bg-surface-hover: rgba(255, 255, 255, 3%);
   --bg-surface-active: rgba(255, 255, 255, 5%);
   --bg-surface-border: rgba(0, 0, 0, 20%);
@@ -237,15 +233,16 @@
 
   /* system icons | --ic-[background type]-[priority]: value */
   --ic-surface-normal: rgba(255, 255, 255, 84%);
+  --ic-surface-low: rgba(255, 255, 255, 64%);
   --ic-primary-normal: #ffffff;
 
   /* user mxid colors */
   --mx-uc-1: hsl(208, 100%, 58%);
-  --mx-uc-2: hsl(301, 100%, 60%);
+  --mx-uc-2: hsl(301, 80%, 70%);
   --mx-uc-3: hsl(163, 93%, 41%);
   --mx-uc-4: hsl(343, 91%, 66%);
-  --mx-uc-5: hsl(24, 100%, 67%);
-  --mx-uc-6: hsl(181, 100%, 50%);
+  --mx-uc-5: hsl(24, 90%, 67%);
+  --mx-uc-6: hsl(181, 90%, 50%);
   --mx-uc-7: hsl(243, 100%, 74%);
   --mx-uc-8: hsl(94, 66%, 50%);
   
@@ -301,6 +298,41 @@
 
   /* system icons | --ic-[background type]-[priority]: value */
   --ic-surface-normal: rgb(255, 251, 222, 84%);
+  --ic-surface-low: rgba(255, 251, 222, 64%);
+}
+
+.font-primary {
+  font-family: var(--font-primary);
+
+  /* override font styles for primary font */
+  --fs-h1: 36px;
+  --ls-h1: -1.5px;
+  --lh-h1: 38px;
+
+  --fs-h2: 24px;
+  --ls-h2: -0.5px;
+  --lh-h2: 30px;
+
+  --fs-s1: 18px;
+  --ls-s1: -0.2px;
+  --lh-s1: 24px;
+
+  --fs-b1: 16px;
+  --ls-b1: 0.1px;
+  --lh-b1: 24px;
+
+  --fs-b2: 14px;
+  --ls-b2: 0.2px;
+  --lh-b2: 20px;
+
+  --fs-b3: 12px;
+  --ls-b3: 0px;
+  --lh-b3: 16px;
+
+  --fw-light: 300;
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-bold: 600;
 }
 
 html {

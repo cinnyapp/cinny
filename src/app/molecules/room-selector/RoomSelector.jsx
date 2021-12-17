@@ -55,6 +55,7 @@ function RoomSelector({
             text={name}
             bgColor={colorMXID(roomId)}
             imageSrc={imageSrc}
+            iconColor="var(--ic-surface-low)"
             iconSrc={iconSrc}
             size="extra-small"
           />

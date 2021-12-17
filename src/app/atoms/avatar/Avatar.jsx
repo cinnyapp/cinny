@@ -8,7 +8,7 @@ import Text from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 
 function Avatar({
-  text, bgColor, iconSrc, imageSrc, size,
+  text, bgColor, iconSrc, iconColor, imageSrc, size,
 }) {
   const [image, updateImage] = useState(imageSrc);
   let textSize = 's1';
@@ -30,7 +30,7 @@ function Avatar({
             >
               {
                 iconSrc !== null
-                  ? <RawIcon size={size} src={iconSrc} />
+                  ? <RawIcon size={size} src={iconSrc} color={iconColor} />
                   : text !== null && (
                     <Text variant={textSize} weight="medium" primary>
                       {twemojify([...text][0])}
@@ -48,6 +48,7 @@ Avatar.defaultProps = {
   text: null,
   bgColor: 'transparent',
   iconSrc: null,
+  iconColor: null,
   imageSrc: null,
   size: 'normal',
 };
@@ -56,6 +57,7 @@ Avatar.propTypes = {
   text: PropTypes.string,
   bgColor: PropTypes.string,
   iconSrc: PropTypes.string,
+  iconColor: PropTypes.string,
   imageSrc: PropTypes.string,
   size: PropTypes.oneOf(['large', 'normal', 'small', 'extra-small']),
 };
