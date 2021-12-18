@@ -22,7 +22,7 @@ function Avatar({
     <div className={`avatar-container avatar-container__${size} noselect`}>
       {
         image !== null
-          ? <img src={image} onError={() => updateImage(null)} alt="avatar" />
+          ? <img draggable="false" src={image} onError={() => updateImage(null)} alt="avatar" />
           : (
             <span
               style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
@@ -32,7 +32,7 @@ function Avatar({
                 iconSrc !== null
                   ? <RawIcon size={size} src={iconSrc} color={iconColor} />
                   : text !== null && (
-                    <Text variant={textSize} weight="medium" primary>
+                    <Text variant={textSize} primary>
                       {twemojify([...text][0])}
                     </Text>
                   )

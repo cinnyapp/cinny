@@ -236,15 +236,17 @@
   --ic-surface-low: rgba(255, 255, 255, 64%);
   --ic-primary-normal: #ffffff;
 
-  /* user mxid colors */
-  --mx-uc-1: hsl(208, 100%, 58%);
-  --mx-uc-2: hsl(301, 80%, 70%);
-  --mx-uc-3: hsl(163, 93%, 41%);
-  --mx-uc-4: hsl(343, 91%, 66%);
-  --mx-uc-5: hsl(24, 90%, 67%);
-  --mx-uc-6: hsl(181, 90%, 50%);
-  --mx-uc-7: hsl(243, 100%, 74%);
-  --mx-uc-8: hsl(94, 66%, 50%);
+  & .text {
+    /* override user mxid colors for texts */
+    --mx-uc-1: hsl(208, 100%, 58%);
+    --mx-uc-2: hsl(301, 80%, 70%);
+    --mx-uc-3: hsl(163, 93%, 41%);
+    --mx-uc-4: hsl(343, 91%, 66%);
+    --mx-uc-5: hsl(24, 90%, 67%);
+    --mx-uc-6: hsl(181, 90%, 50%);
+    --mx-uc-7: hsl(243, 100%, 74%);
+    --mx-uc-8: hsl(94, 66%, 50%);
+  }
   
   /* shadow and overlay */
   --bg-overlay: rgba(0, 0, 0, 50%);
@@ -267,9 +269,9 @@
   --fs-b1: 14.6px;
   --ls-b1: 0.14px;
 
-  --fs-b2: 13.6px;
+  --fs-b2: 13.2px;
 
-  --fs-b3: 11.6px;
+  --fs-b3: 11.2px;
 
   /* override normal font weight for dark mode */
   --fw-normal: 380;

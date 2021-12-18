@@ -128,16 +128,16 @@
       margin-right: 0;
     }
 
-    & > .text {
+    & > span {
       color: inherit;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
     }
-    & > .text:last-child { display: none; }
+    & > span:last-child { display: none; }
     &:hover {
-      & > .text:first-child { display: none; }
-      & > .text:last-child { display: block; }
+      & > span:first-child { display: none; }
+      & > span:last-child { display: block; }
     }
   }
 

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import './Text.scss';
 
 function Text({
-  className, variant, weight,
+  className, style, variant, weight,
   primary, span, children,
 }) {
   const classes = [];
@@ -13,15 +13,16 @@ function Text({
   if (primary) classes.push('font-primary');
 
   const textClass = classes.join(' ');
-  if (span) return <span className={classes.join(' ')}>{ children }</span>;
-  if (variant === 'h1') return <h1 className={textClass}>{ children }</h1>;
-  if (variant === 'h2') return <h2 className={textClass}>{ children }</h2>;
-  if (variant === 's1') return <h4 className={textClass}>{ children }</h4>;
-  return <p className={textClass}>{ children }</p>;
+  if (span) return <span className={textClass} style={style}>{ children }</span>;
+  if (variant === 'h1') return <h1 className={textClass} style={style}>{ children }</h1>;
+  if (variant === 'h2') return <h2 className={textClass} style={style}>{ children }</h2>;
+  if (variant === 's1') return <h4 className={textClass} style={style}>{ children }</h4>;
+  return <p className={textClass} style={style}>{ children }</p>;
 }
 
 Text.defaultProps = {
   className: null,
+  style: null,
   variant: 'b1',
   weight: 'normal',
   primary: false,
@@ -30,6 +31,7 @@ Text.defaultProps = {
 
 Text.propTypes = {
   className: PropTypes.string,
+  style: PropTypes.shape({}),
   variant: PropTypes.oneOf(['h1', 'h2', 's1', 'b1', 'b2', 'b3']),
   weight: PropTypes.oneOf(['light', 'normal', 'medium', 'bold']),
   primary: PropTypes.bool,

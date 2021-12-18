@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
-import dateFormat from 'dateformat';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -69,10 +68,16 @@ const MessageHeader = React.memo(({
   userId, username, time,
 }) => (
   <div className="message__header">
-    <div style={{ color: colorMXID(userId) }} className="message__profile">
-      <Text variant="b1" weight="medium">{twemojify(username)}</Text>
-      <Text variant="b1" weight="medium">{twemojify(userId)}</Text>
-    </div>
+    <Text
+      style={{ color: colorMXID(userId) }}
+      className="message__profile"
+      variant="b1"
+      weight="medium"
+      span
+    >
+      <span>{twemojify(username)}</span>
+      <span>{twemojify(userId)}</span>
+    </Text>
     <div className="message__time">
       <Text variant="b3">{time}</Text>
     </div>
