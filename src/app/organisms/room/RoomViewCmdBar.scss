@@ -1,8 +1,6 @@
-.overflow-ellipsis {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
+@use '../../partials/flex';
+@use '../../partials/text';
+@use '../../partials/dir';
 
 .cmd-bar {
   --cmd-bar-height: 28px;
@@ -12,18 +10,15 @@
   &__info {
     display: flex;
     width: 40px;
-    margin: 0 10px 0 14px;
-    [dir=rtl] & {
-      margin: 0 14px 0 10px;
-    }
+    @include dir.side(margin, 10px, 14px);
+
     & > * {
       margin: auto;
     }
   }
 
   &__content {
-    min-width: 0;
-    flex: 1;
+    @extend .cp-fx__item-one;
     display: flex;
 
     &-suggestions {
@@ -33,7 +28,7 @@
       align-items: center;
 
       & > .text {
-        @extend .overflow-ellipsis;
+        @extend .cp-txt__ellipsis;
       }
     }
   }
@@ -44,7 +39,7 @@
 
   display: inline-flex;
   align-items: center;
-  margin-right: var(--sp-extra-tight);
+  @include dir.side(margin, 0, var(--sp-extra-tight));
   padding: 0 var(--sp-extra-tight);
   height: 100%;
   border-radius: var(--bo-radius) var(--bo-radius) 0 0;
@@ -53,7 +48,7 @@
   & .emoji {
     width: 20px;
     height: 20px;
-    margin-right: var(--sp-ultra-tight);
+    @include dir.side(margin, 0, var(--sp-ultra-tight));
   }
 
   &:hover {
@@ -64,14 +59,5 @@
     box-shadow: var(--cmd-item-bar);
     border-bottom: 2px solid transparent;
     outline: none;
-  }
-  
-  [dir=rtl] & {
-    margin-right: 0;
-    margin-left: var(--sp-extra-tight);
-    & .emoji {
-      margin-right: 0;
-      margin-left: var(--sp-ultra-tight);
-    }
   }
 }

@@ -1,3 +1,6 @@
+@use '../../partials/text';
+@use '../../partials/dir';
+
 .breadcrumb__wrapper {
   height: var(--header-height);
   position: relative;
@@ -47,17 +50,12 @@
     white-space: nowrap;
     box-shadow: none;
     & p {
+      @extend .cp-txt__ellipsis;
       max-width: 86px;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     & .notification-badge {
-      margin-left: var(--sp-extra-tight);
-      [dir=rtl] & {
-        margin-left: 0;
-        margin-right: var(--sp-extra-tight);
-      }
+      @include dir.side(margin, var(--sp-extra-tight), 0);
     }
   }
 

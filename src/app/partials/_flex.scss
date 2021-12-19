@@ -1,0 +1,58 @@
+._s-c {
+  justify-content: flex-start;
+  align-items: center;
+}
+._c-c {
+  justify-content: center;
+  align-items: center;
+}
+._e-c {
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.cp-fx__row {
+  display: flex;
+  flex-direction: row;
+}
+
+.cp-fx__column {
+  display: flex;
+  flex-direction: column;
+}
+
+.cp-fx__row--s-c {
+  @extend .cp-fx__row;
+  @extend ._s-c;
+}
+
+.cp-fx__row--c-c {
+  @extend .cp-fx__row;
+  @extend ._c-c;
+}
+
+.cp-fx__row--e-c {
+  @extend .cp-fx__row;
+  @extend ._e-c;
+}
+
+.cp-fx__column--s-c {
+  @extend .cp-fx__column;
+  @extend ._s-c;
+}
+
+.cp-fx__column--c-c {
+  @extend .cp-fx__column;
+  @extend ._c-c;
+}
+
+.cp-fx__column--e-c {
+  @extend .cp-fx__column;
+  @extend ._e-c;
+}
+
+.cp-fx__item-one {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}

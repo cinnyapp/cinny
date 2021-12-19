@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .room-input {
   padding: var(--sp-extra-tight) calc(var(--sp-normal) - 2px);
   display: flex;
@@ -30,11 +32,7 @@
       flex: 1;
 
       &:first-child {
-        margin-left: var(--sp-tight);
-        [dir=rtl] & {
-          margin-left: 0;
-          margin-right: var(--sp-tight);
-        }
+        @include dir.side(margin, var(--sp-tight), 0);
       }
     }
   }
@@ -65,13 +63,9 @@
   --side-spacing: calc(var(--sp-normal) + var(--av-small) + var(--sp-tight));
   display: flex;
   align-items: center;
-  margin-left: var(--side-spacing);
+  @include dir.side(margin, var(--side-spacing), 0);
   margin-top: var(--sp-extra-tight);
   line-height: 0;
-  [dir=rtl] & {
-    margin-left: 0;
-    margin-right: var(--side-spacing);
-  }
 
   &__preview > img {
     max-height: 40px;
@@ -107,10 +101,7 @@
   border-bottom: 1px solid var(--bg-surface-border);
 
   & .ic-btn-surface {
-    margin: 0 13px 0 17px;
+    @include dir.side(margin, 17px, 13px);
     border-radius: 0;
-    [dir=rtl] & {
-      margin: 0 17px 0 13px;
-    }
   }
 }

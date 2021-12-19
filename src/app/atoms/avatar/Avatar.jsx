@@ -26,7 +26,7 @@ function Avatar({
           : (
             <span
               style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
-              className={`avatar__border${iconSrc !== null ? ' avatar__bordered' : ''} inline-flex--center`}
+              className={`avatar__border${iconSrc !== null ? '--active' : ''}`}
             >
               {
                 iconSrc !== null

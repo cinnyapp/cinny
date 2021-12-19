@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .sidebar-avatar {
   position: relative;
   display: flex;
@@ -7,10 +9,11 @@
   
   & .notification-badge {
     position: absolute;
-    right: 0;
+    @include dir.prop(left, unset, 0);
+    @include dir.prop(right, 0, unset);
     top: 0;
     box-shadow: 0 0 0 2px var(--bg-surface-low);
-    transform: translate(20%, -20%);
+    @include dir.prop(transform, translate(20%, -20%), translate(-20%, -20%));
 
     margin: 0 !important;
   }
@@ -19,10 +22,12 @@
     transition: transform 200ms var(--fluid-push);
   }
   &:hover .avatar-container {
-    transform: translateX(4px)
+    @include dir.prop(transform, translateX(4px), translateX(-4px));
   }
   &:hover .notification-badge {
-    transform: translate(calc(20% + 4px), -20%);
+    --ltr: translate(calc(20% + 4px), -20%);
+    --rtl: translate(calc(-20% - 4px), -20%);
+    @include dir.prop(transform, var(--ltr), var(--rtl));
   }
   &:focus {
     outline: none;
@@ -37,21 +42,16 @@
     content: "";
     display: block;
     position: absolute;
-    left: -11px;
+    @include dir.prop(left, -11px, unset);
+    @include dir.prop(right, unset, -11px);
     top: 50%;
     transform: translateY(-50%);
 
     width: 3px;
     height: 12px;
     background-color: var(--tc-surface-high);
-    border-radius: 0 4px 4px 0;
+    @include dir.prop(border-radius, 0 4px 4px 0, 4px 0 0 4px);
     transition: height 200ms linear;
-
-    [dir=rtl] & {
-      left: unset;
-      right: -11px;
-      border-radius: 4px 0 0 4px;
-    }
   }
   &--active:hover::before,
   &--active:focus::before,

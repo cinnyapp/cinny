@@ -442,45 +442,8 @@ textarea {
                                   supported by Chrome, Edge, Opera and Firefox */
 }
 
-.flex {
+.flex--center {
   display: flex;
-}
-.flex-v {
-  display: flex;
-  flex-direction: column;
-}
-
-.flex--center,
-.flex--spaceBetween-center,
-.flex--end-center {
-  @extend .flex;
   justify-content: center;
   align-items: center;
-}
-.flex--spaceBetween,
-.flex--spaceBetween-center {
-  @extend .flex;
-  justify-content: space-between;
-}
-.flex--end,
-.flex--end-center {
-  @extend .flex;
-  justify-content: flex-end;
-}
-.inline-flex--center {
-  @extend .flex--center;
-  display: inline-flex
-}
-.flex--center-baseline {
-  @extend .flex--center;
-  align-items: baseline;
-}
-
-.flex-v--center {
-  @extend .flex-v;
-  justify-content: center;
-}
-.flex-v--end {
-  @extend .flex-v;
-  justify-content: flex-end;
 }

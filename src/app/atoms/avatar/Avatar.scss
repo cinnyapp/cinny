@@ -1,3 +1,5 @@
+@use '../../partials/flex';
+
 .avatar-container {
   display: inline-flex;
   width: 42px;
@@ -31,11 +33,9 @@
     border-radius: inherit;
   }
 
-  .avatar__bordered {
-    box-shadow: var(--bs-surface-border);
-  }
-
   .avatar__border {
+    @extend .cp-fx__row--c-c;
+    
     position: absolute;
     top: 0;
     left: 0;
@@ -46,6 +46,10 @@
 
     .text {
       color: white;
+    }
+    &--active {
+      @extend .avatar__border;
+      box-shadow: var(--bs-surface-border);
     }
   }
 }

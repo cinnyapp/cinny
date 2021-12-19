@@ -1,3 +1,5 @@
+@use '../../partials/text';
+
 .file-header {
   display: flex;
   align-items: center;
@@ -5,11 +7,9 @@
   min-height: 42px;
 
   & .file-name {
+    @extend .cp-txt__ellipsis;
     flex: 1;
     color: var(--tc-surface-low);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   & a {

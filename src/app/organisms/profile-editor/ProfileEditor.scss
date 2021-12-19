@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .profile-editor {
   display: flex;
   align-items: flex-start;
@@ -21,10 +23,6 @@
   }
 
   & > * {
-    margin-left: var(--sp-normal);
-    [dir=rtl] & {
-      margin-left: 0;
-      margin-right: var(--sp-normal);
-    }
+    @include dir.side(margin, var(--sp-normal), 0);
   }
 }

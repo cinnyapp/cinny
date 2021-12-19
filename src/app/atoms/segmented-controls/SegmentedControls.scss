@@ -1,4 +1,5 @@
 @use '../button/state';
+@use '../../partials/dir';
 
 .segmented-controls {
   background-color: var(--bg-surface-low);
@@ -20,12 +21,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-left: 1px solid var(--bg-surface-border);
-    
-    [dir=rtl] & {
-      border-left: none;
-      border-right: 1px solid var(--bg-surface-border);
-    }
+    @include dir.side(border, 1px solid var(--bg-surface-border), none);
 
     & .text:nth-child(2) {
       margin: 0 var(--sp-extra-tight);

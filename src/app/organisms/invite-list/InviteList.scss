@@ -1,6 +1,7 @@
+@use '../../partials/dir';
+
 .invites-content {
-  margin: 0 var(--sp-normal);
-  margin-right: var(--sp-extra-tight);
+  @include dir.side(margin, var(--sp-normal), var(--sp-extra-tight));
 
   &__subheading {
     margin-top: var(--sp-extra-loose);
@@ -20,19 +21,6 @@
     }
   }
   & .invite-btn__container .btn-surface {
-    margin-right: var(--sp-normal);
-    [dir=rtl] & {
-      margin: {
-        right: 0;
-        left: var(--sp-normal);
-      }
-    }
-  }
-
-  [dir=rtl] & {
-    margin: {
-      left: var(--sp-extra-tight);
-      right: var(--sp-normal);
-    }
+    @include dir.side(margin, 0, var(--sp-normal));
   }
 }

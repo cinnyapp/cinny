@@ -1,3 +1,5 @@
+@use '../../partials/text';
+@use '../../partials/dir';
 
 .import-e2e-room-keys {
   &__file {
@@ -22,17 +24,9 @@
     }
     
     & .text {
-      margin-left: var(--sp-tight);
-      margin-right: var(--sp-loose);
+      @extend .cp-txt__ellipsis;
+      @include dir.side(margin, var(--sp-tight), var(--sp-loose));
       max-width: 86px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-
-      [dir=rtl] {
-        margin-right: var(--sp-tight);
-        margin-left: var(--sp-loose);
-      }
     }
   }
 

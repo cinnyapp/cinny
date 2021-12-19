@@ -1,24 +1,16 @@
-.room-view-flexBox {
-  display: flex;
-  flex-direction: column;
-}
-.room-view-flexItem {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-}
+@use '../../partials/flex';
 
 .room-view {
-  @extend .room-view-flexItem;
-  @extend .room-view-flexBox;
+  @extend .cp-fx__item-one;
+  @extend .cp-fx__column;
 
   &__content-wrapper {
-    @extend .room-view-flexItem;
-    @extend .room-view-flexBox;
+    @extend .cp-fx__item-one;
+    @extend .cp-fx__column;
   }
 
   &__scrollable {
-    @extend .room-view-flexItem;
+    @extend .cp-fx__item-one;
     position: relative;
   }
   

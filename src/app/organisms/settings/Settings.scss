@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .settings-window {
   & .pw__content-container {
     min-height: 100%;
@@ -5,12 +7,7 @@
 }
 
 .settings-content {
-  margin: 0 var(--sp-normal);
-  margin-right: var(--sp-extra-tight);
-  [dir=rtl] & {
-    margin-left: var(--sp-extra-tight);
-    margin-right: var(--sp-normal);
-  }
+  @include dir.side(margin, var(--sp-normal), var(--sp-extra-tight));
 
   & .setting-tile {
     margin-top: var(--sp-normal);

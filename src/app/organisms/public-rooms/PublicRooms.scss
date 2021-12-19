@@ -1,6 +1,7 @@
+@use '../../partials/dir';
+
 .public-rooms {
-  margin: 0 var(--sp-normal);
-  margin-right: var(--sp-extra-tight);
+  @include dir.side(margin, var(--sp-normal), var(--sp-extra-tight));
   margin-top: var(--sp-extra-tight);
 
   &__form {
@@ -19,33 +20,28 @@
     min-width: 0;
 
     display: flex;
-    margin-right: var(--sp-normal);
-    [dir=rtl] & {
-      margin-right: 0;
-      margin-left: var(--sp-normal);
-    }
+    @include dir.side(margin, 0, var(--sp-normal));
 
     & > div:first-child {
       flex: 1;
       min-width: 0;
 
       & .input {
-        border-radius: var(--bo-radius) 0 0 var(--bo-radius);
-        [dir=rtl] & {
-          border-radius: 0 var(--bo-radius) var(--bo-radius) 0;
-        }
+        @include dir.prop(border-radius,
+          var(--bo-radius) 0 0 var(--bo-radius),
+          0 var(--bo-radius) var(--bo-radius) 0,
+        );
       }
     }
 
     & > div:last-child .input {
       width: 120px;
-      border-left-width: 0;
-      border-radius: 0 var(--bo-radius) var(--bo-radius) 0;
-      [dir=rtl] & {
-        border-left-width: 1px;
-        border-right-width: 0;
-        border-radius: var(--bo-radius) 0 0 var(--bo-radius);
-      }
+      @include dir.prop(border-left-width, 0, 1px);
+      @include dir.prop(border-right-width, 1px, 0);
+      @include dir.prop(border-radius,
+        0 var(--bo-radius) var(--bo-radius) 0,
+        var(--bo-radius) 0 0 var(--bo-radius),
+      );
     }
   }
 
@@ -68,24 +64,13 @@
   }
   &__view-more {
     margin-top: var(--sp-loose);
-    margin-left: calc(var(--av-normal) + var(--sp-normal));
-    [dir=rtl] & {
-      margin-left: 0;
-      margin-right: calc(var(--av-normal) + var(--sp-normal));
-    }
+    @include dir.side(margin, calc(var(--av-normal) + var(--sp-normal)), 0);
   }
   
   & .room-tile {
     margin-top: var(--sp-normal);
     &__options {
       align-self: flex-end;
-    }
-  }
-
-  [dir=rtl] & {
-    margin: {
-      left: var(--sp-extra-tight);
-      right: var(--sp-normal);
     }
   }
 }

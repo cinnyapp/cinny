@@ -1,0 +1,26 @@
+/*
+* NOTICE: only use this
+* when sides are un-even
+* if they are even just use $property: 0 $spacing; 
+*/
+
+@mixin side($property, $left, $right) {
+  #{$property}: {
+    left: $left;
+    right: $right;
+  };
+  
+  [dir=rtl] & {
+    #{$property}: {
+      left: $right;
+      right: $left;
+    };
+  }
+}
+
+@mixin prop($property, $ltr, $rtl) {
+  #{$property}: $ltr;
+  [dir=rtl] & {
+    #{$property}: $rtl;
+  }
+}

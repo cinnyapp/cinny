@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .room-view__content {
   min-height: 100%;
   display: flex;
@@ -13,26 +15,16 @@
     & .message,
     & .ph-msg,
     & .timeline-change {
-      border-radius: 0 var(--bo-radius) var(--bo-radius) 0;
-      [dir=rtl] & {
-        border-radius: var(--bo-radius) 0 0 var(--bo-radius);
-      }
+      @include dir.prop(border-radius,
+      0 var(--bo-radius) var(--bo-radius) 0,
+      var(--bo-radius) 0 0 var(--bo-radius),
+      );
     }
     
     & > .divider {
-      margin: var(--sp-extra-tight) var(--sp-normal);
-      margin-right: var(--sp-extra-tight);
-      padding-left: calc(var(--av-small) + var(--sp-tight));
-      [dir=rtl] & {
-        padding: {
-          left: 0;
-          right: calc(var(--av-small) + var(--sp-tight));
-        }
-        margin: {
-          left: var(--sp-extra-tight);
-          right: var(--sp-normal);
-        }
-      }
+      margin: var(--sp-extra-tight);
+      @include dir.side(margin, var(--sp-normal), var(--sp-extra-tight));
+      @include dir.side(padding, calc(var(--av-small) + var(--sp-tight)), 0);
     }
   }
 }

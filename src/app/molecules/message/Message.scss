@@ -1,9 +1,11 @@
 @use '../../atoms/scroll/scrollbar';
+@use '../../partials/text';
+@use '../../partials/dir';
 
 .message,
 .ph-msg {
-  padding: var(--sp-ultra-tight) var(--sp-normal);
-  padding-right: var(--sp-extra-tight);
+  padding: var(--sp-ultra-tight);
+  @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
   display: flex;
 
   &:hover {
@@ -12,17 +14,11 @@
       display: flex;
     }
   }
-
-  [dir=rtl] & {
-    padding: {
-      left: var(--sp-extra-tight);
-      right: var(--sp-normal);
-    }
-  }
   
   &__avatar-container {
     padding-top: 6px;
-    margin-right: var(--sp-tight);
+    @include dir.side(margin, 0, var(--sp-tight));
+
     & .avatar-container {
       transition: transform 200ms var(--fluid-push);
       &:hover {
@@ -33,13 +29,6 @@
     & button {
       cursor: pointer;
       display: flex;
-    }
-
-    [dir=rtl] & {
-      margin: {
-        left: var(--sp-tight);
-        right: 0;
-      }
     }
   }
 
@@ -62,7 +51,9 @@
     width: var(--av-small);
   }
   &--focus {
-    box-shadow: inset 2px 0 0 var(--bg-caution);
+    --ltr: inset 2px 0 0 var(--bg-caution);
+    --rtl: inset -2px 0 0 var(--bg-caution);
+    @include dir.prop(box-shadow, var(--ltr), var(--rtl));
     background-color: var(--bg-caution-hover);
   }
 }
@@ -77,20 +68,13 @@
 
   &__header,
   &__body > div {
-    margin: var(--sp-ultra-tight) 0;
-    margin-right: var(--sp-extra-tight);
+    margin: var(--sp-ultra-tight);
+    @include dir.side(margin, 0, var(--sp-extra-tight));
     height: var(--fs-b1);
     width: 100%;
     max-width: 100px;
     background-color: var(--bg-surface-hover);
     border-radius: calc(var(--bo-radius) / 2);
-
-    [dir=rtl] & {
-      margin: {
-        right: 0;
-        left: var(--sp-extra-tight);
-      }
-    }
   }
   &__body {
     display: flex;
@@ -121,18 +105,11 @@
   & .message__profile {
     min-width: 0;
     color: var(--tc-surface-high);
-    margin-right: var(--sp-tight);
-
-    [dir=rtl] & {
-      margin-left: var(--sp-tight);
-      margin-right: 0;
-    }
+    @include dir.side(margin, 0, var(--sp-tight));
 
     & > span {
+      @extend .cp-txt__ellipsis;
       color: inherit;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
     }
     & > span:last-child { display: none; }
     &:hover {
@@ -166,10 +143,8 @@
     }
   }
   .text {
+    @extend .cp-txt__ellipsis;
     color: var(--tc-surface-low);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   .ic-raw {
     width: 16px;
@@ -235,10 +210,8 @@
 .message__edit {
   padding: var(--sp-extra-tight) 0;
   &-btns button {
-    margin: var(--sp-tight) var(--sp-tight) 0 0;
-    [dir=rtl] & {
-      margin: var(--sp-tight) 0 0 var(--sp-tight);
-    }
+    margin: var(--sp-tight) 0 0 0;
+    @include dir.side(margin, 0, var(--sp-tight));
   }
 }
 .message__reactions {
@@ -255,7 +228,8 @@
   }
 }
 .msg__reaction {
-  margin: var(--sp-extra-tight) var(--sp-extra-tight) 0 0;
+  margin: var(--sp-extra-tight) 0 0 0;
+  @include dir.side(margin, 0, var(--sp-extra-tight));
   padding: 0 var(--sp-ultra-tight);
   min-height: 26px;
   display: inline-flex;
@@ -280,13 +254,6 @@
     height: 14px;
     margin: 0 var(--sp-ultra-tight);
     margin-bottom: -2px;
-  }
-
-  [dir=rtl] & {
-    margin: {
-      right: 0;
-      left: var(--sp-extra-tight);
-    }
   }
 
   @media (hover: hover) {
@@ -314,7 +281,9 @@
 .message__options {
   position: absolute;
   top: 0;
-  right: 60px;
+  @include dir.prop(right, 60px, unset);
+  @include dir.prop(left, unset, 60px);
+
   z-index: 99;
   transform: translateY(-50%);
 
@@ -322,11 +291,6 @@
   box-shadow: var(--bs-surface-border);
   background-color: var(--bg-surface-low);
   display: none;
-
-  [dir=rtl] & {
-    left: 60px;
-    right: unset;
-  }
 }
 
 // markdown formating
@@ -406,40 +370,22 @@
   & blockquote {
     display: inline-block;
     max-width: 100%;
-    padding-left: var(--sp-extra-tight);
-    border-left: 4px solid var(--bg-surface-active);
+    @include dir.side(padding, var(--sp-extra-tight), 0);
+    @include dir.side(border, 4px solid var(--bg-surface-active), 0);
     white-space: initial !important;
 
     & > * {
       white-space: pre-wrap;
-    }
-
-    [dir=rtl] & {
-      padding: {
-        left: 0;
-        right: var(--sp-extra-tight);
-      }
-      border: {
-        left: none;
-        right: 4px solid var(--bg-surface-active);
-      }
     }
   }
   & ul,
   & ol {
     margin: var(--sp-ultra-tight) 0;
-    padding-left: 24px;
+    @include dir.side(padding, 24px, 0);
     white-space: initial !important;
     
     & > * {
       white-space: pre-wrap;
-    }
-
-    [dir=rtl] & {
-      padding: {
-        left: 0;
-        right: 24px;
-      }
     }
   }
   & ul.contains-task-list {

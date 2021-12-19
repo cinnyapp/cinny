@@ -533,7 +533,7 @@ function Auth() {
         <div className="auth__wrapper">
           {loginToken && <LoadingScreen message="Redirecting..." />}
           {!loginToken && (
-            <div className="auth-card flex-v">
+            <div className="auth-card">
               <Header>
                 <Avatar size="extra-small" imageSrc={CinnySvg} />
                 <TitleWrapper>

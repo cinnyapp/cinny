@@ -1,3 +1,7 @@
+ @use '../../partials/flex';
+@use '../../partials/text';
+@use '../../partials/dir';
+
 .room-view {
   &__typing {
     display: flex;
@@ -10,12 +14,9 @@
     }
 
     & .text {
-      flex: 1;
-      min-width: 0;
+      @extend .cp-txt__ellipsis;
+      @extend .cp-fx__item-one;
 
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
       margin: 0 var(--sp-tight);
     }
 
@@ -72,17 +73,14 @@
 
   &__STB {
     position: absolute;
-    right: var(--sp-normal);
+    @include dir.prop(right, var(--sp-normal), unset);
+    @include dir.prop(left, unset, var(--sp-normal));
     bottom: 0;
     border-radius: var(--bo-radius);
     box-shadow: var(--bs-surface-border);
     background-color: var(--bg-surface-low);
     transition: transform 200ms ease-in-out;
     transform: translateY(100%) scale(0);
-    [dir=rtl] & {
-      right: unset;
-      left: var(--sp-normal);
-    }
 
     &--open {
       transform: translateY(-28px) scale(1);
@@ -110,8 +108,7 @@
       border-radius: 0;
     }
     & .btn-primary {
-      flex: 1;
-      min-width: 0;
+      @extend .cp-fx__item-one;
       border-radius: 0;
       padding: 0 var(--sp-tight);
       &:focus {

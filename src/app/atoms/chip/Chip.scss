@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .chip {
   padding: var(--sp-ultra-tight) var(--sp-extra-tight);
   
@@ -24,10 +26,6 @@
   & > .ic-raw {
     width: 16px;
     height: 16px;
-    margin-right: var(--sp-ultra-tight);
-    [dir=rtl] & {
-      margin-right: 0;
-      margin-left: var(--sp-ultra-tight);
-    }
+    @include dir.side(margin, 0, var(--sp-ultra-tight));
   }
 }

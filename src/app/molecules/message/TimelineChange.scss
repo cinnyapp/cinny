@@ -1,19 +1,15 @@
+@use '../../partials/dir';
+
 .timeline-change {
-  padding: var(--sp-ultra-tight) var(--sp-normal);
-  padding-right: var(--sp-extra-tight);
+  padding: var(--sp-ultra-tight);
+  @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
+
   display: flex;
   align-items: center;
   width: 100%;
 
   &:hover {
     background-color: var(--bg-surface-hover);
-  }
-
-  [dir=rtl] & {
-    padding: {
-      left: var(--sp-extra-tight);
-      right: var(--sp-normal);
-    }
   }
 
   &__avatar-container {

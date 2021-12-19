@@ -1,21 +1,16 @@
-.sidebar__flexBox {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-}
+@use '../../partials/flex';
+@use '../../partials/dir';
 
 .sidebar {
-  @extend .sidebar__flexBox;
+  @extend .cp-fx__column;
+
   width: var(--navigation-sidebar-width);
   height: 100%;
-  border-right: 1px solid var(--bg-surface-border);
   background-color: var(--bg-surface-extra-low);
-
-  [dir=rtl] & {
-    border-right: none;
-    border-left: 1px solid var(--bg-surface-border);
-  }
+  @include dir.side(border,
+    none,
+    1px solid var(--bg-surface-border),
+  );
 
   &__scrollable,
   &__sticky {
@@ -23,12 +18,7 @@
   }
 
   &__scrollable {
-    flex: 1;
-    min-height: 0px;
-  }
-
-  &__sticky {
-    align-items: center;
+    @extend .cp-fx__item-one;
   }
 }
 
@@ -53,7 +43,7 @@
 .featured-container,
 .space-container,
 .sticky-container {
-  @extend .sidebar__flexBox;
+  @extend .cp-fx__column--c-c;
   
   padding: var(--sp-ultra-tight) 0;
 

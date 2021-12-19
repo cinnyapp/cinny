@@ -1,17 +1,14 @@
+@use '../../partials/text';
+@use '../../partials/dir';
+
 .people-selector {
   width: 100%;
   padding: var(--sp-extra-tight);
-  padding-left: var(--sp-normal);
+  @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
   display: flex;
   align-items: center;
   cursor: pointer;
-  
-  [dir=rtl] & {
-    padding: {
-      left: var(--sp-extra-tight);
-      right: var(--sp-normal);
-    }
-  }
+
   @media (hover: hover) {
     &:hover {
       background-color: var(--bg-surface-hover);
@@ -26,13 +23,11 @@
   }
 
   &__name {
+    @extend .cp-txt__ellipsis;
     flex: 1;
     min-width: 0;
     margin: 0 var(--sp-tight);
     color: var(--tc-surface-normal);
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
   }
   &__role {
     color: var(--tc-surface-low);

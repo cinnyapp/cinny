@@ -1,3 +1,4 @@
+@use '../../partials/text';
 
 .following-members {
   width: 100%;
@@ -13,9 +14,7 @@
     margin: 0 var(--sp-extra-tight);
   }
   & .text {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    @extend .cp-txt__ellipsis;
     color: var(--tc-surface-low);
     b {
       color: var(--tc-surface-normal);

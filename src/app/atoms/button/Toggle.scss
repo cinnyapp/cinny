@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .toggle {
   width: 44px;
   height: 24px;
@@ -27,13 +29,13 @@
     background-color: var(--bg-positive);
 
     &::before {
-      background-color: white;
-      transform: translateX(calc(125%));
-      opacity: 1;
+      --ltr: translateX(calc(125%));
+      --rtl: translateX(calc(-125%));
+      @include dir.prop(transform, var(--ltr), var(--rtl));
 
-      [dir=rtl] & {
-        transform: translateX(calc(-125%));
-      }
+      transform: translateX(calc(125%));
+      background-color: white;
+      opacity: 1;
     }
   }
 }

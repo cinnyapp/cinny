@@ -1,3 +1,6 @@
+@use '../../partials/text';
+@use '../../partials/dir';
+
 .context-menu {
   background-color: var(--bg-surface);
   box-shadow: var(--bs-popup);
@@ -29,10 +32,8 @@
   border-bottom: 1px solid var(--bg-surface-border);
 
   .text {
+    @extend .cp-txt__ellipsis;
     color: var(--tc-surface-low);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   &:not(:first-child) {
@@ -50,17 +51,11 @@
     white-space: nowrap;
 
     .text:first-child {
-      margin: {
-        left: calc(var(--ic-small) + var(--sp-ultra-tight));
-        right: var(--sp-extra-tight);
-      }
-
-      [dir=rtl] & {
-        margin: {
-          left: var(--sp-extra-tight);
-          right: calc(var(--ic-small) + var(--sp-ultra-tight));
-        }
-      }
+      @include dir.side(
+        margin,
+        calc(var(--ic-small) + var(--sp-ultra-tight)),
+        var(--sp-extra-tight)
+      );
     }
   }
   .btn-surface:focus {

@@ -1,4 +1,5 @@
 @use 'state';
+@use '../../partials/dir';
 
 .btn-surface,
 .btn-primary,
@@ -18,27 +19,10 @@
   @include state.disabled;
 
   &--icon {
-    padding: {
-      left: var(--sp-tight);
-      right: var(--sp-loose);
-    }
-
-    [dir=rtl] & {
-      padding: {
-        left: var(--sp-loose);
-        right: var(--sp-tight);
-      }
-    }
+    @include dir.side(padding, var(--sp-tight), var(--sp-loose));
 
     .ic-raw {
-      margin-right: var(--sp-extra-tight);
-
-      [dir=rtl] & {
-        margin: {
-          right: 0;
-          left: var(--sp-extra-tight);
-        }
-      }
+      @include dir.side(margin, 0, var(--sp-extra-tight));
     }
   }
 }

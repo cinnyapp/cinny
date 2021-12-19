@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .context-menu__item {
   position: relative;
 }
@@ -8,13 +10,12 @@
   width: 3px;
   height: 12px;
   background: var(--bg-positive);
-  border-radius: 0 4px 4px 0;
+  @include dir.prop(
+    border-radius,
+    0 4px 4px 0,
+    4px 0 0 4px,
+  );
   position: absolute;
-  left: 0;
-
-  [dir=rtl] & {
-    left: unset;
-    right: 0;
-    border-radius: 4px 0 0 4px;
-  }
+  @include dir.prop(left, 0, unset);
+  @include dir.prop(right, unset, 0);
 }

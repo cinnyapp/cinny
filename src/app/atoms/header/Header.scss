@@ -1,20 +1,13 @@
+@use '../../partials/text';
+@use '../../partials/dir';
+
 .header {
-  padding: {
-    left: var(--sp-normal);
-    right: var(--sp-extra-tight);
-  }
+  @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
   width: 100%;
   height: var(--header-height);
   border-bottom: 1px solid var(--bg-surface-border);
   display: flex;
   align-items: center;
-
-  [dir=rtl] & {
-    padding: {
-      left: var(--sp-extra-tight);
-      right: var(--sp-normal);
-    }
-  }
 
   &__title-wrapper {
     flex: 1;
@@ -22,42 +15,29 @@
     display: flex;
     align-items: center;
     margin: 0 var(--sp-tight);
-
+    
     &:first-child {
-      margin-left: 0;
-      [dir=rtl] & {
-        margin-right: 0;
-      }
+      @include dir.side(margin, 0, var(--sp-tight));
     }
 
     & > .text:first-child {
+      @extend .cp-txt__ellipsis;
       min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
     & > .text-b3{
       flex: 1;
       min-width: 0;
 
       margin-top: var(--sp-ultra-tight);
-      margin-left: var(--sp-tight);
-      padding-left: var(--sp-tight);
-      border-left: 1px solid var(--bg-surface-border);
+      @include dir.side(margin, var(--sp-tight), 0);
+      @include dir.side(padding, var(--sp-tight), 0);
+      @include dir.side(border, 1px solid var(--bg-surface-border), none);
+
       max-height: calc(2 * var(--lh-b3));
       overflow: hidden;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
       display: -webkit-box;
-
-      [dir=rtl] & {
-        margin-left: 0;
-        padding-left: 0;
-        border-left: none;
-        margin-right: var(--sp-tight);
-        padding-right: var(--sp-tight);
-        border-right: 1px solid var(--bg-surface-border);
-      }
     }
   }
 }

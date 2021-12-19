@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .pw-model {
   --modal-height: 656px;
   max-height: var(--modal-height) !important;
@@ -16,14 +18,7 @@
   &__drawer {
     width: var(--popup-window-drawer-width);
     background-color: var(--bg-surface-low);
-    border-right: 1px solid var(--bg-surface-border);
-
-    [dir=rtl] & {
-      border: {
-        right: none;
-        left: 1px solid var(--bg-surface-border);
-      }
-    }
+    @include dir.side(border, none, 1px solid var(--bg-surface-border));
   }
   &__content {
     flex: 1;
@@ -52,12 +47,9 @@
 .pw__drawer {
   & .header {
     padding-left: var(--sp-tight);
+    @include dir.side(padding, var(--sp-tight), var(--sp-tight));
     & .header__title-wrapper {
-      margin: 0 var(--sp-extra-tight) 0 var(--sp-ultra-tight);
-    }
-    [dir=rtl] & {
-      padding-right: var(--sp-tight);
-      margin: 0 var(--sp-ultra-tight) 0 var(--sp-extra-tight);
+      @include dir.side(margin, var(--sp-ultra-tight), var(--sp-extra-tight));
     }
   }
 }
@@ -82,11 +74,7 @@
       color: var(--tc-surface-normal);
     }
     & .ic-raw {
-      margin-right: var(--sp-tight);
-      [dir=rtl] & {
-        margin-right: 0;
-        margin-left: var(--sp-tight);
-      }
+      @include dir.side(margin, 0, var(--sp-tight));
     }
   }
 }

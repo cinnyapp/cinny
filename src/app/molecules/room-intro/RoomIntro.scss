@@ -1,15 +1,10 @@
+@use '../../partials/dir';
+
 .room-intro {
   margin-top: calc(2 * var(--sp-extra-loose));
   margin-bottom: var(--sp-extra-loose);
-  padding-left: calc(var(--sp-normal) + var(--av-small) + var(--sp-tight));
-  padding-right: var(--sp-extra-tight);
-
-  [dir=rtl] & {
-    padding: {
-      left: var(--sp-extra-tight);
-      right: calc(var(--sp-normal) + var(--av-small) + var(--sp-tight));
-    }
-  }
+  --left-pad: calc(var(--sp-normal) + var(--av-small) + var(--sp-tight));
+  @include dir.side(padding, var(--left-pad), var(--sp-extra-tight));
 
   .room-intro__content {
     margin-top: var(--sp-extra-loose);

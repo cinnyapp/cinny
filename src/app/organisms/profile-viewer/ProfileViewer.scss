@@ -1,15 +1,13 @@
+@use '../../partials/dir';
+
 .profile-viewer__dialog {
   & .dialog__content__wrapper {
     position: relative;
   }
   & .dialog__content-container {
-    padding: var(--sp-normal);
+    padding-top: var(--sp-normal);
     padding-bottom: 89px;
-    padding-right: var(--sp-extra-tight);
-    [dir=rtl] & {
-      padding-right: var(--sp-normal);
-      padding-left: var(--sp-extra-tight);
-    }
+    @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
   }
 }
 
@@ -58,11 +56,7 @@
       margin: 0 var(--sp-normal)
     }
     & > *:last-child {
-      margin-left: auto;
-      [dir=rtl] & {
-        margin-left: 0;
-        margin-right: auto;
-      }
+      @include dir.side(margin, auto, 0);
     }
   }
 }
@@ -74,13 +68,8 @@
   &__chips {
     padding-top: var(--sp-ultra-tight);
     & .chip {
-      margin: {
-        top: var(--sp-extra-tight);
-        right: var(--sp-extra-tight);
-      }
-      [dir=rtl] & {
-        margin: 0 0 var(--sp-extra-tight) var(--sp-extra-tight);
-      }
+      margin-top: var(--sp-extra-tight);
+      @include dir.side(margin, 0, var(--sp-extra-tight));
     }
   } 
 }

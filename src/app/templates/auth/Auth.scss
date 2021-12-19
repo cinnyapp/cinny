@@ -1,3 +1,6 @@
+@use '../../partials/flex';
+@use '../../partials/dir';
+
 .auth__base {
   --pattern-size: 48px;
   min-height: 100%;
@@ -60,25 +63,22 @@
   & > .input-container {
     flex: 1;
     & .input {
-      border-right: unset;
-      border-radius: var(--bo-radius) 0 0 var(--bo-radius);
       background-color: var(--bg-surface);
+      @include dir.prop(border-right-width, 0, 1px);
+      @include dir.prop(border-left-width, 1px, 0 );
+      @include dir.prop(border-radius,
+        var(--bo-radius) 0 0 var(--bo-radius),
+        0 var(--bo-radius) var(--bo-radius) 0,
+      );
     }
   }
   & .ic-btn {
     height: 46px;
     border: 1px solid var(--bg-surface-border);
-    border-radius: 0 var(--bo-radius) var(--bo-radius) 0;
-  }
-  [dir=rtl] & {
-    & .input {
-      border-radius: 0 var(--bo-radius) var(--bo-radius) 0;
-      border-radius: 1px;
-      border-left: unset;
-    }
-    .ic-btn {
-      border-radius: var(--bo-radius) 0 0 var(--bo-radius);
-    }
+    @include dir.prop(border-radius,
+      0 var(--bo-radius) var(--bo-radius) 0,
+      var(--bo-radius) 0 0 var(--bo-radius),
+    );
   }
 
   &__status {
@@ -144,10 +144,7 @@
 }
 
 .process-wrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  @extend .cp-fx__column--c-c;
 
   min-height: 100%;
   width: 100%;

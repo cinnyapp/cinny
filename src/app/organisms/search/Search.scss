@@ -1,3 +1,5 @@
+@use '../../partials/dir';
+
 .search-dialog__model {
   --modal-height: 380px;
   height: 100%;
@@ -17,20 +19,16 @@
 
     & > .ic-raw {
       position: absolute;
-      left: calc(var(--sp-normal) + var(--sp-tight));
-      [dir=rtl] & {
-        left: unset;
-        right: calc(var(--sp-normal) + var(--sp-tight));
-      }
+      --away: calc(var(--sp-normal) + var(--sp-tight));
+      @include dir.prop(left, var(--away), unset);
+      @include dir.prop(right, unset, var(--away));
     }
     & > .ic-btn {
       border-radius: calc(var(--bo-radius) / 2);
       position: absolute;
-      right: calc(var(--sp-normal) + var(--sp-extra-tight));
-      [dir=rtl] & {
-        right: unset;
-        left: calc(var(--sp-normal) + var(--sp-extra-tight));
-      }
+      --away: calc(var(--sp-normal) + var(--sp-extra-tight));
+      @include dir.prop(right, var(--away), unset);
+      @include dir.prop(left, unset, var(--away));
     }
     & .input-container {
       min-width: 0;
@@ -69,13 +67,8 @@
   }
 
   &__content {
-    padding: var(--sp-extra-tight) var(--sp-normal);
-    padding-right: var(--sp-extra-tight);
-    
-    [dir=rtl] & {
-      padding-left: var(--sp-extra-tight);
-      padding-right: var(--sp-normal);
-    }
+    padding: var(--sp-extra-tight);
+    @include dir.side(padding,  var(--sp-normal), var(--sp-extra-tight));
   }
 
   &__footer {

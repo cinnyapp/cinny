@@ -1,33 +1,24 @@
-.drawer-flexBox {
-  display: flex;
-  flex-direction: column;
-}
-.drawer-flexItem {
-  flex: 1;
-  min-height: 0;
-}
+@use '../../partials/flex';
+@use '../../partials/dir';
 
 .drawer {
-  @extend .drawer-flexItem;
-  @extend .drawer-flexBox;
+  @extend .cp-fx__column;
+  @extend .cp-fx__item-one;
   min-width: 0;
-  border-right: 1px solid var(--bg-surface-border);
-
-  [dir=rtl] & {
-    border-right: none;
-    border-left: 1px solid var(--bg-surface-border);
-  }
+  @include dir.side(border,
+    none,
+    1px solid var(--bg-surface-border),
+  );
 
   &__content-wrapper {
-    @extend .drawer-flexItem;
-    @extend .drawer-flexBox;
+    @extend .cp-fx__item-one;
+    @extend .cp-fx__column;
   }
 
   &__state {
     padding: var(--sp-extra-tight);
     border-top: 1px solid var(--bg-surface-border);
-    display: flex;
-    justify-content: center;
+    @extend .cp-fx__row--c-c;
 
     & .text {
       color: var(--tc-danger-high);
@@ -35,7 +26,7 @@
   }
 }
 .rooms__wrapper {
-  @extend .drawer-flexItem;
+  @extend .cp-fx__item-one;
   position: relative;
 }
 
@@ -58,13 +49,7 @@
 
   & > .room-selector {
     width: calc(100% - var(--sp-extra-tight));
-    margin-left: auto;
-
-    [dir=rtl] & {
-      margin-left: 0;
-      margin-right: auto;
-    }
-
+    @include dir.side(margin, auto, 0);
   }
 
   & > .room-selector:first-child {
