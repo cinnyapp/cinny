@@ -90,7 +90,8 @@
   &__unread {
     position: absolute;
     top: var(--sp-extra-tight);
-    right: var(--sp-extra-tight);
+    @include dir.prop(right, var(--sp-extra-tight), unset);
+    @include dir.prop(left, unset, var(--sp-extra-tight));
     z-index: 999;
 
     display: none;
@@ -109,6 +110,7 @@
     }
     & .btn-primary {
       @extend .cp-fx__item-one;
+      @include dir.side(margin, 0, 1px);
       border-radius: 0;
       padding: 0 var(--sp-tight);
       &:focus {
