@@ -44,7 +44,7 @@
       }
       & > .ic-raw {
         @include dir.prop(left, var(--sp-tight), unset);
-        @include dir.prop(left, unset, var(--sp-tight));
+        @include dir.prop(right, unset, var(--sp-tight));
       }
       & > .ic-btn {
         @include dir.prop(right, 2px, unset);
