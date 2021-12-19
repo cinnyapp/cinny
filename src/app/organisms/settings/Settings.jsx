@@ -6,6 +6,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import { toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents } from '../../../client/action/settings';
+import logout from '../../../client/action/logout';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -24,6 +25,7 @@ import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
+import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
@@ -177,6 +179,10 @@ function Settings({ isOpen, onRequestClose }) {
   }];
   const [selectedSection, setSelectedSection] = useState(settingSections[0]);
 
+  const handleLogout = () => {
+    if (confirm('Confirm logout')) logout();
+  };
+
   return (
     <PopupWindow
       className="settings-window"
@@ -184,18 +190,29 @@ function Settings({ isOpen, onRequestClose }) {
       onRequestClose={onRequestClose}
       title="Settings"
       contentTitle={selectedSection.name}
-      drawer={
-        settingSections.map((section) => (
+      drawer={(
+        <>
+          {
+            settingSections.map((section) => (
+              <PWContentSelector
+                key={section.name}
+                selected={selectedSection.name === section.name}
+                onClick={() => setSelectedSection(section)}
+                iconSrc={section.iconSrc}
+              >
+                {section.name}
+              </PWContentSelector>
+            ))
+          }
           <PWContentSelector
-            key={section.name}
-            selected={selectedSection.name === section.name}
-            onClick={() => setSelectedSection(section)}
-            iconSrc={section.iconSrc}
+            variant="danger"
+            onClick={handleLogout}
+            iconSrc={PowerIC}
           >
-            {section.name}
+            Logout
           </PWContentSelector>
-        ))
-      }
+        </>
+      )}
       contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip="Close" />}
     >
       {selectedSection.render()}

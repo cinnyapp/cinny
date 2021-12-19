@@ -70,9 +70,6 @@
 
   & .context-menu__item > button {
     border-radius: var(--bo-radius);
-    & .text {
-      color: var(--tc-surface-normal);
-    }
     & .ic-raw {
       @include dir.side(margin, 0, var(--sp-tight));
     }

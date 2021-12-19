@@ -1,6 +1,16 @@
+@use '../../partials/flex';
 @use '../../partials/dir';
 
 .settings-window {
+  & .pw__drawer__content {
+    @extend .cp-fx__column;
+    min-height: 100%;
+    padding-bottom: var(--sp-extra-tight);
+
+    & > .pw-content-selector:last-child {
+      margin-top: auto;
+    }
+  }
   & .pw__content-container {
     min-height: 100%;
   }
