@@ -370,7 +370,6 @@
   & blockquote {
     display: inline-block;
     max-width: 100%;
-    @include dir.side(padding, var(--sp-extra-tight), 0);
     @include dir.side(border, 4px solid var(--bg-surface-active), 0);
     white-space: initial !important;
 
