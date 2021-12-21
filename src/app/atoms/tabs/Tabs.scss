@@ -1,0 +1,45 @@
+@use '../../partials/dir';
+
+.tabs {
+  height: var(--header-height);
+  box-shadow: inset 0 -1px 0 var(--bg-surface-border);
+
+  &__content {
+    min-width: 100%;
+    height: 100%;
+    display: flex;
+  }
+}
+
+.tab-item {
+  flex-shrink: 0;
+  
+  @include dir.side(padding, var(--sp-normal), 24px);
+  border-radius: 0;
+  height: 100%;
+  box-shadow: none;
+  border-radius: var(--bo-radius) var(--bo-radius)   0 0;
+
+  &:focus,
+  &:active {
+    background-color: var(--bg-surface-active);
+    box-shadow: none;
+  }
+
+  &--selected {
+    --bs-tab-selected: inset 0 -2px 0 var(--tc-surface-high);
+    box-shadow: var(--bs-tab-selected);
+
+    & .ic-raw {
+      background-color: var(--ic-surface-high);
+    }
+    & .text {
+      font-weight: var(--fw-medium);
+    }
+    &:focus,
+    &:active {
+      background-color: var(--bg-surface-active);
+      box-shadow: var(--bs-tab-selected);
+    }
+  }
+}
