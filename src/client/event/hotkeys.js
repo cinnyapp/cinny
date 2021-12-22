@@ -1,4 +1,4 @@
-import { openSearch } from '../action/navigation';
+import { openSearch, toggleRoomSettings } from '../action/navigation';
 import navigation from '../state/navigation';
 
 function listenKeyboard(event) {
@@ -11,12 +11,24 @@ function listenKeyboard(event) {
       openSearch();
     }
   }
+
   if (!event.ctrlKey && !event.altKey) {
+    if (event.keyCode === 38 && navigation.isRoomSettings) {
+      // close room settings
+      toggleRoomSettings();
+      return;
+    }
+    if (event.keyCode === 40 && !navigation.isRoomSettings) {
+      // open room settings
+      toggleRoomSettings();
+      return;
+    }
+
     if (navigation.isRawModalVisible) return;
     if (['text', 'textarea'].includes(document.activeElement.type)) {
       return;
     }
-    if (event.keyCode < 48
+    if ((event.keyCode !== 8 && event.keyCode < 48)
       || (event.keyCode >= 91 && event.keyCode <= 93)
       || (event.keyCode >= 112 && event.keyCode <= 183)) {
       return;

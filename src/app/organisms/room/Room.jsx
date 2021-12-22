@@ -9,6 +9,7 @@ import RoomTimeline from '../../../client/state/RoomTimeline';
 
 import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
+import RoomSettings from './RoomSettings';
 import PeopleDrawer from './PeopleDrawer';
 
 function Room() {
@@ -42,8 +43,11 @@ function Room() {
   if (roomTimeline === null) return <Welcome />;
 
   return (
-    <div className="room-container">
-      <RoomView roomTimeline={roomTimeline} eventId={eventId} />
+    <div className="room">
+      <div className="room__content">
+        <RoomSettings roomId={roomTimeline.roomId} />
+        <RoomView roomTimeline={roomTimeline} eventId={eventId} />
+      </div>
       { isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />}
     </div>
   );

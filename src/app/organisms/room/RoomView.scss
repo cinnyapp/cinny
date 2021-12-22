@@ -1,8 +1,23 @@
 @use '../../partials/flex';
 
 .room-view {
-  @extend .cp-fx__item-one;
   @extend .cp-fx__column;
+  background-color: var(--bg-surface);
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  z-index: 99;
+  box-shadow: none;
+
+  transition: transform 200ms var(--fluid-slide-down),
+    box-shadow 200ms var(--fluid-slide-down);
+
+  &--dropped {
+    transform: translateY(calc(100% - var(--header-height)));
+    border-radius: var(--bo-radius) var(--bo-radius) 0 0;
+    box-shadow: var(--bs-popup);
+  }
 
   &__content-wrapper {
     @extend .cp-fx__item-one;

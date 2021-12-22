@@ -1,0 +1,39 @@
+@use '../../partials/dir';
+
+.room-settings {
+  height: 100%;
+
+  &__content {
+    padding-bottom: calc(2 * var(--sp-extra-loose));
+    position: relative;
+
+    & .room-profile {
+      margin: var(--sp-extra-loose);
+    }
+  }
+  
+  & .tabs {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    background-color: var(--bg-surface-low);
+    box-shadow: 0 -4px 0 var(--bg-surface-low),
+      inset 0 -1px 0 var(--bg-surface-border);
+
+    &__content {
+      padding: 0 var(--sp-normal);
+    }
+  }
+  
+  &__cards-wrapper {
+    padding: var(--sp-normal);
+    @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
+  }
+
+  &__card {
+    background-color: var(--bg-surface);
+    border-radius: var(--bo-radius);
+    box-shadow: var(--bs-surface-border);
+    padding: 16px;
+  }
+}

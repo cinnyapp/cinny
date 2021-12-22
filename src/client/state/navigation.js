@@ -11,6 +11,7 @@ class Navigation extends EventEmitter {
     this.selectedSpacePath = [cons.tabs.HOME];
 
     this.selectedRoomId = null;
+    this.isRoomSettings = false;
     this.recentRooms = [];
 
     this.isRawModalVisible = false;
@@ -77,12 +78,20 @@ class Navigation extends EventEmitter {
         this.removeRecentRoom(prevSelectedRoomId);
         this.addRecentRoom(prevSelectedRoomId);
         this.removeRecentRoom(this.selectedRoomId);
+        if (this.isRoomSettings) {
+          this.isRoomSettings = !this.isRoomSettings;
+          this.emit(cons.events.navigation.ROOM_SETTINGS_TOGGLED, this.isRoomSettings);
+        }
         this.emit(
           cons.events.navigation.ROOM_SELECTED,
           this.selectedRoomId,
           prevSelectedRoomId,
           action.eventId,
         );
+      },
+      [cons.actions.navigation.TOGGLE_ROOM_SETTINGS]: () => {
+        this.isRoomSettings = !this.isRoomSettings;
+        this.emit(cons.events.navigation.ROOM_SETTINGS_TOGGLED, this.isRoomSettings);
       },
       [cons.actions.navigation.OPEN_INVITE_LIST]: () => {
         this.emit(cons.events.navigation.INVITE_LIST_OPENED);

@@ -68,6 +68,7 @@
 
 
   /* system icons | --ic-[background type]-[priority]: value */
+  --ic-surface-high: #272727;
   --ic-surface-normal: #626262;
   --ic-surface-low: #7c7c7c;
   --ic-primary-normal: #ffffff;
@@ -177,6 +178,8 @@
 
   /* transition curves */
   --fluid-push: cubic-bezier(0, 0.8, 0.67, 0.97);
+  --fluid-slide-down: cubic-bezier(0.02, 0.82, 0.4, 0.96);
+  --fluid-slide-up: cubic-bezier(0.13, 0.56, 0.25, 0.99);
   
   --font-primary: 'Roboto', sans-serif;
   --font-secondary: 'Roboto', sans-serif;
@@ -218,6 +221,7 @@
 
 
   /* text color | --tc-[background type]-[priority]: value */
+  --ic-surface-high: rgb(255, 255, 255);;
   --tc-surface-high: rgba(255, 255, 255, 98%);
   --tc-surface-normal: rgba(255, 255, 255, 94%);
   --tc-surface-normal-low: rgba(255, 255, 255, 60%);
@@ -299,7 +303,8 @@
 
 
   /* system icons | --ic-[background type]-[priority]: value */
-  --ic-surface-normal: rgb(255, 251, 222, 84%);
+  --ic-surface-high: rgb(255, 251, 222);
+  --ic-surface-normal: rgba(255, 251, 222, 84%);
   --ic-surface-low: rgba(255, 251, 222, 64%);
 }
 

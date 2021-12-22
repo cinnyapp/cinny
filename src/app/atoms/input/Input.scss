@@ -1,3 +1,5 @@
+@use '../../atoms/scroll/scrollbar';
+
 .input {
   display: block;
   width: 100%;
@@ -13,6 +15,11 @@
   letter-spacing: var(--ls-b2);
   line-height: var(--lh-b2);
 
+  :disabled {
+    opacity: 0.4;
+    cursor: no-drop;
+  }
+
   &__label {
     display: inline-block;
     margin-bottom: var(--sp-ultra-tight);
@@ -21,6 +28,10 @@
 
   &--resizable {
     resize: vertical !important;
+    overflow-y: auto !important;
+    @include scrollbar.scroll;
+    @include scrollbar.scroll__v;
+    @include scrollbar.scroll--auto-hide;
   }
   &--success {
     border: 1px solid var(--bg-positive);

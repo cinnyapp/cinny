@@ -23,6 +23,13 @@ export function selectRoom(roomId, eventId) {
   });
 }
 
+export function toggleRoomSettings(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.TOGGLE_ROOM_SETTINGS,
+    roomId,
+  });
+}
+
 export function openInviteList() {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_INVITE_LIST,

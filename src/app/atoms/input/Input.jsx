@@ -8,7 +8,7 @@ function Input({
   id, label, name, value, placeholder,
   required, type, onChange, forwardRef,
   resizable, minHeight, onResize, state,
-  onKeyDown,
+  onKeyDown, disabled,
 }) {
   return (
     <div className="input-container">
@@ -29,6 +29,7 @@ function Input({
             onChange={onChange}
             onResize={onResize}
             onKeyDown={onKeyDown}
+            disabled={disabled}
           />
         ) : (
           <input
@@ -43,6 +44,7 @@ function Input({
             autoComplete="off"
             onChange={onChange}
             onKeyDown={onKeyDown}
+            disabled={disabled}
           />
         )}
     </div>
@@ -64,6 +66,7 @@ Input.defaultProps = {
   onResize: null,
   state: 'normal',
   onKeyDown: null,
+  disabled: false,
 };
 
 Input.propTypes = {
@@ -81,6 +84,7 @@ Input.propTypes = {
   onResize: PropTypes.func,
   state: PropTypes.oneOf(['normal', 'success', 'error']),
   onKeyDown: PropTypes.func,
+  disabled: PropTypes.bool,
 };
 
 export default Input;

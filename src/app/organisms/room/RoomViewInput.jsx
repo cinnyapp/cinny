@@ -151,7 +151,6 @@ function RoomViewInput({
     navigation.on(cons.events.navigation.REPLY_TO_CLICKED, setUpReply);
     if (textAreaRef?.current !== null) {
       isTyping = false;
-      focusInput();
       textAreaRef.current.value = roomsInput.getMessage(roomId);
       setAttachment(roomsInput.getAttachment(roomId));
       setReplyTo(roomsInput.getReplyTo(roomId));
