@@ -1,0 +1,53 @@
+@use '../../partials/flex';
+@use '../../partials/dir';
+
+.room-profile {
+  
+  &__content {
+    @extend .cp-fx__row;
+    & .avatar-container {
+      min-width: var(--av-large);
+    }
+  }
+
+  &__display {
+    align-self: flex-end;
+    @include dir.side(margin, var(--sp-loose), 0);
+
+    & > div:first-child {
+      @extend .cp-fx__row--s-c;
+      & > .text {
+        @include dir.side(margin, 0, var(--sp-extra-tight));
+      }
+    }
+
+    & > *:last-child {
+      margin-top: var(--sp-ultra-tight);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  }
+  
+  &__edit-form {
+    @extend .cp-fx__item-one;
+    @include dir.side(margin, var(--sp-loose), 0);
+
+    & .input-container {
+      margin-bottom: var(--sp-extra-tight);
+    }
+
+    & > .text {
+      margin-bottom: var(--sp-tight);
+    }
+    
+    & > *:last-child {
+      @extend .cp-fx__item-one;
+      @extend .cp-fx__row;
+      margin-top: var(--sp-tight);
+      
+      .btn-primary {
+        @include dir.side(margin, 0, var(--sp-tight));
+      }
+    }
+  }
+}
