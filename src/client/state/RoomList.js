@@ -273,11 +273,12 @@ class RoomList extends EventEmitter {
       });
     });
 
-    this.matrixClient.on('Room.name', () => {
+    this.matrixClient.on('Room.name', (room) => {
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+      this.emit(cons.events.roomList.ROOM_PROFILE_UPDATED, room.roomId);
     });
 
-    this.matrixClient.on('RoomState.events', (mEvent) => {
+    this.matrixClient.on('RoomState.events', (mEvent, state) => {
       if (mEvent.getType() === 'm.space.child') {
         const { event } = mEvent;
         if (isMEventSpaceChild(mEvent)) {
@@ -288,9 +289,16 @@ class RoomList extends EventEmitter {
         this.emit(cons.events.roomList.ROOMLIST_UPDATED);
         return;
       }
-      if (mEvent.getType() !== 'm.room.join_rules') return;
-
-      this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+      if (mEvent.getType() === 'm.room.join_rules') {
+        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        return;
+      }
+      if (['m.room.avatar', 'm.room.topic'].includes(mEvent.getType())) {
+        if (mEvent.getType() === 'm.room.avatar') {
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        }
+        this.emit(cons.events.roomList.ROOM_PROFILE_UPDATED, state.roomId);
+      }
     });
 
     this.matrixClient.on('Room.myMembership', (room, membership, prevMembership) => {

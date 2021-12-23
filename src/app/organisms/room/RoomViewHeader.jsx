@@ -23,7 +23,10 @@ import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 
+import { useForceUpdate } from '../../hooks/useForceUpdate';
+
 function RoomViewHeader({ roomId }) {
+  const [, forceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
   let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
@@ -43,6 +46,20 @@ function RoomViewHeader({ roomId }) {
       navigation.removeListener(cons.events.navigation.ROOM_SETTINGS_TOGGLED, settingsToggle);
     };
   }, []);
+
+  useEffect(() => {
+    const { roomList } = initMatrix;
+    const handleProfileUpdate = (rId) => {
+      if (roomId !== rId) return;
+      forceUpdate();
+    };
+
+    roomList.on(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
+    return () => {
+      roomList.on(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
+    };
+  }, [roomId]);
+
   return (
     <Header>
       <button

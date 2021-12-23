@@ -26,8 +26,12 @@ function RoomView({ roomTimeline, eventId }) {
       roomView.classList.toggle('room-view--dropped');
 
       const roomViewContent = roomView.children[1];
-      if (isVisible) setTimeout(() => { roomViewContent.style.visibility = 'hidden'; }, 200);
-      else roomViewContent.style.visibility = 'visible';
+      if (isVisible) {
+        setTimeout(() => {
+          if (!navigation.isRoomSettings) return;
+          roomViewContent.style.visibility = 'hidden';
+        }, 200);
+      } else roomViewContent.style.visibility = 'visible';
     };
     navigation.on(cons.events.navigation.ROOM_SETTINGS_TOGGLED, settingsToggle);
     return () => {

@@ -18,10 +18,12 @@ import ImageUpload from '../image-upload/ImageUpload';
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 
 import { useStore } from '../../hooks/useStore';
+import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 function RoomProfile({ roomId }) {
   const isMountStore = useStore();
   const [isEditing, setIsEditing] = useState(false);
+  const [, forceUpdate] = useForceUpdate();
   const [status, setStatus] = useState({
     msg: null,
     type: cons.status.PRE_FLIGHT,
@@ -44,7 +46,15 @@ function RoomProfile({ roomId }) {
 
   useEffect(() => {
     isMountStore.setItem(true);
+    const { roomList } = initMatrix;
+    const handleProfileUpdate = (rId) => {
+      if (roomId !== rId) return;
+      forceUpdate();
+    };
+
+    roomList.on(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
     return () => {
+      roomList.removeListener(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
       isMountStore.setItem(false);
       setStatus({
         msg: null,
@@ -111,11 +121,6 @@ function RoomProfile({ roomId }) {
         await mx.sendStateEvent(roomId, 'm.room.avatar', { url }, '');
       }
     } else await mx.sendStateEvent(roomId, 'm.room.avatar', { url }, '');
-    if (!isMountStore.getItem()) return;
-    setStatus({
-      msg: null,
-      type: cons.status.PRE_FLIGHT,
-    });
   };
 
   const renderEditNameAndTopic = () => (
