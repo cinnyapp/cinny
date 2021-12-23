@@ -1,0 +1,24 @@
+@use '../../partials/flex';
+
+.radio-btn {
+  @extend .cp-fx__row--c-c;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--bg-surface-low);
+  box-shadow: var(--bs-surface-border);
+  cursor: pointer;
+
+  &--active {
+    background-color: var(--bg-positive);
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      background-color: white;
+      border-radius: 50%;
+    }
+  }
+}
