@@ -1,3 +1,4 @@
+@use '../../partials/flex';
 @use '../../partials/text';
 @use '../../partials/dir';
 
@@ -25,7 +26,7 @@
 
 .context-menu__header {
   height: 34px;
-  padding: 0 var(--sp-tight);
+  padding: 0 var(--sp-normal);
   margin-bottom: var(--sp-ultra-tight);
   display: flex;
   align-items: center;
@@ -37,29 +38,39 @@
   }
 
   &:not(:first-child) {
-    margin-top: var(--sp-normal);
+    margin-top: var(--sp-extra-tight);
     border-top: 1px solid var(--bg-surface-border);
   }
 }
 
 .context-menu__item {
+  display: flex;
   button[class^="btn"] {
-    width: 100%;
+    @extend .cp-fx__item-one;
     justify-content: flex-start;
     border-radius: 0;
     box-shadow: none;
     white-space: nowrap;
+    padding: var(--sp-extra-tight) var(--sp-normal);
 
+    & > .ic-raw {
+      @include dir.side(margin, 0, var(--sp-tight));
+    }
+
+    // if item doesn't have icon
     .text:first-child {
       @include dir.side(
         margin,
-        calc(var(--ic-small) + var(--sp-ultra-tight)),
-        var(--sp-extra-tight)
+        calc(var(--ic-small) + var(--sp-tight)),
+        0
       );
     }
   }
   .btn-surface:focus {
     background-color: var(--bg-surface-hover);
+  }
+  .btn-positive:focus {
+    background-color: var(--bg-positive-hover);
   }
   .btn-caution:focus {
     background-color: var(--bg-caution-hover);
