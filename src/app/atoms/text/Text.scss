@@ -5,7 +5,7 @@
 
   & img.emoji,
   & img[data-mx-emoticon] {
-    height: var(--fs-#{$type});
+    height: calc(var(--lh-#{$type}) - .25rem);
   }
 }
 
@@ -20,7 +20,8 @@
     margin-right: 2px !important;
     padding: 0 !important;
     position: relative;
-    top: 2px;
+    top: -.1rem;
+    vertical-align: middle;
   }
 }
 
