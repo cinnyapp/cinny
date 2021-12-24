@@ -2,6 +2,7 @@ import EventEmitter from 'events';
 import { micromark } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
+import { getUserEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import cons from './cons';
 import settings from './settings';
 
@@ -214,6 +215,20 @@ class RoomsInput extends EventEmitter {
         body: input.message,
         msgtype: 'm.text',
       };
+
+      // Check to see if there are any :shortcode-style-tags: in the message
+      const shortcodes = Array.from(input.message.matchAll(/\B:([\w-]+):\B/g)).map((m) => m[1]);
+      // Find the corresponding
+      const possibleEmoji = getUserEmoji(this.matrixClient)
+        .filter((e) => shortcodes.indexOf(e.shortcode) !== -1);
+      // If it is, this will need to be an HTML formatted message
+      if (possibleEmoji.length !== 0) {
+        // But we'll put the message in after, so that it doesn't get escaped by the
+        // markdown formatter
+        content.formatted_body = input.message;
+        content.format = 'org.matrix.custom.html';
+      }
+
       if (settings.isMarkdown) {
         const formattedBody = getFormattedBody(input.message);
         if (formattedBody !== input.message) {
@@ -221,6 +236,22 @@ class RoomsInput extends EventEmitter {
           content.formatted_body = formattedBody;
         }
       }
+
+      // If there were any emojis, now we substitute :shortcodes: for the <img/> tag
+      for (let i = 0; i < possibleEmoji.length; i += 1) {
+        const emoji = possibleEmoji[i];
+        const tag = `<img data-mx-emoticon="" src="${
+          emoji.mxc
+        }" alt=":${
+          emoji.shortcode
+        }:" title=":${
+          emoji.shortcode
+        }:" height="32" vertical-align="middle" />`;
+
+        content.formatted_body = content.formatted_body
+          .replace(`:${emoji.shortcode}:`, tag);
+      }
+
       if (typeof input.replyTo !== 'undefined') {
         content = bindReplyToContent(roomId, input.replyTo, content);
       }
