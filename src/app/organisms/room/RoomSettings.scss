@@ -2,10 +2,12 @@
 
 .room-settings {
   height: 100%;
+  & .scrollbar {
+    position: relative;
+  }
 
   &__content {
     padding-bottom: calc(2 * var(--sp-extra-loose));
-    position: relative;
 
     & .room-profile {
       margin: var(--sp-extra-loose);
@@ -15,6 +17,7 @@
   & .tabs {
     position: sticky;
     top: 0;
+    z-index: 999;
     width: 100%;
     background-color: var(--bg-surface-low);
     box-shadow: 0 -4px 0 var(--bg-surface-low),
@@ -26,14 +29,19 @@
   }
   
   &__cards-wrapper {
-    padding: var(--sp-normal);
+    padding: 0 var(--sp-normal);
     @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
   }
 
   &__card {
+    margin: var(--sp-normal) 0;
     background-color: var(--bg-surface);
     border-radius: var(--bo-radius);
     box-shadow: var(--bs-surface-border);
-    padding: 16px;
+    overflow: hidden;
+
+    & > .context-menu__header:first-child {
+      margin-top: 2px;
+    }
   }
 }

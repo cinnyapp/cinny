@@ -61,6 +61,7 @@ function PeopleDrawer({ roomId }) {
   const PER_PAGE_MEMBER = 50;
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
+  const canInvite = room?.canInvite(mx.getUserId());
 
   const [itemCount, setItemCount] = useState(PER_PAGE_MEMBER);
   const [membership, setMembership] = useState('join');
@@ -148,7 +149,7 @@ function PeopleDrawer({ roomId }) {
             <Text className="people-drawer__member-count" variant="b3">{`${room.getJoinedMemberCount()} members`}</Text>
           </Text>
         </TitleWrapper>
-        <IconButton onClick={() => openInviteUser(roomId)} tooltip="Invite" src={AddUserIC} />
+        <IconButton onClick={() => openInviteUser(roomId)} tooltip="Invite" src={AddUserIC} disabled={!canInvite} />
       </Header>
       <div className="people-drawer__content-wrapper">
         <div className="people-drawer__scrollable">
