@@ -82,7 +82,7 @@ function handleOnClickCapture(e) {
     openProfileViewer(userId, roomId);
   }
 
-  const spoiler = nativeEvent.path.find((el) => el?.hasAttribute?.('data-mx-spoiler'));
+  const spoiler = nativeEvent.composedPath().find((el) => el?.hasAttribute?.('data-mx-spoiler'));
   if (spoiler) {
     spoiler.classList.toggle('data-mx-spoiler--visible');
   }
