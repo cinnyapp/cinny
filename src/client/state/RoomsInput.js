@@ -201,6 +201,42 @@ class RoomsInput extends EventEmitter {
     return this.roomIdToInput.get(roomId)?.isSending || false;
   }
 
+  // Apply formatting to a plain text message
+  //
+  // This includes inserting any custom emoji that might be relevant, and (only if the
+  // user has enabled it in their settings) formatting the message using markdown.
+  formatAndEmojifyText(text) {
+
+    // Check to see if there are any :shortcode-style-tags: in the message
+    const shortcodes = Array.from(text.matchAll(/\B:([\w-]+):\B/g)).map((m) => m[1]);
+    // Find the corresponding emoji
+    const possibleEmoji = getUserEmoji(this.matrixClient)
+      .filter((e) => shortcodes.indexOf(e.shortcode) !== -1);
+    // But we'll put the emoji in after, so that they don't get escaped by the markdown
+    // formatter
+
+    // Now we apply markdown formatting
+    if (settings.isMarkdown) {
+      text = getFormattedBody(text);
+    }
+
+    // If there were any emojis, now we substitute :shortcodes: for the <img/> tag
+    for (let i = 0; i < possibleEmoji.length; i += 1) {
+      const emoji = possibleEmoji[i];
+      const tag = `<img data-mx-emoticon="" src="${
+        emoji.mxc
+      }" alt=":${
+        emoji.shortcode
+      }:" title=":${
+        emoji.shortcode
+      }:" height="32" vertical-align="middle" />`;
+
+      text = text.replaceAll(`:${emoji.shortcode}:`, tag);
+    }
+
+    return text;
+  }
+
   async sendInput(roomId) {
     const input = this.getInput(roomId);
     input.isSending = true;
@@ -216,40 +252,12 @@ class RoomsInput extends EventEmitter {
         msgtype: 'm.text',
       };
 
-      // Check to see if there are any :shortcode-style-tags: in the message
-      const shortcodes = Array.from(input.message.matchAll(/\B:([\w-]+):\B/g)).map((m) => m[1]);
-      // Find the corresponding
-      const possibleEmoji = getUserEmoji(this.matrixClient)
-        .filter((e) => shortcodes.indexOf(e.shortcode) !== -1);
-      // If it is, this will need to be an HTML formatted message
-      if (possibleEmoji.length !== 0) {
-        // But we'll put the message in after, so that it doesn't get escaped by the
-        // markdown formatter
-        content.formatted_body = input.message;
-        content.format = 'org.matrix.custom.html';
-      }
-
-      if (settings.isMarkdown) {
-        const formattedBody = getFormattedBody(input.message);
-        if (formattedBody !== input.message) {
+      // Apply formatting if relevant
+      const formattedBody = this.formatAndEmojifyText(input.message);
+      if(formattedBody != input.message) {
+        // Formatting was applied, and we need to switch to custom HTML
           content.format = 'org.matrix.custom.html';
           content.formatted_body = formattedBody;
-        }
-      }
-
-      // If there were any emojis, now we substitute :shortcodes: for the <img/> tag
-      for (let i = 0; i < possibleEmoji.length; i += 1) {
-        const emoji = possibleEmoji[i];
-        const tag = `<img data-mx-emoticon="" src="${
-          emoji.mxc
-        }" alt=":${
-          emoji.shortcode
-        }:" title=":${
-          emoji.shortcode
-        }:" height="32" vertical-align="middle" />`;
-
-        content.formatted_body = content.formatted_body
-          .replaceAll(`:${emoji.shortcode}:`, tag);
       }
 
       if (typeof input.replyTo !== 'undefined') {
@@ -379,14 +387,14 @@ class RoomsInput extends EventEmitter {
         rel_type: 'm.replace',
       },
     };
-    if (settings.isMarkdown) {
-      const formattedBody = getFormattedBody(editedBody);
-      if (formattedBody !== editedBody) {
-        content.formatted_body = ` * ${formattedBody}`;
-        content.format = 'org.matrix.custom.html';
-        content['m.new_content'].formatted_body = formattedBody;
-        content['m.new_content'].format = 'org.matrix.custom.html';
-      }
+
+    // Apply formatting if relevant
+    const formattedBody = this.formatAndEmojifyText(editedBody);
+    if(formattedBody != editedBody) {
+      content.formatted_body = ` * ${formattedBody}`;
+      content.format = 'org.matrix.custom.html';
+      content['m.new_content'].formatted_body = formattedBody;
+      content['m.new_content'].format = 'org.matrix.custom.html';
     }
     if (isReply) {
       const evBody = mEvent.getContent().body;
