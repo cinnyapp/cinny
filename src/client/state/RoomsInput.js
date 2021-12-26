@@ -249,7 +249,7 @@ class RoomsInput extends EventEmitter {
         }:" height="32" vertical-align="middle" />`;
 
         content.formatted_body = content.formatted_body
-          .replace(`:${emoji.shortcode}:`, tag);
+          .replaceAll(`:${emoji.shortcode}:`, tag);
       }
 
       if (typeof input.replyTo !== 'undefined') {
