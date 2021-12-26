@@ -95,6 +95,9 @@
 .message__reactions {
   max-width: calc(100% - 88px);
   min-width: 0;
+  @media (max-width: 1124px) {
+    max-width: 100%;
+  }
 }
 
 

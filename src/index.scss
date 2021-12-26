@@ -173,8 +173,14 @@
   --navigation-drawer-width: calc(280px + var(--border-width));
   --navigation-width: calc(var(--navigation-sidebar-width) + var(--navigation-drawer-width));
   --people-drawer-width: calc(268px - var(--border-width));
-  // large size nav drawer & people drawer width => 326px, 312px
-  // medium size nav drawer & people drawer width => 280, 268
+
+  --popup-window-drawer-width: 280px;
+  
+  @media (max-width: 1124px) {
+    --navigation-drawer-width: calc(240px + var(--border-width));
+    --people-drawer-width: calc(256px - var(--border-width));
+    --popup-window-drawer-width: 240px;
+  }
 
   /* transition curves */
   --fluid-push: cubic-bezier(0, 0.8, 0.67, 0.97);
@@ -184,6 +190,7 @@
   --font-primary: 'Roboto', sans-serif;
   --font-secondary: 'Roboto', sans-serif;
 }
+
 
 .silver-theme {
   /* background color | --bg-[background type]: value */
