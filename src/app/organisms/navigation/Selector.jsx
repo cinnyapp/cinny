@@ -12,8 +12,10 @@ import IconButton from '../../atoms/button/IconButton';
 import RoomSelector from '../../molecules/room-selector/RoomSelector';
 
 import HashIC from '../../../../public/res/ic/outlined/hash.svg';
+import HashGlobeIC from '../../../../public/res/ic/outlined/hash-globe.svg';
 import HashLockIC from '../../../../public/res/ic/outlined/hash-lock.svg';
 import SpaceIC from '../../../../public/res/ic/outlined/space.svg';
+import SpaceGlobeIC from '../../../../public/res/ic/outlined/space-globe.svg';
 import SpaceLockIC from '../../../../public/res/ic/outlined/space-lock.svg';
 import PinIC from '../../../../public/res/ic/outlined/pin.svg';
 import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
@@ -47,13 +49,19 @@ function Selector({
     };
   }, []);
 
+  const joinRuleToIconSrc = {
+    restricted: () => (room.isSpaceRoom() ? SpaceIC : HashIC),
+    invite: () => (room.isSpaceRoom() ? SpaceLockIC : HashLockIC),
+    public: () => (room.isSpaceRoom() ? SpaceGlobeIC : HashGlobeIC),
+  };
+
   if (room.isSpaceRoom()) {
     return (
       <RoomSelector
         key={roomId}
         name={room.name}
         roomId={roomId}
-        iconSrc={room.getJoinRule() === 'invite' ? SpaceLockIC : SpaceIC}
+        iconSrc={joinRuleToIconSrc[room.getJoinRule()]?.() || null}
         isUnread={noti.hasNoti(roomId)}
         notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
         isAlert={noti.getHighlightNoti(roomId) !== 0}
@@ -82,8 +90,7 @@ function Selector({
       name={room.name}
       roomId={roomId}
       imageSrc={isDM ? imageSrc : null}
-      // eslint-disable-next-line no-nested-ternary
-      iconSrc={isDM ? null : room.getJoinRule() === 'invite' ? HashLockIC : HashIC}
+      iconSrc={isDM ? null : joinRuleToIconSrc[room.getJoinRule()]?.() || null}
       isSelected={isSelected}
       isUnread={noti.hasNoti(roomId)}
       notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
