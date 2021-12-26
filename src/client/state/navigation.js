@@ -78,7 +78,7 @@ class Navigation extends EventEmitter {
         this.removeRecentRoom(prevSelectedRoomId);
         this.addRecentRoom(prevSelectedRoomId);
         this.removeRecentRoom(this.selectedRoomId);
-        if (this.isRoomSettings) {
+        if (this.isRoomSettings && typeof this.selectedRoomId === 'string') {
           this.isRoomSettings = !this.isRoomSettings;
           this.emit(cons.events.navigation.ROOM_SETTINGS_TOGGLED, this.isRoomSettings);
         }

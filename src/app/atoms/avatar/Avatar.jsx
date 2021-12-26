@@ -16,7 +16,10 @@ function Avatar({
   if (size === 'small') textSize = 'b1';
   if (size === 'extra-small') textSize = 'b3';
 
-  useEffect(() => updateImage(imageSrc), [imageSrc]);
+  useEffect(() => {
+    updateImage(imageSrc);
+    return () => updateImage(null);
+  }, [imageSrc]);
 
   return (
     <div className={`avatar-container avatar-container__${size} noselect`}>

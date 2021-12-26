@@ -129,9 +129,6 @@ function useNotifications(roomId) {
 function RoomNotification({ roomId }) {
   const [activeType, setNotification] = useNotifications(roomId);
 
-  console.log(roomId)
-  console.log(activeType)
-  
   return (
     <div className="room-notification">
       {

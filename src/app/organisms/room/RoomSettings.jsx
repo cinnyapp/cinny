@@ -15,6 +15,7 @@ import Tabs from '../../atoms/tabs/Tabs';
 import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 import RoomProfile from '../../molecules/room-profile/RoomProfile';
 import RoomNotification from '../../molecules/room-notification/RoomNotification';
+import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
 
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
@@ -56,7 +57,7 @@ function GeneralSettings({ roomId }) {
   return (
     <>
       <div className="room-settings__card">
-        <MenuHeader>Notification</MenuHeader>
+        <MenuHeader>Notification (Changing this will only affect you)</MenuHeader>
         <RoomNotification roomId={roomId} />
       </div>
       <div className="room-settings__card">
@@ -68,6 +69,10 @@ function GeneralSettings({ roomId }) {
           Invite
         </MenuItem>
         <MenuItem variant="danger" onClick={() => roomActions.leave(roomId)} iconSrc={LeaveArrowIC}>Leave</MenuItem>
+      </div>
+      <div className="room-settings__card">
+        <MenuHeader>Visibility (who can join)</MenuHeader>
+        <RoomVisibility roomId={roomId} />
       </div>
     </>
   );
@@ -111,7 +116,11 @@ function RoomSettings({ roomId }) {
             </TitleWrapper>
           </Header>
           <RoomProfile roomId={roomId} />
-          <Tabs items={tabItems} onSelect={handleTabChange} />
+          <Tabs
+            items={tabItems}
+            defaultSelected={tabItems.findIndex((tab) => tab.text === selectedTab.text)}
+            onSelect={handleTabChange}
+          />
           <div className="room-settings__cards-wrapper">
             {selectedTab.text === tabItems[0].text && <GeneralSettings roomId={roomId} />}
           </div>
