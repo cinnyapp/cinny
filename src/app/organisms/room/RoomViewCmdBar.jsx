@@ -103,7 +103,7 @@ function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
           className="emoji"
           src={mx.mxcUrlToHttp(emoji.mxc)}
           data-mx-emoticon=""
-          alt={`:${mx.shortcode}:`}
+          alt={`:${emoji.shortcode}:`}
         />
       );
     }

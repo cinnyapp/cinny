@@ -218,6 +218,8 @@ class RoomsInput extends EventEmitter {
     let formattedText;
     if (settings.isMarkdown) {
       formattedText = getFormattedBody(text);
+    } else {
+      formattedText = text;
     }
 
     // If there were any emojis, now we substitute :shortcodes: for the <img/> tag
