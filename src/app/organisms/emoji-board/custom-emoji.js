@@ -37,15 +37,18 @@ function getUserEmoji(mx) {
 // shortcode, only one will be presented, with priority given to custom emoji.
 //
 // Will eventually be expanded to include all emojis revelant to a room and the user
-function getAllEmoji(mx) {
+function getShortcodeToEmoji(mx) {
   const allEmoji = new Map();
 
-  for (let i = 0; i < emojis.length; i += 1) {
-    const emoji = emojis[i];
-    for (let j = 0; j < emoji.shortcodes; j += 1) {
-      allEmoji.set(emoji.shortcodes[j], emoji);
+  emojis.forEach((emoji) => {
+    if(emoji.shortcodes.constructor.name === "Array") {
+      emoji.shortcodes.forEach((shortcode) => {
+        allEmoji.set(shortcode, emoji);
+      });
+    } else {
+      allEmoji.set(emoji.shortcodes, emoji);
     }
-  }
+  });
 
   getUserEmoji(mx).forEach((emoji) => {
     allEmoji.set(emoji.shortcode, emoji);
@@ -71,4 +74,4 @@ function getEmojiForCompletion(mx) {
     .concat(Array.from(allEmoji.values()));
 }
 
-export { getUserEmoji, getAllEmoji, getEmojiForCompletion };
+export { getUserEmoji, getShortcodeToEmoji, getEmojiForCompletion };

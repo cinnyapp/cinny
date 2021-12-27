@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import { micromark } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
-import { getAllEmoji } from '../../app/organisms/emoji-board/custom-emoji';
+import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import cons from './cons';
 import settings from './settings';
 
@@ -206,7 +206,7 @@ class RoomsInput extends EventEmitter {
   // This includes inserting any custom emoji that might be relevant, and (only if the
   // user has enabled it in their settings) formatting the message using markdown.
   formatAndEmojifyText(text) {
-    const allEmoji = getAllEmoji(this.matrixClient);
+    const allEmoji = getShortcodeToEmoji(this.matrixClient);
 
     // Check to see if there are any :shortcode-style-tags: in the message
     const shortcodes = Array.from(text.matchAll(/\B:([\w-]+):\B/g)).map((m) => m[1])
