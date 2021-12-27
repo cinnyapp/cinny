@@ -210,7 +210,7 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
         setCmd({ prefix, suggestions: commands });
       },
       ':': () => {
-        const emojis = getEmojiForCompletion(mx);
+        const emojis = getEmojiForCompletion(mx.getRoom(roomId));
         asyncSearch.setup(emojis, { keys: ['shortcode'], isContain: true, limit: 20 });
         setCmd({ prefix, suggestions: emojis.slice(26, 46) });
       },

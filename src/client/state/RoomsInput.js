@@ -205,8 +205,8 @@ class RoomsInput extends EventEmitter {
   //
   // This includes inserting any custom emoji that might be relevant, and (only if the
   // user has enabled it in their settings) formatting the message using markdown.
-  formatAndEmojifyText(text) {
-    const allEmoji = getShortcodeToEmoji(this.matrixClient);
+  static formatAndEmojifyText(room, text) {
+    const allEmoji = getShortcodeToEmoji(room);
 
     // Start by applying markdown formatting (if relevant)
     let formattedText;
@@ -265,7 +265,10 @@ class RoomsInput extends EventEmitter {
       };
 
       // Apply formatting if relevant
-      const formattedBody = this.formatAndEmojifyText(input.message);
+      const formattedBody = RoomsInput.formatAndEmojifyText(
+        this.matrixClient.getRoom(roomId),
+        input.message,
+      );
       if (formattedBody !== input.message) {
         // Formatting was applied, and we need to switch to custom HTML
         content.format = 'org.matrix.custom.html';
