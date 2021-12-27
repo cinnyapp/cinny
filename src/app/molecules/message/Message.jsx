@@ -172,13 +172,42 @@ const MessageBody = React.memo(({
   // if body is not string it is a React element.
   if (typeof body !== 'string') return <div className="message__body">{body}</div>;
 
-  const content = isCustomHTML
+  let content = isCustomHTML
     ? twemojify(sanitizeCustomHtml(body), undefined, true, false)
-    : <p>{twemojify(body, undefined, true)}</p>;
+    : twemojify(body, undefined, true);
+
+  // Determine if this message should render with large emojis
+  // Criteria:
+  // - Contains only emoji
+  // - Contains no more than 10 emoji
+  let emojiOnly = false;
+  if (content.type === 'img') {
+    // If this messages contains only a single (inline) image
+    emojiOnly = true;
+  } else if (content.constructor.name === 'Array') {
+    // Otherwise, it might be an array of images / texb
+
+    // Count the number of emojis
+    const nEmojis = content.filter((e) => e.type === 'img').length;
+
+    // Make sure there's no text besides whitespace
+    if (nEmojis <= 10 && content.every((element) => (
+      (typeof element === 'object' && element.type === 'img')
+      || (typeof element === 'string' && /^\s*$/g.test(element))
+    ))) {
+      emojiOnly = true;
+    }
+  }
+
+  if (!isCustomHTML) {
+    // If this is a plaintext message, wrap it in a <p> element (automatically applying
+    // white-space: pre-wrap) in order to preserve newlines
+    content = (<p>{content}</p>);
+  }
 
   return (
     <div className="message__body">
-      <div className="text text-b1">
+      <div className={`text ${emojiOnly ? 'text-h1' : 'text-b1'}`}>
         { msgType === 'm.emote' && (
           <>
             {'* '}
