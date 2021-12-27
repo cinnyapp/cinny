@@ -7,6 +7,8 @@ import './EmojiBoard.scss';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { emojiGroups, emojis } from './emoji';
+import { getUserEmoji } from './custom-emoji';
+import initMatrix from '../../../client/initMatrix';
 import AsyncSearch from '../../../util/AsyncSearch';
 
 import Text from '../../atoms/text/Text';
@@ -16,6 +18,7 @@ import Input from '../../atoms/input/Input';
 import ScrollView from '../../atoms/scroll/ScrollView';
 
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
+import StarIC from '../../../../public/res/ic/outlined/star.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import DogIC from '../../../../public/res/ic/outlined/dog.svg';
 import CupIC from '../../../../public/res/ic/outlined/cup.svg';
@@ -40,16 +43,27 @@ function EmojiGroup({ name, groupEmojis }) {
         emojiRow.push(
           <span key={emojiIndex}>
             {
-              parse(twemoji.parse(
-                emoji.unicode,
-                {
-                  attributes: () => ({
-                    unicode: emoji.unicode,
-                    shortcodes: emoji.shortcodes?.toString(),
-                    hexcode: emoji.hexcode,
-                  }),
-                },
-              ))
+              emoji.hexcode
+                ? parse(twemoji.parse(
+                  emoji.unicode,
+                  {
+                    attributes: () => ({
+                      unicode: emoji.unicode,
+                      shortcodes: emoji.shortcodes?.toString(),
+                      hexcode: emoji.hexcode,
+                    }),
+                  },
+                ))
+                : (
+                  <img
+                    className="emoji"
+                    draggable="false"
+                    alt={emoji.shortcode}
+                    unicode={`:${emoji.shortcode}:`}
+                    shortcodes={emoji.shortcode}
+                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc)}
+                  />
+                )
             }
           </span>,
         );
@@ -72,6 +86,8 @@ EmojiGroup.propTypes = {
     length: PropTypes.number,
     unicode: PropTypes.string,
     hexcode: PropTypes.string,
+    mxc: PropTypes.string,
+    shortcode: PropTypes.string,
     shortcodes: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.arrayOf(PropTypes.string),
@@ -133,8 +149,8 @@ function EmojiBoard({ onSelect }) {
     const infoEmoji = emojiInfo.current.firstElementChild.firstElementChild;
     const infoShortcode = emojiInfo.current.lastElementChild;
 
-    const emojiSrc = infoEmoji.src;
-    infoEmoji.src = `${emojiSrc.slice(0, emojiSrc.lastIndexOf('/') + 1)}${emoji.hexcode.toLowerCase()}.png`;
+    infoEmoji.src = emoji.src;
+    infoEmoji.alt = emoji.unicode;
     infoShortcode.textContent = `:${emoji.shortcode}:`;
   }
 
@@ -142,16 +158,21 @@ function EmojiBoard({ onSelect }) {
     if (isTargetNotEmoji(e.target)) return;
 
     const emoji = e.target;
-    const { shortcodes, hexcode } = getEmojiDataFromTarget(emoji);
+    const { shortcodes, unicode } = getEmojiDataFromTarget(emoji);
+    const { src } = e.target;
 
     if (typeof shortcodes === 'undefined') {
       searchRef.current.placeholder = 'Search';
-      setEmojiInfo({ hexcode: '1f643', shortcode: 'slight_smile' });
+      setEmojiInfo({
+        unicode: '🙂',
+        shortcode: 'slight_smile',
+        src: 'https://twemoji.maxcdn.com/v/13.1.0/72x72/1f642.png',
+      });
       return;
     }
     if (searchRef.current.placeholder === shortcodes[0]) return;
     searchRef.current.setAttribute('placeholder', shortcodes[0]);
-    setEmojiInfo({ hexcode, shortcode: shortcodes[0] });
+    setEmojiInfo({ shortcode: shortcodes[0], src, unicode });
   }
 
   function handleSearchChange(e) {
@@ -164,7 +185,7 @@ function EmojiBoard({ onSelect }) {
     let tabIndex = groupOrder;
     const $emojiContent = scrollEmojisRef.current.firstElementChild;
     const groupCount = $emojiContent.childElementCount;
-    if (groupCount > emojiGroups.length) tabIndex += groupCount - emojiGroups.length;
+    if (groupCount > emojiGroups.length) tabIndex += groupCount - emojiGroups.length - 1;
     $emojiContent.children[tabIndex].scrollIntoView();
   }
 
@@ -179,6 +200,7 @@ function EmojiBoard({ onSelect }) {
           <ScrollView ref={scrollEmojisRef} autoHide>
             <div onMouseMove={hoverEmoji} onClick={selectEmoji}>
               <SearchedEmoji />
+              <EmojiGroup name="Your Emoji" groupEmojis={getUserEmoji(initMatrix.matrixClient)} />
               {
                 emojiGroups.map((group) => (
                   <EmojiGroup key={group.name} name={group.name} groupEmojis={group.emojis} />
@@ -193,14 +215,15 @@ function EmojiBoard({ onSelect }) {
         </div>
       </div>
       <div className="emoji-board__nav">
-        <IconButton onClick={() => openGroup(0)} src={EmojiIC} tooltip="Smileys" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(1)} src={DogIC} tooltip="Animals" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(2)} src={CupIC} tooltip="Food" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(3)} src={BallIC} tooltip="Activity" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(4)} src={PhotoIC} tooltip="Travel" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(5)} src={BulbIC} tooltip="Objects" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(6)} src={PeaceIC} tooltip="Symbols" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(7)} src={FlagIC} tooltip="Flags" tooltipPlacement="right" />
+        <IconButton onClick={() => openGroup(0)} src={StarIC} tooltip="Your Emoji" tooltipPlacement="right" />
+        <IconButton onClick={() => openGroup(1)} src={EmojiIC} tooltip="Smileys" tooltipPlacement="right" />
+        <IconButton onClick={() => openGroup(2)} src={DogIC} tooltip="Animals" tooltipPlacement="right" />
+        <IconButton onClick={() => openGroup(3)} src={CupIC} tooltip="Food" tooltipPlacement="right" />
+        <IconButton onClick={() => openGroup(4)} src={BallIC} tooltip="Activity" tooltipPlacement="right" />
+        <IconButton onClick={() => openGroup(5)} src={PhotoIC} tooltip="Travel" tooltipPlacement="right" />
+        <IconButton onClick={() => openGroup(6)} src={BulbIC} tooltip="Objects" tooltipPlacement="right" />
+        <IconButton onClick={() => openGroup(7)} src={PeaceIC} tooltip="Symbols" tooltipPlacement="right" />
+        <IconButton onClick={() => openGroup(8)} src={FlagIC} tooltip="Flags" tooltipPlacement="right" />
       </div>
     </div>
   );
