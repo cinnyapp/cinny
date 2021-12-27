@@ -208,14 +208,7 @@ class RoomsInput extends EventEmitter {
   formatAndEmojifyText(text) {
     const allEmoji = getShortcodeToEmoji(this.matrixClient);
 
-    // Check to see if there are any :shortcode-style-tags: in the message
-    const shortcodes = Array.from(text.matchAll(/\B:([\w-]+):\B/g)).map((m) => m[1])
-      // Then filter to only the ones corresponding to a valid emoji
-      .filter((s) => allEmoji.has(s));
-    // But we'll put the emoji into the message after, so that they don't get escaped by
-    // the markdown formatter
-
-    // Now we apply markdown formatting
+    // Start by applying markdown formatting (if relevant)
     let formattedText;
     if (settings.isMarkdown) {
       formattedText = getFormattedBody(text);
@@ -223,25 +216,36 @@ class RoomsInput extends EventEmitter {
       formattedText = text;
     }
 
-    // If there were any emojis, now we substitute :shortcodes: for the <img/> tag
-    for (let i = 0; i < shortcodes.length; i += 1) {
-      const shortcode = shortcodes[i];
-      const emoji = allEmoji.get(shortcode);
-      let tag;
-      if (emoji.mxc) {
-        tag = `<img data-mx-emoticon="" src="${
-          emoji.mxc
-        }" alt=":${
-          emoji.shortcode
-        }:" title=":${
-          emoji.shortcode
-        }:" height="32" />`;
-      } else {
-        tag = emoji.unicode;
-      }
+    // Check to see if there are any :shortcode-style-tags: in the message
+    Array.from(formattedText.matchAll(/\B:([\w-]+):\B/g))
+      // Then filter to only the ones corresponding to a valid emoji
+      .filter((match) => allEmoji.has(match[1]))
+      // Reversing the array ensures that indices are preserved as we start replacing
+      .reverse()
+      // Replace each :shortcode: with an <img/> tag
+      .forEach((shortcodeMatch) => {
+        const emoji = allEmoji.get(shortcodeMatch[1]);
 
-      formattedText = formattedText.replaceAll(`:${shortcode}:`, tag);
-    }
+        // Render the tag that will replace the shortcode
+        let tag;
+        if (emoji.mxc) {
+          tag = `<img data-mx-emoticon="" src="${
+            emoji.mxc
+          }" alt=":${
+            emoji.shortcode
+          }:" title=":${
+            emoji.shortcode
+          }:" height="32" />`;
+        } else {
+          tag = emoji.unicode;
+        }
+
+        // Splice the tag into the text
+        formattedText =
+          formattedText.substr(0, shortcodeMatch.index) +
+          tag +
+          formattedText.substr(shortcodeMatch.index + shortcodeMatch[0].length);
+      });
 
     return formattedText;
   }
