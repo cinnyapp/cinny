@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import { micromark } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
-import { getUserEmoji } from '../../app/organisms/emoji-board/custom-emoji';
+import { getAllEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import cons from './cons';
 import settings from './settings';
 
@@ -206,13 +206,14 @@ class RoomsInput extends EventEmitter {
   // This includes inserting any custom emoji that might be relevant, and (only if the
   // user has enabled it in their settings) formatting the message using markdown.
   formatAndEmojifyText(text) {
+    const allEmoji = getAllEmoji(this.matrixClient);
+
     // Check to see if there are any :shortcode-style-tags: in the message
-    const shortcodes = Array.from(text.matchAll(/\B:([\w-]+):\B/g)).map((m) => m[1]);
-    // Find the corresponding emoji
-    const possibleEmoji = getUserEmoji(this.matrixClient)
-      .filter((e) => shortcodes.indexOf(e.shortcode) !== -1);
-    // But we'll put the emoji in after, so that they don't get escaped by the markdown
-    // formatter
+    const shortcodes = Array.from(text.matchAll(/\B:([\w-]+):\B/g)).map((m) => m[1])
+      // Then filter to only the ones corresponding to a valid emoji
+      .filter((s) => allEmoji.has(s));
+    // But we'll put the emoji into the message after, so that they don't get escaped by
+    // the markdown formatter
 
     // Now we apply markdown formatting
     let formattedText;
@@ -223,17 +224,23 @@ class RoomsInput extends EventEmitter {
     }
 
     // If there were any emojis, now we substitute :shortcodes: for the <img/> tag
-    for (let i = 0; i < possibleEmoji.length; i += 1) {
-      const emoji = possibleEmoji[i];
-      const tag = `<img data-mx-emoticon="" src="${
-        emoji.mxc
-      }" alt=":${
-        emoji.shortcode
-      }:" title=":${
-        emoji.shortcode
-      }:" height="32" />`;
+    for (let i = 0; i < shortcodes.length; i += 1) {
+      const shortcode = shortcodes[i];
+      const emoji = allEmoji.get(shortcode);
+      let tag;
+      if (emoji.mxc) {
+        tag = `<img data-mx-emoticon="" src="${
+          emoji.mxc
+        }" alt=":${
+          emoji.shortcode
+        }:" title=":${
+          emoji.shortcode
+        }:" height="32" />`;
+      } else {
+        tag = emoji.unicode;
+      }
 
-      formattedText = formattedText.replaceAll(`:${emoji.shortcode}:`, tag);
+      formattedText = formattedText.replaceAll(`:${shortcode}:`, tag);
     }
 
     return formattedText;
