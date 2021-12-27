@@ -99,7 +99,12 @@ function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
     // Render a custom emoji
     function renderCustomEmoji(emoji) {
       return (
-        <img className="emoji" src={mx.mxcUrlToHttp(emoji.mxc)} alt={`${mx.shortcocde} emoji`} />
+        <img
+          className="emoji"
+          src={mx.mxcUrlToHttp(emoji.mxc)}
+          data-mx-emoticon=""
+          alt={`:${mx.shortcode}:`}
+        />
       );
     }
 

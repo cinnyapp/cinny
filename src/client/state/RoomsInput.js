@@ -206,7 +206,6 @@ class RoomsInput extends EventEmitter {
   // This includes inserting any custom emoji that might be relevant, and (only if the
   // user has enabled it in their settings) formatting the message using markdown.
   formatAndEmojifyText(text) {
-
     // Check to see if there are any :shortcode-style-tags: in the message
     const shortcodes = Array.from(text.matchAll(/\B:([\w-]+):\B/g)).map((m) => m[1]);
     // Find the corresponding emoji
@@ -216,8 +215,9 @@ class RoomsInput extends EventEmitter {
     // formatter
 
     // Now we apply markdown formatting
+    let formattedText;
     if (settings.isMarkdown) {
-      text = getFormattedBody(text);
+      formattedText = getFormattedBody(text);
     }
 
     // If there were any emojis, now we substitute :shortcodes: for the <img/> tag
@@ -229,12 +229,12 @@ class RoomsInput extends EventEmitter {
         emoji.shortcode
       }:" title=":${
         emoji.shortcode
-      }:" height="32" vertical-align="middle" />`;
+      }:" height="32" />`;
 
-      text = text.replaceAll(`:${emoji.shortcode}:`, tag);
+      formattedText = formattedText.replaceAll(`:${emoji.shortcode}:`, tag);
     }
 
-    return text;
+    return formattedText;
   }
 
   async sendInput(roomId) {
@@ -254,10 +254,10 @@ class RoomsInput extends EventEmitter {
 
       // Apply formatting if relevant
       const formattedBody = this.formatAndEmojifyText(input.message);
-      if(formattedBody != input.message) {
+      if (formattedBody !== input.message) {
         // Formatting was applied, and we need to switch to custom HTML
-          content.format = 'org.matrix.custom.html';
-          content.formatted_body = formattedBody;
+        content.format = 'org.matrix.custom.html';
+        content.formatted_body = formattedBody;
       }
 
       if (typeof input.replyTo !== 'undefined') {
@@ -390,7 +390,7 @@ class RoomsInput extends EventEmitter {
 
     // Apply formatting if relevant
     const formattedBody = this.formatAndEmojifyText(editedBody);
-    if(formattedBody != editedBody) {
+    if (formattedBody !== editedBody) {
       content.formatted_body = ` * ${formattedBody}`;
       content.format = 'org.matrix.custom.html';
       content['m.new_content'].formatted_body = formattedBody;

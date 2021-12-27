@@ -17,6 +17,10 @@ import { emojis } from './emoji';
 // Accepts a reference to a matrix client as the only argument
 function getUserEmoji(mx) {
   const accountDataEmoji = mx.getAccountData('im.ponies.user_emotes');
+  if (!accountDataEmoji) {
+    return [];
+  }
+
   const { images } = accountDataEmoji.event.content;
   const mapped = Object.entries(images).map((e) => ({
     shortcode: e[0],
