@@ -41,7 +41,7 @@ function getShortcodeToEmoji(mx) {
   const allEmoji = new Map();
 
   emojis.forEach((emoji) => {
-    if(emoji.shortcodes.constructor.name === "Array") {
+    if (emoji.shortcodes.constructor.name === 'Array') {
       emoji.shortcodes.forEach((shortcode) => {
         allEmoji.set(shortcode, emoji);
       });

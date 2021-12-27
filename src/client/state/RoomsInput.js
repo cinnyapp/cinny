@@ -241,10 +241,9 @@ class RoomsInput extends EventEmitter {
         }
 
         // Splice the tag into the text
-        formattedText =
-          formattedText.substr(0, shortcodeMatch.index) +
-          tag +
-          formattedText.substr(shortcodeMatch.index + shortcodeMatch[0].length);
+        formattedText = formattedText.substr(0, shortcodeMatch.index)
+          + tag
+          + formattedText.substr(shortcodeMatch.index + shortcodeMatch[0].length);
       });
 
     return formattedText;
