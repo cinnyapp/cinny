@@ -71,9 +71,7 @@ function getUserEmoji(mx) {
 // Returns a list of `ImagePack`s.  This does not include packs in spaces that contain
 // this room.
 function getPacksInRoom(room) {
-  const packs = room.currentState
-    .events
-    .get('im.ponies.room_emotes');
+  const packs = room.currentState.getStateEvents('im.ponies.room_emotes');
 
   if (!packs) {
     return [];
