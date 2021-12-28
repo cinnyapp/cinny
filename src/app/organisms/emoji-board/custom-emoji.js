@@ -18,25 +18,45 @@ class ImagePack {
   //
   // The room argument is the room the pack exists in, which is used as a fallback for
   // missing properties
-  constructor(rawPack, room) {
+  //
+  // Returns `null` if the rawPack is not a properly formatted image pack, although there
+  // is still a fair amount of tolerance for malformed packs.
+  static parsePack(rawPack, room) {
+    if (typeof rawPack.images === 'undefined') {
+      return null;
+    }
+
     const pack = rawPack.pack ?? {};
 
-    this.displayName = pack.display_name ?? (room ? room.name : undefined);
-    this.avatar = pack.avatar_url ?? (room ? room.getMxcAvatarUrl() : undefined);
-    this.usage = pack.usage ?? ['emoticon', 'sticker'];
-    this.attribution = pack.attribution;
-    this.images = Object.entries(rawPack.images).map((e) => {
+    const displayName = pack.display_name ?? (room ? room.name : undefined);
+    const avatar = pack.avatar_url ?? (room ? room.getMxcAvatarUrl() : undefined);
+    const usage = pack.usage ?? ['emoticon', 'sticker'];
+    const { attribution } = pack;
+    const images = Object.entries(rawPack.images).flatMap((e) => {
       const data = e[1];
       const shortcode = e[0];
       const mxc = data.url;
       const body = data.body ?? shortcode;
       const { info } = data;
-      const usage = data.usage ?? this.usage;
+      const usage_ = data.usage ?? usage;
 
-      return {
-        shortcode, mxc, body, info, usage,
-      };
+      if (mxc) {
+        return [{
+          shortcode, mxc, body, info, usage: usage_,
+        }];
+      }
+      return [];
     });
+
+    return new ImagePack(displayName, avatar, usage, attribution, images);
+  }
+
+  constructor(displayName, avatar, usage, attribution, images) {
+    this.displayName = displayName;
+    this.avatar = avatar;
+    this.usage = usage;
+    this.attribution = attribution;
+    this.images = images;
   }
 
   // Produce a list of emoji in this image pack
@@ -52,17 +72,18 @@ class ImagePack {
 
 // Retrieve a list of user emojis
 //
-// Result is a list of objects, each with a shortcode and an mxc property
+// Result is an ImagePack, or null if the user hasn't set up or has deleted their personal
+// image pack.
 //
 // Accepts a reference to a matrix client as the only argument
-function getUserEmoji(mx) {
+function getUserImagePack(mx) {
   const accountDataEmoji = mx.getAccountData('im.ponies.user_emotes');
   if (!accountDataEmoji) {
-    return [];
+    return null;
   }
 
-  const userImagePack = new ImagePack(accountDataEmoji.event.content);
-  userImagePack.displayName ??= 'Your Emoji';
+  const userImagePack = ImagePack.parsePack(accountDataEmoji.event.content);
+  if (userImagePack) userImagePack.displayName ??= 'Your Emoji';
   return userImagePack;
 }
 
@@ -77,7 +98,9 @@ function getPacksInRoom(room) {
     return [];
   }
 
-  return Array.from(packs.values()).map((p) => new ImagePack(p.event.content, room));
+  return Array.from(packs.values())
+    .map((p) => ImagePack.parsePack(p.event.content, room))
+    .filter((p) => p !== null);
 }
 
 // Produce a list of all image packs which should be shown for a given room
@@ -93,7 +116,7 @@ function getPacksInRoom(room) {
 // higher priority packs coming first.
 function getRelevantPacks(room) {
   return [].concat(
-    getUserEmoji(room.client),
+    getUserImagePack(room.client) ?? [],
     getPacksInRoom(room),
   );
 }
@@ -147,4 +170,4 @@ function getEmojiForCompletion(room) {
     .concat(Array.from(allEmoji.values()));
 }
 
-export { getUserEmoji, getShortcodeToEmoji, getEmojiForCompletion };
+export { getUserImagePack, getShortcodeToEmoji, getEmojiForCompletion };
