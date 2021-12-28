@@ -13,7 +13,7 @@ import {
   openPublicRooms,
   openInviteUser,
 } from '../../../client/action/navigation';
-import { emojis } from '../emoji-board/emoji';
+import { getEmojiForCompletion } from '../emoji-board/custom-emoji';
 import AsyncSearch from '../../../util/AsyncSearch';
 
 import Text from '../../atoms/text/Text';
@@ -81,24 +81,51 @@ function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
   }
 
   function renderEmojiSuggestion(emPrefix, emos) {
+    const mx = initMatrix.matrixClient;
+
+    // Renders a small Twemoji
+    function renderTwemoji(emoji) {
+      return parse(twemoji.parse(
+        emoji.unicode,
+        {
+          attributes: () => ({
+            unicode: emoji.unicode,
+            shortcodes: emoji.shortcodes?.toString(),
+          }),
+        },
+      ));
+    }
+
+    // Render a custom emoji
+    function renderCustomEmoji(emoji) {
+      return (
+        <img
+          className="emoji"
+          src={mx.mxcUrlToHttp(emoji.mxc)}
+          data-mx-emoticon=""
+          alt={`:${emoji.shortcode}:`}
+        />
+      );
+    }
+
+    // Dynamically render either a custom emoji or twemoji based on what the input is
+    function renderEmoji(emoji) {
+      if (emoji.mxc) {
+        return renderCustomEmoji(emoji);
+      }
+      return renderTwemoji(emoji);
+    }
+
     return emos.map((emoji) => (
       <CmdItem
-        key={emoji.hexcode}
+        key={emoji.shortcode}
         onClick={() => fireCmd({
           prefix: emPrefix,
           result: emoji,
         })}
       >
         {
-          parse(twemoji.parse(
-            emoji.unicode,
-            {
-              attributes: () => ({
-                unicode: emoji.unicode,
-                shortcodes: emoji.shortcodes?.toString(),
-              }),
-            },
-          ))
+          renderEmoji(emoji)
         }
         <Text variant="b2">{`:${emoji.shortcode}:`}</Text>
       </CmdItem>
@@ -183,6 +210,7 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
         setCmd({ prefix, suggestions: commands });
       },
       ':': () => {
+        const emojis = getEmojiForCompletion(mx);
         asyncSearch.setup(emojis, { keys: ['shortcode'], isContain: true, limit: 20 });
         setCmd({ prefix, suggestions: emojis.slice(26, 46) });
       },
@@ -210,7 +238,7 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     }
     if (myCmd.prefix === ':') {
       viewEvent.emit('cmd_fired', {
-        replace: myCmd.result.unicode,
+        replace: myCmd.result.mxc ? `:${myCmd.result.shortcode}: ` : myCmd.result.unicode,
       });
     }
     if (myCmd.prefix === '@') {
