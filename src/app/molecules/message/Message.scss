@@ -164,6 +164,10 @@
   & a {
     word-break: break-word;
   }
+  & > .text > a {
+    white-space: initial !important;
+  }
+  
   & span[data-mx-pill] {
     background-color: hsla(0, 0%, 64%, 0.15);
     padding: 0 2px;
@@ -386,10 +390,6 @@
     margin: var(--sp-ultra-tight) 0;
     @include dir.side(padding, 24px, 0);
     white-space: initial !important;
-    
-    & > * {
-      white-space: pre-wrap;
-    }
   }
   & ul.contains-task-list {
     padding: 0;
