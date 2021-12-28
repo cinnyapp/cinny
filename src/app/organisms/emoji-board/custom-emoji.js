@@ -19,7 +19,7 @@ class ImagePack {
   // The room argument is the room the pack exists in, which is used as a fallback for
   // missing properties
   constructor(rawPack, room) {
-    const { pack } = rawPack;
+    const pack = rawPack.pack ?? {};
 
     this.displayName = pack.display_name ?? (room ? room.name : undefined);
     this.avatar = pack.avatar_url ?? (room ? room.getMxcAvatarUrl() : undefined);
