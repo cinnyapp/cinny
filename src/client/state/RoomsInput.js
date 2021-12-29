@@ -404,7 +404,10 @@ class RoomsInput extends EventEmitter {
     };
 
     // Apply formatting if relevant
-    const formattedBody = formatAndEmojifyText(editedBody);
+    const formattedBody = formatAndEmojifyText(
+      this.matrixClient.getRoom(roomId),
+      editedBody
+    );
     if (formattedBody !== editedBody) {
       content.formatted_body = ` * ${formattedBody}`;
       content.format = 'org.matrix.custom.html';

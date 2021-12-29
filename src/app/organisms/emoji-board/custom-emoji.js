@@ -94,11 +94,7 @@ function getUserImagePack(mx) {
 function getPacksInRoom(room) {
   const packs = room.currentState.getStateEvents('im.ponies.room_emotes');
 
-  if (!packs) {
-    return [];
-  }
-
-  return Array.from(packs.values())
+  return packs
     .map((p) => ImagePack.parsePack(p.event.content, room))
     .filter((p) => p !== null);
 }
