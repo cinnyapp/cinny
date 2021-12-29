@@ -13,8 +13,8 @@ import { emojis } from './emoji';
 class ImagePack {
   // Convert a raw image pack into a more maliable format
   //
-  // Takes an image pack as per MSC 2545 (e.g. as in the Matrix spec), and converts it to a
-  // format used here, while filling in defaults.
+  // Takes an image pack event as per MSC 2545 (e.g. as in the Matrix spec), and converts
+  // it to a format used here, while filling in defaults.
   //
   // The room argument is the room the pack exists in, which is used as a fallback for
   // missing properties
@@ -22,17 +22,17 @@ class ImagePack {
   // Returns `null` if the rawPack is not a properly formatted image pack, although there
   // is still a fair amount of tolerance for malformed packs.
   static parsePack(rawPack, room) {
-    if (typeof rawPack.images === 'undefined') {
+    if (typeof rawPack.content.images === 'undefined') {
       return null;
     }
 
-    const pack = rawPack.pack ?? {};
+    const pack = rawPack.content.pack ?? {};
 
     const displayName = pack.display_name ?? (room ? room.name : undefined);
     const avatar = pack.avatar_url ?? (room ? room.getMxcAvatarUrl() : undefined);
     const usage = pack.usage ?? ['emoticon', 'sticker'];
     const { attribution } = pack;
-    const images = Object.entries(rawPack.images).flatMap((e) => {
+    const images = Object.entries(rawPack.content.images).flatMap((e) => {
       const data = e[1];
       const shortcode = e[0];
       const mxc = data.url;
@@ -48,15 +48,16 @@ class ImagePack {
       return [];
     });
 
-    return new ImagePack(displayName, avatar, usage, attribution, images);
+    return new ImagePack(displayName, avatar, usage, attribution, images, rawPack);
   }
 
-  constructor(displayName, avatar, usage, attribution, images) {
+  constructor(displayName, avatar, usage, attribution, images, event) {
     this.displayName = displayName;
     this.avatar = avatar;
     this.usage = usage;
     this.attribution = attribution;
     this.images = images;
+    this.event = event;
   }
 
   // Produce a list of emoji in this image pack
@@ -82,7 +83,7 @@ function getUserImagePack(mx) {
     return null;
   }
 
-  const userImagePack = ImagePack.parsePack(accountDataEmoji.event.content);
+  const userImagePack = ImagePack.parsePack(accountDataEmoji.event);
   if (userImagePack) userImagePack.displayName ??= 'Your Emoji';
   return userImagePack;
 }
@@ -95,7 +96,7 @@ function getPacksInRoom(room) {
   const packs = room.currentState.getStateEvents('im.ponies.room_emotes');
 
   return packs
-    .map((p) => ImagePack.parsePack(p.event.content, room))
+    .map((p) => ImagePack.parsePack(p.event, room))
     .filter((p) => p !== null);
 }
 

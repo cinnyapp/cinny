@@ -30,7 +30,7 @@ function ImagePackSettings({ roomId }) {
       <div className="pack-settings">
         {
           packs.map((pack) => (
-            <div className="room-settings__card pack-settings__pack">
+            <div className="room-settings__card pack-settings__pack" key={pack.event.event_id}>
               <div className="pack-settings__pack-header">
                 <Avatar
                   imageSrc={pack.avatar ? mx.mxcUrlToHttp(pack.avatar, 80, 80, 'crop') : null}
@@ -45,7 +45,7 @@ function ImagePackSettings({ roomId }) {
                 <div className="pack-settings__image-list">
                   {
                     pack.images.map((image) => (
-                      <div className="pack-settings__image-row">
+                      <div className="pack-settings__image-row" key={image.shortcode}>
                         <img
                           src={mx.mxcUrlToHttp(image.mxc, 32, 32, 'scale')}
                           alt={image.body}
