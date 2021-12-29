@@ -8,13 +8,15 @@ import Text from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 
 function SegmentedControls({
-  selected, segments, onSelect,
+  selected, segments, onSelect, disabled,
 }) {
   const [select, setSelect] = useState(selected);
 
   function selectSegment(segmentIndex) {
-    setSelect(segmentIndex);
-    onSelect(segmentIndex);
+    if (!disabled) {
+      setSelect(segmentIndex);
+      onSelect(segmentIndex);
+    }
   }
 
   useEffect(() => {
@@ -31,6 +33,7 @@ function SegmentedControls({
             type="button"
             onClick={() => selectSegment(index)}
             onMouseUp={(e) => blurOnBubbling(e, '.segment-btn')}
+            aria-disabled={disabled}
           >
             <div className="segment-btn__base">
               {segment.iconSrc && <RawIcon size="small" src={segment.iconSrc} />}
@@ -50,6 +53,11 @@ SegmentedControls.propTypes = {
     text: PropTypes.string,
   })).isRequired,
   onSelect: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+};
+
+SegmentedControls.defaultProps = {
+  disabled: false,
 };
 
 export default SegmentedControls;

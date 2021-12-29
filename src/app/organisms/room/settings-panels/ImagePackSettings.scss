@@ -1,0 +1,54 @@
+.pack-settings {
+
+  &__pack {
+    padding: 20px;
+
+    display: grid;
+    grid-template-columns: 220px 10fr;
+    height: 500px;
+    margin-bottom: 50px;
+  }
+
+  &__pack-header {
+    border-right: 1px solid var(--bg-surface-border);
+    padding: 10px;
+    padding-right: 30px;
+
+    display: grid;
+    align-content: center;
+    justify-content: center;
+
+    .avatar-container__large {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 20px;
+    }
+
+    & > p, & > h2 {
+      width: 150px;
+    }
+  }
+
+  &__image-row {
+    display: grid;
+    grid-template-columns: 42px 1fr 0fr;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 10px;
+    margin-left: 20px;
+    justify-content: center;
+
+    img {
+      width: 100%;
+      justify-self: center;
+    }
+
+    .segmented-controls {
+      width: fit-content;
+      justify-self: end;
+    }
+  }
+  &__image-list {
+    padding-bottom: 00px;
+  }
+}
