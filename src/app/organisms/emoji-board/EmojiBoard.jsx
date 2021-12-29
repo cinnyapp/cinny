@@ -46,6 +46,7 @@ function EmojiGroup({ name, groupEmojis }) {
           <span key={emojiIndex}>
             {
               emoji.hexcode
+                // This is a unicode emoji, and should be rendered with twemoji
                 ? parse(twemoji.parse(
                   emoji.unicode,
                   {
@@ -56,6 +57,7 @@ function EmojiGroup({ name, groupEmojis }) {
                     }),
                   },
                 ))
+                // This is a custom emoji, and should be render as an mxc
                 : (
                   <img
                     className="emoji"
@@ -186,18 +188,24 @@ function EmojiBoard({ onSelect }) {
 
   const [availableEmojis, setAvailableEmojis] = useState([]);
 
+  // This should be called whenever the room changes, so that we can switch out the emoji
+  // for whatever packs are relevant to this room
   function updateAvailableEmoji(selectedRoomId) {
+    // Retrieve the packs for the new room
     const packs = getRelevantPacks(
       initMatrix.matrixClient.getRoom(selectedRoomId),
     );
 
+    // Set an index for each pack so that we know where to jump when the user uses the nav
     for (let i = 0; i < packs.length; i += 1) {
       packs[i].packIndex = i;
     }
 
+    // Update the component state
     setAvailableEmojis(packs);
   }
 
+  // Register the above function as an event listener
   useEffect(() => {
     navigation.on(cons.events.navigation.ROOM_SELECTED, updateAvailableEmoji);
     return () => {
