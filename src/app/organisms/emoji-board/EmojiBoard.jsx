@@ -63,7 +63,8 @@ function EmojiGroup({ name, groupEmojis }) {
                     alt={emoji.shortcode}
                     unicode={`:${emoji.shortcode}:`}
                     shortcodes={emoji.shortcode}
-                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc)}
+                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc, 38, 38, 'crop')}
+                    data-mx-emoticon
                   />
                 )
             }
