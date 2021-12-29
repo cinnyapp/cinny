@@ -18,6 +18,9 @@ function ImagePackSettings({ roomId }) {
   const room = mx.getRoom(roomId);
   const packs = getPacksInRoom(room);
 
+  // The ImagePackSettings panel using a [ Emoji | Sticker | Both ] style component for
+  // indicating the usage of each image.  This method converts from the array format of
+  // usage to the index that should be highlighted in the component
   function getUsageIndex(usage) {
     if (usage.length === 1) {
       return usage[0] === 'emoticon' ? 0 : 1;
@@ -31,6 +34,8 @@ function ImagePackSettings({ roomId }) {
         {
           packs.map((pack) => (
             <div className="room-settings__card pack-settings__pack" key={pack.event.event_id}>
+
+              {/* Pack Header */}
               <div className="pack-settings__pack-header">
                 <Avatar
                   imageSrc={pack.avatar ? mx.mxcUrlToHttp(pack.avatar, 80, 80, 'crop') : null}
@@ -41,20 +46,28 @@ function ImagePackSettings({ roomId }) {
                 <Text variant="h2" weight="medium" primary>{twemojify(pack.displayName)}</Text>
                 {pack.attribution && (<Text variant="b3">{twemojify(pack.attribution)}</Text>)}
               </div>
+
+              {/* List of images */}
               <ScrollView autohide>
                 <div className="pack-settings__image-list">
                   {
                     pack.images.map((image) => (
                       <div className="pack-settings__image-row" key={image.shortcode}>
+
+                        {/* The image itself */}
                         <img
                           src={mx.mxcUrlToHttp(image.mxc, 32, 32, 'scale')}
                           alt={image.body}
                         />
+
+                        {/* The shortcode */}
                         <Text variant="b1">
                           :
                           {image.shortcode}
                           :
                         </Text>
+
+                        {/* Usage indicator */}
                         <SegmentedControls
                           selected={getUsageIndex(image.usage)}
                           disabled
