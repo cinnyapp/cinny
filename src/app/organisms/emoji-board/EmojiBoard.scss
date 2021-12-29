@@ -10,6 +10,10 @@
     height: 400px;
     width: 286px;
   }
+  & > .scrollbar {
+    width: initial;
+    height: 400px;
+  }
   &__nav {
     @extend .cp-fx__column;
     justify-content: center;

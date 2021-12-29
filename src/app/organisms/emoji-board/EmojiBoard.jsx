@@ -249,39 +249,42 @@ function EmojiBoard({ onSelect }) {
           <Text>:slight_smile:</Text>
         </div>
       </div>
-      <div className="emoji-board__nav">
-        {
-          availableEmojis.map((pack) => (
-            // TODO (future PR?):  Use the pack icon, and only use StarIC as a fallback
-            <IconButton
-              onClick={() => openGroup(pack.packIndex)}
-              src={StarIC}
-              key={pack.packIndex}
-              tooltip={pack.displayName}
-              tooltipPlacement="right" />
-          ))
-        }
-        {
-          [
-            [0, EmojiIC, 'Smilies'],
-            [1, DogIC, 'Animals'],
-            [2, CupIC, 'Food'],
-            [3, BallIC, 'Activities'],
-            [4, PhotoIC, 'Travel'],
-            [5, BulbIC, 'Objects'],
-            [6, PeaceIC, 'Symbols'],
-            [7, FlagIC, 'Flags'],
-          ].map(([indx, ico, name]) => (
-            <IconButton
-              onClick={() => openGroup(availableEmojis.length + indx)}
-              key={indx}
-              src={ico}
-              tooltip={name}
-              tooltipPlacement="right"
-            />
-          ))
-        }
-      </div>
+      <ScrollView invisible>
+        <div className="emoji-board__nav">
+          {
+            availableEmojis.map((pack) => (
+              // TODO (future PR?):  Use the pack icon, and only use StarIC as a fallback
+              <IconButton
+                onClick={() => openGroup(pack.packIndex)}
+                src={StarIC}
+                key={pack.packIndex}
+                tooltip={pack.displayName}
+                tooltipPlacement="right"
+              />
+            ))
+          }
+          {
+            [
+              [0, EmojiIC, 'Smilies'],
+              [1, DogIC, 'Animals'],
+              [2, CupIC, 'Food'],
+              [3, BallIC, 'Activities'],
+              [4, PhotoIC, 'Travel'],
+              [5, BulbIC, 'Objects'],
+              [6, PeaceIC, 'Symbols'],
+              [7, FlagIC, 'Flags'],
+            ].map(([indx, ico, name]) => (
+              <IconButton
+                onClick={() => openGroup(availableEmojis.length + indx)}
+                key={indx}
+                src={ico}
+                tooltip={name}
+                tooltipPlacement="right"
+              />
+            ))
+          }
+        </div>
+      </ScrollView>
     </div>
   );
 }
