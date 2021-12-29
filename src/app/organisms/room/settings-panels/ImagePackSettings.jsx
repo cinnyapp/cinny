@@ -38,7 +38,7 @@ function ImagePackSettings({ roomId }) {
               {/* Pack Header */}
               <div className="pack-settings__pack-header">
                 <Avatar
-                  imageSrc={pack.avatar ? mx.mxcUrlToHttp(pack.avatar, 80, 80, 'crop') : null}
+                  imageSrc={pack.avatar ? mx.mxcUrlToHttp(pack.avatar, 150, 150, 'crop') : null}
                   text={pack.displayName}
                   bgColor={colorMXID(roomId)}
                   size="large"
@@ -56,12 +56,12 @@ function ImagePackSettings({ roomId }) {
 
                         {/* The image itself */}
                         <img
-                          src={mx.mxcUrlToHttp(image.mxc, 32, 32, 'scale')}
+                          src={mx.mxcUrlToHttp(image.mxc, 64, 64, 'scale')}
                           alt={image.body}
                         />
 
                         {/* The shortcode */}
-                        <Text variant="b1">
+                        <Text variant="32">
                           :
                           {image.shortcode}
                           :
