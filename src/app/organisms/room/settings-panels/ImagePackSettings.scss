@@ -1,0 +1,50 @@
+.pack-settings {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 50px;
+  height: 680px;
+
+  &__pack {
+    width: 510px;
+    padding: 20px;
+    padding-bottom: 0;
+
+    display: grid;
+    grid-template-rows: 0fr 1fr;
+  }
+
+  &__pack-header {
+    display: grid;
+    grid-template-columns: 0fr 1fr;
+    grid-template-rows: 1fr 0fr;
+    align-items: center;
+    column-gap: 10px;
+
+    /* Make this element ignore the parent padding so we can have the border-bottom */
+    margin: -20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--bg-surface-border);
+
+    & > :first-child {
+      grid-area: 1/1/3/2;
+    }
+  }
+
+  &__image-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 0fr;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+
+    .segmented-controls {
+      width: fit-content;
+      justify-self: end;
+    }
+  }
+  &__image-list {
+    padding-bottom: 00px;
+  }
+}

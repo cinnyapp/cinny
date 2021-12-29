@@ -17,6 +17,9 @@ import RoomProfile from '../../molecules/room-profile/RoomProfile';
 import RoomNotification from '../../molecules/room-notification/RoomNotification';
 import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
 
+import ImagePackSettings from './settings-panels/ImagePackSettings';
+
+import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
@@ -30,6 +33,10 @@ import { useForceUpdate } from '../../hooks/useForceUpdate';
 const tabItems = [{
   iconSrc: SettingsIC,
   text: 'General',
+  disabled: false,
+}, {
+  iconSrc: EmojiIC,
+  text: 'Emoji & Stickers',
   disabled: false,
 }, {
   iconSrc: SearchIC,
@@ -123,6 +130,7 @@ function RoomSettings({ roomId }) {
           />
           <div className="room-settings__cards-wrapper">
             {selectedTab.text === tabItems[0].text && <GeneralSettings roomId={roomId} />}
+            {selectedTab.text === tabItems[1].text && <ImagePackSettings roomId={roomId} />}
           </div>
         </div>
       </ScrollView>

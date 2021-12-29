@@ -12,9 +12,12 @@
 
 .segment-btn {
   padding: var(--sp-extra-tight) 0;
-  cursor: pointer;
-  @include state.hover(var(--bg-surface-hover));
-  @include state.active(var(--bg-surface-active));
+
+  &:not([aria-disabled="true"]) {
+    cursor: pointer;
+    @include state.hover(var(--bg-surface-hover));
+    @include state.active(var(--bg-surface-active));
+  }
 
   &__base {
     padding: 0 var(--sp-normal);
