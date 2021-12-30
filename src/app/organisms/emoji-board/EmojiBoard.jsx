@@ -29,7 +29,7 @@ import BulbIC from '../../../../public/res/ic/outlined/bulb.svg';
 import PeaceIC from '../../../../public/res/ic/outlined/peace.svg';
 import FlagIC from '../../../../public/res/ic/outlined/flag.svg';
 
-function EmojiGroup({ name, groupEmojis }) {
+const EmojiGroup = React.memo(({ name, groupEmojis }) => {
   function getEmojiBoard() {
     const emojiBoard = [];
     const ROW_EMOJIS_COUNT = 7;
@@ -64,7 +64,7 @@ function EmojiGroup({ name, groupEmojis }) {
                     alt={emoji.shortcode}
                     unicode={`:${emoji.shortcode}:`}
                     shortcodes={emoji.shortcode}
-                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc, 38, 38, 'crop')}
+                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc)}
                     data-mx-emoticon
                   />
                 )
@@ -83,7 +83,8 @@ function EmojiGroup({ name, groupEmojis }) {
       {groupEmojis.length !== 0 && <div className="emoji-set">{getEmojiBoard()}</div>}
     </div>
   );
-}
+});
+
 EmojiGroup.propTypes = {
   name: PropTypes.string.isRequired,
   groupEmojis: PropTypes.arrayOf(PropTypes.shape({
