@@ -1,0 +1,37 @@
+@use '../../partials/flex';
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+
+  border-radius: calc(var(--bo-radius) / 2);
+  background-color: var(--bg-surface-border);
+  box-shadow: var(--bs-surface-border);
+  cursor: pointer;
+  @extend .cp-fx__row--c-c;
+
+  &--active {
+    background-color: black;
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 6px;
+      border: 6px solid white;
+      border-width: 0 0 3px 3px;
+      transform: rotateZ(-45deg) translate(1px, -1px);
+    }
+  }
+}
+.checkbox-primary.checkbox--active {
+  background-color: var(--bg-primary);
+}
+.checkbox-positive.checkbox--active {
+  background-color: var(--bg-positive);
+}
+.checkbox-caution.checkbox--active {
+  background-color: var(--bg-caution);
+}
+.checkbox-danger.checkbox--active {
+  background-color: var(--bg-danger);
+}
