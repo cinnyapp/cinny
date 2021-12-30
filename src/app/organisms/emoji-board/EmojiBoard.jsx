@@ -194,7 +194,11 @@ function EmojiBoard({ onSelect }) {
     // Retrieve the packs for the new room
     const packs = getRelevantPacks(
       initMatrix.matrixClient.getRoom(selectedRoomId),
-    );
+    )
+    // Remove packs that aren't marked as emoji packs
+      .filter((pack) => pack.usage.indexOf('emoticon') !== -1)
+    // Remove packs without emojis
+      .filter((pack) => pack.getEmojis().length !== 0);
 
     // Set an index for each pack so that we know where to jump when the user uses the nav
     for (let i = 0; i < packs.length; i += 1) {
