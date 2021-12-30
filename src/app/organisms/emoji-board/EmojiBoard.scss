@@ -22,9 +22,24 @@
     background-color: var(--bg-surface-low);
     @include dir.side(border, 1px solid var(--bg-surface-border), none);
 
-    & > .ic-btn-surface {
+    & .ic-btn-surface {
       margin: calc(var(--sp-ultra-tight) / 2) 0;
       opacity: 0.8;
+    }
+  }
+  &__nav-custom {
+    @extend .cp-fx__column;
+    border-bottom: 1px solid var(--bg-surface-border);
+    
+    & .ic-btn-surface {
+      & .ic-raw {
+        filter: grayscale(1);
+      }
+      &:hover, &:active, &:focus {
+        & .ic-raw {
+          filter: grayscale(0);
+        }
+      }
     }
   }
 }

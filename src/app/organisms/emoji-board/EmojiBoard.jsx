@@ -20,7 +20,6 @@ import Input from '../../atoms/input/Input';
 import ScrollView from '../../atoms/scroll/ScrollView';
 
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
-import StarIC from '../../../../public/res/ic/outlined/star.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import DogIC from '../../../../public/res/ic/outlined/dog.svg';
 import CupIC from '../../../../public/res/ic/outlined/cup.svg';
@@ -65,7 +64,7 @@ function EmojiGroup({ name, groupEmojis }) {
                     alt={emoji.shortcode}
                     unicode={`:${emoji.shortcode}:`}
                     shortcodes={emoji.shortcode}
-                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc, 38, 38, 'crop')}
+                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc)}
                     data-mx-emoticon
                   />
                 )
@@ -263,18 +262,23 @@ function EmojiBoard({ onSelect }) {
       </div>
       <ScrollView invisible>
         <div className="emoji-board__nav">
-          {
-            availableEmojis.map((pack) => (
-              // TODO (future PR?):  Use the pack icon, and only use StarIC as a fallback
-              <IconButton
-                onClick={() => openGroup(pack.packIndex)}
-                src={StarIC}
-                key={pack.packIndex}
-                tooltip={pack.displayName}
-                tooltipPlacement="right"
-              />
-            ))
-          }
+          <div className="emoji-board__nav-custom">
+            {
+              availableEmojis.map((pack) => {
+                const src = initMatrix.matrixClient.mxcUrlToHttp(pack.avatar ?? pack.images[0].mxc);
+                return (
+                  <IconButton
+                    onClick={() => openGroup(pack.packIndex)}
+                    src={src}
+                    key={pack.packIndex}
+                    tooltip={pack.displayName}
+                    tooltipPlacement="right"
+                    isImage
+                  />
+                );
+              })
+            }
+          </div>
           {
             [
               [0, EmojiIC, 'Smilies'],
