@@ -10,6 +10,9 @@
   -webkit-mask-size: cover;
   mask-size: cover;
   background-color: var(--ic-surface-normal);
+
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 .ic-raw-large {
   @include icSize(var(--ic-large));
