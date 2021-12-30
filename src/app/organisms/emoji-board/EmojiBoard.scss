@@ -3,44 +3,44 @@
 @use '../../partials/dir';
 
 .emoji-board {
+  --emoji-board-height: 390px;
+  --emoji-board-width: 286px;
   display: flex;
+  
   &__content {
     @extend .cp-fx__item-one;
     @extend .cp-fx__column;
-    height: 400px;
-    width: 286px;
+    height: var(--emoji-board-height);
+    width: var(--emoji-board-width);
   }
   & > .scrollbar {
     width: initial;
-    height: 400px;
+    height: var(--emoji-board-height);
   }
   &__nav {
     @extend .cp-fx__column;
     justify-content: center;
 
+    min-height: 100%;
     padding: 4px 6px;
     background-color: var(--bg-surface-low);
     @include dir.side(border, 1px solid var(--bg-surface-border), none);
 
+    position: relative;
+    
     & .ic-btn-surface {
-      margin: calc(var(--sp-ultra-tight) / 2) 0;
       opacity: 0.8;
     }
   }
-  &__nav-custom {
+  &__nav-custom,
+  &__nav-twemoji {
     @extend .cp-fx__column;
-    border-bottom: 1px solid var(--bg-surface-border);
-    
-    & .ic-btn-surface {
-      & .ic-raw {
-        filter: grayscale(1);
-      }
-      &:hover, &:active, &:focus {
-        & .ic-raw {
-          filter: grayscale(0);
-        }
-      }
-    }
+  }
+  &__nav-twemoji {
+    background: inherit;
+    position: sticky;
+    bottom: -70%;
+    z-index: 999;
   }
 }
 

@@ -64,7 +64,7 @@ function EmojiGroup({ name, groupEmojis }) {
                     alt={emoji.shortcode}
                     unicode={`:${emoji.shortcode}:`}
                     shortcodes={emoji.shortcode}
-                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc)}
+                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc, 38, 38, 'crop')}
                     data-mx-emoticon
                   />
                 )
@@ -279,26 +279,28 @@ function EmojiBoard({ onSelect }) {
               })
             }
           </div>
-          {
-            [
-              [0, EmojiIC, 'Smilies'],
-              [1, DogIC, 'Animals'],
-              [2, CupIC, 'Food'],
-              [3, BallIC, 'Activities'],
-              [4, PhotoIC, 'Travel'],
-              [5, BulbIC, 'Objects'],
-              [6, PeaceIC, 'Symbols'],
-              [7, FlagIC, 'Flags'],
-            ].map(([indx, ico, name]) => (
-              <IconButton
-                onClick={() => openGroup(availableEmojis.length + indx)}
-                key={indx}
-                src={ico}
-                tooltip={name}
-                tooltipPlacement="right"
-              />
-            ))
-          }
+          <div className="emoji-board__nav-twemoji">
+            {
+              [
+                [0, EmojiIC, 'Smilies'],
+                [1, DogIC, 'Animals'],
+                [2, CupIC, 'Food'],
+                [3, BallIC, 'Activities'],
+                [4, PhotoIC, 'Travel'],
+                [5, BulbIC, 'Objects'],
+                [6, PeaceIC, 'Symbols'],
+                [7, FlagIC, 'Flags'],
+              ].map(([indx, ico, name]) => (
+                <IconButton
+                  onClick={() => openGroup(availableEmojis.length + indx)}
+                  key={indx}
+                  src={ico}
+                  tooltip={name}
+                  tooltipPlacement="right"
+                />
+              ))
+            }
+          </div>
         </div>
       </ScrollView>
     </div>
