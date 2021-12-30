@@ -166,4 +166,6 @@ function getEmojiForCompletion(room) {
     .concat(Array.from(allEmoji.values()));
 }
 
-export { getUserImagePack, getShortcodeToEmoji, getEmojiForCompletion };
+export {
+  getUserImagePack, getShortcodeToEmoji, getRelevantPacks, getEmojiForCompletion,
+};

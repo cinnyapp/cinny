@@ -7,6 +7,10 @@ import './EmojiBoard.scss';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { emojiGroups, emojis } from './emoji';
+import { getRelevantPacks } from './custom-emoji';
+import initMatrix from '../../../client/initMatrix';
+import cons from '../../../client/state/cons';
+import navigation from '../../../client/state/navigation';
 import AsyncSearch from '../../../util/AsyncSearch';
 
 import Text from '../../atoms/text/Text';
@@ -16,6 +20,7 @@ import Input from '../../atoms/input/Input';
 import ScrollView from '../../atoms/scroll/ScrollView';
 
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
+import StarIC from '../../../../public/res/ic/outlined/star.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import DogIC from '../../../../public/res/ic/outlined/dog.svg';
 import CupIC from '../../../../public/res/ic/outlined/cup.svg';
@@ -40,16 +45,30 @@ function EmojiGroup({ name, groupEmojis }) {
         emojiRow.push(
           <span key={emojiIndex}>
             {
-              parse(twemoji.parse(
-                emoji.unicode,
-                {
-                  attributes: () => ({
-                    unicode: emoji.unicode,
-                    shortcodes: emoji.shortcodes?.toString(),
-                    hexcode: emoji.hexcode,
-                  }),
-                },
-              ))
+              emoji.hexcode
+                // This is a unicode emoji, and should be rendered with twemoji
+                ? parse(twemoji.parse(
+                  emoji.unicode,
+                  {
+                    attributes: () => ({
+                      unicode: emoji.unicode,
+                      shortcodes: emoji.shortcodes?.toString(),
+                      hexcode: emoji.hexcode,
+                    }),
+                  },
+                ))
+                // This is a custom emoji, and should be render as an mxc
+                : (
+                  <img
+                    className="emoji"
+                    draggable="false"
+                    alt={emoji.shortcode}
+                    unicode={`:${emoji.shortcode}:`}
+                    shortcodes={emoji.shortcode}
+                    src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc, 38, 38, 'crop')}
+                    data-mx-emoticon
+                  />
+                )
             }
           </span>,
         );
@@ -72,6 +91,8 @@ EmojiGroup.propTypes = {
     length: PropTypes.number,
     unicode: PropTypes.string,
     hexcode: PropTypes.string,
+    mxc: PropTypes.string,
+    shortcode: PropTypes.string,
     shortcodes: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.arrayOf(PropTypes.string),
@@ -133,8 +154,8 @@ function EmojiBoard({ onSelect }) {
     const infoEmoji = emojiInfo.current.firstElementChild.firstElementChild;
     const infoShortcode = emojiInfo.current.lastElementChild;
 
-    const emojiSrc = infoEmoji.src;
-    infoEmoji.src = `${emojiSrc.slice(0, emojiSrc.lastIndexOf('/') + 1)}${emoji.hexcode.toLowerCase()}.png`;
+    infoEmoji.src = emoji.src;
+    infoEmoji.alt = emoji.unicode;
     infoShortcode.textContent = `:${emoji.shortcode}:`;
   }
 
@@ -142,16 +163,21 @@ function EmojiBoard({ onSelect }) {
     if (isTargetNotEmoji(e.target)) return;
 
     const emoji = e.target;
-    const { shortcodes, hexcode } = getEmojiDataFromTarget(emoji);
+    const { shortcodes, unicode } = getEmojiDataFromTarget(emoji);
+    const { src } = e.target;
 
     if (typeof shortcodes === 'undefined') {
       searchRef.current.placeholder = 'Search';
-      setEmojiInfo({ hexcode: '1f643', shortcode: 'slight_smile' });
+      setEmojiInfo({
+        unicode: '🙂',
+        shortcode: 'slight_smile',
+        src: 'https://twemoji.maxcdn.com/v/13.1.0/72x72/1f642.png',
+      });
       return;
     }
     if (searchRef.current.placeholder === shortcodes[0]) return;
     searchRef.current.setAttribute('placeholder', shortcodes[0]);
-    setEmojiInfo({ hexcode, shortcode: shortcodes[0] });
+    setEmojiInfo({ shortcode: shortcodes[0], src, unicode });
   }
 
   function handleSearchChange(e) {
@@ -160,11 +186,44 @@ function EmojiBoard({ onSelect }) {
     scrollEmojisRef.current.scrollTop = 0;
   }
 
+  const [availableEmojis, setAvailableEmojis] = useState([]);
+
+  // This should be called whenever the room changes, so that we can switch out the emoji
+  // for whatever packs are relevant to this room
+  function updateAvailableEmoji(selectedRoomId) {
+    // Retrieve the packs for the new room
+    const packs = getRelevantPacks(
+      initMatrix.matrixClient.getRoom(selectedRoomId),
+    )
+    // Remove packs that aren't marked as emoji packs
+      .filter((pack) => pack.usage.indexOf('emoticon') !== -1)
+    // Remove packs without emojis
+      .filter((pack) => pack.getEmojis().length !== 0);
+
+    // Set an index for each pack so that we know where to jump when the user uses the nav
+    for (let i = 0; i < packs.length; i += 1) {
+      packs[i].packIndex = i;
+    }
+
+    // Update the component state
+    setAvailableEmojis(packs);
+  }
+
+  // Register the above function as an event listener
+  useEffect(() => {
+    navigation.on(cons.events.navigation.ROOM_SELECTED, updateAvailableEmoji);
+    return () => {
+      navigation.removeListener(cons.events.navigation.ROOM_SELECTED, updateAvailableEmoji);
+    };
+  }, []);
+
   function openGroup(groupOrder) {
     let tabIndex = groupOrder;
     const $emojiContent = scrollEmojisRef.current.firstElementChild;
     const groupCount = $emojiContent.childElementCount;
-    if (groupCount > emojiGroups.length) tabIndex += groupCount - emojiGroups.length;
+    if (groupCount > emojiGroups.length) {
+      tabIndex += groupCount - emojiGroups.length - availableEmojis.length;
+    }
     $emojiContent.children[tabIndex].scrollIntoView();
   }
 
@@ -180,6 +239,16 @@ function EmojiBoard({ onSelect }) {
             <div onMouseMove={hoverEmoji} onClick={selectEmoji}>
               <SearchedEmoji />
               {
+                availableEmojis.map((pack) => (
+                  <EmojiGroup
+                    name={pack.displayName}
+                    key={pack.packIndex}
+                    groupEmojis={pack.getEmojis()}
+                    className="custom-emoji-group"
+                  />
+                ))
+              }
+              {
                 emojiGroups.map((group) => (
                   <EmojiGroup key={group.name} name={group.name} groupEmojis={group.emojis} />
                 ))
@@ -192,16 +261,42 @@ function EmojiBoard({ onSelect }) {
           <Text>:slight_smile:</Text>
         </div>
       </div>
-      <div className="emoji-board__nav">
-        <IconButton onClick={() => openGroup(0)} src={EmojiIC} tooltip="Smileys" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(1)} src={DogIC} tooltip="Animals" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(2)} src={CupIC} tooltip="Food" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(3)} src={BallIC} tooltip="Activity" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(4)} src={PhotoIC} tooltip="Travel" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(5)} src={BulbIC} tooltip="Objects" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(6)} src={PeaceIC} tooltip="Symbols" tooltipPlacement="right" />
-        <IconButton onClick={() => openGroup(7)} src={FlagIC} tooltip="Flags" tooltipPlacement="right" />
-      </div>
+      <ScrollView invisible>
+        <div className="emoji-board__nav">
+          {
+            availableEmojis.map((pack) => (
+              // TODO (future PR?):  Use the pack icon, and only use StarIC as a fallback
+              <IconButton
+                onClick={() => openGroup(pack.packIndex)}
+                src={StarIC}
+                key={pack.packIndex}
+                tooltip={pack.displayName}
+                tooltipPlacement="right"
+              />
+            ))
+          }
+          {
+            [
+              [0, EmojiIC, 'Smilies'],
+              [1, DogIC, 'Animals'],
+              [2, CupIC, 'Food'],
+              [3, BallIC, 'Activities'],
+              [4, PhotoIC, 'Travel'],
+              [5, BulbIC, 'Objects'],
+              [6, PeaceIC, 'Symbols'],
+              [7, FlagIC, 'Flags'],
+            ].map(([indx, ico, name]) => (
+              <IconButton
+                onClick={() => openGroup(availableEmojis.length + indx)}
+                key={indx}
+                src={ico}
+                tooltip={name}
+                tooltipPlacement="right"
+              />
+            ))
+          }
+        </div>
+      </ScrollView>
     </div>
   );
 }
