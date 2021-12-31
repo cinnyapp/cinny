@@ -362,6 +362,9 @@ body {
   font-size: 16px;
   font-weight: var(--fw-normal);
   background-color: var(--bg-surface-low);
+
+  /*Why font-variant-ligatures => https://github.com/rsms/inter/issues/222 */
+  font-variant-ligatures: no-contextual;
 }
 #root {
   width: 100%;
