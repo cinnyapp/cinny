@@ -1,4 +1,4 @@
-import { openSearch, toggleRoomSettings } from '../action/navigation';
+import { openSearch } from '../action/navigation';
 import navigation from '../state/navigation';
 
 function listenKeyboard(event) {
@@ -13,17 +13,6 @@ function listenKeyboard(event) {
   }
 
   if (!event.ctrlKey && !event.altKey) {
-    if (event.keyCode === 38 && navigation.isRoomSettings) {
-      // close room settings
-      toggleRoomSettings();
-      return;
-    }
-    if (event.keyCode === 40 && !navigation.isRoomSettings) {
-      // open room settings
-      toggleRoomSettings();
-      return;
-    }
-
     if (navigation.isRawModalVisible) return;
     if (['text', 'textarea'].includes(document.activeElement.type)) {
       return;
