@@ -1,4 +1,5 @@
 @use '../../partials/flex';
+@use './state';
 
 .checkbox {
   width: 20px;
@@ -8,6 +9,7 @@
   background-color: var(--bg-surface-border);
   box-shadow: var(--bs-surface-border);
   cursor: pointer;
+  @include state.disabled;
   @extend .cp-fx__row--c-c;
 
   &--active {
