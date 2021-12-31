@@ -58,6 +58,7 @@ function AppearanceSection() {
               { text: 'Silver' },
               { text: 'Dark' },
               { text: 'Butter' },
+              { text: 'Auto' },
             ]}
             onSelect={(index) => settings.setTheme(index)}
           />
