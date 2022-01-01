@@ -12,8 +12,8 @@ import Button from '../../atoms/button/Button';
 import Input from '../../atoms/input/Input';
 import Checkbox from '../../atoms/button/Checkbox';
 import Toggle from '../../atoms/button/Toggle';
-import { MenuItem, MenuHeader } from '../../atoms/context-menu/ContextMenu';
-import SettingTile from '../../molecules/setting-tile/SettingTile';
+import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
+import SettingTile from '../setting-tile/SettingTile';
 
 import { useStore } from '../../hooks/useStore';
 
