@@ -51,8 +51,8 @@
 
 .homeserver-form,
 .auth-form__heading {
-  & .context-menu .btn-surface .ic-raw {
-    width: 0;
+  & .context-menu__item .text {
+    margin: 0 !important;
   }
 }
 
