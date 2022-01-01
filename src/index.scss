@@ -289,7 +289,8 @@
   --font-secondary: 'Inter', 'Roboto', sans-serif;
 }
 
-.dark-theme {
+.dark-theme,
+.butter-theme {
   @include dark-mode();
 }
 
@@ -300,7 +301,6 @@
 }
 
 .butter-theme {
-  @include dark-mode();
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(64, 6%, 14%);
   --bg-surface-transparent: hsla(64, 6%, 14%, 0);
