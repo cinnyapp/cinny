@@ -16,6 +16,7 @@ import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 import RoomProfile from '../../molecules/room-profile/RoomProfile';
 import RoomNotification from '../../molecules/room-notification/RoomNotification';
 import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
+import RoomAliases from '../../molecules/room-aliases/RoomAliases';
 
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
@@ -71,8 +72,12 @@ function GeneralSettings({ roomId }) {
         <MenuItem variant="danger" onClick={() => roomActions.leave(roomId)} iconSrc={LeaveArrowIC}>Leave</MenuItem>
       </div>
       <div className="room-settings__card">
-        <MenuHeader>Visibility (who can join)</MenuHeader>
+        <MenuHeader>Room visibility (who can join)</MenuHeader>
         <RoomVisibility roomId={roomId} />
+      </div>
+      <div className="room-settings__card">
+        <MenuHeader>Room addresses</MenuHeader>
+        <RoomAliases roomId={roomId} />
       </div>
     </>
   );

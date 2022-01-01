@@ -1,0 +1,84 @@
+@use '../../partials/flex';
+@use '../../partials/dir';
+@use '../../partials/text';
+
+.room-aliases {
+  &__message,
+  & .setting-tile {
+    margin: var(--sp-tight) var(--sp-normal);
+  }
+  & .setting-tile {
+    margin-bottom: var(--sp-loose);
+  }
+
+  &__alias-item {
+    padding: var(--sp-extra-tight) var(--sp-normal);
+    @extend .cp-fx__row--s-c;
+    &.checkbox {
+      @include dir.side(margin, 0 , var(--sp-tight));
+    }
+    & .text {
+      @extend .cp-fx__item-one;
+      @extend .cp-txt__ellipsis;
+      color: var(--tc-surface-high);
+      span {
+        margin: 0 var(--sp-extra-tight);
+        padding: 0 var(--sp-ultra-tight);
+        color: var(--bg-surface);
+        background-color: var(--tc-surface-low);
+        border-radius: 4px;
+      }
+    }
+  }
+  &__item-btns {
+    @include dir.side(margin, 48px, 0);
+    & button {
+      padding: var(--sp-ultra-tight) var(--sp-tight);
+      margin-bottom: var(--sp-tight);
+      @include dir.side(margin, 0, var(--sp-tight));
+    }
+  }
+
+  &__content {
+    margin-bottom: var(--sp-normal);
+
+    & .checkbox {
+      @include dir.side(margin, 0, var(--sp-tight));
+      min-width: 20px;
+    }
+    & > button {
+      margin: 0 var(--sp-normal);
+    }
+  }
+  
+  &__form {
+    padding: var(--sp-normal);
+    padding-top: 0;
+    display: flex;
+    &-label {
+      padding: var(--sp-normal) var(--sp-normal) var(--sp-ultra-tight);
+    }
+  }
+  
+  &__input-wrapper {
+    display: flex;
+    @extend .cp-fx__item-one;
+    @include dir.side(margin, 0, var(--sp-tight));
+    
+    & .input-container {
+      @extend .cp-fx__item-one;
+    }
+  }
+
+  &__input-status {
+    padding: 0 var(--sp-normal);
+  }
+  &__valid {
+    color: var(--tc-positive-high);
+    padding-bottom: var(--sp-normal);
+  }
+  &__invalid {
+    color: var(--tc-danger-high);
+    padding-bottom: var(--sp-normal);
+  }
+}

@@ -91,16 +91,17 @@ function MenuItem({
 
 MenuItem.defaultProps = {
   variant: 'surface',
-  iconSrc: 'none',
+  iconSrc: null,
   type: 'button',
   disabled: false,
+  onClick: null,
 };
 
 MenuItem.propTypes = {
   variant: PropTypes.oneOf(['surface', 'positive', 'caution', 'danger']),
   iconSrc: PropTypes.string,
   type: PropTypes.oneOf(['button', 'submit']),
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
   children: PropTypes.node.isRequired,
   disabled: PropTypes.bool,
 };

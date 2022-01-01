@@ -34,16 +34,11 @@ function getUsernameOfRoomMember(roomMember) {
 
 async function isRoomAliasAvailable(alias) {
   try {
-    const myUserId = initMatrix.matrixClient.getUserId();
-    const myServer = myUserId.slice(myUserId.indexOf(':') + 1);
     const result = await initMatrix.matrixClient.resolveRoomAlias(alias);
-    const aliasIsRegisteredOnMyServer = typeof result.servers.find((server) => server === myServer) === 'string';
-
-    if (aliasIsRegisteredOnMyServer) return false;
-    return true;
+    if (result.room_id) return false;
+    return false;
   } catch (e) {
     if (e.errcode === 'M_NOT_FOUND') return true;
-    if (e.errcode === 'M_INVALID_PARAM') throw new Error(e);
     return false;
   }
 }
