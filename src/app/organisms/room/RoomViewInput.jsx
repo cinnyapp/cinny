@@ -29,7 +29,7 @@ import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
 import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
-import { AttachmentTypeSelector } from './AttachmentTypeSelector';
+import { AttachmentTypeSelector, AttachmentTypes } from './AttachmentTypeSelector';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
@@ -290,17 +290,66 @@ function RoomViewInput({
     textAreaRef.current.focus();
   }
 
-  const handleUploadClick = () => {
-    if (attachment === null) uploadInputRef.current.click();
-    else {
-      roomsInput.cancelAttachment(roomId);
-    }
-  };
   function uploadFileChange(e) {
     const file = e.target.files.item(0);
     setAttachment(file);
+    console.log(file);
     if (file !== null) roomsInput.setAttachment(roomId, file);
   }
+
+  const recordVoice = () => {
+    navigator.getUserMedia = navigator.getUserMedia
+                           || navigator.webkitGetUserMedia
+                           || navigator.mozGetUserMedia
+                           || navigator.msGetUserMedia;
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        const audioChunks = [];
+
+        mediaRecorder.addEventListener('dataavailable', (event) => {
+          audioChunks.push(event.data);
+        });
+
+        mediaRecorder.addEventListener('stop', () => {
+          const opts = { type: 'audio/webm' };
+          const audioBlob = new Blob(audioChunks, opts);
+
+          audioBlob.text()
+            .then(() => {
+              const a = new File([audioBlob], 'voicemail.webm', opts);
+
+              console.log(a);
+              roomsInput.setAttachment(roomId, a);
+            });
+        });
+
+        setTimeout(() => {
+          mediaRecorder.stop();
+        }, 5000); // 1 hour 3600000
+      })
+      .catch((e) => console.log(e));
+  };
+
+  const handleAttachmentTypeSelectorReturn = (ret) => {
+    console.log(ret);
+    switch (ret) {
+      case AttachmentTypes.remove:
+        roomsInput.cancelAttachment(roomId);
+        break;
+      case AttachmentTypes.file:
+        uploadInputRef.current.click();
+        break;
+      case AttachmentTypes.voice:
+        recordVoice();
+        break;
+      default:
+        console.log('unhandled attachment type selector return');
+        break;
+    }
+  };
 
   const canISend = roomTimeline.room.currentState.maySendMessage(mx.getUserId());
 
@@ -316,7 +365,8 @@ function RoomViewInput({
           <AttachmentTypeSelector
             ref={uploadInputRef}
             tooltip={attachment === null ? 'Upload' : 'Cancel'}
-            uploadFile={() => handleUploadClick()}
+            actOnAttaching={handleAttachmentTypeSelectorReturn}
+            alreadyHasAttachment={attachment !== null}
           />
           <input onChange={uploadFileChange} style={{ display: 'none' }} ref={uploadInputRef} type="file" />
           {/* <IconButton onClick={handleUploadClick}

@@ -216,6 +216,7 @@ class RoomsInput extends EventEmitter {
   }
 
   setAttachment(roomId, file) {
+    console.log(file);
     const input = this.getInput(roomId);
     input.attachment = {
       file,
@@ -287,6 +288,7 @@ class RoomsInput extends EventEmitter {
 
   async sendFile(roomId, file) {
     const fileType = file.type.slice(0, file.type.indexOf('/'));
+    console.log(file.type);
     const info = {
       mimetype: file.type,
       size: file.size,
