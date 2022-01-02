@@ -20,9 +20,10 @@ class Settings extends EventEmitter {
   constructor() {
     super();
 
-    this.themes = ['', 'silver-theme', 'dark-theme', 'butter-theme', 'auto-theme'];
+    this.themes = ['', 'silver-theme', 'dark-theme', 'butter-theme'];
     this.themeIndex = this.getThemeIndex();
 
+    this.useSystemTheme = this.getUseSystemTheme();
     this.isMarkdown = this.getIsMarkdown();
     this.isPeopleDrawer = this.getIsPeopleDrawer();
     this.hideMembershipEvents = this.getHideMembershipEvents();
@@ -54,6 +55,15 @@ class Settings extends EventEmitter {
     if (this.themes[themeIndex] !== '') appBody.classList.add(this.themes[themeIndex]);
     setSettings('themeIndex', themeIndex);
     this.themeIndex = themeIndex;
+  }
+
+  getUseSystemTheme() {
+    if (typeof this.useSystemTheme === 'boolean') return this.useSystemTheme;
+
+    const settings = getSettings();
+    if (settings === null) return false;
+    if (typeof settings.useSystemTheme === 'undefined') return false;
+    return settings.useSystemTheme;
   }
 
   getIsMarkdown() {
@@ -94,6 +104,24 @@ class Settings extends EventEmitter {
 
   setter(action) {
     const actions = {
+      [cons.actions.settings.TOGGLE_SYSTEM_THEME]: () => {
+        this.useSystemTheme = !this.useSystemTheme;
+        setSettings('useSystemTheme', this.useSystemTheme);
+        const appBody = document.getElementById('appBody');
+
+        if (this.useSystemTheme) {
+          appBody.classList.add('system-theme');
+          this.themes.forEach((themeName) => {
+            if (themeName === '') return;
+            appBody.classList.remove(themeName);
+          });
+        } else {
+          appBody.classList.remove('system-theme');
+          this.setTheme(this.themeIndex);
+        }
+
+        this.emit(cons.events.settings.SYSTEM_THEME_TOGGLED, this.useSystemTheme);
+      },
       [cons.actions.settings.TOGGLE_MARKDOWN]: () => {
         this.isMarkdown = !this.isMarkdown;
         setSettings('isMarkdown', this.isMarkdown);

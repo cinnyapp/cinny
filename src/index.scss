@@ -295,7 +295,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .auto-theme {
+  .system-theme {
     @include dark-mode();
   }
 }
