@@ -8,7 +8,7 @@ import TextareaAutosize from 'react-autosize-textarea';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
-import { openEmojiBoard } from '../../../client/action/navigation';
+import { openAttachmentTypeSelector, openEmojiBoard } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
 import { bytesToSize, getEventCords } from '../../../util/common';
 import { getUsername } from '../../../util/matrixUtil';
@@ -29,6 +29,7 @@ import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
 import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+import { AttachmentTypeSelector } from './AttachmentTypeSelector';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
@@ -312,8 +313,14 @@ function RoomViewInput({
     return (
       <>
         <div className={`room-input__option-container${attachment === null ? '' : ' room-attachment__option'}`}>
+          <AttachmentTypeSelector
+            ref={uploadInputRef}
+            tooltip={attachment === null ? 'Upload' : 'Cancel'}
+            uploadFile={() => handleUploadClick()}
+          />
           <input onChange={uploadFileChange} style={{ display: 'none' }} ref={uploadInputRef} type="file" />
-          <IconButton onClick={handleUploadClick} tooltip={attachment === null ? 'Upload' : 'Cancel'} src={CirclePlusIC} />
+          {/* <IconButton onClick={handleUploadClick}
+            tooltip={attachment === null ? 'Upload' : 'Cancel'} src={CirclePlusIC} /> */}
         </div>
         <div ref={inputBaseRef} className="room-input__input-container">
           {roomTimeline.isEncrypted() && <RawIcon size="extra-small" src={ShieldIC} />}

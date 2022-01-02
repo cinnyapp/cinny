@@ -8,7 +8,7 @@
     "node": ">=14.6.0"
   },
   "scripts": {
-    "start": "webpack serve --config ./webpack.dev.js --open",
+    "start": "webpack serve --config ./webpack.dev.js",
     "build": "webpack --config ./webpack.prod.js"
   },
   "keywords": [],
@@ -37,7 +37,8 @@
     "react-modal": "^3.13.1",
     "sanitize-html": "^2.5.3",
     "tippy.js": "^6.3.1",
-    "twemoji": "^13.1.0"
+    "twemoji": "^13.1.0",
+    "url": "^0.11.0"
   },
   "devDependencies": {
     "@babel/core": "^7.15.5",

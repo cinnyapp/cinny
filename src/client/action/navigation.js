@@ -95,6 +95,13 @@ export function openRoomOptions(cords, roomId) {
   });
 }
 
+export function openAttachmentTypeSelector(params) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_ATTACHMENT_TYPE_SELECTOR,
+    params,
+  });
+}
+
 export function replyTo(userId, eventId, body) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.CLICK_REPLY_TO,

@@ -131,6 +131,13 @@ class Navigation extends EventEmitter {
           action.roomId,
         );
       },
+      [cons.actions.navigation.OPEN_ATTACHMENT_TYPE_SELECTOR]: () => {
+        this.emit(
+          cons.events.navigation.OPEN_ATTACHMENT_TYPE_SELECTOR,
+          action.cords,
+          action.roomId,
+        );
+      },
       [cons.actions.navigation.CLICK_REPLY_TO]: () => {
         this.emit(
           cons.events.navigation.REPLY_TO_CLICKED,
