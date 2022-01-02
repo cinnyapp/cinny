@@ -18,6 +18,7 @@ import RoomNotification from '../../molecules/room-notification/RoomNotification
 import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
 import RoomAliases from '../../molecules/room-aliases/RoomAliases';
 import RoomHistoryVisibility from '../../molecules/room-history-visibility/RoomHistoryVisibility';
+import RoomEncryption from '../../molecules/room-encryption/RoomEncryption';
 
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
@@ -99,6 +100,10 @@ GeneralSettings.propTypes = {
 function SecuritySettings({ roomId }) {
   return (
     <>
+      <div className="room-settings__card">
+        <MenuHeader>Encryption</MenuHeader>
+        <RoomEncryption roomId={roomId} />
+      </div>
       <div className="room-settings__card">
         <MenuHeader>Message history visibility (Who can read history)</MenuHeader>
         <RoomHistoryVisibility roomId={roomId} />
