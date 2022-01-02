@@ -2,12 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import IconButton from '../../atoms/button/IconButton';
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
+import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import ContextMenu, { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
 const AttachmentTypes = {
   remove: 'remove',
   file: 'file',
   voice: 'voice',
+  currentLocation: 'currentLocation',
 };
 
 function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
@@ -21,6 +23,7 @@ function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
             onClick={() => {
               toggleMenu(); actOnAttaching(AttachmentTypes.file);
             }}
+            iconSrc={FileIC}
           >
             File
           </MenuItem>
@@ -42,7 +45,7 @@ function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
               actOnAttaching(AttachmentTypes.remove);
             }
           }}
-          tooltip={alreadyHasAttachment ? 'Upload' : 'Cancel'}
+          tooltip={alreadyHasAttachment ? 'Cancel' : 'Select attachment'}
           src={CirclePlusIC}
         />
       )}

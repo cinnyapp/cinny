@@ -8,7 +8,7 @@ import TextareaAutosize from 'react-autosize-textarea';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
-import { openAttachmentTypeSelector, openEmojiBoard } from '../../../client/action/navigation';
+import { openEmojiBoard } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
 import { bytesToSize, getEventCords } from '../../../util/common';
 import { getUsername } from '../../../util/matrixUtil';
@@ -20,7 +20,6 @@ import IconButton from '../../atoms/button/IconButton';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import { MessageReply } from '../../molecules/message/Message';
 
-import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import SendIC from '../../../../public/res/ic/outlined/send.svg';
 import ShieldIC from '../../../../public/res/ic/outlined/shield.svg';
@@ -293,15 +292,15 @@ function RoomViewInput({
   function uploadFileChange(e) {
     const file = e.target.files.item(0);
     setAttachment(file);
-    console.log(file);
     if (file !== null) roomsInput.setAttachment(roomId, file);
   }
 
   const recordVoice = () => {
-    navigator.getUserMedia = navigator.getUserMedia
-                           || navigator.webkitGetUserMedia
-                           || navigator.mozGetUserMedia
-                           || navigator.msGetUserMedia;
+    // TODO: Check if supported
+    // navigator.getUserMedia = navigator.getUserMedia
+    //                        || navigator.webkitGetUserMedia
+    //                        || navigator.mozGetUserMedia
+    //                        || navigator.msGetUserMedia;
 
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then((stream) => {
@@ -317,20 +316,17 @@ function RoomViewInput({
           const opts = { type: 'audio/webm' };
           const audioBlob = new Blob(audioChunks, opts);
 
-          audioBlob.text()
-            .then(() => {
-              const a = new File([audioBlob], 'voicemail.webm', opts);
+          const audioFile = new File([audioBlob], 'voicemail.webm', opts);
 
-              console.log(a);
-              roomsInput.setAttachment(roomId, a);
-            });
+          setAttachment(audioFile);
+          roomsInput.setAttachment(roomId, audioFile);
         });
 
         setTimeout(() => {
           mediaRecorder.stop();
         }, 5000); // 1 hour 3600000
       })
-      .catch((e) => console.log(e));
+      .catch(console.log);
   };
 
   const handleAttachmentTypeSelectorReturn = (ret) => {
@@ -364,7 +360,6 @@ function RoomViewInput({
         <div className={`room-input__option-container${attachment === null ? '' : ' room-attachment__option'}`}>
           <AttachmentTypeSelector
             ref={uploadInputRef}
-            tooltip={attachment === null ? 'Upload' : 'Cancel'}
             actOnAttaching={handleAttachmentTypeSelectorReturn}
             alreadyHasAttachment={attachment !== null}
           />
@@ -407,6 +402,7 @@ function RoomViewInput({
 
   function attachFile() {
     const fileType = attachment.type.slice(0, attachment.type.indexOf('/'));
+    console.log(attachment.type);
     return (
       <div className="room-attachment">
         <div className={`room-attachment__preview${fileType !== 'image' ? ' room-attachment__icon' : ''}`}>
