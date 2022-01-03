@@ -37,7 +37,7 @@ let cmdCursorPos = null;
 function RoomViewInput({
   roomId, roomTimeline, viewEvent,
 }) {
-  const [attachment, setAttachment] = useState(null);
+  const [attachmentOrUi, setAttachmentOrUi] = useState(null);
   const [isMarkdown, setIsMarkdown] = useState(settings.isMarkdown);
   const [replyTo, setReplyTo] = useState(null);
 
@@ -84,7 +84,7 @@ function RoomViewInput({
   }
   function clearAttachment(myRoomId) {
     if (roomId !== myRoomId) return;
-    setAttachment(null);
+    setAttachmentOrUi(null);
     inputBaseRef.current.style.backgroundImage = 'unset';
     uploadInputRef.current.value = null;
   }
@@ -152,7 +152,7 @@ function RoomViewInput({
     if (textAreaRef?.current !== null) {
       isTyping = false;
       textAreaRef.current.value = roomsInput.getMessage(roomId);
-      setAttachment(roomsInput.getAttachment(roomId));
+      setAttachmentOrUi(roomsInput.getAttachment(roomId));
       setReplyTo(roomsInput.getReplyTo(roomId));
     }
     return () => {
@@ -179,12 +179,13 @@ function RoomViewInput({
     requestAnimationFrame(() => deactivateCmdAndEmit());
     const msgBody = textAreaRef.current.value;
     if (roomsInput.isSending(roomId)) return;
-    if (msgBody.trim() === '' && attachment === null) return;
+    if (msgBody.trim() === '' && attachmentOrUi === null) return;
     sendIsTyping(false);
 
     roomsInput.setMessage(roomId, msgBody);
-    if (attachment !== null) {
-      roomsInput.setAttachment(roomId, attachment);
+    if (typeof attachmentOrUi === 'string') console.log('input is not FINISHED'); // TODO: remove
+    if (attachmentOrUi !== null && typeof attachmentOrUi === 'object') {
+      roomsInput.setAttachment(roomId, attachmentOrUi);
     }
     textAreaRef.current.disabled = true;
     textAreaRef.current.style.cursor = 'not-allowed';
@@ -271,8 +272,8 @@ function RoomViewInput({
       const item = e.clipboardData.items[i];
       if (item.type.indexOf('image') !== -1) {
         const image = item.getAsFile();
-        if (attachment === null) {
-          setAttachment(image);
+        if (attachmentOrUi === null) {
+          setAttachmentOrUi(image);
           if (image !== null) {
             roomsInput.setAttachment(roomId, image);
             return;
@@ -291,7 +292,7 @@ function RoomViewInput({
 
   function uploadFileChange(e) {
     const file = e.target.files.item(0);
-    setAttachment(file);
+    setAttachmentOrUi(file);
     if (file !== null) roomsInput.setAttachment(roomId, file);
   }
 
@@ -318,7 +319,7 @@ function RoomViewInput({
 
           const audioFile = new File([audioBlob], 'voicemail.webm', opts);
 
-          setAttachment(audioFile);
+          setAttachmentOrUi(audioFile);
           roomsInput.setAttachment(roomId, audioFile);
         });
 
@@ -357,11 +358,11 @@ function RoomViewInput({
     }
     return (
       <>
-        <div className={`room-input__option-container${attachment === null ? '' : ' room-attachment__option'}`}>
+        <div className={`room-input__option-container${attachmentOrUi === null ? '' : ' room-attachment__option'}`}>
           <AttachmentTypeSelector
             ref={uploadInputRef}
             actOnAttaching={handleAttachmentTypeSelectorReturn}
-            alreadyHasAttachment={attachment !== null}
+            alreadyHasAttachment={attachmentOrUi !== null}
           />
           <input onChange={uploadFileChange} style={{ display: 'none' }} ref={uploadInputRef} type="file" />
           {/* <IconButton onClick={handleUploadClick}
@@ -401,19 +402,24 @@ function RoomViewInput({
   }
 
   function attachFile() {
-    const fileType = attachment.type.slice(0, attachment.type.indexOf('/'));
-    console.log(attachment.type);
+    console.log(attachmentOrUi.type);
+    console.log(typeof attachmentOrUi === 'object');
+
+    // If this is not a file object, how can this be reached?
+    if (typeof attachmentOrUi !== 'object') return null;
+
+    const fileType = attachmentOrUi.type.slice(0, attachmentOrUi.type.indexOf('/'));
     return (
       <div className="room-attachment">
         <div className={`room-attachment__preview${fileType !== 'image' ? ' room-attachment__icon' : ''}`}>
-          {fileType === 'image' && <img alt={attachment.name} src={URL.createObjectURL(attachment)} />}
+          {fileType === 'image' && <img alt={attachmentOrUi.name} src={URL.createObjectURL(attachmentOrUi)} />}
           {fileType === 'video' && <RawIcon src={VLCIC} />}
           {fileType === 'audio' && <RawIcon src={VolumeFullIC} />}
           {fileType !== 'image' && fileType !== 'video' && fileType !== 'audio' && <RawIcon src={FileIC} />}
         </div>
         <div className="room-attachment__info">
-          <Text variant="b1">{attachment.name}</Text>
-          <Text variant="b3"><span ref={uploadProgressRef}>{`size: ${bytesToSize(attachment.size)}`}</span></Text>
+          <Text variant="b1">{attachmentOrUi.name}</Text>
+          <Text variant="b3"><span ref={uploadProgressRef}>{`size: ${bytesToSize(attachmentOrUi.size)}`}</span></Text>
         </div>
       </div>
     );
@@ -444,7 +450,7 @@ function RoomViewInput({
   return (
     <>
       { replyTo !== null && attachReply()}
-      { attachment !== null && attachFile() }
+      { attachmentOrUi !== null && attachFile() }
       <form className="room-input" onSubmit={(e) => { e.preventDefault(); }}>
         {
           renderInputs()
