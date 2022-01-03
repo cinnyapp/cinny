@@ -5,7 +5,7 @@ import './Settings.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
-import { toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents } from '../../../client/action/settings';
+import { toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents } from '../../../client/action/settings';
 import logout from '../../../client/action/logout';
 
 import Text from '../../atoms/text/Text';
@@ -49,20 +49,34 @@ function AppearanceSection() {
   return (
     <div className="settings-content">
       <SettingTile
-        title="Theme"
-        content={(
-          <SegmentedControls
-            selected={settings.getThemeIndex()}
-            segments={[
-              { text: 'Light' },
-              { text: 'Silver' },
-              { text: 'Dark' },
-              { text: 'Butter' },
-            ]}
-            onSelect={(index) => settings.setTheme(index)}
+        title="Follow system theme"
+        options={(
+          <Toggle
+            isActive={settings.useSystemTheme}
+            onToggle={() => { toggleSystemTheme(); updateState({}); }}
           />
         )}
+        content={<Text variant="b3">Use light or dark mode based on the system's settings.</Text>}
       />
+      {(() => {
+        if (!settings.useSystemTheme) {
+          return <SettingTile
+            title="Theme"
+            content={(
+              <SegmentedControls
+                selected={settings.getThemeIndex()}
+                segments={[
+                  { text: 'Light' },
+                  { text: 'Silver' },
+                  { text: 'Dark' },
+                  { text: 'Butter' },
+                ]}
+                onSelect={(index) => settings.setTheme(index)}
+              />
+            )}
+          />
+        }
+      })()}
       <SettingTile
         title="Markdown formatting"
         options={(
