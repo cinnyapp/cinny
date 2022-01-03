@@ -5,10 +5,15 @@ import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import ContextMenu, { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
-const AttachmentTypes = {
-  remove: 'remove',
-  file: 'file',
-  voice: 'voice',
+// const AttachmentTypes = {
+//   remove: 'remove',
+//   file: 'file',
+//   voice: 'voice',
+// };
+const attachmentUiFrameTypes = {
+  none: null,
+  hasFile: 'file',
+  voiceMailRecorder: 'voiceMailRecorder',
 };
 
 function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
@@ -20,7 +25,7 @@ function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
           <MenuHeader>Attachment</MenuHeader>
           <MenuItem
             onClick={() => {
-              toggleMenu(); actOnAttaching(AttachmentTypes.file);
+              toggleMenu(); actOnAttaching(attachmentUiFrameTypes.file);
             }}
             iconSrc={FileIC}
           >
@@ -28,7 +33,7 @@ function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
           </MenuItem>
           <MenuItem
             onClick={() => {
-              toggleMenu(); actOnAttaching(AttachmentTypes.voice);
+              toggleMenu(); actOnAttaching(attachmentUiFrameTypes.voiceMailRecorder);
             }}
           >
             Audio
@@ -41,7 +46,7 @@ function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
             if (!alreadyHasAttachment) {
               toggleMenu();
             } else {
-              actOnAttaching(AttachmentTypes.remove);
+              actOnAttaching(attachmentUiFrameTypes.none);
             }
           }}
           tooltip={alreadyHasAttachment ? 'Cancel' : 'Select attachment'}
@@ -62,4 +67,4 @@ AttachmentTypeSelector.defaultProps = {
   actOnAttaching: null,
 };
 
-export { AttachmentTypeSelector, AttachmentTypes };
+export { AttachmentTypeSelector, attachmentUiFrameTypes };

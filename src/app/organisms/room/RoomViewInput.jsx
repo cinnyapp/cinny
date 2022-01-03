@@ -28,7 +28,8 @@ import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
 import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
-import { AttachmentTypeSelector, AttachmentTypes } from './AttachmentTypeSelector';
+import { AttachmentTypeSelector, attachmentUiFrameTypes } from './AttachmentTypeSelector';
+import { VoiceMailRecorder } from './VoiceMailRecorder';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
@@ -296,51 +297,17 @@ function RoomViewInput({
     if (file !== null) roomsInput.setAttachment(roomId, file);
   }
 
-  const recordVoice = () => {
-    // TODO: Check if supported
-    // navigator.getUserMedia = navigator.getUserMedia
-    //                        || navigator.webkitGetUserMedia
-    //                        || navigator.mozGetUserMedia
-    //                        || navigator.msGetUserMedia;
-
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then((stream) => {
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-        const audioChunks = [];
-
-        mediaRecorder.addEventListener('dataavailable', (event) => {
-          audioChunks.push(event.data);
-        });
-
-        mediaRecorder.addEventListener('stop', () => {
-          const opts = { type: 'audio/webm' };
-          const audioBlob = new Blob(audioChunks, opts);
-
-          const audioFile = new File([audioBlob], 'voicemail.webm', opts);
-
-          setAttachmentOrUi(audioFile);
-          roomsInput.setAttachment(roomId, audioFile);
-        });
-
-        setTimeout(() => {
-          mediaRecorder.stop();
-        }, 5000); // 1 hour 3600000
-      })
-      .catch(console.log);
-  };
-
   const handleAttachmentTypeSelectorReturn = (ret) => {
-    console.log(ret);
+    console.log(`here we go ${ret}`);
     switch (ret) {
-      case AttachmentTypes.remove:
+      case attachmentUiFrameTypes.none:
         roomsInput.cancelAttachment(roomId);
         break;
-      case AttachmentTypes.file:
+      case attachmentUiFrameTypes.file:
         uploadInputRef.current.click();
         break;
-      case AttachmentTypes.voice:
-        recordVoice();
+      case attachmentUiFrameTypes.voiceMailRecorder:
+        setAttachmentOrUi(attachmentUiFrameTypes.voiceMailRecorder);
         break;
       default:
         console.log('unhandled attachment type selector return');
@@ -401,7 +368,7 @@ function RoomViewInput({
     );
   }
 
-  function attachFile() {
+  function fileAttachedIndicator() {
     console.log(attachmentOrUi.type);
     console.log(typeof attachmentOrUi === 'object');
 
@@ -423,6 +390,29 @@ function RoomViewInput({
         </div>
       </div>
     );
+  }
+
+  function attachmentFrame() {
+    // If there already is an attachment, show it
+    // I love Githhub Copilot
+    if (typeof attachmentOrUi === 'object') return fileAttachedIndicator();
+
+    console.log(attachmentOrUi);
+    switch (attachmentOrUi) {
+      case attachmentUiFrameTypes.voiceMailRecorder:
+        // Not to easy, need to attach function to return
+        return (
+          <VoiceMailRecorder
+            returnedFileHandler={(blob) => {
+              setAttachmentOrUi(blob);
+              roomsInput.setAttachment(roomId, blob);
+            }}
+          />
+        );
+      default:
+        console.log('unhandled attachmentOrUi');
+        return null;
+    }
   }
 
   function attachReply() {
@@ -450,7 +440,7 @@ function RoomViewInput({
   return (
     <>
       { replyTo !== null && attachReply()}
-      { attachmentOrUi !== null && attachFile() }
+      { attachmentOrUi !== null && attachmentFrame() }
       <form className="room-input" onSubmit={(e) => { e.preventDefault(); }}>
         {
           renderInputs()
