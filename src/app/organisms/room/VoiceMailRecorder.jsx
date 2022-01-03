@@ -4,16 +4,12 @@ import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
 
-function VoiceMailRecorder({ returnedFileHandler }) {
+function VoiceMailRecorder({ returnedFileHandler, attachmentOrUi }) {
   let mediaRecorder;
 
   const recordVoice = () => {
     console.log('record voice, new recorder');
     // TODO: Check if supported
-    // navigator.getUserMedia = navigator.getUserMedia
-    //                        || navigator.webkitGetUserMedia
-    //                        || navigator.mozGetUserMedia
-    //                        || navigator.msGetUserMedia;
 
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then((stream) => {
@@ -33,9 +29,11 @@ function VoiceMailRecorder({ returnedFileHandler }) {
           const audioBlob = new Blob(audioChunks, opts);
 
           const audioFile = new File([audioBlob], 'voicemail.webm', opts);
+          console.log(`attachmentOrUi is ${attachmentOrUi}`);
           returnedFileHandler(audioFile);
         });
 
+        // Voicemails too long are not nice, lets forbid them!
         setTimeout(() => {
           mediaRecorder.stop();
         }, 5000); // 1 hour 3600000
@@ -61,6 +59,7 @@ function VoiceMailRecorder({ returnedFileHandler }) {
 
 VoiceMailRecorder.propTypes = {
   returnedFileHandler: PropTypes.func.isRequired,
+  attachmentOrUi: PropTypes.node.isRequired,
 };
 
 export { VoiceMailRecorder };

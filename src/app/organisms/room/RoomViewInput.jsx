@@ -23,13 +23,10 @@ import { MessageReply } from '../../molecules/message/Message';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import SendIC from '../../../../public/res/ic/outlined/send.svg';
 import ShieldIC from '../../../../public/res/ic/outlined/shield.svg';
-import VLCIC from '../../../../public/res/ic/outlined/vlc.svg';
-import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
 import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
-import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { AttachmentTypeSelector, attachmentUiFrameTypes } from './AttachmentTypeSelector';
-import { VoiceMailRecorder } from './VoiceMailRecorder';
+import AttachmentFrame from './AttachmentFrame';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
@@ -298,9 +295,9 @@ function RoomViewInput({
   }
 
   const handleAttachmentTypeSelectorReturn = (ret) => {
-    console.log(`here we go ${ret}`);
     switch (ret) {
       case attachmentUiFrameTypes.none:
+        setAttachmentOrUi(attachmentUiFrameTypes.none);
         roomsInput.cancelAttachment(roomId);
         break;
       case attachmentUiFrameTypes.file:
@@ -368,53 +365,6 @@ function RoomViewInput({
     );
   }
 
-  function fileAttachedIndicator() {
-    console.log(attachmentOrUi.type);
-    console.log(typeof attachmentOrUi === 'object');
-
-    // If this is not a file object, how can this be reached?
-    if (typeof attachmentOrUi !== 'object') return null;
-
-    const fileType = attachmentOrUi.type.slice(0, attachmentOrUi.type.indexOf('/'));
-    return (
-      <div className="room-attachment">
-        <div className={`room-attachment__preview${fileType !== 'image' ? ' room-attachment__icon' : ''}`}>
-          {fileType === 'image' && <img alt={attachmentOrUi.name} src={URL.createObjectURL(attachmentOrUi)} />}
-          {fileType === 'video' && <RawIcon src={VLCIC} />}
-          {fileType === 'audio' && <RawIcon src={VolumeFullIC} />}
-          {fileType !== 'image' && fileType !== 'video' && fileType !== 'audio' && <RawIcon src={FileIC} />}
-        </div>
-        <div className="room-attachment__info">
-          <Text variant="b1">{attachmentOrUi.name}</Text>
-          <Text variant="b3"><span ref={uploadProgressRef}>{`size: ${bytesToSize(attachmentOrUi.size)}`}</span></Text>
-        </div>
-      </div>
-    );
-  }
-
-  function attachmentFrame() {
-    // If there already is an attachment, show it
-    // I love Githhub Copilot
-    if (typeof attachmentOrUi === 'object') return fileAttachedIndicator();
-
-    console.log(attachmentOrUi);
-    switch (attachmentOrUi) {
-      case attachmentUiFrameTypes.voiceMailRecorder:
-        // Not to easy, need to attach function to return
-        return (
-          <VoiceMailRecorder
-            returnedFileHandler={(blob) => {
-              setAttachmentOrUi(blob);
-              roomsInput.setAttachment(roomId, blob);
-            }}
-          />
-        );
-      default:
-        console.log('unhandled attachmentOrUi');
-        return null;
-    }
-  }
-
   function attachReply() {
     return (
       <div className="room-reply">
@@ -440,7 +390,16 @@ function RoomViewInput({
   return (
     <>
       { replyTo !== null && attachReply()}
-      { attachmentOrUi !== null && attachmentFrame() }
+      { attachmentOrUi !== null && (
+        <AttachmentFrame
+          attachmentOrUi={attachmentOrUi}
+          uploadProgressRef={uploadProgressRef}
+          fileSetter={(blob) => {
+            setAttachmentOrUi(blob);
+            roomsInput.setAttachment(roomId, blob);
+          }}
+        />
+      ) }
       <form className="room-input" onSubmit={(e) => { e.preventDefault(); }}>
         {
           renderInputs()
