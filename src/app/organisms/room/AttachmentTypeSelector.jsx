@@ -9,7 +9,6 @@ const AttachmentTypes = {
   remove: 'remove',
   file: 'file',
   voice: 'voice',
-  currentLocation: 'currentLocation',
 };
 
 function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
