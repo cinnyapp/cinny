@@ -48,9 +48,10 @@ function AttachmentFrame({
     const fnRequestResult = (func) => {
       requestResult = func;
     };
-    let howToSubmit;
+    let submission;
     const fnHowToSubmit = (func) => {
-      howToSubmit = func;
+      submission = func;
+      console.log(submission);
     };
 
     // If there already is an attachment, show it
