@@ -27,6 +27,7 @@ import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { AttachmentTypeSelector, attachmentUiFrameTypes } from './AttachmentTypeSelector';
 import AttachmentFrame from './AttachmentFrame';
+import { VoiceMailRecorder } from './VoiceMailRecorder';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;

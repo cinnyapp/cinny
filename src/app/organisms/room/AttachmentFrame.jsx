@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { attachmentUiFrameTypes } from './AttachmentTypeSelector';
-import { VoiceMailRecorder } from './VoiceMailRecorder';
+import { funnyFunc, VoiceMailRecorder } from './VoiceMailRecorder';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import VLCIC from '../../../../public/res/ic/outlined/vlc.svg';
 import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
@@ -40,6 +40,19 @@ function AttachmentFrame({
   }
 
   function attachmentFrame() {
+    let initStop;
+    const fnInitStop = (func) => {
+      initStop = func;
+    };
+    let requestResult;
+    const fnRequestResult = (func) => {
+      requestResult = func;
+    };
+    let howToSubmit;
+    const fnHowToSubmit = (func) => {
+      howToSubmit = func;
+    };
+
     // If there already is an attachment, show it
     if (typeof attachmentOrUi === 'object') return fileAttachedIndicator();
 
@@ -49,8 +62,9 @@ function AttachmentFrame({
         // Not too easy, need to attach function to return the audio blob
         return (
           <VoiceMailRecorder
-            returnedFileHandler={fileSetter}
-            attachmentOrUi={attachmentOrUi}
+            fnCancel={fnInitStop}
+            fnRequestResult={fnRequestResult}
+            fnHowToSubmit={fnHowToSubmit}
           />
         );
       default:

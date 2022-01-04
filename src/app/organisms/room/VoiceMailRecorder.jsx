@@ -1,65 +1,101 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
+import PropTypes, { func } from 'prop-types';
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
+import IconButton from '../../atoms/button/IconButton';
 
-function VoiceMailRecorder({ returnedFileHandler, attachmentOrUi }) {
-  let mediaRecorder;
+let _stream;
+let _mediaRecorder;
+const audioChunks = [];
 
-  const recordVoice = () => {
-    console.log('record voice, new recorder');
-    // TODO: Check if supported
+console.log('record voice, new recorder');
+// TODO: Check if supported
 
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then((stream) => {
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-        const audioChunks = [];
+navigator.mediaDevices.getUserMedia({ audio: true })
+  .then((stream) => {
+    _stream = stream;
+    _mediaRecorder = new MediaRecorder(_stream);
 
-        mediaRecorder.addEventListener('dataavailable', (event) => {
-          audioChunks.push(event.data);
-        });
-        mediaRecorder.addEventListener('error', (error) => {
-          console.log(error);
-          mediaRecorder.stop();
-        });
-        mediaRecorder.addEventListener('stop', () => {
-          const opts = { type: 'audio/webm' };
-          const audioBlob = new Blob(audioChunks, opts);
+    _mediaRecorder.start();
 
-          const audioFile = new File([audioBlob], 'voicemail.webm', opts);
-          console.log(`attachmentOrUi is ${attachmentOrUi}`);
-          returnedFileHandler(audioFile);
-        });
+    _mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+    _mediaRecorder.onerror = (error) => {
+      console.log(error);
+      _mediaRecorder.stop();
+    };
+  })
+  .catch(console.log);
 
-        // Voicemails too long are not nice, lets forbid them!
-        setTimeout(() => {
-          mediaRecorder.stop();
-        }, 5000); // 1 hour 3600000
-      })
-      .catch(console.log);
-  };
+// TODO: Handle turning off the recorder to remove the browser indicator
+function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
+  const [state, setState] = React.useState('unknown');
 
-  recordVoice();
+  while (!_mediaRecorder) {
+    // Blocking
+  }
+
+  _mediaRecorder.onstop = () => setState('stopped');
+  _mediaRecorder.onstart = () => setState('started');
+  _mediaRecorder.onpause = () => setState('paused');
+  _mediaRecorder.onresume = () => setState('resumed');
+
+  function pauseRec() {
+    if (_mediaRecorder.state === 'recording') {
+      _mediaRecorder.pause();
+      console.log('pause');
+    }
+  }
+  function startOrResumeRec() {
+    if (_mediaRecorder.state === 'paused') {
+      _mediaRecorder.resume();
+      console.log('resume');
+    } else if (_mediaRecorder.state === 'inactive') {
+      audioChunks.length = 0;
+      _mediaRecorder.start();
+      console.log('start');
+    }
+  }
+  function restartRec() {
+    _mediaRecorder.stop();
+    startOrResumeRec();
+  }
+
+  function stopAndSubmit() {
+    _mediaRecorder.stop();
+
+    _stream.getTracks().forEach((track) => track.stop());
+
+    const opts = { type: 'audio/webm' };
+    const audioBlob = new Blob(audioChunks, opts);
+
+    const audioFile = new File([audioBlob], 'voicemail.webm', opts);
+    fnHowToSubmit(audioFile);
+  }
+  fnCancel(stopAndSubmit);
 
   return (
     <div className="room-attachment">
-      Voice recorder
       <div className="room-attachment__preview">
         <RawIcon src={VolumeFullIC} />
       </div>
       <div className="room-attachment__info">
-        <Text variant="b1">Recording...</Text>
+        <Text variant="b1">Recording...{state}</Text>
         <Text variant="b3">{`for: ${'some time '}`}</Text>
+        <button onClick={pauseRec} type="button">Pause</button>
+        <button onClick={startOrResumeRec} type="button">Start</button>
+        <button onClick={startOrResumeRec} type="button">Stop</button>
+        <button onClick={restartRec} type="button">Restart</button>
+        <button onClick={fnHowToSubmit(stopAndSubmit)} type="submit">Submit</button>
       </div>
     </div>
   );
 }
 
 VoiceMailRecorder.propTypes = {
-  returnedFileHandler: PropTypes.func.isRequired,
-  attachmentOrUi: PropTypes.node.isRequired,
+  fnCancel: PropTypes.func.isRequired,
+  fnRequestResult: PropTypes.func.isRequired,
+  fnHowToSubmit: PropTypes.func.isRequired,
 };
 
 export { VoiceMailRecorder };
