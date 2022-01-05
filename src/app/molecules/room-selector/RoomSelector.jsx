@@ -21,7 +21,7 @@ function RoomSelectorWrapper({
         className="room-selector__content"
         type="button"
         onClick={onClick}
-        onMouseUp={(e) => blurOnBubbling(e, '.room-selector')}
+        onMouseUp={(e) => blurOnBubbling(e, '.room-selector__content')}
       >
         {content}
       </button>
