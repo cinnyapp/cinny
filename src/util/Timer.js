@@ -4,11 +4,13 @@ class Timer {
     this.timeStarted = new Date().getTime();
   }
 
-  esume() {
+  resume() {
+    if (this.timeStarted) return;
     this.timeStarted = new Date().getTime();
   }
 
   pause() {
+    if (!this.timeStarted) return;
     this.savedTime += this.timeStarted - new Date().getTime();
     this.timeStarted = null;
   }

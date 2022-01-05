@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Text from '../../../atoms/text/Text';
 import RawIcon from '../../../atoms/system-icons/RawIcon';
@@ -9,7 +9,9 @@ import PauseIC from '../../../../../public/res/ic/outlined/pause.svg';
 import PlayIC from '../../../../../public/res/ic/outlined/play.svg';
 import IconButton from '../../../atoms/button/IconButton';
 import './VoiceMailRecorder.scss';
-// import Timer from '../../../../util/Timer';
+import Timer from '../../../../util/Timer';
+
+let timer = new Timer();
 
 let _stream;
 let _mediaRecorder;
@@ -30,10 +32,9 @@ async function init() {
 
   _mediaRecorder.ondataavailable = (event) => {
     audioChunks.push(event.data);
-    console.log('ondataavailable');
   };
   _mediaRecorder.onerror = (error) => {
-    console.log(error);
+    console.warn(error);
     _mediaRecorder.stop();
   };
 }
@@ -41,7 +42,7 @@ async function init() {
 function pauseRec() {
   if (_mediaRecorder.state === 'recording') {
     _mediaRecorder.pause();
-    console.log('pause');
+    timer.pause();
   }
 }
 function startOrResumeRec() {
@@ -49,23 +50,23 @@ function startOrResumeRec() {
 
   if (_mediaRecorder.state === 'paused') {
     _mediaRecorder.resume();
-    console.log('resume');
   } else if (_mediaRecorder.state === 'inactive') {
     audioChunks.length = 0;
     _mediaRecorder.start();
-    console.log('start');
   }
+  timer.start();
 }
 function restartRec() {
   if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
 
   _mediaRecorder = null;
+  timer = new Timer();
   init()
     .then(startOrResumeRec());
 }
 
 // TODO: Handle turning off the recorder to remove the browser indicator
-function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
+function VoiceMailRecorder({ fnRequestResult, fnHowToSubmit }) {
   const [state, setState] = React.useState('unknown');
 
   async function initiateInitiation() {
@@ -73,15 +74,16 @@ function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
       await init();
       startOrResumeRec();
     }
-    _mediaRecorder.onstop = () => setState('Recording stopped');
+    // _mediaRecorder.onstop = () => {
+    //   setState('Recording stopped');
+    // };
     _mediaRecorder.onstart = () => setState('Recording...');
     _mediaRecorder.onpause = () => setState('Recording paused');
     _mediaRecorder.onresume = () => setState('Recording...');
   }
-  initiateInitiation();
 
   function stopAndSubmit(skipSubmission) {
-    if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
+    if (_mediaRecorder && _mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
 
     _stream.getTracks().forEach((track) => track.stop());
 
@@ -99,8 +101,24 @@ function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
       }, 300); // TODO: Fix this hack, stop does not mean dataavailable but its going to happen soon
     }
   }
-  fnCancel(stopAndSubmit);
+
+  // Cleanup after components unmount
+  useEffect(() => () => {
+    console.log('VoiceMailRecorder unmount');
+
+    if (_mediaRecorder) {
+      _mediaRecorder = null;
+    }
+    if (_stream) {
+      _stream.getTracks().forEach((track) => track.stop());
+      _stream = null;
+    }
+    // stopAndSubmit(true);
+  }, []);
+  // fnCancel(() => console.log('meh'));
   fnRequestResult(stopAndSubmit);
+
+  initiateInitiation();
 
   return (
     <div className="room-attachment">
@@ -125,7 +143,7 @@ function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
 }
 
 VoiceMailRecorder.propTypes = {
-  fnCancel: PropTypes.func.isRequired,
+  // fnCancel: PropTypes.func.isRequired,
   fnRequestResult: PropTypes.func.isRequired,
   fnHowToSubmit: PropTypes.func.isRequired,
 };

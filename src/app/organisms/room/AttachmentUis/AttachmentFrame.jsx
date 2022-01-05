@@ -41,11 +41,11 @@ function AttachmentFrame({
   }
 
   function attachmentFrame() {
-    let initStop;
-    const fnInitStop = (func) => {
-      initStop = func;
-      cancelNeedle(initStop);
-    };
+    // let initStop;
+    // const fnInitStop = (func) => {
+    //   initStop = func;
+    //   // cancelNeedle(initStop);
+    // };
     let requestResult;
     const fnRequestResult = (func) => {
       requestResult = func;
@@ -66,7 +66,7 @@ function AttachmentFrame({
         // Not too easy, need to attach function to return the audio blob
         return (
           <VoiceMailRecorder
-            fnCancel={fnInitStop}
+            // fnCancel={fnInitStop}
             fnRequestResult={fnRequestResult}
             fnHowToSubmit={fnHowToSubmit}
           />
