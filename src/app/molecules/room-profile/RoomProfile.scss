@@ -21,7 +21,7 @@
       }
     }
 
-    & > *:last-child {
+    & > *:not(:first-child) {
       margin-top: var(--sp-ultra-tight);
       white-space: pre-wrap;
       word-break: break-word;
