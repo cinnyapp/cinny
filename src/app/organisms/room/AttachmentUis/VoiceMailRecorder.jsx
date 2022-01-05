@@ -1,14 +1,15 @@
-import React, { useEffect, useRef } from 'react';
-import PropTypes, { func } from 'prop-types';
-import Text from '../../atoms/text/Text';
-import RawIcon from '../../atoms/system-icons/RawIcon';
-import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
-import SendIC from '../../../../public/res/ic/outlined/send.svg';
-import ArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
-import PauseIC from '../../../../public/res/ic/outlined/pause.svg';
-import PlayIC from '../../../../public/res/ic/outlined/play.svg';
-import IconButton from '../../atoms/button/IconButton';
-import Timer from '../../../util/Timer';
+import React from 'react';
+import PropTypes from 'prop-types';
+import Text from '../../../atoms/text/Text';
+import RawIcon from '../../../atoms/system-icons/RawIcon';
+import VolumeFullIC from '../../../../../public/res/ic/outlined/volume-full.svg';
+import ChevronBottomIC from '../../../../../public/res/ic/outlined/chevron-bottom.svg';
+import ArrowIC from '../../../../../public/res/ic/outlined/leave-arrow.svg';
+import PauseIC from '../../../../../public/res/ic/outlined/pause.svg';
+import PlayIC from '../../../../../public/res/ic/outlined/play.svg';
+import IconButton from '../../../atoms/button/IconButton';
+import './VoiceMailRecorder.scss';
+// import Timer from '../../../../util/Timer';
 
 let _stream;
 let _mediaRecorder;
@@ -78,21 +79,24 @@ function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
   }
   initiateInitiation();
 
-  function stopAndSubmit() {
+  function stopAndSubmit(skipSubmission) {
     if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
 
     _stream.getTracks().forEach((track) => track.stop());
 
-    setTimeout(() => {
-      _mediaRecorder = null;
-      _stream = null;
+    if (!skipSubmission) {
+      setTimeout(() => {
+        _mediaRecorder = null;
+        _stream = null;
 
-      const opts = { type: 'audio/webm' };
-      const audioBlob = new Blob(audioChunks, opts);
-      console.log('audioBlob', audioBlob);
-      const audioFile = new File([audioBlob], 'voicemail.webm', opts);
-      fnHowToSubmit(audioFile);
-    }, 300); // TODO: Fix this hack, stop does not mean dataavailable but its going to happen soon
+        const opts = { type: 'audio/webm' };
+        const audioBlob = new Blob(audioChunks, opts);
+        console.log('audioBlob', audioBlob);
+        const audioFile = new File([audioBlob], 'voicemail.webm', opts);
+        fnHowToSubmit(audioFile);
+      // BUG: This will cause the recorder to add the file although it was to be cancelled
+      }, 300); // TODO: Fix this hack, stop does not mean dataavailable but its going to happen soon
+    }
   }
   fnCancel(stopAndSubmit);
   fnRequestResult(stopAndSubmit);
@@ -103,14 +107,17 @@ function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
         <RawIcon src={VolumeFullIC} />
       </div>
       <div className="room-attachment__info">
-        <Text variant="b1">
-          {state}
-        </Text>
-        <Text variant="b3">for some time maybe?</Text>
-        <IconButton onClick={pauseRec} src={PauseIC}>Pause</IconButton>
-        <IconButton onClick={startOrResumeRec} src={PlayIC}>Start</IconButton>
-        <IconButton onClick={restartRec} src={ArrowIC}>Reset</IconButton>
-        <IconButton onClick={() => stopAndSubmit()} src={SendIC} type="submit">Submit</IconButton>
+        <div>
+          <Text variant="b1">
+            {state}
+          </Text>
+          <Text variant="b3">for some time maybe?</Text>
+        </div>
+        {(_mediaRecorder && _mediaRecorder.state === 'recording')
+          ? (<IconButton onClick={pauseRec} src={PauseIC}>Pause</IconButton>)
+          : (<IconButton onClick={startOrResumeRec} src={PlayIC}>Start</IconButton>)}
+        <IconButton onClick={restartRec} src={ArrowIC} tooltip="Start over">Reset</IconButton>
+        <IconButton onClick={() => stopAndSubmit()} src={ChevronBottomIC} type="Add as attachment">Submit</IconButton>
       </div>
     </div>
   );

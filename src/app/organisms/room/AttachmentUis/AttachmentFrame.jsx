@@ -1,14 +1,14 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { attachmentUiFrameTypes } from './AttachmentTypeSelector';
-import { funnyFunc, VoiceMailRecorder } from './VoiceMailRecorder';
-import RawIcon from '../../atoms/system-icons/RawIcon';
-import VLCIC from '../../../../public/res/ic/outlined/vlc.svg';
-import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
-import FileIC from '../../../../public/res/ic/outlined/file.svg';
-import Text from '../../atoms/text/Text';
-import { bytesToSize } from '../../../util/common';
+import { attachmentUiFrameTypes } from '../AttachmentTypeSelector';
+import { VoiceMailRecorder } from './VoiceMailRecorder';
+import RawIcon from '../../../atoms/system-icons/RawIcon';
+import VLCIC from '../../../../../public/res/ic/outlined/vlc.svg';
+import VolumeFullIC from '../../../../../public/res/ic/outlined/volume-full.svg';
+import FileIC from '../../../../../public/res/ic/outlined/file.svg';
+import Text from '../../../atoms/text/Text';
+import { bytesToSize } from '../../../../util/common';
 
 function AttachmentFrame({
   attachmentOrUi,

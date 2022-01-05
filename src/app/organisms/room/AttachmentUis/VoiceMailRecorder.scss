@@ -1,0 +1,11 @@
+@use '../../../partials/flex';
+
+.room-attachment__info {
+    display: flex;
+
+    div {
+        width: 150px;
+        max-width: 100%;
+        // max-width: ;
+    }
+}
