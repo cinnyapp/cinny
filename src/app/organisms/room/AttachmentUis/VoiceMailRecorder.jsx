@@ -54,7 +54,7 @@ function startOrResumeRec() {
     audioChunks.length = 0;
     _mediaRecorder.start();
   }
-  timer.start();
+  timer.resume();
 }
 function restartRec() {
   if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
@@ -68,6 +68,7 @@ function restartRec() {
 // TODO: Handle turning off the recorder to remove the browser indicator
 function VoiceMailRecorder({ fnRequestResult, fnHowToSubmit }) {
   const [state, setState] = React.useState('unknown');
+  const [timeRecording, setTimeRecording] = React.useState(null);
 
   async function initiateInitiation() {
     if (!_mediaRecorder) {
@@ -102,22 +103,26 @@ function VoiceMailRecorder({ fnRequestResult, fnHowToSubmit }) {
     }
   }
 
-  // Cleanup after components unmount
-  useEffect(() => () => {
-    console.log('VoiceMailRecorder unmount');
+  useEffect(() => {
+    const timerUpdater = setInterval(() => {
+      setTimeRecording(timer.getTimeStr);
+    }, 500); // .5 seconds
 
-    if (_mediaRecorder) {
-      _mediaRecorder = null;
-    }
-    if (_stream) {
-      _stream.getTracks().forEach((track) => track.stop());
-      _stream = null;
-    }
-    // stopAndSubmit(true);
+    // Cleanup after components unmount
+    return () => {
+      clearInterval(timerUpdater);
+      if (_mediaRecorder) {
+        _mediaRecorder = null;
+      }
+      if (_stream) {
+        // To remove the browser's recording indicator
+        _stream.getTracks().forEach((track) => track.stop());
+        _stream = null;
+      }
+    };
   }, []);
-  // fnCancel(() => console.log('meh'));
-  fnRequestResult(stopAndSubmit);
 
+  fnRequestResult(stopAndSubmit);
   initiateInitiation();
 
   return (
@@ -130,7 +135,7 @@ function VoiceMailRecorder({ fnRequestResult, fnHowToSubmit }) {
           <Text variant="b1">
             {state}
           </Text>
-          <Text variant="b3">for some time maybe?</Text>
+          <Text variant="b3">{`for ${timeRecording}`}</Text>
         </div>
         {(_mediaRecorder && _mediaRecorder.state === 'recording')
           ? (<IconButton onClick={pauseRec} src={PauseIC}>Pause</IconButton>)
