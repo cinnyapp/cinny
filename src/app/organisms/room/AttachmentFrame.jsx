@@ -14,6 +14,7 @@ function AttachmentFrame({
   attachmentOrUi,
   fileSetter,
   uploadProgressRef,
+  cancelNeedle,
 }) {
   function fileAttachedIndicator() {
     console.log(attachmentOrUi.type);
@@ -43,6 +44,7 @@ function AttachmentFrame({
     let initStop;
     const fnInitStop = (func) => {
       initStop = func;
+      cancelNeedle(initStop);
     };
     let requestResult;
     const fnRequestResult = (func) => {
@@ -52,6 +54,7 @@ function AttachmentFrame({
     const fnHowToSubmit = (func) => {
       submission = func;
       console.log(submission);
+      fileSetter(submission);
     };
 
     // If there already is an attachment, show it
@@ -73,7 +76,6 @@ function AttachmentFrame({
         return null;
     }
   }
-
   return attachmentFrame();
 }
 
@@ -81,6 +83,7 @@ AttachmentFrame.propTypes = {
   attachmentOrUi: PropTypes.node.isRequired,
   fileSetter: PropTypes.func.isRequired,
   uploadProgressRef: PropTypes.node.isRequired,
+  cancelNeedle: PropTypes.func.isRequired,
 };
 
 export default AttachmentFrame;

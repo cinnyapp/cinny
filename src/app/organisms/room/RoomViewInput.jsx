@@ -50,6 +50,8 @@ function RoomViewInput({
   const mx = initMatrix.matrixClient;
   const { roomsInput } = initMatrix;
 
+  let cancelAttachmentCmd;
+
   function requestFocusInput() {
     if (textAreaRef === null) return;
     textAreaRef.current.focus();
@@ -296,6 +298,8 @@ function RoomViewInput({
   }
 
   const handleAttachmentTypeSelectorReturn = (ret) => {
+    if (cancelAttachmentCmd) cancelAttachmentCmd();
+
     switch (ret) {
       case attachmentUiFrameTypes.none:
         setAttachmentOrUi(attachmentUiFrameTypes.none);
@@ -397,7 +401,12 @@ function RoomViewInput({
           uploadProgressRef={uploadProgressRef}
           fileSetter={(blob) => {
             setAttachmentOrUi(blob);
+            console.log(blob);
             roomsInput.setAttachment(roomId, blob);
+          }}
+          cancelNeedle={(cmd) => {
+            cancelAttachmentCmd = cmd;
+            console.log(cmd);
           }}
         />
       ) }

@@ -55,24 +55,26 @@ function startOrResumeRec() {
 }
 function restartRec() {
   if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
-  audioChunks.length = 0;
+
+  _mediaRecorder = null;
+  init();
+
   startOrResumeRec();
 }
 
 // TODO: Handle turning off the recorder to remove the browser indicator
 function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
   const [state, setState] = React.useState('unknown');
-  const [duration, setDuraction] = React.useState('unknown');
 
   async function initiateInitiation() {
     if (!_mediaRecorder) {
       await init();
       startOrResumeRec();
     }
-    _mediaRecorder.onstop = () => setState('stopped');
-    _mediaRecorder.onstart = () => setState('started');
-    _mediaRecorder.onpause = () => setState('paused');
-    _mediaRecorder.onresume = () => setState('resumed');
+    _mediaRecorder.onstop = () => setState('Recording stopped');
+    _mediaRecorder.onstart = () => setState('Recording...');
+    _mediaRecorder.onpause = () => setState('Recording paused');
+    _mediaRecorder.onresume = () => setState('Recording...');
   }
   initiateInitiation();
 
@@ -81,11 +83,16 @@ function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
 
     _stream.getTracks().forEach((track) => track.stop());
 
-    const opts = { type: 'audio/webm' };
-    const audioBlob = new Blob(audioChunks, opts);
+    setTimeout(() => {
+      _mediaRecorder = null;
+      _stream = null;
 
-    const audioFile = new File([audioBlob], 'voicemail.webm', opts);
-    fnHowToSubmit(audioFile);
+      const opts = { type: 'audio/webm' };
+      const audioBlob = new Blob(audioChunks, opts);
+      console.log('audioBlob', audioBlob);
+      const audioFile = new File([audioBlob], 'voicemail.webm', opts);
+      fnHowToSubmit(audioFile);
+    }, 300); // TODO: Fix this hack, stop does not mean dataavailable but its going to happen soon
   }
   fnCancel(stopAndSubmit);
   fnRequestResult(stopAndSubmit);
@@ -97,10 +104,9 @@ function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
       </div>
       <div className="room-attachment__info">
         <Text variant="b1">
-          Recording...
           {state}
         </Text>
-        <Text variant="b3">{`for: ${duration}`}</Text>
+        <Text variant="b3">for some time maybe?</Text>
         <IconButton onClick={pauseRec} src={PauseIC}>Pause</IconButton>
         <IconButton onClick={startOrResumeRec} src={PlayIC}>Start</IconButton>
         <IconButton onClick={restartRec} src={ArrowIC}>Reset</IconButton>
