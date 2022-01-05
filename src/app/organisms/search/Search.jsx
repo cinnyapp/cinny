@@ -17,8 +17,10 @@ import RoomSelector from '../../molecules/room-selector/RoomSelector';
 
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import HashIC from '../../../../public/res/ic/outlined/hash.svg';
+import HashGlobeIC from '../../../../public/res/ic/outlined/hash-globe.svg';
 import HashLockIC from '../../../../public/res/ic/outlined/hash-lock.svg';
 import SpaceIC from '../../../../public/res/ic/outlined/space.svg';
+import SpaceGlobeIC from '../../../../public/res/ic/outlined/space-globe.svg';
 import SpaceLockIC from '../../../../public/res/ic/outlined/space-lock.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
@@ -176,12 +178,18 @@ function Search() {
 
   const notifs = initMatrix.notifications;
   const renderRoomSelector = (item) => {
-    const isPrivate = item.room.getJoinRule() === 'invite';
     let imageSrc = null;
     let iconSrc = null;
-    if (item.type === 'room') iconSrc = isPrivate ? HashLockIC : HashIC;
-    if (item.type === 'space') iconSrc = isPrivate ? SpaceLockIC : SpaceIC;
-    if (item.type === 'direct') imageSrc = item.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
+    if (item.type === 'direct') {
+      imageSrc = item.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
+    } else {
+      const joinRuleToIconSrc = (joinRule) => ({
+        restricted: () => (item.type === 'space' ? SpaceIC : HashIC),
+        invite: () => (item.type === 'space' ? SpaceLockIC : HashLockIC),
+        public: () => (item.type === 'space' ? SpaceGlobeIC : HashGlobeIC),
+      }[joinRule]?.() || null);
+      iconSrc = joinRuleToIconSrc(item.room.getJoinRule());
+    }
 
     const isUnread = notifs.hasNoti(item.roomId);
     const noti = notifs.getNoti(item.roomId);
