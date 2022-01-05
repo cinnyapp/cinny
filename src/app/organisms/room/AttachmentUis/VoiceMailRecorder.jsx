@@ -45,6 +45,8 @@ function pauseRec() {
   }
 }
 function startOrResumeRec() {
+  if (!_mediaRecorder) return;
+
   if (_mediaRecorder.state === 'paused') {
     _mediaRecorder.resume();
     console.log('resume');
@@ -58,9 +60,8 @@ function restartRec() {
   if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
 
   _mediaRecorder = null;
-  init();
-
-  startOrResumeRec();
+  init()
+    .then(startOrResumeRec());
 }
 
 // TODO: Handle turning off the recorder to remove the browser indicator
@@ -106,7 +107,7 @@ function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
       <div className="room-attachment__preview">
         <RawIcon src={VolumeFullIC} />
       </div>
-      <div className="room-attachment__info">
+      <div className="room-attachment__info room-attachment-ui-recorder">
         <div>
           <Text variant="b1">
             {state}
@@ -117,7 +118,7 @@ function VoiceMailRecorder({ fnCancel, fnRequestResult, fnHowToSubmit }) {
           ? (<IconButton onClick={pauseRec} src={PauseIC}>Pause</IconButton>)
           : (<IconButton onClick={startOrResumeRec} src={PlayIC}>Start</IconButton>)}
         <IconButton onClick={restartRec} src={ArrowIC} tooltip="Start over">Reset</IconButton>
-        <IconButton onClick={() => stopAndSubmit()} src={ChevronBottomIC} type="Add as attachment">Submit</IconButton>
+        <IconButton onClick={() => stopAndSubmit()} src={ChevronBottomIC} tooltip="Add as attachment" type="submit">Submit</IconButton>
       </div>
     </div>
   );

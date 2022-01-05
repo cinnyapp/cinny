@@ -328,7 +328,6 @@ function RoomViewInput({
       <>
         <div className={`room-input__option-container${attachmentOrUi === null ? '' : ' room-attachment__option'}`}>
           <AttachmentTypeSelector
-            ref={uploadInputRef}
             actOnAttaching={handleAttachmentTypeSelectorReturn}
             alreadyHasAttachment={attachmentOrUi !== null}
           />

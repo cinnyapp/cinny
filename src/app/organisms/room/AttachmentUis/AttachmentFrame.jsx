@@ -80,9 +80,9 @@ function AttachmentFrame({
 }
 
 AttachmentFrame.propTypes = {
-  attachmentOrUi: PropTypes.node.isRequired,
+  attachmentOrUi: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
   fileSetter: PropTypes.func.isRequired,
-  uploadProgressRef: PropTypes.node.isRequired,
+  uploadProgressRef: PropTypes.shape().isRequired,
   cancelNeedle: PropTypes.func.isRequired,
 };
 
