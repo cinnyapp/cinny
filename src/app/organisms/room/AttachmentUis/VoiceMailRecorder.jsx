@@ -123,7 +123,6 @@ function VoiceMailRecorder({ fnHowToSubmit }) {
     };
   }, []);
 
-  // fnRequestResult(stopAndSubmit);
   initiateInitiation();
 
   const ui = (
@@ -155,10 +154,6 @@ function VoiceMailRecorder({ fnHowToSubmit }) {
 }
 
 VoiceMailRecorder.propTypes = {
-  // // Might be useful in the future if
-  // // components should be requested to submit their result content when the message gets sent
-  // // so the user does not need this UI to attach its result here but can just sent it
-  // fnRequestResult: PropTypes.func.isRequired,
   fnHowToSubmit: PropTypes.func.isRequired,
 };
 

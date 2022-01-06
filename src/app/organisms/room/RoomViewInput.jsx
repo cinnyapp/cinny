@@ -25,7 +25,7 @@ import SendIC from '../../../../public/res/ic/outlined/send.svg';
 import ShieldIC from '../../../../public/res/ic/outlined/shield.svg';
 import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
-import { AttachmentTypeSelector, attachmentUiFrameTypes } from './AttachmentTypeSelector';
+import AttachmentTypeSelector from './AttachmentUis/AttachmentTypeSelector';
 import AttachmentFrame from './AttachmentUis/AttachmentFrame';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
@@ -295,20 +295,13 @@ function RoomViewInput({
   }
 
   const handleAttachmentTypeSelectorReturn = (ret) => {
-    switch (ret) {
-      case attachmentUiFrameTypes.none:
-        setAttachmentOrUi(ret);
-        roomsInput.cancelAttachment(roomId);
-        break;
-      case attachmentUiFrameTypes.file:
-        uploadInputRef.current.click();
-        break;
-      case attachmentUiFrameTypes.voiceMailRecorder:
-        setAttachmentOrUi(ret);
-        break;
-      default:
-        console.log('unhandled attachment type selector return');
-        break;
+    if (!ret) {
+      setAttachmentOrUi(null);
+      roomsInput.cancelAttachment(roomId);
+    } else if (ret === 'file') {
+      uploadInputRef.current.click();
+    } else {
+      setAttachmentOrUi(ret);
     }
   };
 
