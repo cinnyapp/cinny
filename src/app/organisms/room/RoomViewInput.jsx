@@ -180,8 +180,9 @@ function RoomViewInput({
     if (msgBody.trim() === '' && attachmentOrUi === null) return;
     sendIsTyping(false);
 
+    // TODO: Notify user about their mistake
+    if (typeof attachmentOrUi === 'string') return; // Attachment UI is not finished
     roomsInput.setMessage(roomId, msgBody);
-    if (typeof attachmentOrUi === 'string') console.log('input is not FINISHED'); // TODO: disallow sending
     if (attachmentOrUi !== null && typeof attachmentOrUi === 'object') {
       roomsInput.setAttachment(roomId, attachmentOrUi);
     }

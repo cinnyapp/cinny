@@ -17,8 +17,6 @@ let _stream;
 let _mediaRecorder;
 const audioChunks = [];
 
-// TODO: Check if supported, check if browser allows
-
 async function init() {
   if (_mediaRecorder) return;
 
@@ -77,10 +75,17 @@ function restartRec() {
 function VoiceMailRecorder({ fnHowToSubmit }) {
   const [state, setState] = React.useState('Recording');
   const [timeRecording, setTimeRecording] = React.useState('00:00');
+  const [browserHasNoSupport, setBrowserHasNoSupport] = React.useState(!navigator.mediaDevices
+    ? 'It seems like your browser is unsupported' : null);
 
   async function initiateInitiation() {
     if (!_mediaRecorder) {
-      await init();
+      await init().catch((err) => {
+        console.warn('Recording is disallowed', err);
+        setBrowserHasNoSupport('It seems like you have disallowed Cinny to record your voice ༼ つ ◕_◕ ༽つ');
+      });
+
+      if (browserHasNoSupport) return;
       startOrResumeRec();
     }
 
@@ -131,7 +136,7 @@ function VoiceMailRecorder({ fnHowToSubmit }) {
   // fnRequestResult(stopAndSubmit);
   initiateInitiation();
 
-  return (
+  const ui = (
     <div className="room-attachment">
       <div className="room-attachment__preview">
         <RawIcon src={VolumeFullIC} />
@@ -151,6 +156,10 @@ function VoiceMailRecorder({ fnHowToSubmit }) {
       </div>
     </div>
   );
+
+  return browserHasNoSupport
+    ? <Text variant="b1" className="room-attachment unsupported-info">{browserHasNoSupport}</Text>
+    : ui;
 }
 
 VoiceMailRecorder.propTypes = {
