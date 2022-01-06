@@ -62,12 +62,13 @@ function startOrResumeRec() {
   timer.resume();
 }
 function restartRec() {
+  if (_mediaRecorder.state !== 'recording') _mediaRecorder.pause();
   if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
 
   _mediaRecorder = null;
   timer = new Timer();
   init()
-    .then(startOrResumeRec());
+    .then(startOrResumeRec);
 }
 
 // TODO: Handle turning off the recorder to remove the browser indicator
