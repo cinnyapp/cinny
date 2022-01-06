@@ -261,6 +261,7 @@ function ProfileViewer() {
   function renderProfile() {
     const member = room.getMember(userId) || mx.getUser(userId) || {};
     const avatarMxc = member.getMxcAvatarUrl?.() || member.avatarUrl;
+    const canChangeRole = room.currentState.maySendEvent('m.room.power_levels', mx.getUserId());
 
     return (
       <div className="profile-viewer">
@@ -277,7 +278,7 @@ function ProfileViewer() {
           </div>
           <div className="profile-viewer__user__role">
             <Text variant="b3">Role</Text>
-            <Button iconSrc={ChevronBottomIC}>{getPowerLabel(member.powerLevel) || 'Member'}</Button>
+            <Button iconSrc={canChangeRole ? ChevronBottomIC : null}>{getPowerLabel(member.powerLevel) || 'Member'}</Button>
           </div>
         </div>
         <SessionInfo userId={userId} />

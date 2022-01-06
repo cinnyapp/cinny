@@ -56,7 +56,7 @@ function RoomViewHeader({ roomId }) {
 
     roomList.on(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
     return () => {
-      roomList.on(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
+      roomList.removeListener(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
     };
   }, [roomId]);
 

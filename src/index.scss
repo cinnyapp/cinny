@@ -202,8 +202,7 @@
   --bg-surface-extra-low-transparent: hsla(0, 0%, 91%, 0);
 }
 
-.dark-theme,
-.butter-theme {
+@mixin dark-mode() {
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(208, 8%, 20%);
   --bg-surface-transparent: hsla(208, 8%, 20%, 0);
@@ -288,6 +287,17 @@
   --fw-normal: 380;
 
   --font-secondary: 'Inter', 'Roboto', sans-serif;
+}
+
+.dark-theme,
+.butter-theme {
+  @include dark-mode();
+}
+
+@media (prefers-color-scheme: dark) {
+  .system-theme {
+    @include dark-mode();
+  }
 }
 
 .butter-theme {

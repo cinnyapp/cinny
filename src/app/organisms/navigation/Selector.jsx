@@ -49,11 +49,11 @@ function Selector({
     };
   }, []);
 
-  const joinRuleToIconSrc = {
+  const joinRuleToIconSrc = (joinRule) => ({
     restricted: () => (room.isSpaceRoom() ? SpaceIC : HashIC),
     invite: () => (room.isSpaceRoom() ? SpaceLockIC : HashLockIC),
     public: () => (room.isSpaceRoom() ? SpaceGlobeIC : HashGlobeIC),
-  };
+  }[joinRule]?.() || null);
 
   if (room.isSpaceRoom()) {
     return (
@@ -61,7 +61,7 @@ function Selector({
         key={roomId}
         name={room.name}
         roomId={roomId}
-        iconSrc={joinRuleToIconSrc[room.getJoinRule()]?.() || null}
+        iconSrc={joinRuleToIconSrc(room.getJoinRule())}
         isUnread={noti.hasNoti(roomId)}
         notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
         isAlert={noti.getHighlightNoti(roomId) !== 0}
@@ -90,7 +90,7 @@ function Selector({
       name={room.name}
       roomId={roomId}
       imageSrc={isDM ? imageSrc : null}
-      iconSrc={isDM ? null : joinRuleToIconSrc[room.getJoinRule()]?.() || null}
+      iconSrc={isDM ? null : joinRuleToIconSrc(room.getJoinRule())}
       isSelected={isSelected}
       isUnread={noti.hasNoti(roomId)}
       notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
