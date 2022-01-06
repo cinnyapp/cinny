@@ -11,7 +11,7 @@ import IconButton from '../../../atoms/button/IconButton';
 import './VoiceMailRecorder.scss';
 import Timer from '../../../../util/Timer';
 
-let timer = new Timer();
+let timer;
 
 let _stream;
 let _mediaRecorder;
@@ -21,6 +21,11 @@ const audioChunks = [];
 
 async function init() {
   if (_mediaRecorder) return;
+
+  timer = new Timer();
+  _stream = null;
+  _mediaRecorder = null;
+  audioChunks.length = 0;
 
   console.log('record voice, new recorder');
   _stream = await navigator.mediaDevices.getUserMedia({ audio: true });
