@@ -68,3 +68,4 @@ AttachmentTypeSelector.defaultProps = {
 };
 
 export { AttachmentTypeSelector, attachmentUiFrameTypes };
+export default AttachmentTypeSelector;

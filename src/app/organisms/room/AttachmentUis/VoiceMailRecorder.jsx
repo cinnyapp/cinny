@@ -17,7 +17,7 @@ let _stream;
 let _mediaRecorder;
 const audioChunks = [];
 
-// TODO: Check if supported
+// TODO: Check if supported, check if browser allows
 
 async function init() {
   if (_mediaRecorder) return;
@@ -27,7 +27,6 @@ async function init() {
   _mediaRecorder = null;
   audioChunks.length = 0;
 
-  console.log('record voice, new recorder');
   _stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
   _mediaRecorder = new MediaRecorder(_stream);
@@ -39,7 +38,7 @@ async function init() {
     audioChunks.push(event.data);
   };
   _mediaRecorder.onerror = (error) => {
-    console.warn(error);
+    console.log(error);
     _mediaRecorder.stop();
   };
 }
@@ -50,6 +49,7 @@ function pauseRec() {
     timer.pause();
   }
 }
+
 function startOrResumeRec() {
   if (!_mediaRecorder) return;
 
@@ -61,7 +61,10 @@ function startOrResumeRec() {
   }
   timer.resume();
 }
+
 function restartRec() {
+  // TODO: BUG: If recording is paused before restarting
+  // it will cause the "Recording paused" not to be edited
   if (_mediaRecorder.state !== 'recording') _mediaRecorder.pause();
   if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
 
@@ -71,19 +74,16 @@ function restartRec() {
     .then(startOrResumeRec);
 }
 
-// TODO: Handle turning off the recorder to remove the browser indicator
-function VoiceMailRecorder({ fnRequestResult, fnHowToSubmit }) {
-  const [state, setState] = React.useState('unknown');
-  const [timeRecording, setTimeRecording] = React.useState(null);
+function VoiceMailRecorder({ fnHowToSubmit }) {
+  const [state, setState] = React.useState('Recording');
+  const [timeRecording, setTimeRecording] = React.useState('00:00');
 
   async function initiateInitiation() {
     if (!_mediaRecorder) {
       await init();
       startOrResumeRec();
     }
-    // _mediaRecorder.onstop = () => {
-    //   setState('Recording stopped');
-    // };
+
     _mediaRecorder.onstart = () => setState('Recording...');
     _mediaRecorder.onpause = () => setState('Recording paused');
     _mediaRecorder.onresume = () => setState('Recording...');
@@ -101,7 +101,7 @@ function VoiceMailRecorder({ fnRequestResult, fnHowToSubmit }) {
 
         const opts = { type: 'audio/webm' };
         const audioBlob = new Blob(audioChunks, opts);
-        console.log('audioBlob', audioBlob);
+
         const audioFile = new File([audioBlob], 'voicemail.webm', opts);
         fnHowToSubmit(audioFile);
       // BUG: This will cause the recorder to add the file although it was to be cancelled
@@ -128,7 +128,7 @@ function VoiceMailRecorder({ fnRequestResult, fnHowToSubmit }) {
     };
   }, []);
 
-  fnRequestResult(stopAndSubmit);
+  // fnRequestResult(stopAndSubmit);
   initiateInitiation();
 
   return (
@@ -154,9 +154,11 @@ function VoiceMailRecorder({ fnRequestResult, fnHowToSubmit }) {
 }
 
 VoiceMailRecorder.propTypes = {
-  // fnCancel: PropTypes.func.isRequired,
-  fnRequestResult: PropTypes.func.isRequired,
+  // // Might be useful in the future if
+  // // components should be requested to submit their result content when the message gets sent
+  // // so the user does not need this UI to attach its result here but can just sent it
+  // fnRequestResult: PropTypes.func.isRequired,
   fnHowToSubmit: PropTypes.func.isRequired,
 };
 
-export { VoiceMailRecorder };
+export default VoiceMailRecorder;

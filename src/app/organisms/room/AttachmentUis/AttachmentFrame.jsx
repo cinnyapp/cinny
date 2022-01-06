@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { attachmentUiFrameTypes } from '../AttachmentTypeSelector';
-import { VoiceMailRecorder } from './VoiceMailRecorder';
+import VoiceMailRecorder from './VoiceMailRecorder';
 import RawIcon from '../../../atoms/system-icons/RawIcon';
 import VLCIC from '../../../../../public/res/ic/outlined/vlc.svg';
 import VolumeFullIC from '../../../../../public/res/ic/outlined/volume-full.svg';
@@ -14,12 +14,8 @@ function AttachmentFrame({
   attachmentOrUi,
   fileSetter,
   uploadProgressRef,
-  cancelNeedle,
 }) {
   function fileAttachedIndicator() {
-    console.log(attachmentOrUi.type);
-    console.log(typeof attachmentOrUi === 'object');
-
     // If this is not a file object, how can this be reached?
     if (typeof attachmentOrUi !== 'object') return null;
 
@@ -41,19 +37,13 @@ function AttachmentFrame({
   }
 
   function attachmentFrame() {
-    // let initStop;
-    // const fnInitStop = (func) => {
-    //   initStop = func;
-    //   // cancelNeedle(initStop);
+    // let requestResult;
+    // const fnRequestResult = (func) => {
+    //   requestResult = func;
     // };
-    let requestResult;
-    const fnRequestResult = (func) => {
-      requestResult = func;
-    };
     let submission;
     const fnHowToSubmit = (func) => {
       submission = func;
-      console.log(submission);
       fileSetter(submission);
     };
 
@@ -66,8 +56,7 @@ function AttachmentFrame({
         // Not too easy, need to attach function to return the audio blob
         return (
           <VoiceMailRecorder
-            // fnCancel={fnInitStop}
-            fnRequestResult={fnRequestResult}
+            // fnRequestResult={fnRequestResult}
             fnHowToSubmit={fnHowToSubmit}
           />
         );
@@ -83,7 +72,6 @@ AttachmentFrame.propTypes = {
   attachmentOrUi: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
   fileSetter: PropTypes.func.isRequired,
   uploadProgressRef: PropTypes.shape().isRequired,
-  cancelNeedle: PropTypes.func.isRequired,
 };
 
 export default AttachmentFrame;

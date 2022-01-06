@@ -49,8 +49,6 @@ function RoomViewInput({
   const mx = initMatrix.matrixClient;
   const { roomsInput } = initMatrix;
 
-  let cancelAttachmentCmd;
-
   function requestFocusInput() {
     if (textAreaRef === null) return;
     textAreaRef.current.focus();
@@ -183,7 +181,7 @@ function RoomViewInput({
     sendIsTyping(false);
 
     roomsInput.setMessage(roomId, msgBody);
-    if (typeof attachmentOrUi === 'string') console.log('input is not FINISHED'); // TODO: remove
+    if (typeof attachmentOrUi === 'string') console.log('input is not FINISHED'); // TODO: disallow sending
     if (attachmentOrUi !== null && typeof attachmentOrUi === 'object') {
       roomsInput.setAttachment(roomId, attachmentOrUi);
     }
@@ -297,8 +295,6 @@ function RoomViewInput({
   }
 
   const handleAttachmentTypeSelectorReturn = (ret) => {
-    if (cancelAttachmentCmd) cancelAttachmentCmd();
-
     switch (ret) {
       case attachmentUiFrameTypes.none:
         setAttachmentOrUi(attachmentUiFrameTypes.none);
@@ -332,8 +328,6 @@ function RoomViewInput({
             alreadyHasAttachment={attachmentOrUi !== null}
           />
           <input onChange={uploadFileChange} style={{ display: 'none' }} ref={uploadInputRef} type="file" />
-          {/* <IconButton onClick={handleUploadClick}
-            tooltip={attachment === null ? 'Upload' : 'Cancel'} src={CirclePlusIC} /> */}
         </div>
         <div ref={inputBaseRef} className="room-input__input-container">
           {roomTimeline.isEncrypted() && <RawIcon size="extra-small" src={ShieldIC} />}
@@ -399,12 +393,7 @@ function RoomViewInput({
           uploadProgressRef={uploadProgressRef}
           fileSetter={(blob) => {
             setAttachmentOrUi(blob);
-            console.log(blob);
             roomsInput.setAttachment(roomId, blob);
-          }}
-          cancelNeedle={(cmd) => {
-            cancelAttachmentCmd = cmd;
-            console.log(cmd);
           }}
         />
       ) }
