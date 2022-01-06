@@ -11,6 +11,7 @@ function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
     const list = [];
 
     attachmentUiFrameTypes.forEach((obj, key) => {
+      // Entries have to have an icon
       const icon = obj.icon ?? PlusIC;
 
       list.push(
@@ -18,10 +19,9 @@ function AttachmentTypeSelector({ alreadyHasAttachment, actOnAttaching }) {
           // This does not matter
           // eslint-disable-next-line react/no-array-index-key
           key={`attachmentUiListItem-${key}`}
-          // variant="surface"
           onClick={() => {
             toggleMenu();
-            actOnAttaching(key); // TODO: change to component
+            actOnAttaching(key);
           }}
           iconSrc={icon}
         >

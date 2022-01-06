@@ -35,6 +35,15 @@ let cmdCursorPos = null;
 function RoomViewInput({
   roomId, roomTimeline, viewEvent,
 }) {
+  /**
+   * @typedef attachmentOrUiType
+   * @type {string | File | null}
+   * Either contains the file object which is attached
+   * Or the name of a UI which is to be shown
+   */
+  /**
+   * @type {[attachmentOrUiType, Function]}
+   */
   const [attachmentOrUi, setAttachmentOrUi] = useState(null);
   const [isMarkdown, setIsMarkdown] = useState(settings.isMarkdown);
   const [replyTo, setReplyTo] = useState(null);

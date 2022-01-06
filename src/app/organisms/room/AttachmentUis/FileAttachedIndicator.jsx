@@ -11,7 +11,6 @@ function FileAttachedIndicator({
   attachmentOrUi,
   uploadProgressRef,
 }) {
-  // If this is not a file object, how can this be reached?
   if (typeof attachmentOrUi !== 'object') return null;
 
   const fileType = attachmentOrUi.type.slice(0, attachmentOrUi.type.indexOf('/'));

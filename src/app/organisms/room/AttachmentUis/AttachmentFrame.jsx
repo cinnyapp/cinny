@@ -9,27 +9,26 @@ function AttachmentFrame({
   fileSetter,
   uploadProgressRef,
 }) {
-  function attachmentFrame() {
-    let submission;
-    const fnHowToSubmit = (func) => {
-      submission = func;
-      fileSetter(submission);
-    };
+  // To enable child components to learn how to attach their result
+  let submission;
+  const fnHowToSubmit = (func) => {
+    submission = func;
+    fileSetter(submission);
+  };
 
-    // If there already is an attachment, show it
-    if (typeof attachmentOrUi === 'object') {
-      return (
-        <FileAttachedIndicator
-          attachmentOrUi={attachmentOrUi}
-          uploadProgressRef={uploadProgressRef}
-        />
-      );
-    }
-
-    const UiComponent = attachmentUis.get(attachmentOrUi).component;
-    return (<UiComponent fnHowToSubmit={fnHowToSubmit} />);
+  // If there already is an attachment, show it
+  if (typeof attachmentOrUi === 'object') {
+    return (
+      <FileAttachedIndicator
+        attachmentOrUi={attachmentOrUi}
+        uploadProgressRef={uploadProgressRef}
+      />
+    );
   }
-  return attachmentFrame();
+
+  // Show the desired UI
+  const UiComponent = attachmentUis.get(attachmentOrUi).component;
+  return (<UiComponent fnHowToSubmit={fnHowToSubmit} />);
 }
 
 AttachmentFrame.propTypes = {

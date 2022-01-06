@@ -11,9 +11,18 @@ import IconButton from '../../../atoms/button/IconButton';
 import './VoiceMailRecorder.scss';
 import Timer from '../../../../util/Timer';
 
+/**
+ * @type {Timer}
+ */
 let timer;
 
+/**
+ * @type {MediaStream}
+ */
 let _stream;
+/**
+ * @type {MediaRecorder}
+ */
 let _mediaRecorder;
 
 async function init() {
