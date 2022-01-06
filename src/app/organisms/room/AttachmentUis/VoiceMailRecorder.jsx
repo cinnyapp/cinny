@@ -15,7 +15,6 @@ let timer;
 
 let _stream;
 let _mediaRecorder;
-const audioChunks = [];
 
 async function init() {
   if (_mediaRecorder) return;
@@ -23,18 +22,11 @@ async function init() {
   timer = new Timer();
   _stream = null;
   _mediaRecorder = null;
-  audioChunks.length = 0;
 
   _stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
   _mediaRecorder = new MediaRecorder(_stream);
 
-  // Remove previous recording
-  audioChunks.length = 0;
-
-  _mediaRecorder.ondataavailable = (event) => {
-    audioChunks.push(event.data);
-  };
   _mediaRecorder.onerror = (error) => {
     console.log(error);
     _mediaRecorder.stop();
@@ -54,16 +46,12 @@ function startOrResumeRec() {
   if (_mediaRecorder.state === 'paused') {
     _mediaRecorder.resume();
   } else if (_mediaRecorder.state === 'inactive') {
-    audioChunks.length = 0;
     _mediaRecorder.start();
   }
   timer.resume();
 }
 
 async function restartRec() {
-  // TODO: BUG: If recording is paused before restarting
-  // it will cause the "Recording paused" not to be edited
-
   // Needed, otherwise the browser indicator would remain after closing UI
   if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
   _stream.getTracks().forEach((track) => track.stop());
@@ -95,13 +83,11 @@ function VoiceMailRecorder({ fnHowToSubmit }) {
     _mediaRecorder.onresume = () => setState('Recording...');
   }
 
-  function stopAndSubmit(skipSubmission) {
-    if (_mediaRecorder && _mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
-
-    _stream.getTracks().forEach((track) => track.stop());
-
+  function stopAndSubmit(skipSubmission = false) {
     if (!skipSubmission) {
-      setTimeout(() => {
+      _mediaRecorder.ondataavailable = (event) => {
+        const audioChunks = [];
+        audioChunks.push(event.data);
         _mediaRecorder = null;
         _stream = null;
 
@@ -110,8 +96,12 @@ function VoiceMailRecorder({ fnHowToSubmit }) {
 
         const audioFile = new File([audioBlob], 'voicemail.webm', opts);
         fnHowToSubmit(audioFile);
-      }, 300); // TODO: Fix this hack, stop does not mean dataavailable but its going to happen soon
+      };
     }
+
+    // Stop recording, remove browser indicator
+    if (_mediaRecorder && _mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
+    _stream.getTracks().forEach((track) => track.stop());
   }
 
   useEffect(() => {

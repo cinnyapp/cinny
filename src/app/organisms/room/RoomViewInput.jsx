@@ -297,14 +297,14 @@ function RoomViewInput({
   const handleAttachmentTypeSelectorReturn = (ret) => {
     switch (ret) {
       case attachmentUiFrameTypes.none:
-        setAttachmentOrUi(attachmentUiFrameTypes.none);
+        setAttachmentOrUi(ret);
         roomsInput.cancelAttachment(roomId);
         break;
       case attachmentUiFrameTypes.file:
         uploadInputRef.current.click();
         break;
       case attachmentUiFrameTypes.voiceMailRecorder:
-        setAttachmentOrUi(attachmentUiFrameTypes.voiceMailRecorder);
+        setAttachmentOrUi(ret);
         break;
       default:
         console.log('unhandled attachment type selector return');
