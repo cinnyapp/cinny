@@ -60,16 +60,17 @@ function startOrResumeRec() {
   timer.resume();
 }
 
-function restartRec() {
+async function restartRec() {
   // TODO: BUG: If recording is paused before restarting
   // it will cause the "Recording paused" not to be edited
-  if (_mediaRecorder.state !== 'recording') _mediaRecorder.pause();
-  if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
 
+  // Needed, otherwise the browser indicator would remain after closing UI
+  if (_mediaRecorder.state !== 'inactive') _mediaRecorder.stop();
+  _stream.getTracks().forEach((track) => track.stop());
   _mediaRecorder = null;
   timer = new Timer();
-  init()
-    .then(startOrResumeRec);
+  await init();
+  startOrResumeRec();
 }
 
 function VoiceMailRecorder({ fnHowToSubmit }) {
@@ -109,7 +110,6 @@ function VoiceMailRecorder({ fnHowToSubmit }) {
 
         const audioFile = new File([audioBlob], 'voicemail.webm', opts);
         fnHowToSubmit(audioFile);
-      // BUG: This will cause the recorder to add the file although it was to be cancelled
       }, 300); // TODO: Fix this hack, stop does not mean dataavailable but its going to happen soon
     }
   }
@@ -151,7 +151,9 @@ function VoiceMailRecorder({ fnHowToSubmit }) {
         {(_mediaRecorder && _mediaRecorder.state === 'recording')
           ? (<IconButton onClick={pauseRec} src={PauseIC}>Pause</IconButton>)
           : (<IconButton onClick={startOrResumeRec} src={PlayIC}>Start</IconButton>)}
-        <IconButton onClick={restartRec} src={ArrowIC} tooltip="Start over">Reset</IconButton>
+        <IconButton onClick={() => restartRec().then(() => setState('Recording...'))} src={ArrowIC} tooltip="Start over">
+          Reset
+        </IconButton>
         <IconButton onClick={() => stopAndSubmit()} src={ChevronBottomIC} tooltip="Add as attachment" type="submit">Submit</IconButton>
       </div>
     </div>
