@@ -48,11 +48,19 @@ class Settings extends EventEmitter {
 
   setTheme(themeIndex) {
     const appBody = document.getElementById('appBody');
+
+    appBody.classList.remove('system-theme');
     this.themes.forEach((themeName) => {
       if (themeName === '') return;
       appBody.classList.remove(themeName);
     });
-    if (this.themes[themeIndex] !== '') appBody.classList.add(this.themes[themeIndex]);
+    // If use system theme is enabled
+    // we will override current theme choice with system theme
+    if (this.useSystemTheme) {
+      appBody.classList.add('system-theme');
+    } else if (this.themes[themeIndex] !== '') {
+      appBody.classList.add(this.themes[themeIndex]);
+    }
     setSettings('themeIndex', themeIndex);
     this.themeIndex = themeIndex;
   }
@@ -106,19 +114,9 @@ class Settings extends EventEmitter {
     const actions = {
       [cons.actions.settings.TOGGLE_SYSTEM_THEME]: () => {
         this.useSystemTheme = !this.useSystemTheme;
-        setSettings('useSystemTheme', this.useSystemTheme);
-        const appBody = document.getElementById('appBody');
 
-        if (this.useSystemTheme) {
-          appBody.classList.add('system-theme');
-          this.themes.forEach((themeName) => {
-            if (themeName === '') return;
-            appBody.classList.remove(themeName);
-          });
-        } else {
-          appBody.classList.remove('system-theme');
-          this.setTheme(this.themeIndex);
-        }
+        setSettings('useSystemTheme', this.useSystemTheme);
+        this.setTheme(this.themeIndex);
 
         this.emit(cons.events.settings.SYSTEM_THEME_TOGGLED, this.useSystemTheme);
       },
