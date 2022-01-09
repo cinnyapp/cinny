@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import './Avatar.scss';
 
@@ -10,22 +10,16 @@ import RawIcon from '../system-icons/RawIcon';
 function Avatar({
   text, bgColor, iconSrc, iconColor, imageSrc, size,
 }) {
-  const [image, updateImage] = useState(imageSrc);
   let textSize = 's1';
   if (size === 'large') textSize = 'h1';
   if (size === 'small') textSize = 'b1';
   if (size === 'extra-small') textSize = 'b3';
 
-  useEffect(() => {
-    updateImage(imageSrc);
-    return () => updateImage(null);
-  }, [imageSrc]);
-
   return (
     <div className={`avatar-container avatar-container__${size} noselect`}>
       {
-        image !== null
-          ? <img draggable="false" src={image} onError={() => updateImage(null)} alt="avatar" />
+        imageSrc !== null
+          ? <img draggable="false" src={imageSrc} alt="avatar" />
           : (
             <span
               style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
