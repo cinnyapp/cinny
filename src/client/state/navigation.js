@@ -73,6 +73,8 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
+        if (this.selectedRoomId === action.roomId) return;
+
         const prevSelectedRoomId = this.selectedRoomId;
         this.selectedRoomId = action.roomId;
         this.removeRecentRoom(prevSelectedRoomId);
