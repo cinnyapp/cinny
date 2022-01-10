@@ -19,12 +19,12 @@ import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
 import RoomAliases from '../../molecules/room-aliases/RoomAliases';
 import RoomHistoryVisibility from '../../molecules/room-history-visibility/RoomHistoryVisibility';
 import RoomEncryption from '../../molecules/room-encryption/RoomEncryption';
+import RoomPermissions from '../../molecules/room-permissions/RoomPermissions';
 
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
-import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 
@@ -35,7 +35,6 @@ const tabText = {
   SEARCH: 'Search',
   PERMISSIONS: 'Permissions',
   SECURITY: 'Security',
-  ADVANCED: 'Advanced',
 };
 
 const tabItems = [{
@@ -53,10 +52,6 @@ const tabItems = [{
 }, {
   iconSrc: LockIC,
   text: tabText.SECURITY,
-  disabled: false,
-}, {
-  iconSrc: InfoIC,
-  text: tabText.ADVANCED,
   disabled: false,
 }];
 
@@ -156,6 +151,7 @@ function RoomSettings({ roomId }) {
           />
           <div className="room-settings__cards-wrapper">
             {selectedTab.text === tabText.GENERAL && <GeneralSettings roomId={roomId} />}
+            {selectedTab.text === tabText.PERMISSIONS && <RoomPermissions roomId={roomId} />}
             {selectedTab.text === tabText.SECURITY && <SecuritySettings roomId={roomId} />}
           </div>
         </div>
