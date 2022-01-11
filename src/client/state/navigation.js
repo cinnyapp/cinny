@@ -147,6 +147,14 @@ class Navigation extends EventEmitter {
           action.term,
         );
       },
+      [cons.actions.navigation.OPEN_REUSABLE_CONTEXT_MENU]: () => {
+        this.emit(
+          cons.events.navigation.REUSABLE_CONTEXT_MENU_OPENED,
+          action.placement,
+          action.cords,
+          action.render,
+        );
+      },
     };
     actions[action.type]?.();
   }
