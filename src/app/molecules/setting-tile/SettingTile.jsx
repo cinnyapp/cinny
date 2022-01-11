@@ -7,13 +7,13 @@ import Text from '../../atoms/text/Text';
 function SettingTile({ title, options, content }) {
   return (
     <div className="setting-tile">
-      <div className="setting-tile__title__wrapper">
+      <div className="setting-tile__content">
         <div className="setting-tile__title">
           <Text variant="b1">{title}</Text>
         </div>
-        {options !== null && <div className="setting-tile__options">{options}</div>}
+        {content}
       </div>
-      {content !== null && <div className="setting-tile__content">{content}</div>}
+      {options !== null && <div className="setting-tile__options">{options}</div>}
     </div>
   );
 }

@@ -1,13 +1,15 @@
 @use '../../partials/dir';
 
 .setting-tile {
-  &__title__wrapper {
-    display: flex;
-    align-items: center;
-  }
-  &__title {
+  display: flex;
+  &__content {
     flex: 1;
     min-width: 0;
-    @include dir.side(margin, 0, var(--sp-normal));
+  }
+  &__title {
+    margin-bottom: var(--sp-ultra-tight);
+  }
+  &__options {
+    @include dir.side(margin, var(--sp-tight), 0);
   }
 }

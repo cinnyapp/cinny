@@ -117,3 +117,12 @@ export function openSearch(term) {
     term,
   });
 }
+
+export function openReusableContextMenu(placement, cords, render) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_REUSABLE_CONTEXT_MENU,
+    placement,
+    cords,
+    render,
+  });
+}

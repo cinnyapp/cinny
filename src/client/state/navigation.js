@@ -73,6 +73,8 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
+        if (this.selectedRoomId === action.roomId) return;
+
         const prevSelectedRoomId = this.selectedRoomId;
         this.selectedRoomId = action.roomId;
         this.removeRecentRoom(prevSelectedRoomId);
@@ -150,6 +152,14 @@ class Navigation extends EventEmitter {
         this.emit(
           cons.events.navigation.SEARCH_OPENED,
           action.term,
+        );
+      },
+      [cons.actions.navigation.OPEN_REUSABLE_CONTEXT_MENU]: () => {
+        this.emit(
+          cons.events.navigation.REUSABLE_CONTEXT_MENU_OPENED,
+          action.placement,
+          action.cords,
+          action.render,
         );
       },
     };

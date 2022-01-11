@@ -32,16 +32,20 @@
     padding: 0 var(--sp-normal);
     @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
   }
+}
 
-  &__card {
-    margin: var(--sp-normal) 0;
-    background-color: var(--bg-surface);
-    border-radius: var(--bo-radius);
-    box-shadow: var(--bs-surface-border);
-    overflow: hidden;
+.room-settings__card {
+  margin: var(--sp-normal) 0;
+  background-color: var(--bg-surface);
+  border-radius: var(--bo-radius);
+  box-shadow: var(--bs-surface-border);
+  overflow: hidden;
 
-    & > .context-menu__header:first-child {
-      margin-top: 2px;
-    }
+  & > .context-menu__header:first-child {
+    margin-top: 2px;
   }
+}
+
+.room-settings .room-permissions__card {
+  @extend .room-settings__card;
 }

@@ -1,0 +1,20 @@
+@use '../../partials/flex';
+@use '../../partials/dir';
+
+.power-level-selector {
+  & .context-menu__item .text {
+    margin: 0 !important;
+  }
+
+  & form {
+    margin: var(--sp-normal);
+    display: flex;
+      
+    & input {
+      @extend .cp-fx__item-one;
+      @include dir.side(margin, 0, var(--sp-tight));
+      width: 148px;
+      padding: 9px var(--sp-tight);
+    }
+  }
+}

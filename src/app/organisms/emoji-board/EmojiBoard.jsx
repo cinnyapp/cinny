@@ -188,29 +188,29 @@ function EmojiBoard({ onSelect }) {
 
   const [availableEmojis, setAvailableEmojis] = useState([]);
 
-  // This should be called whenever the room changes, so that we can switch out the emoji
-  // for whatever packs are relevant to this room
-  function updateAvailableEmoji(selectedRoomId) {
-    // Retrieve the packs for the new room
-    const packs = getRelevantPacks(
-      initMatrix.matrixClient.getRoom(selectedRoomId),
-    )
-    // Remove packs that aren't marked as emoji packs
-      .filter((pack) => pack.usage.indexOf('emoticon') !== -1)
-    // Remove packs without emojis
-      .filter((pack) => pack.getEmojis().length !== 0);
-
-    // Set an index for each pack so that we know where to jump when the user uses the nav
-    for (let i = 0; i < packs.length; i += 1) {
-      packs[i].packIndex = i;
-    }
-
-    // Update the component state
-    setAvailableEmojis(packs);
-  }
-
-  // Register the above function as an event listener
   useEffect(() => {
+    const updateAvailableEmoji = (selectedRoomId) => {
+      if (!selectedRoomId) {
+        setAvailableEmojis([]);
+        return;
+      }
+      // Retrieve the packs for the new room
+      // Remove packs that aren't marked as emoji packs
+      // Remove packs without emojis
+      const packs = getRelevantPacks(
+        initMatrix.matrixClient.getRoom(selectedRoomId),
+      )
+        .filter((pack) => pack.usage.indexOf('emoticon') !== -1)
+        .filter((pack) => pack.getEmojis().length !== 0);
+
+      // Set an index for each pack so that we know where to jump when the user uses the nav
+      for (let i = 0; i < packs.length; i += 1) {
+        packs[i].packIndex = i;
+      }
+
+      setAvailableEmojis(packs);
+    };
+
     navigation.on(cons.events.navigation.ROOM_SELECTED, updateAvailableEmoji);
     return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, updateAvailableEmoji);
