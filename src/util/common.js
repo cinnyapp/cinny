@@ -21,11 +21,28 @@ export function isInSameDay(dt2, dt1) {
   );
 }
 
-export function getEventCords(ev) {
-  const boxInfo = ev.target.getBoundingClientRect();
+/**
+ * @param {Event} ev
+ * @param {string} [targetSelector] element selector for Element.matches([selector])
+ */
+export function getEventCords(ev, targetSelector) {
+  let boxInfo;
+
+  const path = ev.nativeEvent.composedPath();
+  const target = targetSelector
+    ? path.find((element) => element.matches?.(targetSelector))
+    : null;
+  if (target) {
+    boxInfo = target.getBoundingClientRect();
+  } else {
+    boxInfo = ev.target.getBoundingClientRect();
+  }
+
   return {
     x: boxInfo.x,
     y: boxInfo.y,
+    width: boxInfo.width,
+    height: boxInfo.height,
     detail: ev.detail,
   };
 }
