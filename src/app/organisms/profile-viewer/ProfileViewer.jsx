@@ -44,6 +44,11 @@ function ModerationTools({
     && room.currentState.hasSufficientPowerLevelFor('kick', myPowerLevel)
     && powerLevel < myPowerLevel
   );
+  const canIBan = (
+    ['join', 'leave'].includes(roomMember?.membership)
+    && room.currentState.hasSufficientPowerLevelFor('ban', myPowerLevel)
+    && powerLevel < myPowerLevel
+  );
 
   const handleKick = (e) => {
     e.preventDefault();
@@ -51,15 +56,25 @@ function ModerationTools({
     roomActions.kick(roomId, userId, kickReason !== '' ? kickReason : undefined);
   };
 
+  const handleBan = (e) => {
+    e.preventDefault();
+    const banReason = e.target.elements['ban-reason']?.value.trim();
+    roomActions.ban(roomId, userId, banReason !== '' ? banReason : undefined);
+  };
+
   return (
     <div className="moderation-tools">
       {canIKick && (
-        <>
-          <form onSubmit={handleKick}>
-            <Input label="Kick reason" name="kick-reason" />
-            <Button type="submit">Kick</Button>
-          </form>
-        </>
+        <form onSubmit={handleKick}>
+          <Input label="Kick reason" name="kick-reason" />
+          <Button type="submit">Kick</Button>
+        </form>
+      )}
+      {canIBan && (
+        <form onSubmit={handleBan}>
+          <Input label="Ban reason" name="ban-reason" />
+          <Button type="submit">Ban</Button>
+        </form>
       )}
     </div>
   );

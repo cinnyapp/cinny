@@ -199,6 +199,13 @@ async function kick(roomId, userId, reason) {
   return result;
 }
 
+async function ban(roomId, userId, reason) {
+  const mx = initMatrix.matrixClient;
+
+  const result = await mx.ban(roomId, userId, reason);
+  return result;
+}
+
 async function setPowerLevel(roomId, userId, powerLevel) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
@@ -225,7 +232,7 @@ function deleteSpaceShortcut(roomId) {
 
 export {
   join, leave,
-  create, invite, kick,
+  create, invite, kick, ban,
   setPowerLevel,
   createSpaceShortcut, deleteSpaceShortcut,
 };
