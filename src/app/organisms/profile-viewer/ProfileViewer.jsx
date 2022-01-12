@@ -230,20 +230,10 @@ ProfileFooter.propTypes = {
   onRequestClose: PropTypes.func.isRequired,
 };
 
-function ProfileViewer() {
+function useToggleDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [roomId, setRoomId] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [, forceUpdate] = useForceUpdate();
-
-  const mx = initMatrix.matrixClient;
-  const room = roomId ? mx.getRoom(roomId) : null;
-  let username = '';
-  if (room !== null) {
-    const roomMember = room.getMember(userId);
-    if (roomMember) username = getUsernameOfRoomMember(roomMember);
-    else username = getUsername(userId);
-  }
 
   useEffect(() => {
     const loadProfile = (uId, rId) => {
@@ -257,6 +247,19 @@ function ProfileViewer() {
     };
   }, []);
 
+  const closeDialog = () => setIsOpen(false);
+
+  const afterClose = () => {
+    setUserId(null);
+    setRoomId(null);
+  };
+
+  return [isOpen, roomId, userId, closeDialog, afterClose];
+}
+
+function useRerenderOnRoleChange(roomId, userId) {
+  const mx = initMatrix.matrixClient;
+  const [, forceUpdate] = useForceUpdate();
   useEffect(() => {
     const handlePowerLevelChange = (mEvent, member) => {
       if (mEvent.getRoomId() === roomId && member.userId === userId) {
@@ -268,17 +271,27 @@ function ProfileViewer() {
       mx.removeListener('RoomMember.powerLevel', handlePowerLevelChange);
     };
   }, [roomId, userId]);
+}
 
-  const handleAfterClose = () => {
-    setUserId(null);
-    setRoomId(null);
-  };
+function ProfileViewer() {
+  const [isOpen, roomId, userId, closeDialog, handleAfterClose] = useToggleDialog();
+  useRerenderOnRoleChange(roomId, userId);
 
-  function renderProfile() {
-    const member = room.getMember(userId) || mx.getUser(userId) || {};
-    const avatarMxc = member.getMxcAvatarUrl?.() || member.avatarUrl;
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
 
-    const powerLevel = member.powerLevel || 0;
+  let [roomMember, username] = [null, null];
+
+  if (roomId) {
+    roomMember = room.getMember(userId);
+    username = roomMember ? getUsernameOfRoomMember(roomMember) : getUsername(userId);
+  }
+
+  const renderProfile = () => {
+    const avatarMxc = roomMember.getMxcAvatarUrl?.() || mx.getMember(userId).avatarUrl;
+    const avatarUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
+
+    const powerLevel = roomMember.powerLevel || 0;
     const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel || 0;
 
     const canChangeRole = (
@@ -295,6 +308,7 @@ function ProfileViewer() {
         roomActions.setPowerLevel(roomId, userId, newPowerLevel);
       }
     };
+
     const handlePowerSelector = (e) => {
       openReusableContextMenu(
         'bottom',
@@ -315,12 +329,7 @@ function ProfileViewer() {
     return (
       <div className="profile-viewer">
         <div className="profile-viewer__user">
-          <Avatar
-            imageSrc={!avatarMxc ? null : mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop')}
-            text={username}
-            bgColor={colorMXID(userId)}
-            size="large"
-          />
+          <Avatar imageSrc={avatarUrl} text={username} bgColor={colorMXID(userId)} size="large" />
           <div className="profile-viewer__user__info">
             <Text variant="s1" weight="medium">{twemojify(username)}</Text>
             <Text variant="b2">{twemojify(userId)}</Text>
@@ -340,12 +349,12 @@ function ProfileViewer() {
           <ProfileFooter
             roomId={roomId}
             userId={userId}
-            onRequestClose={() => setIsOpen(false)}
+            onRequestClose={closeDialog}
           />
         )}
       </div>
     );
-  }
+  };
 
   return (
     <Dialog
@@ -353,8 +362,8 @@ function ProfileViewer() {
       isOpen={isOpen}
       title={`${username} in ${room?.name ?? ''}`}
       onAfterClose={handleAfterClose}
-      onRequestClose={() => setIsOpen(false)}
-      contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
+      onRequestClose={closeDialog}
+      contentOptions={<IconButton src={CrossIC} onClick={closeDialog} tooltip="Close" />}
     >
       {roomId ? renderProfile() : <div />}
     </Dialog>
