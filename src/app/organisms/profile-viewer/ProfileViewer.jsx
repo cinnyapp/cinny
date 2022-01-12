@@ -17,6 +17,7 @@ import colorMXID from '../../../util/colorMXID';
 import Text from '../../atoms/text/Text';
 import Chip from '../../atoms/chip/Chip';
 import IconButton from '../../atoms/button/IconButton';
+import Input from '../../atoms/input/Input';
 import Avatar from '../../atoms/avatar/Avatar';
 import Button from '../../atoms/button/Button';
 import PowerLevelSelector from '../../molecules/power-level-selector/PowerLevelSelector';
@@ -28,6 +29,45 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
+
+function ModerationTools({
+  roomId, userId,
+}) {
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
+  const roomMember = room.getMember(userId);
+
+  const myPowerLevel = room.getMember(mx.getUserId()).powerLevel;
+  const powerLevel = roomMember?.powerLevel || 0;
+  const canIKick = (
+    roomMember?.membership === 'join'
+    && room.currentState.hasSufficientPowerLevelFor('kick', myPowerLevel)
+    && powerLevel < myPowerLevel
+  );
+
+  const handleKick = (e) => {
+    e.preventDefault();
+    const kickReason = e.target.elements['kick-reason']?.value.trim();
+    roomActions.kick(roomId, userId, kickReason !== '' ? kickReason : undefined);
+  };
+
+  return (
+    <div className="moderation-tools">
+      {canIKick && (
+        <>
+          <form onSubmit={handleKick}>
+            <Input label="Kick reason" name="kick-reason" />
+            <Button type="submit">Kick</Button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+}
+ModerationTools.propTypes = {
+  roomId: PropTypes.string.isRequired,
+  userId: PropTypes.string.isRequired,
+};
 
 function SessionInfo({ userId }) {
   const [devices, setDevices] = useState(null);
@@ -257,25 +297,30 @@ function useToggleDialog() {
   return [isOpen, roomId, userId, closeDialog, afterClose];
 }
 
-function useRerenderOnRoleChange(roomId, userId) {
+function useRerenderOnProfileChange(roomId, userId) {
   const mx = initMatrix.matrixClient;
   const [, forceUpdate] = useForceUpdate();
   useEffect(() => {
-    const handlePowerLevelChange = (mEvent, member) => {
-      if (mEvent.getRoomId() === roomId && member.userId === userId) {
+    const handleProfileChange = (mEvent, member) => {
+      if (
+        mEvent.getRoomId() === roomId
+        && (member.userId === userId || member.userId === mx.getUserId())
+      ) {
         forceUpdate();
       }
     };
-    mx.on('RoomMember.powerLevel', handlePowerLevelChange);
+    mx.on('RoomMember.powerLevel', handleProfileChange);
+    mx.on('RoomMember.membership', handleProfileChange);
     return () => {
-      mx.removeListener('RoomMember.powerLevel', handlePowerLevelChange);
+      mx.removeListener('RoomMember.powerLevel', handleProfileChange);
+      mx.removeListener('RoomMember.membership', handleProfileChange);
     };
   }, [roomId, userId]);
 }
 
 function ProfileViewer() {
   const [isOpen, roomId, userId, closeDialog, handleAfterClose] = useToggleDialog();
-  useRerenderOnRoleChange(roomId, userId);
+  useRerenderOnProfileChange(roomId, userId);
 
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
@@ -288,8 +333,8 @@ function ProfileViewer() {
   }
 
   const renderProfile = () => {
-    const avatarMxc = roomMember.getMxcAvatarUrl?.() || mx.getMember(userId).avatarUrl;
-    const avatarUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
+    const avatarMxc = roomMember?.getMxcAvatarUrl?.() || mx.getUser(userId).avatarUrl;
+    const avatarUrl = (avatarMxc && avatarMxc !== 'null') ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
 
     const powerLevel = roomMember.powerLevel || 0;
     const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel || 0;
@@ -344,13 +389,10 @@ function ProfileViewer() {
             </Button>
           </div>
         </div>
+        <ModerationTools roomId={roomId} userId={userId} />
         <SessionInfo userId={userId} />
         { userId !== mx.getUserId() && (
-          <ProfileFooter
-            roomId={roomId}
-            userId={userId}
-            onRequestClose={closeDialog}
-          />
+          <ProfileFooter roomId={roomId} userId={userId} onRequestClose={closeDialog} />
         )}
       </div>
     );

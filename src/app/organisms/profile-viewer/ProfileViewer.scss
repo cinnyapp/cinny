@@ -1,3 +1,4 @@
+@use '../../partials/flex';
 @use '../../partials/dir';
 
 .profile-viewer__dialog {
@@ -57,6 +58,27 @@
     }
     & > *:last-child {
       @include dir.side(margin, auto, 0);
+    }
+  }
+}
+
+.profile-viewer__admin-tool {
+  .setting-tile {
+    margin-top: var(--sp-loose);
+  }
+}
+
+.moderation-tools {
+  & > form {
+    margin: var(--sp-normal) 0;
+    display: flex;
+    align-items: flex-end;
+    & .input-container {
+      @extend .cp-fx__item-one;
+      @include dir.side(margin, 0, var(--sp-tight));
+    }
+    & button {
+      height: 46px;
     }
   }
 }

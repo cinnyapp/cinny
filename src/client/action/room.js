@@ -192,10 +192,10 @@ async function invite(roomId, userId) {
   return result;
 }
 
-async function kick(roomId, userId) {
+async function kick(roomId, userId, reason) {
   const mx = initMatrix.matrixClient;
 
-  const result = await mx.kick(roomId, userId);
+  const result = await mx.kick(roomId, userId, reason);
   return result;
 }
 
