@@ -199,6 +199,16 @@ async function kick(roomId, userId) {
   return result;
 }
 
+async function setPowerLevel(roomId, userId, powerLevel) {
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
+
+  const powerlevelEvent = room.currentState.getStateEvents('m.room.power_levels')[0];
+
+  const result = await mx.setPowerLevel(roomId, userId, powerLevel, powerlevelEvent);
+  return result;
+}
+
 function createSpaceShortcut(roomId) {
   appDispatcher.dispatch({
     type: cons.actions.room.CREATE_SPACE_SHORTCUT,
@@ -216,5 +226,6 @@ function deleteSpaceShortcut(roomId) {
 export {
   join, leave,
   create, invite, kick,
+  setPowerLevel,
   createSpaceShortcut, deleteSpaceShortcut,
 };

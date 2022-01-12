@@ -7,10 +7,11 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { selectRoom } from '../../../client/action/navigation';
+import { selectRoom, openReusableContextMenu } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 
 import { getUsername, getUsernameOfRoomMember, getPowerLabel } from '../../../util/matrixUtil';
+import { getEventCords } from '../../../util/common';
 import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
@@ -18,12 +19,15 @@ import Chip from '../../atoms/chip/Chip';
 import IconButton from '../../atoms/button/IconButton';
 import Avatar from '../../atoms/avatar/Avatar';
 import Button from '../../atoms/button/Button';
+import PowerLevelSelector from '../../molecules/power-level-selector/PowerLevelSelector';
 import Dialog from '../../molecules/dialog/Dialog';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
 
 import ShieldEmptyIC from '../../../../public/res/ic/outlined/shield-empty.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+
+import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 function SessionInfo({ userId }) {
   const [devices, setDevices] = useState(null);
@@ -230,6 +234,7 @@ function ProfileViewer() {
   const [isOpen, setIsOpen] = useState(false);
   const [roomId, setRoomId] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [, forceUpdate] = useForceUpdate();
 
   const mx = initMatrix.matrixClient;
   const room = roomId ? mx.getRoom(roomId) : null;
@@ -240,18 +245,29 @@ function ProfileViewer() {
     else username = getUsername(userId);
   }
 
-  function loadProfile(uId, rId) {
-    setIsOpen(true);
-    setUserId(uId);
-    setRoomId(rId);
-  }
-
   useEffect(() => {
+    const loadProfile = (uId, rId) => {
+      setIsOpen(true);
+      setUserId(uId);
+      setRoomId(rId);
+    };
     navigation.on(cons.events.navigation.PROFILE_VIEWER_OPENED, loadProfile);
     return () => {
       navigation.removeListener(cons.events.navigation.PROFILE_VIEWER_OPENED, loadProfile);
     };
   }, []);
+
+  useEffect(() => {
+    const handlePowerLevelChange = (mEvent, member) => {
+      if (mEvent.getRoomId() === roomId && member.userId === userId) {
+        forceUpdate();
+      }
+    };
+    mx.on('RoomMember.powerLevel', handlePowerLevelChange);
+    return () => {
+      mx.removeListener('RoomMember.powerLevel', handlePowerLevelChange);
+    };
+  }, [roomId, userId]);
 
   const handleAfterClose = () => {
     setUserId(null);
@@ -261,8 +277,40 @@ function ProfileViewer() {
   function renderProfile() {
     const member = room.getMember(userId) || mx.getUser(userId) || {};
     const avatarMxc = member.getMxcAvatarUrl?.() || member.avatarUrl;
+
     const powerLevel = member.powerLevel || 0;
-    const canChangeRole = room.currentState.maySendEvent('m.room.power_levels', mx.getUserId());
+    const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel || 0;
+
+    const canChangeRole = (
+      room.currentState.maySendEvent('m.room.power_levels', mx.getUserId())
+      && (powerLevel < myPowerLevel || userId === mx.getUserId())
+    );
+
+    const handleChangePowerLevel = (newPowerLevel) => {
+      if (newPowerLevel === powerLevel) return;
+      if (newPowerLevel === myPowerLevel
+        ? confirm('You will not be able to undo this change as you are promoting the user to have the same power level as yourself. Are you sure?')
+        : true
+      ) {
+        roomActions.setPowerLevel(roomId, userId, newPowerLevel);
+      }
+    };
+    const handlePowerSelector = (e) => {
+      openReusableContextMenu(
+        'bottom',
+        getEventCords(e, '.btn-surface'),
+        (closeMenu) => (
+          <PowerLevelSelector
+            value={powerLevel}
+            max={myPowerLevel}
+            onSelect={(pl) => {
+              closeMenu();
+              handleChangePowerLevel(pl);
+            }}
+          />
+        ),
+      );
+    };
 
     return (
       <div className="profile-viewer">
@@ -279,7 +327,10 @@ function ProfileViewer() {
           </div>
           <div className="profile-viewer__user__role">
             <Text variant="b3">Role</Text>
-            <Button iconSrc={canChangeRole ? ChevronBottomIC : null}>
+            <Button
+              onClick={canChangeRole ? handlePowerSelector : null}
+              iconSrc={canChangeRole ? ChevronBottomIC : null}
+            >
               {`${getPowerLabel(powerLevel) || 'Member'} - ${powerLevel}`}
             </Button>
           </div>

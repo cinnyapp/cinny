@@ -4,6 +4,7 @@ import './Client.scss';
 import Text from '../../atoms/text/Text';
 import Spinner from '../../atoms/spinner/Spinner';
 import Navigation from '../../organisms/navigation/Navigation';
+import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
 import Room from '../../organisms/room/Room';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
@@ -66,6 +67,7 @@ function Client() {
       <Dialogs />
       <EmojiBoardOpener />
       <RoomOptions />
+      <ReusableContextMenu />
     </div>
   );
 }
