@@ -382,7 +382,7 @@
     @include scrollbar.scroll--auto-hide;
   }
   & pre {
-    display: inline-block;
+    width: fit-content;
     max-width: 100%;
     @include scrollbar.scroll;
     @include scrollbar.scroll__h;
@@ -393,7 +393,7 @@
     }
   }
   & blockquote {
-    display: inline-block;
+    width: fit-content;
     max-width: 100%;
     @include dir.side(border, 4px solid var(--bg-surface-active), 0);
     white-space: initial !important;
