@@ -107,7 +107,7 @@ function PeopleDrawer({ roomId }) {
     let isRoomChanged = false;
     const updateMemberList = (event) => {
       if (isGettingMembers) return;
-      if (event && event?.event?.room_id !== roomId) return;
+      if (event && event?.getRoomId() !== roomId) return;
       setMemberList(
         simplyfiMembers(
           getMembersWithMembership(membership)
@@ -125,6 +125,7 @@ function PeopleDrawer({ roomId }) {
 
     asyncSearch.on(asyncSearch.RESULT_SENT, handleSearchData);
     mx.on('RoomMember.membership', updateMemberList);
+    mx.on('RoomMember.powerLevel', updateMemberList);
     return () => {
       isRoomChanged = true;
       setMemberList([]);
@@ -132,6 +133,7 @@ function PeopleDrawer({ roomId }) {
       setItemCount(PER_PAGE_MEMBER);
       asyncSearch.removeListener(asyncSearch.RESULT_SENT, handleSearchData);
       mx.removeListener('RoomMember.membership', updateMemberList);
+      mx.removeListener('RoomMember.powerLevel', updateMemberList);
     };
   }, [roomId, membership]);
 
