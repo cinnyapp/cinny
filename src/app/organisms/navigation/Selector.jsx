@@ -106,6 +106,7 @@ function Selector({
       notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
       isAlert={noti.getHighlightNoti(roomId) !== 0}
       onClick={onClick}
+      onContextMenu={openRoomOptions}
       options={(
         <IconButton
           size="extra-small"
