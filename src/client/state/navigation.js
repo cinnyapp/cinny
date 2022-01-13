@@ -146,6 +146,7 @@ class Navigation extends EventEmitter {
           action.placement,
           action.cords,
           action.render,
+          action.afterClose,
         );
       },
     };

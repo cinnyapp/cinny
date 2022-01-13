@@ -23,12 +23,14 @@ function ReusableContextMenu() {
       openerRef.current.style.height = `${cords.height}px`;
       openerRef.current.click();
     }
-    const handleContextMenuOpen = (placement, cords, render) => {
+    const handleContextMenuOpen = (placement, cords, render, afterClose) => {
       if (key) {
         closeMenu();
         return;
       }
-      setData({ placement, cords, render });
+      setData({
+        placement, cords, render, afterClose,
+      });
     };
     navigation.on(cons.events.navigation.REUSABLE_CONTEXT_MENU_OPENED, handleContextMenuOpen);
     return () => {
@@ -44,6 +46,7 @@ function ReusableContextMenu() {
       key = Math.random();
       return;
     }
+    data?.afterClose?.();
     if (setData) setData(null);
 
     if (key === null) return;
