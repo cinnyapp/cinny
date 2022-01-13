@@ -16,7 +16,6 @@
   &__user {
     display: flex;
     padding-bottom: var(--sp-normal);
-    border-bottom: 1px solid var(--bg-surface-border);
 
     &__info {
       align-self: flex-end;
@@ -84,11 +83,18 @@
 }
 
 .session-info {
-  & .setting-tile__title .text {
-    color: var(--tc-surface-high);
-  }
+  box-shadow: var(--bs-surface-border);
+  border-radius: var(--bo-radius);
+  overflow: hidden;
+  
   &__chips {
+    border-top: 1px solid var(--bg-surface-border);
+    padding: var(--sp-tight);
     padding-top: var(--sp-ultra-tight);
+
+    & > .text {
+      margin-top: var(--sp-extra-tight);
+    }
     & .chip {
       margin-top: var(--sp-extra-tight);
       @include dir.side(margin, 0, var(--sp-extra-tight));

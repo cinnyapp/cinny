@@ -20,11 +20,13 @@ import IconButton from '../../atoms/button/IconButton';
 import Input from '../../atoms/input/Input';
 import Avatar from '../../atoms/avatar/Avatar';
 import Button from '../../atoms/button/Button';
+import { MenuItem } from '../../atoms/context-menu/ContextMenu';
 import PowerLevelSelector from '../../molecules/power-level-selector/PowerLevelSelector';
 import Dialog from '../../molecules/dialog/Dialog';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
 
 import ShieldEmptyIC from '../../../../public/res/ic/outlined/shield-empty.svg';
+import ChevronRightIC from '../../../../public/res/ic/outlined/chevron-right.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
@@ -86,6 +88,7 @@ ModerationTools.propTypes = {
 
 function SessionInfo({ userId }) {
   const [devices, setDevices] = useState(null);
+  const [isVisible, setIsVisible] = useState(false);
   const mx = initMatrix.matrixClient;
 
   useEffect(() => {
@@ -110,10 +113,11 @@ function SessionInfo({ userId }) {
   }, [userId]);
 
   function renderSessionChips() {
+    if (!isVisible) return null;
     return (
       <div className="session-info__chips">
-        {devices === null && <Text variant="b3">Loading sessions...</Text>}
-        {devices?.length === 0 && <Text variant="b3">No session found.</Text>}
+        {devices === null && <Text variant="b2">Loading sessions...</Text>}
+        {devices?.length === 0 && <Text variant="b2">No session found.</Text>}
         {devices !== null && (devices.map((device) => (
           <Chip
             key={device.deviceId}
@@ -127,10 +131,13 @@ function SessionInfo({ userId }) {
 
   return (
     <div className="session-info">
-      <SettingTile
-        title="Sessions"
-        content={renderSessionChips()}
-      />
+      <MenuItem
+        onClick={() => setIsVisible(!isVisible)}
+        iconSrc={isVisible ? ChevronBottomIC : ChevronRightIC}
+      >
+        <Text variant="b2">{`View ${devices?.length > 0 ? `${devices.length} ` : ''}sessions`}</Text>
+      </MenuItem>
+      {renderSessionChips()}
     </div>
   );
 }
@@ -340,14 +347,9 @@ function ProfileViewer() {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
 
-  let [roomMember, username] = [null, null];
-
-  if (roomId) {
-    roomMember = room.getMember(userId);
-    username = roomMember ? getUsernameOfRoomMember(roomMember) : getUsername(userId);
-  }
-
   const renderProfile = () => {
+    const roomMember = room.getMember(userId);
+    const username = roomMember ? getUsernameOfRoomMember(roomMember) : getUsername(userId);
     const avatarMxc = roomMember?.getMxcAvatarUrl?.() || mx.getUser(userId).avatarUrl;
     const avatarUrl = (avatarMxc && avatarMxc !== 'null') ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
 
@@ -417,7 +419,7 @@ function ProfileViewer() {
     <Dialog
       className="profile-viewer__dialog"
       isOpen={isOpen}
-      title={`${username} in ${room?.name ?? ''}`}
+      title={room?.name ?? ''}
       onAfterClose={handleAfterClose}
       onRequestClose={closeDialog}
       contentOptions={<IconButton src={CrossIC} onClick={closeDialog} tooltip="Close" />}
