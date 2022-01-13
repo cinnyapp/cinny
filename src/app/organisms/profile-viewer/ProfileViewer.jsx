@@ -358,7 +358,7 @@ function ProfileViewer() {
   const renderProfile = () => {
     const roomMember = room.getMember(userId);
     const username = roomMember ? getUsernameOfRoomMember(roomMember) : getUsername(userId);
-    const avatarMxc = roomMember?.getMxcAvatarUrl?.() || mx.getUser(userId).avatarUrl;
+    const avatarMxc = roomMember?.getMxcAvatarUrl?.() || mx.getUser(userId)?.avatarUrl;
     const avatarUrl = (avatarMxc && avatarMxc !== 'null') ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
 
     const powerLevel = roomMember.powerLevel || 0;
