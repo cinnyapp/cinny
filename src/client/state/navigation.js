@@ -126,13 +126,6 @@ class Navigation extends EventEmitter {
           action.userIds,
         );
       },
-      [cons.actions.navigation.OPEN_ROOMOPTIONS]: () => {
-        this.emit(
-          cons.events.navigation.ROOMOPTIONS_OPENED,
-          action.cords,
-          action.roomId,
-        );
-      },
       [cons.actions.navigation.CLICK_REPLY_TO]: () => {
         this.emit(
           cons.events.navigation.REPLY_TO_CLICKED,

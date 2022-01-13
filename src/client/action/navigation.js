@@ -87,14 +87,6 @@ export function openReadReceipts(roomId, userIds) {
   });
 }
 
-export function openRoomOptions(cords, roomId) {
-  appDispatcher.dispatch({
-    type: cons.actions.navigation.OPEN_ROOMOPTIONS,
-    cords,
-    roomId,
-  });
-}
-
 export function replyTo(userId, eventId, body) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.CLICK_REPLY_TO,
