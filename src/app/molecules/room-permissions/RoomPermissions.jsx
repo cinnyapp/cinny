@@ -28,6 +28,12 @@ const permissionsInfo = {
     description: 'Set minimum power level to send messages in room.',
     default: 0,
   },
+  'm.reaction': {
+    parent: 'events',
+    name: 'Send reactions',
+    description: 'Set minimum power level to send reactions in room.',
+    default: 0,
+  },
   redact: {
     name: 'Delete messages sent by others',
     description: 'Set minimum power level to delete messages in room.',
@@ -135,7 +141,7 @@ const permissionsInfo = {
 };
 
 const roomPermsGroups = {
-  'General Permissions': ['users_default', 'events_default', 'redact', 'notifications'],
+  'General Permissions': ['users_default', 'events_default', 'm.reaction', 'redact', 'notifications'],
   'Manage members permissions': ['invite', 'kick', 'ban'],
   'Room profile permissions': ['m.room.avatar', 'm.room.name', 'm.room.topic'],
   'Settings permissions': ['state_default', 'm.room.canonical_alias', 'm.room.power_levels', 'm.room.encryption', 'm.room.history_visibility'],
