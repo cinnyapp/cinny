@@ -86,6 +86,13 @@
   box-shadow: var(--bs-surface-border);
   border-radius: var(--bo-radius);
   overflow: hidden;
+
+  & .context-menu__item button {
+    padding: var(--sp-extra-tight);
+    & .ic-raw {
+      @include dir.side(margin, 0, var(--sp-extra-tight));
+    }
+  }
   
   &__chips {
     border-top: 1px solid var(--bg-surface-border);
