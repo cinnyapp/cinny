@@ -23,7 +23,6 @@ import Button from '../../atoms/button/Button';
 import { MenuItem } from '../../atoms/context-menu/ContextMenu';
 import PowerLevelSelector from '../../molecules/power-level-selector/PowerLevelSelector';
 import Dialog from '../../molecules/dialog/Dialog';
-import SettingTile from '../../molecules/setting-tile/SettingTile';
 
 import ShieldEmptyIC from '../../../../public/res/ic/outlined/shield-empty.svg';
 import ChevronRightIC from '../../../../public/res/ic/outlined/chevron-right.svg';
@@ -259,7 +258,6 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
       >
         {isCreatingDM ? 'Creating room...' : 'Message'}
       </Button>
-      { member?.membership === 'join' && <Button>Mention</Button>}
       { (isInvited ? canIKick : room.canInvite(mx.getUserId())) && isInvitable && (
         <Button
           onClick={toggleInvite}
