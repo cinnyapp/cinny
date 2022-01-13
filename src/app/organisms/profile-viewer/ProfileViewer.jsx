@@ -163,6 +163,8 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   const userPL = room.getMember(userId)?.powerLevel || 0;
   const canIKick = room.currentState.hasSufficientPowerLevelFor('kick', myPowerlevel) && userPL < myPowerlevel;
 
+  const isBanned = member?.membership === 'ban';
+
   const onCreated = (dmRoomId) => {
     if (isMountedRef.current === false) return;
     setIsCreatingDM(false);
@@ -184,7 +186,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     setIsInviting(false);
   }, [userId]);
 
-  async function openDM() {
+  const openDM = async () => {
     const directIds = [...initMatrix.roomList.directs];
 
     // Check and open if user already have a DM with userId.
@@ -210,9 +212,9 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
       if (isMountedRef.current === false) return;
       setIsCreatingDM(false);
     }
-  }
+  };
 
-  async function toggleIgnore() {
+  const toggleIgnore = async () => {
     const ignoredUsers = mx.getIgnoredUsers();
     const uIndex = ignoredUsers.indexOf(userId);
     if (uIndex >= 0) {
@@ -230,9 +232,9 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     } catch {
       setIsIgnoring(false);
     }
-  }
+  };
 
-  async function toggleInvite() {
+  const toggleInvite = async () => {
     try {
       setIsInviting(true);
       let isInviteSent = false;
@@ -247,7 +249,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     } catch {
       setIsInviting(false);
     }
-  }
+  };
 
   return (
     <div className="profile-viewer__buttons">
@@ -258,6 +260,14 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
       >
         {isCreatingDM ? 'Creating room...' : 'Message'}
       </Button>
+      { isBanned && canIKick && (
+        <Button
+          variant="positive"
+          onClick={() => roomActions.unban(roomId, userId)}
+        >
+          Unban
+        </Button>
+      )}
       { (isInvited ? canIKick : room.canInvite(mx.getUserId())) && isInvitable && (
         <Button
           onClick={toggleInvite}
