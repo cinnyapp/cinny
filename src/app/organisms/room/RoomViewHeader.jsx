@@ -18,7 +18,7 @@ import RawIcon from '../../atoms/system-icons/RawIcon';
 import IconButton from '../../atoms/button/IconButton';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import Avatar from '../../atoms/avatar/Avatar';
-import RoomOptions from '../../molecules/room-optons/RoomOptions';
+import RoomOptions from '../../molecules/room-options/RoomOptions';
 
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';

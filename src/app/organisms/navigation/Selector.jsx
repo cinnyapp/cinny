@@ -10,7 +10,7 @@ import { getEventCords, abbreviateNumber } from '../../../util/common';
 
 import IconButton from '../../atoms/button/IconButton';
 import RoomSelector from '../../molecules/room-selector/RoomSelector';
-import RoomOptions from '../../molecules/room-optons/RoomOptions';
+import RoomOptions from '../../molecules/room-options/RoomOptions';
 
 import HashIC from '../../../../public/res/ic/outlined/hash.svg';
 import HashGlobeIC from '../../../../public/res/ic/outlined/hash-globe.svg';
