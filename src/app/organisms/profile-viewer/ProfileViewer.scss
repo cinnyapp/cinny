@@ -1,3 +1,4 @@
+@use '../../partials/flex';
 @use '../../partials/dir';
 
 .profile-viewer__dialog {
@@ -15,7 +16,6 @@
   &__user {
     display: flex;
     padding-bottom: var(--sp-normal);
-    border-bottom: 1px solid var(--bg-surface-border);
 
     &__info {
       align-self: flex-end;
@@ -61,12 +61,47 @@
   }
 }
 
-.session-info {
-  & .setting-tile__title .text {
-    color: var(--tc-surface-high);
+.profile-viewer__admin-tool {
+  .setting-tile {
+    margin-top: var(--sp-loose);
   }
+}
+
+.moderation-tools {
+  & > form {
+    margin: var(--sp-normal) 0;
+    display: flex;
+    align-items: flex-end;
+    & .input-container {
+      @extend .cp-fx__item-one;
+      @include dir.side(margin, 0, var(--sp-tight));
+    }
+    & button {
+      height: 46px;
+    }
+  }
+}
+
+.session-info {
+  box-shadow: var(--bs-surface-border);
+  border-radius: var(--bo-radius);
+  overflow: hidden;
+
+  & .context-menu__item button {
+    padding: var(--sp-extra-tight);
+    & .ic-raw {
+      @include dir.side(margin, 0, var(--sp-extra-tight));
+    }
+  }
+  
   &__chips {
+    border-top: 1px solid var(--bg-surface-border);
+    padding: var(--sp-tight);
     padding-top: var(--sp-ultra-tight);
+
+    & > .text {
+      margin-top: var(--sp-extra-tight);
+    }
     & .chip {
       margin-top: var(--sp-extra-tight);
       @include dir.side(margin, 0, var(--sp-extra-tight));

@@ -126,13 +126,6 @@ class Navigation extends EventEmitter {
           action.userIds,
         );
       },
-      [cons.actions.navigation.OPEN_ROOMOPTIONS]: () => {
-        this.emit(
-          cons.events.navigation.ROOMOPTIONS_OPENED,
-          action.cords,
-          action.roomId,
-        );
-      },
       [cons.actions.navigation.OPEN_ATTACHMENT_TYPE_SELECTOR]: () => {
         this.emit(
           cons.events.navigation.OPEN_ATTACHMENT_TYPE_SELECTOR,
@@ -160,6 +153,7 @@ class Navigation extends EventEmitter {
           action.placement,
           action.cords,
           action.render,
+          action.afterClose,
         );
       },
     };

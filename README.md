@@ -24,11 +24,12 @@ You can serve the application with a webserver of your choosing by simply copyin
 Execute the following commands to compile the app from its source code:
 
 ```sh
-npm install # Installs all dependencies
+npm ci # Installs all dependencies
 npm run build # Compiles the app into the dist/ directory
 ```
 
-You can then copy the files to a webserver's webroot of your choice. 
+You can then copy the files to a webserver's webroot of your choice.
+
 To serve a development version of the app locally for testing, you may also use the command `npm start`.
 
 ### Running with Docker

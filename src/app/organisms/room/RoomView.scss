@@ -15,7 +15,7 @@
   &--dropped {
     transform: translateY(calc(100% - var(--header-height)));
     border-radius: var(--bo-radius) var(--bo-radius) 0 0;
-    box-shadow: 0 0 0 1px var(--bg-surface-border);
+    box-shadow: var(--bs-popup);
   }
 
   &__content-wrapper {

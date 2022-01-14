@@ -11,7 +11,8 @@ import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 
 function RoomSelectorWrapper({
-  isSelected, isUnread, onClick, content, options,
+  isSelected, isUnread, onClick,
+  content, options, onContextMenu,
 }) {
   let myClass = isUnread ? ' room-selector--unread' : '';
   myClass += isSelected ? ' room-selector--selected' : '';
@@ -22,6 +23,7 @@ function RoomSelectorWrapper({
         type="button"
         onClick={onClick}
         onMouseUp={(e) => blurOnBubbling(e, '.room-selector__content')}
+        onContextMenu={onContextMenu}
       >
         {content}
       </button>
@@ -31,6 +33,7 @@ function RoomSelectorWrapper({
 }
 RoomSelectorWrapper.defaultProps = {
   options: null,
+  onContextMenu: null,
 };
 RoomSelectorWrapper.propTypes = {
   isSelected: PropTypes.bool.isRequired,
@@ -38,12 +41,13 @@ RoomSelectorWrapper.propTypes = {
   onClick: PropTypes.func.isRequired,
   content: PropTypes.node.isRequired,
   options: PropTypes.node,
+  onContextMenu: PropTypes.func,
 };
 
 function RoomSelector({
   name, parentName, roomId, imageSrc, iconSrc,
   isSelected, isUnread, notificationCount, isAlert,
-  options, onClick,
+  options, onClick, onContextMenu,
 }) {
   return (
     <RoomSelectorWrapper
@@ -78,6 +82,7 @@ function RoomSelector({
       )}
       options={options}
       onClick={onClick}
+      onContextMenu={onContextMenu}
     />
   );
 }
@@ -87,6 +92,7 @@ RoomSelector.defaultProps = {
   imageSrc: null,
   iconSrc: null,
   options: null,
+  onContextMenu: null,
 };
 RoomSelector.propTypes = {
   name: PropTypes.string.isRequired,
@@ -103,6 +109,7 @@ RoomSelector.propTypes = {
   isAlert: PropTypes.bool.isRequired,
   options: PropTypes.node,
   onClick: PropTypes.func.isRequired,
+  onContextMenu: PropTypes.func,
 };
 
 export default RoomSelector;

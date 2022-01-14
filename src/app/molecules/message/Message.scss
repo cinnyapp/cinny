@@ -303,23 +303,40 @@
 
 // markdown formating
 .message__body {
+  & h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    margin-bottom: var(--sp-ultra-tight);
+    font-weight: var(--fw-medium);
+    &:first-child {
+      margin-top: 0;
+    }
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
   & h1,
   & h2 {
     color: var(--tc-surface-high);
-    margin: var(--sp-loose) 0 var(--sp-normal);
-    line-height: var(--lh-h1);
+    margin-top: var(--sp-normal);
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+    letter-spacing: var(--ls-h2);
   }
   & h3,
   & h4 {
     color: var(--tc-surface-high);
-    margin: var(--sp-normal) 0 var(--sp-tight);
-    line-height: var(--lh-h2);
+    margin-top: var(--sp-tight);
+    font-size: var(--fs-s1);
+    line-height: var(--lh-s1);
+    letter-spacing: var(--ls-s1);
   }
   & h5,
   & h6 {
     color: var(--tc-surface-high);
-    margin: var(--sp-tight) 0 var(--sp-extra-tight);
-    line-height: var(--lh-s1);
+    margin-top: var(--sp-extra-tight);
+    font-size: var(--fs-b1);
+    line-height: var(--lh-b1);
+    letter-spacing: var(--ls-b1);
   }
   & hr {
     border-color: var(--bg-divider);
@@ -365,7 +382,7 @@
     @include scrollbar.scroll--auto-hide;
   }
   & pre {
-    display: inline-block;
+    width: fit-content;
     max-width: 100%;
     @include scrollbar.scroll;
     @include scrollbar.scroll__h;
@@ -376,7 +393,7 @@
     }
   }
   & blockquote {
-    display: inline-block;
+    width: fit-content;
     max-width: 100%;
     @include dir.side(border, 4px solid var(--bg-surface-active), 0);
     white-space: initial !important;

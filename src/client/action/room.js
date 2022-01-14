@@ -192,10 +192,34 @@ async function invite(roomId, userId) {
   return result;
 }
 
-async function kick(roomId, userId) {
+async function kick(roomId, userId, reason) {
   const mx = initMatrix.matrixClient;
 
-  const result = await mx.kick(roomId, userId);
+  const result = await mx.kick(roomId, userId, reason);
+  return result;
+}
+
+async function ban(roomId, userId, reason) {
+  const mx = initMatrix.matrixClient;
+
+  const result = await mx.ban(roomId, userId, reason);
+  return result;
+}
+
+async function unban(roomId, userId) {
+  const mx = initMatrix.matrixClient;
+
+  const result = await mx.unban(roomId, userId);
+  return result;
+}
+
+async function setPowerLevel(roomId, userId, powerLevel) {
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
+
+  const powerlevelEvent = room.currentState.getStateEvents('m.room.power_levels')[0];
+
+  const result = await mx.setPowerLevel(roomId, userId, powerLevel, powerlevelEvent);
   return result;
 }
 
@@ -215,6 +239,7 @@ function deleteSpaceShortcut(roomId) {
 
 export {
   join, leave,
-  create, invite, kick,
+  create, invite, kick, ban, unban,
+  setPowerLevel,
   createSpaceShortcut, deleteSpaceShortcut,
 };

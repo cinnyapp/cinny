@@ -11,7 +11,7 @@ function PowerLevelSelector({
   value, max, onSelect,
 }) {
   const handleSubmit = (e) => {
-    const powerLevel = e.target.elements['power-level'];
+    const powerLevel = e.target.elements['power-level']?.value;
     if (!powerLevel) return;
     onSelect(Number(powerLevel));
   };

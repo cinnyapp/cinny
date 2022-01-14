@@ -8,7 +8,7 @@ import { blurOnBubbling } from '../../atoms/button/script';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { toggleRoomSettings, openRoomOptions } from '../../../client/action/navigation';
+import { toggleRoomSettings, openReusableContextMenu } from '../../../client/action/navigation';
 import { togglePeopleDrawer } from '../../../client/action/settings';
 import colorMXID from '../../../util/colorMXID';
 import { getEventCords } from '../../../util/common';
@@ -18,6 +18,7 @@ import RawIcon from '../../atoms/system-icons/RawIcon';
 import IconButton from '../../atoms/button/IconButton';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import Avatar from '../../atoms/avatar/Avatar';
+import RoomOptions from '../../molecules/room-optons/RoomOptions';
 
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
@@ -60,6 +61,14 @@ function RoomViewHeader({ roomId }) {
     };
   }, [roomId]);
 
+  const openRoomOptions = (e) => {
+    openReusableContextMenu(
+      'bottom',
+      getEventCords(e, '.ic-btn'),
+      (closeMenu) => <RoomOptions roomId={roomId} afterOptionSelect={closeMenu} />,
+    );
+  };
+
   return (
     <Header>
       <button
@@ -77,7 +86,7 @@ function RoomViewHeader({ roomId }) {
       </button>
       <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
       <IconButton
-        onClick={(e) => openRoomOptions(getEventCords(e), roomId)}
+        onClick={openRoomOptions}
         tooltip="Options"
         src={VerticalMenuIC}
       />

@@ -1,16 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomPermissions.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import { getPowerLabel } from '../../../util/matrixUtil';
+import { openReusableContextMenu } from '../../../client/action/navigation';
+import { getEventCords } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
+import PowerLevelSelector from '../power-level-selector/PowerLevelSelector';
 import SettingTile from '../setting-tile/SettingTile';
 
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+
+import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 const permissionsInfo = {
   users_default: {
@@ -21,6 +26,12 @@ const permissionsInfo = {
   events_default: {
     name: 'Send messages',
     description: 'Set minimum power level to send messages in room.',
+    default: 0,
+  },
+  'm.reaction': {
+    parent: 'events',
+    name: 'Send reactions',
+    description: 'Set minimum power level to send reactions in room.',
     default: 0,
   },
   redact: {
@@ -130,7 +141,7 @@ const permissionsInfo = {
 };
 
 const roomPermsGroups = {
-  'General Permissions': ['users_default', 'events_default', 'redact', 'notifications'],
+  'General Permissions': ['users_default', 'events_default', 'm.reaction', 'redact', 'notifications'],
   'Manage members permissions': ['invite', 'kick', 'ban'],
   'Room profile permissions': ['m.room.avatar', 'm.room.name', 'm.room.topic'],
   'Settings permissions': ['state_default', 'm.room.canonical_alias', 'm.room.power_levels', 'm.room.encryption', 'm.room.history_visibility'],
@@ -144,12 +155,68 @@ const spacePermsGroups = {
   'Settings permissions': ['state_default', 'm.room.canonical_alias', 'm.room.power_levels'],
 };
 
+function useRoomStateUpdate(roomId) {
+  const [, forceUpdate] = useForceUpdate();
+  const mx = initMatrix.matrixClient;
+
+  useEffect(() => {
+    const handleStateEvent = (event) => {
+      if (event.getRoomId() !== roomId) return;
+      forceUpdate();
+    };
+
+    mx.on('RoomState.events', handleStateEvent);
+    return () => {
+      mx.removeListener('RoomState.events', handleStateEvent);
+    };
+  }, [roomId]);
+}
+
 function RoomPermissions({ roomId }) {
+  useRoomStateUpdate(roomId);
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
   const pLEvent = room.currentState.getStateEvents('m.room.power_levels')[0];
   const permissions = pLEvent.getContent();
   const canChangePermission = room.currentState.maySendStateEvent('m.room.power_levels', mx.getUserId());
+
+  const handlePowerSelector = (e, permKey, parentKey, powerLevel) => {
+    const handlePowerLevelChange = (newPowerLevel) => {
+      if (powerLevel === newPowerLevel) return;
+
+      const newPermissions = { ...permissions };
+      if (parentKey) {
+        newPermissions[parentKey] = {
+          ...permissions[parentKey],
+          [permKey]: newPowerLevel,
+        };
+      } else if (permKey === 'notifications') {
+        newPermissions[permKey] = {
+          ...permissions[permKey],
+          room: newPowerLevel,
+        };
+      } else {
+        newPermissions[permKey] = newPowerLevel;
+      }
+
+      mx.sendStateEvent(roomId, 'm.room.power_levels', newPermissions);
+    };
+
+    openReusableContextMenu(
+      'bottom',
+      getEventCords(e, '.btn-surface'),
+      (closeMenu) => (
+        <PowerLevelSelector
+          value={powerLevel}
+          max={100}
+          onSelect={(pl) => {
+            closeMenu();
+            handlePowerLevelChange(pl);
+          }}
+        />
+      ),
+    );
+  };
 
   return (
     <div className="room-permissions">
@@ -182,6 +249,11 @@ function RoomPermissions({ roomId }) {
                       content={<Text variant="b3">{permInfo.description}</Text>}
                       options={(
                         <Button
+                          onClick={
+                            canChangePermission
+                              ? (e) => handlePowerSelector(e, permKey, permInfo.parent, powerLevel)
+                              : null
+                          }
                           iconSrc={canChangePermission ? ChevronBottomIC : null}
                         >
                           <Text variant="b2">

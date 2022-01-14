@@ -4,12 +4,13 @@ import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
-import { openRoomOptions } from '../../../client/action/navigation';
+import { openReusableContextMenu } from '../../../client/action/navigation';
 import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
 import { getEventCords, abbreviateNumber } from '../../../util/common';
 
 import IconButton from '../../atoms/button/IconButton';
 import RoomSelector from '../../molecules/room-selector/RoomSelector';
+import RoomOptions from '../../molecules/room-optons/RoomOptions';
 
 import HashIC from '../../../../public/res/ic/outlined/hash.svg';
 import HashGlobeIC from '../../../../public/res/ic/outlined/hash-globe.svg';
@@ -48,6 +49,15 @@ function Selector({
       drawerPostie.unsubscribe('unread-change', roomId);
     };
   }, []);
+
+  const openRoomOptions = (e) => {
+    e.preventDefault();
+    openReusableContextMenu(
+      'right',
+      getEventCords(e, '.room-selector'),
+      (closeMenu) => <RoomOptions roomId={roomId} afterOptionSelect={closeMenu} />,
+    );
+  };
 
   const joinRuleToIconSrc = (joinRule) => ({
     restricted: () => (room.isSpaceRoom() ? SpaceIC : HashIC),
@@ -96,13 +106,14 @@ function Selector({
       notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
       isAlert={noti.getHighlightNoti(roomId) !== 0}
       onClick={onClick}
+      onContextMenu={openRoomOptions}
       options={(
         <IconButton
           size="extra-small"
           tooltip="Options"
           tooltipPlacement="right"
           src={VerticalMenuIC}
-          onClick={(e) => openRoomOptions(getEventCords(e), roomId)}
+          onClick={openRoomOptions}
         />
       )}
     />

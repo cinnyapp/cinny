@@ -4,11 +4,11 @@ import './Client.scss';
 import Text from '../../atoms/text/Text';
 import Spinner from '../../atoms/spinner/Spinner';
 import Navigation from '../../organisms/navigation/Navigation';
+import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
 import Room from '../../organisms/room/Room';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
-import RoomOptions from '../../organisms/room-optons/RoomOptions';
 import logout from '../../../client/action/logout';
 
 import initMatrix from '../../../client/initMatrix';
@@ -65,7 +65,7 @@ function Client() {
       <Windows />
       <Dialogs />
       <EmojiBoardOpener />
-      <RoomOptions />
+      <ReusableContextMenu />
     </div>
   );
 }
