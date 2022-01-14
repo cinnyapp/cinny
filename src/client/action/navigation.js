@@ -87,6 +87,15 @@ export function openReadReceipts(roomId, userIds) {
   });
 }
 
+export function replyTo(userId, eventId, body) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.CLICK_REPLY_TO,
+    userId,
+    eventId,
+    body,
+  });
+}
+
 export function openAttachmentTypeSelector(params) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_ATTACHMENT_TYPE_SELECTOR,
