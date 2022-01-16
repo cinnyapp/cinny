@@ -64,10 +64,6 @@ function GeneralSettings({ roomId }) {
   return (
     <>
       <div className="room-settings__card">
-        <MenuHeader>Notification (Changing this will only affect you)</MenuHeader>
-        <RoomNotification roomId={roomId} />
-      </div>
-      <div className="room-settings__card">
         <MenuItem
           disabled={!canInvite}
           onClick={() => openInviteUser(roomId)}
@@ -75,7 +71,21 @@ function GeneralSettings({ roomId }) {
         >
           Invite
         </MenuItem>
-        <MenuItem variant="danger" onClick={() => roomActions.leave(roomId)} iconSrc={LeaveArrowIC}>Leave</MenuItem>
+        <MenuItem
+          variant="danger"
+          onClick={() => {
+            if (confirm('Are you really want to leave this room?')) {
+              roomActions.leave(roomId);
+            }
+          }}
+          iconSrc={LeaveArrowIC}
+        >
+          Leave
+        </MenuItem>
+      </div>
+      <div className="room-settings__card">
+        <MenuHeader>Notification (Changing this will only affect you)</MenuHeader>
+        <RoomNotification roomId={roomId} />
       </div>
       <div className="room-settings__card">
         <MenuHeader>Room visibility (who can join)</MenuHeader>
