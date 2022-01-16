@@ -7,6 +7,8 @@ import { twemojify } from '../../../util/twemojify';
 import Text from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 
+import ImageBrokenSVG from '../../../../public/res/svg/image-broken.svg';
+
 function Avatar({
   text, bgColor, iconSrc, iconColor, imageSrc, size,
 }) {
@@ -19,7 +21,7 @@ function Avatar({
     <div className={`avatar-container avatar-container__${size} noselect`}>
       {
         imageSrc !== null
-          ? <img draggable="false" src={imageSrc} alt="avatar" />
+          ? <img draggable="false" src={imageSrc} onError={(e) => { e.target.src = ImageBrokenSVG; }} alt="avatar" />
           : (
             <span
               style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
