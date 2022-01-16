@@ -91,7 +91,11 @@ class Navigation extends EventEmitter {
       },
       [cons.actions.navigation.TOGGLE_ROOM_SETTINGS]: () => {
         this.isRoomSettings = !this.isRoomSettings;
-        this.emit(cons.events.navigation.ROOM_SETTINGS_TOGGLED, this.isRoomSettings);
+        this.emit(
+          cons.events.navigation.ROOM_SETTINGS_TOGGLED,
+          this.isRoomSettings,
+          action.tabText,
+        );
       },
       [cons.actions.navigation.OPEN_INVITE_LIST]: () => {
         this.emit(cons.events.navigation.INVITE_LIST_OPENED);

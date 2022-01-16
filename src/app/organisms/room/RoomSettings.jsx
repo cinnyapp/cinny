@@ -131,10 +131,13 @@ function RoomSettings({ roomId }) {
 
   useEffect(() => {
     let mounted = true;
-    const settingsToggle = (isVisible) => {
+    const settingsToggle = (isVisible, tab) => {
       if (!mounted) return;
-      if (isVisible) forceUpdate();
-      else setTimeout(() => forceUpdate(), 200);
+      if (isVisible) {
+        const tabItem = tabItems.find((item) => item.text === tab);
+        if (tabItem) setSelectedTab(tabItem);
+        forceUpdate();
+      } else setTimeout(() => forceUpdate(), 200);
     };
     navigation.on(cons.events.navigation.ROOM_SETTINGS_TOGGLED, settingsToggle);
     return () => {
@@ -176,4 +179,7 @@ RoomSettings.propTypes = {
   roomId: PropTypes.string.isRequired,
 };
 
-export default RoomSettings;
+export {
+  RoomSettings as default,
+  tabText,
+};

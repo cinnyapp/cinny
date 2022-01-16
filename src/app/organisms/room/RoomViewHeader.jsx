@@ -13,6 +13,7 @@ import { togglePeopleDrawer } from '../../../client/action/settings';
 import colorMXID from '../../../util/colorMXID';
 import { getEventCords } from '../../../util/common';
 
+import { tabText } from './RoomSettings';
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import IconButton from '../../atoms/button/IconButton';
@@ -20,8 +21,9 @@ import Header, { TitleWrapper } from '../../atoms/header/Header';
 import Avatar from '../../atoms/avatar/Avatar';
 import RoomOptions from '../../molecules/room-options/RoomOptions';
 
-import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+import SearchIC from '../../../../public/res/ic/outlined/search.svg';
+import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
@@ -74,7 +76,7 @@ function RoomViewHeader({ roomId }) {
       <button
         ref={roomHeaderBtnRef}
         className="room-header__btn"
-        onClick={toggleRoomSettings}
+        onClick={() => toggleRoomSettings()}
         type="button"
         onMouseUp={(e) => blurOnBubbling(e, '.room-header__btn')}
       >
@@ -84,6 +86,7 @@ function RoomViewHeader({ roomId }) {
         </TitleWrapper>
         <RawIcon src={ChevronBottomIC} />
       </button>
+      <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="People" src={SearchIC} />
       <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
       <IconButton
         onClick={openRoomOptions}

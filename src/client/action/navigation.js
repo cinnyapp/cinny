@@ -23,10 +23,10 @@ export function selectRoom(roomId, eventId) {
   });
 }
 
-export function toggleRoomSettings(roomId) {
+export function toggleRoomSettings(tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.TOGGLE_ROOM_SETTINGS,
-    roomId,
+    tabText,
   });
 }
 
