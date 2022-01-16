@@ -23,6 +23,13 @@ export function selectRoom(roomId, eventId) {
   });
 }
 
+// Open navigation on mobile
+export function openNavigation() {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_NAVIGATION,
+  });
+}
+
 export function toggleRoomSettings(tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.TOGGLE_ROOM_SETTINGS,

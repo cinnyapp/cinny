@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import './RoomViewHeader.scss';
 
@@ -25,16 +25,31 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
+import BackArrowIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 function RoomViewHeader({ roomId }) {
+  const [mobileSize, setMobileSize] = useState(false);
   const [, forceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
   let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
   avatarSrc = isDM ? mx.getRoom(roomId).getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop') : avatarSrc;
   const roomName = mx.getRoom(roomId).name;
+
+  // Check if screen size is small
+  const updateMobileSize = () => {
+    setMobileSize(window.innerWidth < 750);
+    console.log('Mobile size: ', mobileSize);
+  };
+  useEffect(() => {
+    window.addEventListener('resize', updateMobileSize);
+
+    return (() => {
+      window.removeEventListener('resize', updateMobileSize);
+    });
+  }, [mobileSize]);
 
   const roomHeaderBtnRef = useRef(null);
   useEffect(() => {
@@ -73,6 +88,14 @@ function RoomViewHeader({ roomId }) {
 
   return (
     <Header>
+      {mobileSize
+        ? (
+          <IconButton
+            src={BackArrowIC}
+            tooltip="Return to navigation"
+            onClick={() => navigation.emit(cons.events.navigation.OPEN_NAVIGATION)}
+          />
+        ) : (<></>)}
       <button
         ref={roomHeaderBtnRef}
         className="room-header__btn"
