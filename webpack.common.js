@@ -16,8 +16,6 @@ module.exports = {
       'stream': require.resolve('stream-browserify'),
       'util': require.resolve('util/'),
       'assert': require.resolve('assert/'),
-      "events": require.resolve("events/"),
-      "url": require.resolve("url/"),
     }
   },
   node: {
