@@ -227,7 +227,6 @@
 
 
   /* text color | --tc-[background type]-[priority]: value */
-  --ic-surface-high: rgb(255, 255, 255);;
   --tc-surface-high: rgba(255, 255, 255, 98%);
   --tc-surface-normal: rgba(255, 255, 255, 94%);
   --tc-surface-normal-low: rgba(255, 255, 255, 60%);
@@ -242,6 +241,7 @@
   --tc-badge: black;
 
   /* system icons | --ic-[background type]-[priority]: value */
+  --ic-surface-high: rgb(255, 255, 255);
   --ic-surface-normal: rgba(255, 255, 255, 84%);
   --ic-surface-low: rgba(255, 255, 255, 64%);
   --ic-primary-normal: #ffffff;
@@ -284,7 +284,7 @@
   --fs-b3: 11.2px;
 
   /* override normal font weight for dark mode */
-  --fw-normal: 380;
+  --fw-normal: 350;
 
   --font-secondary: 'Inter', 'Roboto', sans-serif;
 }
