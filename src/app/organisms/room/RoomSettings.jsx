@@ -14,6 +14,7 @@ import ScrollView from '../../atoms/scroll/ScrollView';
 import Tabs from '../../atoms/tabs/Tabs';
 import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 import RoomProfile from '../../molecules/room-profile/RoomProfile';
+import RoomSearch from '../../molecules/room-search/RoomSearch';
 import RoomNotification from '../../molecules/room-notification/RoomNotification';
 import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
 import RoomAliases from '../../molecules/room-aliases/RoomAliases';
@@ -151,6 +152,7 @@ function RoomSettings({ roomId }) {
           />
           <div className="room-settings__cards-wrapper">
             {selectedTab.text === tabText.GENERAL && <GeneralSettings roomId={roomId} />}
+            {selectedTab.text === tabText.SEARCH && <RoomSearch roomId={roomId} />}
             {selectedTab.text === tabText.PERMISSIONS && <RoomPermissions roomId={roomId} />}
             {selectedTab.text === tabText.SECURITY && <SecuritySettings roomId={roomId} />}
           </div>

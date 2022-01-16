@@ -46,6 +46,9 @@
   }
 }
 
-.room-settings .room-permissions__card {
+.room-settings .room-permissions__card,
+.room-settings .room-search__form,
+.room-settings .room-search__help,
+.room-settings .room-search__result-item {
   @extend .room-settings__card;
 }

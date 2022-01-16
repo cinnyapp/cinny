@@ -52,17 +52,14 @@ function PlaceholderMessage() {
 }
 
 const MessageAvatar = React.memo(({
-  roomId, mEvent, userId, username,
-}) => {
-  const avatarSrc = mEvent.sender.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop');
-  return (
-    <div className="message__avatar-container">
-      <button type="button" onClick={() => openProfileViewer(userId, roomId)}>
-        <Avatar imageSrc={avatarSrc} text={username} bgColor={colorMXID(userId)} size="small" />
-      </button>
-    </div>
-  );
-});
+  roomId, avatarSrc, userId, username,
+}) => (
+  <div className="message__avatar-container">
+    <button type="button" onClick={() => openProfileViewer(userId, roomId)}>
+      <Avatar imageSrc={avatarSrc} text={username} bgColor={colorMXID(userId)} size="small" />
+    </button>
+  </div>
+));
 
 const MessageHeader = React.memo(({
   userId, username, time,
@@ -597,7 +594,8 @@ function Message({
   mEvent, isBodyOnly, roomTimeline, focus, time,
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const { roomId, editedTimeline, reactionTimeline } = roomTimeline;
+  const roomId = mEvent.getRoomId();
+  const { editedTimeline, reactionTimeline } = roomTimeline ?? {};
 
   const className = ['message', (isBodyOnly ? 'message--body-only' : 'message--full')];
   if (focus) className.push('message--focus');
@@ -606,7 +604,8 @@ function Message({
   const msgType = content?.msgtype;
   const senderId = mEvent.getSender();
   let { body } = content;
-  const username = getUsernameOfRoomMember(mEvent.sender);
+  const username = mEvent.sender ? getUsernameOfRoomMember(mEvent.sender) : getUsername(senderId);
+  const avatarSrc = mEvent.sender?.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop') ?? null;
 
   const edit = useCallback(() => {
     setIsEditing(true);
@@ -619,8 +618,10 @@ function Message({
   if (msgType === 'm.emote') className.push('message--type-emote');
 
   let isCustomHTML = content.format === 'org.matrix.custom.html';
-  const isEdited = editedTimeline.has(eventId);
-  const haveReactions = reactionTimeline.has(eventId) || !!mEvent.getServerAggregatedRelation('m.annotation');
+  const isEdited = roomTimeline ? editedTimeline.has(eventId) : false;
+  const haveReactions = roomTimeline
+    ? reactionTimeline.has(eventId) || !!mEvent.getServerAggregatedRelation('m.annotation')
+    : false;
   const isReply = !!mEvent.replyEventId;
   let customHTML = isCustomHTML ? content.formatted_body : null;
 
@@ -640,13 +641,20 @@ function Message({
       {
         isBodyOnly
           ? <div className="message__avatar-container" />
-          : <MessageAvatar roomId={roomId} mEvent={mEvent} userId={senderId} username={username} />
+          : (
+            <MessageAvatar
+              roomId={roomId}
+              avatarSrc={avatarSrc}
+              userId={senderId}
+              username={username}
+            />
+          )
       }
       <div className="message__main-container">
         {!isBodyOnly && (
           <MessageHeader userId={senderId} username={username} time={time} />
         )}
-        {isReply && (
+        {roomTimeline && isReply && (
           <MessageReplyWrapper
             roomTimeline={roomTimeline}
             eventId={mEvent.replyEventId}
@@ -676,7 +684,7 @@ function Message({
         {haveReactions && (
           <MessageReactionGroup roomTimeline={roomTimeline} mEvent={mEvent} />
         )}
-        {!isEditing && (
+        {roomTimeline && !isEditing && (
           <MessageOptions
             roomTimeline={roomTimeline}
             mEvent={mEvent}
@@ -691,11 +699,12 @@ function Message({
 Message.defaultProps = {
   isBodyOnly: false,
   focus: false,
+  roomTimeline: null,
 };
 Message.propTypes = {
   mEvent: PropTypes.shape({}).isRequired,
   isBodyOnly: PropTypes.bool,
-  roomTimeline: PropTypes.shape({}).isRequired,
+  roomTimeline: PropTypes.shape({}),
   focus: PropTypes.bool,
   time: PropTypes.string.isRequired,
 };
