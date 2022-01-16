@@ -27,7 +27,7 @@ If applicable, add screenshots to help explain your problem.
  - OS: [e.g. Windows, MacOS]
  - Browser: [e.g. chrome, firefox]
  - Version: [e.g. 3.22]
- - Matrix homeserver: [matrix.org]
+ - Matrix homeserver: [e.g. matrix.org]
 
 #### Additional context
 Add any other context about the problem here.
