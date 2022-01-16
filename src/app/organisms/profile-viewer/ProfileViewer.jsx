@@ -38,7 +38,7 @@ function ModerationTools({
   const room = mx.getRoom(roomId);
   const roomMember = room.getMember(userId);
 
-  const myPowerLevel = room.getMember(mx.getUserId()).powerLevel;
+  const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel || 0;
   const powerLevel = roomMember?.powerLevel || 0;
   const canIKick = (
     roomMember?.membership === 'join'
@@ -159,7 +159,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   const [isInviting, setIsInviting] = useState(false);
   const [isInvited, setIsInvited] = useState(member?.membership === 'invite');
 
-  const myPowerlevel = room.getMember(mx.getUserId()).powerLevel;
+  const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel || 0;
   const userPL = room.getMember(userId)?.powerLevel || 0;
   const canIKick = room.currentState.hasSufficientPowerLevelFor('kick', myPowerlevel) && userPL < myPowerlevel;
 
@@ -361,7 +361,7 @@ function ProfileViewer() {
     const avatarMxc = roomMember?.getMxcAvatarUrl?.() || mx.getUser(userId)?.avatarUrl;
     const avatarUrl = (avatarMxc && avatarMxc !== 'null') ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
 
-    const powerLevel = roomMember.powerLevel || 0;
+    const powerLevel = roomMember?.powerLevel || 0;
     const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel || 0;
 
     const canChangeRole = (
