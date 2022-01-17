@@ -104,10 +104,12 @@ function useRoomSearch(roomId) {
 
 function RoomSearch({ roomId }) {
   const [searchData, search, paginate, status] = useRoomSearch(roomId);
-
+  const mx = initMatrix.matrixClient;
+  const isRoomEncrypted = mx.isRoomEncrypted(roomId);
   const searchTerm = searchData?._query.search_categories.room_events.search_term ?? '';
 
   const handleSearch = (e) => {
+    if (isRoomEncrypted) return;
     e.preventDefault();
     const searchTermInput = e.target.elements['room-search-input'];
     const term = searchTermInput.value.trim();
@@ -148,22 +150,27 @@ function RoomSearch({ roomId }) {
         {searchData?.results.length > 0 && (
           <Text>{`${searchData.count} results for "${searchTerm}"`}</Text>
         )}
-      </form>
-      {searchData === null && (
-        <div className="room-search__help">
-          {status.type === cons.status.IN_FLIGHT && <Spinner />}
-          {status.type === cons.status.IN_FLIGHT && <Text>Searching room messages...</Text>}
-          {status.type === cons.status.PRE_FLIGHT && <RawIcon src={SearchIC} size="large" />}
-          {status.type === cons.status.PRE_FLIGHT && <Text>Search room messages</Text>}
-          {status.type === cons.status.ERROR && <Text>Failed to search messages</Text>}
-        </div>
-      )}
+        {!isRoomEncrypted && searchData === null && (
+          <div className="room-search__help">
+            {status.type === cons.status.IN_FLIGHT && <Spinner />}
+            {status.type === cons.status.IN_FLIGHT && <Text>Searching room messages...</Text>}
+            {status.type === cons.status.PRE_FLIGHT && <RawIcon src={SearchIC} size="large" />}
+            {status.type === cons.status.PRE_FLIGHT && <Text>Search room messages</Text>}
+            {status.type === cons.status.ERROR && <Text>Failed to search messages</Text>}
+          </div>
+        )}
 
-      {searchData?.results.length === 0 && (
-        <div className="room-search__help">
-          <Text>No result found</Text>
-        </div>
-      )}
+        {!isRoomEncrypted && searchData?.results.length === 0 && (
+          <div className="room-search__help">
+            <Text>No result found</Text>
+          </div>
+        )}
+        {isRoomEncrypted && (
+          <div className="room-search__help">
+            <Text>Search does not work in encrypted room</Text>
+          </div>
+        )}
+      </form>
       {searchData?.results.length > 0 && (
         <>
           <div className="room-search__content">
