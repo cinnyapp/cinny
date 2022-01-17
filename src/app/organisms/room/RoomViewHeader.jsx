@@ -86,7 +86,7 @@ function RoomViewHeader({ roomId }) {
         </TitleWrapper>
         <RawIcon src={ChevronBottomIC} />
       </button>
-      <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="People" src={SearchIC} />
+      <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="Search" src={SearchIC} />
       <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
       <IconButton
         onClick={openRoomOptions}
