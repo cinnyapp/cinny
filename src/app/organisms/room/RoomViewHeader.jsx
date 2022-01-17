@@ -30,7 +30,7 @@ import BackArrowIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 function RoomViewHeader({ roomId }) {
-  const [mobileSize, setMobileSize] = useState(false);
+  const [mobileSize, setMobileSize] = useState(window.innerWidth < 750);
   const [, forceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);

@@ -16,7 +16,7 @@ import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
 
 function Client() {
-  const [mobileSize, setMobileSize] = useState(false);
+  const [mobileSize, setMobileSize] = useState(window.innerWidth < 750);
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [onNavView, setOnNavRoom] = useState(true); // User can be on RoomView or Navigation
