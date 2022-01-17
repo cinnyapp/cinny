@@ -109,8 +109,8 @@ function RoomSearch({ roomId }) {
   const searchTerm = searchData?._query.search_categories.room_events.search_term ?? '';
 
   const handleSearch = (e) => {
-    if (isRoomEncrypted) return;
     e.preventDefault();
+    if (isRoomEncrypted) return;
     const searchTermInput = e.target.elements['room-search-input'];
     const term = searchTermInput.value.trim();
 
@@ -144,6 +144,7 @@ function RoomSearch({ roomId }) {
           <Input
             placeholder="Search for keywords"
             name="room-search-input"
+            disabled={isRoomEncrypted}
           />
           <Button iconSrc={SearchIC} variant="primary" type="submit">Search</Button>
         </div>
