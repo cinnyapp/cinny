@@ -180,7 +180,7 @@ function RoomViewInput({
     const msgBody = textAreaRef.current.value;
     if (roomsInput.isSending(roomId)) return;
     if (msgBody.trim() === '' && attachment === null) return;
-    if (msgBody.contains("@room")) {
+    if (msgBody.indexOf("@room") != -1) {
         alert("dont do that");
         return;
     }
