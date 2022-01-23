@@ -128,8 +128,7 @@ function SearchedEmoji() {
   return <EmojiGroup key="-1" name={searchedEmojis.emojis.length === 0 ? 'No search result found' : 'Search results'} groupEmojis={searchedEmojis.emojis} />;
 }
 
-function EmojiBoard({ onSelect }) {
-  const searchRef = useRef(null);
+function EmojiBoard({ onSelect, searchRef }) {
   const scrollEmojisRef = useRef(null);
   const emojiInfo = useRef(null);
 
@@ -312,6 +311,7 @@ function EmojiBoard({ onSelect }) {
 
 EmojiBoard.propTypes = {
   onSelect: PropTypes.func.isRequired,
+  searchRef: PropTypes.shape({}).isRequired,
 };
 
 export default EmojiBoard;
