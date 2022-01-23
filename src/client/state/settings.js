@@ -3,7 +3,6 @@ import appDispatcher from '../dispatcher';
 
 import cons from './cons';
 
-
 function getSettings() {
   const settings = localStorage.getItem('settings');
   if (settings === null) return null;
@@ -116,8 +115,8 @@ class Settings extends EventEmitter {
     if (typeof this.showNotifications === 'boolean') return this.showNotifications;
 
     const settings = getSettings();
-    if (settings === null) return false;
-    if (typeof settings.showNotifications === 'undefined') return false;
+    if (settings === null) return true;
+    if (typeof settings.showNotifications === 'undefined') return true;
     return settings.showNotifications;
   }
 

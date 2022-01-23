@@ -1,7 +1,9 @@
 import EventEmitter from 'events';
 import { selectRoom } from '../action/navigation';
 import cons from './cons';
+import navigation from './navigation';
 import settings from './settings';
+import userActivity from './userActivity';
 
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
@@ -165,6 +167,12 @@ class Notifications extends EventEmitter {
   async _displayPopupNoti(mEvent, room) {
     if (!settings.showNotifications) return;
     if (window.Notification.permission !== 'granted') return;
+
+    const actions = this.matrixClient.getPushActionsForEvent(mEvent);
+    if (!actions?.notify) return;
+
+    if (navigation.selectedRoomId === room.roomId
+      && userActivity.recentlyActive()) return;
 
     if (mEvent.isEncrypted()) {
       await mEvent.attemptDecryption(this.matrixClient.crypto);
