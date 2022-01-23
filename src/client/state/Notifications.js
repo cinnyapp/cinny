@@ -1,5 +1,7 @@
 import EventEmitter from 'events';
+import { selectRoom } from '../action/navigation';
 import cons from './cons';
+import settings from './settings';
 
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
@@ -20,6 +22,8 @@ class Notifications extends EventEmitter {
     this.roomList = roomList;
 
     this.roomIdToNoti = new Map();
+
+    this._isSyncing = false;
 
     this._initNoti();
     this._listenEvents();
@@ -158,6 +162,28 @@ class Notifications extends EventEmitter {
     [...parentIds].forEach((parentId) => this._deleteNoti(parentId, total, highlight, roomId));
   }
 
+  async _displayPopupNoti(mEvent, room) {
+    if (!settings.showNotifications) return;
+    if (window.Notification.permission !== 'granted') return;
+
+    if (mEvent.isEncrypted()) {
+      await mEvent.attemptDecryption(this.matrixClient.crypto);
+    }
+
+    let title;
+    if (!mEvent.sender || room.name === mEvent.sender.name) {
+      title = room.name;
+    } else if (mEvent.sender) {
+      title = `${mEvent.sender.name} (${room.name})`;
+    }
+
+    const noti = new window.Notification(title, {
+      body: mEvent.getContent().body,
+      icon: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, 36, 36, 'crop'),
+    });
+    noti.onclick = () => selectRoom(room.roomId);
+  }
+
   _listenEvents() {
     this.matrixClient.on('Room.timeline', (mEvent, room) => {
       if (!isNotifEvent(mEvent)) return;
@@ -172,6 +198,10 @@ class Notifications extends EventEmitter {
 
       const noti = this.getNoti(room.roomId);
       this._setNoti(room.roomId, total - noti.total, highlight - noti.highlight);
+
+      if (this._isSyncing) {
+        this._displayPopupNoti(mEvent, room);
+      }
     });
 
     this.matrixClient.on('Room.receipt', (mEvent, room) => {
@@ -188,6 +218,14 @@ class Notifications extends EventEmitter {
     this.matrixClient.on('Room.myMembership', (room, membership) => {
       if (membership === 'leave' && this.hasNoti(room.roomId)) {
         this.deleteNoti(room.roomId);
+      }
+    });
+
+    this.matrixClient.on('sync', (state) => {
+      if (state === 'SYNCING') {
+        this._isSyncing = true;
+      } else if (state === 'STOPPED' || state === 'ERROR') {
+        this._isSyncing = false;
       }
     });
   }

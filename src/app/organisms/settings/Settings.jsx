@@ -5,8 +5,9 @@ import './Settings.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
-import { toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents } from '../../../client/action/settings';
+import { toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents, toggleNotifications } from '../../../client/action/settings';
 import logout from '../../../client/action/logout';
+import { usePermission } from '../../hooks/usePermission';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -24,6 +25,7 @@ import ProfileEditor from '../profile-editor/ProfileEditor';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
+import BellIC from '../../../../public/res/ic/outlined/bell.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
@@ -111,6 +113,34 @@ function AppearanceSection() {
   );
 }
 
+function NotificationsSection() {
+  const permission = usePermission('notifications', window.Notification.permission);
+
+  const [, updateState] = useState({});
+
+  return (
+    <div className="settings-content">
+      <SettingTile
+        title="Show notifications"
+        options={permission === 'granted' ? (
+          <Toggle
+            isActive={settings.showNotifications}
+            onToggle={() => { toggleNotifications(); updateState({}); }}
+          />
+        ) : (
+          <Button
+            variant="primary"
+            onClick={() => window.Notification.requestPermission()}
+          >
+            Request permission
+          </Button>
+        )}
+        content={<Text variant="b3">Show notification when new messages arrive.</Text>}
+      />
+    </div>
+  );
+}
+
 function SecuritySection() {
   return (
     <div className="set-security settings-content">
@@ -177,6 +207,12 @@ function Settings({ isOpen, onRequestClose }) {
     iconSrc: SunIC,
     render() {
       return <AppearanceSection />;
+    },
+  }, {
+    name: 'Notifications',
+    iconSrc: BellIC,
+    render() {
+      return <NotificationsSection />;
     },
   }, {
     name: 'Security & Privacy',

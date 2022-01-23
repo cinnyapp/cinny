@@ -3,6 +3,7 @@ import appDispatcher from '../dispatcher';
 
 import cons from './cons';
 
+
 function getSettings() {
   const settings = localStorage.getItem('settings');
   if (settings === null) return null;
@@ -28,6 +29,7 @@ class Settings extends EventEmitter {
     this.isPeopleDrawer = this.getIsPeopleDrawer();
     this.hideMembershipEvents = this.getHideMembershipEvents();
     this.hideNickAvatarEvents = this.getHideNickAvatarEvents();
+    this.showNotifications = this.getShowNotifications();
 
     this.isTouchScreenDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
   }
@@ -110,6 +112,15 @@ class Settings extends EventEmitter {
     return settings.isPeopleDrawer;
   }
 
+  getShowNotifications() {
+    if (typeof this.showNotifications === 'boolean') return this.showNotifications;
+
+    const settings = getSettings();
+    if (settings === null) return false;
+    if (typeof settings.showNotifications === 'undefined') return false;
+    return settings.showNotifications;
+  }
+
   setter(action) {
     const actions = {
       [cons.actions.settings.TOGGLE_SYSTEM_THEME]: () => {
@@ -139,6 +150,11 @@ class Settings extends EventEmitter {
         this.hideNickAvatarEvents = !this.hideNickAvatarEvents;
         setSettings('hideNickAvatarEvents', this.hideNickAvatarEvents);
         this.emit(cons.events.settings.NICKAVATAR_EVENTS_TOGGLED, this.hideNickAvatarEvents);
+      },
+      [cons.actions.settings.TOGGLE_NOTIFICATIONS]: async () => {
+        this.showNotifications = !this.showNotifications;
+        setSettings('showNotifications', this.showNotifications);
+        this.emit(cons.events.settings.NOTIFICATIONS_TOGGLED, this.showNotifications);
       },
     };
 
