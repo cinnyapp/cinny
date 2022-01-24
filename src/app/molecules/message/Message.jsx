@@ -298,19 +298,17 @@ function pickEmoji(e, roomId, eventId, roomTimeline) {
 }
 
 function genReactionMsg(userIds, reaction) {
-  const genLessContText = (text) => <span style={{ opacity: '.6' }}>{text}</span>;
-  let msg = <></>;
-  userIds.forEach((userId, index) => {
-    if (index === 0) msg = <>{getUsername(userId)}</>;
-    // eslint-disable-next-line react/jsx-one-expression-per-line
-    else if (index === userIds.length - 1) msg = <>{msg}{genLessContText(' and ')}{getUsername(userId)}</>;
-    // eslint-disable-next-line react/jsx-one-expression-per-line
-    else msg = <>{msg}{genLessContText(', ')}{getUsername(userId)}</>;
-  });
   return (
     <>
-      {msg}
-      {genLessContText(' reacted with')}
+      {userIds.map((userId, index) => (
+        <>
+          {twemojify(getUsername(userId))}
+          <span style={{ opacity: '.6' }}>
+            {index === userIds.length - 1 ? ' and ' : ', '}
+          </span>
+        </>
+      ))}
+      <span style={{ opacity: '.6' }}>{' reacted with '}</span>
       {twemojify(reaction, { className: 'react-emoji' })}
     </>
   );
