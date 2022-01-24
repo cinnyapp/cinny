@@ -1,0 +1,16 @@
+@use '../../partials/dir';
+
+.view-source {
+  @include dir.side(margin, var(--sp-normal), var(--sp-extra-tight));
+
+  & .text {
+    margin: var(--sp-extra-tight) 0;
+  }
+
+  & pre {
+    margin: var(--sp-ultra-tight) 0;
+    padding: var(--sp-extra-tight);
+    background-color: var(--bg-surface-hover);
+    border-radius: calc(var(--bo-radius) / 2);
+  }
+}

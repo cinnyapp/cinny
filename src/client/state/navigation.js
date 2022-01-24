@@ -137,6 +137,12 @@ class Navigation extends EventEmitter {
           action.userIds,
         );
       },
+      [cons.actions.navigation.OPEN_VIEWSOURCE]: () => {
+        this.emit(
+          cons.events.navigation.VIEWSOURCE_OPENED,
+          action.event,
+        );
+      },
       [cons.actions.navigation.CLICK_REPLY_TO]: () => {
         this.emit(
           cons.events.navigation.REPLY_TO_CLICKED,
