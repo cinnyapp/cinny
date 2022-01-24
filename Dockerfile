@@ -3,9 +3,10 @@ FROM node:14-alpine as builder
 
 WORKDIR /src
 
+COPY package.json package-lock.json /src
+RUN npm ci
 COPY . /src
-RUN npm install \
-  && npm run build
+RUN npm run build
 
 
 ## App
