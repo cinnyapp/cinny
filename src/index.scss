@@ -389,6 +389,9 @@ body {
 a {
   color: var(--tc-link);
   text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
 }
 b {
   font-weight: var(--fw-medium);
