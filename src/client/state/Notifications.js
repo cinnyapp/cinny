@@ -166,7 +166,7 @@ class Notifications extends EventEmitter {
 
   async _displayPopupNoti(mEvent, room) {
     if (!settings.showNotifications) return;
-    if (window.Notification.permission !== 'granted') return;
+    if (window.Notification === undefined || window.Notification.permission !== 'granted') return;
 
     const actions = this.matrixClient.getPushActionsForEvent(mEvent);
     if (!actions?.notify) return;

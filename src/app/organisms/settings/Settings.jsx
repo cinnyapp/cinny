@@ -5,7 +5,10 @@ import './Settings.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
-import { toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents, toggleNotifications } from '../../../client/action/settings';
+import {
+  toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
+  toggleNotifications,
+} from '../../../client/action/settings';
 import logout from '../../../client/action/logout';
 import { usePermission } from '../../hooks/usePermission';
 
@@ -62,21 +65,23 @@ function AppearanceSection() {
       />
       {(() => {
         if (!settings.useSystemTheme) {
-          return <SettingTile
-            title="Theme"
-            content={(
-              <SegmentedControls
-                selected={settings.getThemeIndex()}
-                segments={[
-                  { text: 'Light' },
-                  { text: 'Silver' },
-                  { text: 'Dark' },
-                  { text: 'Butter' },
-                ]}
-                onSelect={(index) => settings.setTheme(index)}
-              />
+          return (
+            <SettingTile
+              title="Theme"
+              content={(
+                <SegmentedControls
+                  selected={settings.getThemeIndex()}
+                  segments={[
+                    { text: 'Light' },
+                    { text: 'Silver' },
+                    { text: 'Dark' },
+                    { text: 'Butter' },
+                  ]}
+                  onSelect={(index) => settings.setTheme(index)}
+                />
             )}
-          />
+            />
+          );
         }
       })()}
       <SettingTile
@@ -114,28 +119,40 @@ function AppearanceSection() {
 }
 
 function NotificationsSection() {
-  const permission = usePermission('notifications', window.Notification.permission);
+  const permission = usePermission('notifications', window.Notification?.permission);
 
   const [, updateState] = useState({});
 
+  const renderOptions = () => {
+    if (window.Notification === undefined) {
+      return <Text className="set-notifications__not-supported">Not supported in this browser.</Text>;
+    }
+
+    if (permission === 'granted') {
+      return (
+        <Toggle
+          isActive={settings.showNotifications}
+          onToggle={() => { toggleNotifications(); updateState({}); }}
+        />
+      );
+    }
+
+    return (
+      <Button
+        variant="primary"
+        onClick={() => window.Notification.requestPermission()}
+      >
+        Request permission
+      </Button>
+    );
+  };
+
   return (
-    <div className="settings-content">
+    <div className="set-notifications settings-content">
       <SettingTile
         title="Show notifications"
-        options={permission === 'granted' ? (
-          <Toggle
-            isActive={settings.showNotifications}
-            onToggle={() => { toggleNotifications(); updateState({}); }}
-          />
-        ) : (
-          <Button
-            variant="primary"
-            onClick={() => window.Notification.requestPermission()}
-          >
-            Request permission
-          </Button>
-        )}
-        content={<Text variant="b3">Show notification when new messages arrive.</Text>}
+        options={renderOptions()}
+        content={<Text variant="b3">Show notifications when new messages arrive.</Text>}
       />
     </div>
   );
