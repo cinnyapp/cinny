@@ -40,6 +40,7 @@ class AsyncSearch extends EventEmitter {
    * @param {string | [string]} [opts.keys=null]
    * @param {boolean} [opts.isContain=false] - Add finding to result if it contain search term
    * @param {boolean} [opts.isCaseSensitive=false]
+   * @param {boolean} [opts.normalizeUnicode=true]
    * @param {boolean} [opts.ignoreWhitespace=true]
    * @param {number} [opts.limit=null] - Stop search after limit
    */
@@ -49,6 +50,7 @@ class AsyncSearch extends EventEmitter {
     this.searchKeys = opts?.keys || null;
     this.isContain = opts?.isContain || false;
     this.isCaseSensitive = opts?.isCaseSensitive || false;
+    this.normalizeUnicode = opts?.normalizeUnicode || true;
     this.ignoreWhitespace = opts?.ignoreWhitespace || true;
     this.limit = opts?.limit || null;
   }
