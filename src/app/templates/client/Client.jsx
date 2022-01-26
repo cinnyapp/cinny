@@ -12,6 +12,8 @@ import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 import logout from '../../../client/action/logout';
 
 import initMatrix from '../../../client/initMatrix';
+import navigation from '../../../client/state/navigation';
+import cons from '../../../client/state/cons';
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
@@ -54,8 +56,29 @@ function Client() {
       </div>
     );
   }
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+
+    const roomId = navigation.selectedRoomId;
+    if (!roomId) return;
+
+    const { files } = e.dataTransfer;
+    const file = files[0];
+    initMatrix.roomsInput.setAttachment(roomId, file);
+    initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
+  };
+
   return (
-    <div className="client-container">
+    <div
+      className="client-container"
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
       <div className="navigation__wrapper">
         <Navigation />
       </div>

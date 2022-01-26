@@ -58,9 +58,11 @@ function RoomViewInput({
 
   useEffect(() => {
     settings.on(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
+    roomsInput.on(cons.events.roomsInput.ATTACHMENT_SET, setAttachment);
     viewEvent.on('focus_msg_input', requestFocusInput);
     return () => {
       settings.removeListener(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
+      roomsInput.removeListener(cons.events.roomsInput.ATTACHMENT_SET, setAttachment);
       viewEvent.removeListener('focus_msg_input', requestFocusInput);
     };
   }, []);
