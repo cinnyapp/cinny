@@ -354,11 +354,12 @@ MessageReaction.propTypes = {
 };
 
 function MessageReactionGroup({ roomTimeline, mEvent }) {
-  const { roomId, reactionTimeline } = roomTimeline;
+  const { roomId, room, reactionTimeline } = roomTimeline;
   const eventId = mEvent.getId();
   const mx = initMatrix.matrixClient;
   const reactions = {};
-  const shortcodeToEmoji = getShortcodeToCustomEmoji(roomTimeline.room);
+  const shortcodeToEmoji = getShortcodeToCustomEmoji(room);
+  const canSendReaction = room.currentState.maySendEvent('m.reaction', mx.getUserId());
 
   const eventReactions = reactionTimeline.get(eventId);
   const addReaction = (key, count, senderId, isActive) => {
@@ -416,14 +417,16 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
           />
         ))
       }
-      <IconButton
-        onClick={(e) => {
-          pickEmoji(e, roomId, eventId, roomTimeline);
-        }}
-        src={EmojiAddIC}
-        size="extra-small"
-        tooltip="Add reaction"
-      />
+      {canSendReaction && (
+        <IconButton
+          onClick={(e) => {
+            pickEmoji(e, roomId, eventId, roomTimeline);
+          }}
+          src={EmojiAddIC}
+          size="extra-small"
+          tooltip="Add reaction"
+        />
+      )}
     </div>
   );
 }
@@ -452,15 +455,18 @@ const MessageOptions = React.memo(({
 
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel;
   const canIRedact = room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
+  const canSendReaction = room.currentState.maySendEvent('m.reaction', mx.getUserId());
 
   return (
     <div className="message__options">
-      <IconButton
-        onClick={(e) => pickEmoji(e, roomId, eventId, roomTimeline)}
-        src={EmojiAddIC}
-        size="extra-small"
-        tooltip="Add reaction"
-      />
+      {canSendReaction && (
+        <IconButton
+          onClick={(e) => pickEmoji(e, roomId, eventId, roomTimeline)}
+          src={EmojiAddIC}
+          size="extra-small"
+          tooltip="Add reaction"
+        />
+      )}
       <IconButton
         onClick={() => reply()}
         src={ReplyArrowIC}
