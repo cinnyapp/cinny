@@ -7,7 +7,6 @@ import colorMXID from '../../../util/colorMXID';
 import {
   selectTab, openInviteList, openSearch, openSettings,
 } from '../../../client/action/navigation';
-import navigation from '../../../client/state/navigation';
 import { abbreviateNumber } from '../../../util/common';
 
 import ScrollView from '../../atoms/scroll/ScrollView';
@@ -17,6 +16,9 @@ import HomeIC from '../../../../public/res/ic/outlined/home.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import InviteIC from '../../../../public/res/ic/outlined/invite.svg';
+
+import { useSelectedTab } from '../../hooks/useSelectedTab';
+import { useSpaceShortcut } from '../../hooks/useSpaceShortcut';
 
 function ProfileAvatarMenu() {
   const mx = initMatrix.matrixClient;
@@ -54,41 +56,42 @@ function ProfileAvatarMenu() {
   );
 }
 
-function SideBar() {
-  const { roomList, notifications } = initMatrix;
-  const mx = initMatrix.matrixClient;
+function useTotalInvites() {
+  const { roomList } = initMatrix;
   const totalInviteCount = () => roomList.inviteRooms.size
     + roomList.inviteSpaces.size
     + roomList.inviteDirects.size;
-
   const [totalInvites, updateTotalInvites] = useState(totalInviteCount());
-  const [selectedTab, setSelectedTab] = useState(navigation.selectedTab);
-  const [, forceUpdate] = useState({});
-
-  function onTabSelected(tabId) {
-    setSelectedTab(tabId);
-  }
-  function onInviteListChange() {
-    updateTotalInvites(totalInviteCount());
-  }
-  function onSpaceShortcutUpdated() {
-    forceUpdate({});
-  }
-  function onNotificationChanged(roomId, total, prevTotal) {
-    if (total === prevTotal) return;
-    forceUpdate({});
-  }
 
   useEffect(() => {
-    navigation.on(cons.events.navigation.TAB_SELECTED, onTabSelected);
-    roomList.on(cons.events.roomList.SPACE_SHORTCUT_UPDATED, onSpaceShortcutUpdated);
+    const onInviteListChange = () => {
+      updateTotalInvites(totalInviteCount());
+    };
     roomList.on(cons.events.roomList.INVITELIST_UPDATED, onInviteListChange);
-    notifications.on(cons.events.notifications.NOTI_CHANGED, onNotificationChanged);
-
     return () => {
-      navigation.removeListener(cons.events.navigation.TAB_SELECTED, onTabSelected);
-      roomList.removeListener(cons.events.roomList.SPACE_SHORTCUT_UPDATED, onSpaceShortcutUpdated);
       roomList.removeListener(cons.events.roomList.INVITELIST_UPDATED, onInviteListChange);
+    };
+  }, []);
+
+  return [totalInvites];
+}
+
+function SideBar() {
+  const { roomList, notifications } = initMatrix;
+  const mx = initMatrix.matrixClient;
+
+  const [selectedTab] = useSelectedTab();
+  const [spaceShortcut] = useSpaceShortcut();
+  const [totalInvites] = useTotalInvites();
+  const [, forceUpdate] = useState({});
+
+  useEffect(() => {
+    function onNotificationChanged(roomId, total, prevTotal) {
+      if (total === prevTotal) return;
+      forceUpdate({});
+    }
+    notifications.on(cons.events.notifications.NOTI_CHANGED, onNotificationChanged);
+    return () => {
       notifications.removeListener(cons.events.notifications.NOTI_CHANGED, onNotificationChanged);
     };
   }, []);
@@ -156,7 +159,7 @@ function SideBar() {
             <div className="sidebar-divider" />
             <div className="space-container">
               {
-                [...roomList.spaceShortcut].map((shortcut) => {
+                spaceShortcut.map((shortcut) => {
                   const sRoomId = shortcut;
                   const room = mx.getRoom(sRoomId);
                   return (

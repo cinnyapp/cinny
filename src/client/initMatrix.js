@@ -7,6 +7,7 @@ import RoomList from './state/RoomList';
 import RoomsInput from './state/RoomsInput';
 import Notifications from './state/Notifications';
 import { initHotkeys } from './event/hotkeys';
+import { initRoomListListener } from './event/roomList';
 
 global.Olm = require('@matrix-org/olm');
 
@@ -64,6 +65,7 @@ class InitMatrix extends EventEmitter {
           this.roomsInput = new RoomsInput(this.matrixClient);
           this.notifications = new Notifications(this.roomList);
           initHotkeys();
+          initRoomListListener(this.roomList);
           this.emit('init_loading_finished');
         }
       },

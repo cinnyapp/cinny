@@ -14,34 +14,12 @@ import DrawerBreadcrumb from './DrawerBreadcrumb';
 import Home from './Home';
 import Directs from './Directs';
 
-function Drawer() {
-  const [systemState, setSystemState] = useState(null);
-  const [selectedTab, setSelectedTab] = useState(navigation.selectedTab);
-  const [spaceId, setSpaceId] = useState(navigation.selectedSpaceId);
-  const scrollRef = useRef(null);
+import { useSelectedTab } from '../../hooks/useSelectedTab';
+import { useSelectedSpace } from '../../hooks/useSelectedSpace';
 
-  useEffect(() => {
-    const onTabSelected = (tabId) => {
-      setSelectedTab(tabId);
-    };
-    const onSpaceSelected = (roomId) => {
-      setSpaceId(roomId);
-    };
-    const onRoomLeaved = (roomId) => {
-      const lRoomIndex = navigation.selectedSpacePath.indexOf(roomId);
-      if (lRoomIndex === -1) return;
-      if (lRoomIndex === 0) selectTab(cons.tabs.HOME);
-      else selectSpace(navigation.selectedSpacePath[lRoomIndex - 1]);
-    };
-    navigation.on(cons.events.navigation.TAB_SELECTED, onTabSelected);
-    navigation.on(cons.events.navigation.SPACE_SELECTED, onSpaceSelected);
-    initMatrix.roomList.on(cons.events.roomList.ROOM_LEAVED, onRoomLeaved);
-    return () => {
-      navigation.removeListener(cons.events.navigation.TAB_SELECTED, onTabSelected);
-      navigation.removeListener(cons.events.navigation.SPACE_SELECTED, onSpaceSelected);
-      initMatrix.roomList.removeListener(cons.events.roomList.ROOM_LEAVED, onRoomLeaved);
-    };
-  }, []);
+function useSystemState() {
+  const [systemState, setSystemState] = useState(null);
+
   useEffect(() => {
     const handleSystemState = (state) => {
       if (state === 'ERROR' || state === 'RECONNECTING' || state === 'STOPPED') {
@@ -54,6 +32,15 @@ function Drawer() {
       initMatrix.matrixClient.removeListener('sync', handleSystemState);
     };
   }, [systemState]);
+
+  return [systemState];
+}
+
+function Drawer() {
+  const [systemState] = useSystemState();
+  const [selectedTab] = useSelectedTab();
+  const [spaceId] = useSelectedSpace();
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     requestAnimationFrame(() => {
