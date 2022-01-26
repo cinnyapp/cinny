@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
+import { getShortcodeToCustomEmoji } from '../../organisms/emoji-board/custom-emoji';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -301,12 +302,12 @@ function genReactionMsg(userIds, reaction) {
   return (
     <>
       {userIds.map((userId, index) => (
-        <>
+        <React.Fragment key={userId}>
           {twemojify(getUsername(userId))}
           <span style={{ opacity: '.6' }}>
             {index === userIds.length - 1 ? ' and ' : ', '}
           </span>
-        </>
+        </React.Fragment>
       ))}
       <span style={{ opacity: '.6' }}>{' reacted with '}</span>
       {twemojify(reaction, { className: 'react-emoji' })}
@@ -315,8 +316,14 @@ function genReactionMsg(userIds, reaction) {
 }
 
 function MessageReaction({
-  reaction, count, users, isActive, onClick,
+  shortcodeToEmoji, reaction, count, users, isActive, onClick,
 }) {
+  const customEmojiMatch = reaction.match(/^:(\S+):$/);
+  let customEmojiUrl = null;
+  if (customEmojiMatch) {
+    const customEmoji = shortcodeToEmoji.get(customEmojiMatch[1]);
+    customEmojiUrl = initMatrix.matrixClient.mxcUrlToHttp(customEmoji?.mxc);
+  }
   return (
     <Tooltip
       className="msg__reaction-tooltip"
@@ -327,13 +334,18 @@ function MessageReaction({
         type="button"
         className={`msg__reaction${isActive ? ' msg__reaction--active' : ''}`}
       >
-        { twemojify(reaction, { className: 'react-emoji' }) }
+        {
+          customEmojiUrl
+            ? <img className="react-emoji" draggable="false" alt={reaction} src={customEmojiUrl} />
+            : twemojify(reaction, { className: 'react-emoji' })
+        }
         <Text variant="b3" className="msg__reaction-count">{count}</Text>
       </button>
     </Tooltip>
   );
 }
 MessageReaction.propTypes = {
+  shortcodeToEmoji: PropTypes.shape({}).isRequired,
   reaction: PropTypes.node.isRequired,
   count: PropTypes.number.isRequired,
   users: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -346,6 +358,7 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
   const eventId = mEvent.getId();
   const mx = initMatrix.matrixClient;
   const reactions = {};
+  const shortcodeToEmoji = getShortcodeToCustomEmoji(roomTimeline.room);
 
   const eventReactions = reactionTimeline.get(eventId);
   const addReaction = (key, count, senderId, isActive) => {
@@ -392,6 +405,7 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
         Object.keys(reactions).map((key) => (
           <MessageReaction
             key={key}
+            shortcodeToEmoji={shortcodeToEmoji}
             reaction={key}
             count={reactions[key].count}
             users={reactions[key].users}

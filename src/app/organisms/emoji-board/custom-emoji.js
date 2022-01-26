@@ -147,6 +147,18 @@ function getShortcodeToEmoji(room) {
   return allEmoji;
 }
 
+function getShortcodeToCustomEmoji(room) {
+  const allEmoji = new Map();
+
+  getRelevantPacks(room).reverse()
+    .flatMap((pack) => pack.getEmojis())
+    .forEach((emoji) => {
+      allEmoji.set(emoji.shortcode, emoji);
+    });
+
+  return allEmoji;
+}
+
 // Produces a special list of emoji specifically for auto-completion
 //
 // This list contains each emoji once, with all emoji being deduplicated by shortcode.
@@ -167,5 +179,7 @@ function getEmojiForCompletion(room) {
 }
 
 export {
-  getUserImagePack, getShortcodeToEmoji, getRelevantPacks, getEmojiForCompletion,
+  getUserImagePack,
+  getShortcodeToEmoji, getShortcodeToCustomEmoji,
+  getRelevantPacks, getEmojiForCompletion,
 };
