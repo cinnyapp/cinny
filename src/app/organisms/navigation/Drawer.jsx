@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Drawer.scss';
 
 import initMatrix from '../../../client/initMatrix';
@@ -18,28 +18,21 @@ function Drawer() {
   const [systemState, setSystemState] = useState(null);
   const [selectedTab, setSelectedTab] = useState(navigation.selectedTab);
   const [spaceId, setSpaceId] = useState(navigation.selectedSpaceId);
-
-  function onTabSelected(tabId) {
-    setSelectedTab(tabId);
-  }
-  function onSpaceSelected(roomId) {
-    setSpaceId(roomId);
-  }
-  function onRoomLeaved(roomId) {
-    const lRoomIndex = navigation.selectedSpacePath.indexOf(roomId);
-    if (lRoomIndex === -1) return;
-    if (lRoomIndex === 0) selectTab(cons.tabs.HOME);
-    else selectSpace(navigation.selectedSpacePath[lRoomIndex - 1]);
-  }
-
-  function handleSystemState(state) {
-    if (state === 'ERROR' || state === 'RECONNECTING' || state === 'STOPPED') {
-      setSystemState({ status: 'Connection lost!' });
-    }
-    if (systemState !== null) setSystemState(null);
-  }
+  const scrollRef = useRef(null);
 
   useEffect(() => {
+    const onTabSelected = (tabId) => {
+      setSelectedTab(tabId);
+    };
+    const onSpaceSelected = (roomId) => {
+      setSpaceId(roomId);
+    };
+    const onRoomLeaved = (roomId) => {
+      const lRoomIndex = navigation.selectedSpacePath.indexOf(roomId);
+      if (lRoomIndex === -1) return;
+      if (lRoomIndex === 0) selectTab(cons.tabs.HOME);
+      else selectSpace(navigation.selectedSpacePath[lRoomIndex - 1]);
+    };
     navigation.on(cons.events.navigation.TAB_SELECTED, onTabSelected);
     navigation.on(cons.events.navigation.SPACE_SELECTED, onSpaceSelected);
     initMatrix.roomList.on(cons.events.roomList.ROOM_LEAVED, onRoomLeaved);
@@ -50,11 +43,23 @@ function Drawer() {
     };
   }, []);
   useEffect(() => {
+    const handleSystemState = (state) => {
+      if (state === 'ERROR' || state === 'RECONNECTING' || state === 'STOPPED') {
+        setSystemState({ status: 'Connection lost!' });
+      }
+      if (systemState !== null) setSystemState(null);
+    };
     initMatrix.matrixClient.on('sync', handleSystemState);
     return () => {
       initMatrix.matrixClient.removeListener('sync', handleSystemState);
     };
   }, [systemState]);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      scrollRef.current.scrollTop = 0;
+    });
+  }, [selectedTab]);
 
   return (
     <div className="drawer">
@@ -62,7 +67,7 @@ function Drawer() {
       <div className="drawer__content-wrapper">
         {selectedTab !== cons.tabs.DIRECTS && <DrawerBreadcrumb spaceId={spaceId} />}
         <div className="rooms__wrapper">
-          <ScrollView autoHide>
+          <ScrollView ref={scrollRef} autoHide>
             <div className="rooms-container">
               {
                 selectedTab !== cons.tabs.DIRECTS
