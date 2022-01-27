@@ -1,5 +1,7 @@
 import EventEmitter from 'events';
 
+const recentlyActiveThreshold = 2 * 60 * 1000; // 2 minutes
+
 class UserActivity extends EventEmitter {
   constructor() {
     super();
@@ -14,7 +16,6 @@ class UserActivity extends EventEmitter {
     const inactivityEvent = () => { this.lastActive = 0; };
 
     window.addEventListener('mousedown', activityEvent);
-    // window.addEventListener('mousemove', activityEvent);
     window.addEventListener('keydown', activityEvent);
     window.addEventListener('wheel', activityEvent, { passive: true, capture: true });
     window.addEventListener('focus', activityEvent);
@@ -22,7 +23,7 @@ class UserActivity extends EventEmitter {
   }
 
   recentlyActive() {
-    return Date.now() - this.lastActive <= 2 * 60 * 1000;
+    return Date.now() - this.lastActive <= recentlyActiveThreshold;
   }
 }
 

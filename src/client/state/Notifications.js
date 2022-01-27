@@ -25,8 +25,6 @@ class Notifications extends EventEmitter {
 
     this.roomIdToNoti = new Map();
 
-    this._isSyncing = false;
-
     this._initNoti();
     this._listenEvents();
 
@@ -192,7 +190,7 @@ class Notifications extends EventEmitter {
       body: mEvent.getContent().body,
       icon: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, 36, 36, 'crop'),
     });
-    noti.onclick = () => selectRoom(room.roomId);
+    noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
   }
 
   _listenEvents() {
@@ -210,7 +208,7 @@ class Notifications extends EventEmitter {
       const noti = this.getNoti(room.roomId);
       this._setNoti(room.roomId, total - noti.total, highlight - noti.highlight);
 
-      if (this._isSyncing) {
+      if (this.matrixClient.getSyncState() === 'SYNCING') {
         this._displayPopupNoti(mEvent, room);
       }
     });
@@ -229,14 +227,6 @@ class Notifications extends EventEmitter {
     this.matrixClient.on('Room.myMembership', (room, membership) => {
       if (membership === 'leave' && this.hasNoti(room.roomId)) {
         this.deleteNoti(room.roomId);
-      }
-    });
-
-    this.matrixClient.on('sync', (state) => {
-      if (state === 'SYNCING') {
-        this._isSyncing = true;
-      } else if (state === 'STOPPED' || state === 'ERROR') {
-        this._isSyncing = false;
       }
     });
   }
