@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-const recentlyActiveThreshold = 2 * 60 * 1000; // 2 minutes
+const RECENTLY_ACTIVE_THRESHOLD = 2 * 60 * 1000; // 2 minutes
 
 class UserActivity extends EventEmitter {
   constructor() {
@@ -23,7 +23,7 @@ class UserActivity extends EventEmitter {
   }
 
   recentlyActive() {
-    return Date.now() - this.lastActive <= recentlyActiveThreshold;
+    return Date.now() - this.lastActive <= RECENTLY_ACTIVE_THRESHOLD;
   }
 }
 
