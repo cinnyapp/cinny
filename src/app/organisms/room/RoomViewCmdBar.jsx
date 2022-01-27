@@ -5,6 +5,8 @@ import './RoomViewCmdBar.scss';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 
+import { twemojify } from '../../../util/twemojify';
+
 import initMatrix from '../../../client/initMatrix';
 import { toggleMarkdown } from '../../../client/action/settings';
 import * as roomActions from '../../../client/action/room';
@@ -143,7 +145,7 @@ function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
           });
         }}
       >
-        <Text variant="b2">{member.name}</Text>
+        <Text variant="b2">{twemojify(member.name)}</Text>
       </CmdItem>
     ));
   }
