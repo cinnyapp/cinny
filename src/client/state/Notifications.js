@@ -3,7 +3,6 @@ import { selectRoom } from '../action/navigation';
 import cons from './cons';
 import navigation from './navigation';
 import settings from './settings';
-import userActivity from './userActivity';
 
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
@@ -172,8 +171,7 @@ class Notifications extends EventEmitter {
     const actions = this.matrixClient.getPushActionsForEvent(mEvent);
     if (!actions?.notify) return;
 
-    if (navigation.selectedRoomId === room.roomId
-      && userActivity.recentlyActive()) return;
+    if (navigation.selectedRoomId === room.roomId && document.visibilityState === 'visible') return;
 
     if (mEvent.isEncrypted()) {
       await mEvent.attemptDecryption(this.matrixClient.crypto);
