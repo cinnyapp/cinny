@@ -150,7 +150,7 @@ function NotificationsSection() {
   return (
     <div className="set-notifications settings-content">
       <SettingTile
-        title="Show notifications"
+        title="Show desktop notifications"
         options={renderOptions()}
         content={<Text variant="b3">Show notifications when new messages arrive.</Text>}
       />
