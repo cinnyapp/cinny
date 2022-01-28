@@ -28,7 +28,7 @@ class Settings extends EventEmitter {
     this.isPeopleDrawer = this.getIsPeopleDrawer();
     this.hideMembershipEvents = this.getHideMembershipEvents();
     this.hideNickAvatarEvents = this.getHideNickAvatarEvents();
-    this.showNotifications = this.getShowNotifications();
+    this._showNotifications = this.getShowNotifications();
 
     this.isTouchScreenDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
   }
@@ -111,8 +111,13 @@ class Settings extends EventEmitter {
     return settings.isPeopleDrawer;
   }
 
+  get showNotifications() {
+    if (window.Notification?.permission !== 'granted') return false;
+    return this._showNotifications;
+  }
+
   getShowNotifications() {
-    if (typeof this.showNotifications === 'boolean') return this.showNotifications;
+    if (typeof this._showNotifications === 'boolean') return this._showNotifications;
 
     const settings = getSettings();
     if (settings === null) return true;
@@ -151,9 +156,13 @@ class Settings extends EventEmitter {
         this.emit(cons.events.settings.NICKAVATAR_EVENTS_TOGGLED, this.hideNickAvatarEvents);
       },
       [cons.actions.settings.TOGGLE_NOTIFICATIONS]: async () => {
-        this.showNotifications = !this.showNotifications;
-        setSettings('showNotifications', this.showNotifications);
-        this.emit(cons.events.settings.NOTIFICATIONS_TOGGLED, this.showNotifications);
+        if (window.Notification?.permission !== 'granted') {
+          this._showNotifications = false;
+        } else {
+          this._showNotifications = !this._showNotifications;
+        }
+        setSettings('showNotifications', this._showNotifications);
+        this.emit(cons.events.settings.NOTIFICATIONS_TOGGLED, this._showNotifications);
       },
     };
 

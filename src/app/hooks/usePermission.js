@@ -24,5 +24,5 @@ export function usePermission(name, initial) {
     };
   }, []);
 
-  return state;
+  return [state, setState];
 }

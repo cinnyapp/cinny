@@ -119,7 +119,7 @@ function AppearanceSection() {
 }
 
 function NotificationsSection() {
-  const permission = usePermission('notifications', window.Notification?.permission);
+  const [permission, setPermission] = usePermission('notifications', window.Notification?.permission);
 
   const [, updateState] = useState({});
 
@@ -131,8 +131,12 @@ function NotificationsSection() {
     if (permission === 'granted') {
       return (
         <Toggle
-          isActive={settings.showNotifications}
-          onToggle={() => { toggleNotifications(); updateState({}); }}
+          isActive={settings._showNotifications}
+          onToggle={() => {
+            toggleNotifications();
+            setPermission(window.Notification?.permission);
+            updateState({});
+          }}
         />
       );
     }
@@ -140,7 +144,7 @@ function NotificationsSection() {
     return (
       <Button
         variant="primary"
-        onClick={() => window.Notification.requestPermission()}
+        onClick={() => window.Notification.requestPermission().then(setPermission)}
       >
         Request permission
       </Button>
