@@ -10,9 +10,8 @@ export function usePermission(name, initial) {
 
     const update = () => setState(descriptor.state);
 
-    const query = navigator.permissions?.query;
-    if (query) {
-      query({ name }).then((_descriptor) => {
+    if (navigator.permissions?.query) {
+      navigator.permissions.query({ name }).then((_descriptor) => {
         descriptor = _descriptor;
 
         update();
