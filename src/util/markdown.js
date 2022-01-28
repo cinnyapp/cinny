@@ -1,3 +1,7 @@
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-plusplus */
+/* eslint-disable no-continue */
+
 import { codes } from 'micromark-util-symbol/codes';
 import { types } from 'micromark-util-symbol/types';
 import { resolveAll } from 'micromark-util-resolve-all';
@@ -43,8 +47,6 @@ function inlineExtension(marker, len, key) {
     }
 
     function resolve(events, context) {
-      console.log(events);
-
       let i = -1;
 
       while (++i < events.length) {
@@ -53,11 +55,6 @@ function inlineExtension(marker, len, key) {
         let open = i;
         while (open--) {
           if (events[open][0] !== 'exit' || events[open][1].type !== keySeqTmp) continue;
-
-          //   // diffent length of begin and end
-          //   if (events[i][1].end.offset - events[i][1].start.offset
-          //         !== events[open][1].end.offset - events[open][1].start.offset
-          //   ) continue;
 
           events[i][1].type = keySeq;
           events[open][1].type = keySeq;
