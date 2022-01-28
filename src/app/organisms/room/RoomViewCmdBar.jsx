@@ -126,9 +126,7 @@ function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
           result: emoji,
         })}
       >
-        {
-          renderEmoji(emoji)
-        }
+        <Text variant="b1">{renderEmoji(emoji)}</Text>
         <Text variant="b2">{`:${emoji.shortcode}:`}</Text>
       </CmdItem>
     ));

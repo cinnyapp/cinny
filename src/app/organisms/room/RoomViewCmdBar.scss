@@ -36,20 +36,14 @@
 
 .cmd-item {
   --cmd-item-bar: inset 0 -2px 0 0 var(--bg-caution);
-
-  display: inline-flex;
-  align-items: center;
+  height: 100%;
   @include dir.side(margin, 0, var(--sp-extra-tight));
   padding: 0 var(--sp-extra-tight);
-  height: 100%;
   border-radius: var(--bo-radius) var(--bo-radius) 0 0;
   cursor: pointer;
-
-  & .emoji {
-    width: 20px;
-    height: 20px;
-    @include dir.side(margin, 0, var(--sp-ultra-tight));
-  }
+  
+  display: inline-flex;
+  align-items: center;
 
   &:hover {
     background-color: var(--bg-caution-hover);
