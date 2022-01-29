@@ -1,5 +1,8 @@
 import EventEmitter from 'events';
+import { selectRoom } from '../action/navigation';
 import cons from './cons';
+import navigation from './navigation';
+import settings from './settings';
 
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
@@ -23,6 +26,9 @@ class Notifications extends EventEmitter {
 
     this._initNoti();
     this._listenEvents();
+
+    // Ask for permission by default after loading
+    window.Notification?.requestPermission();
 
     // TODO:
     window.notifications = this;
@@ -158,6 +164,32 @@ class Notifications extends EventEmitter {
     [...parentIds].forEach((parentId) => this._deleteNoti(parentId, total, highlight, roomId));
   }
 
+  async _displayPopupNoti(mEvent, room) {
+    if (!settings.showNotifications) return;
+
+    const actions = this.matrixClient.getPushActionsForEvent(mEvent);
+    if (!actions?.notify) return;
+
+    if (navigation.selectedRoomId === room.roomId && document.visibilityState === 'visible') return;
+
+    if (mEvent.isEncrypted()) {
+      await mEvent.attemptDecryption(this.matrixClient.crypto);
+    }
+
+    let title;
+    if (!mEvent.sender || room.name === mEvent.sender.name) {
+      title = room.name;
+    } else if (mEvent.sender) {
+      title = `${mEvent.sender.name} (${room.name})`;
+    }
+
+    const noti = new window.Notification(title, {
+      body: mEvent.getContent().body,
+      icon: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, 36, 36, 'crop'),
+    });
+    noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
+  }
+
   _listenEvents() {
     this.matrixClient.on('Room.timeline', (mEvent, room) => {
       if (!isNotifEvent(mEvent)) return;
@@ -172,6 +204,10 @@ class Notifications extends EventEmitter {
 
       const noti = this.getNoti(room.roomId);
       this._setNoti(room.roomId, total - noti.total, highlight - noti.highlight);
+
+      if (this.matrixClient.getSyncState() === 'SYNCING') {
+        this._displayPopupNoti(mEvent, room);
+      }
     });
 
     this.matrixClient.on('Room.receipt', (mEvent, room) => {

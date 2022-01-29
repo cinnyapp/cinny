@@ -5,8 +5,12 @@ import './Settings.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
-import { toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents } from '../../../client/action/settings';
+import {
+  toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
+  toggleNotifications,
+} from '../../../client/action/settings';
 import logout from '../../../client/action/logout';
+import { usePermission } from '../../hooks/usePermission';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -24,6 +28,7 @@ import ProfileEditor from '../profile-editor/ProfileEditor';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
+import BellIC from '../../../../public/res/ic/outlined/bell.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
@@ -60,21 +65,23 @@ function AppearanceSection() {
       />
       {(() => {
         if (!settings.useSystemTheme) {
-          return <SettingTile
-            title="Theme"
-            content={(
-              <SegmentedControls
-                selected={settings.getThemeIndex()}
-                segments={[
-                  { text: 'Light' },
-                  { text: 'Silver' },
-                  { text: 'Dark' },
-                  { text: 'Butter' },
-                ]}
-                onSelect={(index) => settings.setTheme(index)}
-              />
+          return (
+            <SettingTile
+              title="Theme"
+              content={(
+                <SegmentedControls
+                  selected={settings.getThemeIndex()}
+                  segments={[
+                    { text: 'Light' },
+                    { text: 'Silver' },
+                    { text: 'Dark' },
+                    { text: 'Butter' },
+                  ]}
+                  onSelect={(index) => settings.setTheme(index)}
+                />
             )}
-          />
+            />
+          );
         }
       })()}
       <SettingTile
@@ -106,6 +113,50 @@ function AppearanceSection() {
           />
         )}
         content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
+      />
+    </div>
+  );
+}
+
+function NotificationsSection() {
+  const [permission, setPermission] = usePermission('notifications', window.Notification?.permission);
+
+  const [, updateState] = useState({});
+
+  const renderOptions = () => {
+    if (window.Notification === undefined) {
+      return <Text className="set-notifications__not-supported">Not supported in this browser.</Text>;
+    }
+
+    if (permission === 'granted') {
+      return (
+        <Toggle
+          isActive={settings._showNotifications}
+          onToggle={() => {
+            toggleNotifications();
+            setPermission(window.Notification?.permission);
+            updateState({});
+          }}
+        />
+      );
+    }
+
+    return (
+      <Button
+        variant="primary"
+        onClick={() => window.Notification.requestPermission().then(setPermission)}
+      >
+        Request permission
+      </Button>
+    );
+  };
+
+  return (
+    <div className="set-notifications settings-content">
+      <SettingTile
+        title="Show desktop notifications"
+        options={renderOptions()}
+        content={<Text variant="b3">Show notifications when new messages arrive.</Text>}
       />
     </div>
   );
@@ -177,6 +228,12 @@ function Settings({ isOpen, onRequestClose }) {
     iconSrc: SunIC,
     render() {
       return <AppearanceSection />;
+    },
+  }, {
+    name: 'Notifications',
+    iconSrc: BellIC,
+    render() {
+      return <NotificationsSection />;
     },
   }, {
     name: 'Security & Privacy',

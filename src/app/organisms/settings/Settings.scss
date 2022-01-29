@@ -26,6 +26,12 @@
   }
 }
 
+.set-notifications {
+  &__not-supported {
+    padding: 0 var(--sp-ultra-tight);
+  }
+}
+
 .set-about {
   &__branding {
     margin-top: var(--sp-extra-tight);
