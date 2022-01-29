@@ -1,0 +1,83 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+
+import { twemojify } from '../../../util/twemojify';
+
+import initMatrix from '../../../client/initMatrix';
+import { openSpaceSettings, openInviteUser } from '../../../client/action/navigation';
+import { leave, createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
+
+import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
+
+import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
+import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
+import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
+import PinIC from '../../../../public/res/ic/outlined/pin.svg';
+import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
+
+function SpaceOptions({ roomId, afterOptionSelect }) {
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
+  const canInvite = room?.canInvite(mx.getUserId());
+  const isPinned = initMatrix.roomList.spaceShortcut.has(roomId);
+
+  const handleInviteClick = () => {
+    openInviteUser(roomId);
+    afterOptionSelect();
+  };
+  const handlePinClick = () => {
+    if (isPinned) deleteSpaceShortcut(roomId);
+    else createSpaceShortcut(roomId);
+    afterOptionSelect();
+  };
+
+  const handleSettingsClick = () => {
+    openSpaceSettings(roomId);
+    afterOptionSelect();
+  };
+
+  const handleLeaveClick = () => {
+    if (confirm('Are you really want to leave this space?')) {
+      leave(roomId);
+      afterOptionSelect();
+    }
+  };
+
+  return (
+    <>
+      <MenuHeader>{twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}</MenuHeader>
+      <MenuItem
+        onClick={handlePinClick}
+        iconSrc={isPinned ? PinFilledIC : PinIC}
+      >
+        {isPinned ? 'Unpin from sidebar' : 'Pin to sidebar'}
+      </MenuItem>
+      <MenuItem
+        iconSrc={AddUserIC}
+        onClick={handleInviteClick}
+        disabled={!canInvite}
+      >
+        Invite
+      </MenuItem>
+      <MenuItem onClick={handleSettingsClick} iconSrc={SettingsIC}>Settings</MenuItem>
+      <MenuItem
+        variant="danger"
+        onClick={handleLeaveClick}
+        iconSrc={LeaveArrowIC}
+      >
+        Leave
+      </MenuItem>
+    </>
+  );
+}
+
+SpaceOptions.defaultProps = {
+  afterOptionSelect: null,
+};
+
+SpaceOptions.propTypes = {
+  roomId: PropTypes.string.isRequired,
+  afterOptionSelect: PropTypes.func,
+};
+
+export default SpaceOptions;

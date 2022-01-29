@@ -7,9 +7,10 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import {
-  openSpaceSettings, openPublicRooms, openCreateRoom, openInviteUser,
+  openPublicRooms, openCreateRoom, openInviteUser, openReusableContextMenu,
 } from '../../../client/action/navigation';
 import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
+import { getEventCords } from '../../../util/common';
 
 import { blurOnBubbling } from '../../atoms/button/script';
 
@@ -18,6 +19,7 @@ import RawIcon from '../../atoms/system-icons/RawIcon';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import IconButton from '../../atoms/button/IconButton';
 import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/ContextMenu';
+import SpaceOptions from '../../molecules/space-options/SpaceOptions';
 
 import PlusIC from '../../../../public/res/ic/outlined/plus.svg';
 import HashPlusIC from '../../../../public/res/ic/outlined/hash-plus.svg';
@@ -35,12 +37,21 @@ function DrawerHeader({ selectedTab, spaceId }) {
   const room = mx.getRoom(spaceId);
   const spaceName = selectedTab === cons.tabs.DIRECTS ? null : (room?.name || null);
 
+  const openSpaceOptions = (e) => {
+    e.preventDefault();
+    openReusableContextMenu(
+      'bottom',
+      getEventCords(e, '.drawer-header__btn'),
+      (closeMenu) => <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />,
+    );
+  };
+
   return (
     <Header>
       {spaceName ? (
         <button
           className="drawer-header__btn"
-          onClick={() => openSpaceSettings(spaceId)}
+          onClick={openSpaceOptions}
           type="button"
           onMouseUp={(e) => blurOnBubbling(e, '.drawer-header__btn')}
         >
