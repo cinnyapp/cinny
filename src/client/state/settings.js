@@ -79,8 +79,8 @@ class Settings extends EventEmitter {
     if (typeof this.isMarkdown === 'boolean') return this.isMarkdown;
 
     const settings = getSettings();
-    if (settings === null) return false;
-    if (typeof settings.isMarkdown === 'undefined') return false;
+    if (settings === null) return true;
+    if (typeof settings.isMarkdown === 'undefined') return true;
     return settings.isMarkdown;
   }
 

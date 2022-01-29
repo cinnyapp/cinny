@@ -41,7 +41,7 @@ function DrawerHeader({ selectedTab, spaceId }) {
     e.preventDefault();
     openReusableContextMenu(
       'bottom',
-      getEventCords(e, '.drawer-header__btn'),
+      getEventCords(e, '.header'),
       (closeMenu) => <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />,
     );
   };
