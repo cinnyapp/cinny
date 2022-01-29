@@ -8,6 +8,7 @@ import PublicRooms from '../public-rooms/PublicRooms';
 import CreateRoom from '../create-room/CreateRoom';
 import InviteUser from '../invite-user/InviteUser';
 import Settings from '../settings/Settings';
+import SpaceSettings from '../space-settings/SpaceSettings';
 
 function Windows() {
   const [isInviteList, changeInviteList] = useState(false);
@@ -83,6 +84,7 @@ function Windows() {
         isOpen={settings}
         onRequestClose={() => changeSettings(false)}
       />
+      <SpaceSettings />
     </>
   );
 }

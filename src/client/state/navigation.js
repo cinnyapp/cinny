@@ -89,6 +89,9 @@ class Navigation extends EventEmitter {
           action.eventId,
         );
       },
+      [cons.actions.navigation.OPEN_SPACE_SETTINGS]: () => {
+        this.emit(cons.events.navigation.SPACE_SETTINGS_OPENED, action.spaceId, action.tabText);
+      },
       [cons.actions.navigation.TOGGLE_ROOM_SETTINGS]: () => {
         this.isRoomSettings = !this.isRoomSettings;
         this.emit(

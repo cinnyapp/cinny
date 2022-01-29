@@ -23,6 +23,14 @@ export function selectRoom(roomId, eventId) {
   });
 }
 
+export function openSpaceSettings(spaceId, tabText) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_SPACE_SETTINGS,
+    spaceId,
+    tabText,
+  });
+}
+
 export function toggleRoomSettings(tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.TOGGLE_ROOM_SETTINGS,

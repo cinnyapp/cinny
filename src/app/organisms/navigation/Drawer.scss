@@ -10,6 +10,13 @@
     1px solid var(--bg-surface-border),
   );
 
+  & .header {
+    padding: var(--sp-extra-tight);
+    & > .header__title-wrapper {
+      @include dir.side(margin, var(--sp-ultra-tight), 0);
+    }
+  }
+
   &__content-wrapper {
     @extend .cp-fx__item-one;
     @extend .cp-fx__column;
