@@ -54,6 +54,7 @@ function PopupWindow({
   onRequestClose, children,
 }) {
   const haveDrawer = drawer !== null;
+  const cTitle = contentTitle !== null ? contentTitle : title;
 
   return (
     <RawModal
@@ -68,7 +69,11 @@ function PopupWindow({
             <Header>
               <IconButton size="small" src={ChevronLeftIC} onClick={onRequestClose} tooltip="Back" />
               <TitleWrapper>
-                <Text variant="s1" weight="medium" primary>{twemojify(title)}</Text>
+                {
+                  typeof title === 'string'
+                    ? <Text variant="s1" weight="medium" primary>{twemojify(title)}</Text>
+                    : title
+                }
               </TitleWrapper>
               {drawerOptions}
             </Header>
@@ -84,7 +89,11 @@ function PopupWindow({
         <div className="pw__content">
           <Header>
             <TitleWrapper>
-              <Text variant="h2" weight="medium" primary>{twemojify(contentTitle !== null ? contentTitle : title)}</Text>
+              {
+                typeof cTitle === 'string'
+                  ? <Text variant="h2" weight="medium" primary>{twemojify(cTitle)}</Text>
+                  : cTitle
+              }
             </TitleWrapper>
             {contentOptions}
           </Header>
@@ -113,8 +122,8 @@ PopupWindow.defaultProps = {
 PopupWindow.propTypes = {
   className: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
-  title: PropTypes.string.isRequired,
-  contentTitle: PropTypes.string,
+  title: PropTypes.node.isRequired,
+  contentTitle: PropTypes.node,
   drawer: PropTypes.node,
   drawerOptions: PropTypes.node,
   contentOptions: PropTypes.node,
