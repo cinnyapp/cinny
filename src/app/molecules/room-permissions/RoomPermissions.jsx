@@ -218,11 +218,12 @@ function RoomPermissions({ roomId }) {
     );
   };
 
+  const permsGroups = room.isSpaceRoom() ? spacePermsGroups : roomPermsGroups;
   return (
     <div className="room-permissions">
       {
-        Object.keys(roomPermsGroups).map((groupKey) => {
-          const groupedPermKeys = roomPermsGroups[groupKey];
+        Object.keys(permsGroups).map((groupKey) => {
+          const groupedPermKeys = permsGroups[groupKey];
           return (
             <div className="room-permissions__card" key={groupKey}>
               <MenuHeader>{groupKey}</MenuHeader>
