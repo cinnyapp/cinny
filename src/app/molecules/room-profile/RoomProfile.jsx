@@ -125,9 +125,9 @@ function RoomProfile({ roomId }) {
 
   const renderEditNameAndTopic = () => (
     <form className="room-profile__edit-form" onSubmit={handleOnSubmit}>
-      {canChangeName && <Input value={roomName} name="room-name" disabled={status.type === cons.status.IN_FLIGHT} label="Room name" required />}
+      {canChangeName && <Input value={roomName} name="room-name" disabled={status.type === cons.status.IN_FLIGHT} label="Name" required />}
       {canChangeTopic && <Input value={roomTopic} name="room-topic" disabled={status.type === cons.status.IN_FLIGHT} minHeight={100} resizable label="Topic" />}
-      {(!canChangeName || !canChangeTopic) && <Text variant="b3">{`You have permission to change room ${canChangeName ? 'name' : 'topic'} only.`}</Text>}
+      {(!canChangeName || !canChangeTopic) && <Text variant="b3">{`You have permission to change ${room.isSpaceRoom() ? 'space' : 'room'} ${canChangeName ? 'name' : 'topic'} only.`}</Text>}
       { status.type === cons.status.IN_FLIGHT && <Text variant="b2">{status.msg}</Text>}
       { status.type === cons.status.SUCCESS && <Text style={{ color: 'var(--tc-positive-high)' }} variant="b2">{status.msg}</Text>}
       { status.type === cons.status.ERROR && <Text style={{ color: 'var(--tc-danger-high)' }} variant="b2">{status.msg}</Text>}
@@ -148,7 +148,7 @@ function RoomProfile({ roomId }) {
           <IconButton
             src={PencilIC}
             size="extra-small"
-            tooltip="Edit room name and topic"
+            tooltip="Edit"
             onClick={() => setIsEditing(true)}
           />
         )}
