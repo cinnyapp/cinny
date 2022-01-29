@@ -5,12 +5,14 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import colorMXID from '../../../util/colorMXID';
 import {
-  selectTab, openInviteList, openSearch, openSettings,
+  selectTab, openInviteList, openSearch,
+  openSettings, openReusableContextMenu,
 } from '../../../client/action/navigation';
-import { abbreviateNumber } from '../../../util/common';
+import { abbreviateNumber, getEventCords } from '../../../util/common';
 
 import ScrollView from '../../atoms/scroll/ScrollView';
 import SidebarAvatar from '../../molecules/sidebar-avatar/SidebarAvatar';
+import SpaceOptions from '../../molecules/space-options/SpaceOptions';
 
 import HomeIC from '../../../../public/res/ic/outlined/home.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
@@ -96,6 +98,15 @@ function SideBar() {
     };
   }, []);
 
+  const openSpaceOptions = (e, spaceId) => {
+    e.preventDefault();
+    openReusableContextMenu(
+      'right',
+      getEventCords(e, '.sidebar-avatar'),
+      (closeMenu) => <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />,
+    );
+  };
+
   function getHomeNoti() {
     const orphans = roomList.getOrphans();
     let noti = null;
@@ -174,6 +185,7 @@ function SideBar() {
                       notificationCount={abbreviateNumber(notifications.getTotalNoti(sRoomId))}
                       isAlert={notifications.getHighlightNoti(sRoomId) !== 0}
                       onClick={() => selectTab(shortcut)}
+                      onContextMenu={(e) => openSpaceOptions(e, sRoomId)}
                     />
                   );
                 })
