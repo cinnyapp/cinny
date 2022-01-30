@@ -1,0 +1,27 @@
+.room-members {
+  & .input-container {
+    margin: var(--sp-normal);
+  }
+  
+  & .segmented-controls {
+    margin: var(--sp-normal);
+    display: flex;
+    & > * {
+      flex: 1;
+    }
+  } 
+
+  &__list {
+    & .people-selector__container:last-child {
+      margin-bottom: var(--sp-extra-tight);
+    }
+    & > .btn-surface {
+      width: calc(100% - 32px);
+      margin: var(--sp-normal);
+    }
+  }
+  
+  &__status {
+    margin: var(--sp-normal);
+  }
+}

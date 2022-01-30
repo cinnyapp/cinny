@@ -24,7 +24,9 @@ import RoomAliases from '../../molecules/room-aliases/RoomAliases';
 import RoomHistoryVisibility from '../../molecules/room-history-visibility/RoomHistoryVisibility';
 import RoomEncryption from '../../molecules/room-encryption/RoomEncryption';
 import RoomPermissions from '../../molecules/room-permissions/RoomPermissions';
+import RoomMembers from '../../molecules/room-members/RoomMembers';
 
+import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
@@ -38,6 +40,7 @@ import { useForceUpdate } from '../../hooks/useForceUpdate';
 const tabText = {
   GENERAL: 'General',
   SEARCH: 'Search',
+  MEMBERS: 'Members',
   PERMISSIONS: 'Permissions',
   SECURITY: 'Security',
 };
@@ -49,6 +52,10 @@ const tabItems = [{
 }, {
   iconSrc: SearchIC,
   text: tabText.SEARCH,
+  disabled: false,
+}, {
+  iconSrc: UserIC,
+  text: tabText.MEMBERS,
   disabled: false,
 }, {
   iconSrc: ShieldUserIC,
@@ -182,6 +189,7 @@ function RoomSettings({ roomId }) {
           <div className="room-settings__cards-wrapper">
             {selectedTab.text === tabText.GENERAL && <GeneralSettings roomId={roomId} />}
             {selectedTab.text === tabText.SEARCH && <RoomSearch roomId={roomId} />}
+            {selectedTab.text === tabText.MEMBERS && <RoomMembers roomId={roomId} />}
             {selectedTab.text === tabText.PERMISSIONS && <RoomPermissions roomId={roomId} />}
             {selectedTab.text === tabText.SECURITY && <SecuritySettings roomId={roomId} />}
           </div>

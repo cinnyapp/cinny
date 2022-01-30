@@ -35,6 +35,7 @@
   }
 }
 
-.space-settings .room-permissions__card {
+.space-settings .room-permissions__card,
+.space-settings .room-members {
   @extend .space-settings__card;
 }

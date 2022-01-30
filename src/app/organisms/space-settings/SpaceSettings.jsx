@@ -18,7 +18,9 @@ import RoomProfile from '../../molecules/room-profile/RoomProfile';
 import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
 import RoomAliases from '../../molecules/room-aliases/RoomAliases';
 import RoomPermissions from '../../molecules/room-permissions/RoomPermissions';
+import RoomMembers from '../../molecules/room-members/RoomMembers';
 
+import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
@@ -30,12 +32,17 @@ import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 const tabText = {
   GENERAL: 'General',
+  MEMBERS: 'Members',
   PERMISSIONS: 'Permissions',
 };
 
 const tabItems = [{
   iconSrc: SettingsIC,
   text: tabText.GENERAL,
+  disabled: false,
+}, {
+  iconSrc: UserIC,
+  text: tabText.MEMBERS,
   disabled: false,
 }, {
   iconSrc: ShieldUserIC,
@@ -144,6 +151,7 @@ function SpaceSettings() {
           />
           <div className="space-settings__cards-wrapper">
             {selectedTab.text === tabText.GENERAL && <GeneralSettings roomId={roomId} />}
+            {selectedTab.text === tabText.MEMBERS && <RoomMembers roomId={roomId} />}
             {selectedTab.text === tabText.PERMISSIONS && <RoomPermissions roomId={roomId} />}
           </div>
         </div>

@@ -75,6 +75,7 @@
 
 .room-settings .room-permissions__card,
 .room-settings .room-search__form,
-.room-settings .room-search__result-item {
+.room-settings .room-search__result-item ,
+.room-settings .room-members {
   @extend .room-settings__card;
 }
