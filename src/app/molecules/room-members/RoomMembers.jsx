@@ -84,15 +84,15 @@ function useMemberOfMembership(roomId, membership) {
   return [members];
 }
 
-const asyncSearch = new AsyncSearch();
 function useSearchMembers(members) {
   const [searchMembers, setSearchMembers] = useState(null);
+  const [asyncSearch] = useState(new AsyncSearch());
 
   const reSearch = useCallback(() => {
     if (searchMembers) {
       asyncSearch.search(searchMembers.term);
     }
-  }, [searchMembers]);
+  }, [searchMembers, asyncSearch]);
 
   useEffect(() => {
     asyncSearch.setup(members, {
@@ -100,7 +100,7 @@ function useSearchMembers(members) {
       limit: PER_PAGE_MEMBER,
     });
     reSearch();
-  }, [members]);
+  }, [members, asyncSearch]);
 
   useEffect(() => {
     const handleSearchData = (data, term) => setSearchMembers({ data, term });
@@ -108,7 +108,7 @@ function useSearchMembers(members) {
     return () => {
       asyncSearch.removeListener(asyncSearch.RESULT_SENT, handleSearchData);
     };
-  }, []);
+  }, [asyncSearch]);
 
   const handleSearch = (e) => {
     const term = e.target.value;
