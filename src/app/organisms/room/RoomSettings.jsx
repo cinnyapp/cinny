@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomSettings.scss';
 
+import { blurOnBubbling } from '../../atoms/button/script';
+
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { openInviteUser } from '../../../client/action/navigation';
+import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 
 import Text from '../../atoms/text/Text';
+import RawIcon from '../../atoms/system-icons/RawIcon';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import Tabs from '../../atoms/tabs/Tabs';
@@ -28,6 +31,7 @@ import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
+import ChevronTopIC from '../../../../public/res/ic/outlined/chevron-top.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
@@ -124,6 +128,7 @@ SecuritySettings.propTypes = {
 function RoomSettings({ roomId }) {
   const [, forceUpdate] = useForceUpdate();
   const [selectedTab, setSelectedTab] = useState(tabItems[0]);
+  const room = initMatrix.matrixClient.getRoom(roomId);
 
   const handleTabChange = (tabItem) => {
     setSelectedTab(tabItem);
@@ -153,9 +158,20 @@ function RoomSettings({ roomId }) {
       <ScrollView autoHide>
         <div className="room-settings__content">
           <Header>
-            <TitleWrapper>
-              <Text variant="s1" weight="medium" primary>Room settings</Text>
-            </TitleWrapper>
+            <button
+              className="room-settings__header-btn"
+              onClick={() => toggleRoomSettings()}
+              type="button"
+              onMouseUp={(e) => blurOnBubbling(e, '.room-settings__header-btn')}
+            >
+              <TitleWrapper>
+                <Text variant="s1" weight="medium" primary>
+                  {`${room.name}`}
+                  <span style={{ color: 'var(--tc-surface-low)' }}> — room settings</span>
+                </Text>
+              </TitleWrapper>
+              <RawIcon src={ChevronTopIC} />
+            </button>
           </Header>
           <RoomProfile roomId={roomId} />
           <Tabs

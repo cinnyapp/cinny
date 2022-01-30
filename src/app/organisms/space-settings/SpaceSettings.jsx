@@ -127,7 +127,8 @@ function SpaceSettings() {
       className="space-settings"
       title={(
         <Text variant="s1" weight="medium" primary>
-          {twemojify(isOpen ? `${room.name} - space settings` : 'Space settings')}
+          {isOpen && twemojify(room.name)}
+          <span style={{ color: 'var(--tc-surface-low)' }}> — space settings</span>
         </Text>
       )}
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}

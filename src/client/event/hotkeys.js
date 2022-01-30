@@ -1,4 +1,4 @@
-import { openSearch } from '../action/navigation';
+import { openSearch, toggleRoomSettings } from '../action/navigation';
 import navigation from '../state/navigation';
 
 function listenKeyboard(event) {
@@ -17,11 +17,19 @@ function listenKeyboard(event) {
     if (['text', 'textarea'].includes(document.activeElement.type)) {
       return;
     }
+
+    // esc - close room settings panel
+    if (event.keyCode === 27 && navigation.isRoomSettings) {
+      toggleRoomSettings();
+    }
+
     if ((event.keyCode !== 8 && event.keyCode < 48)
       || (event.keyCode >= 91 && event.keyCode <= 93)
       || (event.keyCode >= 112 && event.keyCode <= 183)) {
       return;
     }
+
+    // press any key to focus and type in message field
     const msgTextarea = document.getElementById('message-textarea');
     msgTextarea?.focus();
   }

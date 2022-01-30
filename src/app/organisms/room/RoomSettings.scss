@@ -1,9 +1,36 @@
 @use '../../partials/dir';
+@use '../../partials/flex';
 
 .room-settings {
   height: 100%;
   & .scrollbar {
     position: relative;
+  }
+
+  & .header {
+    padding: 0 var(--sp-extra-tight);
+  }
+
+  &__header-btn {
+    min-width: 0;
+    @extend .cp-fx__row--s-c;
+    @include dir.side(margin, 0, auto);
+    padding: var(--sp-ultra-tight) var(--sp-extra-tight);
+    border-radius: calc(var(--bo-radius) / 2);
+    cursor: pointer;
+    
+    @media (hover:hover) {
+      &:hover {
+        background-color: var(--bg-surface-hover);
+        box-shadow: var(--bs-surface-outline);
+      }
+    }
+    &:focus,
+    &:active {
+      background-color: var(--bg-surface-active);
+      box-shadow: var(--bs-surface-outline);
+      outline: none;
+    }
   }
 
   &__content {
