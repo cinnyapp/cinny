@@ -1,5 +1,5 @@
 ## Builder
-FROM node:14-alpine as builder
+FROM node:17-alpine as builder
 
 WORKDIR /src
 
