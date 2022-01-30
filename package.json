@@ -63,7 +63,7 @@
     "file-loader": "^6.2.0",
     "html-loader": "^2.1.2",
     "html-webpack-plugin": "^5.3.1",
-    "mini-css-extract-plugin": "^1.4.0",
+    "mini-css-extract-plugin": "^2.5.3",
     "path-browserify": "^1.0.1",
     "sass": "^1.32.8",
     "sass-loader": "^11.0.1",
