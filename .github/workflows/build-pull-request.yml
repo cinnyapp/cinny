@@ -12,7 +12,7 @@ jobs:
         steps:
             - uses: actions/checkout@v2
             - name: Build
-              run: npm install && npm run build
+              run: npm ci && npm run build
             - name: Upload Artifact
               uses: actions/upload-artifact@v2
               with:
