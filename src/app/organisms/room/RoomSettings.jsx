@@ -170,7 +170,7 @@ function RoomSettings({ roomId }) {
                   <span style={{ color: 'var(--tc-surface-low)' }}> — room settings</span>
                 </Text>
               </TitleWrapper>
-              <RawIcon src={ChevronTopIC} />
+              <RawIcon size="small" src={ChevronTopIC} />
             </button>
           </Header>
           <RoomProfile roomId={roomId} />

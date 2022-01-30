@@ -44,7 +44,7 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
   };
 
   return (
-    <>
+    <div style={{ maxWidth: 'calc(var(--navigation-drawer-width) - var(--sp-normal))' }}>
       <MenuHeader>{twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}</MenuHeader>
       <MenuItem
         onClick={handlePinClick}
@@ -67,7 +67,7 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
       >
         Leave
       </MenuItem>
-    </>
+    </div>
   );
 }
 
