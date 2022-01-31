@@ -14,7 +14,7 @@ jobs:
             # workflow_run action (https://github.com/actions/download-artifact/issues/60)
             # so instead we get this mess:
             - name: 'Download artifact'
-              uses: actions/github-script@v5.1.0
+              uses: actions/github-script@v3.1.0
               with:
                 script: |
                   var artifacts = await github.actions.listWorkflowRunArtifacts({

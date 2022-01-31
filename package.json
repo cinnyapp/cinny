@@ -63,7 +63,6 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "favicons": "^6.2.2",
     "favicons-webpack-plugin": "^5.0.2",
-    "file-loader": "^6.2.0",
     "html-loader": "^2.1.2",
     "html-webpack-plugin": "^5.3.1",
     "mini-css-extract-plugin": "^2.5.3",
