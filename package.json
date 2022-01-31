@@ -67,7 +67,7 @@
     "html-webpack-plugin": "^5.3.1",
     "mini-css-extract-plugin": "^2.5.3",
     "path-browserify": "^1.0.1",
-    "sass": "^1.32.8",
+    "sass": "^1.49.0",
     "sass-loader": "^11.0.1",
     "stream-browserify": "^3.0.0",
     "style-loader": "^2.0.0",
