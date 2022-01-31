@@ -3,6 +3,7 @@ import { micromark } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
+import { spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
 import cons from './cons';
 import settings from './settings';
 
@@ -84,8 +85,8 @@ function getVideoThumbnail(video, width, height, mimeType) {
 
 function getFormattedBody(markdown) {
   const result = micromark(markdown, {
-    extensions: [gfm()],
-    htmlExtensions: [gfmHtml],
+    extensions: [gfm(), spoilerExtension()],
+    htmlExtensions: [gfmHtml, spoilerExtensionHtml],
   });
   const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
   if (bodyParts === null) return result;
@@ -406,7 +407,7 @@ class RoomsInput extends EventEmitter {
     // Apply formatting if relevant
     const formattedBody = formatAndEmojifyText(
       this.matrixClient.getRoom(roomId),
-      editedBody
+      editedBody,
     );
     if (formattedBody !== editedBody) {
       content.formatted_body = ` * ${formattedBody}`;
