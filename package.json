@@ -43,7 +43,7 @@
     "twemoji": "^13.1.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.15.5",
+    "@babel/core": "^7.16.12",
     "@babel/preset-env": "^7.13.12",
     "@babel/preset-react": "^7.16.7",
     "assert": "^2.0.0",
