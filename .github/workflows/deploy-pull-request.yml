@@ -14,7 +14,7 @@ jobs:
             # workflow_run action (https://github.com/actions/download-artifact/issues/60)
             # so instead we get this mess:
             - name: 'Download artifact'
-              uses: actions/github-script@v3.1.0
+              uses: actions/github-script@v5.1.0
               with:
                 script: |
                   var artifacts = await github.actions.listWorkflowRunArtifacts({
@@ -56,7 +56,7 @@ jobs:
                     console.log(`::set-output name=prnumber::${pr.number}`);
             - name: Deploy to Netlify
               id: netlify
-              uses: nwtgck/actions-netlify@v1.2
+              uses: nwtgck/actions-netlify@v1.2.3
               with:
                   publish-dir: dist
                   deploy-message: "Deploy from GitHub Actions"
