@@ -137,22 +137,25 @@ function RoomMembers({ roomId }) {
   const mList = searchMembers ? searchMembers.data : members.slice(0, itemCount);
   return (
     <div className="room-members">
-      <SegmentedControls
-        selected={
-          (() => {
-            const getSegmentIndex = { join: 0, invite: 1, ban: 2 };
-            return getSegmentIndex[membership];
-          })()
-        }
-        segments={[{ text: 'Joined' }, { text: 'Invited' }, { text: 'Banned' }]}
-        onSelect={(index) => {
-          const memberships = ['join', 'invite', 'ban'];
-          setMembership(memberships[index]);
-        }}
-      />
-      <Input onChange={handleSearch} label="Search member" placeholder="name" />
-      <div className="room-members__list">
+      <MenuHeader>Search member</MenuHeader>
+      <Input onChange={handleSearch} placeholder="Search for name" />
+      <div className="room-members__header">
         <MenuHeader>{`${searchMembers ? `Found — ${mList.length}` : members.length} members`}</MenuHeader>
+        <SegmentedControls
+          selected={
+            (() => {
+              const getSegmentIndex = { join: 0, invite: 1, ban: 2 };
+              return getSegmentIndex[membership];
+            })()
+          }
+          segments={[{ text: 'Joined' }, { text: 'Invited' }, { text: 'Banned' }]}
+          onSelect={(index) => {
+            const memberships = ['join', 'invite', 'ban'];
+            setMembership(memberships[index]);
+          }}
+        />
+      </div>
+      <div className="room-members__list">
         {mList.map((member) => (
           <PeopleSelector
             key={member.userId}
