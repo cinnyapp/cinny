@@ -68,7 +68,9 @@
   & .people-selector {
     padding: var(--sp-extra-tight);
     border-radius: var(--bo-radius);
-    @include dir.side(margin, var(--sp-extra-tight), 0);
+    &__container {
+      @include dir.side(margin, var(--sp-extra-tight), 0);
+    }
   }
   
   & .segmented-controls {
