@@ -75,6 +75,7 @@ function GeneralSettings({ roomId }) {
   return (
     <>
       <div className="room-settings__card">
+        <MenuHeader>Options</MenuHeader>
         <MenuItem
           disabled={!canInvite}
           onClick={() => openInviteUser(roomId)}

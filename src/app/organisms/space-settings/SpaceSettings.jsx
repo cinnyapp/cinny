@@ -57,6 +57,7 @@ function GeneralSettings({ roomId }) {
   return (
     <>
       <div className="room-settings__card">
+        <MenuHeader>Options</MenuHeader>
         <MenuItem
           onClick={() => {
             if (isPinned) deleteSpaceShortcut(roomId);
