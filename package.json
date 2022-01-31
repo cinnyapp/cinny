@@ -45,7 +45,7 @@
   "devDependencies": {
     "@babel/core": "^7.15.5",
     "@babel/preset-env": "^7.13.12",
-    "@babel/preset-react": "^7.13.13",
+    "@babel/preset-react": "^7.16.7",
     "assert": "^2.0.0",
     "babel-loader": "^8.2.2",
     "browserify-fs": "^1.0.0",
