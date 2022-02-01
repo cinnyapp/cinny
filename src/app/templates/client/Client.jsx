@@ -68,6 +68,7 @@ function Client() {
     if (!roomId) return;
 
     const { files } = e.dataTransfer;
+    if (!files) return;
     const file = files[0];
     initMatrix.roomsInput.setAttachment(roomId, file);
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
