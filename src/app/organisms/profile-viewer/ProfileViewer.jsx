@@ -371,10 +371,16 @@ function ProfileViewer() {
 
     const handleChangePowerLevel = (newPowerLevel) => {
       if (newPowerLevel === powerLevel) return;
-      if (newPowerLevel === myPowerLevel
-        ? confirm('You will not be able to undo this change as you are promoting the user to have the same power level as yourself. Are you sure?')
-        : true
-      ) {
+      const SHARED_POWER_MSG = 'You will not be able to undo this change as you are promoting the user to have the same power level as yourself. Are you sure?';
+      const DEMOTING_MYSELF_MSG = 'You will not be able to undo this change as you are demoting yourself. Are you sure?';
+
+      const isSharedPower = newPowerLevel === myPowerLevel;
+      const isDemotingMyself = userId === mx.getUserId();
+      if (isSharedPower || isDemotingMyself) {
+        if (confirm(isSharedPower ? SHARED_POWER_MSG : DEMOTING_MYSELF_MSG)) {
+          roomActions.setPowerLevel(roomId, userId, newPowerLevel);
+        }
+      } else {
         roomActions.setPowerLevel(roomId, userId, newPowerLevel);
       }
     };
