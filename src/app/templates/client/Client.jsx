@@ -59,6 +59,10 @@ function Client() {
 
   const handleDrag = (e) => {
     e.preventDefault();
+
+    if (!navigation.selectedRoomId) {
+      e.dataTransfer.dropEffect = 'none';
+    }
   };
 
   const handleDrop = (e) => {
