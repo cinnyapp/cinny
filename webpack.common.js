@@ -4,7 +4,6 @@ const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: {
-    polyfill: 'babel-polyfill',
     main: './src/index.jsx'
   },
   resolve: {
@@ -25,17 +24,10 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(ts|js)x?$/,
+        test: /\.m?(ts|js)x?$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              '@babel/preset-env',
-              '@babel/preset-react',
-              '@babel/preset-typescript'
-            ],
-          },
+          loader: 'swc-loader',
         },
       },
       {

@@ -1,0 +1,16 @@
+{
+    "jsc": {
+      "parser": {
+        "syntax": "typescript",
+        "tsx": true
+      },
+      "transform": {
+          "optimizer": {}
+      },
+      "target": "es5",
+      "loose": false,
+      "externalHelpers": false,
+      "keepClassNames": false
+    },
+    "minify": true
+}
