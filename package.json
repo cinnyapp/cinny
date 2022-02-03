@@ -19,7 +19,7 @@
     "@tippyjs/react": "^4.2.5",
     "babel-polyfill": "^6.26.0",
     "browser-encrypt-attachment": "^0.3.0",
-    "dateformat": "^4.5.1",
+    "dateformat": "^5.0.2",
     "emojibase-data": "^6.2.0",
     "file-saver": "^2.0.5",
     "flux": "^4.0.3",
