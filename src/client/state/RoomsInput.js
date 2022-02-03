@@ -86,7 +86,7 @@ function getVideoThumbnail(video, width, height, mimeType) {
 function getFormattedBody(markdown) {
   const result = micromark(markdown, {
     extensions: [gfm(), spoilerExtension()],
-    htmlExtensions: [gfmHtml, spoilerExtensionHtml],
+    htmlExtensions: [gfmHtml(), spoilerExtensionHtml],
   });
   const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
   if (bodyParts === null) return result;
