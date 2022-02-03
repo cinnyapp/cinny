@@ -26,7 +26,7 @@
     "formik": "^2.2.9",
     "html-react-parser": "^1.2.7",
     "linkifyjs": "^2.1.9",
-    "matrix-js-sdk": "^15.4.0",
+    "matrix-js-sdk": "^15.5.0",
     "micromark": "^3.0.3",
     "micromark-extension-gfm": "^2.0.1",
     "micromark-util-chunked": "^1.0.0",
