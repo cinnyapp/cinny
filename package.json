@@ -68,7 +68,7 @@
     "mini-css-extract-plugin": "^2.5.3",
     "path-browserify": "^1.0.1",
     "sass": "^1.49.7",
-    "sass-loader": "^11.0.1",
+    "sass-loader": "^12.4.0",
     "stream-browserify": "^3.0.0",
     "style-loader": "^2.0.0",
     "url": "^0.11.0",
