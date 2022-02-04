@@ -304,9 +304,11 @@ function genReactionMsg(userIds, reaction) {
       {userIds.map((userId, index) => (
         <React.Fragment key={userId}>
           {twemojify(getUsername(userId))}
-          <span style={{ opacity: '.6' }}>
-            {index === userIds.length - 1 ? ' and ' : ', '}
-          </span>
+          {index < userIds.length - 1 && (
+            <span style={{ opacity: '.6' }}>
+              {index === userIds.length - 2 ? ' and ' : ', '}
+            </span>
+          )}
         </React.Fragment>
       ))}
       <span style={{ opacity: '.6' }}>{' reacted with '}</span>
