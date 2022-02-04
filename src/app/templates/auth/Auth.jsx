@@ -106,7 +106,7 @@ function Homeserver({ onChange }) {
     const { value } = e.target;
     setProcess({ isLoading: false });
     debounce._(async () => {
-      setHs({ selected: value, list: hs.list });
+      setHs({ selected: value.trim(), list: hs.list });
     }, 700)();
   };
 
