@@ -5,11 +5,14 @@
         "tsx": true
       },
       "transform": {
-          "optimizer": {}
+          "optimizer": {},
+          "react": {
+            "runtime": "automatic"
+          }
       },
       "target": "es5",
       "loose": false,
-      "externalHelpers": false,
+      "externalHelpers": true,
       "keepClassNames": false
     },
     "minify": true
