@@ -60,6 +60,8 @@ function Client() {
   }
 
   const handleDrag = (e) => {
+    if (!e.dataTransfer?.files?.length) return;
+
     e.preventDefault();
 
     if (!navigation.selectedRoomId) {
@@ -70,6 +72,7 @@ function Client() {
   const handleDragEnter = (e) => {
     e.preventDefault();
     if (!navigation.selectedRoomId) return;
+    if (!e.dataTransfer?.files?.length) return;
 
     setDragCounter(dragCounter + 1);
   };
@@ -77,6 +80,7 @@ function Client() {
   const handleDragLeave = (e) => {
     e.preventDefault();
     if (!navigation.selectedRoomId) return;
+    if (!e.dataTransfer?.files?.length) return;
 
     setDragCounter(dragCounter - 1);
   };
@@ -90,7 +94,7 @@ function Client() {
     if (!roomId) return;
 
     const { files } = e.dataTransfer;
-    if (!files) return;
+    if (!files?.length) return;
     const file = files[0];
     initMatrix.roomsInput.setAttachment(roomId, file);
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
