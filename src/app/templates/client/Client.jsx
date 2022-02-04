@@ -59,33 +59,42 @@ function Client() {
     );
   }
 
-  const handleDrag = (e) => {
-    if (!e.dataTransfer?.files?.length) return;
+  function dragContainsFiles(e) {
+    if (!e.dataTransfer.types) return false;
+
+    for (let i = 0; i < e.dataTransfer.types.length; i += 1) {
+      if (e.dataTransfer.types[i] === 'Files') return true;
+    }
+    return false;
+  }
+
+  function handleDrag(e) {
+    if (!dragContainsFiles(e)) return;
 
     e.preventDefault();
 
     if (!navigation.selectedRoomId) {
       e.dataTransfer.dropEffect = 'none';
     }
-  };
+  }
 
-  const handleDragEnter = (e) => {
+  function handleDragEnter(e) {
     e.preventDefault();
     if (!navigation.selectedRoomId) return;
-    if (!e.dataTransfer?.files?.length) return;
+    if (!dragContainsFiles(e)) return;
 
     setDragCounter(dragCounter + 1);
-  };
+  }
 
-  const handleDragLeave = (e) => {
+  function handleDragLeave(e) {
     e.preventDefault();
     if (!navigation.selectedRoomId) return;
-    if (!e.dataTransfer?.files?.length) return;
+    if (!dragContainsFiles(e)) return;
 
     setDragCounter(dragCounter - 1);
-  };
+  }
 
-  const handleDrop = (e) => {
+  function handleDrop(e) {
     e.preventDefault();
 
     setDragCounter(0);
@@ -98,7 +107,7 @@ function Client() {
     const file = files[0];
     initMatrix.roomsInput.setAttachment(roomId, file);
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
-  };
+  }
 
   return (
     <div
