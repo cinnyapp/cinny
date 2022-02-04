@@ -104,6 +104,13 @@ export function replyTo(userId, eventId, body) {
   });
 }
 
+export function openAttachmentTypeSelector(params) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_ATTACHMENT_TYPE_SELECTOR,
+    params,
+  });
+}
+
 export function openSearch(term) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SEARCH,

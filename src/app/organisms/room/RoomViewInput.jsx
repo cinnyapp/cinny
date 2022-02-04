@@ -20,15 +20,13 @@ import IconButton from '../../atoms/button/IconButton';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import { MessageReply } from '../../molecules/message/Message';
 
-import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import SendIC from '../../../../public/res/ic/outlined/send.svg';
 import ShieldIC from '../../../../public/res/ic/outlined/shield.svg';
-import VLCIC from '../../../../public/res/ic/outlined/vlc.svg';
-import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
 import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
-import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+import AttachmentTypeSelector from './AttachmentUis/AttachmentTypeSelector';
+import AttachmentFrame from './AttachmentUis/AttachmentFrame';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
@@ -37,7 +35,16 @@ let cmdCursorPos = null;
 function RoomViewInput({
   roomId, roomTimeline, viewEvent,
 }) {
-  const [attachment, setAttachment] = useState(null);
+  /**
+   * @typedef attachmentOrUiType
+   * @type {string | File | null}
+   * Either contains the file object which is attached
+   * Or the name of a UI which is to be shown
+   */
+  /**
+   * @type {[attachmentOrUiType, Function]}
+   */
+  const [attachmentOrUi, setAttachmentOrUi] = useState(null);
   const [isMarkdown, setIsMarkdown] = useState(settings.isMarkdown);
   const [replyTo, setReplyTo] = useState(null);
 
@@ -86,7 +93,7 @@ function RoomViewInput({
   }
   function clearAttachment(myRoomId) {
     if (roomId !== myRoomId) return;
-    setAttachment(null);
+    setAttachmentOrUi(null);
     inputBaseRef.current.style.backgroundImage = 'unset';
     uploadInputRef.current.value = null;
   }
@@ -154,7 +161,7 @@ function RoomViewInput({
     if (textAreaRef?.current !== null) {
       isTyping = false;
       textAreaRef.current.value = roomsInput.getMessage(roomId);
-      setAttachment(roomsInput.getAttachment(roomId));
+      setAttachmentOrUi(roomsInput.getAttachment(roomId));
       setReplyTo(roomsInput.getReplyTo(roomId));
     }
     return () => {
@@ -181,12 +188,13 @@ function RoomViewInput({
     requestAnimationFrame(() => deactivateCmdAndEmit());
     const msgBody = textAreaRef.current.value;
     if (roomsInput.isSending(roomId)) return;
-    if (msgBody.trim() === '' && attachment === null) return;
+    if (msgBody.trim() === '' && attachmentOrUi === null) return;
     sendIsTyping(false);
 
+    if (typeof attachmentOrUi === 'string') return; // Attachment UI is not finished
     roomsInput.setMessage(roomId, msgBody);
-    if (attachment !== null) {
-      roomsInput.setAttachment(roomId, attachment);
+    if (attachmentOrUi !== null && typeof attachmentOrUi === 'object') {
+      roomsInput.setAttachment(roomId, attachmentOrUi);
     }
     textAreaRef.current.disabled = true;
     textAreaRef.current.style.cursor = 'not-allowed';
@@ -273,8 +281,8 @@ function RoomViewInput({
       const item = e.clipboardData.items[i];
       if (item.type.indexOf('image') !== -1) {
         const image = item.getAsFile();
-        if (attachment === null) {
-          setAttachment(image);
+        if (attachmentOrUi === null) {
+          setAttachmentOrUi(image);
           if (image !== null) {
             roomsInput.setAttachment(roomId, image);
             return;
@@ -291,17 +299,22 @@ function RoomViewInput({
     textAreaRef.current.focus();
   }
 
-  const handleUploadClick = () => {
-    if (attachment === null) uploadInputRef.current.click();
-    else {
-      roomsInput.cancelAttachment(roomId);
-    }
-  };
   function uploadFileChange(e) {
     const file = e.target.files.item(0);
-    setAttachment(file);
+    setAttachmentOrUi(file);
     if (file !== null) roomsInput.setAttachment(roomId, file);
   }
+
+  const handleAttachmentTypeSelectorReturn = (ret) => {
+    if (!ret) {
+      setAttachmentOrUi(null);
+      roomsInput.cancelAttachment(roomId);
+    } else if (ret === 'file') {
+      uploadInputRef.current.click();
+    } else {
+      setAttachmentOrUi(ret);
+    }
+  };
 
   const canISend = roomTimeline.room.currentState.maySendMessage(mx.getUserId());
 
@@ -313,9 +326,12 @@ function RoomViewInput({
     }
     return (
       <>
-        <div className={`room-input__option-container${attachment === null ? '' : ' room-attachment__option'}`}>
+        <div className={`room-input__option-container${attachmentOrUi === null ? '' : ' room-attachment__option'}`}>
+          <AttachmentTypeSelector
+            actOnAttaching={handleAttachmentTypeSelectorReturn}
+            alreadyHasAttachment={attachmentOrUi !== null}
+          />
           <input onChange={uploadFileChange} style={{ display: 'none' }} ref={uploadInputRef} type="file" />
-          <IconButton onClick={handleUploadClick} tooltip={attachment === null ? 'Upload' : 'Cancel'} src={CirclePlusIC} />
         </div>
         <div ref={inputBaseRef} className="room-input__input-container">
           {roomTimeline.isEncrypted() && <RawIcon size="extra-small" src={ShieldIC} />}
@@ -350,24 +366,6 @@ function RoomViewInput({
     );
   }
 
-  function attachFile() {
-    const fileType = attachment.type.slice(0, attachment.type.indexOf('/'));
-    return (
-      <div className="room-attachment">
-        <div className={`room-attachment__preview${fileType !== 'image' ? ' room-attachment__icon' : ''}`}>
-          {fileType === 'image' && <img alt={attachment.name} src={URL.createObjectURL(attachment)} />}
-          {fileType === 'video' && <RawIcon src={VLCIC} />}
-          {fileType === 'audio' && <RawIcon src={VolumeFullIC} />}
-          {fileType !== 'image' && fileType !== 'video' && fileType !== 'audio' && <RawIcon src={FileIC} />}
-        </div>
-        <div className="room-attachment__info">
-          <Text variant="b1">{attachment.name}</Text>
-          <Text variant="b3"><span ref={uploadProgressRef}>{`size: ${bytesToSize(attachment.size)}`}</span></Text>
-        </div>
-      </div>
-    );
-  }
-
   function attachReply() {
     return (
       <div className="room-reply">
@@ -393,7 +391,16 @@ function RoomViewInput({
   return (
     <>
       { replyTo !== null && attachReply()}
-      { attachment !== null && attachFile() }
+      { attachmentOrUi !== null && (
+        <AttachmentFrame
+          attachmentOrUi={attachmentOrUi}
+          uploadProgressRef={uploadProgressRef}
+          fileSetter={(blob) => {
+            setAttachmentOrUi(blob);
+            roomsInput.setAttachment(roomId, blob);
+          }}
+        />
+      ) }
       <form className="room-input" onSubmit={(e) => { e.preventDefault(); }}>
         {
           renderInputs()
