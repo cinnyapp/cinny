@@ -72,7 +72,22 @@ function parseReply(rawBody) {
   };
 }
 
+function hasDMWith(userId) {
+  const mx = initMatrix.matrixClient;
+  const directIds = [...initMatrix.roomList.directs];
+
+  return directIds.find((roomId) => {
+    const dRoom = mx.getRoom(roomId);
+    const roomMembers = dRoom.getMembers();
+    if (roomMembers.length <= 2 && dRoom.getMember(userId)) {
+      return true;
+    }
+    return false;
+  });
+}
+
 export {
   getBaseUrl, getUsername, getUsernameOfRoomMember,
   isRoomAliasAvailable, getPowerLabel, parseReply,
+  hasDMWith,
 };
