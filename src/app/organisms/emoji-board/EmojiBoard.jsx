@@ -82,7 +82,7 @@ const EmojiGroup = React.memo(({ name, groupEmojis }) => {
   return (
     <div className="emoji-group">
       <Text className="emoji-group__header" variant="b2" weight="bold">{name}</Text>
-      {groupEmojis.length !== 0 && <div className="emoji-set">{getEmojiBoard()}</div>}
+      {groupEmojis.length !== 0 && <div className="emoji-set noselect">{getEmojiBoard()}</div>}
     </div>
   );
 });
