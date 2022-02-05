@@ -185,13 +185,14 @@ class Notifications extends EventEmitter {
       title = `${mEvent.sender.name} (${room.name})`;
     }
 
-    const iconSize = 42;
+    const iconSize = 36;
     const icon = await renderAvatar({
       text: mEvent.sender.name,
       bgColor: cssColorMXID(mEvent.getSender()),
       imageSrc: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, iconSize, iconSize, 'crop'),
       size: iconSize,
       borderRadius: 8,
+      multiplier: 4,
     });
 
     const noti = new window.Notification(title, {

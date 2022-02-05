@@ -6,22 +6,25 @@ function cssVar(name) {
 
 // renders the avatar and returns it as an URL
 export default async function renderAvatar({
-  text, bgColor, imageSrc, size, borderRadius,
+  text, bgColor, imageSrc, size, borderRadius, multiplier,
 }) {
   try {
+    const mSize = size * multiplier;
+    const mBorderRadius = borderRadius * multiplier;
+
     const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
+    canvas.width = mSize;
+    canvas.height = mSize;
 
     const ctx = canvas.getContext('2d');
 
     // rounded corners
     ctx.beginPath();
-    ctx.moveTo(size, size);
-    ctx.arcTo(0, size, 0, 0, borderRadius);
-    ctx.arcTo(0, 0, size, 0, borderRadius);
-    ctx.arcTo(size, 0, size, size, borderRadius);
-    ctx.arcTo(size, size, 0, size, borderRadius);
+    ctx.moveTo(mSize, mSize);
+    ctx.arcTo(0, mSize, 0, 0, mBorderRadius);
+    ctx.arcTo(0, 0, mSize, 0, mBorderRadius);
+    ctx.arcTo(mSize, 0, mSize, mSize, mBorderRadius);
+    ctx.arcTo(mSize, mSize, 0, mSize, mBorderRadius);
 
     if (imageSrc) {
       // clip corners of image
@@ -37,17 +40,17 @@ export default async function renderAvatar({
       img.src = imageSrc;
       await promise;
 
-      ctx.drawImage(img, 0, 0, size, size);
+      ctx.drawImage(img, 0, 0, mSize, mSize);
     } else {
       // draw initials centered on the canvas
       ctx.fillStyle = cssVar(bgColor);
       ctx.fill();
 
       ctx.fillStyle = 'white';
-      ctx.font = `${cssVar('--fs-s1')} ${cssVar('--font-primary')}`;
+      ctx.font = `calc(${multiplier} * ${cssVar('--fs-s1')}) ${cssVar('--font-primary')}`;
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
-      ctx.fillText(avatarInitials(text), size / 2, size / 2);
+      ctx.fillText(avatarInitials(text), mSize / 2, mSize / 2);
     }
 
     return canvas.toDataURL();
