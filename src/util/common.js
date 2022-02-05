@@ -110,3 +110,7 @@ export function getScrollInfo(target) {
   scroll.isScrollable = scroll.height > scroll.viewHeight;
   return scroll;
 }
+
+export function avatarInitials(text) {
+  return [...text][0];
+}

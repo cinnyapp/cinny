@@ -1,16 +1,6 @@
 // https://github.com/cloudrac3r/cadencegq/blob/master/pug/mxid.pug
 
-const colors = [
-  'var(--mx-uc-1)',
-  'var(--mx-uc-2)',
-  'var(--mx-uc-3)',
-  'var(--mx-uc-4)',
-  'var(--mx-uc-5)',
-  'var(--mx-uc-6)',
-  'var(--mx-uc-7)',
-  'var(--mx-uc-8)',
-];
-function hashCode(str) {
+export function hashCode(str) {
   let hash = 0;
   let i;
   let chr;
@@ -26,7 +16,12 @@ function hashCode(str) {
   }
   return Math.abs(hash);
 }
-export default function colorMXID(userId) {
+
+export function cssColorMXID(userId) {
   const colorNumber = hashCode(userId) % 8;
-  return colors[colorNumber];
+  return `--mx-uc-${colorNumber + 1}`;
+}
+
+export default function colorMXID(userId) {
+  return `var(${cssColorMXID(userId)})`;
 }
