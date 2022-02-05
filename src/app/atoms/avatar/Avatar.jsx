@@ -21,7 +21,15 @@ function Avatar({
     <div className={`avatar-container avatar-container__${size} noselect`}>
       {
         imageSrc !== null
-          ? <img draggable="false" src={imageSrc} onError={(e) => { e.target.src = ImageBrokenSVG; }} alt="avatar" />
+          ? (
+            <img
+              draggable="false"
+              src={imageSrc}
+              onLoad={(e) => { e.target.style.backgroundColor = 'transparent'; }}
+              onError={(e) => { e.target.src = ImageBrokenSVG; }}
+              alt=""
+            />
+          )
           : (
             <span
               style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
