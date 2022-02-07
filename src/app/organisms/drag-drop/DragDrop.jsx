@@ -8,13 +8,11 @@ import Text from '../../atoms/text/Text';
 function DragDrop({ isOpen }) {
   return (
     <RawModal
-      className="drag-drop__model dialog-model"
+      className="drag-drop__model"
+      overlayClassName="drag-drop__overlay"
       isOpen={isOpen}
-      size="small"
     >
-      <div className="drag-drop">
-        <Text variant="s1" weight="medium">Drop file to upload</Text>
-      </div>
+      <Text variant="h2" weight="medium">Drop file to upload</Text>
     </RawModal>
   );
 }

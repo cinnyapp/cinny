@@ -1,8 +1,12 @@
 .drag-drop__model {
-  background-color: var(--bg-surface);
+  box-shadow: none;
+  text-align: center;
+
+  .text {
+    color: white;
+  }
 }
 
-.drag-drop {
-  margin: calc(3 * var(--sp-extra-loose)) var(--sp-loose);
-  text-align: center;
+.drag-drop__overlay {
+  background-color: var(--bg-overlay-low);
 }
