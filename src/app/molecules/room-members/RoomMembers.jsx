@@ -128,11 +128,6 @@ function RoomMembers({ roomId }) {
   const [membership, setMembership] = useState('join');
   const [members] = useMemberOfMembership(roomId, membership);
   const [searchMembers, handleSearch] = useSearchMembers(members);
-  const searchRef = useRef(null);
-
-  useEffect(() => {
-    if (!settings.isTouchScreenDevice) searchRef.current.focus();
-  }, []);
 
   useEffect(() => {
     setItemCount(PER_PAGE_MEMBER);
@@ -149,7 +144,7 @@ function RoomMembers({ roomId }) {
       <Input
         onChange={handleSearch}
         placeholder="Search for name"
-        forwardRef={searchRef}
+        autoFocus={!settings.isTouchScreenDevice}
       />
       <div className="room-members__header">
         <MenuHeader>{`${searchMembers ? `Found — ${mList.length}` : members.length} members`}</MenuHeader>

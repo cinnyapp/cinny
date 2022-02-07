@@ -107,11 +107,6 @@ function RoomSearch({ roomId }) {
   const mx = initMatrix.matrixClient;
   const isRoomEncrypted = mx.isRoomEncrypted(roomId);
   const searchTerm = searchData?._query.search_categories.room_events.search_term ?? '';
-  const searchRef = useRef(null);
-
-  useEffect(() => {
-    searchRef.current.focus();
-  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -150,7 +145,7 @@ function RoomSearch({ roomId }) {
             placeholder="Search for keywords"
             name="room-search-input"
             disabled={isRoomEncrypted}
-            forwardRef={searchRef}
+            autoFocus
           />
           <Button iconSrc={SearchIC} variant="primary" type="submit">Search</Button>
         </div>

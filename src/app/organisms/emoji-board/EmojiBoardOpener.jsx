@@ -28,7 +28,6 @@ function EmojiBoardOpener() {
   function afterEmojiBoardToggle(isVisible) {
     isEmojiBoardVisible = isVisible;
     if (isVisible) {
-      searchRef.current.value = '';
       if (!settings.isTouchScreenDevice) searchRef.current.focus();
     } else {
       setTimeout(() => {

@@ -8,7 +8,7 @@ function Input({
   id, label, name, value, placeholder,
   required, type, onChange, forwardRef,
   resizable, minHeight, onResize, state,
-  onKeyDown, disabled,
+  onKeyDown, disabled, autoFocus,
 }) {
   return (
     <div className="input-container">
@@ -30,6 +30,7 @@ function Input({
             onResize={onResize}
             onKeyDown={onKeyDown}
             disabled={disabled}
+            autoFocus={autoFocus}
           />
         ) : (
           <input
@@ -45,6 +46,8 @@ function Input({
             onChange={onChange}
             onKeyDown={onKeyDown}
             disabled={disabled}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus={autoFocus}
           />
         )}
     </div>
@@ -67,6 +70,7 @@ Input.defaultProps = {
   state: 'normal',
   onKeyDown: null,
   disabled: false,
+  autoFocus: false,
 };
 
 Input.propTypes = {
@@ -85,6 +89,7 @@ Input.propTypes = {
   state: PropTypes.oneOf(['normal', 'success', 'error']),
   onKeyDown: PropTypes.func,
   disabled: PropTypes.bool,
+  autoFocus: PropTypes.bool,
 };
 
 export default Input;
