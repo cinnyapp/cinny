@@ -192,7 +192,7 @@ class Notifications extends EventEmitter {
       imageSrc: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, iconSize, iconSize, 'crop'),
       size: iconSize,
       borderRadius: 8,
-      multiplier: 4,
+      scale: 8,
     });
 
     const noti = new window.Notification(title, {
