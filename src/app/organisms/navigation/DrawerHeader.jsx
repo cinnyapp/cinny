@@ -23,7 +23,7 @@ import SpaceOptions from '../../molecules/space-options/SpaceOptions';
 
 import PlusIC from '../../../../public/res/ic/outlined/plus.svg';
 import HashPlusIC from '../../../../public/res/ic/outlined/hash-plus.svg';
-import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
+import HashGlobeIC from '../../../../public/res/ic/outlined/hash-globe.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import PinIC from '../../../../public/res/ic/outlined/pin.svg';
 import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
@@ -79,28 +79,26 @@ function DrawerHeader({ selectedTab, spaceId }) {
       )}
       { selectedTab === cons.tabs.DIRECTS && <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="normal" /> }
       { selectedTab !== cons.tabs.DIRECTS && !spaceName && (
-        <>
-          <ContextMenu
-            content={(hideMenu) => (
-              <>
-                <MenuHeader>Add room</MenuHeader>
-                <MenuItem
-                  iconSrc={HashPlusIC}
-                  onClick={() => { hideMenu(); openCreateRoom(); }}
-                >
-                  Create new room
-                </MenuItem>
-                <MenuItem
-                  iconSrc={HashSearchIC}
-                  onClick={() => { hideMenu(); openPublicRooms(); }}
-                >
-                  Add public room
-                </MenuItem>
-              </>
-            )}
-            render={(toggleMenu) => (<IconButton onClick={toggleMenu} tooltip="Add room" src={PlusIC} size="normal" />)}
-          />
-        </>
+        <ContextMenu
+          content={(hideMenu) => (
+            <>
+              <MenuHeader>Add room</MenuHeader>
+              <MenuItem
+                iconSrc={HashPlusIC}
+                onClick={() => { hideMenu(); openCreateRoom(); }}
+              >
+                Create new room
+              </MenuItem>
+              <MenuItem
+                iconSrc={HashGlobeIC}
+                onClick={() => { hideMenu(); openPublicRooms(); }}
+              >
+                Join public room
+              </MenuItem>
+            </>
+          )}
+          render={(toggleMenu) => (<IconButton onClick={toggleMenu} tooltip="Add room" src={PlusIC} size="normal" />)}
+        />
       )}
     </Header>
   );
