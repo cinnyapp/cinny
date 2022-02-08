@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './RoomSearch.scss';
 
@@ -145,6 +145,7 @@ function RoomSearch({ roomId }) {
             placeholder="Search for keywords"
             name="room-search-input"
             disabled={isRoomEncrypted}
+            autoFocus
           />
           <Button iconSrc={SearchIC} variant="primary" type="submit">Search</Button>
         </div>

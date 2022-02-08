@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState, useEffect, useCallback, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import './RoomMembers.scss';
 
@@ -14,6 +16,7 @@ import Input from '../../atoms/input/Input';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls';
 import PeopleSelector from '../people-selector/PeopleSelector';
+import settings from '../../../client/state/settings';
 
 const PER_PAGE_MEMBER = 50;
 
@@ -138,7 +141,11 @@ function RoomMembers({ roomId }) {
   return (
     <div className="room-members">
       <MenuHeader>Search member</MenuHeader>
-      <Input onChange={handleSearch} placeholder="Search for name" />
+      <Input
+        onChange={handleSearch}
+        placeholder="Search for name"
+        autoFocus={!settings.isTouchScreenDevice}
+      />
       <div className="room-members__header">
         <MenuHeader>{`${searchMembers ? `Found — ${mList.length}` : members.length} members`}</MenuHeader>
         <SegmentedControls

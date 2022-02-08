@@ -128,8 +128,7 @@ function SearchedEmoji() {
   return <EmojiGroup key="-1" name={searchedEmojis.emojis.length === 0 ? 'No search result found' : 'Search results'} groupEmojis={searchedEmojis.emojis} />;
 }
 
-function EmojiBoard({ onSelect }) {
-  const searchRef = useRef(null);
+function EmojiBoard({ onSelect, searchRef }) {
   const scrollEmojisRef = useRef(null);
   const emojiInfo = useRef(null);
 
@@ -182,8 +181,8 @@ function EmojiBoard({ onSelect }) {
     setEmojiInfo({ shortcode: shortcodes[0], src, unicode });
   }
 
-  function handleSearchChange(e) {
-    const term = e.target.value;
+  function handleSearchChange() {
+    const term = searchRef.current.value;
     asyncSearch.search(term);
     scrollEmojisRef.current.scrollTop = 0;
   }
@@ -213,9 +212,16 @@ function EmojiBoard({ onSelect }) {
       setAvailableEmojis(packs);
     };
 
+    const onOpen = () => {
+      searchRef.current.value = '';
+      handleSearchChange();
+    };
+
     navigation.on(cons.events.navigation.ROOM_SELECTED, updateAvailableEmoji);
+    navigation.on(cons.events.navigation.EMOJIBOARD_OPENED, onOpen);
     return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, updateAvailableEmoji);
+      navigation.removeListener(cons.events.navigation.EMOJIBOARD_OPENED, onOpen);
     };
   }, []);
 
@@ -312,6 +318,7 @@ function EmojiBoard({ onSelect }) {
 
 EmojiBoard.propTypes = {
   onSelect: PropTypes.func.isRequired,
+  searchRef: PropTypes.shape({}).isRequired,
 };
 
 export default EmojiBoard;
