@@ -248,10 +248,8 @@ function MessageEdit({ body, onSave, onCancel }) {
   const editInputRef = useRef(null);
 
   useEffect(() => {
-    editInputRef.current.focus();
-
-    // Setting the value here instead of using the value prop below
-    // makes the cursor end up at the end of the line instead of the begining
+    // makes the cursor end up at the end of the line instead of the beginning
+    editInputRef.current.value = '';
     editInputRef.current.value = body;
   }, []);
 
@@ -267,9 +265,11 @@ function MessageEdit({ body, onSave, onCancel }) {
       <Input
         forwardRef={editInputRef}
         onKeyDown={handleKeyDown}
+        value={body}
         placeholder="Edit message"
         required
         resizable
+        autoFocus
       />
       <div className="message__edit-btns">
         <Button type="submit" variant="primary">Save</Button>
