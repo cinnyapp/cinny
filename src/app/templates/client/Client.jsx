@@ -73,23 +73,21 @@ function Client() {
 
     e.preventDefault();
 
-    if (!navigation.selectedRoomId) {
+    if (!navigation.selectedRoomId || navigation.isRawModalVisible) {
       e.dataTransfer.dropEffect = 'none';
     }
   }
 
   function handleDragEnter(e) {
     e.preventDefault();
-    if (!navigation.selectedRoomId) return;
-    if (!dragContainsFiles(e)) return;
+    if (!navigation.selectedRoomId || navigation.isRawModalVisible || !dragContainsFiles(e)) return;
 
     setDragCounter(dragCounter + 1);
   }
 
   function handleDragLeave(e) {
     e.preventDefault();
-    if (!navigation.selectedRoomId) return;
-    if (!dragContainsFiles(e)) return;
+    if (!navigation.selectedRoomId || navigation.isRawModalVisible || !dragContainsFiles(e)) return;
 
     setDragCounter(dragCounter - 1);
   }
@@ -98,6 +96,8 @@ function Client() {
     e.preventDefault();
 
     setDragCounter(0);
+
+    if (navigation.isRawModalVisible) return;
 
     const roomId = navigation.selectedRoomId;
     if (!roomId) return;
