@@ -11,8 +11,7 @@ Modal.setAppElement('#root');
 function RawModal({
   className, overlayClassName,
   isOpen, size, onAfterOpen, onAfterClose,
-  onRequestClose, closeFromOutside, setNavigationValue,
-  children,
+  onRequestClose, closeFromOutside, children,
 }) {
   let modalClass = (className !== null) ? `${className} ` : '';
   switch (size) {
@@ -27,11 +26,9 @@ function RawModal({
       modalClass += 'raw-modal__small ';
   }
 
-  if (setNavigationValue) {
-    useEffect(() => {
-      navigation.setIsRawModalVisible(isOpen);
-    }, [isOpen]);
-  }
+  useEffect(() => {
+    navigation.setIsRawModalVisible(isOpen);
+  }, [isOpen]);
 
   const modalOverlayClass = (overlayClassName !== null) ? `${overlayClassName} ` : '';
   return (
@@ -60,7 +57,6 @@ RawModal.defaultProps = {
   onAfterClose: null,
   onRequestClose: null,
   closeFromOutside: true,
-  setNavigationValue: true,
 };
 
 RawModal.propTypes = {
@@ -72,7 +68,6 @@ RawModal.propTypes = {
   onAfterClose: PropTypes.func,
   onRequestClose: PropTypes.func,
   closeFromOutside: PropTypes.bool,
-  setNavigationValue: PropTypes.bool,
   children: PropTypes.node.isRequired,
 };
 

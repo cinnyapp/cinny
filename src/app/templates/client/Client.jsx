@@ -68,28 +68,34 @@ function Client() {
     return false;
   }
 
-  function handleDrag(e) {
+  function modalOpen() {
+    return navigation.isRawModalVisible && dragCounter <= 0;
+  }
+
+  function handleDragOver(e) {
     if (!dragContainsFiles(e)) return;
 
     e.preventDefault();
 
-    if (!navigation.selectedRoomId || navigation.isRawModalVisible) {
+    if (!navigation.selectedRoomId || modalOpen()) {
       e.dataTransfer.dropEffect = 'none';
     }
   }
 
   function handleDragEnter(e) {
     e.preventDefault();
-    if (!navigation.selectedRoomId || navigation.isRawModalVisible || !dragContainsFiles(e)) return;
 
-    setDragCounter(dragCounter + 1);
+    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
+      setDragCounter(dragCounter + 1);
+    }
   }
 
   function handleDragLeave(e) {
     e.preventDefault();
-    if (!navigation.selectedRoomId || navigation.isRawModalVisible || !dragContainsFiles(e)) return;
 
-    setDragCounter(dragCounter - 1);
+    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
+      setDragCounter(dragCounter - 1);
+    }
   }
 
   function handleDrop(e) {
@@ -97,7 +103,7 @@ function Client() {
 
     setDragCounter(0);
 
-    if (navigation.isRawModalVisible) return;
+    if (modalOpen()) return;
 
     const roomId = navigation.selectedRoomId;
     if (!roomId) return;
@@ -112,7 +118,7 @@ function Client() {
   return (
     <div
       className="client-container"
-      onDragOver={handleDrag}
+      onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

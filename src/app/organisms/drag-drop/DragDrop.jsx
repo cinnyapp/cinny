@@ -11,7 +11,6 @@ function DragDrop({ isOpen }) {
       className="drag-drop__model"
       overlayClassName="drag-drop__overlay"
       isOpen={isOpen}
-      setNavigationValue={false}
     >
       <Text variant="h2" weight="medium">Drop file to upload</Text>
     </RawModal>
