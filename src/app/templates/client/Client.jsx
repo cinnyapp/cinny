@@ -14,10 +14,12 @@ import logout from '../../../client/action/logout';
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
+import DragDrop from '../../organisms/drag-drop/DragDrop';
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
+  const [dragCounter, setDragCounter] = useState(0);
 
   useEffect(() => {
     let counter = 0;
@@ -57,31 +59,68 @@ function Client() {
     );
   }
 
-  const handleDrag = (e) => {
+  function dragContainsFiles(e) {
+    if (!e.dataTransfer.types) return false;
+
+    for (let i = 0; i < e.dataTransfer.types.length; i += 1) {
+      if (e.dataTransfer.types[i] === 'Files') return true;
+    }
+    return false;
+  }
+
+  function modalOpen() {
+    return navigation.isRawModalVisible && dragCounter <= 0;
+  }
+
+  function handleDragOver(e) {
+    if (!dragContainsFiles(e)) return;
+
     e.preventDefault();
 
-    if (!navigation.selectedRoomId) {
+    if (!navigation.selectedRoomId || modalOpen()) {
       e.dataTransfer.dropEffect = 'none';
     }
-  };
+  }
 
-  const handleDrop = (e) => {
+  function handleDragEnter(e) {
     e.preventDefault();
+
+    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
+      setDragCounter(dragCounter + 1);
+    }
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault();
+
+    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
+      setDragCounter(dragCounter - 1);
+    }
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+
+    setDragCounter(0);
+
+    if (modalOpen()) return;
 
     const roomId = navigation.selectedRoomId;
     if (!roomId) return;
 
     const { files } = e.dataTransfer;
-    if (!files) return;
+    if (!files?.length) return;
     const file = files[0];
     initMatrix.roomsInput.setAttachment(roomId, file);
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
-  };
+  }
 
   return (
     <div
       className="client-container"
-      onDragOver={handleDrag}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       <div className="navigation__wrapper">
@@ -94,6 +133,7 @@ function Client() {
       <Dialogs />
       <EmojiBoardOpener />
       <ReusableContextMenu />
+      <DragDrop isOpen={dragCounter !== 0} />
     </div>
   );
 }
