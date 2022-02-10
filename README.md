@@ -5,6 +5,7 @@
 - [About](#about)
 - [Getting Started](https://cinny.in)
 - [Contributing](./CONTRIBUTING.md)
+- [Roadmap](https://github.com/ajbura/cinny/projects/11)
 
 ## About <a name = "about"></a>
 
