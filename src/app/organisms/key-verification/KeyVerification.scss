@@ -13,23 +13,28 @@
 }
 
 .key-verification {
+	&__container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-normal);
+	}
+
   &__emojis {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    padding-bottom: var(--sp-normal);
   }
 
   &__emoji-block {
     @extend .cp-fx__column;
+	  flex: 1;
     align-items: center;
-    gap: 4px;
+    gap: var(--sp-extra-tight);
   }
 
   &__buttons {
     display: flex;
     @extend ._e-c;
     gap: var(--sp-normal);
-    // padding: 0 var(--sp-extra-tight);
   }
 }

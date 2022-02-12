@@ -45,7 +45,7 @@ function KeyVerification({ request, onRequestClose }) {
 
   if (sas !== null) {
     return (
-      <div>
+      <div className="key-verification__container">
         <div className="key-verification__emojis">
           {sas.sas.emoji.map((emoji, i) => (
             <div className="key-verification__emoji-block" key={i}>
@@ -67,12 +67,12 @@ function KeyVerification({ request, onRequestClose }) {
   }
 
   return (
-    <>
+    <div className="key-verification__container">
       <Text>Click accept to start the verification process</Text>
       <div className="key-verification__buttons">
         <Button variant="primary" onClick={acceptRequest}>Accept</Button>
       </div>
-    </>
+    </div>
   );
 }
 KeyVerification.propTypes = {
