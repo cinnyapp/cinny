@@ -13,21 +13,23 @@
 }
 
 .key-verification {
-	&__container {
+  &__container {
     display: flex;
     flex-direction: column;
     gap: var(--sp-normal);
-	}
+  }
 
   &__emojis {
     display: flex;
     align-items: center;
     justify-content: space-around;
+    gap: var(--sp-extra-tight);
+    flex-wrap: wrap;
   }
 
   &__emoji-block {
     @extend .cp-fx__column;
-	  flex: 1;
+    flex: 1;
     align-items: center;
     gap: var(--sp-extra-tight);
   }
