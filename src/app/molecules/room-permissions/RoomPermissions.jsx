@@ -233,8 +233,9 @@ function RoomPermissions({ roomId }) {
 
                   let powerLevel = 0;
                   let permValue = permInfo.parent
-                    ? permissions[permInfo.parent][permKey]
-                    : permissions[permKey];
+                    ? permissions[permInfo.parent]
+                    : permissions;
+                  permValue = permValue ? permValue[permKey] : permInfo.default;
 
                   if (!permValue) permValue = permInfo.default;
 
