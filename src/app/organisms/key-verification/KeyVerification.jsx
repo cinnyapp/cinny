@@ -45,7 +45,7 @@ function KeyVerification({ request, onRequestClose }) {
 
   if (sas !== null) {
     return (
-      <div className="key-verification__container">
+      <div className="key-verification">
         <div className="key-verification__emojis">
           {sas.sas.emoji.map((emoji, i) => (
             <div className="key-verification__emoji-block" key={i}>
@@ -67,7 +67,7 @@ function KeyVerification({ request, onRequestClose }) {
   }
 
   return (
-    <div className="key-verification__container">
+    <div className="key-verification">
       <Text>Click accept to start the verification process</Text>
       <div className="key-verification__buttons">
         <Button variant="primary" onClick={acceptRequest}>Accept</Button>
@@ -75,8 +75,11 @@ function KeyVerification({ request, onRequestClose }) {
     </div>
   );
 }
+KeyVerification.defaultProps = {
+  request: null,
+};
 KeyVerification.propTypes = {
-  request: PropTypes.shape({}).isRequired,
+  request: PropTypes.shape({}),
   onRequestClose: PropTypes.func.isRequired,
 };
 

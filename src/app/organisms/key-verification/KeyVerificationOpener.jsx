@@ -28,9 +28,7 @@ function KeyVerificationOpener() {
       onRequestClose={closeDialog}
       contentOptions={<IconButton src={CrossIC} onClick={closeDialog} tooltip="Close" />}
     >
-      <div className="key-verification">
-        <KeyVerification request={request} onRequestClose={closeDialog} />
-      </div>
+      <KeyVerification request={request} onRequestClose={closeDialog} />
     </Dialog>
   );
 }
