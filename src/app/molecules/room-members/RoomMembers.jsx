@@ -58,8 +58,10 @@ function useMemberOfMembership(roomId, membership) {
 
   useEffect(() => {
     let isMounted = true;
+    let isLoadingMembers = false;
 
     const updateMemberList = (event) => {
+      if (isLoadingMembers) return;
       if (event && event?.getRoomId() !== roomId) return;
       const memberOfMembership = normalizeMembers(
         room.getMembersWithMembership(membership)
@@ -69,7 +71,9 @@ function useMemberOfMembership(roomId, membership) {
     };
 
     updateMemberList();
+    isLoadingMembers = true;
     room.loadMembersIfNeeded().then(() => {
+      isLoadingMembers = false;
       if (!isMounted) return;
       updateMemberList();
     });

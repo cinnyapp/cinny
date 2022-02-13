@@ -103,10 +103,10 @@ function PeopleDrawer({ roomId }) {
   }, [memberList]);
 
   useEffect(() => {
-    let isGettingMembers = true;
+    let isLoadingMembers = false;
     let isRoomChanged = false;
     const updateMemberList = (event) => {
-      if (isGettingMembers) return;
+      if (isLoadingMembers) return;
       if (event && event?.getRoomId() !== roomId) return;
       setMemberList(
         simplyfiMembers(
@@ -117,8 +117,9 @@ function PeopleDrawer({ roomId }) {
     };
     searchRef.current.value = '';
     updateMemberList();
+    isLoadingMembers = true;
     room.loadMembersIfNeeded().then(() => {
-      isGettingMembers = false;
+      isLoadingMembers = false;
       if (isRoomChanged) return;
       updateMemberList();
     });
