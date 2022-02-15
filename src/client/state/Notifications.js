@@ -1,4 +1,6 @@
 import EventEmitter from 'events';
+import renderAvatar from '../../app/atoms/avatar/render';
+import { cssColorMXID } from '../../util/colorMXID';
 import { selectRoom } from '../action/navigation';
 import cons from './cons';
 import navigation from './navigation';
@@ -183,9 +185,19 @@ class Notifications extends EventEmitter {
       title = `${mEvent.sender.name} (${room.name})`;
     }
 
+    const iconSize = 36;
+    const icon = await renderAvatar({
+      text: mEvent.sender.name,
+      bgColor: cssColorMXID(mEvent.getSender()),
+      imageSrc: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, iconSize, iconSize, 'crop'),
+      size: iconSize,
+      borderRadius: 8,
+      scale: 8,
+    });
+
     const noti = new window.Notification(title, {
       body: mEvent.getContent().body,
-      icon: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, 36, 36, 'crop'),
+      icon,
     });
     noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
   }

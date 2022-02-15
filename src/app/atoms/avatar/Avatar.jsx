@@ -8,6 +8,7 @@ import Text from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 
 import ImageBrokenSVG from '../../../../public/res/svg/image-broken.svg';
+import { avatarInitials } from '../../../util/common';
 
 function Avatar({
   text, bgColor, iconSrc, iconColor, imageSrc, size,
@@ -40,7 +41,7 @@ function Avatar({
                   ? <RawIcon size={size} src={iconSrc} color={iconColor} />
                   : text !== null && (
                     <Text variant={textSize} primary>
-                      {twemojify([...text][0])}
+                      {twemojify(avatarInitials(text))}
                     </Text>
                   )
               }
