@@ -82,12 +82,15 @@ function guessDMRoomTargetId(room, myUserId) {
  *
  * @param {string} roomId
  * @param {boolean} isDM
+ * @param {string[]} via
  */
-async function join(roomIdOrAlias, isDM) {
+async function join(roomIdOrAlias, isDM, via) {
   const mx = initMatrix.matrixClient;
   const roomIdParts = roomIdOrAlias.split(':');
+  const viaServers = via || [roomIdParts[1]];
+
   try {
-    const resultRoom = await mx.joinRoom(roomIdOrAlias, { viaServers: [roomIdParts[1]] });
+    const resultRoom = await mx.joinRoom(roomIdOrAlias, { viaServers });
 
     if (isDM) {
       const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom.roomId), mx.getUserId());
