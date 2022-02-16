@@ -28,9 +28,12 @@ class RoomsHierarchy {
     let roomHierarchy = this.getHierarchy(roomId);
 
     if (!roomHierarchy) {
-      const room = this.matrixClient.getRoom(roomId);
-      if (!room) return null;
-      roomHierarchy = new RoomHierarchy(room, limit, this._maxDepth, this._suggestedOnly);
+      roomHierarchy = new RoomHierarchy(
+        { roomId, client: this.matrixClient },
+        limit,
+        this._maxDepth,
+        this._suggestedOnly,
+      );
       this.roomIdToHierarchy.set(roomId, roomHierarchy);
     }
 
