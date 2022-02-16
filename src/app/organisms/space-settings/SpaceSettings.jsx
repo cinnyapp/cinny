@@ -100,8 +100,8 @@ function useWindowToggle(setSelectedTab) {
   const [window, setWindow] = useState(null);
 
   useEffect(() => {
-    const openSpaceSettings = (spaceId, tab) => {
-      setWindow({ spaceId, tabText });
+    const openSpaceSettings = (roomId, tab) => {
+      setWindow({ roomId, tabText });
       const tabItem = tabItems.find((item) => item.text === tab);
       if (tabItem) setSelectedTab(tabItem);
     };
@@ -120,7 +120,7 @@ function SpaceSettings() {
   const [selectedTab, setSelectedTab] = useState(tabItems[0]);
   const [window, requestClose] = useWindowToggle(setSelectedTab);
   const isOpen = window !== null;
-  const roomId = window?.spaceId;
+  const roomId = window?.roomId;
 
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);

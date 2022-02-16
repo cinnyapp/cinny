@@ -23,11 +23,18 @@ export function selectRoom(roomId, eventId) {
   });
 }
 
-export function openSpaceSettings(spaceId, tabText) {
+export function openSpaceSettings(roomId, tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SPACE_SETTINGS,
-    spaceId,
+    roomId,
     tabText,
+  });
+}
+
+export function openSpaceManage(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_SPACE_MANAGE,
+    roomId,
   });
 }
 

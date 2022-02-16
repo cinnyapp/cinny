@@ -9,6 +9,7 @@ import CreateRoom from '../create-room/CreateRoom';
 import InviteUser from '../invite-user/InviteUser';
 import Settings from '../settings/Settings';
 import SpaceSettings from '../space-settings/SpaceSettings';
+import SpaceManage from '../space-manage/SpaceManage';
 
 function Windows() {
   const [isInviteList, changeInviteList] = useState(false);
@@ -85,6 +86,7 @@ function Windows() {
         onRequestClose={() => changeSettings(false)}
       />
       <SpaceSettings />
+      <SpaceManage />
     </>
   );
 }

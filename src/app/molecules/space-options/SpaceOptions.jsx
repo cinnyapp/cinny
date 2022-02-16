@@ -4,13 +4,14 @@ import PropTypes from 'prop-types';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
-import { openSpaceSettings, openInviteUser } from '../../../client/action/navigation';
+import { openSpaceSettings, openSpaceManage, openInviteUser } from '../../../client/action/navigation';
 import { leave, createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
 
 import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
+import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 import PinIC from '../../../../public/res/ic/outlined/pin.svg';
 import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
@@ -33,6 +34,10 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
 
   const handleSettingsClick = () => {
     openSpaceSettings(roomId);
+    afterOptionSelect();
+  };
+  const handleManageRoom = () => {
+    openSpaceManage(roomId);
     afterOptionSelect();
   };
 
@@ -59,6 +64,7 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
       >
         Invite
       </MenuItem>
+      <MenuItem onClick={handleManageRoom} iconSrc={HashSearchIC}>Manage rooms</MenuItem>
       <MenuItem onClick={handleSettingsClick} iconSrc={SettingsIC}>Settings</MenuItem>
       <MenuItem
         variant="danger"
