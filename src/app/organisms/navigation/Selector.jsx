@@ -6,18 +6,13 @@ import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
 import { openReusableContextMenu } from '../../../client/action/navigation';
 import { getEventCords, abbreviateNumber } from '../../../util/common';
+import { joinRuleToIconSrc } from '../../../util/matrixUtil';
 
 import IconButton from '../../atoms/button/IconButton';
 import RoomSelector from '../../molecules/room-selector/RoomSelector';
 import RoomOptions from '../../molecules/room-options/RoomOptions';
 import SpaceOptions from '../../molecules/space-options/SpaceOptions';
 
-import HashIC from '../../../../public/res/ic/outlined/hash.svg';
-import HashGlobeIC from '../../../../public/res/ic/outlined/hash-globe.svg';
-import HashLockIC from '../../../../public/res/ic/outlined/hash-lock.svg';
-import SpaceIC from '../../../../public/res/ic/outlined/space.svg';
-import SpaceGlobeIC from '../../../../public/res/ic/outlined/space-globe.svg';
-import SpaceLockIC from '../../../../public/res/ic/outlined/space-lock.svg';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 
 function Selector({
@@ -59,19 +54,13 @@ function Selector({
     );
   };
 
-  const joinRuleToIconSrc = (joinRule) => ({
-    restricted: () => (room.isSpaceRoom() ? SpaceIC : HashIC),
-    invite: () => (room.isSpaceRoom() ? SpaceLockIC : HashLockIC),
-    public: () => (room.isSpaceRoom() ? SpaceGlobeIC : HashGlobeIC),
-  }[joinRule]?.() || null);
-
   return (
     <RoomSelector
       key={roomId}
       name={room.name}
       roomId={roomId}
       imageSrc={isDM ? imageSrc : null}
-      iconSrc={isDM ? null : joinRuleToIconSrc(room.getJoinRule())}
+      iconSrc={isDM ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())}
       isSelected={isSelected}
       isUnread={noti.hasNoti(roomId)}
       notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
