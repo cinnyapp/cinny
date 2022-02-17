@@ -25,7 +25,7 @@ function Client() {
     let counter = 0;
     const iId = setInterval(() => {
       const msgList = [
-        'Sometimes it takes a while...',
+        'Almost there...',
         'Looks like you have a lot of stuff to heat up!',
       ];
       if (counter === msgList.length - 1) {
@@ -35,7 +35,7 @@ function Client() {
       }
       setLoadingMsg(msgList[counter]);
       counter += 1;
-    }, 9000);
+    }, 15000);
     initMatrix.once('init_loading_finished', () => {
       clearInterval(iId);
       changeLoading(false);
