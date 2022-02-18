@@ -100,7 +100,7 @@ function SpaceManageItem({
       bgColor={colorMXID(roomId)}
       imageSrc={directs.has(roomId) ? imageSrc : null}
       iconColor="var(--ic-surface-low)"
-      iconSrc={joinRuleToIconSrc(roomInfo.join_rule, isSpace)}
+      iconSrc={joinRuleToIconSrc((roomInfo.join_rules || roomInfo.join_rule), isSpace)}
       size="extra-small"
     />
   );
