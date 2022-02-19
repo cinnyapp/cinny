@@ -106,14 +106,23 @@
   &__btn {
     @extend .cp-fx__item-one;
     display: flex;
+    align-items: center;
 
     & .avatar__border--active {
       box-shadow: none;
     }
-    & .text {
+    & > .text-b1 {
+      @extend .cp-fx__item-one;
       @extend .cp-txt__ellipsis;
       min-width: 0;
       margin: 0 var(--sp-extra-tight);
+    }
+    & > .text-b2 {
+      margin: 0 var(--sp-extra-tight);
+      padding: 1px var(--sp-ultra-tight);
+      color: var(--bg-positive);
+      box-shadow: var(--bs-positive-border);
+      border-radius: 4px;
     }
   }
 

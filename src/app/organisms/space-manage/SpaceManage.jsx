@@ -69,10 +69,11 @@ function SpaceManageItem({
   const { directs } = initMatrix.roomList;
   const mx = initMatrix.matrixClient;
   const parentRoom = mx.getRoom(parentId);
-  const canManage = parentRoom?.currentState.maySendStateEvent('m.space.child', mx.getUserId()) || false;
-
   const isSpace = roomInfo.room_type === 'm.space';
   const roomId = roomInfo.room_id;
+  const canManage = parentRoom?.currentState.maySendStateEvent('m.space.child', mx.getUserId()) || false;
+  const isSuggested = parentRoom?.currentState.getStateEvents('m.space.child', roomId)?.getContent().suggested === true;
+
   const room = mx.getRoom(roomId);
   const isJoined = !!(room?.getMyMembership() === 'join' || null);
   const name = room?.name || roomInfo.name || roomInfo.canonical_alias || roomId;
@@ -135,6 +136,7 @@ function SpaceManageItem({
         >
           {roomAvatarJSX}
           {roomNameJSX}
+          {isSuggested && <Text variant="b2">Suggested</Text>}
         </button>
         {roomInfo.topic && expandBtnJsx}
         {
