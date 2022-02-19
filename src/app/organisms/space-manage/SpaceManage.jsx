@@ -13,6 +13,7 @@ import { selectRoom, selectTab } from '../../../client/action/navigation';
 import RoomsHierarchy from '../../../client/state/RoomsHierarchy';
 import { joinRuleToIconSrc } from '../../../util/matrixUtil';
 import { join } from '../../../client/action/room';
+import { Debounce } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
@@ -159,17 +160,58 @@ SpaceManageItem.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
-function SpaceManageFooter({ roomId, selected }) {
+function SpaceManageFooter({ parentId, selected }) {
+  const [process, setProcess] = useState(null);
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(parentId);
+  const { currentState } = room;
+
+  const allSuggested = selected.every((roomId) => {
+    const sEvent = currentState.getStateEvents('m.space.child', roomId);
+    return !!sEvent?.getContent()?.suggested;
+  });
+
+  const handleRemove = () => {
+    setProcess(`Removing ${selected.length} items`);
+    selected.forEach((roomId) => {
+      mx.sendStateEvent(parentId, 'm.space.child', {}, roomId);
+    });
+  };
+
+  const handleToggleSuggested = (isMark) => {
+    if (isMark) setProcess(`Marking as suggested ${selected.length} items`);
+    else setProcess(`Marking as not suggested ${selected.length} items`);
+    selected.forEach((roomId) => {
+      const sEvent = room.currentState.getStateEvents('m.space.child', roomId);
+      if (!sEvent) return;
+      const content = { ...sEvent.getContent() };
+      if (isMark && content.suggested) return;
+      if (!isMark && !content.suggested) return;
+      content.suggested = isMark;
+      mx.sendStateEvent(parentId, 'm.space.child', content, roomId);
+    });
+  };
+
   return (
     <div className="space-manage__footer">
-      <Text weight="medium">{`${selected.length} item selected`}</Text>
-      <Button variant="danger">Remove</Button>
-      <Button variant="primary">Mark as suggested</Button>
+      {process && <Spinner size="small" />}
+      <Text weight="medium">{process || `${selected.length} item selected`}</Text>
+      { !process && (
+        <>
+          <Button onClick={handleRemove} variant="danger">Remove</Button>
+          <Button
+            onClick={() => handleToggleSuggested(!allSuggested)}
+            variant={allSuggested ? 'surface' : 'primary'}
+          >
+            {allSuggested ? 'Mark as not suggested' : 'Mark as suggested'}
+          </Button>
+        </>
+      )}
     </div>
   );
 }
 SpaceManageFooter.propTypes = {
-  roomId: PropTypes.string.isRequired,
+  parentId: PropTypes.string.isRequired,
   selected: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
@@ -209,16 +251,43 @@ function useUpdateOnJoin(roomId) {
   }, [roomId]);
 }
 
+function useChildUpdate(roomId, roomsHierarchy) {
+  const [, forceUpdate] = useForceUpdate();
+  const [debounce] = useState(new Debounce());
+  const mx = initMatrix.matrixClient;
+
+  useEffect(() => {
+    let isMounted = true;
+    const handleStateEvent = (event) => {
+      if (event.getRoomId() !== roomId) return;
+      if (event.getType() !== 'm.space.child') return;
+
+      debounce._(() => {
+        if (!isMounted) return;
+        roomsHierarchy.removeHierarchy(roomId);
+        forceUpdate();
+      }, 500)();
+    };
+    mx.on('RoomState.events', handleStateEvent);
+    return () => {
+      isMounted = false;
+      mx.removeListener('RoomState.events', handleStateEvent);
+    };
+  }, [roomId, roomsHierarchy]);
+}
+
 function SpaceManageContent({ roomId, requestClose }) {
   const mx = initMatrix.matrixClient;
   useUpdateOnJoin(roomId);
+  const [, forceUpdate] = useForceUpdate();
   const [roomsHierarchy] = useState(new RoomsHierarchy(mx, 30));
   const [spacePath, addPathItem] = useSpacePath(roomId);
   const [isLoading, setIsLoading] = useState(true);
   const [selected, setSelected] = useState([]);
   const mountStore = useStore();
-
   const currentPath = spacePath[spacePath.length - 1];
+  useChildUpdate(currentPath.roomId, roomsHierarchy);
+
   const currentHierarchy = roomsHierarchy.getHierarchy(currentPath.roomId);
 
   useEffect(() => {
@@ -228,9 +297,7 @@ function SpaceManageContent({ roomId, requestClose }) {
     };
   }, [roomId]);
 
-  useEffect(() => {
-    setSelected([]);
-  }, [spacePath]);
+  useEffect(() => setSelected([]), [spacePath]);
 
   const handleSelected = (selectedRoomId) => {
     const newSelected = [...selected];
@@ -247,14 +314,17 @@ function SpaceManageContent({ roomId, requestClose }) {
 
   const loadRoomHierarchy = async () => {
     if (!roomsHierarchy.canLoadMore(currentPath.roomId)) return;
+    if (!roomsHierarchy.getHierarchy(currentPath.roomId)) setSelected([]);
     setIsLoading(true);
     try {
       await roomsHierarchy.load(currentPath.roomId);
       if (!mountStore.getItem()) return;
       setIsLoading(false);
+      forceUpdate();
     } catch {
       if (!mountStore.getItem()) return;
       setIsLoading(false);
+      forceUpdate();
     }
   };
 
@@ -295,10 +365,12 @@ function SpaceManageContent({ roomId, requestClose }) {
       {isLoading && (
         <div className="space-manage__content-loading">
           <Spinner size="small" />
-          <Text>Loading rooms</Text>
+          <Text>Loading rooms...</Text>
         </div>
       )}
-      {selected.length > 0 && <SpaceManageFooter roomId={roomId} selected={selected} />}
+      {selected.length > 0 && (
+        <SpaceManageFooter parentId={currentPath.roomId} selected={selected} />
+      )}
     </div>
   );
 }
