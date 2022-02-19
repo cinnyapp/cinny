@@ -1,11 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+import PropTypes from 'prop-types';
+import './ViewSource.scss';
+
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
+
 import IconButton from '../../atoms/button/IconButton';
-import Text from '../../atoms/text/Text';
+import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import Dialog from '../../molecules/dialog/Dialog';
-import './ViewSource.scss';
+
+import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+
+function ViewSourceBlock({ title, json }) {
+  return (
+    <div className="view-source__card">
+      <MenuHeader>{title}</MenuHeader>
+      <pre className="scrollbar scrollbar__h scrollbar--auto-hide text text-b1">
+        <code className="language-json">
+          {JSON.stringify(json, null, 2)}
+        </code>
+      </pre>
+    </div>
+  );
+}
+ViewSourceBlock.propTypes = {
+  title: PropTypes.string.isRequired,
+  json: PropTypes.shape({}).isRequired,
+};
 
 function ViewSource() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,35 +48,22 @@ function ViewSource() {
   };
 
   const renderViewSource = () => (
-    <div className="view-source text">
-      {event.isEncrypted() && (
-      <>
-        <Text variant="s1" weight="medium">Decrypted source</Text>
-        <pre className="scrollbar scrollbar__h scrollbar--auto-hide">
-          <code className="language-json">
-            {JSON.stringify(event.getEffectiveEvent(), null, 2)}
-          </code>
-        </pre>
-      </>
-      )}
-      <Text variant="s1" weight="medium">Original source</Text>
-      <pre className="scrollbar scrollbar__h scrollbar--auto-hide">
-        <code className="language-json">
-          {JSON.stringify(event.event, null, 2)}
-        </code>
-      </pre>
+    <div className="view-source">
+      {event.isEncrypted() && <ViewSourceBlock title="Decrypted source" json={event.getEffectiveEvent()} />}
+      <ViewSourceBlock title="Original source" json={event.event} />
     </div>
   );
 
   return (
     <Dialog
       isOpen={isOpen}
+      size="medium"
       title="View source"
       onAfterClose={handleAfterClose}
       onRequestClose={() => setIsOpen(false)}
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
     >
-      {event ? renderViewSource() : <div /> }
+      {event && renderViewSource()}
     </Dialog>
   );
 }

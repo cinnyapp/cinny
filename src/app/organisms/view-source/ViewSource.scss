@@ -3,14 +3,15 @@
 .view-source {
   @include dir.side(margin, var(--sp-normal), var(--sp-extra-tight));
 
-  & .text {
-    margin: var(--sp-extra-tight) 0;
+  & pre {
+    padding: var(--sp-extra-tight);
   }
 
-  & pre {
-    margin: var(--sp-ultra-tight) 0;
-    padding: var(--sp-extra-tight);
+  &__card {
+    margin: var(--sp-normal) 0;
     background-color: var(--bg-surface-hover);
-    border-radius: calc(var(--bo-radius) / 2);
+    border-radius: var(--bo-radius);
+    box-shadow: var(--bs-surface-border);
+    overflow: hidden;
   }
 }

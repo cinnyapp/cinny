@@ -10,7 +10,7 @@ import ScrollView from '../../atoms/scroll/ScrollView';
 import RawModal from '../../atoms/modal/RawModal';
 
 function Dialog({
-  className, isOpen, title, onAfterOpen, onAfterClose,
+  className, isOpen, size, title, onAfterOpen, onAfterClose,
   contentOptions, onRequestClose, closeFromOutside, children,
 }) {
   return (
@@ -21,7 +21,7 @@ function Dialog({
       onAfterClose={onAfterClose}
       onRequestClose={onRequestClose}
       closeFromOutside={closeFromOutside}
-      size="small"
+      size={size}
     >
       <div className="dialog">
         <div className="dialog__content">
@@ -50,6 +50,7 @@ function Dialog({
 
 Dialog.defaultProps = {
   className: null,
+  size: 'small',
   contentOptions: null,
   onAfterOpen: null,
   onAfterClose: null,
@@ -60,6 +61,7 @@ Dialog.defaultProps = {
 Dialog.propTypes = {
   className: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
+  size: PropTypes.oneOf(['large', 'medium', 'small']),
   title: PropTypes.node.isRequired,
   contentOptions: PropTypes.node,
   onAfterOpen: PropTypes.func,
