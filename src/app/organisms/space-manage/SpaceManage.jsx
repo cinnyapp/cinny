@@ -83,6 +83,7 @@ function SpaceManageItem({
     imageSrc = room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
     if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
   }
+  const isDM = directs.has(roomId);
 
   const handleOpen = () => {
     if (isSpace) selectTab(roomId);
@@ -100,9 +101,13 @@ function SpaceManageItem({
     <Avatar
       text={name}
       bgColor={colorMXID(roomId)}
-      imageSrc={directs.has(roomId) ? imageSrc : null}
+      imageSrc={isDM ? imageSrc : null}
       iconColor="var(--ic-surface-low)"
-      iconSrc={joinRuleToIconSrc((roomInfo.join_rules || roomInfo.join_rule), isSpace)}
+      iconSrc={
+        isDM
+          ? null
+          : joinRuleToIconSrc((roomInfo.join_rules || roomInfo.join_rule), isSpace)
+      }
       size="extra-small"
     />
   );
