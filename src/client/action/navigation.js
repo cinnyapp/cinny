@@ -38,6 +38,13 @@ export function openSpaceManage(roomId) {
   });
 }
 
+export function openSpaceAddExisting(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_SPACE_ADDEXISTING,
+    roomId,
+  });
+}
+
 export function toggleRoomSettings(tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.TOGGLE_ROOM_SETTINGS,

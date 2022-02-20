@@ -95,6 +95,9 @@ class Navigation extends EventEmitter {
       [cons.actions.navigation.OPEN_SPACE_MANAGE]: () => {
         this.emit(cons.events.navigation.SPACE_MANAGE_OPENED, action.roomId);
       },
+      [cons.actions.navigation.OPEN_SPACE_ADDEXISTING]: () => {
+        this.emit(cons.events.navigation.SPACE_ADDEXISTING_OPENED, action.roomId);
+      },
       [cons.actions.navigation.TOGGLE_ROOM_SETTINGS]: () => {
         this.isRoomSettings = !this.isRoomSettings;
         this.emit(
