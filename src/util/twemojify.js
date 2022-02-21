@@ -3,6 +3,22 @@ import linkifyHtml from 'linkifyjs/html';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { sanitizeText } from './sanitize';
+import KaTeX from '../app/atoms/katex/KaTeX';
+
+const parseOptions = {
+  replace: (node) => {
+    if (node.attribs?.['data-mx-maths']) {
+      return KaTeX({
+        tex: node.attribs['data-mx-maths'],
+        options: {
+          throwOnError: false,
+          displayMode: node.name === 'div',
+        },
+      });
+    }
+    return null;
+  },
+};
 
 /**
  * @param {string} text - text to twemojify
@@ -11,7 +27,7 @@ import { sanitizeText } from './sanitize';
  * @param {boolean} [sanitize=true] - sanitize html text (default: true)
  * @returns React component
  */
-export function twemojify(text, opts, linkify = false, sanitize = true) {
+export function twemojify(text, opts, linkify = false, sanitize = true, maths = false) {
   if (typeof text !== 'string') return text;
   let content = text;
 
@@ -25,5 +41,5 @@ export function twemojify(text, opts, linkify = false, sanitize = true) {
       rel: 'noreferrer noopener',
     });
   }
-  return parse(content);
+  return parse(content, maths && parseOptions);
 }

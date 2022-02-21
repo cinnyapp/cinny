@@ -189,7 +189,7 @@ const MessageBody = React.memo(({
   let content = null;
   if (isCustomHTML) {
     try {
-      content = twemojify(sanitizeCustomHtml(body), undefined, true, false);
+      content = twemojify(sanitizeCustomHtml(body), undefined, true, false, true);
     } catch {
       console.error('Malformed custom html: ', body);
       content = twemojify(body, undefined);
