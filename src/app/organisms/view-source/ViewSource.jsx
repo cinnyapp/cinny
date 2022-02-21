@@ -7,7 +7,8 @@ import navigation from '../../../client/state/navigation';
 
 import IconButton from '../../atoms/button/IconButton';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
-import Dialog from '../../molecules/dialog/Dialog';
+import ScrollView from '../../atoms/scroll/ScrollView';
+import PopupWindow from '../../molecules/popup-window/PopupWindow';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
@@ -15,11 +16,13 @@ function ViewSourceBlock({ title, json }) {
   return (
     <div className="view-source__card">
       <MenuHeader>{title}</MenuHeader>
-      <pre className="scrollbar scrollbar__h scrollbar--auto-hide text text-b1">
-        <code className="language-json">
-          {JSON.stringify(json, null, 2)}
-        </code>
-      </pre>
+      <ScrollView horizontal vertical={false} autoHide>
+        <pre className="text text-b1">
+          <code className="language-json">
+            {JSON.stringify(json, null, 2)}
+          </code>
+        </pre>
+      </ScrollView>
     </div>
   );
 }
@@ -55,16 +58,15 @@ function ViewSource() {
   );
 
   return (
-    <Dialog
+    <PopupWindow
       isOpen={isOpen}
-      size="medium"
       title="View source"
       onAfterClose={handleAfterClose}
       onRequestClose={() => setIsOpen(false)}
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
     >
       {event && renderViewSource()}
-    </Dialog>
+    </PopupWindow>
   );
 }
 

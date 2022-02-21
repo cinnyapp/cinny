@@ -51,7 +51,7 @@ PWContentSelector.propTypes = {
 function PopupWindow({
   className, isOpen, title, contentTitle,
   drawer, drawerOptions, contentOptions,
-  onRequestClose, children,
+  onAfterClose, onRequestClose, children,
 }) {
   const haveDrawer = drawer !== null;
   const cTitle = contentTitle !== null ? contentTitle : title;
@@ -60,6 +60,7 @@ function PopupWindow({
     <RawModal
       className={`${className === null ? '' : `${className} `}pw-model`}
       isOpen={isOpen}
+      onAfterClose={onAfterClose}
       onRequestClose={onRequestClose}
       size={haveDrawer ? 'large' : 'medium'}
     >
@@ -116,6 +117,7 @@ PopupWindow.defaultProps = {
   contentTitle: null,
   drawerOptions: null,
   contentOptions: null,
+  onAfterClose: null,
   onRequestClose: null,
 };
 
@@ -127,6 +129,7 @@ PopupWindow.propTypes = {
   drawer: PropTypes.node,
   drawerOptions: PropTypes.node,
   contentOptions: PropTypes.node,
+  onAfterClose: PropTypes.func,
   onRequestClose: PropTypes.func,
   children: PropTypes.node.isRequired,
 };
