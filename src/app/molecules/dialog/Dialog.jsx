@@ -21,6 +21,7 @@ function Dialog({
       onAfterClose={onAfterClose}
       onRequestClose={onRequestClose}
       closeFromOutside={closeFromOutside}
+      size="small"
     >
       <div className="dialog">
         <div className="dialog__content">
