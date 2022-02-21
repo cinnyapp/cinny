@@ -39,7 +39,7 @@ module.exports = {
         use: ['html-loader'],
       },
       {
-        test: /\.(png|jpe?g|gif|otf|ttf)$/,
+        test: /\.(png|jpe?g|gif|otf|ttf|woff|woff2)$/,
         type: 'asset/resource',
       },
       {

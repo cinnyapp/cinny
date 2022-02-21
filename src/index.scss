@@ -1,5 +1,3 @@
-@import url(./font-face.css);
-
 :root {
 
   /* background color | --bg-[background type]: value */
@@ -154,7 +152,7 @@
   --fw-light: 300;
   --fw-normal: 400;
   --fw-medium: 500;
-  --fw-bold: 600;
+  --fw-bold: 700;
 
 
   /* spacing | --sp-[space]: value */
@@ -287,7 +285,7 @@
   /* override normal font weight for dark mode */
   --fw-normal: 350;
 
-  --font-secondary: 'Inter', 'Roboto', sans-serif;
+  --font-secondary: 'InterVariable', 'Roboto', sans-serif;
 }
 
 .dark-theme,
