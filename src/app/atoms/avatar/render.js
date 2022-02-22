@@ -1,8 +1,4 @@
-import { avatarInitials } from '../../../util/common';
-
-function cssVar(name) {
-  return getComputedStyle(document.body).getPropertyValue(name);
-}
+import { avatarInitials, getCssVar } from '../../../util/common';
 
 // renders the avatar and returns it as an URL
 export default async function renderAvatar({
@@ -42,12 +38,12 @@ export default async function renderAvatar({
       ctx.drawImage(img, 0, 0, size, size);
     } else {
       // colored background
-      ctx.fillStyle = cssVar(bgColor);
+      ctx.fillStyle = getCssVar(bgColor);
       ctx.fill();
 
       // centered letter
       ctx.fillStyle = '#fff';
-      ctx.font = `${cssVar('--fs-s1')} ${cssVar('--font-primary')}`;
+      ctx.font = `${getCssVar('--fs-s1')} ${getCssVar('--font-primary')}`;
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       ctx.fillText(avatarInitials(text), size / 2, size / 2);

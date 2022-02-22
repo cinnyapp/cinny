@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
-function KaTeX({ tex, options }) {
+function Math({ tex, options }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -13,12 +13,12 @@ function KaTeX({ tex, options }) {
 
   return <div ref={ref} />;
 }
-KaTeX.defaultProps = {
+Math.defaultProps = {
   options: undefined,
 };
-KaTeX.propTypes = {
+Math.propTypes = {
   tex: PropTypes.string.isRequired,
   options: PropTypes.shape({}),
 };
 
-export default KaTeX;
+export default Math;

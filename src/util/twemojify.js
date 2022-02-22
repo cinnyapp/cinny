@@ -3,15 +3,17 @@ import linkifyHtml from 'linkifyjs/html';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { sanitizeText } from './sanitize';
-import KaTeX from '../app/atoms/katex/KaTeX';
+import Math from '../app/atoms/math/Math';
+import { getCssVar } from './common';
 
 const parseOptions = {
   replace: (node) => {
     if (node.attribs?.['data-mx-maths']) {
-      return KaTeX({
+      return Math({
         tex: node.attribs['data-mx-maths'],
         options: {
           throwOnError: false,
+          errorColor: getCssVar('--tc-danger-normal'),
           displayMode: node.name === 'div',
         },
       });
