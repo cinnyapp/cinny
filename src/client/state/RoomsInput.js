@@ -2,8 +2,9 @@ import EventEmitter from 'events';
 import { micromark } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
+import { math } from 'micromark-extension-math';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
-import { spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
+import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
 import cons from './cons';
 import settings from './settings';
 
@@ -85,8 +86,8 @@ function getVideoThumbnail(video, width, height, mimeType) {
 
 function getFormattedBody(markdown) {
   const result = micromark(markdown, {
-    extensions: [gfm(), spoilerExtension()],
-    htmlExtensions: [gfmHtml(), spoilerExtensionHtml],
+    extensions: [gfm(), spoilerExtension(), math()],
+    htmlExtensions: [gfmHtml(), spoilerExtensionHtml, mathExtensionHtml],
   });
   const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
   if (bodyParts === null) return result;
