@@ -65,7 +65,7 @@ function ViewSource() {
       onRequestClose={() => setIsOpen(false)}
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
     >
-      {event && renderViewSource()}
+      {event ? renderViewSource() : <div />}
     </PopupWindow>
   );
 }
