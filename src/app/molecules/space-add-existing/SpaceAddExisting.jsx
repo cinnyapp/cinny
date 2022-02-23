@@ -7,7 +7,7 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { joinRuleToIconSrc } from '../../../util/matrixUtil';
+import { joinRuleToIconSrc, getIdServer, genRoomVia } from '../../../util/matrixUtil';
 import { Debounce } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
@@ -23,7 +23,10 @@ import Dialog from '../dialog/Dialog';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 
+import { useStore } from '../../hooks/useStore';
+
 function SpaceAddExistingContent({ roomId }) {
+  const mountStore = useStore(roomId);
   const [debounce] = useState(new Debounce());
   const [process, setProcess] = useState(null);
   const [selected, setSelected] = useState([]);
@@ -75,6 +78,26 @@ function SpaceAddExistingContent({ roomId }) {
 
   const handleAdd = async () => {
     setProcess(`Adding ${selected.length} items...`);
+
+    const promises = selected.map((rId) => {
+      const room = mx.getRoom(rId);
+      const via = genRoomVia(room);
+      if (via.length === 0) {
+        via.push(getIdServer(rId));
+      }
+
+      return mx.sendStateEvent(roomId, 'm.space.child', {
+        auto_join: false,
+        suggested: false,
+        via,
+      }, rId);
+    });
+
+    mountStore.setItem(true);
+    await Promise.allSettled(promises);
+    if (mountStore.getItem() !== true) return;
+    setSelected([]);
+    setProcess(null);
   };
 
   return (
