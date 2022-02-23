@@ -69,7 +69,7 @@ class Navigation extends EventEmitter {
       },
       [cons.actions.navigation.SELECT_SPACE]: () => {
         this._setSpacePath(action.roomId);
-        this.selectedSpaceId = action.roomId;
+        this.selectedSpaceId = action.roomId === cons.tabs.HOME ? null : action.roomId;
         this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {

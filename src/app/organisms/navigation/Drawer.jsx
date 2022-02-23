@@ -4,7 +4,6 @@ import './Drawer.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { selectTab, selectSpace } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
 import ScrollView from '../../atoms/scroll/ScrollView';
@@ -52,7 +51,7 @@ function Drawer() {
     <div className="drawer">
       <DrawerHeader selectedTab={selectedTab} spaceId={spaceId} />
       <div className="drawer__content-wrapper">
-        {selectedTab !== cons.tabs.DIRECTS && <DrawerBreadcrumb spaceId={spaceId} />}
+        {navigation.selectedSpacePath.length > 1 && <DrawerBreadcrumb spaceId={spaceId} />}
         <div className="rooms__wrapper">
           <ScrollView ref={scrollRef} autoHide>
             <div className="rooms-container">

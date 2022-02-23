@@ -48,8 +48,6 @@ function DrawerBreadcrumb({ spaceId }) {
     };
   }, [spaceId]);
 
-  if (spacePath.length === 1) return null;
-
   function getHomeNotiExcept(childId) {
     const orphans = roomList.getOrphans();
     const childIndex = orphans.indexOf(childId);
