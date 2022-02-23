@@ -29,6 +29,7 @@ function SpaceAddExistingContent({ roomId }) {
   const mountStore = useStore(roomId);
   const [debounce] = useState(new Debounce());
   const [process, setProcess] = useState(null);
+  const [allRoomIds, setAllRoomIds] = useState([]);
   const [selected, setSelected] = useState([]);
   const [searchIds, setSearchIds] = useState(null);
   const mx = initMatrix.matrixClient;
@@ -36,11 +37,12 @@ function SpaceAddExistingContent({ roomId }) {
     spaces, rooms, directs, roomIdToParents,
   } = initMatrix.roomList;
 
-  let allRoomIds = [...spaces, ...rooms, ...directs];
-  allRoomIds = allRoomIds.filter((rId) => (
-    rId !== roomId
-    && !roomIdToParents.get(rId)?.has(roomId)
-  ));
+  useEffect(() => {
+    const allIds = [...spaces, ...rooms, ...directs].filter((rId) => (
+      rId !== roomId && !roomIdToParents.get(rId)?.has(roomId)
+    ));
+    setAllRoomIds(allIds);
+  }, [roomId]);
 
   const toggleSelection = (rId) => {
     if (process !== null) return;
@@ -54,26 +56,6 @@ function SpaceAddExistingContent({ roomId }) {
     }
     newSelected.push(rId);
     setSelected(newSelected);
-  };
-
-  const handleSearch = (ev) => {
-    const term = ev.target.value.toLocaleLowerCase().replaceAll(' ', '');
-    if (term === '') {
-      setSearchIds(null);
-      return;
-    }
-
-    debounce._(() => {
-      const searchedIds = allRoomIds.filter((rId) => {
-        let name = mx.getRoom(rId)?.name;
-        if (!name) return false;
-        name = name.normalize('NFKC')
-          .toLocaleLowerCase()
-          .replaceAll(' ', '');
-        return name.includes(term);
-      });
-      setSearchIds(searchedIds);
-    }, 400)();
   };
 
   const handleAdd = async () => {
@@ -96,20 +78,43 @@ function SpaceAddExistingContent({ roomId }) {
     mountStore.setItem(true);
     await Promise.allSettled(promises);
     if (mountStore.getItem() !== true) return;
-    setSelected([]);
+
+    const allIds = [...spaces, ...rooms, ...directs].filter((rId) => (
+      rId !== roomId && !roomIdToParents.get(rId)?.has(roomId) && !selected.includes(rId)
+    ));
+    setAllRoomIds(allIds);
     setProcess(null);
+    setSelected([]);
+  };
+
+  const handleSearch = (ev) => {
+    const term = ev.target.value.toLocaleLowerCase().replaceAll(' ', '');
+    if (term === '') {
+      setSearchIds(null);
+      return;
+    }
+
+    debounce._(() => {
+      const searchedIds = allRoomIds.filter((rId) => {
+        let name = mx.getRoom(rId)?.name;
+        if (!name) return false;
+        name = name.normalize('NFKC')
+          .toLocaleLowerCase()
+          .replaceAll(' ', '');
+        return name.includes(term);
+      });
+      setSearchIds(searchedIds);
+    }, 200)();
+  };
+  const handleSearchClear = (ev) => {
+    const btn = ev.currentTarget;
+    btn.parentElement.searchInput.value = '';
+    setSearchIds(null);
   };
 
   return (
     <>
-      <form
-        onSubmit={(ev) => {
-          ev.preventDefault();
-          const { target } = ev;
-          target.searchInput.value = '';
-          setSearchIds(null);
-        }}
-      >
+      <form onSubmit={(ev) => { ev.preventDefault(); }}>
         <RawIcon size="small" src={SearchIC} />
         <Input
           name="searchInput"
@@ -117,7 +122,7 @@ function SpaceAddExistingContent({ roomId }) {
           placeholder="Search room"
           autoFocus
         />
-        <IconButton size="small" type="submit" src={CrossIC} />
+        <IconButton size="small" type="button" onClick={handleSearchClear} src={CrossIC} />
       </form>
       {searchIds?.length === 0 && <Text>No result found</Text>}
       {
