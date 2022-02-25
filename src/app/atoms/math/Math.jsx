@@ -4,21 +4,31 @@ import PropTypes from 'prop-types';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
-function Math({ tex, options }) {
+import 'katex/dist/contrib/copy-tex';
+import 'katex/dist/contrib/copy-tex.css';
+
+const Math = React.memo(({
+  content, throwOnError, errorColor, displayMode,
+}) => {
   const ref = useRef(null);
 
   useEffect(() => {
-    katex.render(tex, ref.current, options);
-  }, [tex, options]);
+    katex.render(content, ref.current, { throwOnError, errorColor, displayMode });
+    console.debug(content);
+  }, [content, throwOnError, errorColor, displayMode]);
 
-  return <div ref={ref} />;
-}
+  return <span ref={ref} />;
+});
 Math.defaultProps = {
-  options: undefined,
+  throwOnError: null,
+  errorColor: null,
+  displayMode: null,
 };
 Math.propTypes = {
-  tex: PropTypes.string.isRequired,
-  options: PropTypes.shape({}),
+  content: PropTypes.string.isRequired,
+  throwOnError: PropTypes.bool,
+  errorColor: PropTypes.string,
+  displayMode: PropTypes.bool,
 };
 
 export default Math;

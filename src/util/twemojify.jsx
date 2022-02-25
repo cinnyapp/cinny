@@ -13,12 +13,10 @@ const parseOptions = {
     if (node.attribs?.['data-mx-maths']) {
       return (
         <Math
-          tex={node.attribs['data-mx-maths']}
-          options={{
-            throwOnError: false,
-            errorColor: getCssVar('--tc-danger-normal'),
-            displayMode: node.name === 'div',
-          }}
+          content={node.attribs['data-mx-maths']}
+          throwOnError={false}
+          errorColor={getCssVar('--tc-danger-normal')}
+          displayMode={node.name === 'div'}
         />
       );
     }
