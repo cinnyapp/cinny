@@ -7,7 +7,7 @@ import twemoji from 'twemoji';
 import Math from '../app/atoms/math/Math';
 import { sanitizeText } from './sanitize';
 
-const parseOptions = {
+const mathOptions = {
   replace: (node) => {
     if (node.attribs?.['data-mx-maths']) {
       return (
@@ -45,5 +45,5 @@ export function twemojify(text, opts, linkify = false, sanitize = true, maths = 
       rel: 'noreferrer noopener',
     });
   }
-  return parse(content, maths && parseOptions);
+  return parse(content, maths ? mathOptions : null);
 }

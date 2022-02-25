@@ -14,7 +14,6 @@ const Math = React.memo(({
 
   useEffect(() => {
     katex.render(content, ref.current, { throwOnError, errorColor, displayMode });
-    console.debug(content);
   }, [content, throwOnError, errorColor, displayMode]);
 
   return <span ref={ref} />;
