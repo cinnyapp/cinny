@@ -6,7 +6,6 @@ import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import Math from '../app/atoms/math/Math';
 import { sanitizeText } from './sanitize';
-import { getCssVar } from './common';
 
 const parseOptions = {
   replace: (node) => {
@@ -15,7 +14,7 @@ const parseOptions = {
         <Math
           content={node.attribs['data-mx-maths']}
           throwOnError={false}
-          errorColor={getCssVar('--tc-danger-normal')}
+          errorColor="var(--tc-danger-normal)"
           displayMode={node.name === 'div'}
         />
       );

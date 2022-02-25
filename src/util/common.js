@@ -132,7 +132,3 @@ export function copyToClipboard(text) {
     copyInput.remove();
   }
 }
-
-export function getCssVar(name) {
-  return getComputedStyle(document.body).getPropertyValue(name);
-}
