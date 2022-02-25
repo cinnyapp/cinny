@@ -1,22 +1,26 @@
 /* eslint-disable import/prefer-default-export */
+import React from 'react';
+
 import linkifyHtml from 'linkifyjs/html';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
-import { sanitizeText } from './sanitize';
 import Math from '../app/atoms/math/Math';
+import { sanitizeText } from './sanitize';
 import { getCssVar } from './common';
 
 const parseOptions = {
   replace: (node) => {
     if (node.attribs?.['data-mx-maths']) {
-      return Math({
-        tex: node.attribs['data-mx-maths'],
-        options: {
-          throwOnError: false,
-          errorColor: getCssVar('--tc-danger-normal'),
-          displayMode: node.name === 'div',
-        },
-      });
+      return (
+        <Math
+          tex={node.attribs['data-mx-maths']}
+          options={{
+            throwOnError: false,
+            errorColor: getCssVar('--tc-danger-normal'),
+            displayMode: node.name === 'div',
+          }}
+        />
+      );
     }
     return null;
   },
@@ -27,6 +31,7 @@ const parseOptions = {
  * @param {object|undefined} opts - options for tweomoji.parse
  * @param {boolean} [linkify=false] - convert links to html tags (default: false)
  * @param {boolean} [sanitize=true] - sanitize html text (default: true)
+ * @param {boolean} [maths=false] - render maths (default: false)
  * @returns React component
  */
 export function twemojify(text, opts, linkify = false, sanitize = true, maths = false) {
