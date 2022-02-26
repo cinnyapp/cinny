@@ -53,9 +53,6 @@ const cons = {
       CREATE: 'CREATE',
       CREATE_SPACE_SHORTCUT: 'CREATE_SPACE_SHORTCUT',
       DELETE_SPACE_SHORTCUT: 'DELETE_SPACE_SHORTCUT',
-      error: {
-        CREATE: 'ERROR_CREATE',
-      },
     },
     settings: {
       TOGGLE_SYSTEM_THEME: 'TOGGLE_SYSTEM_THEME',

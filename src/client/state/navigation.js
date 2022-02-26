@@ -113,7 +113,11 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.PUBLIC_ROOMS_OPENED, action.searchTerm);
       },
       [cons.actions.navigation.OPEN_CREATE_ROOM]: () => {
-        this.emit(cons.events.navigation.CREATE_ROOM_OPENED);
+        this.emit(
+          cons.events.navigation.CREATE_ROOM_OPENED,
+          action.isSpace,
+          action.parentId,
+        );
       },
       [cons.actions.navigation.OPEN_INVITE_USER]: () => {
         this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId, action.searchTerm);

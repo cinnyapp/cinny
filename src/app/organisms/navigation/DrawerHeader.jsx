@@ -39,18 +39,18 @@ function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
     <>
       <MenuHeader>Add rooms or spaces</MenuHeader>
       <MenuItem
-        iconSrc={HashPlusIC}
-        onClick={() => { afterOptionSelect(); openCreateRoom(); }}
-        disabled={!canManage}
-      >
-        Create new room
-      </MenuItem>
-      <MenuItem
         iconSrc={SpacePlusIC}
-        onClick={() => { afterOptionSelect(); }}
+        onClick={() => { afterOptionSelect(); openCreateRoom(true, spaceId); }}
         disabled={!canManage}
       >
         Create new space
+      </MenuItem>
+      <MenuItem
+        iconSrc={HashPlusIC}
+        onClick={() => { afterOptionSelect(); openCreateRoom(false, spaceId); }}
+        disabled={!canManage}
+      >
+        Create new room
       </MenuItem>
       { !spaceId && (
         <MenuItem

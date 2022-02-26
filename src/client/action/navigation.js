@@ -65,9 +65,11 @@ export function openPublicRooms(searchTerm) {
   });
 }
 
-export function openCreateRoom() {
+export function openCreateRoom(isSpace = false, parentId = null) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_CREATE_ROOM,
+    isSpace,
+    parentId,
   });
 }
 

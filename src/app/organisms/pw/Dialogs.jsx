@@ -5,6 +5,7 @@ import ProfileViewer from '../profile-viewer/ProfileViewer';
 import SpaceAddExisting from '../../molecules/space-add-existing/SpaceAddExisting';
 import Search from '../search/Search';
 import ViewSource from '../view-source/ViewSource';
+import CreateRoom from '../create-room/CreateRoom';
 
 function Dialogs() {
   return (
@@ -12,6 +13,7 @@ function Dialogs() {
       <ReadReceipts />
       <ViewSource />
       <ProfileViewer />
+      <CreateRoom />
       <SpaceAddExisting />
       <Search />
     </>

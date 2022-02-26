@@ -117,12 +117,7 @@ function InviteUser({
       procUserError.delete(userId);
       updateUserProcError(getMapCopy(procUserError));
 
-      const result = await roomActions.create({
-        isPublic: false,
-        isEncrypted: true,
-        isDirect: true,
-        invite: [userId],
-      });
+      const result = await roomActions.createDM(userId);
       roomIdToUserId.set(result.room_id, userId);
       updateRoomIdToUserId(getMapCopy(roomIdToUserId));
     } catch (e) {

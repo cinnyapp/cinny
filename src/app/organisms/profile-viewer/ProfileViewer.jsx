@@ -200,11 +200,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     // Create new DM
     try {
       setIsCreatingDM(true);
-      await roomActions.create({
-        isEncrypted: true,
-        isDirect: true,
-        invite: [userId],
-      });
+      await roomActions.createDM(userId);
     } catch {
       if (isMountedRef.current === false) return;
       setIsCreatingDM(false);
