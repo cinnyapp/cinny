@@ -224,6 +224,17 @@ async function createRoom(opts) {
     });
   }
   if (parentId && joinRule === 'restricted') {
+    try {
+      const caps = await mx.getCapabilities();
+      options.room_version = caps
+        ?.['m.room_versions']
+        ?.['org.matrix.msc3244.room_capabilities']
+        ?.restricted
+        ?.preferred
+        || undefined;
+    } catch {
+      console.error('Can\'t find room version for restricted.');
+    }
     options.initial_state.push({
       type: 'm.room.join_rules',
       content: {

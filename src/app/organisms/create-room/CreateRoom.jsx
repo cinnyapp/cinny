@@ -51,13 +51,10 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
   useEffect(() => {
     const { roomList } = initMatrix;
     const onCreated = (roomId) => {
-      setJoinRule(false);
-      setIsEncrypted(true);
-      setIsValidAddress(null);
       setIsCreatingRoom(false);
       setCreatingError(null);
+      setIsValidAddress(null);
       setAddressValue(undefined);
-      setRoleIndex(0);
 
       if (!mx.getRoom(roomId)?.isSpaceRoom()) {
         selectRoom(roomId);
