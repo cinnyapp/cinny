@@ -1,5 +1,6 @@
 @use 'state';
 @use '../../partials/dir';
+@use '../../partials/text';
 
 .btn-surface,
 .btn-primary,
@@ -18,11 +19,16 @@
   cursor: pointer;
   @include state.disabled;
 
+  & .text {
+    @extend .cp-txt__ellipsis;
+  }
+  
   &--icon {
     @include dir.side(padding, var(--sp-tight), var(--sp-loose));
 
     .ic-raw {
       @include dir.side(margin, 0, var(--sp-extra-tight));
+      flex-shrink: 0;
     }
   }
 }
