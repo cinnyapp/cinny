@@ -5,10 +5,13 @@ import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { openSpaceSettings, openSpaceManage, openInviteUser } from '../../../client/action/navigation';
-import { leave, createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
+import { leave } from '../../../client/action/room';
+import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/accountData';
 
 import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
+import CategoryIC from '../../../../public/res/ic/outlined/category.svg';
+import CategoryFilledIC from '../../../../public/res/ic/filled/category.svg';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
@@ -20,7 +23,7 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
   const canInvite = room?.canInvite(mx.getUserId());
-  const isPinned = initMatrix.roomList.spaceShortcut.has(roomId);
+  const isPinned = initMatrix.accountData.spaceShortcut.has(roomId);
 
   const handleInviteClick = () => {
     openInviteUser(roomId);
@@ -31,7 +34,10 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
     else createSpaceShortcut(roomId);
     afterOptionSelect();
   };
-
+  const handleCategorizeClick = () => {
+    alert('categorize');
+    afterOptionSelect();
+  };
   const handleSettingsClick = () => {
     openSpaceSettings(roomId);
     afterOptionSelect();
@@ -51,6 +57,12 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
   return (
     <div style={{ maxWidth: 'calc(var(--navigation-drawer-width) - var(--sp-normal))' }}>
       <MenuHeader>{twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}</MenuHeader>
+      <MenuItem
+        onClick={handleCategorizeClick}
+        iconSrc={CategoryIC}
+      >
+        Categorize subspaces
+      </MenuItem>
       <MenuItem
         onClick={handlePinClick}
         iconSrc={isPinned ? PinFilledIC : PinIC}

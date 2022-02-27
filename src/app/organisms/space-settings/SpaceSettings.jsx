@@ -7,7 +7,8 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { leave, createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
+import { leave } from '../../../client/action/room';
+import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/accountData';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -51,7 +52,7 @@ const tabItems = [{
 }];
 
 function GeneralSettings({ roomId }) {
-  const isPinned = initMatrix.roomList.spaceShortcut.has(roomId);
+  const isPinned = initMatrix.accountData.spaceShortcut.has(roomId);
   const [, forceUpdate] = useForceUpdate();
 
   return (

@@ -7,7 +7,7 @@ const cons = {
     BASE_URL: 'cinny_hs_base_url',
   },
   DEVICE_DISPLAY_NAME: 'Cinny Web',
-  'in.cinny.spaces': 'in.cinny.spaces',
+  IN_CINNY_SPACES: 'in.cinny.spaces',
   tabs: {
     HOME: 'home',
     DIRECTS: 'dm',
@@ -51,6 +51,8 @@ const cons = {
       JOIN: 'JOIN',
       LEAVE: 'LEAVE',
       CREATE: 'CREATE',
+    },
+    accountData: {
       CREATE_SPACE_SHORTCUT: 'CREATE_SPACE_SHORTCUT',
       DELETE_SPACE_SHORTCUT: 'DELETE_SPACE_SHORTCUT',
     },
@@ -91,8 +93,10 @@ const cons = {
       ROOM_JOINED: 'ROOM_JOINED',
       ROOM_LEAVED: 'ROOM_LEAVED',
       ROOM_CREATED: 'ROOM_CREATED',
-      SPACE_SHORTCUT_UPDATED: 'SPACE_SHORTCUT_UPDATED',
       ROOM_PROFILE_UPDATED: 'ROOM_PROFILE_UPDATED',
+    },
+    accountData: {
+      SPACE_SHORTCUT_UPDATED: 'SPACE_SHORTCUT_UPDATED',
     },
     notifications: {
       NOTI_CHANGED: 'NOTI_CHANGED',

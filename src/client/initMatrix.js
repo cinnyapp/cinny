@@ -4,6 +4,7 @@ import * as sdk from 'matrix-js-sdk';
 
 import { secret } from './state/auth';
 import RoomList from './state/RoomList';
+import AccountData from './state/AccountData';
 import RoomsInput from './state/RoomsInput';
 import Notifications from './state/Notifications';
 import { initHotkeys } from './event/hotkeys';
@@ -62,6 +63,7 @@ class InitMatrix extends EventEmitter {
         global.initMatrix = this;
         if (prevState === null) {
           this.roomList = new RoomList(this.matrixClient);
+          this.accountData = new AccountData(this.roomList);
           this.roomsInput = new RoomsInput(this.matrixClient);
           this.notifications = new Notifications(this.roomList);
           initHotkeys();

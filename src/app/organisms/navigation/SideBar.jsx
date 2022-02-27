@@ -79,7 +79,7 @@ function useTotalInvites() {
 }
 
 function SideBar() {
-  const { roomList, notifications } = initMatrix;
+  const { roomList, accountData, notifications } = initMatrix;
   const mx = initMatrix.matrixClient;
 
   const [selectedTab] = useSelectedTab();
@@ -112,7 +112,7 @@ function SideBar() {
     let noti = null;
 
     orphans.forEach((roomId) => {
-      if (roomList.spaceShortcut.has(roomId)) return;
+      if (accountData.spaceShortcut.has(roomId)) return;
       if (!notifications.hasNoti(roomId)) return;
       if (noti === null) noti = { total: 0, highlight: 0 };
       const childNoti = notifications.getNoti(roomId);

@@ -298,24 +298,9 @@ async function setPowerLevel(roomId, userId, powerLevel) {
   return result;
 }
 
-function createSpaceShortcut(roomId) {
-  appDispatcher.dispatch({
-    type: cons.actions.room.CREATE_SPACE_SHORTCUT,
-    roomId,
-  });
-}
-
-function deleteSpaceShortcut(roomId) {
-  appDispatcher.dispatch({
-    type: cons.actions.room.DELETE_SPACE_SHORTCUT,
-    roomId,
-  });
-}
-
 export {
   join, leave,
   createDM, createRoom,
   invite, kick, ban, unban,
   setPowerLevel,
-  createSpaceShortcut, deleteSpaceShortcut,
 };
