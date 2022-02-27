@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
@@ -14,7 +14,6 @@ import { AtoZ } from './common';
 
 const drawerPostie = new Postie();
 function Home({ spaceId }) {
-  const [, forceUpdate] = useState({});
   const { roomList, notifications } = initMatrix;
   let spaceIds = [];
   let roomIds = [];
@@ -32,47 +31,38 @@ function Home({ spaceId }) {
       .filter((roomId) => !roomList.roomIdToParents.has(roomId)).sort(AtoZ);
   }
 
-  function selectorChanged(selectedRoomId, prevSelectedRoomId) {
-    if (!drawerPostie.hasTopic('selector-change')) return;
-    const addresses = [];
-    if (drawerPostie.hasSubscriber('selector-change', selectedRoomId)) addresses.push(selectedRoomId);
-    if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId)) addresses.push(prevSelectedRoomId);
-    if (addresses.length === 0) return;
-    drawerPostie.post('selector-change', addresses, selectedRoomId);
-  }
-  function notiChanged(roomId, total, prevTotal) {
-    if (total === prevTotal) return;
-    if (drawerPostie.hasTopicAndSubscriber('unread-change', roomId)) {
-      drawerPostie.post('unread-change', roomId);
-    }
-  }
-
-  function roomListUpdated() {
-    const { spaces, rooms, directs } = initMatrix.roomList;
-    if (!(
-      spaces.has(navigation.selectedRoomId)
-      || rooms.has(navigation.selectedRoomId)
-      || directs.has(navigation.selectedRoomId))
-    ) {
-      selectRoom(null);
-    }
-    forceUpdate({});
-  }
-
   useEffect(() => {
-    roomList.on(cons.events.roomList.ROOMLIST_UPDATED, roomListUpdated);
+    const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
+      if (!drawerPostie.hasTopic('selector-change')) return;
+      const addresses = [];
+      if (drawerPostie.hasSubscriber('selector-change', selectedRoomId)) addresses.push(selectedRoomId);
+      if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId)) addresses.push(prevSelectedRoomId);
+      if (addresses.length === 0) return;
+      drawerPostie.post('selector-change', addresses, selectedRoomId);
+    };
+
+    const notiChanged = (roomId, total, prevTotal) => {
+      if (total === prevTotal) return;
+      if (drawerPostie.hasTopicAndSubscriber('unread-change', roomId)) {
+        drawerPostie.post('unread-change', roomId);
+      }
+    };
+
     navigation.on(cons.events.navigation.ROOM_SELECTED, selectorChanged);
     notifications.on(cons.events.notifications.NOTI_CHANGED, notiChanged);
     return () => {
-      roomList.removeListener(cons.events.roomList.ROOMLIST_UPDATED, roomListUpdated);
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, selectorChanged);
       notifications.removeListener(cons.events.notifications.NOTI_CHANGED, notiChanged);
     };
   }, []);
 
+  const renderCatHeader = (name) => (
+    <Text className="cat-header" variant="b3" weight="bold">{name}</Text>
+  );
+
   return (
     <>
-      { spaceIds.length !== 0 && <Text className="cat-header" variant="b3" weight="bold">Spaces</Text> }
+      { spaceIds.length !== 0 && renderCatHeader('Spaces') }
       { spaceIds.map((id) => (
         <Selector
           key={id}
@@ -83,7 +73,7 @@ function Home({ spaceId }) {
         />
       ))}
 
-      { roomIds.length !== 0 && <Text className="cat-header" variant="b3" weight="bold">Rooms</Text> }
+      { roomIds.length !== 0 && renderCatHeader('Rooms') }
       { roomIds.map((id) => (
         <Selector
           key={id}
@@ -94,7 +84,9 @@ function Home({ spaceId }) {
         />
       )) }
 
-      { directIds.length !== 0 && <Text className="cat-header" variant="b3" weight="bold">People</Text> }
+      {}
+
+      { directIds.length !== 0 && renderCatHeader('People') }
       { directIds.map((id) => (
         <Selector
           key={id}

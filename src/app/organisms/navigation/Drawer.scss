@@ -64,8 +64,8 @@
   }
 
   & .cat-header {
-    margin: var(--sp-normal);
-    margin-bottom: var(--sp-extra-tight);
+    margin-top: var(--sp-extra-tight);
+    padding: var(--sp-extra-tight) var(--sp-normal);
     text-transform: uppercase;
   }
 }

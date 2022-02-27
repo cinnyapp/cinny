@@ -15,6 +15,8 @@ import SpaceOptions from '../../molecules/space-options/SpaceOptions';
 
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 
+import { useForceUpdate } from '../../hooks/useForceUpdate';
+
 function Selector({
   roomId, isDM, drawerPostie, onClick,
 }) {
@@ -24,19 +26,11 @@ function Selector({
   let imageSrc = room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
   if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
 
-  const [isSelected, setIsSelected] = useState(navigation.selectedRoomId === roomId);
-  const [, forceUpdate] = useState({});
-
-  function selectorChanged(selectedRoomId) {
-    setIsSelected(selectedRoomId === roomId);
-  }
-  function changeNotificationBadge() {
-    forceUpdate({});
-  }
+  const [, forceUpdate] = useForceUpdate();
 
   useEffect(() => {
-    drawerPostie.subscribe('selector-change', roomId, selectorChanged);
-    drawerPostie.subscribe('unread-change', roomId, changeNotificationBadge);
+    drawerPostie.subscribe('selector-change', roomId, forceUpdate);
+    drawerPostie.subscribe('unread-change', roomId, forceUpdate);
     return () => {
       drawerPostie.unsubscribe('selector-change', roomId);
       drawerPostie.unsubscribe('unread-change', roomId);
@@ -61,7 +55,7 @@ function Selector({
       roomId={roomId}
       imageSrc={isDM ? imageSrc : null}
       iconSrc={isDM ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())}
-      isSelected={isSelected}
+      isSelected={navigation.selectedRoomId === roomId}
       isUnread={noti.hasNoti(roomId)}
       notificationCount={abbreviateNumber(noti.getTotalNoti(roomId))}
       isAlert={noti.getHighlightNoti(roomId) !== 0}

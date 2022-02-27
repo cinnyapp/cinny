@@ -14,14 +14,17 @@ class AccountData extends EventEmitter {
     this._populateSpaceShortcut();
     this._listenEvents();
 
-    appDispatcher.register(this.roomActions.bind(this));
+    appDispatcher.register(this.accountActions.bind(this));
+  }
+
+  _getAccountData() {
+    return this.matrixClient.getAccountData(cons.IN_CINNY_SPACES)?.getContent() || {};
   }
 
   _populateSpaceShortcut() {
     this.spaceShortcut.clear();
-    const spacesContent = this.matrixClient.getAccountData(cons.IN_CINNY_SPACES)?.getContent();
+    const spacesContent = this._getAccountData();
 
-    if (!spacesContent) return;
     if (spacesContent?.shortcut === undefined) return;
 
     spacesContent.shortcut.forEach((shortcut) => {
@@ -35,12 +38,12 @@ class AccountData extends EventEmitter {
   }
 
   _updateSpaceShortcutData(shortcutList) {
-    const spaceContent = this.matrixClient.getAccountData(cons.IN_CINNY_SPACES)?.getContent() || {};
+    const spaceContent = this._getAccountData();
     spaceContent.shortcut = shortcutList;
     this.matrixClient.setAccountData(cons.IN_CINNY_SPACES, spaceContent);
   }
 
-  roomActions(action) {
+  accountActions(action) {
     const actions = {
       [cons.actions.accountData.CREATE_SPACE_SHORTCUT]: () => {
         if (this.spaceShortcut.has(action.roomId)) return;
