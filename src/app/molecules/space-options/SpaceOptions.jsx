@@ -6,7 +6,12 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import { openSpaceSettings, openSpaceManage, openInviteUser } from '../../../client/action/navigation';
 import { leave } from '../../../client/action/room';
-import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/accountData';
+import {
+  createSpaceShortcut,
+  deleteSpaceShortcut,
+  categorizeSpace,
+  unCategorizeSpace,
+} from '../../../client/action/accountData';
 
 import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
@@ -24,6 +29,7 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
   const room = mx.getRoom(roomId);
   const canInvite = room?.canInvite(mx.getUserId());
   const isPinned = initMatrix.accountData.spaceShortcut.has(roomId);
+  const isCategorized = initMatrix.accountData.categorizedSpaces.has(roomId);
 
   const handleInviteClick = () => {
     openInviteUser(roomId);
@@ -35,7 +41,8 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
     afterOptionSelect();
   };
   const handleCategorizeClick = () => {
-    alert('categorize');
+    if (isCategorized) unCategorizeSpace(roomId);
+    else categorizeSpace(roomId);
     afterOptionSelect();
   };
   const handleSettingsClick = () => {
@@ -59,9 +66,9 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
       <MenuHeader>{twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}</MenuHeader>
       <MenuItem
         onClick={handleCategorizeClick}
-        iconSrc={CategoryIC}
+        iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}
       >
-        Categorize subspaces
+        {isCategorized ? 'Uncategorize subspaces' : 'Categorize subspaces'}
       </MenuItem>
       <MenuItem
         onClick={handlePinClick}
