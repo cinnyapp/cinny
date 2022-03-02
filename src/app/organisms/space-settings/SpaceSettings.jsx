@@ -8,7 +8,12 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { leave } from '../../../client/action/room';
-import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/accountData';
+import {
+  createSpaceShortcut,
+  deleteSpaceShortcut,
+  categorizeSpace,
+  unCategorizeSpace,
+} from '../../../client/action/accountData';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -28,6 +33,8 @@ import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 import PinIC from '../../../../public/res/ic/outlined/pin.svg';
 import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
+import CategoryIC from '../../../../public/res/ic/outlined/category.svg';
+import CategoryFilledIC from '../../../../public/res/ic/filled/category.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
@@ -53,12 +60,23 @@ const tabItems = [{
 
 function GeneralSettings({ roomId }) {
   const isPinned = initMatrix.accountData.spaceShortcut.has(roomId);
+  const isCategorized = initMatrix.accountData.categorizedSpaces.has(roomId);
   const [, forceUpdate] = useForceUpdate();
 
   return (
     <>
       <div className="room-settings__card">
         <MenuHeader>Options</MenuHeader>
+        <MenuItem
+          onClick={() => {
+            if (isCategorized) unCategorizeSpace(roomId);
+            else categorizeSpace(roomId);
+            forceUpdate();
+          }}
+          iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}
+        >
+          {isCategorized ? 'Uncategorize subspaces' : 'Categorize subspaces'}
+        </MenuItem>
         <MenuItem
           onClick={() => {
             if (isPinned) deleteSpaceShortcut(roomId);
