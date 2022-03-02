@@ -12,6 +12,10 @@ class AccountData extends EventEmitter {
 
     this.spaceShortcut = new Set();
     this._populateSpaceShortcut();
+
+    this.categorizedSpaces = new Set();
+    this._populateCategorizedSpaces();
+
     this._listenEvents();
 
     appDispatcher.register(this.accountActions.bind(this));
@@ -43,6 +47,27 @@ class AccountData extends EventEmitter {
     this.matrixClient.setAccountData(cons.IN_CINNY_SPACES, spaceContent);
   }
 
+  _populateCategorizedSpaces() {
+    this.categorizedSpaces.clear();
+    const spaceContent = this._getAccountData();
+
+    if (spaceContent?.categorized === undefined) return;
+
+    spaceContent.categorized.forEach((spaceId) => {
+      if (this.spaces.has(spaceId)) this.categorizedSpaces.add(spaceId);
+    });
+    if (spaceContent.categorized.length !== this.categorizedSpaces.size) {
+      // TODO: we can wait for sync to complete or else we may end up removing valid space id
+      this._updateCategorizedSpacesData([...this.categorizedSpaces]);
+    }
+  }
+
+  _updateCategorizedSpacesData(categorizedSpaceList) {
+    const spaceContent = this._getAccountData();
+    spaceContent.categorized = categorizedSpaceList;
+    this.matrixClient.setAccountData(cons.IN_CINNY_SPACES, spaceContent);
+  }
+
   accountActions(action) {
     const actions = {
       [cons.actions.accountData.CREATE_SPACE_SHORTCUT]: () => {
@@ -57,6 +82,18 @@ class AccountData extends EventEmitter {
         this._updateSpaceShortcutData([...this.spaceShortcut]);
         this.emit(cons.events.accountData.SPACE_SHORTCUT_UPDATED, action.roomId);
       },
+      [cons.actions.accountData.CATEGORIZE_SPACE]: () => {
+        if (this.categorizedSpaces.has(action.roomId)) return;
+        this.categorizedSpaces.add(action.roomId);
+        this._updateCategorizedSpacesData([...this.categorizedSpaces]);
+        this.emit(cons.events.accountData.CATEGORIZE_SPACE_UPDATED, action.roomId);
+      },
+      [cons.actions.accountData.UNCATEGORIZE_SPACE]: () => {
+        if (!this.categorizedSpaces.has(action.roomId)) return;
+        this.categorizedSpaces.delete(action.roomId);
+        this._updateCategorizedSpacesData([...this.categorizedSpaces]);
+        this.emit(cons.events.accountData.CATEGORIZE_SPACE_UPDATED, action.roomId);
+      },
     };
     actions[action.type]?.();
   }
@@ -66,6 +103,8 @@ class AccountData extends EventEmitter {
       if (event.getType() !== cons.IN_CINNY_SPACES) return;
       this._populateSpaceShortcut();
       this.emit(cons.events.accountData.SPACE_SHORTCUT_UPDATED);
+      this._populateCategorizedSpaces();
+      this.emit(cons.events.accountData.CATEGORIZE_SPACE_UPDATED);
     });
 
     this.roomList.on(cons.events.roomList.ROOM_LEAVED, (roomId) => {
@@ -74,6 +113,11 @@ class AccountData extends EventEmitter {
         this.spaceShortcut.delete(roomId);
         this._updateSpaceShortcutData([...this.spaceShortcut]);
         this.emit(cons.events.accountData.SPACE_SHORTCUT_UPDATED, roomId);
+      }
+      if (this.categorizedSpaces.has(roomId)) {
+        this.categorizedSpaces.delete(roomId);
+        this._updateCategorizedSpacesData([...this.categorizedSpaces]);
+        this.emit(cons.events.accountData.CATEGORIZE_SPACE_UPDATED, roomId);
       }
     });
   }

@@ -14,3 +14,17 @@ export function deleteSpaceShortcut(roomId) {
     roomId,
   });
 }
+
+export function categorizeSpace(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.accountData.CATEGORIZE_SPACE,
+    roomId,
+  });
+}
+
+export function unCategorizeSpace(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.accountData.UNCATEGORIZE_SPACE,
+    roomId,
+  });
+}
