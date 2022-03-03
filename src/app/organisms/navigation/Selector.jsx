@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
@@ -29,11 +29,11 @@ function Selector({
   const [, forceUpdate] = useForceUpdate();
 
   useEffect(() => {
-    drawerPostie.subscribe('selector-change', roomId, forceUpdate);
-    drawerPostie.subscribe('unread-change', roomId, forceUpdate);
+    const unSub1 = drawerPostie.subscribe('selector-change', roomId, forceUpdate);
+    const unSub2 = drawerPostie.subscribe('unread-change', roomId, forceUpdate);
     return () => {
-      drawerPostie.unsubscribe('selector-change', roomId);
-      drawerPostie.unsubscribe('unread-change', roomId);
+      unSub1();
+      unSub2();
     };
   }, []);
 

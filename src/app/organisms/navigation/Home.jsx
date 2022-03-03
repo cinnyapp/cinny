@@ -4,31 +4,44 @@ import PropTypes from 'prop-types';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { selectSpace, selectRoom } from '../../../client/action/navigation';
 import Postie from '../../../util/Postie';
 
-import Text from '../../atoms/text/Text';
-import Selector from './Selector';
+import RoomsCategory from './RoomsCategory';
 
-import { AtoZ } from './common';
+import { useCategorizedSpaces } from '../../hooks/useCategorizedSpaces';
+import { AtoZ, RoomToDM } from './common';
 
 const drawerPostie = new Postie();
 function Home({ spaceId }) {
-  const { roomList, notifications } = initMatrix;
+  const mx = initMatrix.matrixClient;
+  const { roomList, notifications, accountData } = initMatrix;
+  const {
+    spaces, rooms, directs, roomIdToParents,
+  } = roomList;
+  const categorizedSpaces = useCategorizedSpaces();
+  const isCategorized = accountData.categorizedSpaces.has(spaceId);
+
+  let categories = null;
   let spaceIds = [];
   let roomIds = [];
   let directIds = [];
 
   const spaceChildIds = roomList.getSpaceChildren(spaceId);
   if (spaceChildIds) {
-    spaceIds = spaceChildIds.filter((roomId) => roomList.spaces.has(roomId)).sort(AtoZ);
-    roomIds = spaceChildIds.filter((roomId) => roomList.rooms.has(roomId)).sort(AtoZ);
-    directIds = spaceChildIds.filter((roomId) => roomList.directs.has(roomId)).sort(AtoZ);
+    spaceIds = spaceChildIds.filter((roomId) => spaces.has(roomId));
+    roomIds = spaceChildIds.filter((roomId) => rooms.has(roomId));
+    directIds = spaceChildIds.filter((roomId) => directs.has(roomId));
   } else {
-    spaceIds = [...roomList.spaces]
-      .filter((roomId) => !roomList.roomIdToParents.has(roomId)).sort(AtoZ);
-    roomIds = [...roomList.rooms]
-      .filter((roomId) => !roomList.roomIdToParents.has(roomId)).sort(AtoZ);
+    spaceIds = [...spaces].filter((roomId) => !roomIdToParents.has(roomId));
+    roomIds = [...rooms].filter((roomId) => !roomIdToParents.has(roomId));
+  }
+
+  spaceIds.sort(AtoZ);
+  roomIds.sort(AtoZ);
+  directIds.sort(AtoZ);
+
+  if (isCategorized) {
+    categories = roomList.getCategorizedSpaces(spaceIds);
   }
 
   useEffect(() => {
@@ -56,43 +69,27 @@ function Home({ spaceId }) {
     };
   }, []);
 
-  const renderCatHeader = (name) => (
-    <Text className="cat-header" variant="b3" weight="bold">{name}</Text>
-  );
-
   return (
     <>
-      { spaceIds.length !== 0 && renderCatHeader('Spaces') }
-      { spaceIds.map((id) => (
-        <Selector
-          key={id}
-          roomId={id}
-          isDM={false}
-          drawerPostie={drawerPostie}
-          onClick={() => selectSpace(id)}
-        />
-      ))}
+      { !isCategorized && spaceIds.length !== 0 && (
+        <RoomsCategory name="Spaces" roomIds={spaceIds} drawerPostie={drawerPostie} />
+      )}
 
-      { roomIds.length !== 0 && renderCatHeader('Rooms') }
-      { roomIds.map((id) => (
-        <Selector
-          key={id}
-          roomId={id}
-          isDM={false}
-          drawerPostie={drawerPostie}
-          onClick={() => selectRoom(id)}
-        />
-      )) }
+      { roomIds.length !== 0 && (
+        <RoomsCategory name="Rooms" roomIds={roomIds} drawerPostie={drawerPostie} />
+      )}
 
-      {}
+      { directIds.length !== 0 && (
+        <RoomsCategory name="People" roomIds={directIds} drawerPostie={drawerPostie} />
+      )}
 
-      { directIds.length !== 0 && renderCatHeader('People') }
-      { directIds.map((id) => (
-        <Selector
-          key={id}
-          roomId={id}
+      { isCategorized && [...categories].map(([catId, childIds]) => (
+        <RoomsCategory
+          key={catId}
+          spaceId={catId}
+          name={mx.getRoom(catId).name}
+          roomIds={[...childIds].sort(AtoZ).sort(RoomToDM)}
           drawerPostie={drawerPostie}
-          onClick={() => selectRoom(id)}
         />
       ))}
     </>

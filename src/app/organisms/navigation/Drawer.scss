@@ -53,19 +53,4 @@
       var(--bg-surface-low),
       var(--bg-surface-low-transparent));
   }
-
-  & > .room-selector {
-    width: calc(100% - var(--sp-extra-tight));
-    @include dir.side(margin, auto, 0);
-  }
-
-  & > .room-selector:first-child {
-    margin-top: var(--sp-extra-tight);
-  }
-
-  & .cat-header {
-    margin-top: var(--sp-extra-tight);
-    padding: var(--sp-extra-tight) var(--sp-normal);
-    text-transform: uppercase;
-  }
 }

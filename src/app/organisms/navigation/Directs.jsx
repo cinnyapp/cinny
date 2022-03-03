@@ -3,10 +3,9 @@ import React, { useEffect } from 'react';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { selectRoom } from '../../../client/action/navigation';
 import Postie from '../../../util/Postie';
 
-import Selector from './Selector';
+import RoomsCategory from './RoomsCategory';
 
 import { AtoZ } from './common';
 
@@ -40,14 +39,7 @@ function Directs() {
     };
   }, []);
 
-  return directIds.map((id) => (
-    <Selector
-      key={id}
-      roomId={id}
-      drawerPostie={drawerPostie}
-      onClick={() => selectRoom(id)}
-    />
-  ));
+  return <RoomsCategory name="People" hideHeader roomIds={directIds} drawerPostie={drawerPostie} />;
 }
 
 export default Directs;
