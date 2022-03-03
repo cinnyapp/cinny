@@ -13,6 +13,7 @@ import DrawerBreadcrumb from './DrawerBreadcrumb';
 import Home from './Home';
 import Directs from './Directs';
 
+import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { useSelectedTab } from '../../hooks/useSelectedTab';
 import { useSelectedSpace } from '../../hooks/useSelectedSpace';
 
@@ -39,7 +40,16 @@ function Drawer() {
   const [systemState] = useSystemState();
   const [selectedTab] = useSelectedTab();
   const [spaceId] = useSelectedSpace();
+  const [, forceUpdate] = useForceUpdate();
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const { roomList } = initMatrix;
+    roomList.on(cons.events.roomList.ROOMLIST_UPDATED, forceUpdate);
+    return () => {
+      roomList.removeListener(cons.events.roomList.ROOMLIST_UPDATED, forceUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     requestAnimationFrame(() => {
