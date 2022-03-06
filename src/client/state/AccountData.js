@@ -71,8 +71,15 @@ class AccountData extends EventEmitter {
   accountActions(action) {
     const actions = {
       [cons.actions.accountData.CREATE_SPACE_SHORTCUT]: () => {
-        if (this.spaceShortcut.has(action.roomId)) return;
-        this.spaceShortcut.add(action.roomId);
+        const addRoomId = (id) => {
+          if (this.spaceShortcut.has(id)) return;
+          this.spaceShortcut.add(id);
+        };
+        if (Array.isArray(action.roomId)) {
+          action.roomId.forEach(addRoomId);
+        } else {
+          addRoomId(action.roomId);
+        }
         this._updateSpaceShortcutData([...this.spaceShortcut]);
         this.emit(cons.events.accountData.SPACE_SHORTCUT_UPDATED, action.roomId);
       },
