@@ -96,6 +96,7 @@ export function hasDMWith(userId) {
 export function joinRuleToIconSrc(joinRule, isSpace) {
   return ({
     restricted: () => (isSpace ? SpaceIC : HashIC),
+    knock: () => (isSpace ? SpaceLockIC : HashLockIC),
     invite: () => (isSpace ? SpaceLockIC : HashLockIC),
     public: () => (isSpace ? SpaceGlobeIC : HashGlobeIC),
   }[joinRule]?.() || null);
