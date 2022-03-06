@@ -106,6 +106,9 @@ class Navigation extends EventEmitter {
           action.tabText,
         );
       },
+      [cons.actions.navigation.OPEN_SHORTCUT_SPACES]: () => {
+        this.emit(cons.events.navigation.SHORTCUT_SPACES_OPENED);
+      },
       [cons.actions.navigation.OPEN_INVITE_LIST]: () => {
         this.emit(cons.events.navigation.INVITE_LIST_OPENED);
       },

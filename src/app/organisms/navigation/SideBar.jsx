@@ -5,8 +5,8 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import colorMXID from '../../../util/colorMXID';
 import {
-  selectTab, openInviteList, openSearch,
-  openSettings, openReusableContextMenu,
+  selectTab, openShortcutSpaces, openInviteList,
+  openSearch, openSettings, openReusableContextMenu,
 } from '../../../client/action/navigation';
 import { abbreviateNumber, getEventCords } from '../../../util/common';
 
@@ -16,6 +16,7 @@ import SpaceOptions from '../../molecules/space-options/SpaceOptions';
 
 import HomeIC from '../../../../public/res/ic/outlined/home.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
+import AddPinIC from '../../../../public/res/ic/outlined/add-pin.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import InviteIC from '../../../../public/res/ic/outlined/invite.svg';
 
@@ -190,6 +191,11 @@ function SideBar() {
                   );
                 })
               }
+              <SidebarAvatar
+                onClick={() => openShortcutSpaces()}
+                tooltip="Pin spaces"
+                iconSrc={AddPinIC}
+              />
             </div>
           </div>
         </ScrollView>
