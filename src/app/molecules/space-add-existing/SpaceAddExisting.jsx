@@ -124,7 +124,7 @@ function SpaceAddExistingContent({ roomId }) {
         />
         <IconButton size="small" type="button" onClick={handleSearchClear} src={CrossIC} />
       </form>
-      {searchIds?.length === 0 && <Text>No result found</Text>}
+      {searchIds?.length === 0 && <Text>No results found</Text>}
       {
         (searchIds || allRoomIds).map((rId) => {
           const room = mx.getRoom(rId);

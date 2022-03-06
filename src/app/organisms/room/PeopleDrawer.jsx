@@ -195,7 +195,7 @@ function PeopleDrawer({ roomId }) {
                 (searchedMembers?.data.length === 0 || memberList.length === 0)
                 && (
                   <div className="people-drawer__noresult">
-                    <Text variant="b2">No result found!</Text>
+                    <Text variant="b2">No results found!</Text>
                   </div>
                 )
               }

@@ -164,7 +164,7 @@ function RoomSearch({ roomId }) {
 
         {!isRoomEncrypted && searchData?.results.length === 0 && (
           <div className="room-search__help">
-            <Text>No result found</Text>
+            <Text>No results found</Text>
           </div>
         )}
         {isRoomEncrypted && (
