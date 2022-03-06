@@ -87,7 +87,7 @@ function getTimelineJSXMessages() {
       return (
         <>
           <b>{twemojify(user)}</b>
-          {' set the avatar'}
+          {' set a avatar'}
         </>
       );
     },
@@ -95,7 +95,7 @@ function getTimelineJSXMessages() {
       return (
         <>
           <b>{twemojify(user)}</b>
-          {' changed the avatar'}
+          {' changed their avatar'}
         </>
       );
     },
@@ -103,7 +103,7 @@ function getTimelineJSXMessages() {
       return (
         <>
           <b>{twemojify(user)}</b>
-          {' removed the avatar'}
+          {' removed their avatar'}
         </>
       );
     },
@@ -111,7 +111,7 @@ function getTimelineJSXMessages() {
       return (
         <>
           <b>{twemojify(user)}</b>
-          {' set the display name to '}
+          {' set display name to '}
           <b>{twemojify(newName)}</b>
         </>
       );
@@ -120,7 +120,7 @@ function getTimelineJSXMessages() {
       return (
         <>
           <b>{twemojify(user)}</b>
-          {' changed the display name to '}
+          {' changed their display name to '}
           <b>{twemojify(newName)}</b>
         </>
       );
@@ -129,7 +129,7 @@ function getTimelineJSXMessages() {
       return (
         <>
           <b>{twemojify(user)}</b>
-          {' removed the display name '}
+          {' removed their display name '}
           <b>{twemojify(lastName)}</b>
         </>
       );
