@@ -46,6 +46,9 @@
     @extend .cp-fx__item-one;
   }
 
+  .room-selector {
+    margin: 0 var(--sp-extra-tight);
+  }
   .room-selector__options {
     display: flex;
     margin: 0 10px;
