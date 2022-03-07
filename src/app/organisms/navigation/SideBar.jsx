@@ -10,6 +10,8 @@ import {
 } from '../../../client/action/navigation';
 import { abbreviateNumber, getEventCords } from '../../../util/common';
 
+import Avatar from '../../atoms/avatar/Avatar';
+import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import SidebarAvatar from '../../molecules/sidebar-avatar/SidebarAvatar';
 import SpaceOptions from '../../molecules/space-options/SpaceOptions';
@@ -52,9 +54,14 @@ function ProfileAvatarMenu() {
     <SidebarAvatar
       onClick={openSettings}
       tooltip={profile.displayName}
-      imageSrc={profile.avatarUrl !== null ? mx.mxcUrlToHttp(profile.avatarUrl, 42, 42, 'crop') : null}
-      bgColor={colorMXID(mx.getUserId())}
-      text={profile.displayName}
+      avatar={(
+        <Avatar
+          text={profile.displayName}
+          bgColor={colorMXID(mx.getUserId())}
+          size="normal"
+          imageSrc={profile.avatarUrl !== null ? mx.mxcUrlToHttp(profile.avatarUrl, 42, 42, 'crop') : null}
+        />
+      )}
     />
   );
 }
@@ -150,22 +157,28 @@ function SideBar() {
           <div className="scrollable-content">
             <div className="featured-container">
               <SidebarAvatar
+                tooltip="Home"
                 active={selectedTab === cons.tabs.HOME}
                 onClick={() => selectTab(cons.tabs.HOME)}
-                tooltip="Home"
-                iconSrc={HomeIC}
-                isUnread={homeNoti !== null}
-                notificationCount={homeNoti !== null ? abbreviateNumber(homeNoti.total) : 0}
-                isAlert={homeNoti?.highlight > 0}
+                avatar={<Avatar iconSrc={HomeIC} size="normal" />}
+                notificationBadge={homeNoti ? (
+                  <NotificationBadge
+                    alert={homeNoti?.highlight > 0}
+                    content={abbreviateNumber(homeNoti.total) || null}
+                  />
+                ) : null}
               />
               <SidebarAvatar
+                tooltip="People"
                 active={selectedTab === cons.tabs.DIRECTS}
                 onClick={() => selectTab(cons.tabs.DIRECTS)}
-                tooltip="People"
-                iconSrc={UserIC}
-                isUnread={dmsNoti !== null}
-                notificationCount={dmsNoti !== null ? abbreviateNumber(dmsNoti.total) : 0}
-                isAlert={dmsNoti?.highlight > 0}
+                avatar={<Avatar iconSrc={UserIC} size="normal" />}
+                notificationBadge={dmsNoti ? (
+                  <NotificationBadge
+                    alert={dmsNoti?.highlight > 0}
+                    content={abbreviateNumber(dmsNoti.total) || null}
+                  />
+                ) : null}
               />
             </div>
             <div className="sidebar-divider" />
@@ -179,22 +192,30 @@ function SideBar() {
                       active={selectedTab === sRoomId}
                       key={sRoomId}
                       tooltip={room.name}
-                      bgColor={colorMXID(room.roomId)}
-                      imageSrc={room.getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop') || null}
-                      text={room.name}
-                      isUnread={notifications.hasNoti(sRoomId)}
-                      notificationCount={abbreviateNumber(notifications.getTotalNoti(sRoomId))}
-                      isAlert={notifications.getHighlightNoti(sRoomId) !== 0}
                       onClick={() => selectTab(shortcut)}
                       onContextMenu={(e) => openSpaceOptions(e, sRoomId)}
+                      avatar={(
+                        <Avatar
+                          text={room.name}
+                          bgColor={colorMXID(room.roomId)}
+                          size="normal"
+                          imageSrc={room.getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop') || null}
+                        />
+                      )}
+                      notificationBadge={notifications.hasNoti(sRoomId) ? (
+                        <NotificationBadge
+                          alert={notifications.getHighlightNoti(sRoomId) > 0}
+                          content={abbreviateNumber(notifications.getTotalNoti(sRoomId)) || null}
+                        />
+                      ) : null}
                     />
                   );
                 })
               }
               <SidebarAvatar
-                onClick={() => openShortcutSpaces()}
                 tooltip="Pin spaces"
-                iconSrc={AddPinIC}
+                onClick={() => openShortcutSpaces()}
+                avatar={<Avatar iconSrc={AddPinIC} size="normal" />}
               />
             </div>
           </div>
@@ -204,18 +225,16 @@ function SideBar() {
         <div className="sidebar-divider" />
         <div className="sticky-container">
           <SidebarAvatar
-            onClick={() => openSearch()}
             tooltip="Search"
-            iconSrc={SearchIC}
+            onClick={() => openSearch()}
+            avatar={<Avatar iconSrc={SearchIC} size="normal" />}
           />
           { totalInvites !== 0 && (
             <SidebarAvatar
-              isUnread
-              notificationCount={totalInvites}
-              isAlert
-              onClick={() => openInviteList()}
               tooltip="Invites"
-              iconSrc={InviteIC}
+              onClick={() => openInviteList()}
+              avatar={<Avatar iconSrc={InviteIC} size="normal" />}
+              notificationBadge={<NotificationBadge alert content={totalInvites} />}
             />
           )}
           <ProfileAvatarMenu />
