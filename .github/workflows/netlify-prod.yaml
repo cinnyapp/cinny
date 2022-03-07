@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - uses: jsmrcaga/action-netlify-deploy@v1.7.2
         with:
           install_command: "npm ci"

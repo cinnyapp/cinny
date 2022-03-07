@@ -10,7 +10,7 @@ jobs:
         env:
           PR_NUMBER: ${{github.event.number}}
         steps:
-            - uses: actions/checkout@v2.4.0
+            - uses: actions/checkout@v3
             - name: Build
               run: npm ci && npm run build
             - name: Upload Artifact
