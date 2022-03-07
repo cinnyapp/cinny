@@ -14,7 +14,7 @@ jobs:
             - name: Build
               run: npm ci && npm run build
             - name: Upload Artifact
-              uses: actions/upload-artifact@v2.3.1
+              uses: actions/upload-artifact@v3
               with:
                   name: previewbuild
                   path: dist
@@ -25,7 +25,7 @@ jobs:
                     var fs = require('fs');
                     fs.writeFileSync('${{github.workspace}}/pr.json', JSON.stringify(context.payload.pull_request));
             - name: Upload PR Info
-              uses: actions/upload-artifact@v2.3.1
+              uses: actions/upload-artifact@v3
               with:
                   name: pr.json
                   path: pr.json
