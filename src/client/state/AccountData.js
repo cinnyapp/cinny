@@ -89,6 +89,17 @@ class AccountData extends EventEmitter {
         this._updateSpaceShortcutData([...this.spaceShortcut]);
         this.emit(cons.events.accountData.SPACE_SHORTCUT_UPDATED, action.roomId);
       },
+      [cons.actions.accountData.MOVE_SPACE_SHORTCUTS]: () => {
+        const { roomId, toIndex } = action;
+        if (!this.spaceShortcut.has(roomId)) return;
+        this.spaceShortcut.delete(roomId);
+        const ssList = [...this.spaceShortcut];
+        if (toIndex >= ssList.length) ssList.push(roomId);
+        else ssList.splice(toIndex, 0, roomId);
+        this.spaceShortcut = new Set(ssList);
+        this._updateSpaceShortcutData(ssList);
+        this.emit(cons.events.accountData.SPACE_SHORTCUT_UPDATED, roomId);
+      },
       [cons.actions.accountData.CATEGORIZE_SPACE]: () => {
         if (this.categorizedSpaces.has(action.roomId)) return;
         this.categorizedSpaces.add(action.roomId);

@@ -18,6 +18,14 @@ export function deleteSpaceShortcut(roomId) {
   });
 }
 
+export function moveSpaceShortcut(roomId, toIndex) {
+  appDispatcher.dispatch({
+    type: cons.actions.accountData.MOVE_SPACE_SHORTCUTS,
+    roomId,
+    toIndex,
+  });
+}
+
 export function categorizeSpace(roomId) {
   appDispatcher.dispatch({
     type: cons.actions.accountData.CATEGORIZE_SPACE,
