@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import './SideBar.scss';
+
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -8,6 +12,7 @@ import {
   selectTab, openShortcutSpaces, openInviteList,
   openSearch, openSettings, openReusableContextMenu,
 } from '../../../client/action/navigation';
+import { moveSpaceShortcut } from '../../../client/action/accountData';
 import { abbreviateNumber, getEventCords } from '../../../util/common';
 
 import Avatar from '../../atoms/avatar/Avatar';
@@ -23,7 +28,21 @@ import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import InviteIC from '../../../../public/res/ic/outlined/invite.svg';
 
 import { useSelectedTab } from '../../hooks/useSelectedTab';
-import { useSpaceShortcut } from '../../hooks/useSpaceShortcut';
+
+function useNotificationUpdate() {
+  const { notifications } = initMatrix;
+  const [, forceUpdate] = useState({});
+  useEffect(() => {
+    function onNotificationChanged(roomId, total, prevTotal) {
+      if (total === prevTotal) return;
+      forceUpdate({});
+    }
+    notifications.on(cons.events.notifications.NOTI_CHANGED, onNotificationChanged);
+    return () => {
+      notifications.removeListener(cons.events.notifications.NOTI_CHANGED, onNotificationChanged);
+    };
+  }, []);
+}
 
 function ProfileAvatarMenu() {
   const mx = initMatrix.matrixClient;
@@ -66,54 +85,10 @@ function ProfileAvatarMenu() {
   );
 }
 
-function useTotalInvites() {
-  const { roomList } = initMatrix;
-  const totalInviteCount = () => roomList.inviteRooms.size
-    + roomList.inviteSpaces.size
-    + roomList.inviteDirects.size;
-  const [totalInvites, updateTotalInvites] = useState(totalInviteCount());
-
-  useEffect(() => {
-    const onInviteListChange = () => {
-      updateTotalInvites(totalInviteCount());
-    };
-    roomList.on(cons.events.roomList.INVITELIST_UPDATED, onInviteListChange);
-    return () => {
-      roomList.removeListener(cons.events.roomList.INVITELIST_UPDATED, onInviteListChange);
-    };
-  }, []);
-
-  return [totalInvites];
-}
-
-function SideBar() {
+function FeaturedTab() {
   const { roomList, accountData, notifications } = initMatrix;
-  const mx = initMatrix.matrixClient;
-
   const [selectedTab] = useSelectedTab();
-  const [spaceShortcut] = useSpaceShortcut();
-  const [totalInvites] = useTotalInvites();
-  const [, forceUpdate] = useState({});
-
-  useEffect(() => {
-    function onNotificationChanged(roomId, total, prevTotal) {
-      if (total === prevTotal) return;
-      forceUpdate({});
-    }
-    notifications.on(cons.events.notifications.NOTI_CHANGED, onNotificationChanged);
-    return () => {
-      notifications.removeListener(cons.events.notifications.NOTI_CHANGED, onNotificationChanged);
-    };
-  }, []);
-
-  const openSpaceOptions = (e, spaceId) => {
-    e.preventDefault();
-    openReusableContextMenu(
-      'right',
-      getEventCords(e, '.sidebar-avatar'),
-      (closeMenu) => <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />,
-    );
-  };
+  useNotificationUpdate();
 
   function getHomeNoti() {
     const orphans = roomList.getOrphans();
@@ -145,10 +120,207 @@ function SideBar() {
     return noti;
   }
 
-  // TODO: bellow operations are heavy.
-  // refactor this component into more smaller components.
   const dmsNoti = getDMsNoti();
   const homeNoti = getHomeNoti();
+
+  return (
+    <>
+      <SidebarAvatar
+        tooltip="Home"
+        active={selectedTab === cons.tabs.HOME}
+        onClick={() => selectTab(cons.tabs.HOME)}
+        avatar={<Avatar iconSrc={HomeIC} size="normal" />}
+        notificationBadge={homeNoti ? (
+          <NotificationBadge
+            alert={homeNoti?.highlight > 0}
+            content={abbreviateNumber(homeNoti.total) || null}
+          />
+        ) : null}
+      />
+      <SidebarAvatar
+        tooltip="People"
+        active={selectedTab === cons.tabs.DIRECTS}
+        onClick={() => selectTab(cons.tabs.DIRECTS)}
+        avatar={<Avatar iconSrc={UserIC} size="normal" />}
+        notificationBadge={dmsNoti ? (
+          <NotificationBadge
+            alert={dmsNoti?.highlight > 0}
+            content={abbreviateNumber(dmsNoti.total) || null}
+          />
+        ) : null}
+      />
+    </>
+  );
+}
+
+function DraggableSpaceShortcut({
+  isActive, spaceId, index, moveShortcut, onDrop,
+}) {
+  const mx = initMatrix.matrixClient;
+  const { notifications } = initMatrix;
+  const room = mx.getRoom(spaceId);
+  const shortcutRef = useRef(null);
+  const avatarRef = useRef(null);
+
+  const openSpaceOptions = (e, sId) => {
+    e.preventDefault();
+    openReusableContextMenu(
+      'right',
+      getEventCords(e, '.sidebar-avatar'),
+      (closeMenu) => <SpaceOptions roomId={sId} afterOptionSelect={closeMenu} />,
+    );
+  };
+
+  const [, drop] = useDrop({
+    accept: 'SPACE_SHORTCUT',
+    collect(monitor) {
+      return {
+        handlerId: monitor.getHandlerId(),
+      };
+    },
+    drop(item) {
+      onDrop(item.index, item.spaceId);
+    },
+    hover(item, monitor) {
+      if (!shortcutRef.current) return;
+
+      const dragIndex = item.index;
+      const hoverIndex = index;
+      if (dragIndex === hoverIndex) return;
+
+      const hoverBoundingRect = shortcutRef.current?.getBoundingClientRect();
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const clientOffset = monitor.getClientOffset();
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return;
+      }
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return;
+      }
+      moveShortcut(dragIndex, hoverIndex);
+      // eslint-disable-next-line no-param-reassign
+      item.index = hoverIndex;
+    },
+  });
+  const [{ isDragging }, drag] = useDrag({
+    type: 'SPACE_SHORTCUT',
+    item: () => ({ spaceId, index }),
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  drag(avatarRef);
+  drop(shortcutRef);
+
+  if (shortcutRef.current) {
+    if (isDragging) shortcutRef.current.style.opacity = 0;
+    else shortcutRef.current.style.opacity = 1;
+  }
+
+  return (
+    <SidebarAvatar
+      ref={shortcutRef}
+      active={isActive}
+      tooltip={room.name}
+      onClick={() => selectTab(spaceId)}
+      onContextMenu={(e) => openSpaceOptions(e, spaceId)}
+      avatar={(
+        <Avatar
+          ref={avatarRef}
+          text={room.name}
+          bgColor={colorMXID(room.roomId)}
+          size="normal"
+          imageSrc={room.getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop') || null}
+        />
+      )}
+      notificationBadge={notifications.hasNoti(spaceId) ? (
+        <NotificationBadge
+          alert={notifications.getHighlightNoti(spaceId) > 0}
+          content={abbreviateNumber(notifications.getTotalNoti(spaceId)) || null}
+        />
+      ) : null}
+    />
+  );
+}
+
+DraggableSpaceShortcut.propTypes = {
+  spaceId: PropTypes.string.isRequired,
+  isActive: PropTypes.bool.isRequired,
+  index: PropTypes.number.isRequired,
+  moveShortcut: PropTypes.func.isRequired,
+  onDrop: PropTypes.func.isRequired,
+};
+
+function SpaceShortcut() {
+  const { accountData } = initMatrix;
+  const [selectedTab] = useSelectedTab();
+  useNotificationUpdate();
+  const [spaceShortcut, setSpaceShortcut] = useState([...accountData.spaceShortcut]);
+
+  useEffect(() => {
+    const handleShortcut = () => setSpaceShortcut([...accountData.spaceShortcut]);
+    accountData.on(cons.events.accountData.SPACE_SHORTCUT_UPDATED, handleShortcut);
+    return () => {
+      accountData.removeListener(cons.events.accountData.SPACE_SHORTCUT_UPDATED, handleShortcut);
+    };
+  }, []);
+
+  const moveShortcut = (dragIndex, hoverIndex) => {
+    const dragSpaceId = spaceShortcut[dragIndex];
+    const newShortcuts = [...spaceShortcut];
+    newShortcuts.splice(dragIndex, 1);
+    newShortcuts.splice(hoverIndex, 0, dragSpaceId);
+    setSpaceShortcut(newShortcuts);
+  };
+
+  const handleDrop = (dragIndex, dragSpaceId) => {
+    if ([...accountData.spaceShortcut][dragIndex] === dragSpaceId) return;
+    moveSpaceShortcut(dragSpaceId, dragIndex);
+  };
+
+  return (
+    <DndProvider backend={HTML5Backend}>
+      {
+        spaceShortcut.map((shortcut, index) => (
+          <DraggableSpaceShortcut
+            key={shortcut}
+            index={index}
+            spaceId={shortcut}
+            isActive={selectedTab === shortcut}
+            moveShortcut={moveShortcut}
+            onDrop={handleDrop}
+          />
+        ))
+      }
+    </DndProvider>
+  );
+}
+
+function useTotalInvites() {
+  const { roomList } = initMatrix;
+  const totalInviteCount = () => roomList.inviteRooms.size
+    + roomList.inviteSpaces.size
+    + roomList.inviteDirects.size;
+  const [totalInvites, updateTotalInvites] = useState(totalInviteCount());
+
+  useEffect(() => {
+    const onInviteListChange = () => {
+      updateTotalInvites(totalInviteCount());
+    };
+    roomList.on(cons.events.roomList.INVITELIST_UPDATED, onInviteListChange);
+    return () => {
+      roomList.removeListener(cons.events.roomList.INVITELIST_UPDATED, onInviteListChange);
+    };
+  }, []);
+
+  return [totalInvites];
+}
+
+function SideBar() {
+  const [totalInvites] = useTotalInvites();
 
   return (
     <div className="sidebar">
@@ -156,62 +328,11 @@ function SideBar() {
         <ScrollView invisible>
           <div className="scrollable-content">
             <div className="featured-container">
-              <SidebarAvatar
-                tooltip="Home"
-                active={selectedTab === cons.tabs.HOME}
-                onClick={() => selectTab(cons.tabs.HOME)}
-                avatar={<Avatar iconSrc={HomeIC} size="normal" />}
-                notificationBadge={homeNoti ? (
-                  <NotificationBadge
-                    alert={homeNoti?.highlight > 0}
-                    content={abbreviateNumber(homeNoti.total) || null}
-                  />
-                ) : null}
-              />
-              <SidebarAvatar
-                tooltip="People"
-                active={selectedTab === cons.tabs.DIRECTS}
-                onClick={() => selectTab(cons.tabs.DIRECTS)}
-                avatar={<Avatar iconSrc={UserIC} size="normal" />}
-                notificationBadge={dmsNoti ? (
-                  <NotificationBadge
-                    alert={dmsNoti?.highlight > 0}
-                    content={abbreviateNumber(dmsNoti.total) || null}
-                  />
-                ) : null}
-              />
+              <FeaturedTab />
             </div>
             <div className="sidebar-divider" />
             <div className="space-container">
-              {
-                spaceShortcut.map((shortcut) => {
-                  const sRoomId = shortcut;
-                  const room = mx.getRoom(sRoomId);
-                  return (
-                    <SidebarAvatar
-                      active={selectedTab === sRoomId}
-                      key={sRoomId}
-                      tooltip={room.name}
-                      onClick={() => selectTab(shortcut)}
-                      onContextMenu={(e) => openSpaceOptions(e, sRoomId)}
-                      avatar={(
-                        <Avatar
-                          text={room.name}
-                          bgColor={colorMXID(room.roomId)}
-                          size="normal"
-                          imageSrc={room.getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop') || null}
-                        />
-                      )}
-                      notificationBadge={notifications.hasNoti(sRoomId) ? (
-                        <NotificationBadge
-                          alert={notifications.getHighlightNoti(sRoomId) > 0}
-                          content={abbreviateNumber(notifications.getTotalNoti(sRoomId)) || null}
-                        />
-                      ) : null}
-                    />
-                  );
-                })
-              }
+              <SpaceShortcut />
               <SidebarAvatar
                 tooltip="Pin spaces"
                 onClick={() => openShortcutSpaces()}
