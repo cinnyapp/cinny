@@ -10,16 +10,16 @@ import RawIcon from '../system-icons/RawIcon';
 import ImageBrokenSVG from '../../../../public/res/svg/image-broken.svg';
 import { avatarInitials } from '../../../util/common';
 
-function Avatar({
+const Avatar = React.forwardRef(({
   text, bgColor, iconSrc, iconColor, imageSrc, size,
-}) {
+}, ref) => {
   let textSize = 's1';
   if (size === 'large') textSize = 'h1';
   if (size === 'small') textSize = 'b1';
   if (size === 'extra-small') textSize = 'b3';
 
   return (
-    <div className={`avatar-container avatar-container__${size} noselect`}>
+    <div ref={ref} className={`avatar-container avatar-container__${size} noselect`}>
       {
         imageSrc !== null
           ? (
@@ -50,7 +50,7 @@ function Avatar({
       }
     </div>
   );
-}
+});
 
 Avatar.defaultProps = {
   text: null,
