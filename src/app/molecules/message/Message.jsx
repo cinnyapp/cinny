@@ -201,10 +201,10 @@ const MessageBody = React.memo(({
     // Count the number of emojis
     const nEmojis = content.filter((e) => e.type === 'img').length;
 
-    // Make sure there's no text besides whitespace
+    // Make sure there's no text besides whitespace and variation selector U+FE0F
     if (nEmojis <= 10 && content.every((element) => (
       (typeof element === 'object' && element.type === 'img')
-      || (typeof element === 'string' && /^\s*$/g.test(element))
+      || (typeof element === 'string' && /^[\s\ufe0f]*$/g.test(element))
     ))) {
       emojiOnly = true;
     }
