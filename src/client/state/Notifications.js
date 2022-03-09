@@ -6,6 +6,8 @@ import cons from './cons';
 import navigation from './navigation';
 import settings from './settings';
 
+import NotificationSound from '../../../public/notification.ogg';
+
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
   if (!cons.supportEventTypes.includes(eType)) return false;
@@ -213,10 +215,16 @@ class Notifications extends EventEmitter {
       scale: 8,
     });
 
+    const sound = true;
+
     const noti = new window.Notification(title, {
       body: mEvent.getContent().body,
       icon,
+      silent: sound,
     });
+    if (sound) {
+      noti.onshow = () => new Audio(NotificationSound).play();
+    }
     noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
   }
 
