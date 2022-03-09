@@ -7,7 +7,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import {
   toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
-  toggleNotifications,
+  toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
 import logout from '../../../client/action/logout';
 import { usePermission } from '../../hooks/usePermission';
@@ -158,6 +158,18 @@ function NotificationsSection() {
         options={renderOptions()}
         content={<Text variant="b3">Show notifications when new messages arrive.</Text>}
       />
+      {settings.showNotifications && (
+        <SettingTile
+          title="Play notification sounds"
+          options={(
+            <Toggle
+              isActive={settings.isNotificationSounds}
+              onToggle={() => { toggleNotificationSounds(); updateState({}); }}
+            />
+          )}
+          content={<Text variant="b3">Play a sound when a new message arrive.</Text>}
+        />
+      )}
     </div>
   );
 }
@@ -200,7 +212,7 @@ function AboutSection() {
       <div className="set-about__branding">
         <img width="60" height="60" src={CinnySVG} alt="Cinny logo" />
         <div>
-          <Text variant="h2" weight='medium'>
+          <Text variant="h2" weight="medium">
             Cinny
             <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>{`v${cons.version}`}</span>
           </Text>

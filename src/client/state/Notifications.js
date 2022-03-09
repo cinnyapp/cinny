@@ -215,14 +215,12 @@ class Notifications extends EventEmitter {
       scale: 8,
     });
 
-    const sound = true;
-
     const noti = new window.Notification(title, {
       body: mEvent.getContent().body,
       icon,
-      silent: sound,
+      silent: settings.isNotificationSounds,
     });
-    if (sound) {
+    if (settings.isNotificationSounds) {
       noti.onshow = () => new Audio(NotificationSound).play();
     }
     noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
