@@ -21,6 +21,7 @@ import Input from '../../atoms/input/Input';
 import ScrollView from '../../atoms/scroll/ScrollView';
 
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
+import HeartIC from '../../../../public/res/ic/outlined/heart.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import DogIC from '../../../../public/res/ic/outlined/dog.svg';
 import CupIC from '../../../../public/res/ic/outlined/cup.svg';
@@ -193,6 +194,8 @@ function EmojiBoard({ onSelect, searchRef }) {
   const [availableEmojis, setAvailableEmojis] = useState([]);
   const [recentEmojis, setRecentEmojis] = useState([]);
 
+  const recentOffset = recentEmojis.length > 0 ? 1 : 0;
+
   useEffect(() => {
     const updateAvailableEmoji = (selectedRoomId) => {
       if (!selectedRoomId) {
@@ -237,7 +240,7 @@ function EmojiBoard({ onSelect, searchRef }) {
     const $emojiContent = scrollEmojisRef.current.firstElementChild;
     const groupCount = $emojiContent.childElementCount;
     if (groupCount > emojiGroups.length) {
-      tabIndex += groupCount - emojiGroups.length - availableEmojis.length;
+      tabIndex += groupCount - emojiGroups.length - availableEmojis.length - recentOffset;
     }
     $emojiContent.children[tabIndex].scrollIntoView();
   }
@@ -279,13 +282,21 @@ function EmojiBoard({ onSelect, searchRef }) {
       </div>
       <ScrollView invisible>
         <div className="emoji-board__nav">
+          {recentEmojis.length > 0 && (
+            <IconButton
+              onClick={() => openGroup(0)}
+              src={HeartIC}
+              tooltip="Recent"
+              tooltipPlacement="right"
+            />
+          )}
           <div className="emoji-board__nav-custom">
             {
               availableEmojis.map((pack) => {
                 const src = initMatrix.matrixClient.mxcUrlToHttp(pack.avatar ?? pack.images[0].mxc);
                 return (
                   <IconButton
-                    onClick={() => openGroup(pack.packIndex)}
+                    onClick={() => openGroup(recentOffset + pack.packIndex)}
                     src={src}
                     key={pack.packIndex}
                     tooltip={pack.displayName}
@@ -309,7 +320,7 @@ function EmojiBoard({ onSelect, searchRef }) {
                 [7, FlagIC, 'Flags'],
               ].map(([indx, ico, name]) => (
                 <IconButton
-                  onClick={() => openGroup(availableEmojis.length + indx)}
+                  onClick={() => openGroup(recentOffset + availableEmojis.length + indx)}
                   key={indx}
                   src={ico}
                   tooltip={name}
