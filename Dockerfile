@@ -3,9 +3,9 @@ FROM node:17.6.0-alpine3.15 as builder
 
 WORKDIR /src
 
-COPY package.json package-lock.json /src
+COPY package.json package-lock.json /src/
 RUN npm ci
-COPY . /src
+COPY . /src/
 RUN npm run build
 
 
