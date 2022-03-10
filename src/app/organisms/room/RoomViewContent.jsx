@@ -7,16 +7,13 @@ import React, {
 import PropTypes from 'prop-types';
 import './RoomViewContent.scss';
 
-import EventEmitter from 'events';
 import dateFormat from 'dateformat';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { openProfileViewer } from '../../../client/action/navigation';
-import {
-  diffMinutes, isInSameDay, Throttle, getScrollInfo,
-} from '../../../util/common';
+import { diffMinutes, isInSameDay, Throttle } from '../../../util/common';
 
 import Divider from '../../atoms/divider/Divider';
 import ScrollView from '../../atoms/scroll/ScrollView';
@@ -27,16 +24,14 @@ import TimelineChange from '../../molecules/message/TimelineChange';
 import { useStore } from '../../hooks/useStore';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { parseTimelineChange } from './common';
+import TimelineScroll from './TimelineScroll';
+import EventLimit from './EventLimit';
 
-const DEFAULT_MAX_EVENTS = 50;
 const PAG_LIMIT = 30;
 const MAX_MSG_DIFF_MINUTES = 5;
 const PLACEHOLDER_COUNT = 2;
 const PLACEHOLDERS_HEIGHT = 96 * PLACEHOLDER_COUNT;
 const SCROLL_TRIGGER_POS = PLACEHOLDERS_HEIGHT * 4;
-
-const SMALLEST_MSG_HEIGHT = 32;
-const PAGES_COUNT = 4;
 
 function loadingMsgPlaceholders(key, count = 2) {
   const pl = [];
@@ -124,178 +119,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
   );
 }
 
-class TimelineScroll extends EventEmitter {
-  constructor(target) {
-    super();
-    if (target === null) {
-      throw new Error('Can not initialize TimelineScroll, target HTMLElement in null');
-    }
-    this.scroll = target;
-
-    this.backwards = false;
-    this.inTopHalf = false;
-    this.maxEvents = DEFAULT_MAX_EVENTS;
-
-    this.isScrollable = false;
-    this.top = 0;
-    this.bottom = 0;
-    this.height = 0;
-    this.viewHeight = 0;
-
-    this.topMsg = null;
-    this.bottomMsg = null;
-    this.diff = 0;
-  }
-
-  scrollToBottom() {
-    const scrollInfo = getScrollInfo(this.scroll);
-    const maxScrollTop = scrollInfo.height - scrollInfo.viewHeight;
-
-    this._scrollTo(scrollInfo, maxScrollTop);
-  }
-
-  // restore scroll using previous calc by this._updateTopBottomMsg() and this._calcDiff.
-  tryRestoringScroll() {
-    const scrollInfo = getScrollInfo(this.scroll);
-
-    let scrollTop = 0;
-    const ot = this.inTopHalf ? this.topMsg?.offsetTop : this.bottomMsg?.offsetTop;
-    if (!ot) scrollTop = Math.round(this.height - this.viewHeight);
-    else scrollTop = ot - this.diff;
-
-    this._scrollTo(scrollInfo, scrollTop);
-  }
-
-  scrollToIndex(index, offset = 0) {
-    const scrollInfo = getScrollInfo(this.scroll);
-    const msgs = this.scroll.lastElementChild.lastElementChild.children;
-    const offsetTop = msgs[index]?.offsetTop;
-
-    if (offsetTop === undefined) return;
-    // if msg is already in visible are we don't need to scroll to that
-    if (offsetTop > scrollInfo.top && offsetTop < (scrollInfo.top + scrollInfo.viewHeight)) return;
-    const to = offsetTop - offset;
-
-    this._scrollTo(scrollInfo, to);
-  }
-
-  _scrollTo(scrollInfo, scrollTop) {
-    this.scroll.scrollTop = scrollTop;
-
-    // browser emit 'onscroll' event only if the 'element.scrollTop' value changes.
-    // so here we flag that the upcoming 'onscroll' event is
-    // emitted as side effect of assigning 'this.scroll.scrollTop' above
-    // only if it's changes.
-    // by doing so we prevent this._updateCalc() from calc again.
-    if (scrollTop !== this.top) {
-      this.scrolledByCode = true;
-    }
-    const sInfo = { ...scrollInfo };
-
-    const maxScrollTop = scrollInfo.height - scrollInfo.viewHeight;
-
-    sInfo.top = (scrollTop > maxScrollTop) ? maxScrollTop : scrollTop;
-    this._updateCalc(sInfo);
-  }
-
-  // we maintain reference of top and bottom messages
-  // to restore the scroll position when
-  // messages gets removed from either end and added to other.
-  _updateTopBottomMsg() {
-    const msgs = this.scroll.lastElementChild.lastElementChild.children;
-    const lMsgIndex = msgs.length - 1;
-
-    this.topMsg = msgs[0]?.className === 'ph-msg'
-      ? msgs[PLACEHOLDER_COUNT]
-      : msgs[0];
-    this.bottomMsg = msgs[lMsgIndex]?.className === 'ph-msg'
-      ? msgs[lMsgIndex - PLACEHOLDER_COUNT]
-      : msgs[lMsgIndex];
-  }
-
-  // we calculate the difference between first/last message and current scrollTop.
-  // if we are going above we calc diff between first and scrollTop
-  // else otherwise.
-  // NOTE: This will help to restore the scroll when msgs get's removed
-  // from one end and added to other end
-  _calcDiff(scrollInfo) {
-    if (!this.topMsg || !this.bottomMsg) return 0;
-    if (this.inTopHalf) {
-      return this.topMsg.offsetTop - scrollInfo.top;
-    }
-    return this.bottomMsg.offsetTop - scrollInfo.top;
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  _calcMaxEvents(scrollInfo) {
-    return Math.round(scrollInfo.viewHeight / SMALLEST_MSG_HEIGHT) * PAGES_COUNT;
-  }
-
-  _updateCalc(scrollInfo) {
-    const halfViewHeight = Math.round(scrollInfo.viewHeight / 2);
-    const scrollMiddle = scrollInfo.top + halfViewHeight;
-    const lastMiddle = this.top + halfViewHeight;
-
-    this.backwards = scrollMiddle < lastMiddle;
-    this.inTopHalf = scrollMiddle < scrollInfo.height / 2;
-
-    this.isScrollable = scrollInfo.isScrollable;
-    this.top = scrollInfo.top;
-    this.bottom = scrollInfo.height - (scrollInfo.top + scrollInfo.viewHeight);
-    this.height = scrollInfo.height;
-
-    // only calculate maxEvents if viewHeight change
-    if (this.viewHeight !== scrollInfo.viewHeight) {
-      this.maxEvents = this._calcMaxEvents(scrollInfo);
-      this.viewHeight = scrollInfo.viewHeight;
-    }
-
-    this._updateTopBottomMsg();
-    this.diff = this._calcDiff(scrollInfo);
-  }
-
-  calcScroll() {
-    if (this.scrolledByCode) {
-      this.scrolledByCode = false;
-      return;
-    }
-
-    const scrollInfo = getScrollInfo(this.scroll);
-    this._updateCalc(scrollInfo);
-
-    this.emit('scroll', this.backwards);
-  }
-}
-
-let timelineScroll = null;
-let jumpToItemIndex = -1;
-const throttle = new Throttle();
-const limit = {
-  from: 0,
-  getMaxEvents() {
-    return timelineScroll?.maxEvents ?? DEFAULT_MAX_EVENTS;
-  },
-  getEndIndex() {
-    return this.from + this.getMaxEvents();
-  },
-  calcNextFrom(backwards, tLength) {
-    let newFrom = backwards ? this.from - PAG_LIMIT : this.from + PAG_LIMIT;
-    if (!backwards && newFrom + this.getMaxEvents() > tLength) {
-      newFrom = tLength - this.getMaxEvents();
-    }
-    if (newFrom < 0) newFrom = 0;
-    return newFrom;
-  },
-  setFrom(from) {
-    if (from < 0) {
-      this.from = 0;
-      return;
-    }
-    this.from = from;
-  },
-};
-
-function useTimeline(roomTimeline, eventId, readEventStore) {
+function useTimeline(roomTimeline, eventId, readEventStore, eventLimitRef) {
   const [timelineInfo, setTimelineInfo] = useState(null);
 
   const setEventTimeline = async (eId) => {
@@ -309,6 +133,7 @@ function useTimeline(roomTimeline, eventId, readEventStore) {
   };
 
   useEffect(() => {
+    const limit = eventLimitRef.current;
     const initTimeline = (eId) => {
       // NOTICE: eId can be id of readUpto, reply or specific event.
       // readUpTo: when user click jump to unread message button.
@@ -331,9 +156,9 @@ function useTimeline(roomTimeline, eventId, readEventStore) {
       }
 
       if (focusEventIndex > -1) {
-        limit.setFrom(focusEventIndex - Math.round(limit.getMaxEvents() / 2));
+        limit.setFrom(focusEventIndex - Math.round(limit.maxEvents / 2));
       } else {
-        limit.setFrom(roomTimeline.timeline.length - limit.getMaxEvents());
+        limit.setFrom(roomTimeline.timeline.length - limit.maxEvents);
       }
       setTimelineInfo({ focusEventId: isSpecificEvent ? eId : null });
     };
@@ -350,17 +175,24 @@ function useTimeline(roomTimeline, eventId, readEventStore) {
   return timelineInfo;
 }
 
-function usePaginate(roomTimeline, readEventStore, forceUpdateLimit) {
+function usePaginate(
+  roomTimeline,
+  readEventStore,
+  forceUpdateLimit,
+  timelineScrollRef,
+  eventLimitRef,
+) {
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
     const handleOnPagination = (backwards, loaded) => {
+      const limit = eventLimitRef.current;
       if (loaded === 0) return;
       if (!readEventStore.getItem()) {
         const readUpToId = roomTimeline.getReadUpToEventId();
         readEventStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
       }
-      limit.setFrom(limit.calcNextFrom(backwards, roomTimeline.timeline.length));
+      limit.paginate(backwards, PAG_LIMIT, roomTimeline.timeline.length);
       setTimeout(() => setInfo({
         backwards,
         loaded,
@@ -373,13 +205,15 @@ function usePaginate(roomTimeline, readEventStore, forceUpdateLimit) {
   }, [roomTimeline]);
 
   const autoPaginate = useCallback(async () => {
+    const timelineScroll = timelineScrollRef.current;
+    const limit = eventLimitRef.current;
     if (roomTimeline.isOngoingPagination) return;
     const tLength = roomTimeline.timeline.length;
 
     if (timelineScroll.bottom < SCROLL_TRIGGER_POS) {
-      if (limit.getEndIndex() < tLength) {
+      if (limit.end < tLength) {
         // paginate from memory
-        limit.setFrom(limit.calcNextFrom(false, tLength));
+        limit.paginate(false, PAG_LIMIT, tLength);
         forceUpdateLimit();
       } else if (roomTimeline.canPaginateForward()) {
         // paginate from server.
@@ -390,7 +224,7 @@ function usePaginate(roomTimeline, readEventStore, forceUpdateLimit) {
     if (timelineScroll.top < SCROLL_TRIGGER_POS) {
       if (limit.from > 0) {
         // paginate from memory
-        limit.setFrom(limit.calcNextFrom(true, tLength));
+        limit.paginate(true, PAG_LIMIT, tLength);
         forceUpdateLimit();
       } else if (roomTimeline.canPaginateBackward()) {
         // paginate from server.
@@ -402,13 +236,22 @@ function usePaginate(roomTimeline, readEventStore, forceUpdateLimit) {
   return [info, autoPaginate];
 }
 
-function useHandleScroll(roomTimeline, autoPaginate, readEventStore, forceUpdateLimit) {
+function useHandleScroll(
+  roomTimeline,
+  autoPaginate,
+  readEventStore,
+  forceUpdateLimit,
+  timelineScrollRef,
+  eventLimitRef,
+) {
   const handleScroll = useCallback(() => {
+    const timelineScroll = timelineScrollRef.current;
+    const limit = eventLimitRef.current;
     requestAnimationFrame(() => {
       // emit event to toggle scrollToBottom button visibility
       const isAtBottom = (
         timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward()
-        && limit.getEndIndex() >= roomTimeline.timeline.length
+        && limit.end >= roomTimeline.timeline.length
       );
       roomTimeline.emit(cons.events.roomTimeline.AT_BOTTOM, isAtBottom);
       if (isAtBottom && readEventStore.getItem()) {
@@ -419,11 +262,13 @@ function useHandleScroll(roomTimeline, autoPaginate, readEventStore, forceUpdate
   }, [roomTimeline]);
 
   const handleScrollToLive = useCallback(() => {
+    const timelineScroll = timelineScrollRef.current;
+    const limit = eventLimitRef.current;
     if (readEventStore.getItem()) {
       requestAnimationFrame(() => roomTimeline.markAllAsRead());
     }
     if (roomTimeline.isServingLiveTimeline()) {
-      limit.setFrom(roomTimeline.timeline.length - limit.getMaxEvents());
+      limit.setFrom(roomTimeline.timeline.length - limit.maxEvents);
       timelineScroll.scrollToBottom();
       forceUpdateLimit();
       return;
@@ -434,10 +279,13 @@ function useHandleScroll(roomTimeline, autoPaginate, readEventStore, forceUpdate
   return [handleScroll, handleScrollToLive];
 }
 
-function useEventArrive(roomTimeline, readEventStore) {
+function useEventArrive(roomTimeline, readEventStore, timelineScrollRef, eventLimitRef) {
   const myUserId = initMatrix.matrixClient.getUserId();
   const [newEvent, setEvent] = useState(null);
+
   useEffect(() => {
+    const timelineScroll = timelineScrollRef.current;
+    const limit = eventLimitRef.current;
     const sendReadReceipt = (event) => {
       if (event.isSending()) return;
       if (myUserId === event.getSender()) {
@@ -470,11 +318,11 @@ function useEventArrive(roomTimeline, readEventStore) {
       const tLength = roomTimeline.timeline.length;
       const isUserViewingLive = (
         roomTimeline.isServingLiveTimeline()
-        && limit.getEndIndex() >= tLength - 1
+        && limit.end >= tLength - 1
         && timelineScroll.bottom < SCROLL_TRIGGER_POS
       );
       if (isUserViewingLive) {
-        limit.setFrom(tLength - limit.getMaxEvents());
+        limit.setFrom(tLength - limit.maxEvents);
         sendReadReceipt(event);
         setEvent(event);
         return;
@@ -486,7 +334,7 @@ function useEventArrive(roomTimeline, readEventStore) {
       }
       const isUserDitchedLive = (
         roomTimeline.isServingLiveTimeline()
-        && limit.getEndIndex() >= tLength - 1
+        && limit.end >= tLength - 1
       );
       if (isUserDitchedLive) {
         // This stateUpdate will help to put the
@@ -506,6 +354,7 @@ function useEventArrive(roomTimeline, readEventStore) {
   }, [roomTimeline]);
 
   useEffect(() => {
+    const timelineScroll = timelineScrollRef.current;
     if (!roomTimeline.initialized) return;
     if (timelineScroll.bottom < 16
       && !roomTimeline.canPaginateForward()
@@ -517,27 +366,49 @@ function useEventArrive(roomTimeline, readEventStore) {
   }, [newEvent, roomTimeline]);
 }
 
+let jumpToItemIndex = -1;
+
 function RoomViewContent({ eventId, roomTimeline }) {
+  const [throttle] = useState(new Throttle());
+
   const timelineSVRef = useRef(null);
+  const timelineScrollRef = useRef(null);
+  const eventLimitRef = useRef(null);
+
   const readEventStore = useStore(roomTimeline);
-  const timelineInfo = useTimeline(roomTimeline, eventId, readEventStore);
   const [onLimitUpdate, forceUpdateLimit] = useForceUpdate();
-  const [paginateInfo, autoPaginate] = usePaginate(roomTimeline, readEventStore, forceUpdateLimit);
-  const [handleScroll, handleScrollToLive] = useHandleScroll(
-    roomTimeline, autoPaginate, readEventStore, forceUpdateLimit,
+
+  const timelineInfo = useTimeline(roomTimeline, eventId, readEventStore, eventLimitRef);
+  const [paginateInfo, autoPaginate] = usePaginate(
+    roomTimeline,
+    readEventStore,
+    forceUpdateLimit,
+    timelineScrollRef,
+    eventLimitRef,
   );
-  useEventArrive(roomTimeline, readEventStore);
+  const [handleScroll, handleScrollToLive] = useHandleScroll(
+    roomTimeline,
+    autoPaginate,
+    readEventStore,
+    forceUpdateLimit,
+    timelineScrollRef,
+    eventLimitRef,
+  );
+  useEventArrive(roomTimeline, readEventStore, timelineScrollRef, eventLimitRef);
+
   const { timeline } = roomTimeline;
 
   useLayoutEffect(() => {
     if (!roomTimeline.initialized) {
-      timelineScroll = new TimelineScroll(timelineSVRef.current);
+      timelineScrollRef.current = new TimelineScroll(timelineSVRef.current);
+      eventLimitRef.current = new EventLimit();
     }
   });
 
   // when active timeline changes
   useEffect(() => {
     if (!roomTimeline.initialized) return undefined;
+    const timelineScroll = timelineScrollRef.current;
 
     if (timeline.length > 0) {
       if (jumpToItemIndex === -1) {
@@ -555,11 +426,9 @@ function RoomViewContent({ eventId, roomTimeline }) {
     }
     autoPaginate();
 
-    timelineScroll.on('scroll', handleScroll);
     roomTimeline.on(cons.events.roomTimeline.SCROLL_TO_LIVE, handleScrollToLive);
     return () => {
       if (timelineSVRef.current === null) return;
-      timelineScroll.removeListener('scroll', handleScroll);
       roomTimeline.removeListener(cons.events.roomTimeline.SCROLL_TO_LIVE, handleScrollToLive);
     };
   }, [timelineInfo]);
@@ -567,6 +436,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
   // when paginating from server
   useEffect(() => {
     if (!roomTimeline.initialized) return;
+    const timelineScroll = timelineScrollRef.current;
     timelineScroll.tryRestoringScroll();
     autoPaginate();
   }, [paginateInfo]);
@@ -574,17 +444,24 @@ function RoomViewContent({ eventId, roomTimeline }) {
   // when paginating locally
   useEffect(() => {
     if (!roomTimeline.initialized) return;
+    const timelineScroll = timelineScrollRef.current;
     timelineScroll.tryRestoringScroll();
   }, [onLimitUpdate]);
 
   const handleTimelineScroll = (event) => {
-    const { target } = event;
-    if (!target) return;
-    throttle._(() => timelineScroll?.calcScroll(), 400)(target);
+    const timelineScroll = timelineScrollRef.current;
+    if (!event.target) return;
+
+    throttle._(() => {
+      const backwards = timelineScroll?.calcScroll();
+      if (typeof backwards !== 'boolean') return;
+      handleScroll(backwards);
+    }, 200)();
   };
 
   const renderTimeline = () => {
     const tl = [];
+    const limit = eventLimitRef.current;
 
     let itemCountIndex = 0;
     jumpToItemIndex = -1;
@@ -595,7 +472,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
       tl.push(loadingMsgPlaceholders(1, PLACEHOLDER_COUNT));
       itemCountIndex += PLACEHOLDER_COUNT;
     }
-    for (let i = limit.from; i < limit.getEndIndex(); i += 1) {
+    for (let i = limit.from; i < limit.end; i += 1) {
       if (i >= timeline.length) break;
       const mEvent = timeline[i];
       const prevMEvent = timeline[i - 1] ?? null;
@@ -637,7 +514,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
       tl.push(renderEvent(roomTimeline, mEvent, isNewEvent ? null : prevMEvent, isFocus));
       itemCountIndex += 1;
     }
-    if (roomTimeline.canPaginateForward() || limit.getEndIndex() < timeline.length) {
+    if (roomTimeline.canPaginateForward() || limit.end < timeline.length) {
       tl.push(loadingMsgPlaceholders(2, PLACEHOLDER_COUNT));
     }
 
