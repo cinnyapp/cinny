@@ -12,6 +12,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import AsyncSearch from '../../../util/AsyncSearch';
+import { addRecentEmoji, getRecentEmojis } from './recent';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
@@ -29,10 +30,11 @@ import BulbIC from '../../../../public/res/ic/outlined/bulb.svg';
 import PeaceIC from '../../../../public/res/ic/outlined/peace.svg';
 import FlagIC from '../../../../public/res/ic/outlined/flag.svg';
 
+const ROW_EMOJIS_COUNT = 7;
+
 const EmojiGroup = React.memo(({ name, groupEmojis }) => {
   function getEmojiBoard() {
     const emojiBoard = [];
-    const ROW_EMOJIS_COUNT = 7;
     const totalEmojis = groupEmojis.length;
 
     for (let r = 0; r < totalEmojis; r += ROW_EMOJIS_COUNT) {
@@ -147,8 +149,9 @@ function EmojiBoard({ onSelect, searchRef }) {
   function selectEmoji(e) {
     if (isTargetNotEmoji(e.target)) return;
 
-    const emoji = e.target;
-    onSelect(getEmojiDataFromTarget(emoji));
+    const emoji = getEmojiDataFromTarget(e.target);
+    onSelect(emoji);
+    addRecentEmoji(emoji.unicode);
   }
 
   function setEmojiInfo(emoji) {
@@ -188,6 +191,7 @@ function EmojiBoard({ onSelect, searchRef }) {
   }
 
   const [availableEmojis, setAvailableEmojis] = useState([]);
+  const [recentEmojis, setRecentEmojis] = useState([]);
 
   useEffect(() => {
     const updateAvailableEmoji = (selectedRoomId) => {
@@ -215,6 +219,9 @@ function EmojiBoard({ onSelect, searchRef }) {
     const onOpen = () => {
       searchRef.current.value = '';
       handleSearchChange();
+
+      // only update when board is getting opened to prevent shifting UI
+      setRecentEmojis(getRecentEmojis(3 * ROW_EMOJIS_COUNT));
     };
 
     navigation.on(cons.events.navigation.ROOM_SELECTED, updateAvailableEmoji);
@@ -246,6 +253,7 @@ function EmojiBoard({ onSelect, searchRef }) {
           <ScrollView ref={scrollEmojisRef} autoHide>
             <div onMouseMove={hoverEmoji} onClick={selectEmoji}>
               <SearchedEmoji />
+              {recentEmojis.length > 0 && <EmojiGroup name="Recently used" groupEmojis={recentEmojis} />}
               {
                 availableEmojis.map((pack) => (
                   <EmojiGroup
