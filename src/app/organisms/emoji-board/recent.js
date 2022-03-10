@@ -25,5 +25,7 @@ export function addRecentEmoji(unicode) {
     entry[1] += 1;
   }
   recent.unshift(entry);
-  initMatrix.matrixClient.setAccountData(eventType, { recent_emoji: recent });
+  initMatrix.matrixClient.setAccountData(eventType, {
+    recent_emoji: recent.slice(0, 100),
+  });
 }
