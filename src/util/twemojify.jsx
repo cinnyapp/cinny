@@ -10,11 +10,12 @@ const Math = lazy(() => import('../app/atoms/math/Math'));
 
 const mathOptions = {
   replace: (node) => {
-    if (node.attribs?.['data-mx-maths']) {
+    const maths = node.attribs?.['data-mx-maths'];
+    if (maths) {
       return (
-        <Suspense fallback={<div />}>
+        <Suspense fallback={<code>{maths}</code>}>
           <Math
-            content={node.attribs['data-mx-maths']}
+            content={maths}
             throwOnError={false}
             errorColor="var(--tc-danger-normal)"
             displayMode={node.name === 'div'}
