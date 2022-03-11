@@ -8,10 +8,15 @@ function getRecentEmojisRaw() {
 }
 
 export function getRecentEmojis(limit) {
-  return getRecentEmojisRaw()
+  const res = [];
+  getRecentEmojisRaw()
     .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([unicode]) => emojis.find((e) => e.unicode === unicode));
+    .find(([unicode]) => {
+      const emoji = emojis.find((e) => e.unicode === unicode);
+      if (emoji) return res.push(emoji) >= limit;
+      return false;
+    });
+  return res;
 }
 
 export function addRecentEmoji(unicode) {
