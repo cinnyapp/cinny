@@ -3,19 +3,19 @@ import { emojis } from './emoji';
 
 const eventType = 'io.element.recent_emoji';
 
-function get() {
+function getRecentEmojisRaw() {
   return initMatrix.matrixClient.getAccountData(eventType).getContent().recent_emoji ?? [];
 }
 
 export function getRecentEmojis(limit) {
-  return get()
+  return getRecentEmojisRaw()
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
     .map(([unicode]) => emojis.find((e) => e.unicode === unicode));
 }
 
 export function addRecentEmoji(unicode) {
-  const recent = get();
+  const recent = getRecentEmojisRaw();
   const i = recent.findIndex(([u]) => u === unicode);
   let entry;
   if (i < 0) {

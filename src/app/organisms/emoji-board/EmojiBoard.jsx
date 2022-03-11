@@ -152,7 +152,7 @@ function EmojiBoard({ onSelect, searchRef }) {
 
     const emoji = getEmojiDataFromTarget(e.target);
     onSelect(emoji);
-    addRecentEmoji(emoji.unicode);
+    if (emoji.hexcode) addRecentEmoji(emoji.unicode);
   }
 
   function setEmojiInfo(emoji) {
