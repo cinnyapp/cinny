@@ -2,8 +2,8 @@ import { openSearch, toggleRoomSettings } from '../action/navigation';
 import navigation from '../state/navigation';
 
 function listenKeyboard(event) {
-  // Ctrl +
-  if (event.ctrlKey) {
+  // Ctrl/Cmd +
+  if (event.ctrlKey || event.metaKey) {
     // k - for search Modal
     if (event.keyCode === 75) {
       event.preventDefault();
