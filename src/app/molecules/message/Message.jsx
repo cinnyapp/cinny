@@ -150,10 +150,13 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
     };
   }, []);
 
-  const focusReply = () => {
-    if (reply?.event === null) return;
-    if (reply?.event.isRedacted()) return;
-    roomTimeline.loadEventTimeline(eventId);
+  const focusReply = (ev) => {
+    if (!ev.keyCode || ev.keyCode === 32 || ev.keyCode === 13) {
+      if (ev.keyCode) ev.preventDefault();
+      if (reply?.event === null) return;
+      if (reply?.event.isRedacted()) return;
+      roomTimeline.loadEventTimeline(eventId);
+    }
   };
 
   return (
