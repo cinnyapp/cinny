@@ -14,12 +14,8 @@ class EventLimit {
     return this._from;
   }
 
-  get end() {
+  get length() {
     return this._from + this.maxEvents;
-  }
-
-  setMaxEvents(maxEvents) {
-    this.maxEvents = maxEvents;
   }
 
   setFrom(from) {
@@ -29,7 +25,7 @@ class EventLimit {
   paginate(backwards, limit, timelineLength) {
     this._from = backwards ? this._from - limit : this._from + limit;
 
-    if (!backwards && this.end > timelineLength) {
+    if (!backwards && this.length > timelineLength) {
       this._from = timelineLength - this.maxEvents;
     }
     if (this._from < 0) this._from = 0;

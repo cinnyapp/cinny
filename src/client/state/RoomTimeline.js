@@ -154,19 +154,19 @@ class RoomTimeline extends EventEmitter {
     this._populateAllLinkedEvents(this.activeTimeline);
   }
 
-  async _reset(eventId) {
+  async _reset() {
     if (this.isEncrypted()) await this.decryptAllEventsOfTimeline(this.activeTimeline);
     this._populateTimelines();
     if (!this.initialized) {
       this.initialized = true;
       this._listenEvents();
     }
-    this.emit(cons.events.roomTimeline.READY, eventId ?? null);
   }
 
   async loadLiveTimeline() {
     this.activeTimeline = this.liveTimeline;
     await this._reset();
+    this.emit(cons.events.roomTimeline.READY, null);
     return true;
   }
 
@@ -176,7 +176,8 @@ class RoomTimeline extends EventEmitter {
     try {
       const eventTimeline = await this.matrixClient.getEventTimeline(timelineSet, eventId);
       this.activeTimeline = eventTimeline;
-      await this._reset(eventId);
+      await this._reset();
+      this.emit(cons.events.roomTimeline.READY, eventId);
       return true;
     } catch {
       return false;
