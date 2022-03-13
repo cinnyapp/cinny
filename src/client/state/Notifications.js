@@ -193,6 +193,7 @@ class Notifications extends EventEmitter {
 
   _listenEvents() {
     this.matrixClient.on('Room.timeline', (mEvent, room) => {
+      if (room.isSpaceRoom()) return;
       if (!isNotifEvent(mEvent)) return;
       const liveEvents = room.getLiveTimeline().getEvents();
 
@@ -212,6 +213,7 @@ class Notifications extends EventEmitter {
 
     this.matrixClient.on('Room.receipt', (mEvent, room) => {
       if (mEvent.getType() === 'm.receipt') {
+        if (room.isSpaceRoom()) return;
         const content = mEvent.getContent();
         const readedEventId = Object.keys(content)[0];
         const readerUserId = Object.keys(content[readedEventId]['m.read'])[0];
