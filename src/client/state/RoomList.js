@@ -92,13 +92,21 @@ class RoomList extends EventEmitter {
   }
 
   getParentSpaces(roomId) {
-    let parentIds = this.roomIdToParents.get(roomId);
-    if (parentIds) {
-      [...parentIds].forEach((parentId) => {
-        parentIds = new Set([...parentIds, ...this.getParentSpaces(parentId)]);
-      });
-    }
-    return parentIds || new Set();
+    const allParents = new Set();
+    const processed = new Set();
+    const addAllParentIds = (rId) => {
+      if (processed.has(rId)) return;
+      processed.add(rId);
+
+      const parents = this.roomIdToParents.get(rId);
+      if (parents === undefined) return;
+
+      parents.forEach((id) => allParents.add(id));
+      parents.forEach((id) => addAllParentIds(id));
+    };
+    addAllParentIds(roomId);
+    processed.clear();
+    return allParents;
   }
 
   addToSpaces(roomId) {
