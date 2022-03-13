@@ -42,8 +42,7 @@ class Notifications extends EventEmitter {
       if (this.doesRoomHaveUnread(room) === false) return;
       const total = room.getUnreadNotificationCount('total');
       const highlight = room.getUnreadNotificationCount('highlight');
-      const noti = this.getNoti(room.roomId);
-      this._setNoti(room.roomId, total - noti.total, highlight - noti.highlight);
+      this._setNoti(room.roomId, total ?? 0, highlight ?? 0);
     };
     [...this.roomList.rooms].forEach(addNoti);
     [...this.roomList.directs].forEach(addNoti);
@@ -96,74 +95,64 @@ class Notifications extends EventEmitter {
     }
   }
 
-  _getAllParentIds(roomId) {
-    let allParentIds = this.roomList.roomIdToParents.get(roomId);
-    if (allParentIds === undefined) return new Set();
-    const parentIds = [...allParentIds];
+  _setNoti(roomId, total, highlight) {
+    const addNoti = (id, t, h, fromId) => {
+      const prevTotal = this.roomIdToNoti.get(id)?.total ?? null;
+      const noti = this.getNoti(id);
 
-    parentIds.forEach((pId) => {
-      allParentIds = new Set(
-        [...allParentIds, ...this._getAllParentIds(pId)],
-      );
+      noti.total += t;
+      noti.highlight += h;
+
+      if (fromId) {
+        if (noti.from === null) noti.from = new Set();
+        noti.from.add(fromId);
+      }
+      this.roomIdToNoti.set(id, noti);
+      this.emit(cons.events.notifications.NOTI_CHANGED, id, noti.total, prevTotal);
+    };
+
+    const noti = this.getNoti(roomId);
+    const addT = total - noti.total;
+    const addH = highlight - noti.highlight;
+    if (addT < 0 || addH < 0) return;
+
+    addNoti(roomId, addT, addH);
+    const allParentSpaces = this.roomList.getParentSpaces(roomId);
+    allParentSpaces.forEach((spaceId) => {
+      addNoti(spaceId, addT, addH, roomId);
     });
-
-    return allParentIds;
   }
 
-  _setNoti(roomId, total, highlight, childId) {
-    const prevTotal = this.roomIdToNoti.get(roomId)?.total ?? null;
-    const noti = this.getNoti(roomId);
+  _deleteNoti(roomId, total, highlight) {
+    const removeNoti = (id, t, h, fromId) => {
+      if (this.roomIdToNoti.has(id) === false) return;
 
-    if (!childId || this._remainingParentIds?.has(roomId)) {
-      noti.total += total;
-      noti.highlight += highlight;
-    }
-    if (childId) {
-      if (noti.from === null) noti.from = new Set();
-      noti.from.add(childId);
-    }
+      const noti = this.getNoti(id);
+      const prevTotal = noti.total;
+      noti.total -= t;
+      noti.highlight -= h;
+      if (noti.total < 0) {
+        noti.total = 0;
+        noti.highlight = 0;
+      }
+      if (fromId && noti.from !== null) {
+        if (!this.hasNoti(fromId)) noti.from.delete(fromId);
+      }
+      if (noti.from === null || noti.from.size === 0) {
+        this.roomIdToNoti.delete(id);
+        this.emit(cons.events.notifications.FULL_READ, id);
+        this.emit(cons.events.notifications.NOTI_CHANGED, id, null, prevTotal);
+      } else {
+        this.roomIdToNoti.set(id, noti);
+        this.emit(cons.events.notifications.NOTI_CHANGED, id, noti.total, prevTotal);
+      }
+    };
 
-    this.roomIdToNoti.set(roomId, noti);
-    this.emit(cons.events.notifications.NOTI_CHANGED, roomId, noti.total, prevTotal);
-
-    if (!childId) this._remainingParentIds = this._getAllParentIds(roomId);
-    else this._remainingParentIds.delete(roomId);
-
-    const parentIds = this.roomList.roomIdToParents.get(roomId);
-    if (typeof parentIds === 'undefined') {
-      if (!childId) this._remainingParentIds = undefined;
-      return;
-    }
-    [...parentIds].forEach((parentId) => this._setNoti(parentId, total, highlight, roomId));
-    if (!childId) this._remainingParentIds = undefined;
-  }
-
-  _deleteNoti(roomId, total, highlight, childId) {
-    if (this.roomIdToNoti.has(roomId) === false) return;
-
-    const noti = this.getNoti(roomId);
-    const prevTotal = noti.total;
-    noti.total -= total;
-    noti.highlight -= highlight;
-    if (noti.total < 0) {
-      noti.total = 0;
-      noti.highlight = 0;
-    }
-    if (childId && noti.from !== null) {
-      if (!this.hasNoti(childId)) noti.from.delete(childId);
-    }
-    if (noti.from === null || noti.from.size === 0) {
-      this.roomIdToNoti.delete(roomId);
-      this.emit(cons.events.notifications.FULL_READ, roomId);
-      this.emit(cons.events.notifications.NOTI_CHANGED, roomId, null, prevTotal);
-    } else {
-      this.roomIdToNoti.set(roomId, noti);
-      this.emit(cons.events.notifications.NOTI_CHANGED, roomId, noti.total, prevTotal);
-    }
-
-    const parentIds = this.roomList.roomIdToParents.get(roomId);
-    if (typeof parentIds === 'undefined') return;
-    [...parentIds].forEach((parentId) => this._deleteNoti(parentId, total, highlight, roomId));
+    removeNoti(roomId, total, highlight);
+    const allParentSpaces = this.roomList.getParentSpaces(roomId);
+    allParentSpaces.forEach((spaceId) => {
+      removeNoti(spaceId, total, highlight, roomId);
+    });
   }
 
   async _displayPopupNoti(mEvent, room) {
@@ -214,8 +203,7 @@ class Notifications extends EventEmitter {
       const total = room.getUnreadNotificationCount('total');
       const highlight = room.getUnreadNotificationCount('highlight');
 
-      const noti = this.getNoti(room.roomId);
-      this._setNoti(room.roomId, total - noti.total, highlight - noti.highlight);
+      this._setNoti(room.roomId, total ?? 0, highlight ?? 0);
 
       if (this.matrixClient.getSyncState() === 'SYNCING') {
         this._displayPopupNoti(mEvent, room);

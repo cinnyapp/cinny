@@ -72,14 +72,22 @@ function DrawerBreadcrumb({ spaceId }) {
     const noti = notifications.getNoti(roomId);
     if (!notifications.hasNoti(childId)) return noti;
     if (noti.from === null) return noti;
-    if (noti.from.has(childId) && noti.from.size === 1) return null;
 
     const childNoti = notifications.getNoti(childId);
 
-    return {
-      total: noti.total - childNoti.total,
-      highlight: noti.highlight - childNoti.highlight,
-    };
+    let noOther = true;
+    let total = 0;
+    let highlight = 0;
+    noti.from.forEach((fromId) => {
+      if (childNoti.from.has(fromId)) return;
+      noOther = false;
+      const fromNoti = notifications.getNoti(fromId);
+      total += fromNoti.total;
+      highlight += fromNoti.highlight;
+    });
+
+    if (noOther) return null;
+    return { total, highlight };
   }
 
   return (
