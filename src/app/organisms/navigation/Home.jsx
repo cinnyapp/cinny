@@ -18,7 +18,7 @@ function Home({ spaceId }) {
   const {
     spaces, rooms, directs, roomIdToParents,
   } = roomList;
-  const categorizedSpaces = useCategorizedSpaces();
+  useCategorizedSpaces();
   const isCategorized = accountData.categorizedSpaces.has(spaceId);
 
   let categories = null;
@@ -42,6 +42,7 @@ function Home({ spaceId }) {
 
   if (isCategorized) {
     categories = roomList.getCategorizedSpaces(spaceIds);
+    categories.delete(spaceId);
   }
 
   useEffect(() => {
