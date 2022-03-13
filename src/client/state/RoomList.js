@@ -43,13 +43,15 @@ class RoomList extends EventEmitter {
 
   getSpaceChildren(roomId) {
     const space = this.matrixClient.getRoom(roomId);
+    if (space === null) return null;
     const mSpaceChild = space?.currentState.getStateEvents('m.space.child');
-    const children = mSpaceChild?.map((mEvent) => {
+
+    const children = [];
+    mSpaceChild.forEach((mEvent) => {
       const childId = mEvent.event.state_key;
-      if (isMEventSpaceChild(mEvent)) return childId;
-      return null;
+      if (isMEventSpaceChild(mEvent)) children.push(childId);
     });
-    return children?.filter((childId) => childId !== null);
+    return children;
   }
 
   getCategorizedSpaces(spaceIds) {
@@ -69,7 +71,7 @@ class RoomList extends EventEmitter {
         else mappedChild.add(childId);
       });
     };
-    spaceIds.map(categorizeSpace);
+    spaceIds.forEach(categorizeSpace);
 
     return categorized;
   }
