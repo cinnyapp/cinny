@@ -293,7 +293,7 @@ function RoomAliases({ roomId }) {
     <div className="room-aliases">
       <SettingTile
         title="Publish to room directory"
-        content={<Text variant="b3">{`Publish this room to the ${hsString}'s public room directory?`}</Text>}
+        content={<Text variant="b3">{`Publish this ${room.isSpaceRoom() ? 'space' : 'room'} to the ${hsString}'s public room directory?`}</Text>}
         options={(
           <Toggle
             isActive={isPublic}
@@ -308,14 +308,18 @@ function RoomAliases({ roomId }) {
         {(aliases.published.length === 0) && <Text className="room-aliases__message">No published addresses</Text>}
         {(aliases.published.length > 0 && !aliases.main) && <Text className="room-aliases__message">No Main address (select one from below)</Text>}
         {aliases.published.map(renderAlias)}
-        <Text className="room-aliases__message" variant="b3">Published addresses can be used by anyone on any server to join your room. To publish an address, it needs to be set as a local address first.</Text>
+        <Text className="room-aliases__message" variant="b3">
+          {`Published addresses can be used by anyone on any server to join your ${room.isSpaceRoom() ? 'space' : 'room'}. To publish an address, it needs to be set as a local address first.`}
+        </Text>
       </div>
       { isLocalVisible && (
         <div className="room-aliases__content">
           <MenuHeader>Local addresses</MenuHeader>
           {(aliases.local.length === 0) && <Text className="room-aliases__message">No local addresses</Text>}
           {aliases.local.map(renderAlias)}
-          <Text className="room-aliases__message" variant="b3">Set local addresses for this room so users can find this room through your homeserver.</Text>
+          <Text className="room-aliases__message" variant="b3">
+            {`Set local addresses for this ${room.isSpaceRoom() ? 'space' : 'room'} so users can find this ${room.isSpaceRoom() ? 'space' : 'room'} through your homeserver.`}
+          </Text>
 
           <Text className="room-aliases__form-label" variant="b2">Add local address</Text>
           <form className="room-aliases__form" onSubmit={handleAliasSubmit}>
@@ -324,7 +328,7 @@ function RoomAliases({ roomId }) {
                 name="alias-input"
                 state={inputState}
                 onChange={handleAliasChange}
-                placeholder="my_room_address"
+                placeholder={`my_${room.isSpaceRoom() ? 'space' : 'room'}_address`}
                 required
               />
             </div>

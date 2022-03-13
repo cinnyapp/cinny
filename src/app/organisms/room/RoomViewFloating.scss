@@ -22,6 +22,7 @@
 
     &--open {
       transform: translateY(-99%);
+      box-shadow: 0 4px 0 0 var(--bg-surface);
       & .bouncing-loader {
         & > *,
         &::after,

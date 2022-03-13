@@ -27,7 +27,11 @@ function Dialog({
         <div className="dialog__content">
           <Header>
             <TitleWrapper>
-              <Text variant="h2" weight="medium" primary>{twemojify(title)}</Text>
+              {
+                typeof title === 'string'
+                  ? <Text variant="h2" weight="medium" primary>{twemojify(title)}</Text>
+                  : title
+              }
             </TitleWrapper>
             {contentOptions}
           </Header>
@@ -56,7 +60,7 @@ Dialog.defaultProps = {
 Dialog.propTypes = {
   className: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.node.isRequired,
   contentOptions: PropTypes.node,
   onAfterOpen: PropTypes.func,
   onAfterClose: PropTypes.func,

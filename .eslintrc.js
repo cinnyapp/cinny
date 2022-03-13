@@ -20,5 +20,9 @@ module.exports = {
   rules: {
     'linebreak-style': 0,
     'no-underscore-dangle': 0,
+    'react/no-unstable-nested-components': [
+      'error',
+      { allowAsProps: true },
+    ],
   },
 };

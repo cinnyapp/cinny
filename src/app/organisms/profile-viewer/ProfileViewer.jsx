@@ -10,7 +10,9 @@ import navigation from '../../../client/state/navigation';
 import { selectRoom, openReusableContextMenu } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 
-import { getUsername, getUsernameOfRoomMember, getPowerLabel } from '../../../util/matrixUtil';
+import {
+  getUsername, getUsernameOfRoomMember, getPowerLabel, hasDMWith
+} from '../../../util/matrixUtil';
 import { getEventCords } from '../../../util/common';
 import colorMXID from '../../../util/colorMXID';
 
@@ -187,27 +189,18 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   }, [userId]);
 
   const openDM = async () => {
-    const directIds = [...initMatrix.roomList.directs];
-
     // Check and open if user already have a DM with userId.
-    for (let i = 0; i < directIds.length; i += 1) {
-      const dRoom = mx.getRoom(directIds[i]);
-      const roomMembers = dRoom.getMembers();
-      if (roomMembers.length <= 2 && dRoom.getMember(userId)) {
-        selectRoom(directIds[i]);
-        onRequestClose();
-        return;
-      }
+    const dmRoomId = hasDMWith(userId);
+    if (dmRoomId) {
+      selectRoom(dmRoomId);
+      onRequestClose();
+      return;
     }
 
     // Create new DM
     try {
       setIsCreatingDM(true);
-      await roomActions.create({
-        isEncrypted: true,
-        isDirect: true,
-        invite: [userId],
-      });
+      await roomActions.createDM(userId);
     } catch {
       if (isMountedRef.current === false) return;
       setIsCreatingDM(false);
@@ -371,10 +364,16 @@ function ProfileViewer() {
 
     const handleChangePowerLevel = (newPowerLevel) => {
       if (newPowerLevel === powerLevel) return;
-      if (newPowerLevel === myPowerLevel
-        ? confirm('You will not be able to undo this change as you are promoting the user to have the same power level as yourself. Are you sure?')
-        : true
-      ) {
+      const SHARED_POWER_MSG = 'You will not be able to undo this change as you are promoting the user to have the same power level as yourself. Are you sure?';
+      const DEMOTING_MYSELF_MSG = 'You will not be able to undo this change as you are demoting yourself. Are you sure?';
+
+      const isSharedPower = newPowerLevel === myPowerLevel;
+      const isDemotingMyself = userId === mx.getUserId();
+      if (isSharedPower || isDemotingMyself) {
+        if (confirm(isSharedPower ? SHARED_POWER_MSG : DEMOTING_MYSELF_MSG)) {
+          roomActions.setPowerLevel(roomId, userId, newPowerLevel);
+        }
+      } else {
         roomActions.setPowerLevel(roomId, userId, newPowerLevel);
       }
     };

@@ -1,6 +1,7 @@
 import initMatrix from '../initMatrix';
 import appDispatcher from '../dispatcher';
 import cons from '../state/cons';
+import { getIdServer } from '../../util/matrixUtil';
 
 /**
  * https://github.com/matrix-org/matrix-react-sdk/blob/1e6c6e9d800890c732d60429449bc280de01a647/src/Rooms.js#L73
@@ -82,12 +83,15 @@ function guessDMRoomTargetId(room, myUserId) {
  *
  * @param {string} roomId
  * @param {boolean} isDM
+ * @param {string[]} via
  */
-async function join(roomIdOrAlias, isDM) {
+async function join(roomIdOrAlias, isDM, via) {
   const mx = initMatrix.matrixClient;
   const roomIdParts = roomIdOrAlias.split(':');
+  const viaServers = via || [roomIdParts[1]];
+
   try {
-    const resultRoom = await mx.joinRoom(roomIdOrAlias, { viaServers: [roomIdParts[1]] });
+    const resultRoom = await mx.joinRoom(roomIdOrAlias, { viaServers });
 
     if (isDM) {
       const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom.roomId), mx.getUserId());
@@ -122,36 +126,37 @@ function leave(roomId) {
     }).catch();
 }
 
-/**
- * Create a room.
- * @param {Object} opts
- * @param {string} [opts.name]
- * @param {string} [opts.topic]
- * @param {boolean} [opts.isPublic=false] Sets room visibility to public
- * @param {string} [opts.roomAlias] Sets the room address
- * @param {boolean} [opts.isEncrypted=false] Makes room encrypted
- * @param {boolean} [opts.isDirect=false] Makes room as direct message
- * @param {string[]} [opts.invite=[]] An array of userId's to invite
- * @param{number} [opts.powerLevel=100] My power level
- */
-async function create(opts) {
+async function create(options, isDM = false) {
   const mx = initMatrix.matrixClient;
-  const customPowerLevels = [101];
-  const options = {
-    name: opts.name,
-    topic: opts.topic,
-    visibility: opts.isPublic === true ? 'public' : 'private',
-    room_alias_name: opts.roomAlias,
-    is_direct: opts.isDirect === true,
-    invite: opts.invite || [],
-    initial_state: [],
-    preset: opts.isDirect === true ? 'trusted_private_chat' : undefined,
-    power_level_content_override: customPowerLevels.indexOf(opts.powerLevel) === -1 ? undefined : {
-      users: { [initMatrix.matrixClient.getUserId()]: opts.powerLevel },
-    },
-  };
+  try {
+    const result = await mx.createRoom(options);
+    if (isDM && typeof options.invite?.[0] === 'string') {
+      await addRoomToMDirect(result.room_id, options.invite[0]);
+    }
+    appDispatcher.dispatch({
+      type: cons.actions.room.CREATE,
+      roomId: result.room_id,
+      isDM,
+    });
+    return result;
+  } catch (e) {
+    const errcodes = ['M_UNKNOWN', 'M_BAD_JSON', 'M_ROOM_IN_USE', 'M_INVALID_ROOM_STATE', 'M_UNSUPPORTED_ROOM_VERSION'];
+    if (errcodes.includes(e.errcode)) {
+      throw new Error(e);
+    }
+    throw new Error('Something went wrong!');
+  }
+}
 
-  if (opts.isPublic !== true && opts.isEncrypted === true) {
+async function createDM(userId, isEncrypted = true) {
+  const options = {
+    is_direct: true,
+    invite: [userId],
+    visibility: 'private',
+    preset: 'trusted_private_chat',
+    initial_state: [],
+  };
+  if (isEncrypted) {
     options.initial_state.push({
       type: 'm.room.encryption',
       state_key: '',
@@ -161,28 +166,98 @@ async function create(opts) {
     });
   }
 
-  try {
-    const result = await mx.createRoom(options);
-    if (opts.isDirect === true && typeof opts.invite[0] !== 'undefined') {
-      await addRoomToMDirect(result.room_id, opts.invite[0]);
-    }
-    appDispatcher.dispatch({
-      type: cons.actions.room.CREATE,
-      roomId: result.room_id,
-      isDM: opts.isDirect === true,
-    });
-    return result;
-  } catch (e) {
-    const errcodes = ['M_UNKNOWN', 'M_BAD_JSON', 'M_ROOM_IN_USE', 'M_INVALID_ROOM_STATE', 'M_UNSUPPORTED_ROOM_VERSION'];
-    if (errcodes.find((errcode) => errcode === e.errcode)) {
-      appDispatcher.dispatch({
-        type: cons.actions.room.error.CREATE,
-        error: e,
-      });
-      throw new Error(e);
-    }
-    throw new Error('Something went wrong!');
+  const result = await create(options, true);
+  return result;
+}
+
+async function createRoom(opts) {
+  // joinRule: 'public' | 'invite' | 'restricted'
+  const { name, topic, joinRule } = opts;
+  const alias = opts.alias ?? undefined;
+  const parentId = opts.parentId ?? undefined;
+  const isSpace = opts.isSpace ?? false;
+  const isEncrypted = opts.isEncrypted ?? false;
+  const powerLevel = opts.powerLevel ?? undefined;
+  const blockFederation = opts.blockFederation ?? false;
+
+  const mx = initMatrix.matrixClient;
+  const visibility = joinRule === 'public' ? 'public' : 'private';
+  const options = {
+    creation_content: undefined,
+    name,
+    topic,
+    visibility,
+    room_alias_name: alias,
+    initial_state: [],
+    power_level_content_override: undefined,
+  };
+  if (isSpace) {
+    options.creation_content = { type: 'm.space' };
   }
+  if (blockFederation) {
+    options.creation_content = { 'm.federate': false };
+  }
+  if (isEncrypted) {
+    options.initial_state.push({
+      type: 'm.room.encryption',
+      state_key: '',
+      content: {
+        algorithm: 'm.megolm.v1.aes-sha2',
+      },
+    });
+  }
+  if (powerLevel) {
+    options.power_level_content_override = {
+      users: {
+        [mx.getUserId()]: powerLevel,
+      },
+    };
+  }
+  if (parentId) {
+    options.initial_state.push({
+      type: 'm.space.parent',
+      state_key: parentId,
+      content: {
+        canonical: true,
+        via: [getIdServer(mx.getUserId())],
+      },
+    });
+  }
+  if (parentId && joinRule === 'restricted') {
+    try {
+      const caps = await mx.getCapabilities();
+      options.room_version = caps
+        ?.['m.room_versions']
+        ?.['org.matrix.msc3244.room_capabilities']
+        ?.restricted
+        ?.preferred
+        || undefined;
+    } catch {
+      console.error('Can\'t find room version for restricted.');
+    }
+    options.initial_state.push({
+      type: 'm.room.join_rules',
+      content: {
+        join_rule: 'restricted',
+        allow: [{
+          type: 'm.room_membership',
+          room_id: parentId,
+        }],
+      },
+    });
+  }
+
+  const result = await create(options);
+
+  if (parentId) {
+    await mx.sendStateEvent(parentId, 'm.space.child', {
+      auto_join: false,
+      suggested: false,
+      via: [getIdServer(mx.getUserId())],
+    }, result.room_id);
+  }
+
+  return result;
 }
 
 async function invite(roomId, userId) {
@@ -223,23 +298,9 @@ async function setPowerLevel(roomId, userId, powerLevel) {
   return result;
 }
 
-function createSpaceShortcut(roomId) {
-  appDispatcher.dispatch({
-    type: cons.actions.room.CREATE_SPACE_SHORTCUT,
-    roomId,
-  });
-}
-
-function deleteSpaceShortcut(roomId) {
-  appDispatcher.dispatch({
-    type: cons.actions.room.DELETE_SPACE_SHORTCUT,
-    roomId,
-  });
-}
-
 export {
   join, leave,
-  create, invite, kick, ban, unban,
+  createDM, createRoom,
+  invite, kick, ban, unban,
   setPowerLevel,
-  createSpaceShortcut, deleteSpaceShortcut,
 };

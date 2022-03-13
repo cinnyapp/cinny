@@ -18,4 +18,13 @@ function AtoZ(aId, bId) {
   return 0;
 }
 
-export { AtoZ };
+const RoomToDM = (aId, bId) => {
+  const { directs } = initMatrix.roomList;
+  const aIsDm = directs.has(aId);
+  const bIsDm = directs.has(bId);
+  if (aIsDm && !bIsDm) return 1;
+  if (!aIsDm && bIsDm) return -1;
+  return 0;
+};
+
+export { AtoZ, RoomToDM };

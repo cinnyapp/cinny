@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomSettings.scss';
 
+import { blurOnBubbling } from '../../atoms/button/script';
+
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { openInviteUser } from '../../../client/action/navigation';
+import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 
 import Text from '../../atoms/text/Text';
+import RawIcon from '../../atoms/system-icons/RawIcon';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import Tabs from '../../atoms/tabs/Tabs';
@@ -21,19 +24,23 @@ import RoomAliases from '../../molecules/room-aliases/RoomAliases';
 import RoomHistoryVisibility from '../../molecules/room-history-visibility/RoomHistoryVisibility';
 import RoomEncryption from '../../molecules/room-encryption/RoomEncryption';
 import RoomPermissions from '../../molecules/room-permissions/RoomPermissions';
+import RoomMembers from '../../molecules/room-members/RoomMembers';
 
+import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
+import ChevronTopIC from '../../../../public/res/ic/outlined/chevron-top.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 const tabText = {
   GENERAL: 'General',
   SEARCH: 'Search',
+  MEMBERS: 'Members',
   PERMISSIONS: 'Permissions',
   SECURITY: 'Security',
 };
@@ -45,6 +52,10 @@ const tabItems = [{
 }, {
   iconSrc: SearchIC,
   text: tabText.SEARCH,
+  disabled: false,
+}, {
+  iconSrc: UserIC,
+  text: tabText.MEMBERS,
   disabled: false,
 }, {
   iconSrc: ShieldUserIC,
@@ -64,6 +75,7 @@ function GeneralSettings({ roomId }) {
   return (
     <>
       <div className="room-settings__card">
+        <MenuHeader>Options</MenuHeader>
         <MenuItem
           disabled={!canInvite}
           onClick={() => openInviteUser(roomId)}
@@ -124,6 +136,7 @@ SecuritySettings.propTypes = {
 function RoomSettings({ roomId }) {
   const [, forceUpdate] = useForceUpdate();
   const [selectedTab, setSelectedTab] = useState(tabItems[0]);
+  const room = initMatrix.matrixClient.getRoom(roomId);
 
   const handleTabChange = (tabItem) => {
     setSelectedTab(tabItem);
@@ -153,9 +166,20 @@ function RoomSettings({ roomId }) {
       <ScrollView autoHide>
         <div className="room-settings__content">
           <Header>
-            <TitleWrapper>
-              <Text variant="s1" weight="medium" primary>Room settings</Text>
-            </TitleWrapper>
+            <button
+              className="room-settings__header-btn"
+              onClick={() => toggleRoomSettings()}
+              type="button"
+              onMouseUp={(e) => blurOnBubbling(e, '.room-settings__header-btn')}
+            >
+              <TitleWrapper>
+                <Text variant="s1" weight="medium" primary>
+                  {`${room.name}`}
+                  <span style={{ color: 'var(--tc-surface-low)' }}> — room settings</span>
+                </Text>
+              </TitleWrapper>
+              <RawIcon size="small" src={ChevronTopIC} />
+            </button>
           </Header>
           <RoomProfile roomId={roomId} />
           <Tabs
@@ -166,6 +190,7 @@ function RoomSettings({ roomId }) {
           <div className="room-settings__cards-wrapper">
             {selectedTab.text === tabText.GENERAL && <GeneralSettings roomId={roomId} />}
             {selectedTab.text === tabText.SEARCH && <RoomSearch roomId={roomId} />}
+            {selectedTab.text === tabText.MEMBERS && <RoomMembers roomId={roomId} />}
             {selectedTab.text === tabText.PERMISSIONS && <RoomPermissions roomId={roomId} />}
             {selectedTab.text === tabText.SECURITY && <SecuritySettings roomId={roomId} />}
           </div>

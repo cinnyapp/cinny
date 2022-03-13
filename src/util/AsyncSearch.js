@@ -15,6 +15,7 @@ class AsyncSearch extends EventEmitter {
     this.searchKeys = null;
     this.isContain = false;
     this.isCaseSensitive = false;
+    this.normalizeUnicode = true;
     this.ignoreWhitespace = true;
     this.limit = null;
     this.findingList = [];
@@ -39,6 +40,7 @@ class AsyncSearch extends EventEmitter {
    * @param {string | [string]} [opts.keys=null]
    * @param {boolean} [opts.isContain=false] - Add finding to result if it contain search term
    * @param {boolean} [opts.isCaseSensitive=false]
+   * @param {boolean} [opts.normalizeUnicode=true]
    * @param {boolean} [opts.ignoreWhitespace=true]
    * @param {number} [opts.limit=null] - Stop search after limit
    */
@@ -48,6 +50,7 @@ class AsyncSearch extends EventEmitter {
     this.searchKeys = opts?.keys || null;
     this.isContain = opts?.isContain || false;
     this.isCaseSensitive = opts?.isCaseSensitive || false;
+    this.normalizeUnicode = opts?.normalizeUnicode || true;
     this.ignoreWhitespace = opts?.ignoreWhitespace || true;
     this.limit = opts?.limit || null;
   }
@@ -55,8 +58,7 @@ class AsyncSearch extends EventEmitter {
   search(term) {
     this._softReset();
 
-    this.term = (this.isCaseSensitive) ? term : term.toLocaleLowerCase();
-    if (this.ignoreWhitespace) this.term = this.term.replaceAll(' ', '');
+    this.term = this._normalize(term);
     if (this.term === '') {
       this._sendFindings();
       return;
@@ -113,11 +115,16 @@ class AsyncSearch extends EventEmitter {
 
   _compare(item) {
     if (typeof item !== 'string') return false;
-    let myItem = (this.isCaseSensitive) ? item : item.toLocaleLowerCase();
-    if (this.ignoreWhitespace) myItem = myItem.replaceAll(' ', '');
-
+    const myItem = this._normalize(item);
     if (this.isContain) return myItem.indexOf(this.term) !== -1;
     return myItem.startsWith(this.term);
+  }
+
+  _normalize(item) {
+    let myItem = item.normalize(this.normalizeUnicode ? 'NFKC' : 'NFC');
+    if (!this.isCaseSensitive) myItem = myItem.toLocaleLowerCase();
+    if (this.ignoreWhitespace) myItem = myItem.replaceAll(' ', '');
+    return myItem;
   }
 
   _sendFindings() {

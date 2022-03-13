@@ -1,78 +1,141 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
+import './DrawerHeader.scss';
 
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import {
-  openPublicRooms, openCreateRoom, openInviteUser,
+  openPublicRooms, openCreateRoom, openSpaceManage,
+  openSpaceAddExisting, openInviteUser, openReusableContextMenu,
 } from '../../../client/action/navigation';
-import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/room';
+import { getEventCords } from '../../../util/common';
+
+import { blurOnBubbling } from '../../atoms/button/script';
 
 import Text from '../../atoms/text/Text';
+import RawIcon from '../../atoms/system-icons/RawIcon';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import IconButton from '../../atoms/button/IconButton';
-import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/ContextMenu';
+import { MenuItem, MenuHeader } from '../../atoms/context-menu/ContextMenu';
+import SpaceOptions from '../../molecules/space-options/SpaceOptions';
 
 import PlusIC from '../../../../public/res/ic/outlined/plus.svg';
 import HashPlusIC from '../../../../public/res/ic/outlined/hash-plus.svg';
+import HashGlobeIC from '../../../../public/res/ic/outlined/hash-globe.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
-import PinIC from '../../../../public/res/ic/outlined/pin.svg';
-import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
+import SpacePlusIC from '../../../../public/res/ic/outlined/space-plus.svg';
+import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+
+export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(spaceId);
+  const canManage = room
+    ? room.currentState.maySendStateEvent('m.space.child', mx.getUserId())
+    : true;
+
+  return (
+    <>
+      <MenuHeader>Add rooms or spaces</MenuHeader>
+      <MenuItem
+        iconSrc={SpacePlusIC}
+        onClick={() => { afterOptionSelect(); openCreateRoom(true, spaceId); }}
+        disabled={!canManage}
+      >
+        Create new space
+      </MenuItem>
+      <MenuItem
+        iconSrc={HashPlusIC}
+        onClick={() => { afterOptionSelect(); openCreateRoom(false, spaceId); }}
+        disabled={!canManage}
+      >
+        Create new room
+      </MenuItem>
+      { !spaceId && (
+        <MenuItem
+          iconSrc={HashGlobeIC}
+          onClick={() => { afterOptionSelect(); openPublicRooms(); }}
+        >
+          Join public room
+        </MenuItem>
+      )}
+      { spaceId && (
+        <MenuItem
+          iconSrc={PlusIC}
+          onClick={() => { afterOptionSelect(); openSpaceAddExisting(spaceId); }}
+          disabled={!canManage}
+        >
+          Add existing
+        </MenuItem>
+      )}
+      { spaceId && (
+        <MenuItem
+          onClick={() => { afterOptionSelect(); openSpaceManage(spaceId); }}
+          iconSrc={HashSearchIC}
+        >
+          Manage rooms
+        </MenuItem>
+      )}
+    </>
+  );
+}
+HomeSpaceOptions.defaultProps = {
+  spaceId: null,
+};
+HomeSpaceOptions.propTypes = {
+  spaceId: PropTypes.string,
+  afterOptionSelect: PropTypes.func.isRequired,
+};
 
 function DrawerHeader({ selectedTab, spaceId }) {
-  const [, forceUpdate] = useState({});
   const mx = initMatrix.matrixClient;
   const tabName = selectedTab !== cons.tabs.DIRECTS ? 'Home' : 'Direct messages';
 
+  const isDMTab = selectedTab === cons.tabs.DIRECTS;
   const room = mx.getRoom(spaceId);
-  const spaceName = selectedTab === cons.tabs.DIRECTS ? null : (room?.name || null);
+  const spaceName = isDMTab ? null : (room?.name || null);
+
+  const openSpaceOptions = (e) => {
+    e.preventDefault();
+    openReusableContextMenu(
+      'bottom',
+      getEventCords(e, '.header'),
+      (closeMenu) => <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />,
+    );
+  };
+
+  const openHomeSpaceOptions = (e) => {
+    e.preventDefault();
+    openReusableContextMenu(
+      'right',
+      getEventCords(e, '.ic-btn'),
+      (closeMenu) => <HomeSpaceOptions spaceId={spaceId} afterOptionSelect={closeMenu} />,
+    );
+  };
 
   return (
     <Header>
-      <TitleWrapper>
-        <Text variant="s1" weight="medium" primary>{twemojify(spaceName) || tabName}</Text>
-      </TitleWrapper>
-      {spaceName && (
-        <IconButton
-          size="extra-small"
-          variant="surface"
-          tooltip={initMatrix.roomList.spaceShortcut.has(spaceId) ? 'Unpin' : 'Pin to sidebar'}
-          src={initMatrix.roomList.spaceShortcut.has(spaceId) ? PinFilledIC : PinIC}
-          onClick={() => {
-            if (initMatrix.roomList.spaceShortcut.has(spaceId)) deleteSpaceShortcut(spaceId);
-            else createSpaceShortcut(spaceId);
-            forceUpdate({});
-          }}
-        />
+      {spaceName ? (
+        <button
+          className="drawer-header__btn"
+          onClick={openSpaceOptions}
+          type="button"
+          onMouseUp={(e) => blurOnBubbling(e, '.drawer-header__btn')}
+        >
+          <TitleWrapper>
+            <Text variant="s1" weight="medium" primary>{twemojify(spaceName)}</Text>
+          </TitleWrapper>
+          <RawIcon size="small" src={ChevronBottomIC} />
+        </button>
+      ) : (
+        <TitleWrapper>
+          <Text variant="s1" weight="medium" primary>{tabName}</Text>
+        </TitleWrapper>
       )}
-      { selectedTab === cons.tabs.DIRECTS && <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="normal" /> }
-      { selectedTab !== cons.tabs.DIRECTS && !spaceName && (
-        <>
-          <ContextMenu
-            content={(hideMenu) => (
-              <>
-                <MenuHeader>Add room</MenuHeader>
-                <MenuItem
-                  iconSrc={HashPlusIC}
-                  onClick={() => { hideMenu(); openCreateRoom(); }}
-                >
-                  Create new room
-                </MenuItem>
-                <MenuItem
-                  iconSrc={HashSearchIC}
-                  onClick={() => { hideMenu(); openPublicRooms(); }}
-                >
-                  Add public room
-                </MenuItem>
-              </>
-            )}
-            render={(toggleMenu) => (<IconButton onClick={toggleMenu} tooltip="Add room" src={PlusIC} size="normal" />)}
-          />
-        </>
-      )}
-      {/* <IconButton onClick={() => ''} tooltip="Menu" src={VerticalMenuIC} size="normal" /> */}
+
+      { isDMTab && <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="small" /> }
+      { !isDMTab && <IconButton onClick={openHomeSpaceOptions} tooltip="Add rooms/spaces" src={PlusIC} size="small" /> }
     </Header>
   );
 }

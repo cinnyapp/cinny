@@ -30,10 +30,38 @@ export function openNavigation() {
   });
 }
 
+export function openSpaceSettings(roomId, tabText) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_SPACE_SETTINGS,
+    roomId,
+    tabText,
+  });
+}
+
+export function openSpaceManage(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_SPACE_MANAGE,
+    roomId,
+  });
+}
+
+export function openSpaceAddExisting(roomId) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_SPACE_ADDEXISTING,
+    roomId,
+  });
+}
+
 export function toggleRoomSettings(tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.TOGGLE_ROOM_SETTINGS,
     tabText,
+  });
+}
+
+export function openShortcutSpaces() {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_SHORTCUT_SPACES,
   });
 }
 
@@ -50,9 +78,11 @@ export function openPublicRooms(searchTerm) {
   });
 }
 
-export function openCreateRoom() {
+export function openCreateRoom(isSpace = false, parentId = null) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_CREATE_ROOM,
+    isSpace,
+    parentId,
   });
 }
 
@@ -91,6 +121,13 @@ export function openReadReceipts(roomId, userIds) {
     type: cons.actions.navigation.OPEN_READRECEIPTS,
     roomId,
     userIds,
+  });
+}
+
+export function openViewSource(event) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_VIEWSOURCE,
+    event,
   });
 }
 

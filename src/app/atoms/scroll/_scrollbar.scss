@@ -1,5 +1,3 @@
-@use '../../partials/dir';
-
 .firefox-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--bg-surface-hover) transparent;
@@ -32,12 +30,6 @@
   }
 }
 
-@mixin paddingForSafari($padding) {
-	@media not all and (min-resolution:.001dpcm) {
-    @include dir.side(padding, 0, $padding);
-  }
-}
-
 @mixin scroll {
   overflow: hidden;
   // Below code stop scroll when x-scrollable content come in timeline
@@ -46,7 +38,6 @@
   @extend .webkit-scrollbar;
   @extend .webkit-scrollbar-track;
   @extend .webkit-scrollbar-thumb;
-  @include paddingForSafari(var(--sp-extra-tight));
 }
 
 @mixin scroll__h {
@@ -67,7 +58,6 @@
 @mixin scroll--invisible {
   -ms-overflow-style: none;
   scrollbar-width: none;
-  @include paddingForSafari(0);
 
   &::-webkit-scrollbar {
     display: none;

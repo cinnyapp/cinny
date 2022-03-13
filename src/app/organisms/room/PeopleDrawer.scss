@@ -30,7 +30,7 @@
       --search-input-height: 40px;
       min-height: var(--search-input-height);
   
-      margin: 0 var(--sp-normal);
+      margin: 0 var(--sp-extra-tight);
 
       position: relative;
       bottom: var(--sp-normal);
@@ -54,7 +54,7 @@
         flex: 1;
       }
       & .input {
-        padding: 0 calc(var(--sp-loose) + var(--sp-normal));
+        padding: 0 44px;
         height: var(--search-input-height);
       }
     }
@@ -64,6 +64,14 @@
 .people-drawer__content {
   padding-top: var(--sp-extra-tight);
   padding-bottom: calc(2 * var(--sp-normal));
+  
+  & .people-selector {
+    padding: var(--sp-extra-tight);
+    border-radius: var(--bo-radius);
+    &__container {
+      @include dir.side(margin, var(--sp-extra-tight), 0);
+    }
+  }
   
   & .segmented-controls {
     display: flex;

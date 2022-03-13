@@ -1,0 +1,39 @@
+@use '../../partials/flex';
+@use '../../partials/dir';
+
+.room-members {
+  & .input-container {
+    margin: var(--sp-normal);
+  } 
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    & .context-menu__header {
+      @extend .cp-fx__item-one;
+      margin-top: 14px;
+      border-top: 1px solid var(--bg-surface-border);
+      border-bottom: none;
+    }
+    & .segmented-controls {
+      @include dir.side(margin, 0, var(--sp-normal));
+      & > button {
+        padding: var(--sp-ultra-tight) 0;
+      }
+    }
+  }
+  &__list {
+    
+    & .people-selector__container:last-child {
+      margin-bottom: var(--sp-extra-tight);
+    }
+    & > .btn-surface {
+      width: calc(100% - 32px);
+      margin: var(--sp-normal);
+    }
+  }
+  
+  &__status {
+    margin: var(--sp-normal);
+  }
+}

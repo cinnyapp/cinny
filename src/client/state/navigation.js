@@ -69,7 +69,7 @@ class Navigation extends EventEmitter {
       },
       [cons.actions.navigation.SELECT_SPACE]: () => {
         this._setSpacePath(action.roomId);
-        this.selectedSpaceId = action.roomId;
+        this.selectedSpaceId = action.roomId === cons.tabs.HOME ? null : action.roomId;
         this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
@@ -89,6 +89,15 @@ class Navigation extends EventEmitter {
           action.eventId,
         );
       },
+      [cons.actions.navigation.OPEN_SPACE_SETTINGS]: () => {
+        this.emit(cons.events.navigation.SPACE_SETTINGS_OPENED, action.roomId, action.tabText);
+      },
+      [cons.actions.navigation.OPEN_SPACE_MANAGE]: () => {
+        this.emit(cons.events.navigation.SPACE_MANAGE_OPENED, action.roomId);
+      },
+      [cons.actions.navigation.OPEN_SPACE_ADDEXISTING]: () => {
+        this.emit(cons.events.navigation.SPACE_ADDEXISTING_OPENED, action.roomId);
+      },
       [cons.actions.navigation.TOGGLE_ROOM_SETTINGS]: () => {
         this.isRoomSettings = !this.isRoomSettings;
         this.emit(
@@ -97,6 +106,9 @@ class Navigation extends EventEmitter {
           action.tabText,
         );
       },
+      [cons.actions.navigation.OPEN_SHORTCUT_SPACES]: () => {
+        this.emit(cons.events.navigation.SHORTCUT_SPACES_OPENED);
+      },
       [cons.actions.navigation.OPEN_INVITE_LIST]: () => {
         this.emit(cons.events.navigation.INVITE_LIST_OPENED);
       },
@@ -104,7 +116,11 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.PUBLIC_ROOMS_OPENED, action.searchTerm);
       },
       [cons.actions.navigation.OPEN_CREATE_ROOM]: () => {
-        this.emit(cons.events.navigation.CREATE_ROOM_OPENED);
+        this.emit(
+          cons.events.navigation.CREATE_ROOM_OPENED,
+          action.isSpace,
+          action.parentId,
+        );
       },
       [cons.actions.navigation.OPEN_INVITE_USER]: () => {
         this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId, action.searchTerm);
@@ -129,6 +145,12 @@ class Navigation extends EventEmitter {
           cons.events.navigation.READRECEIPTS_OPENED,
           action.roomId,
           action.userIds,
+        );
+      },
+      [cons.actions.navigation.OPEN_VIEWSOURCE]: () => {
+        this.emit(
+          cons.events.navigation.VIEWSOURCE_OPENED,
+          action.event,
         );
       },
       [cons.actions.navigation.CLICK_REPLY_TO]: () => {

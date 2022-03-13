@@ -30,3 +30,9 @@ export function toggleNickAvatarEvents() {
     type: cons.actions.settings.TOGGLE_NICKAVATAR_EVENT,
   });
 }
+
+export function toggleNotifications() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_NOTIFICATIONS,
+  });
+}

@@ -1,0 +1,41 @@
+@use '../../partials/dir.scss';
+
+.space-settings {
+  & .pw {
+    background-color: var(--bg-surface-low);
+  }
+
+  & .room-profile {
+    padding: var(--sp-loose) var(--sp-extra-loose);
+  }
+
+  & .tabs {
+    box-shadow: inset 0 -1px 0 var(--bg-surface-border);
+
+    &__content {
+      padding: 0 var(--sp-normal);
+    }
+  }
+
+  &__cards-wrapper {
+    padding: 0 var(--sp-normal);
+    @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
+  }
+}
+  
+.space-settings__card {
+  margin: var(--sp-normal) 0;
+  background-color: var(--bg-surface);
+  border-radius: var(--bo-radius);
+  box-shadow: var(--bs-surface-border);
+  overflow: hidden;
+
+  & > .context-menu__header:first-child {
+    margin-top: 2px;
+  }
+}
+
+.space-settings .room-permissions__card,
+.space-settings .room-members {
+  @extend .space-settings__card;
+}

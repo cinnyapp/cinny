@@ -53,6 +53,7 @@ function addToGroup(emoji) {
 const emojis = [];
 emojisData.forEach((emoji) => {
   const myShortCodes = shortcodes[emoji.hexcode];
+  if (!myShortCodes) return;
   const em = {
     ...emoji,
     shortcode: Array.isArray(myShortCodes) ? myShortCodes[0] : myShortCodes,

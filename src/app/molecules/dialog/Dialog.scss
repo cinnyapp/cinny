@@ -1,28 +1,28 @@
 .dialog-model {
   --modal-height: 656px;
-  max-height: var(--modal-height) !important;
+  max-height: min(100%, var(--modal-height));
+  display: flex;
+}
+
+.dialog,
+.dialog__content,
+.dialog__content__wrapper {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+
+  display: flex;
 }
 
 .dialog {
-  width: 100%;
-  max-height: inherit;
   background-color: var(--bg-surface);
-  display: flex;
 
   &__content {
-    flex: 1;
-    min-width: 0;
-    display: flex;
     flex-direction: column;
   }
 }
 
-
 .dialog__content-container {
   padding-top: var(--sp-extra-tight);
   padding-bottom: var(--sp-extra-loose);
-}
-.dialog__content__wrapper {
-  flex: 1;
-  min-height: 0;
 }

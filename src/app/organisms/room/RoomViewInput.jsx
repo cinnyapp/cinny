@@ -58,9 +58,11 @@ function RoomViewInput({
 
   useEffect(() => {
     settings.on(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
+    roomsInput.on(cons.events.roomsInput.ATTACHMENT_SET, setAttachment);
     viewEvent.on('focus_msg_input', requestFocusInput);
     return () => {
       settings.removeListener(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
+      roomsInput.removeListener(cons.events.roomsInput.ATTACHMENT_SET, setAttachment);
       viewEvent.removeListener('focus_msg_input', requestFocusInput);
     };
   }, []);
@@ -301,12 +303,18 @@ function RoomViewInput({
     if (file !== null) roomsInput.setAttachment(roomId, file);
   }
 
-  const canISend = roomTimeline.room.currentState.maySendMessage(mx.getUserId());
-
   function renderInputs() {
-    if (!canISend) {
+    const canISend = roomTimeline.room.currentState.maySendMessage(mx.getUserId());
+    const tombstoneEvent = roomTimeline.room.currentState.getStateEvents('m.room.tombstone')[0];
+    if (!canISend || tombstoneEvent) {
       return (
-        <Text className="room-input__alert">You do not have permission to post to this room</Text>
+        <Text className="room-input__alert">
+          {
+            tombstoneEvent
+              ? tombstoneEvent.getContent()?.body ?? 'This room has been replaced and is no longer active.'
+              : 'You do not have permission to post to this room'
+          }
+        </Text>
       );
     }
     return (

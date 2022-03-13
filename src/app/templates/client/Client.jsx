@@ -10,15 +10,17 @@ import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 import logout from '../../../client/action/logout';
-import cons from '../../../client/state/cons';
 
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
+import cons from '../../../client/state/cons';
+import DragDrop from '../../organisms/drag-drop/DragDrop';
 
 function Client() {
   const [mobileSize, setMobileSize] = useState(window.innerWidth < 750);
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
+  const [dragCounter, setDragCounter] = useState(0);
   const [onNavView, setOnNavRoom] = useState(true); // User can be on RoomView or Navigation
 
   // Check if screen size is small
@@ -58,7 +60,7 @@ function Client() {
     let counter = 0;
     const iId = setInterval(() => {
       const msgList = [
-        'Sometimes it takes a while...',
+        'Almost there...',
         'Looks like you have a lot of stuff to heat up!',
       ];
       if (counter === msgList.length - 1) {
@@ -68,7 +70,7 @@ function Client() {
       }
       setLoadingMsg(msgList[counter]);
       counter += 1;
-    }, 9000);
+    }, 15000);
     initMatrix.once('init_loading_finished', () => {
       clearInterval(iId);
       changeLoading(false);
@@ -91,8 +93,71 @@ function Client() {
       </div>
     );
   }
+
+  function dragContainsFiles(e) {
+    if (!e.dataTransfer.types) return false;
+
+    for (let i = 0; i < e.dataTransfer.types.length; i += 1) {
+      if (e.dataTransfer.types[i] === 'Files') return true;
+    }
+    return false;
+  }
+
+  function modalOpen() {
+    return navigation.isRawModalVisible && dragCounter <= 0;
+  }
+
+  function handleDragOver(e) {
+    if (!dragContainsFiles(e)) return;
+
+    e.preventDefault();
+
+    if (!navigation.selectedRoomId || modalOpen()) {
+      e.dataTransfer.dropEffect = 'none';
+    }
+  }
+
+  function handleDragEnter(e) {
+    e.preventDefault();
+
+    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
+      setDragCounter(dragCounter + 1);
+    }
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault();
+
+    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
+      setDragCounter(dragCounter - 1);
+    }
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+
+    setDragCounter(0);
+
+    if (modalOpen()) return;
+
+    const roomId = navigation.selectedRoomId;
+    if (!roomId) return;
+
+    const { files } = e.dataTransfer;
+    if (!files?.length) return;
+    const file = files[0];
+    initMatrix.roomsInput.setAttachment(roomId, file);
+    initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
+  }
+
   return (
-    <div className="client-container">
+    <div
+      className="client-container"
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className={`navigation__wrapper ${mobileSize && onNavView === false ? 'hidden' : ''} ${mobileSize ? 'nav-selected' : ''}`}>
         <Navigation />
       </div>
@@ -103,6 +168,7 @@ function Client() {
       <Dialogs />
       <EmojiBoardOpener />
       <ReusableContextMenu />
+      <DragDrop isOpen={dragCounter !== 0} />
     </div>
   );
 }

@@ -16,6 +16,7 @@ module.exports = {
       'stream': require.resolve('stream-browserify'),
       'util': require.resolve('util/'),
       'assert': require.resolve('assert/'),
+      'url': require.resolve('url/'),
     }
   },
   node: {
@@ -38,7 +39,7 @@ module.exports = {
         use: ['html-loader'],
       },
       {
-        test: /\.(png|jpe?g|gif|otf|ttf)$/,
+        test: /\.(png|jpe?g|gif|otf|ttf|woff|woff2)$/,
         type: 'asset/resource',
       },
       {

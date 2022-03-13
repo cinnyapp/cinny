@@ -48,8 +48,6 @@ function DrawerBreadcrumb({ spaceId }) {
     };
   }, [spaceId]);
 
-  if (spacePath.length === 1) return null;
-
   function getHomeNotiExcept(childId) {
     const orphans = roomList.getOrphans();
     const childIndex = orphans.indexOf(childId);
@@ -85,9 +83,9 @@ function DrawerBreadcrumb({ spaceId }) {
   }
 
   return (
-    <div className="breadcrumb__wrapper">
+    <div className="drawer-breadcrumb__wrapper">
       <ScrollView ref={scrollRef} horizontal vertical={false} invisible>
-        <div className="breadcrumb">
+        <div className="drawer-breadcrumb">
           {
             spacePath.map((id, index) => {
               const noti = (id !== cons.tabs.HOME && index < spacePath.length)
@@ -100,7 +98,7 @@ function DrawerBreadcrumb({ spaceId }) {
                 >
                   { index !== 0 && <RawIcon size="extra-small" src={ChevronRightIC} />}
                   <Button
-                    className={index === spacePath.length - 1 ? 'breadcrumb__btn--selected' : ''}
+                    className={index === spacePath.length - 1 ? 'drawer-breadcrumb__btn--selected' : ''}
                     onClick={() => selectSpace(id)}
                   >
                     <Text variant="b2">{id === cons.tabs.HOME ? 'Home' : twemojify(mx.getRoom(id).name)}</Text>

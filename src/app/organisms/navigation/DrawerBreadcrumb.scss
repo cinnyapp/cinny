@@ -1,12 +1,12 @@
 @use '../../partials/text';
 @use '../../partials/dir';
 
-.breadcrumb__wrapper {
+.drawer-breadcrumb__wrapper {
   height: var(--header-height);
   position: relative;
 }
 
-.breadcrumb {
+.drawer-breadcrumb {
   display: flex;
   align-items: center;
   height: 100%;

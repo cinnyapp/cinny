@@ -1,13 +1,15 @@
 @use '../../partials/text';
-@use '../../partials/dir';
 
 .people-selector {
   width: 100%;
-  padding: var(--sp-extra-tight);
-  @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
+  padding: var(--sp-extra-tight) var(--sp-normal);
   display: flex;
   align-items: center;
   cursor: pointer;
+
+  &__container {
+    display: flex;
+  }
 
   @media (hover: hover) {
     &:hover {

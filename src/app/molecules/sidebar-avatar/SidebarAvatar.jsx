@@ -4,15 +4,13 @@ import './SidebarAvatar.scss';
 
 import { twemojify } from '../../../util/twemojify';
 
-import Avatar from '../../atoms/avatar/Avatar';
 import Text from '../../atoms/text/Text';
 import Tooltip from '../../atoms/tooltip/Tooltip';
-import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 
 const SidebarAvatar = React.forwardRef(({
-  tooltip, text, bgColor, imageSrc,
-  iconSrc, active, onClick, isUnread, notificationCount, isAlert,
+  tooltip, active, onClick, onContextMenu,
+  avatar, notificationBadge,
 }, ref) => {
   let activeClass = '';
   if (active) activeClass = ' sidebar-avatar--active';
@@ -27,50 +25,28 @@ const SidebarAvatar = React.forwardRef(({
         type="button"
         onMouseUp={(e) => blurOnBubbling(e, '.sidebar-avatar')}
         onClick={onClick}
+        onContextMenu={onContextMenu}
       >
-        <Avatar
-          text={text}
-          bgColor={bgColor}
-          imageSrc={imageSrc}
-          iconSrc={iconSrc}
-          size="normal"
-        />
-        { isUnread && (
-          <NotificationBadge
-            alert={isAlert}
-            content={notificationCount !== 0 ? notificationCount : null}
-          />
-        )}
+        {avatar}
+        {notificationBadge}
       </button>
     </Tooltip>
   );
 });
 SidebarAvatar.defaultProps = {
-  text: null,
-  bgColor: 'transparent',
-  iconSrc: null,
-  imageSrc: null,
   active: false,
   onClick: null,
-  isUnread: false,
-  notificationCount: 0,
-  isAlert: false,
+  onContextMenu: null,
+  notificationBadge: null,
 };
 
 SidebarAvatar.propTypes = {
   tooltip: PropTypes.string.isRequired,
-  text: PropTypes.string,
-  bgColor: PropTypes.string,
-  imageSrc: PropTypes.string,
-  iconSrc: PropTypes.string,
   active: PropTypes.bool,
   onClick: PropTypes.func,
-  isUnread: PropTypes.bool,
-  notificationCount: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]),
-  isAlert: PropTypes.bool,
+  onContextMenu: PropTypes.func,
+  avatar: PropTypes.node.isRequired,
+  notificationBadge: PropTypes.node,
 };
 
 export default SidebarAvatar;

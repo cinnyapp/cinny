@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RawModal.scss';
 
@@ -26,7 +26,9 @@ function RawModal({
       modalClass += 'raw-modal__small ';
   }
 
-  navigation.setIsRawModalVisible(isOpen);
+  useEffect(() => {
+    navigation.setIsRawModalVisible(isOpen);
+  }, [isOpen]);
 
   const modalOverlayClass = (overlayClassName !== null) ? `${overlayClassName} ` : '';
   return (

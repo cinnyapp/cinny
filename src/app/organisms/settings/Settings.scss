@@ -26,6 +26,12 @@
   }
 }
 
+.set-notifications {
+  &__not-supported {
+    padding: 0 var(--sp-ultra-tight);
+  }
+}
+
 .set-about {
   &__branding {
     margin-top: var(--sp-extra-tight);
@@ -33,7 +39,7 @@
     display: flex;
 
     & > div {
-      margin: 0 calc(var(--sp-loose) + var(--sp-ultra-tight));
+      margin: 0 var(--sp-loose);
     }
 
   }
@@ -42,6 +48,13 @@
     margin-top: var(--sp-normal);
     & button:last-child {
       margin: 0 var(--sp-tight)
+    }
+  }
+
+  &__credits {
+    margin-top: var(--sp-loose);
+    & ul {
+      margin: var(--sp-extra-tight) 0;
     }
   }
 }

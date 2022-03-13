@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 import './Checkbox.scss';
 
 function Checkbox({
-  variant, isActive, onToggle, disabled,
+  variant, isActive, onToggle,
+  disabled, tabIndex,
 }) {
   const className = `checkbox checkbox-${variant}${isActive ? ' checkbox--active' : ''}`;
   if (onToggle === null) return <span className={className} />;
@@ -14,6 +15,7 @@ function Checkbox({
       className={className}
       type="button"
       disabled={disabled}
+      tabIndex={tabIndex}
     />
   );
 }
@@ -23,6 +25,7 @@ Checkbox.defaultProps = {
   isActive: false,
   onToggle: null,
   disabled: false,
+  tabIndex: 0,
 };
 
 Checkbox.propTypes = {
@@ -30,6 +33,7 @@ Checkbox.propTypes = {
   isActive: PropTypes.bool,
   onToggle: PropTypes.func,
   disabled: PropTypes.bool,
+  tabIndex: PropTypes.number,
 };
 
 export default Checkbox;

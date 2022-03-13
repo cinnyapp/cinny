@@ -6,6 +6,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
 import { selectRoom } from '../../../client/action/navigation';
+import { hasDMWith } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -104,17 +105,19 @@ function InviteUser({
 
   async function createDM(userId) {
     if (mx.getUserId() === userId) return;
+    const dmRoomId = hasDMWith(userId);
+    if (dmRoomId) {
+      selectRoom(dmRoomId);
+      onRequestClose();
+      return;
+    }
+
     try {
       addUserToProc(userId);
       procUserError.delete(userId);
       updateUserProcError(getMapCopy(procUserError));
 
-      const result = await roomActions.create({
-        isPublic: false,
-        isEncrypted: true,
-        isDirect: true,
-        invite: [userId],
-      });
+      const result = await roomActions.createDM(userId);
       roomIdToUserId.set(result.room_id, userId);
       updateRoomIdToUserId(getMapCopy(roomIdToUserId));
     } catch (e) {

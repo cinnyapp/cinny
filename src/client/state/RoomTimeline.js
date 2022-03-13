@@ -12,6 +12,20 @@ function isReaction(mEvent) {
   return mEvent.getType() === 'm.reaction';
 }
 
+function hideMemberEvents(mEvent) {
+  const content = mEvent.getContent();
+  const prevContent = mEvent.getPrevContent();
+  const { membership } = content;
+  if (settings.hideMembershipEvents) {
+    if (membership === 'invite' || membership === 'ban' || membership === 'leave') return true;
+    if (prevContent.membership !== 'join') return true;
+  }
+  if (settings.hideNickAvatarEvents) {
+    if (membership === 'join' && prevContent.membership === 'join') return true;
+  }
+  return false;
+}
+
 function getRelateToId(mEvent) {
   const relation = mEvent.getRelation();
   return relation && relation.event_id;
@@ -112,18 +126,8 @@ class RoomTimeline extends EventEmitter {
   }
 
   addToTimeline(mEvent) {
-    if (mEvent.getType() === 'm.room.member' && (settings.hideMembershipEvents || settings.hideNickAvatarEvents)) {
-      const content = mEvent.getContent();
-      const prevContent = mEvent.getPrevContent();
-      const { membership } = content;
-
-      if (settings.hideMembershipEvents) {
-        if (membership === 'invite' || membership === 'ban' || membership === 'leave') return;
-        if (prevContent.membership !== 'join') return;
-      }
-      if (settings.hideNickAvatarEvents) {
-        if (membership === 'join' && prevContent.membership === 'join') return;
-      }
+    if (mEvent.getType() === 'm.room.member' && hideMemberEvents(mEvent)) {
+      return;
     }
     if (mEvent.isRedacted()) return;
     if (isReaction(mEvent)) {
@@ -150,19 +154,19 @@ class RoomTimeline extends EventEmitter {
     this._populateAllLinkedEvents(this.activeTimeline);
   }
 
-  async _reset(eventId) {
+  async _reset() {
     if (this.isEncrypted()) await this.decryptAllEventsOfTimeline(this.activeTimeline);
     this._populateTimelines();
     if (!this.initialized) {
       this.initialized = true;
       this._listenEvents();
     }
-    this.emit(cons.events.roomTimeline.READY, eventId ?? null);
   }
 
   async loadLiveTimeline() {
     this.activeTimeline = this.liveTimeline;
     await this._reset();
+    this.emit(cons.events.roomTimeline.READY, null);
     return true;
   }
 
@@ -172,7 +176,8 @@ class RoomTimeline extends EventEmitter {
     try {
       const eventTimeline = await this.matrixClient.getEventTimeline(timelineSet, eventId);
       this.activeTimeline = eventTimeline;
-      await this._reset(eventId);
+      await this._reset();
+      this.emit(cons.events.roomTimeline.READY, eventId);
       return true;
     } catch {
       return false;
@@ -244,23 +249,10 @@ class RoomTimeline extends EventEmitter {
     return this.room.getUnfilteredTimelineSet();
   }
 
-  getLiveReaders() {
-    const lastEvent = this.timeline[this.timeline.length - 1];
-    const liveEvents = this.liveTimeline.getEvents();
-
-    const readers = [];
-
-    for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
-      readers.splice(readers.length, 0, ...this.room.getUsersReadUpTo(liveEvents[i]));
-      if (lastEvent === liveEvents[i]) break;
-    }
-
-    return [...new Set(readers)];
-  }
-
   getEventReaders(mEvent) {
     const liveEvents = this.liveTimeline.getEvents();
     const readers = [];
+    if (!mEvent) return [];
 
     for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
       readers.splice(readers.length, 0, ...this.room.getUsersReadUpTo(liveEvents[i]));
@@ -268,6 +260,27 @@ class RoomTimeline extends EventEmitter {
     }
 
     return [...new Set(readers)];
+  }
+
+  getLiveReaders() {
+    const liveEvents = this.liveTimeline.getEvents();
+    const getLatestVisibleEvent = () => {
+      for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
+        const mEvent = liveEvents[i];
+        if (mEvent.getType() === 'm.room.member' && hideMemberEvents(mEvent)) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+        if (!mEvent.isRedacted()
+          && !isReaction(mEvent)
+          && !isEdited(mEvent)
+          && cons.supportEventTypes.includes(mEvent.getType())
+        ) return mEvent;
+      }
+      return liveEvents[liveEvents.length - 1];
+    };
+
+    return this.getEventReaders(getLatestVisibleEvent());
   }
 
   getUnreadEventIndex(readUpToEventId) {
