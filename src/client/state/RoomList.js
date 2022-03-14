@@ -36,6 +36,14 @@ class RoomList extends EventEmitter {
     return !this.roomIdToParents.has(roomId);
   }
 
+  getOrphanSpaces() {
+    return [...this.spaces].filter((roomId) => !this.roomIdToParents.has(roomId));
+  }
+
+  getOrphanRooms() {
+    return [...this.rooms].filter((roomId) => !this.roomIdToParents.has(roomId));
+  }
+
   getOrphans() {
     const rooms = [...this.spaces].concat([...this.rooms]);
     return rooms.filter((roomId) => !this.roomIdToParents.has(roomId));

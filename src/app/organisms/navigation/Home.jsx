@@ -15,9 +15,7 @@ const drawerPostie = new Postie();
 function Home({ spaceId }) {
   const mx = initMatrix.matrixClient;
   const { roomList, notifications, accountData } = initMatrix;
-  const {
-    spaces, rooms, directs, roomIdToParents,
-  } = roomList;
+  const { spaces, rooms, directs } = roomList;
   useCategorizedSpaces();
   const isCategorized = accountData.categorizedSpaces.has(spaceId);
 
@@ -26,14 +24,14 @@ function Home({ spaceId }) {
   let roomIds = [];
   let directIds = [];
 
-  const spaceChildIds = roomList.getSpaceChildren(spaceId);
-  if (spaceChildIds) {
+  if (spaceId) {
+    const spaceChildIds = roomList.getSpaceChildren(spaceId);
     spaceIds = spaceChildIds.filter((roomId) => spaces.has(roomId));
     roomIds = spaceChildIds.filter((roomId) => rooms.has(roomId));
     directIds = spaceChildIds.filter((roomId) => directs.has(roomId));
   } else {
-    spaceIds = [...spaces].filter((roomId) => !roomIdToParents.has(roomId));
-    roomIds = [...rooms].filter((roomId) => !roomIdToParents.has(roomId));
+    spaceIds = roomList.getOrphanSpaces();
+    roomIds = roomList.getOrphanRooms();
   }
 
   spaceIds.sort(AtoZ);
