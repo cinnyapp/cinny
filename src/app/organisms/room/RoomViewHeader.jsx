@@ -20,6 +20,7 @@ import IconButton from '../../atoms/button/IconButton';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import Avatar from '../../atoms/avatar/Avatar';
 import RoomOptions from '../../molecules/room-options/RoomOptions';
+import { baseCompactThreshold } from '../../../util/compactThreshold';
 
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
@@ -30,7 +31,7 @@ import BackArrowIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 function RoomViewHeader({ roomId }) {
-  const [compactSize, setCompactSize] = useState(window.innerWidth < 750);
+  const [compactSize, setCompactSize] = useState(window.innerWidth < baseCompactThreshold);
   const [, forceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
@@ -39,7 +40,7 @@ function RoomViewHeader({ roomId }) {
   const roomName = mx.getRoom(roomId).name;
 
   // #region Check if screen size is small
-  const updateCompactSize = () => setCompactSize(window.innerWidth < 750);
+  const updateCompactSize = () => setCompactSize(window.innerWidth < baseCompactThreshold);
 
   useEffect(() => {
     window.addEventListener('resize', updateCompactSize);

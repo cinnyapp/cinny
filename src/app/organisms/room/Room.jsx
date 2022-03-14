@@ -6,6 +6,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import RoomTimeline from '../../../client/state/RoomTimeline';
 import navigation from '../../../client/state/navigation';
+import { baseCompactThreshold } from '../../../util/compactThreshold';
 
 import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
@@ -13,13 +14,13 @@ import RoomSettings from './RoomSettings';
 import PeopleDrawer from './PeopleDrawer';
 
 function Room() {
-  const [compactSize, setCompactSize] = useState(window.innerWidth < 750);
+  const [compactSize, setCompactSize] = useState(window.innerWidth < baseCompactThreshold);
   const [roomTimeline, setRoomTimeline] = useState(null);
   const [eventId, setEventId] = useState(null);
   const [isDrawer, setIsDrawer] = useState(settings.isPeopleDrawer);
 
   // #region Check if screen size is small
-  const updateCompactSize = () => setCompactSize(window.innerWidth < 750);
+  const updateCompactSize = () => setCompactSize(window.innerWidth < baseCompactThreshold);
 
   useEffect(() => {
     window.addEventListener('resize', updateCompactSize);

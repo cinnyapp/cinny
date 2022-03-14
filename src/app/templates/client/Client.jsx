@@ -10,6 +10,7 @@ import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 import logout from '../../../client/action/logout';
+import { baseCompactThreshold } from '../../../util/compactThreshold';
 
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
@@ -22,14 +23,14 @@ const viewPossibilities = {
 };
 
 function Client() {
-  const [compactSize, setCompactSize] = useState(window.innerWidth < 750);
+  const [compactSize, setCompactSize] = useState(window.innerWidth < baseCompactThreshold);
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
   const [activeView, setActiveView] = useState(viewPossibilities.nav);
 
   // #region Check if screen size is small
-  const updateCompactSize = () => setCompactSize(window.innerWidth < 750);
+  const updateCompactSize = () => setCompactSize(window.innerWidth < baseCompactThreshold);
 
   useEffect(() => {
     window.addEventListener('resize', updateCompactSize);
