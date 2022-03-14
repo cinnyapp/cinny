@@ -111,20 +111,21 @@ class RoomList extends EventEmitter {
 
   addToSpaces(roomId) {
     this.spaces.add(roomId);
-    const allParentSpaces = this.getParentSpaces(roomId);
 
+    const allParentSpaces = this.getAllParentSpaces(roomId);
     const spaceChildren = this.getSpaceChildren(roomId);
-    spaceChildren?.forEach((childRoomId) => {
-      if (allParentSpaces.has(childRoomId)) return;
-      this.addToRoomIdToParents(childRoomId, roomId);
+    spaceChildren?.forEach((childId) => {
+      if (allParentSpaces.has(childId)) return;
+      this.addToRoomIdToParents(childId, roomId);
     });
   }
 
   deleteFromSpaces(roomId) {
     this.spaces.delete(roomId);
+
     const spaceChildren = this.getSpaceChildren(roomId);
-    spaceChildren?.forEach((childRoomId) => {
-      this.removeFromRoomIdToParents(childRoomId, roomId);
+    spaceChildren?.forEach((childId) => {
+      this.removeFromRoomIdToParents(childId, roomId);
     });
   }
 
@@ -264,12 +265,17 @@ class RoomList extends EventEmitter {
 
     this.matrixClient.on('RoomState.events', (mEvent, state) => {
       if (mEvent.getType() === 'm.space.child') {
-        const { event } = mEvent;
+        const roomId = mEvent.event.room_id;
+        const childId = mEvent.event.state_key;
         if (isMEventSpaceChild(mEvent)) {
-          const allParentSpaces = this.getParentSpaces(event.room_id);
-          if (allParentSpaces.has(event.state_key)) return;
-          this.addToRoomIdToParents(event.state_key, event.room_id);
-        } else this.removeFromRoomIdToParents(event.state_key, event.room_id);
+          const allParentSpaces = this.getAllParentSpaces(roomId);
+          // only add if it doesn't make a cycle
+          if (!allParentSpaces.has(childId)) {
+            this.addToRoomIdToParents(childId, roomId);
+          }
+        } else {
+          this.removeFromRoomIdToParents(childId, roomId);
+        }
         this.emit(cons.events.roomList.ROOMLIST_UPDATED);
         return;
       }
