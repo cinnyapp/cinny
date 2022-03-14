@@ -30,7 +30,7 @@ import BackArrowIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 function RoomViewHeader({ roomId }) {
-  const [mobileSize, setMobileSize] = useState(window.innerWidth < 750);
+  const [compactSize, setCompactSize] = useState(window.innerWidth < 750);
   const [, forceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
@@ -38,18 +38,17 @@ function RoomViewHeader({ roomId }) {
   avatarSrc = isDM ? mx.getRoom(roomId).getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop') : avatarSrc;
   const roomName = mx.getRoom(roomId).name;
 
-  // Check if screen size is small
-  const updateMobileSize = () => {
-    setMobileSize(window.innerWidth < 750);
-    console.log('Mobile size: ', mobileSize);
-  };
+  // #region Check if screen size is small
+  const updateCompactSize = () => setCompactSize(window.innerWidth < 750);
+
   useEffect(() => {
-    window.addEventListener('resize', updateMobileSize);
+    window.addEventListener('resize', updateCompactSize);
 
     return (() => {
-      window.removeEventListener('resize', updateMobileSize);
+      window.removeEventListener('resize', updateCompactSize);
     });
-  }, [mobileSize]);
+  }, [compactSize]);
+  // #endregion
 
   const roomHeaderBtnRef = useRef(null);
   useEffect(() => {
@@ -88,14 +87,13 @@ function RoomViewHeader({ roomId }) {
 
   return (
     <Header>
-      {mobileSize
-        ? (
-          <IconButton
-            src={BackArrowIC}
-            tooltip="Return to navigation"
-            onClick={() => navigation.emit(cons.events.navigation.OPEN_NAVIGATION)}
-          />
-        ) : (<></>)}
+      {compactSize && (
+        <IconButton
+          src={BackArrowIC}
+          tooltip="Return to navigation"
+          onClick={() => navigation.emit(cons.events.navigation.OPEN_NAVIGATION)}
+        />
+      )}
       <button
         ref={roomHeaderBtnRef}
         className="room-header__btn"
@@ -110,7 +108,7 @@ function RoomViewHeader({ roomId }) {
         <RawIcon src={ChevronBottomIC} />
       </button>
       <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="Search" src={SearchIC} />
-      <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
+      {!compactSize && <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />}
       <IconButton
         onClick={openRoomOptions}
         tooltip="Options"

@@ -16,46 +16,46 @@ import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
 
+const viewPossibilities = {
+  nav: 'navigation',
+  room: 'room',
+};
+
 function Client() {
-  const [mobileSize, setMobileSize] = useState(window.innerWidth < 750);
+  const [compactSize, setCompactSize] = useState(window.innerWidth < 750);
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
-  const [onNavView, setOnNavRoom] = useState(true); // User can be on RoomView or Navigation
+  const [activeView, setActiveView] = useState(viewPossibilities.nav);
 
-  // Check if screen size is small
-  const updateMobileSize = () => {
-    setMobileSize(window.innerWidth < 750);
-    console.log('Mobile size: ', mobileSize);
-  };
+  // #region Check if screen size is small
+  const updateCompactSize = () => setCompactSize(window.innerWidth < 750);
+
   useEffect(() => {
-    window.addEventListener('resize', updateMobileSize);
+    window.addEventListener('resize', updateCompactSize);
 
     return (() => {
-      window.removeEventListener('resize', updateMobileSize);
+      window.removeEventListener('resize', updateCompactSize);
     });
-  }, [mobileSize]);
+  }, [compactSize]);
+  // #endregion
 
-  // Liston on events if mobile
-  const tada = (ev) => {
-    console.log('Room selected', ev);
-    setOnNavRoom(false);
-  };
-  const da = (ev) => {
-    console.log('Nav selected', ev);
-    setOnNavRoom(true);
-  };
+  // #region Liston on events for compact screen sizes
+  const onRoomSelected = () => setActiveView(viewPossibilities.room);
+  const onNavigationSelected = () => setActiveView(viewPossibilities.nav);
+
   useEffect(() => {
-    navigation.on(cons.events.navigation.ROOM_SELECTED, tada);
-    navigation.on(cons.events.navigation.OPEN_NAVIGATION, da);
+    navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
+    navigation.on(cons.events.navigation.OPEN_NAVIGATION, onNavigationSelected);
     // appDispatcher.register(cons.events.navigation.ROOM_SELECTED, () => setOnNavRoom(false));
 
     return (() => {
-      navigation.removeListener(tada);
+      navigation.removeListener(onRoomSelected);
     });
   }, []);
+  // #endregion
 
-  // Startup
+  // #region Startup
   useEffect(() => {
     let counter = 0;
     const iId = setInterval(() => {
@@ -93,7 +93,9 @@ function Client() {
       </div>
     );
   }
+  // #endregion
 
+  // #region drag and drop
   function dragContainsFiles(e) {
     if (!e.dataTransfer.types) return false;
 
@@ -149,6 +151,7 @@ function Client() {
     initMatrix.roomsInput.setAttachment(roomId, file);
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
   }
+  // #endregion
 
   return (
     <div
@@ -158,10 +161,15 @@ function Client() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className={`navigation__wrapper ${mobileSize && onNavView === false ? 'hidden' : ''} ${mobileSize ? 'nav-selected' : ''}`}>
+      <div className={`navigation__wrapper
+        ${compactSize && activeView !== viewPossibilities.nav ? 'hidden' : null}
+        ${compactSize ? 'nav-selected' : null}`}
+      >
         <Navigation />
       </div>
-      <div className={`room__wrapper ${mobileSize && onNavView === true ? 'hidden' : ''}`}>
+      <div className={`room__wrapper
+        ${compactSize && activeView !== viewPossibilities.room ? 'hidden' : null}`}
+      >
         <Room />
       </div>
       <Windows />
