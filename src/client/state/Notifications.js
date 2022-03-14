@@ -117,7 +117,7 @@ class Notifications extends EventEmitter {
     if (addT < 0 || addH < 0) return;
 
     addNoti(roomId, addT, addH);
-    const allParentSpaces = this.roomList.getParentSpaces(roomId);
+    const allParentSpaces = this.roomList.getAllParentSpaces(roomId);
     allParentSpaces.forEach((spaceId) => {
       addNoti(spaceId, addT, addH, roomId);
     });
@@ -149,7 +149,7 @@ class Notifications extends EventEmitter {
     };
 
     removeNoti(roomId, total, highlight);
-    const allParentSpaces = this.roomList.getParentSpaces(roomId);
+    const allParentSpaces = this.roomList.getAllParentSpaces(roomId);
     allParentSpaces.forEach((spaceId) => {
       removeNoti(spaceId, total, highlight, roomId);
     });
