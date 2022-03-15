@@ -469,6 +469,18 @@ function isMedia(mE) {
   );
 }
 
+// if editedTimeline has mEventId then pass editedMEvent else pass mEvent to openViewSource
+function handleOpenViewSource(mEvent, roomTimeline) {
+  const eventId = mEvent.getId();
+  const { editedTimeline } = roomTimeline ?? {};
+  let editedMEvent;
+  if (editedTimeline?.has(eventId)) {
+    const editedList = editedTimeline.get(eventId);
+    editedMEvent = editedList[editedList.length - 1];
+  }
+  openViewSource(editedMEvent !== undefined ? editedMEvent : mEvent);
+}
+
 const MessageOptions = React.memo(({
   roomTimeline, mEvent, edit, reply,
 }) => {
@@ -516,7 +528,7 @@ const MessageOptions = React.memo(({
             </MenuItem>
             <MenuItem
               iconSrc={CmdIC}
-              onClick={() => openViewSource(mEvent)}
+              onClick={() => handleOpenViewSource(mEvent, roomTimeline)}
             >
               View source
             </MenuItem>
