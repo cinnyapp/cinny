@@ -215,6 +215,7 @@ class Notifications extends EventEmitter {
     this.matrixClient.on('Room.timeline', (mEvent, room) => {
       if (room.isSpaceRoom()) return;
       if (!isNotifEvent(mEvent)) return;
+
       const liveEvents = room.getLiveTimeline().getEvents();
 
       const lastTimelineEvent = liveEvents[liveEvents.length - 1];
@@ -223,6 +224,11 @@ class Notifications extends EventEmitter {
 
       const total = room.getUnreadNotificationCount('total');
       const highlight = room.getUnreadNotificationCount('highlight');
+
+      if (this.getNotiType(room.roomId) === cons.notifs.MUTE) {
+        this.deleteNoti(room.roomId, total ?? 0, highlight ?? 0);
+        return;
+      }
 
       this._setNoti(room.roomId, total ?? 0, highlight ?? 0);
 
