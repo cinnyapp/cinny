@@ -69,9 +69,9 @@ class Notifications extends EventEmitter {
     const mx = this.matrixClient;
     const pushRule = mx.getRoomPushRule('global', roomId);
 
-    if (typeof pushRule === 'undefined') {
+    if (pushRule === undefined) {
       const overridePushRules = mx.getAccountData('m.push_rules')?.getContent()?.global?.override;
-      if (typeof overridePushRules === 'undefined') return 0;
+      if (overridePushRules === undefined) return cons.notifs.DEFAULT;
 
       const isMuteOverride = overridePushRules.find((rule) => (
         rule.rule_id === roomId
