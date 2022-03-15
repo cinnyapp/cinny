@@ -17,6 +17,17 @@ function isNotifEvent(mEvent) {
   return true;
 }
 
+function isMutedRule(rule) {
+  return rule.actions[0] === 'dont_notify' && rule.conditions[0].kind === 'event_match';
+}
+
+function findMutedRule(overrideRules, roomId) {
+  return overrideRules.find((rule) => (
+    rule.rule_id === roomId
+    && isMutedRule(rule)
+  ));
+}
+
 class Notifications extends EventEmitter {
   constructor(roomList) {
     super();
@@ -72,16 +83,12 @@ class Notifications extends EventEmitter {
     const pushRule = mx.getRoomPushRule('global', roomId);
 
     if (pushRule === undefined) {
-      const overridePushRules = mx.getAccountData('m.push_rules')?.getContent()?.global?.override;
-      if (overridePushRules === undefined) return cons.notifs.DEFAULT;
+      const overrideRules = mx.getAccountData('m.push_rules')?.getContent()?.global?.override;
+      if (overrideRules === undefined) return cons.notifs.DEFAULT;
 
-      const isMuteOverride = overridePushRules.find((rule) => (
-        rule.rule_id === roomId
-        && rule.actions[0] === 'dont_notify'
-        && rule.conditions[0].kind === 'event_match'
-      ));
+      const isMuted = findMutedRule(overrideRules, roomId);
 
-      return isMuteOverride ? cons.notifs.MUTE : cons.notifs.DEFAULT;
+      return isMuted ? cons.notifs.MUTE : cons.notifs.DEFAULT;
     }
     if (pushRule.actions[0] === 'notify') return cons.notifs.ALL_MESSAGES;
     return cons.notifs.MENTIONS_AND_KEYWORDS;
@@ -236,6 +243,43 @@ class Notifications extends EventEmitter {
 
       if (this.matrixClient.getSyncState() === 'SYNCING') {
         this._displayPopupNoti(mEvent, room);
+      }
+    });
+
+    this.matrixClient.on('accountData', (mEvent, oldMEvent) => {
+      if (mEvent.getType() === 'm.push_rules') {
+        const override = mEvent?.getContent()?.global?.override;
+        const oldOverride = oldMEvent?.getContent()?.global?.override;
+        if (!override || !oldOverride) return;
+
+        const isMuteToggled = (rule, otherOverride) => {
+          const roomId = rule.rule_id;
+          const room = this.matrixClient.getRoom(roomId);
+          if (room === null) return false;
+          if (room.isSpaceRoom()) return false;
+
+          const isMuted = isMutedRule(rule);
+          if (!isMuted) return false;
+          const isOtherMuted = findMutedRule(otherOverride, roomId);
+          if (isOtherMuted) return false;
+          return true;
+        };
+
+        const mutedRules = override.filter((rule) => isMuteToggled(rule, oldOverride));
+        const unMutedRules = oldOverride.filter((rule) => isMuteToggled(rule, override));
+
+        mutedRules.forEach((rule) => {
+          this.emit(cons.events.notifications.MUTE_TOGGLED, rule.rule_id, true);
+          this.deleteNoti(rule.rule_id);
+        });
+        unMutedRules.forEach((rule) => {
+          this.emit(cons.events.notifications.MUTE_TOGGLED, rule.rule_id, false);
+          const room = this.matrixClient.getRoom(rule.rule_id);
+          if (!this.doesRoomHaveUnread(room)) return;
+          const total = room.getUnreadNotificationCount('total');
+          const highlight = room.getUnreadNotificationCount('highlight');
+          this._setNoti(room.roomId, total ?? 0, highlight ?? 0);
+        });
       }
     });
 
