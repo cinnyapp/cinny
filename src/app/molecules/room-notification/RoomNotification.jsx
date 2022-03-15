@@ -32,28 +32,9 @@ const items = [{
   type: cons.notifs.MUTE,
 }];
 
-function getNotifType(roomId) {
-  const mx = initMatrix.matrixClient;
-  const pushRule = mx.getRoomPushRule('global', roomId);
-
-  if (typeof pushRule === 'undefined') {
-    const overridePushRules = mx.getAccountData('m.push_rules')?.getContent()?.global?.override;
-    if (typeof overridePushRules === 'undefined') return 0;
-
-    const isMuteOverride = overridePushRules.find((rule) => (
-      rule.rule_id === roomId
-      && rule.actions[0] === 'dont_notify'
-      && rule.conditions[0].kind === 'event_match'
-    ));
-
-    return isMuteOverride ? cons.notifs.MUTE : cons.notifs.DEFAULT;
-  }
-  if (pushRule.actions[0] === 'notify') return cons.notifs.ALL_MESSAGES;
-  return cons.notifs.MENTIONS_AND_KEYWORDS;
-}
-
 function setRoomNotifType(roomId, newType) {
   const mx = initMatrix.matrixClient;
+  const { notifications } = initMatrix;
   const roomPushRule = mx.getRoomPushRule('global', roomId);
   const promises = [];
 
@@ -76,7 +57,7 @@ function setRoomNotifType(roomId, newType) {
     return promises;
   }
 
-  const oldState = getNotifType(roomId);
+  const oldState = notifications.getNotiType(roomId);
   if (oldState === cons.notifs.MUTE) {
     promises.push(mx.deletePushRule('global', 'override', roomId));
   }
@@ -115,8 +96,9 @@ function setRoomNotifType(roomId, newType) {
 }
 
 function useNotifications(roomId) {
-  const [activeType, setActiveType] = useState(getNotifType(roomId));
-  useEffect(() => setActiveType(getNotifType(roomId)), [roomId]);
+  const { notifications } = initMatrix;
+  const [activeType, setActiveType] = useState(notifications.getNotiType(roomId));
+  useEffect(() => setActiveType(notifications.getNotiType(roomId)), [roomId]);
 
   const setNotification = useCallback((item) => {
     if (item.type === activeType.type) return;

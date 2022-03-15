@@ -62,9 +62,11 @@ function Home({ spaceId }) {
 
     navigation.on(cons.events.navigation.ROOM_SELECTED, selectorChanged);
     notifications.on(cons.events.notifications.NOTI_CHANGED, notiChanged);
+    notifications.on(cons.events.notifications.MUTE_TOGGLED, notiChanged);
     return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, selectorChanged);
       notifications.removeListener(cons.events.notifications.NOTI_CHANGED, notiChanged);
+      notifications.removeListener(cons.events.notifications.MUTE_TOGGLED, notiChanged);
     };
   }, []);
 

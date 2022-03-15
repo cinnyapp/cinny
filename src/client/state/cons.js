@@ -107,6 +107,7 @@ const cons = {
     notifications: {
       NOTI_CHANGED: 'NOTI_CHANGED',
       FULL_READ: 'FULL_READ',
+      MUTE_TOGGLED: 'MUTE_TOGGLED',
     },
     roomTimeline: {
       READY: 'READY',

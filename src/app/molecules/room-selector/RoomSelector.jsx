@@ -11,13 +11,16 @@ import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 
 function RoomSelectorWrapper({
-  isSelected, isUnread, onClick,
+  isSelected, isMuted, isUnread, onClick,
   content, options, onContextMenu,
 }) {
-  let myClass = isUnread ? ' room-selector--unread' : '';
-  myClass += isSelected ? ' room-selector--selected' : '';
+  const classes = ['room-selector'];
+  if (isMuted) classes.push('room-selector--muted');
+  if (isUnread) classes.push('room-selector--unread');
+  if (isSelected) classes.push('room-selector--selected');
+
   return (
-    <div className={`room-selector${myClass}`}>
+    <div className={classes.join(' ')}>
       <button
         className="room-selector__content"
         type="button"
@@ -32,11 +35,13 @@ function RoomSelectorWrapper({
   );
 }
 RoomSelectorWrapper.defaultProps = {
+  isMuted: false,
   options: null,
   onContextMenu: null,
 };
 RoomSelectorWrapper.propTypes = {
   isSelected: PropTypes.bool.isRequired,
+  isMuted: PropTypes.bool,
   isUnread: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
   content: PropTypes.node.isRequired,
@@ -46,12 +51,13 @@ RoomSelectorWrapper.propTypes = {
 
 function RoomSelector({
   name, parentName, roomId, imageSrc, iconSrc,
-  isSelected, isUnread, notificationCount, isAlert,
+  isSelected, isMuted, isUnread, notificationCount, isAlert,
   options, onClick, onContextMenu,
 }) {
   return (
     <RoomSelectorWrapper
       isSelected={isSelected}
+      isMuted={isMuted}
       isUnread={isUnread}
       content={(
         <>
@@ -91,6 +97,7 @@ RoomSelector.defaultProps = {
   isSelected: false,
   imageSrc: null,
   iconSrc: null,
+  isMuted: false,
   options: null,
   onContextMenu: null,
 };
@@ -101,6 +108,7 @@ RoomSelector.propTypes = {
   imageSrc: PropTypes.string,
   iconSrc: PropTypes.string,
   isSelected: PropTypes.bool,
+  isMuted: PropTypes.bool,
   isUnread: PropTypes.bool.isRequired,
   notificationCount: PropTypes.oneOfType([
     PropTypes.string,
