@@ -10,7 +10,6 @@ import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 import logout from '../../../client/action/logout';
-import { baseCompactThreshold } from '../../../util/compactThreshold';
 
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
@@ -23,23 +22,10 @@ const viewPossibilities = {
 };
 
 function Client() {
-  const [compactSize, setCompactSize] = useState(window.innerWidth < baseCompactThreshold);
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
   const [activeView, setActiveView] = useState(viewPossibilities.nav);
-
-  // #region Check if screen size is small
-  const updateCompactSize = () => setCompactSize(window.innerWidth < baseCompactThreshold);
-
-  useEffect(() => {
-    window.addEventListener('resize', updateCompactSize);
-
-    return (() => {
-      window.removeEventListener('resize', updateCompactSize);
-    });
-  }, [compactSize]);
-  // #endregion
 
   // #region Liston on events for compact screen sizes
   const onRoomSelected = () => setActiveView(viewPossibilities.room);
@@ -163,13 +149,12 @@ function Client() {
       onDrop={handleDrop}
     >
       <div className={`navigation__wrapper
-        ${compactSize && activeView !== viewPossibilities.nav ? 'hidden' : null}
-        ${compactSize ? 'nav-selected' : null}`}
+        ${activeView !== viewPossibilities.nav ? 'non-focused-ui' : ''}`}
       >
         <Navigation />
       </div>
       <div className={`room__wrapper
-        ${compactSize && activeView !== viewPossibilities.room ? 'hidden' : null}`}
+        ${activeView !== viewPossibilities.room ? 'non-focused-ui' : ''}`}
       >
         <Room />
       </div>

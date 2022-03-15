@@ -20,7 +20,6 @@ import IconButton from '../../atoms/button/IconButton';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import Avatar from '../../atoms/avatar/Avatar';
 import RoomOptions from '../../molecules/room-options/RoomOptions';
-import { baseCompactThreshold } from '../../../util/compactThreshold';
 
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
@@ -31,25 +30,12 @@ import BackArrowIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 function RoomViewHeader({ roomId }) {
-  const [compactSize, setCompactSize] = useState(window.innerWidth < baseCompactThreshold);
   const [, forceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
   let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
   avatarSrc = isDM ? mx.getRoom(roomId).getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop') : avatarSrc;
   const roomName = mx.getRoom(roomId).name;
-
-  // #region Check if screen size is small
-  const updateCompactSize = () => setCompactSize(window.innerWidth < baseCompactThreshold);
-
-  useEffect(() => {
-    window.addEventListener('resize', updateCompactSize);
-
-    return (() => {
-      window.removeEventListener('resize', updateCompactSize);
-    });
-  }, [compactSize]);
-  // #endregion
 
   const roomHeaderBtnRef = useRef(null);
   useEffect(() => {
@@ -88,13 +74,13 @@ function RoomViewHeader({ roomId }) {
 
   return (
     <Header>
-      {compactSize && (
+      <div className="room-back-btn">
         <IconButton
           src={BackArrowIC}
           tooltip="Return to navigation"
           onClick={() => navigation.emit(cons.events.navigation.OPEN_NAVIGATION)}
         />
-      )}
+      </div>
       <button
         ref={roomHeaderBtnRef}
         className="room-header__btn"
@@ -109,7 +95,9 @@ function RoomViewHeader({ roomId }) {
         <RawIcon src={ChevronBottomIC} />
       </button>
       <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="Search" src={SearchIC} />
-      {!compactSize && <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />}
+      <div className="room-people-drawer-toggle">
+        <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
+      </div>
       <IconButton
         onClick={openRoomOptions}
         tooltip="Options"

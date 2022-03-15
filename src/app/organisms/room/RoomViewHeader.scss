@@ -1,6 +1,9 @@
 @use '../../partials/flex';
 @use '../../partials/dir';
 
+$threshold-compact-view: 750px;
+$threshold-hide-people-drawer: 750px;
+
 .room-header__btn {
   min-width: 0;
   @extend .cp-fx__row--s-c;
@@ -23,5 +26,20 @@
     background-color: var(--bg-surface-active);
     box-shadow: var(--bs-surface-outline);
     outline: none;
+  }
+}
+
+.room-people-drawer-toggle {
+  @media screen and (max-width: $threshold-hide-people-drawer) {
+    display: none;
+  }
+}
+
+.room-back-btn {
+  margin-left: -10px;
+  margin-right: 5px;
+  
+  @media screen and (min-width: $threshold-compact-view) {
+    display: none;
   }
 }

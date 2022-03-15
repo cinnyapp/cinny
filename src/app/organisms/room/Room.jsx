@@ -6,7 +6,6 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import RoomTimeline from '../../../client/state/RoomTimeline';
 import navigation from '../../../client/state/navigation';
-import { baseCompactThreshold } from '../../../util/compactThreshold';
 
 import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
@@ -14,21 +13,9 @@ import RoomSettings from './RoomSettings';
 import PeopleDrawer from './PeopleDrawer';
 
 function Room() {
-  const [compactSize, setCompactSize] = useState(window.innerWidth < baseCompactThreshold);
   const [roomTimeline, setRoomTimeline] = useState(null);
   const [eventId, setEventId] = useState(null);
   const [isDrawer, setIsDrawer] = useState(settings.isPeopleDrawer);
-
-  // #region Check if screen size is small
-  const updateCompactSize = () => setCompactSize(window.innerWidth < baseCompactThreshold);
-
-  useEffect(() => {
-    window.addEventListener('resize', updateCompactSize);
-    return (() => {
-      window.removeEventListener('resize', updateCompactSize);
-    });
-  }, [compactSize]);
-  // #endregion
 
   const mx = initMatrix.matrixClient;
   const handleRoomSelected = (rId, pRoomId, eId) => {
@@ -47,6 +34,7 @@ function Room() {
     navigation.on(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
     settings.on(cons.events.settings.PEOPLE_DRAWER_TOGGLED, handleDrawerToggling);
     return () => {
+      navigation.removeListener(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
       settings.removeListener(cons.events.settings.PEOPLE_DRAWER_TOGGLED, handleDrawerToggling);
       roomTimeline?.removeInternalListeners();
     };
@@ -60,9 +48,9 @@ function Room() {
         <RoomSettings roomId={roomTimeline.roomId} />
         <RoomView roomTimeline={roomTimeline} eventId={eventId} />
       </div>
-      {/* On compact screen sizes there is not enough space
-          but no need to view it otherwise as it already is in settings */}
-      {!compactSize && isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />}
+      <div className="room__drawer">
+        {isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />}
+      </div>
     </div>
   );
 }

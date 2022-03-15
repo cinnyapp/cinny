@@ -1,3 +1,7 @@
+
+$threshold-compact-view: 750px;
+$threshold-hide-people-drawer: 750px;
+
 .client-container {
   display: flex;
   height: 100%;
@@ -5,12 +9,22 @@
 
 .navigation__wrapper {
   width: var(--navigation-width);
+  
+  @media screen and (max-width: $threshold-compact-view) {
+    width: 100%;
+  }
 }
+
 .room__wrapper {
   flex: 1;
   min-width: 0;
 }
 
+@media screen and (max-width: $threshold-compact-view) {
+  .non-focused-ui {
+    display: none;
+  }
+}
 
 .loading-display {
   position: absolute;
@@ -41,12 +55,4 @@
   .text {
     color: var(--tc-link);
   }
-}
-
-.hidden {
-  display: none;
-}
-
-.nav-selected {
-  width: 100%;
 }
