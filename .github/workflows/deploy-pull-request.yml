@@ -1,7 +1,7 @@
 name: Upload Preview Build to Netlify
 on:
   workflow_run:
-      workflows: ["Build PR"]
+      workflows: ["Build pull request"]
       types:
         - completed
 jobs:
