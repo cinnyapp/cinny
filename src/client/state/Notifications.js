@@ -65,6 +65,26 @@ class Notifications extends EventEmitter {
     return true;
   }
 
+  getNotiType(roomId) {
+    const mx = this.matrixClient;
+    const pushRule = mx.getRoomPushRule('global', roomId);
+
+    if (typeof pushRule === 'undefined') {
+      const overridePushRules = mx.getAccountData('m.push_rules')?.getContent()?.global?.override;
+      if (typeof overridePushRules === 'undefined') return 0;
+
+      const isMuteOverride = overridePushRules.find((rule) => (
+        rule.rule_id === roomId
+        && rule.actions[0] === 'dont_notify'
+        && rule.conditions[0].kind === 'event_match'
+      ));
+
+      return isMuteOverride ? cons.notifs.MUTE : cons.notifs.DEFAULT;
+    }
+    if (pushRule.actions[0] === 'notify') return cons.notifs.ALL_MESSAGES;
+    return cons.notifs.MENTIONS_AND_KEYWORDS;
+  }
+
   getNoti(roomId) {
     return this.roomIdToNoti.get(roomId) || { total: 0, highlight: 0, from: null };
   }
