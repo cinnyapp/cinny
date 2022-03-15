@@ -39,7 +39,9 @@ class Notifications extends EventEmitter {
   _initNoti() {
     const addNoti = (roomId) => {
       const room = this.matrixClient.getRoom(roomId);
+      if (this.getNotiType(room.roomId) === cons.notifs.MUTE) return;
       if (this.doesRoomHaveUnread(room) === false) return;
+
       const total = room.getUnreadNotificationCount('total');
       const highlight = room.getUnreadNotificationCount('highlight');
       this._setNoti(room.roomId, total ?? 0, highlight ?? 0);
