@@ -49,7 +49,6 @@ jobs:
       with:
         files: |
           src-tauri/target/release/bundle/dmg/cinny_${{ steps.vars.outputs.tag }}_x64.dmg
-          src-tauri/target/release/bundle/macos/cinny.app
           src-tauri/target/release/bundle/macos/cinny.app.tar.gz
           src-tauri/target/release/bundle/macos/cinny.app.tar.gz.sig
     - name: Upload tagged release (ubuntu)
