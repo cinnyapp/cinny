@@ -167,7 +167,6 @@ function useTimeline(roomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
     setEventTimeline(eventId);
     return () => {
       roomTimeline.removeListener(cons.events.roomTimeline.READY, initTimeline);
-      roomTimeline.removeInternalListeners();
       limit.setFrom(0);
     };
   }, [roomTimeline, eventId]);
