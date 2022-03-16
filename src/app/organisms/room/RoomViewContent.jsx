@@ -145,13 +145,12 @@ function useTimeline(roomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
 
       if (isSpecificEvent) {
         focusEventIndex = roomTimeline.getEventIndex(eId);
-      } else if (!readUptoEvtStore.getItem()) {
+      }
+      if (!readUptoEvtStore.getItem() && roomTimeline.hasEventInTimeline(readUpToId)) {
         // either opening live timeline or jump to unread.
-        focusEventIndex = roomTimeline.getUnreadEventIndex(readUpToId);
-        if (roomTimeline.hasEventInTimeline(readUpToId)) {
-          readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
-        }
-      } else {
+        readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
+      }
+      if (readUptoEvtStore.getItem() && !isSpecificEvent) {
         focusEventIndex = roomTimeline.getUnreadEventIndex(readUptoEvtStore.getItem().getId());
       }
 
