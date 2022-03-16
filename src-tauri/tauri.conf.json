@@ -47,7 +47,12 @@
       }
     },
     "updater": {
-      "active": false
+      "active": true,
+      "endpoints": [
+          "https://gist.githubusercontent.com/kfiven/8ec54f202c74a8ab081c7808b7f466b8/raw"
+      ],
+      "dialog": true,
+      "pubkey": ""
     },
     "allowlist": {
       "all": true
@@ -55,8 +60,8 @@
     "windows": [
       {
         "title": "Cinny",
-        "width": 800,
-        "height": 600,
+        "width": 1024,
+        "height": 724,
         "resizable": true,
         "fullscreen": false
       }
