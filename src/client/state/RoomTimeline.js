@@ -230,10 +230,18 @@ class RoomTimeline extends EventEmitter {
 
   markAllAsRead() {
     const readEventId = this.getReadUpToEventId();
+    const getLatestValidEvent = () => {
+      for (let i = this.timeline.length - 1; i >= 0; i -= 1) {
+        const latestEvent = this.timeline[i];
+        if (latestEvent.getId() === readEventId) return null;
+        if (!latestEvent.isSending()) return latestEvent;
+      }
+      return null;
+    };
     this.notifications.deleteNoti(this.roomId);
     if (this.timeline.length === 0) return;
-    const latestEvent = this.timeline[this.timeline.length - 1];
-    if (latestEvent.isSending() || latestEvent.getId().startsWith('~')) return;
+    const latestEvent = getLatestValidEvent();
+    if (latestEvent === null) return;
     if (readEventId === latestEvent.getId()) return;
     this.matrixClient.sendReadReceipt(latestEvent);
     this.emit(cons.events.roomTimeline.MARKED_AS_READ, latestEvent);
