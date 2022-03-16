@@ -285,9 +285,8 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
     const timelineScroll = timelineScrollRef.current;
     const limit = eventLimitRef.current;
     const trySendReadReceipt = (event) => {
-      if (event.isSending()) return;
       if (myUserId === event.getSender()) {
-        roomTimeline.markAllAsRead();
+        requestAnimationFrame(() => roomTimeline.markAllAsRead());
         return;
       }
       const readUpToEvent = readUptoEvtStore.getItem();
@@ -296,7 +295,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
 
       if (isUnread === false) {
         if (document.visibilityState === 'visible' && timelineScroll.bottom < 16) {
-          roomTimeline.markAllAsRead();
+          requestAnimationFrame(() => roomTimeline.markAllAsRead());
         } else {
           readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
         }
@@ -306,7 +305,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
       const { timeline } = roomTimeline;
       const unreadMsgIsLast = timeline[timeline.length - 2].getId() === readUpToId;
       if (unreadMsgIsLast) {
-        roomTimeline.markAllAsRead();
+        requestAnimationFrame(() => roomTimeline.markAllAsRead());
       }
     };
 
