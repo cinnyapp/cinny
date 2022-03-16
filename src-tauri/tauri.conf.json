@@ -51,8 +51,7 @@
       "endpoints": [
           "https://gist.githubusercontent.com/kfiven/8ec54f202c74a8ab081c7808b7f466b8/raw"
       ],
-      "dialog": true,
-      "pubkey": ""
+      "dialog": true
     },
     "allowlist": {
       "all": true
