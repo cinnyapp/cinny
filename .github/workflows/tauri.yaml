@@ -33,9 +33,10 @@ jobs:
         sudo apt-get install -y webkit2gtk-4.0
     - name: Install app dependencies and build it
       run: npm ci && npm run build
-    - uses: tauri-apps/tauri-action@v0
+    - uses: tauri-apps/tauri-action@v0.3.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
       with:
         releaseId: ${{ steps.get_release.outputs.upload_url }}
     - name: Get app version (macos, ubuntu)
