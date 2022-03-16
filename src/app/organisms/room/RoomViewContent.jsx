@@ -284,7 +284,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
   useEffect(() => {
     const timelineScroll = timelineScrollRef.current;
     const limit = eventLimitRef.current;
-    const sendReadReceipt = (event) => {
+    const trySendReadReceipt = (event) => {
       if (event.isSending()) return;
       if (myUserId === event.getSender()) {
         roomTimeline.markAllAsRead();
@@ -292,21 +292,19 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
       }
       const readUpToEvent = readUptoEvtStore.getItem();
       const readUpToId = roomTimeline.getReadUpToEventId();
-      const isUnread = readUpToEvent?.getId() === readUpToId;
+      const isUnread = readUpToEvent ? readUpToEvent?.getId() === readUpToId : true;
 
-      // if user doesn't have focus on app don't mark messages as read.
-      if (document.visibilityState === 'hidden' || timelineScroll.bottom >= 16) {
-        if (isUnread) return;
-        readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
+      if (isUnread === false) {
+        if (document.visibilityState === 'visible' && timelineScroll.bottom < 16) {
+          roomTimeline.markAllAsRead();
+        } else {
+          readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
+        }
         return;
       }
 
-      // user has not mark room as read
-      if (!isUnread) {
-        roomTimeline.markAllAsRead();
-      }
       const { timeline } = roomTimeline;
-      const unreadMsgIsLast = timeline[timeline.length - 2].getId() === readUpToEvent?.getId();
+      const unreadMsgIsLast = timeline[timeline.length - 2].getId() === readUpToId;
       if (unreadMsgIsLast) {
         roomTimeline.markAllAsRead();
       }
@@ -314,14 +312,12 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
 
     const handleEvent = (event) => {
       const tLength = roomTimeline.timeline.length;
-      const isUserViewingLive = (
-        roomTimeline.isServingLiveTimeline()
-        && limit.length >= tLength - 1
-        && timelineScroll.bottom < SCROLL_TRIGGER_POS
-      );
-      if (isUserViewingLive) {
+      const isViewingLive = roomTimeline.isServingLiveTimeline() && limit.length >= tLength - 1;
+      const isAttached = timelineScroll.bottom < SCROLL_TRIGGER_POS;
+
+      if (isViewingLive && isAttached) {
         limit.setFrom(tLength - limit.maxEvents);
-        sendReadReceipt(event);
+        trySendReadReceipt(event);
         setEvent(event);
         return;
       }
@@ -330,11 +326,8 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
         setEvent(event);
         return;
       }
-      const isUserDitchedLive = (
-        roomTimeline.isServingLiveTimeline()
-        && limit.length >= tLength - 1
-      );
-      if (isUserDitchedLive) {
+
+      if (isViewingLive) {
         // This stateUpdate will help to put the
         // loading msg placeholder at bottom
         setEvent(event);
@@ -351,17 +344,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
     };
   }, [roomTimeline]);
 
-  useEffect(() => {
-    const timelineScroll = timelineScrollRef.current;
-    if (!roomTimeline.initialized) return;
-    if (timelineScroll.bottom < 16
-      && !roomTimeline.canPaginateForward()
-      && document.visibilityState === 'visible') {
-      timelineScroll.scrollToBottom();
-    } else {
-      timelineScroll.tryRestoringScroll();
-    }
-  }, [newEvent, roomTimeline]);
+  return newEvent;
 }
 
 let jumpToItemIndex = -1;
@@ -392,7 +375,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
     timelineScrollRef,
     eventLimitRef,
   );
-  useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, eventLimitRef);
+  const newEvent = useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, eventLimitRef);
 
   const { timeline } = roomTimeline;
 
@@ -445,6 +428,16 @@ function RoomViewContent({ eventId, roomTimeline }) {
     const timelineScroll = timelineScrollRef.current;
     timelineScroll.tryRestoringScroll();
   }, [onLimitUpdate]);
+
+  useEffect(() => {
+    const timelineScroll = timelineScrollRef.current;
+    if (!roomTimeline.initialized) return;
+    if (timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward() && document.visibilityState === 'visible') {
+      timelineScroll.scrollToBottom();
+    } else {
+      timelineScroll.tryRestoringScroll();
+    }
+  }, [newEvent]);
 
   const handleTimelineScroll = (event) => {
     const timelineScroll = timelineScrollRef.current;
