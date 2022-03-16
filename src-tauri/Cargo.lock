@@ -1702,6 +1702,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "minisign-verify"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95ccf091884470c4b3a80ad6daadbb2e7736611d631cbf0c9e603bb7dbcfdfd9"
+
+[[package]]
 name = "miniz_oxide"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3104,6 +3110,7 @@ checksum = "1112a78b3de89c41e01b671d62f24038d324c6cb61708896ee16f533b655c82e"
 dependencies = [
  "anyhow",
  "attohttpc",
+ "base64",
  "bincode",
  "cfg_aliases",
  "dirs-next",
@@ -3118,6 +3125,7 @@ dependencies = [
  "http",
  "ignore",
  "memchr",
+ "minisign-verify",
  "notify-rust",
  "once_cell",
  "open",
@@ -3146,6 +3154,7 @@ dependencies = [
  "url",
  "uuid",
  "windows 0.30.0",
+ "zip",
 ]
 
 [[package]]
@@ -4033,6 +4042,17 @@ dependencies = [
  "serde",
  "static_assertions",
  "zvariant",
+]
+
+[[package]]
+name = "zip"
+version = "0.5.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93ab48844d61251bb3835145c521d88aa4031d7139e8485990f60ca911fa0815"
+dependencies = [
+ "byteorder",
+ "crc32fast",
+ "thiserror",
 ]
 
 [[package]]
