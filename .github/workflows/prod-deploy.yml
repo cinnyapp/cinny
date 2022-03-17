@@ -5,21 +5,16 @@ on:
     types: [published]
 
 jobs:
-  deploy-to-netlify:
-    name: 'Deploy to Netlify'
+  create-release:
+    name: 'Create release tar'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out the repo
         uses: actions/checkout@v3.0.2
-      - name: Build and deploy to Netlify
-        uses: jsmrcaga/action-netlify-deploy@fb6a5f936a4b06a8f7793e69fc5a022ffe39807a
-        with:
-          install_command: "npm ci"
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          BUILD_DIRECTORY: "dist"
-          NETLIFY_DEPLOY_MESSAGE: "Prod deploy v${{ github.ref }}"
-          NETLIFY_DEPLOY_TO_PROD: true
+      - name: Build
+        run: |
+          npm ci
+          npm run build
       - name: Get version from tag
         id: vars
         run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
@@ -38,6 +33,22 @@ jobs:
           files: |
             cinny-${{ steps.vars.outputs.tag }}.tar.gz
             cinny-${{ steps.vars.outputs.tag }}.tar.gz.asc
+
+  deploy-to-netlify:
+    name: 'Deploy to Netlify'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.2
+      - name: Build and deploy to Netlify
+        uses: jsmrcaga/action-netlify-deploy@fb6a5f936a4b06a8f7793e69fc5a022ffe39807a
+        with:
+          install_command: "npm ci"
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          BUILD_DIRECTORY: "dist"
+          NETLIFY_DEPLOY_MESSAGE: "Prod deploy v${{ github.ref }}"
+          NETLIFY_DEPLOY_TO_PROD: true
 
   push_to_dockerhub:
     name: Push Docker image to Docker Hub
