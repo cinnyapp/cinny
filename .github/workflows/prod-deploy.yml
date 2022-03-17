@@ -29,6 +29,8 @@ jobs:
   deploy-to-netlify:
     name: 'Deploy to Netlify'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.0.0
@@ -45,6 +47,8 @@ jobs:
   push_to_dockerhub:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.0.0
