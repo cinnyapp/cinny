@@ -5,11 +5,13 @@ import './RoomViewFloating.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
+import { isInSameDay } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
 
+import ChevronTopIC from '../../../../public/res/ic/outlined/chevron-top.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
@@ -96,17 +98,12 @@ function RoomViewFloating({
   return (
     <>
       <div className={`room-view__unread ${isJumpToEvent ? 'room-view__unread--open' : ''}`}>
-        <Button onClick={jumpToEvent} variant="primary">
-          <Text variant="b2">Jump to unread</Text>
+        <Button iconSrc={ChevronTopIC} onClick={jumpToEvent} variant="primary">
+          <Text variant="b3" weight="medium">Jump to unread messages</Text>
         </Button>
-        <IconButton
-          onClick={cancelJumpToEvent}
-          variant="primary"
-          size="extra-small"
-          src={TickMarkIC}
-          tooltipPlacement="bottom"
-          tooltip="Mark as read"
-        />
+        <Button iconSrc={TickMarkIC} onClick={cancelJumpToEvent} variant="primary">
+          <Text variant="b3" weight="bold">Mark as read</Text>
+        </Button>
       </div>
       <div className={`room-view__typing${typingMembers.size > 0 ? ' room-view__typing--open' : ''}`}>
         <div className="bouncing-loader"><div /></div>

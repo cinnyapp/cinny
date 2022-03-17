@@ -90,33 +90,33 @@
 
   &__unread {
     position: absolute;
-    top: var(--sp-extra-tight);
-    @include dir.prop(right, var(--sp-extra-tight), unset);
-    @include dir.prop(left, unset, var(--sp-extra-tight));
+    top: 0;
+    @include dir.prop(left, var(--sp-normal), unset);
+    @include dir.prop(right, unset, var(--sp-normal));
     z-index: 999;
 
     display: none;
+    width: calc(100% - var(--sp-extra-loose));
     background-color: var(--bg-surface);
-    border-radius: var(--bo-radius);
+    border-radius: 0 0 var(--bo-radius) var(--bo-radius);
     box-shadow: var(--bs-primary-border);
     overflow: hidden;
 
     &--open {
       display: flex;
     }
-    
-    & .ic-btn {
-      padding: 6px var(--sp-extra-tight);
-      border-radius: 0;
-    }
     & .btn-primary {
-      @extend .cp-fx__item-one;
-      @include dir.side(margin, 0, 1px);
+      justify-content: flex-start;
       border-radius: 0;
-      padding: 0 var(--sp-tight);
-      &:focus {
-        background-color: var(--bg-primary-hover);
+      padding: 2px var(--sp-tight);
+      & .ic-raw {
+        width: 16px;
+        height: 16px;
       }
+    }
+    & .btn-primary:first-child {
+      @extend .cp-fx__item-one;
+      padding: var(--sp-ultra-tight) var(--sp-extra-tight);
     }
   }
 }
