@@ -5,13 +5,34 @@ on:
     types: [published]
 
 jobs:
+  create-release:
+    name: 'Create release tar'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3.0.0
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+      - name: Get version from tag
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      - name: Create tar.gz
+        run: tar -czvf cinny-${{ steps.vars.outputs.tag }}.tar.gz dist
+      - name: Upload release build
+        uses: actions/upload-artifact@v3.0.0
+        with:
+          name: cinny-${{ steps.vars.outputs.tag }}.tar.gz
+          path: cinny-${{ steps.vars.outputs.tag }}.tar.gz
+
   deploy-to-netlify:
     name: 'Deploy to Netlify'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.0.0
-      - name: Build and deploy to Netlify
+      - name: Deploy to Netlify
         uses: jsmrcaga/action-netlify-deploy@v1.7.2
         with:
           install_command: "npm ci"
@@ -20,16 +41,6 @@ jobs:
           BUILD_DIRECTORY: "dist"
           NETLIFY_DEPLOY_MESSAGE: "Prod deploy v${{ github.ref }}"
           NETLIFY_DEPLOY_TO_PROD: true
-      - name: Get version from tag
-        id: vars
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
-      - name: Create tar.gz
-        run: tar -czvf cinny-${{ steps.vars.outputs.tag }}.tar.gz dist
-      - name: Upload tagged release
-        uses: softprops/action-gh-release@v0.1.14
-        with:
-          files: |
-            cinny-${{ steps.vars.outputs.tag }}.tar.gz
 
   push_to_dockerhub:
     name: Push Docker image to Docker Hub
