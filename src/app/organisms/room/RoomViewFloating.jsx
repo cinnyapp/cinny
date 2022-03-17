@@ -11,7 +11,7 @@ import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
 
-import ChevronTopIC from '../../../../public/res/ic/outlined/chevron-top.svg';
+import MessageUnreadIC from '../../../../public/res/ic/outlined/message-unread.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
@@ -99,7 +99,7 @@ function RoomViewFloating({
   return (
     <>
       <div className={`room-view__unread ${isJumpToEvent ? 'room-view__unread--open' : ''}`}>
-        <Button iconSrc={ChevronTopIC} onClick={jumpToEvent} variant="primary">
+        <Button iconSrc={MessageUnreadIC} onClick={jumpToEvent} variant="primary">
           <Text variant="b3" weight="medium">Jump to unread messages</Text>
         </Button>
         <Button iconSrc={TickMarkIC} onClick={cancelJumpToEvent} variant="primary">
