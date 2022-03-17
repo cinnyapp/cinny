@@ -6,6 +6,7 @@ import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { createSpaceShortcut, deleteSpaceShortcut } from '../../../client/action/accountData';
 import { joinRuleToIconSrc } from '../../../util/matrixUtil';
+import { roomIdByAtoZ } from '../../../util/sort';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -20,7 +21,6 @@ import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import { useSpaceShortcut } from '../../hooks/useSpaceShortcut';
-import { AtoZ } from '../navigation/common';
 
 function ShortcutSpacesContent() {
   const mx = initMatrix.matrixClient;
@@ -29,7 +29,7 @@ function ShortcutSpacesContent() {
   const [spaceShortcut] = useSpaceShortcut();
   const spaceWithoutShortcut = [...spaces].filter(
     (spaceId) => !spaceShortcut.includes(spaceId),
-  ).sort(AtoZ);
+  ).sort(roomIdByAtoZ);
 
   const [process, setProcess] = useState(null);
   const [selected, setSelected] = useState([]);

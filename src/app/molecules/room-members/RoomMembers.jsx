@@ -9,6 +9,7 @@ import colorMXID from '../../../util/colorMXID';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { getUsernameOfRoomMember, getPowerLabel } from '../../../util/matrixUtil';
 import AsyncSearch from '../../../util/AsyncSearch';
+import { memberByAtoZ, memberByPowerLevel } from '../../../util/sort';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -19,26 +20,6 @@ import PeopleSelector from '../people-selector/PeopleSelector';
 
 const PER_PAGE_MEMBER = 50;
 
-function AtoZ(m1, m2) {
-  const aName = m1.name;
-  const bName = m2.name;
-
-  if (aName.toLowerCase() < bName.toLowerCase()) {
-    return -1;
-  }
-  if (aName.toLowerCase() > bName.toLowerCase()) {
-    return 1;
-  }
-  return 0;
-}
-function sortByPowerLevel(m1, m2) {
-  const pl1 = m1.powerLevel;
-  const pl2 = m2.powerLevel;
-
-  if (pl1 > pl2) return -1;
-  if (pl1 < pl2) return 1;
-  return 0;
-}
 function normalizeMembers(members) {
   const mx = initMatrix.matrixClient;
   return members.map((member) => ({
@@ -65,7 +46,7 @@ function useMemberOfMembership(roomId, membership) {
       if (event && event?.getRoomId() !== roomId) return;
       const memberOfMembership = normalizeMembers(
         room.getMembersWithMembership(membership)
-          .sort(AtoZ).sort(sortByPowerLevel),
+          .sort(memberByAtoZ).sort(memberByPowerLevel),
       );
       setMembers(memberOfMembership);
     };
