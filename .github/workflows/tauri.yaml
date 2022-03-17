@@ -45,7 +45,7 @@ jobs:
       run: echo ::set-output name=tag::$(jq .package.version src-tauri/tauri.conf.json | tr -d '"')
     - name: Upload tagged release (macos)
       if: matrix.platform == 'macos-latest'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v0.1.14
       with:
         files: |
           src-tauri/target/release/bundle/dmg/cinny_${{ steps.vars.outputs.tag }}_x64.dmg
@@ -53,7 +53,7 @@ jobs:
           src-tauri/target/release/bundle/macos/cinny.app.tar.gz.sig
     - name: Upload tagged release (ubuntu)
       if: matrix.platform == 'ubuntu-latest'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v0.1.14
       with:
         files: |
           src-tauri/target/release/bundle/deb/cinny_${{ steps.vars.outputs.tag }}_amd64.deb
@@ -71,7 +71,7 @@ jobs:
       shell: pwsh
     - name: Upload tagged release (windows)
       if: matrix.platform == 'windows-latest'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v0.1.14
       with:
         files: |
           src-tauri\target\release\bundle\msi\cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi
