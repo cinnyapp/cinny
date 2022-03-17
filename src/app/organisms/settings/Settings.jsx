@@ -158,18 +158,16 @@ function NotificationsSection() {
         options={renderOptions()}
         content={<Text variant="b3">Show notifications when new messages arrive.</Text>}
       />
-      {settings.showNotifications && (
-        <SettingTile
-          title="Play notification sounds"
-          options={(
-            <Toggle
-              isActive={settings.isNotificationSounds}
-              onToggle={() => { toggleNotificationSounds(); updateState({}); }}
-            />
+      <SettingTile
+        title="Play notification sounds"
+        options={(
+          <Toggle
+            isActive={settings.isNotificationSounds}
+            onToggle={() => { toggleNotificationSounds(); updateState({}); }}
+          />
           )}
-          content={<Text variant="b3">Play a sound when a new message arrive.</Text>}
-        />
-      )}
+        content={<Text variant="b3">Play a sound when new messages arrive.</Text>}
+      />
     </div>
   );
 }
