@@ -5,7 +5,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import Postie from '../../../util/Postie';
-import { roomIdByLastActive, roomIdByAtoZ } from '../../../util/sort';
+import { roomIdByActivity, roomIdByAtoZ } from '../../../util/sort';
 
 import RoomsCategory from './RoomsCategory';
 
@@ -77,7 +77,7 @@ function Home({ spaceId }) {
       )}
 
       { directIds.length !== 0 && (
-        <RoomsCategory name="People" roomIds={directIds.sort(roomIdByLastActive)} drawerPostie={drawerPostie} />
+        <RoomsCategory name="People" roomIds={directIds.sort(roomIdByActivity)} drawerPostie={drawerPostie} />
       )}
 
       { isCategorized && [...categories].map(([catId, childIds]) => {
@@ -88,7 +88,7 @@ function Home({ spaceId }) {
           else rms.push(id);
         });
         rms.sort(roomIdByAtoZ);
-        dms.sort(roomIdByLastActive);
+        dms.sort(roomIdByActivity);
         return (
           <RoomsCategory
             key={catId}

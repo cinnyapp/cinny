@@ -4,7 +4,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import Postie from '../../../util/Postie';
-import { roomIdByLastActive } from '../../../util/sort';
+import { roomIdByActivity } from '../../../util/sort';
 
 import RoomsCategory from './RoomsCategory';
 
@@ -14,7 +14,7 @@ function Directs() {
   const { roomList, notifications } = initMatrix;
   const [directIds, setDirectIds] = useState([]);
 
-  useEffect(() => setDirectIds([...roomList.directs].sort(roomIdByLastActive)), []);
+  useEffect(() => setDirectIds([...roomList.directs].sort(roomIdByActivity)), []);
 
   useEffect(() => {
     const handleTimeline = (event, room, toStartOfTimeline, removed, data) => {

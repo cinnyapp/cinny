@@ -1,6 +1,6 @@
 import initMatrix from '../client/initMatrix';
 
-export function roomIdByLastActive(id1, id2) {
+export function roomIdByActivity(id1, id2) {
   const room1 = initMatrix.matrixClient.getRoom(id1);
   const room2 = initMatrix.matrixClient.getRoom(id2);
 
