@@ -5,6 +5,7 @@ import './RoomViewFloating.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
+import { markAsRead } from '../../../client/action/notifications';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -24,7 +25,7 @@ function useJumpToEvent(roomTimeline) {
   };
 
   const cancelJumpToEvent = () => {
-    roomTimeline.markAllAsRead();
+    markAsRead(roomTimeline.roomId);
     setEventId(null);
   };
 

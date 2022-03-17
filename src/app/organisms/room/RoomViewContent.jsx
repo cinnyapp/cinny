@@ -14,6 +14,7 @@ import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { diffMinutes, isInSameDay, Throttle } from '../../../util/common';
+import { markAsRead } from '../../../client/action/notifications';
 
 import Divider from '../../atoms/divider/Divider';
 import ScrollView from '../../atoms/scroll/ScrollView';
@@ -253,7 +254,7 @@ function useHandleScroll(
       );
       roomTimeline.emit(cons.events.roomTimeline.AT_BOTTOM, isAtBottom);
       if (isAtBottom && readUptoEvtStore.getItem()) {
-        requestAnimationFrame(() => roomTimeline.markAllAsRead());
+        requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
       }
     });
     autoPaginate();
@@ -263,7 +264,7 @@ function useHandleScroll(
     const timelineScroll = timelineScrollRef.current;
     const limit = eventLimitRef.current;
     if (readUptoEvtStore.getItem()) {
-      requestAnimationFrame(() => roomTimeline.markAllAsRead());
+      requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
     }
     if (roomTimeline.isServingLiveTimeline()) {
       limit.setFrom(roomTimeline.timeline.length - limit.maxEvents);
@@ -286,7 +287,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
     const limit = eventLimitRef.current;
     const trySendReadReceipt = (event) => {
       if (myUserId === event.getSender()) {
-        requestAnimationFrame(() => roomTimeline.markAllAsRead());
+        requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
         return;
       }
       const readUpToEvent = readUptoEvtStore.getItem();
@@ -295,7 +296,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
 
       if (isUnread === false) {
         if (document.visibilityState === 'visible' && timelineScroll.bottom < 16) {
-          requestAnimationFrame(() => roomTimeline.markAllAsRead());
+          requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
         } else {
           readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
         }
@@ -305,7 +306,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
       const { timeline } = roomTimeline;
       const unreadMsgIsLast = timeline[timeline.length - 2].getId() === readUpToId;
       if (unreadMsgIsLast) {
-        requestAnimationFrame(() => roomTimeline.markAllAsRead());
+        requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
       }
     };
 
@@ -399,7 +400,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
       if (timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward()) {
         const readUpToId = roomTimeline.getReadUpToEventId();
         if (readUptoEvtStore.getItem()?.getId() === readUpToId || readUpToId === null) {
-          requestAnimationFrame(() => roomTimeline.markAllAsRead());
+          requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
         }
       }
       jumpToItemIndex = -1;

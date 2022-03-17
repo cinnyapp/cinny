@@ -26,7 +26,7 @@ function Room() {
       roomInfo.roomTimeline?.removeInternalListeners();
       if (mx.getRoom(rId)) {
         setRoomInfo({
-          roomTimeline: new RoomTimeline(rId, initMatrix.notifications),
+          roomTimeline: new RoomTimeline(rId),
           eventId: eId ?? null,
         });
       } else {
