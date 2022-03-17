@@ -244,7 +244,6 @@ class RoomTimeline extends EventEmitter {
     if (latestEvent === null) return;
     if (readEventId === latestEvent.getId()) return;
     this.matrixClient.sendReadReceipt(latestEvent);
-    this.emit(cons.events.roomTimeline.MARKED_AS_READ, latestEvent);
   }
 
   hasEventInTimeline(eventId, timeline = this.activeTimeline) {

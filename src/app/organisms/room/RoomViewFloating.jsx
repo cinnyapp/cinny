@@ -37,11 +37,12 @@ function useJumpToEvent(roomTimeline) {
       setEventId(readEventId);
     }
 
+    const { notifications } = initMatrix;
     const handleMarkAsRead = () => setEventId(null);
-    roomTimeline.on(cons.events.roomTimeline.MARKED_AS_READ, handleMarkAsRead);
+    notifications.on(cons.events.notifications.FULL_READ, handleMarkAsRead);
 
     return () => {
-      roomTimeline.removeListener(cons.events.roomTimeline.MARKED_AS_READ, handleMarkAsRead);
+      notifications.removeListener(cons.events.notifications.FULL_READ, handleMarkAsRead);
       setEventId(null);
     };
   }, [roomTimeline]);
