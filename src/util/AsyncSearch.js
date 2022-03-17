@@ -123,7 +123,7 @@ class AsyncSearch extends EventEmitter {
   _normalize(item) {
     let myItem = item.normalize(this.normalizeUnicode ? 'NFKC' : 'NFC');
     if (!this.isCaseSensitive) myItem = myItem.toLocaleLowerCase();
-    if (this.ignoreWhitespace) myItem = myItem.replaceAll(' ', '');
+    if (this.ignoreWhitespace) myItem = myItem.replace(/\s/g, '');
     return myItem;
   }
 
