@@ -1,33 +1,59 @@
----
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
+name: 🐞 Bug Report
+title: '[bug] '
+description: Report a bug
+labels: 'type: bug'
 
----
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## First of all
+        1. Please search for [existing issues](https://github.com/ajbura/cinny/issues?q=is%3Aissue) about this problem first.
+        2. Make sure Cinny is up to date.
+        3. Make sure it's an issue with Cinny and not something else you are using.
+        4. Remember to be friendly.
 
-#### Describe the bug
-A clear and concise description of what the bug is.
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear description of what the bug is. Include screenshots if applicable.
+      placeholder: Bug description
+    validations:
+      required: true
 
-#### To Reproduce
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. See error
 
-#### Expected behavior
-A clear and concise description of what you expected to happen.
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: A clear description of what you expected to happen.
 
-#### Screenshots
-If applicable, add screenshots to help explain your problem.
-
-#### Desktop (please complete the following information):
- - OS: [e.g. Windows, MacOS]
- - Browser: [e.g. chrome, firefox]
- - Version: [e.g. 3.22]
- - Matrix homeserver: [e.g. matrix.org]
-
-#### Additional context
-Add any other context about the problem here.
+  - type: textarea
+    id: info
+    attributes:
+      label: Platform and versions
+      description: "Provide OS, browser and Cinny version with your Homeserver."
+      placeholder: |
+       1. OS: [e.g. Windows 10, MacOS]
+       2. Browser: [e.g. chrome 99.5, firefox 97.2]
+       3. Cinny version: [e.g. 1.8.1 (app.cinny.in)]
+       4. Matrix homeserver: [e.g. matrix.org]
+      render: shell
+    validations:
+      required: true
+  
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
