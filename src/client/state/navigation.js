@@ -185,6 +185,12 @@ class Navigation extends EventEmitter {
           action.afterClose,
         );
       },
+      [cons.actions.navigation.OPEN_KEY_VERIFICATION]: () => {
+        this.emit(
+          cons.events.navigation.KEY_VERIFICATION_OPENED,
+          action.request,
+        );
+      },
     };
     actions[action.type]?.();
   }

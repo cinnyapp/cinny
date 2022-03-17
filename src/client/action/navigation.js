@@ -166,3 +166,10 @@ export function openReusableDialog(title, render, afterClose) {
     afterClose,
   });
 }
+
+export function openKeyVerification(request) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_KEY_VERIFICATION,
+    request,
+  });
+}
