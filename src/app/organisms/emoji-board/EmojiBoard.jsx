@@ -21,7 +21,7 @@ import Input from '../../atoms/input/Input';
 import ScrollView from '../../atoms/scroll/ScrollView';
 
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
-import HeartIC from '../../../../public/res/ic/outlined/heart.svg';
+import RecentClockIC from '../../../../public/res/ic/outlined/recent-clock.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import DogIC from '../../../../public/res/ic/outlined/dog.svg';
 import CupIC from '../../../../public/res/ic/outlined/cup.svg';
@@ -285,7 +285,7 @@ function EmojiBoard({ onSelect, searchRef }) {
           {recentEmojis.length > 0 && (
             <IconButton
               onClick={() => openGroup(0)}
-              src={HeartIC}
+              src={RecentClockIC}
               tooltip="Recent"
               tooltipPlacement="right"
             />
