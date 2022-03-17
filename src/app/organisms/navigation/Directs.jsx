@@ -4,15 +4,14 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import Postie from '../../../util/Postie';
+import { roomIdByLastActive } from '../../../util/sort';
 
 import RoomsCategory from './RoomsCategory';
-
-import { AtoZ } from './common';
 
 const drawerPostie = new Postie();
 function Directs() {
   const { roomList, notifications } = initMatrix;
-  const directIds = [...roomList.directs].sort(AtoZ);
+  const directIds = [...roomList.directs].sort(roomIdByLastActive);
 
   useEffect(() => {
     const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
