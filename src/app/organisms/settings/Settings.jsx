@@ -7,7 +7,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import {
   toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
-  toggleNotifications,
+  toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
 import logout from '../../../client/action/logout';
 import { usePermission } from '../../hooks/usePermission';
@@ -158,6 +158,16 @@ function NotificationsSection() {
         options={renderOptions()}
         content={<Text variant="b3">Show notifications when new messages arrive.</Text>}
       />
+      <SettingTile
+        title="Play notification sounds"
+        options={(
+          <Toggle
+            isActive={settings.isNotificationSounds}
+            onToggle={() => { toggleNotificationSounds(); updateState({}); }}
+          />
+          )}
+        content={<Text variant="b3">Play a sound when new messages arrive.</Text>}
+      />
     </div>
   );
 }
@@ -200,7 +210,7 @@ function AboutSection() {
       <div className="set-about__branding">
         <img width="60" height="60" src={CinnySVG} alt="Cinny logo" />
         <div>
-          <Text variant="h2" weight='medium'>
+          <Text variant="h2" weight="medium">
             Cinny
             <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>{`v${cons.version}`}</span>
           </Text>
@@ -222,6 +232,10 @@ function AboutSection() {
           <li>
             {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
             <Text>The <a href="https://twemoji.twitter.com" target="_blank" rel="noreferrer noopener">Twemoji</a> emoji art is © <a href="https://twemoji.twitter.com" target="_blank" rel="noreferrer noopener">Twitter, Inc and other contributors</a> used under the terms of <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer noopener">CC-BY 4.0</a>.</Text>
+          </li>
+          <li>
+            {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
+            <Text>The <a href="https://material.io/design/sound/sound-resources.html" target="_blank" rel="noreferrer noopener">Material sound resources</a> are © <a href="https://google.com" target="_blank" rel="noreferrer noopener">Google</a> used under the terms of <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer noopener">CC-BY 4.0</a>.</Text>
           </li>
         </ul>
       </div>
