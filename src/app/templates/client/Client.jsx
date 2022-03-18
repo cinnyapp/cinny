@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './Client.scss';
 
+import { initHotkeys } from '../../../client/event/hotkeys';
+import { initRoomListListener } from '../../../client/event/roomList';
+
 import Text from '../../atoms/text/Text';
 import Spinner from '../../atoms/spinner/Spinner';
 import Navigation from '../../organisms/navigation/Navigation';
@@ -38,6 +41,8 @@ function Client() {
     }, 15000);
     initMatrix.once('init_loading_finished', () => {
       clearInterval(iId);
+      initHotkeys();
+      initRoomListListener(initMatrix.roomList);
       changeLoading(false);
     });
     initMatrix.init();
