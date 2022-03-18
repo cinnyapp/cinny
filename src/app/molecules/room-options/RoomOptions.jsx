@@ -6,6 +6,7 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import { openInviteUser } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
+import { markAsRead } from '../../../client/action/notifications';
 
 import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 import RoomNotification from '../room-notification/RoomNotification';
@@ -20,10 +21,8 @@ function RoomOptions({ roomId, afterOptionSelect }) {
   const canInvite = room?.canInvite(mx.getUserId());
 
   const handleMarkAsRead = () => {
+    markAsRead(roomId);
     afterOptionSelect();
-    if (!room) return;
-    const events = room.getLiveTimeline().getEvents();
-    mx.sendReadReceipt(events[events.length - 1]);
   };
 
   const handleInviteClick = () => {
