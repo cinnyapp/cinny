@@ -1,0 +1,28 @@
+
+$tablet-threshold: 900px;
+$mobile-threshold: 750px;
+
+@mixin smaller($devicetype) {
+  @if $devicetype==mobile {
+    @media screen and (max-width: $mobile-threshold) {
+      @content;
+    }
+  }
+  @else if $devicetype==tablet {
+    @media screen and (max-width: $tablet-threshold) {
+      @content;
+    }
+  }
+}
+
+@mixin bigger($devicetype) {
+  @if $devicetype==mobile {
+    @media screen and (min-width: $mobile-threshold) {
+      @content;
+    }
+  } @else if $devicetype==tablet {
+    @media screen and (min-width: $tablet-threshold) {
+      @content;
+    }
+  }
+}

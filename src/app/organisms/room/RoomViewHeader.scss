@@ -1,8 +1,6 @@
 @use '../../partials/flex';
 @use '../../partials/dir';
-
-$threshold-compact-view: 750px;
-$threshold-hide-people-drawer: 750px;
+@use '../../partials/threshold';
 
 .room-header__btn {
   min-width: 0;
@@ -30,7 +28,7 @@ $threshold-hide-people-drawer: 750px;
 }
 
 .room-people-drawer-toggle {
-  @media screen and (max-width: $threshold-hide-people-drawer) {
+  @include threshold.smaller(tablet) {
     display: none;
   }
 }
@@ -38,8 +36,8 @@ $threshold-hide-people-drawer: 750px;
 .room-back-btn {
   margin-left: -10px;
   margin-right: 5px;
-  
-  @media screen and (min-width: $threshold-compact-view) {
+
+  @include threshold.bigger(mobile) {
     display: none;
   }
 }

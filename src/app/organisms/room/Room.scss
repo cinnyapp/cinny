@@ -1,6 +1,5 @@
 @use '../../partials/flex';
-
-$threshold-hide-people-drawer: 750px;
+@use '../../partials/threshold';
 
 .room {
   @extend .cp-fx__row;
@@ -14,7 +13,7 @@ $threshold-hide-people-drawer: 750px;
 }
 
 .room__drawer {
-  @media screen and (max-width: $threshold-hide-people-drawer) {
+  @include threshold.smaller(tablet) {
     // On compact screen sizes there is not enough space
     // but no need to view it otherwise as it already is in settings
     display: none;

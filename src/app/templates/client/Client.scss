@@ -1,6 +1,4 @@
-
-$threshold-compact-view: 750px;
-$threshold-hide-people-drawer: 750px;
+@use '../../partials/threshold';
 
 .client-container {
   display: flex;
@@ -10,7 +8,7 @@ $threshold-hide-people-drawer: 750px;
 .navigation__wrapper {
   width: var(--navigation-width);
   
-  @media screen and (max-width: $threshold-compact-view) {
+  @include threshold.smaller(mobile) {
     width: 100%;
   }
 }
@@ -20,7 +18,7 @@ $threshold-hide-people-drawer: 750px;
   min-width: 0;
 }
 
-@media screen and (max-width: $threshold-compact-view) {
+@include threshold.smaller(mobile) {
   .non-focused-ui {
     display: none;
   }
