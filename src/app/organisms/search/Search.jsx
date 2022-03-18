@@ -91,33 +91,27 @@ function Search() {
   const generateResults = (term) => {
     const prefix = term.match(/^[#@*]/)?.[0];
 
-    if (term.length === 1) {
-      const { roomList } = initMatrix;
-      const spaceIds = [...roomList.spaces];
-      const roomIds = [...roomList.rooms];
-      const directIds = [...roomList.directs];
-
-      if (prefix === '*') {
-        const mappedIds = mapRoomIds(spaceIds.sort(roomIdByActivity));
-        asyncSearch.setup(mappedIds, { keys: 'name', isContain: true, limit: 20 });
-        handleSearchResults(mappedIds, '*');
-      } else if (prefix === '#') {
-        const mappedIds = mapRoomIds(roomIds.sort(roomIdByActivity));
-        asyncSearch.setup(mappedIds, { keys: 'name', isContain: true, limit: 20 });
-        handleSearchResults(mappedIds, '#');
-      } else if (prefix === '@') {
-        const mappedIds = mapRoomIds(directIds.sort(roomIdByActivity));
-        asyncSearch.setup(mappedIds, { keys: 'name', isContain: true, limit: 20 });
-        handleSearchResults(mappedIds, '@');
-      } else {
-        const ids = roomIds.concat(directIds, spaceIds);
-        const mappedIds = mapRoomIds(ids.sort(roomIdByActivity));
-        asyncSearch.setup(mappedIds, { keys: 'name', isContain: true, limit: 20 });
-        asyncSearch.search(term);
-      }
-    } else {
+    if (term.length > 1) {
       asyncSearch.search(prefix ? term.slice(1) : term);
+      return;
     }
+
+    const { spaces, rooms, directs } = initMatrix.roomList;
+    let ids = null;
+
+    if (prefix) {
+      if (prefix === '#') ids = [...rooms];
+      else if (prefix === '@') ids = [...directs];
+      else ids = [...spaces];
+    } else {
+      ids = [...rooms].concat([...directs], [...spaces]);
+    }
+
+    ids.sort(roomIdByActivity);
+    const mappedIds = mapRoomIds(ids);
+    asyncSearch.setup(mappedIds, { keys: 'name', isContain: true, limit: 20 });
+    if (prefix) handleSearchResults(mappedIds, prefix);
+    else asyncSearch.search(term);
   };
 
   const loadRecentRooms = () => {
