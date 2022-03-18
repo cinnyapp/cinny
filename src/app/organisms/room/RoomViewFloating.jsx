@@ -9,10 +9,9 @@ import { markAsRead } from '../../../client/action/notifications';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
-import IconButton from '../../atoms/button/IconButton';
 
+import MessageIC from '../../../../public/res/ic/outlined/message.svg';
 import MessageUnreadIC from '../../../../public/res/ic/outlined/message-unread.svg';
-import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
 import { getUsersActionJsx } from './common';
@@ -111,11 +110,9 @@ function RoomViewFloating({
         <Text variant="b2">{getUsersActionJsx(roomId, [...typingMembers], 'typing...')}</Text>
       </div>
       <div className={`room-view__STB${isAtBottom ? '' : ' room-view__STB--open'}`}>
-        <IconButton
-          onClick={handleScrollToBottom}
-          src={ChevronBottomIC}
-          tooltip="Scroll to Bottom"
-        />
+        <Button iconSrc={MessageIC} onClick={handleScrollToBottom}>
+          <Text variant="b3" weight="medium">Jump to latest</Text>
+        </Button>
       </div>
     </>
   );
