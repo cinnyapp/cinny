@@ -7,6 +7,7 @@ import navigation from './navigation';
 import settings from './settings';
 
 import NotificationSound from '../../../public/sound/notification.ogg';
+import InviteSound from '../../../public/sound/invite.ogg';
 
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
@@ -222,19 +223,26 @@ class Notifications extends EventEmitter {
         silent: settings.isNotificationSounds,
       });
       if (settings.isNotificationSounds) {
-        noti.onshow = () => this._playNotiSounds();
+        noti.onshow = () => this._playNotiSound();
       }
       noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
     } else {
-      this._playNotiSounds();
+      this._playNotiSound();
     }
   }
 
-  _playNotiSounds() {
+  _playNotiSound() {
     if (!this._notiAudio) {
       this._notiAudio = new Audio(NotificationSound);
     }
     this._notiAudio.play();
+  }
+
+  _playInviteSound() {
+    if (!this._inviteAudio) {
+      this._inviteAudio = new Audio(InviteSound);
+    }
+    this._inviteAudio.play();
   }
 
   _listenEvents() {
@@ -315,6 +323,9 @@ class Notifications extends EventEmitter {
     this.matrixClient.on('Room.myMembership', (room, membership) => {
       if (membership === 'leave' && this.hasNoti(room.roomId)) {
         this.deleteNoti(room.roomId);
+      }
+      if (membership === 'invite') {
+        this._playInviteSound();
       }
     });
   }
