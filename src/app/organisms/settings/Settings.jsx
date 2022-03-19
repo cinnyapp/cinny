@@ -237,10 +237,6 @@ function AboutSection() {
             {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
             <Text>The <a href="https://material.io/design/sound/sound-resources.html" target="_blank" rel="noreferrer noopener">Material sound resources</a> are © <a href="https://google.com" target="_blank" rel="noreferrer noopener">Google</a> used under the terms of <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer noopener">CC-BY 4.0</a>.</Text>
           </li>
-          <li>
-            {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
-            <Text>The <a href="https://freesound.org/people/Joao_Janz/sounds/478510/" target="_blank" rel="noreferrer noopener">invite sound </a> is © <a href="https://freesound.org/people/Joao_Janz/" target="_blank" rel="noreferrer noopener">Joao_Janz</a> used under the terms of <a href="https://creativecommons.org/licenses/by-nc/3.0/" target="_blank" rel="noreferrer noopener">CC BY-NC 3.0</a>.</Text>
-          </li>
         </ul>
       </div>
     </div>
