@@ -1,5 +1,6 @@
 @use '../../partials/flex';
 @use '../../partials/dir';
+@use '../../partials/threshold';
 
 .settings-window {
   & .pw__drawer__content {
@@ -55,6 +56,19 @@
     margin-top: var(--sp-loose);
     & ul {
       margin: var(--sp-extra-tight) 0;
+    }
+  }
+}
+
+.settings-window {
+  @include threshold.smaller(mobile) {
+    .pw__drawer p, .pw__drawer .header h4 {
+      display: none;
+      width: 0;
+    }
+
+    .pw__drawer {
+      width: fit-content;
     }
   }
 }
