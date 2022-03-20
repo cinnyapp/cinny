@@ -8,8 +8,7 @@
   
   .header .btn-danger {
     margin: 0 var(--sp-tight);
-    padding-top: var(--sp-ultra-tight);
-    padding-bottom: var(--sp-ultra-tight);
+    box-shadow: none;
   }
 
   & .profile-editor {

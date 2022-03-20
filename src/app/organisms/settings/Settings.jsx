@@ -306,7 +306,7 @@ function Settings() {
     <PopupWindow
       isOpen={isOpen}
       className="settings-window"
-      title={<Text variant="s1" weight="medium" primary>Settings</Text>}
+      title={<Text variant="s1" weight="medium" primary>User settings</Text>}
       contentOptions={(
         <>
           <Button variant="danger" iconSrc={PowerIC} onClick={handleLogout}>
