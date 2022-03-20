@@ -95,9 +95,10 @@ export function openProfileViewer(userId, roomId) {
   });
 }
 
-export function openSettings() {
+export function openSettings(tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SETTINGS,
+    tabText,
   });
 }
 
