@@ -10,7 +10,8 @@
   "scripts": {
     "start": "webpack serve --config ./webpack.dev.js --open",
     "build": "webpack --config ./webpack.prod.js",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "release": "node scripts/release.mjs"
   },
   "keywords": [],
   "author": "Ajay Bura",
@@ -49,6 +50,7 @@
     "twemoji": "^14.0.1"
   },
   "devDependencies": {
+    "@actions/github": "^5.0.0",
     "@babel/core": "^7.17.7",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-react": "^7.16.7",
@@ -73,6 +75,7 @@
     "html-loader": "^3.1.0",
     "html-webpack-plugin": "^5.3.1",
     "mini-css-extract-plugin": "^2.6.0",
+    "node-fetch": "^3.2.3",
     "path-browserify": "^1.0.1",
     "sass": "^1.49.9",
     "sass-loader": "^12.6.0",
