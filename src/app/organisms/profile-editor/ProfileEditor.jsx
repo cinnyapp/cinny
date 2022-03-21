@@ -31,6 +31,7 @@ function ProfileEditor({ userId }) {
     mx.getProfileInfo(mx.getUserId()).then((info) => {
       if (!isMounted) return;
       setAvatarSrc(info.avatar_url ? mx.mxcUrlToHttp(info.avatar_url, 80, 80, 'crop') : null);
+      setUsername(info.displayname);
     });
     return () => {
       isMounted = false;
