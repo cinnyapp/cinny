@@ -88,7 +88,7 @@ function SpaceAddExistingContent({ roomId }) {
   };
 
   const handleSearch = (ev) => {
-    const term = ev.target.value.toLocaleLowerCase().replaceAll(' ', '');
+    const term = ev.target.value.toLocaleLowerCase().replace(/\s/g, '');
     if (term === '') {
       setSearchIds(null);
       return;
@@ -100,7 +100,7 @@ function SpaceAddExistingContent({ roomId }) {
         if (!name) return false;
         name = name.normalize('NFKC')
           .toLocaleLowerCase()
-          .replaceAll(' ', '');
+          .replace(/\s/g, '');
         return name.includes(term);
       });
       setSearchIds(searchedIds);

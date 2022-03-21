@@ -21,6 +21,7 @@ import AsyncSearch from '../../../util/AsyncSearch';
 import Text from '../../atoms/text/Text';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import FollowingMembers from '../../molecules/following-members/FollowingMembers';
+import { addRecentEmoji } from '../emoji-board/recent';
 
 const commands = [{
   name: 'markdown',
@@ -237,6 +238,7 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
       viewEvent.emit('cmd_fired');
     }
     if (myCmd.prefix === ':') {
+      if (!myCmd.result.mxc) addRecentEmoji(myCmd.result.unicode);
       viewEvent.emit('cmd_fired', {
         replace: myCmd.result.mxc ? `:${myCmd.result.shortcode}: ` : myCmd.result.unicode,
       });

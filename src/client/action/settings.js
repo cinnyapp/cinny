@@ -36,3 +36,9 @@ export function toggleNotifications() {
     type: cons.actions.settings.TOGGLE_NOTIFICATIONS,
   });
 }
+
+export function toggleNotificationSounds() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_NOTIFICATION_SOUNDS,
+  });
+}

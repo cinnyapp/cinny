@@ -6,6 +6,9 @@ import cons from './cons';
 import navigation from './navigation';
 import settings from './settings';
 
+import NotificationSound from '../../../public/sound/notification.ogg';
+import InviteSound from '../../../public/sound/invite.ogg';
+
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
   if (!cons.supportEventTypes.includes(eType)) return false;
@@ -185,7 +188,7 @@ class Notifications extends EventEmitter {
   }
 
   async _displayPopupNoti(mEvent, room) {
-    if (!settings.showNotifications) return;
+    if (!settings.showNotifications && !settings.isNotificationSounds) return;
 
     const actions = this.matrixClient.getPushActionsForEvent(mEvent);
     if (!actions?.notify) return;
@@ -196,28 +199,50 @@ class Notifications extends EventEmitter {
       await mEvent.attemptDecryption(this.matrixClient.crypto);
     }
 
-    let title;
-    if (!mEvent.sender || room.name === mEvent.sender.name) {
-      title = room.name;
-    } else if (mEvent.sender) {
-      title = `${mEvent.sender.name} (${room.name})`;
+    if (settings.showNotifications) {
+      let title;
+      if (!mEvent.sender || room.name === mEvent.sender.name) {
+        title = room.name;
+      } else if (mEvent.sender) {
+        title = `${mEvent.sender.name} (${room.name})`;
+      }
+
+      const iconSize = 36;
+      const icon = await renderAvatar({
+        text: mEvent.sender.name,
+        bgColor: cssColorMXID(mEvent.getSender()),
+        imageSrc: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, iconSize, iconSize, 'crop'),
+        size: iconSize,
+        borderRadius: 8,
+        scale: 8,
+      });
+
+      const noti = new window.Notification(title, {
+        body: mEvent.getContent().body,
+        icon,
+        silent: settings.isNotificationSounds,
+      });
+      if (settings.isNotificationSounds) {
+        noti.onshow = () => this._playNotiSound();
+      }
+      noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
+    } else {
+      this._playNotiSound();
     }
+  }
 
-    const iconSize = 36;
-    const icon = await renderAvatar({
-      text: mEvent.sender.name,
-      bgColor: cssColorMXID(mEvent.getSender()),
-      imageSrc: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, iconSize, iconSize, 'crop'),
-      size: iconSize,
-      borderRadius: 8,
-      scale: 8,
-    });
+  _playNotiSound() {
+    if (!this._notiAudio) {
+      this._notiAudio = new Audio(NotificationSound);
+    }
+    this._notiAudio.play();
+  }
 
-    const noti = new window.Notification(title, {
-      body: mEvent.getContent().body,
-      icon,
-    });
-    noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
+  _playInviteSound() {
+    if (!this._inviteAudio) {
+      this._inviteAudio = new Audio(InviteSound);
+    }
+    this._inviteAudio.play();
   }
 
   _listenEvents() {
@@ -298,6 +323,9 @@ class Notifications extends EventEmitter {
     this.matrixClient.on('Room.myMembership', (room, membership) => {
       if (membership === 'leave' && this.hasNoti(room.roomId)) {
         this.deleteNoti(room.roomId);
+      }
+      if (membership === 'invite') {
+        this._playInviteSound();
       }
     });
   }

@@ -5,11 +5,11 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import Postie from '../../../util/Postie';
+import { roomIdByActivity, roomIdByAtoZ } from '../../../util/sort';
 
 import RoomsCategory from './RoomsCategory';
 
 import { useCategorizedSpaces } from '../../hooks/useCategorizedSpaces';
-import { AtoZ, RoomToDM } from './common';
 
 const drawerPostie = new Postie();
 function Home({ spaceId }) {
@@ -33,10 +33,6 @@ function Home({ spaceId }) {
     spaceIds = roomList.getOrphanSpaces();
     roomIds = roomList.getOrphanRooms();
   }
-
-  spaceIds.sort(AtoZ);
-  roomIds.sort(AtoZ);
-  directIds.sort(AtoZ);
 
   if (isCategorized) {
     categories = roomList.getCategorizedSpaces(spaceIds);
@@ -73,26 +69,36 @@ function Home({ spaceId }) {
   return (
     <>
       { !isCategorized && spaceIds.length !== 0 && (
-        <RoomsCategory name="Spaces" roomIds={spaceIds} drawerPostie={drawerPostie} />
+        <RoomsCategory name="Spaces" roomIds={spaceIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
       )}
 
       { roomIds.length !== 0 && (
-        <RoomsCategory name="Rooms" roomIds={roomIds} drawerPostie={drawerPostie} />
+        <RoomsCategory name="Rooms" roomIds={roomIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
       )}
 
       { directIds.length !== 0 && (
-        <RoomsCategory name="People" roomIds={directIds} drawerPostie={drawerPostie} />
+        <RoomsCategory name="People" roomIds={directIds.sort(roomIdByActivity)} drawerPostie={drawerPostie} />
       )}
 
-      { isCategorized && [...categories].map(([catId, childIds]) => (
-        <RoomsCategory
-          key={catId}
-          spaceId={catId}
-          name={mx.getRoom(catId).name}
-          roomIds={[...childIds].sort(AtoZ).sort(RoomToDM)}
-          drawerPostie={drawerPostie}
-        />
-      ))}
+      { isCategorized && [...categories].map(([catId, childIds]) => {
+        const rms = [];
+        const dms = [];
+        childIds.forEach((id) => {
+          if (directs.has(id)) dms.push(id);
+          else rms.push(id);
+        });
+        rms.sort(roomIdByAtoZ);
+        dms.sort(roomIdByActivity);
+        return (
+          <RoomsCategory
+            key={catId}
+            spaceId={catId}
+            name={mx.getRoom(catId).name}
+            roomIds={rms.concat(dms)}
+            drawerPostie={drawerPostie}
+          />
+        );
+      })}
     </>
   );
 }

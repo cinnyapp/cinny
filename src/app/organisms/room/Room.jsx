@@ -13,33 +13,46 @@ import RoomSettings from './RoomSettings';
 import PeopleDrawer from './PeopleDrawer';
 
 function Room() {
-  const [roomTimeline, setRoomTimeline] = useState(null);
-  const [eventId, setEventId] = useState(null);
+  const [roomInfo, setRoomInfo] = useState({
+    roomTimeline: null,
+    eventId: null,
+  });
   const [isDrawer, setIsDrawer] = useState(settings.isPeopleDrawer);
 
   const mx = initMatrix.matrixClient;
-  const handleRoomSelected = (rId, pRoomId, eId) => {
-    if (mx.getRoom(rId)) {
-      setRoomTimeline(new RoomTimeline(rId, initMatrix.notifications));
-      setEventId(eId);
-    } else {
-      // TODO: add ability to join room if roomId is invalid
-      setRoomTimeline(null);
-      setEventId(null);
-    }
-  };
-  const handleDrawerToggling = (visiblity) => setIsDrawer(visiblity);
 
   useEffect(() => {
+    const handleRoomSelected = (rId, pRoomId, eId) => {
+      roomInfo.roomTimeline?.removeInternalListeners();
+      if (mx.getRoom(rId)) {
+        setRoomInfo({
+          roomTimeline: new RoomTimeline(rId),
+          eventId: eId ?? null,
+        });
+      } else {
+        // TODO: add ability to join room if roomId is invalid
+        setRoomInfo({
+          roomTimeline: null,
+          eventId: null,
+        });
+      }
+    };
+
     navigation.on(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
-    settings.on(cons.events.settings.PEOPLE_DRAWER_TOGGLED, handleDrawerToggling);
     return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
+    };
+  }, [roomInfo]);
+
+  useEffect(() => {
+    const handleDrawerToggling = (visiblity) => setIsDrawer(visiblity);
+    settings.on(cons.events.settings.PEOPLE_DRAWER_TOGGLED, handleDrawerToggling);
+    return () => {
       settings.removeListener(cons.events.settings.PEOPLE_DRAWER_TOGGLED, handleDrawerToggling);
-      roomTimeline?.removeInternalListeners();
     };
   }, []);
 
+  const { roomTimeline, eventId } = roomInfo;
   if (roomTimeline === null) return <Welcome />;
 
   return (
