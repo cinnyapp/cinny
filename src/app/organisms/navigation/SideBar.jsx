@@ -72,7 +72,7 @@ function ProfileAvatarMenu() {
   return (
     <SidebarAvatar
       onClick={openSettings}
-      tooltip={profile.displayName}
+      tooltip="Settings"
       avatar={(
         <Avatar
           text={profile.displayName}

@@ -1,28 +1,41 @@
 @use '../../partials/dir';
+@use '../../partials/flex';
 
 .profile-editor {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
 }
 
-.profile-editor__input-wrapper {
-  flex: 1;
-  min-width: 0;
-  margin-top: 10px;
-  
+.profile-editor__info,
+.profile-editor__form {
+  @extend .cp-fx__item-one;
+  @include dir.side(margin, var(--sp-loose), 0);
   display: flex;
-  align-items: flex-end;
+}
+
+.profile-editor__info {
+  flex-direction: column;
+  & > div:first-child {
+    display: flex;
+    align-items: center;
+  }
+  .ic-btn {
+    margin: 0 var(--sp-extra-tight);
+  }
+}
+
+.profile-editor__form {
+  margin-top: 10px;
   flex-wrap: wrap;
+  align-items: flex-end;
 
   & > .input-container  {
-    flex: 1;
+    @extend .cp-fx__item-one;
   }
   & > button {
     height: 46px;
     margin-top: var(--sp-normal);
-  }
-
-  & > * {
     @include dir.side(margin, var(--sp-normal), 0);
   }
+
 }
