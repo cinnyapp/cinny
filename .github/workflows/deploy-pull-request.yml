@@ -13,7 +13,7 @@ jobs:
       # There's a 'download artifact' action but it hasn't been updated for the
       # workflow_run action (https://github.com/actions/download-artifact/issues/60)
       # so instead we get this mess:
-      - name: 'Download artifact'
+      - name: Download artifact
         uses: actions/github-script@v6.0.0
         with:
           script: |
@@ -46,7 +46,7 @@ jobs:
             fs.writeFileSync('${{github.workspace}}/pr.json.zip', Buffer.from(download.data));
       - name: Extract Artifacts
         run: unzip -d dist previewbuild.zip && rm previewbuild.zip && unzip pr.json.zip && rm pr.json.zip
-      - name: 'Read PR Info'
+      - name: Read PR Info
         id: readctx
         uses: actions/github-script@v6.0.0
         with:

@@ -9,7 +9,7 @@ jobs:
     name: 'Deploy to Netlify'
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
+      - name: Checkout repository
         uses: actions/checkout@v3.0.0
       - name: Build and deploy to Netlify
         uses: jsmrcaga/action-netlify-deploy@v1.7.2
@@ -26,7 +26,7 @@ jobs:
       - name: Create tar.gz
         run: tar -czvf cinny-${{ steps.vars.outputs.tag }}.tar.gz dist
       - name: Upload tagged release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v0.1.14
         with:
           files: |
             cinny-${{ steps.vars.outputs.tag }}.tar.gz
@@ -35,7 +35,7 @@ jobs:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
+      - name: Checkout repository
         uses: actions/checkout@v3.0.0
       - name: Login to Docker Hub
         uses: docker/login-action@v1.14.1

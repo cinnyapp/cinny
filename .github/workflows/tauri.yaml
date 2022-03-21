@@ -12,7 +12,8 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-    - uses: actions/checkout@v3.0.0
+    - name: Checkout repository
+      uses: actions/checkout@v3.0.0
     - name: Get release
       id: get_release
       uses: bruceadams/get-release@v1.2.3
@@ -33,7 +34,8 @@ jobs:
         sudo apt-get install -y webkit2gtk-4.0
     - name: Install app dependencies
       run: npm ci
-    - uses: tauri-apps/tauri-action@v0.3.0
+    - name: Build desktop app with Tauri
+      uses: tauri-apps/tauri-action@v0.3.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -77,4 +79,16 @@ jobs:
           src-tauri\target\release\bundle\msi\cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi
           src-tauri\target\release\bundle\msi\cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi.zip
           src-tauri\target\release\bundle\msi\cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi.zip.sig
-          
+
+  release-update:
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.0
+      - name: Install dependencies
+        run: npm ci
+      - name: Run release.json
+        run: npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
