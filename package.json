@@ -26,7 +26,7 @@
     "file-saver": "^2.0.5",
     "flux": "^4.0.3",
     "formik": "^2.2.9",
-    "html-react-parser": "^1.4.8",
+    "html-react-parser": "^1.4.9",
     "linkifyjs": "^2.1.9",
     "matrix-js-sdk": "^15.6.0",
     "micromark": "^3.0.10",
