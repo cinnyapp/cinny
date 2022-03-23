@@ -1,0 +1,18 @@
+@use '../../partials/flex';
+
+.device-manage {
+  &__loading {
+    @extend .cp-fx__row--c-c;
+    padding: var(--sp-extra-loose) var(--sp-normal);
+
+    .text {
+      margin: 0 var(--sp-normal);
+    }
+  }
+  &__info {
+    margin: var(--sp-normal);
+  }
+  & .setting-tile:last-of-type {
+     border-bottom: none;
+  }
+}
