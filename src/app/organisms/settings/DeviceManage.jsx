@@ -5,6 +5,7 @@ import dateFormat from 'dateformat';
 import initMatrix from '../../../client/initMatrix';
 
 import Text from '../../atoms/text/Text';
+import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import Spinner from '../../atoms/spinner/Spinner';
@@ -56,11 +57,14 @@ function isCrossVerified(deviceId) {
 }
 
 function DeviceManage() {
+  const TRUNCATED_COUNT = 4;
   const mx = initMatrix.matrixClient;
   const deviceList = useDeviceList();
   const [processing, setProcessing] = useState([]);
+  const [truncated, setTruncated] = useState(true);
   const mountStore = useStore();
   mountStore.setItem(true);
+
   useEffect(() => {
     setProcessing([]);
   }, [deviceList]);
@@ -193,9 +197,17 @@ function DeviceManage() {
         <MenuHeader>Verified sessions</MenuHeader>
         {
           verified.length > 0
-            ? verified.map((device) => renderDevice(device, true))
+            ? verified.map((device, index) => {
+              if (truncated && index >= TRUNCATED_COUNT) return null;
+              return renderDevice(device, true);
+            })
             : <Text className="device-manage__info">No verified session</Text>
         }
+        { verified.length > TRUNCATED_COUNT && (
+          <Button className="device-manage__info" onClick={() => setTruncated(!truncated)}>
+            {truncated ? `View ${verified.length - 4} more` : 'View less'}
+          </Button>
+        )}
         { deviceList.length > 0 && (
           <Text className="device-manage__info" variant="b3">Session names are visible to everyone, so do not put any private info here.</Text>
         )}
