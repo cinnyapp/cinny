@@ -13,8 +13,8 @@ export function roomIdByAtoZ(aId, bId) {
 
   // remove "#" from the room name
   // To ignore it in sorting
-  aName = aName.replaceAll('#', '');
-  bName = bName.replaceAll('#', '');
+  aName = aName.replace(/#/g, '');
+  bName = bName.replace(/#/g, '');
 
   if (aName.toLowerCase() < bName.toLowerCase()) {
     return -1;
