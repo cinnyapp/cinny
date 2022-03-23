@@ -102,47 +102,76 @@ function DeviceManage() {
   };
 
   const handleRemove = async (device, auth = undefined) => {
-    if (confirm(`You are about to logout "${device.display_name}" session?`)) {
-      addToProcessing(device, auth);
+    if (auth === undefined
+      ? window.confirm(`You are about to logout "${device.display_name}" session?`)
+      : true
+    ) {
+      addToProcessing(device);
       try {
-        await mx.deleteDevice(device.device_id);
+        await mx.deleteDevice(device.device_id, auth);
       } catch (e) {
+        if (e.httpStatus === 401 && e.data?.flows) {
+          const { flows } = e.data;
+          const flow = flows.find((f) => f.stages.includes('m.login.password'));
+          if (flow) {
+            const password = window.prompt('Please enter account password', '');
+            if (password && password.trim() !== '') {
+              handleRemove(device, {
+                session: e.data.session,
+                type: 'm.login.password',
+                password,
+                identifier: {
+                  type: 'm.id.user',
+                  user: mx.getUserId(),
+                },
+              });
+              return;
+            }
+          }
+        }
+        window.alert('Failed to remove session!');
         if (!mountStore.getItem()) return;
         removeFromProcessing(device);
       }
     }
   };
 
-  const renderDevice = (device, isVerified) => (
-    <SettingTile
-      key={device.device_id}
-      title={(
-        <Text style={{ color: isVerified ? '' : 'var(--tc-danger-high)' }}>
-          {device.display_name}
-          <Text variant="b3" span>{` — ${device.device_id}${mx.deviceId === device.device_id ? ' (current)' : ''}`}</Text>
-        </Text>
-      )}
-      options={
-        processing.includes(device.device_id)
-          ? <Spinner size="small" />
-          : (
-            <>
-              <IconButton size="small" onClick={() => handleRename(device)} src={PencilIC} tooltip="Rename" />
-              <IconButton size="small" onClick={() => handleRemove(device)} src={BinIC} tooltip="Remove session" />
-            </>
-          )
-      }
-      content={(
-        <Text variant="b3">
-          Last activity
-          <span style={{ color: 'var(--tc-surface-normal)' }}>
-            {dateFormat(new Date(device.last_seen_ts), ' hh:MM TT, dd/mm/yyyy')}
-          </span>
-          {` at ${device.last_seen_ip}`}
-        </Text>
-      )}
-    />
-  );
+  const renderDevice = (device, isVerified) => {
+    const deviceId = device.device_id;
+    const displayName = device.display_name;
+    const lastIP = device.last_seen_ip;
+    const lastTS = device.last_seen_ts;
+    return (
+      <SettingTile
+        key={deviceId}
+        title={(
+          <Text style={{ color: isVerified ? '' : 'var(--tc-danger-high)' }}>
+            {displayName}
+            <Text variant="b3" span>{` — ${deviceId}${mx.deviceId === deviceId ? ' (current)' : ''}`}</Text>
+          </Text>
+        )}
+        options={
+          processing.includes(deviceId)
+            ? <Spinner size="small" />
+            : (
+              <>
+                <IconButton size="small" onClick={() => handleRename(device)} src={PencilIC} tooltip="Rename" />
+                <IconButton size="small" onClick={() => handleRemove(device)} src={BinIC} tooltip="Remove session" />
+              </>
+            )
+        }
+        content={(
+          <Text variant="b3">
+            Last activity
+            <span style={{ color: 'var(--tc-surface-normal)' }}>
+              {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
+            </span>
+            {lastIP ? ` at ${lastIP}` : ''}
+          </Text>
+        )}
+      />
+    );
+  };
 
   const unverified = [];
   const verified = [];
@@ -167,6 +196,9 @@ function DeviceManage() {
             ? verified.map((device) => renderDevice(device, true))
             : <Text className="device-manage__info">No verified session</Text>
         }
+        { deviceList.length > 0 && (
+          <Text className="device-manage__info" variant="b3">Session names are visible to everyone, so do not put any private info here.</Text>
+        )}
       </div>
     </div>
   );
