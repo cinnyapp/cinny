@@ -10,7 +10,7 @@ jobs:
     env:
       PR_NUMBER: ${{github.event.number}}
     steps:
-      - name: Check out the repo
+      - name: Checkout repository
         uses: actions/checkout@v3.0.0
       - name: Build app
         run: npm ci && npm run build
