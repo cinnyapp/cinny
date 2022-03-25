@@ -350,6 +350,8 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
 let jumpToItemIndex = -1;
 
 function RoomViewContent({ eventId, roomTimeline }) {
+  const [, forceUpdate] = useForceUpdate();
+
   const [throttle] = useState(new Throttle());
 
   const timelineSVRef = useRef(null);
@@ -438,6 +440,19 @@ function RoomViewContent({ eventId, roomTimeline }) {
       timelineScroll.tryRestoringScroll();
     }
   }, [newEvent]);
+
+  useEffect(() => {
+    const { roomList } = initMatrix;
+    const handleProfileUpdate = () => {
+      console.log('%cRoom profile updated, rerendering', 'color: red;');
+      forceUpdate();
+    };
+
+    roomList.on(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
+    return () => {
+      roomList.removeListener(cons.events.roomList.ROOM_PROFILE_UPDATED, handleProfileUpdate);
+    };
+  }, []);
 
   const handleTimelineScroll = (event) => {
     const timelineScroll = timelineScrollRef.current;
