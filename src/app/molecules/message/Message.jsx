@@ -186,9 +186,17 @@ const MessageBody = React.memo(({
   // if body is not string it is a React element.
   if (typeof body !== 'string') return <div className="message__body">{body}</div>;
 
-  let content = isCustomHTML
-    ? twemojify(sanitizeCustomHtml(body), undefined, true, false)
-    : twemojify(body, undefined, true);
+  let content = null;
+  if (isCustomHTML) {
+    try {
+      content = twemojify(sanitizeCustomHtml(body), undefined, true, false);
+    } catch {
+      console.error('Malformed custom html: ', body);
+      content = twemojify(body, undefined);
+    }
+  } else {
+    content = twemojify(body, undefined, true);
+  }
 
   // Determine if this message should render with large emojis
   // Criteria:
