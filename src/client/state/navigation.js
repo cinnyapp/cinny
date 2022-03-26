@@ -131,8 +131,8 @@ class Navigation extends EventEmitter {
       [cons.actions.navigation.OPEN_SETTINGS]: () => {
         this.emit(cons.events.navigation.SETTINGS_OPENED);
       },
-      [cons.actions.navigation.OPEN_NAVIGATION]: () => {
-        this.emit(cons.events.navigation.OPEN_NAVIGATION);
+      [cons.actions.navigation.NAVIGATION_OPENED]: () => {
+        this.emit(cons.events.navigation.NAVIGATION_OPENED);
       },
       [cons.actions.navigation.OPEN_EMOJIBOARD]: () => {
         this.emit(

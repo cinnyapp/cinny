@@ -74,13 +74,12 @@ function RoomViewHeader({ roomId }) {
 
   return (
     <Header>
-      <div className="room-back-btn">
-        <IconButton
-          src={BackArrowIC}
-          tooltip="Return to navigation"
-          onClick={() => navigation.emit(cons.events.navigation.OPEN_NAVIGATION)}
-        />
-      </div>
+      <IconButton
+        src={BackArrowIC}
+        className="room_back__button"
+        tooltip="Return to navigation"
+        onClick={() => navigation.emit(cons.events.navigation.NAVIGATION_OPENED)}
+      />
       <button
         ref={roomHeaderBtnRef}
         className="room-header__btn"
@@ -95,9 +94,7 @@ function RoomViewHeader({ roomId }) {
         <RawIcon src={ChevronBottomIC} />
       </button>
       <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="Search" src={SearchIC} />
-      <div className="room-people-drawer-toggle">
-        <IconButton onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
-      </div>
+      <IconButton className="room-people-drawer__toggle" onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
       <IconButton
         onClick={openRoomOptions}
         tooltip="Options"

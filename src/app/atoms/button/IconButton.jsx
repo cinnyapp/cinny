@@ -11,11 +11,12 @@ const IconButton = React.forwardRef(({
   variant, size, type,
   tooltip, tooltipPlacement, src,
   onClick, tabIndex, disabled, isImage,
+  className,
 }, ref) => {
   const btn = (
     <button
       ref={ref}
-      className={`ic-btn ic-btn-${variant}`}
+      className={`ic-btn ic-btn-${variant} ${className}`}
       onMouseUp={(e) => blurOnBubbling(e, `.ic-btn-${variant}`)}
       onClick={onClick}
       // eslint-disable-next-line react/button-has-type
@@ -47,6 +48,7 @@ IconButton.defaultProps = {
   tabIndex: 0,
   disabled: false,
   isImage: false,
+  className: '',
 };
 
 IconButton.propTypes = {
@@ -60,6 +62,7 @@ IconButton.propTypes = {
   tabIndex: PropTypes.number,
   disabled: PropTypes.bool,
   isImage: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 export default IconButton;

@@ -1,5 +1,5 @@
 @use '../../partials/flex';
-@use '../../partials/threshold';
+@use '../../partials/screen';
 
 .room {
   @extend .cp-fx__row;
@@ -12,10 +12,8 @@
   }
 }
 
-.room__drawer {
-  @include threshold.smaller(tablet) {
-    // On compact screen sizes there is not enough space
-    // but no need to view it otherwise as it already is in settings
+.room .people-drawer {
+  @include screen.smallerThan(tabletBreakpoint) {
     display: none;
   }
 }

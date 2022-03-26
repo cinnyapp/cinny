@@ -48,9 +48,7 @@ function Room() {
         <RoomSettings roomId={roomTimeline.roomId} />
         <RoomView roomTimeline={roomTimeline} eventId={eventId} />
       </div>
-      <div className="room__drawer">
-        {isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />}
-      </div>
+      {isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />}
     </div>
   );
 }

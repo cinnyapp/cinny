@@ -1,6 +1,6 @@
 @use '../../partials/flex';
 @use '../../partials/dir';
-@use '../../partials/threshold';
+@use '../../partials/screen';
 
 .room-header__btn {
   min-width: 0;
@@ -27,17 +27,16 @@
   }
 }
 
-.room-people-drawer-toggle {
-  @include threshold.smaller(tablet) {
+.header .room-people-drawer__toggle {
+  @include screen.smallerThan(tabletBreakpoint) {
     display: none;
   }
 }
 
-.room-back-btn {
-  margin-left: -10px;
-  margin-right: 5px;
+.header .room_back__button {
+  @include dir.side(margin, 0, 5px);
 
-  @include threshold.bigger(mobile) {
+  @include screen.biggerThan(mobileBreakpoint) {
     display: none;
   }
 }

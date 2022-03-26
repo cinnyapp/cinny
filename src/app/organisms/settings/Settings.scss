@@ -1,6 +1,6 @@
 @use '../../partials/flex';
 @use '../../partials/dir';
-@use '../../partials/threshold';
+@use '../../partials/screen';
 
 .settings-window {
   & .pw__drawer__content {
@@ -61,7 +61,7 @@
 }
 
 .settings-window {
-  @include threshold.smaller(mobile) {
+  @include screen.smallerThan(mobileBreakpoint) {
     .pw__drawer p, .pw__drawer .header h4 {
       display: none;
       width: 0;

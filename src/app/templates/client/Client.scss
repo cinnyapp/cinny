@@ -1,4 +1,4 @@
-@use '../../partials/threshold';
+@use '../../partials/screen';
 
 .client-container {
   display: flex;
@@ -8,7 +8,7 @@
 .navigation__wrapper {
   width: var(--navigation-width);
   
-  @include threshold.smaller(mobile) {
+  @include screen.smallerThan(mobileBreakpoint) {
     width: 100%;
   }
 }
@@ -18,8 +18,8 @@
   min-width: 0;
 }
 
-@include threshold.smaller(mobile) {
-  .non-focused-ui {
+@include screen.smallerThan(mobileBreakpoint) {
+  .client-container-item__hidden {
     display: none;
   }
 }

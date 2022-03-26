@@ -28,7 +28,7 @@ export function selectRoom(roomId, eventId) {
  */
 export function openNavigation() {
   appDispatcher.dispatch({
-    type: cons.actions.navigation.OPEN_NAVIGATION,
+    type: cons.actions.navigation.NAVIGATION_OPENED,
   });
 }
 

@@ -33,16 +33,14 @@ function Client() {
 
   useEffect(() => {
     navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
-    navigation.on(cons.events.navigation.OPEN_NAVIGATION, onNavigationSelected);
-    // appDispatcher.register(cons.events.navigation.ROOM_SELECTED, () => setOnNavRoom(false));
+    navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
 
     return (() => {
-      navigation.removeListener(onRoomSelected);
+      navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
     });
   }, []);
   // #endregion
 
-  // #region Startup
   useEffect(() => {
     let counter = 0;
     const iId = setInterval(() => {
@@ -80,7 +78,6 @@ function Client() {
       </div>
     );
   }
-  // #endregion
 
   // #region drag and drop
   function dragContainsFiles(e) {
@@ -149,12 +146,12 @@ function Client() {
       onDrop={handleDrop}
     >
       <div className={`navigation__wrapper
-        ${activeView !== viewPossibilities.nav ? 'non-focused-ui' : ''}`}
+        ${activeView !== viewPossibilities.nav ? 'client-container-item__hidden' : null}`}
       >
         <Navigation />
       </div>
       <div className={`room__wrapper
-        ${activeView !== viewPossibilities.room ? 'non-focused-ui' : ''}`}
+        ${activeView !== viewPossibilities.room ? 'client-container-item__hidden' : null}`}
       >
         <Room />
       </div>
