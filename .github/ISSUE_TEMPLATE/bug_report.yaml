@@ -49,7 +49,7 @@ body:
       render: shell
     validations:
       required: true
-  
+
   - type: textarea
     id: context
     attributes:
