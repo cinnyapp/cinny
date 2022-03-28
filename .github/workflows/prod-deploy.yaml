@@ -26,7 +26,7 @@ jobs:
       - name: Create tar.gz
         run: tar -czvf cinny-${{ steps.vars.outputs.tag }}.tar.gz dist
       - name: Upload tagged release
-        uses: softprops/action-gh-release@v0.1.14
+        uses: softprops/action-gh-release@v1
         with:
           files: |
             cinny-${{ steps.vars.outputs.tag }}.tar.gz
