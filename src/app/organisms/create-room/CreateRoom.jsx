@@ -210,7 +210,7 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
             />
           )}
           content={(
-            <Text variant="b3">Founder (101) override the default Admin (100) power level.</Text>
+            <Text variant="b3">Selecting Admin sets 100 power level whereas Founder sets 101.</Text>
           )}
         />
         <Input name="topic" minHeight={174} resizable label="Topic (optional)" />
