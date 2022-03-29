@@ -35,7 +35,12 @@ const items = [{
 function setRoomNotifType(roomId, newType) {
   const mx = initMatrix.matrixClient;
   const { notifications } = initMatrix;
-  const roomPushRule = mx.getRoomPushRule('global', roomId);
+  let roomPushRule;
+  try {
+    roomPushRule = mx.getRoomPushRule('global', roomId);
+  } catch {
+    roomPushRule = undefined;
+  }
   const promises = [];
 
   if (newType === cons.notifs.MUTE) {

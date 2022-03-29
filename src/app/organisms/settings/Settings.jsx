@@ -26,6 +26,7 @@ import ImportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/Impor
 import ExportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ExportE2ERoomKeys';
 
 import ProfileEditor from '../profile-editor/ProfileEditor';
+import DeviceManage from './DeviceManage';
 
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
@@ -167,15 +168,16 @@ function SecuritySection() {
   return (
     <div className="settings-security">
       <div className="settings-security__card">
-        <MenuHeader>Device Info</MenuHeader>
+        <MenuHeader>Session Info</MenuHeader>
         <SettingTile
-          title={`Device ID: ${initMatrix.matrixClient.getDeviceId()}`}
+          title={`Session ID: ${initMatrix.matrixClient.getDeviceId()}`}
         />
         <SettingTile
-          title={`Device key: ${initMatrix.matrixClient.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
-          content={<Text variant="b3">Use this device ID-key combo to verify or manage this session from Element client.</Text>}
+          title={`Session key: ${initMatrix.matrixClient.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
+          content={<Text variant="b3">Use this session ID-key combo to verify or manage this session.</Text>}
         />
       </div>
+      <DeviceManage />
       <div className="settings-security__card">
         <MenuHeader>Encryption</MenuHeader>
         <SettingTile

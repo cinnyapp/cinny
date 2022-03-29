@@ -83,7 +83,12 @@ class Notifications extends EventEmitter {
 
   getNotiType(roomId) {
     const mx = this.matrixClient;
-    const pushRule = mx.getRoomPushRule('global', roomId);
+    let pushRule;
+    try {
+      pushRule = mx.getRoomPushRule('global', roomId);
+    } catch {
+      pushRule = undefined;
+    }
 
     if (pushRule === undefined) {
       const overrideRules = mx.getAccountData('m.push_rules')?.getContent()?.global?.override;
