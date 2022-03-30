@@ -3,6 +3,7 @@ import './DeviceManage.scss';
 import dateFormat from 'dateformat';
 
 import initMatrix from '../../../client/initMatrix';
+import { isCrossVerified } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -16,18 +17,6 @@ import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { useStore } from '../../hooks/useStore';
 import { useDeviceList } from '../../hooks/useDeviceList';
-
-function isCrossVerified(deviceId) {
-  try {
-    const mx = initMatrix.matrixClient;
-    const crossSignInfo = mx.getStoredCrossSigningForUser(mx.getUserId());
-    const deviceInfo = mx.getStoredDevice(mx.getUserId(), deviceId);
-    const deviceTrust = crossSignInfo.checkDeviceTrust(crossSignInfo, deviceInfo, false, true);
-    return deviceTrust.isCrossSigningVerified();
-  } catch {
-    return false;
-  }
-}
 
 function DeviceManage() {
   const TRUNCATED_COUNT = 4;

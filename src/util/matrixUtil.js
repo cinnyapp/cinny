@@ -162,3 +162,15 @@ export function genRoomVia(room) {
   }
   return via.concat(mostPop3.slice(0, 2));
 }
+
+export function isCrossVerified(deviceId) {
+  try {
+    const mx = initMatrix.matrixClient;
+    const crossSignInfo = mx.getStoredCrossSigningForUser(mx.getUserId());
+    const deviceInfo = mx.getStoredDevice(mx.getUserId(), deviceId);
+    const deviceTrust = crossSignInfo.checkDeviceTrust(crossSignInfo, deviceInfo, false, true);
+    return deviceTrust.isCrossSigningVerified();
+  } catch {
+    return false;
+  }
+}
