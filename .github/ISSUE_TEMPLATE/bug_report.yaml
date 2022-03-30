@@ -1,6 +1,5 @@
 name: 🐞 Bug Report
 description: Report a bug
-labels: 'type: bug'
 
 body:
   - type: markdown
@@ -50,7 +49,7 @@ body:
       render: shell
     validations:
       required: true
-  
+
   - type: textarea
     id: context
     attributes:

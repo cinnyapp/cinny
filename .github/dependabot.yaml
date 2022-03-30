@@ -5,7 +5,7 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
-    schedule: 
+    schedule:
       interval: weekly
       day: "tuesday"
       time: "01:00"
@@ -13,7 +13,7 @@ updates:
 
   - package-ecosystem: docker
     directory: /
-    schedule: 
+    schedule:
       interval: weekly
       day: "tuesday"
       time: "01:00"
@@ -21,7 +21,7 @@ updates:
 
   - package-ecosystem: npm
     directory: /
-    schedule: 
+    schedule:
       interval: weekly
       day: "tuesday"
       time: "01:00"

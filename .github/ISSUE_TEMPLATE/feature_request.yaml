@@ -1,6 +1,5 @@
 name: 💡 Feature Request
 description: Suggest an idea
-labels: 'type: feature'
 
 body:
   - type: textarea
@@ -26,7 +25,7 @@ body:
     attributes:
       label: Alternatives considered
       description: "Any alternative solutions you've considered"
-  
+
   - type: textarea
     id: context
     attributes:
