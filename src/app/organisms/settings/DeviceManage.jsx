@@ -15,34 +15,7 @@ import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { useStore } from '../../hooks/useStore';
-
-function useDeviceList() {
-  const mx = initMatrix.matrixClient;
-  const [deviceList, setDeviceList] = useState(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const updateDevices = () => mx.getDevices().then((data) => {
-      if (!isMounted) return;
-      setDeviceList(data.devices || []);
-    });
-    updateDevices();
-
-    const handleDevicesUpdate = (users) => {
-      if (users.includes(mx.getUserId())) {
-        updateDevices();
-      }
-    };
-
-    mx.on('crypto.devicesUpdated', handleDevicesUpdate);
-    return () => {
-      mx.removeListener('crypto.devicesUpdated', handleDevicesUpdate);
-      isMounted = false;
-    };
-  }, []);
-  return deviceList;
-}
+import { useDeviceList } from '../../hooks/useDeviceList';
 
 function isCrossVerified(deviceId) {
   try {
