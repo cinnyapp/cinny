@@ -1,0 +1,20 @@
+name: 'Docker check'
+
+on:
+  pull_request:
+    paths: 
+      - 'Dockerfile'
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    env:
+      PR_NUMBER: ${{github.event.number}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.0
+      - name: Build Docker image
+        uses: docker/build-push-action@v2.10.0
+        with:
+          context: .
+          push: false
