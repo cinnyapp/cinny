@@ -17,19 +17,19 @@ const visibility = {
 
 const items = [{
   iconSrc: null,
-  text: 'Anyone will see all messages without even joining',
+  text: 'Anyone (including guests)',
   type: visibility.WORLD_READABLE,
 }, {
   iconSrc: null,
-  text: 'Members will see all messages',
+  text: 'Members (all messages)',
   type: visibility.SHARED,
 }, {
   iconSrc: null,
-  text: 'Members will see messages sent after their invite',
+  text: 'Members (messages after invite)',
   type: visibility.INVITED,
 }, {
   iconSrc: null,
-  text: 'Members will see messages sent after they join',
+  text: 'Members (messages after join)',
   type: visibility.JOINED,
 }];
 
