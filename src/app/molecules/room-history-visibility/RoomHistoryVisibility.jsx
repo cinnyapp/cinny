@@ -87,7 +87,7 @@ function RoomHistoryVisibility({ roomId }) {
           </MenuItem>
         ))
       }
-      <Text variant="b3">Changes to who can read history will only apply to future messages in this room. The visibility of existing history will be unchanged.</Text>
+      <Text variant="b3">Changes to history visibility will only apply to future messages. The visibility of existing history will have no effect.</Text>
     </div>
   );
 }
