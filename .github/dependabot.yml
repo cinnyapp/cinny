@@ -18,6 +18,7 @@ updates:
       day: "tuesday"
       time: "01:00"
       timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 5
 
   - package-ecosystem: docker
     directory: /
@@ -26,3 +27,4 @@ updates:
       day: "tuesday"
       time: "01:00"
       timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 5
