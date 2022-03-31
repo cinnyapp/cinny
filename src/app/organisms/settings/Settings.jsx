@@ -176,7 +176,7 @@ function SecuritySection() {
       </div>
       <DeviceManage />
       <div className="settings-security__card">
-        <MenuHeader>Encryption</MenuHeader>
+        <MenuHeader>Export/Import encryption keys</MenuHeader>
         <SettingTile
           title="Export E2E room keys"
           content={(

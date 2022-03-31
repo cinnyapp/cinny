@@ -159,7 +159,7 @@ function DeviceManage() {
               rounded
               variant="caution"
               iconSrc={InfoIC}
-              title="Setup cross signing in case you lose all your devices."
+              title="Setup cross signing in case you lose all your sessions."
             />
           </div>
         )}

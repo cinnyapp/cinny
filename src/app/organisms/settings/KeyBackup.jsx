@@ -48,7 +48,7 @@ function KeyBackup() {
       title="Encrypted messages backup"
       content={(
         <>
-          <Text variant="b3">Online backup your encryption keys with your account data in case you lose access to your sessions. Your keys will be secured with a unique Security Key.</Text>
+          <Text variant="b3">Online backup your encrypted messages keys with your account data in case you lose access to your sessions. Your keys will be secured with a unique Security Key.</Text>
           {!isCSEnabled && (
             <InfoCard
               style={{ marginTop: 'var(--sp-ultra-tight)' }}
