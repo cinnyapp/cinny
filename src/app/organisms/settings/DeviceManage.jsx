@@ -9,18 +9,22 @@ import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
+import InfoCard from '../../atoms/card/InfoCard';
 import Spinner from '../../atoms/spinner/Spinner';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
 
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
+import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 
 import { useStore } from '../../hooks/useStore';
 import { useDeviceList } from '../../hooks/useDeviceList';
+import { useCrossSigninStatus } from '../../hooks/useCrossSigninStatus';
 
 function DeviceManage() {
   const TRUNCATED_COUNT = 4;
   const mx = initMatrix.matrixClient;
+  const isCSEnabled = useCrossSigninStatus();
   const deviceList = useDeviceList();
   const [processing, setProcessing] = useState([]);
   const [truncated, setTruncated] = useState(true);
@@ -149,6 +153,16 @@ function DeviceManage() {
     <div className="device-manage">
       <div>
         <MenuHeader>Unverified sessions</MenuHeader>
+        {!isCSEnabled && (
+          <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
+            <InfoCard
+              rounded
+              variant="caution"
+              iconSrc={InfoIC}
+              title="Setup cross sign-in in case you lose all your devices."
+            />
+          </div>
+        )}
         {
           unverified.length > 0
             ? unverified.map((device) => renderDevice(device, false))
