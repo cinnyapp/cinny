@@ -175,7 +175,7 @@ export function isCrossVerified(deviceId) {
   }
 }
 
-export function hasCrossSigninAccountData() {
+export function hasCrossSigningAccountData() {
   const mx = initMatrix.matrixClient;
   const masterKeyData = mx.getAccountData('m.cross_signing.master');
   return !!masterKeyData;

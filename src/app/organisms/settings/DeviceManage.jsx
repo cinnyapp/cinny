@@ -19,12 +19,12 @@ import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 
 import { useStore } from '../../hooks/useStore';
 import { useDeviceList } from '../../hooks/useDeviceList';
-import { useCrossSigninStatus } from '../../hooks/useCrossSigninStatus';
+import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
 
 function DeviceManage() {
   const TRUNCATED_COUNT = 4;
   const mx = initMatrix.matrixClient;
-  const isCSEnabled = useCrossSigninStatus();
+  const isCSEnabled = useCrossSigningStatus();
   const deviceList = useDeviceList();
   const [processing, setProcessing] = useState([]);
   const [truncated, setTruncated] = useState(true);
@@ -159,7 +159,7 @@ function DeviceManage() {
               rounded
               variant="caution"
               iconSrc={InfoIC}
-              title="Setup cross sign-in in case you lose all your devices."
+              title="Setup cross signing in case you lose all your devices."
             />
           </div>
         )}

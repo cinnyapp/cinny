@@ -26,7 +26,7 @@ import ImportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/Impor
 import ExportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ExportE2ERoomKeys';
 
 import ProfileEditor from '../profile-editor/ProfileEditor';
-import CrossSignin from './CrossSignin';
+import CrossSigning from './CrossSigning';
 import KeyBackup from './KeyBackup';
 import DeviceManage from './DeviceManage';
 
@@ -170,8 +170,8 @@ function SecuritySection() {
   return (
     <div className="settings-security">
       <div className="settings-security__card">
-        <MenuHeader>Cross sign-in and backup</MenuHeader>
-        <CrossSignin />
+        <MenuHeader>Cross signing and backup</MenuHeader>
+        <CrossSigning />
         <KeyBackup />
       </div>
       <DeviceManage />

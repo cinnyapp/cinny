@@ -13,11 +13,11 @@ import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 import DownloadIC from '../../../../public/res/ic/outlined/download.svg';
 
-import { useCrossSigninStatus } from '../../hooks/useCrossSigninStatus';
+import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
 
 function KeyBackup() {
   const mx = initMatrix.matrixClient;
-  const isCSEnabled = useCrossSigninStatus();
+  const isCSEnabled = useCrossSigningStatus();
   const [keyBackup, setKeyBackup] = useState(undefined);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ function KeyBackup() {
               rounded
               variant="caution"
               iconSrc={InfoIC}
-              title="Setup cross sign-in to backup your encrypted messages."
+              title="Setup cross signing to backup your encrypted messages."
             />
           )}
         </>
