@@ -123,7 +123,7 @@ function SecuritySettings({ roomId }) {
         <RoomEncryption roomId={roomId} />
       </div>
       <div className="room-settings__card">
-        <MenuHeader>Message history visibility (Who can read history)</MenuHeader>
+        <MenuHeader>Message history visibility</MenuHeader>
         <RoomHistoryVisibility roomId={roomId} />
       </div>
     </>

@@ -174,6 +174,14 @@ class Navigation extends EventEmitter {
           action.afterClose,
         );
       },
+      [cons.actions.navigation.OPEN_REUSABLE_DIALOG]: () => {
+        this.emit(
+          cons.events.navigation.REUSABLE_DIALOG_OPENED,
+          action.title,
+          action.render,
+          action.afterClose,
+        );
+      },
     };
     actions[action.type]?.();
   }

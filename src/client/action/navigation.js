@@ -150,3 +150,12 @@ export function openReusableContextMenu(placement, cords, render, afterClose) {
     afterClose,
   });
 }
+
+export function openReusableDialog(title, render, afterClose) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_REUSABLE_DIALOG,
+    title,
+    render,
+    afterClose,
+  });
+}
