@@ -26,6 +26,8 @@ import ImportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/Impor
 import ExportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ExportE2ERoomKeys';
 
 import ProfileEditor from '../profile-editor/ProfileEditor';
+import CrossSignin from './CrossSignin';
+import KeyBackup from './KeyBackup';
 import DeviceManage from './DeviceManage';
 
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
@@ -167,6 +169,11 @@ function NotificationsSection() {
 function SecuritySection() {
   return (
     <div className="settings-security">
+      <div className="settings-security__card">
+        <MenuHeader>Cross sign-in and backup</MenuHeader>
+        <CrossSignin />
+        <KeyBackup />
+      </div>
       <DeviceManage />
       <div className="settings-security__card">
         <MenuHeader>Encryption</MenuHeader>
