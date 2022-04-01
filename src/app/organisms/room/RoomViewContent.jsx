@@ -199,7 +199,7 @@ function usePaginate(
     };
     roomTimeline.on(cons.events.roomTimeline.PAGINATED, handlePaginatedFromServer);
     return () => {
-      roomTimeline.on(cons.events.roomTimeline.PAGINATED, handlePaginatedFromServer);
+      roomTimeline.removeListener(cons.events.roomTimeline.PAGINATED, handlePaginatedFromServer);
     };
   }, [roomTimeline]);
 
