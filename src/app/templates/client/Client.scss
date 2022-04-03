@@ -19,7 +19,7 @@
 }
 
 @include screen.smallerThan(mobileBreakpoint) {
-  .client-container-item__hidden {
+  .client__item-hidden {
     display: none;
   }
 }

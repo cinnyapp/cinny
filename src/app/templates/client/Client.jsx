@@ -36,6 +36,7 @@ function Client() {
     navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
 
     return (() => {
+      navigation.removeListener(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
       navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
     });
   }, []);
@@ -145,14 +146,10 @@ function Client() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className={`navigation__wrapper
-        ${activeView !== viewPossibilities.nav ? 'client-container-item__hidden' : null}`}
-      >
+      <div className={`navigation__wrapper ${activeView !== viewPossibilities.nav ? 'client__item-hidden' : ''}`}>
         <Navigation />
       </div>
-      <div className={`room__wrapper
-        ${activeView !== viewPossibilities.room ? 'client-container-item__hidden' : null}`}
-      >
+      <div className={`room__wrapper ${activeView !== viewPossibilities.room ? 'client__item-hidden' : ''}`}>
         <Room />
       </div>
       <Windows />
