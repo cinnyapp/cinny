@@ -9,6 +9,10 @@
   border-radius: var(--bo-radius);
   cursor: pointer;
 
+  &--muted {
+    opacity: 0.6;
+  }
+
   &--unread {
     .room-selector__content > .text {
       color: var(--tc-surface-high);

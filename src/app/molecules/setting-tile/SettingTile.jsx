@@ -9,7 +9,11 @@ function SettingTile({ title, options, content }) {
     <div className="setting-tile">
       <div className="setting-tile__content">
         <div className="setting-tile__title">
-          <Text variant="b1">{title}</Text>
+          {
+            typeof title === 'string'
+              ? <Text variant="b1">{title}</Text>
+              : title
+          }
         </div>
         {content}
       </div>
@@ -24,7 +28,7 @@ SettingTile.defaultProps = {
 };
 
 SettingTile.propTypes = {
-  title: PropTypes.string.isRequired,
+  title: PropTypes.node.isRequired,
   options: PropTypes.node,
   content: PropTypes.node,
 };

@@ -17,19 +17,19 @@ const visibility = {
 
 const items = [{
   iconSrc: null,
-  text: 'World readable (anyone can read)',
+  text: 'Anyone (including guests)',
   type: visibility.WORLD_READABLE,
 }, {
   iconSrc: null,
-  text: 'Member shared (since the point in time of selecting this option)',
+  text: 'Members (all messages)',
   type: visibility.SHARED,
 }, {
   iconSrc: null,
-  text: 'Member invited (since they were invited)',
+  text: 'Members (messages after invite)',
   type: visibility.INVITED,
 }, {
   iconSrc: null,
-  text: 'Member joined (since they joined)',
+  text: 'Members (messages after join)',
   type: visibility.JOINED,
 }];
 
@@ -87,7 +87,7 @@ function RoomHistoryVisibility({ roomId }) {
           </MenuItem>
         ))
       }
-      <Text variant="b3">Changes to who can read history will only apply to future messages in this room. The visibility of existing history will be unchanged.</Text>
+      <Text variant="b3">Changes to history visibility will only apply to future messages. The visibility of existing history will have no effect.</Text>
     </div>
   );
 }

@@ -129,7 +129,7 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.PROFILE_VIEWER_OPENED, action.userId, action.roomId);
       },
       [cons.actions.navigation.OPEN_SETTINGS]: () => {
-        this.emit(cons.events.navigation.SETTINGS_OPENED);
+        this.emit(cons.events.navigation.SETTINGS_OPENED, action.tabText);
       },
       [cons.actions.navigation.OPEN_NAVIGATION]: () => {
         this.emit(cons.events.navigation.NAVIGATION_OPENED);
@@ -137,7 +137,8 @@ class Navigation extends EventEmitter {
       [cons.actions.navigation.OPEN_EMOJIBOARD]: () => {
         this.emit(
           cons.events.navigation.EMOJIBOARD_OPENED,
-          action.cords, action.requestEmojiCallback,
+          action.cords,
+          action.requestEmojiCallback,
         );
       },
       [cons.actions.navigation.OPEN_READRECEIPTS]: () => {
@@ -172,6 +173,14 @@ class Navigation extends EventEmitter {
           cons.events.navigation.REUSABLE_CONTEXT_MENU_OPENED,
           action.placement,
           action.cords,
+          action.render,
+          action.afterClose,
+        );
+      },
+      [cons.actions.navigation.OPEN_REUSABLE_DIALOG]: () => {
+        this.emit(
+          cons.events.navigation.REUSABLE_DIALOG_OPENED,
+          action.title,
           action.render,
           action.afterClose,
         );

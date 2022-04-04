@@ -29,6 +29,7 @@ class Settings extends EventEmitter {
     this.hideMembershipEvents = this.getHideMembershipEvents();
     this.hideNickAvatarEvents = this.getHideNickAvatarEvents();
     this._showNotifications = this.getShowNotifications();
+    this.isNotificationSounds = this.getIsNotificationSounds();
 
     this.isTouchScreenDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
   }
@@ -97,8 +98,8 @@ class Settings extends EventEmitter {
     if (typeof this.hideNickAvatarEvents === 'boolean') return this.hideNickAvatarEvents;
 
     const settings = getSettings();
-    if (settings === null) return false;
-    if (typeof settings.hideNickAvatarEvents === 'undefined') return false;
+    if (settings === null) return true;
+    if (typeof settings.hideNickAvatarEvents === 'undefined') return true;
     return settings.hideNickAvatarEvents;
   }
 
@@ -123,6 +124,15 @@ class Settings extends EventEmitter {
     if (settings === null) return true;
     if (typeof settings.showNotifications === 'undefined') return true;
     return settings.showNotifications;
+  }
+
+  getIsNotificationSounds() {
+    if (typeof this.isNotificationSounds === 'boolean') return this.isNotificationSounds;
+
+    const settings = getSettings();
+    if (settings === null) return true;
+    if (typeof settings.isNotificationSounds === 'undefined') return true;
+    return settings.isNotificationSounds;
   }
 
   setter(action) {
@@ -163,6 +173,11 @@ class Settings extends EventEmitter {
         }
         setSettings('showNotifications', this._showNotifications);
         this.emit(cons.events.settings.NOTIFICATIONS_TOGGLED, this._showNotifications);
+      },
+      [cons.actions.settings.TOGGLE_NOTIFICATION_SOUNDS]: () => {
+        this.isNotificationSounds = !this.isNotificationSounds;
+        setSettings('isNotificationSounds', this.isNotificationSounds);
+        this.emit(cons.events.settings.NOTIFICATION_SOUNDS_TOGGLED, this.isNotificationSounds);
       },
     };
 

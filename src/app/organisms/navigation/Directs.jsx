@@ -1,18 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import Postie from '../../../util/Postie';
+import { roomIdByActivity } from '../../../util/sort';
 
 import RoomsCategory from './RoomsCategory';
 
-import { AtoZ } from './common';
-
 const drawerPostie = new Postie();
 function Directs() {
+  const mx = initMatrix.matrixClient;
   const { roomList, notifications } = initMatrix;
-  const directIds = [...roomList.directs].sort(AtoZ);
+  const [directIds, setDirectIds] = useState([]);
+
+  useEffect(() => setDirectIds([...roomList.directs].sort(roomIdByActivity)), []);
+
+  useEffect(() => {
+    const handleTimeline = (event, room, toStartOfTimeline, removed, data) => {
+      if (!roomList.directs.has(room.roomId)) return;
+      if (!data.liveEvent) return;
+      if (directIds[0] === room.roomId) return;
+      const newDirectIds = [room.roomId];
+      directIds.forEach((id) => {
+        if (id === room.roomId) return;
+        newDirectIds.push(id);
+      });
+      setDirectIds(newDirectIds);
+    };
+    mx.on('Room.timeline', handleTimeline);
+    return () => {
+      mx.removeListener('Room.timeline', handleTimeline);
+    };
+  }, [directIds]);
 
   useEffect(() => {
     const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
@@ -33,9 +53,11 @@ function Directs() {
 
     navigation.on(cons.events.navigation.ROOM_SELECTED, selectorChanged);
     notifications.on(cons.events.notifications.NOTI_CHANGED, notiChanged);
+    notifications.on(cons.events.notifications.MUTE_TOGGLED, notiChanged);
     return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, selectorChanged);
       notifications.removeListener(cons.events.notifications.NOTI_CHANGED, notiChanged);
+      notifications.removeListener(cons.events.notifications.MUTE_TOGGLED, notiChanged);
     };
   }, []);
 

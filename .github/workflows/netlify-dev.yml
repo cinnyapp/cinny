@@ -6,13 +6,15 @@ on:
        - dev
 
 jobs:
-  deploy:
+  deploy-to-netlify:
     name: 'Deploy'
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3.0.0
-      - uses: jsmrcaga/action-netlify-deploy@v1.7.2
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.0
+      - name: Build and deploy to Netlify
+        uses: jsmrcaga/action-netlify-deploy@v1.7.2
         with:
           install_command: "npm ci"
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}

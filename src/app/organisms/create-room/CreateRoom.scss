@@ -2,6 +2,7 @@
 @use '../../partials/dir';
 
 .create-room {
+  margin: var(--sp-normal);
   @include dir.side(margin, var(--sp-normal), var(--sp-extra-tight));
 
   &__form > * {

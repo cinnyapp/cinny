@@ -77,7 +77,7 @@ function isTimelineLinked(tm1, tm2) {
 }
 
 class RoomTimeline extends EventEmitter {
-  constructor(roomId, notifications) {
+  constructor(roomId) {
     super();
     // These are local timelines
     this.timeline = [];
@@ -88,7 +88,6 @@ class RoomTimeline extends EventEmitter {
     this.matrixClient = initMatrix.matrixClient;
     this.roomId = roomId;
     this.room = this.matrixClient.getRoom(roomId);
-    this.notifications = notifications;
 
     this.liveTimeline = this.room.getLiveTimeline();
     this.activeTimeline = this.liveTimeline;
@@ -226,16 +225,6 @@ class RoomTimeline extends EventEmitter {
       .map((event) => event.attemptDecryption(this.matrixClient.crypto, { isRetry: true }));
 
     return Promise.allSettled(decryptionPromises);
-  }
-
-  markAllAsRead() {
-    const readEventId = this.getReadUpToEventId();
-    this.notifications.deleteNoti(this.roomId);
-    if (this.timeline.length === 0) return;
-    const latestEvent = this.timeline[this.timeline.length - 1];
-    if (readEventId === latestEvent.getId()) return;
-    this.matrixClient.sendReadReceipt(latestEvent);
-    this.emit(cons.events.roomTimeline.MARKED_AS_READ, latestEvent);
   }
 
   hasEventInTimeline(eventId, timeline = this.activeTimeline) {

@@ -1,32 +1,34 @@
-name: 'Build PR'
+name: 'Build pull request'
 
 on:
   pull_request:
     types: ['opened', 'synchronize']
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        env:
-          PR_NUMBER: ${{github.event.number}}
-        steps:
-            - uses: actions/checkout@v3.0.0
-            - name: Build
-              run: npm ci && npm run build
-            - name: Upload Artifact
-              uses: actions/upload-artifact@v3.0.0
-              with:
-                  name: previewbuild
-                  path: dist
-                  retention-days: 1
-            - uses: actions/github-script@v6.0.0
-              with:
-                script: |
-                    var fs = require('fs');
-                    fs.writeFileSync('${{github.workspace}}/pr.json', JSON.stringify(context.payload.pull_request));
-            - name: Upload PR Info
-              uses: actions/upload-artifact@v3.0.0
-              with:
-                  name: pr.json
-                  path: pr.json
-                  retention-days: 1
+  build-pull-request:
+    runs-on: ubuntu-latest
+    env:
+      PR_NUMBER: ${{github.event.number}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.0
+      - name: Build app
+        run: npm ci && npm run build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3.0.0
+        with:
+          name: previewbuild
+          path: dist
+          retention-days: 1
+      - name: Get PR info
+        uses: actions/github-script@v6.0.0
+        with:
+          script: |
+            var fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/pr.json', JSON.stringify(context.payload.pull_request));
+      - name: Upload PR Info
+        uses: actions/upload-artifact@v3.0.0
+        with:
+          name: pr.json
+          path: pr.json
+          retention-days: 1
