@@ -18,7 +18,6 @@ function Windows() {
   const [inviteUser, changeInviteUser] = useState({
     isOpen: false, roomId: undefined, term: undefined,
   });
-  const [settings, changeSettings] = useState(false);
 
   function openInviteList() {
     changeInviteList(true);
@@ -36,20 +35,15 @@ function Windows() {
       searchTerm,
     });
   }
-  function openSettings() {
-    changeSettings(true);
-  }
 
   useEffect(() => {
     navigation.on(cons.events.navigation.INVITE_LIST_OPENED, openInviteList);
     navigation.on(cons.events.navigation.PUBLIC_ROOMS_OPENED, openPublicRooms);
     navigation.on(cons.events.navigation.INVITE_USER_OPENED, openInviteUser);
-    navigation.on(cons.events.navigation.SETTINGS_OPENED, openSettings);
     return () => {
       navigation.removeListener(cons.events.navigation.INVITE_LIST_OPENED, openInviteList);
       navigation.removeListener(cons.events.navigation.PUBLIC_ROOMS_OPENED, openPublicRooms);
       navigation.removeListener(cons.events.navigation.INVITE_USER_OPENED, openInviteUser);
-      navigation.removeListener(cons.events.navigation.SETTINGS_OPENED, openSettings);
     };
   }, []);
 
@@ -70,10 +64,7 @@ function Windows() {
         searchTerm={inviteUser.searchTerm}
         onRequestClose={() => changeInviteUser({ isOpen: false, roomId: undefined })}
       />
-      <Settings
-        isOpen={settings}
-        onRequestClose={() => changeSettings(false)}
-      />
+      <Settings />
       <SpaceSettings />
       <SpaceManage />
     </>

@@ -10,7 +10,7 @@
   &__info {
     display: flex;
     width: 40px;
-    @include dir.side(margin, 10px, 14px);
+    @include dir.side(margin, 14px, 10px);
 
     & > * {
       margin: auto;

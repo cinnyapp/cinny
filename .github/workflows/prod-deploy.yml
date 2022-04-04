@@ -1,0 +1,56 @@
+name: 'Production deploy'
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy-to-netlify:
+    name: 'Deploy to Netlify'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.0
+      - name: Build and deploy to Netlify
+        uses: jsmrcaga/action-netlify-deploy@v1.7.2
+        with:
+          install_command: "npm ci"
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          BUILD_DIRECTORY: "dist"
+          NETLIFY_DEPLOY_MESSAGE: "Prod deploy v${{ github.ref }}"
+          NETLIFY_DEPLOY_TO_PROD: true
+      - name: Get version from tag
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      - name: Create tar.gz
+        run: tar -czvf cinny-${{ steps.vars.outputs.tag }}.tar.gz dist
+      - name: Upload tagged release
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          files: |
+            cinny-${{ steps.vars.outputs.tag }}.tar.gz
+
+  push_to_dockerhub:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.0
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1.14.1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3.6.2
+        with:
+          images: ajbura/cinny
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2.10.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

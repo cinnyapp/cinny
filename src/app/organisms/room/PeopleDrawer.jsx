@@ -9,6 +9,7 @@ import { getPowerLabel, getUsernameOfRoomMember } from '../../../util/matrixUtil
 import colorMXID from '../../../util/colorMXID';
 import { openInviteUser, openProfileViewer } from '../../../client/action/navigation';
 import AsyncSearch from '../../../util/AsyncSearch';
+import { memberByAtoZ, memberByPowerLevel } from '../../../util/sort';
 
 import Text from '../../atoms/text/Text';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
@@ -24,26 +25,6 @@ import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-function AtoZ(m1, m2) {
-  const aName = m1.name;
-  const bName = m2.name;
-
-  if (aName.toLowerCase() < bName.toLowerCase()) {
-    return -1;
-  }
-  if (aName.toLowerCase() > bName.toLowerCase()) {
-    return 1;
-  }
-  return 0;
-}
-function sortByPowerLevel(m1, m2) {
-  const pl1 = m1.powerLevel;
-  const pl2 = m2.powerLevel;
-
-  if (pl1 > pl2) return -1;
-  if (pl1 < pl2) return 1;
-  return 0;
-}
 function simplyfiMembers(members) {
   const mx = initMatrix.matrixClient;
   return members.map((member) => ({
@@ -111,7 +92,7 @@ function PeopleDrawer({ roomId }) {
       setMemberList(
         simplyfiMembers(
           getMembersWithMembership(membership)
-            .sort(AtoZ).sort(sortByPowerLevel),
+            .sort(memberByAtoZ).sort(memberByPowerLevel),
         ),
       );
     };

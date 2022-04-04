@@ -4,7 +4,7 @@ import './PublicRooms.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
-import { selectRoom } from '../../../client/action/navigation';
+import { selectRoom, selectTab } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 
 import Text from '../../atoms/text/Text';
@@ -179,7 +179,9 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
   }, [joiningRooms]);
 
   function handleViewRoom(roomId) {
-    selectRoom(roomId);
+    const room = initMatrix.matrixClient.getRoom(roomId);
+    if (room.isSpaceRoom()) selectTab(roomId);
+    else selectRoom(roomId);
     onRequestClose();
   }
 
@@ -193,7 +195,7 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
     return rooms.map((room) => {
       const alias = typeof room.canonical_alias === 'string' ? room.canonical_alias : room.room_id;
       const name = typeof room.name === 'string' ? room.name : alias;
-      const isJoined = initMatrix.roomList.rooms.has(room.room_id);
+      const isJoined = initMatrix.matrixClient.getRoom(room.room_id) !== null;
       return (
         <RoomTile
           key={room.room_id}

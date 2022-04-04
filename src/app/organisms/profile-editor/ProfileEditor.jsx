@@ -1,35 +1,44 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import colorMXID from '../../../util/colorMXID';
 
+import Text from '../../atoms/text/Text';
+import IconButton from '../../atoms/button/IconButton';
 import Button from '../../atoms/button/Button';
 import ImageUpload from '../../molecules/image-upload/ImageUpload';
 import Input from '../../atoms/input/Input';
 
+import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
+
 import './ProfileEditor.scss';
 
 // TODO Fix bug that prevents 'Save' button from enabling up until second changed.
-function ProfileEditor({
-  userId,
-}) {
+function ProfileEditor({ userId }) {
+  const [isEditing, setIsEditing] = useState(false);
   const mx = initMatrix.matrixClient;
+  const user = mx.getUser(mx.getUserId());
+
   const displayNameRef = useRef(null);
-  const bgColor = colorMXID(userId);
-  const [avatarSrc, setAvatarSrc] = useState(null);
+  const [avatarSrc, setAvatarSrc] = useState(user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null);
+  const [username, setUsername] = useState(user.displayName);
   const [disabled, setDisabled] = useState(true);
 
-  let username = mx.getUser(mx.getUserId()).displayName;
-
   useEffect(() => {
+    let isMounted = true;
     mx.getProfileInfo(mx.getUserId()).then((info) => {
+      if (!isMounted) return;
       setAvatarSrc(info.avatar_url ? mx.mxcUrlToHttp(info.avatar_url, 80, 80, 'crop') : null);
+      setUsername(info.displayname);
     });
+    return () => {
+      isMounted = false;
+    };
   }, [userId]);
 
-  // Sets avatar URL and updates the avatar component in profile editor to reflect new upload
-  function handleAvatarUpload(url) {
+  const handleAvatarUpload = (url) => {
     if (url === null) {
       if (confirm('Are you sure you want to remove avatar?')) {
         mx.setAvatarUrl('');
@@ -39,48 +48,72 @@ function ProfileEditor({
     }
     mx.setAvatarUrl(url);
     setAvatarSrc(mx.mxcUrlToHttp(url, 80, 80, 'crop'));
-  }
+  };
 
-  function saveDisplayName() {
+  const saveDisplayName = () => {
     const newDisplayName = displayNameRef.current.value;
     if (newDisplayName !== null && newDisplayName !== username) {
       mx.setDisplayName(newDisplayName);
-      username = newDisplayName;
+      setUsername(newDisplayName);
       setDisabled(true);
+      setIsEditing(false);
     }
-  }
+  };
 
-  function onDisplayNameInputChange() {
+  const onDisplayNameInputChange = () => {
     setDisabled(username === displayNameRef.current.value || displayNameRef.current.value == null);
-  }
-  function cancelDisplayNameChanges() {
+  };
+  const cancelDisplayNameChanges = () => {
     displayNameRef.current.value = username;
     onDisplayNameInputChange();
-  }
+    setIsEditing(false);
+  };
 
-  return (
+  const renderForm = () => (
     <form
-      className="profile-editor"
+      className="profile-editor__form"
+      style={{ marginBottom: avatarSrc ? '24px' : '0' }}
       onSubmit={(e) => { e.preventDefault(); saveDisplayName(); }}
     >
+      <Input
+        label={`Display name of ${mx.getUserId()}`}
+        onChange={onDisplayNameInputChange}
+        value={mx.getUser(mx.getUserId()).displayName}
+        forwardRef={displayNameRef}
+      />
+      <Button variant="primary" type="submit" disabled={disabled}>Save</Button>
+      <Button onClick={cancelDisplayNameChanges}>Cancel</Button>
+    </form>
+  );
+
+  const renderInfo = () => (
+    <div className="profile-editor__info" style={{ marginBottom: avatarSrc ? '24px' : '0' }}>
+      <div>
+        <Text variant="h2" primary weight="medium">{twemojify(username)}</Text>
+        <IconButton
+          src={PencilIC}
+          size="extra-small"
+          tooltip="Edit"
+          onClick={() => setIsEditing(true)}
+        />
+      </div>
+      <Text variant="b2">{mx.getUserId()}</Text>
+    </div>
+  );
+
+  return (
+    <div className="profile-editor">
       <ImageUpload
         text={username}
-        bgColor={bgColor}
+        bgColor={colorMXID(userId)}
         imageSrc={avatarSrc}
         onUpload={handleAvatarUpload}
         onRequestRemove={() => handleAvatarUpload(null)}
       />
-      <div className="profile-editor__input-wrapper">
-        <Input
-          label={`Display name of ${mx.getUserId()}`}
-          onChange={onDisplayNameInputChange}
-          value={mx.getUser(mx.getUserId()).displayName}
-          forwardRef={displayNameRef}
-        />
-        <Button variant="primary" type="submit" disabled={disabled}>Save</Button>
-        <Button onClick={cancelDisplayNameChanges}>Cancel</Button>
-      </div>
-    </form>
+      {
+        isEditing ? renderForm() : renderInfo()
+      }
+    </div>
   );
 }
 

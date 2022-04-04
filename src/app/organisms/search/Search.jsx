@@ -7,6 +7,7 @@ import navigation from '../../../client/state/navigation';
 import AsyncSearch from '../../../util/AsyncSearch';
 import { selectRoom, selectTab } from '../../../client/action/navigation';
 import { joinRuleToIconSrc } from '../../../util/matrixUtil';
+import { roomIdByActivity } from '../../../util/sort';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
@@ -47,27 +48,24 @@ function useVisiblityToggle(setResult) {
   return [isOpen, requestClose];
 }
 
-function mapRoomIds(roomIds, type) {
+function mapRoomIds(roomIds) {
   const mx = initMatrix.matrixClient;
   const { directs, roomIdToParents } = initMatrix.roomList;
 
   return roomIds.map((roomId) => {
-    let roomType = type;
-
-    if (!roomType) {
-      roomType = directs.has(roomId) ? 'direct' : 'room';
-    }
-
     const room = mx.getRoom(roomId);
     const parentSet = roomIdToParents.get(roomId);
-    const parentNames = parentSet
-      ? [...parentSet].map((parentId) => mx.getRoom(parentId).name)
-      : undefined;
+    const parentNames = parentSet ? [] : undefined;
+    parentSet?.forEach((parentId) => parentNames.push(mx.getRoom(parentId).name));
 
     const parents = parentNames ? parentNames.join(', ') : null;
 
+    let type = 'room';
+    if (room.isSpaceRoom()) type = 'space';
+    else if (directs.has(roomId)) type = 'direct';
+
     return ({
-      type: roomType,
+      type,
       name: room.name,
       parents,
       roomId,
@@ -93,34 +91,32 @@ function Search() {
   const generateResults = (term) => {
     const prefix = term.match(/^[#@*]/)?.[0];
 
-    if (term.length === 1) {
-      const { roomList } = initMatrix;
-      const spaces = mapRoomIds([...roomList.spaces], 'space').reverse();
-      const rooms = mapRoomIds([...roomList.rooms], 'room').reverse();
-      const directs = mapRoomIds([...roomList.directs], 'direct').reverse();
-
-      if (prefix === '*') {
-        asyncSearch.setup(spaces, { keys: 'name', isContain: true, limit: 20 });
-        handleSearchResults(spaces, '*');
-      } else if (prefix === '#') {
-        asyncSearch.setup(rooms, { keys: 'name', isContain: true, limit: 20 });
-        handleSearchResults(rooms, '#');
-      } else if (prefix === '@') {
-        asyncSearch.setup(directs, { keys: 'name', isContain: true, limit: 20 });
-        handleSearchResults(directs, '@');
-      } else {
-        const dataList = spaces.concat(rooms, directs);
-        asyncSearch.setup(dataList, { keys: 'name', isContain: true, limit: 20 });
-        asyncSearch.search(term);
-      }
-    } else {
+    if (term.length > 1) {
       asyncSearch.search(prefix ? term.slice(1) : term);
+      return;
     }
+
+    const { spaces, rooms, directs } = initMatrix.roomList;
+    let ids = null;
+
+    if (prefix) {
+      if (prefix === '#') ids = [...rooms];
+      else if (prefix === '@') ids = [...directs];
+      else ids = [...spaces];
+    } else {
+      ids = [...rooms].concat([...directs], [...spaces]);
+    }
+
+    ids.sort(roomIdByActivity);
+    const mappedIds = mapRoomIds(ids);
+    asyncSearch.setup(mappedIds, { keys: 'name', isContain: true, limit: 20 });
+    if (prefix) handleSearchResults(mappedIds, prefix);
+    else asyncSearch.search(term);
   };
 
   const loadRecentRooms = () => {
     const { recentRooms } = navigation;
-    handleSearchResults(mapRoomIds(recentRooms).reverse(), '');
+    handleSearchResults(mapRoomIds(recentRooms).reverse());
   };
 
   const handleAfterOpen = () => {
@@ -154,6 +150,7 @@ function Search() {
     else {
       searchRef.current.value = '';
       searchRef.current.focus();
+      loadRecentRooms();
     }
   };
 

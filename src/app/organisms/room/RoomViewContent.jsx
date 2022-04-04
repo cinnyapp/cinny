@@ -14,6 +14,7 @@ import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { diffMinutes, isInSameDay, Throttle } from '../../../util/common';
+import { markAsRead } from '../../../client/action/notifications';
 
 import Divider from '../../atoms/divider/Divider';
 import ScrollView from '../../atoms/scroll/ScrollView';
@@ -62,7 +63,7 @@ function genRoomIntro(mEvent, roomTimeline) {
       avatarSrc={avatarSrc}
       name={roomTimeline.room.name}
       heading={`Welcome to ${roomTimeline.room.name}`}
-      desc={`This is the beginning of ${roomTimeline.room.name} room.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
+      desc={`This is the beginning of the ${roomTimeline.room.name} room.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
       time={mEvent ? `Created at ${dateFormat(mEvent.getDate(), 'dd mmmm yyyy, hh:MM TT')}` : null}
     />
   );
@@ -145,13 +146,12 @@ function useTimeline(roomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
 
       if (isSpecificEvent) {
         focusEventIndex = roomTimeline.getEventIndex(eId);
-      } else if (!readUptoEvtStore.getItem()) {
+      }
+      if (!readUptoEvtStore.getItem() && roomTimeline.hasEventInTimeline(readUpToId)) {
         // either opening live timeline or jump to unread.
-        focusEventIndex = roomTimeline.getUnreadEventIndex(readUpToId);
-        if (roomTimeline.hasEventInTimeline(readUpToId)) {
-          readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
-        }
-      } else {
+        readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
+      }
+      if (readUptoEvtStore.getItem() && !isSpecificEvent) {
         focusEventIndex = roomTimeline.getUnreadEventIndex(readUptoEvtStore.getItem().getId());
       }
 
@@ -167,7 +167,6 @@ function useTimeline(roomTimeline, eventId, readUptoEvtStore, eventLimitRef) {
     setEventTimeline(eventId);
     return () => {
       roomTimeline.removeListener(cons.events.roomTimeline.READY, initTimeline);
-      roomTimeline.removeInternalListeners();
       limit.setFrom(0);
     };
   }, [roomTimeline, eventId]);
@@ -255,7 +254,7 @@ function useHandleScroll(
       );
       roomTimeline.emit(cons.events.roomTimeline.AT_BOTTOM, isAtBottom);
       if (isAtBottom && readUptoEvtStore.getItem()) {
-        requestAnimationFrame(() => roomTimeline.markAllAsRead());
+        requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
       }
     });
     autoPaginate();
@@ -265,7 +264,7 @@ function useHandleScroll(
     const timelineScroll = timelineScrollRef.current;
     const limit = eventLimitRef.current;
     if (readUptoEvtStore.getItem()) {
-      requestAnimationFrame(() => roomTimeline.markAllAsRead());
+      requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
     }
     if (roomTimeline.isServingLiveTimeline()) {
       limit.setFrom(roomTimeline.timeline.length - limit.maxEvents);
@@ -286,44 +285,39 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
   useEffect(() => {
     const timelineScroll = timelineScrollRef.current;
     const limit = eventLimitRef.current;
-    const sendReadReceipt = (event) => {
-      if (event.isSending()) return;
+    const trySendReadReceipt = (event) => {
       if (myUserId === event.getSender()) {
-        roomTimeline.markAllAsRead();
+        requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
         return;
       }
       const readUpToEvent = readUptoEvtStore.getItem();
       const readUpToId = roomTimeline.getReadUpToEventId();
-      const isUnread = readUpToEvent?.getId() === readUpToId;
+      const isUnread = readUpToEvent ? readUpToEvent?.getId() === readUpToId : true;
 
-      // if user doesn't have focus on app don't mark messages as read.
-      if (document.visibilityState === 'hidden' || timelineScroll.bottom >= 16) {
-        if (isUnread) return;
-        readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
+      if (isUnread === false) {
+        if (document.visibilityState === 'visible' && timelineScroll.bottom < 16) {
+          requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
+        } else {
+          readUptoEvtStore.setItem(roomTimeline.findEventByIdInTimelineSet(readUpToId));
+        }
         return;
       }
 
-      // user has not mark room as read
-      if (!isUnread) {
-        roomTimeline.markAllAsRead();
-      }
       const { timeline } = roomTimeline;
-      const unreadMsgIsLast = timeline[timeline.length - 2].getId() === readUpToEvent?.getId();
+      const unreadMsgIsLast = timeline[timeline.length - 2].getId() === readUpToId;
       if (unreadMsgIsLast) {
-        roomTimeline.markAllAsRead();
+        requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
       }
     };
 
     const handleEvent = (event) => {
       const tLength = roomTimeline.timeline.length;
-      const isUserViewingLive = (
-        roomTimeline.isServingLiveTimeline()
-        && limit.length >= tLength - 1
-        && timelineScroll.bottom < SCROLL_TRIGGER_POS
-      );
-      if (isUserViewingLive) {
+      const isViewingLive = roomTimeline.isServingLiveTimeline() && limit.length >= tLength - 1;
+      const isAttached = timelineScroll.bottom < SCROLL_TRIGGER_POS;
+
+      if (isViewingLive && isAttached) {
         limit.setFrom(tLength - limit.maxEvents);
-        sendReadReceipt(event);
+        trySendReadReceipt(event);
         setEvent(event);
         return;
       }
@@ -332,11 +326,8 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
         setEvent(event);
         return;
       }
-      const isUserDitchedLive = (
-        roomTimeline.isServingLiveTimeline()
-        && limit.length >= tLength - 1
-      );
-      if (isUserDitchedLive) {
+
+      if (isViewingLive) {
         // This stateUpdate will help to put the
         // loading msg placeholder at bottom
         setEvent(event);
@@ -353,17 +344,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
     };
   }, [roomTimeline]);
 
-  useEffect(() => {
-    const timelineScroll = timelineScrollRef.current;
-    if (!roomTimeline.initialized) return;
-    if (timelineScroll.bottom < 16
-      && !roomTimeline.canPaginateForward()
-      && document.visibilityState === 'visible') {
-      timelineScroll.scrollToBottom();
-    } else {
-      timelineScroll.tryRestoringScroll();
-    }
-  }, [newEvent, roomTimeline]);
+  return newEvent;
 }
 
 let jumpToItemIndex = -1;
@@ -394,7 +375,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
     timelineScrollRef,
     eventLimitRef,
   );
-  useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, eventLimitRef);
+  const newEvent = useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, eventLimitRef);
 
   const { timeline } = roomTimeline;
 
@@ -419,7 +400,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
       if (timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward()) {
         const readUpToId = roomTimeline.getReadUpToEventId();
         if (readUptoEvtStore.getItem()?.getId() === readUpToId || readUpToId === null) {
-          requestAnimationFrame(() => roomTimeline.markAllAsRead());
+          requestAnimationFrame(() => markAsRead(roomTimeline.roomId));
         }
       }
       jumpToItemIndex = -1;
@@ -447,6 +428,16 @@ function RoomViewContent({ eventId, roomTimeline }) {
     const timelineScroll = timelineScrollRef.current;
     timelineScroll.tryRestoringScroll();
   }, [onLimitUpdate]);
+
+  useEffect(() => {
+    const timelineScroll = timelineScrollRef.current;
+    if (!roomTimeline.initialized) return;
+    if (timelineScroll.bottom < 16 && !roomTimeline.canPaginateForward() && document.visibilityState === 'visible') {
+      timelineScroll.scrollToBottom();
+    } else {
+      timelineScroll.tryRestoringScroll();
+    }
+  }, [newEvent]);
 
   const handleTimelineScroll = (event) => {
     const timelineScroll = timelineScrollRef.current;

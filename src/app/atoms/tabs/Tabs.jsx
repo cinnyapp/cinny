@@ -74,7 +74,7 @@ Tabs.defaultProps = {
 
 Tabs.propTypes = {
   items: PropTypes.arrayOf(
-    PropTypes.exact({
+    PropTypes.shape({
       iconSrc: PropTypes.string,
       text: PropTypes.string,
       disabled: PropTypes.bool,
@@ -84,4 +84,4 @@ Tabs.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
-export { Tabs as default };
+export default Tabs;

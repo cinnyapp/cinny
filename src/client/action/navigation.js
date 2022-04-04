@@ -104,9 +104,10 @@ export function openProfileViewer(userId, roomId) {
   });
 }
 
-export function openSettings() {
+export function openSettings(tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SETTINGS,
+    tabText,
   });
 }
 
@@ -154,6 +155,15 @@ export function openReusableContextMenu(placement, cords, render, afterClose) {
     type: cons.actions.navigation.OPEN_REUSABLE_CONTEXT_MENU,
     placement,
     cords,
+    render,
+    afterClose,
+  });
+}
+
+export function openReusableDialog(title, render, afterClose) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_REUSABLE_DIALOG,
+    title,
     render,
     afterClose,
   });

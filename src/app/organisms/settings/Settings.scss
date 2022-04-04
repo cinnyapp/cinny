@@ -3,58 +3,87 @@
 @use '../../partials/screen';
 
 .settings-window {
-  & .pw__drawer__content {
-    @extend .cp-fx__column;
-    min-height: 100%;
-    padding-bottom: var(--sp-extra-tight);
+  & .pw {
+    background-color: var(--bg-surface-low);
+  }
+  
+  .header .btn-danger {
+    margin: 0 var(--sp-tight);
+    box-shadow: none;
+  }
 
-    & > .pw-content-selector:last-child {
-      margin-top: auto;
+  & .profile-editor {
+    padding: var(--sp-loose) var(--sp-extra-loose);
+  } 
+
+  & .tabs__content {
+    padding: 0 var(--sp-normal);
+  }
+
+  &__cards-wrapper {
+    padding: 0 var(--sp-normal);
+    @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
+  }
+}
+.settings-window__card {
+  margin: var(--sp-normal) 0;
+  background-color: var(--bg-surface);
+  border-radius: var(--bo-radius);
+  box-shadow: var(--bs-surface-border);
+  overflow: hidden;
+
+  & > .context-menu__header:first-child {
+    margin-top: 2px;
+  }
+}
+.settings-appearance__card,
+.settings-notifications,
+.settings-security__card,
+.settings-security .device-manage,
+.settings-about__card {
+  @extend .settings-window__card;
+}
+
+.settings-window__cards-wrapper{
+  & .setting-tile {
+    margin: 0 var(--sp-normal);
+    margin-top: var(--sp-normal);
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--bg-surface-border);
+    &:last-child {
+      border-bottom: none;
     }
   }
-  & .pw__content-container {
-    min-height: 100%;
-  }
 }
 
-.settings-content {
-  @include dir.side(margin, var(--sp-normal), var(--sp-extra-tight));
-
-  & .setting-tile {
-    margin-top: var(--sp-normal);
-    border-bottom: 1px solid var(--bg-surface-border);
-    padding-bottom: 16px;
-  }
-}
-
-.set-notifications {
+.settings-notifications {
   &__not-supported {
     padding: 0 var(--sp-ultra-tight);
   }
 }
 
-.set-about {
+.settings-about {
   &__branding {
-    margin-top: var(--sp-extra-tight);
-    margin-bottom: var(--sp-normal);
+    padding: var(--sp-normal);
     display: flex;
-
+    
     & > div {
       margin: 0 var(--sp-loose);
     }
-
+    
   }
   &__btns {
-    margin: 0;
-    margin-top: var(--sp-normal);
-    & button:last-child {
-      margin: 0 var(--sp-tight)
+    & button {
+      margin-top: var(--sp-tight);
+      @include dir.side(margin, 0, var(--sp-tight));
     }
   }
-
+  
   &__credits {
-    margin-top: var(--sp-loose);
+    padding: 0 var(--sp-normal);
     & ul {
+      color: var(--tc-surface-low);
+      padding: var(--sp-normal);
       margin: var(--sp-extra-tight) 0;
     }
   }

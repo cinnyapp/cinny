@@ -5,20 +5,18 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import Postie from '../../../util/Postie';
+import { roomIdByActivity, roomIdByAtoZ } from '../../../util/sort';
 
 import RoomsCategory from './RoomsCategory';
 
 import { useCategorizedSpaces } from '../../hooks/useCategorizedSpaces';
-import { AtoZ, RoomToDM } from './common';
 
 const drawerPostie = new Postie();
 function Home({ spaceId }) {
   const mx = initMatrix.matrixClient;
   const { roomList, notifications, accountData } = initMatrix;
-  const {
-    spaces, rooms, directs, roomIdToParents,
-  } = roomList;
-  const categorizedSpaces = useCategorizedSpaces();
+  const { spaces, rooms, directs } = roomList;
+  useCategorizedSpaces();
   const isCategorized = accountData.categorizedSpaces.has(spaceId);
 
   let categories = null;
@@ -26,22 +24,19 @@ function Home({ spaceId }) {
   let roomIds = [];
   let directIds = [];
 
-  const spaceChildIds = roomList.getSpaceChildren(spaceId);
-  if (spaceChildIds) {
+  if (spaceId) {
+    const spaceChildIds = roomList.getSpaceChildren(spaceId);
     spaceIds = spaceChildIds.filter((roomId) => spaces.has(roomId));
     roomIds = spaceChildIds.filter((roomId) => rooms.has(roomId));
     directIds = spaceChildIds.filter((roomId) => directs.has(roomId));
   } else {
-    spaceIds = [...spaces].filter((roomId) => !roomIdToParents.has(roomId));
-    roomIds = [...rooms].filter((roomId) => !roomIdToParents.has(roomId));
+    spaceIds = roomList.getOrphanSpaces();
+    roomIds = roomList.getOrphanRooms();
   }
-
-  spaceIds.sort(AtoZ);
-  roomIds.sort(AtoZ);
-  directIds.sort(AtoZ);
 
   if (isCategorized) {
     categories = roomList.getCategorizedSpaces(spaceIds);
+    categories.delete(spaceId);
   }
 
   useEffect(() => {
@@ -63,35 +58,47 @@ function Home({ spaceId }) {
 
     navigation.on(cons.events.navigation.ROOM_SELECTED, selectorChanged);
     notifications.on(cons.events.notifications.NOTI_CHANGED, notiChanged);
+    notifications.on(cons.events.notifications.MUTE_TOGGLED, notiChanged);
     return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, selectorChanged);
       notifications.removeListener(cons.events.notifications.NOTI_CHANGED, notiChanged);
+      notifications.removeListener(cons.events.notifications.MUTE_TOGGLED, notiChanged);
     };
   }, []);
 
   return (
     <>
       { !isCategorized && spaceIds.length !== 0 && (
-        <RoomsCategory name="Spaces" roomIds={spaceIds} drawerPostie={drawerPostie} />
+        <RoomsCategory name="Spaces" roomIds={spaceIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
       )}
 
       { roomIds.length !== 0 && (
-        <RoomsCategory name="Rooms" roomIds={roomIds} drawerPostie={drawerPostie} />
+        <RoomsCategory name="Rooms" roomIds={roomIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
       )}
 
       { directIds.length !== 0 && (
-        <RoomsCategory name="People" roomIds={directIds} drawerPostie={drawerPostie} />
+        <RoomsCategory name="People" roomIds={directIds.sort(roomIdByActivity)} drawerPostie={drawerPostie} />
       )}
 
-      { isCategorized && [...categories].map(([catId, childIds]) => (
-        <RoomsCategory
-          key={catId}
-          spaceId={catId}
-          name={mx.getRoom(catId).name}
-          roomIds={[...childIds].sort(AtoZ).sort(RoomToDM)}
-          drawerPostie={drawerPostie}
-        />
-      ))}
+      { isCategorized && [...categories].map(([catId, childIds]) => {
+        const rms = [];
+        const dms = [];
+        childIds.forEach((id) => {
+          if (directs.has(id)) dms.push(id);
+          else rms.push(id);
+        });
+        rms.sort(roomIdByAtoZ);
+        dms.sort(roomIdByActivity);
+        return (
+          <RoomsCategory
+            key={catId}
+            spaceId={catId}
+            name={mx.getRoom(catId).name}
+            roomIds={rms.concat(dms)}
+            drawerPostie={drawerPostie}
+          />
+        );
+      })}
     </>
   );
 }

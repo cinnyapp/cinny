@@ -5,12 +5,13 @@ import './RoomViewFloating.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
+import { markAsRead } from '../../../client/action/notifications';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
-import IconButton from '../../atoms/button/IconButton';
 
-import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+import MessageIC from '../../../../public/res/ic/outlined/message.svg';
+import MessageUnreadIC from '../../../../public/res/ic/outlined/message-unread.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
 import { getUsersActionJsx } from './common';
@@ -23,7 +24,7 @@ function useJumpToEvent(roomTimeline) {
   };
 
   const cancelJumpToEvent = () => {
-    roomTimeline.markAllAsRead();
+    markAsRead(roomTimeline.roomId);
     setEventId(null);
   };
 
@@ -36,11 +37,12 @@ function useJumpToEvent(roomTimeline) {
       setEventId(readEventId);
     }
 
+    const { notifications } = initMatrix;
     const handleMarkAsRead = () => setEventId(null);
-    roomTimeline.on(cons.events.roomTimeline.MARKED_AS_READ, handleMarkAsRead);
+    notifications.on(cons.events.notifications.FULL_READ, handleMarkAsRead);
 
     return () => {
-      roomTimeline.removeListener(cons.events.roomTimeline.MARKED_AS_READ, handleMarkAsRead);
+      notifications.removeListener(cons.events.notifications.FULL_READ, handleMarkAsRead);
       setEventId(null);
     };
   }, [roomTimeline]);
@@ -96,28 +98,21 @@ function RoomViewFloating({
   return (
     <>
       <div className={`room-view__unread ${isJumpToEvent ? 'room-view__unread--open' : ''}`}>
-        <Button onClick={jumpToEvent} variant="primary">
-          <Text variant="b2">Jump to unread</Text>
+        <Button iconSrc={MessageUnreadIC} onClick={jumpToEvent} variant="primary">
+          <Text variant="b3" weight="medium">Jump to unread messages</Text>
         </Button>
-        <IconButton
-          onClick={cancelJumpToEvent}
-          variant="primary"
-          size="extra-small"
-          src={TickMarkIC}
-          tooltipPlacement="bottom"
-          tooltip="Mark as read"
-        />
+        <Button iconSrc={TickMarkIC} onClick={cancelJumpToEvent} variant="primary">
+          <Text variant="b3" weight="bold">Mark as read</Text>
+        </Button>
       </div>
       <div className={`room-view__typing${typingMembers.size > 0 ? ' room-view__typing--open' : ''}`}>
         <div className="bouncing-loader"><div /></div>
         <Text variant="b2">{getUsersActionJsx(roomId, [...typingMembers], 'typing...')}</Text>
       </div>
       <div className={`room-view__STB${isAtBottom ? '' : ' room-view__STB--open'}`}>
-        <IconButton
-          onClick={handleScrollToBottom}
-          src={ChevronBottomIC}
-          tooltip="Scroll to Bottom"
-        />
+        <Button iconSrc={MessageIC} onClick={handleScrollToBottom}>
+          <Text variant="b3" weight="medium">Jump to latest</Text>
+        </Button>
       </div>
     </>
   );

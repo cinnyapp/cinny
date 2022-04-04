@@ -186,9 +186,17 @@ const MessageBody = React.memo(({
   // if body is not string it is a React element.
   if (typeof body !== 'string') return <div className="message__body">{body}</div>;
 
-  let content = isCustomHTML
-    ? twemojify(sanitizeCustomHtml(body), undefined, true, false)
-    : twemojify(body, undefined, true);
+  let content = null;
+  if (isCustomHTML) {
+    try {
+      content = twemojify(sanitizeCustomHtml(body), undefined, true, false);
+    } catch {
+      console.error('Malformed custom html: ', body);
+      content = twemojify(body, undefined);
+    }
+  } else {
+    content = twemojify(body, undefined, true);
+  }
 
   // Determine if this message should render with large emojis
   // Criteria:
@@ -469,6 +477,18 @@ function isMedia(mE) {
   );
 }
 
+// if editedTimeline has mEventId then pass editedMEvent else pass mEvent to openViewSource
+function handleOpenViewSource(mEvent, roomTimeline) {
+  const eventId = mEvent.getId();
+  const { editedTimeline } = roomTimeline ?? {};
+  let editedMEvent;
+  if (editedTimeline?.has(eventId)) {
+    const editedList = editedTimeline.get(eventId);
+    editedMEvent = editedList[editedList.length - 1];
+  }
+  openViewSource(editedMEvent !== undefined ? editedMEvent : mEvent);
+}
+
 const MessageOptions = React.memo(({
   roomTimeline, mEvent, edit, reply,
 }) => {
@@ -516,7 +536,7 @@ const MessageOptions = React.memo(({
             </MenuItem>
             <MenuItem
               iconSrc={CmdIC}
-              onClick={() => openViewSource(mEvent)}
+              onClick={() => handleOpenViewSource(mEvent, roomTimeline)}
             >
               View source
             </MenuItem>

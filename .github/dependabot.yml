@@ -1,22 +1,30 @@
-# Docs: <https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/customizing-dependency-updates>
+# Docs: <https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/customizing-dependency-updates>
 
 version: 2
-
 updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: "tuesday"
+      time: "01:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 15
+
   - package-ecosystem: github-actions
     directory: /
-    schedule: {interval: weekly}
-    reviewers: [ajbura]
-    assignees: [ajbura]
+    schedule:
+      interval: weekly
+      day: "tuesday"
+      time: "01:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 5
 
   - package-ecosystem: docker
     directory: /
-    schedule: {interval: weekly}
-    reviewers: [ajbura]
-    assignees: [ajbura]
-
-  - package-ecosystem: npm
-    directory: /
-    schedule: {interval: weekly}
-    reviewers: [ajbura]
-    assignees: [ajbura]
+    schedule:
+      interval: weekly
+      day: "tuesday"
+      time: "01:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 5

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import './RoomsCategory.scss';
 
 import initMatrix from '../../../client/initMatrix';
-import { selectSpace, selectRoom,openReusableContextMenu } from '../../../client/action/navigation';
+import { selectSpace, selectRoom, openReusableContextMenu } from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';

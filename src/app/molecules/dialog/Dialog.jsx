@@ -12,6 +12,7 @@ import RawModal from '../../atoms/modal/RawModal';
 function Dialog({
   className, isOpen, title, onAfterOpen, onAfterClose,
   contentOptions, onRequestClose, closeFromOutside, children,
+  invisibleScroll,
 }) {
   return (
     <RawModal
@@ -36,7 +37,7 @@ function Dialog({
             {contentOptions}
           </Header>
           <div className="dialog__content__wrapper">
-            <ScrollView autoHide>
+            <ScrollView autoHide invisible={invisibleScroll}>
               <div className="dialog__content-container">
                 {children}
               </div>
@@ -55,6 +56,7 @@ Dialog.defaultProps = {
   onAfterClose: null,
   onRequestClose: null,
   closeFromOutside: true,
+  invisibleScroll: false,
 };
 
 Dialog.propTypes = {
@@ -67,6 +69,7 @@ Dialog.propTypes = {
   onRequestClose: PropTypes.func,
   closeFromOutside: PropTypes.bool,
   children: PropTypes.node.isRequired,
+  invisibleScroll: PropTypes.bool,
 };
 
 export default Dialog;
