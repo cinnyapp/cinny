@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Client.scss';
 
 import Text from '../../atoms/text/Text';
@@ -16,20 +16,33 @@ import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
 
-const viewPossibilities = {
-  nav: 'navigation',
-  room: 'room',
-};
+const classNameHidden = 'client__item-hidden';
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
-  const [activeView, setActiveView] = useState(viewPossibilities.nav);
+
+  /**
+   * @type {React.MutableRefObject<HTMLDivElement>}
+   */
+  const navWrapperRef = useRef(null);
+  /**
+   * @type {React.MutableRefObject<HTMLDivElement>}
+   */
+  const roomWrapperRef = useRef(null);
 
   // #region Liston on events for compact screen sizes
-  const onRoomSelected = () => setActiveView(viewPossibilities.room);
-  const onNavigationSelected = () => setActiveView(viewPossibilities.nav);
+  function onRoomSelected() {
+    // setActiveView(viewPossibilities.room);
+    navWrapperRef.current.classList.add(classNameHidden);
+    roomWrapperRef.current.classList.remove(classNameHidden);
+  }
+  function onNavigationSelected() {
+    // setActiveView(viewPossibilities.nav);
+    navWrapperRef.current.classList.remove(classNameHidden);
+    roomWrapperRef.current.classList.add(classNameHidden);
+  }
 
   useEffect(() => {
     navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
@@ -146,10 +159,10 @@ function Client() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className={`navigation__wrapper ${activeView !== viewPossibilities.nav ? 'client__item-hidden' : ''}`}>
+      <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation />
       </div>
-      <div className={`room__wrapper ${activeView !== viewPossibilities.room ? 'client__item-hidden' : ''}`}>
+      <div className="room__wrapper" ref={roomWrapperRef}>
         <Room />
       </div>
       <Windows />
