@@ -44,7 +44,7 @@
     "react-modal": "^3.14.4",
     "sanitize-html": "^2.7.0",
     "tippy.js": "^6.3.7",
-    "twemoji": "^14.0.1"
+    "twemoji": "^14.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.17.8",
