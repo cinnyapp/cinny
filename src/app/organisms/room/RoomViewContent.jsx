@@ -55,15 +55,19 @@ function genRoomIntro(mEvent, roomTimeline) {
   const roomTopic = roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
   const isDM = initMatrix.roomList.directs.has(roomTimeline.roomId);
   let avatarSrc = roomTimeline.room.getAvatarUrl(mx.baseUrl, 80, 80, 'crop');
-  avatarSrc = isDM ? roomTimeline.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
+  avatarSrc = isDM ? roomTimeline.room.getAvatarFallbackMember()
+    ?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
+  const descPrefix = isDM
+    ? 'This is the beginning of your conversation with @'
+    : 'This is the beginning of ';
   return (
     <RoomIntro
       key={mEvent ? mEvent.getId() : 'room-intro'}
       roomId={roomTimeline.roomId}
       avatarSrc={avatarSrc}
       name={roomTimeline.room.name}
-      heading={`Welcome to ${roomTimeline.room.name}`}
-      desc={`This is the beginning of ${roomTimeline.room.name} room.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
+      heading={isDM ? roomTimeline.room.name : `Welcome to ${roomTimeline.room.name}`}
+      desc={`${descPrefix}${roomTimeline.room.name}.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
       time={mEvent ? `Created at ${dateFormat(mEvent.getDate(), 'dd mmmm yyyy, hh:MM TT')}` : null}
     />
   );
