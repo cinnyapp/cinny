@@ -411,7 +411,6 @@ function RoomViewContent({ eventId, roomTimeline }) {
 
     roomTimeline.on(cons.events.roomTimeline.SCROLL_TO_LIVE, handleScrollToLive);
     return () => {
-      if (timelineSVRef.current === null) return;
       roomTimeline.removeListener(cons.events.roomTimeline.SCROLL_TO_LIVE, handleScrollToLive);
     };
   }, [timelineInfo]);
