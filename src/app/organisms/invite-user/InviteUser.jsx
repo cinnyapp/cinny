@@ -103,6 +103,20 @@ function InviteUser({
     updateIsSearching(false);
   }
 
+  async function checkIfNotBot(userId) {
+    try {
+      const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
+      // { "@user:host": { "DEVICE": {...}, ... }, ... }
+      return Object.values(usersDeviceMap).every((userDevices) =>
+          // { "DEVICE": {...}, ... }
+        Object.keys(userDevices).length > 0,
+      );
+    } catch (e) {
+      console.error("Error determining if it's possible to encrypt to all users: ", e);
+      return false; // assume not
+    }
+  }
+
   async function createDM(userId) {
     if (mx.getUserId() === userId) return;
     const dmRoomId = hasDMWith(userId);
@@ -112,12 +126,13 @@ function InviteUser({
       return;
     }
 
+
     try {
       addUserToProc(userId);
       procUserError.delete(userId);
       updateUserProcError(getMapCopy(procUserError));
 
-      const result = await roomActions.createDM(userId);
+      const result = await roomActions.createDM(userId, await checkIfNotBot(userId));
       roomIdToUserId.set(result.room_id, userId);
       updateRoomIdToUserId(getMapCopy(roomIdToUserId));
     } catch (e) {
