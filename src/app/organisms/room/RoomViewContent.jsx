@@ -63,7 +63,7 @@ function genRoomIntro(mEvent, roomTimeline) {
       avatarSrc={avatarSrc}
       name={roomTimeline.room.name}
       heading={`Welcome to ${roomTimeline.room.name}`}
-      desc={`This is the beginning of ${roomTimeline.room.name} room.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
+      desc={`This is the beginning of the ${roomTimeline.room.name} room.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
       time={mEvent ? `Created at ${dateFormat(mEvent.getDate(), 'dd mmmm yyyy, hh:MM TT')}` : null}
     />
   );

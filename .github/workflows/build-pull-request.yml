@@ -32,8 +32,3 @@ jobs:
           name: pr.json
           path: pr.json
           retention-days: 1
-      - name: Build Docker image
-        uses: docker/build-push-action@v2.10.0
-        with:
-          context: .
-          push: false

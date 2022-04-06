@@ -8,6 +8,8 @@ import Search from '../search/Search';
 import ViewSource from '../view-source/ViewSource';
 import CreateRoom from '../create-room/CreateRoom';
 
+import ReusableDialog from '../../molecules/dialog/ReusableDialog';
+
 function Dialogs() {
   return (
     <>
@@ -18,6 +20,8 @@ function Dialogs() {
       <CreateRoom />
       <SpaceAddExisting />
       <Search />
+
+      <ReusableDialog />
     </>
   );
 }
