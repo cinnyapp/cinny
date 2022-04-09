@@ -1,38 +1,81 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './CrossSigning.scss';
+import FileSaver from 'file-saver';
 import { Formik } from 'formik';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { hasCrossSigningAccountData } from '../../../util/matrixUtil';
+import { copyToClipboard } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import Input from '../../atoms/input/Input';
+import Spinner from '../../atoms/spinner/Spinner';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
+
+const securityKeyDialog = (key) => {
+  const downloadKey = () => {
+    const blob = new Blob([key.encodedPrivateKey], {
+      type: 'text/plain;charset=us-ascii',
+    });
+    FileSaver.saveAs(blob, 'security-key.txt');
+  };
+  const copyKey = () => {
+    copyToClipboard(key.encodedPrivateKey);
+  };
+
+  const renderSecurityKey = () => (
+    <div className="cross-signing__key">
+      <Text weight="medium">Please save this security key somewhere safe.</Text>
+      <Text className="cross-signing__key-text">
+        {key.encodedPrivateKey}
+      </Text>
+      <div className="cross-signing__key-btn">
+        <Button variant="primary" onClick={() => copyKey(key)}>Copy</Button>
+        <Button onClick={() => downloadKey(key)}>Download</Button>
+      </div>
+    </div>
+  );
+
+  // Download automatically.
+  downloadKey();
+
+  openReusableDialog(
+    <Text variant="s1" weight="medium">Security Key</Text>,
+    () => renderSecurityKey(),
+  );
+};
 
 function CrossSigningSetup() {
   const initialValues = { phrase: '', confirmPhrase: '' };
+  const [genWithPhrase, setGenWithPhrase] = useState(undefined);
 
-  const setup = (securityPhrase = undefined) => {
+  const setup = async (securityPhrase = undefined) => {
     const mx = initMatrix.matrixClient;
-    const crossSigning = mx.getStoredCrossSigningForUser(mx.getUserId());
+    setGenWithPhrase(typeof securityPhrase === 'string');
+    const recoveryKey = await mx.createRecoveryKeyFromPassphrase(securityPhrase);
 
-    if (!crossSigning) {
-      // TODO: bootstrap crossSigning.
-    }
-    if (hasCrossSigningAccountData()) {
-      // TODO: user is doing reset.
-      // delete current cross signing keys
-      // delete current message backup
-    }
+    const bootstrapSSOpts = {
+      createSecretStorageKey: async () => recoveryKey,
+      setupNewKeyBackup: true,
+      setupNewSecretStorage: true,
+    };
 
-    // TODO: prompt user security key.
+    await mx.bootstrapSecretStorage(bootstrapSSOpts);
+
+    securityKeyDialog(recoveryKey);
   };
 
   const validator = (values) => {
     const errors = {};
+    if (values.phrase === '12345678') {
+      errors.phrase = 'How about 87654321 ?';
+    }
+    if (values.phrase === '87654321') {
+      errors.phrase = 'Your are playing with 🔥';
+    }
     const PHRASE_REGEX = /^([^\s]){8,127}$/;
     if (values.phrase.length > 0 && !PHRASE_REGEX.test(values.phrase)) {
       errors.phrase = 'Phrase must contain 8-127 characters with no space.';
@@ -43,10 +86,6 @@ function CrossSigningSetup() {
     return errors;
   };
 
-  const submitter = (values) => {
-    setup(values.phrase);
-  };
-
   return (
     <div className="cross-signing__setup">
       <div className="cross-signing__setup-entry">
@@ -54,12 +93,13 @@ function CrossSigningSetup() {
           We will generate a Security Key, 
           which you can use to manage messages backup and session verification.
         </Text>
-        <Button variant="primary" onClick={() => setup()}>Generate Key</Button>
+        {genWithPhrase !== false && <Button variant="primary" onClick={() => setup()} disabled={genWithPhrase !== undefined}>Generate Key</Button>}
+        {genWithPhrase === false && <Spinner size="small" />}
       </div>
       <Text className="cross-signing__setup-divider">OR</Text>
       <Formik
         initialValues={initialValues}
-        onSubmit={submitter}
+        onSubmit={(values) => setup(values.phrase)}
         validate={validator}
       >
         {({
@@ -68,17 +108,35 @@ function CrossSigningSetup() {
           <form
             className="cross-signing__setup-entry"
             onSubmit={handleSubmit}
+            disabled={genWithPhrase !== undefined}
           >
             <Text>
               Alternatively you can also set a Security Phrase 
               so you don't have to remember long Security Key, 
               and optionally save the Key as backup.
             </Text>
-            <Input name="phrase" value={values.phrase} onChange={handleChange} label="Security Phrase" type="password" required />
+            <Input
+              name="phrase"
+              value={values.phrase}
+              onChange={handleChange}
+              label="Security Phrase"
+              type="password"
+              required
+              disabled={genWithPhrase !== undefined}
+            />
             {errors.phrase && <Text variant="b3" className="cross-signing__error">{errors.phrase}</Text>}
-            <Input name="confirmPhrase" value={values.confirmPhrase} onChange={handleChange} label="Confirm Security Phrase" type="password" required />
+            <Input
+              name="confirmPhrase"
+              value={values.confirmPhrase}
+              onChange={handleChange}
+              label="Confirm Security Phrase"
+              type="password"
+              required
+              disabled={genWithPhrase !== undefined}
+            />
             {errors.confirmPhrase && <Text variant="b3" className="cross-signing__error">{errors.confirmPhrase}</Text>}
-            <Button variant="primary" type="submit">Set Phrase & Generate Key</Button>
+            {genWithPhrase !== true && <Button variant="primary" type="submit" disabled={genWithPhrase !== undefined}>Set Phrase & Generate Key</Button>}
+            {genWithPhrase === true && <Spinner size="small" />}
           </form>
         )}
       </Formik>

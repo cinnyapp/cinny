@@ -1,6 +1,7 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
+const webpack = require('webpack');
 
 module.exports = {
   entry: {
@@ -17,6 +18,7 @@ module.exports = {
       'util': require.resolve('util/'),
       'assert': require.resolve('assert/'),
       'url': require.resolve('url/'),
+      'buffer': require.resolve('buffer'),
     }
   },
   node: {
@@ -72,6 +74,9 @@ module.exports = {
         { from: '_redirects' },
         { from: 'config.json' },
       ],
+    }),
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
     }),
   ],
 };

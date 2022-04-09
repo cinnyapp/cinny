@@ -27,6 +27,24 @@
     }
   }
 }
+
+.cross-signing__key {
+  padding: var(--sp-normal);
+
+  &-text {
+    margin: var(--sp-normal) 0;
+    padding: var(--sp-extra-tight);
+    background-color: var(--bg-surface-low);
+    border-radius: var(--bo-radius);
+  }
+  &-btn {
+    display: flex;
+    & > button:last-child {
+      margin: 0 var(--sp-normal);
+    }
+  }
+}
+
 .cross-signing__reset {
   padding: var(--sp-normal);
   padding-top: var(--sp-extra-loose);
