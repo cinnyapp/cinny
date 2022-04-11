@@ -179,6 +179,7 @@ function RoomPermissions({ roomId }) {
   const pLEvent = room.currentState.getStateEvents('m.room.power_levels')[0];
   const permissions = pLEvent.getContent();
   const canChangePermission = room.currentState.maySendStateEvent('m.room.power_levels', mx.getUserId());
+  const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel ?? 100;
 
   const handlePowerSelector = (e, permKey, parentKey, powerLevel) => {
     const handlePowerLevelChange = (newPowerLevel) => {
@@ -208,7 +209,7 @@ function RoomPermissions({ roomId }) {
       (closeMenu) => (
         <PowerLevelSelector
           value={powerLevel}
-          max={100}
+          max={myPowerLevel}
           onSelect={(pl) => {
             closeMenu();
             handlePowerLevelChange(pl);
