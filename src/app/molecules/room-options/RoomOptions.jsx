@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
-import { openInviteUser } from '../../../client/action/navigation';
+import { openInviteUser, openNavigation } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 import { markAsRead } from '../../../client/action/notifications';
 
@@ -33,6 +33,7 @@ function RoomOptions({ roomId, afterOptionSelect }) {
     if (confirm('Are you really want to leave this room?')) {
       roomActions.leave(roomId);
       afterOptionSelect();
+      openNavigation();
     }
   };
 
