@@ -180,3 +180,21 @@ export function hasCrossSigningAccountData() {
   const masterKeyData = mx.getAccountData('m.cross_signing.master');
   return !!masterKeyData;
 }
+
+export function getDefaultSSKey() {
+  const mx = initMatrix.matrixClient;
+  try {
+    return mx.getAccountData('m.secret_storage.default_key').getContent().key;
+  } catch {
+    return undefined;
+  }
+}
+
+export function getSSKeyInfo(key) {
+  const mx = initMatrix.matrixClient;
+  try {
+    return mx.getAccountData(`m.secret_storage.key.${key}`).getContent();
+  } catch {
+    return undefined;
+  }
+}

@@ -4,6 +4,7 @@ import './SecretStorageAccess.scss';
 import { deriveKey } from 'matrix-js-sdk/lib/crypto/key_passphrase';
 
 import initMatrix from '../../../client/initMatrix';
+import { getDefaultSSKey, getSSKeyInfo } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -14,8 +15,8 @@ import { useStore } from '../../hooks/useStore';
 
 function SecretStorageAccess({ onComplete }) {
   const mx = initMatrix.matrixClient;
-  const sSKeyId = mx.getAccountData('m.secret_storage.default_key').getContent().key;
-  const sSKeyInfo = mx.getAccountData(`m.secret_storage.key.${sSKeyId}`).getContent();
+  const sSKeyId = getDefaultSSKey();
+  const sSKeyInfo = getSSKeyInfo(sSKeyId);
   const isPassphrase = !!sSKeyInfo.passphrase;
   const [withPhrase, setWithPhrase] = useState(isPassphrase);
   const [process, setProcess] = useState(false);
@@ -40,7 +41,12 @@ function SecretStorageAccess({ onComplete }) {
         setProcess(false);
         return;
       }
-      onComplete({ key, phrase, decodedKey });
+      onComplete({
+        keyId: sSKeyId,
+        key,
+        phrase,
+        decodedKey,
+      });
     } catch (e) {
       if (!mountStore.getItem()) return;
       setError(`Incorrect Security ${key ? 'Key' : 'Phrase'}`);
