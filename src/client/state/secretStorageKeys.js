@@ -27,6 +27,10 @@ async function getSecretStorageKey({ keys }) {
   return [keyId, privateKey];
 }
 
+function cacheSecretStorageKey(keyId, keyInfo, privateKey) {
+  secretStorageKeys[keyId] = privateKey;
+}
+
 export const cryptoCallbacks = {
   getSecretStorageKey,
-};
+  cacheSecretStorageKey,
