@@ -34,3 +34,4 @@ function cacheSecretStorageKey(keyId, keyInfo, privateKey) {
 export const cryptoCallbacks = {
   getSecretStorageKey,
   cacheSecretStorageKey,
+};
