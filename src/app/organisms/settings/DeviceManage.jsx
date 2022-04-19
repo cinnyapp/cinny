@@ -107,7 +107,7 @@ function DeviceManage() {
 
   const handleRemove = async (device, auth = undefined) => {
     if (auth === undefined
-      ? window.confirm(`You are about to logout "${device.display_name}" session?`)
+      ? window.confirm(`You are about to logout "${device.display_name}" session.`)
       : true
     ) {
       addToProcessing(device);

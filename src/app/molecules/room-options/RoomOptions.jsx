@@ -30,7 +30,7 @@ function RoomOptions({ roomId, afterOptionSelect }) {
     afterOptionSelect();
   };
   const handleLeaveClick = () => {
-    if (confirm('Are you really want to leave this room?')) {
+    if (confirm('Are you sure that you want to leave this room?')) {
       roomActions.leave(roomId);
       afterOptionSelect();
       openNavigation();

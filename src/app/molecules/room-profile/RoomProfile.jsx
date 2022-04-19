@@ -117,7 +117,7 @@ function RoomProfile({ roomId }) {
 
   const handleAvatarUpload = async (url) => {
     if (url === null) {
-      if (confirm('Are you sure you want to remove avatar?')) {
+      if (confirm('Are you sure that you want to remove room avatar?')) {
         await mx.sendStateEvent(roomId, 'm.room.avatar', { url }, '');
       }
     } else await mx.sendStateEvent(roomId, 'm.room.avatar', { url }, '');
