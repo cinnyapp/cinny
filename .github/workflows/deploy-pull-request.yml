@@ -68,7 +68,7 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE3_ID }}
         timeout-minutes: 1
       - name: Edit PR Description
-        uses: velas/pr-description@v1.0.1
+        uses: Beakyn/gha-comment-pull-request@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
