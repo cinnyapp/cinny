@@ -2,8 +2,9 @@ name: 'Docker check'
 
 on:
   pull_request:
-    paths: 
+    paths:
       - 'Dockerfile'
+      - '.github/workflows/docker-pr.yml'
 
 jobs:
   docker-build:
