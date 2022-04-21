@@ -8,6 +8,7 @@ import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { hasCrossSigningAccountData } from '../../../util/matrixUtil';
 import { copyToClipboard } from '../../../util/common';
+import { clearSecretStorageKeys } from '../../../client/state/secretStorageKeys';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -56,10 +57,25 @@ function CrossSigningSetup() {
     const mx = initMatrix.matrixClient;
     setGenWithPhrase(typeof securityPhrase === 'string');
     const recoveryKey = await mx.createRecoveryKeyFromPassphrase(securityPhrase);
+    clearSecretStorageKeys();
+
+    await mx.bootstrapSecretStorage({
+      createSecretStorageKey: async () => recoveryKey,
+      setupNewKeyBackup: true,
+      setupNewSecretStorage: true,
+    });
 
     const authUploadDeviceSigningKeys = async (makeRequest) => {
       try {
-        await makeRequest({});
+        const password = prompt('Password', '');
+        await makeRequest({
+          type: 'm.login.password',
+          password,
+          identifier: {
+            type: 'm.id.user',
+            user: mx.getUserId(),
+          },
+        });
       } catch (e) {
         console.log(e);
         // TODO: handle error
@@ -70,16 +86,6 @@ function CrossSigningSetup() {
       authUploadDeviceSigningKeys,
       setupNewCrossSigning: true,
     });
-
-    const bootstrapSSOpts = {
-      createSecretStorageKey: async () => recoveryKey,
-      setupNewKeyBackup: true,
-      setupNewSecretStorage: true,
-    };
-
-    await mx.bootstrapSecretStorage(bootstrapSSOpts);
-    // setup newKeyBackup only bootstrap it
-    // TODO: createKeyBackupVersion;
 
     securityKeyDialog(recoveryKey);
   };

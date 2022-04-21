@@ -189,6 +189,17 @@ function KeyBackup() {
   useEffect(() => {
     mountStore.setItem(true);
     fetchKeyBackupVersion();
+
+    const handleAccountData = (event) => {
+      if (event.getType() === 'm.megolm_backup.v1') {
+        fetchKeyBackupVersion();
+      }
+    };
+
+    mx.on('accountData', handleAccountData);
+    return () => {
+      mx.removeListener('accountData', handleAccountData);
+    };
   }, []);
 
   const accessSecretStorage = (title, onComplete) => {
