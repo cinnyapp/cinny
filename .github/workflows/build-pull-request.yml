@@ -11,7 +11,7 @@ jobs:
       PR_NUMBER: ${{github.event.number}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3.0.1
       - name: Build app
         run: npm ci && npm run build
       - name: Upload artifact

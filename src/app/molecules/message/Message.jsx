@@ -547,7 +547,7 @@ const MessageOptions = React.memo(({
                   variant="danger"
                   iconSrc={BinIC}
                   onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this event')) {
+                    if (window.confirm('Are you sure that you want to delete this event?')) {
                       redactEvent(roomId, mEvent.getId());
                     }
                   }}
