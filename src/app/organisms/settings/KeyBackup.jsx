@@ -36,7 +36,7 @@ function CreateKeyBackupDialog({ keyData }) {
 
     try {
       info = await mx.prepareKeyBackupVersion(
-        keyData.decodedKey,
+        null,
         { secureSecretStorage: true },
       );
       info = await mx.createKeyBackupVersion(info);
@@ -65,7 +65,7 @@ function CreateKeyBackupDialog({ keyData }) {
       )}
       {done === true && (
         <>
-          <Text variant="h1">{twemojify('👍')}</Text>
+          <Text variant="h1">{twemojify('✅')}</Text>
           <Text>Successfully created backup</Text>
         </>
       )}
@@ -91,11 +91,10 @@ function RestoreKeyBackupDialog({ keyData, backupInfo }) {
     setDone(false);
 
     try {
-      await mx.restoreKeyBackup(
-        keyData.decodedKey,
-        undefined,
-        undefined,
+      await mx.restoreKeyBackupWithSecretStorage(
         backupInfo,
+        undefined,
+        undefined,
       );
       if (!mountStore.getItem()) return;
       setDone(true);
@@ -120,7 +119,7 @@ function RestoreKeyBackupDialog({ keyData, backupInfo }) {
       )}
       {done === true && (
         <>
-          <Text variant="h1">{twemojify('👍')}</Text>
+          <Text variant="h1">{twemojify('✅')}</Text>
           <Text>Successfully restored backup</Text>
         </>
       )}
