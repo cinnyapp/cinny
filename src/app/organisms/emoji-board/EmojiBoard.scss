@@ -6,6 +6,8 @@
   --emoji-board-height: 390px;
   --emoji-board-width: 286px;
   display: flex;
+  max-width: 90vw;
+  max-height: 90vh;
   
   &__content {
     @extend .cp-fx__item-one;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Client.scss';
 
 import { initHotkeys } from '../../../client/event/hotkeys';
@@ -19,10 +19,44 @@ import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
 
+const classNameHidden = 'client__item-hidden';
+
 function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
+
+  /**
+   * @type {React.MutableRefObject<HTMLDivElement>}
+   */
+  const navWrapperRef = useRef(null);
+  /**
+   * @type {React.MutableRefObject<HTMLDivElement>}
+   */
+  const roomWrapperRef = useRef(null);
+
+  // #region Liston on events for compact screen sizes
+  function onRoomSelected() {
+    // setActiveView(viewPossibilities.room);
+    navWrapperRef.current.classList.add(classNameHidden);
+    roomWrapperRef.current.classList.remove(classNameHidden);
+  }
+  function onNavigationSelected() {
+    // setActiveView(viewPossibilities.nav);
+    navWrapperRef.current.classList.remove(classNameHidden);
+    roomWrapperRef.current.classList.add(classNameHidden);
+  }
+
+  useEffect(() => {
+    navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
+    navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
+
+    return (() => {
+      navigation.removeListener(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
+      navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
+    });
+  }, []);
+  // #endregion
 
   useEffect(() => {
     let counter = 0;
@@ -64,6 +98,7 @@ function Client() {
     );
   }
 
+  // #region drag and drop
   function dragContainsFiles(e) {
     if (!e.dataTransfer.types) return false;
 
@@ -119,6 +154,7 @@ function Client() {
     initMatrix.roomsInput.setAttachment(roomId, file);
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
   }
+  // #endregion
 
   return (
     <div
@@ -128,10 +164,10 @@ function Client() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="navigation__wrapper">
+      <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation />
       </div>
-      <div className="room__wrapper">
+      <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
         <Room />
       </div>
       <Windows />

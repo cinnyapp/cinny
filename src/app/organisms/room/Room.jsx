@@ -3,9 +3,9 @@ import './Room.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
-import navigation from '../../../client/state/navigation';
 import settings from '../../../client/state/settings';
 import RoomTimeline from '../../../client/state/RoomTimeline';
+import navigation from '../../../client/state/navigation';
 
 import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
@@ -61,7 +61,7 @@ function Room() {
         <RoomSettings roomId={roomTimeline.roomId} />
         <RoomView roomTimeline={roomTimeline} eventId={eventId} />
       </div>
-      { isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />}
+      {isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />}
     </div>
   );
 }

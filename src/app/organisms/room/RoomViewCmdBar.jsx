@@ -14,6 +14,7 @@ import {
   openCreateRoom,
   openPublicRooms,
   openInviteUser,
+  openNavigation,
 } from '../../../client/action/navigation';
 import { getEmojiForCompletion } from '../emoji-board/custom-emoji';
 import AsyncSearch from '../../../util/AsyncSearch';
@@ -44,7 +45,10 @@ const commands = [{
 }, {
   name: 'leave',
   description: 'Leave current room',
-  exe: (roomId) => roomActions.leave(roomId),
+  exe: (roomId) => {
+    roomActions.leave(roomId);
+    openNavigation();
+  },
 }, {
   name: 'invite',
   isOptions: true,

@@ -1,5 +1,6 @@
 @use '../../partials/text';
 @use '../../partials/dir';
+@use '../../partials/screen';
 
 .header {
   @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
@@ -39,5 +40,9 @@
       -webkit-line-clamp: 2;
       display: -webkit-box;
     }
+  }
+
+  @include screen.smallerThan(mobileBreakpoint) {
+    @include dir.side(padding, calc(var(--sp-normal) - 10px), var(--sp-extra-tight));
   }
 }
