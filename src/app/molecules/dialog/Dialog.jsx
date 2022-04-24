@@ -16,7 +16,7 @@ function Dialog({
 }) {
   return (
     <RawModal
-      className={`${className === null ? '' : `${className} `}dialog-model`}
+      className={`${className === null ? '' : `${className} `}dialog-modal`}
       isOpen={isOpen}
       onAfterOpen={onAfterOpen}
       onAfterClose={onAfterClose}

@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import './RoomTile.scss';
 
 import { twemojify } from '../../../util/twemojify';
-import { sanitizeText } from '../../../util/sanitize';
 
 import colorMXID from '../../../util/colorMXID';
 
