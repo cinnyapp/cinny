@@ -17,6 +17,8 @@ import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 
+import { authRequest } from './AuthRequest';
+
 import { useStore } from '../../hooks/useStore';
 import { useDeviceList } from '../../hooks/useDeviceList';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
@@ -71,38 +73,15 @@ function DeviceManage() {
     }
   };
 
-  const handleRemove = async (device, auth = undefined) => {
-    if (auth === undefined
-      ? window.confirm(`You are about to logout "${device.display_name}" session.`)
-      : true
-    ) {
+  const handleRemove = async (device) => {
+    if (window.confirm(`You are about to logout "${device.display_name}" session.`)) {
       addToProcessing(device);
-      try {
+      await authRequest(`Logout "${device.display_name}"`, async (auth) => {
         await mx.deleteDevice(device.device_id, auth);
-      } catch (e) {
-        if (e.httpStatus === 401 && e.data?.flows) {
-          const { flows } = e.data;
-          const flow = flows.find((f) => f.stages.includes('m.login.password'));
-          if (flow) {
-            const password = window.prompt('Please enter account password', '');
-            if (password && password.trim() !== '') {
-              handleRemove(device, {
-                session: e.data.session,
-                type: 'm.login.password',
-                password,
-                identifier: {
-                  type: 'm.id.user',
-                  user: mx.getUserId(),
-                },
-              });
-              return;
-            }
-          }
-        }
-        window.alert('Failed to remove session!');
-        if (!mountStore.getItem()) return;
-        removeFromProcessing(device);
-      }
+      });
+
+      if (!mountStore.getItem()) return;
+      removeFromProcessing(device);
     }
   };
 

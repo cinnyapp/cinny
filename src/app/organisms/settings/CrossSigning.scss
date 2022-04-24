@@ -45,10 +45,11 @@
   }
 }
 
+.cross-signing__failure,
 .cross-signing__reset {
   padding: var(--sp-normal);
   padding-top: var(--sp-extra-loose);
   & > .text {
-    padding-bottom: var(--sp-loose);
+    padding-bottom: var(--sp-normal);
   }
 }

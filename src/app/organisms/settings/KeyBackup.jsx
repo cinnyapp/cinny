@@ -82,7 +82,7 @@ CreateKeyBackupDialog.propTypes = {
   keyData: PropTypes.shape({}).isRequired,
 };
 
-function RestoreKeyBackupDialog({ keyData, backupInfo }) {
+function RestoreKeyBackupDialog({ keyData }) {
   const [status, setStatus] = useState(false);
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
@@ -103,6 +103,7 @@ function RestoreKeyBackupDialog({ keyData, backupInfo }) {
     };
 
     try {
+      const backupInfo = await mx.getKeyBackupVersion();
       const info = await mx.restoreKeyBackupWithSecretStorage(
         backupInfo,
         undefined,
@@ -115,7 +116,7 @@ function RestoreKeyBackupDialog({ keyData, backupInfo }) {
       if (!mountStore.getItem()) return;
       if (e.errcode === 'RESTORE_BACKUP_ERROR_BAD_KEY') {
         deletePrivateKey(keyData.keyId);
-        setStatus({ error: 'Failed to restore backup. Key is invalid', errorCode: 'BAD_KEY' });
+        setStatus({ error: 'Failed to restore backup. Key is invalid!', errorCode: 'BAD_KEY' });
       } else {
         setStatus({ error: 'Failed to restore backup.', errCode: 'UNKNOWN' });
       }
@@ -152,10 +153,9 @@ function RestoreKeyBackupDialog({ keyData, backupInfo }) {
 }
 RestoreKeyBackupDialog.propTypes = {
   keyData: PropTypes.shape({}).isRequired,
-  backupInfo: PropTypes.shape({}).isRequired,
 };
 
-function DeleteKeyBackupDialog({ version, requestClose }) {
+function DeleteKeyBackupDialog({ requestClose }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
@@ -164,7 +164,8 @@ function DeleteKeyBackupDialog({ version, requestClose }) {
   const deleteBackup = async () => {
     setIsDeleting(true);
     try {
-      await mx.deleteKeyBackupVersion(version);
+      const backupInfo = await mx.getKeyBackupVersion();
+      if (backupInfo) await mx.deleteKeyBackupVersion(backupInfo.version);
       if (!mountStore.getItem()) return;
       requestClose(true);
     } catch {
@@ -187,7 +188,6 @@ function DeleteKeyBackupDialog({ version, requestClose }) {
   );
 }
 DeleteKeyBackupDialog.propTypes = {
-  version: PropTypes.string.isRequired,
   requestClose: PropTypes.func.isRequired,
 };
 
@@ -217,7 +217,7 @@ function KeyBackup() {
     return () => {
       mx.removeListener('accountData', handleAccountData);
     };
-  }, []);
+  }, [isCSEnabled]);
 
   const openCreateKeyBackup = async () => {
     const keyData = await accessSecretStorage('Create Key Backup');
@@ -236,7 +236,7 @@ function KeyBackup() {
 
     openReusableDialog(
       <Text variant="s1" weight="medium">Restore Key Backup</Text>,
-      () => <RestoreKeyBackupDialog keyData={keyData} backupInfo={keyBackup} />,
+      () => <RestoreKeyBackupDialog keyData={keyData} />,
     );
   };
 
@@ -244,7 +244,6 @@ function KeyBackup() {
     <Text variant="s1" weight="medium">Delete Key Backup</Text>,
     (requestClose) => (
       <DeleteKeyBackupDialog
-        version={keyBackup.version}
         requestClose={(isDone) => {
           if (isDone) setKeyBackup(null);
           requestClose();

@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-one-expression-per-line */
 import React, { useState } from 'react';
 import './CrossSigning.scss';
 import FileSaver from 'file-saver';
@@ -6,7 +7,6 @@ import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
-import { hasCrossSigningAccountData } from '../../../util/matrixUtil';
 import { copyToClipboard } from '../../../util/common';
 import { clearSecretStorageKeys } from '../../../client/state/secretStorageKeys';
 
@@ -15,6 +15,24 @@ import Button from '../../atoms/button/Button';
 import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
+
+import { authRequest } from './AuthRequest';
+import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
+
+const failedDialog = () => {
+  const renderFailure = (requestClose) => (
+    <div className="cross-signing__failure">
+      <Text variant="h1">{twemojify('❌')}</Text>
+      <Text weight="medium">Failed to setup cross signing. Please try again.</Text>
+      <Button onClick={requestClose}>Close</Button>
+    </div>
+  );
+
+  openReusableDialog(
+    <Text variant="s1" weight="medium">Setup cross signing</Text>,
+    renderFailure,
+  );
+};
 
 const securityKeyDialog = (key) => {
   const downloadKey = () => {
@@ -66,28 +84,19 @@ function CrossSigningSetup() {
     });
 
     const authUploadDeviceSigningKeys = async (makeRequest) => {
-      try {
-        const password = prompt('Password', '');
-        await makeRequest({
-          type: 'm.login.password',
-          password,
-          identifier: {
-            type: 'm.id.user',
-            user: mx.getUserId(),
-          },
-        });
-      } catch (e) {
-        console.log(e);
-        // TODO: handle error
-      }
+      const isDone = await authRequest('Setup cross signing', async (auth) => {
+        await makeRequest(auth);
+      });
+      setTimeout(() => {
+        if (isDone) securityKeyDialog(recoveryKey);
+        else failedDialog();
+      });
     };
 
     await mx.bootstrapCrossSigning({
       authUploadDeviceSigningKeys,
       setupNewCrossSigning: true,
     });
-
-    securityKeyDialog(recoveryKey);
   };
 
   const validator = (values) => {
@@ -112,7 +121,7 @@ function CrossSigningSetup() {
     <div className="cross-signing__setup">
       <div className="cross-signing__setup-entry">
         <Text>
-          We will generate a Security Key, 
+          We will generate a <b>Security Key</b>, 
           which you can use to manage messages backup and session verification.
         </Text>
         {genWithPhrase !== false && <Button variant="primary" onClick={() => setup()} disabled={genWithPhrase !== undefined}>Generate Key</Button>}
@@ -133,7 +142,7 @@ function CrossSigningSetup() {
             disabled={genWithPhrase !== undefined}
           >
             <Text>
-              Alternatively you can also set a Security Phrase 
+              Alternatively you can also set a <b>Security Phrase </b>
               so you don't have to remember long Security Key, 
               and optionally save the Key as backup.
             </Text>
@@ -181,7 +190,8 @@ function CrossSigningReset() {
       <Text>
         Anyone you have verified with will see security alerts and your message backup will lost. 
         You almost certainly do not want to do this, 
-        unless you have lost Security Key or Phrase and every session you can cross-sign from.
+        unless you have lost <b>Security Key</b> or <b>Phrase</b> and 
+        every session you can cross-sign from.
       </Text>
       <Button variant="danger" onClick={setupDialog}>Reset</Button>
     </div>
@@ -196,12 +206,13 @@ const resetDialog = () => {
 };
 
 function CrossSignin() {
+  const isCSEnabled = useCrossSigningStatus();
   return (
     <SettingTile
       title="Cross signing"
       content={<Text variant="b3">Setup to verify and keep track of all your sessions. Also required to backup encrypted message.</Text>}
       options={(
-        hasCrossSigningAccountData()
+        isCSEnabled
           ? <Button variant="danger" onClick={resetDialog}>Reset</Button>
           : <Button variant="primary" onClick={setupDialog}>Setup</Button>
       )}

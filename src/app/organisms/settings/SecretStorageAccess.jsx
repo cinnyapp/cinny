@@ -116,7 +116,14 @@ export const accessSecretStorage = (title) => new Promise((resolve) => {
 
   openReusableDialog(
     <Text variant="s1" weight="medium">{title}</Text>,
-    () => <SecretStorageAccess onComplete={handleComplete} />,
+    (requestClose) => (
+      <SecretStorageAccess
+        onComplete={(keyData) => {
+          handleComplete(keyData);
+          requestClose(requestClose);
+        }}
+      />
+    ),
     () => {
       if (!isCompleted) resolve(null);
     },
