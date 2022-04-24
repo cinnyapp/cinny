@@ -152,7 +152,7 @@ function DeviceManage() {
         {
           unverified.length > 0
             ? unverified.map((device) => renderDevice(device, false))
-            : <Text className="device-manage__info">No unverified session</Text>
+            : <Text className="device-manage__info">No unverified sessions</Text>
         }
       </div>
       {noEncryption.length > 0 && (
