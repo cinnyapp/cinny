@@ -162,3 +162,39 @@ export function genRoomVia(room) {
   }
   return via.concat(mostPop3.slice(0, 2));
 }
+
+export function isCrossVerified(deviceId) {
+  try {
+    const mx = initMatrix.matrixClient;
+    const crossSignInfo = mx.getStoredCrossSigningForUser(mx.getUserId());
+    const deviceInfo = mx.getStoredDevice(mx.getUserId(), deviceId);
+    const deviceTrust = crossSignInfo.checkDeviceTrust(crossSignInfo, deviceInfo, false, true);
+    return deviceTrust.isCrossSigningVerified();
+  } catch {
+    return false;
+  }
+}
+
+export function hasCrossSigningAccountData() {
+  const mx = initMatrix.matrixClient;
+  const masterKeyData = mx.getAccountData('m.cross_signing.master');
+  return !!masterKeyData;
+}
+
+export function getDefaultSSKey() {
+  const mx = initMatrix.matrixClient;
+  try {
+    return mx.getAccountData('m.secret_storage.default_key').getContent().key;
+  } catch {
+    return undefined;
+  }
+}
+
+export function getSSKeyInfo(key) {
+  const mx = initMatrix.matrixClient;
+  try {
+    return mx.getAccountData(`m.secret_storage.key.${key}`).getContent();
+  } catch {
+    return undefined;
+  }
+}

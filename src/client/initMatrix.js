@@ -7,6 +7,7 @@ import RoomList from './state/RoomList';
 import AccountData from './state/AccountData';
 import RoomsInput from './state/RoomsInput';
 import Notifications from './state/Notifications';
+import { cryptoCallbacks } from './state/secretStorageKeys';
 
 global.Olm = require('@matrix-org/olm');
 
@@ -36,6 +37,7 @@ class InitMatrix extends EventEmitter {
       cryptoStore: new sdk.IndexedDBCryptoStore(global.indexedDB, 'crypto-store'),
       deviceId: secret.deviceId,
       timelineSupport: true,
+      cryptoCallbacks,
     });
 
     await this.matrixClient.initCrypto();

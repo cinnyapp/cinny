@@ -91,6 +91,10 @@
   }
 }
 
+.emoji-row {
+  display: flex;
+}
+
 .emoji-group {
   --emoji-padding: 6px;
   position: relative;

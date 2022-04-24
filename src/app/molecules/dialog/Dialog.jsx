@@ -37,7 +37,7 @@ function Dialog({
             {contentOptions}
           </Header>
           <div className="dialog__content__wrapper">
-            <ScrollView autoHide invisible={invisibleScroll}>
+            <ScrollView autoHide={!invisibleScroll} invisible={invisibleScroll}>
               <div className="dialog__content-container">
                 {children}
               </div>
