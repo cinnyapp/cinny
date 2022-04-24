@@ -1,9 +1,18 @@
 @use '../../partials/dir';
+@use '../../partials/screen';
 
-.pw-model {
+.pw-modal {
   --modal-height: 774px;
   max-height: var(--modal-height) !important;
   height: 100%;
+
+  @include screen.smallerThan(mobileBreakpoint) {
+    --modal-height: 100%;
+    border-radius: 0 !important;
+    &__overlay {
+      padding: 0 !important;
+    }
+  }
 }
 
 .pw {

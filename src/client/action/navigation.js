@@ -23,6 +23,13 @@ export function selectRoom(roomId, eventId) {
   });
 }
 
+// Open navigation on compact screen sizes
+export function openNavigation() {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_NAVIGATION,
+  });
+}
+
 export function openSpaceSettings(roomId, tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SPACE_SETTINGS,

@@ -1,0 +1,28 @@
+
+$breakpoint-tablet: 1124px;
+$breakpoint-mobile: 750px;
+
+@mixin smallerThan($deviceBreakpoint) {
+  @if $deviceBreakpoint==mobileBreakpoint {
+    @media screen and (max-width: $breakpoint-mobile) {
+      @content;
+    }
+  }
+  @else if $deviceBreakpoint==tabletBreakpoint {
+    @media screen and (max-width: $breakpoint-tablet) {
+      @content;
+    }
+  }
+}
+
+@mixin biggerThan($deviceBreakpoint) {
+  @if $deviceBreakpoint==mobileBreakpoint {
+    @media screen and (min-width: $breakpoint-mobile) {
+      @content;
+    }
+  } @else if $deviceBreakpoint==tabletBreakpoint {
+    @media screen and (min-width: $breakpoint-tablet) {
+      @content;
+    }
+  }
+}

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
-import { openInviteUser } from '../../../client/action/navigation';
+import { openInviteUser, openNavigation } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 import { markAsRead } from '../../../client/action/notifications';
 
@@ -30,9 +30,10 @@ function RoomOptions({ roomId, afterOptionSelect }) {
     afterOptionSelect();
   };
   const handleLeaveClick = () => {
-    if (confirm('Are you really want to leave this room?')) {
+    if (confirm('Are you sure that you want to leave this room?')) {
       roomActions.leave(roomId);
       afterOptionSelect();
+      openNavigation();
     }
   };
 

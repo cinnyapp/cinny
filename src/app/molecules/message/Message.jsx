@@ -189,7 +189,7 @@ const MessageBody = React.memo(({
   let content = null;
   if (isCustomHTML) {
     try {
-      content = twemojify(sanitizeCustomHtml(body), undefined, true, false);
+      content = twemojify(sanitizeCustomHtml(body), undefined, true, false, true);
     } catch {
       console.error('Malformed custom html: ', body);
       content = twemojify(body, undefined);
@@ -547,7 +547,7 @@ const MessageOptions = React.memo(({
                   variant="danger"
                   iconSrc={BinIC}
                   onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this event')) {
+                    if (window.confirm('Are you sure that you want to delete this event?')) {
                       redactEvent(roomId, mEvent.getId());
                     }
                   }}

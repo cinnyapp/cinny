@@ -14,6 +14,7 @@ import {
 } from '../../../client/action/navigation';
 import { moveSpaceShortcut } from '../../../client/action/accountData';
 import { abbreviateNumber, getEventCords } from '../../../util/common';
+import { isCrossVerified } from '../../../util/matrixUtil';
 
 import Avatar from '../../atoms/avatar/Avatar';
 import NotificationBadge from '../../atoms/badge/NotificationBadge';
@@ -26,8 +27,12 @@ import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import AddPinIC from '../../../../public/res/ic/outlined/add-pin.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import InviteIC from '../../../../public/res/ic/outlined/invite.svg';
+import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
 
 import { useSelectedTab } from '../../hooks/useSelectedTab';
+import { useDeviceList } from '../../hooks/useDeviceList';
+
+import { tabText as settingTabText } from '../settings/Settings';
 
 function useNotificationUpdate() {
   const { notifications } = initMatrix;
@@ -81,6 +86,22 @@ function ProfileAvatarMenu() {
           imageSrc={profile.avatarUrl !== null ? mx.mxcUrlToHttp(profile.avatarUrl, 42, 42, 'crop') : null}
         />
       )}
+    />
+  );
+}
+
+function CrossSigninAlert() {
+  const deviceList = useDeviceList();
+  const unverified = deviceList?.filter((device) => !isCrossVerified(device.device_id));
+
+  if (!unverified?.length) return null;
+
+  return (
+    <SidebarAvatar
+      className="sidebar__cross-signin-alert"
+      tooltip={`${unverified.length} unverified sessions`}
+      onClick={() => openSettings(settingTabText.SECURITY)}
+      avatar={<Avatar iconSrc={ShieldUserIC} iconColor="var(--ic-danger-normal)" size="normal" />}
     />
   );
 }
@@ -358,6 +379,7 @@ function SideBar() {
               notificationBadge={<NotificationBadge alert content={totalInvites} />}
             />
           )}
+          <CrossSigninAlert />
           <ProfileAvatarMenu />
         </div>
       </div>

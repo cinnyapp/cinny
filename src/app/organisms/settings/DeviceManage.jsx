@@ -3,62 +3,30 @@ import './DeviceManage.scss';
 import dateFormat from 'dateformat';
 
 import initMatrix from '../../../client/initMatrix';
+import { isCrossVerified } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
+import InfoCard from '../../atoms/card/InfoCard';
 import Spinner from '../../atoms/spinner/Spinner';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
 
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
+import InfoIC from '../../../../public/res/ic/outlined/info.svg';
+
+import { authRequest } from './AuthRequest';
 
 import { useStore } from '../../hooks/useStore';
-
-function useDeviceList() {
-  const mx = initMatrix.matrixClient;
-  const [deviceList, setDeviceList] = useState(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const updateDevices = () => mx.getDevices().then((data) => {
-      if (!isMounted) return;
-      setDeviceList(data.devices || []);
-    });
-    updateDevices();
-
-    const handleDevicesUpdate = (users) => {
-      if (users.includes(mx.getUserId())) {
-        updateDevices();
-      }
-    };
-
-    mx.on('crypto.devicesUpdated', handleDevicesUpdate);
-    return () => {
-      mx.removeListener('crypto.devicesUpdated', handleDevicesUpdate);
-      isMounted = false;
-    };
-  }, []);
-  return deviceList;
-}
-
-function isCrossVerified(deviceId) {
-  try {
-    const mx = initMatrix.matrixClient;
-    const crossSignInfo = mx.getStoredCrossSigningForUser(mx.getUserId());
-    const deviceInfo = mx.getStoredDevice(mx.getUserId(), deviceId);
-    const deviceTrust = crossSignInfo.checkDeviceTrust(crossSignInfo, deviceInfo, false, true);
-    return deviceTrust.isCrossSigningVerified();
-  } catch {
-    return false;
-  }
-}
+import { useDeviceList } from '../../hooks/useDeviceList';
+import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
 
 function DeviceManage() {
   const TRUNCATED_COUNT = 4;
   const mx = initMatrix.matrixClient;
+  const isCSEnabled = useCrossSigningStatus();
   const deviceList = useDeviceList();
   const [processing, setProcessing] = useState([]);
   const [truncated, setTruncated] = useState(true);
@@ -105,38 +73,15 @@ function DeviceManage() {
     }
   };
 
-  const handleRemove = async (device, auth = undefined) => {
-    if (auth === undefined
-      ? window.confirm(`You are about to logout "${device.display_name}" session?`)
-      : true
-    ) {
+  const handleRemove = async (device) => {
+    if (window.confirm(`You are about to logout "${device.display_name}" session.`)) {
       addToProcessing(device);
-      try {
+      await authRequest(`Logout "${device.display_name}"`, async (auth) => {
         await mx.deleteDevice(device.device_id, auth);
-      } catch (e) {
-        if (e.httpStatus === 401 && e.data?.flows) {
-          const { flows } = e.data;
-          const flow = flows.find((f) => f.stages.includes('m.login.password'));
-          if (flow) {
-            const password = window.prompt('Please enter account password', '');
-            if (password && password.trim() !== '') {
-              handleRemove(device, {
-                session: e.data.session,
-                type: 'm.login.password',
-                password,
-                identifier: {
-                  type: 'm.id.user',
-                  user: mx.getUserId(),
-                },
-              });
-              return;
-            }
-          }
-        }
-        window.alert('Failed to remove session!');
-        if (!mountStore.getItem()) return;
-        removeFromProcessing(device);
-      }
+      });
+
+      if (!mountStore.getItem()) return;
+      removeFromProcessing(device);
     }
   };
 
@@ -187,6 +132,16 @@ function DeviceManage() {
     <div className="device-manage">
       <div>
         <MenuHeader>Unverified sessions</MenuHeader>
+        {!isCSEnabled && (
+          <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
+            <InfoCard
+              rounded
+              variant="caution"
+              iconSrc={InfoIC}
+              title="Setup cross signing in case you lose all your sessions."
+            />
+          </div>
+        )}
         {
           unverified.length > 0
             ? unverified.map((device) => renderDevice(device, false))

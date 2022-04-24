@@ -1,3 +1,5 @@
+@use './app/partials/screen';
+
 :root {
 
   /* background color | --bg-[background type]: value */
@@ -69,9 +71,13 @@
   --ic-surface-high: #272727;
   --ic-surface-normal: #626262;
   --ic-surface-low: #7c7c7c;
+  --ic-primary-high: #ffffff;
   --ic-primary-normal: #ffffff;
+  --ic-positive-high: rgba(69, 184, 59);
   --ic-positive-normal: rgba(69, 184, 59, 80%);
+  --ic-caution-high: rgba(255, 179, 0);
   --ic-caution-normal: rgba(255, 179, 0, 80%);
+  --ic-danger-high: rgba(240, 71, 71);
   --ic-danger-normal: rgba(240, 71, 71, 0.7);
 
   /* user mxid colors */
@@ -175,7 +181,7 @@
 
   --popup-window-drawer-width: 280px;
   
-  @media (max-width: 1124px) {
+  @include screen.smallerThan(tabletBreakpoint) {
     --navigation-drawer-width: calc(240px + var(--border-width));
     --people-drawer-width: calc(256px - var(--border-width));
     --popup-window-drawer-width: 240px;

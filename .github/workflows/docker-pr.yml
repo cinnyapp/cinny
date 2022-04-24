@@ -2,8 +2,9 @@ name: 'Docker check'
 
 on:
   pull_request:
-    paths: 
+    paths:
       - 'Dockerfile'
+      - '.github/workflows/docker-pr.yml'
 
 jobs:
   docker-build:
@@ -12,7 +13,7 @@ jobs:
       PR_NUMBER: ${{github.event.number}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3.0.1
       - name: Build Docker image
         uses: docker/build-push-action@v2.10.0
         with:

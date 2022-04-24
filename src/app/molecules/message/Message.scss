@@ -1,6 +1,7 @@
 @use '../../atoms/scroll/scrollbar';
 @use '../../partials/text';
 @use '../../partials/dir';
+@use '../../partials/screen';
 
 .message,
 .ph-msg {
@@ -95,7 +96,7 @@
 .message__reactions {
   max-width: calc(100% - 88px);
   min-width: 0;
-  @media (max-width: 1124px) {
+  @include screen.smallerThan(tabletBreakpoint) {
     max-width: 100%;
   }
 }

@@ -206,7 +206,7 @@ class RoomList extends EventEmitter {
     this.matrixClient.getRooms().forEach((room) => {
       const { roomId } = room;
       const tombstone = room.currentState.events.get('m.room.tombstone');
-      if (typeof tombstone !== 'undefined') {
+      if (tombstone?.get('') !== undefined) {
         const repRoomId = tombstone.get('').getContent().replacement_room;
         const repRoomMembership = this.matrixClient.getRoom(repRoomId)?.getMyMembership();
         if (repRoomMembership === 'join') return;

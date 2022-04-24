@@ -8,7 +8,7 @@ import Text from '../../atoms/text/Text';
 function DragDrop({ isOpen }) {
   return (
     <RawModal
-      className="drag-drop__model"
+      className="drag-drop__modal"
       overlayClassName="drag-drop__overlay"
       isOpen={isOpen}
     >

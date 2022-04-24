@@ -40,7 +40,7 @@ function ProfileEditor({ userId }) {
 
   const handleAvatarUpload = (url) => {
     if (url === null) {
-      if (confirm('Are you sure you want to remove avatar?')) {
+      if (confirm('Are you sure that you want to remove avatar?')) {
         mx.setAvatarUrl('');
         setAvatarSrc(null);
       }

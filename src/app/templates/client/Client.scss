@@ -1,3 +1,5 @@
+@use '../../partials/screen';
+
 .client-container {
   display: flex;
   height: 100%;
@@ -5,12 +7,22 @@
 
 .navigation__wrapper {
   width: var(--navigation-width);
+  
+  @include screen.smallerThan(mobileBreakpoint) {
+    width: 100%;
+  }
 }
+
 .room__wrapper {
   flex: 1;
   min-width: 0;
 }
 
+@include screen.smallerThan(mobileBreakpoint) {
+  .client__item-hidden {
+    display: none;
+  }
+}
 
 .loading-display {
   position: absolute;

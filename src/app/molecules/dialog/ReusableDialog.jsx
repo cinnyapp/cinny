@@ -24,7 +24,7 @@ function ReusableDialog() {
   }, []);
 
   const handleAfterClose = () => {
-    data.afterClose();
+    data.afterClose?.();
     setData(null);
   };
 
