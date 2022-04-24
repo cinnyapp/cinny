@@ -158,7 +158,7 @@ function DeviceManage() {
       {noEncryption.length > 0 && (
       <div>
         <MenuHeader>Sessions without encryption support</MenuHeader>
-        {noEncryption.map((device) => renderDevice(device, false))}
+        {noEncryption.map((device) => renderDevice(device, true))}
       </div>
       )}
       <div>
