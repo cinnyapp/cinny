@@ -88,16 +88,3 @@
     }
   }
 }
-
-.settings-window {
-  @include screen.smallerThan(mobileBreakpoint) {
-    .pw__drawer p, .pw__drawer .header h4 {
-      display: none;
-      width: 0;
-    }
-
-    .pw__drawer {
-      width: fit-content;
-    }
-  }
-}
