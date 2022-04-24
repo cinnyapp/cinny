@@ -1,3 +1,5 @@
+@use './app/partials/screen';
+
 :root {
 
   /* background color | --bg-[background type]: value */
@@ -179,7 +181,7 @@
 
   --popup-window-drawer-width: 280px;
   
-  @media (max-width: 1124px) {
+  @include screen.smallerThan(tabletBreakpoint) {
     --navigation-drawer-width: calc(240px + var(--border-width));
     --people-drawer-width: calc(256px - var(--border-width));
     --popup-window-drawer-width: 240px;

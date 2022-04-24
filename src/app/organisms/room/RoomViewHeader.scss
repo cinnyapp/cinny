@@ -32,6 +32,11 @@
     display: none;
   }
 }
+.room-header__members-btn {
+  @include screen.biggerThan(tabletBreakpoint) {
+    display: none;
+  }
+}
 
 .room-header__back-btn {
   @include dir.side(margin, 0, var(--sp-tight));
