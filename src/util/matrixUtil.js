@@ -171,7 +171,8 @@ export function isCrossVerified(deviceId) {
     const deviceTrust = crossSignInfo.checkDeviceTrust(crossSignInfo, deviceInfo, false, true);
     return deviceTrust.isCrossSigningVerified();
   } catch {
-    return false;
+    // device does not support encryption
+    return null;
   }
 }
 
