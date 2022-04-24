@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './RoomViewHeader.scss';
 
@@ -8,7 +8,7 @@ import { blurOnBubbling } from '../../atoms/button/script';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { toggleRoomSettings, openReusableContextMenu } from '../../../client/action/navigation';
+import { toggleRoomSettings, openReusableContextMenu, openNavigation } from '../../../client/action/navigation';
 import { togglePeopleDrawer } from '../../../client/action/settings';
 import colorMXID from '../../../util/colorMXID';
 import { getEventCords } from '../../../util/common';
@@ -78,7 +78,7 @@ function RoomViewHeader({ roomId }) {
         src={BackArrowIC}
         className="room-header__back-btn"
         tooltip="Return to navigation"
-        onClick={() => navigation.emit(cons.events.navigation.NAVIGATION_OPENED)}
+        onClick={() => openNavigation()}
       />
       <button
         ref={roomHeaderBtnRef}

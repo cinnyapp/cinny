@@ -7,7 +7,7 @@ import { blurOnBubbling } from '../../atoms/button/script';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { openInviteUser, toggleRoomSettings, openNavigation } from '../../../client/action/navigation';
+import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 
 import Text from '../../atoms/text/Text';
@@ -88,7 +88,6 @@ function GeneralSettings({ roomId }) {
           onClick={() => {
             if (confirm('Are you sure that you want to leave this room?')) {
               roomActions.leave(roomId);
-              openNavigation();
             }
           }}
           iconSrc={LeaveArrowIC}

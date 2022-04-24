@@ -5,7 +5,7 @@ import './InviteList.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
-import { selectRoom, selectTab, openNavigation } from '../../../client/action/navigation';
+import { selectRoom, selectTab } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -28,7 +28,6 @@ function InviteList({ isOpen, onRequestClose }) {
     procInvite.add(roomId);
     changeProcInvite(new Set(Array.from(procInvite)));
     roomActions.leave(roomId, isDM);
-    openNavigation();
   }
   function updateInviteList(roomId) {
     if (procInvite.has(roomId)) procInvite.delete(roomId);

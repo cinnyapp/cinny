@@ -6,6 +6,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import RoomTimeline from '../../../client/state/RoomTimeline';
 import navigation from '../../../client/state/navigation';
+import { openNavigation } from '../../../client/action/navigation';
 
 import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
@@ -53,7 +54,10 @@ function Room() {
   }, []);
 
   const { roomTimeline, eventId } = roomInfo;
-  if (roomTimeline === null) return <Welcome />;
+  if (roomTimeline === null) {
+    setTimeout(() => openNavigation());
+    return <Welcome />;
+  }
 
   return (
     <div className="room">
