@@ -27,14 +27,14 @@
   }
 }
 
-.header .room-header__drawer-btn {
+.room-header__drawer-btn {
   @include screen.smallerThan(tabletBreakpoint) {
     display: none;
   }
 }
 
-.header .room-header__back-btn {
-  @include dir.side(margin, 0, 5px);
+.room-header__back-btn {
+  @include dir.side(margin, 0, var(--sp-tight));
 
   @include screen.biggerThan(mobileBreakpoint) {
     display: none;
