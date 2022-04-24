@@ -6,8 +6,7 @@ import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
-import { getDefaultSSKey } from '../../../util/matrixUtil';
-import { storePrivateKey, hasPrivateKey, getPrivateKey } from '../../../client/state/secretStorageKeys';
+import { deletePrivateKey } from '../../../client/state/secretStorageKeys';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -16,7 +15,7 @@ import Spinner from '../../atoms/spinner/Spinner';
 import InfoCard from '../../atoms/card/InfoCard';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
 
-import SecretStorageAccess from './SecretStorageAccess';
+import { accessSecretStorage } from './SecretStorageAccess';
 
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
@@ -44,6 +43,7 @@ function CreateKeyBackupDialog({ keyData }) {
       if (!mountStore.getItem()) return;
       setDone(true);
     } catch (e) {
+      deletePrivateKey(keyData.keyId);
       await mx.deleteKeyBackupVersion(info.version);
       if (!mountStore.getItem()) return;
       setDone(null);
@@ -83,24 +83,42 @@ CreateKeyBackupDialog.propTypes = {
 };
 
 function RestoreKeyBackupDialog({ keyData, backupInfo }) {
-  const [done, setDone] = useState(false);
+  const [status, setStatus] = useState(false);
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
 
   const restoreBackup = async () => {
-    setDone(false);
+    setStatus(false);
+
+    let meBreath = true;
+    const progressCallback = (progress) => {
+      if (!progress.successes) return;
+      if (meBreath === false) return;
+      meBreath = false;
+      setTimeout(() => {
+        meBreath = true;
+      }, 200);
+
+      setStatus({ message: `Restoring backup keys... (${progress.successes}/${progress.total})` });
+    };
 
     try {
-      await mx.restoreKeyBackupWithSecretStorage(
+      const info = await mx.restoreKeyBackupWithSecretStorage(
         backupInfo,
         undefined,
         undefined,
+        { progressCallback },
       );
       if (!mountStore.getItem()) return;
-      setDone(true);
+      setStatus({ done: `Successfully restored backup keys (${info.imported}/${info.total}).` });
     } catch (e) {
       if (!mountStore.getItem()) return;
-      setDone(null);
+      if (e.errcode === 'RESTORE_BACKUP_ERROR_BAD_KEY') {
+        deletePrivateKey(keyData.keyId);
+        setStatus({ error: 'Failed to restore backup. Key is invalid', errorCode: 'BAD_KEY' });
+      } else {
+        setStatus({ error: 'Failed to restore backup.', errCode: 'UNKNOWN' });
+      }
     }
   };
 
@@ -111,21 +129,21 @@ function RestoreKeyBackupDialog({ keyData, backupInfo }) {
 
   return (
     <div className="key-backup__restore">
-      {done === false && (
+      {(status === false || status.message) && (
         <div>
           <Spinner size="small" />
-          <Text>Restoring backup...</Text>
+          <Text>{status.message ?? 'Restoring backup keys...'}</Text>
         </div>
       )}
-      {done === true && (
+      {status.done && (
         <>
           <Text variant="h1">{twemojify('✅')}</Text>
-          <Text>Successfully restored backup</Text>
+          <Text>{status.done}</Text>
         </>
       )}
-      {done === null && (
+      {status.error && (
         <>
-          <Text>Failed to restore backup</Text>
+          <Text>{status.error}</Text>
           <Button onClick={restoreBackup}>Retry</Button>
         </>
       )}
@@ -201,42 +219,25 @@ function KeyBackup() {
     };
   }, []);
 
-  const accessSecretStorage = (title, onComplete) => {
-    const defaultSSKey = getDefaultSSKey();
-    if (hasPrivateKey(defaultSSKey)) {
-      onComplete({ decodedKey: getPrivateKey(defaultSSKey) });
-      return;
-    }
-    const handleComplete = (keyData) => {
-      storePrivateKey(keyData.keyId, keyData.decodedKey);
-      onComplete(keyData);
-    };
+  const openCreateKeyBackup = async () => {
+    const keyData = await accessSecretStorage('Create Key Backup');
+    if (keyData === null) return;
 
     openReusableDialog(
-      <Text variant="s1" weight="medium">{title}</Text>,
-      () => <SecretStorageAccess onComplete={handleComplete} />,
+      <Text variant="s1" weight="medium">Create Key Backup</Text>,
+      () => <CreateKeyBackupDialog keyData={keyData} />,
+      () => fetchKeyBackupVersion(),
     );
   };
 
-  const openCreateKeyBackup = () => {
-    const createKeyBackup = (keyData) => {
-      openReusableDialog(
-        <Text variant="s1" weight="medium">Create Key Backup</Text>,
-        () => <CreateKeyBackupDialog keyData={keyData} />,
-        () => fetchKeyBackupVersion(),
-      );
-    };
-    accessSecretStorage('Create Key Backup', createKeyBackup);
-  };
+  const openRestoreKeyBackup = async () => {
+    const keyData = await accessSecretStorage('Restore Key Backup');
+    if (keyData === null) return;
 
-  const openRestoreKeyBackup = () => {
-    const restoreKeyBackup = (keyData) => {
-      openReusableDialog(
-        <Text variant="s1" weight="medium">Restore Key Backup</Text>,
-        () => <RestoreKeyBackupDialog keyData={keyData} backupInfo={keyBackup} />,
-      );
-    };
-    accessSecretStorage('Restore Key Backup', restoreKeyBackup);
+    openReusableDialog(
+      <Text variant="s1" weight="medium">Restore Key Backup</Text>,
+      () => <RestoreKeyBackupDialog keyData={keyData} backupInfo={keyBackup} />,
+    );
   };
 
   const openDeleteKeyBackup = () => openReusableDialog(

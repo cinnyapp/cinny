@@ -4,7 +4,9 @@ import './SecretStorageAccess.scss';
 import { deriveKey } from 'matrix-js-sdk/lib/crypto/key_passphrase';
 
 import initMatrix from '../../../client/initMatrix';
+import { openReusableDialog } from '../../../client/action/navigation';
 import { getDefaultSSKey, getSSKeyInfo } from '../../../util/matrixUtil';
+import { storePrivateKey, hasPrivateKey, getPrivateKey } from '../../../client/state/secretStorageKeys';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -30,10 +32,10 @@ function SecretStorageAccess({ onComplete }) {
     setProcess(true);
     try {
       const { salt, iterations } = sSKeyInfo.passphrase;
-      const decodedKey = key
+      const privateKey = key
         ? mx.keyBackupKeyFromRecoveryKey(key)
         : await deriveKey(phrase, salt, iterations);
-      const isCorrect = await mx.checkSecretStorageKey(decodedKey, sSKeyInfo);
+      const isCorrect = await mx.checkSecretStorageKey(privateKey, sSKeyInfo);
 
       if (!mountStore.getItem()) return;
       if (!isCorrect) {
@@ -45,7 +47,7 @@ function SecretStorageAccess({ onComplete }) {
         keyId: sSKeyId,
         key,
         phrase,
-        decodedKey,
+        privateKey,
       });
     } catch (e) {
       if (!mountStore.getItem()) return;
@@ -94,5 +96,31 @@ function SecretStorageAccess({ onComplete }) {
 SecretStorageAccess.propTypes = {
   onComplete: PropTypes.func.isRequired,
 };
+
+/**
+ * @param {string} title Title of secret storage access dialog
+ * @returns {Promise<keyData | null>} resolve to keyData or null
+ */
+export const accessSecretStorage = (title) => new Promise((resolve) => {
+  let isCompleted = false;
+  const defaultSSKey = getDefaultSSKey();
+  if (hasPrivateKey(defaultSSKey)) {
+    resolve({ keyId: defaultSSKey, privateKey: getPrivateKey(defaultSSKey) });
+    return;
+  }
+  const handleComplete = (keyData) => {
+    isCompleted = true;
+    storePrivateKey(keyData.keyId, keyData.privateKey);
+    resolve(keyData);
+  };
+
+  openReusableDialog(
+    <Text variant="s1" weight="medium">{title}</Text>,
+    () => <SecretStorageAccess onComplete={handleComplete} />,
+    () => {
+      if (!isCompleted) resolve(null);
+    },
+  );
+});
 
 export default SecretStorageAccess;
