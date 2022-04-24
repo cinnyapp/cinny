@@ -92,7 +92,7 @@ function ProfileAvatarMenu() {
 
 function CrossSigninAlert() {
   const deviceList = useDeviceList();
-  const unverified = deviceList?.filter((device) => !isCrossVerified(device.device_id));
+  const unverified = deviceList?.filter((device) => isCrossVerified(device.device_id) === false);
 
   if (!unverified?.length) return null;
 

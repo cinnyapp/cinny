@@ -124,9 +124,16 @@ function DeviceManage() {
 
   const unverified = [];
   const verified = [];
+  const noEncryption = [];
   deviceList.sort((a, b) => b.last_seen_ts - a.last_seen_ts).forEach((device) => {
-    if (isCrossVerified(device.device_id)) verified.push(device);
-    else unverified.push(device);
+    const isVerified = isCrossVerified(device.device_id);
+    if (isVerified === true) {
+      verified.push(device);
+    } else if (isVerified === false) {
+      unverified.push(device);
+    } else {
+      noEncryption.push(device);
+    }
   });
   return (
     <div className="device-manage">
@@ -145,9 +152,15 @@ function DeviceManage() {
         {
           unverified.length > 0
             ? unverified.map((device) => renderDevice(device, false))
-            : <Text className="device-manage__info">No unverified session</Text>
+            : <Text className="device-manage__info">No unverified sessions</Text>
         }
       </div>
+      {noEncryption.length > 0 && (
+      <div>
+        <MenuHeader>Sessions without encryption support</MenuHeader>
+        {noEncryption.map((device) => renderDevice(device, true))}
+      </div>
+      )}
       <div>
         <MenuHeader>Verified sessions</MenuHeader>
         {
