@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
-import { openInviteUser, openNavigation } from '../../../client/action/navigation';
+import { openInviteUser } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 import { markAsRead } from '../../../client/action/notifications';
 
@@ -14,6 +14,8 @@ import RoomNotification from '../room-notification/RoomNotification';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
+
+import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 
 function RoomOptions({ roomId, afterOptionSelect }) {
   const mx = initMatrix.matrixClient;
@@ -29,12 +31,16 @@ function RoomOptions({ roomId, afterOptionSelect }) {
     openInviteUser(roomId);
     afterOptionSelect();
   };
-  const handleLeaveClick = () => {
-    if (confirm('Are you sure that you want to leave this room?')) {
-      roomActions.leave(roomId);
-      afterOptionSelect();
-      openNavigation();
-    }
+  const handleLeaveClick = async () => {
+    afterOptionSelect();
+    const isConfirmed = await confirmDialog(
+      'Leave room',
+      `Are you sure that you want to leave "${room.name}" room?`,
+      'Leave',
+      'danger',
+    );
+    if (!isConfirmed) return;
+    roomActions.leave(roomId);
   };
 
   return (

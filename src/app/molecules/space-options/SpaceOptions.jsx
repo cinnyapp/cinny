@@ -24,6 +24,8 @@ import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 import PinIC from '../../../../public/res/ic/outlined/pin.svg';
 import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
 
+import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
+
 function SpaceOptions({ roomId, afterOptionSelect }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
@@ -54,11 +56,16 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
     afterOptionSelect();
   };
 
-  const handleLeaveClick = () => {
-    if (confirm('Are you sure that you want to leave this space?')) {
-      leave(roomId);
-      afterOptionSelect();
-    }
+  const handleLeaveClick = async () => {
+    afterOptionSelect();
+    const isConfirmed = await confirmDialog(
+      'Leave space',
+      `Are you sure that you want to leave "${room.name}" space?`,
+      'Leave',
+      'danger',
+    );
+    if (!isConfirmed) return;
+    leave(roomId);
   };
 
   return (
