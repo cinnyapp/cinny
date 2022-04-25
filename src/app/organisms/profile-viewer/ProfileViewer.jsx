@@ -32,6 +32,7 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
+import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 function ModerationTools({
   roomId, userId,
@@ -362,7 +363,7 @@ function ProfileViewer() {
       && (powerLevel < myPowerLevel || userId === mx.getUserId())
     );
 
-    const handleChangePowerLevel = (newPowerLevel) => {
+    const handleChangePowerLevel = async (newPowerLevel) => {
       if (newPowerLevel === powerLevel) return;
       const SHARED_POWER_MSG = 'You will not be able to undo this change as you are promoting the user to have the same power level as yourself. Are you sure?';
       const DEMOTING_MYSELF_MSG = 'You will not be able to undo this change as you are demoting yourself. Are you sure?';
@@ -370,9 +371,14 @@ function ProfileViewer() {
       const isSharedPower = newPowerLevel === myPowerLevel;
       const isDemotingMyself = userId === mx.getUserId();
       if (isSharedPower || isDemotingMyself) {
-        if (confirm(isSharedPower ? SHARED_POWER_MSG : DEMOTING_MYSELF_MSG)) {
-          roomActions.setPowerLevel(roomId, userId, newPowerLevel);
-        }
+        const isConfirmed = await confirmDialog(
+          'Change power level',
+          isSharedPower ? SHARED_POWER_MSG : DEMOTING_MYSELF_MSG,
+          'Change',
+          'caution',
+        );
+        if (!isConfirmed) return;
+        roomActions.setPowerLevel(roomId, userId, newPowerLevel);
       } else {
         roomActions.setPowerLevel(roomId, userId, newPowerLevel);
       }

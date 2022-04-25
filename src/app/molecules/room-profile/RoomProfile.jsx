@@ -19,6 +19,7 @@ import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 
 import { useStore } from '../../hooks/useStore';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
+import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 
 function RoomProfile({ roomId }) {
   const isMountStore = useStore();
@@ -117,7 +118,13 @@ function RoomProfile({ roomId }) {
 
   const handleAvatarUpload = async (url) => {
     if (url === null) {
-      if (confirm('Are you sure that you want to remove room avatar?')) {
+      const isConfirmed = await confirmDialog(
+        'Remove avatar',
+        'Are you sure that you want to remove room avatar?',
+        'Remove',
+        'caution',
+      );
+      if (isConfirmed) {
         await mx.sendStateEvent(roomId, 'm.room.avatar', { url }, '');
       }
     } else await mx.sendStateEvent(roomId, 'm.room.avatar', { url }, '');

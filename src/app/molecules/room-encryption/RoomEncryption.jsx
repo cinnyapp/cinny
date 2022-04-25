@@ -8,6 +8,8 @@ import Text from '../../atoms/text/Text';
 import Toggle from '../../atoms/button/Toggle';
 import SettingTile from '../setting-tile/SettingTile';
 
+import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
+
 function RoomEncryption({ roomId }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
@@ -15,17 +17,20 @@ function RoomEncryption({ roomId }) {
   const [isEncrypted, setIsEncrypted] = useState(encryptionEvents.length > 0);
   const canEnableEncryption = room.currentState.maySendStateEvent('m.room.encryption', mx.getUserId());
 
-  const handleEncryptionEnable = () => {
+  const handleEncryptionEnable = async () => {
     const joinRule = room.getJoinRule();
     const confirmMsg1 = 'It is not recommended to add encryption in public room. Anyone can find and join public rooms, so anyone can read messages in them.';
     const confirmMsg2 = 'Once enabled, encryption for a room cannot be disabled. Messages sent in an encrypted room cannot be seen by the server, only by the participants of the room. Enabling encryption may prevent many bots and bridges from working correctly';
-    if (joinRule === 'public' ? confirm(confirmMsg1) : true) {
-      if (confirm(confirmMsg2)) {
-        setIsEncrypted(true);
-        mx.sendStateEvent(roomId, 'm.room.encryption', {
-          algorithm: 'm.megolm.v1.aes-sha2',
-        });
-      }
+
+    const isConfirmed1 = (joinRule === 'public')
+      ? await confirmDialog('Enable encryption', confirmMsg1, 'Continue', 'caution')
+      : true;
+    if (!isConfirmed1) return;
+    if (await confirmDialog('Enable encryption', confirmMsg2, 'Enable', 'caution')) {
+      setIsEncrypted(true);
+      mx.sendStateEvent(roomId, 'm.room.encryption', {
+        algorithm: 'm.megolm.v1.aes-sha2',
+      });
     }
   };
 
