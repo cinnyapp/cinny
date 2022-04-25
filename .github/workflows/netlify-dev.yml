@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.0.1
+        uses: actions/checkout@v3.0.2
       - name: Build and deploy to Netlify
         uses: jsmrcaga/action-netlify-deploy@v1.7.2
         with:
