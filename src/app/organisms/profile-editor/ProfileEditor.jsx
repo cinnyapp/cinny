@@ -12,6 +12,7 @@ import ImageUpload from '../../molecules/image-upload/ImageUpload';
 import Input from '../../atoms/input/Input';
 
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
+import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import './ProfileEditor.scss';
 
@@ -38,9 +39,15 @@ function ProfileEditor({ userId }) {
     };
   }, [userId]);
 
-  const handleAvatarUpload = (url) => {
+  const handleAvatarUpload = async (url) => {
     if (url === null) {
-      if (confirm('Are you sure that you want to remove avatar?')) {
+      const isConfirmed = await confirmDialog(
+        'Remove avatar',
+        'Are you sure that you want to remove avatar?',
+        'Remove',
+        'caution',
+      );
+      if (isConfirmed) {
         mx.setAvatarUrl('');
         setAvatarSrc(null);
       }

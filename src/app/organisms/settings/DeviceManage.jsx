@@ -4,10 +4,12 @@ import dateFormat from 'dateformat';
 
 import initMatrix from '../../../client/initMatrix';
 import { isCrossVerified } from '../../../util/matrixUtil';
+import { openReusableDialog } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
+import Input from '../../atoms/input/Input';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import InfoCard from '../../atoms/card/InfoCard';
 import Spinner from '../../atoms/spinner/Spinner';
@@ -18,10 +20,45 @@ import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 
 import { authRequest } from './AuthRequest';
+import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import { useStore } from '../../hooks/useStore';
 import { useDeviceList } from '../../hooks/useDeviceList';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
+
+const promptDeviceName = async (deviceName) => new Promise((resolve) => {
+  let isCompleted = false;
+
+  const renderContent = (onComplete) => {
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      const name = e.target.session.value;
+      if (typeof name !== 'string') onComplete(null);
+      onComplete(name);
+    };
+    return (
+      <form className="device-manage__rename" onSubmit={handleSubmit}>
+        <Input value={deviceName} label="Session name" name="session" />
+        <div className="device-manage__rename-btn">
+          <Button variant="primary" type="submit">Save</Button>
+          <Button onClick={() => onComplete(null)}>Cancel</Button>
+        </div>
+      </form>
+    );
+  };
+
+  openReusableDialog(
+    <Text variant="s1" weight="medium">Edit session name</Text>,
+    (requestClose) => renderContent((name) => {
+      isCompleted = true;
+      resolve(name);
+      requestClose();
+    }),
+    () => {
+      if (!isCompleted) resolve(null);
+    },
+  );
+});
 
 function DeviceManage() {
   const TRUNCATED_COUNT = 4;
@@ -59,7 +96,7 @@ function DeviceManage() {
   }
 
   const handleRename = async (device) => {
-    const newName = window.prompt('Edit session name', device.display_name);
+    const newName = await promptDeviceName(device.display_name);
     if (newName === null || newName.trim() === '') return;
     if (newName.trim() === device.display_name) return;
     addToProcessing(device);
@@ -74,15 +111,20 @@ function DeviceManage() {
   };
 
   const handleRemove = async (device) => {
-    if (window.confirm(`You are about to logout "${device.display_name}" session.`)) {
-      addToProcessing(device);
-      await authRequest(`Logout "${device.display_name}"`, async (auth) => {
-        await mx.deleteDevice(device.device_id, auth);
-      });
+    const isConfirmed = await confirmDialog(
+      `Logout ${device.display_name}`,
+      `You are about to logout "${device.display_name}" session.`,
+      'Logout',
+      'danger',
+    );
+    if (!isConfirmed) return;
+    addToProcessing(device);
+    await authRequest(`Logout "${device.display_name}"`, async (auth) => {
+      await mx.deleteDevice(device.device_id, auth);
+    });
 
-      if (!mountStore.getItem()) return;
-      removeFromProcessing(device);
-    }
+    if (!mountStore.getItem()) return;
+    removeFromProcessing(device);
   };
 
   const renderDevice = (device, isVerified) => {
@@ -124,9 +166,16 @@ function DeviceManage() {
 
   const unverified = [];
   const verified = [];
+  const noEncryption = [];
   deviceList.sort((a, b) => b.last_seen_ts - a.last_seen_ts).forEach((device) => {
-    if (isCrossVerified(device.device_id)) verified.push(device);
-    else unverified.push(device);
+    const isVerified = isCrossVerified(device.device_id);
+    if (isVerified === true) {
+      verified.push(device);
+    } else if (isVerified === false) {
+      unverified.push(device);
+    } else {
+      noEncryption.push(device);
+    }
   });
   return (
     <div className="device-manage">
@@ -145,9 +194,15 @@ function DeviceManage() {
         {
           unverified.length > 0
             ? unverified.map((device) => renderDevice(device, false))
-            : <Text className="device-manage__info">No unverified session</Text>
+            : <Text className="device-manage__info">No unverified sessions</Text>
         }
       </div>
+      {noEncryption.length > 0 && (
+      <div>
+        <MenuHeader>Sessions without encryption support</MenuHeader>
+        {noEncryption.map((device) => renderDevice(device, true))}
+      </div>
+      )}
       <div>
         <MenuHeader>Verified sessions</MenuHeader>
         {

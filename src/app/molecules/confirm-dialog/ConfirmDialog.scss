@@ -1,0 +1,11 @@
+.confirm-dialog {
+  padding: var(--sp-normal);
+
+  & > .text {
+    padding-bottom: var(--sp-normal);
+  }
+  &__btn {
+    display: flex;
+    gap: var(--sp-normal);
+  }
+}

@@ -36,6 +36,8 @@ import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import CmdIC from '../../../../public/res/ic/outlined/cmd.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
+import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
+
 function PlaceholderMessage() {
   return (
     <div className="ph-msg">
@@ -546,10 +548,15 @@ const MessageOptions = React.memo(({
                 <MenuItem
                   variant="danger"
                   iconSrc={BinIC}
-                  onClick={() => {
-                    if (window.confirm('Are you sure that you want to delete this event?')) {
-                      redactEvent(roomId, mEvent.getId());
-                    }
+                  onClick={async () => {
+                    const isConfirmed = await confirmDialog(
+                      'Delete message',
+                      'Are you sure that you want to delete this message?',
+                      'Delete',
+                      'danger',
+                    );
+                    if (!isConfirmed) return;
+                    redactEvent(roomId, mEvent.getId());
                   }}
                 >
                   Delete

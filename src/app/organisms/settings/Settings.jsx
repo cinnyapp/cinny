@@ -38,6 +38,7 @@ import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
+import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 function AppearanceSection() {
   const [, updateState] = useState({});
@@ -297,8 +298,10 @@ function Settings() {
   const [isOpen, requestClose] = useWindowToggle(setSelectedTab);
 
   const handleTabChange = (tabItem) => setSelectedTab(tabItem);
-  const handleLogout = () => {
-    if (confirm('Confirm logout')) logout();
+  const handleLogout = async () => {
+    if (await confirmDialog('Logout', 'Are you sure that you want to logout your session?', 'Logout', 'danger')) {
+      logout();
+    }
   };
 
   return (

@@ -15,4 +15,15 @@
   & .setting-tile:last-of-type {
      border-bottom: none;
   }
+
+  &__rename {
+    padding: var(--sp-normal);
+    & > *:not(:last-child) {
+      margin-bottom: var(--sp-normal);
+    }
+    &-btn {
+      display: flex;
+      gap: var(--sp-normal);
+    }
+  }
 }
