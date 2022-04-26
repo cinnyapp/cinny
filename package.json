@@ -53,7 +53,7 @@
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-react": "^7.16.7",
     "assert": "^2.0.0",
-    "babel-loader": "^8.2.4",
+    "babel-loader": "^8.2.5",
     "browserify-fs": "^1.0.0",
     "buffer": "^6.0.3",
     "clean-webpack-plugin": "^4.0.0",
