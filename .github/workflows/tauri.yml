@@ -1,0 +1,98 @@
+name: "Publish Tauri App"
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3.0.2
+      with: 
+        submodules: true
+    - name: Get release
+      id: get_release
+      uses: bruceadams/get-release@3a8733307b85cd96d52772b037617bd63d99522e
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Setup node
+      uses: actions/setup-node@v3.1.1
+      with:
+        node-version: 16
+    - name: Install Rust stable
+      uses: actions-rs/toolchain@v1.0.7
+      with:
+        toolchain: stable
+    - name: Install webkit2gtk (ubuntu only)
+      if: matrix.platform == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y webkit2gtk-4.0
+    - name: Install cinny dependencies
+      run: cd cinny && npm ci
+    - name: Install tauri dependencies
+      run: npm ci
+    - name: Build desktop app with Tauri
+      uses: tauri-apps/tauri-action@v0.3.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+      with:
+        releaseId: ${{ steps.get_release.outputs.upload_url }}
+    - name: Get app version (macos, ubuntu)
+      if: matrix.platform != 'windows-latest'
+      id: vars
+      run: echo ::set-output name=tag::$(jq .package.version src-tauri/tauri.conf.json | tr -d '"')
+    - name: Upload tagged release (macos)
+      if: matrix.platform == 'macos-latest'
+      uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+      with:
+        files: |
+          src-tauri/target/release/bundle/dmg/cinny_${{ steps.vars.outputs.tag }}_x64.dmg
+          src-tauri/target/release/bundle/macos/cinny.app.tar.gz
+          src-tauri/target/release/bundle/macos/cinny.app.tar.gz.sig
+    - name: Upload tagged release (ubuntu)
+      if: matrix.platform == 'ubuntu-latest'
+      uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+      with:
+        files: |
+          src-tauri/target/release/bundle/deb/cinny_${{ steps.vars.outputs.tag }}_amd64.deb
+          src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage
+          src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage.tar.gz
+          src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage.tar.gz.sig
+    - name: Get app version (windows)
+      if: matrix.platform == 'windows-latest'
+      run: |
+        $json = (Get-Content "src-tauri\tauri.conf.json" -Raw) | ConvertFrom-Json
+        $version = $json.package.version
+        echo "Version: ${version}"
+        echo "TAURI_VERSION=${version}" >> $Env:GITHUB_ENV
+        echo "${Env:TAURI_VERSION}"
+      shell: pwsh
+    - name: Upload tagged release (windows)
+      if: matrix.platform == 'windows-latest'
+      uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+      with:
+        files: |
+          src-tauri\target\release\bundle\msi\cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi
+          src-tauri\target\release\bundle\msi\cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi.zip
+          src-tauri\target\release\bundle\msi\cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi.zip.sig
+
+  release-update:
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.2
+      - name: Install dependencies
+        run: npm ci
+      - name: Run release.json
+        run: npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

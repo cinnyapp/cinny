@@ -1,0 +1,25 @@
+{
+  "name": "cinny",
+  "version": "1.8.2",
+  "description": "Yet another matrix client",
+  "main": "index.js",
+  "engines": {
+    "npm": ">=6.14.11",
+    "node": ">=14.6.0"
+  },
+  "scripts": {
+    "tauri": "tauri",
+    "release": "node scripts/release.mjs"
+  },
+  "keywords": [],
+  "author": "Ajay Bura",
+  "license": "MIT",
+  "dependencies": {
+    "@tauri-apps/api": "^1.0.0-rc.2"
+  },
+  "devDependencies": {
+    "@actions/github": "^5.0.0",
+    "@tauri-apps/cli": "^1.0.0-rc.7",
+    "node-fetch": "^3.2.3"
+  }
+}
