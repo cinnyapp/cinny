@@ -25,6 +25,7 @@ import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useStore } from '../../hooks/useStore';
 import { useDeviceList } from '../../hooks/useDeviceList';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
+import { accessSecretStorage } from './SecretStorageAccess';
 
 const promptDeviceName = async (deviceName) => new Promise((resolve) => {
   let isCompleted = false;
@@ -127,18 +128,44 @@ function DeviceManage() {
     removeFromProcessing(device);
   };
 
+  const verifyWithKey = async (device) => {
+    const keyData = await accessSecretStorage('Device Verification');
+    if (!keyData) return;
+    addToProcessing(device);
+    await mx.checkOwnCrossSigningTrust();
+  };
+
+  const verifyWithEmojis = async () => {
+    // TODO:
+  };
+
+  const verifyManually = async () => {
+    // TODO:
+  };
+
+  const verify = (deviceId, isCurrentDevice) => {
+    if (isCurrentDevice) {
+      verifyWithKey(deviceId);
+      return;
+    }
+    verifyManually(deviceId);
+  };
+
   const renderDevice = (device, isVerified) => {
     const deviceId = device.device_id;
     const displayName = device.display_name;
     const lastIP = device.last_seen_ip;
     const lastTS = device.last_seen_ts;
+    const isCurrentDevice = mx.deviceId === deviceId;
+
     return (
       <SettingTile
         key={deviceId}
         title={(
-          <Text style={{ color: isVerified ? '' : 'var(--tc-danger-high)' }}>
-            {displayName}
-            <Text variant="b3" span>{` — ${deviceId}${mx.deviceId === deviceId ? ' (current)' : ''}`}</Text>
+          <Text style={{ color: isVerified !== false ? '' : 'var(--tc-danger-high)' }}>
+            {displayName ? `${displayName} — ` : ''}
+            <Text variant="b3" span>{deviceId}</Text>
+            {isCurrentDevice && <Text span className="device-manage__current-label" variant="b3">Current</Text>}
           </Text>
         )}
         options={
@@ -146,6 +173,7 @@ function DeviceManage() {
             ? <Spinner size="small" />
             : (
               <>
+                {isVerified === false && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">Verify</Button>}
                 <IconButton size="small" onClick={() => handleRename(device)} src={PencilIC} tooltip="Rename" />
                 <IconButton size="small" onClick={() => handleRemove(device)} src={BinIC} tooltip="Remove session" />
               </>
@@ -200,7 +228,7 @@ function DeviceManage() {
       {noEncryption.length > 0 && (
       <div>
         <MenuHeader>Sessions without encryption support</MenuHeader>
-        {noEncryption.map((device) => renderDevice(device, true))}
+        {noEncryption.map((device) => renderDevice(device, null))}
       </div>
       )}
       <div>
@@ -211,7 +239,7 @@ function DeviceManage() {
               if (truncated && index >= TRUNCATED_COUNT) return null;
               return renderDevice(device, true);
             })
-            : <Text className="device-manage__info">No verified session</Text>
+            : <Text className="device-manage__info">No verified sessions</Text>
         }
         { verified.length > TRUNCATED_COUNT && (
           <Button className="device-manage__info" onClick={() => setTruncated(!truncated)}>
