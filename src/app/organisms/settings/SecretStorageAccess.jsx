@@ -31,7 +31,7 @@ function SecretStorageAccess({ onComplete }) {
   const processInput = async ({ key, phrase }) => {
     setProcess(true);
     try {
-      const { salt, iterations } = sSKeyInfo.passphrase;
+      const { salt, iterations } = sSKeyInfo.passphrase || {};
       const privateKey = key
         ? mx.keyBackupKeyFromRecoveryKey(key)
         : await deriveKey(phrase, salt, iterations);
