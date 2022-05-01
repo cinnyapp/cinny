@@ -7,6 +7,8 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
+import { hasPrivateKey } from '../../../client/state/secretStorageKeys';
+import { getDefaultSSKey, isCrossVerified } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -16,35 +18,61 @@ import Dialog from '../../molecules/dialog/Dialog';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useStore } from '../../hooks/useStore';
+import { accessSecretStorage } from '../settings/SecretStorageAccess';
 
 function EmojiVerificationContent({ request, requestClose }) {
   const [sas, setSas] = useState(null);
   const [process, setProcess] = useState(false);
+  const mx = initMatrix.matrixClient;
   const mountStore = useStore();
-  mountStore.setItem(true);
-
-  const handleChange = () => {
-    if (request.done || request.cancelled) requestClose();
-  };
 
   useEffect(() => {
     mountStore.setItem(true);
+    const handleChange = () => {
+      if (request.done || request.cancelled) requestClose();
+    };
+
     if (request === null) return null;
     const req = request;
     req.on('change', handleChange);
-    return () => req.off('change', handleChange);
+    return () => {
+      req.off('change', handleChange);
+      if (!req.cancelled && !req.done) {
+        req.cancel();
+      }
+    };
   }, [request]);
 
   const acceptRequest = async () => {
+    if (isCrossVerified(mx.deviceId) && !hasPrivateKey(getDefaultSSKey())) {
+      const keyData = await accessSecretStorage('Session verification');
+      if (!keyData) {
+        request.cancel();
+        return;
+      }
+    }
     setProcess(true);
     await request.accept();
 
-    const verifier = request.beginKeyVerification('m.sas.v1');
-    verifier.on('show_sas', (data) => {
+    let targetDevice;
+    try {
+      targetDevice = request.targetDevice;
+    } catch {
+      targetDevice = {
+        userId: mx.getUserId(),
+        deviceId: request.channel.devices[0],
+      };
+    }
+
+    const verifier = request.beginKeyVerification('m.sas.v1', targetDevice);
+
+    const handleVerifier = (data) => {
+      verifier.off('show_sas', handleVerifier);
       if (!mountStore.getItem()) return;
       setSas(data);
       setProcess(false);
-    });
+    };
+    verifier.on('show_sas', handleVerifier);
     await verifier.verify();
   };
 
@@ -70,8 +98,9 @@ function EmojiVerificationContent({ request, requestClose }) {
       <div className="emoji-verification__content">
         <Text>Confirm the emoji below are displayed on both devices, in the same order:</Text>
         <div className="emoji-verification__emojis">
-          {sas.sas.emoji.map((emoji) => (
-            <div className="emoji-verification__emoji-block" key={emoji[1]}>
+          {sas.sas.emoji.map((emoji, i) => (
+            // eslint-disable-next-line react/no-array-index-key
+            <div className="emoji-verification__emoji-block" key={`${emoji[1]}-${i}`}>
               <Text variant="h1">{twemojify(emoji[0])}</Text>
               <Text>{emoji[1]}</Text>
             </div>

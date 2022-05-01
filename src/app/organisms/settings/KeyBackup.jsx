@@ -159,9 +159,9 @@ function DeleteKeyBackupDialog({ requestClose }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
-  mountStore.setItem(true);
 
   const deleteBackup = async () => {
+    mountStore.setItem(true);
     setIsDeleting(true);
     try {
       const backupInfo = await mx.getKeyBackupVersion();
