@@ -4,7 +4,7 @@ import dateFormat from 'dateformat';
 
 import initMatrix from '../../../client/initMatrix';
 import { isCrossVerified } from '../../../util/matrixUtil';
-import { openReusableDialog } from '../../../client/action/navigation';
+import { openReusableDialog, openEmojiVerification } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -70,6 +70,7 @@ function DeviceManage() {
   const [truncated, setTruncated] = useState(true);
   const mountStore = useStore();
   mountStore.setItem(true);
+  const isMeVerified = isCrossVerified(mx.deviceId);
 
   useEffect(() => {
     setProcessing([]);
@@ -129,18 +130,15 @@ function DeviceManage() {
   };
 
   const verifyWithKey = async (device) => {
-    const keyData = await accessSecretStorage('Device Verification');
+    const keyData = await accessSecretStorage('Session verification');
     if (!keyData) return;
     addToProcessing(device);
     await mx.checkOwnCrossSigningTrust();
   };
 
-  const verifyWithEmojis = async () => {
-    // TODO:
-  };
-
-  const verifyManually = async () => {
-    // TODO:
+  const verifyWithEmojis = async (deviceId) => {
+    const req = await mx.requestVerification(mx.getUserId(), [deviceId]);
+    openEmojiVerification(req);
   };
 
   const verify = (deviceId, isCurrentDevice) => {
@@ -148,7 +146,7 @@ function DeviceManage() {
       verifyWithKey(deviceId);
       return;
     }
-    verifyManually(deviceId);
+    verifyWithEmojis(deviceId);
   };
 
   const renderDevice = (device, isVerified) => {
@@ -163,8 +161,8 @@ function DeviceManage() {
         key={deviceId}
         title={(
           <Text style={{ color: isVerified !== false ? '' : 'var(--tc-danger-high)' }}>
-            {displayName ? `${displayName} — ` : ''}
-            <Text variant="b3" span>{deviceId}</Text>
+            {displayName}
+            <Text variant="b3" span>{`${displayName ? ' — ' : ''}${deviceId}`}</Text>
             {isCurrentDevice && <Text span className="device-manage__current-label" variant="b3">Current</Text>}
           </Text>
         )}
@@ -173,20 +171,27 @@ function DeviceManage() {
             ? <Spinner size="small" />
             : (
               <>
-                {isVerified === false && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">Verify</Button>}
+                {((isMeVerified && isVerified === false) || (isCurrentDevice && isVerified === false)) && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">Verify</Button>}
                 <IconButton size="small" onClick={() => handleRename(device)} src={PencilIC} tooltip="Rename" />
                 <IconButton size="small" onClick={() => handleRemove(device)} src={BinIC} tooltip="Remove session" />
               </>
             )
         }
         content={(
-          <Text variant="b3">
-            Last activity
-            <span style={{ color: 'var(--tc-surface-normal)' }}>
-              {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
-            </span>
-            {lastIP ? ` at ${lastIP}` : ''}
-          </Text>
+          <>
+            <Text variant="b3">
+              Last activity
+              <span style={{ color: 'var(--tc-surface-normal)' }}>
+                {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
+              </span>
+              {lastIP ? ` at ${lastIP}` : ''}
+            </Text>
+            {isCurrentDevice && (
+              <Text style={{ marginTop: 'var(--sp-ultra-tight)' }} variant="b3">
+                {`Session Key: ${initMatrix.matrixClient.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
+              </Text>
+            )}
+          </>
         )}
       />
     );

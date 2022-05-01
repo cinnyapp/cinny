@@ -7,6 +7,7 @@ import SpaceAddExisting from '../../molecules/space-add-existing/SpaceAddExistin
 import Search from '../search/Search';
 import ViewSource from '../view-source/ViewSource';
 import CreateRoom from '../create-room/CreateRoom';
+import EmojiVerification from '../emoji-verification/EmojiVerification';
 
 import ReusableDialog from '../../molecules/dialog/ReusableDialog';
 
@@ -20,6 +21,7 @@ function Dialogs() {
       <CreateRoom />
       <SpaceAddExisting />
       <Search />
+      <EmojiVerification />
 
       <ReusableDialog />
     </>

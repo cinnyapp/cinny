@@ -38,6 +38,9 @@ class InitMatrix extends EventEmitter {
       deviceId: secret.deviceId,
       timelineSupport: true,
       cryptoCallbacks,
+      verificationMethods: [
+        'm.sas.v1',
+      ],
     });
 
     await this.matrixClient.initCrypto();
