@@ -52,7 +52,7 @@
           "https://github.com/cinnyapp/cinny-desktop/releases/download/tauri/release.json"
       ],
       "dialog": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE2NDc3NDBGMTAzNTk1NUYKUldSZmxUVVFEM1JIRnRuMjVRTkFOQ21lUFI5KzRMU0s4OWtBS1RNRUVCNE9LcE9GcExNZ2M2NHoK"
+      "pubkey": "RWSZTe0YjF31f/7UEM7VVGfQ6SLoRF9wkZ22sy+rwW99S3L8A5yEGMkl"
     },
     "allowlist": {
       "all": true
