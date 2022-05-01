@@ -11,7 +11,7 @@
 
 Cinny is a [Matrix](https://matrix.org) client focusing primarily on simple, elegant and secure interface.
 
-![preview](https://github.com/cinnyapp/cinny-site/blob/master/assets/preview-light.png)
+![preview](https://github.com/cinnyapp/cinny-site/blob/main/assets/preview-light.png)
 
 ## Building and Running
 
