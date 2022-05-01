@@ -56,7 +56,7 @@ jobs:
             console.log(`::set-output name=prnumber::${pr.number}`);
       - name: Deploy to Netlify
         id: netlify
-        uses: nwtgck/actions-netlify@v1.2.3
+        uses: nwtgck/actions-netlify@b7c1504e00c6b8a249d1848cc1b522a4865eed99
         with:
           publish-dir: dist
           deploy-message: "Deploy from GitHub Actions"
@@ -68,7 +68,7 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE3_ID }}
         timeout-minutes: 1
       - name: Edit PR Description
-        uses: Beakyn/gha-comment-pull-request@v1.0.2
+        uses: Beakyn/gha-comment-pull-request@2167a7aee24f9e61ce76a23039f322e49a990409
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

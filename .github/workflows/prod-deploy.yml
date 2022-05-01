@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3.0.2
       - name: Build and deploy to Netlify
-        uses: jsmrcaga/action-netlify-deploy@v1.7.2
+        uses: jsmrcaga/action-netlify-deploy@fb6a5f936a4b06a8f7793e69fc5a022ffe39807a
         with:
           install_command: "npm ci"
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
@@ -26,7 +26,7 @@ jobs:
       - name: Create tar.gz
         run: tar -czvf cinny-${{ steps.vars.outputs.tag }}.tar.gz dist
       - name: Upload tagged release
-        uses: softprops/action-gh-release@v0.1.14
+        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
         with:
           files: |
             cinny-${{ steps.vars.outputs.tag }}.tar.gz
