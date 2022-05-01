@@ -4,7 +4,7 @@ import dateFormat from 'dateformat';
 
 import initMatrix from '../../../client/initMatrix';
 import { isCrossVerified } from '../../../util/matrixUtil';
-import { openReusableDialog } from '../../../client/action/navigation';
+import { openReusableDialog, openEmojiVerification } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -25,6 +25,7 @@ import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useStore } from '../../hooks/useStore';
 import { useDeviceList } from '../../hooks/useDeviceList';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
+import { accessSecretStorage } from './SecretStorageAccess';
 
 const promptDeviceName = async (deviceName) => new Promise((resolve) => {
   let isCompleted = false;
@@ -69,6 +70,7 @@ function DeviceManage() {
   const [truncated, setTruncated] = useState(true);
   const mountStore = useStore();
   mountStore.setItem(true);
+  const isMeVerified = isCrossVerified(mx.deviceId);
 
   useEffect(() => {
     setProcessing([]);
@@ -127,18 +129,41 @@ function DeviceManage() {
     removeFromProcessing(device);
   };
 
+  const verifyWithKey = async (device) => {
+    const keyData = await accessSecretStorage('Session verification');
+    if (!keyData) return;
+    addToProcessing(device);
+    await mx.checkOwnCrossSigningTrust();
+  };
+
+  const verifyWithEmojis = async (deviceId) => {
+    const req = await mx.requestVerification(mx.getUserId(), [deviceId]);
+    openEmojiVerification(req);
+  };
+
+  const verify = (deviceId, isCurrentDevice) => {
+    if (isCurrentDevice) {
+      verifyWithKey(deviceId);
+      return;
+    }
+    verifyWithEmojis(deviceId);
+  };
+
   const renderDevice = (device, isVerified) => {
     const deviceId = device.device_id;
     const displayName = device.display_name;
     const lastIP = device.last_seen_ip;
     const lastTS = device.last_seen_ts;
+    const isCurrentDevice = mx.deviceId === deviceId;
+
     return (
       <SettingTile
         key={deviceId}
         title={(
-          <Text style={{ color: isVerified ? '' : 'var(--tc-danger-high)' }}>
+          <Text style={{ color: isVerified !== false ? '' : 'var(--tc-danger-high)' }}>
             {displayName}
-            <Text variant="b3" span>{` — ${deviceId}${mx.deviceId === deviceId ? ' (current)' : ''}`}</Text>
+            <Text variant="b3" span>{`${displayName ? ' — ' : ''}${deviceId}`}</Text>
+            {isCurrentDevice && <Text span className="device-manage__current-label" variant="b3">Current</Text>}
           </Text>
         )}
         options={
@@ -146,19 +171,27 @@ function DeviceManage() {
             ? <Spinner size="small" />
             : (
               <>
+                {((isMeVerified && isVerified === false) || (isCurrentDevice && isVerified === false)) && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">Verify</Button>}
                 <IconButton size="small" onClick={() => handleRename(device)} src={PencilIC} tooltip="Rename" />
                 <IconButton size="small" onClick={() => handleRemove(device)} src={BinIC} tooltip="Remove session" />
               </>
             )
         }
         content={(
-          <Text variant="b3">
-            Last activity
-            <span style={{ color: 'var(--tc-surface-normal)' }}>
-              {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
-            </span>
-            {lastIP ? ` at ${lastIP}` : ''}
-          </Text>
+          <>
+            <Text variant="b3">
+              Last activity
+              <span style={{ color: 'var(--tc-surface-normal)' }}>
+                {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
+              </span>
+              {lastIP ? ` at ${lastIP}` : ''}
+            </Text>
+            {isCurrentDevice && (
+              <Text style={{ marginTop: 'var(--sp-ultra-tight)' }} variant="b3">
+                {`Session Key: ${initMatrix.matrixClient.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
+              </Text>
+            )}
+          </>
         )}
       />
     );
@@ -200,7 +233,7 @@ function DeviceManage() {
       {noEncryption.length > 0 && (
       <div>
         <MenuHeader>Sessions without encryption support</MenuHeader>
-        {noEncryption.map((device) => renderDevice(device, true))}
+        {noEncryption.map((device) => renderDevice(device, null))}
       </div>
       )}
       <div>
@@ -211,7 +244,7 @@ function DeviceManage() {
               if (truncated && index >= TRUNCATED_COUNT) return null;
               return renderDevice(device, true);
             })
-            : <Text className="device-manage__info">No verified session</Text>
+            : <Text className="device-manage__info">No verified sessions</Text>
         }
         { verified.length > TRUNCATED_COUNT && (
           <Button className="device-manage__info" onClick={() => setTruncated(!truncated)}>
