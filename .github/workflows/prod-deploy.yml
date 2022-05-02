@@ -44,7 +44,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v3.7.0
+        uses: docker/metadata-action@v3.8.0
         with:
           images: ajbura/cinny
       - name: Build and push Docker image
