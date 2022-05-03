@@ -16,11 +16,6 @@ jobs:
       uses: actions/checkout@v3.0.2
       with: 
         submodules: true
-    - name: Get release
-      id: get_release
-      uses: bruceadams/get-release@3a8733307b85cd96d52772b037617bd63d99522e
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Setup node
       uses: actions/setup-node@v3.1.1
       with:
@@ -42,7 +37,3 @@ jobs:
       uses: tauri-apps/tauri-action@v0.3.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-        TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-      with:
-        releaseId: ${{ steps.get_release.outputs.upload_url }}
