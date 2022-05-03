@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import './RoomViewContent.scss';
 
 import dateFormat from 'dateformat';
+import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -50,21 +51,54 @@ function loadingMsgPlaceholders(key, count = 2) {
   );
 }
 
-function genRoomIntro(mEvent, roomTimeline) {
+function RoomIntroContainer({ event, timeline }) {
+  const [, nameForceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
-  const roomTopic = roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
-  const isDM = initMatrix.roomList.directs.has(roomTimeline.roomId);
-  let avatarSrc = roomTimeline.room.getAvatarUrl(mx.baseUrl, 80, 80, 'crop');
-  avatarSrc = isDM ? roomTimeline.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
+  const { roomList } = initMatrix;
+  const { room } = timeline;
+  const roomTopic = room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
+  const isDM = roomList.directs.has(timeline.roomId);
+  let avatarSrc = room.getAvatarUrl(mx.baseUrl, 80, 80, 'crop');
+  avatarSrc = isDM ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
+
+  const heading = isDM ? room.name : `Welcome to ${room.name}`;
+  const topic = twemojify(roomTopic || '', undefined, true);
+  const nameJsx = twemojify(room.name);
+  const desc = isDM
+    ? (
+      <>
+        This is the beginning of your direct message history with @
+        <b>{nameJsx}</b>
+        {'. '}
+        {topic}
+      </>
+    )
+    : (
+      <>
+        {'This is the beginning of the '}
+        <b>{nameJsx}</b>
+        {' room. '}
+        {topic}
+      </>
+    );
+
+  useEffect(() => {
+    const handleUpdate = () => nameForceUpdate();
+
+    roomList.on(cons.events.roomList.ROOM_PROFILE_UPDATED, handleUpdate);
+    return () => {
+      roomList.removeListener(cons.events.roomList.ROOM_PROFILE_UPDATED, handleUpdate);
+    };
+  }, []);
+
   return (
     <RoomIntro
-      key={mEvent ? mEvent.getId() : 'room-intro'}
-      roomId={roomTimeline.roomId}
+      roomId={timeline.roomId}
       avatarSrc={avatarSrc}
-      name={roomTimeline.room.name}
-      heading={`Welcome to ${roomTimeline.room.name}`}
-      desc={`This is the beginning of the ${roomTimeline.room.name} room.${typeof roomTopic !== 'undefined' ? (` Topic: ${roomTopic}`) : ''}`}
-      time={mEvent ? `Created at ${dateFormat(mEvent.getDate(), 'dd mmmm yyyy, hh:MM TT')}` : null}
+      name={room.name}
+      heading={twemojify(heading)}
+      desc={desc}
+      time={event ? `Created at ${dateFormat(event.getDate(), 'dd mmmm yyyy, hh:MM TT')}` : null}
     />
   );
 }
@@ -199,7 +233,7 @@ function usePaginate(
     };
     roomTimeline.on(cons.events.roomTimeline.PAGINATED, handlePaginatedFromServer);
     return () => {
-      roomTimeline.on(cons.events.roomTimeline.PAGINATED, handlePaginatedFromServer);
+      roomTimeline.removeListener(cons.events.roomTimeline.PAGINATED, handlePaginatedFromServer);
     };
   }, [roomTimeline]);
 
@@ -470,12 +504,14 @@ function RoomViewContent({ eventId, roomTimeline }) {
 
       if (i === 0 && !roomTimeline.canPaginateBackward()) {
         if (mEvent.getType() === 'm.room.create') {
-          tl.push(genRoomIntro(mEvent, roomTimeline));
+          tl.push(
+            <RoomIntroContainer key={mEvent.getId()} event={mEvent} timeline={roomTimeline} />,
+          );
           itemCountIndex += 1;
           // eslint-disable-next-line no-continue
           continue;
         } else {
-          tl.push(genRoomIntro(undefined, roomTimeline));
+          tl.push(<RoomIntroContainer key="room-intro" event={null} timeline={roomTimeline} />);
           itemCountIndex += 1;
         }
       }
