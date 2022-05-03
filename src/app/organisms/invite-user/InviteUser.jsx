@@ -106,14 +106,12 @@ function InviteUser({
   async function checkIfNotBot(userId) {
     try {
       const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
-      // { "@user:host": { "DEVICE": {...}, ... }, ... }
       return Object.values(usersDeviceMap).every((userDevices) =>
-          // { "DEVICE": {...}, ... }
         Object.keys(userDevices).length > 0,
       );
     } catch (e) {
       console.error("Error determining if it's possible to encrypt to all users: ", e);
-      return false; // assume not
+      return false;
     }
   }
 
@@ -125,7 +123,6 @@ function InviteUser({
       onRequestClose();
       return;
     }
-
 
     try {
       addUserToProc(userId);
