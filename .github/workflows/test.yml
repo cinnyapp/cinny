@@ -1,0 +1,48 @@
+name: "Build pull request"
+on:
+  pull_request:
+    types: ['opened', 'synchronize']
+
+jobs:
+  publish-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3.0.2
+      with: 
+        submodules: true
+    - name: Get release
+      id: get_release
+      uses: bruceadams/get-release@3a8733307b85cd96d52772b037617bd63d99522e
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Setup node
+      uses: actions/setup-node@v3.1.1
+      with:
+        node-version: 16
+    - name: Install Rust stable
+      uses: actions-rs/toolchain@v1.0.7
+      with:
+        toolchain: stable
+    - name: Install webkit2gtk (ubuntu only)
+      if: matrix.platform == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y webkit2gtk-4.0
+    - name: Install cinny dependencies
+      run: cd cinny && npm ci
+    - name: Install tauri dependencies
+      run: npm ci
+    - name: Build desktop app with Tauri
+      uses: tauri-apps/tauri-action@v0.3.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+        TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+      with:
+        releaseId: ${{ steps.get_release.outputs.upload_url }}
