@@ -1,0 +1,20 @@
+@use '../../partials/dir';
+
+.join-alias {
+  padding: var(--sp-normal);
+  @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
+
+  & > *:not(:first-child) {
+    margin-top: var(--sp-normal);
+  }
+
+  &__error {
+    color: var(--tc-danger-high);
+    margin-top: var(--sp-extra-tight) !important;
+  }
+
+  &__btn {
+    display: flex;
+    gap: var(--sp-normal);
+  }
+}

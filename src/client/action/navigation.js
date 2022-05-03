@@ -86,6 +86,13 @@ export function openCreateRoom(isSpace = false, parentId = null) {
   });
 }
 
+export function openJoinAlias(term) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_JOIN_ALIAS,
+    term,
+  });
+}
+
 export function openInviteUser(roomId, searchTerm) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_INVITE_USER,

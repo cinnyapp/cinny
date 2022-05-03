@@ -122,6 +122,12 @@ class Navigation extends EventEmitter {
           action.parentId,
         );
       },
+      [cons.actions.navigation.OPEN_JOIN_ALIAS]: () => {
+        this.emit(
+          cons.events.navigation.JOIN_ALIAS_OPENED,
+          action.term,
+        );
+      },
       [cons.actions.navigation.OPEN_INVITE_USER]: () => {
         this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId, action.searchTerm);
       },

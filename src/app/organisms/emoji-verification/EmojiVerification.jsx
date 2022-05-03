@@ -125,7 +125,7 @@ function EmojiVerificationContent({ data, requestClose }) {
 
   return (
     <div className="emoji-verification__content">
-      <Text>Click accept to start the verification process</Text>
+      <Text>Click accept to start the verification process.</Text>
       <div className="emoji-verification__buttons">
         {
           process
