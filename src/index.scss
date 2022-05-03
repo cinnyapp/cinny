@@ -475,6 +475,10 @@ textarea {
                                   supported by Chrome, Edge, Opera and Firefox */
 }
 
+audio:not([controls]) {
+  display: none !important;
+}
+
 .flex--center {
   display: flex;
   justify-content: center;

@@ -6,9 +6,6 @@ import cons from './cons';
 import navigation from './navigation';
 import settings from './settings';
 
-import NotificationSound from '../../../public/sound/notification.ogg';
-import InviteSound from '../../../public/sound/invite.ogg';
-
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
   if (!cons.supportEventTypes.includes(eType)) return false;
@@ -238,14 +235,14 @@ class Notifications extends EventEmitter {
 
   _playNotiSound() {
     if (!this._notiAudio) {
-      this._notiAudio = new Audio(NotificationSound);
+      this._notiAudio = document.getElementById('notificationSound');
     }
     this._notiAudio.play();
   }
 
   _playInviteSound() {
     if (!this._inviteAudio) {
-      this._inviteAudio = new Audio(InviteSound);
+      this._inviteAudio = document.getElementById('inviteSound');
     }
     this._inviteAudio.play();
   }
