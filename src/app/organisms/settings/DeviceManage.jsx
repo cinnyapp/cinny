@@ -138,7 +138,7 @@ function DeviceManage() {
 
   const verifyWithEmojis = async (deviceId) => {
     const req = await mx.requestVerification(mx.getUserId(), [deviceId]);
-    openEmojiVerification(req);
+    openEmojiVerification(req, { userId: mx.getUserId(), deviceId });
   };
 
   const verify = (deviceId, isCurrentDevice) => {

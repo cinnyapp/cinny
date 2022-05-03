@@ -20,30 +20,14 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useStore } from '../../hooks/useStore';
 import { accessSecretStorage } from '../settings/SecretStorageAccess';
 
-function EmojiVerificationContent({ request, requestClose }) {
+function EmojiVerificationContent({ data, requestClose }) {
   const [sas, setSas] = useState(null);
   const [process, setProcess] = useState(false);
+  const { request, targetDevice } = data;
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
 
-  useEffect(() => {
-    mountStore.setItem(true);
-    const handleChange = () => {
-      if (request.done || request.cancelled) requestClose();
-    };
-
-    if (request === null) return null;
-    const req = request;
-    req.on('change', handleChange);
-    return () => {
-      req.off('change', handleChange);
-      if (!req.cancelled && !req.done) {
-        req.cancel();
-      }
-    };
-  }, [request]);
-
-  const acceptRequest = async () => {
+  const beginVerification = async () => {
     if (isCrossVerified(mx.deviceId) && !hasPrivateKey(getDefaultSSKey())) {
       const keyData = await accessSecretStorage('Session verification');
       if (!keyData) {
@@ -54,22 +38,12 @@ function EmojiVerificationContent({ request, requestClose }) {
     setProcess(true);
     await request.accept();
 
-    let targetDevice;
-    try {
-      targetDevice = request.targetDevice;
-    } catch {
-      targetDevice = {
-        userId: mx.getUserId(),
-        deviceId: request.channel.devices[0],
-      };
-    }
-
     const verifier = request.beginKeyVerification('m.sas.v1', targetDevice);
 
-    const handleVerifier = (data) => {
+    const handleVerifier = (sasData) => {
       verifier.off('show_sas', handleVerifier);
       if (!mountStore.getItem()) return;
-      setSas(data);
+      setSas(sasData);
       setProcess(false);
     };
     verifier.on('show_sas', handleVerifier);
@@ -85,6 +59,26 @@ function EmojiVerificationContent({ request, requestClose }) {
     sas.confirm();
     setProcess(true);
   };
+
+  useEffect(() => {
+    mountStore.setItem(true);
+    const handleChange = () => {
+      if (targetDevice && request.started) {
+        beginVerification();
+      }
+      if (request.done || request.cancelled) requestClose();
+    };
+
+    if (request === null) return null;
+    const req = request;
+    req.on('change', handleChange);
+    return () => {
+      req.off('change', handleChange);
+      if (!req.cancelled && !req.done) {
+        req.cancel();
+      }
+    };
+  }, [request]);
 
   const renderWait = () => (
     <>
@@ -118,6 +112,17 @@ function EmojiVerificationContent({ request, requestClose }) {
     );
   }
 
+  if (targetDevice) {
+    return (
+      <div className="emoji-verification__content">
+        <Text>Please accept the request from other device.</Text>
+        <div className="emoji-verification__buttons">
+          {renderWait()}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="emoji-verification__content">
       <Text>Click accept to start the verification process</Text>
@@ -125,23 +130,25 @@ function EmojiVerificationContent({ request, requestClose }) {
         {
           process
             ? renderWait()
-            : <Button variant="primary" onClick={acceptRequest}>Accept</Button>
+            : <Button variant="primary" onClick={beginVerification}>Accept</Button>
         }
       </div>
     </div>
   );
 }
 EmojiVerificationContent.propTypes = {
-  request: PropTypes.shape({}).isRequired,
+  data: PropTypes.shape({}).isRequired,
   requestClose: PropTypes.func.isRequired,
 };
 
 function useVisibilityToggle() {
-  const [request, setRequest] = useState(null);
+  const [data, setData] = useState(null);
   const mx = initMatrix.matrixClient;
 
   useEffect(() => {
-    const handleOpen = (req) => setRequest(req);
+    const handleOpen = (request, targetDevice) => {
+      setData({ request, targetDevice });
+    };
     navigation.on(cons.events.navigation.EMOJI_VERIFICATION_OPENED, handleOpen);
     mx.on('crypto.verification.request', handleOpen);
     return () => {
@@ -150,17 +157,17 @@ function useVisibilityToggle() {
     };
   }, []);
 
-  const requestClose = () => setRequest(null);
+  const requestClose = () => setData(null);
 
-  return [request, requestClose];
+  return [data, requestClose];
 }
 
 function EmojiVerification() {
-  const [request, requestClose] = useVisibilityToggle();
+  const [data, requestClose] = useVisibilityToggle();
 
   return (
     <Dialog
-      isOpen={request !== null}
+      isOpen={data !== null}
       className="emoji-verification"
       title={(
         <Text variant="s1" weight="medium" primary>
@@ -171,8 +178,8 @@ function EmojiVerification() {
       onRequestClose={requestClose}
     >
       {
-        request !== null
-          ? <EmojiVerificationContent request={request} requestClose={requestClose} />
+        data !== null
+          ? <EmojiVerificationContent data={data} requestClose={requestClose} />
           : <div />
       }
     </Dialog>

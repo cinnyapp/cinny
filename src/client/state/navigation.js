@@ -189,6 +189,7 @@ class Navigation extends EventEmitter {
         this.emit(
           cons.events.navigation.EMOJI_VERIFICATION_OPENED,
           action.request,
+          action.targetDevice,
         );
       },
     };

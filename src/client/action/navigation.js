@@ -167,9 +167,10 @@ export function openReusableDialog(title, render, afterClose) {
   });
 }
 
-export function openEmojiVerification(request) {
+export function openEmojiVerification(request, targetDevice) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_EMOJI_VERIFICATION,
     request,
+    targetDevice,
   });
 }
