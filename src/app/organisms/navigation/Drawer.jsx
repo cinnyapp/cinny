@@ -42,12 +42,15 @@ function Drawer() {
   const [spaceId] = useSelectedSpace();
   const [, forceUpdate] = useForceUpdate();
   const scrollRef = useRef(null);
+  const { roomList } = initMatrix;
 
   useEffect(() => {
-    const { roomList } = initMatrix;
-    roomList.on(cons.events.roomList.ROOMLIST_UPDATED, forceUpdate);
+    const handleUpdate = () => {
+      forceUpdate();
+    };
+    roomList.on(cons.events.roomList.ROOMLIST_UPDATED, handleUpdate);
     return () => {
-      roomList.removeListener(cons.events.roomList.ROOMLIST_UPDATED, forceUpdate);
+      roomList.removeListener(cons.events.roomList.ROOMLIST_UPDATED, handleUpdate);
     };
   }, []);
 
@@ -68,7 +71,7 @@ function Drawer() {
               {
                 selectedTab !== cons.tabs.DIRECTS
                   ? <Home spaceId={spaceId} />
-                  : <Directs />
+                  : <Directs size={roomList.directs.size} />
               }
             </div>
           </ScrollView>

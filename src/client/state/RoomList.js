@@ -6,6 +6,21 @@ function isMEventSpaceChild(mEvent) {
   return mEvent.getType() === 'm.space.child' && Object.keys(mEvent.getContent()).length > 0;
 }
 
+/**
+ * @param {() => boolean} callback if return true wait will over else callback will be called again.
+ * @param {number} timeout timeout to callback
+ * @param {number} maxTry maximum callback try > 0. -1 means no limit
+ */
+async function waitFor(callback, timeout = 400, maxTry = -1) {
+  if (maxTry === 0) return false;
+  const isOver = async () => new Promise((resolve) => {
+    setTimeout(() => resolve(callback()), timeout);
+  });
+
+  if (await isOver()) return true;
+  return waitFor(callback, timeout, maxTry - 1);
+}
+
 class RoomList extends EventEmitter {
   constructor(matrixClient) {
     super();
@@ -228,6 +243,7 @@ class RoomList extends EventEmitter {
   }
 
   _isDMInvite(room) {
+    if (this.mDirects.has(room.roomId)) return true;
     const me = room.getMember(this.matrixClient.getUserId());
     const myEventContent = me.events.member.getContent();
     return myEventContent.membership === 'invite' && myEventContent.is_direct;
@@ -243,22 +259,11 @@ class RoomList extends EventEmitter {
       latestMDirects.forEach((directId) => {
         const myRoom = this.matrixClient.getRoom(directId);
         if (this.mDirects.has(directId)) return;
-
-        // Update mDirects
         this.mDirects.add(directId);
 
         if (myRoom === null) return;
-
-        if (this._isDMInvite(myRoom)) return;
-
-        if (myRoom.getMyMembership === 'join' && !this.directs.has(directId)) {
+        if (myRoom.getMyMembership() === 'join') {
           this.directs.add(directId);
-        }
-
-        // Newly added room.
-        // at this time my membership can be invite | join
-        if (myRoom.getMyMembership() === 'join' && this.rooms.has(directId)) {
-          // found a DM which accidentally gets added to this.rooms
           this.rooms.delete(directId);
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);
         }
@@ -298,23 +303,17 @@ class RoomList extends EventEmitter {
       }
     });
 
-    this.matrixClient.on('Room.myMembership', (room, membership, prevMembership) => {
+    this.matrixClient.on('Room.myMembership', async (room, membership, prevMembership) => {
       // room => prevMembership = null | invite | join | leave | kick | ban | unban
       // room => membership = invite | join | leave | kick | ban | unban
       const { roomId } = room;
+      const isRoomReady = () => this.matrixClient.getRoom(roomId) !== null;
+      if (['join', 'invite'].includes(membership) && isRoomReady() === false) {
+        if (await waitFor(isRoomReady, 200, 100) === false) return;
+      }
 
       if (membership === 'unban') return;
 
-      // When user_reject/sender_undo room invite
-      if (prevMembership === 'invite') {
-        if (this.inviteDirects.has(roomId)) this.inviteDirects.delete(roomId);
-        else if (this.inviteSpaces.has(roomId)) this.inviteSpaces.delete(roomId);
-        else this.inviteRooms.delete(roomId);
-
-        this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
-      }
-
-      // When user get invited
       if (membership === 'invite') {
         if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
         else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
@@ -324,88 +323,53 @@ class RoomList extends EventEmitter {
         return;
       }
 
-      // When user join room (first time) or start DM.
-      if ((prevMembership === null || prevMembership === 'invite') && membership === 'join') {
-        // when user create room/DM OR accept room/dm invite from this client.
-        // we will update this.rooms/this.directs with user action
-        if (this.directs.has(roomId) || this.spaces.has(roomId) || this.rooms.has(roomId)) return;
+      if (prevMembership === 'invite') {
+        if (this.inviteDirects.has(roomId)) this.inviteDirects.delete(roomId);
+        else if (this.inviteSpaces.has(roomId)) this.inviteSpaces.delete(roomId);
+        else this.inviteRooms.delete(roomId);
 
-        if (this.processingRooms.has(roomId)) {
-          const procRoomInfo = this.processingRooms.get(roomId);
-
-          if (procRoomInfo.isDM) this.directs.add(roomId);
-          else if (room.isSpaceRoom()) this.addToSpaces(roomId);
-          else this.rooms.add(roomId);
-
-          if (procRoomInfo.task === 'CREATE') this.emit(cons.events.roomList.ROOM_CREATED, roomId);
-          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-
-          this.processingRooms.delete(roomId);
-          return;
-        }
-        if (room.isSpaceRoom()) {
-          this.addToSpaces(roomId);
-
-          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-          return;
-        }
-
-        // below code intented to work when user create room/DM
-        // OR accept room/dm invite from other client.
-        // and we have to update our client. (it's ok to have 10sec delay)
-
-        // create a buffer of 10sec and HOPE client.accoundData get updated
-        // then accoundData event listener will update this.mDirects.
-        // and we will be able to know if it's a DM.
-        // ----------
-        // less likely situation:
-        // if we don't get accountData with 10sec then:
-        // we will temporary add it to this.rooms.
-        // and in future when accountData get updated
-        // accountData listener will automatically goona REMOVE it from this.rooms
-        // and will ADD it to this.directs
-        // and emit the cons.events.roomList.ROOMLIST_UPDATED to update the UI.
-
-        setTimeout(() => {
-          if (this.directs.has(roomId) || this.spaces.has(roomId) || this.rooms.has(roomId)) return;
-          if (this.mDirects.has(roomId)) this.directs.add(roomId);
-          else this.rooms.add(roomId);
-
-          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-        }, 10000);
-        return;
+        this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
       }
 
-      // when room is a DM add/remove it from DM's and return.
-      if (this.directs.has(roomId)) {
-        if (membership === 'leave' || membership === 'kick' || membership === 'ban') {
-          this.directs.delete(roomId);
-          this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
-        }
-      }
-      if (this.mDirects.has(roomId)) {
-        if (membership === 'join') {
-          this.directs.add(roomId);
-          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-        }
+      if (['leave', 'kick', 'ban'].includes(membership)) {
+        if (this.directs.has(roomId)) this.directs.delete(roomId);
+        else if (this.spaces.has(roomId)) this.deleteFromSpaces(roomId);
+        else this.rooms.delete(roomId);
+        this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
         this.emit(cons.events.roomList.ROOMLIST_UPDATED);
         return;
       }
-      // when room is not a DM add/remove it from rooms.
-      if (membership === 'leave' || membership === 'kick' || membership === 'ban') {
-        if (room.isSpaceRoom()) this.deleteFromSpaces(roomId);
-        else this.rooms.delete(roomId);
-        this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
+
+      // when user create room/DM OR accept room/dm invite from this client.
+      // we will update this.rooms/this.directs with user action
+      if (membership === 'join' && this.processingRooms.has(roomId)) {
+        const procRoomInfo = this.processingRooms.get(roomId);
+
+        if (procRoomInfo.isDM) this.directs.add(roomId);
+        else if (room.isSpaceRoom()) this.addToSpaces(roomId);
+        else this.rooms.add(roomId);
+
+        if (procRoomInfo.task === 'CREATE') this.emit(cons.events.roomList.ROOM_CREATED, roomId);
+        this.emit(cons.events.roomList.ROOM_JOINED, roomId);
+        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+
+        this.processingRooms.delete(roomId);
+        return;
       }
+
+      if (this.mDirects.has(roomId) && membership === 'join') {
+        this.directs.add(roomId);
+        this.emit(cons.events.roomList.ROOM_JOINED, roomId);
+        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        return;
+      }
+
       if (membership === 'join') {
         if (room.isSpaceRoom()) this.addToSpaces(roomId);
         else this.rooms.add(roomId);
         this.emit(cons.events.roomList.ROOM_JOINED, roomId);
+        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
       }
-      this.emit(cons.events.roomList.ROOMLIST_UPDATED);
     });
   }
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -9,12 +10,12 @@ import { roomIdByActivity } from '../../../util/sort';
 import RoomsCategory from './RoomsCategory';
 
 const drawerPostie = new Postie();
-function Directs() {
+function Directs({ size }) {
   const mx = initMatrix.matrixClient;
   const { roomList, notifications } = initMatrix;
   const [directIds, setDirectIds] = useState([]);
 
-  useEffect(() => setDirectIds([...roomList.directs].sort(roomIdByActivity)), []);
+  useEffect(() => setDirectIds([...roomList.directs].sort(roomIdByActivity)), [size]);
 
   useEffect(() => {
     const handleTimeline = (event, room, toStartOfTimeline, removed, data) => {
@@ -63,5 +64,8 @@ function Directs() {
 
   return <RoomsCategory name="People" hideHeader roomIds={directIds} drawerPostie={drawerPostie} />;
 }
+Directs.propTypes = {
+  size: PropTypes.number.isRequired,
+};
 
 export default Directs;
