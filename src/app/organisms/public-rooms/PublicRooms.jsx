@@ -195,7 +195,7 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
     return rooms.map((room) => {
       const alias = typeof room.canonical_alias === 'string' ? room.canonical_alias : room.room_id;
       const name = typeof room.name === 'string' ? room.name : alias;
-      const isJoined = initMatrix.matrixClient.getRoom(room.room_id) !== null;
+      const isJoined = initMatrix.matrixClient.getRoom(room.room_id)?.getMyMembership() === 'join';
       return (
         <RoomTile
           key={room.room_id}
