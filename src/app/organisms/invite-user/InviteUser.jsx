@@ -103,6 +103,18 @@ function InviteUser({
     updateIsSearching(false);
   }
 
+  async function hasDevices(userId) {
+    try {
+      const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
+      return Object.values(usersDeviceMap).every((userDevices) =>
+        Object.keys(userDevices).length > 0,
+      );
+    } catch (e) {
+      console.error("Error determining if it's possible to encrypt to all users: ", e);
+      return false;
+    }
+  }
+
   async function createDM(userId) {
     if (mx.getUserId() === userId) return;
     const dmRoomId = hasDMWith(userId);
@@ -117,7 +129,7 @@ function InviteUser({
       procUserError.delete(userId);
       updateUserProcError(getMapCopy(procUserError));
 
-      const result = await roomActions.createDM(userId);
+      const result = await roomActions.createDM(userId, await hasDevices(userId));
       roomIdToUserId.set(result.room_id, userId);
       updateRoomIdToUserId(getMapCopy(roomIdToUserId));
     } catch (e) {
