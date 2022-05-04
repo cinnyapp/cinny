@@ -1,12 +1,12 @@
 {
   "package": {
-    "productName": "Cinny",
+    "productName": "cinny",
     "version": "1.8.2"
   },
   "build": {
     "distDir": "../cinny/dist",
     "devPath": "http://localhost:8080",
-    "beforeDevCommand": "",
+    "beforeDevCommand": "cd cinny && npm start",
     "beforeBuildCommand": "cd cinny && npm run build"
   },
   "tauri": {
@@ -28,13 +28,11 @@
       "shortDescription": "",
       "longDescription": "",
       "deb": {
-        "depends": [],
-        "useBootstrapper": false
+        "depends": []
       },
       "macOS": {
         "frameworks": [],
         "minimumSystemVersion": "",
-        "useBootstrapper": false,
         "exceptionDomain": "",
         "signingIdentity": null,
         "providerShortName": null,

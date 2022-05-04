@@ -16,5 +16,4 @@ To build the app locally, run:
 * `npm run tauri build`
 
 To start local dev server, run:
-* Open cinny submodule dir in terminal and run `npm start`
-* Now main dir in another termial window run `npm run tauri dev`
+* `npm run tauri dev`
