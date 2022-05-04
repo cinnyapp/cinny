@@ -103,7 +103,7 @@ function InviteUser({
     updateIsSearching(false);
   }
 
-  async function checkIfNotBot(userId) {
+  async function hasDevices(userId) {
     try {
       const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
       return Object.values(usersDeviceMap).every((userDevices) =>
@@ -129,7 +129,7 @@ function InviteUser({
       procUserError.delete(userId);
       updateUserProcError(getMapCopy(procUserError));
 
-      const result = await roomActions.createDM(userId, await checkIfNotBot(userId));
+      const result = await roomActions.createDM(userId, await hasDevices(userId));
       roomIdToUserId.set(result.room_id, userId);
       updateRoomIdToUserId(getMapCopy(roomIdToUserId));
     } catch (e) {
