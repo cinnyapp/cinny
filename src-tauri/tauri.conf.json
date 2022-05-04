@@ -60,6 +60,7 @@
         "title": "Cinny",
         "width": 1024,
         "height": 724,
+        "center": true,
         "resizable": true,
         "fullscreen": false
       }
