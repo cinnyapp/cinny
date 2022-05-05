@@ -64,7 +64,9 @@ function Drawer() {
     <div className="drawer">
       <DrawerHeader selectedTab={selectedTab} spaceId={spaceId} />
       <div className="drawer__content-wrapper">
-        {navigation.selectedSpacePath.length > 1 && <DrawerBreadcrumb spaceId={spaceId} />}
+        {navigation.selectedSpacePath.length > 1 && selectedTab !== cons.tabs.DIRECTS && (
+          <DrawerBreadcrumb spaceId={spaceId} />
+        )}
         <div className="rooms__wrapper">
           <ScrollView ref={scrollRef} autoHide>
             <div className="rooms-container">
