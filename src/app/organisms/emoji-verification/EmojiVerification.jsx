@@ -28,12 +28,15 @@ function EmojiVerificationContent({ data, requestClose }) {
   const mountStore = useStore();
 
   const beginVerification = async () => {
-    if (isCrossVerified(mx.deviceId) && !hasPrivateKey(getDefaultSSKey())) {
-      const keyData = await accessSecretStorage('Session verification');
-      if (!keyData) {
-        request.cancel();
-        return;
+    if (mx.getCrossSigningId() === null && isCrossVerified(mx.deviceId)) {
+      if (!hasPrivateKey(getDefaultSSKey())) {
+        const keyData = await accessSecretStorage('Emoji verification');
+        if (!keyData) {
+          request.cancel();
+          return;
+        }
       }
+      await mx.checkOwnCrossSigningTrust();
     }
     setProcess(true);
     await request.accept();
