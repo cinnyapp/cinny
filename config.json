@@ -7,5 +7,6 @@
     "kde.org",
     "matrix.org",
     "chat.mozilla.org"
-  ]
+  ],
+  "allowCustomHomeservers": true
 }
