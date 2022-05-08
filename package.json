@@ -15,7 +15,7 @@
   "author": "Ajay Bura",
   "license": "MIT",
   "dependencies": {
-    "@tauri-apps/api": "^1.0.0-rc.4"
+    "@tauri-apps/api": "^1.0.0-rc.5"
   },
   "devDependencies": {
     "@actions/github": "^5.0.0",
