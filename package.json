@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@actions/github": "^5.0.0",
-    "@tauri-apps/cli": "^1.0.0-rc.9",
+    "@tauri-apps/cli": "^1.0.0-rc.10",
     "node-fetch": "^3.2.3"
   }
 }
