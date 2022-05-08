@@ -1,5 +1,10 @@
 # Cinny
 
+[![Star](https://img.shields.io/github/stars/ajbura/cinny)](https://github.com/ajbura/cinny/tree/dev)
+[![Chat](https://img.shields.io/badge/chat-on%20matrix-orange)](https://matrix.to/#/#cinny:matrix.org)
+[![Twitter](https://img.shields.io/twitter/url?url=https://twitter.com/@cinnyapp)](https://twitter.com/@cinnyapp)
+[![Support](https://img.shields.io/badge/sponsor-open%20collective-blue.svg)](https://opencollective.com/cinny)
+
 ## Table of Contents
 
 - [About](#about)
