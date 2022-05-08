@@ -26,6 +26,7 @@ function EmojiVerificationContent({ data, requestClose }) {
   const { request, targetDevice } = data;
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
+  const beginStore = useStore();
 
   const beginVerification = async () => {
     if (
@@ -73,7 +74,8 @@ function EmojiVerificationContent({ data, requestClose }) {
         requestClose();
         return;
       }
-      if (targetDevice && request.started) {
+      if (targetDevice && !beginStore.getItem()) {
+        beginStore.setItem(true);
         beginVerification();
       }
     };
