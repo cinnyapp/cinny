@@ -28,7 +28,10 @@ function EmojiVerificationContent({ data, requestClose }) {
   const mountStore = useStore();
 
   const beginVerification = async () => {
-    if (mx.getCrossSigningId() === null && isCrossVerified(mx.deviceId)) {
+    if (
+      isCrossVerified(mx.deviceId)
+      && (mx.getCrossSigningId() === null || await mx.crypto.crossSigningInfo.isStoredInKeyCache('self_signing') === false)
+    ) {
       if (!hasPrivateKey(getDefaultSSKey())) {
         const keyData = await accessSecretStorage('Emoji verification');
         if (!keyData) {
@@ -66,10 +69,13 @@ function EmojiVerificationContent({ data, requestClose }) {
   useEffect(() => {
     mountStore.setItem(true);
     const handleChange = () => {
+      if (request.done || request.cancelled) {
+        requestClose();
+        return;
+      }
       if (targetDevice && request.started) {
         beginVerification();
       }
-      if (request.done || request.cancelled) requestClose();
     };
 
     if (request === null) return null;
@@ -77,7 +83,7 @@ function EmojiVerificationContent({ data, requestClose }) {
     req.on('change', handleChange);
     return () => {
       req.off('change', handleChange);
-      if (!req.cancelled && !req.done) {
+      if (req.cancelled === false && req.done === false) {
         req.cancel();
       }
     };
