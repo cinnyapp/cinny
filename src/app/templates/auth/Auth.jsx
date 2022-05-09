@@ -107,7 +107,7 @@ function Homeserver({ onChange }) {
     const { value } = e.target;
     setProcess({ isLoading: false });
     debounce._(async () => {
-      setHs({ selected: value.trim(), list: hs.list });
+      setHs({ ...hs, selected: value.trim() });
     }, 700)();
   };
 
@@ -128,7 +128,7 @@ function Homeserver({ onChange }) {
                     onClick={() => {
                       hideMenu();
                       hsRef.current.value = hsName;
-                      setHs({ selected: hsName, list: hs.list });
+                      setHs({ ...hs, selected: hsName });
                     }}
                   >
                     {hsName}
