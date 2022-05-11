@@ -118,9 +118,6 @@ async function leave(roomId) {
   const isDM = initMatrix.roomList.directs.has(roomId);
   try {
     await mx.leave(roomId);
-    setTimeout(() => {
-      mx.forget(roomId);
-    }, 5000);
     appDispatcher.dispatch({
       type: cons.actions.room.LEAVE,
       roomId,
