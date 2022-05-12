@@ -123,17 +123,26 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
         const eTimeline = await mx.getEventTimeline(timelineSet, eventId);
         await roomTimeline.decryptAllEventsOfTimeline(eTimeline);
 
-        const mEvent = eTimeline.getTimelineSet().findEventById(eventId);
+        let mEvent = eTimeline.getTimelineSet().findEventById(eventId);
+        const editedList = roomTimeline.editedTimeline.get(mEvent.getId());
+        if (editedList) {
+          mEvent = editedList[editedList.length - 1];
+        }
 
         const rawBody = mEvent.getContent().body;
         const username = getUsernameOfRoomMember(mEvent.sender);
 
         if (isMountedRef.current === false) return;
         const fallbackBody = mEvent.isRedacted() ? '*** This message has been deleted ***' : '*** Unable to load reply ***';
+        let parsedBody = parseReply(rawBody)?.body ?? rawBody ?? fallbackBody;
+        if (editedList && parsedBody.startsWith(' * ')) {
+          parsedBody = parsedBody.slice(3);
+        }
+
         setReply({
           to: username,
           color: colorMXID(mEvent.getSender()),
-          body: parseReply(rawBody)?.body ?? rawBody ?? fallbackBody,
+          body: parsedBody,
           event: mEvent,
         });
       } catch {
