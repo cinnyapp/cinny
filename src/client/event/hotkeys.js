@@ -2,91 +2,90 @@ import { openSearch, toggleRoomSettings } from '../action/navigation';
 import navigation from '../state/navigation';
 import { markAsRead } from '../action/notifications';
 
-function listenKeyboard(event) {
-	// Ctrl/Cmd +
-	if (event.ctrlKey || event.metaKey) {
-		// search modal
-		if (event.code === 'KeyK') {
-			event.preventDefault();
-			if (navigation.isRawModalVisible) {
-				return;
-			}
-			openSearch();
-		}
+function shouldFocusMessageField(code) {
+  // should focus on alphanumeric values, and backspace
+  if (code.startsWith('Key')) {
+    return true;
+  }
+  if (code.startsWith('Digit')) {
+    return true;
+  }
+  if (code === 'Backspace') {
+    return true;
+  }
 
-		// focus message field on paste
-		if (event.code === 'KeyV') {
-			const msgTextarea = document.getElementById('message-textarea');
-			msgTextarea?.focus();
-		}
-	}
+  // do not focus if super key is pressed
+  if (code.startsWith('Meta')) { // chrome
+    return false;
+  }
+  if (code.startsWith('OS')) { // firefox
+    return false;
+  }
 
-	if (!event.ctrlKey && !event.altKey && !event.metaKey) {
-		if (navigation.isRawModalVisible) return;
-		if (['text', 'textarea'].includes(document.activeElement.type)) {
-			return;
-		}
+  // do not focus on F keys
+  if (/^F\d+$/.test(code)) {
+    return false;
+  }
 
-		if (event.code === 'Escape') {
-			if (navigation.isRoomSettings) {
-				toggleRoomSettings();
-				return;
-			}
-			if (navigation.selectedRoomId) {
-				markAsRead(navigation.selectedRoomId);
-				return;
-			}
-		}
+  // do not focus on numlock/scroll lock
+  if (code === 'NumLock' || code === 'ScrollLock') {
+    return false;
+  }
 
-		// focus the text field on most keypresses
-		if (shouldFocusMessageField(event.code)) {
-			// press any key to focus and type in message field
-			const msgTextarea = document.getElementById('message-textarea');
-			msgTextarea?.focus();
-		}
-	}
+  return true;
 }
 
-function shouldFocusMessageField(code) {
+function listenKeyboard(event) {
+  // Ctrl/Cmd +
+  if (event.ctrlKey || event.metaKey) {
+    // search modal
+    if (event.code === 'KeyK') {
+      event.preventDefault();
+      if (navigation.isRawModalVisible) {
+        return;
+      }
+      openSearch();
+    }
 
-	// should focus on alphanumeric values, and backspace
-	if (code.startsWith('Key')) {
-		return true;
-	}
-	if (code.startsWith('Digit')) {
-		return true;
-	}
-	if (code === 'Backspace') {
-		return true;
-	}
+    // focus message field on paste
+    if (event.code === 'KeyV') {
+      const msgTextarea = document.getElementById('message-textarea');
+      msgTextarea?.focus();
+    }
+  }
 
-	// do not focus if super key is pressed
-	if (code.startsWith('Meta')) { // chrome
-		return false;
-	}
-	if (code.startsWith('OS')) { // firefox
-		return false;
-	}
+  if (!event.ctrlKey && !event.altKey && !event.metaKey) {
+    if (navigation.isRawModalVisible) return;
+    if (['text', 'textarea'].includes(document.activeElement.type)) {
+      return;
+    }
 
-	// do not focus on F keys
-	if (/^F\d+$/.test(code)) {
-		return false;
-	}
+    if (event.code === 'Escape') {
+      if (navigation.isRoomSettings) {
+        toggleRoomSettings();
+        return;
+      }
+      if (navigation.selectedRoomId) {
+        markAsRead(navigation.selectedRoomId);
+        return;
+      }
+    }
 
-	// do not focus on numlock/scroll lock
-	if (code === 'NumLock' || code === 'ScrollLock') {
-		return false;
-	}
-
-	return true;
+    // focus the text field on most keypresses
+    if (shouldFocusMessageField(event.code)) {
+      // press any key to focus and type in message field
+      const msgTextarea = document.getElementById('message-textarea');
+      msgTextarea?.focus();
+    }
+  }
 }
 
 function initHotkeys() {
-	document.body.addEventListener('keydown', listenKeyboard);
+  document.body.addEventListener('keydown', listenKeyboard);
 }
 
 function removeHotkeys() {
-	document.body.removeEventListener('keydown', listenKeyboard);
+  document.body.removeEventListener('keydown', listenKeyboard);
 }
 
 export { initHotkeys, removeHotkeys };
