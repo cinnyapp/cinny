@@ -2,6 +2,7 @@ import { openSearch, toggleRoomSettings } from '../action/navigation';
 import navigation from '../state/navigation';
 import { markAsRead } from '../action/notifications';
 
+// describes which keys should auto-focus the message field
 function shouldFocusMessageField(code) {
   // should focus on alphanumeric values, and backspace
   if (code.startsWith('Key')) {
@@ -38,7 +39,7 @@ function shouldFocusMessageField(code) {
 function listenKeyboard(event) {
   // Ctrl/Cmd +
   if (event.ctrlKey || event.metaKey) {
-    // search modal
+    // open search modal
     if (event.code === 'KeyK') {
       event.preventDefault();
       if (navigation.isRawModalVisible) {
