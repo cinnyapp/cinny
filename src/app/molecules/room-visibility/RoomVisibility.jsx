@@ -70,7 +70,7 @@ function RoomVisibility({ roomId }) {
 
   const noSpaceParent = currentState.getStateEvents('m.space.parent').length === 0;
   const mCreate = currentState.getStateEvents('m.room.create')[0]?.getContent();
-  const roomVersion = Number(mCreate.room_version);
+  const roomVersion = Number(mCreate?.room_version ?? 0);
 
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel || 0;
   const canChange = room.currentState.hasSufficientPowerLevelFor('state_default', myPowerlevel);
