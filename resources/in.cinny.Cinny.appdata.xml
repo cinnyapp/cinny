@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright 2022 Ajay Bura <ajbura@gmail.com> -->
 <component type="desktop">
-    <id>in.cinny.cinnyapp</id>
+    <id>in.cinny.Cinny</id>
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>MIT</project_license>
     <name>Cinny</name>
@@ -14,7 +14,7 @@
     </description>
 
     <provides>
-        <binary>cinnyapp</binary>
+        <binary>cinny</binary>
     </provides>
 
     <developer_name>Ajay Bura</developer_name>

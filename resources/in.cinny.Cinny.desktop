@@ -2,7 +2,7 @@
 Type=Application
 Name=Cinny
 Comment=A matrix client with focus on simple, elegant and secure interface.
-Exec=cinnyapp
+Exec=cinny
 Icon=cinny
 Terminal=false
 Categories=Network;InstantMessaging;
