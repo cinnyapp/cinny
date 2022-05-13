@@ -2,34 +2,25 @@ import { openSearch, toggleRoomSettings } from '../action/navigation';
 import navigation from '../state/navigation';
 import { markAsRead } from '../action/notifications';
 
-// describes which keys should auto-focus the message field
 function shouldFocusMessageField(code) {
-  // should focus on alphanumeric values, and backspace
-  if (code.startsWith('Key')) {
-    return true;
-  }
-  if (code.startsWith('Digit')) {
-    return true;
-  }
-  if (code === 'Backspace') {
-    return true;
-  }
-
-  // do not focus if super key is pressed
-  if (code.startsWith('Meta')) { // chrome
-    return false;
-  }
-  if (code.startsWith('OS')) { // firefox
-    return false;
-  }
-
   // do not focus on F keys
-  if (/^F\d+$/.test(code)) {
-    return false;
-  }
+  if (/^F\d+$/.test(code)) return false;
 
   // do not focus on numlock/scroll lock
-  if (code === 'NumLock' || code === 'ScrollLock') {
+  if (
+    code.metaKey
+    || code.startsWith('OS')
+    || code.startsWith('Meta')
+    || code.startsWith('Shift')
+    || code.startsWith('Alt')
+    || code.startsWith('Control')
+    || code.startsWith('Arrow')
+    || code === 'Tab'
+    || code === 'Space'
+    || code === 'Enter'
+    || code === 'NumLock'
+    || code === 'ScrollLock'
+  ) {
     return false;
   }
 
