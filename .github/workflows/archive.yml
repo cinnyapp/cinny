@@ -1,0 +1,22 @@
+name: "Upload zip-archive"
+on:
+  release:
+    types: [published]
+
+jobs:
+  zip-archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.2
+        with:
+          submodules: true
+      - name: Create zip including submodules
+        run: |
+          cd ..
+          zip ${{ github.event.repository.name }}/${{ github.event.repository.name }}-${{ github.ref_name }}.zip ${{ github.event.repository.name }} -r
+      - name: Upload zip to release
+        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+        with:
+          files: |
+            ${{ github.event.repository.name }}-${{ github.ref_name }}.zip

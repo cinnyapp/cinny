@@ -1,7 +1,7 @@
 name: "Build pull request"
 on:
-  pull_request:
-    types: ['opened', 'synchronize']
+  #pull_request:
+    #types: ['opened', 'synchronize']
 
 jobs:
   publish-tauri:
