@@ -15,7 +15,6 @@ class Navigation extends EventEmitter {
     this.recentRooms = [];
 
     this.rawModelStack = [];
-    window.nav = this;
   }
 
   _setSpacePath(roomId) {
