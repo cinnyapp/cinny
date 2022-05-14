@@ -41,14 +41,17 @@ function listenKeyboard(event) {
     if (event.code === 'KeyV') {
       if (navigation.isRawModalVisible) return;
       const msgTextarea = document.getElementById('message-textarea');
-      if (document.activeElement !== msgTextarea && document.activeElement.tagName.toLowerCase() === 'input') return;
+      const { activeElement } = document;
+      if (activeElement !== msgTextarea
+        && ['input', 'textarea'].includes(activeElement.tagName.toLowerCase())
+      ) return;
       msgTextarea?.focus();
     }
   }
 
   if (!event.ctrlKey && !event.altKey && !event.metaKey) {
     if (navigation.isRawModalVisible) return;
-    if (document.activeElement.tagName.toLowerCase() === 'input') {
+    if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) {
       return;
     }
 
