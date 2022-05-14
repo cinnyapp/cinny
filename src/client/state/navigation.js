@@ -14,7 +14,8 @@ class Navigation extends EventEmitter {
     this.isRoomSettings = false;
     this.recentRooms = [];
 
-    this.isRawModalVisible = false;
+    this.rawModelStack = [];
+    window.nav = this;
   }
 
   _setSpacePath(roomId) {
@@ -47,8 +48,13 @@ class Navigation extends EventEmitter {
     }
   }
 
+  get isRawModalVisible() {
+    return this.rawModelStack.length > 0;
+  }
+
   setIsRawModalVisible(visible) {
-    this.isRawModalVisible = visible;
+    if (visible) this.rawModelStack.push(true);
+    else this.rawModelStack.pop();
   }
 
   navigate(action) {

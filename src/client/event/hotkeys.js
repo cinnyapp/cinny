@@ -33,22 +33,22 @@ function listenKeyboard(event) {
     // open search modal
     if (event.code === 'KeyK') {
       event.preventDefault();
-      if (navigation.isRawModalVisible) {
-        return;
-      }
+      if (navigation.isRawModalVisible) return;
       openSearch();
     }
 
     // focus message field on paste
     if (event.code === 'KeyV') {
+      if (navigation.isRawModalVisible) return;
       const msgTextarea = document.getElementById('message-textarea');
+      if (document.activeElement !== msgTextarea && document.activeElement.tagName.toLowerCase() === 'input') return;
       msgTextarea?.focus();
     }
   }
 
   if (!event.ctrlKey && !event.altKey && !event.metaKey) {
     if (navigation.isRawModalVisible) return;
-    if (['text', 'textarea'].includes(document.activeElement.type)) {
+    if (document.activeElement.tagName.toLowerCase() === 'input') {
       return;
     }
 
