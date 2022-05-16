@@ -1,6 +1,6 @@
 {
   "package": {
-    "productName": "cinny",
+    "productName": "Cinny",
     "version": "2.0.3"
   },
   "build": {
@@ -25,7 +25,7 @@
       "externalBin": [],
       "copyright": "",
       "category": "SocialNetworking",
-      "shortDescription": "",
+      "shortDescription": "Yet another matrix client",
       "longDescription": "",
       "deb": {
         "depends": []
