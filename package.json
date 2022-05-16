@@ -29,7 +29,7 @@
     "html-react-parser": "^1.4.12",
     "katex": "^0.15.3",
     "linkifyjs": "^2.1.9",
-    "matrix-js-sdk": "^17.1.0",
+    "matrix-js-sdk": "^17.2.0",
     "micromark": "^3.0.10",
     "micromark-extension-gfm": "^2.0.1",
     "micromark-extension-math": "^2.0.2",
