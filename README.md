@@ -1,5 +1,6 @@
 # Cinny desktop
 Dekstop app of Cinny made with Tauri. Cinny is a matrix client focusing primarily on simple, elegant and secure interface.
+![Image](resources/screenshot2.png)
 
 ## Local development
 
