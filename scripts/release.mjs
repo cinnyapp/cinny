@@ -69,13 +69,13 @@ async function createTauriRelease() {
     platforms: {},
   };
 
-  if (win64.url) releaseData.platforms.win64 = win64;
+  if (win64.url) releaseData.platforms["windows-x86_64"] = win64;
   else console.error('Failed to get release for win64');
 
-  if (linux.url) releaseData.platforms.linux = linux;
+  if (linux.url) releaseData.platforms["linux-x86_64"] = linux;
   else console.error('Failed to get release for linux');
 
-  if (darwin.url) releaseData.platforms.darwin = darwin;
+  if (darwin.url) releaseData.platforms["darwin-x86_64"] = darwin;
   else console.error('Failed to get release for darwin');
 
   const releaseResult = await repos.getReleaseByTag({ ...repoMetaData, tag: 'tauri' });
