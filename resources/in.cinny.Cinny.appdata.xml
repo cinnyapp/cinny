@@ -1,43 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-    <id>in.cinny.Cinny</id>
+  <id>in.cinny.Cinny</id>
+  
+  <name>Cinny</name>
+  <summary>Yet another matrix client with simple, elegant and secure interface.</summary>
+  <developer_name>Ajay Bura</developer_name>
+  
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  
+  <url type="homepage">https://cinny.in</url>
+  <url type="bugtracker">https://github.com/ajbura/cinny/issues</url>
+  <url type="donation">https://cinny.in/#sponsor</url>
+  
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+  
+  <description>
+    <p>
+      Cinny is a matrix.org client focusing primarily on simple, elegant and secure interface protected by e2ee with the power of open source.
+    </p>
+    <p>
+      Features: User-friendly design, Login and register, Full space support, Encryption and emoji verification, Ability to create new rooms and tweak settings, Support replies, markdown, message editing, Dark, light, and black themes.
+    </p>
+  </description>
 
-    <name>Cinny</name>
-    <summary>Yet another matrix client with simple, elegant and secure interface.</summary>
-    <developer_name>Ajay Bura</developer_name>
+  <custom>
+      <value key="Purism::form_factor">workstation</value>
+      <value key="Purism::form_factor">mobile</value>
+  </custom>
+  
+  <launchable type="desktop-id">in.cinny.Cinny.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://github.com/cinnyapp/cinny-desktop/blob/main/resources/screenshot1.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://github.com/cinnyapp/cinny-desktop/blob/main/resources/screenshot2.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://github.com/cinnyapp/cinny-desktop/blob/main/resources/screenshot3.png</image>
+    </screenshot>
+  </screenshots>
 
-    <metadata_license>CC0-1.0</metadata_license>
-    <project_license>MIT</project_license>
-
-    <url type="homepage">https://cinny.in</url>
-    <url type="bugtracker">https://github.com/ajbura/cinny/issues</url>
-    <url type="donation">https://cinny.in/#sponsor</url>
-
-    <description>
-        <p>
-            Cinny is a matrix client focusing primarily on simple, elegant and secure interface.
-        </p>
-    </description>
-
-    <custom>
-        <value key="Purism::form_factor">workstation</value>
-        <value key="Purism::form_factor">mobile</value>
-    </custom>
-
-    <screenshots>
-        <screenshot type="default">
-            <image>https://github.com/cinnyapp/cinny-desktop/media/branch/main/resources/screenshot1.png</image>
-        </screenshot>
-        <screenshot>
-            <image>https://github.com/cinnyapp/cinny-desktop/media/branch/main/resources/screenshot2.png</image>
-        </screenshot>
-        <screenshot>
-            <image>https://github.com/cinnyapp/cinny-desktop/media/branch/main/resources/screenshot3.png</image>
-        </screenshot>
-    </screenshots>
-
-    <releases>
-        <release version="2.0.3" date="2022-05-15"/>
-    </releases>
-    <content_rating type="oars-1.1"/>
+  <releases>
+      <release version="2.0.3" date="2022-05-15"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
 </component>

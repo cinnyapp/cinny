@@ -1,9 +1,11 @@
 [Desktop Entry]
+Version=1.0
 Type=Application
+
 Name=Cinny
-Comment=A matrix client with focus on simple, elegant and secure interface.
-Exec=cinny
+Comment=Yet another matrix client with simple, elegant and secure interface.
 Icon=cinny
+Exec=cinny
 Terminal=false
 Categories=Network;InstantMessaging;
 Keywords=Matrix;matrix.org;chat;irc;communications;talk;riot;element;fractal;voip;
