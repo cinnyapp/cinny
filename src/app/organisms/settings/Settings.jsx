@@ -7,6 +7,7 @@ import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
   toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
+  toggleTypingNotifications, toggleReadReceipts,
   toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
 import logout from '../../../client/action/logout';
@@ -106,6 +107,29 @@ function AppearanceSection() {
             />
           )}
           content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
+        />
+      </div>
+      <div className="settings-appearance__card">
+        <MenuHeader>Privacy</MenuHeader>
+        <SettingTile
+          title="Typing notifications"
+          options={(
+            <Toggle
+              isActive={settings.sendTypingNotifications}
+              onToggle={() => { toggleTypingNotifications(); updateState({}); }}
+            />
+          )}
+          content={<Text variant="b3">Send typing notifications.</Text>}
+        />
+        <SettingTile
+          title="Read recipts"
+          options={(
+            <Toggle
+              isActive={settings.sendReadReceipts}
+              onToggle={() => { toggleReadReceipts(); updateState({}); }}
+            />
+          )}
+          content={<Text variant="b3">Send read receipts.</Text>}
         />
       </div>
     </div>

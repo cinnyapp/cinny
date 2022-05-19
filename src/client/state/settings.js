@@ -28,6 +28,8 @@ class Settings extends EventEmitter {
     this.isPeopleDrawer = this.getIsPeopleDrawer();
     this.hideMembershipEvents = this.getHideMembershipEvents();
     this.hideNickAvatarEvents = this.getHideNickAvatarEvents();
+    this.sendTypingNotifications = this.getSendTypingNotifications();
+    this.sendReadReceipts = this.getSendReadReceipts();
     this._showNotifications = this.getShowNotifications();
     this.isNotificationSounds = this.getIsNotificationSounds();
 
@@ -103,6 +105,24 @@ class Settings extends EventEmitter {
     return settings.hideNickAvatarEvents;
   }
 
+  getSendTypingNotifications() {
+    if (typeof this.sendTypingNotifications === 'boolean') return this.sendTypingNotifications;
+
+    const settings = getSettings();
+    if (settings === null) return true;
+    if (typeof settings.sendTypingNotifications === 'undefined') return true;
+    return settings.sendTypingNotifications;
+  }
+
+  getSendReadReceipts() {
+    if (typeof this.sendReadReceipts === 'boolean') return this.sendReadReceipts;
+
+    const settings = getSettings();
+    if (settings === null) return true;
+    if (typeof settings.sendReadReceipts === 'undefined') return true;
+    return settings.sendReadReceipts;
+  }
+
   getIsPeopleDrawer() {
     if (typeof this.isPeopleDrawer === 'boolean') return this.isPeopleDrawer;
 
@@ -164,6 +184,16 @@ class Settings extends EventEmitter {
         this.hideNickAvatarEvents = !this.hideNickAvatarEvents;
         setSettings('hideNickAvatarEvents', this.hideNickAvatarEvents);
         this.emit(cons.events.settings.NICKAVATAR_EVENTS_TOGGLED, this.hideNickAvatarEvents);
+      },
+      [cons.actions.settings.TOGGLE_TYPING_NOTIFICATIONS]: () => {
+        this.sendTypingNotifications = !this.sendTypingNotifications;
+        setSettings('hideNickAvatarEvents', this.sendTypingNotifications);
+        this.emit(cons.events.settings.SEND_TYPING_TOGGLED, this.sendTypingNotifications);
+      },
+      [cons.actions.settings.TOGGLE_READ_RECEIPTS]: () => {
+        this.sendReadReceipts = !this.sendReadReceipts;
+        setSettings('hideNickAvatarEvents', this.sendReadReceipts);
+        this.emit(cons.events.settings.SEND_RECEIPTS_TOGGLED, this.sendReadReceipts);
       },
       [cons.actions.settings.TOGGLE_NOTIFICATIONS]: async () => {
         if (window.Notification?.permission !== 'granted') {

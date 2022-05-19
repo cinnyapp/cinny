@@ -1,3 +1,4 @@
+import settings from '../state/settings';
 import initMatrix from '../initMatrix';
 
 // eslint-disable-next-line import/prefer-default-export
@@ -22,5 +23,5 @@ export async function markAsRead(roomId) {
   const latestEvent = getLatestValidEvent();
   if (latestEvent === null) return;
 
-  await mx.sendReadReceipt(latestEvent);
+  if(settings.getSendReadReceipts()) await mx.sendReadReceipt(latestEvent);
 }

@@ -31,6 +31,18 @@ export function toggleNickAvatarEvents() {
   });
 }
 
+export function toggleTypingNotifications() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_TYPING_NOTIFICATIONS,
+  });
+}
+
+export function toggleReadReceipts() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_READ_RECEIPTS,
+  });
+}
+
 export function toggleNotifications() {
   appDispatcher.dispatch({
     type: cons.actions.settings.TOGGLE_NOTIFICATIONS,
