@@ -187,12 +187,12 @@ class Settings extends EventEmitter {
       },
       [cons.actions.settings.TOGGLE_TYPING_NOTIFICATIONS]: () => {
         this.sendTypingNotifications = !this.sendTypingNotifications;
-        setSettings('hideNickAvatarEvents', this.sendTypingNotifications);
+        setSettings('sendTypingNotifications', this.sendTypingNotifications);
         this.emit(cons.events.settings.SEND_TYPING_TOGGLED, this.sendTypingNotifications);
       },
       [cons.actions.settings.TOGGLE_READ_RECEIPTS]: () => {
         this.sendReadReceipts = !this.sendReadReceipts;
-        setSettings('hideNickAvatarEvents', this.sendReadReceipts);
+        setSettings('sendReadReceipts', this.sendReadReceipts);
         this.emit(cons.events.settings.SEND_RECEIPTS_TOGGLED, this.sendReadReceipts);
       },
       [cons.actions.settings.TOGGLE_NOTIFICATIONS]: async () => {

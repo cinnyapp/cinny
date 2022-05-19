@@ -23,5 +23,5 @@ export async function markAsRead(roomId) {
   const latestEvent = getLatestValidEvent();
   if (latestEvent === null) return;
 
-  if(settings.getSendReadReceipts()) await mx.sendReadReceipt(latestEvent);
+  if (settings.getSendReadReceipts()) await mx.sendReadReceipt(latestEvent);
 }
