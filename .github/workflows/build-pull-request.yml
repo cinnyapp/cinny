@@ -21,7 +21,7 @@ jobs:
           path: dist
           retention-days: 1
       - name: Get PR info
-        uses: actions/github-script@v6.0.0
+        uses: actions/github-script@v6.1.0
         with:
           script: |
             var fs = require('fs');
