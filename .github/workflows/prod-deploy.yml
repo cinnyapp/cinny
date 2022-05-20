@@ -56,7 +56,7 @@ jobs:
         with:
           images: ajbura/cinny
       - name: Build and push Docker image
-        uses: docker/build-push-action@v2.10.0
+        uses: docker/build-push-action@v3.0.0
         with:
           context: .
           push: true
