@@ -26,6 +26,8 @@ A tarball of pre-compiled version of the app is provided with each [release](htt
 You can serve the application with a webserver of your choosing by simply copying `dist/` directory to the webroot.
 
 ### Building from source
+> We recommend using a version manager as versions change very quickly. You will likely need to switch 
+between multiple Node.js versions based on the needs of different projects you're working on. [NVM on windows](https://github.com/coreybutler/nvm-windows#installation--upgrades) on Windows and [nvm](https://github.com/nvm-sh/nvm) on Linux/macOS are pretty good choices. Also recommended nodejs version is 16.15.0 LTS.
 
 Execute the following commands to compile the app from its source code:
 
