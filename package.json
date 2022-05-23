@@ -57,7 +57,7 @@
     "browserify-fs": "^1.0.0",
     "buffer": "^6.0.3",
     "clean-webpack-plugin": "^4.0.0",
-    "copy-webpack-plugin": "^10.2.4",
+    "copy-webpack-plugin": "^11.0.0",
     "crypto-browserify": "^3.12.0",
     "css-loader": "^6.7.1",
     "css-minimizer-webpack-plugin": "^3.4.1",
