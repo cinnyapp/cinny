@@ -2776,9 +2776,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-build"
-version = "1.0.0-rc.9"
+version = "1.0.0-rc.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae2a4dfb8e5d8a5a4325fda01e9ddf327db23115dce0f54a4a3f9e8f74341f28"
+checksum = "08486bbcae11faef73a8ca6f0d57a269089c584462582d70f6a971ac1213c7b6"
 dependencies = [
  "anyhow",
  "cargo_toml",
