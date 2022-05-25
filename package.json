@@ -15,11 +15,11 @@
   "author": "Ajay Bura",
   "license": "MIT",
   "dependencies": {
-    "@tauri-apps/api": "^1.0.0-rc.5"
+    "@tauri-apps/api": "^1.0.0-rc.6"
   },
   "devDependencies": {
     "@actions/github": "^5.0.3",
-    "@tauri-apps/cli": "^1.0.0-rc.11",
+    "@tauri-apps/cli": "^1.0.0-rc.12",
     "node-fetch": "^3.2.3"
   }
 }

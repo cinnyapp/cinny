@@ -12,12 +12,12 @@ edition = "2021"
 rust-version = "1.57"
 
 [build-dependencies]
-tauri-build = { version = "1.0.0-rc.9", features = [] }
+tauri-build = { version = "1.0.0-rc.10", features = [] }
 
 [dependencies]
 serde_json = "1.0.81"
 serde = { version = "1.0.137", features = ["derive"] }
-tauri = { version = "1.0.0-rc.11", features = ["api-all", "devtools", "updater"] }
+tauri = { version = "1.0.0-rc.12", features = ["api-all", "devtools", "updater"] }
 
 [features]
 # by default Tauri runs in production mode
