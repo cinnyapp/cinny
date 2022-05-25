@@ -9,7 +9,7 @@ license = "MIT"
 repository = "https://github.com/cinnyapp/cinny-desktop"
 default-run = "cinny"
 edition = "2021"
-rust-version = "1.57"
+rust-version = "1.61"
 
 [build-dependencies]
 tauri-build = { version = "1.0.0-rc.10", features = [] }
