@@ -5,11 +5,11 @@ on:
     types: [published]
 
 jobs:
-  create-release:
+  create-release-tar:
     name: 'Create release tar'
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
+      - name: Checkout repository
         uses: actions/checkout@v3.0.2
       - name: Build
         run: |
@@ -55,7 +55,7 @@ jobs:
           NETLIFY_DEPLOY_MESSAGE: "Prod deploy v${{ github.ref }}"
           NETLIFY_DEPLOY_TO_PROD: true
 
-  push_to_dockerhub:
+  push-to-dockerhub:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     permissions:
