@@ -1,9 +1,11 @@
 <p align="center">
     <img src="https://raw.githubusercontent.com/ajbura/cinny/dev/public/res/svg/cinny.svg?sanitize=true"
         height="16">
-  <span><b>Cinny</b></span>
+    <span><b>Cinny</b></span>
 </p>
 <p align="center">
+    <a href="https://github.com/ajbura/cinny/releases">
+        <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/ajbura/cinny/total?style=social"></a>
     <a href="https://fosstodon.org/@cinnyapp">
         <img src="https://img.shields.io/mastodon/follow/106845779685925461?domain=https%3A%2F%2Ffosstodon.org&style=social"></a>
     <a href="https://twitter.com/intent/follow?screen_name=cinnyapp">
