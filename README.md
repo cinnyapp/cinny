@@ -14,8 +14,8 @@ Installers for macOS, Windows and Linux can be downloaded from [Github releases]
 Decoded pulic key:
 > RWRflTUQD3RHFtn25QNANCmePR9+4LSK89kAKTMEEB4OKpOFpLMgc64z
 
-To verify you need to download [minisign tool](https://jedisct1.github.io/minisign/) and decode the .sig file before running:
->  minisign -Vm RELEASE_FILE.msi.zip -P RWRflTUQD3RHFtn25QNANCmePR9+4LSK89kAKTMEEB4OKpOFpLMgc64z -x SINGATURE.msi.zip.sig
+To verify release files, you need to download [minisign](https://jedisct1.github.io/minisign/) tool and [decode](https://www.base64decode.org/) the *.sig* file before running:
+>  minisign -Vm ***RELEASE_FILE.msi.zip*** -P RWRflTUQD3RHFtn25QNANCmePR9+4LSK89kAKTMEEB4OKpOFpLMgc64z -x ***SINGATURE.msi.zip.sig***
 
 ## Local development
 
