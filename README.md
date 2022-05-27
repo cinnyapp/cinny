@@ -5,15 +5,15 @@
 </p>
 <p align="center">
     <a href="https://github.com/ajbura/cinny/releases">
-        <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/ajbura/cinny/total?style=social"></a>
+        <img alt="GitHub release downloads" src="https://img.shields.io/github/downloads/ajbura/cinny/total?logo=github&style=social"></a>
     <a href="https://hub.docker.com/r/ajbura/cinny">
-        <img alt="GitHub all releases" src="https://img.shields.io/docker/pulls/ajbura/cinny?logo=docker&style=social"></a>
+        <img alt="DockerHub downloads" src="https://img.shields.io/docker/pulls/ajbura/cinny?logo=docker&style=social"></a>
     <a href="https://fosstodon.org/@cinnyapp">
-        <img src="https://img.shields.io/mastodon/follow/106845779685925461?domain=https%3A%2F%2Ffosstodon.org&style=social"></a>
+        <img alt="Follow on Mastodon" src="https://img.shields.io/mastodon/follow/106845779685925461?domain=https%3A%2F%2Ffosstodon.org&logo=mastodon&style=social"></a>
     <a href="https://twitter.com/intent/follow?screen_name=cinnyapp">
-        <img src="https://img.shields.io/twitter/follow/cinnyapp?style=social&logo=twitter"></a>
+        <img alt="Follow on Twitter" src="https://img.shields.io/twitter/follow/cinnyapp?logo=twitter&style=social"></a>
     <a href="https://cinny.in/#sponsor">
-        <img src="https://img.shields.io/opencollective/all/cinny?style=social&logo=opencollective"></a>
+        <img alt="Sponsor Cinny" src="https://img.shields.io/opencollective/all/cinny?logo=opencollective&style=social"></a>
 </p>
 
 **Cinny** is a Matrix client focusing primarily on simple, elegant and secure interface. The main goal is to have a client that is easy on end user 
