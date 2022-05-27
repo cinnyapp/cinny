@@ -1,22 +1,22 @@
-# Cinny
+<p align="center">
+    <img src="https://raw.githubusercontent.com/ajbura/cinny/dev/public/res/svg/cinny.svg?sanitize=true"
+        height="16">
+  <span><b>Cinny</b></span>
+</p>
+<p align="center">
+    <a href="https://fosstodon.org/@cinnyapp">
+        <img src="https://img.shields.io/mastodon/follow/106845779685925461?domain=https%3A%2F%2Ffosstodon.org&style=social"></a>
+    <a href="https://twitter.com/intent/follow?screen_name=cinnyapp">
+        <img src="https://img.shields.io/twitter/follow/cinnyapp?style=social&logo=twitter"></a>
+    <a href="https://cinny.in/#sponsor">
+        <img src="https://img.shields.io/opencollective/all/cinny?style=social&logo=opencollective"></a>
+</p>
 
-[![Star](https://img.shields.io/github/stars/ajbura/cinny)](https://github.com/ajbura/cinny/tree/dev)
-[![Chat](https://img.shields.io/badge/chat-on%20matrix-orange)](https://matrix.to/#/#cinny:matrix.org)
-[![Twitter](https://img.shields.io/twitter/url?url=https://twitter.com/@cinnyapp)](https://twitter.com/@cinnyapp)
-[![Support](https://img.shields.io/badge/sponsor-open%20collective-blue.svg)](https://opencollective.com/cinny)
+**Cinny** is a Matrix client focusing primarily on simple, elegant and secure interface. The main goal is to have a client that is easy on end user 
+and feels a modern chat application.
 
-## Table of Contents
-
-- [About](#about)
-- [Getting Started](https://cinny.in)
 - [Contributing](./CONTRIBUTING.md)
 - [Roadmap](https://github.com/ajbura/cinny/projects/11)
-
-## About <a name = "about"></a>
-
-Cinny is a [Matrix](https://matrix.org) client focusing primarily on simple, elegant and secure interface.
-
-![preview](https://github.com/cinnyapp/cinny-site/blob/main/assets/preview-light.png)
 
 ## Building and Running
 
@@ -86,7 +86,7 @@ npm run build # Compiles the app into the dist/ directory
 
 You can then copy the files to a webserver's webroot of your choice.
 
-To serve a development version of the app locally for testing, you may also use the command `npm start`.
+To serve a development version of the app locally for testing, you need to use the command `npm start`.
 
 ### Running with Docker
 
