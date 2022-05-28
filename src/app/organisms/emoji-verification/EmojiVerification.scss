@@ -1,0 +1,35 @@
+@use '../../partials/flex';
+@use '../../partials/dir';
+
+.emoji-verification {
+  &__content {
+    padding: var(--sp-normal);
+    @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-normal);
+  }
+
+  &__emojis {
+    margin: var(--sp-loose) 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: var(--sp-extra-tight);
+    flex-wrap: wrap;
+  }
+
+  &__emoji-block {
+    @extend .cp-fx__column;
+    flex: 1;
+    align-items: center;
+    gap: var(--sp-extra-tight);
+    white-space: nowrap;
+    text-transform: capitalize;
+  }
+
+  &__buttons {
+    display: flex;
+    gap: var(--sp-normal);
+  }
+}

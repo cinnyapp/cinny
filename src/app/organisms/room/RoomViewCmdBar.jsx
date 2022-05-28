@@ -44,7 +44,9 @@ const commands = [{
 }, {
   name: 'leave',
   description: 'Leave current room',
-  exe: (roomId) => roomActions.leave(roomId),
+  exe: (roomId) => {
+    roomActions.leave(roomId);
+  },
 }, {
   name: 'invite',
   isOptions: true,

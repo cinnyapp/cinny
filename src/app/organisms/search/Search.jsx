@@ -199,7 +199,7 @@ function Search() {
 
   return (
     <RawModal
-      className="search-dialog__model dialog-model"
+      className="search-dialog__modal dialog-modal"
       isOpen={isOpen}
       onAfterOpen={handleAfterOpen}
       onAfterClose={handleAfterClose}

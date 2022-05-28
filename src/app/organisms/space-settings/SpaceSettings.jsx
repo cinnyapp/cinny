@@ -36,6 +36,7 @@ import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
 import CategoryIC from '../../../../public/res/ic/outlined/category.svg';
 import CategoryFilledIC from '../../../../public/res/ic/filled/category.svg';
 
+import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 const tabText = {
@@ -61,6 +62,7 @@ const tabItems = [{
 function GeneralSettings({ roomId }) {
   const isPinned = initMatrix.accountData.spaceShortcut.has(roomId);
   const isCategorized = initMatrix.accountData.categorizedSpaces.has(roomId);
+  const roomName = initMatrix.matrixClient.getRoom(roomId)?.name;
   const [, forceUpdate] = useForceUpdate();
 
   return (
@@ -89,10 +91,14 @@ function GeneralSettings({ roomId }) {
         </MenuItem>
         <MenuItem
           variant="danger"
-          onClick={() => {
-            if (confirm('Are you sure that you want to leave this space?')) {
-              leave(roomId);
-            }
+          onClick={async () => {
+            const isConfirmed = await confirmDialog(
+              'Leave space',
+              `Are you sure that you want to leave "${roomName}" space?`,
+              'Leave',
+              'danger',
+            );
+            if (isConfirmed) leave(roomId);
           }}
           iconSrc={LeaveArrowIC}
         >

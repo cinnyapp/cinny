@@ -54,17 +54,20 @@ function InviteList({ isOpen, onRequestClose }) {
   }, [procInvite]);
 
   function renderRoomTile(roomId) {
-    const myRoom = initMatrix.matrixClient.getRoom(roomId);
+    const mx = initMatrix.matrixClient;
+    const myRoom = mx.getRoom(roomId);
+    if (!myRoom) return null;
     const roomName = myRoom.name;
     let roomAlias = myRoom.getCanonicalAlias();
-    if (roomAlias === null) roomAlias = myRoom.roomId;
+    if (!roomAlias) roomAlias = myRoom.roomId;
+    const inviterName = myRoom.getMember(mx.getUserId())?.events?.member?.getSender?.() ?? '';
     return (
       <RoomTile
         key={myRoom.roomId}
         name={roomName}
         avatarSrc={initMatrix.matrixClient.getRoom(roomId).getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop')}
         id={roomAlias}
-        inviterName={myRoom.getJoinedMembers()[0].userId}
+        inviterName={inviterName}
         options={
           procInvite.has(myRoom.roomId)
             ? (<Spinner size="small" />)
@@ -95,12 +98,13 @@ function InviteList({ isOpen, onRequestClose }) {
         {
           Array.from(initMatrix.roomList.inviteDirects).map((roomId) => {
             const myRoom = initMatrix.matrixClient.getRoom(roomId);
+            if (myRoom === null) return null;
             const roomName = myRoom.name;
             return (
               <RoomTile
                 key={myRoom.roomId}
                 name={roomName}
-                id={myRoom.getDMInviter()}
+                id={myRoom.getDMInviter() || roomId}
                 options={
                   procInvite.has(myRoom.roomId)
                     ? (<Spinner size="small" />)

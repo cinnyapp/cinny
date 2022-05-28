@@ -113,17 +113,19 @@ async function join(roomIdOrAlias, isDM, via) {
  * @param {string} roomId
  * @param {boolean} isDM
  */
-function leave(roomId) {
+async function leave(roomId) {
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
-  mx.leave(roomId)
-    .then(() => {
-      appDispatcher.dispatch({
-        type: cons.actions.room.LEAVE,
-        roomId,
-        isDM,
-      });
-    }).catch();
+  try {
+    await mx.leave(roomId);
+    appDispatcher.dispatch({
+      type: cons.actions.room.LEAVE,
+      roomId,
+      isDM,
+    });
+  } catch {
+    console.error('Unable to leave room.');
+  }
 }
 
 async function create(options, isDM = false) {

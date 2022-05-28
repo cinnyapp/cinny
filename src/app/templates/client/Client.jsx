@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Client.scss';
 
 import { initHotkeys } from '../../../client/event/hotkeys';
@@ -23,6 +23,29 @@ function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
+  const classNameHidden = 'client__item-hidden';
+
+  const navWrapperRef = useRef(null);
+  const roomWrapperRef = useRef(null);
+
+  function onRoomSelected() {
+    navWrapperRef.current?.classList.add(classNameHidden);
+    roomWrapperRef.current?.classList.remove(classNameHidden);
+  }
+  function onNavigationSelected() {
+    navWrapperRef.current?.classList.remove(classNameHidden);
+    roomWrapperRef.current?.classList.add(classNameHidden);
+  }
+
+  useEffect(() => {
+    navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
+    navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
+
+    return (() => {
+      navigation.removeListener(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
+      navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
+    });
+  }, []);
 
   useEffect(() => {
     let counter = 0;
@@ -128,10 +151,10 @@ function Client() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="navigation__wrapper">
+      <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation />
       </div>
-      <div className="room__wrapper">
+      <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
         <Room />
       </div>
       <Windows />

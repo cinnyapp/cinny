@@ -36,6 +36,7 @@ import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 import ChevronTopIC from '../../../../public/res/ic/outlined/chevron-top.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
+import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 const tabText = {
   GENERAL: 'General',
@@ -85,10 +86,15 @@ function GeneralSettings({ roomId }) {
         </MenuItem>
         <MenuItem
           variant="danger"
-          onClick={() => {
-            if (confirm('Are you sure that you want to leave this room?')) {
-              roomActions.leave(roomId);
-            }
+          onClick={async () => {
+            const isConfirmed = await confirmDialog(
+              'Leave room',
+              `Are you sure that you want to leave "${room.name}" room?`,
+              'Leave',
+              'danger',
+            );
+            if (!isConfirmed) return;
+            roomActions.leave(roomId);
           }}
           iconSrc={LeaveArrowIC}
         >

@@ -58,7 +58,8 @@ function PopupWindow({
 
   return (
     <RawModal
-      className={`${className === null ? '' : `${className} `}pw-model`}
+      className={`${className === null ? '' : `${className} `}pw-modal`}
+      overlayClassName="pw-modal__overlay"
       isOpen={isOpen}
       onAfterClose={onAfterClose}
       onRequestClose={onRequestClose}

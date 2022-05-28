@@ -26,6 +26,8 @@ import ImportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/Impor
 import ExportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ExportE2ERoomKeys';
 
 import ProfileEditor from '../profile-editor/ProfileEditor';
+import CrossSigning from './CrossSigning';
+import KeyBackup from './KeyBackup';
 import DeviceManage from './DeviceManage';
 
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
@@ -36,6 +38,7 @@ import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
+import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 function AppearanceSection() {
   const [, updateState] = useState({});
@@ -168,18 +171,13 @@ function SecuritySection() {
   return (
     <div className="settings-security">
       <div className="settings-security__card">
-        <MenuHeader>Session Info</MenuHeader>
-        <SettingTile
-          title={`Session ID: ${initMatrix.matrixClient.getDeviceId()}`}
-        />
-        <SettingTile
-          title={`Session key: ${initMatrix.matrixClient.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
-          content={<Text variant="b3">Use this session ID-key combo to verify or manage this session.</Text>}
-        />
+        <MenuHeader>Cross signing and backup</MenuHeader>
+        <CrossSigning />
+        <KeyBackup />
       </div>
       <DeviceManage />
       <div className="settings-security__card">
-        <MenuHeader>Encryption</MenuHeader>
+        <MenuHeader>Export/Import encryption keys</MenuHeader>
         <SettingTile
           title="Export E2E room keys"
           content={(
@@ -247,7 +245,7 @@ function AboutSection() {
   );
 }
 
-const tabText = {
+export const tabText = {
   APPEARANCE: 'Appearance',
   NOTIFICATIONS: 'Notifications',
   SECURITY: 'Security',
@@ -300,8 +298,10 @@ function Settings() {
   const [isOpen, requestClose] = useWindowToggle(setSelectedTab);
 
   const handleTabChange = (tabItem) => setSelectedTab(tabItem);
-  const handleLogout = () => {
-    if (confirm('Confirm logout')) logout();
+  const handleLogout = async () => {
+    if (await confirmDialog('Logout', 'Are you sure that you want to logout your session?', 'Logout', 'danger')) {
+      logout();
+    }
   };
 
   return (

@@ -93,12 +93,13 @@ function Homeserver({ onChange }) {
       const result = await (await fetch(configFileUrl, { method: 'GET' })).json();
       const selectedHs = result?.defaultHomeserver;
       const hsList = result?.homeserverList;
+      const allowCustom = result?.allowCustomHomeservers ?? true;
       if (!hsList?.length > 0 || selectedHs < 0 || selectedHs >= hsList?.length) {
         throw new Error();
       }
-      setHs({ selected: hsList[selectedHs], list: hsList });
+      setHs({ selected: hsList[selectedHs], list: hsList, allowCustom: allowCustom });
     } catch {
-      setHs({ selected: 'matrix.org', list: ['matrix.org'] });
+      setHs({ selected: 'matrix.org', list: ['matrix.org'], allowCustom: true });
     }
   }, []);
 
@@ -106,14 +107,15 @@ function Homeserver({ onChange }) {
     const { value } = e.target;
     setProcess({ isLoading: false });
     debounce._(async () => {
-      setHs({ selected: value.trim(), list: hs.list });
+      setHs({ ...hs, selected: value.trim() });
     }, 700)();
   };
 
   return (
     <>
       <div className="homeserver-form">
-        <Input name="homeserver" onChange={handleHsInput} value={hs?.selected} forwardRef={hsRef} label="Homeserver" />
+        <Input name="homeserver" onChange={handleHsInput} value={hs?.selected} forwardRef={hsRef} label="Homeserver"
+          disabled={hs === null || !hs.allowCustom} />
         <ContextMenu
           placement="right"
           content={(hideMenu) => (
@@ -126,7 +128,7 @@ function Homeserver({ onChange }) {
                     onClick={() => {
                       hideMenu();
                       hsRef.current.value = hsName;
-                      setHs({ selected: hsName, list: hs.list });
+                      setHs({ ...hs, selected: hsName });
                     }}
                   >
                     {hsName}

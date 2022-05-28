@@ -1,5 +1,6 @@
 @use '../../partials/flex';
 @use '../../partials/dir';
+@use '../../partials/screen';
 
 .room-header__btn {
   min-width: 0;
@@ -23,5 +24,24 @@
     background-color: var(--bg-surface-active);
     box-shadow: var(--bs-surface-outline);
     outline: none;
+  }
+}
+
+.room-header__drawer-btn {
+  @include screen.smallerThan(tabletBreakpoint) {
+    display: none;
+  }
+}
+.room-header__members-btn {
+  @include screen.biggerThan(tabletBreakpoint) {
+    display: none;
+  }
+}
+
+.room-header__back-btn {
+  @include dir.side(margin, 0, var(--sp-tight));
+
+  @include screen.biggerThan(mobileBreakpoint) {
+    display: none;
   }
 }

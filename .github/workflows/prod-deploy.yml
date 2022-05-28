@@ -5,14 +5,48 @@ on:
     types: [published]
 
 jobs:
-  deploy-to-netlify:
-    name: 'Deploy to Netlify'
+  create-release-tar:
+    name: 'Create release tar'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.0.1
+        uses: actions/checkout@v3.0.2
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+      - name: Get version from tag
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      - name: Create tar.gz
+        run: tar -czvf cinny-${{ steps.vars.outputs.tag }}.tar.gz dist
+      - name: Sign tar.gz
+        run: |
+          echo '${{ secrets.GNUPG_KEY }}' | gpg --batch --import
+          # Sadly a few lines in the private key match a few lines in the public key,
+          # As a result just --export --armor gives us a few lines replaced with ***
+          # making it useless for importing the signing key. Instead, we dump it as
+          # non-armored and hex-encode it so that its printable.
+          echo "PGP Signing key, in raw PGP format in hex. Import with cat ... | xxd -r -p - | gpg --import"
+          gpg --export | xxd -p
+          echo '${{ secrets.GNUPG_PASSPHRASE }}' | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign cinny-${{ steps.vars.outputs.tag }}.tar.gz
+      - name: Upload tagged release
+        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+        with:
+          files: |
+            cinny-${{ steps.vars.outputs.tag }}.tar.gz
+            cinny-${{ steps.vars.outputs.tag }}.tar.gz.asc
+
+  deploy-to-netlify:
+    name: 'Deploy to Netlify'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.2
       - name: Build and deploy to Netlify
-        uses: jsmrcaga/action-netlify-deploy@v1.7.2
+        uses: jsmrcaga/action-netlify-deploy@fb6a5f936a4b06a8f7793e69fc5a022ffe39807a
         with:
           install_command: "npm ci"
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
@@ -20,39 +54,31 @@ jobs:
           BUILD_DIRECTORY: "dist"
           NETLIFY_DEPLOY_MESSAGE: "Prod deploy v${{ github.ref }}"
           NETLIFY_DEPLOY_TO_PROD: true
-      - name: Get version from tag
-        id: vars
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
-      - name: Create tar.gz
-        run: tar -czvf cinny-${{ steps.vars.outputs.tag }}.tar.gz dist
-      - name: Upload tagged release
-        uses: softprops/action-gh-release@v0.1.14
-        with:
-          files: |
-            cinny-${{ steps.vars.outputs.tag }}.tar.gz
 
-  push_to_dockerhub:
+  push-to-dockerhub:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.0.1
+        uses: actions/checkout@v3.0.2
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1.2.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1.6.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v1.14.1
+        uses: docker/login-action@v2.0.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v3.7.0
+        uses: docker/metadata-action@v4.0.1
         with:
           images: ajbura/cinny
       - name: Build and push Docker image
-        uses: docker/build-push-action@v2.10.0
+        uses: docker/build-push-action@v3.0.0
         with:
           context: .
           platforms: linux/amd64,linux/arm64

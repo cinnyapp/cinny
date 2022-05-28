@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './RoomIntro.scss';
 
-import { twemojify } from '../../../util/twemojify';
 import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
@@ -15,8 +14,8 @@ function RoomIntro({
     <div className="room-intro">
       <Avatar imageSrc={avatarSrc} text={name} bgColor={colorMXID(roomId)} size="large" />
       <div className="room-intro__content">
-        <Text className="room-intro__name" variant="h1" weight="medium" primary>{twemojify(heading)}</Text>
-        <Text className="room-intro__desc" variant="b1">{twemojify(desc, undefined, true)}</Text>
+        <Text className="room-intro__name" variant="h1" weight="medium" primary>{heading}</Text>
+        <Text className="room-intro__desc" variant="b1">{desc}</Text>
         { time !== null && <Text className="room-intro__time" variant="b3">{time}</Text>}
       </div>
     </div>
@@ -35,9 +34,9 @@ RoomIntro.propTypes = {
     PropTypes.bool,
   ]),
   name: PropTypes.string.isRequired,
-  heading: PropTypes.string.isRequired,
-  desc: PropTypes.string.isRequired,
-  time: PropTypes.string,
+  heading: PropTypes.node.isRequired,
+  desc: PropTypes.node.isRequired,
+  time: PropTypes.node,
 };
 
 export default RoomIntro;

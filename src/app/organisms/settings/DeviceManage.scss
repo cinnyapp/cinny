@@ -15,4 +15,32 @@
   & .setting-tile:last-of-type {
      border-bottom: none;
   }
+  & .setting-tile__options {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-ultra-tight);
+    & .btn-positive {
+      padding: 6px var(--sp-tight);
+      min-width: 0;
+    }
+  }
+
+  &__current-label {
+    margin: 0 var(--sp-extra-tight);
+    padding: 2px var(--sp-ultra-tight);
+    color: var(--bg-surface);
+    background-color: var(--tc-surface-low);
+    border-radius: 4px;
+  }
+
+  &__rename {
+    padding: var(--sp-normal);
+    & > *:not(:last-child) {
+      margin-bottom: var(--sp-normal);
+    }
+    &-btn {
+      display: flex;
+      gap: var(--sp-normal);
+    }
+  }
 }

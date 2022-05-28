@@ -42,12 +42,15 @@ function Drawer() {
   const [spaceId] = useSelectedSpace();
   const [, forceUpdate] = useForceUpdate();
   const scrollRef = useRef(null);
+  const { roomList } = initMatrix;
 
   useEffect(() => {
-    const { roomList } = initMatrix;
-    roomList.on(cons.events.roomList.ROOMLIST_UPDATED, forceUpdate);
+    const handleUpdate = () => {
+      forceUpdate();
+    };
+    roomList.on(cons.events.roomList.ROOMLIST_UPDATED, handleUpdate);
     return () => {
-      roomList.removeListener(cons.events.roomList.ROOMLIST_UPDATED, forceUpdate);
+      roomList.removeListener(cons.events.roomList.ROOMLIST_UPDATED, handleUpdate);
     };
   }, []);
 
@@ -61,14 +64,16 @@ function Drawer() {
     <div className="drawer">
       <DrawerHeader selectedTab={selectedTab} spaceId={spaceId} />
       <div className="drawer__content-wrapper">
-        {navigation.selectedSpacePath.length > 1 && <DrawerBreadcrumb spaceId={spaceId} />}
+        {navigation.selectedSpacePath.length > 1 && selectedTab !== cons.tabs.DIRECTS && (
+          <DrawerBreadcrumb spaceId={spaceId} />
+        )}
         <div className="rooms__wrapper">
           <ScrollView ref={scrollRef} autoHide>
             <div className="rooms-container">
               {
                 selectedTab !== cons.tabs.DIRECTS
                   ? <Home spaceId={spaceId} />
-                  : <Directs />
+                  : <Directs size={roomList.directs.size} />
               }
             </div>
           </ScrollView>

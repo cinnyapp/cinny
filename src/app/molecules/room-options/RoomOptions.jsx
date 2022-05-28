@@ -15,6 +15,8 @@ import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 
+import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
+
 function RoomOptions({ roomId, afterOptionSelect }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
@@ -29,11 +31,16 @@ function RoomOptions({ roomId, afterOptionSelect }) {
     openInviteUser(roomId);
     afterOptionSelect();
   };
-  const handleLeaveClick = () => {
-    if (confirm('Are you sure that you want to leave this room?')) {
-      roomActions.leave(roomId);
-      afterOptionSelect();
-    }
+  const handleLeaveClick = async () => {
+    afterOptionSelect();
+    const isConfirmed = await confirmDialog(
+      'Leave room',
+      `Are you sure that you want to leave "${room.name}" room?`,
+      'Leave',
+      'danger',
+    );
+    if (!isConfirmed) return;
+    roomActions.leave(roomId);
   };
 
   return (

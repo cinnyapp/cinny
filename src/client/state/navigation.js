@@ -14,7 +14,7 @@ class Navigation extends EventEmitter {
     this.isRoomSettings = false;
     this.recentRooms = [];
 
-    this.isRawModalVisible = false;
+    this.rawModelStack = [];
   }
 
   _setSpacePath(roomId) {
@@ -47,8 +47,13 @@ class Navigation extends EventEmitter {
     }
   }
 
+  get isRawModalVisible() {
+    return this.rawModelStack.length > 0;
+  }
+
   setIsRawModalVisible(visible) {
-    this.isRawModalVisible = visible;
+    if (visible) this.rawModelStack.push(true);
+    else this.rawModelStack.pop();
   }
 
   navigate(action) {
@@ -122,6 +127,12 @@ class Navigation extends EventEmitter {
           action.parentId,
         );
       },
+      [cons.actions.navigation.OPEN_JOIN_ALIAS]: () => {
+        this.emit(
+          cons.events.navigation.JOIN_ALIAS_OPENED,
+          action.term,
+        );
+      },
       [cons.actions.navigation.OPEN_INVITE_USER]: () => {
         this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId, action.searchTerm);
       },
@@ -130,6 +141,9 @@ class Navigation extends EventEmitter {
       },
       [cons.actions.navigation.OPEN_SETTINGS]: () => {
         this.emit(cons.events.navigation.SETTINGS_OPENED, action.tabText);
+      },
+      [cons.actions.navigation.OPEN_NAVIGATION]: () => {
+        this.emit(cons.events.navigation.NAVIGATION_OPENED);
       },
       [cons.actions.navigation.OPEN_EMOJIBOARD]: () => {
         this.emit(
@@ -180,6 +194,13 @@ class Navigation extends EventEmitter {
           action.title,
           action.render,
           action.afterClose,
+        );
+      },
+      [cons.actions.navigation.OPEN_EMOJI_VERIFICATION]: () => {
+        this.emit(
+          cons.events.navigation.EMOJI_VERIFICATION_OPENED,
+          action.request,
+          action.targetDevice,
         );
       },
     };

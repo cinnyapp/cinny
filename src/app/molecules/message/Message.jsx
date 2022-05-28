@@ -36,6 +36,8 @@ import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import CmdIC from '../../../../public/res/ic/outlined/cmd.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
+import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
+
 function PlaceholderMessage() {
   return (
     <div className="ph-msg">
@@ -121,17 +123,26 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
         const eTimeline = await mx.getEventTimeline(timelineSet, eventId);
         await roomTimeline.decryptAllEventsOfTimeline(eTimeline);
 
-        const mEvent = eTimeline.getTimelineSet().findEventById(eventId);
+        let mEvent = eTimeline.getTimelineSet().findEventById(eventId);
+        const editedList = roomTimeline.editedTimeline.get(mEvent.getId());
+        if (editedList) {
+          mEvent = editedList[editedList.length - 1];
+        }
 
         const rawBody = mEvent.getContent().body;
         const username = getUsernameOfRoomMember(mEvent.sender);
 
         if (isMountedRef.current === false) return;
         const fallbackBody = mEvent.isRedacted() ? '*** This message has been deleted ***' : '*** Unable to load reply ***';
+        let parsedBody = parseReply(rawBody)?.body ?? rawBody ?? fallbackBody;
+        if (editedList && parsedBody.startsWith(' * ')) {
+          parsedBody = parsedBody.slice(3);
+        }
+
         setReply({
           to: username,
           color: colorMXID(mEvent.getSender()),
-          body: parseReply(rawBody)?.body ?? rawBody ?? fallbackBody,
+          body: parsedBody,
           event: mEvent,
         });
       } catch {
@@ -189,7 +200,7 @@ const MessageBody = React.memo(({
   let content = null;
   if (isCustomHTML) {
     try {
-      content = twemojify(sanitizeCustomHtml(body), undefined, true, false);
+      content = twemojify(sanitizeCustomHtml(body), undefined, true, false, true);
     } catch {
       console.error('Malformed custom html: ', body);
       content = twemojify(body, undefined);
@@ -546,10 +557,15 @@ const MessageOptions = React.memo(({
                 <MenuItem
                   variant="danger"
                   iconSrc={BinIC}
-                  onClick={() => {
-                    if (window.confirm('Are you sure that you want to delete this event?')) {
-                      redactEvent(roomId, mEvent.getId());
-                    }
+                  onClick={async () => {
+                    const isConfirmed = await confirmDialog(
+                      'Delete message',
+                      'Are you sure that you want to delete this message?',
+                      'Delete',
+                      'danger',
+                    );
+                    if (!isConfirmed) return;
+                    redactEvent(roomId, mEvent.getId());
                   }}
                 >
                   Delete

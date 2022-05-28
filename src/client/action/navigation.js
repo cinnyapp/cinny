@@ -23,6 +23,13 @@ export function selectRoom(roomId, eventId) {
   });
 }
 
+// Open navigation on compact screen sizes
+export function openNavigation() {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_NAVIGATION,
+  });
+}
+
 export function openSpaceSettings(roomId, tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SPACE_SETTINGS,
@@ -76,6 +83,13 @@ export function openCreateRoom(isSpace = false, parentId = null) {
     type: cons.actions.navigation.OPEN_CREATE_ROOM,
     isSpace,
     parentId,
+  });
+}
+
+export function openJoinAlias(term) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_JOIN_ALIAS,
+    term,
   });
 }
 
@@ -157,5 +171,13 @@ export function openReusableDialog(title, render, afterClose) {
     title,
     render,
     afterClose,
+  });
+}
+
+export function openEmojiVerification(request, targetDevice) {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.OPEN_EMOJI_VERIFICATION,
+    request,
+    targetDevice,
   });
 }
