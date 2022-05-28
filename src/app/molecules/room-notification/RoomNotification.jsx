@@ -20,7 +20,7 @@ const items = [{
   type: cons.notifs.DEFAULT,
 }, {
   iconSrc: BellRingIC,
-  text: 'All message',
+  text: 'All messages',
   type: cons.notifs.ALL_MESSAGES,
 }, {
   iconSrc: BellPingIC,
