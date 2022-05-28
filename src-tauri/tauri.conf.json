@@ -62,7 +62,8 @@
         "height": 724,
         "center": true,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "fileDropEnabled": false
       }
     ],
     "security": {
