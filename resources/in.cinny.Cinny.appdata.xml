@@ -47,6 +47,7 @@
   </screenshots>
 
   <releases>
+      <release version="2.0.4" date="2022-05-29"/>
       <release version="2.0.3" date="2022-05-15"/>
   </releases>
   <content_rating type="oars-1.1"/>
