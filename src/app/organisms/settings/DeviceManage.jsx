@@ -155,6 +155,7 @@ function DeviceManage() {
     const lastIP = device.last_seen_ip;
     const lastTS = device.last_seen_ts;
     const isCurrentDevice = mx.deviceId === deviceId;
+    const canVerify = isVerified === false && (isMeVerified || isCurrentDevice);
 
     return (
       <SettingTile
@@ -171,7 +172,7 @@ function DeviceManage() {
             ? <Spinner size="small" />
             : (
               <>
-                {((isMeVerified && isVerified === false) || (isCurrentDevice && isVerified === false)) && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">Verify</Button>}
+                {(isCSEnabled && canVerify) && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">Verify</Button>}
                 <IconButton size="small" onClick={() => handleRename(device)} src={PencilIC} tooltip="Rename" />
                 <IconButton size="small" onClick={() => handleRemove(device)} src={BinIC} tooltip="Remove session" />
               </>
