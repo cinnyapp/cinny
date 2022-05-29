@@ -2,7 +2,7 @@
 
 [package]
 name = "cinny"
-version = "2.0.3"
+version = "2.0.4"
 description = "Yet another matrix client"
 authors = ["Ajay Bura"]
 license = "MIT"
