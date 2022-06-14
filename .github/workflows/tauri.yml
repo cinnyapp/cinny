@@ -39,7 +39,7 @@ jobs:
     - name: Install tauri dependencies
       run: npm ci
     - name: Build desktop app with Tauri
-      uses: tauri-apps/tauri-action@v0.3.0
+      uses: tauri-apps/tauri-action@v0.3.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
