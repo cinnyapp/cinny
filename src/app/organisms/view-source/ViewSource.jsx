@@ -12,6 +12,9 @@ import PopupWindow from '../../molecules/popup-window/PopupWindow';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function ViewSourceBlock({ title, json }) {
   return (
     <div className="view-source__card">
@@ -34,6 +37,7 @@ ViewSourceBlock.propTypes = {
 function ViewSource() {
   const [isOpen, setIsOpen] = useState(false);
   const [event, setEvent] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const loadViewSource = (e) => {
@@ -52,18 +56,18 @@ function ViewSource() {
 
   const renderViewSource = () => (
     <div className="view-source">
-      {event.isEncrypted() && <ViewSourceBlock title="Decrypted source" json={event.getEffectiveEvent()} />}
-      <ViewSourceBlock title="Original source" json={event.event} />
+      {event.isEncrypted() && <ViewSourceBlock title={t("view_source.decrypted_source")} json={event.getEffectiveEvent()} />}
+      <ViewSourceBlock title={t("view_source.original_source")} json={event.event} />
     </div>
   );
 
   return (
     <PopupWindow
       isOpen={isOpen}
-      title="View source"
+      title={t("view_source.title")}
       onAfterClose={handleAfterClose}
       onRequestClose={() => setIsOpen(false)}
-      contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
+      contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip={t("common.close")} />}
     >
       {event ? renderViewSource() : <div />}
     </PopupWindow>

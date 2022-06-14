@@ -1,0 +1,34 @@
+{
+    "common" : {
+        "close": "Close",
+        "leave": "Leave",
+        "options": "Options"
+    },
+    "welcome": {
+        "heading": "Welcome to Cinny!",
+        "subheading": "Yet another Matrix client"
+    },
+    "view_source":{
+        "title": "View Source",
+        "original_source": "Original source",
+        "decrypted_source": "Decrypted source"
+    },
+    "space_settings":{
+        "subtitle": "space settings",
+        "leave":{
+            "leave_space": "Leave Space",
+            "leave_dialog_title": "Leave Space",
+            "leave_dialog_message": "Are you sure you want to leave {{space}}?"
+        },
+        "visibility":{
+            "header": "Space visibility (who can join)"
+        },
+        "addresses": {
+            "header": "Space addresses"
+        },
+        "categorize_subspaces": "Categorize subspaces",
+        "uncategorize_subspaces": "Uncategorize subspaces",
+        "pin_sidebar": "Pin to sidebar",
+        "unpin_sidebar": "Unpin from sidebar"
+    }
+}

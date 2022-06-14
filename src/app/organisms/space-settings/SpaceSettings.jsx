@@ -39,6 +39,10 @@ import CategoryFilledIC from '../../../../public/res/ic/filled/category.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
+
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 const tabText = {
   GENERAL: 'General',
   MEMBERS: 'Members',
@@ -65,10 +69,12 @@ function GeneralSettings({ roomId }) {
   const roomName = initMatrix.matrixClient.getRoom(roomId)?.name;
   const [, forceUpdate] = useForceUpdate();
 
+  const { t } = useTranslation();
+
   return (
     <>
       <div className="room-settings__card">
-        <MenuHeader>Options</MenuHeader>
+        <MenuHeader>{t("common.options")}</MenuHeader>
         <MenuItem
           onClick={() => {
             if (isCategorized) unCategorizeSpace(roomId);
@@ -77,7 +83,7 @@ function GeneralSettings({ roomId }) {
           }}
           iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}
         >
-          {isCategorized ? 'Uncategorize subspaces' : 'Categorize subspaces'}
+          {isCategorized ? t("space_settings.uncategorize_subspaces") : t("space_settings.categorize_subspaces")}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -87,30 +93,30 @@ function GeneralSettings({ roomId }) {
           }}
           iconSrc={isPinned ? PinFilledIC : PinIC}
         >
-          {isPinned ? 'Unpin from sidebar' : 'Pin to sidebar'}
+          {isPinned ? t("space_settings.unpin_sidebar") : t("space_settings.pin_sidebar")}
         </MenuItem>
         <MenuItem
           variant="danger"
           onClick={async () => {
             const isConfirmed = await confirmDialog(
-              'Leave space',
-              `Are you sure that you want to leave "${roomName}" space?`,
-              'Leave',
+              t("space_settings.leave.leave_dialog_title"),
+              t("space_settings.leave.leave_dialog_message", {space: roomName}),
+              t("space_settings.leave.leave_space"),
               'danger',
             );
             if (isConfirmed) leave(roomId);
           }}
           iconSrc={LeaveArrowIC}
         >
-          Leave
+          {t("space_settings.leave.leave_space")}
         </MenuItem>
       </div>
       <div className="space-settings__card">
-        <MenuHeader>Space visibility (who can join)</MenuHeader>
+        <MenuHeader>{t("space_settings.visibility.header")}</MenuHeader>
         <RoomVisibility roomId={roomId} />
       </div>
       <div className="space-settings__card">
-        <MenuHeader>Space addresses</MenuHeader>
+        <MenuHeader>{t("space_settings.addresses.header")}</MenuHeader>
         <RoomAliases roomId={roomId} />
       </div>
     </>
@@ -154,6 +160,8 @@ function SpaceSettings() {
     setSelectedTab(tabItem);
   };
 
+  const { t } = useTranslation();
+
   return (
     <PopupWindow
       isOpen={isOpen}
@@ -161,10 +169,10 @@ function SpaceSettings() {
       title={(
         <Text variant="s1" weight="medium" primary>
           {isOpen && twemojify(room.name)}
-          <span style={{ color: 'var(--tc-surface-low)' }}> — space settings</span>
+          <span style={{ color: 'var(--tc-surface-low)' }}> — {t("space_settings.subtitle")}</span>
         </Text>
       )}
-      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
+      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />}
       onRequestClose={requestClose}
     >
       {isOpen && (

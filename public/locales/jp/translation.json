@@ -1,0 +1,9 @@
+{
+    "common":{
+        "close": "閉める",
+        "leave": "残す"
+    },
+    "welcome":{
+        "heading": "いらっしゃいませ"
+    }
+}
