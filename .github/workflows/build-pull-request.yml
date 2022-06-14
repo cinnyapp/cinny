@@ -15,7 +15,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3.3.0
         with:
-          node-version: 16
+          node-version: 17.9.0
       - name: Build app
         run: npm ci && npm run build
       - name: Upload artifact
