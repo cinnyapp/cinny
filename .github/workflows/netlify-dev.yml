@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 17.9.0
       - name: Build and deploy to Netlify
-        uses: jsmrcaga/action-netlify-deploy@fb6a5f936a4b06a8f7793e69fc5a022ffe39807a
+        uses: jsmrcaga/action-netlify-deploy@53de32e559b0b3833615b9788c7a090cd2fddb03
         with:
           install_command: "npm ci"
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
