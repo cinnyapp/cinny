@@ -44,26 +44,23 @@ import '../../i18n.jsx'
 import { useTranslation } from 'react-i18next';
 
 const tabText = {
-  GENERAL: 'settings.tabs.general',
-  MEMBERS: 'settings.tabs.members',
-  PERMISSIONS: 'settings.tabs.permission',
+  GENERAL: 'General',
+  MEMBERS: 'Members',
+  PERMISSIONS: 'Permissions',
 };
 
 const tabItems = [{
   iconSrc: SettingsIC,
   text: tabText.GENERAL,
-  translate: true,
   disabled: false,
 }, {
   iconSrc: UserIC,
   text: tabText.MEMBERS,
-  translate: true,
   disabled: false,
 }, {
   iconSrc: ShieldUserIC,
   text: tabText.PERMISSIONS,
   disabled: false,
-  translate: true
 }];
 
 function GeneralSettings({ roomId }) {

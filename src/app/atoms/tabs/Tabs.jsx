@@ -5,9 +5,6 @@ import './Tabs.scss';
 import Button from '../button/Button';
 import ScrollView from '../scroll/ScrollView';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-
 function TabItem({
   selected, iconSrc,
   onClick, children, disabled,
@@ -44,8 +41,6 @@ TabItem.propTypes = {
 function Tabs({ items, defaultSelected, onSelect }) {
   const [selectedItem, setSelectedItem] = useState(items[defaultSelected]);
 
-  const { t } = useTranslation();
-
   const handleTabSelection = (item, index) => {
     if (selectedItem === item) return;
     setSelectedItem(item);
@@ -64,7 +59,7 @@ function Tabs({ items, defaultSelected, onSelect }) {
               disabled={item.disabled}
               onClick={() => handleTabSelection(item, index)}
             >
-              {(item.translate != undefined && item.translate) ? t(item.text) : item.text}
+              {item.text}
             </TabItem>
           ))}
         </div>
