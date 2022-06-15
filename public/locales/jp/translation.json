@@ -5,5 +5,12 @@
     },
     "welcome":{
         "heading": "いらっしゃいませ"
+    },
+    "settings":{
+        "tabs": {
+            "general": "一般",
+            "members": "ユーザー",
+            "permission": "許可"
+        }
     }
 }

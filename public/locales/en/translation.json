@@ -30,5 +30,12 @@
         "uncategorize_subspaces": "Uncategorize subspaces",
         "pin_sidebar": "Pin to sidebar",
         "unpin_sidebar": "Unpin from sidebar"
+    },
+    "settings":{
+        "tabs": {
+            "general": "General",
+            "members": "Members",
+            "permission": "Permissions"
+        }
     }
 }
