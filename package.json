@@ -28,7 +28,7 @@
     "formik": "^2.2.9",
     "html-react-parser": "^2.0.0",
     "katex": "^0.15.6",
-    "linkifyjs": "^2.1.9",
+    "linkifyjs": "^3.0.5",
     "matrix-js-sdk": "^18.1.0",
     "micromark": "^3.0.10",
     "micromark-extension-gfm": "^2.0.1",
