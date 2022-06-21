@@ -19,7 +19,7 @@ jobs:
     - name: Setup node
       uses: actions/setup-node@v3.3.0
       with:
-        node-version: 16
+        node-version: 17.9.0
     - name: Install Rust stable
       uses: actions-rs/toolchain@v1.0.7
       with:
