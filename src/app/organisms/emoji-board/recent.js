@@ -4,7 +4,7 @@ import { emojis } from './emoji';
 const eventType = 'io.element.recent_emoji';
 
 function getRecentEmojisRaw() {
-  return initMatrix.matrixClient.getAccountData(eventType).getContent().recent_emoji ?? [];
+  return initMatrix.matrixClient.getAccountData(eventType)?.getContent().recent_emoji ?? [];
 }
 
 export function getRecentEmojis(limit) {

@@ -118,7 +118,7 @@ function RoomAliases({ roomId }) {
     const loadLocalAliases = async () => {
       let local = [];
       try {
-        const result = await mx.unstableGetLocalAliases(roomId);
+        const result = await mx.getLocalAliases(roomId);
         local = result.aliases.filter((alias) => !aliases.published.includes(alias));
       } catch {
         local = [];

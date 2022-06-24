@@ -6,6 +6,9 @@ on:
         - completed
 jobs:
   get-build-and-deploy:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     if: >
       ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -14,7 +17,7 @@ jobs:
       # workflow_run action (https://github.com/actions/download-artifact/issues/60)
       # so instead we get this mess:
       - name: Download artifact
-        uses: actions/github-script@v6.0.0
+        uses: actions/github-script@v6.1.0
         with:
           script: |
             var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
@@ -48,7 +51,7 @@ jobs:
         run: unzip -d dist previewbuild.zip && rm previewbuild.zip && unzip pr.json.zip && rm pr.json.zip
       - name: Read PR Info
         id: readctx
-        uses: actions/github-script@v6.0.0
+        uses: actions/github-script@v6.1.0
         with:
           script: |
             var fs = require('fs');
