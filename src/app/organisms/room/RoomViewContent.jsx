@@ -119,7 +119,7 @@ function handleOnClickCapture(e) {
 }
 
 function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
-  const stateEvents = ['m.room.name', 'm.room.topic', 'm.room.member'];
+  const stateEvents = ['m.room.name', 'm.room.topic', 'm.room.avatar', 'm.room.member'];
   const isBodyOnly = (prevMEvent !== null
     && prevMEvent.getSender() === mEvent.getSender()
     && !stateEvents.concat('m.room.create').includes(prevMEvent.getType())

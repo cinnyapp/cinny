@@ -24,6 +24,22 @@ function getTimelineJSXMessages() {
         </>
       );
     },
+    roomAvatarChanged(actor) {
+      return (
+        <>
+          <b>{twemojify(actor)}</b>
+          {' changed the room avatar'}
+        </>
+      );
+    },
+    roomAvatarRemoved(actor) {
+      return (
+        <>
+          <b>{twemojify(actor)}</b>
+          {' removed the room avatar'}
+        </>
+      );
+    },
     join(user) {
       return (
         <>
@@ -197,12 +213,11 @@ function parseTimelineChange(mEvent) {
   const senderName = getUsername(sender);
   const userName = getUsername(mEvent.getStateKey());
   
-  if (type === 'm.room.name') {
-    return makeReturnObj('edit', tJSXMsgs.roomNameChanged(senderName, content.name));
-  }
   
-  if (type === 'm.room.topic') {
-    return makeReturnObj('edit', tJSXMsgs.roomTopicChanged(senderName, content.topic));
+  switch (type) {
+    case 'm.room.name': return makeReturnObj('edit', tJSXMsgs.roomNameChanged(senderName, content.name));
+    case 'm.room.topic': return makeReturnObj('edit', tJSXMsgs.roomTopicChanged(senderName));
+    case 'm.room.avatar': return makeReturnObj('edit', tJSXMsgs[content.url ? 'roomAvatarChanged' : 'roomAvatarRemoved'](senderName));
   }
 
   switch (content.membership) {
