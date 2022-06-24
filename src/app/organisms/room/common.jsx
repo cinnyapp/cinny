@@ -7,6 +7,23 @@ import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 
 function getTimelineJSXMessages() {
   return {
+    roomNameChanged(actor, name) {
+      return (
+        <>
+          <b>{twemojify(actor)}</b>
+          {' changed the room name to '}
+          <b>{twemojify(name)}</b>
+        </>
+      );
+    },
+    roomTopicChanged(actor) {
+      return (
+        <>
+          <b>{twemojify(actor)}</b>
+          {' changed the room topic'}
+        </>
+      );
+    },
     join(user) {
       return (
         <>
@@ -173,11 +190,20 @@ function parseTimelineChange(mEvent) {
     variant,
     content,
   });
+  const type = mEvent.getType();
   const content = mEvent.getContent();
   const prevContent = mEvent.getPrevContent();
   const sender = mEvent.getSender();
   const senderName = getUsername(sender);
   const userName = getUsername(mEvent.getStateKey());
+  
+  if (type === 'm.room.name') {
+    return makeReturnObj('edit', tJSXMsgs.roomNameChanged(senderName, content.name));
+  }
+  
+  if (type === 'm.room.topic') {
+    return makeReturnObj('edit', tJSXMsgs.roomTopicChanged(senderName, content.topic));
+  }
 
   switch (content.membership) {
     case 'invite': return makeReturnObj('invite', tJSXMsgs.invite(senderName, userName));

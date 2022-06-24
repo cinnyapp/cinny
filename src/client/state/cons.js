@@ -12,7 +12,7 @@ const cons = {
     HOME: 'home',
     DIRECTS: 'dm',
   },
-  supportEventTypes: ['m.room.create', 'm.room.message', 'm.room.encrypted', 'm.room.member', 'm.sticker'],
+  supportEventTypes: ['m.room.create', 'm.room.name', 'm.room.topic', 'm.room.message', 'm.room.encrypted', 'm.room.member', 'm.sticker'],
   notifs: {
     DEFAULT: 'default',
     ALL_MESSAGES: 'all_messages',

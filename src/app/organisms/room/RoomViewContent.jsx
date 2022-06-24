@@ -130,7 +130,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
 
   const time = dateFormat(mDate, isToday ? 'hh:MM TT' : 'dd/mm/yyyy');
 
-  if (mEvent.getType() === 'm.room.member') {
+  if (['m.room.name', 'm.room.topic', 'm.room.member'].includes(mEvent.getType())) {
     const timelineChange = parseTimelineChange(mEvent);
     if (timelineChange === null) return <div key={mEvent.getId()} />;
     return (
