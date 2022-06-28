@@ -34,7 +34,7 @@ async function createTauriRelease() {
   const windowsX86_64 = {};
   const linuxX86_64 = {};
   const darwinX86_64 = {};
-  const darwinAarch64 = {};
+  // const darwinAarch64 = {};
 
   const promises = latestAssets.map(async (asset) => {
     const { name, browser_download_url } = asset;
@@ -60,12 +60,12 @@ async function createTauriRelease() {
       darwinX86_64.signature = await getAssetSign(browser_download_url);
     }
 
-    if (/aarch64\.app\.tar\.gz$/.test(name)) {
-      darwinAarch64.url = browser_download_url;
-    }
-    if (/aarch64\.app\.tar\.gz\.sig$/.test(name)) {
-      darwinAarch64.signature = await getAssetSign(browser_download_url);
-    }
+    // if (/aarch64\.app\.tar\.gz$/.test(name)) {
+    //   darwinAarch64.url = browser_download_url;
+    // }
+    // if (/aarch64\.app\.tar\.gz\.sig$/.test(name)) {
+    //   darwinAarch64.signature = await getAssetSign(browser_download_url);
+    // }
   });
 
   await Promise.allSettled(promises);
@@ -86,8 +86,8 @@ async function createTauriRelease() {
   if (darwinX86_64.url) releaseData.platforms["darwin-x86_64"] = darwinX86_64;
   else console.error('Failed to get release for darwinX86_64');
 
-  if (darwinAarch64.url) releaseData.platforms["darwin-aarch64"] = darwinAarch64;
-  else console.error('Failed to get release for darwinAarch64');
+  // if (darwinAarch64.url) releaseData.platforms["darwin-aarch64"] = darwinAarch64;
+  // else console.error('Failed to get release for darwinAarch64');
 
   const releaseResult = await repos.getReleaseByTag({ ...repoMetaData, tag: 'tauri' });
   const tauriRelease = releaseResult.data;
