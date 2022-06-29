@@ -1,5 +1,6 @@
 import emojisData from 'emojibase-data/en/compact.json';
-import shortcodes from 'emojibase-data/en/shortcodes/joypixels.json';
+import joypixels from 'emojibase-data/en/shortcodes/joypixels.json';
+import emojibase from 'emojibase-data/en/shortcodes/emojibase.json';
 
 const emojiGroups = [{
   name: 'Smileys & people',
@@ -52,7 +53,7 @@ function addToGroup(emoji) {
 
 const emojis = [];
 emojisData.forEach((emoji) => {
-  const myShortCodes = shortcodes[emoji.hexcode];
+  const myShortCodes = joypixels[emoji.hexcode] || emojibase[emoji.hexcode];
   if (!myShortCodes) return;
   const em = {
     ...emoji,
