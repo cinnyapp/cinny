@@ -19,7 +19,7 @@ To verify release files, you need to download [minisign](https://jedisct1.github
 
 ## Local development
 
-Firstly, to setup Rust, NodeJS and build tools follow [Tauri documentation](https://tauri.studio/docs/getting-started/prerequisites).
+Firstly, to setup Rust, NodeJS and build tools follow [Tauri documentation](https://tauri.app/v1/guides/getting-started/prerequisites).
 
 Now, to setup development locally run the following commands:
 * `git clone --recursive https://github.com/cinnyapp/cinny-desktop.git`
