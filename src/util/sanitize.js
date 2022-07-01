@@ -44,7 +44,7 @@ function transformSpanTag(tagName, attribs) {
 }
 
 function transformATag(tagName, attribs) {
-  const userLink = attribs.href.match(/^https?:\/\/matrix.to\/#\/(@.+:.+)/);
+  const userLink = decodeURIComponent(attribs.href).match(/^https?:\/\/matrix.to\/#\/(@.+:.+)/);
   if (userLink !== null) {
     // convert user link to pill
     const userId = userLink[1];
