@@ -19,12 +19,6 @@ export function togglePeopleDrawer() {
   });
 }
 
-export function toggleRoomEvents() {
-  appDispatcher.dispatch({
-    type: cons.actions.settings.TOGGLE_ROOM_EVENT,
-  });
-}
-
 export function toggleMembershipEvents() {
   appDispatcher.dispatch({
     type: cons.actions.settings.TOGGLE_MEMBERSHIP_EVENT,

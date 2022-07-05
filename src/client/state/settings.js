@@ -26,7 +26,6 @@ class Settings extends EventEmitter {
     this.useSystemTheme = this.getUseSystemTheme();
     this.isMarkdown = this.getIsMarkdown();
     this.isPeopleDrawer = this.getIsPeopleDrawer();
-    this.hideRoomEvents = this.getHideRoomEvents();
     this.hideMembershipEvents = this.getHideMembershipEvents();
     this.hideNickAvatarEvents = this.getHideNickAvatarEvents();
     this._showNotifications = this.getShowNotifications();
@@ -86,15 +85,6 @@ class Settings extends EventEmitter {
     return settings.isMarkdown;
   }
 
-  getHideRoomEvents() {
-    if (typeof this.hideRoomEvents === 'boolean') return this.hideRoomEvents;
-
-    const settings = getSettings();
-    if (settings === null) return false;
-    if (typeof settings.hideRoomEvents === 'undefined') return false;
-    return settings.hideRoomEvents;
-  }
-  
   getHideMembershipEvents() {
     if (typeof this.hideMembershipEvents === 'boolean') return this.hideMembershipEvents;
 
@@ -164,11 +154,6 @@ class Settings extends EventEmitter {
         this.isPeopleDrawer = !this.isPeopleDrawer;
         setSettings('isPeopleDrawer', this.isPeopleDrawer);
         this.emit(cons.events.settings.PEOPLE_DRAWER_TOGGLED, this.isPeopleDrawer);
-      },
-      [cons.actions.settings.TOGGLE_ROOM_EVENT]: () => {
-        this.hideRoomEvents = !this.hideRoomEvents;
-        setSettings('hideRoomEvents', this.hideRoomEvents);
-        this.emit(cons.events.settings.ROOM_EVENTS_TOGGLED, this.hideRoomEvents);
       },
       [cons.actions.settings.TOGGLE_MEMBERSHIP_EVENT]: () => {
         this.hideMembershipEvents = !this.hideMembershipEvents;

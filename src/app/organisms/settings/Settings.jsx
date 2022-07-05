@@ -6,7 +6,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
-  toggleSystemTheme, toggleMarkdown, toggleRoomEvents, toggleMembershipEvents, toggleNickAvatarEvents,
+  toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
   toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
 import logout from '../../../client/action/logout';
@@ -86,16 +86,6 @@ function AppearanceSection() {
             />
           )}
           content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
-        />
-        <SettingTile
-          title="Hide room change events"
-          options={(
-            <Toggle
-              isActive={settings.hideRoomEvents}
-              onToggle={() => { toggleRoomEvents(); updateState({}); }}
-            />
-          )}
-          content={<Text variant="b3">Hide room change messages from room timeline. (Name, Topic, and Avatar)</Text>}
         />
         <SettingTile
           title="Hide membership events"
