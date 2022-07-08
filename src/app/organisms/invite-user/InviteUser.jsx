@@ -6,7 +6,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
 import { selectRoom } from '../../../client/action/navigation';
-import { hasDMWith } from '../../../util/matrixUtil';
+import { hasDMWith, hasDevices } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -101,18 +101,6 @@ function InviteUser({
       }
     }
     updateIsSearching(false);
-  }
-
-  async function hasDevices(userId) {
-    try {
-      const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
-      return Object.values(usersDeviceMap).every((userDevices) =>
-        Object.keys(userDevices).length > 0,
-      );
-    } catch (e) {
-      console.error("Error determining if it's possible to encrypt to all users: ", e);
-      return false;
-    }
   }
 
   async function createDM(userId) {
