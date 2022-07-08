@@ -97,7 +97,7 @@ function Homeserver({ onChange }) {
       if (!hsList?.length > 0 || selectedHs < 0 || selectedHs >= hsList?.length) {
         throw new Error();
       }
-      setHs({ selected: hsList[selectedHs], list: hsList, allowCustom: allowCustom });
+      setHs({ selected: hsList[selectedHs], list: hsList, allowCustom });
     } catch {
       setHs({ selected: 'matrix.org', list: ['matrix.org'], allowCustom: true });
     }
@@ -114,8 +114,14 @@ function Homeserver({ onChange }) {
   return (
     <>
       <div className="homeserver-form">
-        <Input name="homeserver" onChange={handleHsInput} value={hs?.selected} forwardRef={hsRef} label="Homeserver"
-          disabled={hs === null || !hs.allowCustom} />
+        <Input
+          name="homeserver"
+          onChange={handleHsInput}
+          value={hs?.selected}
+          forwardRef={hsRef}
+          label="Homeserver"
+          disabled={hs === null || !hs.allowCustom}
+        />
         <ContextMenu
           placement="right"
           content={(hideMenu) => (
@@ -319,6 +325,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
         if (!isAvail) {
           actions.setErrors({ username: 'Username is already taken' });
           actions.setSubmitting(false);
+          return;
         }
         if (isEmail && values.email.length > 0) {
           const result = await auth.verifyEmail(baseUrl, values.email, clientSecret, 1);
