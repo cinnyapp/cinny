@@ -20,7 +20,7 @@ export async function getBaseUrl(servername) {
     if (baseUrl === undefined) throw new Error();
     return baseUrl;
   } catch (e) {
-    throw new Error(`${protocol}${servername}`);
+    return `${protocol}${servername}`;
   }
 }
 
@@ -204,9 +204,8 @@ export async function hasDevices(userId) {
   const mx = initMatrix.matrixClient;
   try {
     const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
-    return Object.values(usersDeviceMap).every((userDevices) =>
-      Object.keys(userDevices).length > 0,
-    );
+    return Object.values(usersDeviceMap)
+      .every((userDevices) => (Object.keys(userDevices).length > 0));
   } catch (e) {
     console.error("Error determining if it's possible to encrypt to all users: ", e);
     return false;

@@ -56,11 +56,8 @@ function Homeserver({ onChange }) {
   const setupHsConfig = async (servername) => {
     setProcess({ isLoading: true, message: 'Looking for homeserver...' });
     let baseUrl = null;
-    try {
-      baseUrl = await getBaseUrl(servername);
-    } catch (e) {
-      baseUrl = e.message;
-    }
+    baseUrl = await getBaseUrl(servername);
+
     if (searchingHs !== servername) return;
     setProcess({ isLoading: true, message: `Connecting to ${baseUrl}...` });
     const tempClient = auth.createTemporaryClient(baseUrl);
@@ -175,31 +172,38 @@ function Login({ loginFlow, baseUrl }) {
 
   const validator = (values) => {
     const errors = {};
-    if (typeIndex === 0 && values.username.length > 0 && values.username.indexOf(':') > -1) {
-      errors.username = 'Username must contain local-part only';
-    }
     if (typeIndex === 1 && values.email.length > 0 && !isValidInput(values.email, EMAIL_REGEX)) {
       errors.email = BAD_EMAIL_ERROR;
     }
     return errors;
   };
-  const submitter = (values, actions) => auth.login(
-    baseUrl,
-    typeIndex === 0 ? normalizeUsername(values.username) : undefined,
-    typeIndex === 1 ? values.email : undefined,
-    values.password,
-  ).then(() => {
-    actions.setSubmitting(true);
-    window.location.reload();
-  }).catch((error) => {
-    let msg = error.message;
-    if (msg === 'Unknown message') msg = 'Please check your credentials';
-    actions.setErrors({
-      password: msg === 'Invalid password' ? msg : undefined,
-      other: msg !== 'Invalid password' ? msg : undefined,
+  const submitter = async (values, actions) => {
+    let userBaseUrl = baseUrl;
+    let { username } = values;
+    const mxIdMatch = username.match(/^@(.+):(.+\..+)$/);
+    if (typeIndex === 0 && mxIdMatch) {
+      [, username, userBaseUrl] = mxIdMatch;
+      userBaseUrl = await getBaseUrl(userBaseUrl);
+    }
+
+    return auth.login(
+      userBaseUrl,
+      typeIndex === 0 ? normalizeUsername(username) : undefined,
+      typeIndex === 1 ? values.email : undefined,
+      values.password,
+    ).then(() => {
+      actions.setSubmitting(true);
+      window.location.reload();
+    }).catch((error) => {
+      let msg = error.message;
+      if (msg === 'Unknown message') msg = 'Please check your credentials';
+      actions.setErrors({
+        password: msg === 'Invalid password' ? msg : undefined,
+        other: msg !== 'Invalid password' ? msg : undefined,
+      });
+      actions.setSubmitting(false);
     });
-    actions.setSubmitting(false);
-  });
+  };
 
   return (
     <>
