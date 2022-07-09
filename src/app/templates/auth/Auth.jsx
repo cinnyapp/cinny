@@ -21,6 +21,8 @@ import Avatar from '../../atoms/avatar/Avatar';
 import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/ContextMenu';
 
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+import EyeIC from '../../../../public/res/ic/outlined/eye.svg';
+import EyeBlindIC from '../../../../public/res/ic/outlined/eye-blind.svg';
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
 
@@ -162,6 +164,7 @@ Homeserver.propTypes = {
 
 function Login({ loginFlow, baseUrl }) {
   const [typeIndex, setTypeIndex] = useState(0);
+  const [passVisible, setPassVisible] = useState(false);
   const loginTypes = ['Username', 'Email'];
   const isPassword = loginFlow?.filter((flow) => flow.type === 'm.login.password')[0];
   const ssoProviders = loginFlow?.filter((flow) => flow.type === 'm.login.sso')[0];
@@ -242,7 +245,10 @@ function Login({ loginFlow, baseUrl }) {
                 {errors.username && <Text className="auth-form__error" variant="b3">{errors.username}</Text>}
                 {typeIndex === 1 && <Input values={values.email} name="email" onChange={handleChange} label="Email" type="email" required />}
                 {errors.email && <Text className="auth-form__error" variant="b3">{errors.email}</Text>}
-                <Input values={values.password} name="password" onChange={handleChange} label="Password" type="password" required />
+                <div className="auth-form__pass-eye-wrapper">
+                  <Input values={values.password} name="password" onChange={handleChange} label="Password" type={passVisible ? 'text' : 'password'} required />
+                  <IconButton onClick={() => setPassVisible(!passVisible)} src={passVisible ? EyeIC : EyeBlindIC} size="extra-small" />
+                </div>
                 {errors.password && <Text className="auth-form__error" variant="b3">{errors.password}</Text>}
                 {errors.other && <Text className="auth-form__error" variant="b3">{errors.other}</Text>}
                 <div className="auth-form__btns">
@@ -275,6 +281,8 @@ let sid;
 let clientSecret;
 function Register({ registerInfo, loginFlow, baseUrl }) {
   const [process, setProcess] = useState({});
+  const [passVisible, setPassVisible] = useState(false);
+  const [cPassVisible, setCPassVisible] = useState(false);
   const formRef = useRef();
 
   const ssoProviders = loginFlow?.filter((flow) => flow.type === 'm.login.sso')[0];
@@ -444,9 +452,15 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
               <form className="auth-form" ref={formRef} onSubmit={handleSubmit}>
                 <Input values={values.username} name="username" onChange={handleChange} label="Username" type="username" required />
                 {errors.username && <Text className="auth-form__error" variant="b3">{errors.username}</Text>}
-                <Input values={values.password} name="password" onChange={handleChange} label="Password" type="password" required />
+                <div className="auth-form__pass-eye-wrapper">
+                  <Input values={values.password} name="password" onChange={handleChange} label="Password" type={passVisible ? 'text' : 'password'} required />
+                  <IconButton onClick={() => setPassVisible(!passVisible)} src={passVisible ? EyeIC : EyeBlindIC} size="extra-small" />
+                </div>
                 {errors.password && <Text className="auth-form__error" variant="b3">{errors.password}</Text>}
-                <Input values={values.confirmPassword} name="confirmPassword" onChange={handleChange} label="Confirm password" type="password" required />
+                <div className="auth-form__pass-eye-wrapper">
+                  <Input values={values.confirmPassword} name="confirmPassword" onChange={handleChange} label="Confirm password" type={cPassVisible ? 'text' : 'password'} required />
+                  <IconButton onClick={() => setCPassVisible(!cPassVisible)} src={cPassVisible ? EyeIC : EyeBlindIC} size="extra-small" />
+                </div>
                 {errors.confirmPassword && <Text className="auth-form__error" variant="b3">{errors.confirmPassword}</Text>}
                 {isEmail && <Input values={values.email} name="email" onChange={handleChange} label={`Email${isEmailRequired ? '' : ' (optional)'}`} type="email" required={isEmailRequired} />}
                 {errors.email && <Text className="auth-form__error" variant="b3">{errors.email}</Text>}
