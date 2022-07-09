@@ -57,23 +57,25 @@ function AppearanceSection() {
           )}
           content={<Text variant="b3">Use light or dark mode based on the system settings.</Text>}
         />
-        {!settings.useSystemTheme && (
-          <SettingTile
-            title="Theme"
-            content={(
-              <SegmentedControls
-                selected={settings.getThemeIndex()}
-                segments={[
-                  { text: 'Light' },
-                  { text: 'Silver' },
-                  { text: 'Dark' },
-                  { text: 'Butter' },
-                ]}
-                onSelect={(index) => settings.setTheme(index)}
-              />
-          )}
-          />
+        <SettingTile
+          title="Theme"
+          content={(
+            <SegmentedControls
+              selected={settings.useSystemTheme ? -1 : settings.getThemeIndex()}
+              segments={[
+                { text: 'Light' },
+                { text: 'Silver' },
+                { text: 'Dark' },
+                { text: 'Butter' },
+              ]}
+              onSelect={(index) => {
+                if (settings.useSystemTheme) toggleSystemTheme();
+                settings.setTheme(index);
+                updateState({});
+              }}
+            />
         )}
+        />
       </div>
       <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
