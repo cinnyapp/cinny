@@ -51,9 +51,6 @@ function listenKeyboard(event) {
 
   if (!event.ctrlKey && !event.altKey && !event.metaKey) {
     if (navigation.isRawModalVisible) return;
-    if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) {
-      return;
-    }
 
     if (event.code === 'Escape') {
       if (navigation.isRoomSettings) {
@@ -64,6 +61,10 @@ function listenKeyboard(event) {
         markAsRead(navigation.selectedRoomId);
         return;
       }
+    }
+
+    if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) {
+      return;
     }
 
     // focus the text field on most keypresses
