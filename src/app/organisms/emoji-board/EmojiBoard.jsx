@@ -202,9 +202,7 @@ function EmojiBoard({ onSelect, searchRef }) {
         setAvailableEmojis([]);
         return;
       }
-      // Retrieve the packs for the new room
-      // Remove packs that aren't marked as emoji packs
-      // Remove packs without emojis
+
       const packs = getRelevantPacks(
         initMatrix.matrixClient.getRoom(selectedRoomId),
       )
