@@ -83,7 +83,7 @@ function GeneralSettings({ roomId }) {
           }}
           iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}
         >
-          {isCategorized ? t("SpaceSettings.uncategorize_subspaces") : t("SpaceSettings.categorize_subspaces")}
+          {isCategorized ? t("Organisms.SpaceSettings.uncategorize_subspaces") : t("Organisms.SpaceSettings.categorize_subspaces")}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -93,30 +93,30 @@ function GeneralSettings({ roomId }) {
           }}
           iconSrc={isPinned ? PinFilledIC : PinIC}
         >
-          {isPinned ? t("SpaceSettings.unpin_sidebar") : t("SpaceSettings.pin_sidebar")}
+          {isPinned ? t("Organisms.SpaceSettings.unpin_sidebar") : t("Organisms.SpaceSettings.pin_sidebar")}
         </MenuItem>
         <MenuItem
           variant="danger"
           onClick={async () => {
             const isConfirmed = await confirmDialog(
-              t("SpaceSettings.leave.leave_dialog_title"),
-              t("SpaceSettings.leave.leave_dialog_message", {space: roomName}),
-              t("SpaceSettings.leave.leave_space"),
+              t("Organisms.SpaceSettings.leave.leave_dialog_title"),
+              t("Organisms.SpaceSettings.leave.leave_dialog_message", {space: roomName}),
+              t("Organisms.SpaceSettings.leave.leave_space"),
               'danger',
             );
             if (isConfirmed) leave(roomId);
           }}
           iconSrc={LeaveArrowIC}
         >
-          {t("SpaceSettings.leave.leave_space")}
+          {t("Organisms.SpaceSettings.leave.leave_space")}
         </MenuItem>
       </div>
       <div className="space-settings__card">
-        <MenuHeader>{t("SpaceSettings.visibility.header")}</MenuHeader>
+        <MenuHeader>{t("Organisms.SpaceSettings.visibility.header")}</MenuHeader>
         <RoomVisibility roomId={roomId} />
       </div>
       <div className="space-settings__card">
-        <MenuHeader>{t("SpaceSettings.addresses.header")}</MenuHeader>
+        <MenuHeader>{t("Organisms.SpaceSettings.addresses.header")}</MenuHeader>
         <RoomAliases roomId={roomId} />
       </div>
     </>
@@ -169,7 +169,7 @@ function SpaceSettings() {
       title={(
         <Text variant="s1" weight="medium" primary>
           {isOpen && twemojify(room.name)}
-          <span style={{ color: 'var(--tc-surface-low)' }}> — {t("SpaceSettings.subtitle")}</span>
+          <span style={{ color: 'var(--tc-surface-low)' }}> — {t("Organisms.SpaceSettings.subtitle")}</span>
         </Text>
       )}
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />}

@@ -94,9 +94,9 @@ function GeneralSettings({ roomId }) {
           variant="danger"
           onClick={async () => {
             const isConfirmed = await confirmDialog(
-              t("RoomSettings.leave_room"),
-              t("RoomSettings.leave_room_confirm_message", {room_name: room.name}),
-              t("RoomSettings.leave_room_confirm_button"),
+              t("Organisms.RoomSettings.leave_room"),
+              t("Organisms.RoomSettings.leave_room_confirm_message", {room_name: room.name}),
+              t("Organisms.RoomSettings.leave_room_confirm_button"),
               'danger',
             );
             if (!isConfirmed) return;
@@ -108,15 +108,15 @@ function GeneralSettings({ roomId }) {
         </MenuItem>
       </div>
       <div className="room-settings__card">
-        <MenuHeader>{t("RoomSettings.notification_header")}</MenuHeader>
+        <MenuHeader>{t("Organisms.RoomSettings.notification_header")}</MenuHeader>
         <RoomNotification roomId={roomId} />
       </div>
       <div className="room-settings__card">
-        <MenuHeader>{t("RoomSettings.visibility_header")}</MenuHeader>
+        <MenuHeader>{t("Organisms.RoomSettings.visibility_header")}</MenuHeader>
         <RoomVisibility roomId={roomId} />
       </div>
       <div className="room-settings__card">
-        <MenuHeader>{t("RoomSettings.address_header")}</MenuHeader>
+        <MenuHeader>{t("Organisms.RoomSettings.address_header")}</MenuHeader>
         <RoomAliases roomId={roomId} />
       </div>
     </>
@@ -131,11 +131,11 @@ function SecuritySettings({ roomId }) {
   return (
     <>
       <div className="room-settings__card">
-        <MenuHeader>{t("RoomSettings.encryption_header")}</MenuHeader>
+        <MenuHeader>{t("Organisms.RoomSettings.encryption_header")}</MenuHeader>
         <RoomEncryption roomId={roomId} />
       </div>
       <div className="room-settings__card">
-        <MenuHeader>{t("RoomSettings.message_history_header")}</MenuHeader>
+        <MenuHeader>{t("Organisms.RoomSettings.message_history_header")}</MenuHeader>
         <RoomHistoryVisibility roomId={roomId} />
       </div>
     </>
@@ -187,7 +187,7 @@ function RoomSettings({ roomId }) {
               <TitleWrapper>
                 <Text variant="s1" weight="medium" primary>
                   {`${room.name}`}
-                  <span style={{ color: 'var(--tc-surface-low)' }}> — {t("RoomSettings.room_settings_subtitle")}</span>
+                  <span style={{ color: 'var(--tc-surface-low)' }}> — {t("Organisms.RoomSettings.room_settings_subtitle")}</span>
                 </Text>
               </TitleWrapper>
               <RawIcon size="small" src={ChevronTopIC} />

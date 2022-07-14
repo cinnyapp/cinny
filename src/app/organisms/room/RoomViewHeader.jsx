@@ -98,9 +98,9 @@ function RoomViewHeader({ roomId }) {
         </TitleWrapper>
         <RawIcon src={ChevronBottomIC} />
       </button>
-      <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip={t("RoomViewHeader.search_tooltip")} src={SearchIC} />
-      <IconButton className="room-header__drawer-btn" onClick={togglePeopleDrawer} tooltip={t("RoomViewHeader.people_tooltip")} src={UserIC} />
-      <IconButton className="room-header__members-btn" onClick={() => toggleRoomSettings(tabText.MEMBERS)} tooltip={t("RoomViewHeader.members_tooltip")} src={UserIC} />
+      <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip={t("Organisms.RoomViewHeader.search_tooltip")} src={SearchIC} />
+      <IconButton className="room-header__drawer-btn" onClick={togglePeopleDrawer} tooltip={t("Organisms.RoomViewHeader.people_tooltip")} src={UserIC} />
+      <IconButton className="room-header__members-btn" onClick={() => toggleRoomSettings(tabText.MEMBERS)} tooltip={t("Organisms.RoomViewHeader.members_tooltip")} src={UserIC} />
       <IconButton
         onClick={openRoomOptions}
         tooltip={t("common.options")}

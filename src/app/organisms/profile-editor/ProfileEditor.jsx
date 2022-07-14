@@ -49,8 +49,8 @@ function ProfileEditor({ userId }) {
   const handleAvatarUpload = async (url) => {
     if (url === null) {
       const isConfirmed = await confirmDialog(
-        t("ProfileEditor.remove_avatar"),
-        t("ProfileViewer.remove_avatar_confirmation"),
+        t("Organisms.ProfileEditor.remove_avatar"),
+        t("Organisms.ProfileViewer.remove_avatar_confirmation"),
         t("common.remove"),
         'caution',
       );
@@ -90,7 +90,7 @@ function ProfileEditor({ userId }) {
       onSubmit={(e) => { e.preventDefault(); saveDisplayName(); }}
     >
       <Input
-        label={t("ProfileEditor.display_name_message", {user_name: mx.getUserId()})}
+        label={t("Organisms.ProfileEditor.display_name_message", {user_name: mx.getUserId()})}
         onChange={onDisplayNameInputChange}
         value={mx.getUser(mx.getUserId()).displayName}
         forwardRef={displayNameRef}

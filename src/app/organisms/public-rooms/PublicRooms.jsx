@@ -59,7 +59,7 @@ function TryJoinWithAlias({ alias, onRequestClose }) {
     } catch (e) {
       setStatus({
         isJoining: false,
-        error: t("PublicRooms.could_not_join_alias", {alias: alias}),
+        error: t("Organisms.PublicRooms.could_not_join_alias", {alias: alias}),
         roomId: null,
         tempRoomId: null,
       });
@@ -69,12 +69,12 @@ function TryJoinWithAlias({ alias, onRequestClose }) {
   return (
     <div className="try-join-with-alias">
       {status.roomId === null && !status.isJoining && status.error === null && (
-        <Button onClick={() => joinWithAlias()}>{t("PublicRooms.try_joining_alias", {alias: alias})}</Button>
+        <Button onClick={() => joinWithAlias()}>{t("Organisms.PublicRooms.try_joining_alias", {alias: alias})}</Button>
       )}
       {status.isJoining && (
         <>
           <Spinner size="small" />
-          <Text>{t("PublicRooms.joining_alias", {alias: alias})}</Text>
+          <Text>{t("Organisms.PublicRooms.joining_alias", {alias: alias})}</Text>
         </>
       )}
       {status.roomId !== null && (
@@ -147,8 +147,8 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
       if (totalRooms.length === 0) {
         updateSearchQuery({
           error: inputRoomName === ''
-            ? t("PublicRooms.no_public_rooms", {homeserver: inputHs})
-            : t("PublicRooms.no_result_found", {homeserver: inputHs, input: inputRoomName}),
+            ? t("Organisms.PublicRooms.no_public_rooms", {homeserver: inputHs})
+            : t("Organisms.PublicRooms.no_result_found", {homeserver: inputHs, input: inputRoomName}),
           alias: isInputAlias ? inputRoomName : null,
         });
       }
@@ -225,17 +225,17 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
   return (
     <PopupWindow
       isOpen={isOpen}
-      title={t("PublicRooms.title")}
+      title={t("Organisms.PublicRooms.title")}
       contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip={t("common.close")} />}
       onRequestClose={onRequestClose}
     >
       <div className="public-rooms">
         <form className="public-rooms__form" onSubmit={(e) => { e.preventDefault(); searchRooms(); }}>
           <div className="public-rooms__input-wrapper">
-            <Input value={searchTerm} forwardRef={roomNameRef} label={t("PublicRooms.search_room_name_alias")} />
+            <Input value={searchTerm} forwardRef={roomNameRef} label={t("Organisms.PublicRooms.search_room_name_alias")} />
             <Input forwardRef={hsRef} value={userId.slice(userId.indexOf(':') + 1)} label={t("common.homeserver")} required />
           </div>
-          <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">{t("PublicRooms.search_button")}</Button>
+          <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">{t("Organisms.PublicRooms.search_button")}</Button>
         </form>
         <div className="public-rooms__search-status">
           {
@@ -244,13 +244,13 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
                 ? (
                   <div className="flex--center">
                     <Spinner size="small" />
-                    <Text variant="b2">{t("PublicRooms.loading", {homeserver: searchQuery.homeserver})}</Text>
+                    <Text variant="b2">{t("Organisms.PublicRooms.loading", {homeserver: searchQuery.homeserver})}</Text>
                   </div>
                 )
                 : (
                   <div className="flex--center">
                     <Spinner size="small" />
-                    <Text variant="b2">{t("PublicRooms.searching", {homeserver: searchQuery.homeserver, query: searchQuery.name})}</Text>
+                    <Text variant="b2">{t("Organisms.PublicRooms.searching", {homeserver: searchQuery.homeserver, query: searchQuery.name})}</Text>
                   </div>
                 )
             )
@@ -258,8 +258,8 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
           {
             typeof searchQuery.name !== 'undefined' && !isSearching && (
               searchQuery.name === ''
-                ? <Text variant="b2">{t("PublicRooms.result_title", {homeserver: searchQuery.homeserver})}</Text>
-                : <Text variant="b2">{t("PublicRooms.search_result_title", {homeserver: searchQuery.homeserver, query: searchQuery.name})}</Text>
+                ? <Text variant="b2">{t("Organisms.PublicRooms.result_title", {homeserver: searchQuery.homeserver})}</Text>
+                : <Text variant="b2">{t("Organisms.PublicRooms.search_result_title", {homeserver: searchQuery.homeserver, query: searchQuery.name})}</Text>
             )
           }
           { searchQuery.error && (

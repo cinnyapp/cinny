@@ -81,8 +81,8 @@ function InviteList({ isOpen, onRequestClose }) {
             ? (<Spinner size="small" />)
             : (
               <div className="invite-btn__container">
-                <Button onClick={() => rejectInvite(myRoom.roomId)}>{t("InviteList.reject_invite")}</Button>
-                <Button onClick={() => acceptInvite(myRoom.roomId)} variant="primary">{t("InviteList.accept_invite")}</Button>
+                <Button onClick={() => rejectInvite(myRoom.roomId)}>{t("Organisms.InviteList.reject_invite")}</Button>
+                <Button onClick={() => acceptInvite(myRoom.roomId)} variant="primary">{t("Organisms.InviteList.accept_invite")}</Button>
               </div>
             )
         }
@@ -93,14 +93,14 @@ function InviteList({ isOpen, onRequestClose }) {
   return (
     <PopupWindow
       isOpen={isOpen}
-      title={t("InviteList.title")}
+      title={t("Organisms.InviteList.title")}
       contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip={t("common.close")} />}
       onRequestClose={onRequestClose}
     >
       <div className="invites-content">
         { initMatrix.roomList.inviteDirects.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3" weight="bold">{t("InviteList.direct_messages_title")}</Text>
+            <Text variant="b3" weight="bold">{t("Organisms.InviteList.direct_messages_title")}</Text>
           </div>
         )}
         {
@@ -118,8 +118,8 @@ function InviteList({ isOpen, onRequestClose }) {
                     ? (<Spinner size="small" />)
                     : (
                       <div className="invite-btn__container">
-                        <Button onClick={() => rejectInvite(myRoom.roomId, true)}>{t("InviteList.reject_invite")}</Button>
-                        <Button onClick={() => acceptInvite(myRoom.roomId, true)} variant="primary">{t("InviteList.accept_invite")}</Button>
+                        <Button onClick={() => rejectInvite(myRoom.roomId, true)}>{t("Organisms.InviteList.reject_invite")}</Button>
+                        <Button onClick={() => acceptInvite(myRoom.roomId, true)} variant="primary">{t("Organisms.InviteList.accept_invite")}</Button>
                       </div>
                     )
                 }
@@ -129,14 +129,14 @@ function InviteList({ isOpen, onRequestClose }) {
         }
         { initMatrix.roomList.inviteSpaces.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3" weight="bold">{t("InviteList.spaces_title")}</Text>
+            <Text variant="b3" weight="bold">{t("Organisms.InviteList.spaces_title")}</Text>
           </div>
         )}
         { Array.from(initMatrix.roomList.inviteSpaces).map(renderRoomTile) }
 
         { initMatrix.roomList.inviteRooms.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3" weight="bold">{t("InviteList.rooms_title")}</Text>
+            <Text variant="b3" weight="bold">{t("Organisms.InviteList.rooms_title")}</Text>
           </div>
         )}
         { Array.from(initMatrix.roomList.inviteRooms).map(renderRoomTile) }

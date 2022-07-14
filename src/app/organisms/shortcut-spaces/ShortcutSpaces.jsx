@@ -115,18 +115,18 @@ function ShortcutSpacesContent() {
 
   return (
     <>
-      <Text className="shortcut-spaces__header" variant="b3" weight="bold">{t("ShortcutSpaces.pinned_spaces")}</Text>
-      {spaceShortcut.length === 0 && <Text>{t("ShortcutSpaces.no_pinned_spaces")}</Text>}
+      <Text className="shortcut-spaces__header" variant="b3" weight="bold">{t("Organisms.ShortcutSpaces.pinned_spaces")}</Text>
+      {spaceShortcut.length === 0 && <Text>{t("Organisms.ShortcutSpaces.no_pinned_spaces")}</Text>}
       {spaceShortcut.map((spaceId) => renderSpace(spaceId, true))}
-      <Text className="shortcut-spaces__header" variant="b3" weight="bold">{t("ShortcutSpaces.unpinned_spaces")}</Text>
-      {spaceWithoutShortcut.length === 0 && <Text>{t("ShortcutSpaces.no_unpinned_spaces")}</Text>}
+      <Text className="shortcut-spaces__header" variant="b3" weight="bold">{t("Organisms.ShortcutSpaces.unpinned_spaces")}</Text>
+      {spaceWithoutShortcut.length === 0 && <Text>{t("Organisms.ShortcutSpaces.no_unpinned_spaces")}</Text>}
       {spaceWithoutShortcut.map((spaceId) => renderSpace(spaceId, false))}
       {selected.length !== 0 && (
         <div className="shortcut-spaces__footer">
           {process && <Spinner size="small" />}
-          <Text weight="medium">{process || t("ShortcutSpaces.spaces_selected", {count: selected.length})}</Text>
+          <Text weight="medium">{process || t("Organisms.ShortcutSpaces.spaces_selected", {count: selected.length})}</Text>
           { !process && (
-            <Button onClick={handleAdd} variant="primary">{t("ShortcutSpaces.pin_button")}</Button>
+            <Button onClick={handleAdd} variant="primary">{t("Organisms.ShortcutSpaces.pin_button")}</Button>
           )}
         </div>
       )}
@@ -160,7 +160,7 @@ function ShortcutSpaces() {
       className="shortcut-spaces"
       title={(
         <Text variant="s1" weight="medium" primary>
-          {t("ShortcutSpaces.header")}
+          {t("Organisms.ShortcutSpaces.header")}
         </Text>
       )}
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip= {t("common.close")}/>}

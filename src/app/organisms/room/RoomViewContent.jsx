@@ -68,14 +68,14 @@ function RoomIntroContainer({ event, timeline }) {
   let avatarSrc = room.getAvatarUrl(mx.baseUrl, 80, 80, 'crop');
   avatarSrc = isDM ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
 
-  const heading = isDM ? room.name : t("RoomViewContent.welcome_to_room", {room_name: room.name});
+  const heading = isDM ? room.name : t("Organisms.RoomViewContent.welcome_to_room", {room_name: room.name});
   const topic = twemojify(roomTopic || '', undefined, true);
   const nameJsx = twemojify(room.name);
   const desc = isDM
     ? (
       <>
         <Trans 
-          i18nKey={"RoomViewContent.beginning_dm"} 
+          i18nKey={"Organisms.RoomViewContent.beginning_dm"} 
           values={{user_name: nameJsx}}
           components={{bold: <b/>}}
         />
@@ -86,7 +86,7 @@ function RoomIntroContainer({ event, timeline }) {
     : (
       <>
         <Trans 
-          i18nKey={"RoomViewContent.beginning_room"} 
+          i18nKey={"Organisms.RoomViewContent.beginning_room"} 
           values={{room_name: nameJsx}}
           components={{bold: <b/>}}
           />
@@ -112,7 +112,7 @@ function RoomIntroContainer({ event, timeline }) {
       name={room.name}
       heading={twemojify(heading)}
       desc={desc}
-      time={event ? t("RoomViewContent.created_on", {date: event.getDate(), formatParams: { date: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}}}) : null}
+      time={event ? t("Organisms.RoomViewContent.created_on", {date: event.getDate(), formatParams: { date: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}}}) : null}
     />
   );
 }
@@ -539,7 +539,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
           && readUptoEvent.getTs() < mEvent.getTs());
         if (unreadDivider) {
           isNewEvent = true;
-          tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text={t("RoomViewContent.new_messages")} />);
+          tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text={t("Organisms.RoomViewContent.new_messages")} />);
           itemCountIndex += 1;
           if (jumpToItemIndex === -1) jumpToItemIndex = itemCountIndex;
         }

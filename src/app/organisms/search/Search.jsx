@@ -229,7 +229,7 @@ function Search() {
           </ScrollView>
         </div>
         <div className="search-dialog__footer">
-          <Text variant="b3">{t("Search.description")}</Text>
+          <Text variant="b3">{t("Organisms.Search.description")}</Text>
         </div>
       </div>
     </RawModal>

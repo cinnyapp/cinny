@@ -124,17 +124,17 @@ function RoomViewFloating({
     <>
       <div className={`room-view__unread ${isJumpToEvent ? 'room-view__unread--open' : ''}`}>
         <Button iconSrc={MessageUnreadIC} onClick={jumpToEvent} variant="primary">
-          <Text variant="b3" weight="medium">{t("RoomViewFloating.jump_unread")}</Text>
+          <Text variant="b3" weight="medium">{t("Organisms.RoomViewFloating.jump_unread")}</Text>
         </Button>
         <Button iconSrc={TickMarkIC} onClick={cancelJumpToEvent} variant="primary">
-          <Text variant="b3" weight="bold">{t("RoomViewFloating.mark_read")}</Text>
+          <Text variant="b3" weight="bold">{t("Organisms.RoomViewFloating.mark_read")}</Text>
         </Button>
       </div>
       <div className={`room-view__typing${typingMembers.size > 0 ? ' room-view__typing--open' : ''}`}>
         <div className="bouncing-loader"><div /></div>
         <Text variant="b2"> 
           <Trans 
-            i18nKey="RoomViewFloating.user_typing" 
+            i18nKey="Organisms.RoomViewFloating.user_typing" 
             values={{count: typingMembers.size, user_one: getUserDisplayName(typingMemberValues?.[0]), user_two: getUserDisplayName(typingMemberValues?.[1]), user_three: getUserDisplayName(typingMemberValues?.[2]), user_four: getUserDisplayName(typingMemberValues?.[3])}}
             components={{bold: <b/>}}
             />
@@ -142,7 +142,7 @@ function RoomViewFloating({
       </div>
       <div className={`room-view__STB${isAtBottom ? '' : ' room-view__STB--open'}`}>
         <Button iconSrc={MessageIC} onClick={handleScrollToBottom}>
-          <Text variant="b3" weight="medium">{t("RoomViewFloating.jump_latest")}</Text>
+          <Text variant="b3" weight="medium">{t("Organisms.RoomViewFloating.jump_latest")}</Text>
         </Button>
       </div>
     </>

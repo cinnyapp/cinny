@@ -137,8 +137,8 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
   };
 
   const joinRules = ['invite', 'restricted', 'public'];
-  const joinRuleShortText = [ t("CreateRoom.private_room_short"), t("CreateRoom.restricted_room_short"), t("CreateRoom.public_room_short")];
-  const joinRuleText = [ t("CreateRoom.private_room_long"), t("CreateRoom.restricted_room_long"), t("CreateRoom.public_room_long")];
+  const joinRuleShortText = [ t("Organisms.CreateRoom.private_room_short"), t("Organisms.CreateRoom.restricted_room_short"), t("Organisms.CreateRoom.public_room_short")];
+  const joinRuleText = [ t("Organisms.CreateRoom.private_room_long"), t("Organisms.CreateRoom.restricted_room_long"), t("Organisms.CreateRoom.public_room_long")];
   const jrRoomIC = [HashLockIC, HashIC, HashGlobeIC];
   const jrSpaceIC = [SpaceLockIC, SpaceIC, SpaceGlobeIC];
   const handleJoinRule = (evt) => {
@@ -147,7 +147,7 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
       getEventCords(evt, '.btn-surface'),
       (closeMenu) => (
         <>
-          <MenuHeader>{t("CreateRoom.visibility_message")}</MenuHeader>
+          <MenuHeader>{t("Organisms.CreateRoom.visibility_message")}</MenuHeader>
           {
             joinRules.map((rule) => (
               <MenuItem
@@ -174,17 +174,17 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
     <div className="create-room">
       <form className="create-room__form" onSubmit={handleSubmit}>
         <SettingTile
-          title={t("CreateRoom.visibility_title")}
+          title={t("Organisms.CreateRoom.visibility_title")}
           options={(
             <Button onClick={handleJoinRule} iconSrc={ChevronBottomIC}>
               {joinRuleShortText[joinRules.indexOf(joinRule)]}
             </Button>
           )}
-          content={<Text variant="b3">{isSpace ? t("CreateRoom.select_who_can_join_space") : t("CreateRoom.select_who_can_join_room")}</Text>}
+          content={<Text variant="b3">{isSpace ? t("Organisms.CreateRoom.select_who_can_join_space") : t("Organisms.CreateRoom.select_who_can_join_room")}</Text>}
         />
         {joinRule === 'public' && (
           <div>
-            <Text className="create-room__address__label" variant="b2">{isSpace ? t("CreateRoom.space_address") : t("CreateRoom.room_address")}</Text>
+            <Text className="create-room__address__label" variant="b2">{isSpace ? t("Organisms.CreateRoom.space_address") : t("Organisms.CreateRoom.room_address")}</Text>
             <div className="create-room__address">
               <Text variant="b1">#</Text>
               <Input
@@ -197,32 +197,32 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
               />
               <Text variant="b1">{`:${userHs}`}</Text>
             </div>
-            {isValidAddress === false && <Text className="create-room__address__tip" variant="b3"><span style={{ color: 'var(--bg-danger)' }}>{ t("CreateRoom.room_address_already_in_use", {room_address: `#${addressValue}:${userHs}`})}</span></Text>}
+            {isValidAddress === false && <Text className="create-room__address__tip" variant="b3"><span style={{ color: 'var(--bg-danger)' }}>{ t("Organisms.CreateRoom.room_address_already_in_use", {room_address: `#${addressValue}:${userHs}`})}</span></Text>}
           </div>
         )}
         {!isSpace && joinRule !== 'public' && (
           <SettingTile
-            title={t("CreateRoom.e2e_title")}
+            title={t("Organisms.CreateRoom.e2e_title")}
             options={<Toggle isActive={isEncrypted} onToggle={setIsEncrypted} />}
-            content={<Text variant="b3"> {t("CreateRoom.e2e_message")}</Text>}
+            content={<Text variant="b3"> {t("Organisms.CreateRoom.e2e_message")}</Text>}
           />
         )}
         <SettingTile
-          title={t("CreateRoom.role_title")}
+          title={t("Organisms.CreateRoom.role_title")}
           options={(
             <SegmentControl
               selected={roleIndex}
-              segments={[{ text: t("CreateRoom.role_admin")}, { text: t("CreateRoom.role_founder")}]}
+              segments={[{ text: t("Organisms.CreateRoom.role_admin")}, { text: t("Organisms.CreateRoom.role_founder")}]}
               onSelect={setRoleIndex}
             />
           )}
           content={(
-            <Text variant="b3"> {t("CreateRoom.role_message")}</Text>
+            <Text variant="b3"> {t("Organisms.CreateRoom.role_message")}</Text>
           )}
         />
-        <Input name="topic" minHeight={174} resizable label= {t("CreateRoom.topic_label")}/>
+        <Input name="topic" minHeight={174} resizable label= {t("Organisms.CreateRoom.topic_label")}/>
         <div className="create-room__name-wrapper">
-          <Input name="name" label={isSpace ? t("CreateRoom.space_name"): t("CreateRoom.room_name")} required />
+          <Input name="name" label={isSpace ? t("Organisms.CreateRoom.space_name"): t("Organisms.CreateRoom.room_name")} required />
           <Button
             disabled={isValidAddress === false || isCreatingRoom}
             iconSrc={isSpace ? SpacePlusIC : HashPlusIC}
@@ -235,7 +235,7 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
         {isCreatingRoom && (
           <div className="create-room__loading">
             <Spinner size="small" />
-            <Text>{ isSpace ? t("CreateRoom.creating_space") : t("CreateRoom.creating_room")}</Text>
+            <Text>{ isSpace ? t("Organisms.CreateRoom.creating_space") : t("Organisms.CreateRoom.creating_room")}</Text>
           </div>
         )}
         {typeof creatingError === 'string' && <Text className="create-room__error" variant="b3">{creatingError}</Text>}
@@ -284,9 +284,9 @@ function CreateRoom() {
       isOpen={create !== null}
       title={(
         <Text variant="s1" weight="medium" primary>
-          {parentId ? twemojify(room.name) : t("CreateRoom.home")}
+          {parentId ? twemojify(room.name) : t("Organisms.CreateRoom.home")}
           <span style={{ color: 'var(--tc-surface-low)' }}>
-            {` — ${isSpace ? t("CreateRoom.create_space") : t("CreateRoom.create_room")}`}
+            {` — ${isSpace ? t("Organisms.CreateRoom.create_space") : t("Organisms.CreateRoom.create_room")}`}
           </span>
         </Text>
       )}

@@ -66,18 +66,18 @@ function CreateKeyBackupDialog({ keyData }) {
       {done === false && (
         <div>
           <Spinner size="small" />
-          <Text>{t("KeyBackup.creating_backup")}</Text>
+          <Text>{t("Organisms.KeyBackup.creating_backup")}</Text>
         </div>
       )}
       {done === true && (
         <>
           <Text variant="h1">{twemojify('✅')}</Text>
-          <Text>{t("KeyBackup.backup_created")}</Text>
+          <Text>{t("Organisms.KeyBackup.backup_created")}</Text>
         </>
       )}
       {done === null && (
         <>
-          <Text>{t("KeyBackup.backup_failed")}</Text>
+          <Text>{t("Organisms.KeyBackup.backup_failed")}</Text>
           <Button onClick={doBackup}>{t("common.retry")}</Button>
         </>
       )}
@@ -108,7 +108,7 @@ function RestoreKeyBackupDialog({ keyData }) {
         meBreath = true;
       }, 200);
 
-      setStatus({ message: t("KeyBackup.restoring_progress", {progress: progress.successes, total: progress.total}) });
+      setStatus({ message: t("Organisms.KeyBackup.restoring_progress", {progress: progress.successes, total: progress.total}) });
     };
 
     try {
@@ -120,14 +120,14 @@ function RestoreKeyBackupDialog({ keyData }) {
         { progressCallback },
       );
       if (!mountStore.getItem()) return;
-      setStatus({ done: t("KeyBackup.restore_complete", {progress: info.imported, total: info.total})});
+      setStatus({ done: t("Organisms.KeyBackup.restore_complete", {progress: info.imported, total: info.total})});
     } catch (e) {
       if (!mountStore.getItem()) return;
       if (e.errcode === 'RESTORE_BACKUP_ERROR_BAD_KEY') {
         deletePrivateKey(keyData.keyId);
-        setStatus({ error: t("KeyBackup.restore_failed_bad_key"), errorCode: 'BAD_KEY' });
+        setStatus({ error: t("Organisms.KeyBackup.restore_failed_bad_key"), errorCode: 'BAD_KEY' });
       } else {
-        setStatus({ error: t("KeyBackup.restore_failed_unknown"), errCode: 'UNKNOWN' });
+        setStatus({ error: t("Organisms.KeyBackup.restore_failed_unknown"), errCode: 'UNKNOWN' });
       }
     }
   };
@@ -142,7 +142,7 @@ function RestoreKeyBackupDialog({ keyData }) {
       {(status === false || status.message) && (
         <div>
           <Spinner size="small" />
-          <Text>{status.message ?? t("KeyBackup.restoring")}</Text>
+          <Text>{status.message ?? t("Organisms.KeyBackup.restoring")}</Text>
         </div>
       )}
       {status.done && (
@@ -187,8 +187,8 @@ function DeleteKeyBackupDialog({ requestClose }) {
   return (
     <div className="key-backup__delete">
       <Text variant="h1">{twemojify('🗑')}</Text>
-      <Text weight="medium">{t("KeyBackup.delete_key_backup_subtitle")}</Text>
-      <Text>{t("KeyBackup.delete_key_backup_message")}</Text>
+      <Text weight="medium">{t("Organisms.KeyBackup.delete_key_backup_subtitle")}</Text>
+      <Text>{t("Organisms.KeyBackup.delete_key_backup_message")}</Text>
       {
         isDeleting
           ? <Spinner size="small" />
@@ -231,28 +231,28 @@ function KeyBackup() {
   }, [isCSEnabled]);
 
   const openCreateKeyBackup = async () => {
-    const keyData = await accessSecretStorage(t('KeyBackup.create_backup_title'));
+    const keyData = await accessSecretStorage(t('Organisms.KeyBackup.create_backup_title'));
     if (keyData === null) return;
 
     openReusableDialog(
-      <Text variant="s1" weight="medium">{t('KeyBackup.create_backup_title')}</Text>,
+      <Text variant="s1" weight="medium">{t('Organisms.KeyBackup.create_backup_title')}</Text>,
       () => <CreateKeyBackupDialog keyData={keyData} />,
       () => fetchKeyBackupVersion(),
     );
   };
 
   const openRestoreKeyBackup = async () => {
-    const keyData = await accessSecretStorage(t('KeyBackup.restore_backup_title'));
+    const keyData = await accessSecretStorage(t('Organisms.KeyBackup.restore_backup_title'));
     if (keyData === null) return;
 
     openReusableDialog(
-      <Text variant="s1" weight="medium">{t('KeyBackup.restore_backup_title')}</Text>,
+      <Text variant="s1" weight="medium">{t('Organisms.KeyBackup.restore_backup_title')}</Text>,
       () => <RestoreKeyBackupDialog keyData={keyData} />,
     );
   };
 
   const openDeleteKeyBackup = () => openReusableDialog(
-    <Text variant="s1" weight="medium">{t('KeyBackup.delete_key_backup_title')}</Text>,
+    <Text variant="s1" weight="medium">{t('Organisms.KeyBackup.delete_key_backup_title')}</Text>,
     (requestClose) => (
       <DeleteKeyBackupDialog
         requestClose={(isDone) => {
@@ -265,28 +265,28 @@ function KeyBackup() {
 
   const renderOptions = () => {
     if (keyBackup === undefined) return <Spinner size="small" />;
-    if (keyBackup === null) return <Button variant="primary" onClick={openCreateKeyBackup}>{t('KeyBackup.create_backup_tooltip')}</Button>;
+    if (keyBackup === null) return <Button variant="primary" onClick={openCreateKeyBackup}>{t('Organisms.KeyBackup.create_backup_tooltip')}</Button>;
     return (
       <>
-        <IconButton src={DownloadIC} variant="positive" onClick={openRestoreKeyBackup} tooltip={t('KeyBackup.restore_backup_tooltip')} />
-        <IconButton src={BinIC} onClick={openDeleteKeyBackup} tooltip={t('KeyBackup.delete_key_backup_tooltip')} />
+        <IconButton src={DownloadIC} variant="positive" onClick={openRestoreKeyBackup} tooltip={t('Organisms.KeyBackup.restore_backup_tooltip')} />
+        <IconButton src={BinIC} onClick={openDeleteKeyBackup} tooltip={t('Organisms.KeyBackup.delete_key_backup_tooltip')} />
       </>
     );
   };
 
   return (
     <SettingTile
-      title={t("KeyBackup.encrypted_messages_backup_title")}
+      title={t("Organisms.KeyBackup.encrypted_messages_backup_title")}
       content={(
         <>
-          <Text variant="b3">{t("KeyBackup.encrypted_messages_backup_description")}</Text>
+          <Text variant="b3">{t("Organisms.KeyBackup.encrypted_messages_backup_description")}</Text>
           {!isCSEnabled && (
             <InfoCard
               style={{ marginTop: 'var(--sp-ultra-tight)' }}
               rounded
               variant="caution"
               iconSrc={InfoIC}
-              title={t("KeyBackup.encrypted_messages_backup_cross_signing_disabled")}
+              title={t("Organisms.KeyBackup.encrypted_messages_backup_cross_signing_disabled")}
             />
           )}
         </>

@@ -100,14 +100,14 @@ function EmojiVerificationContent({ data, requestClose }) {
   const renderWait = () => (
     <>
       <Spinner size="small" />
-      <Text>{t("EmojiVerification.waiting_for_response")}</Text>
+      <Text>{t("Organisms.EmojiVerification.waiting_for_response")}</Text>
     </>
   );
 
   if (sas !== null) {
     return (
       <div className="emoji-verification__content">
-        <Text>{t("EmojiVerification.confirmation_prompt")}</Text>
+        <Text>{t("Organisms.EmojiVerification.confirmation_prompt")}</Text>
         <div className="emoji-verification__emojis">
           {sas.sas.emoji.map((emoji, i) => (
             // eslint-disable-next-line react/no-array-index-key
@@ -120,8 +120,8 @@ function EmojiVerificationContent({ data, requestClose }) {
         <div className="emoji-verification__buttons">
           {process ? renderWait() : (
             <>
-              <Button variant="primary" onClick={sasConfirm}>{t("EmojiVerification.emojis_match_button")}</Button>
-              <Button onClick={sasMismatch}>{t("EmojiVerification.emojis_dont_match_button")}</Button>
+              <Button variant="primary" onClick={sasConfirm}>{t("Organisms.EmojiVerification.emojis_match_button")}</Button>
+              <Button onClick={sasMismatch}>{t("Organisms.EmojiVerification.emojis_dont_match_button")}</Button>
             </>
           )}
         </div>
@@ -132,7 +132,7 @@ function EmojiVerificationContent({ data, requestClose }) {
   if (targetDevice) {
     return (
       <div className="emoji-verification__content">
-        <Text>{t("EmojiVerification.accept_request_from_other_device_message")}</Text>
+        <Text>{t("Organisms.EmojiVerification.accept_request_from_other_device_message")}</Text>
         <div className="emoji-verification__buttons">
           {renderWait()}
         </div>
@@ -142,12 +142,12 @@ function EmojiVerificationContent({ data, requestClose }) {
 
   return (
     <div className="emoji-verification__content">
-      <Text>{t("EmojiVerification.begin_verification_process_message")}</Text>
+      <Text>{t("Organisms.EmojiVerification.begin_verification_process_message")}</Text>
       <div className="emoji-verification__buttons">
         {
           process
             ? renderWait()
-            : <Button variant="primary" onClick={beginVerification}>{t("EmojiVerification.begin_verification_button_text")}</Button>
+            : <Button variant="primary" onClick={beginVerification}>{t("Organisms.EmojiVerification.begin_verification_button_text")}</Button>
         }
       </div>
     </div>
@@ -188,7 +188,7 @@ function EmojiVerification() {
       className="emoji-verification"
       title={(
         <Text variant="s1" weight="medium" primary>
-          {t("EmojiVerification.title")}
+          {t("Organisms.EmojiVerification.title")}
         </Text>
       )}
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />}

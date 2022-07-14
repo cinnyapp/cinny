@@ -61,10 +61,10 @@ function JoinAliasContent({ term, requestClose }) {
     const alias = e.target.alias.value;
     if (alias?.trim() === '') return;
     if (alias.match(ALIAS_OR_ID_REG) === null) {
-      setError(t("JoinAlias.invalid_address"));
+      setError(t("Organisms.JoinAlias.invalid_address"));
       return;
     }
-    setProcess(t("JoinAlias.looking_for_address"));
+    setProcess(t("Organisms.JoinAlias.looking_for_address"));
     setError(undefined);
     let via;
     if (alias.startsWith('#')) {
@@ -72,12 +72,12 @@ function JoinAliasContent({ term, requestClose }) {
         const aliasData = await mx.resolveRoomAlias(alias);
         via = aliasData?.servers.slice(0, 3) || [];
         if (mountStore.getItem()) {
-          setProcess(t("JoinAlias.joining_alias", {alias_name: alias}));
+          setProcess(t("Organisms.JoinAlias.joining_alias", {alias_name: alias}));
         }
       } catch (err) {
         if (!mountStore.getItem()) return;
         setProcess(false);
-        setError(t("JoinAlias.couldnt_find_room_or_space_alias", {alias_name: alias}));
+        setError(t("Organisms.JoinAlias.couldnt_find_room_or_space_alias", {alias_name: alias}));
       }
     }
     try {
@@ -88,14 +88,14 @@ function JoinAliasContent({ term, requestClose }) {
     } catch {
       if (!mountStore.getItem()) return;
       setProcess(false);
-      setError(t("JoinAlias.couldnt_find_room_or_space", {alias_name: alias}));
+      setError(t("Organisms.JoinAlias.couldnt_find_room_or_space", {alias_name: alias}));
     }
   };
 
   return (
     <form className="join-alias" onSubmit={handleSubmit}>
       <Input
-        label={t("JoinAlias.address_label")}
+        label={t("Organisms.JoinAlias.address_label")}
         value={term}
         name="alias"
         required
@@ -149,7 +149,7 @@ function JoinAlias() {
     <Dialog
       isOpen={data !== null}
       title={(
-        <Text variant="s1" weight="medium" primary>{t("JoinAlias.title")}</Text>
+        <Text variant="s1" weight="medium" primary>{t("Organisms.JoinAlias.title")}</Text>
       )}
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={"common.close"} />}
       onRequestClose={requestClose}

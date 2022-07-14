@@ -35,13 +35,13 @@ function CrossSigningSetup() {
     const renderFailure = (requestClose) => (
       <div className="cross-signing__failure">
         <Text variant="h1">{twemojify('❌')}</Text>
-        <Text weight="medium">{t("CrossSigning.setup_failed")}</Text>
+        <Text weight="medium">{t("Organisms.CrossSigning.setup_failed")}</Text>
         <Button onClick={requestClose}>{t("common.close")}</Button>
       </div>
     );
 
     openReusableDialog(
-      <Text variant="s1" weight="medium">{t("CrossSigning.setup")}</Text>,
+      <Text variant="s1" weight="medium">{t("Organisms.CrossSigning.setup")}</Text>,
       renderFailure,
     );
   };
@@ -59,7 +59,7 @@ function CrossSigningSetup() {
 
     const renderSecurityKey = () => (
       <div className="cross-signing__key">
-        <Text weight="medium">{t("CrossSigning.save_security_key_message")}</Text>
+        <Text weight="medium">{t("Organisms.CrossSigning.save_security_key_message")}</Text>
         <Text className="cross-signing__key-text">
           {key.encodedPrivateKey}
         </Text>
@@ -74,7 +74,7 @@ function CrossSigningSetup() {
     downloadKey();
 
     openReusableDialog(
-      <Text variant="s1" weight="medium">{t("CrossSigning.security_key_dialog_title")}</Text>,
+      <Text variant="s1" weight="medium">{t("Organisms.CrossSigning.security_key_dialog_title")}</Text>,
       () => renderSecurityKey(),
     );
   };
@@ -130,9 +130,9 @@ function CrossSigningSetup() {
     <div className="cross-signing__setup">
       <div className="cross-signing__setup-entry">
         <Text>
-          {t("CrossSigning.security_key_generation_message")}
+          {t("Organisms.CrossSigning.security_key_generation_message")}
         </Text>
-        {genWithPhrase !== false && <Button variant="primary" onClick={() => setup()} disabled={genWithPhrase !== undefined}>{t("CrossSigning.security_key_generation_button")}</Button>}
+        {genWithPhrase !== false && <Button variant="primary" onClick={() => setup()} disabled={genWithPhrase !== undefined}>{t("Organisms.CrossSigning.security_key_generation_button")}</Button>}
         {genWithPhrase === false && <Spinner size="small" />}
       </div>
       <Text className="cross-signing__setup-divider">{t("common.or")}</Text>
@@ -150,13 +150,13 @@ function CrossSigningSetup() {
             disabled={genWithPhrase !== undefined}
           >
             <Text>
-              {t("CrossSigning.security_phrase_message")}
+              {t("Organisms.CrossSigning.security_phrase_message")}
             </Text>
             <Input
               name="phrase"
               value={values.phrase}
               onChange={handleChange}
-              label={t("CrossSigning.security_phrase_label")}
+              label={t("Organisms.CrossSigning.security_phrase_label")}
               type="password"
               required
               disabled={genWithPhrase !== undefined}
@@ -166,13 +166,13 @@ function CrossSigningSetup() {
               name="confirmPhrase"
               value={values.confirmPhrase}
               onChange={handleChange}
-              label={t("CrossSigning.security_phrase_confirm_label")}
+              label={t("Organisms.CrossSigning.security_phrase_confirm_label")}
               type="password"
               required
               disabled={genWithPhrase !== undefined}
             />
             {errors.confirmPhrase && <Text variant="b3" className="cross-signing__error">{errors.confirmPhrase}</Text>}
-            {genWithPhrase !== true && <Button variant="primary" type="submit" disabled={genWithPhrase !== undefined}>{t("CrossSigning.security_phrase_set_button")}</Button>}
+            {genWithPhrase !== true && <Button variant="primary" type="submit" disabled={genWithPhrase !== undefined}>{t("Organisms.CrossSigning.security_phrase_set_button")}</Button>}
             {genWithPhrase === true && <Spinner size="small" />}
           </form>
         )}
@@ -193,9 +193,9 @@ function CrossSigningReset() {
   return (
     <div className="cross-signing__reset">
       <Text variant="h1">{twemojify('✋🧑‍🚒🤚')}</Text>
-      <Text weight="medium">{t("CrossSigning.reset_keys_subtitle")}</Text>
+      <Text weight="medium">{t("Organisms.CrossSigning.reset_keys_subtitle")}</Text>
       <Text>
-        {t("CrossSigning.reset_keys_message")}
+        {t("Organisms.CrossSigning.reset_keys_message")}
       </Text>
       <Button variant="danger" onClick={setupDialog}>{t("common.reset")}</Button>
     </div>
@@ -215,8 +215,8 @@ function CrossSignin() {
   const isCSEnabled = useCrossSigningStatus();
   return (
     <SettingTile
-      title={t("CrossSigning.title")}
-      content={<Text variant="b3">{t("CrossSigning.setup_message")}</Text>}
+      title={t("Organisms.CrossSigning.title")}
+      content={<Text variant="b3">{t("Organisms.CrossSigning.setup_message")}</Text>}
       options={(
         isCSEnabled
           ? <Button variant="danger" onClick={resetDialog}>{t("common.reset")}</Button>

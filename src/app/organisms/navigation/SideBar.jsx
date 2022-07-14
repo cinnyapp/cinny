@@ -85,7 +85,7 @@ function ProfileAvatarMenu() {
   return (
     <SidebarAvatar
       onClick={openSettings}
-      tooltip={t("SideBar.settings_tooltip")}
+      tooltip={t("Organisms.SideBar.settings_tooltip")}
       avatar={(
         <Avatar
           text={profile.displayName}
@@ -107,7 +107,7 @@ function CrossSigninAlert() {
   return (
     <SidebarAvatar
       className="sidebar__cross-signin-alert"
-      tooltip={t("SideBar.unverified_sessions", {count: unverified.length})}
+      tooltip={t("Organisms.SideBar.unverified_sessions", {count: unverified.length})}
       onClick={() => openSettings(settingTabText.SECURITY)}
       avatar={<Avatar iconSrc={ShieldUserIC} iconColor="var(--ic-danger-normal)" size="normal" />}
     />
@@ -155,7 +155,7 @@ function FeaturedTab() {
   return (
     <>
       <SidebarAvatar
-        tooltip={t("SideBar.home_tooltip")}
+        tooltip={t("Organisms.SideBar.home_tooltip")}
         active={selectedTab === cons.tabs.HOME}
         onClick={() => selectTab(cons.tabs.HOME)}
         avatar={<Avatar iconSrc={HomeIC} size="normal" />}
@@ -167,7 +167,7 @@ function FeaturedTab() {
         ) : null}
       />
       <SidebarAvatar
-        tooltip={t("SideBar.direct_messages_tooltip")}
+        tooltip={t("Organisms.SideBar.direct_messages_tooltip")}
         active={selectedTab === cons.tabs.DIRECTS}
         onClick={() => selectTab(cons.tabs.DIRECTS)}
         avatar={<Avatar iconSrc={UserIC} size="normal" />}
@@ -363,7 +363,7 @@ function SideBar() {
             <div className="space-container">
               <SpaceShortcut />
               <SidebarAvatar
-                tooltip={t("SideBar.pin_spaces_tooltip")}
+                tooltip={t("Organisms.SideBar.pin_spaces_tooltip")}
                 onClick={() => openShortcutSpaces()}
                 avatar={<Avatar iconSrc={AddPinIC} size="normal" />}
               />
@@ -375,13 +375,13 @@ function SideBar() {
         <div className="sidebar-divider" />
         <div className="sticky-container">
           <SidebarAvatar
-            tooltip={t("SideBar.search_tooltip")}
+            tooltip={t("Organisms.SideBar.search_tooltip")}
             onClick={() => openSearch()}
             avatar={<Avatar iconSrc={SearchIC} size="normal" />}
           />
           { totalInvites !== 0 && (
             <SidebarAvatar
-              tooltip={t("SideBar.invites_tooltip")}
+              tooltip={t("Organisms.SideBar.invites_tooltip")}
               onClick={() => openInviteList()}
               avatar={<Avatar iconSrc={InviteIC} size="normal" />}
               notificationBadge={<NotificationBadge alert content={totalInvites} />}

@@ -45,10 +45,10 @@ function AuthRequest({ onComplete, makeRequest }) {
       lastUsedPassword = undefined;
       if (!mountStore.getItem()) return;
       if (err.errcode === 'M_FORBIDDEN') {
-        setStatus({ error: t("AuthRequest.wrong_password") });
+        setStatus({ error: t("Organisms.AuthRequest.wrong_password") });
         return;
       }
-      setStatus({ error: t("AuthRequest.request_failed") });
+      setStatus({ error: t("Organisms.AuthRequest.request_failed") });
     }
   };
 
@@ -61,7 +61,7 @@ function AuthRequest({ onComplete, makeRequest }) {
       <form onSubmit={handleForm}>
         <Input
           name="password"
-          label={t("AuthRequest.password_label")}
+          label={t("Organisms.AuthRequest.password_label")}
           type="password"
           onChange={handleChange}
           required

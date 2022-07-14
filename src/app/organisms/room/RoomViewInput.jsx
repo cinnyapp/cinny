@@ -86,7 +86,7 @@ function RoomViewInput({
   function uploadingProgress(myRoomId, { loaded, total }) {
     if (myRoomId !== roomId) return;
     const progressPer = Math.round((loaded * 100) / total);
-    uploadProgressRef.current.textContent = t("RoomViewInput.upload_progress", {progress: bytesToSize(loaded), total:bytesToSize(total), percent: progressPer});
+    uploadProgressRef.current.textContent = t("Organisms.RoomViewInput.upload_progress", {progress: bytesToSize(loaded), total:bytesToSize(total), percent: progressPer});
     inputBaseRef.current.style.backgroundImage = `linear-gradient(90deg, var(--bg-surface-hover) ${progressPer}%, var(--bg-surface-low) ${progressPer}%)`;
   }
   function clearAttachment(myRoomId) {
@@ -316,8 +316,8 @@ function RoomViewInput({
         <Text className="room-input__alert">
           {
             tombstoneEvent
-              ? tombstoneEvent.getContent()?.body ?? t("RoomViewInput.tombstone_replaced")
-              : t("RoomViewInput.tombstone_permission_denied")
+              ? tombstoneEvent.getContent()?.body ?? t("Organisms.RoomViewInput.tombstone_replaced")
+              : t("Organisms.RoomViewInput.tombstone_permission_denied")
           }
         </Text>
       );
@@ -338,7 +338,7 @@ function RoomViewInput({
                 onChange={handleMsgTyping}
                 onPaste={handlePaste}
                 onKeyDown={handleKeyDown}
-                placeholder={t("RoomViewInput.send_message_placeholder")}
+                placeholder={t("Organisms.RoomViewInput.send_message_placeholder")}
               />
             </Text>
           </ScrollView>
@@ -352,7 +352,7 @@ function RoomViewInput({
               cords.y -= 250;
               openEmojiBoard(cords, addEmoji);
             }}
-            tooltip={t("RoomViewInput.emoji_tooltip")}
+            tooltip={t("Organisms.RoomViewInput.emoji_tooltip")}
             src={EmojiIC}
           />
           <IconButton onClick={sendMessage} tooltip={t("common.send")} src={SendIC} />
@@ -373,7 +373,7 @@ function RoomViewInput({
         </div>
         <div className="room-attachment__info">
           <Text variant="b1">{attachment.name}</Text>
-          <Text variant="b3"><span ref={uploadProgressRef}>{t("RoomViewInput.file_size", {size: bytesToSize(attachment.size)})}</span></Text>
+          <Text variant="b3"><span ref={uploadProgressRef}>{t("Organisms.RoomViewInput.file_size", {size: bytesToSize(attachment.size)})}</span></Text>
         </div>
       </div>
     );
@@ -388,7 +388,7 @@ function RoomViewInput({
             setReplyTo(null);
           }}
           src={CrossIC}
-          tooltip={t("RoomViewInput.cancel_reply_tooltip")}
+          tooltip={t("Organisms.RoomViewInput.cancel_reply_tooltip")}
           size="extra-small"
         />
         <MessageReply

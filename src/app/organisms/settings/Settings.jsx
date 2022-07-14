@@ -53,26 +53,26 @@ function AppearanceSection() {
       <div className="settings-appearance__card">
         <MenuHeader>Theme</MenuHeader>
         <SettingTile
-          title={t("Settings.theme.follow_system.title")}
+          title={t("Organisms.Settings.theme.follow_system.title")}
           options={(
             <Toggle
               isActive={settings.useSystemTheme}
               onToggle={() => { toggleSystemTheme(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">{t("Settings.theme.follow_system.description")}</Text>}
+          content={<Text variant="b3">{t("Organisms.Settings.theme.follow_system.description")}</Text>}
         />
         {!settings.useSystemTheme && (
           <SettingTile
-            title={t("Settings.theme.title")}
+            title={t("Organisms.Settings.theme.title")}
             content={(
               <SegmentedControls
                 selected={settings.getThemeIndex()}
                 segments={[
-                  { text: t("Settings.theme.theme_light") },
-                  { text: t("Settings.theme.theme_silver") },
-                  { text: t("Settings.theme.theme_dark") },
-                  { text: t("Settings.theme.theme_butter") },
+                  { text: t("Organisms.Settings.theme.theme_light") },
+                  { text: t("Organisms.Settings.theme.theme_silver") },
+                  { text: t("Organisms.Settings.theme.theme_dark") },
+                  { text: t("Organisms.Settings.theme.theme_butter") },
                 ]}
                 onSelect={(index) => settings.setTheme(index)}
               />
@@ -83,34 +83,34 @@ function AppearanceSection() {
       <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
         <SettingTile
-          title={t("Settings.markdown.title")}
+          title={t("Organisms.Settings.markdown.title")}
           options={(
             <Toggle
               isActive={settings.isMarkdown}
               onToggle={() => { toggleMarkdown(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">{t("Settings.markdown.description")}</Text>}
+          content={<Text variant="b3">{t("Organisms.Settings.markdown.description")}</Text>}
         />
         <SettingTile
-          title={t("Settings.hide_membership_events.title")}
+          title={t("Organisms.Settings.hide_membership_events.title")}
           options={(
             <Toggle
               isActive={settings.hideMembershipEvents}
               onToggle={() => { toggleMembershipEvents(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">{t("Settings.hide_membership_events.description")}</Text>}
+          content={<Text variant="b3">{t("Organisms.Settings.hide_membership_events.description")}</Text>}
         />
         <SettingTile
-          title={t("Settings.hide_nickname_avatar_events.title")}
+          title={t("Organisms.Settings.hide_nickname_avatar_events.title")}
           options={(
             <Toggle
               isActive={settings.hideNickAvatarEvents}
               onToggle={() => { toggleNickAvatarEvents(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">{t("Settings.hide_nickname_avatar_events.description")}</Text>}
+          content={<Text variant="b3">{t("Organisms.Settings.hide_nickname_avatar_events.description")}</Text>}
         />
       </div>
     </div>
@@ -154,21 +154,21 @@ function NotificationsSection() {
 
   return (
     <div className="settings-notifications">
-      <MenuHeader>{t("Settings.notifications_and_sound.title")}</MenuHeader>
+      <MenuHeader>{t("Organisms.Settings.notifications_and_sound.title")}</MenuHeader>
       <SettingTile
-        title={t("Settings.notifications_and_sound.desktop.title")}
+        title={t("Organisms.Settings.notifications_and_sound.desktop.title")}
         options={renderOptions()}
-        content={<Text variant="b3">{t("Settings.notifications_and_sound.desktop.description")}</Text>}
+        content={<Text variant="b3">{t("Organisms.Settings.notifications_and_sound.desktop.description")}</Text>}
       />
       <SettingTile
-        title={t("Settings.notifications_and_sound.sound.title")}
+        title={t("Organisms.Settings.notifications_and_sound.sound.title")}
         options={(
           <Toggle
             isActive={settings.isNotificationSounds}
             onToggle={() => { toggleNotificationSounds(); updateState({}); }}
           />
           )}
-        content={<Text variant="b3">{t("Settings.notifications_and_sound.desktop.description")}</Text>}
+        content={<Text variant="b3">{t("Organisms.Settings.notifications_and_sound.desktop.description")}</Text>}
       />
     </div>
   );
@@ -181,27 +181,27 @@ function SecuritySection() {
   return (
     <div className="settings-security">
       <div className="settings-security__card">
-        <MenuHeader>{t("Settings.security.cross_signing.title")}</MenuHeader>
+        <MenuHeader>{t("Organisms.Settings.security.cross_signing.title")}</MenuHeader>
         <CrossSigning />
         <KeyBackup />
       </div>
       <DeviceManage />
       <div className="settings-security__card">
-        <MenuHeader>{t("Settings.security.export_import_encryption_keys.title")}</MenuHeader>
+        <MenuHeader>{t("Organisms.Settings.security.export_import_encryption_keys.title")}</MenuHeader>
         <SettingTile
-          title={t("Settings.security.export_encryption_keys.title")}
+          title={t("Organisms.Settings.security.export_encryption_keys.title")}
           content={(
             <>
-              <Text variant="b3">{t("Settings.security.export_encryption_keys.description")}</Text>
+              <Text variant="b3">{t("Organisms.Settings.security.export_encryption_keys.description")}</Text>
               <ExportE2ERoomKeys />
             </>
           )}
         />
         <SettingTile
-          title={t("Settings.security.import_encryption_keys.title")}
+          title={t("Organisms.Settings.security.import_encryption_keys.title")}
           content={(
             <>
-              <Text variant="b3">{t("Settings.security.import_encryption_keys.description")}</Text>
+              <Text variant="b3">{t("Organisms.Settings.security.import_encryption_keys.description")}</Text>
               <ImportE2ERoomKeys />
             </>
           )}
@@ -218,7 +218,7 @@ function AboutSection() {
   return (
     <div className="settings-about">
       <div className="settings-about__card">
-        <MenuHeader>{t("Settings.about.application")}</MenuHeader>
+        <MenuHeader>{t("Organisms.Settings.about.application")}</MenuHeader>
         <div className="settings-about__branding">
           <img width="60" height="60" src={CinnySVG} alt="Cinny logo" />
           <div>
@@ -236,7 +236,7 @@ function AboutSection() {
         </div>
       </div>
       <div className="settings-about__card">
-        <MenuHeader>{t("Settings.about.credits")}</MenuHeader>
+        <MenuHeader>{t("Organisms.Settings.about.credits")}</MenuHeader>
         <div className="settings-about__credits">
           <ul>
             <li>
@@ -314,7 +314,7 @@ function Settings() {
 
   const handleTabChange = (tabItem) => setSelectedTab(tabItem);
   const handleLogout = async () => {
-    if (await confirmDialog(t("Settings.logout.dialog.title"), t("Settings.logout.dialog.description"), t("Settings.logout.dialog.confirm"), 'danger')) {
+    if (await confirmDialog(t("Organisms.Settings.logout.dialog.title"), t("Organisms.Settings.logout.dialog.description"), t("Organisms.Settings.logout.dialog.confirm"), 'danger')) {
       logout();
     }
   };
@@ -323,11 +323,11 @@ function Settings() {
     <PopupWindow
       isOpen={isOpen}
       className="settings-window"
-      title={<Text variant="s1" weight="medium" primary>{t("Settings.title")}</Text>}
+      title={<Text variant="s1" weight="medium" primary>{t("Organisms.Settings.title")}</Text>}
       contentOptions={(
         <>
           <Button variant="danger" iconSrc={PowerIC} onClick={handleLogout}>
-            {t("Settings.logout.title")}
+            {t("Organisms.Settings.logout.title")}
           </Button>
           <IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />
         </>

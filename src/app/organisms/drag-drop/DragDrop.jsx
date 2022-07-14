@@ -18,7 +18,7 @@ function DragDrop({ isOpen }) {
       overlayClassName="drag-drop__overlay"
       isOpen={isOpen}
     >
-      <Text variant="h2" weight="medium">{t("DragDrop.drop_file_to_upload_prompt")}</Text>
+      <Text variant="h2" weight="medium">{t("Organisms.DragDrop.drop_file_to_upload_prompt")}</Text>
     </RawModal>
   );
 }
