@@ -16,8 +16,16 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+import { t } from 'i18next';
+
+
+
 function InviteList({ isOpen, onRequestClose }) {
   const [procInvite, changeProcInvite] = useState(new Set());
+
+  const { t } = useTranslation();
 
   function acceptInvite(roomId, isDM) {
     procInvite.add(roomId);
@@ -73,8 +81,8 @@ function InviteList({ isOpen, onRequestClose }) {
             ? (<Spinner size="small" />)
             : (
               <div className="invite-btn__container">
-                <Button onClick={() => rejectInvite(myRoom.roomId)}>Reject</Button>
-                <Button onClick={() => acceptInvite(myRoom.roomId)} variant="primary">Accept</Button>
+                <Button onClick={() => rejectInvite(myRoom.roomId)}>{t("InviteList.reject_invite")}</Button>
+                <Button onClick={() => acceptInvite(myRoom.roomId)} variant="primary">{t("InviteList.accept_invite")}</Button>
               </div>
             )
         }
@@ -85,14 +93,14 @@ function InviteList({ isOpen, onRequestClose }) {
   return (
     <PopupWindow
       isOpen={isOpen}
-      title="Invites"
-      contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip="Close" />}
+      title={t("InviteList.title")}
+      contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip={t("common.close")} />}
       onRequestClose={onRequestClose}
     >
       <div className="invites-content">
         { initMatrix.roomList.inviteDirects.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3" weight="bold">Direct Messages</Text>
+            <Text variant="b3" weight="bold">{t("InviteList.direct_messages_title")}</Text>
           </div>
         )}
         {
@@ -110,8 +118,8 @@ function InviteList({ isOpen, onRequestClose }) {
                     ? (<Spinner size="small" />)
                     : (
                       <div className="invite-btn__container">
-                        <Button onClick={() => rejectInvite(myRoom.roomId, true)}>Reject</Button>
-                        <Button onClick={() => acceptInvite(myRoom.roomId, true)} variant="primary">Accept</Button>
+                        <Button onClick={() => rejectInvite(myRoom.roomId, true)}>{t("InviteList.reject_invite")}</Button>
+                        <Button onClick={() => acceptInvite(myRoom.roomId, true)} variant="primary">{t("InviteList.accept_invite")}</Button>
                       </div>
                     )
                 }
@@ -121,14 +129,14 @@ function InviteList({ isOpen, onRequestClose }) {
         }
         { initMatrix.roomList.inviteSpaces.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3" weight="bold">Spaces</Text>
+            <Text variant="b3" weight="bold">{t("InviteList.spaces_title")}</Text>
           </div>
         )}
         { Array.from(initMatrix.roomList.inviteSpaces).map(renderRoomTile) }
 
         { initMatrix.roomList.inviteRooms.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3" weight="bold">Rooms</Text>
+            <Text variant="b3" weight="bold">{t("InviteList.rooms_title")}</Text>
           </div>
         )}
         { Array.from(initMatrix.roomList.inviteRooms).map(renderRoomTile) }

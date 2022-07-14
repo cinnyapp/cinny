@@ -32,6 +32,10 @@ import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { useStore } from '../../hooks/useStore';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
+
 function SpaceManageBreadcrumb({ path, onSelect }) {
   return (
     <div className="space-manage-breadcrumb__wrapper">
@@ -75,6 +79,8 @@ function SpaceManageItem({
   const canManage = parentRoom?.currentState.maySendStateEvent('m.space.child', mx.getUserId()) || false;
   const isSuggested = parentRoom?.currentState.getStateEvents('m.space.child', roomId)?.getContent().suggested === true;
 
+  const { t } = useTranslation();
+
   const room = mx.getRoom(roomId);
   const isJoined = !!(room?.getMyMembership() === 'join' || null);
   const name = room?.name || roomInfo.name || roomInfo.canonical_alias || roomId;
@@ -114,7 +120,7 @@ function SpaceManageItem({
   const roomNameJSX = (
     <Text>
       {twemojify(name)}
-      <Text variant="b3" span>{` • ${roomInfo.num_joined_members} members`}</Text>
+      <Text variant="b3" span> • {t("SpaceManage.room_members", {count: roomInfo.num_joined_members})}</Text>
     </Text>
   );
 
@@ -142,19 +148,21 @@ function SpaceManageItem({
         >
           {roomAvatarJSX}
           {roomNameJSX}
-          {isSuggested && <Text variant="b2">Suggested</Text>}
+          {isSuggested && <Text variant="b2">{t("SpaceManage.suggested")}</Text>}
         </button>
         {roomInfo.topic && expandBtnJsx}
         {
           isJoined
-            ? <Button onClick={handleOpen}>Open</Button>
-            : <Button variant="primary" onClick={handleJoin} disabled={isJoining}>{isJoining ? 'Joining...' : 'Join'}</Button>
+            ? <Button onClick={handleOpen}>{t("common.open")}</Button>
+            : <Button variant="primary" onClick={handleJoin} disabled={isJoining}>{t(isJoining ? "common.joining" : "common.join")}</Button>
         }
       </div>
       {isExpand && roomInfo.topic && <Text variant="b2">{twemojify(roomInfo.topic, undefined, true)}</Text>}
     </div>
   );
 }
+
+
 SpaceManageItem.propTypes = {
   parentId: PropTypes.string.isRequired,
   roomHierarchy: PropTypes.shape({}).isRequired,
@@ -171,21 +179,23 @@ function SpaceManageFooter({ parentId, selected }) {
   const room = mx.getRoom(parentId);
   const { currentState } = room;
 
+  const { t } = useTranslation();
+
   const allSuggested = selected.every((roomId) => {
     const sEvent = currentState.getStateEvents('m.space.child', roomId);
     return !!sEvent?.getContent()?.suggested;
   });
 
   const handleRemove = () => {
-    setProcess(`Removing ${selected.length} items`);
+    setProcess(t("SpaceManage.remove", {count: selected.length}));
     selected.forEach((roomId) => {
       mx.sendStateEvent(parentId, 'm.space.child', {}, roomId);
     });
   };
 
   const handleToggleSuggested = (isMark) => {
-    if (isMark) setProcess(`Marking as suggested ${selected.length} items`);
-    else setProcess(`Marking as not suggested ${selected.length} items`);
+    if (isMark) setProcess(t("SpaceManage.mark_suggested", {count: selected.length}));
+    else setProcess(t("SpaceManage.mark_not_suggested", {count: selected.length}));
     selected.forEach((roomId) => {
       const sEvent = room.currentState.getStateEvents('m.space.child', roomId);
       if (!sEvent) return;
@@ -200,15 +210,15 @@ function SpaceManageFooter({ parentId, selected }) {
   return (
     <div className="space-manage__footer">
       {process && <Spinner size="small" />}
-      <Text weight="medium">{process || `${selected.length} item selected`}</Text>
+      <Text weight="medium">{process || t("SpaceManage.items_selected", {count: selected.length})}</Text>
       { !process && (
         <>
-          <Button onClick={handleRemove} variant="danger">Remove</Button>
+          <Button onClick={handleRemove} variant="danger">{t("common.remove")}</Button>
           <Button
             onClick={() => handleToggleSuggested(!allSuggested)}
             variant={allSuggested ? 'surface' : 'primary'}
           >
-            {allSuggested ? 'Mark as not suggested' : 'Mark as suggested'}
+            {t(allSuggested ? 'SpaceManage.mark_as_not_suggested' : 'SpaceManage.mark_as_suggested')}
           </Button>
         </>
       )}
@@ -282,6 +292,9 @@ function useChildUpdate(roomId, roomsHierarchy) {
 }
 
 function SpaceManageContent({ roomId, requestClose }) {
+
+  const { t } = useTranslation();
+
   const mx = initMatrix.matrixClient;
   useUpdateOnJoin(roomId);
   const [, forceUpdate] = useForceUpdate();
@@ -339,11 +352,11 @@ function SpaceManageContent({ roomId, requestClose }) {
       {spacePath.length > 1 && (
         <SpaceManageBreadcrumb path={spacePath} onSelect={addPathItem} />
       )}
-      <Text variant="b3" weight="bold">Rooms and spaces</Text>
+      <Text variant="b3" weight="bold">{t("SpaceManage.rooms_and_spaces")}</Text>
       <div className="space-manage__content-items">
         {!isLoading && currentHierarchy?.rooms?.length === 1 && (
           <Text>
-            Either the space contains private rooms or you need to join space to view it's rooms.
+            {t("SpaceManage.private_rooms_message")}
           </Text>
         )}
         {currentHierarchy && (currentHierarchy.rooms?.map((roomInfo) => (
@@ -362,15 +375,15 @@ function SpaceManageContent({ roomId, requestClose }) {
               />
             )
         )))}
-        {!currentHierarchy && <Text>loading...</Text>}
+        {!currentHierarchy && <Text>{t("common.loading")}</Text>}
       </div>
       {currentHierarchy?.canLoadMore && !isLoading && (
-        <Button onClick={loadRoomHierarchy}>Load more</Button>
+        <Button onClick={loadRoomHierarchy}>{t("SpaceManage.load_more")}</Button>
       )}
       {isLoading && (
         <div className="space-manage__content-loading">
           <Spinner size="small" />
-          <Text>Loading rooms...</Text>
+          <Text>{t("common.loading")}</Text>
         </div>
       )}
       {selected.length > 0 && (
@@ -406,6 +419,8 @@ function SpaceManage() {
   const [roomId, requestClose] = useWindowToggle();
   const room = mx.getRoom(roomId);
 
+  const { t } = useTranslation();
+
   return (
     <PopupWindow
       isOpen={roomId !== null}
@@ -413,7 +428,7 @@ function SpaceManage() {
       title={(
         <Text variant="s1" weight="medium" primary>
           {roomId && twemojify(room.name)}
-          <span style={{ color: 'var(--tc-surface-low)' }}> — manage rooms</span>
+          <span style={{ color: 'var(--tc-surface-low)' }}> — {t("SpaceManage.subtitle")}</span>
         </Text>
       )}
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}

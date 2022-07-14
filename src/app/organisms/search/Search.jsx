@@ -20,6 +20,9 @@ import RoomSelector from '../../molecules/room-selector/RoomSelector';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function useVisiblityToggle(setResult) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -80,6 +83,8 @@ function Search() {
   const [isOpen, requestClose] = useVisiblityToggle(setResult);
   const searchRef = useRef(null);
   const mx = initMatrix.matrixClient;
+
+  const { t } = useTranslation();
 
   const handleSearchResults = (chunk, term) => {
     setResult({
@@ -212,7 +217,7 @@ function Search() {
           <Input
             onChange={handleOnChange}
             forwardRef={searchRef}
-            placeholder="Search"
+            placeholder={t("common.search")}
           />
           <IconButton size="small" src={CrossIC} type="reset" onClick={handleCross} tabIndex={-1} />
         </form>
@@ -224,7 +229,7 @@ function Search() {
           </ScrollView>
         </div>
         <div className="search-dialog__footer">
-          <Text variant="b3">Type # for rooms, @ for DMs and * for spaces. Hotkey: Ctrl + k</Text>
+          <Text variant="b3">{t("Search.description")}</Text>
         </div>
       </div>
     </RawModal>

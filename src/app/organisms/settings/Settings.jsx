@@ -40,34 +40,39 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function AppearanceSection() {
   const [, updateState] = useState({});
+
+  const { t } = useTranslation();
 
   return (
     <div className="settings-appearance">
       <div className="settings-appearance__card">
         <MenuHeader>Theme</MenuHeader>
         <SettingTile
-          title="Follow system theme"
+          title={t("Settings.theme.follow_system.title")}
           options={(
             <Toggle
               isActive={settings.useSystemTheme}
               onToggle={() => { toggleSystemTheme(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">Use light or dark mode based on the system settings.</Text>}
+          content={<Text variant="b3">{t("Settings.theme.follow_system.description")}</Text>}
         />
         {!settings.useSystemTheme && (
           <SettingTile
-            title="Theme"
+            title={t("Settings.theme.title")}
             content={(
               <SegmentedControls
                 selected={settings.getThemeIndex()}
                 segments={[
-                  { text: 'Light' },
-                  { text: 'Silver' },
-                  { text: 'Dark' },
-                  { text: 'Butter' },
+                  { text: t("Settings.theme.theme_light") },
+                  { text: t("Settings.theme.theme_silver") },
+                  { text: t("Settings.theme.theme_dark") },
+                  { text: t("Settings.theme.theme_butter") },
                 ]}
                 onSelect={(index) => settings.setTheme(index)}
               />
@@ -78,34 +83,34 @@ function AppearanceSection() {
       <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
         <SettingTile
-          title="Markdown formatting"
+          title={t("Settings.markdown.title")}
           options={(
             <Toggle
               isActive={settings.isMarkdown}
               onToggle={() => { toggleMarkdown(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
+          content={<Text variant="b3">{t("Settings.markdown.description")}</Text>}
         />
         <SettingTile
-          title="Hide membership events"
+          title={t("Settings.hide_membership_events.title")}
           options={(
             <Toggle
               isActive={settings.hideMembershipEvents}
               onToggle={() => { toggleMembershipEvents(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and Ban)</Text>}
+          content={<Text variant="b3">{t("Settings.hide_membership_events.description")}</Text>}
         />
         <SettingTile
-          title="Hide nick/avatar events"
+          title={t("Settings.hide_nickname_avatar_events.title")}
           options={(
             <Toggle
               isActive={settings.hideNickAvatarEvents}
               onToggle={() => { toggleNickAvatarEvents(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
+          content={<Text variant="b3">{t("Settings.hide_nickname_avatar_events.description")}</Text>}
         />
       </div>
     </div>
@@ -117,9 +122,11 @@ function NotificationsSection() {
 
   const [, updateState] = useState({});
 
+  const { t } = useTranslation();
+
   const renderOptions = () => {
     if (window.Notification === undefined) {
-      return <Text className="settings-notifications__not-supported">Not supported in this browser.</Text>;
+      return <Text className="settings-notifications__not-supported">{t("errors.browser_not_supported")}</Text>;
     }
 
     if (permission === 'granted') {
@@ -147,51 +154,54 @@ function NotificationsSection() {
 
   return (
     <div className="settings-notifications">
-      <MenuHeader>Notification & Sound</MenuHeader>
+      <MenuHeader>{t("Settings.notifications_and_sound.title")}</MenuHeader>
       <SettingTile
-        title="Desktop notification"
+        title={t("Settings.notifications_and_sound.desktop.title")}
         options={renderOptions()}
-        content={<Text variant="b3">Show desktop notification when new messages arrive.</Text>}
+        content={<Text variant="b3">{t("Settings.notifications_and_sound.desktop.description")}</Text>}
       />
       <SettingTile
-        title="Notification Sound"
+        title={t("Settings.notifications_and_sound.sound.title")}
         options={(
           <Toggle
             isActive={settings.isNotificationSounds}
             onToggle={() => { toggleNotificationSounds(); updateState({}); }}
           />
           )}
-        content={<Text variant="b3">Play sound when new messages arrive.</Text>}
+        content={<Text variant="b3">{t("Settings.notifications_and_sound.desktop.description")}</Text>}
       />
     </div>
   );
 }
 
 function SecuritySection() {
+
+  const { t } = useTranslation();
+
   return (
     <div className="settings-security">
       <div className="settings-security__card">
-        <MenuHeader>Cross signing and backup</MenuHeader>
+        <MenuHeader>{t("Settings.security.cross_signing.title")}</MenuHeader>
         <CrossSigning />
         <KeyBackup />
       </div>
       <DeviceManage />
       <div className="settings-security__card">
-        <MenuHeader>Export/Import encryption keys</MenuHeader>
+        <MenuHeader>{t("Settings.security.export_import_encryption_keys.title")}</MenuHeader>
         <SettingTile
-          title="Export E2E room keys"
+          title={t("Settings.security.export_encryption_keys.title")}
           content={(
             <>
-              <Text variant="b3">Export end-to-end encryption room keys to decrypt old messages in other session. In order to encrypt keys you need to set a password, which will be used while importing.</Text>
+              <Text variant="b3">{t("Settings.security.export_encryption_keys.description")}</Text>
               <ExportE2ERoomKeys />
             </>
           )}
         />
         <SettingTile
-          title="Import E2E room keys"
+          title={t("Settings.security.import_encryption_keys.title")}
           content={(
             <>
-              <Text variant="b3">{'To decrypt older messages, Export E2EE room keys from Element (Settings > Security & Privacy > Encryption > Cryptography) and import them here. Imported keys are encrypted so you\'ll have to enter the password you set in order to decrypt it.'}</Text>
+              <Text variant="b3">{t("Settings.security.import_encryption_keys.description")}</Text>
               <ImportE2ERoomKeys />
             </>
           )}
@@ -202,28 +212,31 @@ function SecuritySection() {
 }
 
 function AboutSection() {
+
+  const { t } = useTranslation();
+
   return (
     <div className="settings-about">
       <div className="settings-about__card">
-        <MenuHeader>Application</MenuHeader>
+        <MenuHeader>{t("Settings.about.application")}</MenuHeader>
         <div className="settings-about__branding">
           <img width="60" height="60" src={CinnySVG} alt="Cinny logo" />
           <div>
             <Text variant="h2" weight="medium">
-              Cinny
+              {t("common.cinny")}
               <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>{`v${cons.version}`}</span>
             </Text>
-            <Text>Yet another matrix client</Text>
+            <Text>{t("common.slogan")}</Text>
 
             <div className="settings-about__btns">
-              <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>Source code</Button>
-              <Button onClick={() => window.open('https://cinny.in/#sponsor')}>Support</Button>
+              <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>{t("common.source_code")}</Button>
+              <Button onClick={() => window.open('https://cinny.in/#sponsor')}>{t("common.sponsor")}</Button>
             </div>
           </div>
         </div>
       </div>
       <div className="settings-about__card">
-        <MenuHeader>Credits</MenuHeader>
+        <MenuHeader>{t("Settings.about.credits")}</MenuHeader>
         <div className="settings-about__credits">
           <ul>
             <li>
@@ -297,9 +310,11 @@ function Settings() {
   const [selectedTab, setSelectedTab] = useState(tabItems[0]);
   const [isOpen, requestClose] = useWindowToggle(setSelectedTab);
 
+  const { t } = useTranslation();
+
   const handleTabChange = (tabItem) => setSelectedTab(tabItem);
   const handleLogout = async () => {
-    if (await confirmDialog('Logout', 'Are you sure that you want to logout your session?', 'Logout', 'danger')) {
+    if (await confirmDialog(t("Settings.logout.dialog.title"), t("Settings.logout.dialog.description"), t("Settings.logout.dialog.confirm"), 'danger')) {
       logout();
     }
   };
@@ -308,13 +323,13 @@ function Settings() {
     <PopupWindow
       isOpen={isOpen}
       className="settings-window"
-      title={<Text variant="s1" weight="medium" primary>Settings</Text>}
+      title={<Text variant="s1" weight="medium" primary>{t("Settings.title")}</Text>}
       contentOptions={(
         <>
           <Button variant="danger" iconSrc={PowerIC} onClick={handleLogout}>
-            Logout
+            {t("Settings.logout.title")}
           </Button>
-          <IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />
+          <IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />
         </>
       )}
       onRequestClose={requestClose}

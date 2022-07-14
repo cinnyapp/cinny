@@ -83,7 +83,7 @@ function GeneralSettings({ roomId }) {
           }}
           iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}
         >
-          {isCategorized ? t("space_settings.uncategorize_subspaces") : t("space_settings.categorize_subspaces")}
+          {isCategorized ? t("SpaceSettings.uncategorize_subspaces") : t("SpaceSettings.categorize_subspaces")}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -93,30 +93,30 @@ function GeneralSettings({ roomId }) {
           }}
           iconSrc={isPinned ? PinFilledIC : PinIC}
         >
-          {isPinned ? t("space_settings.unpin_sidebar") : t("space_settings.pin_sidebar")}
+          {isPinned ? t("SpaceSettings.unpin_sidebar") : t("SpaceSettings.pin_sidebar")}
         </MenuItem>
         <MenuItem
           variant="danger"
           onClick={async () => {
             const isConfirmed = await confirmDialog(
-              t("space_settings.leave.leave_dialog_title"),
-              t("space_settings.leave.leave_dialog_message", {space: roomName}),
-              t("space_settings.leave.leave_space"),
+              t("SpaceSettings.leave.leave_dialog_title"),
+              t("SpaceSettings.leave.leave_dialog_message", {space: roomName}),
+              t("SpaceSettings.leave.leave_space"),
               'danger',
             );
             if (isConfirmed) leave(roomId);
           }}
           iconSrc={LeaveArrowIC}
         >
-          {t("space_settings.leave.leave_space")}
+          {t("SpaceSettings.leave.leave_space")}
         </MenuItem>
       </div>
       <div className="space-settings__card">
-        <MenuHeader>{t("space_settings.visibility.header")}</MenuHeader>
+        <MenuHeader>{t("SpaceSettings.visibility.header")}</MenuHeader>
         <RoomVisibility roomId={roomId} />
       </div>
       <div className="space-settings__card">
-        <MenuHeader>{t("space_settings.addresses.header")}</MenuHeader>
+        <MenuHeader>{t("SpaceSettings.addresses.header")}</MenuHeader>
         <RoomAliases roomId={roomId} />
       </div>
     </>
@@ -169,7 +169,7 @@ function SpaceSettings() {
       title={(
         <Text variant="s1" weight="medium" primary>
           {isOpen && twemojify(room.name)}
-          <span style={{ color: 'var(--tc-surface-low)' }}> — {t("space_settings.subtitle")}</span>
+          <span style={{ color: 'var(--tc-surface-low)' }}> — {t("SpaceSettings.subtitle")}</span>
         </Text>
       )}
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />}

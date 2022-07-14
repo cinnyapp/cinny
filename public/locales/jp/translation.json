@@ -3,7 +3,8 @@
         "close": "閉める",
         "leave": "残す"
     },
-    "welcome":{
-        "heading": "いらっしゃいませ"
+    "Welcome": {
+        "heading": "おはようございます",
+        "subheading": "Yet another Matrix client"
     }
 }

@@ -16,8 +16,8 @@ function Welcome() {
     <div className="app-welcome flex--center">
       <div>
         <img className="app-welcome__logo noselect" src={CinnySvg} alt="Cinny logo" />
-        <Text className="app-welcome__heading" variant="h1" weight="medium" primary>{t('welcome.heading')}</Text>
-        <Text className="app-welcome__subheading" variant="s1">{t('welcome.subheading')}</Text>
+        <Text className="app-welcome__heading" variant="h1" weight="medium" primary>{t('Welcome.heading')}</Text>
+        <Text className="app-welcome__subheading" variant="s1">{t('Welcome.subheading')}</Text>
       </div>
     </div>
   );

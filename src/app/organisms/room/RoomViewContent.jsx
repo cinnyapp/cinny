@@ -29,6 +29,10 @@ import { parseTimelineChange } from './common';
 import TimelineScroll from './TimelineScroll';
 import EventLimit from './EventLimit';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+import { Trans } from 'react-i18next';
+
 const PAG_LIMIT = 30;
 const MAX_MSG_DIFF_MINUTES = 5;
 const PLACEHOLDER_COUNT = 2;
@@ -55,29 +59,39 @@ function RoomIntroContainer({ event, timeline }) {
   const [, nameForceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const { roomList } = initMatrix;
+
+  const { t } = useTranslation();
+
   const { room } = timeline;
   const roomTopic = room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic;
   const isDM = roomList.directs.has(timeline.roomId);
   let avatarSrc = room.getAvatarUrl(mx.baseUrl, 80, 80, 'crop');
   avatarSrc = isDM ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
 
-  const heading = isDM ? room.name : `Welcome to ${room.name}`;
+  const heading = isDM ? room.name : t("RoomViewContent.welcome_to_room", {room_name: room.name});
   const topic = twemojify(roomTopic || '', undefined, true);
   const nameJsx = twemojify(room.name);
   const desc = isDM
     ? (
       <>
-        This is the beginning of your direct message history with @
-        <b>{nameJsx}</b>
-        {'. '}
-        {topic}
+        <Trans 
+          i18nKey={"RoomViewContent.beginning_dm"} 
+          values={{user_name: nameJsx}}
+          components={{bold: <b/>}}
+        />
+        {topic == "" ? "" : " - "}
+        {topic }
       </>
     )
     : (
       <>
-        {'This is the beginning of the '}
-        <b>{nameJsx}</b>
-        {' room. '}
+        <Trans 
+          i18nKey={"RoomViewContent.beginning_room"} 
+          values={{room_name: nameJsx}}
+          components={{bold: <b/>}}
+          />
+
+        {topic == "" ? "" : " - "}
         {topic}
       </>
     );
@@ -98,7 +112,7 @@ function RoomIntroContainer({ event, timeline }) {
       name={room.name}
       heading={twemojify(heading)}
       desc={desc}
-      time={event ? `Created at ${dateFormat(event.getDate(), 'dd mmmm yyyy, hh:MM TT')}` : null}
+      time={event ? t("RoomViewContent.created_on", {date: event.getDate(), formatParams: { date: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}}}) : null}
     />
   );
 }
@@ -386,6 +400,8 @@ let jumpToItemIndex = -1;
 function RoomViewContent({ eventId, roomTimeline }) {
   const [throttle] = useState(new Throttle());
 
+  const { t } = useTranslation();
+
   const timelineSVRef = useRef(null);
   const timelineScrollRef = useRef(null);
   const eventLimitRef = useRef(null);
@@ -523,7 +539,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
           && readUptoEvent.getTs() < mEvent.getTs());
         if (unreadDivider) {
           isNewEvent = true;
-          tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text="New messages" />);
+          tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text={t("RoomViewContent.new_messages")} />);
           itemCountIndex += 1;
           if (jumpToItemIndex === -1) jumpToItemIndex = itemCountIndex;
         }

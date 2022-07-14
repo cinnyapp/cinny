@@ -13,6 +13,11 @@ import Button from '../../atoms/button/Button';
 import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 
+
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
+
 import { useStore } from '../../hooks/useStore';
 
 function SecretStorageAccess({ onComplete }) {
@@ -24,6 +29,7 @@ function SecretStorageAccess({ onComplete }) {
   const [process, setProcess] = useState(false);
   const [error, setError] = useState(null);
   const mountStore = useStore();
+  const { t } = useTranslation();
 
   const toggleWithPhrase = () => setWithPhrase(!withPhrase);
 
@@ -39,7 +45,7 @@ function SecretStorageAccess({ onComplete }) {
 
       if (!mountStore.getItem()) return;
       if (!isCorrect) {
-        setError(`Incorrect Security ${key ? 'Key' : 'Phrase'}`);
+        setError(t(key ? "SecretStorageAccess.incorrect_security_key" : "SecretStorageAccess.incorrect_security_phrase"));
         setProcess(false);
         return;
       }
@@ -51,7 +57,7 @@ function SecretStorageAccess({ onComplete }) {
       });
     } catch (e) {
       if (!mountStore.getItem()) return;
-      setError(`Incorrect Security ${key ? 'Key' : 'Phrase'}`);
+      setError(t(key ? "SecretStorageAccess.incorrect_security_key" : "SecretStorageAccess.incorrect_security_phrase"));
       setProcess(false);
     }
   };
@@ -76,7 +82,7 @@ function SecretStorageAccess({ onComplete }) {
       <form onSubmit={handleForm}>
         <Input
           name="password"
-          label={`Security ${withPhrase ? 'Phrase' : 'Key'}`}
+          label={t(withPhrase ? "SecretStorageAccess.security_phrase" : "SecretStorageAccess.security_key")}
           type="password"
           onChange={handleChange}
           required
@@ -84,8 +90,8 @@ function SecretStorageAccess({ onComplete }) {
         {error && <Text variant="b3">{error}</Text>}
         {!process && (
           <div className="secret-storage-access__btn">
-            <Button variant="primary" type="submit">Continue</Button>
-            {isPassphrase && <Button onClick={toggleWithPhrase}>{`Use Security ${withPhrase ? 'Key' : 'Phrase'}`}</Button>}
+            <Button variant="primary" type="submit">{t("common.continue")}</Button>
+            {isPassphrase && <Button onClick={toggleWithPhrase}>{t( withPhrase ? "SecretStorageAccess.use_security_key" : "SecretStorageAccess.use_security_phrase")}</Button>}
           </div>
         )}
       </form>

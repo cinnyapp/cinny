@@ -5,13 +5,22 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+import { Trans } from 'react-i18next';
+
 function getTimelineJSXMessages() {
+
   return {
+
     join(user) {
       return (
         <>
-          <b>{twemojify(user)}</b>
-          {' joined the room'}
+        <Trans
+          i18nKey={"RoomCommon.user_joined"}
+          values={{user_name: twemojify(user)}}
+          components={{bold: <b/>}}
+        />
         </>
       );
     },
@@ -19,118 +28,145 @@ function getTimelineJSXMessages() {
       const reasonMsg = (typeof reason === 'string') ? `: ${reason}` : '';
       return (
         <>
-          <b>{twemojify(user)}</b>
-          {' left the room'}
-          {twemojify(reasonMsg)}
+        <Trans
+          i18nKey={"RoomCommon.user_left"}
+          values={{user_name: twemojify(user)}}
+          components={{bold: <b/>}}
+        />
         </>
       );
     },
     invite(inviter, user) {
       return (
         <>
-          <b>{twemojify(inviter)}</b>
-          {' invited '}
-          <b>{twemojify(user)}</b>
+        <Trans
+          i18nKey={"RoomCommon.user_invited"}
+          values={{user_name: twemojify(user), inviter_name: twemojify(inviter)}}
+          components={{bold: <b/>}}
+        />
         </>
       );
     },
     cancelInvite(inviter, user) {
       return (
         <>
-          <b>{twemojify(inviter)}</b>
-          {' canceled '}
-          <b>{twemojify(user)}</b>
-          {'\'s invite'}
+        <Trans
+          i18nKey={"RoomCommon.invite_cancelled"}
+          values={{user_name: twemojify(user), inviter_name: twemojify(inviter)}}
+          components={{bold: <b/>}}
+        />
         </>
       );
     },
     rejectInvite(user) {
       return (
         <>
-          <b>{twemojify(user)}</b>
-          {' rejected the invitation'}
+        <Trans
+          i18nKey={"RoomCommon.invite_rejected"}
+          values={{user_name: twemojify(user)}}
+          components={{bold: <b/>}}
+        />
         </>
       );
     },
     kick(actor, user, reason) {
-      const reasonMsg = (typeof reason === 'string') ? `: ${reason}` : '';
+      const reasonMsg = (typeof reason === 'string') ? `${reason}` : '';
       return (
         <>
-          <b>{twemojify(actor)}</b>
-          {' kicked '}
-          <b>{twemojify(user)}</b>
-          {twemojify(reasonMsg)}
+        <Trans
+          i18nKey={"RoomCommon.user_kicked"}
+          values={{user_name: twemojify(user), actor: twemojify(actor), reason: twemojify(reasonMsg)}}
+          components={{bold: <b/>}}
+        />
         </>
       );
     },
     ban(actor, user, reason) {
-      const reasonMsg = (typeof reason === 'string') ? `: ${reason}` : '';
+      const reasonMsg = (typeof reason === 'string') ? `${reason}` : '';
       return (
         <>
-          <b>{twemojify(actor)}</b>
-          {' banned '}
-          <b>{twemojify(user)}</b>
-          {twemojify(reasonMsg)}
+          <Trans
+          i18nKey={"RoomCommon.user_banned"}
+          values={{user_name: twemojify(user), actor: twemojify(actor), reason: twemojify(reasonMsg)}}
+          components={{bold: <b/>}}
+          />
         </>
       );
     },
     unban(actor, user) {
       return (
         <>
-          <b>{twemojify(actor)}</b>
-          {' unbanned '}
-          <b>{twemojify(user)}</b>
+          <Trans
+          i18nKey={"RoomCommon.user_unbanned"}
+          values={{user_name: twemojify(user), actor: twemojify(actor)}}
+          components={{bold: <b/>}}
+          />
         </>
       );
     },
     avatarSets(user) {
       return (
         <>
-          <b>{twemojify(user)}</b>
-          {' set a avatar'}
+          <Trans
+          i18nKey={"RoomCommon.avatar_set"}
+          values={{user_name: twemojify(user)}}
+          components={{bold: <b/>}}
+          />
         </>
       );
     },
     avatarChanged(user) {
       return (
         <>
-          <b>{twemojify(user)}</b>
-          {' changed their avatar'}
+          <Trans
+          i18nKey={"RoomCommon.avatar_changed"}
+          values={{user_name: twemojify(user)}}
+          components={{bold: <b/>}}
+          />
         </>
       );
     },
     avatarRemoved(user) {
       return (
         <>
-          <b>{twemojify(user)}</b>
-          {' removed their avatar'}
+          <Trans
+          i18nKey={"RoomCommon.avatar_removed"}
+          values={{user_name: twemojify(user)}}
+          components={{bold: <b/>}}
+          />
         </>
       );
     },
     nameSets(user, newName) {
       return (
         <>
-          <b>{twemojify(user)}</b>
-          {' set display name to '}
-          <b>{twemojify(newName)}</b>
+          <Trans
+          i18nKey={"RoomCommon.name_set"}
+          values={{user_name: twemojify(user), new_name: twemojify(newName)}}
+          components={{bold: <b/>}}
+          />
         </>
       );
     },
     nameChanged(user, newName) {
       return (
         <>
-          <b>{twemojify(user)}</b>
-          {' changed their display name to '}
-          <b>{twemojify(newName)}</b>
+          <Trans
+          i18nKey={"RoomCommon.name_changed"}
+          values={{user_name: twemojify(user), new_name: twemojify(newName)}}
+          components={{bold: <b/>}}
+          />
         </>
       );
     },
     nameRemoved(user, lastName) {
       return (
         <>
-          <b>{twemojify(user)}</b>
-          {' removed their display name '}
-          <b>{twemojify(lastName)}</b>
+          <Trans
+          i18nKey={"RoomCommon.name_removed"}
+          values={{user_name: twemojify(user), new_name: twemojify(newName)}}
+          components={{bold: <b/>}}
+          />
         </>
       );
     },

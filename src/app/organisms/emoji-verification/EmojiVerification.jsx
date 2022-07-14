@@ -20,6 +20,10 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useStore } from '../../hooks/useStore';
 import { accessSecretStorage } from '../settings/SecretStorageAccess';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+import { t } from 'i18next';
+
 function EmojiVerificationContent({ data, requestClose }) {
   const [sas, setSas] = useState(null);
   const [process, setProcess] = useState(false);
@@ -27,6 +31,8 @@ function EmojiVerificationContent({ data, requestClose }) {
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
   const beginStore = useStore();
+
+  const { t } = useTranslation();
 
   const beginVerification = async () => {
     if (
@@ -94,14 +100,14 @@ function EmojiVerificationContent({ data, requestClose }) {
   const renderWait = () => (
     <>
       <Spinner size="small" />
-      <Text>Waiting for response from other device...</Text>
+      <Text>{t("EmojiVerification.waiting_for_response")}</Text>
     </>
   );
 
   if (sas !== null) {
     return (
       <div className="emoji-verification__content">
-        <Text>Confirm the emoji below are displayed on both devices, in the same order:</Text>
+        <Text>{t("EmojiVerification.confirmation_prompt")}</Text>
         <div className="emoji-verification__emojis">
           {sas.sas.emoji.map((emoji, i) => (
             // eslint-disable-next-line react/no-array-index-key
@@ -114,8 +120,8 @@ function EmojiVerificationContent({ data, requestClose }) {
         <div className="emoji-verification__buttons">
           {process ? renderWait() : (
             <>
-              <Button variant="primary" onClick={sasConfirm}>They match</Button>
-              <Button onClick={sasMismatch}>{'They don\'t match'}</Button>
+              <Button variant="primary" onClick={sasConfirm}>{t("EmojiVerification.emojis_match_button")}</Button>
+              <Button onClick={sasMismatch}>{t("EmojiVerification.emojis_dont_match_button")}</Button>
             </>
           )}
         </div>
@@ -126,7 +132,7 @@ function EmojiVerificationContent({ data, requestClose }) {
   if (targetDevice) {
     return (
       <div className="emoji-verification__content">
-        <Text>Please accept the request from other device.</Text>
+        <Text>{t("EmojiVerification.accept_request_from_other_device_message")}</Text>
         <div className="emoji-verification__buttons">
           {renderWait()}
         </div>
@@ -136,12 +142,12 @@ function EmojiVerificationContent({ data, requestClose }) {
 
   return (
     <div className="emoji-verification__content">
-      <Text>Click accept to start the verification process.</Text>
+      <Text>{t("EmojiVerification.begin_verification_process_message")}</Text>
       <div className="emoji-verification__buttons">
         {
           process
             ? renderWait()
-            : <Button variant="primary" onClick={beginVerification}>Accept</Button>
+            : <Button variant="primary" onClick={beginVerification}>{t("EmojiVerification.begin_verification_button_text")}</Button>
         }
       </div>
     </div>
@@ -182,10 +188,10 @@ function EmojiVerification() {
       className="emoji-verification"
       title={(
         <Text variant="s1" weight="medium" primary>
-          Emoji verification
+          {t("EmojiVerification.title")}
         </Text>
       )}
-      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
+      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />}
       onRequestClose={requestClose}
     >
       {

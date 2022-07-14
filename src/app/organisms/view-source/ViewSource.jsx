@@ -56,15 +56,15 @@ function ViewSource() {
 
   const renderViewSource = () => (
     <div className="view-source">
-      {event.isEncrypted() && <ViewSourceBlock title={t("view_source.decrypted_source")} json={event.getEffectiveEvent()} />}
-      <ViewSourceBlock title={t("view_source.original_source")} json={event.event} />
+      {event.isEncrypted() && <ViewSourceBlock title={t("ViewSource.decrypted_source")} json={event.getEffectiveEvent()} />}
+      <ViewSourceBlock title={t("ViewSource.original_source")} json={event.event} />
     </div>
   );
 
   return (
     <PopupWindow
       isOpen={isOpen}
-      title={t("view_source.title")}
+      title={t("ViewSource.title")}
       onAfterClose={handleAfterClose}
       onRequestClose={() => setIsOpen(false)}
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip={t("common.close")} />}
