@@ -8,6 +8,7 @@ import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
+import { t } from 'i18next';
 
 function RoomTile({
   avatarSrc, name, id,
@@ -27,8 +28,8 @@ function RoomTile({
         <Text variant="b3">
           {
             inviterName !== null
-              ? `Invited by ${inviterName} to ${id}${memberCount === null ? '' : ` • ${memberCount} members`}`
-              : id + (memberCount === null ? '' : ` • ${memberCount} members`)
+              ? t("Molecules.RoomTile.invited_by_user", {inviter: inviterName, count: memberCount || 0, id: id})
+              : t("Molecules.RoomTile.invited", {count: memberCount || 0, id: id})
           }
         </Text>
         {

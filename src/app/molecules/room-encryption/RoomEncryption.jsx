@@ -10,6 +10,9 @@ import SettingTile from '../setting-tile/SettingTile';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function RoomEncryption({ roomId }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
@@ -17,16 +20,18 @@ function RoomEncryption({ roomId }) {
   const [isEncrypted, setIsEncrypted] = useState(encryptionEvents.length > 0);
   const canEnableEncryption = room.currentState.maySendStateEvent('m.room.encryption', mx.getUserId());
 
+  const { t } = useTranslation();
+
   const handleEncryptionEnable = async () => {
     const joinRule = room.getJoinRule();
-    const confirmMsg1 = 'It is not recommended to add encryption in public room. Anyone can find and join public rooms, so anyone can read messages in them.';
-    const confirmMsg2 = 'Once enabled, encryption for a room cannot be disabled. Messages sent in an encrypted room cannot be seen by the server, only by the participants of the room. Enabling encryption may prevent many bots and bridges from working correctly';
+    const confirmMsg1 = t("Molecules.RoomEncryption.encryption_public_room_message");
+    const confirmMsg2 = t("Molecules.RoomEncryption.encryption_message");
 
     const isConfirmed1 = (joinRule === 'public')
-      ? await confirmDialog('Enable encryption', confirmMsg1, 'Continue', 'caution')
+      ? await confirmDialog(t("Molecules.RoomEncryption.enable_encryption_prompt"), confirmMsg1, t("Molecules.RoomEncryption.continue_button"), 'caution')
       : true;
     if (!isConfirmed1) return;
-    if (await confirmDialog('Enable encryption', confirmMsg2, 'Enable', 'caution')) {
+    if (await confirmDialog(t("Molecules.RoomEncryption.enable_encryption_prompt"), confirmMsg2, t("Molecules.RoomEncryption.enable_encryption_button"), 'caution')) {
       setIsEncrypted(true);
       mx.sendStateEvent(roomId, 'm.room.encryption', {
         algorithm: 'm.megolm.v1.aes-sha2',
@@ -37,9 +42,9 @@ function RoomEncryption({ roomId }) {
   return (
     <div className="room-encryption">
       <SettingTile
-        title="Enable room encryption"
+        title={t("Molecules.RoomEncryption.enable_room_encryption")}
         content={(
-          <Text variant="b3">Once enabled, encryption cannot be disabled.</Text>
+          <Text variant="b3">{t("Molecules.RoomEncryption.encryption_cannot_be_disabled")}</Text>
         )}
         options={(
           <Toggle

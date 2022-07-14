@@ -334,6 +334,18 @@
             "shared_power_message": "You will not be able to undo this change as you are promoting the user to have the same power level as yourself. Are you sure?",
             "demoting_self_message": "You will not be able to undo this change as you are demoting yourself. Are you sure?"
         },
+        "PeopleDrawer": {
+            "title": "People",
+            "members_one": "{{count}} member",
+            "members_other": "{{count}} members",
+            "joined": "Joined",
+            "invited": "Invited",
+            "banned": "Banned",
+            "search_no_results": "No results found",
+            "view_more": "View more",
+            "placeholder": "Search",
+            "invite_tooltip": "Invite"
+        },
         "ProfileEditor": {
             "remove_avatar": "Remove avatar",
             "remove_avatar_confirmation": "Are you sure that you want to remove your avatar?",
@@ -438,6 +450,327 @@
             "create_room": "Create room",
             "create_space": "Create space",
             "home": "Home"
+        }
+    },
+    "Molecules":{
+        "ConfirmDialog":{
+            "cancel": "Cancel"
+        },
+        "ReusableDialog":
+        {
+            "close_tooltip": "Close"
+        },
+        "FollowingMembers":{
+            "users_following_one": "<bold>{{user_one}}</bold> is following the conversation",
+            "users_following_two": "<bold>{{user_one}}</bold> and <bold>{{user_two}}</bold> are following the conversation",
+            "users_following_three": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold>, and <bold>{{user_three}}</bold> are following the conversation",
+            "users_following_other": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold>, <bold>{{user_three}}</bold> and {{other_count}} others are following the conversation"
+        },
+        "ImageUpload":
+        {
+            "prompt": "Upload",
+            "cancel": "Cancel",
+            "remove": "Remove"
+        },
+        "ExportE2ERoomKeys":
+        {
+            "getting_keys": "Getting keys...",
+            "encrypting_keys": "Encrypting Keys...",
+            "password_does_not_match": "Password does not match.",
+            "export_success": "Successfully exported all keys.",
+            "export_failed": "Failed to export keys. Please try again.",
+            "button_text": "Export"
+        },
+        "ImportE2ERoomKeys":
+        {
+            "decrypting_file": "Decrypting file...",
+            "decrypting_messages": "Decrypting messages...",
+            "import_success": "Successfully imported all keys",
+            "import_failed": "Failed tp decrypt keys. Please try again",
+            "import_keys_button": "Import Keys",
+            "decrypt_button": "Decrypt"
+        },
+        "Media":{
+            "open_new_tab": "Open in new tab",
+            "download": "Download",
+            "play_audio": "Play audio",
+            "play_video": "Play video"
+        },
+        "Message":
+        {
+            "message_deleted": "*** This message has been deleted ***",
+            "unable_to_load_reply": "*** Unable to load reply ***",
+            "unknown_user": "** Unknown user **",
+            "edited": "(edited)",
+            "edit_placeholder": "Edit message",
+            "user_reacted_one": "<bold>{{user_one}}</bold> reacted with <emoji/>",
+            "user_reacted_two": "<bold>{{user_one}}</bold> and <bold>{{user_two}}</bold> reacted with <emoji/>",
+            "user_reacted_three": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold> and <bold>{{user_three}}</bold> reacted with <emoji/>",
+            "user_reacted_other": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold>, <bold>{{user_three}}</bold> and {{other_count}} others reacted with <emoji/>",
+            "add_reaction_tooltip": "Add reaction",
+            "reply_tooltip": "Reply",
+            "edit_tooltip": "Edit",
+            "options_header": "Options",
+            "options_tooltip": "Options",
+            "read_receipts": "Read receipts",
+            "view_source": "View source",
+            "delete_message_prompt": "Delete message",
+            "delete_message_confirmation": "Are you sure that you want to delete this message?",
+            "delete_message_button": "Delete"
+        },
+        "PopupWindow":
+        {
+            "close_tooltip": "Back"
+        },
+        "PowerLevelSelector": {
+            "placeholder": "Power level"
+        },
+        "RoomAliases": {
+            "invalid_characters": "Invalid character: only letter, numbers and _- are allowed.",
+            "validating_alias": "validating {{alias}}...",
+            "alias_available": "{{alias}} is available.",
+            "alias_unavailable": "{{alias}} is unavailable.",
+            "deleting_alias": "Deleting...",
+            "set_main_alias": "Set as Main",
+            "publish_alias": "Publish",
+            "unpublish_alias": "Unpublish",
+            "delete_alias": "Delete",
+            "main_alias": "Main",
+            "publish_to_room_directory":
+            {
+                "title": "Publish to room directory",
+                "publish_room_message": "Publish this room to the {{homeserver}} publish directory?",
+                "publish_space_message": "Publish this space to the {{homeserver}} publish directory?"
+            },
+            "published_addresses":
+            {
+                "title": "Published addresses",
+                "none": "No published addresses",
+                "no_main_address": "No main address (select one from below)",
+                "message_room": "Published addresses can be used by anyone on any server to join your room. To publish an address, it needs to be set as a local address first.",
+                "message_space": "Published addresses can be used by anyone on any server to join your space. To publish an address, it needs to be set as a local address first."
+            },
+            "local_addresses":
+            {
+                "title": "Local addresses",
+                "none": "No local addresses",
+                "message_room": "Set local addresses for this room so users can find this room through your homeserver.",
+                "message_space": "Set local addresses for this space so users can find this space through your homeserver.",
+                "add": "Add local address",
+                "add_button": "Add",
+                "placeholder_room": "my_room_address",
+                "placeholder_space": "my_space_address",
+                "hide": "Hide local addresses",
+                "view": "View local addresses"
+
+            }
+        },
+        "RoomEncryption":{
+            "encryption_public_room_message": "It is not recommended to add encryption in public room. Anyone can find and join public rooms, so anyone should be able to read messages in them.",
+            "encryption_message": "Once enabled, encryption for a room cannot be disabled. Messages sent in an encrypted room cannot be seen by the server, only by the participants of the room. Enabling encryption may prevent many bots and bridges from working correctly",
+            "encryption_cannot_be_disabled": "Once enabled, encryption cannot be disabled.",
+            "enable_room_encryption": "Enable room encryption",
+            "enable_encryption_prompt": "Enable Encryption",
+            "enable_encryption_button": "Enable",
+            "continue_button": "Continue"
+            
+        },
+        "RoomHistoryVisibility": {
+            "world_readable": "Anyone (including guests)",
+            "shared": "Members (all messages)",
+            "invited": "Members (messages after invite)",
+            "joined": "Members (messages after join)",
+            "changes_only_affect_future": "Changes to history visibility will only apply to future messages. The visibility of existing history will have no effect."
+        },
+        "RoomMembers": {
+            "search_title": "Search member",
+            "found_members_one": "Found — one member",
+            "found_members_other": "Found — {{count}} members",
+            "no_results": "No results found for {{term}}",
+            "no_members": "No members to display",
+            "view_more": "View more",
+            "joined": "Joined",
+            "invited": "Invited",
+            "banned": "Banned",
+            "search_placeholder": "Search for name"
+        },
+        "RoomNotification":
+        {
+            "default": "Global",
+            "all_messages": "All messages",
+            "mentions_and_keywords": "Mentions & Keywords",
+            "mute": "Mute"
+        },
+        "RoomOptions":{
+            "title": "Options for {{room_name}}",
+            "leave": {
+                "title": "Leave room",
+                "subtitle": "Are you sure you want to leave the {{room_name}} room?",
+                "button_text": "Leave"
+            },
+            "mark_as_read": "Mark as read",
+            "notifications_heading": "Notifications",
+            "invite": "Invite"
+        },
+        "RoomPermissions":
+        {
+            "default_role": {
+                "name": "Default role",
+                "description": "Set default role for all members"
+            },
+            "send_messages": {
+                "name": "Send messages",
+                "description": "Set minimum power level to send messages in a room"
+            },
+            "reactions":{
+                "name": "Send reactions",
+                "description": "Set minimum power level to send reactions in a room"
+            },
+            "delete": {
+                "name": "Delete messages sent by others",
+                "description": "Set minumum power level to delete messages in a room"
+            },
+            "notifications":{
+                "name": "Ping room",
+                "description": "Set minimum power level to ping room"
+            },
+            "manage_rooms":{
+                "name": "Manage rooms in space",
+                "description": "Set minimum power level to manage rooms in space"
+            },
+            "invite": {
+                "name": "Invite",
+                "description": "Set minimum power level to invite members"
+            },
+            "kick": {
+                "name": "Kick",
+                "description": "Set minimum power level to kick members"
+            },
+            "ban": {
+                "name": "Ban",
+                "description": "Set minimum power level to ban members"
+            },
+            "change_avatar": {
+                "name": "Change avatar",
+                "description": "Set minimum power level to change room/space avatar"
+            },
+            "change_name": {
+                "name": "Change name",
+                "description": "Set minimum power evel to change room/space name"
+            },
+            "change_topic": {
+                "name": "Change topic",
+                "description": "Set minimum power level to change room/space topic"
+            },
+            "change_settings": {
+                "name": "Change settings",
+                "description": "Set minimum power level to change settings"
+            },
+            "change_published_address": {
+                "name": "Change published address",
+                "description": "Set minimum power level to publish and set main address"
+            },
+            "change_permissions": {
+                "name": "Change permissions",
+                "description": "Set minimum power level to change permissions"
+            },
+            "enable_room_encryption": {
+                "name": "Enable room encryption",
+                "description": "Set minimum power level to enable room encryption"
+            },
+            "change_history_visibility": {
+                "name": "Change history visibility",
+                "description": "Set minimum power level to change room message history visibility"
+            },
+            "upgrade_room": {
+                "name": "Upgrade room",
+                "description": "Set minimum power level to upgrade room"
+            },
+            "pin_messages": {
+                "name": "Pin messages",
+                "description": "Set minimum power level to pin messages in a room"
+            },
+            "change_acls": {
+                "name": "Change server ACLs",
+                "description": "Set minimum power level to change server ACLs"
+            },
+            "modify_widgets": {
+                "name": "Modify widgets",
+                "description": "Set minimum power level to modify room widgets"
+            },
+            "groups":
+            {
+                "general": "General permissions",
+                "manage_members": "Manage members permissions",
+                "room": "Room profile permissions",
+                "space": "Space profile permissions",
+                "other": "Other permissions",
+                "settings": "Settings permissions"
+            }
+        },
+        "RoomProfile": {
+            "saving_room_name": "Saving room name...",
+            "saving_room_topic": "Saving room topic...",
+            "save_success": "Saved successfully",
+            "save_failed": "Unable to save",
+            "remove_avatar_title": "Remove avatar",
+            "remove_avatar_subtitle": "Are you sure that you want to remove room avatar?",
+            "remove_avatar_button": "Remove",
+            "permission_change_room_name": "You have permission to change room name only",
+            "permission_change_room_topic": "You have permission to change room topic only",
+            "permission_change_space_name": "You have permission to change space name only",
+            "permission_change_space_topic": "You have permission to change space topic only",
+            "name_label": "Name",
+            "topic_label": "Topic"
+        },
+        "RoomSearch": {
+            "title": "Room search",
+            "placeholder": "Search for keywords",
+            "search_button": "Search",
+            "searching": "Searching room messages...",
+            "subtitle": "Search room messages",
+            "failed": "Failed to search messages",
+            "no_results": "No results found",
+            "encrypted_room": "Search does not work in encrypted room", 
+            "load_more": "Load more",
+            "results_one": "{{count}} result for {{term}}",
+            "results_other": "{{count}} results for {{term}}"
+        },
+        "RoomTile": {
+            "invited_by_user_zero": "Invited by {{inviter}} to {{id}}",
+            "invited_by_user_one": "Invited by {{inviter}} to {{id}} • {{member_count}} member",
+            "invited_by_user_other": "Invited by {{inviter}} to {{id}} • {{member_count}} members",
+            "invited_zero": "{{id}}",
+            "invited_one": "{{id}} • {{member_count}} member",
+            "invited_other": "{{id}} • {{member_count}} members"
+        },
+        "RoomVisibility": {
+            "private": "Private (invite only)",
+            "restricted": "Restricted (space members can join)",
+            "restricted_unsupported": "Restricted (Unsupported: room required upgrade)",
+            "public": "Public (anyone can join)"
+        },
+        "SpaceAddExisting": {
+            "adding_items_one": "Adding one item...",
+            "adding_items_other": "Adding {{count}} items...",
+            "items_selected_one": "{{count}} item selected",
+            "items_selected_other": "{{count}} items selected",
+            "search_rooms_placeholder": "Search rooms",
+            "no_results": "No results found",
+            "add_button": "Add",
+            "subtitle": "add existing rooms"
+        },
+        "SpaceOptions": {
+            "leave_space": "Leave Space",
+            "leave_space_confirmation": "Are you sure that you want to leave the {{space}} space?",
+            "leave_space_confirm": "Leave",
+            "invite": "Invite",
+            "manage_rooms":"Manage rooms",
+            "settings": "Settings",
+            "leave": "Leave"
+        },
+        "SSOButtons": {
+            "login_with": "Login with {{idp_name}}"
         }
     }
 }

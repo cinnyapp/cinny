@@ -25,6 +25,9 @@ import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function simplyfiMembers(members) {
   const mx = initMatrix.matrixClient;
   return members.map((member) => ({
@@ -49,6 +52,8 @@ function PeopleDrawer({ roomId }) {
   const [memberList, setMemberList] = useState([]);
   const [searchedMembers, setSearchedMembers] = useState(null);
   const searchRef = useRef(null);
+
+  const { t } = useTranslation();
 
   const getMembersWithMembership = useCallback(
     (mship) => room.getMembersWithMembership(mship),
@@ -129,11 +134,11 @@ function PeopleDrawer({ roomId }) {
       <Header>
         <TitleWrapper>
           <Text variant="s1" primary>
-            People
-            <Text className="people-drawer__member-count" variant="b3">{`${room.getJoinedMemberCount()} members`}</Text>
+            {t("Organisms.PeopleDrawer.title")}
+            <Text className="people-drawer__member-count" variant="b3">{t("Organisms.PeopleDrawer.members", {count: room.getJoinedMemberCount()})}</Text>
           </Text>
         </TitleWrapper>
-        <IconButton onClick={() => openInviteUser(roomId)} tooltip="Invite" src={AddUserIC} disabled={!canInvite} />
+        <IconButton onClick={() => openInviteUser(roomId)} tooltip={t("Organisms.PeopleDrawer.invite_tooltip")} src={AddUserIC} disabled={!canInvite} />
       </Header>
       <div className="people-drawer__content-wrapper">
         <div className="people-drawer__scrollable">
@@ -150,7 +155,7 @@ function PeopleDrawer({ roomId }) {
                     return getSegmentIndex[membership];
                   })()
                 }
-                segments={[{ text: 'Joined' }, { text: 'Invited' }, { text: 'Banned' }]}
+                segments={[{ text: t("Organisms.PeopleDrawer.joined")}, { text: t("Organisms.PeopleDrawer.invited") }, { text: t("Organisms.PeopleDrawer.banned") }]}
                 onSelect={(index) => {
                   const selectSegment = [
                     () => setMembership('join'),
@@ -176,7 +181,7 @@ function PeopleDrawer({ roomId }) {
                 (searchedMembers?.data.length === 0 || memberList.length === 0)
                 && (
                   <div className="people-drawer__noresult">
-                    <Text variant="b2">No results found!</Text>
+                    <Text variant="b2">{t("Organisms.PeopleDrawer.search_no_results")}</Text>
                   </div>
                 )
               }
@@ -186,7 +191,7 @@ function PeopleDrawer({ roomId }) {
                   && memberList.length > itemCount
                   && searchedMembers === null
                   && (
-                    <Button onClick={loadMorePeople}>View more</Button>
+                    <Button onClick={loadMorePeople}>{t("Organisms.PeopleDrawer.view_more")}</Button>
                   )
                 }
               </div>
@@ -196,7 +201,7 @@ function PeopleDrawer({ roomId }) {
         <div className="people-drawer__sticky">
           <form onSubmit={(e) => e.preventDefault()} className="people-search">
             <RawIcon size="small" src={SearchIC} />
-            <Input forwardRef={searchRef} type="text" onChange={handleSearch} placeholder="Search" required />
+            <Input forwardRef={searchRef} type="text" onChange={handleSearch} placeholder={t("Organisms.PeopleDrawer.placeholder")} required />
             {
               searchedMembers !== null
               && <IconButton onClick={handleSearch} size="small" src={CrossIC} />

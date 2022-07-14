@@ -104,7 +104,6 @@ function RoomViewFloating({
   const room = initMatrix.matrixClient.getRoom(roomId)
 
   const getUserDisplayName = (userId) => {
-    console.log(userId);
     if (room?.getMember(userId)) return getUsernameOfRoomMember(room.getMember(userId));
     return getUsername(userId);
   };
@@ -135,7 +134,13 @@ function RoomViewFloating({
         <Text variant="b2"> 
           <Trans 
             i18nKey="Organisms.RoomViewFloating.user_typing" 
-            values={{count: typingMembers.size, user_one: getUserDisplayName(typingMemberValues?.[0]), user_two: getUserDisplayName(typingMemberValues?.[1]), user_three: getUserDisplayName(typingMemberValues?.[2]), user_four: getUserDisplayName(typingMemberValues?.[3])}}
+            values={{
+              count: typingMembers.size, 
+              user_one: twemojify(getUserDisplayName(typingMemberValues?.[0])), 
+              user_two: twemojify(getUserDisplayName(typingMemberValues?.[1])), 
+              user_three: twemojify(getUserDisplayName(typingMemberValues?.[2])), 
+              user_four: twemojify(getUserDisplayName(typingMemberValues?.[3]))
+            }}
             components={{bold: <b/>}}
             />
         </Text>

@@ -15,6 +15,9 @@ import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 
 import { useStore } from '../../hooks/useStore';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function ImportE2ERoomKeys() {
   const isMountStore = useStore();
   const [keyFile, setKeyFile] = useState(null);
@@ -24,7 +27,9 @@ function ImportE2ERoomKeys() {
     type: cons.status.PRE_FLIGHT,
   });
   const inputRef = useRef(null);
-  const passwordRef = useRef(null);
+  const passwordRef = useRef(null); 
+
+  const { t } = useTranslation();
 
   async function tryDecrypt(file, password) {
     try {
@@ -32,7 +37,7 @@ function ImportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: true,
-          msg: 'Decrypting file...',
+          msg: t("Molecules.ImportE2ERoomKeys.decrypting_file"),
           type: cons.status.IN_FLIGHT,
         });
       }
@@ -41,7 +46,7 @@ function ImportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: true,
-          msg: 'Decrypting messages...',
+          msg: t("Molecules.ImportE2ERoomKeys.decrypting_messages"),
           type: cons.status.IN_FLIGHT,
         });
       }
@@ -49,7 +54,7 @@ function ImportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: false,
-          msg: 'Successfully imported all keys.',
+          msg: t("Molecules.ImportE2ERoomKeys.import_success"),
           type: cons.status.SUCCESS,
         });
         inputRef.current.value = null;
@@ -59,7 +64,7 @@ function ImportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: false,
-          msg: e.friendlyText || 'Failed to decrypt keys. Please try again.',
+          msg: e.friendlyText || t("Molecules.ImportE2ERoomKeys.import_failed"),
           type: cons.status.ERROR,
         });
       }
@@ -114,9 +119,9 @@ function ImportE2ERoomKeys() {
             <Text>{keyFile.name}</Text>
           </div>
         )}
-        {keyFile === null && <Button onClick={() => inputRef.current.click()}>Import keys</Button>}
+        {keyFile === null && <Button onClick={() => inputRef.current.click()}>{t("Molecules.ImportE2ERoomKeys.import_keys_button")}</Button>}
         <Input forwardRef={passwordRef} type="password" placeholder="Password" required />
-        <Button disabled={status.isOngoing} variant="primary" type="submit">Decrypt</Button>
+        <Button disabled={status.isOngoing} variant="primary" type="submit">{t("Molecules.ImportE2ERoomKeys.decrypt_button")}</Button>
       </form>
       { status.type === cons.status.IN_FLIGHT && (
         <div className="import-e2e-room-keys__process">

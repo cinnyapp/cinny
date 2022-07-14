@@ -8,11 +8,16 @@ import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
 import Spinner from '../../atoms/spinner/Spinner';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function ImageUpload({
   text, bgColor, imageSrc, onUpload, onRequestRemove,
 }) {
   const [uploadPromise, setUploadPromise] = useState(null);
   const uploadImageRef = useRef(null);
+
+  const { t } = useTranslation();
 
   async function uploadImage(e) {
     const file = e.target.files.item(0);
@@ -53,7 +58,7 @@ function ImageUpload({
           size="large"
         />
         <div className={`img-upload__process ${uploadPromise === null ? ' img-upload__process--stopped' : ''}`}>
-          {uploadPromise === null && <Text variant="b3" weight="bold">Upload</Text>}
+          {uploadPromise === null && <Text variant="b3" weight="bold">{t("Molecules.ImageUpload.prompt")}</Text>}
           {uploadPromise !== null && <Spinner size="small" />}
         </div>
       </button>
@@ -63,7 +68,7 @@ function ImageUpload({
           type="button"
           onClick={uploadPromise === null ? onRequestRemove : cancelUpload}
         >
-          <Text variant="b3">{uploadPromise ? 'Cancel' : 'Remove'}</Text>
+          <Text variant="b3">{uploadPromise ? t("Molecules.ImageUpload.cancel") : t("Molecules.ImageUpload.remove")}</Text>
         </button>
       )}
       <input onChange={uploadImage} style={{ display: 'none' }} ref={uploadImageRef} type="file" />

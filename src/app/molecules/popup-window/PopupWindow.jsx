@@ -13,6 +13,9 @@ import RawModal from '../../atoms/modal/RawModal';
 
 import ChevronLeftIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function PWContentSelector({
   selected, variant, iconSrc,
   type, onClick, children,
@@ -56,6 +59,8 @@ function PopupWindow({
   const haveDrawer = drawer !== null;
   const cTitle = contentTitle !== null ? contentTitle : title;
 
+  const { t } = useTranslation();
+
   return (
     <RawModal
       className={`${className === null ? '' : `${className} `}pw-modal`}
@@ -69,7 +74,7 @@ function PopupWindow({
         {haveDrawer && (
           <div className="pw__drawer">
             <Header>
-              <IconButton size="small" src={ChevronLeftIC} onClick={onRequestClose} tooltip="Back" />
+              <IconButton size="small" src={ChevronLeftIC} onClick={onRequestClose} tooltip={t("Molecules.PopupWindow.close_tooltip")}/>
               <TitleWrapper>
                 {
                   typeof title === 'string'

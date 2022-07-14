@@ -20,6 +20,9 @@ import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 
 import { useStore } from '../../hooks/useStore';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 const roomIdToBackup = new Map();
 
 function useRoomSearch(roomId) {
@@ -117,6 +120,8 @@ function RoomSearch({ roomId }) {
     search(term);
   };
 
+  const { t } = useTranslation();
+
   const renderTimeline = (timeline) => (
     <div className="room-search__result-item" key={timeline[0].getId()}>
       { timeline.map((mEvent) => {
@@ -139,37 +144,37 @@ function RoomSearch({ roomId }) {
   return (
     <div className="room-search">
       <form className="room-search__form" onSubmit={handleSearch}>
-        <MenuHeader>Room search</MenuHeader>
+        <MenuHeader>{t("Molecules.RoomSearch.title")}</MenuHeader>
         <div>
           <Input
-            placeholder="Search for keywords"
+            placeholder={t("Molecules.RoomSearch.placeholder")}
             name="room-search-input"
             disabled={isRoomEncrypted}
             autoFocus
           />
-          <Button iconSrc={SearchIC} variant="primary" type="submit">Search</Button>
+          <Button iconSrc={SearchIC} variant="primary" type="submit">{t("Molecules.RoomSearch.search_button")}</Button>
         </div>
         {searchData?.results.length > 0 && (
-          <Text>{`${searchData.count} results for "${searchTerm}"`}</Text>
+          <Text>{t("Molecules.RoomSearch.results", {count: searchData.count, term: searchTerm})}</Text>
         )}
         {!isRoomEncrypted && searchData === null && (
           <div className="room-search__help">
             {status.type === cons.status.IN_FLIGHT && <Spinner />}
-            {status.type === cons.status.IN_FLIGHT && <Text>Searching room messages...</Text>}
+            {status.type === cons.status.IN_FLIGHT && <Text>{t("Molecules.RoomSearch.searching")}</Text>}
             {status.type === cons.status.PRE_FLIGHT && <RawIcon src={SearchIC} size="large" />}
-            {status.type === cons.status.PRE_FLIGHT && <Text>Search room messages</Text>}
-            {status.type === cons.status.ERROR && <Text>Failed to search messages</Text>}
+            {status.type === cons.status.PRE_FLIGHT && <Text>{t("Molecules.RoomSearch.subtitle")}</Text>}
+            {status.type === cons.status.ERROR && <Text>{t("Molecules.RoomSearch.failed")}</Text>}
           </div>
         )}
 
         {!isRoomEncrypted && searchData?.results.length === 0 && (
           <div className="room-search__help">
-            <Text>No results found</Text>
+            <Text>{t("Molecules.RoomSearch.no_results")}</Text>
           </div>
         )}
         {isRoomEncrypted && (
           <div className="room-search__help">
-            <Text>Search does not work in encrypted room</Text>
+            <Text>{t("Molecules.RoomSearch.encrypted_room")}</Text>
           </div>
         )}
       </form>
@@ -184,7 +189,7 @@ function RoomSearch({ roomId }) {
           {searchData?.next_batch && (
             <div className="room-search__more">
               {status.type !== cons.status.IN_FLIGHT && (
-                <Button onClick={paginate}>Load more</Button>
+                <Button onClick={paginate}>{t("Molecules.RoomSearch.load_more")}</Button>
               )}
               {status.type === cons.status.IN_FLIGHT && <Spinner />}
             </div>

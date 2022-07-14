@@ -18,6 +18,9 @@ import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function Selector({
   roomId, isDM, drawerPostie, onClick,
 }) {
@@ -29,6 +32,8 @@ function Selector({
   if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
 
   const isMuted = noti.getNotiType(roomId) === cons.notifs.MUTE;
+
+  const { t } = useTranslation();
 
   const [, forceUpdate] = useForceUpdate();
 
@@ -69,7 +74,7 @@ function Selector({
       options={(
         <IconButton
           size="extra-small"
-          tooltip="Options"
+          tooltip={t("common.options")}
           tooltipPlacement="right"
           src={VerticalMenuIC}
           onClick={openOptions}

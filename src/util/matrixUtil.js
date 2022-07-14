@@ -39,6 +39,11 @@ export function getUsernameOfRoomMember(roomMember) {
   return roomMember.name || roomMember.userId;
 }
 
+export function getUserDisplayName(room, userId){
+  if (room?.getMember(userId)) return getUsernameOfRoomMember(room.getMember(userId));
+    return getUsername(userId);
+}
+
 export async function isRoomAliasAvailable(alias) {
   try {
     const result = await initMatrix.matrixClient.resolveRoomAlias(alias);

@@ -15,6 +15,9 @@ import SpaceIC from '../../../../public/res/ic/outlined/space.svg';
 import SpaceLockIC from '../../../../public/res/ic/outlined/space-lock.svg';
 import SpaceGlobeIC from '../../../../public/res/ic/outlined/space-globe.svg';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 const visibility = {
   INVITE: 'invite',
   RESTRICTED: 'restricted',
@@ -75,19 +78,21 @@ function RoomVisibility({ roomId }) {
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel || 0;
   const canChange = room.currentState.hasSufficientPowerLevelFor('state_default', myPowerlevel);
 
+  const { t } = useTranslation();
+
   const items = [{
     iconSrc: isSpace ? SpaceLockIC : HashLockIC,
-    text: 'Private (invite only)',
+    text: 'Molecules.RoomVisibility.private',
     type: visibility.INVITE,
     unsupported: false,
   }, {
     iconSrc: isSpace ? SpaceIC : HashIC,
-    text: roomVersion < 8 ? 'Restricted (unsupported: required room upgrade)' : 'Restricted (space member can join)',
+    text: roomVersion < 8 ? 'Molecules.RoomVisibility.restricted_unsupported' : 'Molecules.RoomVisibility.restricted',
     type: visibility.RESTRICTED,
     unsupported: roomVersion < 8 || noSpaceParent,
   }, {
     iconSrc: isSpace ? SpaceGlobeIC : HashGlobeIC,
-    text: 'Public (anyone can join)',
+    text: 'Molecules.RoomVisibility.public',
     type: visibility.PUBLIC,
     unsupported: false,
   }];
@@ -104,7 +109,7 @@ function RoomVisibility({ roomId }) {
             disabled={(!canChange || item.unsupported)}
           >
             <Text varient="b1">
-              <span>{item.text}</span>
+              <span>{t(item.text)}</span>
               <RadioButton isActive={activeType === item.type} />
             </Text>
           </MenuItem>

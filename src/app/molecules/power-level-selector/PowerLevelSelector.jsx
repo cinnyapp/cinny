@@ -7,6 +7,9 @@ import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
 import CheckIC from '../../../../public/res/ic/outlined/check.svg';
 
+import '../../i18n.jsx'
+import { useTranslation } from 'react-i18next';
+
 function PowerLevelSelector({
   value, max, onSelect,
 }) {
@@ -15,6 +18,8 @@ function PowerLevelSelector({
     if (!powerLevel) return;
     onSelect(Number(powerLevel));
   };
+
+  const { t } = useTranslation();
 
   return (
     <div className="power-level-selector">
@@ -25,7 +30,7 @@ function PowerLevelSelector({
           defaultValue={value}
           type="number"
           name="power-level"
-          placeholder="Power level"
+          placeholder={t("Molecules.PowerLevelIndicator.placeholder")}
           max={max}
           autoComplete="off"
           required
