@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import './RoomViewContent.scss';
 
 import dateFormat from 'dateformat';
+import { useTranslation, Trans } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -29,9 +30,7 @@ import { parseTimelineChange } from './common';
 import TimelineScroll from './TimelineScroll';
 import EventLimit from './EventLimit';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-import { Trans } from 'react-i18next';
+import '../../i18n';
 
 const PAG_LIMIT = 30;
 const MAX_MSG_DIFF_MINUTES = 5;
@@ -68,30 +67,30 @@ function RoomIntroContainer({ event, timeline }) {
   let avatarSrc = room.getAvatarUrl(mx.baseUrl, 80, 80, 'crop');
   avatarSrc = isDM ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 80, 80, 'crop') : avatarSrc;
 
-  const heading = isDM ? room.name : t("Organisms.RoomViewContent.welcome_to_room", {room_name: room.name});
+  const heading = isDM ? room.name : t('Organisms.RoomViewContent.welcome_to_room', { room_name: room.name });
   const topic = twemojify(roomTopic || '', undefined, true);
   const nameJsx = twemojify(room.name);
   const desc = isDM
     ? (
       <>
-        <Trans 
-          i18nKey={"Organisms.RoomViewContent.beginning_dm"} 
-          values={{user_name: nameJsx}}
-          components={{bold: <b/>}}
+        <Trans
+          i18nKey="Organisms.RoomViewContent.beginning_dm"
+          values={{ user_name: nameJsx }}
+          components={{ bold: <b /> }}
         />
-        {topic == "" ? "" : " - "}
+        {topic == '' ? '' : ' - '}
         {topic }
       </>
     )
     : (
       <>
-        <Trans 
-          i18nKey={"Organisms.RoomViewContent.beginning_room"} 
-          values={{room_name: nameJsx}}
-          components={{bold: <b/>}}
-          />
+        <Trans
+          i18nKey="Organisms.RoomViewContent.beginning_room"
+          values={{ room_name: nameJsx }}
+          components={{ bold: <b /> }}
+        />
 
-        {topic == "" ? "" : " - "}
+        {topic == '' ? '' : ' - '}
         {topic}
       </>
     );
@@ -112,7 +111,14 @@ function RoomIntroContainer({ event, timeline }) {
       name={room.name}
       heading={twemojify(heading)}
       desc={desc}
-      time={event ? t("Organisms.RoomViewContent.created_on", {date: event.getDate(), formatParams: { date: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}}}) : null}
+      time={event ? t('Organisms.RoomViewContent.created_on', {
+        date: event.getDate(),
+        formatParams: {
+          date: {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+          },
+        },
+      }) : null}
     />
   );
 }
@@ -539,7 +545,7 @@ function RoomViewContent({ eventId, roomTimeline }) {
           && readUptoEvent.getTs() < mEvent.getTs());
         if (unreadDivider) {
           isNewEvent = true;
-          tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text={t("Organisms.RoomViewContent.new_messages")} />);
+          tl.push(<Divider key={`new-${mEvent.getId()}`} variant="positive" text={t('Organisms.RoomViewContent.new_messages')} />);
           itemCountIndex += 1;
           if (jumpToItemIndex === -1) jumpToItemIndex = itemCountIndex;
         }

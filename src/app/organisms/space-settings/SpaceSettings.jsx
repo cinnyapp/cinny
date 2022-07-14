@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './SpaceSettings.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -39,9 +40,7 @@ import CategoryFilledIC from '../../../../public/res/ic/filled/category.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
-
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 const tabText = {
   GENERAL: 'General',
@@ -74,7 +73,7 @@ function GeneralSettings({ roomId }) {
   return (
     <>
       <div className="room-settings__card">
-        <MenuHeader>{t("common.options")}</MenuHeader>
+        <MenuHeader>{t('common.options')}</MenuHeader>
         <MenuItem
           onClick={() => {
             if (isCategorized) unCategorizeSpace(roomId);
@@ -83,7 +82,7 @@ function GeneralSettings({ roomId }) {
           }}
           iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}
         >
-          {isCategorized ? t("Organisms.SpaceSettings.uncategorize_subspaces") : t("Organisms.SpaceSettings.categorize_subspaces")}
+          {isCategorized ? t('Organisms.SpaceSettings.uncategorize_subspaces') : t('Organisms.SpaceSettings.categorize_subspaces')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -93,30 +92,30 @@ function GeneralSettings({ roomId }) {
           }}
           iconSrc={isPinned ? PinFilledIC : PinIC}
         >
-          {isPinned ? t("Organisms.SpaceSettings.unpin_sidebar") : t("Organisms.SpaceSettings.pin_sidebar")}
+          {isPinned ? t('Organisms.SpaceSettings.unpin_sidebar') : t('Organisms.SpaceSettings.pin_sidebar')}
         </MenuItem>
         <MenuItem
           variant="danger"
           onClick={async () => {
             const isConfirmed = await confirmDialog(
-              t("Organisms.SpaceSettings.leave.leave_dialog_title"),
-              t("Organisms.SpaceSettings.leave.leave_dialog_message", {space: roomName}),
-              t("Organisms.SpaceSettings.leave.leave_space"),
+              t('Organisms.SpaceSettings.leave.leave_dialog_title'),
+              t('Organisms.SpaceSettings.leave.leave_dialog_message', { space: roomName }),
+              t('Organisms.SpaceSettings.leave.leave_space'),
               'danger',
             );
             if (isConfirmed) leave(roomId);
           }}
           iconSrc={LeaveArrowIC}
         >
-          {t("Organisms.SpaceSettings.leave.leave_space")}
+          {t('Organisms.SpaceSettings.leave.leave_space')}
         </MenuItem>
       </div>
       <div className="space-settings__card">
-        <MenuHeader>{t("Organisms.SpaceSettings.visibility.header")}</MenuHeader>
+        <MenuHeader>{t('Organisms.SpaceSettings.visibility.header')}</MenuHeader>
         <RoomVisibility roomId={roomId} />
       </div>
       <div className="space-settings__card">
-        <MenuHeader>{t("Organisms.SpaceSettings.addresses.header")}</MenuHeader>
+        <MenuHeader>{t('Organisms.SpaceSettings.addresses.header')}</MenuHeader>
         <RoomAliases roomId={roomId} />
       </div>
     </>
@@ -169,10 +168,15 @@ function SpaceSettings() {
       title={(
         <Text variant="s1" weight="medium" primary>
           {isOpen && twemojify(room.name)}
-          <span style={{ color: 'var(--tc-surface-low)' }}> — {t("Organisms.SpaceSettings.subtitle")}</span>
+          <span style={{ color: 'var(--tc-surface-low)' }}>
+            {' '}
+            —
+            {' '}
+            {t('Organisms.SpaceSettings.subtitle')}
+          </span>
         </Text>
       )}
-      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />}
+      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t('common.close')} />}
       onRequestClose={requestClose}
     >
       {isOpen && (

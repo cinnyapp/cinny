@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import cons from '../../../client/state/cons';
 
@@ -8,8 +9,7 @@ import Dialog from './Dialog';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function ReusableDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +43,7 @@ function ReusableDialog() {
       title={data?.title || ''}
       onAfterClose={handleAfterClose}
       onRequestClose={handleRequestClose}
-      contentOptions={<IconButton src={CrossIC} onClick={handleRequestClose} tooltip={t("Molecules.ReusableDialog.close_tooltip")} />}
+      contentOptions={<IconButton src={CrossIC} onClick={handleRequestClose} tooltip={t('Molecules.ReusableDialog.close_tooltip')} />}
       invisibleScroll
     >
       {data?.render(handleRequestClose) || <div />}

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomPermissions.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import { getPowerLabel } from '../../../util/matrixUtil';
 import { openReusableContextMenu } from '../../../client/action/navigation';
@@ -17,8 +18,7 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 const permissionsInfo = {
   users_default: {

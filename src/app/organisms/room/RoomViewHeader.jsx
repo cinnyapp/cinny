@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './RoomViewHeader.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 import { blurOnBubbling } from '../../atoms/button/script';
 
@@ -29,8 +30,7 @@ import BackArrowIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function RoomViewHeader({ roomId }) {
   const [, forceUpdate] = useForceUpdate();
@@ -98,12 +98,12 @@ function RoomViewHeader({ roomId }) {
         </TitleWrapper>
         <RawIcon src={ChevronBottomIC} />
       </button>
-      <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip={t("Organisms.RoomViewHeader.search_tooltip")} src={SearchIC} />
-      <IconButton className="room-header__drawer-btn" onClick={togglePeopleDrawer} tooltip={t("Organisms.RoomViewHeader.people_tooltip")} src={UserIC} />
-      <IconButton className="room-header__members-btn" onClick={() => toggleRoomSettings(tabText.MEMBERS)} tooltip={t("Organisms.RoomViewHeader.members_tooltip")} src={UserIC} />
+      <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip={t('Organisms.RoomViewHeader.search_tooltip')} src={SearchIC} />
+      <IconButton className="room-header__drawer-btn" onClick={togglePeopleDrawer} tooltip={t('Organisms.RoomViewHeader.people_tooltip')} src={UserIC} />
+      <IconButton className="room-header__members-btn" onClick={() => toggleRoomSettings(tabText.MEMBERS)} tooltip={t('Organisms.RoomViewHeader.members_tooltip')} src={UserIC} />
       <IconButton
         onClick={openRoomOptions}
-        tooltip={t("common.options")}
+        tooltip={t('common.options')}
         src={VerticalMenuIC}
       />
     </Header>

@@ -5,6 +5,7 @@ import React, {
 import PropTypes from 'prop-types';
 import './Message.scss';
 
+import { useTranslation, Trans } from 'react-i18next';
 import { getShortcodeToCustomEmoji } from '../../organisms/emoji-board/custom-emoji';
 import { twemojify } from '../../../util/twemojify';
 
@@ -38,10 +39,7 @@ import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-import { Trans } from 'react-i18next';
-import { t } from 'i18next';
+import '../../i18n';
 
 function PlaceholderMessage() {
   return (
@@ -123,7 +121,7 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
   useEffect(() => {
     const mx = initMatrix.matrixClient;
     const timelineSet = roomTimeline.getUnfilteredTimelineSet();
-    
+
     const loadReply = async () => {
       try {
         const eTimeline = await mx.getEventTimeline(timelineSet, eventId);
@@ -256,7 +254,7 @@ const MessageBody = React.memo(({
         )}
         { content }
       </div>
-      { isEdited && <Text className="message__body-edited" variant="b3"><Trans i18nKey={"Molecules.Message.edited"}/></Text>}
+      { isEdited && <Text className="message__body-edited" variant="b3"><Trans i18nKey="Molecules.Message.edited" /></Text>}
     </div>
   );
 });
@@ -297,14 +295,14 @@ function MessageEdit({ body, onSave, onCancel }) {
         forwardRef={editInputRef}
         onKeyDown={handleKeyDown}
         value={body}
-        placeholder={t("Molecules.Message.edit_placeholder")}
+        placeholder={t('Molecules.Message.edit_placeholder')}
         required
         resizable
         autoFocus
       />
       <div className="message__edit-btns">
-        <Button type="submit" variant="primary">{t("common.save")}</Button>
-        <Button onClick={onCancel}>{t("common.cancel")}</Button>
+        <Button type="submit" variant="primary">{t('common.save')}</Button>
+        <Button onClick={onCancel}>{t('common.cancel')}</Button>
       </div>
     </form>
   );
@@ -351,20 +349,17 @@ function pickEmoji(e, roomId, eventId, roomTimeline) {
 function genReactionMsg(userIds, reaction) {
   console.log(reaction);
   return (
-    <>
-      <Trans
-        i18nKey="Molecules.Message.user_reacted"
-        values={{
-          count: userIds.length,
-          user_one: getUsername(userIds?.[0]),
-          user_two: getUsername(userIds?.[1]),
-          user_three: getUsername(userIds?.[2]),
-          other_count: userIds.length - 3,
-        }}
-        components={{bold: <b/>, emoji: reaction}}
-
-        />
-    </>
+    <Trans
+      i18nKey="Molecules.Message.user_reacted"
+      values={{
+        count: userIds.length,
+        user_one: getUsername(userIds?.[0]),
+        user_two: getUsername(userIds?.[1]),
+        user_three: getUsername(userIds?.[2]),
+        other_count: userIds.length - 3,
+      }}
+      components={{ bold: <b />, emoji: reaction }}
+    />
   );
 }
 
@@ -520,6 +515,8 @@ const MessageOptions = React.memo(({
   const canIRedact = room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
   const canSendReaction = room.currentState.maySendEvent('m.reaction', mx.getUserId());
 
+  const { t } = useTranslation();
+
   return (
     <div className="message__options">
       {canSendReaction && (
@@ -527,38 +524,38 @@ const MessageOptions = React.memo(({
           onClick={(e) => pickEmoji(e, roomId, mEvent.getId(), roomTimeline)}
           src={EmojiAddIC}
           size="extra-small"
-          tooltip={t("Molecules.Message.add_reaction_tooltip")}
+          tooltip={t('Molecules.Message.add_reaction_tooltip')}
         />
       )}
       <IconButton
         onClick={() => reply()}
         src={ReplyArrowIC}
         size="extra-small"
-        tooltip={t("Molecules.Message.reply_tooltip")}
+        tooltip={t('Molecules.Message.reply_tooltip')}
       />
       {(senderId === mx.getUserId() && !isMedia(mEvent)) && (
         <IconButton
           onClick={() => edit(true)}
           src={PencilIC}
           size="extra-small"
-          tooltip={t("Molecules.Message.edit_tooltip")}
+          tooltip={t('Molecules.Message.edit_tooltip')}
         />
       )}
       <ContextMenu
         content={() => (
           <>
-            <MenuHeader>{t("Molecules.Message.options_header")}</MenuHeader>
+            <MenuHeader>{t('Molecules.Message.options_header')}</MenuHeader>
             <MenuItem
               iconSrc={TickMarkIC}
               onClick={() => openReadReceipts(roomId, roomTimeline.getEventReaders(mEvent))}
             >
-              {t("Molecules.Message.read_receipts")}
+              {t('Molecules.Message.read_receipts')}
             </MenuItem>
             <MenuItem
               iconSrc={CmdIC}
               onClick={() => handleOpenViewSource(mEvent, roomTimeline)}
             >
-              {t("Molecules.Message.view_source")}
+              {t('Molecules.Message.view_source')}
             </MenuItem>
             {(canIRedact || senderId === mx.getUserId()) && (
               <>
@@ -568,9 +565,9 @@ const MessageOptions = React.memo(({
                   iconSrc={BinIC}
                   onClick={async () => {
                     const isConfirmed = await confirmDialog(
-                      t("Molecules.Message.delete_message_prompt"),
-                      t("Molecules.Message.delete_message_confirmation"),
-                      t("Molecules.Message.delete_message_button"),
+                      t('Molecules.Message.delete_message_prompt'),
+                      t('Molecules.Message.delete_message_confirmation'),
+                      t('Molecules.Message.delete_message_button'),
                       'danger',
                     );
                     if (!isConfirmed) return;
@@ -588,7 +585,7 @@ const MessageOptions = React.memo(({
             onClick={toggleMenu}
             src={VerticalMenuIC}
             size="extra-small"
-            tooltip={t("Molecules.Message.options_tooltip")}
+            tooltip={t('Molecules.Message.options_tooltip')}
           />
         )}
       />

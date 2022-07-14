@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './RoomNotification.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 
@@ -14,8 +15,7 @@ import BellRingIC from '../../../../public/res/ic/outlined/bell-ring.svg';
 import BellPingIC from '../../../../public/res/ic/outlined/bell-ping.svg';
 import BellOffIC from '../../../../public/res/ic/outlined/bell-off.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 const items = [{
   iconSrc: BellIC,
@@ -117,7 +117,6 @@ function useNotifications(roomId) {
 }
 
 function RoomNotification({ roomId }) {
-
   const { t } = useTranslation();
   const [activeType, setNotification] = useNotifications(roomId);
 

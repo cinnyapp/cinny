@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -16,10 +17,7 @@ import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import './ProfileEditor.scss';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-import { t } from 'i18next';
-
+import '../../i18n';
 
 // TODO Fix bug that prevents 'Save' button from enabling up until second changed.
 function ProfileEditor({ userId }) {
@@ -49,9 +47,9 @@ function ProfileEditor({ userId }) {
   const handleAvatarUpload = async (url) => {
     if (url === null) {
       const isConfirmed = await confirmDialog(
-        t("Organisms.ProfileEditor.remove_avatar"),
-        t("Organisms.ProfileViewer.remove_avatar_confirmation"),
-        t("common.remove"),
+        t('Organisms.ProfileEditor.remove_avatar'),
+        t('Organisms.ProfileViewer.remove_avatar_confirmation'),
+        t('common.remove'),
         'caution',
       );
       if (isConfirmed) {
@@ -90,13 +88,13 @@ function ProfileEditor({ userId }) {
       onSubmit={(e) => { e.preventDefault(); saveDisplayName(); }}
     >
       <Input
-        label={t("Organisms.ProfileEditor.display_name_message", {user_name: mx.getUserId()})}
+        label={t('Organisms.ProfileEditor.display_name_message', { user_name: mx.getUserId() })}
         onChange={onDisplayNameInputChange}
         value={mx.getUser(mx.getUserId()).displayName}
         forwardRef={displayNameRef}
       />
-      <Button variant="primary" type="submit" disabled={disabled}>{t("common.save")}</Button>
-      <Button onClick={cancelDisplayNameChanges}>{t("common.cancel")}</Button>
+      <Button variant="primary" type="submit" disabled={disabled}>{t('common.save')}</Button>
+      <Button onClick={cancelDisplayNameChanges}>{t('common.cancel')}</Button>
     </form>
   );
 
@@ -107,7 +105,7 @@ function ProfileEditor({ userId }) {
         <IconButton
           src={PencilIC}
           size="extra-small"
-          tooltip={t("common.edit")}
+          tooltip={t('common.edit')}
           onClick={() => setIsEditing(true)}
         />
       </div>

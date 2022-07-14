@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ImportE2ERoomKeys.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { decryptMegolmKeyFile } from '../../../util/cryptE2ERoomKeys';
@@ -15,8 +16,7 @@ import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 
 import { useStore } from '../../hooks/useStore';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function ImportE2ERoomKeys() {
   const isMountStore = useStore();
@@ -27,7 +27,7 @@ function ImportE2ERoomKeys() {
     type: cons.status.PRE_FLIGHT,
   });
   const inputRef = useRef(null);
-  const passwordRef = useRef(null); 
+  const passwordRef = useRef(null);
 
   const { t } = useTranslation();
 
@@ -37,7 +37,7 @@ function ImportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: true,
-          msg: t("Molecules.ImportE2ERoomKeys.decrypting_file"),
+          msg: t('Molecules.ImportE2ERoomKeys.decrypting_file'),
           type: cons.status.IN_FLIGHT,
         });
       }
@@ -46,7 +46,7 @@ function ImportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: true,
-          msg: t("Molecules.ImportE2ERoomKeys.decrypting_messages"),
+          msg: t('Molecules.ImportE2ERoomKeys.decrypting_messages'),
           type: cons.status.IN_FLIGHT,
         });
       }
@@ -54,7 +54,7 @@ function ImportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: false,
-          msg: t("Molecules.ImportE2ERoomKeys.import_success"),
+          msg: t('Molecules.ImportE2ERoomKeys.import_success'),
           type: cons.status.SUCCESS,
         });
         inputRef.current.value = null;
@@ -64,7 +64,7 @@ function ImportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: false,
-          msg: e.friendlyText || t("Molecules.ImportE2ERoomKeys.import_failed"),
+          msg: e.friendlyText || t('Molecules.ImportE2ERoomKeys.import_failed'),
           type: cons.status.ERROR,
         });
       }
@@ -119,9 +119,9 @@ function ImportE2ERoomKeys() {
             <Text>{keyFile.name}</Text>
           </div>
         )}
-        {keyFile === null && <Button onClick={() => inputRef.current.click()}>{t("Molecules.ImportE2ERoomKeys.import_keys_button")}</Button>}
+        {keyFile === null && <Button onClick={() => inputRef.current.click()}>{t('Molecules.ImportE2ERoomKeys.import_keys_button')}</Button>}
         <Input forwardRef={passwordRef} type="password" placeholder="Password" required />
-        <Button disabled={status.isOngoing} variant="primary" type="submit">{t("Molecules.ImportE2ERoomKeys.decrypt_button")}</Button>
+        <Button disabled={status.isOngoing} variant="primary" type="submit">{t('Molecules.ImportE2ERoomKeys.decrypt_button')}</Button>
       </form>
       { status.type === cons.status.IN_FLIGHT && (
         <div className="import-e2e-room-keys__process">

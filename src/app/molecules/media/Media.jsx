@@ -4,6 +4,7 @@ import './Media.scss';
 
 import encrypt from 'browser-encrypt-attachment';
 
+import { useTranslation } from 'react-i18next';
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
@@ -12,8 +13,7 @@ import DownloadSVG from '../../../../public/res/ic/outlined/download.svg';
 import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
 import PlaySVG from '../../../../public/res/ic/outlined/play.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 // https://github.com/matrix-org/matrix-react-sdk/blob/a9e28db33058d1893d964ec96cd247ecc3d92fc3/src/utils/blobs.ts#L73
 const ALLOWED_BLOB_MIMETYPES = [
@@ -99,7 +99,7 @@ function FileHeader({
             external && (
               <IconButton
                 size="extra-small"
-                tooltip={t("Molecules.Media.open_new_tab")}
+                tooltip={t('Molecules.Media.open_new_tab')}
                 src={ExternalSVG}
                 onClick={() => window.open(url || link)}
               />
@@ -108,7 +108,7 @@ function FileHeader({
           <a href={url || link} download={name} target="_blank" rel="noreferrer">
             <IconButton
               size="extra-small"
-              tooltip= {t("Molecules.Media.download")}
+              tooltip={t('Molecules.Media.download')}
               src={DownloadSVG}
               onClick={handleDownload}
             />
@@ -155,7 +155,6 @@ function Image({
   name, width, height, link, file, type,
 }) {
   const [url, setUrl] = useState(null);
-  
 
   useEffect(() => {
     let unmounted = false;
@@ -217,7 +216,7 @@ function Audio({
       <FileHeader name={name} link={file !== null ? url : url || link} type={type} external />
       <div className="audio-container">
         { url === null && isLoading && <Spinner size="small" /> }
-        { url === null && !isLoading && <IconButton onClick={handlePlayAudio} tooltip={t("Molecules.Media.play_audio")} src={PlaySVG} />}
+        { url === null && !isLoading && <IconButton onClick={handlePlayAudio} tooltip={t('Molecules.Media.play_audio')} src={PlaySVG} />}
         { url !== null && (
           /* eslint-disable-next-line jsx-a11y/media-has-caption */
           <audio autoPlay controls>
@@ -284,7 +283,7 @@ function Video({
         className="video-container"
       >
         { url === null && isLoading && <Spinner size="small" /> }
-        { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip={t("Molecules.Media.play_video")} src={PlaySVG} />}
+        { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip={t('Molecules.Media.play_video')} src={PlaySVG} />}
         { url !== null && (
         /* eslint-disable-next-line jsx-a11y/media-has-caption */
           <video autoPlay controls poster={thumbUrl}>

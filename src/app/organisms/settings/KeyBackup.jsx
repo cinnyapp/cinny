@@ -24,7 +24,7 @@ import DownloadIC from '../../../../public/res/ic/outlined/download.svg';
 import { useStore } from '../../hooks/useStore';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
 
-import '../../i18n.jsx'
+import '../../i18n';
 import { useTranslation } from 'react-i18next';
 
 

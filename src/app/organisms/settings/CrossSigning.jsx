@@ -20,7 +20,7 @@ import { authRequest } from './AuthRequest';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
 
 
-import '../../i18n.jsx'
+import '../../i18n';
 import { useTranslation } from 'react-i18next';
 
 

@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './DrawerHeader.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -28,10 +29,7 @@ import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
 import SpacePlusIC from '../../../../public/res/ic/outlined/space-plus.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-import { t } from 'i18next';
-
+import '../../i18n';
 
 export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
   const mx = initMatrix.matrixClient;
@@ -44,27 +42,27 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
 
   return (
     <>
-      <MenuHeader>{t("Organisms.DrawerHeader.add_rooms_or_spaces")}</MenuHeader>
+      <MenuHeader>{t('Organisms.DrawerHeader.add_rooms_or_spaces')}</MenuHeader>
       <MenuItem
         iconSrc={SpacePlusIC}
         onClick={() => { afterOptionSelect(); openCreateRoom(true, spaceId); }}
         disabled={!canManage}
       >
-        {t("Organisms.DrawerHeader.create_new_space")}
+        {t('Organisms.DrawerHeader.create_new_space')}
       </MenuItem>
       <MenuItem
         iconSrc={HashPlusIC}
         onClick={() => { afterOptionSelect(); openCreateRoom(false, spaceId); }}
         disabled={!canManage}
       >
-        {t("Organisms.DrawerHeader.create_new_room")}
+        {t('Organisms.DrawerHeader.create_new_room')}
       </MenuItem>
       { !spaceId && (
         <MenuItem
           iconSrc={HashGlobeIC}
           onClick={() => { afterOptionSelect(); openPublicRooms(); }}
         >
-          {t("Organisms.DrawerHeader.join_public_room")}
+          {t('Organisms.DrawerHeader.join_public_room')}
         </MenuItem>
       )}
       { !spaceId && (
@@ -72,7 +70,7 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
           iconSrc={PlusIC}
           onClick={() => { afterOptionSelect(); openJoinAlias(); }}
         >
-          {t("Organisms.DrawerHeader.join_with_address")}
+          {t('Organisms.DrawerHeader.join_with_address')}
         </MenuItem>
       )}
       { spaceId && (
@@ -81,7 +79,7 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
           onClick={() => { afterOptionSelect(); openSpaceAddExisting(spaceId); }}
           disabled={!canManage}
         >
-          {t("Organisms.DrawerHeader.add_existing")}
+          {t('Organisms.DrawerHeader.add_existing')}
         </MenuItem>
       )}
       { spaceId && (
@@ -89,7 +87,7 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
           onClick={() => { afterOptionSelect(); openSpaceManage(spaceId); }}
           iconSrc={HashSearchIC}
         >
-          {t("Organisms.DrawerHeader.manage_rooms")}
+          {t('Organisms.DrawerHeader.manage_rooms')}
         </MenuItem>
       )}
     </>
@@ -105,7 +103,8 @@ HomeSpaceOptions.propTypes = {
 
 function DrawerHeader({ selectedTab, spaceId }) {
   const mx = initMatrix.matrixClient;
-  const tabName = selectedTab !== cons.tabs.DIRECTS ? t("Organisms.DrawerHeader.home") : t("Organisms.DrawerHeader.direct_messages");
+  const { t } = useTranslation();
+  const tabName = selectedTab !== cons.tabs.DIRECTS ? t('Organisms.DrawerHeader.home') : t('Organisms.DrawerHeader.direct_messages');
 
   const isDMTab = selectedTab === cons.tabs.DIRECTS;
   const room = mx.getRoom(spaceId);
@@ -149,8 +148,8 @@ function DrawerHeader({ selectedTab, spaceId }) {
         </TitleWrapper>
       )}
 
-      { isDMTab && <IconButton onClick={() => openInviteUser()} tooltip={t("Organisms.DrawerHeader.start_dm_tooltip")} src={PlusIC} size="small" /> }
-      { !isDMTab && <IconButton onClick={openHomeSpaceOptions} tooltip={t("Organisms.DrawerHeader.add_rooms_spaces_tooltip")} src={PlusIC} size="small" /> }
+      { isDMTab && <IconButton onClick={() => openInviteUser()} tooltip={t('Organisms.DrawerHeader.start_dm_tooltip')} src={PlusIC} size="small" /> }
+      { !isDMTab && <IconButton onClick={openHomeSpaceOptions} tooltip={t('Organisms.DrawerHeader.add_rooms_spaces_tooltip')} src={PlusIC} size="small" /> }
     </Header>
   );
 }

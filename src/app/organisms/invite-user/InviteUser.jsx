@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './InviteUser.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
@@ -19,9 +20,7 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-
+import '../../i18n';
 
 function InviteUser({
   isOpen, roomId, searchTerm, onRequestClose,
@@ -88,7 +87,7 @@ function InviteUser({
           avatar_url: result.avatar_url,
         }]);
       } catch (e) {
-        updateSearchQuery({error: t("Organisms.InviteUser.user_not_found", {user_name: inputUsername})});
+        updateSearchQuery({ error: t('Organisms.InviteUser.user_not_found', { user_name: inputUsername }) });
       }
     } else {
       try {
@@ -97,13 +96,13 @@ function InviteUser({
           limit: 20,
         });
         if (result.results.length === 0) {
-          updateSearchQuery({ error: t("Organisms.InviteUser.no_matches_found", {user_name: inputUsername})});
+          updateSearchQuery({ error: t('Organisms.InviteUser.no_matches_found', { user_name: inputUsername }) });
           updateIsSearching(false);
           return;
         }
         updateUsers(result.results);
       } catch (e) {
-        updateSearchQuery({ error: t("errors.generic")});
+        updateSearchQuery({ error: t('errors.generic') });
       }
     }
     updateIsSearching(false);
@@ -112,9 +111,7 @@ function InviteUser({
   async function hasDevices(userId) {
     try {
       const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
-      return Object.values(usersDeviceMap).every((userDevices) =>
-        Object.keys(userDevices).length > 0,
-      );
+      return Object.values(usersDeviceMap).every((userDevices) => Object.keys(userDevices).length > 0);
     } catch (e) {
       console.error("Error determining if it's possible to encrypt to all users: ", e);
       return false;
@@ -141,7 +138,7 @@ function InviteUser({
     } catch (e) {
       deleteUserFromProc(userId);
       if (typeof e.message === 'string') procUserError.set(userId, e.message);
-      else procUserError.set(userId, t("errors.generic"));
+      else procUserError.set(userId, t('errors.generic'));
       updateUserProcError(getMapCopy(procUserError));
     }
   }
@@ -161,7 +158,7 @@ function InviteUser({
     } catch (e) {
       deleteUserFromProc(userId);
       if (typeof e.message === 'string') procUserError.set(userId, e.message);
-      else procUserError.set(userId, t("errors.generic"));
+      else procUserError.set(userId, t('errors.generic'));
       updateUserProcError(getMapCopy(procUserError));
     }
   }
@@ -179,7 +176,7 @@ function InviteUser({
         return <Button onClick={() => { selectRoom(createdDM.get(userId)); onRequestClose(); }}>Open</Button>;
       }
       if (invitedUserIds.has(userId)) {
-        return messageJSX(t("Organisms.InviteUser.invite_result.invited"), true);
+        return messageJSX(t('Organisms.InviteUser.invite_result.invited'), true);
       }
       if (typeof roomId === 'string') {
         const member = mx.getRoom(roomId).getMember(userId);
@@ -187,18 +184,18 @@ function InviteUser({
           const userMembership = member.membership;
           switch (userMembership) {
             case 'join':
-              return messageJSX(t("Organisms.InviteUser.invite_result.already_joined"), true);
+              return messageJSX(t('Organisms.InviteUser.invite_result.already_joined'), true);
             case 'invite':
-              return messageJSX(t("Organisms.InviteUser.invite_result.already_invited"), true);
+              return messageJSX(t('Organisms.InviteUser.invite_result.already_invited'), true);
             case 'ban':
-              return messageJSX(t("Organisms.InviteUser.invite_result.banned"), false);
+              return messageJSX(t('Organisms.InviteUser.invite_result.banned'), false);
             default:
           }
         }
       }
       return (typeof roomId === 'string')
-        ? <Button onClick={() => inviteToRoom(userId)} variant="primary">{t("common.invite")}</Button>
-        : <Button onClick={() => createDM(userId)} variant="primary">{t("common.message_prompt")}</Button>;
+        ? <Button onClick={() => inviteToRoom(userId)} variant="primary">{t('common.invite')}</Button>
+        : <Button onClick={() => createDM(userId)} variant="primary">{t('common.message_prompt')}</Button>;
     };
     const renderError = (userId) => {
       if (!procUserError.has(userId)) return null;
@@ -245,27 +242,27 @@ function InviteUser({
   return (
     <PopupWindow
       isOpen={isOpen}
-      title={(typeof roomId === 'string' ? t("Organisms.InviteUser.invite_to_room", {room: mx.getRoom(roomId).name}) : t("Organisms.InviteUser.invite_to_dm"))}
-      contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip={t("common.close")} />}
+      title={(typeof roomId === 'string' ? t('Organisms.InviteUser.invite_to_room', { room: mx.getRoom(roomId).name }) : t('Organisms.InviteUser.invite_to_dm'))}
+      contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip={t('common.close')} />}
       onRequestClose={onRequestClose}
     >
       <div className="invite-user">
         <form className="invite-user__form" onSubmit={(e) => { e.preventDefault(); searchUser(usernameRef.current.value); }}>
-          <Input value={searchTerm} forwardRef={usernameRef} label={t("Organisms.InviteUser.search_label")} />
-          <Button disabled={isSearching} iconSrc={UserIC} variant="primary" type="submit">{t("common.search")}</Button>
+          <Input value={searchTerm} forwardRef={usernameRef} label={t('Organisms.InviteUser.search_label')} />
+          <Button disabled={isSearching} iconSrc={UserIC} variant="primary" type="submit">{t('common.search')}</Button>
         </form>
         <div className="invite-user__search-status">
           {
             typeof searchQuery.username !== 'undefined' && isSearching && (
               <div className="flex--center">
                 <Spinner size="small" />
-                <Text variant="b2">{t("Organisms.InviteUser.searching_for_user", {user_name: searchQuery.username})}</Text>
+                <Text variant="b2">{t('Organisms.InviteUser.searching_for_user', { user_name: searchQuery.username })}</Text>
               </div>
             )
           }
           {
             typeof searchQuery.username !== 'undefined' && !isSearching && (
-              <Text variant="b2">{t("Organisms.InviteUser.search_result_title", {user_name: searchQuery.username})}</Text>
+              <Text variant="b2">{t('Organisms.InviteUser.search_result_title', { user_name: searchQuery.username })}</Text>
             )
           }
           {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './ProfileViewer.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -11,7 +12,7 @@ import { selectRoom, openReusableContextMenu } from '../../../client/action/navi
 import * as roomActions from '../../../client/action/room';
 
 import {
-  getUsername, getUsernameOfRoomMember, getPowerLabel, hasDMWith
+  getUsername, getUsernameOfRoomMember, getPowerLabel, hasDMWith,
 } from '../../../util/matrixUtil';
 import { getEventCords } from '../../../util/common';
 import colorMXID from '../../../util/colorMXID';
@@ -34,14 +35,11 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-import { t } from 'i18next';
+import '../../i18n';
 
 function ModerationTools({
   roomId, userId,
 }) {
-
   const { t } = useTranslation();
 
   const mx = initMatrix.matrixClient;
@@ -77,14 +75,14 @@ function ModerationTools({
     <div className="moderation-tools">
       {canIKick && (
         <form onSubmit={handleKick}>
-          <Input label={t("Organisms.ProfileViewer.kick_reason_label")} name="kick-reason" />
-          <Button type="submit">{t("Organisms.ProfileViewer.kick_button")}</Button>
+          <Input label={t('Organisms.ProfileViewer.kick_reason_label')} name="kick-reason" />
+          <Button type="submit">{t('Organisms.ProfileViewer.kick_button')}</Button>
         </form>
       )}
       {canIBan && (
         <form onSubmit={handleBan}>
-          <Input label={t("Organisms.ProfileViewer.ban_reason_label")} name="ban-reason" />
-          <Button type="submit">{t("Organisms.ProfileViewer.ban_button")}</Button>
+          <Input label={t('Organisms.ProfileViewer.ban_reason_label')} name="ban-reason" />
+          <Button type="submit">{t('Organisms.ProfileViewer.ban_button')}</Button>
         </form>
       )}
     </div>
@@ -127,8 +125,8 @@ function SessionInfo({ userId }) {
     if (!isVisible) return null;
     return (
       <div className="session-info__chips">
-        {devices === null && <Text variant="b2">{t("Organisms.ProfileViewer.loading_sessions")}</Text>}
-        {devices?.length === 0 && <Text variant="b2">{t("Organisms.ProfileViewer.no_sessions_found")}</Text>}
+        {devices === null && <Text variant="b2">{t('Organisms.ProfileViewer.loading_sessions')}</Text>}
+        {devices?.length === 0 && <Text variant="b2">{t('Organisms.ProfileViewer.no_sessions_found')}</Text>}
         {devices !== null && (devices.map((device) => (
           <Chip
             key={device.deviceId}
@@ -146,7 +144,7 @@ function SessionInfo({ userId }) {
         onClick={() => setIsVisible(!isVisible)}
         iconSrc={isVisible ? ChevronBottomIC : ChevronRightIC}
       >
-        <Text variant="b2">{t("Organisms.ProfileViewer.view_sessions", {count: devices?.length})}</Text>
+        <Text variant="b2">{t('Organisms.ProfileViewer.view_sessions', { count: devices?.length })}</Text>
       </MenuItem>
       {renderSessionChips()}
     </div>
@@ -161,6 +159,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   const [isCreatingDM, setIsCreatingDM] = useState(false);
   const [isIgnoring, setIsIgnoring] = useState(false);
   const [isUserIgnored, setIsUserIgnored] = useState(initMatrix.matrixClient.isUserIgnored(userId));
+  const { t } = useTranslation();
 
   const isMountedRef = useRef(true);
   const mx = initMatrix.matrixClient;
@@ -261,7 +260,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
         onClick={openDM}
         disabled={isCreatingDM}
       >
-        {isCreatingDM ? t("Organisms.ProfileViewer.creating_dm_room") : t("Organisms.ProfileViewer.send_direct_message_button")}
+        {isCreatingDM ? t('Organisms.ProfileViewer.creating_dm_room') : t('Organisms.ProfileViewer.send_direct_message_button')}
       </Button>
       { isBanned && canIKick && (
         <Button
@@ -278,8 +277,8 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
         >
           {
             isInvited
-              ? `${isInviting ? t("common.uninviting") : t("common.uninvite")}`
-              : `${isInviting ? t("common.inviting") : t("common.invite")}`
+              ? `${isInviting ? t('common.uninviting') : t('common.uninvite')}`
+              : `${isInviting ? t('common.inviting') : t('common.invite')}`
           }
         </Button>
       )}
@@ -290,8 +289,8 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
       >
         {
           isUserIgnored
-            ? `${isIgnoring ? t("Organisms.ProfileViewer.unignoring") : t("Organisms.ProfileViewer.unignore")}`
-            : `${isIgnoring ? t("Organisms.ProfileViewer.ignoring") : t("Organisms.ProfileViewer.ignore")}`
+            ? `${isIgnoring ? t('Organisms.ProfileViewer.unignoring') : t('Organisms.ProfileViewer.unignore')}`
+            : `${isIgnoring ? t('Organisms.ProfileViewer.ignoring') : t('Organisms.ProfileViewer.ignore')}`
         }
       </Button>
     </div>
@@ -355,6 +354,7 @@ function ProfileViewer() {
   const [isOpen, roomId, userId, closeDialog, handleAfterClose] = useToggleDialog();
   useRerenderOnProfileChange(roomId, userId);
 
+  const { t } = useTranslation();
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
 
@@ -374,16 +374,16 @@ function ProfileViewer() {
 
     const handleChangePowerLevel = async (newPowerLevel) => {
       if (newPowerLevel === powerLevel) return;
-      const SHARED_POWER_MSG = t("Organisms.ProfileViewer.shared_power_message");
-      const DEMOTING_MYSELF_MSG = t("Organisms.ProfileViewer.demoting_self_message");
+      const SHARED_POWER_MSG = t('Organisms.ProfileViewer.shared_power_message');
+      const DEMOTING_MYSELF_MSG = t('Organisms.ProfileViewer.demoting_self_message');
 
       const isSharedPower = newPowerLevel === myPowerLevel;
       const isDemotingMyself = userId === mx.getUserId();
       if (isSharedPower || isDemotingMyself) {
         const isConfirmed = await confirmDialog(
-          t("Organisms.ProfileViewer.change_power_level"),
+          t('Organisms.ProfileViewer.change_power_level'),
           isSharedPower ? SHARED_POWER_MSG : DEMOTING_MYSELF_MSG,
-          t("common.change"),
+          t('common.change'),
           'caution',
         );
         if (!isConfirmed) return;
@@ -444,7 +444,7 @@ function ProfileViewer() {
       title={room?.name ?? ''}
       onAfterClose={handleAfterClose}
       onRequestClose={closeDialog}
-      contentOptions={<IconButton src={CrossIC} onClick={closeDialog} tooltip={t("common.close")} />}
+      contentOptions={<IconButton src={CrossIC} onClick={closeDialog} tooltip={t('common.close')} />}
     >
       {roomId ? renderProfile() : <div />}
     </Dialog>

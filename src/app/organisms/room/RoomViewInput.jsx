@@ -5,6 +5,7 @@ import './RoomViewInput.scss';
 
 import TextareaAutosize from 'react-autosize-textarea';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
@@ -30,8 +31,7 @@ import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
@@ -86,7 +86,7 @@ function RoomViewInput({
   function uploadingProgress(myRoomId, { loaded, total }) {
     if (myRoomId !== roomId) return;
     const progressPer = Math.round((loaded * 100) / total);
-    uploadProgressRef.current.textContent = t("Organisms.RoomViewInput.upload_progress", {progress: bytesToSize(loaded), total:bytesToSize(total), percent: progressPer});
+    uploadProgressRef.current.textContent = t('Organisms.RoomViewInput.upload_progress', { progress: bytesToSize(loaded), total: bytesToSize(total), percent: progressPer });
     inputBaseRef.current.style.backgroundImage = `linear-gradient(90deg, var(--bg-surface-hover) ${progressPer}%, var(--bg-surface-low) ${progressPer}%)`;
   }
   function clearAttachment(myRoomId) {
@@ -133,9 +133,7 @@ function RoomViewInput({
   }
   function firedCmd(cmdData) {
     const msg = textAreaRef.current.value;
-    textAreaRef.current.value = replaceCmdWith(
-      msg, cmdCursorPos, typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '',
-    );
+    textAreaRef.current.value = replaceCmdWith(msg, cmdCursorPos, typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '');
     deactivateCmd();
   }
 
@@ -316,8 +314,8 @@ function RoomViewInput({
         <Text className="room-input__alert">
           {
             tombstoneEvent
-              ? tombstoneEvent.getContent()?.body ?? t("Organisms.RoomViewInput.tombstone_replaced")
-              : t("Organisms.RoomViewInput.tombstone_permission_denied")
+              ? tombstoneEvent.getContent()?.body ?? t('Organisms.RoomViewInput.tombstone_replaced')
+              : t('Organisms.RoomViewInput.tombstone_permission_denied')
           }
         </Text>
       );
@@ -338,7 +336,7 @@ function RoomViewInput({
                 onChange={handleMsgTyping}
                 onPaste={handlePaste}
                 onKeyDown={handleKeyDown}
-                placeholder={t("Organisms.RoomViewInput.send_message_placeholder")}
+                placeholder={t('Organisms.RoomViewInput.send_message_placeholder')}
               />
             </Text>
           </ScrollView>
@@ -352,10 +350,10 @@ function RoomViewInput({
               cords.y -= 250;
               openEmojiBoard(cords, addEmoji);
             }}
-            tooltip={t("Organisms.RoomViewInput.emoji_tooltip")}
+            tooltip={t('Organisms.RoomViewInput.emoji_tooltip')}
             src={EmojiIC}
           />
-          <IconButton onClick={sendMessage} tooltip={t("common.send")} src={SendIC} />
+          <IconButton onClick={sendMessage} tooltip={t('common.send')} src={SendIC} />
         </div>
       </>
     );
@@ -373,7 +371,7 @@ function RoomViewInput({
         </div>
         <div className="room-attachment__info">
           <Text variant="b1">{attachment.name}</Text>
-          <Text variant="b3"><span ref={uploadProgressRef}>{t("Organisms.RoomViewInput.file_size", {size: bytesToSize(attachment.size)})}</span></Text>
+          <Text variant="b3"><span ref={uploadProgressRef}>{t('Organisms.RoomViewInput.file_size', { size: bytesToSize(attachment.size) })}</span></Text>
         </div>
       </div>
     );
@@ -388,7 +386,7 @@ function RoomViewInput({
             setReplyTo(null);
           }}
           src={CrossIC}
-          tooltip={t("Organisms.RoomViewInput.cancel_reply_tooltip")}
+          tooltip={t('Organisms.RoomViewInput.cancel_reply_tooltip')}
           size="extra-small"
         />
         <MessageReply

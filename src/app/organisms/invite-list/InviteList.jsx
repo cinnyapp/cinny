@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './InviteList.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
@@ -16,11 +17,7 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-import { t } from 'i18next';
-
-
+import '../../i18n';
 
 function InviteList({ isOpen, onRequestClose }) {
   const [procInvite, changeProcInvite] = useState(new Set());
@@ -81,8 +78,8 @@ function InviteList({ isOpen, onRequestClose }) {
             ? (<Spinner size="small" />)
             : (
               <div className="invite-btn__container">
-                <Button onClick={() => rejectInvite(myRoom.roomId)}>{t("Organisms.InviteList.reject_invite")}</Button>
-                <Button onClick={() => acceptInvite(myRoom.roomId)} variant="primary">{t("Organisms.InviteList.accept_invite")}</Button>
+                <Button onClick={() => rejectInvite(myRoom.roomId)}>{t('Organisms.InviteList.reject_invite')}</Button>
+                <Button onClick={() => acceptInvite(myRoom.roomId)} variant="primary">{t('Organisms.InviteList.accept_invite')}</Button>
               </div>
             )
         }
@@ -93,14 +90,14 @@ function InviteList({ isOpen, onRequestClose }) {
   return (
     <PopupWindow
       isOpen={isOpen}
-      title={t("Organisms.InviteList.title")}
-      contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip={t("common.close")} />}
+      title={t('Organisms.InviteList.title')}
+      contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip={t('common.close')} />}
       onRequestClose={onRequestClose}
     >
       <div className="invites-content">
         { initMatrix.roomList.inviteDirects.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3" weight="bold">{t("Organisms.InviteList.direct_messages_title")}</Text>
+            <Text variant="b3" weight="bold">{t('Organisms.InviteList.direct_messages_title')}</Text>
           </div>
         )}
         {
@@ -118,8 +115,8 @@ function InviteList({ isOpen, onRequestClose }) {
                     ? (<Spinner size="small" />)
                     : (
                       <div className="invite-btn__container">
-                        <Button onClick={() => rejectInvite(myRoom.roomId, true)}>{t("Organisms.InviteList.reject_invite")}</Button>
-                        <Button onClick={() => acceptInvite(myRoom.roomId, true)} variant="primary">{t("Organisms.InviteList.accept_invite")}</Button>
+                        <Button onClick={() => rejectInvite(myRoom.roomId, true)}>{t('Organisms.InviteList.reject_invite')}</Button>
+                        <Button onClick={() => acceptInvite(myRoom.roomId, true)} variant="primary">{t('Organisms.InviteList.accept_invite')}</Button>
                       </div>
                     )
                 }
@@ -129,14 +126,14 @@ function InviteList({ isOpen, onRequestClose }) {
         }
         { initMatrix.roomList.inviteSpaces.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3" weight="bold">{t("Organisms.InviteList.spaces_title")}</Text>
+            <Text variant="b3" weight="bold">{t('Organisms.InviteList.spaces_title')}</Text>
           </div>
         )}
         { Array.from(initMatrix.roomList.inviteSpaces).map(renderRoomTile) }
 
         { initMatrix.roomList.inviteRooms.size !== 0 && (
           <div className="invites-content__subheading">
-            <Text variant="b3" weight="bold">{t("Organisms.InviteList.rooms_title")}</Text>
+            <Text variant="b3" weight="bold">{t('Organisms.InviteList.rooms_title')}</Text>
           </div>
         )}
         { Array.from(initMatrix.roomList.inviteRooms).map(renderRoomTile) }

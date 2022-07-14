@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomAliases.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { Debounce } from '../../../util/common';
@@ -17,13 +18,11 @@ import SettingTile from '../setting-tile/SettingTile';
 
 import { useStore } from '../../hooks/useStore';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function useValidate(hsString) {
   const [debounce] = useState(new Debounce());
   const [validate, setValidate] = useState({ alias: null, status: cons.status.PRE_FLIGHT });
-
 
   const { t } = useTranslation();
 
@@ -43,7 +42,7 @@ function useValidate(hsString) {
       setValidate({
         alias: null,
         status: cons.status.ERROR,
-        msg: t("Molecules.RoomAliases.invalid_characters")
+        msg: t('Molecules.RoomAliases.invalid_characters'),
       });
       return false;
     }
@@ -65,7 +64,7 @@ function useValidate(hsString) {
       setValidate({
         alias,
         status: cons.status.IN_FLIGHT,
-        msg: t("Molecules.RoomAliases.validating_alias", {alias: alias}),
+        msg: t('Molecules.RoomAliases.validating_alias', { alias }),
       });
 
       const isValid = await isRoomAliasAvailable(alias);
@@ -76,7 +75,7 @@ function useValidate(hsString) {
         return {
           alias,
           status: isValid ? cons.status.SUCCESS : cons.status.ERROR,
-          msg: t( isValid ? "Molecules.RoomAliases.alias_available": "Molecules.RoomAliases.alias_unavailable", {alias: alias}),
+          msg: t(isValid ? 'Molecules.RoomAliases.alias_available' : 'Molecules.RoomAliases.alias_unavailable', { alias }),
         };
       });
     }, 600)();
@@ -233,7 +232,7 @@ function RoomAliases({ roomId }) {
 
   const handleDeleteAlias = async (alias) => {
     try {
-      setDeleteAlias({ alias, status: cons.status.IN_FLIGHT, msg: t("Molecules.RoomAliases.deleting_alias")});
+      setDeleteAlias({ alias, status: cons.status.IN_FLIGHT, msg: t('Molecules.RoomAliases.deleting_alias') });
       await mx.deleteAlias(alias);
       let { main, published, local } = aliases;
       if (published.includes(alias)) {
@@ -267,10 +266,10 @@ function RoomAliases({ roomId }) {
 
     return (
       <div className="room-aliases__item-btns">
-        {canPublishAlias && !isMain && <Button onClick={() => handleSetMainAlias(alias)} variant="primary">{t("Molecules.RoomAliases.set_main_alias")}</Button>}
-        {!isPublished && canPublishAlias && <Button onClick={() => handlePublishAlias(alias)} variant="positive">{t("Molecules.RoomAliases.publish_alias")}</Button>}
-        {isPublished && canPublishAlias && <Button onClick={() => handleUnPublishAlias(alias)} variant="caution">{t("Molecules.RoomAliases.unpublish_alias")}</Button>}
-        <Button onClick={() => handleDeleteAlias(alias)} variant="danger">{t("Molecules.RoomAliases.delete_alias")}</Button>
+        {canPublishAlias && !isMain && <Button onClick={() => handleSetMainAlias(alias)} variant="primary">{t('Molecules.RoomAliases.set_main_alias')}</Button>}
+        {!isPublished && canPublishAlias && <Button onClick={() => handlePublishAlias(alias)} variant="positive">{t('Molecules.RoomAliases.publish_alias')}</Button>}
+        {isPublished && canPublishAlias && <Button onClick={() => handleUnPublishAlias(alias)} variant="caution">{t('Molecules.RoomAliases.unpublish_alias')}</Button>}
+        <Button onClick={() => handleDeleteAlias(alias)} variant="danger">{t('Molecules.RoomAliases.delete_alias')}</Button>
       </div>
     );
   };
@@ -286,7 +285,7 @@ function RoomAliases({ roomId }) {
           <Checkbox variant="positive" disabled={disabled} isActive={isActive} onToggle={() => handleAliasSelect(alias)} />
           <Text>
             {alias}
-            {isMain && <span>{t("Molecules.RoomAliases.main_alias")}</span>}
+            {isMain && <span>{t('Molecules.RoomAliases.main_alias')}</span>}
           </Text>
         </div>
         {isActive && renderAliasBtns(alias)}
@@ -300,8 +299,8 @@ function RoomAliases({ roomId }) {
   return (
     <div className="room-aliases">
       <SettingTile
-        title={t("Molecules.RoomAliases.publish_to_room_directory.title")}
-        content={<Text variant="b3">{t(room.isSpaceRoom() ? "Molecules.RoomAliases.publish_to_room_directory.publish_space_message" : "Molecules.RoomAliases.publish_to_room_directory.publish_room_message", {homeserver: hsString})}</Text>}
+        title={t('Molecules.RoomAliases.publish_to_room_directory.title')}
+        content={<Text variant="b3">{t(room.isSpaceRoom() ? 'Molecules.RoomAliases.publish_to_room_directory.publish_space_message' : 'Molecules.RoomAliases.publish_to_room_directory.publish_room_message', { homeserver: hsString })}</Text>}
         options={(
           <Toggle
             isActive={isPublic}
@@ -312,35 +311,35 @@ function RoomAliases({ roomId }) {
       />
 
       <div className="room-aliases__content">
-        <MenuHeader>{t("Molecules.RoomAliases.published_addresses.title")}</MenuHeader>
-        {(aliases.published.length === 0) && <Text className="room-aliases__message">{t("Molecules.RoomAliases.published_addresses.none")}</Text>}
-        {(aliases.published.length > 0 && !aliases.main) && <Text className="room-aliases__message">{t("Molecules.RoomAliases.published_addresses.no_main_address")}</Text>}
+        <MenuHeader>{t('Molecules.RoomAliases.published_addresses.title')}</MenuHeader>
+        {(aliases.published.length === 0) && <Text className="room-aliases__message">{t('Molecules.RoomAliases.published_addresses.none')}</Text>}
+        {(aliases.published.length > 0 && !aliases.main) && <Text className="room-aliases__message">{t('Molecules.RoomAliases.published_addresses.no_main_address')}</Text>}
         {aliases.published.map(renderAlias)}
         <Text className="room-aliases__message" variant="b3">
-          {t(room.isSpaceRoom() ? "Molecules.RoomAliases.published_addresses.message_space" : "Molecules.RoomAliases.published_addresses.message_room")}
+          {t(room.isSpaceRoom() ? 'Molecules.RoomAliases.published_addresses.message_space' : 'Molecules.RoomAliases.published_addresses.message_room')}
         </Text>
       </div>
       { isLocalVisible && (
         <div className="room-aliases__content">
-          <MenuHeader>{t("Molecules.RoomAliases.local_addresses.title")}</MenuHeader>
-          {(aliases.local.length === 0) && <Text className="room-aliases__message">{t("Molecules.RoomAliases.local_addresses.none")}</Text>}
+          <MenuHeader>{t('Molecules.RoomAliases.local_addresses.title')}</MenuHeader>
+          {(aliases.local.length === 0) && <Text className="room-aliases__message">{t('Molecules.RoomAliases.local_addresses.none')}</Text>}
           {aliases.local.map(renderAlias)}
           <Text className="room-aliases__message" variant="b3">
-            {t(room.isSpaceRoom() ? "Molecules.RoomAliases.local_addresses.message_space" : "Molecules.RoomAliases.local_addresses.message_room" )}
+            {t(room.isSpaceRoom() ? 'Molecules.RoomAliases.local_addresses.message_space' : 'Molecules.RoomAliases.local_addresses.message_room')}
           </Text>
 
-          <Text className="room-aliases__form-label" variant="b2">{t("Molecules.RoomAliases.local_addresses.add")}</Text>
+          <Text className="room-aliases__form-label" variant="b2">{t('Molecules.RoomAliases.local_addresses.add')}</Text>
           <form className="room-aliases__form" onSubmit={handleAliasSubmit}>
             <div className="room-aliases__input-wrapper">
               <Input
                 name="alias-input"
                 state={inputState}
                 onChange={handleAliasChange}
-                placeholder={t(room.isSpaceRoom() ? "Molecules.RoomAliases.local_addresses.placeholder_space" : "Molecules.RoomAliases.local_addresses.placeholder_room")}
+                placeholder={t(room.isSpaceRoom() ? 'Molecules.RoomAliases.local_addresses.placeholder_space' : 'Molecules.RoomAliases.local_addresses.placeholder_room')}
                 required
               />
             </div>
-            <Button variant="primary" type="submit">{t("Molecules.RoomAliases.local_addresses.add_button")}</Button>
+            <Button variant="primary" type="submit">{t('Molecules.RoomAliases.local_addresses.add_button')}</Button>
           </form>
           <div className="room-aliases__input-status">
             {validate.status === cons.status.SUCCESS && <Text className="room-aliases__valid" variant="b2">{validate.msg}</Text>}
@@ -350,7 +349,7 @@ function RoomAliases({ roomId }) {
       )}
       <div className="room-aliases__content">
         <Button onClick={() => setIsLocalVisible(!isLocalVisible)}>
-          {t(isLocalVisible ? "Molecules.RoomAliases.local_addresses.hide" : "Molecules.RoomAliases.local_addresses.view" )}
+          {t(isLocalVisible ? 'Molecules.RoomAliases.local_addresses.hide' : 'Molecules.RoomAliases.local_addresses.view')}
         </Button>
       </div>
     </div>

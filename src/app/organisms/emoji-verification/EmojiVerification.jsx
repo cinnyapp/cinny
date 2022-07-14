@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './EmojiVerification.scss';
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -20,9 +21,7 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useStore } from '../../hooks/useStore';
 import { accessSecretStorage } from '../settings/SecretStorageAccess';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-import { t } from 'i18next';
+import '../../i18n';
 
 function EmojiVerificationContent({ data, requestClose }) {
   const [sas, setSas] = useState(null);
@@ -100,14 +99,14 @@ function EmojiVerificationContent({ data, requestClose }) {
   const renderWait = () => (
     <>
       <Spinner size="small" />
-      <Text>{t("Organisms.EmojiVerification.waiting_for_response")}</Text>
+      <Text>{t('Organisms.EmojiVerification.waiting_for_response')}</Text>
     </>
   );
 
   if (sas !== null) {
     return (
       <div className="emoji-verification__content">
-        <Text>{t("Organisms.EmojiVerification.confirmation_prompt")}</Text>
+        <Text>{t('Organisms.EmojiVerification.confirmation_prompt')}</Text>
         <div className="emoji-verification__emojis">
           {sas.sas.emoji.map((emoji, i) => (
             // eslint-disable-next-line react/no-array-index-key
@@ -120,8 +119,8 @@ function EmojiVerificationContent({ data, requestClose }) {
         <div className="emoji-verification__buttons">
           {process ? renderWait() : (
             <>
-              <Button variant="primary" onClick={sasConfirm}>{t("Organisms.EmojiVerification.emojis_match_button")}</Button>
-              <Button onClick={sasMismatch}>{t("Organisms.EmojiVerification.emojis_dont_match_button")}</Button>
+              <Button variant="primary" onClick={sasConfirm}>{t('Organisms.EmojiVerification.emojis_match_button')}</Button>
+              <Button onClick={sasMismatch}>{t('Organisms.EmojiVerification.emojis_dont_match_button')}</Button>
             </>
           )}
         </div>
@@ -132,7 +131,7 @@ function EmojiVerificationContent({ data, requestClose }) {
   if (targetDevice) {
     return (
       <div className="emoji-verification__content">
-        <Text>{t("Organisms.EmojiVerification.accept_request_from_other_device_message")}</Text>
+        <Text>{t('Organisms.EmojiVerification.accept_request_from_other_device_message')}</Text>
         <div className="emoji-verification__buttons">
           {renderWait()}
         </div>
@@ -142,12 +141,12 @@ function EmojiVerificationContent({ data, requestClose }) {
 
   return (
     <div className="emoji-verification__content">
-      <Text>{t("Organisms.EmojiVerification.begin_verification_process_message")}</Text>
+      <Text>{t('Organisms.EmojiVerification.begin_verification_process_message')}</Text>
       <div className="emoji-verification__buttons">
         {
           process
             ? renderWait()
-            : <Button variant="primary" onClick={beginVerification}>{t("Organisms.EmojiVerification.begin_verification_button_text")}</Button>
+            : <Button variant="primary" onClick={beginVerification}>{t('Organisms.EmojiVerification.begin_verification_button_text')}</Button>
         }
       </div>
     </div>
@@ -182,16 +181,18 @@ function useVisibilityToggle() {
 function EmojiVerification() {
   const [data, requestClose] = useVisibilityToggle();
 
+  const { t } = useTranslation();
+
   return (
     <Dialog
       isOpen={data !== null}
       className="emoji-verification"
       title={(
         <Text variant="s1" weight="medium" primary>
-          {t("Organisms.EmojiVerification.title")}
+          {t('Organisms.EmojiVerification.title')}
         </Text>
       )}
-      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />}
+      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t('common.close')} />}
       onRequestClose={requestClose}
     >
       {

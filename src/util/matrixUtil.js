@@ -39,9 +39,9 @@ export function getUsernameOfRoomMember(roomMember) {
   return roomMember.name || roomMember.userId;
 }
 
-export function getUserDisplayName(room, userId){
+export function getUserDisplayName(room, userId) {
   if (room?.getMember(userId)) return getUsernameOfRoomMember(room.getMember(userId));
-    return getUsername(userId);
+  return getUsername(userId);
 }
 
 export async function isRoomAliasAvailable(alias) {

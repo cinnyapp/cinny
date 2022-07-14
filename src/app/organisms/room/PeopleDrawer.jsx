@@ -4,6 +4,7 @@ import React, {
 import PropTypes from 'prop-types';
 import './PeopleDrawer.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import { getPowerLabel, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
@@ -25,8 +26,7 @@ import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function simplyfiMembers(members) {
   const mx = initMatrix.matrixClient;
@@ -134,11 +134,11 @@ function PeopleDrawer({ roomId }) {
       <Header>
         <TitleWrapper>
           <Text variant="s1" primary>
-            {t("Organisms.PeopleDrawer.title")}
-            <Text className="people-drawer__member-count" variant="b3">{t("Organisms.PeopleDrawer.members", {count: room.getJoinedMemberCount()})}</Text>
+            {t('Organisms.PeopleDrawer.title')}
+            <Text className="people-drawer__member-count" variant="b3">{t('Organisms.PeopleDrawer.members', { count: room.getJoinedMemberCount() })}</Text>
           </Text>
         </TitleWrapper>
-        <IconButton onClick={() => openInviteUser(roomId)} tooltip={t("Organisms.PeopleDrawer.invite_tooltip")} src={AddUserIC} disabled={!canInvite} />
+        <IconButton onClick={() => openInviteUser(roomId)} tooltip={t('Organisms.PeopleDrawer.invite_tooltip')} src={AddUserIC} disabled={!canInvite} />
       </Header>
       <div className="people-drawer__content-wrapper">
         <div className="people-drawer__scrollable">
@@ -155,7 +155,7 @@ function PeopleDrawer({ roomId }) {
                     return getSegmentIndex[membership];
                   })()
                 }
-                segments={[{ text: t("Organisms.PeopleDrawer.joined")}, { text: t("Organisms.PeopleDrawer.invited") }, { text: t("Organisms.PeopleDrawer.banned") }]}
+                segments={[{ text: t('Organisms.PeopleDrawer.joined') }, { text: t('Organisms.PeopleDrawer.invited') }, { text: t('Organisms.PeopleDrawer.banned') }]}
                 onSelect={(index) => {
                   const selectSegment = [
                     () => setMembership('join'),
@@ -181,7 +181,7 @@ function PeopleDrawer({ roomId }) {
                 (searchedMembers?.data.length === 0 || memberList.length === 0)
                 && (
                   <div className="people-drawer__noresult">
-                    <Text variant="b2">{t("Organisms.PeopleDrawer.search_no_results")}</Text>
+                    <Text variant="b2">{t('Organisms.PeopleDrawer.search_no_results')}</Text>
                   </div>
                 )
               }
@@ -191,7 +191,7 @@ function PeopleDrawer({ roomId }) {
                   && memberList.length > itemCount
                   && searchedMembers === null
                   && (
-                    <Button onClick={loadMorePeople}>{t("Organisms.PeopleDrawer.view_more")}</Button>
+                    <Button onClick={loadMorePeople}>{t('Organisms.PeopleDrawer.view_more')}</Button>
                   )
                 }
               </div>
@@ -201,7 +201,7 @@ function PeopleDrawer({ roomId }) {
         <div className="people-drawer__sticky">
           <form onSubmit={(e) => e.preventDefault()} className="people-search">
             <RawIcon size="small" src={SearchIC} />
-            <Input forwardRef={searchRef} type="text" onChange={handleSearch} placeholder={t("Organisms.PeopleDrawer.placeholder")} required />
+            <Input forwardRef={searchRef} type="text" onChange={handleSearch} placeholder={t('Organisms.PeopleDrawer.placeholder')} required />
             {
               searchedMembers !== null
               && <IconButton onClick={handleSearch} size="small" src={CrossIC} />

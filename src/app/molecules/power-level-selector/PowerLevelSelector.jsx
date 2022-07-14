@@ -2,13 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './PowerLevelSelector.scss';
 
+import { useTranslation } from 'react-i18next';
 import IconButton from '../../atoms/button/IconButton';
 import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
 import CheckIC from '../../../../public/res/ic/outlined/check.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function PowerLevelSelector({
   value, max, onSelect,
@@ -30,7 +30,7 @@ function PowerLevelSelector({
           defaultValue={value}
           type="number"
           name="power-level"
-          placeholder={t("Molecules.PowerLevelIndicator.placeholder")}
+          placeholder={t('Molecules.PowerLevelIndicator.placeholder')}
           max={max}
           autoComplete="off"
           required

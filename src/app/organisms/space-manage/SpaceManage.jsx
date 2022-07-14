@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './SpaceManage.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -32,9 +33,7 @@ import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { useStore } from '../../hooks/useStore';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-
+import '../../i18n';
 
 function SpaceManageBreadcrumb({ path, onSelect }) {
   return (
@@ -120,7 +119,12 @@ function SpaceManageItem({
   const roomNameJSX = (
     <Text>
       {twemojify(name)}
-      <Text variant="b3" span> • {t("Organisms.SpaceManage.room_members", {count: roomInfo.num_joined_members})}</Text>
+      <Text variant="b3" span>
+        {' '}
+        •
+        {' '}
+        {t('Organisms.SpaceManage.room_members', { count: roomInfo.num_joined_members })}
+      </Text>
     </Text>
   );
 
@@ -148,20 +152,19 @@ function SpaceManageItem({
         >
           {roomAvatarJSX}
           {roomNameJSX}
-          {isSuggested && <Text variant="b2">{t("Organisms.SpaceManage.suggested")}</Text>}
+          {isSuggested && <Text variant="b2">{t('Organisms.SpaceManage.suggested')}</Text>}
         </button>
         {roomInfo.topic && expandBtnJsx}
         {
           isJoined
-            ? <Button onClick={handleOpen}>{t("common.open")}</Button>
-            : <Button variant="primary" onClick={handleJoin} disabled={isJoining}>{t(isJoining ? "common.joining" : "common.join")}</Button>
+            ? <Button onClick={handleOpen}>{t('common.open')}</Button>
+            : <Button variant="primary" onClick={handleJoin} disabled={isJoining}>{t(isJoining ? 'common.joining' : 'common.join')}</Button>
         }
       </div>
       {isExpand && roomInfo.topic && <Text variant="b2">{twemojify(roomInfo.topic, undefined, true)}</Text>}
     </div>
   );
 }
-
 
 SpaceManageItem.propTypes = {
   parentId: PropTypes.string.isRequired,
@@ -187,15 +190,15 @@ function SpaceManageFooter({ parentId, selected }) {
   });
 
   const handleRemove = () => {
-    setProcess(t("Organisms.SpaceManage.remove", {count: selected.length}));
+    setProcess(t('Organisms.SpaceManage.remove', { count: selected.length }));
     selected.forEach((roomId) => {
       mx.sendStateEvent(parentId, 'm.space.child', {}, roomId);
     });
   };
 
   const handleToggleSuggested = (isMark) => {
-    if (isMark) setProcess(t("Organisms.SpaceManage.mark_suggested", {count: selected.length}));
-    else setProcess(t("Organisms.SpaceManage.mark_not_suggested", {count: selected.length}));
+    if (isMark) setProcess(t('Organisms.SpaceManage.mark_suggested', { count: selected.length }));
+    else setProcess(t('Organisms.SpaceManage.mark_not_suggested', { count: selected.length }));
     selected.forEach((roomId) => {
       const sEvent = room.currentState.getStateEvents('m.space.child', roomId);
       if (!sEvent) return;
@@ -210,10 +213,10 @@ function SpaceManageFooter({ parentId, selected }) {
   return (
     <div className="space-manage__footer">
       {process && <Spinner size="small" />}
-      <Text weight="medium">{process || t("Organisms.SpaceManage.items_selected", {count: selected.length})}</Text>
+      <Text weight="medium">{process || t('Organisms.SpaceManage.items_selected', { count: selected.length })}</Text>
       { !process && (
         <>
-          <Button onClick={handleRemove} variant="danger">{t("common.remove")}</Button>
+          <Button onClick={handleRemove} variant="danger">{t('common.remove')}</Button>
           <Button
             onClick={() => handleToggleSuggested(!allSuggested)}
             variant={allSuggested ? 'surface' : 'primary'}
@@ -292,7 +295,6 @@ function useChildUpdate(roomId, roomsHierarchy) {
 }
 
 function SpaceManageContent({ roomId, requestClose }) {
-
   const { t } = useTranslation();
 
   const mx = initMatrix.matrixClient;
@@ -352,11 +354,11 @@ function SpaceManageContent({ roomId, requestClose }) {
       {spacePath.length > 1 && (
         <SpaceManageBreadcrumb path={spacePath} onSelect={addPathItem} />
       )}
-      <Text variant="b3" weight="bold">{t("Organisms.SpaceManage.rooms_and_spaces")}</Text>
+      <Text variant="b3" weight="bold">{t('Organisms.SpaceManage.rooms_and_spaces')}</Text>
       <div className="space-manage__content-items">
         {!isLoading && currentHierarchy?.rooms?.length === 1 && (
           <Text>
-            {t("Organisms.SpaceManage.private_rooms_message")}
+            {t('Organisms.SpaceManage.private_rooms_message')}
           </Text>
         )}
         {currentHierarchy && (currentHierarchy.rooms?.map((roomInfo) => (
@@ -375,15 +377,15 @@ function SpaceManageContent({ roomId, requestClose }) {
               />
             )
         )))}
-        {!currentHierarchy && <Text>{t("common.loading")}</Text>}
+        {!currentHierarchy && <Text>{t('common.loading')}</Text>}
       </div>
       {currentHierarchy?.canLoadMore && !isLoading && (
-        <Button onClick={loadRoomHierarchy}>{t("Organisms.SpaceManage.load_more")}</Button>
+        <Button onClick={loadRoomHierarchy}>{t('Organisms.SpaceManage.load_more')}</Button>
       )}
       {isLoading && (
         <div className="space-manage__content-loading">
           <Spinner size="small" />
-          <Text>{t("common.loading")}</Text>
+          <Text>{t('common.loading')}</Text>
         </div>
       )}
       {selected.length > 0 && (
@@ -428,7 +430,12 @@ function SpaceManage() {
       title={(
         <Text variant="s1" weight="medium" primary>
           {roomId && twemojify(room.name)}
-          <span style={{ color: 'var(--tc-surface-low)' }}> — {t("Organisms.SpaceManage.subtitle")}</span>
+          <span style={{ color: 'var(--tc-surface-low)' }}>
+            {' '}
+            —
+            {' '}
+            {t('Organisms.SpaceManage.subtitle')}
+          </span>
         </Text>
       )}
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}

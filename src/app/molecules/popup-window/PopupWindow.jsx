@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './PopupWindow.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import Text from '../../atoms/text/Text';
@@ -13,8 +14,7 @@ import RawModal from '../../atoms/modal/RawModal';
 
 import ChevronLeftIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function PWContentSelector({
   selected, variant, iconSrc,
@@ -74,7 +74,7 @@ function PopupWindow({
         {haveDrawer && (
           <div className="pw__drawer">
             <Header>
-              <IconButton size="small" src={ChevronLeftIC} onClick={onRequestClose} tooltip={t("Molecules.PopupWindow.close_tooltip")}/>
+              <IconButton size="small" src={ChevronLeftIC} onClick={onRequestClose} tooltip={t('Molecules.PopupWindow.close_tooltip')} />
               <TitleWrapper>
                 {
                   typeof title === 'string'

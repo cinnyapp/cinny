@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './RoomHistoryVisibility.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 
 import Text from '../../atoms/text/Text';
 import RadioButton from '../../atoms/button/RadioButton';
 import { MenuItem } from '../../atoms/context-menu/ContextMenu';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 const visibility = {
   WORLD_READABLE: 'world_readable',
@@ -40,7 +40,8 @@ function setHistoryVisibility(roomId, type) {
   const mx = initMatrix.matrixClient;
 
   return mx.sendStateEvent(
-    roomId, 'm.room.history_visibility',
+    roomId,
+    'm.room.history_visibility',
     {
       history_visibility: type,
     },
@@ -92,7 +93,7 @@ function RoomHistoryVisibility({ roomId }) {
           </MenuItem>
         ))
       }
-      <Text variant="b3">{t("Molecules.RoomHistoryVisibility.changes_only_affect_future")}</Text>
+      <Text variant="b3">{t('Molecules.RoomHistoryVisibility.changes_only_affect_future')}</Text>
     </div>
   );
 }

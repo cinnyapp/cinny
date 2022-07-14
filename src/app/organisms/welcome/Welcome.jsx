@@ -1,16 +1,15 @@
 import React from 'react';
 import './Welcome.scss';
 
+import { useTranslation } from 'react-i18next';
 import Text from '../../atoms/text/Text';
 
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function Welcome() {
-
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   return (
     <div className="app-welcome flex--center">

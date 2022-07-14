@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -26,8 +27,7 @@ import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function SpaceOptions({ roomId, afterOptionSelect }) {
   const mx = initMatrix.matrixClient;
@@ -64,9 +64,9 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
   const handleLeaveClick = async () => {
     afterOptionSelect();
     const isConfirmed = await confirmDialog(
-      t("Molecules.SpaceOptions.leave_space"),
-      t("Molecules.SpaceOptions.leave_space_confirmation", {space: room.name}),
-      t("Molecules.SpaceOptions.leave_space_confirmation"),
+      t('Molecules.SpaceOptions.leave_space'),
+      t('Molecules.SpaceOptions.leave_space_confirmation', { space: room.name }),
+      t('Molecules.SpaceOptions.leave_space_confirmation'),
       'danger',
     );
     if (!isConfirmed) return;
@@ -80,29 +80,29 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
         onClick={handleCategorizeClick}
         iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}
       >
-        {isCategorized ? t("Organisms.SpaceSettings.uncategorize_subspaces") : t("Organisms.SpaceSettings.categorize_subspaces")}
+        {isCategorized ? t('Organisms.SpaceSettings.uncategorize_subspaces') : t('Organisms.SpaceSettings.categorize_subspaces')}
       </MenuItem>
       <MenuItem
         onClick={handlePinClick}
         iconSrc={isPinned ? PinFilledIC : PinIC}
       >
-        {isPinned ? t("Organisms.SpaceSettings.unpin_sidebar") : t("Organisms.SpaceSettings.pin_sidebar")}
+        {isPinned ? t('Organisms.SpaceSettings.unpin_sidebar') : t('Organisms.SpaceSettings.pin_sidebar')}
       </MenuItem>
       <MenuItem
         iconSrc={AddUserIC}
         onClick={handleInviteClick}
         disabled={!canInvite}
       >
-        {t("Molecules.SpaceOptions.invite")}
+        {t('Molecules.SpaceOptions.invite')}
       </MenuItem>
-      <MenuItem onClick={handleManageRoom} iconSrc={HashSearchIC}>{t("Molecules.SpaceOptions.manage_rooms")}</MenuItem>
-      <MenuItem onClick={handleSettingsClick} iconSrc={SettingsIC}>{t("Molecules.SpaceOptions.settings")}</MenuItem>
+      <MenuItem onClick={handleManageRoom} iconSrc={HashSearchIC}>{t('Molecules.SpaceOptions.manage_rooms')}</MenuItem>
+      <MenuItem onClick={handleSettingsClick} iconSrc={SettingsIC}>{t('Molecules.SpaceOptions.settings')}</MenuItem>
       <MenuItem
         variant="danger"
         onClick={handleLeaveClick}
         iconSrc={LeaveArrowIC}
       >
-        {t("Molecules.SpaceOptions.leave")}
+        {t('Molecules.SpaceOptions.leave')}
       </MenuItem>
     </div>
   );

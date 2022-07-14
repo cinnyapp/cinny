@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomViewFloating.scss';
 
+import { useTranslation, Trans } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -18,11 +19,7 @@ import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
 import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 
-import { getUsersActionJsx } from './common';
-
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-import { Trans } from 'react-i18next';
+import '../../i18n';
 
 function useJumpToEvent(roomTimeline) {
   const [eventId, setEventId] = useState(null);
@@ -94,14 +91,13 @@ function useScrollToBottom(roomTimeline) {
 function RoomViewFloating({
   roomId, roomTimeline,
 }) {
-
   const { t } = useTranslation();
 
   const [isJumpToEvent, jumpToEvent, cancelJumpToEvent] = useJumpToEvent(roomTimeline);
   const [typingMembers] = useTypingMembers(roomTimeline);
   const [isAtBottom, setIsAtBottom] = useScrollToBottom(roomTimeline);
 
-  const room = initMatrix.matrixClient.getRoom(roomId)
+  const room = initMatrix.matrixClient.getRoom(roomId);
 
   const getUserDisplayName = (userId) => {
     if (room?.getMember(userId)) return getUsernameOfRoomMember(room.getMember(userId));
@@ -113,41 +109,41 @@ function RoomViewFloating({
     setIsAtBottom(true);
   };
 
-  console.log(typingMembers)
+  console.log(typingMembers);
 
-  let typingMemberValues = [...typingMembers];
+  const typingMemberValues = [...typingMembers];
 
-  console.log(typingMemberValues)
+  console.log(typingMemberValues);
 
   return (
     <>
       <div className={`room-view__unread ${isJumpToEvent ? 'room-view__unread--open' : ''}`}>
         <Button iconSrc={MessageUnreadIC} onClick={jumpToEvent} variant="primary">
-          <Text variant="b3" weight="medium">{t("Organisms.RoomViewFloating.jump_unread")}</Text>
+          <Text variant="b3" weight="medium">{t('Organisms.RoomViewFloating.jump_unread')}</Text>
         </Button>
         <Button iconSrc={TickMarkIC} onClick={cancelJumpToEvent} variant="primary">
-          <Text variant="b3" weight="bold">{t("Organisms.RoomViewFloating.mark_read")}</Text>
+          <Text variant="b3" weight="bold">{t('Organisms.RoomViewFloating.mark_read')}</Text>
         </Button>
       </div>
       <div className={`room-view__typing${typingMembers.size > 0 ? ' room-view__typing--open' : ''}`}>
         <div className="bouncing-loader"><div /></div>
-        <Text variant="b2"> 
-          <Trans 
-            i18nKey="Organisms.RoomViewFloating.user_typing" 
+        <Text variant="b2">
+          <Trans
+            i18nKey="Organisms.RoomViewFloating.user_typing"
             values={{
-              count: typingMembers.size, 
-              user_one: twemojify(getUserDisplayName(typingMemberValues?.[0])), 
-              user_two: twemojify(getUserDisplayName(typingMemberValues?.[1])), 
-              user_three: twemojify(getUserDisplayName(typingMemberValues?.[2])), 
-              user_four: twemojify(getUserDisplayName(typingMemberValues?.[3]))
+              count: typingMembers.size,
+              user_one: twemojify(getUserDisplayName(typingMemberValues?.[0])),
+              user_two: twemojify(getUserDisplayName(typingMemberValues?.[1])),
+              user_three: twemojify(getUserDisplayName(typingMemberValues?.[2])),
+              user_four: twemojify(getUserDisplayName(typingMemberValues?.[3])),
             }}
-            components={{bold: <b/>}}
-            />
+            components={{ bold: <b /> }}
+          />
         </Text>
       </div>
       <div className={`room-view__STB${isAtBottom ? '' : ' room-view__STB--open'}`}>
         <Button iconSrc={MessageIC} onClick={handleScrollToBottom}>
-          <Text variant="b3" weight="medium">{t("Organisms.RoomViewFloating.jump_latest")}</Text>
+          <Text variant="b3" weight="medium">{t('Organisms.RoomViewFloating.jump_latest')}</Text>
         </Button>
       </div>
     </>

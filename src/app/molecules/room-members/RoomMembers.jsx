@@ -4,6 +4,7 @@ import React, {
 import PropTypes from 'prop-types';
 import './RoomMembers.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import colorMXID from '../../../util/colorMXID';
 import { openProfileViewer } from '../../../client/action/navigation';
@@ -18,8 +19,7 @@ import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls';
 import PeopleSelector from '../people-selector/PeopleSelector';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 const PER_PAGE_MEMBER = 50;
 
@@ -129,14 +129,14 @@ function RoomMembers({ roomId }) {
   const mList = searchMembers ? searchMembers.data : members.slice(0, itemCount);
   return (
     <div className="room-members">
-      <MenuHeader>{t("Molecules.RoomMembers.search_title")}</MenuHeader>
+      <MenuHeader>{t('Molecules.RoomMembers.search_title')}</MenuHeader>
       <Input
         onChange={handleSearch}
-        placeholder={t("Molecules.RoomMembers.search_placeholder")}
+        placeholder={t('Molecules.RoomMembers.search_placeholder')}
         autoFocus
       />
       <div className="room-members__header">
-        <MenuHeader>{t("Molecules.RoomMembers.found_members", {count: mList.length})}</MenuHeader>
+        <MenuHeader>{t('Molecules.RoomMembers.found_members', { count: mList.length })}</MenuHeader>
         <SegmentedControls
           selected={
             (() => {
@@ -144,7 +144,7 @@ function RoomMembers({ roomId }) {
               return getSegmentIndex[membership];
             })()
           }
-          segments={[{ text: t("Molecules.RoomMembers.joined") }, { text: t("Molecules.RoomMembers.invited") }, { text: t("Molecules.RoomMembers.banned") }]}
+          segments={[{ text: t('Molecules.RoomMembers.joined') }, { text: t('Molecules.RoomMembers.invited') }, { text: t('Molecules.RoomMembers.banned') }]}
           onSelect={(index) => {
             const memberships = ['join', 'invite', 'ban'];
             setMembership(memberships[index]);
@@ -167,7 +167,7 @@ function RoomMembers({ roomId }) {
           && (
             <div className="room-members__status">
               <Text variant="b2">
-                {searchMembers ? t("Molecules.RoomMembers.invited", {term: searchMembers.term}) : t("Molecules.RoomMembers.no_members")}
+                {searchMembers ? t('Molecules.RoomMembers.invited', { term: searchMembers.term }) : t('Molecules.RoomMembers.no_members')}
               </Text>
             </div>
           )
@@ -176,7 +176,7 @@ function RoomMembers({ roomId }) {
           mList.length !== 0
           && members.length > itemCount
           && searchMembers === null
-          && <Button onClick={loadMorePeople}>{t("Molecules.RoomMembers.view_more")}</Button>
+          && <Button onClick={loadMorePeople}>{t('Molecules.RoomMembers.view_more')}</Button>
         }
       </div>
     </div>

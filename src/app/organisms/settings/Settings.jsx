@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
@@ -40,8 +41,7 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function AppearanceSection() {
   const [, updateState] = useState({});
@@ -53,26 +53,26 @@ function AppearanceSection() {
       <div className="settings-appearance__card">
         <MenuHeader>Theme</MenuHeader>
         <SettingTile
-          title={t("Organisms.Settings.theme.follow_system.title")}
+          title={t('Organisms.Settings.theme.follow_system.title')}
           options={(
             <Toggle
               isActive={settings.useSystemTheme}
               onToggle={() => { toggleSystemTheme(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">{t("Organisms.Settings.theme.follow_system.description")}</Text>}
+          content={<Text variant="b3">{t('Organisms.Settings.theme.follow_system.description')}</Text>}
         />
         {!settings.useSystemTheme && (
           <SettingTile
-            title={t("Organisms.Settings.theme.title")}
+            title={t('Organisms.Settings.theme.title')}
             content={(
               <SegmentedControls
                 selected={settings.getThemeIndex()}
                 segments={[
-                  { text: t("Organisms.Settings.theme.theme_light") },
-                  { text: t("Organisms.Settings.theme.theme_silver") },
-                  { text: t("Organisms.Settings.theme.theme_dark") },
-                  { text: t("Organisms.Settings.theme.theme_butter") },
+                  { text: t('Organisms.Settings.theme.theme_light') },
+                  { text: t('Organisms.Settings.theme.theme_silver') },
+                  { text: t('Organisms.Settings.theme.theme_dark') },
+                  { text: t('Organisms.Settings.theme.theme_butter') },
                 ]}
                 onSelect={(index) => settings.setTheme(index)}
               />
@@ -83,34 +83,34 @@ function AppearanceSection() {
       <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
         <SettingTile
-          title={t("Organisms.Settings.markdown.title")}
+          title={t('Organisms.Settings.markdown.title')}
           options={(
             <Toggle
               isActive={settings.isMarkdown}
               onToggle={() => { toggleMarkdown(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">{t("Organisms.Settings.markdown.description")}</Text>}
+          content={<Text variant="b3">{t('Organisms.Settings.markdown.description')}</Text>}
         />
         <SettingTile
-          title={t("Organisms.Settings.hide_membership_events.title")}
+          title={t('Organisms.Settings.hide_membership_events.title')}
           options={(
             <Toggle
               isActive={settings.hideMembershipEvents}
               onToggle={() => { toggleMembershipEvents(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">{t("Organisms.Settings.hide_membership_events.description")}</Text>}
+          content={<Text variant="b3">{t('Organisms.Settings.hide_membership_events.description')}</Text>}
         />
         <SettingTile
-          title={t("Organisms.Settings.hide_nickname_avatar_events.title")}
+          title={t('Organisms.Settings.hide_nickname_avatar_events.title')}
           options={(
             <Toggle
               isActive={settings.hideNickAvatarEvents}
               onToggle={() => { toggleNickAvatarEvents(); updateState({}); }}
             />
           )}
-          content={<Text variant="b3">{t("Organisms.Settings.hide_nickname_avatar_events.description")}</Text>}
+          content={<Text variant="b3">{t('Organisms.Settings.hide_nickname_avatar_events.description')}</Text>}
         />
       </div>
     </div>
@@ -126,7 +126,7 @@ function NotificationsSection() {
 
   const renderOptions = () => {
     if (window.Notification === undefined) {
-      return <Text className="settings-notifications__not-supported">{t("errors.browser_not_supported")}</Text>;
+      return <Text className="settings-notifications__not-supported">{t('errors.browser_not_supported')}</Text>;
     }
 
     if (permission === 'granted') {
@@ -154,54 +154,53 @@ function NotificationsSection() {
 
   return (
     <div className="settings-notifications">
-      <MenuHeader>{t("Organisms.Settings.notifications_and_sound.title")}</MenuHeader>
+      <MenuHeader>{t('Organisms.Settings.notifications_and_sound.title')}</MenuHeader>
       <SettingTile
-        title={t("Organisms.Settings.notifications_and_sound.desktop.title")}
+        title={t('Organisms.Settings.notifications_and_sound.desktop.title')}
         options={renderOptions()}
-        content={<Text variant="b3">{t("Organisms.Settings.notifications_and_sound.desktop.description")}</Text>}
+        content={<Text variant="b3">{t('Organisms.Settings.notifications_and_sound.desktop.description')}</Text>}
       />
       <SettingTile
-        title={t("Organisms.Settings.notifications_and_sound.sound.title")}
+        title={t('Organisms.Settings.notifications_and_sound.sound.title')}
         options={(
           <Toggle
             isActive={settings.isNotificationSounds}
             onToggle={() => { toggleNotificationSounds(); updateState({}); }}
           />
           )}
-        content={<Text variant="b3">{t("Organisms.Settings.notifications_and_sound.desktop.description")}</Text>}
+        content={<Text variant="b3">{t('Organisms.Settings.notifications_and_sound.desktop.description')}</Text>}
       />
     </div>
   );
 }
 
 function SecuritySection() {
-
   const { t } = useTranslation();
 
   return (
     <div className="settings-security">
       <div className="settings-security__card">
-        <MenuHeader>{t("Organisms.Settings.security.cross_signing.title")}</MenuHeader>
+        <MenuHeader>{t('Organisms.Settings.security.cross_signing.title')}</MenuHeader>
         <CrossSigning />
         <KeyBackup />
       </div>
       <DeviceManage />
       <div className="settings-security__card">
-        <MenuHeader>{t("Organisms.Settings.security.export_import_encryption_keys.title")}</MenuHeader>
+        <MenuHeader>{t('Organisms.Settings.security.export_import_encryption_keys.title')}</MenuHeader>
         <SettingTile
-          title={t("Organisms.Settings.security.export_encryption_keys.title")}
+          title={t('Organisms.Settings.security.export_encryption_keys.title')}
           content={(
             <>
-              <Text variant="b3">{t("Organisms.Settings.security.export_encryption_keys.description")}</Text>
+              <Text variant="b3">{t('Organisms.Settings.security.export_encryption_keys.description')}</Text>
               <ExportE2ERoomKeys />
             </>
           )}
         />
         <SettingTile
-          title={t("Organisms.Settings.security.import_encryption_keys.title")}
+          title={t('Organisms.Settings.security.import_encryption_keys.title')}
           content={(
             <>
-              <Text variant="b3">{t("Organisms.Settings.security.import_encryption_keys.description")}</Text>
+              <Text variant="b3">{t('Organisms.Settings.security.import_encryption_keys.description')}</Text>
               <ImportE2ERoomKeys />
             </>
           )}
@@ -212,31 +211,30 @@ function SecuritySection() {
 }
 
 function AboutSection() {
-
   const { t } = useTranslation();
 
   return (
     <div className="settings-about">
       <div className="settings-about__card">
-        <MenuHeader>{t("Organisms.Settings.about.application")}</MenuHeader>
+        <MenuHeader>{t('Organisms.Settings.about.application')}</MenuHeader>
         <div className="settings-about__branding">
           <img width="60" height="60" src={CinnySVG} alt="Cinny logo" />
           <div>
             <Text variant="h2" weight="medium">
-              {t("common.cinny")}
+              {t('common.cinny')}
               <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>{`v${cons.version}`}</span>
             </Text>
-            <Text>{t("common.slogan")}</Text>
+            <Text>{t('common.slogan')}</Text>
 
             <div className="settings-about__btns">
-              <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>{t("common.source_code")}</Button>
-              <Button onClick={() => window.open('https://cinny.in/#sponsor')}>{t("common.sponsor")}</Button>
+              <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>{t('common.source_code')}</Button>
+              <Button onClick={() => window.open('https://cinny.in/#sponsor')}>{t('common.sponsor')}</Button>
             </div>
           </div>
         </div>
       </div>
       <div className="settings-about__card">
-        <MenuHeader>{t("Organisms.Settings.about.credits")}</MenuHeader>
+        <MenuHeader>{t('Organisms.Settings.about.credits')}</MenuHeader>
         <div className="settings-about__credits">
           <ul>
             <li>
@@ -314,7 +312,7 @@ function Settings() {
 
   const handleTabChange = (tabItem) => setSelectedTab(tabItem);
   const handleLogout = async () => {
-    if (await confirmDialog(t("Organisms.Settings.logout.dialog.title"), t("Organisms.Settings.logout.dialog.description"), t("Organisms.Settings.logout.dialog.confirm"), 'danger')) {
+    if (await confirmDialog(t('Organisms.Settings.logout.dialog.title'), t('Organisms.Settings.logout.dialog.description'), t('Organisms.Settings.logout.dialog.confirm'), 'danger')) {
       logout();
     }
   };
@@ -323,13 +321,13 @@ function Settings() {
     <PopupWindow
       isOpen={isOpen}
       className="settings-window"
-      title={<Text variant="s1" weight="medium" primary>{t("Organisms.Settings.title")}</Text>}
+      title={<Text variant="s1" weight="medium" primary>{t('Organisms.Settings.title')}</Text>}
       contentOptions={(
         <>
           <Button variant="danger" iconSrc={PowerIC} onClick={handleLogout}>
-            {t("Organisms.Settings.logout.title")}
+            {t('Organisms.Settings.logout.title')}
           </Button>
-          <IconButton src={CrossIC} onClick={requestClose} tooltip={t("common.close")} />
+          <IconButton src={CrossIC} onClick={requestClose} tooltip={t('common.close')} />
         </>
       )}
       onRequestClose={requestClose}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Search.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
@@ -20,8 +21,7 @@ import RoomSelector from '../../molecules/room-selector/RoomSelector';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
+import '../../i18n';
 
 function useVisiblityToggle(setResult) {
   const [isOpen, setIsOpen] = useState(false);
@@ -212,12 +212,12 @@ function Search() {
       size="small"
     >
       <div className="search-dialog">
-        <form className="search-dialog__input" onSubmit={(e) => { e.preventDefault(); openFirstResult()}}>
+        <form className="search-dialog__input" onSubmit={(e) => { e.preventDefault(); openFirstResult(); }}>
           <RawIcon src={SearchIC} size="small" />
           <Input
             onChange={handleOnChange}
             forwardRef={searchRef}
-            placeholder={t("common.search")}
+            placeholder={t('common.search')}
           />
           <IconButton size="small" src={CrossIC} type="reset" onClick={handleCross} tabIndex={-1} />
         </form>
@@ -229,7 +229,7 @@ function Search() {
           </ScrollView>
         </div>
         <div className="search-dialog__footer">
-          <Text variant="b3">{t("Organisms.Search.description")}</Text>
+          <Text variant="b3">{t('Organisms.Search.description')}</Text>
         </div>
       </div>
     </RawModal>

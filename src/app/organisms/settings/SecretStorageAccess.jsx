@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import './SecretStorageAccess.scss';
 import { deriveKey } from 'matrix-js-sdk/lib/crypto/key_passphrase';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { getDefaultSSKey, getSSKeyInfo } from '../../../util/matrixUtil';
@@ -13,10 +14,7 @@ import Button from '../../atoms/button/Button';
 import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 
-
-import '../../i18n.jsx'
-import { useTranslation } from 'react-i18next';
-
+import '../../i18n';
 
 import { useStore } from '../../hooks/useStore';
 
@@ -45,7 +43,7 @@ function SecretStorageAccess({ onComplete }) {
 
       if (!mountStore.getItem()) return;
       if (!isCorrect) {
-        setError(t(key ? "SecretStorageAccess.incorrect_security_key" : "SecretStorageAccess.incorrect_security_phrase"));
+        setError(t(key ? 'SecretStorageAccess.incorrect_security_key' : 'SecretStorageAccess.incorrect_security_phrase'));
         setProcess(false);
         return;
       }
@@ -57,7 +55,7 @@ function SecretStorageAccess({ onComplete }) {
       });
     } catch (e) {
       if (!mountStore.getItem()) return;
-      setError(t(key ? "SecretStorageAccess.incorrect_security_key" : "SecretStorageAccess.incorrect_security_phrase"));
+      setError(t(key ? 'SecretStorageAccess.incorrect_security_key' : 'SecretStorageAccess.incorrect_security_phrase'));
       setProcess(false);
     }
   };
@@ -82,7 +80,7 @@ function SecretStorageAccess({ onComplete }) {
       <form onSubmit={handleForm}>
         <Input
           name="password"
-          label={t(withPhrase ? "SecretStorageAccess.security_phrase" : "SecretStorageAccess.security_key")}
+          label={t(withPhrase ? 'SecretStorageAccess.security_phrase' : 'SecretStorageAccess.security_key')}
           type="password"
           onChange={handleChange}
           required
@@ -90,8 +88,8 @@ function SecretStorageAccess({ onComplete }) {
         {error && <Text variant="b3">{error}</Text>}
         {!process && (
           <div className="secret-storage-access__btn">
-            <Button variant="primary" type="submit">{t("common.continue")}</Button>
-            {isPassphrase && <Button onClick={toggleWithPhrase}>{t( withPhrase ? "SecretStorageAccess.use_security_key" : "SecretStorageAccess.use_security_phrase")}</Button>}
+            <Button variant="primary" type="submit">{t('common.continue')}</Button>
+            {isPassphrase && <Button onClick={toggleWithPhrase}>{t(withPhrase ? 'SecretStorageAccess.use_security_key' : 'SecretStorageAccess.use_security_phrase')}</Button>}
           </div>
         )}
       </form>

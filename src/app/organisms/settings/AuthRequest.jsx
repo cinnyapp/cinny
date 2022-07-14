@@ -12,7 +12,7 @@ import Spinner from '../../atoms/spinner/Spinner';
 
 import { useStore } from '../../hooks/useStore';
 
-import '../../i18n.jsx'
+import '../../i18n';
 import { useTranslation } from 'react-i18next';
 
 let lastUsedPassword;
