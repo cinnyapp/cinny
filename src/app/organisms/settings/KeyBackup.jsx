@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './KeyBackup.scss';
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -25,8 +26,6 @@ import { useStore } from '../../hooks/useStore';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
 
 import '../../i18n';
-import { useTranslation } from 'react-i18next';
-
 
 function CreateKeyBackupDialog({ keyData }) {
   const [done, setDone] = useState(false);
@@ -66,19 +65,19 @@ function CreateKeyBackupDialog({ keyData }) {
       {done === false && (
         <div>
           <Spinner size="small" />
-          <Text>{t("Organisms.KeyBackup.creating_backup")}</Text>
+          <Text>{t('Organisms.KeyBackup.creating_backup')}</Text>
         </div>
       )}
       {done === true && (
         <>
           <Text variant="h1">{twemojify('✅')}</Text>
-          <Text>{t("Organisms.KeyBackup.backup_created")}</Text>
+          <Text>{t('Organisms.KeyBackup.backup_created')}</Text>
         </>
       )}
       {done === null && (
         <>
-          <Text>{t("Organisms.KeyBackup.backup_failed")}</Text>
-          <Button onClick={doBackup}>{t("common.retry")}</Button>
+          <Text>{t('Organisms.KeyBackup.backup_failed')}</Text>
+          <Button onClick={doBackup}>{t('common.retry')}</Button>
         </>
       )}
     </div>
@@ -89,7 +88,6 @@ CreateKeyBackupDialog.propTypes = {
 };
 
 function RestoreKeyBackupDialog({ keyData }) {
-
   const { t } = useTranslation();
 
   const [status, setStatus] = useState(false);
@@ -108,7 +106,7 @@ function RestoreKeyBackupDialog({ keyData }) {
         meBreath = true;
       }, 200);
 
-      setStatus({ message: t("Organisms.KeyBackup.restoring_progress", {progress: progress.successes, total: progress.total}) });
+      setStatus({ message: t('Organisms.KeyBackup.restoring_progress', { progress: progress.successes, total: progress.total }) });
     };
 
     try {
@@ -120,14 +118,14 @@ function RestoreKeyBackupDialog({ keyData }) {
         { progressCallback },
       );
       if (!mountStore.getItem()) return;
-      setStatus({ done: t("Organisms.KeyBackup.restore_complete", {progress: info.imported, total: info.total})});
+      setStatus({ done: t('Organisms.KeyBackup.restore_complete', { progress: info.imported, total: info.total }) });
     } catch (e) {
       if (!mountStore.getItem()) return;
       if (e.errcode === 'RESTORE_BACKUP_ERROR_BAD_KEY') {
         deletePrivateKey(keyData.keyId);
-        setStatus({ error: t("Organisms.KeyBackup.restore_failed_bad_key"), errorCode: 'BAD_KEY' });
+        setStatus({ error: t('Organisms.KeyBackup.restore_failed_bad_key'), errorCode: 'BAD_KEY' });
       } else {
-        setStatus({ error: t("Organisms.KeyBackup.restore_failed_unknown"), errCode: 'UNKNOWN' });
+        setStatus({ error: t('Organisms.KeyBackup.restore_failed_unknown'), errCode: 'UNKNOWN' });
       }
     }
   };
@@ -142,7 +140,7 @@ function RestoreKeyBackupDialog({ keyData }) {
       {(status === false || status.message) && (
         <div>
           <Spinner size="small" />
-          <Text>{status.message ?? t("Organisms.KeyBackup.restoring")}</Text>
+          <Text>{status.message ?? t('Organisms.KeyBackup.restoring')}</Text>
         </div>
       )}
       {status.done && (
@@ -154,7 +152,7 @@ function RestoreKeyBackupDialog({ keyData }) {
       {status.error && (
         <>
           <Text>{status.error}</Text>
-          <Button onClick={restoreBackup}>{t("common.retry")}}</Button>
+          <Button onClick={restoreBackup}>{t('common.retry')}</Button>
         </>
       )}
     </div>
@@ -187,12 +185,12 @@ function DeleteKeyBackupDialog({ requestClose }) {
   return (
     <div className="key-backup__delete">
       <Text variant="h1">{twemojify('🗑')}</Text>
-      <Text weight="medium">{t("Organisms.KeyBackup.delete_key_backup_subtitle")}</Text>
-      <Text>{t("Organisms.KeyBackup.delete_key_backup_message")}</Text>
+      <Text weight="medium">{t('Organisms.KeyBackup.delete_key_backup_subtitle')}</Text>
+      <Text>{t('Organisms.KeyBackup.delete_key_backup_message')}</Text>
       {
         isDeleting
           ? <Spinner size="small" />
-          : <Button variant="danger" onClick={deleteBackup}>{t("common.delete")}</Button>
+          : <Button variant="danger" onClick={deleteBackup}>{t('common.delete')}</Button>
       }
     </div>
   );
@@ -276,17 +274,17 @@ function KeyBackup() {
 
   return (
     <SettingTile
-      title={t("Organisms.KeyBackup.encrypted_messages_backup_title")}
+      title={t('Organisms.KeyBackup.encrypted_messages_backup_title')}
       content={(
         <>
-          <Text variant="b3">{t("Organisms.KeyBackup.encrypted_messages_backup_description")}</Text>
+          <Text variant="b3">{t('Organisms.KeyBackup.encrypted_messages_backup_description')}</Text>
           {!isCSEnabled && (
             <InfoCard
               style={{ marginTop: 'var(--sp-ultra-tight)' }}
               rounded
               variant="caution"
               iconSrc={InfoIC}
-              title={t("Organisms.KeyBackup.encrypted_messages_backup_cross_signing_disabled")}
+              title={t('Organisms.KeyBackup.encrypted_messages_backup_cross_signing_disabled')}
             />
           )}
         </>
