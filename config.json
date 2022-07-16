@@ -1,12 +1,11 @@
 {
-  "defaultHomeserver": 4,
+  "defaultHomeserver": 3,
   "homeserverList": [
-    "converser.eu",
     "envs.net",
     "halogen.city",
     "kde.org",
     "matrix.org",
-    "chat.mozilla.org"
+    "mozilla.org"
   ],
   "allowCustomHomeservers": true
 }

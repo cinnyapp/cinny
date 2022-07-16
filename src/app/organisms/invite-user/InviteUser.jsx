@@ -7,7 +7,7 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
 import { selectRoom } from '../../../client/action/navigation';
-import { hasDMWith } from '../../../util/matrixUtil';
+import { hasDMWith, hasDevices } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';

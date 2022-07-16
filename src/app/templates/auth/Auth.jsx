@@ -21,6 +21,8 @@ import Avatar from '../../atoms/avatar/Avatar';
 import ContextMenu, { MenuItem, MenuHeader } from '../../atoms/context-menu/ContextMenu';
 
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+import EyeIC from '../../../../public/res/ic/outlined/eye.svg';
+import EyeBlindIC from '../../../../public/res/ic/outlined/eye-blind.svg';
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
 
@@ -54,11 +56,8 @@ function Homeserver({ onChange }) {
   const setupHsConfig = async (servername) => {
     setProcess({ isLoading: true, message: 'Looking for homeserver...' });
     let baseUrl = null;
-    try {
-      baseUrl = await getBaseUrl(servername);
-    } catch (e) {
-      baseUrl = e.message;
-    }
+    baseUrl = await getBaseUrl(servername);
+
     if (searchingHs !== servername) return;
     setProcess({ isLoading: true, message: `Connecting to ${baseUrl}...` });
     const tempClient = auth.createTemporaryClient(baseUrl);
@@ -97,7 +96,7 @@ function Homeserver({ onChange }) {
       if (!hsList?.length > 0 || selectedHs < 0 || selectedHs >= hsList?.length) {
         throw new Error();
       }
-      setHs({ selected: hsList[selectedHs], list: hsList, allowCustom: allowCustom });
+      setHs({ selected: hsList[selectedHs], list: hsList, allowCustom });
     } catch {
       setHs({ selected: 'matrix.org', list: ['matrix.org'], allowCustom: true });
     }
@@ -114,8 +113,14 @@ function Homeserver({ onChange }) {
   return (
     <>
       <div className="homeserver-form">
-        <Input name="homeserver" onChange={handleHsInput} value={hs?.selected} forwardRef={hsRef} label="Homeserver"
-          disabled={hs === null || !hs.allowCustom} />
+        <Input
+          name="homeserver"
+          onChange={handleHsInput}
+          value={hs?.selected}
+          forwardRef={hsRef}
+          label="Homeserver"
+          disabled={hs === null || !hs.allowCustom}
+        />
         <ContextMenu
           placement="right"
           content={(hideMenu) => (
@@ -156,6 +161,7 @@ Homeserver.propTypes = {
 
 function Login({ loginFlow, baseUrl }) {
   const [typeIndex, setTypeIndex] = useState(0);
+  const [passVisible, setPassVisible] = useState(false);
   const loginTypes = ['Username', 'Email'];
   const isPassword = loginFlow?.filter((flow) => flow.type === 'm.login.password')[0];
   const ssoProviders = loginFlow?.filter((flow) => flow.type === 'm.login.sso')[0];
@@ -166,31 +172,38 @@ function Login({ loginFlow, baseUrl }) {
 
   const validator = (values) => {
     const errors = {};
-    if (typeIndex === 0 && values.username.length > 0 && values.username.indexOf(':') > -1) {
-      errors.username = 'Username must contain local-part only';
-    }
     if (typeIndex === 1 && values.email.length > 0 && !isValidInput(values.email, EMAIL_REGEX)) {
       errors.email = BAD_EMAIL_ERROR;
     }
     return errors;
   };
-  const submitter = (values, actions) => auth.login(
-    baseUrl,
-    typeIndex === 0 ? normalizeUsername(values.username) : undefined,
-    typeIndex === 1 ? values.email : undefined,
-    values.password,
-  ).then(() => {
-    actions.setSubmitting(true);
-    window.location.reload();
-  }).catch((error) => {
-    let msg = error.message;
-    if (msg === 'Unknown message') msg = 'Please check your credentials';
-    actions.setErrors({
-      password: msg === 'Invalid password' ? msg : undefined,
-      other: msg !== 'Invalid password' ? msg : undefined,
+  const submitter = async (values, actions) => {
+    let userBaseUrl = baseUrl;
+    let { username } = values;
+    const mxIdMatch = username.match(/^@(.+):(.+\..+)$/);
+    if (typeIndex === 0 && mxIdMatch) {
+      [, username, userBaseUrl] = mxIdMatch;
+      userBaseUrl = await getBaseUrl(userBaseUrl);
+    }
+
+    return auth.login(
+      userBaseUrl,
+      typeIndex === 0 ? normalizeUsername(username) : undefined,
+      typeIndex === 1 ? values.email : undefined,
+      values.password,
+    ).then(() => {
+      actions.setSubmitting(true);
+      window.location.reload();
+    }).catch((error) => {
+      let msg = error.message;
+      if (msg === 'Unknown message') msg = 'Please check your credentials';
+      actions.setErrors({
+        password: msg === 'Invalid password' ? msg : undefined,
+        other: msg !== 'Invalid password' ? msg : undefined,
+      });
+      actions.setSubmitting(false);
     });
-    actions.setSubmitting(false);
-  });
+  };
 
   return (
     <>
@@ -236,7 +249,10 @@ function Login({ loginFlow, baseUrl }) {
                 {errors.username && <Text className="auth-form__error" variant="b3">{errors.username}</Text>}
                 {typeIndex === 1 && <Input values={values.email} name="email" onChange={handleChange} label="Email" type="email" required />}
                 {errors.email && <Text className="auth-form__error" variant="b3">{errors.email}</Text>}
-                <Input values={values.password} name="password" onChange={handleChange} label="Password" type="password" required />
+                <div className="auth-form__pass-eye-wrapper">
+                  <Input values={values.password} name="password" onChange={handleChange} label="Password" type={passVisible ? 'text' : 'password'} required />
+                  <IconButton onClick={() => setPassVisible(!passVisible)} src={passVisible ? EyeIC : EyeBlindIC} size="extra-small" />
+                </div>
                 {errors.password && <Text className="auth-form__error" variant="b3">{errors.password}</Text>}
                 {errors.other && <Text className="auth-form__error" variant="b3">{errors.other}</Text>}
                 <div className="auth-form__btns">
@@ -269,6 +285,8 @@ let sid;
 let clientSecret;
 function Register({ registerInfo, loginFlow, baseUrl }) {
   const [process, setProcess] = useState({});
+  const [passVisible, setPassVisible] = useState(false);
+  const [cPassVisible, setCPassVisible] = useState(false);
   const formRef = useRef();
 
   const ssoProviders = loginFlow?.filter((flow) => flow.type === 'm.login.sso')[0];
@@ -319,6 +337,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
         if (!isAvail) {
           actions.setErrors({ username: 'Username is already taken' });
           actions.setSubmitting(false);
+          return;
         }
         if (isEmail && values.email.length > 0) {
           const result = await auth.verifyEmail(baseUrl, values.email, clientSecret, 1);
@@ -437,9 +456,15 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
               <form className="auth-form" ref={formRef} onSubmit={handleSubmit}>
                 <Input values={values.username} name="username" onChange={handleChange} label="Username" type="username" required />
                 {errors.username && <Text className="auth-form__error" variant="b3">{errors.username}</Text>}
-                <Input values={values.password} name="password" onChange={handleChange} label="Password" type="password" required />
+                <div className="auth-form__pass-eye-wrapper">
+                  <Input values={values.password} name="password" onChange={handleChange} label="Password" type={passVisible ? 'text' : 'password'} required />
+                  <IconButton onClick={() => setPassVisible(!passVisible)} src={passVisible ? EyeIC : EyeBlindIC} size="extra-small" />
+                </div>
                 {errors.password && <Text className="auth-form__error" variant="b3">{errors.password}</Text>}
-                <Input values={values.confirmPassword} name="confirmPassword" onChange={handleChange} label="Confirm password" type="password" required />
+                <div className="auth-form__pass-eye-wrapper">
+                  <Input values={values.confirmPassword} name="confirmPassword" onChange={handleChange} label="Confirm password" type={cPassVisible ? 'text' : 'password'} required />
+                  <IconButton onClick={() => setCPassVisible(!cPassVisible)} src={cPassVisible ? EyeIC : EyeBlindIC} size="extra-small" />
+                </div>
                 {errors.confirmPassword && <Text className="auth-form__error" variant="b3">{errors.confirmPassword}</Text>}
                 {isEmail && <Input values={values.email} name="email" onChange={handleChange} label={`Email${isEmailRequired ? '' : ' (optional)'}`} type="email" required={isEmailRequired} />}
                 {errors.email && <Text className="auth-form__error" variant="b3">{errors.email}</Text>}

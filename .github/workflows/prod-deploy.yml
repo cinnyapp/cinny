@@ -11,6 +11,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.0.2
+      - name: Setup node
+        uses: actions/setup-node@v3.4.1
+        with:
+          node-version: 17.9.0
       - name: Build
         run: |
           npm ci
@@ -45,8 +49,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.0.2
+      - name: Setup node
+        uses: actions/setup-node@v3.4.1
+        with:
+          node-version: 17.9.0
       - name: Build and deploy to Netlify
-        uses: jsmrcaga/action-netlify-deploy@fb6a5f936a4b06a8f7793e69fc5a022ffe39807a
+        uses: jsmrcaga/action-netlify-deploy@53de32e559b0b3833615b9788c7a090cd2fddb03
         with:
           install_command: "npm ci"
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}

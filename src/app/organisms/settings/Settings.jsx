@@ -62,23 +62,25 @@ function AppearanceSection() {
           )}
           content={<Text variant="b3">{t('Organisms.Settings.theme.follow_system.description')}</Text>}
         />
-        {!settings.useSystemTheme && (
-          <SettingTile
-            title={t('Organisms.Settings.theme.title')}
-            content={(
-              <SegmentedControls
-                selected={settings.getThemeIndex()}
-                segments={[
+        <SettingTile
+          title={t('Organisms.Settings.theme.title')}
+          content={(
+            <SegmentedControls
+              selected={settings.useSystemTheme ? -1 : settings.getThemeIndex()}
+              segments={[
                   { text: t('Organisms.Settings.theme.theme_light') },
                   { text: t('Organisms.Settings.theme.theme_silver') },
                   { text: t('Organisms.Settings.theme.theme_dark') },
                   { text: t('Organisms.Settings.theme.theme_butter') },
-                ]}
-                onSelect={(index) => settings.setTheme(index)}
-              />
-          )}
-          />
+              ]}
+              onSelect={(index) => {
+                if (settings.useSystemTheme) toggleSystemTheme();
+                settings.setTheme(index);
+                updateState({});
+              }}
+            />
         )}
+        />
       </div>
       <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
