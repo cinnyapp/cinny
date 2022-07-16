@@ -3,7 +3,7 @@
 <a href="https://github.com/cinnyapp/cinny-desktop/releases">
   <img alt="GitHub release downloads" src="https://img.shields.io/github/downloads/cinnyapp/cinny-desktop/total?style=social"></a>
 
-Dekstop app of Cinny made with Tauri. Cinny is a matrix client focusing primarily on simple, elegant and secure interface.
+Desktop app of Cinny made with Tauri. Cinny is a matrix client focusing primarily on simple, elegant and secure interface.
 
 ![Image](resources/screenshot2.png)
 
