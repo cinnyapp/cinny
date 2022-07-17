@@ -42,6 +42,10 @@ function getBlobSafeMimeType(mimetype) {
   if (!ALLOWED_BLOB_MIMETYPES.includes(mimetype)) {
     return 'application/octet-stream';
   }
+  // Required for Chromium browsers
+  if (mimetype === 'video/quicktime') {
+    return 'video/mp4'
+  }
   return mimetype;
 }
 
