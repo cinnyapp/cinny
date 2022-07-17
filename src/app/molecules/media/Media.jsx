@@ -44,7 +44,7 @@ function getBlobSafeMimeType(mimetype) {
   }
   // Required for Chromium browsers
   if (mimetype === 'video/quicktime') {
-    return 'video/mp4'
+    return 'video/mp4';
   }
   return mimetype;
 }
