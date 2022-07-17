@@ -46,7 +46,12 @@ function loadVideo(videoFile) {
     reader.onerror = (e) => {
       reject(e);
     };
-    reader.readAsDataURL(videoFile);
+    if (videoFile.type === 'video/quicktime') {
+      const quicktimeVideoFile = new File([videoFile], videoFile.name, { type: 'video/mp4' });
+      reader.readAsDataURL(quicktimeVideoFile);
+    } else {
+      reader.readAsDataURL(videoFile);
+    }
   });
 }
 function getVideoThumbnail(video, width, height, mimeType) {
