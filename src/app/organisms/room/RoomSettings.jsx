@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomSettings.scss';
 
+import { useTranslation } from 'react-i18next';
 import { blurOnBubbling } from '../../atoms/button/script';
 
 import initMatrix from '../../../client/initMatrix';
@@ -38,6 +39,8 @@ import ChevronTopIC from '../../../../public/res/ic/outlined/chevron-top.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
+import '../../i18n';
+
 const tabText = {
   GENERAL: 'General',
   SEARCH: 'Search',
@@ -73,6 +76,8 @@ function GeneralSettings({ roomId }) {
   const room = mx.getRoom(roomId);
   const canInvite = room.canInvite(mx.getUserId());
 
+  const { t } = useTranslation();
+
   return (
     <>
       <div className="room-settings__card">
@@ -88,9 +93,9 @@ function GeneralSettings({ roomId }) {
           variant="danger"
           onClick={async () => {
             const isConfirmed = await confirmDialog(
-              'Leave room',
-              `Are you sure that you want to leave "${room.name}" room?`,
-              'Leave',
+              t('Organisms.RoomSettings.leave_room'),
+              t('Organisms.RoomSettings.leave_room_confirm_message', { room_name: room.name }),
+              t('Organisms.RoomSettings.leave_room_confirm_button'),
               'danger',
             );
             if (!isConfirmed) return;
@@ -102,15 +107,15 @@ function GeneralSettings({ roomId }) {
         </MenuItem>
       </div>
       <div className="room-settings__card">
-        <MenuHeader>Notification (Changing this will only affect you)</MenuHeader>
+        <MenuHeader>{t('Organisms.RoomSettings.notification_header')}</MenuHeader>
         <RoomNotification roomId={roomId} />
       </div>
       <div className="room-settings__card">
-        <MenuHeader>Room visibility (who can join)</MenuHeader>
+        <MenuHeader>{t('Organisms.RoomSettings.visibility_header')}</MenuHeader>
         <RoomVisibility roomId={roomId} />
       </div>
       <div className="room-settings__card">
-        <MenuHeader>Room addresses</MenuHeader>
+        <MenuHeader>{t('Organisms.RoomSettings.address_header')}</MenuHeader>
         <RoomAliases roomId={roomId} />
       </div>
     </>
@@ -122,14 +127,15 @@ GeneralSettings.propTypes = {
 };
 
 function SecuritySettings({ roomId }) {
+  const { t } = useTranslation();
   return (
     <>
       <div className="room-settings__card">
-        <MenuHeader>Encryption</MenuHeader>
+        <MenuHeader>{t('Organisms.RoomSettings.encryption_header')}</MenuHeader>
         <RoomEncryption roomId={roomId} />
       </div>
       <div className="room-settings__card">
-        <MenuHeader>Message history visibility</MenuHeader>
+        <MenuHeader>{t('Organisms.RoomSettings.message_history_header')}</MenuHeader>
         <RoomHistoryVisibility roomId={roomId} />
       </div>
     </>
@@ -143,6 +149,7 @@ function RoomSettings({ roomId }) {
   const [, forceUpdate] = useForceUpdate();
   const [selectedTab, setSelectedTab] = useState(tabItems[0]);
   const room = initMatrix.matrixClient.getRoom(roomId);
+  const { t } = useTranslation();
 
   const handleTabChange = (tabItem) => {
     setSelectedTab(tabItem);
@@ -181,7 +188,12 @@ function RoomSettings({ roomId }) {
               <TitleWrapper>
                 <Text variant="s1" weight="medium" primary>
                   {`${room.name}`}
-                  <span style={{ color: 'var(--tc-surface-low)' }}> — room settings</span>
+                  <span style={{ color: 'var(--tc-surface-low)' }}>
+                    {' '}
+                    —
+                    {' '}
+                    {t('Organisms.RoomSettings.room_settings_subtitle')}
+                  </span>
                 </Text>
               </TitleWrapper>
               <RawIcon size="small" src={ChevronTopIC} />

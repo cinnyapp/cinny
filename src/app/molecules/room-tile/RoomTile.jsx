@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './RoomTile.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import colorMXID from '../../../util/colorMXID';
@@ -9,10 +10,14 @@ import colorMXID from '../../../util/colorMXID';
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
 
+import '../../i18n';
+
 function RoomTile({
   avatarSrc, name, id,
   inviterName, memberCount, desc, options,
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="room-tile">
       <div className="room-tile__avatar">
@@ -27,8 +32,8 @@ function RoomTile({
         <Text variant="b3">
           {
             inviterName !== null
-              ? `Invited by ${inviterName} to ${id}${memberCount === null ? '' : ` • ${memberCount} members`}`
-              : id + (memberCount === null ? '' : ` • ${memberCount} members`)
+              ? t('Molecules.RoomTile.invited_by_user', { inviter: inviterName, count: memberCount || 0, id })
+              : t('Molecules.RoomTile.invited', { count: memberCount || 0, id })
           }
         </Text>
         {

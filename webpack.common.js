@@ -47,6 +47,10 @@ module.exports = {
       {
         test: /\.svg$/,
         type: 'asset/inline',
+      },
+      {
+        test: /locales/,
+        loader: '@alienfast/i18next-loader'
       }
     ],
   },

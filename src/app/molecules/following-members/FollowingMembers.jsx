@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './FollowingMembers.scss';
 
+import { Trans } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { openReadReceipts } from '../../../client/action/navigation';
@@ -11,7 +12,11 @@ import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
-import { getUsersActionJsx } from '../../organisms/room/common';
+import { twemojify } from '../../../util/twemojify';
+
+import '../../i18n';
+
+import { getUserDisplayName } from '../../../util/matrixUtil';
 
 function FollowingMembers({ roomTimeline }) {
   const [followingMembers, setFollowingMembers] = useState([]);
@@ -19,6 +24,7 @@ function FollowingMembers({ roomTimeline }) {
   const mx = initMatrix.matrixClient;
   const { roomsInput } = initMatrix;
   const myUserId = mx.getUserId();
+  const room = mx.getRoom(roomId);
 
   const handleOnMessageSent = () => setFollowingMembers([]);
 
@@ -47,7 +53,19 @@ function FollowingMembers({ roomTimeline }) {
         size="extra-small"
         src={TickMarkIC}
       />
-      <Text variant="b2">{getUsersActionJsx(roomId, filteredM, 'following the conversation.')}</Text>
+      <Text variant="b2">
+        <Trans
+          i18nKey="Molecules.FollowingMembers.users_following"
+          values={{
+            count: filteredM.length,
+            user_one: twemojify(getUserDisplayName(room, filteredM?.[0])),
+            user_two: twemojify(getUserDisplayName(room, filteredM?.[1])),
+            user_three: twemojify(getUserDisplayName(room, filteredM?.[2])),
+            other_count: filteredM.length - 3,
+          }}
+          components={{ bold: <b /> }}
+        />
+      </Text>
     </button>
   );
 }

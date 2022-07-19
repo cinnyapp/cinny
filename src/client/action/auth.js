@@ -68,9 +68,7 @@ async function verifyEmail(baseUrl, email, client_secret, send_attempt, next_lin
   return data;
 }
 
-async function completeRegisterStage(
-  baseUrl, username, password, auth,
-) {
+async function completeRegisterStage(baseUrl, username, password, auth) {
   const tempClient = createTemporaryClient(baseUrl);
 
   try {

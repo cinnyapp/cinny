@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './RoomNotification.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 
@@ -14,21 +15,23 @@ import BellRingIC from '../../../../public/res/ic/outlined/bell-ring.svg';
 import BellPingIC from '../../../../public/res/ic/outlined/bell-ping.svg';
 import BellOffIC from '../../../../public/res/ic/outlined/bell-off.svg';
 
+import '../../i18n';
+
 const items = [{
   iconSrc: BellIC,
-  text: 'Global',
+  text: 'Molecules.RoomNotification.default',
   type: cons.notifs.DEFAULT,
 }, {
   iconSrc: BellRingIC,
-  text: 'All messages',
+  text: 'Molecules.RoomNotification.all_messages',
   type: cons.notifs.ALL_MESSAGES,
 }, {
   iconSrc: BellPingIC,
-  text: 'Mentions & Keywords',
+  text: 'Molecules.RoomNotification.mentions_and_keywords',
   type: cons.notifs.MENTIONS_AND_KEYWORDS,
 }, {
   iconSrc: BellOffIC,
-  text: 'Mute',
+  text: 'Molecules.RoomNotification.mute',
   type: cons.notifs.MUTE,
 }];
 
@@ -114,6 +117,7 @@ function useNotifications(roomId) {
 }
 
 function RoomNotification({ roomId }) {
+  const { t } = useTranslation();
   const [activeType, setNotification] = useNotifications(roomId);
 
   return (
@@ -127,7 +131,7 @@ function RoomNotification({ roomId }) {
             onClick={() => setNotification(item)}
           >
             <Text varient="b1">
-              <span>{item.text}</span>
+              <span>{t(item.text)}</span>
               <RadioButton isActive={activeType === item.type} />
             </Text>
           </MenuItem>

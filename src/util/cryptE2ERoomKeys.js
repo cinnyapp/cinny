@@ -177,7 +177,6 @@ function unpackMegolmKeyFile(data) {
   return decodeBase64(fileStr.slice(dataStart, dataEnd));
 }
 
-
 /**
  * ascii-armour a  megolm key file
  *
@@ -196,7 +195,7 @@ function packMegolmKeyFile(data) {
   let o = 0;
   let i;
   for (i = 1; i <= nLines; i += 1) {
-    lines[i] = encodeBase64(data.subarray(o, o+LINE_LENGTH));
+    lines[i] = encodeBase64(data.subarray(o, o + LINE_LENGTH));
     o += LINE_LENGTH;
   }
   lines[i] = TRAILER_LINE;
@@ -305,11 +304,11 @@ export async function encryptMegolmKeyFile(data, password, options) {
       encodedData,
     );
   } catch (e) {
-    throw friendlyError('subtleCrypto.encrypt failed: ' + e, cryptoFailMsg());
+    throw friendlyError(`subtleCrypto.encrypt failed: ${e}`, cryptoFailMsg());
   }
 
   const cipherArray = new Uint8Array(ciphertext);
-  const bodyLength = (1+salt.length+iv.length+4+cipherArray.length+32);
+  const bodyLength = (1 + salt.length + iv.length + 4 + cipherArray.length + 32);
   const resultBuffer = new Uint8Array(bodyLength);
   let idx = 0;
   resultBuffer[idx++] = 1; // version
@@ -331,7 +330,7 @@ export async function encryptMegolmKeyFile(data, password, options) {
       toSign,
     );
   } catch (e) {
-    throw friendlyError('subtleCrypto.sign failed: ' + e, cryptoFailMsg());
+    throw friendlyError(`subtleCrypto.sign failed: ${e}`, cryptoFailMsg());
   }
 
   const hmacArray = new Uint8Array(hmac);

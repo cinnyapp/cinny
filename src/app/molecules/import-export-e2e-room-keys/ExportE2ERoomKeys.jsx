@@ -3,6 +3,7 @@ import './ExportE2ERoomKeys.scss';
 
 import FileSaver from 'file-saver';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { encryptMegolmKeyFile } from '../../../util/cryptE2ERoomKeys';
@@ -14,6 +15,8 @@ import Spinner from '../../atoms/spinner/Spinner';
 
 import { useStore } from '../../hooks/useStore';
 
+import '../../i18n';
+
 function ExportE2ERoomKeys() {
   const isMountStore = useStore();
   const [status, setStatus] = useState({
@@ -24,19 +27,21 @@ function ExportE2ERoomKeys() {
   const passwordRef = useRef(null);
   const confirmPasswordRef = useRef(null);
 
+  const { t } = useTranslation();
+
   const exportE2ERoomKeys = async () => {
     const password = passwordRef.current.value;
     if (password !== confirmPasswordRef.current.value) {
       setStatus({
         isOngoing: false,
-        msg: 'Password does not match.',
+        msg: t('Molecules.ExportE2ERoomKeys.password_does_not_match'),
         type: cons.status.ERROR,
       });
       return;
     }
     setStatus({
       isOngoing: true,
-      msg: 'Getting keys...',
+      msg: t('Molecules.ExportE2ERoomKeys.getting_keys'),
       type: cons.status.IN_FLIGHT,
     });
     try {
@@ -44,7 +49,7 @@ function ExportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: true,
-          msg: 'Encrypting keys...',
+          msg: t('Molecules.ExportE2ERoomKeys.encrypting_keys'),
           type: cons.status.IN_FLIGHT,
         });
       }
@@ -56,7 +61,7 @@ function ExportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: false,
-          msg: 'Successfully exported all keys.',
+          msg: t('Molecules.ExportE2ERoomKeys.export_success'),
           type: cons.status.SUCCESS,
         });
       }
@@ -64,7 +69,7 @@ function ExportE2ERoomKeys() {
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: false,
-          msg: e.friendlyText || 'Failed to export keys. Please try again.',
+          msg: e.friendlyText || t('Molecules.ExportE2ERoomKeys.export_failed'),
           type: cons.status.ERROR,
         });
       }
@@ -83,7 +88,7 @@ function ExportE2ERoomKeys() {
       <form className="export-e2e-room-keys__form" onSubmit={(e) => { e.preventDefault(); exportE2ERoomKeys(); }}>
         <Input forwardRef={passwordRef} type="password" placeholder="Password" required />
         <Input forwardRef={confirmPasswordRef} type="password" placeholder="Confirm password" required />
-        <Button disabled={status.isOngoing} variant="primary" type="submit">Export</Button>
+        <Button disabled={status.isOngoing} variant="primary" type="submit">{t('Molecules.ExportE2ERoomKeys.button_text')}</Button>
       </form>
       { status.type === cons.status.IN_FLIGHT && (
         <div className="import-e2e-room-keys__process">

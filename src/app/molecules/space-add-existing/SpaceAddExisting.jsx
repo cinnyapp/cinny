@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './SpaceAddExisting.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -25,6 +26,8 @@ import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 
 import { useStore } from '../../hooks/useStore';
 
+import '../../i18n';
+
 function SpaceAddExistingContent({ roomId }) {
   const mountStore = useStore(roomId);
   const [debounce] = useState(new Debounce());
@@ -36,6 +39,8 @@ function SpaceAddExistingContent({ roomId }) {
   const {
     spaces, rooms, directs, roomIdToParents,
   } = initMatrix.roomList;
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     const allIds = [...spaces, ...rooms, ...directs].filter((rId) => (
@@ -59,7 +64,7 @@ function SpaceAddExistingContent({ roomId }) {
   };
 
   const handleAdd = async () => {
-    setProcess(`Adding ${selected.length} items...`);
+    setProcess(t('Molecules.SpaceAddExisting.adding_items', { count: selected.length }));
 
     const promises = selected.map((rId) => {
       const room = mx.getRoom(rId);
@@ -119,12 +124,12 @@ function SpaceAddExistingContent({ roomId }) {
         <Input
           name="searchInput"
           onChange={handleSearch}
-          placeholder="Search room"
+          placeholder={t('Molecules.SpaceAddExisting.search_rooms_placeholder')}
           autoFocus
         />
         <IconButton size="small" type="button" onClick={handleSearchClear} src={CrossIC} />
       </form>
-      {searchIds?.length === 0 && <Text>No results found</Text>}
+      {searchIds?.length === 0 && <Text>{t('Molecules.SpaceAddExisting.no_results')}</Text>}
       {
         (searchIds || allRoomIds).map((rId) => {
           const room = mx.getRoom(rId);
@@ -171,9 +176,9 @@ function SpaceAddExistingContent({ roomId }) {
       {selected.length !== 0 && (
         <div className="space-add-existing__footer">
           {process && <Spinner size="small" />}
-          <Text weight="medium">{process || `${selected.length} item selected`}</Text>
+          <Text weight="medium">{t('Molecules.SpaceAddExisting.items_selected', { count: selected.length })}</Text>
           { !process && (
-            <Button onClick={handleAdd} variant="primary">Add</Button>
+            <Button onClick={handleAdd} variant="primary">{t('Molecules.SpaceAddExisting.add_button')}</Button>
           )}
         </div>
       )}
@@ -205,6 +210,8 @@ function SpaceAddExisting() {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
 
+  const { t } = useTranslation();
+
   return (
     <Dialog
       isOpen={roomId !== null}
@@ -212,10 +219,15 @@ function SpaceAddExisting() {
       title={(
         <Text variant="s1" weight="medium" primary>
           {roomId && twemojify(room.name)}
-          <span style={{ color: 'var(--tc-surface-low)' }}> — add existing rooms</span>
+          <span style={{ color: 'var(--tc-surface-low)' }}>
+            {' '}
+            —
+            {' '}
+            {t('Molecules.SpaceAddExisting.subtitle')}
+          </span>
         </Text>
       )}
-      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
+      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t('common.close')} />}
       onRequestClose={requestClose}
     >
       {

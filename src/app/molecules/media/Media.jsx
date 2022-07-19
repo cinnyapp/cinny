@@ -4,6 +4,7 @@ import './Media.scss';
 
 import encrypt from 'browser-encrypt-attachment';
 
+import { useTranslation } from 'react-i18next';
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
@@ -11,6 +12,8 @@ import Spinner from '../../atoms/spinner/Spinner';
 import DownloadSVG from '../../../../public/res/ic/outlined/download.svg';
 import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
 import PlaySVG from '../../../../public/res/ic/outlined/play.svg';
+
+import '../../i18n';
 
 // https://github.com/matrix-org/matrix-react-sdk/blob/cd15e08fc285da42134817cce50de8011809cd53/src/utils/blobs.ts#L73
 const ALLOWED_BLOB_MIMETYPES = [
@@ -81,6 +84,8 @@ function FileHeader({
 }) {
   const [url, setUrl] = useState(null);
 
+  const { t } = useTranslation();
+
   async function getFile() {
     const myUrl = await getUrl(link, type, file);
     setUrl(myUrl);
@@ -102,7 +107,7 @@ function FileHeader({
             external && (
               <IconButton
                 size="extra-small"
-                tooltip="Open in new tab"
+                tooltip={t('Molecules.Media.open_new_tab')}
                 src={ExternalSVG}
                 onClick={() => window.open(url || link)}
               />
@@ -111,7 +116,7 @@ function FileHeader({
           <a href={url || link} download={name} target="_blank" rel="noreferrer">
             <IconButton
               size="extra-small"
-              tooltip="Download"
+              tooltip={t('Molecules.Media.download')}
               src={DownloadSVG}
               onClick={handleDownload}
             />
@@ -212,12 +217,14 @@ function Audio({
     loadAudio();
   }
 
+  const { t } = useTranslation();
+
   return (
     <div className="file-container">
       <FileHeader name={name} link={file !== null ? url : url || link} type={type} external />
       <div className="audio-container">
         { url === null && isLoading && <Spinner size="small" /> }
-        { url === null && !isLoading && <IconButton onClick={handlePlayAudio} tooltip="Play audio" src={PlaySVG} />}
+        { url === null && !isLoading && <IconButton onClick={handlePlayAudio} tooltip={t('Molecules.Media.play_audio')} src={PlaySVG} />}
         { url !== null && (
           /* eslint-disable-next-line jsx-a11y/media-has-caption */
           <audio autoPlay controls>
@@ -271,6 +278,8 @@ function Video({
     loadVideo();
   }
 
+  const { t } = useTranslation();
+
   return (
     <div className="file-container">
       <FileHeader name={name} link={file !== null ? url : url || link} type={type} external />
@@ -282,7 +291,7 @@ function Video({
         className="video-container"
       >
         { url === null && isLoading && <Spinner size="small" /> }
-        { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
+        { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip={t('Molecules.Media.play_video')} src={PlaySVG} />}
         { url !== null && (
         /* eslint-disable-next-line jsx-a11y/media-has-caption */
           <video autoPlay controls poster={thumbUrl}>
