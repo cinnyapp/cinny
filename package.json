@@ -70,7 +70,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "favicons": "^6.2.2",
     "favicons-webpack-plugin": "^5.0.2",
-    "html-loader": "^3.1.2",
+    "html-loader": "^4.1.0",
     "html-webpack-plugin": "^5.3.1",
     "mini-css-extract-plugin": "^2.6.1",
     "path-browserify": "^1.0.1",
