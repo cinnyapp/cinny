@@ -3,6 +3,7 @@ import './Client.scss';
 
 import { initHotkeys } from '../../../client/event/hotkeys';
 import { initRoomListListener } from '../../../client/event/roomList';
+import { handleUriFragmentChange, destructUrlHandling } from '../../../util/uriFragments';
 
 import Text from '../../atoms/text/Text';
 import Spinner from '../../atoms/spinner/Spinner';
@@ -67,8 +68,13 @@ function Client() {
       initHotkeys();
       initRoomListListener(initMatrix.roomList);
       changeLoading(false);
+      handleUriFragmentChange();
     });
     initMatrix.init();
+    
+    return () => {
+      destructUrlHandling();
+    };
   }, []);
 
   if (isLoading) {
