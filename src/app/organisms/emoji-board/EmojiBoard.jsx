@@ -202,21 +202,19 @@ function EmojiBoard({ onSelect, searchRef }) {
         setAvailableEmojis([]);
         return;
       }
-      // Retrieve the packs for the new room
-      // Remove packs that aren't marked as emoji packs
-      // Remove packs without emojis
-      const packs = getRelevantPacks(
-        initMatrix.matrixClient.getRoom(selectedRoomId),
-      )
-        .filter((pack) => pack.usage.indexOf('emoticon') !== -1)
-        .filter((pack) => pack.getEmojis().length !== 0);
 
-      // Set an index for each pack so that we know where to jump when the user uses the nav
-      for (let i = 0; i < packs.length; i += 1) {
-        packs[i].packIndex = i;
+      const room = initMatrix.matrixClient.getRoom(selectedRoomId);
+      if (room) {
+        const packs = getRelevantPacks(room.client, [room])
+          .filter((pack) => pack.usage.includes('emoticon'))
+          .filter((pack) => pack.getEmojis().length !== 0);
+
+        // Set an index for each pack so that we know where to jump when the user uses the nav
+        for (let i = 0; i < packs.length; i += 1) {
+          packs[i].packIndex = i;
+        }
+        setAvailableEmojis(packs);
       }
-
-      setAvailableEmojis(packs);
     };
 
     const onOpen = () => {
@@ -293,7 +291,8 @@ function EmojiBoard({ onSelect, searchRef }) {
           <div className="emoji-board__nav-custom">
             {
               availableEmojis.map((pack) => {
-                const src = initMatrix.matrixClient.mxcUrlToHttp(pack.avatar ?? pack.images[0].mxc);
+                const src = initMatrix.matrixClient
+                  .mxcUrlToHttp(pack.avatarUrl ?? pack.getEmojis()[0].mxc);
                 return (
                   <IconButton
                     onClick={() => openGroup(recentOffset + pack.packIndex)}

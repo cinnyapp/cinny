@@ -1,0 +1,17 @@
+@use '../../partials/flex';
+
+.image-pack-item {
+  margin: 0 var(--sp-normal);
+  padding: var(--sp-tight) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-normal);
+
+  &__content {
+    @extend .cp-fx__item-one;
+  }
+
+  &__usage > button {
+    padding: 6px var(--sp-extra-tight);
+  }
+}

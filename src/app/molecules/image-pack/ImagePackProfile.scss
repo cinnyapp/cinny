@@ -1,0 +1,22 @@
+@use '../../partials/flex';
+
+.image-pack-profile {
+  padding: var(--sp-normal);
+  display: flex;
+
+  &__content {
+    padding: 0 var(--sp-tight);
+    @extend .cp-fx__item-one;
+
+    & div:first-child {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-extra-tight);
+    }
+  }
+  &__usage {
+    & > *:first-child {
+      margin-bottom: var(--sp-ultra-tight);
+    }
+  }
+}

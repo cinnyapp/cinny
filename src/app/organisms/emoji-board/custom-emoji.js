@@ -1,135 +1,148 @@
 import { emojis } from './emoji';
 
-// Custom emoji are stored in one of three places:
-// - User emojis, which are stored in account data
-// - Room emojis, which are stored in state events in a room
-// - Emoji packs, which are rooms of emojis referenced in the account data or in a room's
-//   cannonical space
-//
-// Emojis and packs referenced from within a user's account data should be available
-// globally, while emojis and packs in rooms and spaces should only be available within
-// those spaces and rooms
+// https://github.com/Sorunome/matrix-doc/blob/soru/emotes/proposals/2545-emotes.md
 
 class ImagePack {
-  // Convert a raw image pack into a more maliable format
-  //
-  // Takes an image pack as per MSC 2545 (e.g. as in the Matrix spec), and converts it to a
-  // format used here, while filling in defaults.
-  //
-  // The room argument is the room the pack exists in, which is used as a fallback for
-  // missing properties
-  //
-  // Returns `null` if the rawPack is not a properly formatted image pack, although there
-  // is still a fair amount of tolerance for malformed packs.
-  static parsePack(rawPack, room) {
-    if (typeof rawPack.images === 'undefined') {
+  static parsePack(eventId, packContent, room) {
+    if (!eventId || typeof packContent?.images !== 'object') {
       return null;
     }
 
-    const pack = rawPack.pack ?? {};
+    const pack = packContent.pack ?? {};
 
-    const displayName = pack.display_name ?? (room ? room.name : undefined);
-    const avatar = pack.avatar_url ?? (room ? room.getMxcAvatarUrl() : undefined);
-    const usage = pack.usage ?? ['emoticon', 'sticker'];
+    const displayName = pack.display_name ?? room?.name ?? undefined;
+    const avatarUrl = pack.avatar_url ?? room?.getMxcAvatarUrl() ?? undefined;
+    const packUsage = pack.usage ?? ['emoticon', 'sticker'];
     const { attribution } = pack;
-    const images = Object.entries(rawPack.images).flatMap((e) => {
-      const data = e[1];
-      const shortcode = e[0];
+    const images = new Map();
+    const emoticons = [];
+    const stickers = [];
+
+    Object.entries(packContent.images).forEach(([shortcode, data]) => {
       const mxc = data.url;
       const body = data.body ?? shortcode;
+      const usage = data.usage ?? packUsage;
       const { info } = data;
-      const usage_ = data.usage ?? usage;
 
-      if (mxc) {
-        return [{
-          shortcode, mxc, body, info, usage: usage_,
-        }];
+      if (!mxc) return;
+      const image = {
+        shortcode, mxc, body, usage, info,
+      };
+
+      images.set(shortcode, image);
+      if (usage.includes('emoticon')) {
+        emoticons.push(image);
       }
-      return [];
+      if (usage.includes('sticker')) {
+        stickers.push(image);
+      }
     });
 
-    return new ImagePack(displayName, avatar, usage, attribution, images);
+    return new ImagePack(eventId, {
+      displayName,
+      avatarUrl,
+      usage: packUsage,
+      attribution,
+      images,
+      emoticons,
+      stickers,
+    });
   }
 
-  constructor(displayName, avatar, usage, attribution, images) {
+  constructor(id, {
+    displayName,
+    avatarUrl,
+    usage,
+    attribution,
+    images,
+    emoticons,
+    stickers,
+  }) {
+    this.id = id;
     this.displayName = displayName;
-    this.avatar = avatar;
+    this.avatarUrl = avatarUrl;
     this.usage = usage;
     this.attribution = attribution;
+
     this.images = images;
+    this.emoticons = emoticons;
+    this.stickers = stickers;
   }
 
-  // Produce a list of emoji in this image pack
+  getImages() {
+    return this.images;
+  }
+
   getEmojis() {
-    return this.images.filter((i) => i.usage.indexOf('emoticon') !== -1);
+    return this.emoticons;
   }
 
-  // Produce a list of stickers in this image pack
   getStickers() {
-    return this.images.filter((i) => i.usage.indexOf('sticker') !== -1);
+    return this.stickers;
   }
 }
 
-// Retrieve a list of user emojis
-//
-// Result is an ImagePack, or null if the user hasn't set up or has deleted their personal
-// image pack.
-//
-// Accepts a reference to a matrix client as the only argument
+function getGlobalImagePacks(mx) {
+  const globalContent = mx.getAccountData('im.ponies.emote_rooms')?.getContent();
+  if (typeof globalContent !== 'object') return null;
+
+  const { rooms } = globalContent;
+  if (typeof rooms !== 'object') return null;
+
+  const roomIds = Object.keys(rooms);
+
+  const packs = roomIds.flatMap((roomId) => {
+    if (typeof rooms[roomId] !== 'object') return [];
+    const room = mx.getRoom(roomId);
+    const stateKeys = Object.keys(rooms[roomId]);
+
+    return stateKeys.map((stateKey) => {
+      const data = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
+      return ImagePack.parsePack(data?.getId(), data?.getContent(), room);
+    }).filter((pack) => pack !== null);
+  });
+
+  return packs;
+}
+
 function getUserImagePack(mx) {
   const accountDataEmoji = mx.getAccountData('im.ponies.user_emotes');
   if (!accountDataEmoji) {
     return null;
   }
 
-  const userImagePack = ImagePack.parsePack(accountDataEmoji.event.content);
-  if (userImagePack) userImagePack.displayName ??= 'Your Emoji';
+  const userImagePack = ImagePack.parsePack(mx.getUserId(), accountDataEmoji.event.content);
+  if (userImagePack) userImagePack.displayName ??= 'Personal Emoji';
   return userImagePack;
 }
 
-// Produces a list of all of the emoji packs in a room
-//
-// Returns a list of `ImagePack`s.  This does not include packs in spaces that contain
-// this room.
-function getPacksInRoom(room) {
-  const packs = room.currentState.getStateEvents('im.ponies.room_emotes');
+function getRoomImagePacks(room) {
+  const dataEvents = room.currentState.getStateEvents('im.ponies.room_emotes');
 
-  return packs
-    .map((p) => ImagePack.parsePack(p.event.content, room))
-    .filter((p) => p !== null);
+  return dataEvents
+    .map((data) => ImagePack.parsePack(data.getId(), data.getContent(), room))
+    .filter((pack) => pack !== null);
 }
 
-// Produce a list of all image packs which should be shown for a given room
-//
-// This includes packs in that room, the user's personal images, and will eventually
-// include the user's enabled global image packs and space-level packs.
-//
-// This differs from getPacksInRoom, as the former only returns packs that are directly in
-// a room, whereas this function returns all packs which should be shown to the user while
-// they are in this room.
-//
-// Packs will be returned in the order that shortcode conflicts should be resolved, with
-// higher priority packs coming first.
-function getRelevantPacks(room) {
-  return [].concat(
-    getUserImagePack(room.client) ?? [],
-    getPacksInRoom(room),
-  );
+/**
+ * @param {MatrixClient} mx Provide if you want to include user personal/global pack
+ * @param {Room[]} rooms Provide rooms if you want to include rooms pack
+ * @returns {ImagePack[]} packs
+ */
+function getRelevantPacks(mx, rooms) {
+  const userPack = mx ? getUserImagePack(mx) : [];
+  const globalPacks = mx ? getGlobalImagePacks(mx) : [];
+  const globalPackIds = new Set(globalPacks.map((pack) => pack.id));
+  const roomsPack = rooms?.flatMap(getRoomImagePacks) ?? [];
+
+  return [].concat(userPack, globalPacks, roomsPack.filter((pack) => !globalPackIds.has(pack.id)));
 }
 
-// Returns all user+room emojis and all standard unicode emojis
-//
-// Accepts a reference to a matrix client as the only argument
-//
-// Result is a map from shortcode to the corresponding emoji.  If two emoji share a
-// shortcode, only one will be presented, with priority given to custom emoji.
-//
-// Will eventually be expanded to include all emojis revelant to a room and the user
 function getShortcodeToEmoji(room) {
   const allEmoji = new Map();
 
   emojis.forEach((emoji) => {
-    if (emoji.shortcodes.constructor.name === 'Array') {
+    if (Array.isArray(emoji.shortcodes)) {
       emoji.shortcodes.forEach((shortcode) => {
         allEmoji.set(shortcode, emoji);
       });
@@ -138,7 +151,7 @@ function getShortcodeToEmoji(room) {
     }
   });
 
-  getRelevantPacks(room).reverse()
+  getRelevantPacks(room.client, [room])
     .flatMap((pack) => pack.getEmojis())
     .forEach((emoji) => {
       allEmoji.set(emoji.shortcode, emoji);
@@ -150,7 +163,7 @@ function getShortcodeToEmoji(room) {
 function getShortcodeToCustomEmoji(room) {
   const allEmoji = new Map();
 
-  getRelevantPacks(room).reverse()
+  getRelevantPacks(room.client, [room])
     .flatMap((pack) => pack.getEmojis())
     .forEach((emoji) => {
       allEmoji.set(emoji.shortcode, emoji);
@@ -159,27 +172,20 @@ function getShortcodeToCustomEmoji(room) {
   return allEmoji;
 }
 
-// Produces a special list of emoji specifically for auto-completion
-//
-// This list contains each emoji once, with all emoji being deduplicated by shortcode.
-// However, the order of the standard emoji will have been preserved, and alternate
-// shortcodes for the standard emoji will not be considered.
-//
-// Standard emoji are guaranteed to be earlier in the list than custom emoji
 function getEmojiForCompletion(room) {
   const allEmoji = new Map();
-  getRelevantPacks(room).reverse()
+  getRelevantPacks(room.client, [room])
     .flatMap((pack) => pack.getEmojis())
     .forEach((emoji) => {
       allEmoji.set(emoji.shortcode, emoji);
     });
 
-  return emojis.filter((e) => !allEmoji.has(e.shortcode))
-    .concat(Array.from(allEmoji.values()));
+  return Array.from(allEmoji.values()).concat(emojis.filter((e) => !allEmoji.has(e.shortcode)));
 }
 
 export {
-  getUserImagePack,
+  ImagePack,
+  getUserImagePack, getGlobalImagePacks, getRoomImagePacks,
   getShortcodeToEmoji, getShortcodeToCustomEmoji,
   getRelevantPacks, getEmojiForCompletion,
 };
