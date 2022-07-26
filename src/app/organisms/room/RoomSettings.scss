@@ -76,6 +76,7 @@
 .room-settings .room-permissions__card,
 .room-settings .room-search__form,
 .room-settings .room-search__result-item ,
-.room-settings .room-members {
+.room-settings .room-members,
+.room-settings .image-pack {
   @extend .room-settings__card;
 }

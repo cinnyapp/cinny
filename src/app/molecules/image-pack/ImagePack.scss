@@ -1,0 +1,23 @@
+@use '../../partials/flex';
+
+.image-pack {
+  &-item {
+    border-top: 1px solid var(--bg-surface-border);
+  }
+
+  &__header {
+    margin-top: var(--sp-normal);
+    padding: var(--sp-extra-tight) var(--sp-normal);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-normal);
+
+    & > *:nth-child(2) {
+      @extend .cp-fx__item-one;
+    }
+  }
+
+  &__footer {
+    padding: var(--sp-normal);
+  }
+}
