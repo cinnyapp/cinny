@@ -11,9 +11,10 @@ class ImagePack {
     const pack = packContent.pack ?? {};
 
     const displayName = pack.display_name ?? room?.name ?? undefined;
-    const avatar = pack.avatar_url ?? room?.getMxcAvatarUrl() ?? undefined;
+    const avatarUrl = pack.avatar_url ?? room?.getMxcAvatarUrl() ?? undefined;
     const packUsage = pack.usage ?? ['emoticon', 'sticker'];
     const { attribution } = pack;
+    const images = new Map();
     const emoticons = [];
     const stickers = [];
 
@@ -28,6 +29,7 @@ class ImagePack {
         shortcode, mxc, body, usage, info,
       };
 
+      images.set(shortcode, image);
       if (usage.includes('emoticon')) {
         emoticons.push(image);
       }
@@ -38,9 +40,10 @@ class ImagePack {
 
     return new ImagePack(eventId, {
       displayName,
-      avatar,
+      avatarUrl,
       usage: packUsage,
       attribution,
+      images,
       emoticons,
       stickers,
     });
@@ -48,20 +51,26 @@ class ImagePack {
 
   constructor(id, {
     displayName,
-    avatar,
+    avatarUrl,
     usage,
     attribution,
+    images,
     emoticons,
     stickers,
   }) {
     this.id = id;
     this.displayName = displayName;
-    this.avatar = avatar;
+    this.avatarUrl = avatarUrl;
     this.usage = usage;
     this.attribution = attribution;
 
+    this.images = images;
     this.emoticons = emoticons;
     this.stickers = stickers;
+  }
+
+  getImages() {
+    return this.images;
   }
 
   getEmojis() {
@@ -175,6 +184,8 @@ function getEmojiForCompletion(room) {
 }
 
 export {
+  ImagePack,
+  getUserImagePack, getGlobalImagePacks, getRoomImagePacks,
   getShortcodeToEmoji, getShortcodeToCustomEmoji,
   getRelevantPacks, getEmojiForCompletion,
 };

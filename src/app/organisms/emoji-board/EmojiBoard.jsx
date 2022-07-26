@@ -213,8 +213,6 @@ function EmojiBoard({ onSelect, searchRef }) {
         for (let i = 0; i < packs.length; i += 1) {
           packs[i].packIndex = i;
         }
-
-        console.log(packs)
         setAvailableEmojis(packs);
       }
     };
@@ -294,7 +292,7 @@ function EmojiBoard({ onSelect, searchRef }) {
             {
               availableEmojis.map((pack) => {
                 const src = initMatrix.matrixClient
-                  .mxcUrlToHttp(pack.avatar ?? pack.getEmojis()[0].mxc);
+                  .mxcUrlToHttp(pack.avatarUrl ?? pack.getEmojis()[0].mxc);
                 return (
                   <IconButton
                     onClick={() => openGroup(recentOffset + pack.packIndex)}
