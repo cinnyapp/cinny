@@ -119,10 +119,10 @@ function handleOnClickCapture(e) {
 }
 
 function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
+  const stateEvents = ['m.room.name', 'm.room.topic', 'm.room.avatar', 'm.room.member'];
   const isBodyOnly = (prevMEvent !== null
     && prevMEvent.getSender() === mEvent.getSender()
-    && prevMEvent.getType() !== 'm.room.member'
-    && prevMEvent.getType() !== 'm.room.create'
+    && !stateEvents.concat('m.room.create').includes(prevMEvent.getType())
     && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
   );
   const mDate = mEvent.getDate();
@@ -130,7 +130,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
 
   const time = dateFormat(mDate, isToday ? 'hh:MM TT' : 'dd/mm/yyyy');
 
-  if (mEvent.getType() === 'm.room.member') {
+  if (stateEvents.includes(mEvent.getType())) {
     const timelineChange = parseTimelineChange(mEvent);
     if (timelineChange === null) return <div key={mEvent.getId()} />;
     return (
@@ -142,6 +142,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
       />
     );
   }
+
   return (
     <Message
       key={mEvent.getId()}

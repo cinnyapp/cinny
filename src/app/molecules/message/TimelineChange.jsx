@@ -5,11 +5,12 @@ import './TimelineChange.scss';
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 
-import JoinArraowIC from '../../../../public/res/ic/outlined/join-arrow.svg';
-import LeaveArraowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
-import InviteArraowIC from '../../../../public/res/ic/outlined/invite-arrow.svg';
-import InviteCancelArraowIC from '../../../../public/res/ic/outlined/invite-cancel-arrow.svg';
+import JoinArrowIC from '../../../../public/res/ic/outlined/join-arrow.svg';
+import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
+import InviteArrowIC from '../../../../public/res/ic/outlined/invite-arrow.svg';
+import InviteCancelArrowIC from '../../../../public/res/ic/outlined/invite-cancel-arrow.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
+import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 
 function TimelineChange({
   variant, content, time, onClick,
@@ -18,22 +19,25 @@ function TimelineChange({
 
   switch (variant) {
     case 'join':
-      iconSrc = JoinArraowIC;
+      iconSrc = JoinArrowIC;
       break;
     case 'leave':
-      iconSrc = LeaveArraowIC;
+      iconSrc = LeaveArrowIC;
       break;
     case 'invite':
-      iconSrc = InviteArraowIC;
+      iconSrc = InviteArrowIC;
       break;
     case 'invite-cancel':
-      iconSrc = InviteCancelArraowIC;
+      iconSrc = InviteCancelArrowIC;
       break;
     case 'avatar':
       iconSrc = UserIC;
       break;
+    case 'edit':
+      iconSrc = PencilIC;
+      break;
     default:
-      iconSrc = JoinArraowIC;
+      iconSrc = JoinArrowIC;
       break;
   }
 

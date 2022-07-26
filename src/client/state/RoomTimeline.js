@@ -128,6 +128,9 @@ class RoomTimeline extends EventEmitter {
     if (mEvent.getType() === 'm.room.member' && hideMemberEvents(mEvent)) {
       return;
     }
+    if (['m.room.name', 'm.room.topic', 'm.room.avatar'].includes(mEvent.getType()) && settings.hideRoomEvents) {
+      return;
+    }
     if (mEvent.isRedacted()) return;
     if (isReaction(mEvent)) {
       addToMap(this.reactionTimeline, mEvent);
