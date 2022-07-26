@@ -206,7 +206,6 @@ function EmojiBoard({ onSelect, searchRef }) {
       const room = initMatrix.matrixClient.getRoom(selectedRoomId);
       if (room) {
         const packs = getRelevantPacks(room.client, [room])
-          .filter((pack) => pack.usage.includes('emoticon'))
           .filter((pack) => pack.getEmojis().length !== 0);
 
         // Set an index for each pack so that we know where to jump when the user uses the nav
