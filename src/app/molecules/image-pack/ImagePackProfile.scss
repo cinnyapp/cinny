@@ -3,15 +3,20 @@
 .image-pack-profile {
   padding: var(--sp-normal);
   display: flex;
+  align-items: flex-start;
+  gap: var(--sp-tight);
 
   &__content {
-    padding: 0 var(--sp-tight);
     @extend .cp-fx__item-one;
 
     & div:first-child {
       display: flex;
       align-items: center;
       gap: var(--sp-extra-tight);
+
+      & .ic-btn {
+        padding: var(--sp-ultra-tight);
+      }
     }
   }
   &__usage {

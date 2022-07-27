@@ -25,7 +25,7 @@ import RoomHistoryVisibility from '../../molecules/room-history-visibility/RoomH
 import RoomEncryption from '../../molecules/room-encryption/RoomEncryption';
 import RoomPermissions from '../../molecules/room-permissions/RoomPermissions';
 import RoomMembers from '../../molecules/room-members/RoomMembers';
-import ImagePack from '../../molecules/image-pack/ImagePack';
+import RoomEmojis from '../../molecules/room-emojis/RoomEmojis';
 
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
@@ -127,29 +127,6 @@ function GeneralSettings({ roomId }) {
 GeneralSettings.propTypes = {
   roomId: PropTypes.string.isRequired,
 };
-
-function RoomEmojis({ roomId }) {
-  const mx = initMatrix.matrixClient;
-  const room = mx.getRoom(roomId);
-
-  const packEvents = room.currentState.getStateEvents('im.ponies.room_emotes');
-  const unUsablePacks = [];
-  const usablePacks = packEvents.filter((mEvent) => {
-    if (typeof mEvent.getContent()?.images !== 'object') {
-      unUsablePacks.push(mEvent);
-      return false;
-    }
-    return true;
-  });
-
-  return usablePacks.map((mEvent) => (
-    <ImagePack
-      key={mEvent.getId()}
-      roomId={roomId}
-      stateKey={mEvent.getStateKey()}
-    />
-  ));
-}
 
 function SecuritySettings({ roomId }) {
   return (

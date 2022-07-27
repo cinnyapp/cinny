@@ -32,6 +32,7 @@
 }
 
 .space-settings .room-permissions__card,
-.space-settings .room-members {
+.space-settings .room-members,
+.space-settings .image-pack {
   @extend .space-settings__card;
 }

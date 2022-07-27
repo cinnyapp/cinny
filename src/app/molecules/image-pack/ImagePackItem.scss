@@ -1,4 +1,5 @@
 @use '../../partials/flex';
+@use '../../partials/dir';
 
 .image-pack-item {
   margin: 0 var(--sp-normal);
@@ -11,7 +12,27 @@
     @extend .cp-fx__item-one;
   }
 
-  &__usage > button {
-    padding: 6px var(--sp-extra-tight);
+  &__usage {
+    display: flex;
+    gap: var(--sp-ultra-tight);
+    & button {
+      padding: 6px;
+    }
+    & > button.btn-surface {
+      padding: 6px var(--sp-tight);
+      min-width: 0;
+      @include dir.side(margin, var(--sp-ultra-tight), 0);
+    }
+  }
+
+  &__btn {
+    display: none;
+  }
+  &:hover,
+  &:focus-within {
+    .image-pack-item__btn {
+      display: flex;
+      gap: var(--sp-ultra-tight);
+    }
   }
 }

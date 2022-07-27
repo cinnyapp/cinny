@@ -6,9 +6,9 @@ import initMatrix from '../../../client/initMatrix';
 
 import Button from '../../atoms/button/Button';
 import Text from '../../atoms/text/Text';
-import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import ImagePackProfile from './ImagePackProfile';
 import ImagePackItem from './ImagePackItem';
+import Checkbox from '../../atoms/button/Checkbox';
 import { ImagePack as ImagePackBuilder, getUserImagePack } from '../../organisms/emoji-board/custom-emoji';
 
 function getUsage(usage) {
@@ -17,6 +17,17 @@ function getUsage(usage) {
   if (usage.includes('sticker')) return 'sticker';
 
   return 'both';
+}
+
+function isGlobalPack(roomId, stateKey) {
+  const mx = initMatrix.matrixClient;
+  const globalContent = mx.getAccountData('im.ponies.emote_rooms')?.getContent();
+  if (typeof globalContent !== 'object') return false;
+
+  const { rooms } = globalContent;
+  if (typeof rooms !== 'object') return false;
+
+  return rooms[roomId]?.[stateKey] !== undefined;
 }
 
 function ImagePack({ roomId, stateKey }) {
@@ -33,32 +44,34 @@ function ImagePack({ roomId, stateKey }) {
 
   return (
     <div className="image-pack">
-      <MenuHeader>{pack.displayName}</MenuHeader>
       <ImagePackProfile
         avatarUrl={mx.mxcUrlToHttp(pack.avatarUrl ?? pack.getEmojis()[0].mxc)}
         displayName={pack.displayName}
         attribution={pack.attribution}
         usage={getUsage(pack.usage)}
-        onUsage={() => false}
+        onUsageChange={(newUsage) => console.log(newUsage)}
         onEdit={() => false}
       />
-      <div className="image-pack__header">
-        <Text variant="b3">Image</Text>
-        <Text variant="b3">Shortcode</Text>
-        <Text variant="b3">Usage</Text>
-      </div>
       <div>
+        <div className="image-pack__header">
+          <Text variant="b3">Image</Text>
+          <Text variant="b3">Shortcode</Text>
+          <Text variant="b3">Usage</Text>
+        </div>
         {([...pack.images].slice(0, viewMore ? pack.images.size : 2)).map(([shortcode, image]) => (
           <ImagePackItem
             key={shortcode}
             url={mx.mxcUrlToHttp(image.mxc)}
             shortcode={shortcode}
             usage={getUsage(image.usage)}
+            onUsageChange={() => false}
+            onDelete={() => false}
+            onRename={() => false}
           />
         ))}
       </div>
-      <div className="image-pack__footer">
-        {pack.images.size > 2 && (
+      {pack.images.size > 2 && (
+        <div className="image-pack__footer">
           <Button onClick={() => setViewMore(!viewMore)}>
             {
               viewMore
@@ -66,8 +79,17 @@ function ImagePack({ roomId, stateKey }) {
                 : `View ${pack.images.size - 2} more`
             }
           </Button>
-        )}
-      </div>
+        </div>
+      )}
+      { roomId && (
+        <div className="image-pack__global">
+          <Checkbox variant="positive" isActive={isGlobalPack(roomId, stateKey)} />
+          <div>
+            <Text variant="b2">Use globally</Text>
+            <Text variant="b3">Add this pack to your account to use in all rooms.</Text>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
