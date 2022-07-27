@@ -22,7 +22,7 @@
   --bg-positive-hover: rgba(69, 184, 59, 8%);
   --bg-positive-active: rgba(69, 184, 59, 15%);
   --bg-positive-border: rgba(69, 184, 59, 40%);
-  
+
   --bg-caution: rgb(255, 179, 0);
   --bg-caution-hover: rgba(255, 179, 0, 8%);
   --bg-caution-active: rgba(255, 179, 0, 15%);
@@ -44,11 +44,11 @@
   --tc-surface-normal: rgba(0, 0, 0, 78%);
   --tc-surface-normal-low: rgba(0, 0, 0, 60%);
   --tc-surface-low: rgba(0, 0, 0, 48%);
-  
+
   --tc-primary-high: #ffffff;
   --tc-primary-normal: rgba(255, 255, 255, 68%);
   --tc-primary-low: rgba(255, 255, 255, 40%);
-  
+
   --tc-positive-high: var(--bg-positive);
   --tc-positive-normal: rgb(69, 184, 59, 80%);
   --tc-positive-low: rgb(69, 184, 59, 60%);
@@ -56,7 +56,7 @@
   --tc-caution-high: var(--bg-caution);
   --tc-caution-normal: rgb(255, 179, 0, 80%);
   --tc-caution-low: rgb(255, 179, 0, 60%);
-  
+
   --tc-danger-high: var(--bg-danger);
   --tc-danger-normal: rgba(240, 71, 71, 88%);
   --tc-danger-low: rgba(240, 71, 71, 60%);
@@ -180,7 +180,7 @@
   --people-drawer-width: calc(268px - var(--border-width));
 
   --popup-window-drawer-width: 280px;
-  
+
   @include screen.smallerThan(tabletBreakpoint) {
     --navigation-drawer-width: calc(240px + var(--border-width));
     --people-drawer-width: calc(256px - var(--border-width));
@@ -191,7 +191,7 @@
   --fluid-push: cubic-bezier(0, 0.8, 0.67, 0.97);
   --fluid-slide-down: cubic-bezier(0.02, 0.82, 0.4, 0.96);
   --fluid-slide-up: cubic-bezier(0.13, 0.56, 0.25, 0.99);
-  
+
   --font-primary: 'Roboto', sans-serif;
   --font-secondary: 'Roboto', sans-serif;
 }
@@ -236,7 +236,7 @@
   --tc-surface-normal: rgba(255, 255, 255, 94%);
   --tc-surface-normal-low: rgba(255, 255, 255, 60%);
   --tc-surface-low: rgba(255, 255, 255, 58%);
-  
+
   --tc-primary-high: #ffffff;
   --tc-primary-normal: rgba(255, 255, 255, 0.68);
   --tc-primary-low: rgba(255, 255, 255, 0.4);
@@ -262,7 +262,7 @@
     --mx-uc-7: hsl(243, 100%, 74%);
     --mx-uc-8: hsl(94, 66%, 50%);
   }
-  
+
   /* shadow and overlay */
   --bg-overlay: rgba(0, 0, 0, 50%);
 
@@ -273,7 +273,7 @@
 
   --bs-primary-border: inset 0 0 0 1px var(--bg-primary-border);
   --bs-primary-outline: 0 0 0 2px var(--bg-primary-border);
-  
+
   /* font styles: font-size, letter-spacing, line-hight */
   --fs-h1: 35.6px;
 
@@ -306,28 +306,30 @@
 }
 
 .butter-theme {
+  // soon to be nexus theme: #BAABDA (main-purple), #D6E5FA(blue), #333333
+
   /* background color | --bg-[background type]: value */
-  --bg-surface: hsl(64, 6%, 14%);
-  --bg-surface-transparent: hsla(64, 6%, 14%, 0);
-  --bg-surface-low: hsl(64, 6%, 10%);
-  --bg-surface-low-transparent: hsla(64, 6%, 10%, 0);
-  --bg-surface-extra-low: hsl(64, 6%, 8%);
-  --bg-surface-extra-low-transparent: hsla(64, 6%, 8%, 0);
+  --bg-surface: #eeeeee;
+  --bg-surface-transparent: #D6E5FA;
+  --bg-surface-low: #D6E5FA; // .drawer
+  --bg-surface-low-transparent: #D6E5FA; // .drawer shadow
+  --bg-surface-extra-low: #BAABDA; // nav-bar
+  --bg-surface-extra-low-transparent: hsla(64, 6%, 8%, 0); // nav-bar shadow
 
   --bg-badge: #c4c1ab;
 
-  
+
   /* text color | --tc-[background type]-[priority]: value */
-  --tc-surface-high: rgb(255, 251, 222, 94%);
-  --tc-surface-normal: rgba(255, 251, 222, 94%);
-  --tc-surface-normal-low: rgba(255, 251, 222, 60%); 
-  --tc-surface-low: rgba(255, 251, 222, 58%);
+  --tc-surface-high: #BAABDA; // Welcome to nexus
+  --tc-surface-normal: #333333; // yet another matrix client
+  --tc-surface-normal-low: rgba(255, 251, 222, 60%); // ?
+  --tc-surface-low: #BAABDA; // in pin text
 
 
   /* system icons | --ic-[background type]-[priority]: value */
-  --ic-surface-high: rgb(255, 251, 222);
-  --ic-surface-normal: rgba(255, 251, 222, 84%);
-  --ic-surface-low: rgba(255, 251, 222, 64%);
+  --ic-surface-high: #ffffff; // selected icon in settings
+  --ic-surface-normal: #333333 ; // Navigation Icons
+  --ic-surface-low: rgba(255, 251, 222, 64%); // ?
 }
 
 .font-primary {
