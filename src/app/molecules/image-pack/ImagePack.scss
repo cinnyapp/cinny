@@ -6,7 +6,6 @@
   }
 
   &__header {
-    margin-top: var(--sp-normal);
     padding: var(--sp-extra-tight) var(--sp-normal);
     display: flex;
     align-items: center;
@@ -19,5 +18,13 @@
 
   &__footer {
     padding: var(--sp-normal);
+    display: flex;
+  }
+  &__global {
+    padding: var(--sp-normal);
+    padding-top: var(--sp-tight);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-normal);
   }
 }
