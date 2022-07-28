@@ -20,6 +20,7 @@
     "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.8.tgz",
     "@tippyjs/react": "^4.2.6",
     "babel-polyfill": "^6.26.0",
+    "blurhash": "^1.1.5",
     "browser-encrypt-attachment": "^0.3.0",
     "dateformat": "^5.0.3",
     "emojibase-data": "^7.0.1",
