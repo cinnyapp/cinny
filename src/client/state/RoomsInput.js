@@ -11,8 +11,13 @@ import settings from './settings';
 
 const blurhashField = 'xyz.amorgan.blurhash';
 
-function encodeBlurhash(context) {
-  const data = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+function encodeBlurhash(img) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 100;
+  canvas.height = 100;
+  const context = canvas.getContext('2d');
+  context.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const data = context.getImageData(0, 0, canvas.width, canvas.height);
   return encode(data.data, data.width, data.height, 4, 4);
 }
 
@@ -88,7 +93,7 @@ function getVideoThumbnail(video, width, height, mimeType) {
           h: targetHeight,
           mimetype: thumbnail.type,
           size: thumbnail.size,
-          [blurhashField]: encodeBlurhash(context),
+          [blurhashField]: encodeBlurhash(video),
         },
       });
     }, mimeType);
@@ -313,12 +318,7 @@ class RoomsInput extends EventEmitter {
       info.w = img.width;
       info.h = img.height;
 
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const context = canvas.getContext('2d');
-      context.drawImage(img, 0, 0);
-      info[blurhashField] = encodeBlurhash(context);
+      info[blurhashField] = encodeBlurhash(img);
 
       content.msgtype = 'm.image';
       content.body = file.name || 'Image';
