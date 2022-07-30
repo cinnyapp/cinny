@@ -1,15 +1,58 @@
-import React, { useState } from 'react';
+import React, {
+  useState, useMemo, useReducer,
+} from 'react';
 import PropTypes from 'prop-types';
 import './ImagePack.scss';
 
 import initMatrix from '../../../client/initMatrix';
+import { openReusableDialog } from '../../../client/action/navigation';
+import { suffixRename } from '../../../util/common';
 
 import Button from '../../atoms/button/Button';
 import Text from '../../atoms/text/Text';
+import Input from '../../atoms/input/Input';
+import Checkbox from '../../atoms/button/Checkbox';
+
+import { ImagePack as ImagePackBuilder } from '../../organisms/emoji-board/custom-emoji';
+import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import ImagePackProfile from './ImagePackProfile';
 import ImagePackItem from './ImagePackItem';
-import Checkbox from '../../atoms/button/Checkbox';
-import { ImagePack as ImagePackBuilder, getUserImagePack } from '../../organisms/emoji-board/custom-emoji';
+import ImagePackUpload from './ImagePackUpload';
+
+const renameImagePackItem = (shortcode) => new Promise((resolve) => {
+  let isCompleted = false;
+
+  openReusableDialog(
+    <Text variant="s1" weight="medium">Rename</Text>,
+    (requestClose) => (
+      <div style={{ padding: 'var(--sp-normal)' }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const sc = e.target.shortcode.value;
+            if (sc.trim() === '') return;
+            isCompleted = true;
+            resolve(sc.trim());
+            requestClose();
+          }}
+        >
+          <Input
+            value={shortcode}
+            name="shortcode"
+            label="Shortcode"
+            autoFocus
+            required
+          />
+          <div style={{ height: 'var(--sp-normal)' }} />
+          <Button variant="primary" type="submit">Rename</Button>
+        </form>
+      </div>
+    ),
+    () => {
+      if (!isCompleted) resolve(null);
+    },
+  );
+});
 
 function getUsage(usage) {
   if (usage.includes('emoticon') && usage.includes('sticker')) return 'both';
@@ -30,46 +73,159 @@ function isGlobalPack(roomId, stateKey) {
   return rooms[roomId]?.[stateKey] !== undefined;
 }
 
+function useRoomImagePack(roomId, stateKey) {
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
+
+  const packEvent = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
+  const pack = useMemo(() => (
+    ImagePackBuilder.parsePack(packEvent.getId(), packEvent.getContent(), room)
+  ), [room, stateKey]);
+
+  const sendPackContent = (content) => {
+    mx.sendStateEvent(roomId, 'im.ponies.room_emotes', content, stateKey);
+  };
+
+  return {
+    pack,
+    sendPackContent,
+  };
+}
+
+function useImagePackHandles(pack, sendPackContent) {
+  const [, forceUpdate] = useReducer((count) => count + 1, 0);
+
+  const getNewKey = (key) => {
+    if (typeof key !== 'string') return undefined;
+    let newKey = key?.replace(/\s/g, '-');
+    if (pack.getImages().get(newKey)) {
+      newKey = suffixRename(
+        newKey,
+        (suffixedKey) => pack.getImages().get(suffixedKey),
+      );
+    }
+    return newKey;
+  };
+
+  const handleEditProfile = () => false;
+  const handleUsageChange = (newUsage) => {
+    const usage = [];
+    if (newUsage === 'emoticon' || newUsage === 'both') usage.push('emoticon');
+    if (newUsage === 'sticker' || newUsage === 'both') usage.push('sticker');
+    pack.setUsage(usage);
+    pack.getImages().forEach((img) => pack.setImageUsage(img.shortcode, undefined));
+
+    sendPackContent(pack.getContent());
+    forceUpdate();
+  };
+
+  const handleRenameItem = async (key) => {
+    const newKey = getNewKey(await renameImagePackItem(key));
+
+    if (!newKey || newKey === key) return;
+    pack.updateImageKey(key, newKey);
+
+    sendPackContent(pack.getContent());
+    forceUpdate();
+  };
+  const handleDeleteItem = async (key) => {
+    const isConfirmed = await confirmDialog(
+      'Delete',
+      `Are you sure that you want to delete "${key}"?`,
+      'Delete',
+      'danger',
+    );
+    if (!isConfirmed) return;
+    pack.removeImage(key);
+
+    sendPackContent(pack.getContent());
+    forceUpdate();
+  };
+  const handleUsageItem = (key, newUsage) => {
+    const usage = [];
+    if (newUsage === 'emoticon' || newUsage === 'both') usage.push('emoticon');
+    if (newUsage === 'sticker' || newUsage === 'both') usage.push('sticker');
+    pack.setImageUsage(key, usage);
+
+    sendPackContent(pack.getContent());
+    forceUpdate();
+  };
+  const handleAddItem = (key, url) => {
+    const newKey = getNewKey(key);
+    if (!newKey || !url) return;
+
+    pack.addImage(newKey, {
+      url,
+    });
+
+    sendPackContent(pack.getContent());
+    forceUpdate();
+  };
+
+  return {
+    handleEditProfile,
+    handleUsageChange,
+    handleRenameItem,
+    handleDeleteItem,
+    handleUsageItem,
+    handleAddItem,
+  };
+}
+
 function ImagePack({ roomId, stateKey }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
   const [viewMore, setViewMore] = useState(false);
 
-  const packEvent = roomId
-    ? room.currentState.getStateEvents('im.ponies.room_emotes', stateKey)
-    : mx.getAccountData('im.ponies.user_emotes');
-  const pack = roomId
-    ? ImagePackBuilder.parsePack(packEvent.getId(), packEvent.getContent(), room)
-    : getUserImagePack(mx);
+  const { pack, sendPackContent } = useRoomImagePack(roomId, stateKey);
+
+  const {
+    handleEditProfile,
+    handleUsageChange,
+    handleRenameItem,
+    handleDeleteItem,
+    handleUsageItem,
+    handleAddItem,
+  } = useImagePackHandles(pack, sendPackContent);
+
+  const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel || 0;
+  const canChange = room.currentState.hasSufficientPowerLevelFor('state_default', myPowerlevel);
+
+  const images = [...pack.images].slice(0, viewMore ? pack.images.size : 2);
 
   return (
     <div className="image-pack">
       <ImagePackProfile
-        avatarUrl={mx.mxcUrlToHttp(pack.avatarUrl ?? pack.getEmojis()[0].mxc)}
-        displayName={pack.displayName}
+        avatarUrl={mx.mxcUrlToHttp(pack.avatarUrl)}
+        displayName={pack.displayName ?? 'Unknown'}
         attribution={pack.attribution}
         usage={getUsage(pack.usage)}
-        onUsageChange={(newUsage) => console.log(newUsage)}
-        onEdit={() => false}
+        onUsageChange={canChange ? handleUsageChange : undefined}
+        onEdit={canChange ? handleEditProfile : undefined}
       />
-      <div>
-        <div className="image-pack__header">
-          <Text variant="b3">Image</Text>
-          <Text variant="b3">Shortcode</Text>
-          <Text variant="b3">Usage</Text>
+      { canChange && (
+        <ImagePackUpload onUpload={handleAddItem} />
+      )}
+      { images.length === 0 ? null : (
+        <div>
+          <div className="image-pack__header">
+            <Text variant="b3">Image</Text>
+            <Text variant="b3">Shortcode</Text>
+            <Text variant="b3">Usage</Text>
+          </div>
+          {images.map(([shortcode, image]) => (
+            <ImagePackItem
+              key={shortcode}
+              url={mx.mxcUrlToHttp(image.mxc)}
+              shortcode={shortcode}
+              usage={getUsage(image.usage)}
+              onUsageChange={canChange ? handleUsageItem : undefined}
+              onDelete={canChange ? handleDeleteItem : undefined}
+              onRename={canChange ? handleRenameItem : undefined}
+            />
+          ))}
         </div>
-        {([...pack.images].slice(0, viewMore ? pack.images.size : 2)).map(([shortcode, image]) => (
-          <ImagePackItem
-            key={shortcode}
-            url={mx.mxcUrlToHttp(image.mxc)}
-            shortcode={shortcode}
-            usage={getUsage(image.usage)}
-            onUsageChange={() => false}
-            onDelete={() => false}
-            onRename={() => false}
-          />
-        ))}
-      </div>
+      )}
       {pack.images.size > 2 && (
         <div className="image-pack__footer">
           <Button onClick={() => setViewMore(!viewMore)}>
@@ -81,27 +237,20 @@ function ImagePack({ roomId, stateKey }) {
           </Button>
         </div>
       )}
-      { roomId && (
-        <div className="image-pack__global">
-          <Checkbox variant="positive" isActive={isGlobalPack(roomId, stateKey)} />
-          <div>
-            <Text variant="b2">Use globally</Text>
-            <Text variant="b3">Add this pack to your account to use in all rooms.</Text>
-          </div>
+      <div className="image-pack__global">
+        <Checkbox variant="positive" isActive={isGlobalPack(roomId, stateKey)} />
+        <div>
+          <Text variant="b2">Use globally</Text>
+          <Text variant="b3">Add this pack to your account to use in all rooms.</Text>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
-ImagePack.defaultProps = {
-  roomId: null,
-  stateKey: null,
-};
-
 ImagePack.propTypes = {
-  roomId: PropTypes.string,
-  stateKey: PropTypes.string,
+  roomId: PropTypes.string.isRequired,
+  stateKey: PropTypes.string.isRequired,
 };
 
 export default ImagePack;

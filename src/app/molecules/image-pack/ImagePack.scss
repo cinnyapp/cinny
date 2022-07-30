@@ -19,7 +19,9 @@
   &__footer {
     padding: var(--sp-normal);
     display: flex;
+    gap: var(--sp-tight);
   }
+
   &__global {
     padding: var(--sp-normal);
     padding-top: var(--sp-tight);

@@ -8,20 +8,38 @@ class ImagePack {
       return null;
     }
 
-    const pack = packContent.pack ?? {};
+    return new ImagePack(eventId, packContent, room);
+  }
 
-    const displayName = pack.display_name ?? room?.name ?? undefined;
-    const avatarUrl = pack.avatar_url ?? room?.getMxcAvatarUrl() ?? undefined;
-    const packUsage = pack.usage ?? ['emoticon', 'sticker'];
-    const { attribution } = pack;
-    const images = new Map();
-    const emoticons = [];
-    const stickers = [];
+  constructor(eventId, content, room) {
+    this.id = eventId;
+    this.content = JSON.parse(JSON.stringify(content));
 
-    Object.entries(packContent.images).forEach(([shortcode, data]) => {
+    this.displayName = room?.name ?? undefined;
+    this.avatarUrl = room?.getMxcAvatarUrl() ?? undefined;
+
+    this.applyPack(content);
+    this.applyImages(content);
+  }
+
+  applyPack(content) {
+    const pack = content.pack ?? {};
+
+    this.displayName = pack.display_name ?? this.displayName;
+    this.avatarUrl = pack.avatar_url ?? this.avatarUrl;
+    this.usage = pack.usage ?? ['emoticon', 'sticker'];
+    this.attribution = pack.attribution;
+  }
+
+  applyImages(content) {
+    this.images = new Map();
+    this.emoticons = [];
+    this.stickers = [];
+
+    Object.entries(content.images).forEach(([shortcode, data]) => {
       const mxc = data.url;
       const body = data.body ?? shortcode;
-      const usage = data.usage ?? packUsage;
+      const usage = data.usage ?? this.usage;
       const { info } = data;
 
       if (!mxc) return;
@@ -29,44 +47,14 @@ class ImagePack {
         shortcode, mxc, body, usage, info,
       };
 
-      images.set(shortcode, image);
+      this.images.set(shortcode, image);
       if (usage.includes('emoticon')) {
-        emoticons.push(image);
+        this.emoticons.push(image);
       }
       if (usage.includes('sticker')) {
-        stickers.push(image);
+        this.stickers.push(image);
       }
     });
-
-    return new ImagePack(eventId, {
-      displayName,
-      avatarUrl,
-      usage: packUsage,
-      attribution,
-      images,
-      emoticons,
-      stickers,
-    });
-  }
-
-  constructor(id, {
-    displayName,
-    avatarUrl,
-    usage,
-    attribution,
-    images,
-    emoticons,
-    stickers,
-  }) {
-    this.id = id;
-    this.displayName = displayName;
-    this.avatarUrl = avatarUrl;
-    this.usage = usage;
-    this.attribution = attribution;
-
-    this.images = images;
-    this.emoticons = emoticons;
-    this.stickers = stickers;
   }
 
   getImages() {
@@ -79,6 +67,80 @@ class ImagePack {
 
   getStickers() {
     return this.stickers;
+  }
+
+  getContent() {
+    return this.content;
+  }
+
+  _updatePackProperty(property, value) {
+    if (this.content.pack === undefined) {
+      this.content.pack = {};
+    }
+    this.content.pack[property] = value;
+    this.applyPack(this.content);
+  }
+
+  setAvatarUrl(avatarUrl) {
+    this._updatePackProperty('avatar_url', avatarUrl);
+  }
+
+  setDisplayName(displayName) {
+    this._updatePackProperty('display_name', displayName);
+  }
+
+  setAttribution(attribution) {
+    this._updatePackProperty('attribution', attribution);
+  }
+
+  setUsage(usage) {
+    this._updatePackProperty('usage', usage);
+  }
+
+  addImage(key, imgContent) {
+    this.content.images = {
+      [key]: imgContent,
+      ...this.content.images,
+    };
+    this.applyImages(this.content);
+  }
+
+  removeImage(key) {
+    if (this.content.images[key] === undefined) return;
+    delete this.content.images[key];
+    this.applyImages(this.content);
+  }
+
+  updateImageKey(key, newKey) {
+    if (this.content.images[key] === undefined) return;
+    const copyImages = {};
+    Object.keys(this.content.images).forEach((imgKey) => {
+      copyImages[imgKey === key ? newKey : imgKey] = this.content.images[imgKey];
+    });
+    this.content.images = copyImages;
+    this.applyImages(this.content);
+  }
+
+  _updateImageProperty(key, property, value) {
+    if (this.content.images[key] === undefined) return;
+    this.content.images[key][property] = value;
+    this.applyImages(this.content);
+  }
+
+  setImageUrl(key, url) {
+    this._updateImageProperty(key, 'url', url);
+  }
+
+  setImageBody(key, body) {
+    this._updateImageProperty(key, 'body', body);
+  }
+
+  setImageInfo(key, info) {
+    this._updateImageProperty(key, 'info', info);
+  }
+
+  setImageUsage(key, usage) {
+    this._updateImageProperty(key, 'usage', usage);
   }
 }
 
@@ -112,7 +174,6 @@ function getUserImagePack(mx) {
   }
 
   const userImagePack = ImagePack.parsePack(mx.getUserId(), accountDataEmoji.event.content);
-  if (userImagePack) userImagePack.displayName ??= 'Personal Emoji';
   return userImagePack;
 }
 
