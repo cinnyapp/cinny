@@ -35,7 +35,7 @@ function ImagePackProfile({
 
   return (
     <div className="image-pack-profile">
-      <Avatar text={displayName} bgColor="blue" imageSrc={avatarUrl} size="normal" />
+      {avatarUrl && <Avatar text={displayName} bgColor="blue" imageSrc={avatarUrl} size="normal" />}
       <div className="image-pack-profile__content">
         <div>
           <Text>{displayName}</Text>

@@ -5,21 +5,10 @@ import encrypt from 'browser-encrypt-attachment';
 import { math } from 'micromark-extension-math';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
+import { getImageDimension } from '../../util/common';
 import cons from './cons';
 import settings from './settings';
 
-function getImageDimension(file) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = async () => {
-      resolve({
-        w: img.width,
-        h: img.height,
-      });
-    };
-    img.src = URL.createObjectURL(file);
-  });
-}
 function loadVideo(videoFile) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');

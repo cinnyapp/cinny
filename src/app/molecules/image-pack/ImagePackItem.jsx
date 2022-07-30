@@ -27,7 +27,7 @@ function ImagePackItem({
         <ImagePackUsageSelector
           usage={usage}
           onSelect={(newUsage) => {
-            onUsageChange(newUsage);
+            onUsageChange(shortcode, newUsage);
             closeMenu();
           }}
         />
@@ -43,8 +43,8 @@ function ImagePackItem({
       </div>
       <div className="image-pack-item__usage">
         <div className="image-pack-item__btn">
-          {onRename && <IconButton tooltip="Rename" size="extra-small" src={PencilIC} onClick={onRename} />}
-          {onDelete && <IconButton tooltip="Delete" size="extra-small" src={BinIC} onClick={onDelete} />}
+          {onRename && <IconButton tooltip="Rename" size="extra-small" src={PencilIC} onClick={() => onRename(shortcode)} />}
+          {onDelete && <IconButton tooltip="Delete" size="extra-small" src={BinIC} onClick={() => onDelete(shortcode)} />}
         </div>
         <Button onClick={onUsageChange ? handleUsageSelect : undefined}>
           {onUsageChange && <RawIcon src={ChevronBottomIC} size="extra-small" />}

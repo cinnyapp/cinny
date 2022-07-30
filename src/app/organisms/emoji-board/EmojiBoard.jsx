@@ -257,7 +257,7 @@ function EmojiBoard({ onSelect, searchRef }) {
               {
                 availableEmojis.map((pack) => (
                   <EmojiGroup
-                    name={pack.displayName}
+                    name={pack.displayName ?? 'Unknown'}
                     key={pack.packIndex}
                     groupEmojis={pack.getEmojis()}
                     className="custom-emoji-group"
@@ -297,7 +297,7 @@ function EmojiBoard({ onSelect, searchRef }) {
                     onClick={() => openGroup(recentOffset + pack.packIndex)}
                     src={src}
                     key={pack.packIndex}
-                    tooltip={pack.displayName}
+                    tooltip={pack.displayName ?? 'Unknown'}
                     tooltipPlacement="right"
                     isImage
                   />

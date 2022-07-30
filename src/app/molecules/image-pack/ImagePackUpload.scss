@@ -1,0 +1,43 @@
+@use '../../partials/dir';
+@use '../../partials/text';
+
+.image-pack-upload {
+  padding: var(--sp-normal);
+  padding-top: 0;
+  display: flex;
+  gap: var(--sp-tight);
+
+  & > .input-container {
+    flex-grow: 1;
+    input {
+      padding: 9px var(--sp-normal);
+    }
+  }
+  &__file {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-surface-low);
+    border-radius: var(--bo-radius);
+    box-shadow: var(--bs-surface-border);
+  
+    & button {
+      --parent-height: 40px;
+      width: var(--parent-height);
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  
+    & .ic-raw {
+      background-color: var(--bg-caution);
+      transform: rotate(45deg);
+    }
+    
+    & .text {
+      @extend .cp-txt__ellipsis;
+      @include dir.side(margin, var(--sp-ultra-tight), var(--sp-normal));
+      max-width: 86px;
+    }
+  }
+}
