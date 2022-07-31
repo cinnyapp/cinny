@@ -3,23 +3,20 @@ import { emojis } from './emoji';
 // https://github.com/Sorunome/matrix-doc/blob/soru/emotes/proposals/2545-emotes.md
 
 class ImagePack {
-  static parsePack(eventId, packContent, room) {
+  static parsePack(eventId, packContent) {
     if (!eventId || typeof packContent?.images !== 'object') {
       return null;
     }
 
-    return new ImagePack(eventId, packContent, room);
+    return new ImagePack(eventId, packContent);
   }
 
-  constructor(eventId, content, room) {
+  constructor(eventId, content) {
     this.id = eventId;
     this.content = JSON.parse(JSON.stringify(content));
 
     this.applyPack(content);
     this.applyImages(content);
-
-    this.displayName ??= room?.name;
-    this.avatarUrl ??= room?.getMxcAvatarUrl();
   }
 
   applyPack(content) {
@@ -160,7 +157,12 @@ function getGlobalImagePacks(mx) {
 
     return stateKeys.map((stateKey) => {
       const data = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
-      return ImagePack.parsePack(data?.getId(), data?.getContent(), room);
+      const pack = ImagePack.parsePack(data?.getId(), data?.getContent());
+      if (pack) {
+        pack.displayName ??= room.name;
+        pack.avatarUrl ??= room.getMxcAvatarUrl();
+      }
+      return pack;
     }).filter((pack) => pack !== null);
   });
 
@@ -174,6 +176,7 @@ function getUserImagePack(mx) {
   }
 
   const userImagePack = ImagePack.parsePack(mx.getUserId(), accountDataEmoji.event.content);
+  userImagePack.displayName ??= 'Personal Emoji';
   return userImagePack;
 }
 
@@ -181,7 +184,14 @@ function getRoomImagePacks(room) {
   const dataEvents = room.currentState.getStateEvents('im.ponies.room_emotes');
 
   return dataEvents
-    .map((data) => ImagePack.parsePack(data.getId(), data.getContent(), room))
+    .map((data) => {
+      const pack = ImagePack.parsePack(data?.getId(), data?.getContent());
+      if (pack) {
+        pack.displayName ??= room.name;
+        pack.avatarUrl ??= room.getMxcAvatarUrl();
+      }
+      return pack;
+    })
     .filter((pack) => pack !== null);
 }
 
