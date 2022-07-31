@@ -143,10 +143,10 @@ class ImagePack {
 
 function getGlobalImagePacks(mx) {
   const globalContent = mx.getAccountData('im.ponies.emote_rooms')?.getContent();
-  if (typeof globalContent !== 'object') return null;
+  if (typeof globalContent !== 'object') return [];
 
   const { rooms } = globalContent;
-  if (typeof rooms !== 'object') return null;
+  if (typeof rooms !== 'object') return [];
 
   const roomIds = Object.keys(rooms);
 
@@ -206,7 +206,11 @@ function getRelevantPacks(mx, rooms) {
   const globalPackIds = new Set(globalPacks.map((pack) => pack.id));
   const roomsPack = rooms?.flatMap(getRoomImagePacks) ?? [];
 
-  return [].concat(userPack, globalPacks, roomsPack.filter((pack) => !globalPackIds.has(pack.id)));
+  return [].concat(
+    userPack ?? [],
+    globalPacks,
+    roomsPack.filter((pack) => !globalPackIds.has(pack.id)),
+  );
 }
 
 function getShortcodeToEmoji(room) {
