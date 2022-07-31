@@ -79,7 +79,7 @@ function useRoomImagePack(roomId, stateKey) {
 
   const packEvent = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
   const pack = useMemo(() => (
-    ImagePackBuilder.parsePack(packEvent.getId(), packEvent.getContent(), room)
+    ImagePackBuilder.parsePack(packEvent.getId(), packEvent.getContent())
   ), [room, stateKey]);
 
   const sendPackContent = (content) => {
@@ -183,10 +183,29 @@ function useImagePackHandles(pack, sendPackContent) {
   };
 }
 
+function addGlobalImagePack(mx, roomId, stateKey) {
+  const content = mx.getAccountData('im.ponies.emote_rooms')?.getContent() ?? {};
+  if (!content.rooms) content.rooms = {};
+  if (!content.rooms[roomId]) content.rooms[roomId] = {};
+  content.rooms[roomId][stateKey] = {};
+  return mx.setAccountData('im.ponies.emote_rooms', content);
+}
+function removeGlobalImagePack(mx, roomId, stateKey) {
+  const content = mx.getAccountData('im.ponies.emote_rooms')?.getContent() ?? {};
+  if (!content.rooms) return Promise.resolve();
+  if (!content.rooms[roomId]) return Promise.resolve();
+  delete content.rooms[roomId][stateKey];
+  if (Object.keys(content.rooms[roomId]).length === 0) {
+    delete content.rooms[roomId];
+  }
+  return mx.setAccountData('im.ponies.emote_rooms', content);
+}
+
 function ImagePack({ roomId, stateKey }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
   const [viewMore, setViewMore] = useState(false);
+  const [isGlobal, setIsGlobal] = useState(isGlobalPack(roomId, stateKey));
 
   const { pack, sendPackContent } = useRoomImagePack(roomId, stateKey);
 
@@ -199,6 +218,12 @@ function ImagePack({ roomId, stateKey }) {
     handleUsageItem,
     handleAddItem,
   } = useImagePackHandles(pack, sendPackContent);
+
+  const handleGlobalChange = (isG) => {
+    setIsGlobal(isG);
+    if (isG) addGlobalImagePack(mx, roomId, stateKey);
+    else removeGlobalImagePack(mx, roomId, stateKey);
+  };
 
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel || 0;
   const canChange = room.currentState.hasSufficientPowerLevelFor('state_default', myPowerlevel);
@@ -251,7 +276,7 @@ function ImagePack({ roomId, stateKey }) {
         </div>
       )}
       <div className="image-pack__global">
-        <Checkbox variant="positive" isActive={isGlobalPack(roomId, stateKey)} />
+        <Checkbox variant="positive" onToggle={handleGlobalChange} isActive={isGlobal} />
         <div>
           <Text variant="b2">Use globally</Text>
           <Text variant="b3">Add this pack to your account to use in all rooms.</Text>

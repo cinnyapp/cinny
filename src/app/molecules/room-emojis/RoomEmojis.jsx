@@ -18,7 +18,7 @@ function RoomEmojis({ roomId }) {
     return true;
   });
 
-  return usablePacks.map((mEvent) => (
+  return usablePacks.reverse().map((mEvent) => (
     <ImagePack
       key={mEvent.getId()}
       roomId={roomId}
