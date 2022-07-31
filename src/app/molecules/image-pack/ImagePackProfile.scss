@@ -9,13 +9,23 @@
   &__content {
     @extend .cp-fx__item-one;
 
-    & div:first-child {
+    & > div:first-child {
       display: flex;
       align-items: center;
       gap: var(--sp-extra-tight);
 
       & .ic-btn {
         padding: var(--sp-ultra-tight);
+      }
+    }
+    & > form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-extra-tight);
+      & > div:last-child {
+        margin: var(--sp-extra-tight) 0;
+        display: flex;
+        gap: var(--sp-tight);
       }
     }
   }

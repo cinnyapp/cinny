@@ -107,7 +107,17 @@ function useImagePackHandles(pack, sendPackContent) {
     return newKey;
   };
 
-  const handleEditProfile = () => false;
+  const handleAvatarChange = (url) => {
+    pack.setAvatarUrl(url);
+    sendPackContent(pack.getContent());
+    forceUpdate();
+  };
+  const handleEditProfile = (name, attribution) => {
+    pack.setDisplayName(name);
+    pack.setAttribution(attribution);
+    sendPackContent(pack.getContent());
+    forceUpdate();
+  };
   const handleUsageChange = (newUsage) => {
     const usage = [];
     if (newUsage === 'emoticon' || newUsage === 'both') usage.push('emoticon');
@@ -163,6 +173,7 @@ function useImagePackHandles(pack, sendPackContent) {
   };
 
   return {
+    handleAvatarChange,
     handleEditProfile,
     handleUsageChange,
     handleRenameItem,
@@ -180,6 +191,7 @@ function ImagePack({ roomId, stateKey }) {
   const { pack, sendPackContent } = useRoomImagePack(roomId, stateKey);
 
   const {
+    handleAvatarChange,
     handleEditProfile,
     handleUsageChange,
     handleRenameItem,
@@ -196,12 +208,13 @@ function ImagePack({ roomId, stateKey }) {
   return (
     <div className="image-pack">
       <ImagePackProfile
-        avatarUrl={mx.mxcUrlToHttp(pack.avatarUrl)}
+        avatarUrl={pack.avatarUrl ? mx.mxcUrlToHttp(pack.avatarUrl, 42, 42, 'crop') : null}
         displayName={pack.displayName ?? 'Unknown'}
         attribution={pack.attribution}
         usage={getUsage(pack.usage)}
-        onUsageChange={canChange ? handleUsageChange : undefined}
-        onEdit={canChange ? handleEditProfile : undefined}
+        onUsageChange={canChange ? handleUsageChange : null}
+        onAvatarChange={canChange ? handleAvatarChange : null}
+        onEditProfile={canChange ? handleEditProfile : null}
       />
       { canChange && (
         <ImagePackUpload onUpload={handleAddItem} />

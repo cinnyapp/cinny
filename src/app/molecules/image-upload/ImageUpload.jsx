@@ -7,9 +7,13 @@ import initMatrix from '../../../client/initMatrix';
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
 import Spinner from '../../atoms/spinner/Spinner';
+import RawIcon from '../../atoms/system-icons/RawIcon';
+
+import PlusIC from '../../../../public/res/ic/outlined/plus.svg';
 
 function ImageUpload({
   text, bgColor, imageSrc, onUpload, onRequestRemove,
+  size,
 }) {
   const [uploadPromise, setUploadPromise] = useState(null);
   const uploadImageRef = useRef(null);
@@ -50,10 +54,14 @@ function ImageUpload({
           imageSrc={imageSrc}
           text={text}
           bgColor={bgColor}
-          size="large"
+          size={size}
         />
         <div className={`img-upload__process ${uploadPromise === null ? ' img-upload__process--stopped' : ''}`}>
-          {uploadPromise === null && <Text variant="b3" weight="bold">Upload</Text>}
+          {uploadPromise === null && (
+            size === 'large'
+              ? <Text variant="b3" weight="bold">Upload</Text>
+              : <RawIcon src={PlusIC} color="white" />
+          )}
           {uploadPromise !== null && <Spinner size="small" />}
         </div>
       </button>
@@ -75,6 +83,7 @@ ImageUpload.defaultProps = {
   text: null,
   bgColor: 'transparent',
   imageSrc: null,
+  size: 'large',
 };
 
 ImageUpload.propTypes = {
@@ -83,6 +92,7 @@ ImageUpload.propTypes = {
   imageSrc: PropTypes.string,
   onUpload: PropTypes.func.isRequired,
   onRequestRemove: PropTypes.func.isRequired,
+  size: PropTypes.oneOf(['large', 'normal']),
 };
 
 export default ImageUpload;

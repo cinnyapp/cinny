@@ -15,18 +15,18 @@ class ImagePack {
     this.id = eventId;
     this.content = JSON.parse(JSON.stringify(content));
 
-    this.displayName = room?.name ?? undefined;
-    this.avatarUrl = room?.getMxcAvatarUrl() ?? undefined;
-
     this.applyPack(content);
     this.applyImages(content);
+
+    this.displayName ??= room?.name;
+    this.avatarUrl ??= room?.getMxcAvatarUrl();
   }
 
   applyPack(content) {
     const pack = content.pack ?? {};
 
-    this.displayName = pack.display_name ?? this.displayName;
-    this.avatarUrl = pack.avatar_url ?? this.avatarUrl;
+    this.displayName = pack.display_name;
+    this.avatarUrl = pack.avatar_url;
     this.usage = pack.usage ?? ['emoticon', 'sticker'];
     this.attribution = pack.attribution;
   }
