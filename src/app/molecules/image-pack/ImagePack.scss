@@ -19,6 +19,7 @@
   &__footer {
     padding: var(--sp-normal);
     display: flex;
+    justify-content: space-between;
     gap: var(--sp-tight);
   }
 
