@@ -201,7 +201,7 @@ function removeGlobalImagePack(mx, roomId, stateKey) {
   return mx.setAccountData('im.ponies.emote_rooms', content);
 }
 
-function ImagePack({ roomId, stateKey }) {
+function ImagePack({ roomId, stateKey, handlePackDelete }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
   const [viewMore, setViewMore] = useState(false);
@@ -227,6 +227,17 @@ function ImagePack({ roomId, stateKey }) {
 
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel || 0;
   const canChange = room.currentState.hasSufficientPowerLevelFor('state_default', myPowerlevel);
+
+  const handleDeletePack = async () => {
+    const isConfirmed = await confirmDialog(
+      'Delete Pack',
+      `Are you sure that you want to delete "${pack.displayName}"?`,
+      'Delete',
+      'danger',
+    );
+    if (!isConfirmed) return;
+    handlePackDelete(stateKey);
+  };
 
   const images = [...pack.images].slice(0, viewMore ? pack.images.size : 2);
 
@@ -264,15 +275,18 @@ function ImagePack({ roomId, stateKey }) {
           ))}
         </div>
       )}
-      {pack.images.size > 2 && (
+      {(pack.images.size > 2 || handlePackDelete) && (
         <div className="image-pack__footer">
-          <Button onClick={() => setViewMore(!viewMore)}>
-            {
-              viewMore
-                ? 'View less'
-                : `View ${pack.images.size - 2} more`
-            }
-          </Button>
+          {pack.images.size > 2 && (
+            <Button onClick={() => setViewMore(!viewMore)}>
+              {
+                viewMore
+                  ? 'View less'
+                  : `View ${pack.images.size - 2} more`
+              }
+            </Button>
+          )}
+          { handlePackDelete && <Button variant="danger" onClick={handleDeletePack}>Delete Pack</Button>}
         </div>
       )}
       <div className="image-pack__global">
@@ -286,9 +300,13 @@ function ImagePack({ roomId, stateKey }) {
   );
 }
 
+ImagePack.defaultProps = {
+  handlePackDelete: null,
+};
 ImagePack.propTypes = {
   roomId: PropTypes.string.isRequired,
   stateKey: PropTypes.string.isRequired,
+  handlePackDelete: PropTypes.func,
 };
 
 export default ImagePack;
