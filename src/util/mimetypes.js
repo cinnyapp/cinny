@@ -26,12 +26,13 @@ export const ALLOWED_BLOB_MIMETYPES = [
 ];
 
 export function getBlobSafeMimeType(mimetype) {
-  if (!ALLOWED_BLOB_MIMETYPES.includes(mimetype)) {
+  const [type] = mimetype.split(';');
+  if (!ALLOWED_BLOB_MIMETYPES.includes(type)) {
     return 'application/octet-stream';
   }
   // Required for Chromium browsers
-  if (mimetype === 'video/quicktime') {
+  if (type === 'video/quicktime') {
     return 'video/mp4';
   }
-  return mimetype;
+  return type;
 }
