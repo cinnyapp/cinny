@@ -33,6 +33,8 @@
   font-size: 0;
   line-height: 0;
 
+  position: relative;
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -45,6 +47,7 @@
 .image-container {
   & img,
   & canvas {
+    position: absolute;
     max-width: unset !important;
     width: 100% !important;
     border-radius: 0 !important;

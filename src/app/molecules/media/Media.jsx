@@ -159,7 +159,6 @@ function Image({
   name, width, height, link, file, type, blurhash,
 }) {
   const [url, setUrl] = useState(null);
-  const [loaded, setLoaded] = useState();
 
   useEffect(() => {
     let unmounted = false;
@@ -178,8 +177,8 @@ function Image({
     <div className="file-container">
       <FileHeader name={name} link={url || link} type={type} external />
       <div style={{ height: width !== null ? getNativeHeight(width, height) : 'unset' }} className="image-container">
-        {blurhash && <BlurhashCanvas hash={blurhash} punch={1} style={{ display: loaded && 'none' }} />}
-        {url !== null && <img src={url || link} alt={name} onLoad={() => setLoaded(true)} style={{ display: !loaded && 'none' }} />}
+        {blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
+        {url !== null && <img src={url || link} alt={name} />}
       </div>
     </div>
   );
