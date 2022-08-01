@@ -43,7 +43,8 @@
 }
 
 .image-container {
-  & img {
+  & img,
+  & canvas {
     max-width: unset !important;
     width: 100% !important;
     border-radius: 0 !important;
@@ -56,11 +57,11 @@
     background-color: var(--bg-surface-low);
   }
   video {
-    width: 100%
+    width: 100%;
   }
 }
 .audio-container {
   audio {
-    width: 100%
+    width: 100%;
   }
 }

@@ -4,6 +4,7 @@ import './Media.scss';
 
 import encrypt from 'browser-encrypt-attachment';
 
+import { BlurhashCanvas } from 'react-blurhash';
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
@@ -155,9 +156,10 @@ File.propTypes = {
 };
 
 function Image({
-  name, width, height, link, file, type,
+  name, width, height, link, file, type, blurhash,
 }) {
   const [url, setUrl] = useState(null);
+  const [loaded, setLoaded] = useState();
 
   useEffect(() => {
     let unmounted = false;
@@ -176,7 +178,8 @@ function Image({
     <div className="file-container">
       <FileHeader name={name} link={url || link} type={type} external />
       <div style={{ height: width !== null ? getNativeHeight(width, height) : 'unset' }} className="image-container">
-        { url !== null && <img src={url || link} alt={name} />}
+        {blurhash && <BlurhashCanvas hash={blurhash} punch={1} style={{ display: loaded && 'none' }} />}
+        {url !== null && <img src={url || link} alt={name} onLoad={() => setLoaded(true)} style={{ display: !loaded && 'none' }} />}
       </div>
     </div>
   );
@@ -186,6 +189,7 @@ Image.defaultProps = {
   width: null,
   height: null,
   type: '',
+  blurhash: '',
 };
 Image.propTypes = {
   name: PropTypes.string.isRequired,
@@ -194,6 +198,7 @@ Image.propTypes = {
   link: PropTypes.string.isRequired,
   file: PropTypes.shape({}),
   type: PropTypes.string,
+  blurhash: PropTypes.string,
 };
 
 function Audio({

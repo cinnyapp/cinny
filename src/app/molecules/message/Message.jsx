@@ -609,6 +609,8 @@ function genMediaContent(mE) {
   let msgType = mE.getContent()?.msgtype;
   if (mE.getType() === 'm.sticker') msgType = 'm.image';
 
+  const blurhash = mContent?.info?.['xyz.amorgan.blurhash'];
+
   switch (msgType) {
     case 'm.file':
       return (
@@ -628,6 +630,7 @@ function genMediaContent(mE) {
           link={mx.mxcUrlToHttp(mediaMXC)}
           file={isEncryptedFile ? mContent.file : null}
           type={mContent.info?.mimetype}
+          blurhash={blurhash}
         />
       );
     case 'm.audio':
