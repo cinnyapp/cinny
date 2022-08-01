@@ -30,7 +30,7 @@
     "katex": "^0.15.6",
     "linkify-html": "^4.0.0-beta.5",
     "linkifyjs": "^4.0.0-beta.5",
-    "matrix-js-sdk": "^18.1.0",
+    "matrix-js-sdk": "^19.1.0",
     "micromark": "^3.0.10",
     "micromark-extension-gfm": "^2.0.1",
     "micromark-extension-math": "^2.0.2",
