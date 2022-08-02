@@ -128,9 +128,7 @@ function RoomViewInput({
   }
   function firedCmd(cmdData) {
     const msg = textAreaRef.current.value;
-    textAreaRef.current.value = replaceCmdWith(
-      msg, cmdCursorPos, typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '',
-    );
+    textAreaRef.current.value = replaceCmdWith(msg, cmdCursorPos, typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '');
     deactivateCmd();
   }
 
@@ -254,7 +252,7 @@ function RoomViewInput({
   };
 
   const handleKeyDown = (e) => {
-    if (e.keyCode === 13 && e.shiftKey === false) {
+    if (e.key === 'Enter' && e.shiftKey === false) {
       e.preventDefault();
       sendMessage();
     }

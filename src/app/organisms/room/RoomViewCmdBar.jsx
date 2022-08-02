@@ -256,11 +256,11 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
   function listenKeyboard(event) {
     const { activeElement } = document;
     const lastCmdItem = document.activeElement.parentNode.lastElementChild;
-    if (event.keyCode === 27) {
+    if (event.key === 'Escape') {
       if (activeElement.className !== 'cmd-item') return;
       viewEvent.emit('focus_msg_input');
     }
-    if (event.keyCode === 9) {
+    if (event.key === 'Tab') {
       if (lastCmdItem.className !== 'cmd-item') return;
       if (lastCmdItem !== activeElement) return;
       if (event.shiftKey) return;
