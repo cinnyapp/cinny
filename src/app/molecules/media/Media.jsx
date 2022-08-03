@@ -12,15 +12,19 @@ import DownloadSVG from '../../../../public/res/ic/outlined/download.svg';
 import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
 import PlaySVG from '../../../../public/res/ic/outlined/play.svg';
 
-// https://github.com/matrix-org/matrix-react-sdk/blob/a9e28db33058d1893d964ec96cd247ecc3d92fc3/src/utils/blobs.ts#L73
+// https://github.com/matrix-org/matrix-react-sdk/blob/cd15e08fc285da42134817cce50de8011809cd53/src/utils/blobs.ts#L73
 const ALLOWED_BLOB_MIMETYPES = [
   'image/jpeg',
   'image/gif',
   'image/png',
+  'image/apng',
+  'image/webp',
+  'image/avif',
 
   'video/mp4',
   'video/webm',
   'video/ogg',
+  'video/quicktime',
 
   'audio/mp4',
   'audio/webm',
@@ -37,6 +41,10 @@ const ALLOWED_BLOB_MIMETYPES = [
 function getBlobSafeMimeType(mimetype) {
   if (!ALLOWED_BLOB_MIMETYPES.includes(mimetype)) {
     return 'application/octet-stream';
+  }
+  // Required for Chromium browsers
+  if (mimetype === 'video/quicktime') {
+    return 'video/mp4';
   }
   return mimetype;
 }
