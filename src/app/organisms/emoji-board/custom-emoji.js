@@ -153,6 +153,7 @@ function getGlobalImagePacks(mx) {
   const packs = roomIds.flatMap((roomId) => {
     if (typeof rooms[roomId] !== 'object') return [];
     const room = mx.getRoom(roomId);
+    if (!room) return [];
     const stateKeys = Object.keys(rooms[roomId]);
 
     return stateKeys.map((stateKey) => {

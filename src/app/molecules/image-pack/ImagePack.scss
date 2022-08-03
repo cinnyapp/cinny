@@ -31,3 +31,17 @@
     gap: var(--sp-normal);
   }
 }
+
+.image-pack-global {
+  &__empty {
+    text-align: center;
+    padding: var(--sp-extra-loose) var(--sp-normal);
+  }
+  & .image-pack__global {
+    padding: 0 var(--sp-normal);
+    padding-bottom: var(--sp-normal);
+    &:first-child {
+      padding-top: var(--sp-normal);
+    }
+  }
+}
