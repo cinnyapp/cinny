@@ -92,6 +92,26 @@ function useRoomImagePack(roomId, stateKey) {
   };
 }
 
+function useUserImagePack() {
+  const mx = initMatrix.matrixClient;
+  const packEvent = mx.getAccountData('im.ponies.user_emotes');
+  const pack = useMemo(() => (
+    ImagePackBuilder.parsePack(mx.getUserId(), packEvent?.getContent() ?? {
+      pack: { display_name: 'Personal' },
+      images: {},
+    })
+  ), []);
+
+  const sendPackContent = (content) => {
+    mx.setAccountData('im.ponies.user_emotes', content);
+  };
+
+  return {
+    pack,
+    sendPackContent,
+  };
+}
+
 function useImagePackHandles(pack, sendPackContent) {
   const [, forceUpdate] = useReducer((count) => count + 1, 0);
 
@@ -309,4 +329,71 @@ ImagePack.propTypes = {
   handlePackDelete: PropTypes.func,
 };
 
+function ImagePackUser() {
+  const mx = initMatrix.matrixClient;
+  const [viewMore, setViewMore] = useState(false);
+
+  const { pack, sendPackContent } = useUserImagePack();
+
+  const {
+    handleAvatarChange,
+    handleEditProfile,
+    handleUsageChange,
+    handleRenameItem,
+    handleDeleteItem,
+    handleUsageItem,
+    handleAddItem,
+  } = useImagePackHandles(pack, sendPackContent);
+
+  const images = [...pack.images].slice(0, viewMore ? pack.images.size : 2);
+
+  return (
+    <div className="image-pack">
+      <ImagePackProfile
+        avatarUrl={pack.avatarUrl ? mx.mxcUrlToHttp(pack.avatarUrl, 42, 42, 'crop') : null}
+        displayName={pack.displayName ?? 'Personal'}
+        attribution={pack.attribution}
+        usage={getUsage(pack.usage)}
+        onUsageChange={handleUsageChange}
+        onAvatarChange={handleAvatarChange}
+        onEditProfile={handleEditProfile}
+      />
+      <ImagePackUpload onUpload={handleAddItem} />
+      { images.length === 0 ? null : (
+        <div>
+          <div className="image-pack__header">
+            <Text variant="b3">Image</Text>
+            <Text variant="b3">Shortcode</Text>
+            <Text variant="b3">Usage</Text>
+          </div>
+          {images.map(([shortcode, image]) => (
+            <ImagePackItem
+              key={shortcode}
+              url={mx.mxcUrlToHttp(image.mxc)}
+              shortcode={shortcode}
+              usage={getUsage(image.usage)}
+              onUsageChange={handleUsageItem}
+              onDelete={handleDeleteItem}
+              onRename={handleRenameItem}
+            />
+          ))}
+        </div>
+      )}
+      {(pack.images.size > 2) && (
+        <div className="image-pack__footer">
+          <Button onClick={() => setViewMore(!viewMore)}>
+            {
+              viewMore
+                ? 'View less'
+                : `View ${pack.images.size - 2} more`
+            }
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default ImagePack;
+
+export { ImagePackUser };

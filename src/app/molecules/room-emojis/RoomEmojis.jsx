@@ -115,7 +115,7 @@ function RoomEmojis({ roomId }) {
             />
           )) : (
             <div className="room-emojis__empty">
-              <Text>No emojis or stickers pack yet.</Text>
+              <Text>No emoji or sticker pack.</Text>
             </div>
           )
       }
