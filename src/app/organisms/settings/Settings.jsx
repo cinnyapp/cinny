@@ -24,7 +24,7 @@ import PopupWindow from '../../molecules/popup-window/PopupWindow';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
 import ImportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ImportE2ERoomKeys';
 import ExportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ExportE2ERoomKeys';
-import { ImagePackUser } from '../../molecules/image-pack/ImagePack';
+import { ImagePackUser, ImagePackGlobal } from '../../molecules/image-pack/ImagePack';
 
 import ProfileEditor from '../profile-editor/ProfileEditor';
 import CrossSigning from './CrossSigning';
@@ -172,7 +172,12 @@ function NotificationsSection() {
 }
 
 function EmojiSection() {
-  return <div className="settings-emoji__card"><ImagePackUser /></div>;
+  return (
+    <>
+      <div className="settings-emoji__card"><ImagePackUser /></div>
+      <div className="settings-emoji__card"><ImagePackGlobal /></div>
+    </>
+  );
 }
 
 function SecuritySection() {

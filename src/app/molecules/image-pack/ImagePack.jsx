@@ -1,5 +1,5 @@
 import React, {
-  useState, useMemo, useReducer,
+  useState, useMemo, useReducer, useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import './ImagePack.scss';
@@ -12,6 +12,7 @@ import Button from '../../atoms/button/Button';
 import Text from '../../atoms/text/Text';
 import Input from '../../atoms/input/Input';
 import Checkbox from '../../atoms/button/Checkbox';
+import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 
 import { ImagePack as ImagePackBuilder } from '../../organisms/emoji-board/custom-emoji';
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
@@ -394,6 +395,75 @@ function ImagePackUser() {
   );
 }
 
+function useGlobalImagePack() {
+  const [, forceUpdate] = useReducer((count) => count + 1, 0);
+  const mx = initMatrix.matrixClient;
+
+  const roomIdToStateKeys = new Map();
+  const globalContent = mx.getAccountData('im.ponies.emote_rooms')?.getContent() ?? { rooms: {} };
+  const { rooms } = globalContent;
+
+  Object.keys(rooms).forEach((roomId) => {
+    if (typeof rooms[roomId] !== 'object') return;
+    const room = mx.getRoom(roomId);
+    const stateKeys = Object.keys(rooms[roomId]);
+    if (!room || stateKeys.length === 0) return;
+    roomIdToStateKeys.set(roomId, stateKeys);
+  });
+
+  useEffect(() => {
+    const handleEvent = (event) => {
+      if (event.getType() === 'im.ponies.emote_rooms') forceUpdate();
+    };
+    mx.addListener('accountData', handleEvent);
+    return () => {
+      mx.removeListener('accountData', handleEvent);
+    };
+  }, []);
+
+  return roomIdToStateKeys;
+}
+
+function ImagePackGlobal() {
+  const mx = initMatrix.matrixClient;
+  const roomIdToStateKeys = useGlobalImagePack();
+
+  const handleChange = (roomId, stateKey) => {
+    removeGlobalImagePack(mx, roomId, stateKey);
+  };
+
+  return (
+    <div className="image-pack-global">
+      <MenuHeader>Global packs</MenuHeader>
+      <div>
+        {
+          roomIdToStateKeys.size > 0
+            ? [...roomIdToStateKeys].map(([roomId, stateKeys]) => {
+              const room = mx.getRoom(roomId);
+              return (
+                stateKeys.map((stateKey) => {
+                  const data = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
+                  const pack = ImagePackBuilder.parsePack(data?.getId(), data?.getContent());
+                  if (!pack) return null;
+                  return (
+                    <div className="image-pack__global" key={pack.id}>
+                      <Checkbox variant="positive" onToggle={() => handleChange(roomId, stateKey)} isActive />
+                      <div>
+                        <Text variant="b2">{pack.displayName ?? 'Unknown'}</Text>
+                        <Text variant="b3">{room.name}</Text>
+                      </div>
+                    </div>
+                  );
+                })
+              );
+            })
+            : <div className="image-pack-global__empty"><Text>No global packs</Text></div>
+        }
+      </div>
+    </div>
+  );
+}
+
 export default ImagePack;
 
-export { ImagePackUser };
+export { ImagePackUser, ImagePackGlobal };
