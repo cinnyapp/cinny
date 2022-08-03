@@ -18,8 +18,8 @@
     padding: var(--sp-ultra-tight) var(--sp-extra-tight);
     border-radius: calc(var(--bo-radius) / 2);
     cursor: pointer;
-    
-    @media (hover:hover) {
+
+    @media (hover: hover) {
       &:hover {
         background-color: var(--bg-surface-hover);
         box-shadow: var(--bs-surface-outline);
@@ -40,7 +40,7 @@
       margin: var(--sp-extra-loose);
     }
   }
-  
+
   & .tabs {
     position: sticky;
     top: 0;
@@ -54,7 +54,7 @@
       padding: 0 var(--sp-normal);
     }
   }
-  
+
   &__cards-wrapper {
     padding: 0 var(--sp-normal);
     @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
@@ -74,8 +74,9 @@
 }
 
 .room-settings .room-permissions__card,
+.room-settings .room-integrations__bridges,
 .room-settings .room-search__form,
-.room-settings .room-search__result-item ,
+.room-settings .room-search__result-item,
 .room-settings .room-members {
   @extend .room-settings__card;
 }

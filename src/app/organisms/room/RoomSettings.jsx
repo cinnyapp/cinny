@@ -23,6 +23,7 @@ import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
 import RoomAliases from '../../molecules/room-aliases/RoomAliases';
 import RoomHistoryVisibility from '../../molecules/room-history-visibility/RoomHistoryVisibility';
 import RoomEncryption from '../../molecules/room-encryption/RoomEncryption';
+import RoomIntegrations from '../../molecules/room-integrations/RoomIntegrations';
 import RoomPermissions from '../../molecules/room-permissions/RoomPermissions';
 import RoomMembers from '../../molecules/room-members/RoomMembers';
 import RoomEmojis from '../../molecules/room-emojis/RoomEmojis';
@@ -32,6 +33,7 @@ import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
+import CategoryIC from '../../../../public/res/ic/outlined/category.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
@@ -45,6 +47,7 @@ const tabText = {
   SEARCH: 'Search',
   MEMBERS: 'Members',
   EMOJIS: 'Emojis',
+  INTEGRATIONS: 'Integrations',
   PERMISSIONS: 'Permissions',
   SECURITY: 'Security',
 };
@@ -64,6 +67,10 @@ const tabItems = [{
 }, {
   iconSrc: EmojiIC,
   text: tabText.EMOJIS,
+  disabled: false,
+}, {
+  iconSrc: CategoryIC,
+  text: tabText.INTEGRATIONS,
   disabled: false,
 }, {
   iconSrc: ShieldUserIC,
@@ -205,6 +212,7 @@ function RoomSettings({ roomId }) {
             {selectedTab.text === tabText.SEARCH && <RoomSearch roomId={roomId} />}
             {selectedTab.text === tabText.MEMBERS && <RoomMembers roomId={roomId} />}
             {selectedTab.text === tabText.EMOJIS && <RoomEmojis roomId={roomId} />}
+            {selectedTab.text === tabText.INTEGRATIONS && <RoomIntegrations roomId={roomId} />}
             {selectedTab.text === tabText.PERMISSIONS && <RoomPermissions roomId={roomId} />}
             {selectedTab.text === tabText.SECURITY && <SecuritySettings roomId={roomId} />}
           </div>
