@@ -196,6 +196,41 @@ Image.propTypes = {
   type: PropTypes.string,
 };
 
+function Sticker({
+  name, link, file, type,
+}) {
+  const [url, setUrl] = useState(null);
+
+  useEffect(() => {
+    let unmounted = false;
+    async function fetchUrl() {
+      const myUrl = await getUrl(link, type, file);
+      if (unmounted) return;
+      setUrl(myUrl);
+    }
+    fetchUrl();
+    return () => {
+      unmounted = true;
+    };
+  }, []);
+
+  return (
+    <div className="sticker-container">
+      { url !== null && <img src={url || link} alt={name} />}
+    </div>
+  );
+}
+Sticker.defaultProps = {
+  file: null,
+  type: '',
+};
+Sticker.propTypes = {
+  name: PropTypes.string.isRequired,
+  link: PropTypes.string.isRequired,
+  file: PropTypes.shape({}),
+  type: PropTypes.string,
+};
+
 function Audio({
   name, link, type, file,
 }) {
@@ -315,5 +350,5 @@ Video.propTypes = {
 };
 
 export {
-  File, Image, Audio, Video,
+  File, Image, Sticker, Audio, Video,
 };

@@ -411,9 +411,9 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
         count: 0,
         users: [],
         isActive: false,
-        shortcode,
       };
     }
+    if (shortcode) reaction.shortcode = shortcode;
     if (count) {
       reaction.count = count;
     } else {
@@ -608,7 +608,7 @@ function genMediaContent(mE) {
   if (typeof mediaMXC === 'undefined' || mediaMXC === '') return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
 
   let msgType = mE.getContent()?.msgtype;
-  if (mE.getType() === 'm.sticker') msgType = 'm.image';
+  if (mE.getType() === 'm.sticker') msgType = 'm.sticker';
 
   switch (msgType) {
     case 'm.file':
@@ -626,6 +626,15 @@ function genMediaContent(mE) {
           name={mContent.body}
           width={typeof mContent.info?.w === 'number' ? mContent.info?.w : null}
           height={typeof mContent.info?.h === 'number' ? mContent.info?.h : null}
+          link={mx.mxcUrlToHttp(mediaMXC)}
+          file={isEncryptedFile ? mContent.file : null}
+          type={mContent.info?.mimetype}
+        />
+      );
+    case 'm.sticker':
+      return (
+        <Media.Sticker
+          name={mContent.body}
           link={mx.mxcUrlToHttp(mediaMXC)}
           file={isEncryptedFile ? mContent.file : null}
           type={mContent.info?.mimetype}

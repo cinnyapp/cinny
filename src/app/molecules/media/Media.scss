@@ -42,6 +42,15 @@
   background-size: cover;
 }
 
+.sticker-container {
+  display: inline-flex;
+  max-width: 128px;
+  width: 100%;
+  & img {
+    width: 100% !important;
+  }
+}
+
 .image-container {
   & img {
     max-width: unset !important;
