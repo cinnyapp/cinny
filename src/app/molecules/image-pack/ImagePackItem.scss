@@ -8,6 +8,11 @@
   align-items: center;
   gap: var(--sp-normal);
 
+  & .avatar-container img {
+    object-fit: contain;
+    border-radius: 0;
+  }
+
   &__content {
     @extend .cp-fx__item-one;
   }
