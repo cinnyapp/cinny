@@ -70,7 +70,7 @@ const EmojiGroup = React.memo(({ name, groupEmojis }) => {
                     unicode={`:${emoji.shortcode}:`}
                     shortcodes={emoji.shortcode}
                     src={initMatrix.matrixClient.mxcUrlToHttp(emoji.mxc)}
-                    data-mx-emoticon
+                    data-mx-emoticon={emoji.mxc}
                   />
                 )
             }
@@ -141,10 +141,13 @@ function EmojiBoard({ onSelect, searchRef }) {
   function getEmojiDataFromTarget(target) {
     const unicode = target.getAttribute('unicode');
     const hexcode = target.getAttribute('hexcode');
+    const mxc = target.getAttribute('data-mx-emoticon');
     let shortcodes = target.getAttribute('shortcodes');
     if (typeof shortcodes === 'undefined') shortcodes = undefined;
     else shortcodes = shortcodes.split(',');
-    return { unicode, hexcode, shortcodes };
+    return {
+      unicode, hexcode, shortcodes, mxc,
+    };
   }
 
   function selectEmoji(e) {
