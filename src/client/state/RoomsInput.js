@@ -93,7 +93,6 @@ function getVideoThumbnail(video, width, height, mimeType) {
           h: targetHeight,
           mimetype: thumbnail.type,
           size: thumbnail.size,
-          [blurhashField]: encodeBlurhash(video),
         },
       });
     }, mimeType);
@@ -317,7 +316,6 @@ class RoomsInput extends EventEmitter {
 
       info.w = img.width;
       info.h = img.height;
-
       info[blurhashField] = encodeBlurhash(img);
 
       content.msgtype = 'm.image';
@@ -328,8 +326,11 @@ class RoomsInput extends EventEmitter {
 
       try {
         const video = await loadVideo(file);
+
         info.w = video.videoWidth;
         info.h = video.videoHeight;
+        info[blurhashField] = encodeBlurhash(video);
+
         const thumbnailData = await getVideoThumbnail(video, video.videoWidth, video.videoHeight, 'image/jpeg');
         const thumbnailUploadData = await this.uploadFile(roomId, thumbnailData.thumbnail);
         info.thumbnail_info = thumbnailData.info;
