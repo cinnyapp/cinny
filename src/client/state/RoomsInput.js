@@ -113,8 +113,11 @@ function bindReplyToContent(roomId, reply, content) {
 //
 // This includes inserting any custom emoji that might be relevant, and (only if the
 // user has enabled it in their settings) formatting the message using markdown.
-function formatAndEmojifyText(room, text) {
-  const allEmoji = getShortcodeToEmoji(room);
+function formatAndEmojifyText(mx, roomList, roomId, text) {
+  const room = mx.getRoom(roomId);
+  const parentIds = roomList.getAllParentSpaces(roomId);
+  const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
+  const allEmoji = getShortcodeToEmoji(mx, [room, ...parentRooms]);
 
   // Start by applying markdown formatting (if relevant)
   let formattedText;
@@ -158,10 +161,11 @@ function formatAndEmojifyText(room, text) {
 }
 
 class RoomsInput extends EventEmitter {
-  constructor(mx) {
+  constructor(mx, roomList) {
     super();
 
     this.matrixClient = mx;
+    this.roomList = roomList;
     this.roomIdToInput = new Map();
   }
 
@@ -262,7 +266,9 @@ class RoomsInput extends EventEmitter {
 
       // Apply formatting if relevant
       const formattedBody = formatAndEmojifyText(
-        this.matrixClient.getRoom(roomId),
+        this.matrixClient,
+        this.roomList,
+        roomId,
         input.message,
       );
       if (formattedBody !== input.message) {
@@ -401,7 +407,9 @@ class RoomsInput extends EventEmitter {
 
     // Apply formatting if relevant
     const formattedBody = formatAndEmojifyText(
-      this.matrixClient.getRoom(roomId),
+      this.matrixClient,
+      this.roomList,
+      roomId,
       editedBody,
     );
     if (formattedBody !== editedBody) {

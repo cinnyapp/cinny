@@ -214,7 +214,7 @@ function getRelevantPacks(mx, rooms) {
   );
 }
 
-function getShortcodeToEmoji(room) {
+function getShortcodeToEmoji(mx, rooms) {
   const allEmoji = new Map();
 
   emojis.forEach((emoji) => {
@@ -227,7 +227,7 @@ function getShortcodeToEmoji(room) {
     }
   });
 
-  getRelevantPacks(room.client, [room])
+  getRelevantPacks(mx, rooms)
     .flatMap((pack) => pack.getEmojis())
     .forEach((emoji) => {
       allEmoji.set(emoji.shortcode, emoji);
