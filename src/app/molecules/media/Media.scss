@@ -44,7 +44,8 @@
   background-size: cover;
 }
 
-.image-container {
+.image-container,
+.video-container {
   & img,
   & canvas {
     position: absolute;
@@ -59,6 +60,7 @@
 .video-container {
   & .ic-btn-surface {
     background-color: var(--bg-surface-low);
+    position: absolute;
   }
   video {
     width: 100%;

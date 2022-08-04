@@ -657,6 +657,7 @@ function genMediaContent(mE) {
           height={typeof mContent.info?.h === 'number' ? mContent.info?.h : null}
           file={isEncryptedFile ? mContent.file : null}
           type={mContent.info?.mimetype}
+          blurhash={blurhash}
         />
       );
     default:

@@ -177,8 +177,8 @@ function Image({
     <div className="file-container">
       <FileHeader name={name} link={url || link} type={type} external />
       <div style={{ height: width !== null ? getNativeHeight(width, height) : 'unset' }} className="image-container">
-        {blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
-        {url !== null && <img src={url || link} alt={name} />}
+        { blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
+        { url !== null && <img src={url || link} alt={name} />}
       </div>
     </div>
   );
@@ -244,8 +244,8 @@ Audio.propTypes = {
 };
 
 function Video({
-  name, link, thumbnail,
-  width, height, file, type, thumbnailFile, thumbnailType,
+  name, link, thumbnail, thumbnailFile, thumbnailType,
+  width, height, file, type, blurhash,
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState(null);
@@ -281,10 +281,11 @@ function Video({
       <div
         style={{
           height: width !== null ? getNativeHeight(width, height) : 'unset',
-          backgroundImage: thumbUrl === null ? 'none' : `url(${thumbUrl}`,
         }}
         className="video-container"
       >
+        { url === null && blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
+        { url === null && thumbUrl !== null && <img src={thumbUrl} />}
         { url === null && isLoading && <Spinner size="small" /> }
         { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
         { url !== null && (
@@ -302,20 +303,22 @@ Video.defaultProps = {
   height: null,
   file: null,
   thumbnail: null,
-  type: '',
   thumbnailType: null,
   thumbnailFile: null,
+  type: '',
+  blurhash: null,
 };
 Video.propTypes = {
   name: PropTypes.string.isRequired,
   link: PropTypes.string.isRequired,
   thumbnail: PropTypes.string,
+  thumbnailFile: PropTypes.shape({}),
+  thumbnailType: PropTypes.string,
   width: PropTypes.number,
   height: PropTypes.number,
   file: PropTypes.shape({}),
   type: PropTypes.string,
-  thumbnailFile: PropTypes.shape({}),
-  thumbnailType: PropTypes.string,
+  blurhash: PropTypes.string,
 };
 
 export {
