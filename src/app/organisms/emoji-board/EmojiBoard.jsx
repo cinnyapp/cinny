@@ -203,10 +203,15 @@ function EmojiBoard({ onSelect, searchRef }) {
         return;
       }
 
-      const room = initMatrix.matrixClient.getRoom(selectedRoomId);
+      const mx = initMatrix.matrixClient;
+      const room = mx.getRoom(selectedRoomId);
+      const parentIds = initMatrix.roomList.getAllParentSpaces(room.roomId);
+      const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
       if (room) {
-        const packs = getRelevantPacks(room.client, [room])
-          .filter((pack) => pack.getEmojis().length !== 0);
+        const packs = getRelevantPacks(
+          room.client,
+          [room, ...parentRooms],
+        ).filter((pack) => pack.getEmojis().length !== 0);
 
         // Set an index for each pack so that we know where to jump when the user uses the nav
         for (let i = 0; i < packs.length; i += 1) {

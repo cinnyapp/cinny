@@ -248,9 +248,9 @@ function getShortcodeToCustomEmoji(room) {
   return allEmoji;
 }
 
-function getEmojiForCompletion(room) {
+function getEmojiForCompletion(mx, rooms) {
   const allEmoji = new Map();
-  getRelevantPacks(room.client, [room])
+  getRelevantPacks(mx, rooms)
     .flatMap((pack) => pack.getEmojis())
     .forEach((emoji) => {
       allEmoji.set(emoji.shortcode, emoji);
