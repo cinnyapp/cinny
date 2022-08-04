@@ -69,9 +69,8 @@ async function getUrl(link, type, decryptData) {
   }
 }
 
-function getNativeHeight(width, height) {
-  const MEDIA_MAX_WIDTH = 296;
-  const scale = MEDIA_MAX_WIDTH / width;
+function getNativeHeight(width, height, maxWidth = 296) {
+  const scale = maxWidth / width;
   return scale * height;
 }
 
@@ -197,7 +196,7 @@ Image.propTypes = {
 };
 
 function Sticker({
-  name, link, file, type,
+  name, height, width, link, file, type,
 }) {
   const [url, setUrl] = useState(null);
 
@@ -215,8 +214,8 @@ function Sticker({
   }, []);
 
   return (
-    <div className="sticker-container">
-      { url !== null && <img src={url || link} alt={name} />}
+    <div className="sticker-container" style={{ height: width !== null ? getNativeHeight(width, height, 128) : 'unset' }}>
+      { url !== null && <img src={url || link} title={name} alt={name} />}
     </div>
   );
 }
@@ -226,6 +225,10 @@ Sticker.defaultProps = {
 };
 Sticker.propTypes = {
   name: PropTypes.string.isRequired,
+  width: null,
+  height: null,
+  width: PropTypes.number,
+  height: PropTypes.number,
   link: PropTypes.string.isRequired,
   file: PropTypes.shape({}),
   type: PropTypes.string,
