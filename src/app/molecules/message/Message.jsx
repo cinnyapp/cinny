@@ -25,6 +25,7 @@ import Tooltip from '../../atoms/tooltip/Tooltip';
 import Input from '../../atoms/input/Input';
 import Avatar from '../../atoms/avatar/Avatar';
 import IconButton from '../../atoms/button/IconButton';
+import Time from '../../atoms/time/Time';
 import ContextMenu, { MenuHeader, MenuItem, MenuBorder } from '../../atoms/context-menu/ContextMenu';
 import * as Media from '../media/Media';
 
@@ -68,7 +69,7 @@ const MessageAvatar = React.memo(({
 ));
 
 const MessageHeader = React.memo(({
-  userId, username, time,
+  userId, username, timestamp,
 }) => (
   <div className="message__header">
     <Text
@@ -82,14 +83,16 @@ const MessageHeader = React.memo(({
       <span>{twemojify(userId)}</span>
     </Text>
     <div className="message__time">
-      <Text variant="b3">{time}</Text>
+      <Text variant="b3">
+        <Time timestamp={timestamp} />
+      </Text>
     </div>
   </div>
 ));
 MessageHeader.propTypes = {
   userId: PropTypes.string.isRequired,
   username: PropTypes.string.isRequired,
-  time: PropTypes.string.isRequired,
+  timestamp: PropTypes.number.isRequired,
 };
 
 function MessageReply({ name, color, body }) {
@@ -674,7 +677,7 @@ function getEditedBody(editedMEvent) {
 }
 
 function Message({
-  mEvent, isBodyOnly, roomTimeline, focus, time,
+  mEvent, isBodyOnly, roomTimeline, focus, timestamp,
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const roomId = mEvent.getRoomId();
@@ -735,7 +738,7 @@ function Message({
       }
       <div className="message__main-container">
         {!isBodyOnly && (
-          <MessageHeader userId={senderId} username={username} time={time} />
+          <MessageHeader userId={senderId} username={username} timestamp={timestamp} />
         )}
         {roomTimeline && isReply && (
           <MessageReplyWrapper
@@ -789,7 +792,7 @@ Message.propTypes = {
   isBodyOnly: PropTypes.bool,
   roomTimeline: PropTypes.shape({}),
   focus: PropTypes.bool,
-  time: PropTypes.string.isRequired,
+  timestamp: PropTypes.number.isRequired,
 };
 
 export { Message, MessageReply, PlaceholderMessage };
