@@ -285,7 +285,10 @@ function Video({
         className="video-container"
       >
         { url === null && blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
-        { url === null && thumbUrl !== null && <img src={thumbUrl} />}
+        { url === null && thumbUrl !== null && (
+          /* eslint-disable-next-line jsx-a11y/alt-text */
+          <img src={thumbUrl} />
+        )}
         { url === null && isLoading && <Spinner size="small" /> }
         { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
         { url !== null && (
