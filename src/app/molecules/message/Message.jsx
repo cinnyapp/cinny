@@ -162,8 +162,8 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
   }, []);
 
   const focusReply = (ev) => {
-    if (!ev.keyCode || ev.keyCode === 32 || ev.keyCode === 13) {
-      if (ev.keyCode) ev.preventDefault();
+    if (!ev.key || ev.key === ' ' || ev.key === 'Enter') {
+      if (ev.key) ev.preventDefault();
       if (reply?.event === null) return;
       if (reply?.event.isRedacted()) return;
       roomTimeline.loadEventTimeline(eventId);
@@ -277,7 +277,7 @@ function MessageEdit({ body, onSave, onCancel }) {
   }, []);
 
   const handleKeyDown = (e) => {
-    if (e.keyCode === 13 && e.shiftKey === false) {
+    if (e.key === 'Enter' && e.shiftKey === false) {
       e.preventDefault();
       onSave(editInputRef.current.value);
     }
