@@ -123,7 +123,7 @@ function formatAndEmojifyText(mx, roomList, roomId, text) {
     formattedText = text;
   }
 
-  const MXID_REGEX = /\B@\S+:\S+\.\S+/g;
+  const MXID_REGEX = /\B@\S+:\S+\.\S+[^.,:;?!\s]/g;
   Array.from(formattedText.matchAll(MXID_REGEX))
     .filter((mxidMatch) => userIdsToDisplayNames[mxidMatch[0]])
     .reverse()
