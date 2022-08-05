@@ -69,7 +69,7 @@ const MessageAvatar = React.memo(({
 ));
 
 const MessageHeader = React.memo(({
-  userId, username, timestamp,
+  userId, username, timestamp, fullTime,
 }) => (
   <div className="message__header">
     <Text
@@ -84,15 +84,19 @@ const MessageHeader = React.memo(({
     </Text>
     <div className="message__time">
       <Text variant="b3">
-        <Time timestamp={timestamp} />
+        <Time timestamp={timestamp} fullTime={fullTime} />
       </Text>
     </div>
   </div>
 ));
+MessageHeader.defaultProps = {
+  fullTime: false,
+};
 MessageHeader.propTypes = {
   userId: PropTypes.string.isRequired,
   username: PropTypes.string.isRequired,
   timestamp: PropTypes.number.isRequired,
+  fullTime: PropTypes.bool,
 };
 
 function MessageReply({ name, color, body }) {
@@ -677,7 +681,7 @@ function getEditedBody(editedMEvent) {
 }
 
 function Message({
-  mEvent, isBodyOnly, roomTimeline, focus, timestamp,
+  mEvent, isBodyOnly, roomTimeline, focus, fullTime,
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const roomId = mEvent.getRoomId();
@@ -738,7 +742,12 @@ function Message({
       }
       <div className="message__main-container">
         {!isBodyOnly && (
-          <MessageHeader userId={senderId} username={username} timestamp={timestamp} />
+          <MessageHeader
+            userId={senderId}
+            username={username}
+            timestamp={mEvent.getTs()}
+            fullTime={fullTime}
+          />
         )}
         {roomTimeline && isReply && (
           <MessageReplyWrapper
@@ -786,13 +795,14 @@ Message.defaultProps = {
   isBodyOnly: false,
   focus: false,
   roomTimeline: null,
+  fullTime: false,
 };
 Message.propTypes = {
   mEvent: PropTypes.shape({}).isRequired,
   isBodyOnly: PropTypes.bool,
   roomTimeline: PropTypes.shape({}),
   focus: PropTypes.bool,
-  timestamp: PropTypes.number.isRequired,
+  fullTime: PropTypes.bool,
 };
 
 export { Message, MessageReply, PlaceholderMessage };

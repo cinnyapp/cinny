@@ -120,14 +120,13 @@ function RoomSearch({ roomId }) {
   const renderTimeline = (timeline) => (
     <div className="room-search__result-item" key={timeline[0].getId()}>
       { timeline.map((mEvent) => {
-        const time = dateFormat(mEvent.getDate(), 'dd/mm/yyyy - hh:MM TT');
         const id = mEvent.getId();
         return (
           <React.Fragment key={id}>
             <Message
               mEvent={mEvent}
               isBodyOnly={false}
-              time={time}
+              fullTime
             />
             <Button onClick={() => selectRoom(roomId, id)}>View</Button>
           </React.Fragment>

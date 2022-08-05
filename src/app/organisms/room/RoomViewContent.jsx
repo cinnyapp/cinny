@@ -146,7 +146,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
       isBodyOnly={isBodyOnly}
       roomTimeline={roomTimeline}
       focus={isFocus}
-      timestamp={timestamp}
+      fullTime={false}
     />
   );
 }

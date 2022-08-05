@@ -4,29 +4,41 @@ import PropTypes from 'prop-types';
 import dateFormat from 'dateformat';
 import { isInSameDay } from '../../../util/common';
 
-function Time({ timestamp }) {
+function Time({ timestamp, fullTime }) {
   const date = new Date(timestamp);
 
-  const compareDate = new Date();
-  const isToday = isInSameDay(date, compareDate);
+  const formattedFullTime = dateFormat(date, 'dd mmmm yyyy, hh:MM TT');
+  let formattedDate = formattedFullTime;
 
-  compareDate.setDate(compareDate.getDate() - 1);
-  const isYesterday = isInSameDay(date, compareDate);
+  if (!fullTime) {
+    const compareDate = new Date();
+    const isToday = isInSameDay(date, compareDate);
+    compareDate.setDate(compareDate.getDate() - 1);
+    const isYesterday = isInSameDay(date, compareDate);
 
-  const formattedDate = dateFormat(date, isToday || isYesterday ? 'hh:MM TT' : 'dd/mm/yyyy');
+    formattedDate = dateFormat(date, isToday || isYesterday ? 'hh:MM TT' : 'dd/mm/yyyy');
+    if (isYesterday) {
+      formattedDate = `Yesterday, ${formattedDate}`;
+    }
+  }
 
   return (
     <time
       dateTime={date.toISOString()}
-      title={dateFormat(date, 'dd mmmm yyyy, hh:MM TT')}
+      title={formattedFullTime}
     >
-      {isYesterday ? `Yesterday, ${formattedDate}` : formattedDate}
+      {formattedDate}
     </time>
   );
 }
 
+Time.defaultProps = {
+  fullTime: false,
+};
+
 Time.propTypes = {
   timestamp: PropTypes.number.isRequired,
+  fullTime: PropTypes.bool,
 };
 
 export default Time;
