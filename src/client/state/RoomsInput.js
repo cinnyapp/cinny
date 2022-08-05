@@ -1,11 +1,8 @@
 import EventEmitter from 'events';
-import { micromark } from 'micromark';
-import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
-import { math } from 'micromark-extension-math';
 import { encode } from 'blurhash';
+import SimpleMarkdown from 'simple-markdown';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
-import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
 import { getBlobSafeMimeType } from '../../util/mimetypes';
 import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
@@ -103,15 +100,33 @@ function getVideoThumbnail(video, width, height, mimeType) {
   });
 }
 
+const rules = {
+  ...SimpleMarkdown.defaultRules,
+  paragraph: {
+    ...SimpleMarkdown.defaultRules.paragraph,
+    html: (node, output, state) => SimpleMarkdown.htmlTag('p', output(node.content, state)),
+    // html: (node, output, state) => output(node.content, state),
+  },
+  spoiler: {
+    order: SimpleMarkdown.defaultRules.em.order - 0.5,
+    match: (source) => /^\|\|([\s\S]+?)\|\|/.exec(source),
+    parse: (capture, parse, state) => ({
+      content: parse(capture[1], state),
+    }),
+    html: (node, output) => `<span data-mx-spoiler>${output(node.content)}</span>`,
+  },
+};
+
+const parser = SimpleMarkdown.parserFor(rules);
+const htmlOutput = SimpleMarkdown.outputFor(rules, 'html');
+
 function getFormattedBody(markdown) {
-  const result = micromark(markdown, {
-    extensions: [gfm(), spoilerExtension(), math()],
-    htmlExtensions: [gfmHtml(), spoilerExtensionHtml, mathExtensionHtml],
-  });
-  const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
-  if (bodyParts === null) return result;
-  if (bodyParts[2].indexOf('</p>') >= 0) return result;
-  return bodyParts[2];
+  const result = htmlOutput(parser(markdown));
+  // const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
+  // if (bodyParts === null) return result;
+  // if (bodyParts[2].indexOf('</p>') >= 0) return result;
+  // return bodyParts[2];
+  return result;
 }
 
 function getReplyFormattedBody(roomId, reply) {
