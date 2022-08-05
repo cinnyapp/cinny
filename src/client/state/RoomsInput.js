@@ -111,6 +111,7 @@ function bindReplyToContent(roomId, reply, content) {
 
 function formatAndEmojifyText(mx, roomList, roomId, text) {
   const room = mx.getRoom(roomId);
+  const { userIdsToDisplayNames } = room.currentState;
   const parentIds = roomList.getAllParentSpaces(roomId);
   const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
   const allEmoji = getShortcodeToEmoji(mx, [room, ...parentRooms]);
@@ -122,13 +123,24 @@ function formatAndEmojifyText(mx, roomList, roomId, text) {
     formattedText = text;
   }
 
+  const MXID_REGEX = /\B@\S+:\S+\.\S+/g;
+  Array.from(formattedText.matchAll(MXID_REGEX))
+    .filter((mxidMatch) => userIdsToDisplayNames[mxidMatch[0]])
+    .reverse()
+    .forEach((mxidMatch) => {
+      const tag = `<a href="https://matrix.to/#/${mxidMatch[0]}">${userIdsToDisplayNames[mxidMatch[0]]}</a>`;
+
+      formattedText = formattedText.substr(0, mxidMatch.index)
+        + tag
+        + formattedText.substr(mxidMatch.index + mxidMatch[0].length);
+    });
+
   const SHORTCODE_REGEX = /\B:([\w-]+):\B/g;
   Array.from(formattedText.matchAll(SHORTCODE_REGEX))
     .filter((shortcodeMatch) => allEmoji.has(shortcodeMatch[1]))
     .reverse() /* Reversing the array ensures that indices are preserved as we start replacing */
     .forEach((shortcodeMatch) => {
       const emoji = allEmoji.get(shortcodeMatch[1]);
-      console.log(shortcodeMatch);
 
       let tag;
       if (emoji.mxc) {

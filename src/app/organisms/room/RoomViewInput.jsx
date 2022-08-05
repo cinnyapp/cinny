@@ -129,7 +129,9 @@ function RoomViewInput({
   function firedCmd(cmdData) {
     const msg = textAreaRef.current.value;
     textAreaRef.current.value = replaceCmdWith(
-      msg, cmdCursorPos, typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '',
+      msg,
+      cmdCursorPos,
+      typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '',
     );
     deactivateCmd();
   }
