@@ -5,6 +5,7 @@ import './Auth.scss';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Formik } from 'formik';
 
+import zxcvbn from 'zxcvbn';
 import * as auth from '../../../client/action/auth';
 import cons from '../../../client/state/cons';
 import { Debounce, getUrlPrams } from '../../../util/common';
@@ -30,8 +31,6 @@ const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
 const BAD_LOCALPART_ERROR = 'Username can only contain characters a-z, 0-9, or \'=_-./\'';
 const USER_ID_TOO_LONG_ERROR = 'Your user ID, including the hostname, can\'t be more than 255 characters long.';
 
-const PASSWORD_STRENGHT_REGEX = /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,127}$/;
-const BAD_PASSWORD_ERROR = 'Password must contain at least 1 lowercase, 1 uppercase, 1 number, 1 non-alphanumeric character, 8-127 characters with no space.';
 const CONFIRM_PASSWORD_ERROR = 'Passwords don\'t match.';
 
 const EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -317,8 +316,11 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
     if (values.username.length > 0 && !isValidInput(values.username, LOCALPART_SIGNUP_REGEX)) {
       errors.username = BAD_LOCALPART_ERROR;
     }
-    if (values.password.length > 0 && !isValidInput(values.password, PASSWORD_STRENGHT_REGEX)) {
-      errors.password = BAD_PASSWORD_ERROR;
+    if (values.password.length > 0) {
+      const result = zxcvbn(values.password);
+      if (result.feedback) {
+        errors.password = result.feedback.warning;
+      }
     }
     if (values.confirmPassword.length > 0
       && !isValidInput(values.confirmPassword, values.password)) {
