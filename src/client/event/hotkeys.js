@@ -52,7 +52,7 @@ function listenKeyboard(event) {
   if (!event.ctrlKey && !event.altKey && !event.metaKey) {
     if (navigation.isRawModalVisible) return;
 
-    if (event.code === 'Escape') {
+    if (event.key === 'Escape') {
       if (navigation.isRoomSettings) {
         toggleRoomSettings();
         return;
