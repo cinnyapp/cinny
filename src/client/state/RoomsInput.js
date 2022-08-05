@@ -115,6 +115,33 @@ const rules = {
     }),
     html: (node, output) => `<span data-mx-spoiler>${output(node.content)}</span>`,
   },
+  sup: {
+    order: SimpleMarkdown.defaultRules.del.order + 0.5,
+    match: (source) => /^\^([\s\S]+?)\^(?!\^)/.exec(source),
+    parse: (capture, parse, state) => ({
+      content: parse(capture[1], state),
+    }),
+    html: (node, output) => `<sup>${output(node.content)}</sup>`,
+  },
+  sub: {
+    order: SimpleMarkdown.defaultRules.del.order + 0.5,
+    match: (source) => /^~([\s\S]+?)~(?!~)/.exec(source),
+    parse: (capture, parse, state) => ({
+      content: parse(capture[1], state),
+    }),
+    html: (node, output) => `<sub>${output(node.content)}</sub>`,
+  },
+  math: {
+    order: SimpleMarkdown.defaultRules.del.order + 0.5,
+    match: (source) => /^\$(\S[\s\S]+?\S|\S)\$(?!\d)/.exec(source),
+    parse: (capture) => ({
+      content: [{
+        content: capture[1],
+        type: 'text',
+      }],
+    }),
+    html: (node, output) => `<span data-mx-maths="${output(node.content)}"><code>${output(node.content)}</code></span>`,
+  },
 };
 
 const parser = SimpleMarkdown.parserFor(rules);

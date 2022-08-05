@@ -8,9 +8,6 @@ const mathExtensionHtml = {
     mathFlowFenceMeta() {
       this.buffer();
     },
-    mathText() {
-      this.buffer();
-    },
   },
   exit: {
     mathFlow() {
@@ -35,17 +32,6 @@ const mathExtensionHtml = {
       this.resume();
     },
     mathFlowValue(token) {
-      this.raw(this.sliceSerialize(token));
-    },
-    mathText() {
-      const value = this.encode(this.resume());
-      this.tag('<span data-mx-maths="');
-      this.tag(value);
-      this.tag('"><code>');
-      this.raw(value);
-      this.tag('</code></span>');
-    },
-    mathTextData(token) {
       this.raw(this.sliceSerialize(token));
     },
   },
