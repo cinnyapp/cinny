@@ -337,6 +337,7 @@ function RoomViewInput({
           <ScrollView autoHide>
             <Text className="room-input__textarea-wrapper">
               <TextareaAutosize
+                dir="auto"
                 id="message-textarea"
                 ref={textAreaRef}
                 onChange={handleMsgTyping}
