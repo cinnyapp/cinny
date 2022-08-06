@@ -207,30 +207,7 @@ function RoomViewInput({
   };
 
   const handleSendSticker = async (data) => {
-    const { mxc: url, body, httpUrl } = data;
-    const info = {};
-
-    const img = new Image();
-    img.src = httpUrl;
-
-    try {
-      const res = await fetch(httpUrl);
-      const blob = await res.blob();
-      info.w = img.width;
-      info.h = img.height;
-      info.mimetype = blob.type;
-      info.size = blob.size;
-      info.thumbnail_info = { ...info };
-      info.thumbnail_url = url;
-    } catch {
-      // send sticker without info
-    }
-
-    mx.sendEvent(roomId, 'm.sticker', {
-      body,
-      url,
-      info,
-    });
+    roomsInput.sendSticker(roomId, data);
   };
 
   function processTyping(msg) {

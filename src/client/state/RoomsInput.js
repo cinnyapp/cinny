@@ -6,7 +6,6 @@ import { math } from 'micromark-extension-math';
 import { encode } from 'blurhash';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
-import { getImageDimension } from '../../util/common';
 import cons from './cons';
 import settings from './settings';
 
@@ -309,6 +308,34 @@ class RoomsInput extends EventEmitter {
     }
 
     if (this.isSending(roomId)) this.roomIdToInput.delete(roomId);
+    this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
+  }
+
+  async sendSticker(roomId, data) {
+    const { mxc: url, body, httpUrl } = data;
+    const info = {};
+
+    const img = new Image();
+    img.src = httpUrl;
+
+    try {
+      const res = await fetch(httpUrl);
+      const blob = await res.blob();
+      info.w = img.width;
+      info.h = img.height;
+      info.mimetype = blob.type;
+      info.size = blob.size;
+      info.thumbnail_info = { ...info };
+      info.thumbnail_url = url;
+    } catch {
+      // send sticker without info
+    }
+
+    this.matrixClient.sendEvent(roomId, 'm.sticker', {
+      body,
+      url,
+      info,
+    });
     this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
   }
 
