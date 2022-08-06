@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomSearch.scss';
 
-import dateFormat from 'dateformat';
-
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { selectRoom } from '../../../client/action/navigation';
