@@ -246,7 +246,7 @@ const MessageBody = React.memo(({
 
   return (
     <div className="message__body">
-      <div className={`text ${emojiOnly ? 'text-h1' : 'text-b1'}`}>
+      <div dir="auto" className={`text ${emojiOnly ? 'text-h1' : 'text-b1'}`}>
         { msgType === 'm.emote' && (
           <>
             {'* '}
