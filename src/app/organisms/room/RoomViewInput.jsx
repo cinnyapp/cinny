@@ -8,7 +8,7 @@ import TextareaAutosize from 'react-autosize-textarea';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
-import { openEmojiBoard } from '../../../client/action/navigation';
+import { openEmojiBoard, openReusableContextMenu } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
 import { bytesToSize, getEventCords } from '../../../util/common';
 import { getUsername } from '../../../util/matrixUtil';
@@ -20,9 +20,12 @@ import IconButton from '../../atoms/button/IconButton';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import { MessageReply } from '../../molecules/message/Message';
 
+import StickerBoard from '../sticker-board/StickerBoard';
+
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import SendIC from '../../../../public/res/ic/outlined/send.svg';
+import StickerIC from '../../../../public/res/ic/outlined/sticker.svg';
 import ShieldIC from '../../../../public/res/ic/outlined/shield.svg';
 import VLCIC from '../../../../public/res/ic/outlined/vlc.svg';
 import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
@@ -128,7 +131,11 @@ function RoomViewInput({
   }
   function firedCmd(cmdData) {
     const msg = textAreaRef.current.value;
-    textAreaRef.current.value = replaceCmdWith(msg, cmdCursorPos, typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '');
+    textAreaRef.current.value = replaceCmdWith(
+      msg,
+      cmdCursorPos,
+      typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '',
+    );
     deactivateCmd();
   }
 
@@ -197,6 +204,33 @@ function RoomViewInput({
     viewEvent.emit('message_sent');
     textAreaRef.current.style.height = 'unset';
     if (replyTo !== null) setReplyTo(null);
+  };
+
+  const handleSendSticker = async (data) => {
+    const { mxc: url, body, httpUrl } = data;
+    const info = {};
+
+    const img = new Image();
+    img.src = httpUrl;
+
+    try {
+      const res = await fetch(httpUrl);
+      const blob = await res.blob();
+      info.w = img.width;
+      info.h = img.height;
+      info.mimetype = blob.type;
+      info.size = blob.size;
+      info.thumbnail_info = { ...info };
+      info.thumbnail_url = url;
+    } catch {
+      // send sticker without info
+    }
+
+    mx.sendEvent(roomId, 'm.sticker', {
+      body,
+      url,
+      info,
+    });
   };
 
   function processTyping(msg) {
@@ -338,6 +372,29 @@ function RoomViewInput({
           {isMarkdown && <RawIcon size="extra-small" src={MarkdownIC} />}
         </div>
         <div ref={rightOptionsRef} className="room-input__option-container">
+          <IconButton
+            onClick={(e) => {
+              openReusableContextMenu(
+                'top',
+                (() => {
+                  const cords = getEventCords(e);
+                  cords.y -= 20;
+                  return cords;
+                })(),
+                (closeMenu) => (
+                  <StickerBoard
+                    roomId={roomId}
+                    onSelect={(data) => {
+                      handleSendSticker(data);
+                      closeMenu();
+                    }}
+                  />
+                ),
+              );
+            }}
+            tooltip="Sticker"
+            src={StickerIC}
+          />
           <IconButton
             onClick={(e) => {
               const cords = getEventCords(e);

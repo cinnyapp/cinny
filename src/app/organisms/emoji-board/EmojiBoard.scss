@@ -84,6 +84,7 @@
     .emoji {
       width: 32px;
       height: 32px;
+      object-fit: contain;
     }
   }
   & > p:last-child {
@@ -123,6 +124,7 @@
   & .emoji {
     width: 38px;
     height: 38px;
+    object-fit: contain;
     padding: var(--emoji-padding);
     cursor: pointer;
     &:hover {

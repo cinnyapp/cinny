@@ -69,9 +69,8 @@ async function getUrl(link, type, decryptData) {
   }
 }
 
-function getNativeHeight(width, height) {
-  const MEDIA_MAX_WIDTH = 296;
-  const scale = MEDIA_MAX_WIDTH / width;
+function getNativeHeight(width, height, maxWidth = 296) {
+  const scale = maxWidth / width;
   return scale * height;
 }
 
@@ -189,6 +188,45 @@ Image.defaultProps = {
 };
 Image.propTypes = {
   name: PropTypes.string.isRequired,
+  width: PropTypes.number,
+  height: PropTypes.number,
+  link: PropTypes.string.isRequired,
+  file: PropTypes.shape({}),
+  type: PropTypes.string,
+};
+
+function Sticker({
+  name, height, width, link, file, type,
+}) {
+  const [url, setUrl] = useState(null);
+
+  useEffect(() => {
+    let unmounted = false;
+    async function fetchUrl() {
+      const myUrl = await getUrl(link, type, file);
+      if (unmounted) return;
+      setUrl(myUrl);
+    }
+    fetchUrl();
+    return () => {
+      unmounted = true;
+    };
+  }, []);
+
+  return (
+    <div className="sticker-container" style={{ height: width !== null ? getNativeHeight(width, height, 128) : 'unset' }}>
+      { url !== null && <img src={url || link} title={name} alt={name} />}
+    </div>
+  );
+}
+Sticker.defaultProps = {
+  file: null,
+  type: '',
+};
+Sticker.propTypes = {
+  name: PropTypes.string.isRequired,
+  width: null,
+  height: null,
   width: PropTypes.number,
   height: PropTypes.number,
   link: PropTypes.string.isRequired,
@@ -315,5 +353,5 @@ Video.propTypes = {
 };
 
 export {
-  File, Image, Audio, Video,
+  File, Image, Sticker, Audio, Video,
 };

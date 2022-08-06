@@ -5,7 +5,6 @@ import React, {
 import PropTypes from 'prop-types';
 import './Message.scss';
 
-import { getShortcodeToCustomEmoji } from '../../organisms/emoji-board/custom-emoji';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -322,7 +321,7 @@ function getMyEmojiEvent(emojiKey, eventId, roomTimeline) {
   return rEvent;
 }
 
-function toggleEmoji(roomId, eventId, emojiKey, roomTimeline) {
+function toggleEmoji(roomId, eventId, emojiKey, shortcode, roomTimeline) {
   const myAlreadyReactEvent = getMyEmojiEvent(emojiKey, eventId, roomTimeline);
   if (myAlreadyReactEvent) {
     const rId = myAlreadyReactEvent.getId();
@@ -330,17 +329,17 @@ function toggleEmoji(roomId, eventId, emojiKey, roomTimeline) {
     redactEvent(roomId, rId);
     return;
   }
-  sendReaction(roomId, eventId, emojiKey);
+  sendReaction(roomId, eventId, emojiKey, shortcode);
 }
 
 function pickEmoji(e, roomId, eventId, roomTimeline) {
   openEmojiBoard(getEventCords(e), (emoji) => {
-    toggleEmoji(roomId, eventId, emoji.unicode, roomTimeline);
+    toggleEmoji(roomId, eventId, emoji.mxc ?? emoji.unicode, emoji.shortcodes[0], roomTimeline);
     e.target.click();
   });
 }
 
-function genReactionMsg(userIds, reaction) {
+function genReactionMsg(userIds, reaction, shortcode) {
   return (
     <>
       {userIds.map((userId, index) => (
@@ -354,24 +353,22 @@ function genReactionMsg(userIds, reaction) {
         </React.Fragment>
       ))}
       <span style={{ opacity: '.6' }}>{' reacted with '}</span>
-      {twemojify(reaction, { className: 'react-emoji' })}
+      {twemojify(shortcode ? `:${shortcode}:` : reaction, { className: 'react-emoji' })}
     </>
   );
 }
 
 function MessageReaction({
-  shortcodeToEmoji, reaction, count, users, isActive, onClick,
+  reaction, shortcode, count, users, isActive, onClick,
 }) {
-  const customEmojiMatch = reaction.match(/^:(\S+):$/);
   let customEmojiUrl = null;
-  if (customEmojiMatch) {
-    const customEmoji = shortcodeToEmoji.get(customEmojiMatch[1]);
-    customEmojiUrl = initMatrix.matrixClient.mxcUrlToHttp(customEmoji?.mxc);
+  if (reaction.match(/^mxc:\/\/\S+$/)) {
+    customEmojiUrl = initMatrix.matrixClient.mxcUrlToHttp(reaction);
   }
   return (
     <Tooltip
       className="msg__reaction-tooltip"
-      content={<Text variant="b2">{users.length > 0 ? genReactionMsg(users, reaction) : 'Unable to load who has reacted'}</Text>}
+      content={<Text variant="b2">{users.length > 0 ? genReactionMsg(users, reaction, shortcode) : 'Unable to load who has reacted'}</Text>}
     >
       <button
         onClick={onClick}
@@ -380,7 +377,7 @@ function MessageReaction({
       >
         {
           customEmojiUrl
-            ? <img className="react-emoji" draggable="false" alt={reaction} src={customEmojiUrl} />
+            ? <img className="react-emoji" draggable="false" alt={shortcode ?? reaction} src={customEmojiUrl} />
             : twemojify(reaction, { className: 'react-emoji' })
         }
         <Text variant="b3" className="msg__reaction-count">{count}</Text>
@@ -388,9 +385,12 @@ function MessageReaction({
     </Tooltip>
   );
 }
+MessageReaction.defaultProps = {
+  shortcode: undefined,
+};
 MessageReaction.propTypes = {
-  shortcodeToEmoji: PropTypes.shape({}).isRequired,
   reaction: PropTypes.node.isRequired,
+  shortcode: PropTypes.string,
   count: PropTypes.number.isRequired,
   users: PropTypes.arrayOf(PropTypes.string).isRequired,
   isActive: PropTypes.bool.isRequired,
@@ -401,11 +401,10 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
   const { roomId, room, reactionTimeline } = roomTimeline;
   const mx = initMatrix.matrixClient;
   const reactions = {};
-  const shortcodeToEmoji = getShortcodeToCustomEmoji(room);
   const canSendReaction = room.currentState.maySendEvent('m.reaction', mx.getUserId());
 
   const eventReactions = reactionTimeline.get(mEvent.getId());
-  const addReaction = (key, count, senderId, isActive) => {
+  const addReaction = (key, shortcode, count, senderId, isActive) => {
     let reaction = reactions[key];
     if (reaction === undefined) {
       reaction = {
@@ -414,6 +413,7 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
         isActive: false,
       };
     }
+    if (shortcode) reaction.shortcode = shortcode;
     if (count) {
       reaction.count = count;
     } else {
@@ -429,9 +429,10 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
       if (rEvent.getRelation() === null) return;
       const reaction = rEvent.getRelation();
       const senderId = rEvent.getSender();
+      const { shortcode } = rEvent.getContent();
       const isActive = senderId === mx.getUserId();
 
-      addReaction(reaction.key, undefined, senderId, isActive);
+      addReaction(reaction.key, shortcode, undefined, senderId, isActive);
     });
   } else {
     // Use aggregated reactions
@@ -439,7 +440,7 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
     if (!aggregatedReaction) return null;
     aggregatedReaction.forEach((reaction) => {
       if (reaction.type !== 'm.reaction') return;
-      addReaction(reaction.key, reaction.count, undefined, false);
+      addReaction(reaction.key, undefined, reaction.count, undefined, false);
     });
   }
 
@@ -449,13 +450,13 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
         Object.keys(reactions).map((key) => (
           <MessageReaction
             key={key}
-            shortcodeToEmoji={shortcodeToEmoji}
             reaction={key}
+            shortcode={reactions[key].shortcode}
             count={reactions[key].count}
             users={reactions[key].users}
             isActive={reactions[key].isActive}
             onClick={() => {
-              toggleEmoji(roomId, mEvent.getId(), key, roomTimeline);
+              toggleEmoji(roomId, mEvent.getId(), key, reactions[key].shortcode, roomTimeline);
             }}
           />
         ))
@@ -607,7 +608,7 @@ function genMediaContent(mE) {
   if (typeof mediaMXC === 'undefined' || mediaMXC === '') return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
 
   let msgType = mE.getContent()?.msgtype;
-  if (mE.getType() === 'm.sticker') msgType = 'm.image';
+  if (mE.getType() === 'm.sticker') msgType = 'm.sticker';
 
   switch (msgType) {
     case 'm.file':
@@ -622,6 +623,17 @@ function genMediaContent(mE) {
     case 'm.image':
       return (
         <Media.Image
+          name={mContent.body}
+          width={typeof mContent.info?.w === 'number' ? mContent.info?.w : null}
+          height={typeof mContent.info?.h === 'number' ? mContent.info?.h : null}
+          link={mx.mxcUrlToHttp(mediaMXC)}
+          file={isEncryptedFile ? mContent.file : null}
+          type={mContent.info?.mimetype}
+        />
+      );
+    case 'm.sticker':
+      return (
+        <Media.Sticker
           name={mContent.body}
           width={typeof mContent.info?.w === 'number' ? mContent.info?.w : null}
           height={typeof mContent.info?.h === 'number' ? mContent.info?.h : null}

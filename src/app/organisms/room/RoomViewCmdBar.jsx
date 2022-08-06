@@ -21,7 +21,7 @@ import AsyncSearch from '../../../util/AsyncSearch';
 import Text from '../../atoms/text/Text';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import FollowingMembers from '../../molecules/following-members/FollowingMembers';
-import { addRecentEmoji } from '../emoji-board/recent';
+import { addRecentEmoji, getRecentEmojis } from '../emoji-board/recent';
 
 const commands = [{
   name: 'markdown',
@@ -213,9 +213,15 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
         setCmd({ prefix, suggestions: commands });
       },
       ':': () => {
-        const emojis = getEmojiForCompletion(mx.getRoom(roomId));
+        const parentIds = initMatrix.roomList.getAllParentSpaces(roomId);
+        const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
+        const emojis = getEmojiForCompletion(mx, [mx.getRoom(roomId), ...parentRooms]);
+        const recentEmoji = getRecentEmojis(20);
         asyncSearch.setup(emojis, { keys: ['shortcode'], isContain: true, limit: 20 });
-        setCmd({ prefix, suggestions: emojis.slice(26, 46) });
+        setCmd({
+          prefix,
+          suggestions: recentEmoji.length > 0 ? recentEmoji : emojis.slice(26, 46),
+        });
       },
       '@': () => {
         const members = mx.getRoom(roomId).getJoinedMembers().map((member) => ({
@@ -247,7 +253,7 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     }
     if (myCmd.prefix === '@') {
       viewEvent.emit('cmd_fired', {
-        replace: myCmd.result.name,
+        replace: `@${myCmd.result.userId}`,
       });
     }
     deactivateCmd();
