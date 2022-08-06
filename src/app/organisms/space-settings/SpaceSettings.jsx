@@ -26,6 +26,7 @@ import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
 import RoomAliases from '../../molecules/room-aliases/RoomAliases';
 import RoomPermissions from '../../molecules/room-permissions/RoomPermissions';
 import RoomMembers from '../../molecules/room-members/RoomMembers';
+import RoomEmojis from '../../molecules/room-emojis/RoomEmojis';
 
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
@@ -36,6 +37,7 @@ import PinIC from '../../../../public/res/ic/outlined/pin.svg';
 import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
 import CategoryIC from '../../../../public/res/ic/outlined/category.svg';
 import CategoryFilledIC from '../../../../public/res/ic/filled/category.svg';
+import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
@@ -45,6 +47,7 @@ import '../../i18n';
 const tabText = {
   GENERAL: 'General',
   MEMBERS: 'Members',
+  EMOJIS: 'Emojis',
   PERMISSIONS: 'Permissions',
 };
 
@@ -55,6 +58,10 @@ const tabItems = [{
 }, {
   iconSrc: UserIC,
   text: tabText.MEMBERS,
+  disabled: false,
+}, {
+  iconSrc: EmojiIC,
+  text: tabText.EMOJIS,
   disabled: false,
 }, {
   iconSrc: ShieldUserIC,
@@ -190,6 +197,7 @@ function SpaceSettings() {
           <div className="space-settings__cards-wrapper">
             {selectedTab.text === tabText.GENERAL && <GeneralSettings roomId={roomId} />}
             {selectedTab.text === tabText.MEMBERS && <RoomMembers roomId={roomId} />}
+            {selectedTab.text === tabText.EMOJIS && <RoomEmojis roomId={roomId} />}
             {selectedTab.text === tabText.PERMISSIONS && <RoomPermissions roomId={roomId} />}
           </div>
         </div>

@@ -137,7 +137,7 @@ function RoomProfile({ roomId }) {
 
   const renderEditNameAndTopic = () => (
     <form className="room-profile__edit-form" onSubmit={handleOnSubmit}>
-      {canChangeName && <Input value={roomName} name="room-name" disabled={status.type === cons.status.IN_FLIGHT} label={t('Molecules.RoomProfile.name_label')} required />}
+      {canChangeName && <Input value={roomName} name="room-name" disabled={status.type === cons.status.IN_FLIGHT} label={t('Molecules.RoomProfile.name_label')} />}
       {canChangeTopic && <Input value={roomTopic} name="room-topic" disabled={status.type === cons.status.IN_FLIGHT} minHeight={100} resizable label={t('Molecules.RoomProfile.topic_label')} />}
       {(!canChangeName || !canChangeTopic) && (
       <Text variant="b3">

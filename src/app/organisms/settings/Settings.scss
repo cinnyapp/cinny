@@ -40,7 +40,8 @@
 .settings-notifications,
 .settings-security__card,
 .settings-security .device-manage,
-.settings-about__card {
+.settings-about__card,
+.settings-emoji__card {
   @extend .settings-window__card;
 }
 

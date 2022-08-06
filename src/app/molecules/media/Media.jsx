@@ -5,6 +5,7 @@ import './Media.scss';
 import encrypt from 'browser-encrypt-attachment';
 
 import { useTranslation } from 'react-i18next';
+import { BlurhashCanvas } from 'react-blurhash';
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
@@ -72,9 +73,8 @@ async function getUrl(link, type, decryptData) {
   }
 }
 
-function getNativeHeight(width, height) {
-  const MEDIA_MAX_WIDTH = 296;
-  const scale = MEDIA_MAX_WIDTH / width;
+function getNativeHeight(width, height, maxWidth = 296) {
+  const scale = maxWidth / width;
   return scale * height;
 }
 
@@ -160,7 +160,7 @@ File.propTypes = {
 };
 
 function Image({
-  name, width, height, link, file, type,
+  name, width, height, link, file, type, blurhash,
 }) {
   const [url, setUrl] = useState(null);
 
@@ -181,6 +181,7 @@ function Image({
     <div className="file-container">
       <FileHeader name={name} link={url || link} type={type} external />
       <div style={{ height: width !== null ? getNativeHeight(width, height) : 'unset' }} className="image-container">
+        { blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
         { url !== null && <img src={url || link} alt={name} />}
       </div>
     </div>
@@ -191,9 +192,50 @@ Image.defaultProps = {
   width: null,
   height: null,
   type: '',
+  blurhash: '',
 };
 Image.propTypes = {
   name: PropTypes.string.isRequired,
+  width: PropTypes.number,
+  height: PropTypes.number,
+  link: PropTypes.string.isRequired,
+  file: PropTypes.shape({}),
+  type: PropTypes.string,
+  blurhash: PropTypes.string,
+};
+
+function Sticker({
+  name, height, width, link, file, type,
+}) {
+  const [url, setUrl] = useState(null);
+
+  useEffect(() => {
+    let unmounted = false;
+    async function fetchUrl() {
+      const myUrl = await getUrl(link, type, file);
+      if (unmounted) return;
+      setUrl(myUrl);
+    }
+    fetchUrl();
+    return () => {
+      unmounted = true;
+    };
+  }, []);
+
+  return (
+    <div className="sticker-container" style={{ height: width !== null ? getNativeHeight(width, height, 128) : 'unset' }}>
+      { url !== null && <img src={url || link} title={name} alt={name} />}
+    </div>
+  );
+}
+Sticker.defaultProps = {
+  file: null,
+  type: '',
+};
+Sticker.propTypes = {
+  name: PropTypes.string.isRequired,
+  width: null,
+  height: null,
   width: PropTypes.number,
   height: PropTypes.number,
   link: PropTypes.string.isRequired,
@@ -247,8 +289,8 @@ Audio.propTypes = {
 };
 
 function Video({
-  name, link, thumbnail,
-  width, height, file, type, thumbnailFile, thumbnailType,
+  name, link, thumbnail, thumbnailFile, thumbnailType,
+  width, height, file, type, blurhash,
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState(null);
@@ -286,10 +328,14 @@ function Video({
       <div
         style={{
           height: width !== null ? getNativeHeight(width, height) : 'unset',
-          backgroundImage: thumbUrl === null ? 'none' : `url(${thumbUrl}`,
         }}
         className="video-container"
       >
+        { url === null && blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
+        { url === null && thumbUrl !== null && (
+          /* eslint-disable-next-line jsx-a11y/alt-text */
+          <img src={thumbUrl} />
+        )}
         { url === null && isLoading && <Spinner size="small" /> }
         { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip={t('Molecules.Media.play_video')} src={PlaySVG} />}
         { url !== null && (
@@ -307,22 +353,24 @@ Video.defaultProps = {
   height: null,
   file: null,
   thumbnail: null,
-  type: '',
   thumbnailType: null,
   thumbnailFile: null,
+  type: '',
+  blurhash: null,
 };
 Video.propTypes = {
   name: PropTypes.string.isRequired,
   link: PropTypes.string.isRequired,
   thumbnail: PropTypes.string,
+  thumbnailFile: PropTypes.shape({}),
+  thumbnailType: PropTypes.string,
   width: PropTypes.number,
   height: PropTypes.number,
   file: PropTypes.shape({}),
   type: PropTypes.string,
-  thumbnailFile: PropTypes.shape({}),
-  thumbnailType: PropTypes.string,
+  blurhash: PropTypes.string,
 };
 
 export {
-  File, Image, Audio, Video,
+  File, Image, Sticker, Audio, Video,
 };

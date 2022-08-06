@@ -3,23 +3,33 @@ import { micromark } from 'micromark';
 import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
 import { math } from 'micromark-extension-math';
+import { encode } from 'blurhash';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
 import cons from './cons';
 import settings from './settings';
 
-function getImageDimension(file) {
-  return new Promise((resolve) => {
+const blurhashField = 'xyz.amorgan.blurhash';
+
+function encodeBlurhash(img) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 100;
+  canvas.height = 100;
+  const context = canvas.getContext('2d');
+  context.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const data = context.getImageData(0, 0, canvas.width, canvas.height);
+  return encode(data.data, data.width, data.height, 4, 4);
+}
+
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = async () => {
-      resolve({
-        w: img.width,
-        h: img.height,
-      });
-    };
-    img.src = URL.createObjectURL(file);
+    img.onload = () => resolve(img);
+    img.onerror = (err) => reject(err);
+    img.src = url;
   });
 }
+
 function loadVideo(videoFile) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
@@ -120,14 +130,13 @@ function bindReplyToContent(roomId, reply, content) {
   return newContent;
 }
 
-// Apply formatting to a plain text message
-//
-// This includes inserting any custom emoji that might be relevant, and (only if the
-// user has enabled it in their settings) formatting the message using markdown.
-function formatAndEmojifyText(room, text) {
-  const allEmoji = getShortcodeToEmoji(room);
+function formatAndEmojifyText(mx, roomList, roomId, text) {
+  const room = mx.getRoom(roomId);
+  const { userIdsToDisplayNames } = room.currentState;
+  const parentIds = roomList.getAllParentSpaces(roomId);
+  const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
+  const allEmoji = getShortcodeToEmoji(mx, [room, ...parentRooms]);
 
-  // Start by applying markdown formatting (if relevant)
   let formattedText;
   if (settings.isMarkdown) {
     formattedText = getFormattedBody(text);
@@ -135,17 +144,25 @@ function formatAndEmojifyText(room, text) {
     formattedText = text;
   }
 
-  // Check to see if there are any :shortcode-style-tags: in the message
-  Array.from(formattedText.matchAll(/\B:([\w-]+):\B/g))
-    // Then filter to only the ones corresponding to a valid emoji
-    .filter((match) => allEmoji.has(match[1]))
-    // Reversing the array ensures that indices are preserved as we start replacing
+  const MXID_REGEX = /\B@\S+:\S+\.\S+[^.,:;?!\s]/g;
+  Array.from(formattedText.matchAll(MXID_REGEX))
+    .filter((mxidMatch) => userIdsToDisplayNames[mxidMatch[0]])
     .reverse()
-    // Replace each :shortcode: with an <img/> tag
+    .forEach((mxidMatch) => {
+      const tag = `<a href="https://matrix.to/#/${mxidMatch[0]}">${userIdsToDisplayNames[mxidMatch[0]]}</a>`;
+
+      formattedText = formattedText.substr(0, mxidMatch.index)
+        + tag
+        + formattedText.substr(mxidMatch.index + mxidMatch[0].length);
+    });
+
+  const SHORTCODE_REGEX = /\B:([\w-]+):\B/g;
+  Array.from(formattedText.matchAll(SHORTCODE_REGEX))
+    .filter((shortcodeMatch) => allEmoji.has(shortcodeMatch[1]))
+    .reverse() /* Reversing the array ensures that indices are preserved as we start replacing */
     .forEach((shortcodeMatch) => {
       const emoji = allEmoji.get(shortcodeMatch[1]);
 
-      // Render the tag that will replace the shortcode
       let tag;
       if (emoji.mxc) {
         tag = `<img data-mx-emoticon="" src="${
@@ -159,7 +176,6 @@ function formatAndEmojifyText(room, text) {
         tag = emoji.unicode;
       }
 
-      // Splice the tag into the text
       formattedText = formattedText.substr(0, shortcodeMatch.index)
         + tag
         + formattedText.substr(shortcodeMatch.index + shortcodeMatch[0].length);
@@ -169,10 +185,11 @@ function formatAndEmojifyText(room, text) {
 }
 
 class RoomsInput extends EventEmitter {
-  constructor(mx) {
+  constructor(mx, roomList) {
     super();
 
     this.matrixClient = mx;
+    this.roomList = roomList;
     this.roomIdToInput = new Map();
   }
 
@@ -273,7 +290,9 @@ class RoomsInput extends EventEmitter {
 
       // Apply formatting if relevant
       const formattedBody = formatAndEmojifyText(
-        this.matrixClient.getRoom(roomId),
+        this.matrixClient,
+        this.roomList,
+        roomId,
         input.message,
       );
       if (formattedBody !== input.message) {
@@ -292,6 +311,34 @@ class RoomsInput extends EventEmitter {
     this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
   }
 
+  async sendSticker(roomId, data) {
+    const { mxc: url, body, httpUrl } = data;
+    const info = {};
+
+    const img = new Image();
+    img.src = httpUrl;
+
+    try {
+      const res = await fetch(httpUrl);
+      const blob = await res.blob();
+      info.w = img.width;
+      info.h = img.height;
+      info.mimetype = blob.type;
+      info.size = blob.size;
+      info.thumbnail_info = { ...info };
+      info.thumbnail_url = url;
+    } catch {
+      // send sticker without info
+    }
+
+    this.matrixClient.sendEvent(roomId, 'm.sticker', {
+      body,
+      url,
+      info,
+    });
+    this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
+  }
+
   async sendFile(roomId, file) {
     const fileType = file.type.slice(0, file.type.indexOf('/'));
     const info = {
@@ -302,10 +349,11 @@ class RoomsInput extends EventEmitter {
     let uploadData = null;
 
     if (fileType === 'image') {
-      const imgDimension = await getImageDimension(file);
+      const img = await loadImage(URL.createObjectURL(file));
 
-      info.w = imgDimension.w;
-      info.h = imgDimension.h;
+      info.w = img.width;
+      info.h = img.height;
+      info[blurhashField] = encodeBlurhash(img);
 
       content.msgtype = 'm.image';
       content.body = file.name || 'Image';
@@ -315,8 +363,11 @@ class RoomsInput extends EventEmitter {
 
       try {
         const video = await loadVideo(file);
+
         info.w = video.videoWidth;
         info.h = video.videoHeight;
+        info[blurhashField] = encodeBlurhash(video);
+
         const thumbnailData = await getVideoThumbnail(video, video.videoWidth, video.videoHeight, 'image/jpeg');
         const thumbnailUploadData = await this.uploadFile(roomId, thumbnailData.thumbnail);
         info.thumbnail_info = thumbnailData.info;
@@ -412,7 +463,9 @@ class RoomsInput extends EventEmitter {
 
     // Apply formatting if relevant
     const formattedBody = formatAndEmojifyText(
-      this.matrixClient.getRoom(roomId),
+      this.matrixClient,
+      this.roomList,
+      roomId,
       editedBody,
     );
     if (formattedBody !== editedBody) {

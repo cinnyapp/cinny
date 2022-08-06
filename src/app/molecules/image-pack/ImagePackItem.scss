@@ -1,0 +1,43 @@
+@use '../../partials/flex';
+@use '../../partials/dir';
+
+.image-pack-item {
+  margin: 0 var(--sp-normal);
+  padding: var(--sp-tight) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-normal);
+
+  & .avatar-container img {
+    object-fit: contain;
+    border-radius: 0;
+  }
+
+  &__content {
+    @extend .cp-fx__item-one;
+  }
+
+  &__usage {
+    display: flex;
+    gap: var(--sp-ultra-tight);
+    & button {
+      padding: 6px;
+    }
+    & > button.btn-surface {
+      padding: 6px var(--sp-tight);
+      min-width: 0;
+      @include dir.side(margin, var(--sp-ultra-tight), 0);
+    }
+  }
+
+  &__btn {
+    display: none;
+  }
+  &:hover,
+  &:focus-within {
+    .image-pack-item__btn {
+      display: flex;
+      gap: var(--sp-ultra-tight);
+    }
+  }
+}
