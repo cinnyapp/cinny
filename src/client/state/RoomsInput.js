@@ -1,14 +1,12 @@
 import EventEmitter from 'events';
 import encrypt from 'browser-encrypt-attachment';
 import { encode } from 'blurhash';
-import {
-  inlineRegex, defaultRules, parserFor, outputFor, htmlTag,
-} from 'simple-markdown';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import { getBlobSafeMimeType } from '../../util/mimetypes';
 import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
+import { htmlOutput, parser, plainOutput } from '../../util/markdown';
 
 const blurhashField = 'xyz.amorgan.blurhash';
 const MXID_REGEX = /\B@\S+:\S+\.\S+[^.,:;?!\s]/g;
@@ -101,67 +99,6 @@ function getVideoThumbnail(video, width, height, mimeType) {
     }, mimeType);
   });
 }
-
-const rules = {
-  ...defaultRules,
-  Array: {
-    ...defaultRules.Array,
-    plain: (arr, output, state) => arr.map((node) => output(node, state)).join(''),
-  },
-  paragraph: {
-    ...defaultRules.paragraph,
-    plain: (node, output, state) => output(node.content, state),
-    html: (node, output, state) => `<p>${output(node.content, state)}</p>`,
-    // html: (node, output, state) => output(node.content, state),
-  },
-  spoiler: {
-    order: defaultRules.em.order - 0.5,
-    match: inlineRegex(/^\|\|([\s\S]+?)\|\|/),
-    parse: (capture, parse, state) => ({
-      content: parse(capture[1], state),
-    }),
-    plain: () => '<spoiler>',
-    html: (node, output, state) => `<span data-mx-spoiler>${output(node.content, state)}</span>`,
-  },
-  sup: {
-    order: defaultRules.del.order + 0.5,
-    match: inlineRegex(/^\^([\s\S]+?)\^(?!\^)/),
-    parse: (capture, parse, state) => ({
-      content: parse(capture[1], state),
-    }),
-    html: (node, output, state) => `<sup>${output(node.content, state)}</sup>`,
-  },
-  sub: {
-    order: defaultRules.del.order + 0.5,
-    match: inlineRegex(/^~([\s\S]+?)~(?!~)/),
-    parse: (capture, parse, state) => ({
-      content: parse(capture[1], state),
-    }),
-    html: (node, output, state) => `<sub>${output(node.content, state)}</sub>`,
-  },
-  math: {
-    order: defaultRules.del.order + 0.5,
-    match: inlineRegex(/^\$(\S[\s\S]+?\S|\S)\$(?!\d)/),
-    parse: (capture) => ({
-      content: [{
-        content: capture[1],
-        type: 'text',
-      }],
-    }),
-    html: (node, output, state) => {
-      const out = output(node.content, state);
-      return `<span data-mx-maths="${out}"><code>${out}</code></span>`;
-    },
-  },
-  text: {
-    ...defaultRules.text,
-    plain: (node) => node.content,
-  },
-};
-
-const parser = parserFor(rules);
-const plainOutput = outputFor(rules, 'plain');
-const htmlOutput = outputFor(rules, 'html');
 
 function getFormattedBody(markdown) {
   const content = parser(markdown);
