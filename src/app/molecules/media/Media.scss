@@ -33,6 +33,8 @@
   font-size: 0;
   line-height: 0;
 
+  position: relative;
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -40,6 +42,19 @@
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+}
+
+.image-container,
+.video-container {
+  & img,
+  & canvas {
+    position: absolute;
+    max-width: unset !important;
+    width: 100% !important;
+    height: 100%;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
 }
 
 .sticker-container {
@@ -51,25 +66,17 @@
   }
 }
 
-.image-container {
-  & img {
-    max-width: unset !important;
-    width: 100% !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-  }
-}
-
 .video-container {
   & .ic-btn-surface {
     background-color: var(--bg-surface-low);
+    position: absolute;
   }
   video {
-    width: 100%
+    width: 100%;
   }
 }
 .audio-container {
   audio {
-    width: 100%
+    width: 100%;
   }
 }
