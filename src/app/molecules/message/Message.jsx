@@ -24,6 +24,7 @@ import Tooltip from '../../atoms/tooltip/Tooltip';
 import Input from '../../atoms/input/Input';
 import Avatar from '../../atoms/avatar/Avatar';
 import IconButton from '../../atoms/button/IconButton';
+import Time from '../../atoms/time/Time';
 import ContextMenu, { MenuHeader, MenuItem, MenuBorder } from '../../atoms/context-menu/ContextMenu';
 import * as Media from '../media/Media';
 
@@ -67,7 +68,7 @@ const MessageAvatar = React.memo(({
 ));
 
 const MessageHeader = React.memo(({
-  userId, username, time,
+  userId, username, timestamp, fullTime,
 }) => (
   <div className="message__header">
     <Text
@@ -81,14 +82,20 @@ const MessageHeader = React.memo(({
       <span>{twemojify(userId)}</span>
     </Text>
     <div className="message__time">
-      <Text variant="b3">{time}</Text>
+      <Text variant="b3">
+        <Time timestamp={timestamp} fullTime={fullTime} />
+      </Text>
     </div>
   </div>
 ));
+MessageHeader.defaultProps = {
+  fullTime: false,
+};
 MessageHeader.propTypes = {
   userId: PropTypes.string.isRequired,
   username: PropTypes.string.isRequired,
-  time: PropTypes.string.isRequired,
+  timestamp: PropTypes.number.isRequired,
+  fullTime: PropTypes.bool,
 };
 
 function MessageReply({ name, color, body }) {
@@ -690,7 +697,7 @@ function getEditedBody(editedMEvent) {
 }
 
 function Message({
-  mEvent, isBodyOnly, roomTimeline, focus, time,
+  mEvent, isBodyOnly, roomTimeline, focus, fullTime,
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const roomId = mEvent.getRoomId();
@@ -751,7 +758,12 @@ function Message({
       }
       <div className="message__main-container">
         {!isBodyOnly && (
-          <MessageHeader userId={senderId} username={username} time={time} />
+          <MessageHeader
+            userId={senderId}
+            username={username}
+            timestamp={mEvent.getTs()}
+            fullTime={fullTime}
+          />
         )}
         {roomTimeline && isReply && (
           <MessageReplyWrapper
@@ -799,13 +811,14 @@ Message.defaultProps = {
   isBodyOnly: false,
   focus: false,
   roomTimeline: null,
+  fullTime: false,
 };
 Message.propTypes = {
   mEvent: PropTypes.shape({}).isRequired,
   isBodyOnly: PropTypes.bool,
   roomTimeline: PropTypes.shape({}),
   focus: PropTypes.bool,
-  time: PropTypes.string.isRequired,
+  fullTime: PropTypes.bool,
 };
 
 export { Message, MessageReply, PlaceholderMessage };
