@@ -101,15 +101,15 @@ function getVideoThumbnail(video, width, height, mimeType) {
 }
 
 function getFormattedBody(markdown) {
-  const content = parser(markdown);
+  let content = parser(markdown);
+  if (content.length === 1 && content[0].type === 'paragraph') {
+    content = content[0].content;
+  }
+
   console.debug(content);
   console.debug(plainOutput(content));
-  const result = htmlOutput(content);
-  // const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
-  // if (bodyParts === null) return result;
-  // if (bodyParts[2].indexOf('</p>') >= 0) return result;
-  // return bodyParts[2];
-  return result;
+
+  return htmlOutput(content);
 }
 
 function getReplyFormattedBody(roomId, reply) {

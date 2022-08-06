@@ -23,7 +23,7 @@ const rules = {
   },
   paragraph: {
     ...defaultRules.paragraph,
-    plain: (node, output, state) => output(node.content, state),
+    plain: (node, output, state) => `${output(node.content, state)}\n\n`,
     html: (node, output, state) => `<p>${output(node.content, state)}</p>`,
     // html: (node, output, state) => output(node.content, state),
   },
@@ -34,19 +34,7 @@ const rules = {
     plain: () => '<spoiler>',
     html: (node, output, state) => `<span data-mx-spoiler>${output(node.content, state)}</span>`,
   },
-  sup: {
-    order: defaultRules.del.order + 0.5,
-    match: inlineRegex(/^\^([\s\S]+?)\^(?!\^)/),
-    parse: parseCaptureInline,
-    html: (node, output, state) => `<sup>${output(node.content, state)}</sup>`,
-  },
-  sub: {
-    order: defaultRules.del.order + 0.5,
-    match: inlineRegex(/^~([\s\S]+?)~(?!~)/),
-    parse: parseCaptureInline,
-    html: (node, output, state) => `<sub>${output(node.content, state)}</sub>`,
-  },
-  math: {
+  inlineMath: {
     order: defaultRules.del.order + 0.5,
     match: inlineRegex(/^\$(\S[\s\S]+?\S|\S)\$(?!\d)/),
     parse: (capture) => ({ content: capture[1] }),
