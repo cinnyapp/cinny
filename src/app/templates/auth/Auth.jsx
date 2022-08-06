@@ -5,6 +5,7 @@ import './Auth.scss';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Formik } from 'formik';
 
+import { useTranslation, Trans } from 'react-i18next';
 import * as auth from '../../../client/action/auth';
 import cons from '../../../client/state/cons';
 import { Debounce, getUrlPrams } from '../../../util/common';
@@ -26,16 +27,13 @@ import EyeBlindIC from '../../../../public/res/ic/outlined/eye-blind.svg';
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
 
+import '../../i18n';
+
 const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
-const BAD_LOCALPART_ERROR = 'Username can only contain characters a-z, 0-9, or \'=_-./\'';
-const USER_ID_TOO_LONG_ERROR = 'Your user ID, including the hostname, can\'t be more than 255 characters long.';
 
 const PASSWORD_STRENGHT_REGEX = /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,127}$/;
-const BAD_PASSWORD_ERROR = 'Password must contain at least 1 lowercase, 1 uppercase, 1 number, 1 non-alphanumeric character, 8-127 characters with no space.';
-const CONFIRM_PASSWORD_ERROR = 'Passwords don\'t match.';
 
 const EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-const BAD_EMAIL_ERROR = 'Invalid email address';
 
 function isValidInput(value, regex) {
   if (typeof regex === 'string') return regex === value;
@@ -50,16 +48,19 @@ let searchingHs = null;
 function Homeserver({ onChange }) {
   const [hs, setHs] = useState(null);
   const [debounce] = useState(new Debounce());
-  const [process, setProcess] = useState({ isLoading: true, message: 'Loading homeserver list...' });
+
+  const { t } = useTranslation();
+
+  const [process, setProcess] = useState({ isLoading: true, message: t('Templates.Auth.loading_homeserver_list') });
   const hsRef = useRef();
 
   const setupHsConfig = async (servername) => {
-    setProcess({ isLoading: true, message: 'Looking for homeserver...' });
+    setProcess({ isLoading: true, message: t('Templates.Auth.looking_for_homeserver') });
     let baseUrl = null;
     baseUrl = await getBaseUrl(servername);
 
     if (searchingHs !== servername) return;
-    setProcess({ isLoading: true, message: `Connecting to ${baseUrl}...` });
+    setProcess({ isLoading: true, message: t('Templates.Auth.connecting_to_homeserver', { homeserver: baseUrl }) });
     const tempClient = auth.createTemporaryClient(baseUrl);
 
     Promise.allSettled([tempClient.loginFlows(), tempClient.register()])
@@ -74,7 +75,7 @@ function Homeserver({ onChange }) {
       }).catch(() => {
         if (searchingHs !== servername) return;
         onChange(null);
-        setProcess({ isLoading: false, error: 'Unable to connect. Please check your input.' });
+        setProcess({ isLoading: false, error: t('Templates.Auth.unable_to_connect') });
       });
   };
 
@@ -118,14 +119,14 @@ function Homeserver({ onChange }) {
           onChange={handleHsInput}
           value={hs?.selected}
           forwardRef={hsRef}
-          label="Homeserver"
+          label={t('Templates.Auth.homeserver_form.title')}
           disabled={hs === null || !hs.allowCustom}
         />
         <ContextMenu
           placement="right"
           content={(hideMenu) => (
             <>
-              <MenuHeader>Homeserver list</MenuHeader>
+              <MenuHeader>{t('Templates.Auth.homeserver_form.header')}</MenuHeader>
               {
                 hs?.list.map((hsName) => (
                   <MenuItem
@@ -160,9 +161,10 @@ Homeserver.propTypes = {
 };
 
 function Login({ loginFlow, baseUrl }) {
+  const { t } = useTranslation();
   const [typeIndex, setTypeIndex] = useState(0);
   const [passVisible, setPassVisible] = useState(false);
-  const loginTypes = ['Username', 'Email'];
+  const loginTypes = [t('Templates.Auth.login_types.username'), t('Templates.Auth.login_types.email')];
   const isPassword = loginFlow?.filter((flow) => flow.type === 'm.login.password')[0];
   const ssoProviders = loginFlow?.filter((flow) => flow.type === 'm.login.sso')[0];
 
@@ -173,7 +175,7 @@ function Login({ loginFlow, baseUrl }) {
   const validator = (values) => {
     const errors = {};
     if (typeIndex === 1 && values.email.length > 0 && !isValidInput(values.email, EMAIL_REGEX)) {
-      errors.email = BAD_EMAIL_ERROR;
+      errors.email = t('Templates.Auth.bad_email_error');
     }
     return errors;
   };
@@ -196,7 +198,7 @@ function Login({ loginFlow, baseUrl }) {
       window.location.reload();
     }).catch((error) => {
       let msg = error.message;
-      if (msg === 'Unknown message') msg = 'Please check your credentials';
+      if (msg === 'Unknown message') msg = t('Templates.Auth.check_credentials');
       actions.setErrors({
         password: msg === 'Invalid password' ? msg : undefined,
         other: msg !== 'Invalid password' ? msg : undefined,
@@ -208,7 +210,7 @@ function Login({ loginFlow, baseUrl }) {
   return (
     <>
       <div className="auth-form__heading">
-        <Text variant="h2" weight="medium">Login</Text>
+        <Text variant="h2" weight="medium">{t('Templates.Auth.login_form.title')}</Text>
         {isPassword && (
           <ContextMenu
             placement="right"
@@ -243,27 +245,27 @@ function Login({ loginFlow, baseUrl }) {
             values, errors, handleChange, handleSubmit, isSubmitting,
           }) => (
             <>
-              {isSubmitting && <LoadingScreen message="Login in progress..." />}
+              {isSubmitting && <LoadingScreen message={t('Templates.Auth.login_in_progress')} />}
               <form className="auth-form" onSubmit={handleSubmit}>
-                {typeIndex === 0 && <Input values={values.username} name="username" onChange={handleChange} label="Username" type="username" required />}
+                {typeIndex === 0 && <Input values={values.username} name="username" onChange={handleChange} label={t('Templates.Auth.login_form.prompt_username')} type="username" required />}
                 {errors.username && <Text className="auth-form__error" variant="b3">{errors.username}</Text>}
-                {typeIndex === 1 && <Input values={values.email} name="email" onChange={handleChange} label="Email" type="email" required />}
+                {typeIndex === 1 && <Input values={values.email} name="email" onChange={handleChange} label={t('Templates.Auth.login_form.prompt_email')} type="email" required />}
                 {errors.email && <Text className="auth-form__error" variant="b3">{errors.email}</Text>}
                 <div className="auth-form__pass-eye-wrapper">
-                  <Input values={values.password} name="password" onChange={handleChange} label="Password" type={passVisible ? 'text' : 'password'} required />
+                  <Input values={values.password} name="password" onChange={handleChange} label={t('Templates.Auth.login_form.prompt_password')} type={passVisible ? 'text' : 'password'} required />
                   <IconButton onClick={() => setPassVisible(!passVisible)} src={passVisible ? EyeIC : EyeBlindIC} size="extra-small" />
                 </div>
                 {errors.password && <Text className="auth-form__error" variant="b3">{errors.password}</Text>}
                 {errors.other && <Text className="auth-form__error" variant="b3">{errors.other}</Text>}
                 <div className="auth-form__btns">
-                  <Button variant="primary" type="submit" disabled={isSubmitting}>Login</Button>
+                  <Button variant="primary" type="submit" disabled={isSubmitting}>{t('Templates.Auth.login_form.login_button')}</Button>
                 </div>
               </form>
             </>
           )}
         </Formik>
       )}
-      {ssoProviders && isPassword && <Text className="sso__divider">OR</Text>}
+      {ssoProviders && isPassword && <Text className="sso__divider">{t('common.or')}</Text>}
       {ssoProviders && (
         <SSOButtons
           type="sso"
@@ -293,6 +295,8 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
   const isDisabled = registerInfo.errcode !== undefined;
   const { flows, params, session } = registerInfo;
 
+  const { t } = useTranslation();
+
   let isEmail = false;
   let isEmailRequired = true;
   let isRecaptcha = false;
@@ -313,19 +317,19 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
 
   const validator = (values) => {
     const errors = {};
-    if (values.username.list > 255) errors.username = USER_ID_TOO_LONG_ERROR;
+    if (values.username.list > 255) errors.username = t('Templates.Auth.user_id_too_long_error');
     if (values.username.length > 0 && !isValidInput(values.username, LOCALPART_SIGNUP_REGEX)) {
-      errors.username = BAD_LOCALPART_ERROR;
+      errors.username = t('Templates.Auth.bad_localpart_error');
     }
     if (values.password.length > 0 && !isValidInput(values.password, PASSWORD_STRENGHT_REGEX)) {
-      errors.password = BAD_PASSWORD_ERROR;
+      errors.password = t('Templates.Auth.bad_password_error');
     }
     if (values.confirmPassword.length > 0
       && !isValidInput(values.confirmPassword, values.password)) {
-      errors.confirmPassword = CONFIRM_PASSWORD_ERROR;
+      errors.confirmPassword = t('Templates.Auth.confirm_password_error');
     }
     if (values.email.length > 0 && !isValidInput(values.email, EMAIL_REGEX)) {
-      errors.email = BAD_EMAIL_ERROR;
+      errors.email = t('Templates.Auth.bad_email_error');
     }
     return errors;
   };
@@ -335,7 +339,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
     return tempClient.isUsernameAvailable(values.username)
       .then(async (isAvail) => {
         if (!isAvail) {
-          actions.setErrors({ username: 'Username is already taken' });
+          actions.setErrors({ username: t('Templates.Auth.username_taken') });
           actions.setSubmitting(false);
           return;
         }
@@ -349,12 +353,12 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
           }
           sid = result.sid;
         }
-        setProcess({ type: 'processing', message: 'Registration in progress....' });
+        setProcess({ type: 'processing', message: t('Templates.Auth.registration_in_progress') });
         actions.setSubmitting(false);
       }).catch((err) => {
         const msg = err.message || err.error;
         if (['M_USER_IN_USE', 'M_INVALID_USERNAME', 'M_EXCLUSIVE'].indexOf(err.errcode) > -1) {
-          actions.setErrors({ username: err.errcode === 'M_USER_IN_USE' ? 'Username is already taken' : msg });
+          actions.setErrors({ username: err.errcode === 'M_USER_IN_USE' ? t('Templates.Auth.username_taken') : msg });
         } else if (msg) actions.setErrors({ other: msg });
 
         actions.setSubmitting(false);
@@ -409,7 +413,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       session,
     });
     if (d.done) refreshWindow();
-    else setProcess({ type: 'processing', message: 'Registration in progress...' });
+    else setProcess({ type: 'processing', message: t('Templates.Auth.registration_in_progress') });
   };
   const handleTerms = async () => {
     const [username, password] = getInputs();
@@ -418,7 +422,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       session,
     });
     if (d.done) refreshWindow();
-    else setProcess({ type: 'processing', message: 'Registration in progress...' });
+    else setProcess({ type: 'processing', message: t('Templates.Auth.registration_in_progress') });
   };
   const handleEmailVerify = async () => {
     const [username, password] = getInputs();
@@ -429,17 +433,17 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       session,
     });
     if (d.done) refreshWindow();
-    else setProcess({ type: 'processing', message: 'Registration in progress...' });
+    else setProcess({ type: 'processing', message: t('Templates.Auth.registration_in_progress') });
   };
 
   return (
     <>
       {process.type === 'processing' && <LoadingScreen message={process.message} />}
-      {process.type === 'm.login.recaptcha' && <Recaptcha message="Please check the box below to proceed." sitekey={process.sitekey} onChange={handleRecaptcha} />}
+      {process.type === 'm.login.recaptcha' && <Recaptcha message={t('Templates.Auth.captcha.message')} sitekey={process.sitekey} onChange={handleRecaptcha} />}
       {process.type === 'm.login.terms' && <Terms url={process.url} onSubmit={handleTerms} />}
       {process.type === 'm.login.email.identity' && <EmailVerify email={process.email} onContinue={handleEmailVerify} />}
       <div className="auth-form__heading">
-        {!isDisabled && <Text variant="h2" weight="medium">Register</Text>}
+        {!isDisabled && <Text variant="h2" weight="medium">{t('Templates.Auth.register_form.title')}</Text>}
         {isDisabled && <Text className="auth-form__error">{registerInfo.error}</Text>}
       </div>
       {!isDisabled && (
@@ -452,25 +456,25 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
             values, errors, handleChange, handleSubmit, isSubmitting,
           }) => (
             <>
-              {process.type === undefined && isSubmitting && <LoadingScreen message="Registration in progress..." />}
+              {process.type === undefined && isSubmitting && <LoadingScreen message={t('Templates.Auth.registration_in_progress')} />}
               <form className="auth-form" ref={formRef} onSubmit={handleSubmit}>
-                <Input values={values.username} name="username" onChange={handleChange} label="Username" type="username" required />
+                <Input values={values.username} name="username" onChange={handleChange} label={t('Templates.Auth.register_form.prompt_username')} type="username" required />
                 {errors.username && <Text className="auth-form__error" variant="b3">{errors.username}</Text>}
                 <div className="auth-form__pass-eye-wrapper">
-                  <Input values={values.password} name="password" onChange={handleChange} label="Password" type={passVisible ? 'text' : 'password'} required />
+                  <Input values={values.password} name="password" onChange={handleChange} label={t('Templates.Auth.register_form.prompt_password')} type={passVisible ? 'text' : 'password'} required />
                   <IconButton onClick={() => setPassVisible(!passVisible)} src={passVisible ? EyeIC : EyeBlindIC} size="extra-small" />
                 </div>
                 {errors.password && <Text className="auth-form__error" variant="b3">{errors.password}</Text>}
                 <div className="auth-form__pass-eye-wrapper">
-                  <Input values={values.confirmPassword} name="confirmPassword" onChange={handleChange} label="Confirm password" type={cPassVisible ? 'text' : 'password'} required />
+                  <Input values={values.confirmPassword} name="confirmPassword" onChange={handleChange} label={t('Templates.Auth.register_form.prompt_confirm_password')} type={cPassVisible ? 'text' : 'password'} required />
                   <IconButton onClick={() => setCPassVisible(!cPassVisible)} src={cPassVisible ? EyeIC : EyeBlindIC} size="extra-small" />
                 </div>
                 {errors.confirmPassword && <Text className="auth-form__error" variant="b3">{errors.confirmPassword}</Text>}
-                {isEmail && <Input values={values.email} name="email" onChange={handleChange} label={`Email${isEmailRequired ? '' : ' (optional)'}`} type="email" required={isEmailRequired} />}
+                {isEmail && <Input values={values.email} name="email" onChange={handleChange} label={isEmailRequired ? t('Templates.Auth.register_form.prompt_email_required') : t('Templates.Auth.register_form.prompt_email_optional')} type="email" required={isEmailRequired} />}
                 {errors.email && <Text className="auth-form__error" variant="b3">{errors.email}</Text>}
                 {errors.other && <Text className="auth-form__error" variant="b3">{errors.other}</Text>}
                 <div className="auth-form__btns">
-                  <Button variant="primary" type="submit" disabled={isSubmitting}>Register</Button>
+                  <Button variant="primary" type="submit" disabled={isSubmitting}>{t('Templates.Auth.register_form.register_button')}</Button>
                 </div>
               </form>
             </>
@@ -499,6 +503,8 @@ function AuthCard() {
   const [hsConfig, setHsConfig] = useState(null);
   const [type, setType] = useState('login');
 
+  const { t } = useTranslation();
+
   const handleHsChange = (info) => {
     console.log(info);
     setHsConfig(info);
@@ -520,13 +526,13 @@ function AuthCard() {
       )}
       { hsConfig !== null && (
         <Text variant="b2" className="auth-card__switch flex--center">
-          {`${(type === 'login' ? 'Don\'t have' : 'Already have')} an account?`}
+          {(type === 'login' ? t('Templates.Auth.dont_have_an_account') : t('Templates.Auth.already_have_an_account'))}
           <button
             type="button"
             style={{ color: 'var(--tc-link)', cursor: 'pointer', margin: '0 var(--sp-ultra-tight)' }}
             onClick={() => setType((type === 'login') ? 'register' : 'login')}
           >
-            { type === 'login' ? ' Register' : ' Login' }
+            { (type === 'login' ? t('Templates.Auth.register_link') : t('Templates.Auth.login_link')) }
           </button>
         </Text>
       )}
@@ -536,6 +542,8 @@ function AuthCard() {
 
 function Auth() {
   const [loginToken, setLoginToken] = useState(getUrlPrams('loginToken'));
+
+  const { t } = useTranslation();
 
   useEffect(async () => {
     if (!loginToken) return;
@@ -558,13 +566,13 @@ function Auth() {
     <ScrollView invisible>
       <div className="auth__base">
         <div className="auth__wrapper">
-          {loginToken && <LoadingScreen message="Redirecting..." />}
+          {loginToken && <LoadingScreen message={t('Templates.Auth.redirecting')} />}
           {!loginToken && (
             <div className="auth-card">
               <Header>
                 <Avatar size="extra-small" imageSrc={CinnySvg} />
                 <TitleWrapper>
-                  <Text variant="h2" weight="medium">Cinny</Text>
+                  <Text variant="h2" weight="medium">{t('common.cinny')}</Text>
                 </TitleWrapper>
               </Header>
               <div className="auth-card__content">
@@ -576,16 +584,16 @@ function Auth() {
 
         <div className="auth-footer">
           <Text variant="b2">
-            <a href="https://cinny.in" target="_blank" rel="noreferrer">About</a>
+            <a href="https://cinny.in" target="_blank" rel="noreferrer">{t('Templates.Auth.link_about')}</a>
           </Text>
           <Text variant="b2">
             <a href="https://github.com/ajbura/cinny/releases" target="_blank" rel="noreferrer">{`v${cons.version}`}</a>
           </Text>
           <Text variant="b2">
-            <a href="https://twitter.com/cinnyapp" target="_blank" rel="noreferrer">Twitter</a>
+            <a href="https://twitter.com/cinnyapp" target="_blank" rel="noreferrer">{t('Templates.Auth.link_twitter')}</a>
           </Text>
           <Text variant="b2">
-            <a href="https://matrix.org" target="_blank" rel="noreferrer">Powered by Matrix</a>
+            <a href="https://matrix.org" target="_blank" rel="noreferrer">{t('Templates.Auth.link_matrix')}</a>
           </Text>
         </div>
       </div>
@@ -624,21 +632,26 @@ Recaptcha.propTypes = {
 };
 
 function Terms({ url, onSubmit }) {
+  const { t } = useTranslation();
+
   return (
     <ProcessWrapper>
       <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
         <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
-          <Text variant="h2" weight="medium">Agree with terms</Text>
+          <Text variant="h2" weight="medium">{t('Templates.Auth.terms_and_conditions.title')}</Text>
           <div style={{ marginBottom: 'var(--sp-normal)' }} />
-          <Text variant="b1">In order to complete registration, you need to agree to the terms and conditions.</Text>
+          <Text variant="b1">{t('Templates.Auth.terms_and_conditions.description')}</Text>
           <div style={{ display: 'flex', alignItems: 'center', margin: 'var(--sp-normal) 0' }}>
             <input style={{ marginRight: '8px' }} id="termsCheckbox" type="checkbox" required />
             <Text variant="b1">
-              {'I accept '}
-              <a style={{ cursor: 'pointer' }} href={url} rel="noreferrer" target="_blank">Terms and Conditions</a>
+              <Trans
+                i18nKey="Templates.Auth.terms_and_conditions.accept"
+// eslint-disable-next-line jsx-a11y/anchor-has-content,jsx-a11y/control-has-associated-label
+                components={{ a: <a style={{ cursor: 'pointer' }} href={url} rel="noreferrer" target="_blank" /> }}
+              />
             </Text>
           </div>
-          <Button id="termsBtn" type="submit" variant="primary">Submit</Button>
+          <Button id="termsBtn" type="submit" variant="primary">{t('Templates.Auth.terms_and_conditions.submit_button')}</Button>
         </div>
       </form>
     </ProcessWrapper>
@@ -650,18 +663,22 @@ Terms.propTypes = {
 };
 
 function EmailVerify({ email, onContinue }) {
+  const { t } = useTranslation();
   return (
     <ProcessWrapper>
       <div style={{ margin: 'var(--sp-normal)', maxWidth: '450px' }}>
-        <Text variant="h2" weight="medium">Verify email</Text>
+        <Text variant="h2" weight="medium">{t('Templates.Auth.validate_email.title')}</Text>
         <div style={{ margin: 'var(--sp-normal) 0' }}>
           <Text variant="b1">
-            {'Please check your email '}
-            <b>{`(${email})`}</b>
-            {' and validate before continuing further.'}
+            <Trans
+              i18nKey="Templates.Auth.validate_email.message"
+              values={{ email_address: email }}
+// eslint-disable-next-line jsx-a11y/anchor-has-content,jsx-a11y/control-has-associated-label
+              components={{ bold: <b /> }}
+            />
           </Text>
         </div>
-        <Button variant="primary" onClick={onContinue}>Continue</Button>
+        <Button variant="primary" onClick={onContinue}>{t('Templates.Auth.validate_email.continue_button')}</Button>
       </div>
     </ProcessWrapper>
   );
