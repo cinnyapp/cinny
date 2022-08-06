@@ -1,7 +1,9 @@
 import EventEmitter from 'events';
 import encrypt from 'browser-encrypt-attachment';
 import { encode } from 'blurhash';
-import SimpleMarkdown from 'simple-markdown';
+import {
+  inlineRegex, defaultRules, parserFor, outputFor, htmlTag,
+} from 'simple-markdown';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import { getBlobSafeMimeType } from '../../util/mimetypes';
 import { sanitizeText } from '../../util/sanitize';
@@ -101,54 +103,71 @@ function getVideoThumbnail(video, width, height, mimeType) {
 }
 
 const rules = {
-  ...SimpleMarkdown.defaultRules,
+  ...defaultRules,
+  Array: {
+    ...defaultRules.Array,
+    plain: (arr, output, state) => arr.map((node) => output(node, state)).join(''),
+  },
   paragraph: {
-    ...SimpleMarkdown.defaultRules.paragraph,
-    html: (node, output, state) => SimpleMarkdown.htmlTag('p', output(node.content, state)),
+    ...defaultRules.paragraph,
+    plain: (node, output, state) => output(node.content, state),
+    html: (node, output, state) => `<p>${output(node.content, state)}</p>`,
     // html: (node, output, state) => output(node.content, state),
   },
   spoiler: {
-    order: SimpleMarkdown.defaultRules.em.order - 0.5,
-    match: (source) => /^\|\|([\s\S]+?)\|\|/.exec(source),
+    order: defaultRules.em.order - 0.5,
+    match: inlineRegex(/^\|\|([\s\S]+?)\|\|/),
     parse: (capture, parse, state) => ({
       content: parse(capture[1], state),
     }),
-    html: (node, output) => `<span data-mx-spoiler>${output(node.content)}</span>`,
+    plain: () => '<spoiler>',
+    html: (node, output, state) => `<span data-mx-spoiler>${output(node.content, state)}</span>`,
   },
   sup: {
-    order: SimpleMarkdown.defaultRules.del.order + 0.5,
-    match: (source) => /^\^([\s\S]+?)\^(?!\^)/.exec(source),
+    order: defaultRules.del.order + 0.5,
+    match: inlineRegex(/^\^([\s\S]+?)\^(?!\^)/),
     parse: (capture, parse, state) => ({
       content: parse(capture[1], state),
     }),
-    html: (node, output) => `<sup>${output(node.content)}</sup>`,
+    html: (node, output, state) => `<sup>${output(node.content, state)}</sup>`,
   },
   sub: {
-    order: SimpleMarkdown.defaultRules.del.order + 0.5,
-    match: (source) => /^~([\s\S]+?)~(?!~)/.exec(source),
+    order: defaultRules.del.order + 0.5,
+    match: inlineRegex(/^~([\s\S]+?)~(?!~)/),
     parse: (capture, parse, state) => ({
       content: parse(capture[1], state),
     }),
-    html: (node, output) => `<sub>${output(node.content)}</sub>`,
+    html: (node, output, state) => `<sub>${output(node.content, state)}</sub>`,
   },
   math: {
-    order: SimpleMarkdown.defaultRules.del.order + 0.5,
-    match: (source) => /^\$(\S[\s\S]+?\S|\S)\$(?!\d)/.exec(source),
+    order: defaultRules.del.order + 0.5,
+    match: inlineRegex(/^\$(\S[\s\S]+?\S|\S)\$(?!\d)/),
     parse: (capture) => ({
       content: [{
         content: capture[1],
         type: 'text',
       }],
     }),
-    html: (node, output) => `<span data-mx-maths="${output(node.content)}"><code>${output(node.content)}</code></span>`,
+    html: (node, output, state) => {
+      const out = output(node.content, state);
+      return `<span data-mx-maths="${out}"><code>${out}</code></span>`;
+    },
+  },
+  text: {
+    ...defaultRules.text,
+    plain: (node) => node.content,
   },
 };
 
-const parser = SimpleMarkdown.parserFor(rules);
-const htmlOutput = SimpleMarkdown.outputFor(rules, 'html');
+const parser = parserFor(rules);
+const plainOutput = outputFor(rules, 'plain');
+const htmlOutput = outputFor(rules, 'html');
 
 function getFormattedBody(markdown) {
-  const result = htmlOutput(parser(markdown));
+  const content = parser(markdown);
+  console.debug(content);
+  console.debug(plainOutput(content));
+  const result = htmlOutput(content);
   // const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
   // if (bodyParts === null) return result;
   // if (bodyParts[2].indexOf('</p>') >= 0) return result;
