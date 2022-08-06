@@ -1,0 +1,47 @@
+@use '../../partials/flex';
+
+.image-pack {
+  &-item {
+    border-top: 1px solid var(--bg-surface-border);
+  }
+
+  &__header {
+    padding: var(--sp-extra-tight) var(--sp-normal);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-normal);
+
+    & > *:nth-child(2) {
+      @extend .cp-fx__item-one;
+    }
+  }
+
+  &__footer {
+    padding: var(--sp-normal);
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-tight);
+  }
+
+  &__global {
+    padding: var(--sp-normal);
+    padding-top: var(--sp-tight);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-normal);
+  }
+}
+
+.image-pack-global {
+  &__empty {
+    text-align: center;
+    padding: var(--sp-extra-loose) var(--sp-normal);
+  }
+  & .image-pack__global {
+    padding: 0 var(--sp-normal);
+    padding-bottom: var(--sp-normal);
+    &:first-child {
+      padding-top: var(--sp-normal);
+    }
+  }
+}

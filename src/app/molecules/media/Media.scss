@@ -57,6 +57,15 @@
   }
 }
 
+.sticker-container {
+  display: inline-flex;
+  max-width: 128px;
+  width: 100%;
+  & img {
+    width: 100% !important;
+  }
+}
+
 .video-container {
   & .ic-btn-surface {
     background-color: var(--bg-surface-low);
