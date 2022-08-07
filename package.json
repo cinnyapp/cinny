@@ -17,7 +17,7 @@
   "dependencies": {
     "@fontsource/inter": "^4.5.11",
     "@fontsource/roboto": "^4.5.7",
-    "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.8.tgz",
+    "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.12.tgz",
     "@tippyjs/react": "^4.2.6",
     "babel-polyfill": "^6.26.0",
     "blurhash": "^1.1.5",
