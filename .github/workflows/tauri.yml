@@ -101,13 +101,13 @@ jobs:
         id: vars
         run: echo ::set-output name=tag::$(jq .package.version src-tauri/tauri.conf.json | tr -d '"')
       - name: Move deb
-        run: mv "src-tauri/target/release/bundle/deb/Cinny_${{ steps.vars.outputs.tag }}_amd64.deb" "src-tauri/target/release/bundle/deb/Cinny_desktop-x86_64.deb"
+        run: mv "src-tauri/target/release/bundle/deb/cinny_${{ steps.vars.outputs.tag }}_amd64.deb" "src-tauri/target/release/bundle/deb/Cinny_desktop-x86_64.deb"
       - name: Move AppImage
-        run: mv "src-tauri/target/release/bundle/appimage/Cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage"
+        run: mv "src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage"
       - name: Move AppImage.tar.gz
-        run: mv "src-tauri/target/release/bundle/appimage/Cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage.tar.gz" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage.tar.gz"
+        run: mv "src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage.tar.gz" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage.tar.gz"
       - name: Move AppImage.tar.gz.sig
-        run: mv "src-tauri/target/release/bundle/appimage/Cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage.tar.gz.sig" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage.tar.gz.sig"
+        run: mv "src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage.tar.gz.sig" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage.tar.gz.sig"
       - name: Upload tagged release
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
         with:

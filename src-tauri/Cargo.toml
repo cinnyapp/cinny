@@ -1,7 +1,7 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [package]
-name = "Cinny"
+name = "cinny"
 version = "2.1.0"
 description = "Yet another matrix client"
 authors = ["Ajay Bura"]
