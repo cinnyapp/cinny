@@ -43,7 +43,7 @@ function SecretStorageAccess({ onComplete }) {
 
       if (!mountStore.getItem()) return;
       if (!isCorrect) {
-        setError(t(key ? 'SecretStorageAccess.incorrect_security_key' : 'SecretStorageAccess.incorrect_security_phrase'));
+        setError(t(key ? 'Organisms.SecretStorageAccess.incorrect_security_key' : 'Organisms.SecretStorageAccess.incorrect_security_phrase'));
         setProcess(false);
         return;
       }
@@ -55,7 +55,7 @@ function SecretStorageAccess({ onComplete }) {
       });
     } catch (e) {
       if (!mountStore.getItem()) return;
-      setError(t(key ? 'SecretStorageAccess.incorrect_security_key' : 'SecretStorageAccess.incorrect_security_phrase'));
+      setError(t(key ? 'Organisms.SecretStorageAccess.incorrect_security_key' : 'Organisms.SecretStorageAccess.incorrect_security_phrase'));
       setProcess(false);
     }
   };
@@ -80,7 +80,7 @@ function SecretStorageAccess({ onComplete }) {
       <form onSubmit={handleForm}>
         <Input
           name="password"
-          label={t(withPhrase ? 'SecretStorageAccess.security_phrase' : 'SecretStorageAccess.security_key')}
+          label={withPhrase ? t('Organisms.SecretStorageAccess.security_phrase') : t('Organisms.SecretStorageAccess.security_key')}
           type="password"
           onChange={handleChange}
           required
@@ -89,7 +89,7 @@ function SecretStorageAccess({ onComplete }) {
         {!process && (
           <div className="secret-storage-access__btn">
             <Button variant="primary" type="submit">{t('common.continue')}</Button>
-            {isPassphrase && <Button onClick={toggleWithPhrase}>{t(withPhrase ? 'SecretStorageAccess.use_security_key' : 'SecretStorageAccess.use_security_phrase')}</Button>}
+            {isPassphrase && <Button onClick={toggleWithPhrase}>{t(withPhrase ? 'Organisms.SecretStorageAccess.use_security_key' : 'Organisms.SecretStorageAccess.use_security_phrase')}</Button>}
           </div>
         )}
       </form>
