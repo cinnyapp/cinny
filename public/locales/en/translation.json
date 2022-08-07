@@ -740,6 +740,57 @@
                 "restricted_unsupported": "Restricted (Unsupported: room required upgrade)",
                 "public": "Public (anyone can join)"
             },
+            "RoomEmojis": {
+                "header": "Create Pack",
+                "submit_button": "Create pack",
+                "name_placeholder": "Pack Name",
+                "no_packs": "No emoji or sticker packs."
+            },
+            "ImagePack": {
+                "rename_title": "Rename",
+                "rename_button": "Rename",
+                "shortcode_label": "Shortcode",
+                "shortcode_name": "shortcode",
+                "delete_item_title": "Delete",
+                "delete_item_message": "Are you sure that you want to delete {{key}}?",
+                "delete_item_button": "Delete",
+                "delete_pack_title": "Delete Pack",
+                "delete_pack_message": "Are you sure that you want to delete {{pack_name}}?",
+                "delete_pack_button": "Delete",
+                "image_title": "Image",
+                "image_shortcode": "Shortcode",
+                "image_usage": "Usage",
+                "view_more": "View {{count}} more",
+                "view_less": "View less",
+                "use_globally": "Use globally",
+                "use_globally_description": "Add this pack to your account to use in all rooms.",
+                "no_global_packs": "No global packs",
+                "default_personal_pack_name": "Personal"
+            },
+            "ImagePackItem": {
+                "rename_tooltip": "Rename",
+                "delete_tooltip": "Delete"
+            },
+            "ImagePackUsageSelector": {
+                "header": "Usage",
+                "type_emoji": "Emoji",
+                "type_sticker": "Sticker",
+                "type_both": "Both"
+            },
+            "ImagePackUpload": {
+                "remove_file_tooltip": "Remove file",
+                "import_image_button": "Import image",
+                "shortcode_placeholder": "shortcode",
+                "upload_button": "Upload",
+                "upload_button_progress": "Uploading..."
+            },
+            "ImagePackProfile": {
+                "attribution_prompt": "Attribution",
+                "name_prompt": "Name",
+                "edit_tooltip": "Edit",
+                "usage_header": "Usage",
+                "pack_usage": "Pack usage"
+            },
             "SpaceAddExisting": {
                 "adding_items_one": "Adding one item...",
                 "adding_items_other": "Adding {{count}} items...",

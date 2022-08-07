@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './ImagePackUpload.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import { scaleDownImage } from '../../../util/common';
 
@@ -10,6 +11,7 @@ import Button from '../../atoms/button/Button';
 import Input from '../../atoms/input/Input';
 import IconButton from '../../atoms/button/IconButton';
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
+import '../../i18n';
 
 function ImagePackUpload({ onUpload }) {
   const mx = initMatrix.matrixClient;
@@ -17,6 +19,7 @@ function ImagePackUpload({ onUpload }) {
   const shortcodeRef = useRef(null);
   const [imgFile, setImgFile] = useState(null);
   const [progress, setProgress] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmit = async (evt) => {
     evt.preventDefault();
@@ -55,14 +58,14 @@ function ImagePackUpload({ onUpload }) {
         imgFile
           ? (
             <div className="image-pack-upload__file">
-              <IconButton onClick={handleRemove} src={CirclePlusIC} tooltip="Remove file" />
+              <IconButton onClick={handleRemove} src={CirclePlusIC} tooltip={t('Molecules.ImagePackUpload.remove_file_tooltip')} />
               <Text>{imgFile.name}</Text>
             </div>
           )
-          : <Button onClick={() => inputRef.current.click()}>Import image</Button>
+          : <Button onClick={() => inputRef.current.click()}>{t('Molecules.ImagePackUpload.import_image_button')}</Button>
       }
-      <Input forwardRef={shortcodeRef} name="shortcodeInput" placeholder="shortcode" required />
-      <Button disabled={progress} variant="primary" type="submit">{progress ? 'Uploading...' : 'Upload'}</Button>
+      <Input forwardRef={shortcodeRef} name="shortcodeInput" placeholder={t('Molecules.ImagePackUpload.shortcode_placeholder')} required />
+      <Button disabled={progress} variant="primary" type="submit">{progress ? t('Molecules.ImagePackUpload.upload_button_progress') : t('Molecules.ImagePackUpload.upload_button')}</Button>
     </form>
   );
 }

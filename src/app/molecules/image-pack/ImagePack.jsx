@@ -3,6 +3,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import './ImagePack.scss';
+import { useTranslation } from 'react-i18next';
 
 import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
@@ -19,12 +20,14 @@ import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import ImagePackProfile from './ImagePackProfile';
 import ImagePackItem from './ImagePackItem';
 import ImagePackUpload from './ImagePackUpload';
+import '../../i18n';
 
 const renameImagePackItem = (shortcode) => new Promise((resolve) => {
   let isCompleted = false;
+  const { t } = useTranslation();
 
   openReusableDialog(
-    <Text variant="s1" weight="medium">Rename</Text>,
+    <Text variant="s1" weight="medium">{t('Molecules.ImagePack.rename_title')}</Text>,
     (requestClose) => (
       <div style={{ padding: 'var(--sp-normal)' }}>
         <form
@@ -39,13 +42,13 @@ const renameImagePackItem = (shortcode) => new Promise((resolve) => {
         >
           <Input
             value={shortcode}
-            name="shortcode"
-            label="Shortcode"
+            name={t('Molecules.ImagePack.shortcode_name')}
+            label={t('Molecules.ImagePack.shortcode_label')}
             autoFocus
             required
           />
           <div style={{ height: 'var(--sp-normal)' }} />
-          <Button variant="primary" type="submit">Rename</Button>
+          <Button variant="primary" type="submit">{t('Molecules.ImagePack.rename_button')}</Button>
         </form>
       </div>
     ),
@@ -94,11 +97,12 @@ function useRoomImagePack(roomId, stateKey) {
 }
 
 function useUserImagePack() {
+  const { t } = useTranslation();
   const mx = initMatrix.matrixClient;
   const packEvent = mx.getAccountData('im.ponies.user_emotes');
   const pack = useMemo(() => (
     ImagePackBuilder.parsePack(mx.getUserId(), packEvent?.getContent() ?? {
-      pack: { display_name: 'Personal' },
+      pack: { display_name: t('Molecules.ImagePack.default_personal_pack_name') },
       images: {},
     })
   ), []);
@@ -115,6 +119,7 @@ function useUserImagePack() {
 
 function useImagePackHandles(pack, sendPackContent) {
   const [, forceUpdate] = useReducer((count) => count + 1, 0);
+  const { t } = useTranslation();
 
   const getNewKey = (key) => {
     if (typeof key !== 'string') return undefined;
@@ -161,9 +166,9 @@ function useImagePackHandles(pack, sendPackContent) {
   };
   const handleDeleteItem = async (key) => {
     const isConfirmed = await confirmDialog(
-      'Delete',
-      `Are you sure that you want to delete "${key}"?`,
-      'Delete',
+      t('Molecules.ImagePack.delete_item_title'),
+      t('Molecules.ImagePack.delete_item_message', { key }),
+      t('Molecules.ImagePack.delete_item_button'),
       'danger',
     );
     if (!isConfirmed) return;
@@ -227,6 +232,7 @@ function ImagePack({ roomId, stateKey, handlePackDelete }) {
   const room = mx.getRoom(roomId);
   const [viewMore, setViewMore] = useState(false);
   const [isGlobal, setIsGlobal] = useState(isGlobalPack(roomId, stateKey));
+  const { t } = useTranslation();
 
   const { pack, sendPackContent } = useRoomImagePack(roomId, stateKey);
 
@@ -251,9 +257,9 @@ function ImagePack({ roomId, stateKey, handlePackDelete }) {
 
   const handleDeletePack = async () => {
     const isConfirmed = await confirmDialog(
-      'Delete Pack',
-      `Are you sure that you want to delete "${pack.displayName}"?`,
-      'Delete',
+      t('Molecules.ImagePack.delete_pack_title'),
+      t('Molecules.ImagePack.delete_pack_message', { pack_name: pack.displayName }),
+      t('Molecules.ImagePack.delete_pack_button'),
       'danger',
     );
     if (!isConfirmed) return;
@@ -279,9 +285,9 @@ function ImagePack({ roomId, stateKey, handlePackDelete }) {
       { images.length === 0 ? null : (
         <div>
           <div className="image-pack__header">
-            <Text variant="b3">Image</Text>
-            <Text variant="b3">Shortcode</Text>
-            <Text variant="b3">Usage</Text>
+            <Text variant="b3">{t('Molecules.ImagePack.image_title')}</Text>
+            <Text variant="b3">{t('Molecules.ImagePack.image_shortcode')}</Text>
+            <Text variant="b3">{t('Molecules.ImagePack.image_usage')}</Text>
           </div>
           {images.map(([shortcode, image]) => (
             <ImagePackItem
@@ -302,19 +308,19 @@ function ImagePack({ roomId, stateKey, handlePackDelete }) {
             <Button onClick={() => setViewMore(!viewMore)}>
               {
                 viewMore
-                  ? 'View less'
-                  : `View ${pack.images.size - 2} more`
+                  ? t('Molecules.ImagePack.view_less')
+                  : t('Molecules.ImagePack.view_more', { count: pack.images.size - 2 })
               }
             </Button>
           )}
-          { handlePackDelete && <Button variant="danger" onClick={handleDeletePack}>Delete Pack</Button>}
+          { handlePackDelete && <Button variant="danger" onClick={handleDeletePack}>{t('Molecules.ImagePack.delete_pack_title')}</Button>}
         </div>
       )}
       <div className="image-pack__global">
         <Checkbox variant="positive" onToggle={handleGlobalChange} isActive={isGlobal} />
         <div>
-          <Text variant="b2">Use globally</Text>
-          <Text variant="b3">Add this pack to your account to use in all rooms.</Text>
+          <Text variant="b2">{t('Molecules.ImagePack.use_globally')}</Text>
+          <Text variant="b3">{t('Molecules.ImagePack.use_globally_description')}</Text>
         </div>
       </div>
     </div>
@@ -333,6 +339,7 @@ ImagePack.propTypes = {
 function ImagePackUser() {
   const mx = initMatrix.matrixClient;
   const [viewMore, setViewMore] = useState(false);
+  const { t } = useTranslation();
 
   const { pack, sendPackContent } = useUserImagePack();
 
@@ -363,9 +370,9 @@ function ImagePackUser() {
       { images.length === 0 ? null : (
         <div>
           <div className="image-pack__header">
-            <Text variant="b3">Image</Text>
-            <Text variant="b3">Shortcode</Text>
-            <Text variant="b3">Usage</Text>
+            <Text variant="b3">{t('Molecules.ImagePack.image_title')}</Text>
+            <Text variant="b3">{t('Molecules.ImagePack.image_shortcode')}</Text>
+            <Text variant="b3">{t('Molecules.ImagePack.image_usage')}</Text>
           </div>
           {images.map(([shortcode, image]) => (
             <ImagePackItem
@@ -385,8 +392,9 @@ function ImagePackUser() {
           <Button onClick={() => setViewMore(!viewMore)}>
             {
               viewMore
-                ? 'View less'
-                : `View ${pack.images.size - 2} more`
+                ? t('Molecules.ImagePack.view_less')
+                : t('Molecules.ImagePack.view_more', { count: pack.images.size - 2 })
+
             }
           </Button>
         </div>
@@ -427,6 +435,7 @@ function useGlobalImagePack() {
 function ImagePackGlobal() {
   const mx = initMatrix.matrixClient;
   const roomIdToStateKeys = useGlobalImagePack();
+  const { t } = useTranslation();
 
   const handleChange = (roomId, stateKey) => {
     removeGlobalImagePack(mx, roomId, stateKey);
@@ -457,7 +466,7 @@ function ImagePackGlobal() {
                 })
               );
             })
-            : <div className="image-pack-global__empty"><Text>No global packs</Text></div>
+            : <div className="image-pack-global__empty"><Text>{t('Molecules.ImagePack.no_global_packs')}</Text></div>
         }
       </div>
     </div>

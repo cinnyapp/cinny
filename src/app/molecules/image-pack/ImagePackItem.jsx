@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './ImagePackItem.scss';
 
+import { useTranslation } from 'react-i18next';
 import { openReusableContextMenu } from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
 
@@ -16,9 +17,12 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
+import '../../i18n';
+
 function ImagePackItem({
   url, shortcode, usage, onUsageChange, onDelete, onRename,
 }) {
+  const { t } = useTranslation();
   const handleUsageSelect = (event) => {
     openReusableContextMenu(
       'bottom',
@@ -43,15 +47,15 @@ function ImagePackItem({
       </div>
       <div className="image-pack-item__usage">
         <div className="image-pack-item__btn">
-          {onRename && <IconButton tooltip="Rename" size="extra-small" src={PencilIC} onClick={() => onRename(shortcode)} />}
-          {onDelete && <IconButton tooltip="Delete" size="extra-small" src={BinIC} onClick={() => onDelete(shortcode)} />}
+          {onRename && <IconButton tooltip={t('Molecules.ImagePackItem.rename_tooltip')} size="extra-small" src={PencilIC} onClick={() => onRename(shortcode)} />}
+          {onDelete && <IconButton tooltip={t('Molecules.ImagePackItem.delete_tooltip')} size="extra-small" src={BinIC} onClick={() => onDelete(shortcode)} />}
         </div>
         <Button onClick={onUsageChange ? handleUsageSelect : undefined}>
           {onUsageChange && <RawIcon src={ChevronBottomIC} size="extra-small" />}
           <Text variant="b2">
-            {usage === 'emoticon' && 'Emoji'}
-            {usage === 'sticker' && 'Sticker'}
-            {usage === 'both' && 'Both'}
+            {usage === 'emoticon' && t('Molecules.ImagePackUsageSelector.type_emoji')}
+            {usage === 'sticker' && t('Molecules.ImagePackUsageSelector.type_sticker')}
+            {usage === 'both' && t('Molecules.ImagePackUsageSelector.type_both')}
           </Text>
         </Button>
       </div>
