@@ -1,7 +1,7 @@
 import SimpleMarkdown from '@khanacademy/simple-markdown';
 
 const {
-  inlineRegex, parseCaptureInline, blockRegex, defaultRules, parserFor, outputFor,
+  inlineRegex, blockRegex, defaultRules, parserFor, outputFor,
 } = SimpleMarkdown;
 
 const rules = {
@@ -27,10 +27,30 @@ const rules = {
     html: (node, output, state) => `<p>${output(node.content, state)}</p>`,
     // html: (node, output, state) => output(node.content, state),
   },
+  escape: {
+    ...defaultRules.escape,
+    plain: (node, output, state) => `\\${output(node.content, state)}`,
+  },
+  em: {
+    ...defaultRules.em,
+    plain: (node, output, state) => `_${output(node.content, state)}_`,
+  },
+  strong: {
+    ...defaultRules.strong,
+    plain: (node, output, state) => `**${output(node.content, state)}**`,
+  },
+  u: {
+    ...defaultRules.u,
+    plain: (node, output, state) => `__${output(node.content, state)}__`,
+  },
+  del: {
+    ...defaultRules.del,
+    plain: (node, output, state) => `~~${output(node.content, state)}~~`,
+  },
   spoiler: {
     order: defaultRules.em.order - 0.5,
     match: inlineRegex(/^\|\|([\s\S]+?)\|\|/),
-    parse: parseCaptureInline,
+    parse: (capture, parse, state) => ({ content: parse(capture[1], state) }),
     plain: () => '<spoiler>',
     html: (node, output, state) => `<span data-mx-spoiler>${output(node.content, state)}</span>`,
   },
