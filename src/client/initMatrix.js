@@ -33,7 +33,6 @@ class InitMatrix extends EventEmitter {
       accessToken: secret.accessToken,
       userId: secret.userId,
       store: indexedDBStore,
-      sessionStore: new sdk.WebStorageSessionStore(global.localStorage),
       cryptoStore: new sdk.IndexedDBCryptoStore(global.indexedDB, 'crypto-store'),
       deviceId: secret.deviceId,
       timelineSupport: true,
