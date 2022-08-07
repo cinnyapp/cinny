@@ -26,7 +26,7 @@ jobs:
         with:
           toolchain: stable
       - name: Build desktop app with Tauri
-        uses: tauri-apps/tauri-action@v0.3.1
+        uses: tauri-apps/tauri-action@dev
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -86,7 +86,7 @@ jobs:
       - name: Install tauri dependencies
         run: npm ci
       - name: Build desktop app with Tauri
-        uses: tauri-apps/tauri-action@v0.3.1
+        uses: tauri-apps/tauri-action@dev
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -139,7 +139,7 @@ jobs:
       - name: Install tauri dependencies
         run: npm ci
       - name: Build desktop app with Tauri
-        uses: tauri-apps/tauri-action@v0.3.1
+        uses: tauri-apps/tauri-action@dev
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -191,7 +191,7 @@ jobs:
   #     - name: Install rustup target aarch64 darwin
   #       run: rustup target add aarch64-apple-darwin
   #     - name: Build desktop app with Tauri
-  #       uses: tauri-apps/tauri-action@v0.3.1
+  #       uses: tauri-apps/tauri-action@dev
   #       env:
   #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   #         TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
