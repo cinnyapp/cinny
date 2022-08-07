@@ -107,7 +107,9 @@ function getFormattedBody(markdown) {
   }
 
   console.debug(content);
-  // console.debug(plainOutput(content));
+  try {
+    console.debug(plainOutput(content));
+  } catch (e) {}
 
   return htmlOutput(content);
 }

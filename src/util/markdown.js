@@ -1,8 +1,12 @@
 import SimpleMarkdown from '@khanacademy/simple-markdown';
 
 const {
-  inlineRegex, blockRegex, defaultRules, parserFor, outputFor,
+  inlineRegex, blockRegex, defaultRules, parserFor, outputFor, sanitizeText, htmlTag,
 } = SimpleMarkdown;
+
+function mathHtml(wrap, node) {
+  return htmlTag(wrap, htmlTag('code', sanitizeText(node.content)), { 'data-mx-maths': node.content });
+}
 
 const rules = {
   ...defaultRules,
@@ -15,7 +19,7 @@ const rules = {
     match: blockRegex(/^\$\$\n*([\s\S]+?)\n*\$\$/),
     parse: (capture) => ({ content: capture[1] }),
     plain: (node) => `$$\n${node.content}\n$$`,
-    html: (node) => `<div data-mx-maths="${node.content}"><code>${node.content}</code></div>`,
+    html: (node) => mathHtml('div', node),
   },
   newline: {
     ...defaultRules.newline,
@@ -24,7 +28,7 @@ const rules = {
   paragraph: {
     ...defaultRules.paragraph,
     plain: (node, output, state) => `${output(node.content, state)}\n\n`,
-    html: (node, output, state) => `<p>${output(node.content, state)}</p>`,
+    html: (node, output, state) => htmlTag('p', output(node.content, state)),
     // html: (node, output, state) => output(node.content, state),
   },
   escape: {
@@ -49,17 +53,20 @@ const rules = {
   },
   spoiler: {
     order: defaultRules.em.order - 0.5,
-    match: inlineRegex(/^\|\|([\s\S]+?)\|\|/),
-    parse: (capture, parse, state) => ({ content: parse(capture[1], state) }),
-    plain: () => '<spoiler>',
-    html: (node, output, state) => `<span data-mx-spoiler>${output(node.content, state)}</span>`,
+    match: inlineRegex(/^\|\|([\s\S]+?)\|\|(?:\(([\s\S]+?)\))?/),
+    parse: (capture, parse, state) => ({
+      content: parse(capture[1], state),
+      reason: capture[2],
+    }),
+    plain: (node) => `[${node.reason || 'spoiler'}](mxc://somewhere)`,
+    html: (node, output, state) => `<span data-mx-spoiler${node.reason ? `="${sanitizeText(node.reason)}"` : ''}>${output(node.content, state)}</span>`,
   },
   inlineMath: {
     order: defaultRules.del.order + 0.5,
     match: inlineRegex(/^\$(\S[\s\S]+?\S|\S)\$(?!\d)/),
     parse: (capture) => ({ content: capture[1] }),
     plain: (node) => `$${node.content}$`,
-    html: (node) => `<span data-mx-maths="${node.content}"><code>${node.content}</code></span>`,
+    html: (node) => mathHtml('span', node),
   },
   text: {
     ...defaultRules.text,
