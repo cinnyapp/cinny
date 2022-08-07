@@ -38,7 +38,6 @@ jobs:
         with:
           releaseId: ${{ steps.get_release.outputs.upload_url }}
       - name: Get app version (windows)
-        if: matrix.platform == 'windows-latest'
         run: |
           $json = (Get-Content "src-tauri\tauri.conf.json" -Raw) | ConvertFrom-Json
           $version = $json.package.version
