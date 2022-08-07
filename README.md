@@ -5,7 +5,7 @@
 
 Desktop app of Cinny made with Tauri. Cinny is a matrix client focusing primarily on simple, elegant and secure interface.
 
-![Image](resources/screenshot2.png)
+![Image](https://github.com/cinnyapp/cinny-desktop/blob/86b78d5cdeccd161ca6b11aa36c10ae0bbd09e5a/resources/screenshot2.png)
 
 ## Download
 
