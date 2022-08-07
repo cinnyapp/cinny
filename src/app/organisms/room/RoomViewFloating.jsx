@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import './RoomViewFloating.scss';
 
 import { useTranslation, Trans } from 'react-i18next';
-import { twemojify } from '../../../util/twemojify';
+import { twemojify, Twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -109,11 +109,13 @@ function RoomViewFloating({
     setIsAtBottom(true);
   };
 
-  console.log(typingMembers);
-
   const typingMemberValues = [...typingMembers];
 
-  console.log(typingMemberValues);
+  let i18nKey = 'Organisms.RoomViewFloating.user_typing';
+
+  if (typingMemberValues.length <= 4) {
+    i18nKey += `_${typingMemberValues.length}`;
+  }
 
   return (
     <>
@@ -129,15 +131,17 @@ function RoomViewFloating({
         <div className="bouncing-loader"><div /></div>
         <Text variant="b2">
           <Trans
-            i18nKey="Organisms.RoomViewFloating.user_typing"
+            i18nKey={i18nKey}
             values={{
               count: typingMembers.size,
-              user_one: twemojify(getUserDisplayName(typingMemberValues?.[0])),
-              user_two: twemojify(getUserDisplayName(typingMemberValues?.[1])),
-              user_three: twemojify(getUserDisplayName(typingMemberValues?.[2])),
-              user_four: twemojify(getUserDisplayName(typingMemberValues?.[3])),
             }}
-            components={{ bold: <b /> }}
+            components={{
+              bold: <b />,
+              user_one: <Twemojify text={getUsername(typingMemberValues?.[0])} />,
+              user_two: <Twemojify text={getUsername(typingMemberValues?.[1])} />,
+              user_three: <Twemojify text={getUsername(typingMemberValues?.[2])} />,
+              user_four: <Twemojify text={getUsername(typingMemberValues?.[3])} />,
+            }}
           />
         </Text>
       </div>

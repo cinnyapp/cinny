@@ -12,7 +12,7 @@ import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 
-import { twemojify } from '../../../util/twemojify';
+import { twemojify, Twemojify } from '../../../util/twemojify';
 
 import '../../i18n';
 
@@ -43,6 +43,12 @@ function FollowingMembers({ roomTimeline }) {
 
   const filteredM = followingMembers.filter((userId) => userId !== myUserId);
 
+  let i18nKey = 'Molecules.FollowingMembers.users_following';
+
+  if (filteredM.length <= 3) {
+    i18nKey += `_${filteredM.length}`;
+  }
+
   return filteredM.length !== 0 && (
     <button
       className="following-members"
@@ -55,15 +61,17 @@ function FollowingMembers({ roomTimeline }) {
       />
       <Text variant="b2">
         <Trans
-          i18nKey="Molecules.FollowingMembers.users_following"
+          i18nKey={i18nKey}
           values={{
             count: filteredM.length,
-            user_one: twemojify(getUserDisplayName(room, filteredM?.[0])),
-            user_two: twemojify(getUserDisplayName(room, filteredM?.[1])),
-            user_three: twemojify(getUserDisplayName(room, filteredM?.[2])),
             other_count: filteredM.length - 3,
           }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user_one: <Twemojify text={getUserDisplayName(room, filteredM?.[0])} />,
+            user_two: <Twemojify text={getUserDisplayName(room, filteredM?.[1])} />,
+            user_three: <Twemojify text={getUserDisplayName(room, filteredM?.[2])} />,
+          }}
         />
       </Text>
     </button>

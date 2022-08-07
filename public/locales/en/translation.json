@@ -262,10 +262,10 @@
                 "jump_unread": "Jump to unread messages",
                 "mark_read": "Mark as read",
                 "jump_latest": "Jump to latest",
-                "user_typing_one": "<bold>{{user_one}}</bold> is typing...",
-                "user_typing_two": "<bold>{{user_one}}</bold> and <bold>{{user_two}}</bold> are typing...",
-                "user_typing_three": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold> and <bold>{{user_three}}</bold> are typing...",
-                "user_typing_four": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold>, <bold>{{user_three}}</bold> and <bold>{{user_four}}</bold> are typing...",
+                "user_typing_1": "<bold><user_one/></bold> is typing...",
+                "user_typing_2": "<bold><user_one/></bold> and <bold><user_two/></bold> are typing...",
+                "user_typing_3": "<bold><user_one/></bold>, <bold><user_two/></bold> and <bold><user_three/></bold> are typing...",
+                "user_typing_4": "<bold><user_one/></bold>, <bold><user_two/></bold>, <bold><user_three/></bold> and <bold><user_four/></bold> are typing...",
                 "user_typing_other": "<bold>Several people</bold> are typing..."
             },
             "RoomViewContent": {
@@ -287,20 +287,23 @@
                 "room_settings_subtitle": "room settings"
             },
             "RoomCommon": {
-                "user_joined": "<bold>{{user_name}}</bold> joined the room",
-                "user_left": "<bold>{{user_name}}</bold> left the room",
-                "user_invited": "<bold>{{inviter_name}}</bold> invited <bold>{{user_name}}</bold>",
-                "invite_cancelled": "<bold>{{inviter_name}}</bold> cancelled <bold>{{user_name}}'s</bold> invite",
-                "invite_rejected": "<bold>{{user_name}}</bold> rejected the invitation",
-                "user_kicked": "<bold>{{actor}}</bold> kicked <bold>{{user_name}}</bold>: {{reason}}",
-                "user_banned": "<bold>{{actor}}</bold> banned <bold>{{user_name}}</bold>: {{reason}}",
-                "user_unbanned": "<bold>{{actor}} unbanned <bold>{{user_name}}</bold>",
-                "avatar_set": "<bold>{{user_name}}</bold> set an avatar",
-                "avatar_changed": "<bold>{{user_name}}</bold> changed their avatar",
-                "avatar_removed": "<bold>{{user_name}}</bold> removed their avatar",
-                "name_set": "<bold>{{user_name}}</bold> set their display name to <bold>{{new_name}}</bold>",
-                "name_changed": "<bold>{{user_name}}</bold> changed their display name to <bold>{{new_name}}</bold>",
-                "name_removed": "<bold>{{user_name}}</bold> removed their display name <bold>{{new_name}}</bold>"
+                "user_joined": "<bold><user/></bold> joined the room",
+                "user_left": "<bold><user/></bold> left the room",
+                "user_left_reason": "<bold><user/></bold> left the room: <reason/>",
+                "user_invited": "<bold><inviter/></bold> invited <bold><user/></bold>",
+                "invite_cancelled": "<bold><inviter/></bold> cancelled <bold><user/>'s</bold> invite",
+                "invite_rejected": "<bold><user/></bold> rejected the invitation",
+                "user_kicked": "<bold><actor/></bold> kicked <bold><user/></bold>",
+                "user_kicked_reason": "<bold><actor/></bold> kicked <bold><user/></bold>: <reason/>",
+                "user_banned": "<bold><actor/></bold> banned <bold><user/></bold>",
+                "user_banned_reason": "<bold><actor/></bold> banned <bold><user/></bold>: <reason/>",
+                "user_unbanned": "<bold><actor/> unbanned <bold><user/></bold>",
+                "avatar_set": "<bold><user/></bold> set an avatar",
+                "avatar_changed": "<bold><user/></bold> changed their avatar",
+                "avatar_removed": "<bold><user/></bold> removed their avatar",
+                "name_set": "<bold><user/></bold> set their display name to <bold><new_name/></bold>",
+                "name_changed": "<bold><user/></bold> changed their display name to <bold><new_name/></bold>",
+                "name_removed": "<bold><user/></bold> removed their display name <bold><last_name/></bold>"
             },
             "PublicRooms": {
                 "could_not_join_alias": "Unable to join {{alias}}. Either the room is private or doesn't exist",
@@ -461,10 +464,10 @@
                 "close_tooltip": "Close"
             },
             "FollowingMembers": {
-                "users_following_one": "<bold>{{user_one}}</bold> is following the conversation",
-                "users_following_two": "<bold>{{user_one}}</bold> and <bold>{{user_two}}</bold> are following the conversation",
-                "users_following_three": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold>, and <bold>{{user_three}}</bold> are following the conversation",
-                "users_following_other": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold>, <bold>{{user_three}}</bold> and {{other_count}} others are following the conversation"
+                "users_following_1": "<bold><user_one/></bold> is following the conversation",
+                "users_following_2": "<bold><user_one/></bold> and <bold><user_two/></bold> are following the conversation",
+                "users_following_3": "<bold><user_one/></bold>, <bold><user_two/></bold>, and <bold><user_three/></bold> are following the conversation",
+                "users_following_other": "<bold><user_one/></bold>, <bold><user_two/></bold>, <bold><user_three/></bold> and {{other_count}} others are following the conversation"
             },
             "ImageUpload": {
                 "prompt": "Upload",
@@ -499,10 +502,10 @@
                 "unknown_user": "** Unknown user **",
                 "edited": "(edited)",
                 "edit_placeholder": "Edit message",
-                "user_reacted_one": "<bold>{{user_one}}</bold> reacted with <emoji/>",
-                "user_reacted_two": "<bold>{{user_one}}</bold> and <bold>{{user_two}}</bold> reacted with <emoji/>",
-                "user_reacted_three": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold> and <bold>{{user_three}}</bold> reacted with <emoji/>",
-                "user_reacted_other": "<bold>{{user_one}}</bold>, <bold>{{user_two}}</bold>, <bold>{{user_three}}</bold> and {{other_count}} others reacted with <emoji/>",
+                "user_reacted_1": "<bold><user_one/></bold> reacted with <emoji/>",
+                "user_reacted_2": "<bold><user_one/></bold> and <bold><user_two/></bold> reacted with <emoji/>",
+                "user_reacted_3": "<bold><user_one/></bold>, <bold><user_two/></bold> and <bold><user_three/></bold> reacted with <emoji/>",
+                "user_reacted_other": "<bold><user_one/></bold>, <bold><user_two/></bold>, <bold><user_three/></bold> and {{other_count}} others reacted with <emoji/>",
                 "add_reaction_tooltip": "Add reaction",
                 "reply_tooltip": "Reply",
                 "edit_tooltip": "Edit",

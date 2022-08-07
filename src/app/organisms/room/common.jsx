@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Trans } from 'react-i18next';
-import { twemojify } from '../../../util/twemojify';
+import { twemojify, Twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
@@ -15,18 +15,20 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.user_joined"
-          values={{ user_name: twemojify(user) }}
-          components={{ bold: <b /> }}
+          components={{ bold: <b />, user: <Twemojify text={user} /> }}
         />
       );
     },
     leave(user, reason) {
-      const reasonMsg = (typeof reason === 'string') ? `: ${reason}` : '';
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.user_left"
-          values={{ user_name: twemojify(user) }}
-          components={{ bold: <b /> }}
+          context={(typeof reason === 'string') ? 'reason' : null}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+            reason: <Twemojify text={reason} />,
+          }}
         />
       );
     },
@@ -34,8 +36,11 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.user_invited"
-          values={{ user_name: twemojify(user), inviter_name: twemojify(inviter) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+            inviter: <Twemojify text={inviter} />,
+          }}
         />
       );
     },
@@ -43,8 +48,11 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.invite_cancelled"
-          values={{ user_name: twemojify(user), inviter_name: twemojify(inviter) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+            inviter: <Twemojify text={inviter} />,
+          }}
         />
       );
     },
@@ -52,36 +60,38 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.invite_rejected"
-          values={{ user_name: twemojify(user) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+          }}
         />
       );
     },
     kick(actor, user, reason) {
-      const reasonMsg = (typeof reason === 'string') ? `${reason}` : '';
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.user_kicked"
-          values={{
-            user_name: twemojify(user),
-            actor: twemojify(actor),
-            reason: twemojify(reasonMsg),
+          context={(typeof reason === 'string') ? 'reason' : null}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+            actor: <Twemojify text={actor} />,
+            reason: <Twemojify text={reason} />,
           }}
-          components={{ bold: <b /> }}
         />
       );
     },
     ban(actor, user, reason) {
-      const reasonMsg = (typeof reason === 'string') ? `${reason}` : '';
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.user_banned"
-          values={{
-            user_name: twemojify(user),
-            actor: twemojify(actor),
-            reason: twemojify(reasonMsg),
+          context={(typeof reason === 'string') ? 'reason' : null}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+            actor: <Twemojify text={actor} />,
+            reason: <Twemojify text={reason} />,
           }}
-          components={{ bold: <b /> }}
         />
       );
     },
@@ -89,8 +99,11 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.user_unbanned"
-          values={{ user_name: twemojify(user), actor: twemojify(actor) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+            actor: <Twemojify text={actor} />,
+          }}
         />
       );
     },
@@ -98,8 +111,10 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.avatar_set"
-          values={{ user_name: twemojify(user) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+          }}
         />
       );
     },
@@ -107,8 +122,10 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.avatar_changed"
-          values={{ user_name: twemojify(user) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+          }}
         />
       );
     },
@@ -116,8 +133,10 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.avatar_removed"
-          values={{ user_name: twemojify(user) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+          }}
         />
       );
     },
@@ -125,8 +144,11 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.name_set"
-          values={{ user_name: twemojify(user), new_name: twemojify(newName) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+            new_name: <Twemojify text={newName} />,
+          }}
         />
       );
     },
@@ -134,8 +156,11 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.name_changed"
-          values={{ user_name: twemojify(user), new_name: twemojify(newName) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+            new_name: <Twemojify text={newName} />,
+          }}
         />
       );
     },
@@ -143,8 +168,11 @@ function getTimelineJSXMessages() {
       return (
         <Trans
           i18nKey="Organisms.RoomCommon.name_removed"
-          values={{ user_name: twemojify(user), new_name: twemojify(lastName) }}
-          components={{ bold: <b /> }}
+          components={{
+            bold: <b />,
+            user: <Twemojify text={user} />,
+            last_name: <Twemojify text={lastName} />,
+          }}
         />
       );
     },

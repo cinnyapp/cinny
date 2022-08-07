@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import './Message.scss';
 
 import { useTranslation, Trans } from 'react-i18next';
-import { twemojify } from '../../../util/twemojify';
+import { twemojify, Twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { getUsername, getUsernameOfRoomMember, parseReply } from '../../../util/matrixUtil';
@@ -353,21 +353,24 @@ function pickEmoji(e, roomId, eventId, roomTimeline) {
 }
 
 function genReactionMsg(userIds, reaction, shortcode) {
+  let i18nKey = 'Molecules.Message.user_reacted';
+
+  if (userIds.length <= 3) {
+    i18nKey += `_${userIds.length}`;
+  }
+
   return (
-    <>
-      {userIds.map((userId, index) => (
-        <React.Fragment key={userId}>
-          {twemojify(getUsername(userId))}
-          {index < userIds.length - 1 && (
-            <span style={{ opacity: '.6' }}>
-              {index === userIds.length - 2 ? ' and ' : ', '}
-            </span>
-          )}
-        </React.Fragment>
-      ))}
-      <span style={{ opacity: '.6' }}>{' reacted with '}</span>
-      {twemojify(shortcode ? `:${shortcode}:` : reaction, { className: 'react-emoji' })}
-    </>
+    <Trans
+      i18nKey={i18nKey}
+      values={{ count: userIds.length, other_count: userIds.length - 3 }}
+      components={{
+        bold: <b />,
+        user_one: <Twemojify text={getUsername(userIds?.[0])} />,
+        user_two: <Twemojify text={getUsername(userIds?.[1])} />,
+        user_three: <Twemojify text={getUsername(userIds?.[2])} />,
+        emoji: <Twemojify text={shortcode ? `:${shortcode}:` : reaction} />,
+      }}
+    />
   );
 }
 
