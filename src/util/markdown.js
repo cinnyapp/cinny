@@ -1,7 +1,7 @@
 import SimpleMarkdown from '@khanacademy/simple-markdown';
 
 const {
-  inlineRegex, blockRegex, defaultRules, parserFor, outputFor, sanitizeText, htmlTag,
+  inlineRegex, blockRegex, defaultRules, parserFor, outputFor, sanitizeText, htmlTag, anyScopeRegex,
 } = SimpleMarkdown;
 
 function mathHtml(wrap, node) {
@@ -68,8 +68,14 @@ const rules = {
     plain: (node) => `$${node.content}$`,
     html: (node) => mathHtml('span', node),
   },
+  br: {
+    ...defaultRules.br,
+    match: anyScopeRegex(/^ *\n/),
+    plain: () => '\n',
+  },
   text: {
     ...defaultRules.text,
+    match: anyScopeRegex(/^[\s\S]+?(?=[^0-9A-Za-z\s\u00c0-\uffff]| *\n|\w+:\S|$)/),
     plain: (node) => node.content,
   },
 };
