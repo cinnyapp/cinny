@@ -58,7 +58,7 @@ const rules = {
       content: parse(capture[1], state),
       reason: capture[2],
     }),
-    plain: (node) => `[${node.reason || 'spoiler'}](mxc://somewhere)`,
+    plain: (node) => `[spoiler${node.reason ? `: ${node.reason}` : ''}](mxc://somewhere)`,
     html: (node, output, state) => `<span data-mx-spoiler${node.reason ? `="${sanitizeText(node.reason)}"` : ''}>${output(node.content, state)}</span>`,
   },
   inlineMath: {
