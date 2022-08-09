@@ -1,10 +1,10 @@
 ## Builder
-FROM node:17.9.0-alpine3.15 as builder
+FROM node:17.9.1-alpine3.15 as builder
 
 WORKDIR /src
 
 COPY package.json package-lock.json /src/
-RUN npm ci
+RUN npm ci --no-audit --prefer-offline
 COPY . /src/
 RUN npm run build
 
