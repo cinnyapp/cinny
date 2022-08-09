@@ -52,7 +52,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3.4.1
         with:
-          node-version: 17.9.0
+          node-version: 17.9.1
       - name: Build and deploy to Netlify
         uses: jsmrcaga/action-netlify-deploy@53de32e559b0b3833615b9788c7a090cd2fddb03
         with:
@@ -89,7 +89,9 @@ jobs:
         uses: docker/build-push-action@v3.1.1
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
