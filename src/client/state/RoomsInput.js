@@ -359,7 +359,7 @@ class RoomsInput extends EventEmitter {
   }
 
   async sendFile(roomId, file) {
-    const fileType = getBlobSafeMimeType(file.type.slice(0, file.type.indexOf('/')));
+    const fileType = getBlobSafeMimeType(file.type).slice(0, file.type.indexOf('/'));
     const info = {
       mimetype: file.type,
       size: file.size,
