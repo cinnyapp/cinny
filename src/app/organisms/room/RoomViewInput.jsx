@@ -8,7 +8,7 @@ import TextareaAutosize from 'react-autosize-textarea';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
-import { openEmojiBoard } from '../../../client/action/navigation';
+import { openEmojiBoard, openReusableContextMenu } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
 import { bytesToSize, getEventCords } from '../../../util/common';
 import { getUsername } from '../../../util/matrixUtil';
@@ -20,9 +20,12 @@ import IconButton from '../../atoms/button/IconButton';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import { MessageReply } from '../../molecules/message/Message';
 
+import StickerBoard from '../sticker-board/StickerBoard';
+
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import SendIC from '../../../../public/res/ic/outlined/send.svg';
+import StickerIC from '../../../../public/res/ic/outlined/sticker.svg';
 import ShieldIC from '../../../../public/res/ic/outlined/shield.svg';
 import VLCIC from '../../../../public/res/ic/outlined/vlc.svg';
 import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
@@ -129,7 +132,9 @@ function RoomViewInput({
   function firedCmd(cmdData) {
     const msg = textAreaRef.current.value;
     textAreaRef.current.value = replaceCmdWith(
-      msg, cmdCursorPos, typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '',
+      msg,
+      cmdCursorPos,
+      typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '',
     );
     deactivateCmd();
   }
@@ -201,6 +206,10 @@ function RoomViewInput({
     if (replyTo !== null) setReplyTo(null);
   };
 
+  const handleSendSticker = async (data) => {
+    roomsInput.sendSticker(roomId, data);
+  };
+
   function processTyping(msg) {
     const isEmptyMsg = msg === '';
 
@@ -254,7 +263,7 @@ function RoomViewInput({
   };
 
   const handleKeyDown = (e) => {
-    if (e.keyCode === 13 && e.shiftKey === false) {
+    if (e.key === 'Enter' && e.shiftKey === false) {
       e.preventDefault();
       sendMessage();
     }
@@ -328,6 +337,7 @@ function RoomViewInput({
           <ScrollView autoHide>
             <Text className="room-input__textarea-wrapper">
               <TextareaAutosize
+                dir="auto"
                 id="message-textarea"
                 ref={textAreaRef}
                 onChange={handleMsgTyping}
@@ -340,6 +350,29 @@ function RoomViewInput({
           {isMarkdown && <RawIcon size="extra-small" src={MarkdownIC} />}
         </div>
         <div ref={rightOptionsRef} className="room-input__option-container">
+          <IconButton
+            onClick={(e) => {
+              openReusableContextMenu(
+                'top',
+                (() => {
+                  const cords = getEventCords(e);
+                  cords.y -= 20;
+                  return cords;
+                })(),
+                (closeMenu) => (
+                  <StickerBoard
+                    roomId={roomId}
+                    onSelect={(data) => {
+                      handleSendSticker(data);
+                      closeMenu();
+                    }}
+                  />
+                ),
+              );
+            }}
+            tooltip="Sticker"
+            src={StickerIC}
+          />
           <IconButton
             onClick={(e) => {
               const cords = getEventCords(e);

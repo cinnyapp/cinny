@@ -25,9 +25,11 @@ import RoomHistoryVisibility from '../../molecules/room-history-visibility/RoomH
 import RoomEncryption from '../../molecules/room-encryption/RoomEncryption';
 import RoomPermissions from '../../molecules/room-permissions/RoomPermissions';
 import RoomMembers from '../../molecules/room-members/RoomMembers';
+import RoomEmojis from '../../molecules/room-emojis/RoomEmojis';
 
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
+import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
@@ -42,6 +44,7 @@ const tabText = {
   GENERAL: 'General',
   SEARCH: 'Search',
   MEMBERS: 'Members',
+  EMOJIS: 'Emojis',
   PERMISSIONS: 'Permissions',
   SECURITY: 'Security',
 };
@@ -57,6 +60,10 @@ const tabItems = [{
 }, {
   iconSrc: UserIC,
   text: tabText.MEMBERS,
+  disabled: false,
+}, {
+  iconSrc: EmojiIC,
+  text: tabText.EMOJIS,
   disabled: false,
 }, {
   iconSrc: ShieldUserIC,
@@ -197,6 +204,7 @@ function RoomSettings({ roomId }) {
             {selectedTab.text === tabText.GENERAL && <GeneralSettings roomId={roomId} />}
             {selectedTab.text === tabText.SEARCH && <RoomSearch roomId={roomId} />}
             {selectedTab.text === tabText.MEMBERS && <RoomMembers roomId={roomId} />}
+            {selectedTab.text === tabText.EMOJIS && <RoomEmojis roomId={roomId} />}
             {selectedTab.text === tabText.PERMISSIONS && <RoomPermissions roomId={roomId} />}
             {selectedTab.text === tabText.SECURITY && <SecuritySettings roomId={roomId} />}
           </div>
@@ -210,7 +218,5 @@ RoomSettings.propTypes = {
   roomId: PropTypes.string.isRequired,
 };
 
-export {
-  RoomSettings as default,
-  tabText,
-};
+export default RoomSettings;
+export { tabText };
