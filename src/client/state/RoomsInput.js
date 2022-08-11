@@ -6,6 +6,7 @@ import { math } from 'micromark-extension-math';
 import { encode } from 'blurhash';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
+import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
 
@@ -148,29 +149,25 @@ function findAndReplace(text, regex, filter, replace) {
   return copyText;
 }
 
-function formatAndEmojifyText(mx, roomList, room, text) {
+function formatUserPill(room, text) {
   const { userIdsToDisplayNames } = room.currentState;
-  const parentIds = roomList.getAllParentSpaces(room.roomId);
-  const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
-  const allEmoji = getShortcodeToEmoji(mx, [room, ...parentRooms]);
-
-  let formattedText;
-  if (settings.isMarkdown) {
-    formattedText = getFormattedBody(text);
-  } else {
-    formattedText = text;
-  }
-
-  formattedText = findAndReplace(
-    formattedText,
+  return findAndReplace(
+    text,
     MXID_REGEX,
     (match) => userIdsToDisplayNames[match[0]],
     (match) => (
       `<a href="https://matrix.to/#/${match[0]}">@${userIdsToDisplayNames[match[0]]}</a>`
     ),
   );
-  formattedText = findAndReplace(
-    formattedText,
+}
+
+function formatEmoji(mx, room, roomList, text) {
+  const parentIds = roomList.getAllParentSpaces(room.roomId);
+  const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
+  const allEmoji = getShortcodeToEmoji(mx, [room, ...parentRooms]);
+
+  return findAndReplace(
+    text,
     SHORTCODE_REGEX,
     (match) => allEmoji.has(match[1]),
     (match) => {
@@ -191,8 +188,6 @@ function formatAndEmojifyText(mx, roomList, room, text) {
       return tag;
     },
   );
-
-  return formattedText;
 }
 
 class RoomsInput extends EventEmitter {
@@ -295,25 +290,27 @@ class RoomsInput extends EventEmitter {
     }
 
     if (this.getMessage(roomId).trim() !== '') {
+      const rawMessage = input.message;
       let content = {
-        body: input.message,
+        body: rawMessage,
         msgtype: 'm.text',
       };
 
       // Apply formatting if relevant
-      const formattedBody = formatAndEmojifyText(
-        this.matrixClient,
-        this.roomList,
-        room,
-        input.message,
-      );
+      let formattedBody = settings.isMarkdown
+        ? getFormattedBody(rawMessage)
+        : sanitizeText(rawMessage);
+
+      formattedBody = formatUserPill(room, formattedBody);
+      formattedBody = formatEmoji(this.matrixClient, room, this.roomList, formattedBody);
+
       content.body = findAndReplace(
         content.body,
         MXID_REGEX,
         (match) => room.currentState.userIdsToDisplayNames[match[0]],
         (match) => `@${room.currentState.userIdsToDisplayNames[match[0]]}`,
       );
-      if (formattedBody !== input.message) {
+      if (formattedBody !== sanitizeText(rawMessage)) {
         // Formatting was applied, and we need to switch to custom HTML
         content.format = 'org.matrix.custom.html';
         content.formatted_body = formattedBody;
@@ -481,19 +478,19 @@ class RoomsInput extends EventEmitter {
     };
 
     // Apply formatting if relevant
-    const formattedBody = formatAndEmojifyText(
-      this.matrixClient,
-      this.roomList,
-      room,
-      editedBody,
-    );
+    let formattedBody = settings.isMarkdown
+      ? getFormattedBody(editedBody)
+      : sanitizeText(editedBody);
+    formattedBody = formatUserPill(room, formattedBody);
+    formattedBody = formatEmoji(this.matrixClient, room, this.roomList, formattedBody);
+
     content.body = findAndReplace(
       content.body,
       MXID_REGEX,
       (match) => room.currentState.userIdsToDisplayNames[match[0]],
       (match) => `@${room.currentState.userIdsToDisplayNames[match[0]]}`,
     );
-    if (formattedBody !== editedBody) {
+    if (formattedBody !== sanitizeText(editedBody)) {
       content.formatted_body = ` * ${formattedBody}`;
       content.format = 'org.matrix.custom.html';
       content['m.new_content'].formatted_body = formattedBody;
