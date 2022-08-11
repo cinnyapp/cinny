@@ -27,13 +27,20 @@
   white-space: initial;
 }
 
+.sticker-container {
+  display: inline-flex;
+  max-width: 128px;
+  width: 100%;
+  & img {
+    width: 100% !important;
+  }
+}
+
 .image-container,
 .video-container,
 .audio-container {
   font-size: 0;
   line-height: 0;
-
-  position: relative;
 
   display: flex;
   justify-content: center;
@@ -48,7 +55,6 @@
 .video-container {
   & img,
   & canvas {
-    position: absolute;
     max-width: unset !important;
     width: 100% !important;
     height: 100%;
@@ -57,18 +63,13 @@
   }
 }
 
-.sticker-container {
-  display: inline-flex;
-  max-width: 128px;
-  width: 100%;
-  & img {
-    width: 100% !important;
-  }
-}
-
 .video-container {
+  position: relative;
   & .ic-btn-surface {
     background-color: var(--bg-surface-low);
+  }
+  & .ic-btn-surface,
+  & .donut-spinner {
     position: absolute;
   }
   video {

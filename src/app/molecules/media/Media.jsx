@@ -178,7 +178,7 @@ function Image({
       <FileHeader name={name} link={url || link} type={type} external />
       <div style={{ height: width !== null ? getNativeHeight(width, height) : 'unset' }} className="image-container">
         { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
-        { url !== null && <img onLoad={() => setBlur(false)} src={url || link} alt={name} />}
+        { url !== null && <img style={{ display: blur ? 'none' : 'unset' }} onLoad={() => setBlur(false)} src={url || link} alt={name} />}
       </div>
     </div>
   );
@@ -227,11 +227,11 @@ function Sticker({
 Sticker.defaultProps = {
   file: null,
   type: '',
+  width: null,
+  height: null,
 };
 Sticker.propTypes = {
   name: PropTypes.string.isRequired,
-  width: null,
-  height: null,
   width: PropTypes.number,
   height: PropTypes.number,
   link: PropTypes.string.isRequired,
@@ -289,6 +289,7 @@ function Video({
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState(null);
   const [thumbUrl, setThumbUrl] = useState(null);
+  const [blur, setBlur] = useState(true);
 
   useEffect(() => {
     let unmounted = false;
@@ -303,16 +304,16 @@ function Video({
     };
   }, []);
 
-  async function loadVideo() {
+  const loadVideo = async () => {
     const myUrl = await getUrl(link, type, file);
     setUrl(myUrl);
     setIsLoading(false);
-  }
+  };
 
-  function handlePlayVideo() {
+  const handlePlayVideo = () => {
     setIsLoading(true);
     loadVideo();
-  }
+  };
 
   return (
     <div className="file-container">
@@ -323,15 +324,17 @@ function Video({
         }}
         className="video-container"
       >
-        { url === null && blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
-        { url === null && thumbUrl !== null && (
-          /* eslint-disable-next-line jsx-a11y/alt-text */
-          <img src={thumbUrl} />
-        )}
-        { url === null && isLoading && <Spinner size="small" /> }
-        { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
-        { url !== null && (
-        /* eslint-disable-next-line jsx-a11y/media-has-caption */
+        { url === null ? (
+          <>
+            { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
+            { thumbUrl !== null && (
+              <img style={{ display: blur ? 'none' : 'unset' }} src={thumbUrl} onLoad={() => setBlur(false)} alt={name} />
+            )}
+            {isLoading && <Spinner size="small" />}
+            {!isLoading && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
+          </>
+        ) : (
+          /* eslint-disable-next-line jsx-a11y/media-has-caption */
           <video autoPlay controls poster={thumbUrl}>
             <source src={url} type={getBlobSafeMimeType(type)} />
           </video>
