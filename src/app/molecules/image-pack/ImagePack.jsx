@@ -118,7 +118,7 @@ function useImagePackHandles(pack, sendPackContent) {
 
   const getNewKey = (key) => {
     if (typeof key !== 'string') return undefined;
-    let newKey = key?.replace(/\s/g, '-');
+    let newKey = key?.replace(/\s/g, '_');
     if (pack.getImages().get(newKey)) {
       newKey = suffixRename(
         newKey,

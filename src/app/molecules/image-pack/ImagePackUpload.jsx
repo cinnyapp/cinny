@@ -41,11 +41,13 @@ function ImagePackUpload({ onUpload }) {
     const img = evt.target.files[0];
     if (!img) return;
     setImgFile(img);
+    shortcodeRef.current.value = img.name.slice(0, img.name.indexOf('.'));
     shortcodeRef.current.focus();
   };
   const handleRemove = () => {
     setImgFile(null);
     inputRef.current.value = null;
+    shortcodeRef.current.value = '';
   };
 
   return (

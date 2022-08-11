@@ -1,7 +1,7 @@
 import sanitizeHtml from 'sanitize-html';
-import initMatrix from '../client/initMatrix';
 
 const MAX_TAG_NESTING = 100;
+let mx = null;
 
 const permittedHtmlTags = [
   'font', 'del', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -54,7 +54,7 @@ function transformATag(tagName, attribs) {
         'data-mx-pill': userId,
       },
     };
-    if (userId === initMatrix.matrixClient.getUserId()) {
+    if (userId === mx?.getUserId()) {
       pill.attribs['data-mx-ping'] = undefined;
     }
     return pill;
@@ -76,17 +76,28 @@ function transformATag(tagName, attribs) {
 
 function transformImgTag(tagName, attribs) {
   const { src } = attribs;
-  const mx = initMatrix.matrixClient;
+  if (src.startsWith('mxc://') === false) {
+    return {
+      tagName: 'a',
+      attribs: {
+        href: src,
+        rel: 'noopener',
+        target: '_blank',
+      },
+      text: attribs.alt || src,
+    };
+  }
   return {
     tagName,
     attribs: {
       ...attribs,
-      src: src.startsWith('mxc://') ? mx.mxcUrlToHttp(src) : src,
+      src: mx?.mxcUrlToHttp(src),
     },
   };
 }
 
-export function sanitizeCustomHtml(body) {
+export function sanitizeCustomHtml(matrixClient, body) {
+  mx = matrixClient;
   return sanitizeHtml(body, {
     allowedTags: permittedHtmlTags,
     allowedAttributes: permittedTagToAttributes,
