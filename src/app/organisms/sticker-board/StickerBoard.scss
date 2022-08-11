@@ -17,8 +17,6 @@
     flex-direction: column;
     min-height: 100%;
     padding: 4px 6px;
-
-    background-color: var(--bg-surface-low);
     @include dir.side(border, none, 1px solid var(--bg-surface-border));
   }
 
