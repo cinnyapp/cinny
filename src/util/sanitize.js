@@ -76,11 +76,22 @@ function transformATag(tagName, attribs) {
 
 function transformImgTag(tagName, attribs) {
   const { src } = attribs;
+  if (src.startsWith('mxc://') === false) {
+    return {
+      tagName: 'a',
+      attribs: {
+        href: src,
+        rel: 'noopener',
+        target: '_blank',
+      },
+      text: attribs.alt || src,
+    };
+  }
   return {
     tagName,
     attribs: {
       ...attribs,
-      src: src.startsWith('mxc://') ? mx?.mxcUrlToHttp(src) : src,
+      src: mx?.mxcUrlToHttp(src),
     },
   };
 }
