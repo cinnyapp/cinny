@@ -5,6 +5,22 @@
   --sticker-board-width: 286px;
   display: flex;
   height: var(--sticker-board-height);
+  display: flex;
+
+  & > .scrollbar {
+    width: initial;    
+    height: var(--sticker-board-height);
+  }
+
+  &__sidebar {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding: 4px 6px;
+
+    background-color: var(--bg-surface-low);
+    @include dir.side(border, none, 1px solid var(--bg-surface-border));
+  }
 
   &__container {
     flex-grow: 1;

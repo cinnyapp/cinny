@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import './StickerBoard.scss';
 
@@ -9,10 +9,12 @@ import { getRelevantPacks } from '../emoji-board/custom-emoji';
 
 import Text from '../../atoms/text/Text';
 import ScrollView from '../../atoms/scroll/ScrollView';
+import IconButton from '../../atoms/button/IconButton';
 
 function StickerBoard({ roomId, onSelect }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
+  const scrollRef = useRef(null);
 
   const parentIds = initMatrix.roomList.getAllParentSpaces(room.roomId);
   const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
@@ -38,6 +40,11 @@ function StickerBoard({ roomId, onSelect }) {
     onSelect(stickerData);
   };
 
+  const openGroup = (groupIndex) => {
+    const scrollContent = scrollRef.current.firstElementChild;
+    scrollContent.children[groupIndex].scrollIntoView();
+  };
+
   const renderPack = (pack) => (
     <div className="sticker-board__pack" key={pack.id}>
       <Text className="sticker-board__pack-header" variant="b2" weight="bold">{pack.displayName ?? 'Unknown'}</Text>
@@ -50,6 +57,7 @@ function StickerBoard({ roomId, onSelect }) {
             alt={sticker.shortcode}
             title={sticker.body ?? sticker.shortcode}
             data-mx-sticker={sticker.mxc}
+            loading="lazy"
           />
         ))}
       </div>
@@ -58,8 +66,27 @@ function StickerBoard({ roomId, onSelect }) {
 
   return (
     <div className="sticker-board">
+      {packs.length > 0 && (
+        <ScrollView invisible>
+          <div className="sticker-board__sidebar">
+            {packs.map((pack, index) => {
+              const src = mx.mxcUrlToHttp(pack.avatarUrl ?? pack.getStickers()[0].mxc);
+              return (
+                <IconButton
+                  key={pack.id}
+                  onClick={() => openGroup(index)}
+                  src={src}
+                  tooltip={pack.displayName || 'Unknown'}
+                  tooltipPlacement="left"
+                  isImage
+                />
+              );
+            })}
+          </div>
+        </ScrollView>
+      )}
       <div className="sticker-board__container">
-        <ScrollView autoHide>
+        <ScrollView autoHide ref={scrollRef}>
           <div
             onClick={handleOnSelect}
             className="sticker-board__content"
