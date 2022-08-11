@@ -166,6 +166,9 @@ export function scaleDownImage(imageFile, width, height) {
     img.onload = () => {
       let newWidth = img.width;
       let newHeight = img.height;
+      if (newHeight <= height && newWidth <= width) {
+        resolve(imageFile);
+      }
 
       if (newHeight > height) {
         newWidth = Math.floor(newWidth * (height / newHeight));
