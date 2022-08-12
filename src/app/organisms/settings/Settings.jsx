@@ -25,6 +25,7 @@ import PopupWindow from '../../molecules/popup-window/PopupWindow';
 import SettingTile from '../../molecules/setting-tile/SettingTile';
 import ImportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ImportE2ERoomKeys';
 import ExportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ExportE2ERoomKeys';
+import { ImagePackUser, ImagePackGlobal } from '../../molecules/image-pack/ImagePack';
 
 import ProfileEditor from '../profile-editor/ProfileEditor';
 import CrossSigning from './CrossSigning';
@@ -32,6 +33,7 @@ import KeyBackup from './KeyBackup';
 import DeviceManage from './DeviceManage';
 
 import SunIC from '../../../../public/res/ic/outlined/sun.svg';
+import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
 import BellIC from '../../../../public/res/ic/outlined/bell.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
@@ -58,23 +60,25 @@ function AppearanceSection() {
           )}
           content={<Text variant="b3">Use light or dark mode based on the system settings.</Text>}
         />
-        {!settings.useSystemTheme && (
-          <SettingTile
-            title="Theme"
-            content={(
-              <SegmentedControls
-                selected={settings.getThemeIndex()}
-                segments={[
-                  { text: 'Light' },
-                  { text: 'Silver' },
-                  { text: 'Dark' },
-                  { text: 'Butter' },
-                ]}
-                onSelect={(index) => settings.setTheme(index)}
-              />
-          )}
-          />
+        <SettingTile
+          title="Theme"
+          content={(
+            <SegmentedControls
+              selected={settings.useSystemTheme ? -1 : settings.getThemeIndex()}
+              segments={[
+                { text: 'Light' },
+                { text: 'Silver' },
+                { text: 'Dark' },
+                { text: 'Butter' },
+              ]}
+              onSelect={(index) => {
+                if (settings.useSystemTheme) toggleSystemTheme();
+                settings.setTheme(index);
+                updateState({});
+              }}
+            />
         )}
+        />
       </div>
       <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
@@ -191,6 +195,15 @@ function NotificationsSection() {
   );
 }
 
+function EmojiSection() {
+  return (
+    <>
+      <div className="settings-emoji__card"><ImagePackUser /></div>
+      <div className="settings-emoji__card"><ImagePackGlobal /></div>
+    </>
+  );
+}
+
 function SecuritySection() {
   return (
     <div className="settings-security">
@@ -272,6 +285,7 @@ function AboutSection() {
 export const tabText = {
   APPEARANCE: 'Appearance',
   NOTIFICATIONS: 'Notifications',
+  EMOJI: 'Emoji',
   SECURITY: 'Security',
   ABOUT: 'About',
 };
@@ -285,6 +299,11 @@ const tabItems = [{
   iconSrc: BellIC,
   disabled: false,
   render: () => <NotificationsSection />,
+}, {
+  text: tabText.EMOJI,
+  iconSrc: EmojiIC,
+  disabled: false,
+  render: () => <EmojiSection />,
 }, {
   text: tabText.SECURITY,
   iconSrc: LockIC,

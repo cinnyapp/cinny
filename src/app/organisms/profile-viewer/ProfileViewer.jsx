@@ -11,7 +11,7 @@ import { selectRoom, openReusableContextMenu } from '../../../client/action/navi
 import * as roomActions from '../../../client/action/room';
 
 import {
-  getUsername, getUsernameOfRoomMember, getPowerLabel, hasDMWith
+  getUsername, getUsernameOfRoomMember, getPowerLabel, hasDMWith, hasDevices
 } from '../../../util/matrixUtil';
 import { getEventCords } from '../../../util/common';
 import colorMXID from '../../../util/colorMXID';
@@ -201,7 +201,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     // Create new DM
     try {
       setIsCreatingDM(true);
-      await roomActions.createDM(userId);
+      await roomActions.createDM(userId, await hasDevices(userId));
     } catch {
       if (isMountedRef.current === false) return;
       setIsCreatingDM(false);

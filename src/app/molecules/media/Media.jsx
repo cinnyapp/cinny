@@ -4,6 +4,7 @@ import './Media.scss';
 
 import encrypt from 'browser-encrypt-attachment';
 
+import { BlurhashCanvas } from 'react-blurhash';
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
@@ -12,15 +13,19 @@ import DownloadSVG from '../../../../public/res/ic/outlined/download.svg';
 import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
 import PlaySVG from '../../../../public/res/ic/outlined/play.svg';
 
-// https://github.com/matrix-org/matrix-react-sdk/blob/a9e28db33058d1893d964ec96cd247ecc3d92fc3/src/utils/blobs.ts#L73
+// https://github.com/matrix-org/matrix-react-sdk/blob/cd15e08fc285da42134817cce50de8011809cd53/src/utils/blobs.ts#L73
 const ALLOWED_BLOB_MIMETYPES = [
   'image/jpeg',
   'image/gif',
   'image/png',
+  'image/apng',
+  'image/webp',
+  'image/avif',
 
   'video/mp4',
   'video/webm',
   'video/ogg',
+  'video/quicktime',
 
   'audio/mp4',
   'audio/webm',
@@ -37,6 +42,10 @@ const ALLOWED_BLOB_MIMETYPES = [
 function getBlobSafeMimeType(mimetype) {
   if (!ALLOWED_BLOB_MIMETYPES.includes(mimetype)) {
     return 'application/octet-stream';
+  }
+  // Required for Chromium browsers
+  if (mimetype === 'video/quicktime') {
+    return 'video/mp4';
   }
   return mimetype;
 }
@@ -61,9 +70,8 @@ async function getUrl(link, type, decryptData) {
   }
 }
 
-function getNativeHeight(width, height) {
-  const MEDIA_MAX_WIDTH = 296;
-  const scale = MEDIA_MAX_WIDTH / width;
+function getNativeHeight(width, height, maxWidth = 296) {
+  const scale = maxWidth / width;
   return scale * height;
 }
 
@@ -147,9 +155,10 @@ File.propTypes = {
 };
 
 function Image({
-  name, width, height, link, file, type,
+  name, width, height, link, file, type, blurhash,
 }) {
   const [url, setUrl] = useState(null);
+  const [blur, setBlur] = useState(true);
 
   useEffect(() => {
     let unmounted = false;
@@ -168,7 +177,8 @@ function Image({
     <div className="file-container">
       <FileHeader name={name} link={url || link} type={type} external />
       <div style={{ height: width !== null ? getNativeHeight(width, height) : 'unset' }} className="image-container">
-        { url !== null && <img src={url || link} alt={name} />}
+        { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
+        { url !== null && <img style={{ display: blur ? 'none' : 'unset' }} onLoad={() => setBlur(false)} src={url || link} alt={name} />}
       </div>
     </div>
   );
@@ -178,8 +188,49 @@ Image.defaultProps = {
   width: null,
   height: null,
   type: '',
+  blurhash: '',
 };
 Image.propTypes = {
+  name: PropTypes.string.isRequired,
+  width: PropTypes.number,
+  height: PropTypes.number,
+  link: PropTypes.string.isRequired,
+  file: PropTypes.shape({}),
+  type: PropTypes.string,
+  blurhash: PropTypes.string,
+};
+
+function Sticker({
+  name, height, width, link, file, type,
+}) {
+  const [url, setUrl] = useState(null);
+
+  useEffect(() => {
+    let unmounted = false;
+    async function fetchUrl() {
+      const myUrl = await getUrl(link, type, file);
+      if (unmounted) return;
+      setUrl(myUrl);
+    }
+    fetchUrl();
+    return () => {
+      unmounted = true;
+    };
+  }, []);
+
+  return (
+    <div className="sticker-container" style={{ height: width !== null ? getNativeHeight(width, height, 128) : 'unset' }}>
+      { url !== null && <img src={url || link} title={name} alt={name} />}
+    </div>
+  );
+}
+Sticker.defaultProps = {
+  file: null,
+  type: '',
+  width: null,
+  height: null,
+};
+Sticker.propTypes = {
   name: PropTypes.string.isRequired,
   width: PropTypes.number,
   height: PropTypes.number,
@@ -232,12 +283,13 @@ Audio.propTypes = {
 };
 
 function Video({
-  name, link, thumbnail,
-  width, height, file, type, thumbnailFile, thumbnailType,
+  name, link, thumbnail, thumbnailFile, thumbnailType,
+  width, height, file, type, blurhash,
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState(null);
   const [thumbUrl, setThumbUrl] = useState(null);
+  const [blur, setBlur] = useState(true);
 
   useEffect(() => {
     let unmounted = false;
@@ -252,16 +304,16 @@ function Video({
     };
   }, []);
 
-  async function loadVideo() {
+  const loadVideo = async () => {
     const myUrl = await getUrl(link, type, file);
     setUrl(myUrl);
     setIsLoading(false);
-  }
+  };
 
-  function handlePlayVideo() {
+  const handlePlayVideo = () => {
     setIsLoading(true);
     loadVideo();
-  }
+  };
 
   return (
     <div className="file-container">
@@ -269,14 +321,20 @@ function Video({
       <div
         style={{
           height: width !== null ? getNativeHeight(width, height) : 'unset',
-          backgroundImage: thumbUrl === null ? 'none' : `url(${thumbUrl}`,
         }}
         className="video-container"
       >
-        { url === null && isLoading && <Spinner size="small" /> }
-        { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
-        { url !== null && (
-        /* eslint-disable-next-line jsx-a11y/media-has-caption */
+        { url === null ? (
+          <>
+            { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
+            { thumbUrl !== null && (
+              <img style={{ display: blur ? 'none' : 'unset' }} src={thumbUrl} onLoad={() => setBlur(false)} alt={name} />
+            )}
+            {isLoading && <Spinner size="small" />}
+            {!isLoading && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
+          </>
+        ) : (
+          /* eslint-disable-next-line jsx-a11y/media-has-caption */
           <video autoPlay controls poster={thumbUrl}>
             <source src={url} type={getBlobSafeMimeType(type)} />
           </video>
@@ -290,22 +348,24 @@ Video.defaultProps = {
   height: null,
   file: null,
   thumbnail: null,
-  type: '',
   thumbnailType: null,
   thumbnailFile: null,
+  type: '',
+  blurhash: null,
 };
 Video.propTypes = {
   name: PropTypes.string.isRequired,
   link: PropTypes.string.isRequired,
   thumbnail: PropTypes.string,
+  thumbnailFile: PropTypes.shape({}),
+  thumbnailType: PropTypes.string,
   width: PropTypes.number,
   height: PropTypes.number,
   file: PropTypes.shape({}),
   type: PropTypes.string,
-  thumbnailFile: PropTypes.shape({}),
-  thumbnailType: PropTypes.string,
+  blurhash: PropTypes.string,
 };
 
 export {
-  File, Image, Audio, Video,
+  File, Image, Sticker, Audio, Video,
 };

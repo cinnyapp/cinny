@@ -26,10 +26,10 @@
   &--icon {
     @include dir.side(padding, var(--sp-tight), var(--sp-loose));
 
-    .ic-raw {
-      @include dir.side(margin, 0, var(--sp-extra-tight));
-      flex-shrink: 0;
-    }
+  }
+  .ic-raw {
+    @include dir.side(margin, 0, var(--sp-extra-tight));
+    flex-shrink: 0;
   }
 }
 

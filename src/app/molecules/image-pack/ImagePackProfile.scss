@@ -1,0 +1,37 @@
+@use '../../partials/flex';
+
+.image-pack-profile {
+  padding: var(--sp-normal);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-tight);
+
+  &__content {
+    @extend .cp-fx__item-one;
+
+    & > div:first-child {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-extra-tight);
+
+      & .ic-btn {
+        padding: var(--sp-ultra-tight);
+      }
+    }
+    & > form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-extra-tight);
+      & > div:last-child {
+        margin: var(--sp-extra-tight) 0;
+        display: flex;
+        gap: var(--sp-tight);
+      }
+    }
+  }
+  &__usage {
+    & > *:first-child {
+      margin-bottom: var(--sp-ultra-tight);
+    }
+  }
+}
