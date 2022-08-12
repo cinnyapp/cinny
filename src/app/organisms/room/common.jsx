@@ -8,37 +8,56 @@ import { getUsername, getUsernameOfRoomMember } from '../../../util/matrixUtil';
 function getTimelineJSXMessages() {
   return {
     roomNameChanged(actor, name) {
-      return (
-        <>
-          <b>{twemojify(actor)}</b>
-          {' changed the room name to '}
-          <b>{twemojify(name)}</b>
-        </>
-      );
+      if (name) {
+        return (
+          <>
+            <b>{twemojify(actor)}</b>
+            {' changed the room name to '}
+            <b>{twemojify(name)}</b>
+          </>
+        );
+      } else {
+        return (
+          <>
+            <b>{twemojify(actor)}</b>
+            {' removed the room name'}
+          </>
+        );
+      }
     },
-    roomTopicChanged(actor) {
-      return (
-        <>
-          <b>{twemojify(actor)}</b>
-          {' changed the room topic'}
-        </>
-      );
+    roomTopicChanged(actor, topic) {
+      if (topic) {
+        return (
+          <>
+            <b>{twemojify(actor)}</b>
+            {' changed the room topic'}
+          </>
+        );
+      } else {
+        return (
+          <>
+            <b>{twemojify(actor)}</b>
+            {' removed the room topic'}
+          </>
+        );
+      }
     },
-    roomAvatarChanged(actor) {
-      return (
-        <>
-          <b>{twemojify(actor)}</b>
-          {' changed the room avatar'}
-        </>
-      );
-    },
-    roomAvatarRemoved(actor) {
-      return (
-        <>
-          <b>{twemojify(actor)}</b>
-          {' removed the room avatar'}
-        </>
-      );
+    roomAvatarChanged(actor, url) {
+      if (url) {
+        return (
+          <>
+            <b>{twemojify(actor)}</b>
+            {' changed the room avatar'}
+          </>
+        );      
+      } else {
+        return (
+          <>
+            <b>{twemojify(actor)}</b>
+            {' removed the room avatar'}
+          </>
+        );
+      }
     },
     join(user) {
       return (
@@ -167,6 +186,14 @@ function getTimelineJSXMessages() {
         </>
       );
     },
+    unknown(user) {
+      return (
+        <>
+          <b>{twemojify(user)}</b>
+          {' did something'}
+        </>
+      );
+    }
   };
 }
 
@@ -216,8 +243,8 @@ function parseTimelineChange(mEvent) {
   
   switch (type) {
     case 'm.room.name': return makeReturnObj('edit', tJSXMsgs.roomNameChanged(senderName, content.name));
-    case 'm.room.topic': return makeReturnObj('edit', tJSXMsgs.roomTopicChanged(senderName));
-    case 'm.room.avatar': return makeReturnObj('edit', tJSXMsgs[content.url ? 'roomAvatarChanged' : 'roomAvatarRemoved'](senderName));
+    case 'm.room.topic': return makeReturnObj('edit', tJSXMsgs.roomTopicChanged(senderName, content.topic));
+    case 'm.room.avatar': return makeReturnObj('edit', tJSXMsgs.roomAvatarChanged(senderName, content.url));
   }
 
   switch (content.membership) {

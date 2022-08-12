@@ -10,7 +10,7 @@ import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 import InviteArrowIC from '../../../../public/res/ic/outlined/invite-arrow.svg';
 import InviteCancelArrowIC from '../../../../public/res/ic/outlined/invite-cancel-arrow.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
-import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
+import HashIC from '../../../../public/res/ic/outlined/hash.svg';
 
 function TimelineChange({
   variant, content, time, onClick,
@@ -34,7 +34,7 @@ function TimelineChange({
       iconSrc = UserIC;
       break;
     case 'edit':
-      iconSrc = PencilIC;
+      iconSrc = HashIC;
       break;
     default:
       iconSrc = JoinArrowIC;
