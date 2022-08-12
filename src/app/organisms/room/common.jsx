@@ -186,14 +186,6 @@ function getTimelineJSXMessages() {
         </>
       );
     },
-    unknown(user) {
-      return (
-        <>
-          <b>{twemojify(user)}</b>
-          {' did something'}
-        </>
-      );
-    }
   };
 }
 
