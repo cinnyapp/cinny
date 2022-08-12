@@ -125,10 +125,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
     && !stateEvents.concat('m.room.create').includes(prevMEvent.getType())
     && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
   );
-  const mDate = mEvent.getDate();
-  const isToday = isInSameDay(mDate, new Date());
-
-  const time = dateFormat(mDate, isToday ? 'hh:MM TT' : 'dd/mm/yyyy');
+  const timestamp = mEvent.getTs();
 
   if (stateEvents.includes(mEvent.getType())) {
     const timelineChange = parseTimelineChange(mEvent);
@@ -138,7 +135,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
         key={mEvent.getId()}
         variant={timelineChange.variant}
         content={timelineChange.content}
-        time={time}
+        timestamp={timestamp}
       />
     );
   }
@@ -150,7 +147,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
       isBodyOnly={isBodyOnly}
       roomTimeline={roomTimeline}
       focus={isFocus}
-      time={time}
+      fullTime={false}
     />
   );
 }

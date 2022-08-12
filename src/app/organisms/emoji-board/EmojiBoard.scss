@@ -25,8 +25,7 @@
 
     min-height: 100%;
     padding: 4px 6px;
-    background-color: var(--bg-surface-low);
-    @include dir.side(border, 1px solid var(--bg-surface-border), none);
+    @include dir.side(border, none, 1px solid var(--bg-surface-border));
 
     position: relative;
     
@@ -84,6 +83,7 @@
     .emoji {
       width: 32px;
       height: 32px;
+      object-fit: contain;
     }
   }
   & > p:last-child {
@@ -121,8 +121,12 @@
     @include dir.side(margin, var(--left-margin), var(--right-margin));
   }
   & .emoji {
-    width: 38px;
-    height: 38px;
+    max-width: 38px;
+    max-height: 38px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    object-fit: contain;
     padding: var(--emoji-padding);
     cursor: pointer;
     &:hover {

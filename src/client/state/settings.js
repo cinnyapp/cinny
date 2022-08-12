@@ -48,31 +48,43 @@ class Settings extends EventEmitter {
     return this.themes[this.themeIndex];
   }
 
-  setTheme(themeIndex) {
-    const appBody = document.getElementById('appBody');
-
-    appBody.classList.remove('system-theme');
+  _clearTheme() {
+    document.body.classList.remove('system-theme');
     this.themes.forEach((themeName) => {
       if (themeName === '') return;
-      appBody.classList.remove(themeName);
+      document.body.classList.remove(themeName);
     });
-    // If use system theme is enabled
-    // we will override current theme choice with system theme
+  }
+
+  applyTheme() {
+    this._clearTheme();
     if (this.useSystemTheme) {
-      appBody.classList.add('system-theme');
-    } else if (this.themes[themeIndex] !== '') {
-      appBody.classList.add(this.themes[themeIndex]);
+      document.body.classList.add('system-theme');
+    } else if (this.themes[this.themeIndex]) {
+      document.body.classList.add(this.themes[this.themeIndex]);
     }
-    setSettings('themeIndex', themeIndex);
+  }
+
+  setTheme(themeIndex) {
     this.themeIndex = themeIndex;
+    setSettings('themeIndex', this.themeIndex);
+    this.applyTheme();
+  }
+
+  toggleUseSystemTheme() {
+    this.useSystemTheme = !this.useSystemTheme;
+    setSettings('useSystemTheme', this.useSystemTheme);
+    this.applyTheme();
+
+    this.emit(cons.events.settings.SYSTEM_THEME_TOGGLED, this.useSystemTheme);
   }
 
   getUseSystemTheme() {
     if (typeof this.useSystemTheme === 'boolean') return this.useSystemTheme;
 
     const settings = getSettings();
-    if (settings === null) return false;
-    if (typeof settings.useSystemTheme === 'undefined') return false;
+    if (settings === null) return true;
+    if (typeof settings.useSystemTheme === 'undefined') return true;
     return settings.useSystemTheme;
   }
 
@@ -138,12 +150,7 @@ class Settings extends EventEmitter {
   setter(action) {
     const actions = {
       [cons.actions.settings.TOGGLE_SYSTEM_THEME]: () => {
-        this.useSystemTheme = !this.useSystemTheme;
-
-        setSettings('useSystemTheme', this.useSystemTheme);
-        this.setTheme(this.themeIndex);
-
-        this.emit(cons.events.settings.SYSTEM_THEME_TOGGLED, this.useSystemTheme);
+        this.toggleUseSystemTheme();
       },
       [cons.actions.settings.TOGGLE_MARKDOWN]: () => {
         this.isMarkdown = !this.isMarkdown;

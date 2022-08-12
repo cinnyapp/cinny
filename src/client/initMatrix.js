@@ -33,7 +33,6 @@ class InitMatrix extends EventEmitter {
       accessToken: secret.accessToken,
       userId: secret.userId,
       store: indexedDBStore,
-      sessionStore: new sdk.WebStorageSessionStore(global.localStorage),
       cryptoStore: new sdk.IndexedDBCryptoStore(global.indexedDB, 'crypto-store'),
       deviceId: secret.deviceId,
       timelineSupport: true,
@@ -67,7 +66,7 @@ class InitMatrix extends EventEmitter {
         if (prevState === null) {
           this.roomList = new RoomList(this.matrixClient);
           this.accountData = new AccountData(this.roomList);
-          this.roomsInput = new RoomsInput(this.matrixClient);
+          this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
           this.notifications = new Notifications(this.roomList);
           this.emit('init_loading_finished');
         }

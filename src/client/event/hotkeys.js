@@ -31,14 +31,14 @@ function listenKeyboard(event) {
   // Ctrl/Cmd +
   if (event.ctrlKey || event.metaKey) {
     // open search modal
-    if (event.code === 'KeyK') {
+    if (event.key === 'k') {
       event.preventDefault();
       if (navigation.isRawModalVisible) return;
       openSearch();
     }
 
     // focus message field on paste
-    if (event.code === 'KeyV') {
+    if (event.key === 'v') {
       if (navigation.isRawModalVisible) return;
       const msgTextarea = document.getElementById('message-textarea');
       const { activeElement } = document;
@@ -51,11 +51,8 @@ function listenKeyboard(event) {
 
   if (!event.ctrlKey && !event.altKey && !event.metaKey) {
     if (navigation.isRawModalVisible) return;
-    if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) {
-      return;
-    }
 
-    if (event.code === 'Escape') {
+    if (event.key === 'Escape') {
       if (navigation.isRoomSettings) {
         toggleRoomSettings();
         return;
@@ -64,6 +61,10 @@ function listenKeyboard(event) {
         markAsRead(navigation.selectedRoomId);
         return;
       }
+    }
+
+    if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) {
+      return;
     }
 
     // focus the text field on most keypresses

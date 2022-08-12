@@ -4,6 +4,7 @@ import './TimelineChange.scss';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
+import Time from '../../atoms/time/Time';
 
 import JoinArrowIC from '../../../../public/res/ic/outlined/join-arrow.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
@@ -13,7 +14,7 @@ import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import HashIC from '../../../../public/res/ic/outlined/hash.svg';
 
 function TimelineChange({
-  variant, content, time, onClick,
+  variant, content, timestamp, onClick,
 }) {
   let iconSrc;
 
@@ -52,7 +53,9 @@ function TimelineChange({
         </Text>
       </div>
       <div className="timeline-change__time">
-        <Text variant="b3">{time}</Text>
+        <Text variant="b3">
+          <Time timestamp={timestamp} />
+        </Text>
       </div>
     </button>
   );
@@ -72,7 +75,7 @@ TimelineChange.propTypes = {
     PropTypes.string,
     PropTypes.node,
   ]).isRequired,
-  time: PropTypes.string.isRequired,
+  timestamp: PropTypes.number.isRequired,
   onClick: PropTypes.func,
 };
 

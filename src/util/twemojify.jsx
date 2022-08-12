@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import React, { lazy, Suspense } from 'react';
 
-import linkifyHtml from 'linkifyjs/html';
+import linkifyHtml from 'linkify-html';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { sanitizeText } from './sanitize';

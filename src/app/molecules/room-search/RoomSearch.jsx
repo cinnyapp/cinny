@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomSearch.scss';
 
-import dateFormat from 'dateformat';
-
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { selectRoom } from '../../../client/action/navigation';
@@ -120,14 +118,13 @@ function RoomSearch({ roomId }) {
   const renderTimeline = (timeline) => (
     <div className="room-search__result-item" key={timeline[0].getId()}>
       { timeline.map((mEvent) => {
-        const time = dateFormat(mEvent.getDate(), 'dd/mm/yyyy - hh:MM TT');
         const id = mEvent.getId();
         return (
           <React.Fragment key={id}>
             <Message
               mEvent={mEvent}
               isBodyOnly={false}
-              time={time}
+              fullTime
             />
             <Button onClick={() => selectRoom(roomId, id)}>View</Button>
           </React.Fragment>
