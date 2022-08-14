@@ -6,7 +6,7 @@ import { getBlobSafeMimeType } from '../../util/mimetypes';
 import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
-import { htmlOutput, parser, plainOutput } from '../../util/markdown';
+import { htmlOutput, parser } from '../../util/markdown';
 
 const blurhashField = 'xyz.amorgan.blurhash';
 const MXID_REGEX = /\B@\S+:\S+\.\S+[^.,:;?!\s]/g;
