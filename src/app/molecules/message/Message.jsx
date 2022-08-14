@@ -37,6 +37,7 @@ import CmdIC from '../../../../public/res/ic/outlined/cmd.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
+import { getBlobSafeMimeType } from '../../../util/mimetypes';
 
 function PlaceholderMessage() {
   return (
@@ -621,7 +622,12 @@ function genMediaContent(mE) {
   if (typeof mediaMXC === 'undefined' || mediaMXC === '') return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
 
   let msgType = mE.getContent()?.msgtype;
-  if (mE.getType() === 'm.sticker') msgType = 'm.sticker';
+  const safeMimetype = getBlobSafeMimeType(mContent.info?.mimetype);
+  if (mE.getType() === 'm.sticker') {
+    msgType = 'm.sticker';
+  } else if (safeMimetype === 'application/octet-stream') {
+    msgType = 'm.file';
+  }
 
   const blurhash = mContent?.info?.['xyz.amorgan.blurhash'];
 

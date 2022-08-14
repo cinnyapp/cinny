@@ -6,6 +6,7 @@ import { math } from 'micromark-extension-math';
 import { encode } from 'blurhash';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
+import { getBlobSafeMimeType } from '../../util/mimetypes';
 import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
@@ -355,7 +356,7 @@ class RoomsInput extends EventEmitter {
   }
 
   async sendFile(roomId, file) {
-    const fileType = file.type.slice(0, file.type.indexOf('/'));
+    const fileType = getBlobSafeMimeType(file.type).slice(0, file.type.indexOf('/'));
     const info = {
       mimetype: file.type,
       size: file.size,
