@@ -105,12 +105,6 @@ function getFormattedBody(markdown) {
   if (content.length === 1 && content[0].type === 'paragraph') {
     content = content[0].content;
   }
-
-  console.debug(content);
-  try {
-    console.debug(plainOutput(content));
-  } catch (e) {}
-
   return htmlOutput(content);
 }
 

@@ -1,7 +1,7 @@
 import SimpleMarkdown from '@khanacademy/simple-markdown';
 
 const {
-  inlineRegex, blockRegex, defaultRules, parserFor, outputFor, sanitizeText, htmlTag, anyScopeRegex,
+  defaultRules, parserFor, outputFor, anyScopeRegex, blockRegex, inlineRegex, htmlTag, sanitizeText,
 } = SimpleMarkdown;
 
 function mathHtml(wrap, node) {
@@ -29,7 +29,6 @@ const rules = {
     ...defaultRules.paragraph,
     plain: (node, output, state) => `${output(node.content, state)}\n\n`,
     html: (node, output, state) => htmlTag('p', output(node.content, state)),
-    // html: (node, output, state) => output(node.content, state),
   },
   escape: {
     ...defaultRules.escape,
