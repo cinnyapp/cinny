@@ -167,7 +167,7 @@ function RoomMembers({ roomId }) {
           && (
             <div className="room-members__status">
               <Text variant="b2">
-                {searchMembers ? t('Molecules.RoomMembers.invited', { term: searchMembers.term }) : t('Molecules.RoomMembers.no_members')}
+                {searchMembers ? t('Molecules.RoomMembers.no_results', { term: searchMembers.term }) : t('Molecules.RoomMembers.no_members')}
               </Text>
             </div>
           )
