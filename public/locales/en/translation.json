@@ -750,7 +750,6 @@
                 "rename_title": "Rename",
                 "rename_button": "Rename",
                 "shortcode_label": "Shortcode",
-                "shortcode_name": "shortcode",
                 "delete_item_title": "Delete",
                 "delete_item_message": "Are you sure that you want to delete {{key}}?",
                 "delete_item_button": "Delete",

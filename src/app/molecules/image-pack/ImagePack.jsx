@@ -42,7 +42,7 @@ const renameImagePackItem = (shortcode) => new Promise((resolve) => {
         >
           <Input
             value={shortcode}
-            name={t('Molecules.ImagePack.shortcode_name')}
+            name="shortcode"
             label={t('Molecules.ImagePack.shortcode_label')}
             autoFocus
             required
