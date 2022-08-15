@@ -6,10 +6,14 @@ import { math } from 'micromark-extension-math';
 import { encode } from 'blurhash';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
+import { getBlobSafeMimeType } from '../../util/mimetypes';
+import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
 
 const blurhashField = 'xyz.amorgan.blurhash';
+const MXID_REGEX = /\B@\S+:\S+\.\S+[^.,:;?!\s]/g;
+const SHORTCODE_REGEX = /\B:([\w-]+):\B/g;
 
 function encodeBlurhash(img) {
   const canvas = document.createElement('canvas');
@@ -130,38 +134,45 @@ function bindReplyToContent(roomId, reply, content) {
   return newContent;
 }
 
-function formatAndEmojifyText(mx, roomList, roomId, text) {
-  const room = mx.getRoom(roomId);
+function findAndReplace(text, regex, filter, replace) {
+  let copyText = text;
+  Array.from(copyText.matchAll(regex))
+    .filter(filter)
+    .reverse() /* to replace backward to forward */
+    .forEach((match) => {
+      const matchText = match[0];
+      const tag = replace(match);
+
+      copyText = copyText.substr(0, match.index)
+        + tag
+        + copyText.substr(match.index + matchText.length);
+    });
+  return copyText;
+}
+
+function formatUserPill(room, text) {
   const { userIdsToDisplayNames } = room.currentState;
-  const parentIds = roomList.getAllParentSpaces(roomId);
+  return findAndReplace(
+    text,
+    MXID_REGEX,
+    (match) => userIdsToDisplayNames[match[0]],
+    (match) => (
+      `<a href="https://matrix.to/#/${match[0]}">@${userIdsToDisplayNames[match[0]]}</a>`
+    ),
+  );
+}
+
+function formatEmoji(mx, room, roomList, text) {
+  const parentIds = roomList.getAllParentSpaces(room.roomId);
   const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
   const allEmoji = getShortcodeToEmoji(mx, [room, ...parentRooms]);
 
-  let formattedText;
-  if (settings.isMarkdown) {
-    formattedText = getFormattedBody(text);
-  } else {
-    formattedText = text;
-  }
-
-  const MXID_REGEX = /\B@\S+:\S+\.\S+[^.,:;?!\s]/g;
-  Array.from(formattedText.matchAll(MXID_REGEX))
-    .filter((mxidMatch) => userIdsToDisplayNames[mxidMatch[0]])
-    .reverse()
-    .forEach((mxidMatch) => {
-      const tag = `<a href="https://matrix.to/#/${mxidMatch[0]}">${userIdsToDisplayNames[mxidMatch[0]]}</a>`;
-
-      formattedText = formattedText.substr(0, mxidMatch.index)
-        + tag
-        + formattedText.substr(mxidMatch.index + mxidMatch[0].length);
-    });
-
-  const SHORTCODE_REGEX = /\B:([\w-]+):\B/g;
-  Array.from(formattedText.matchAll(SHORTCODE_REGEX))
-    .filter((shortcodeMatch) => allEmoji.has(shortcodeMatch[1]))
-    .reverse() /* Reversing the array ensures that indices are preserved as we start replacing */
-    .forEach((shortcodeMatch) => {
-      const emoji = allEmoji.get(shortcodeMatch[1]);
+  return findAndReplace(
+    text,
+    SHORTCODE_REGEX,
+    (match) => allEmoji.has(match[1]),
+    (match) => {
+      const emoji = allEmoji.get(match[1]);
 
       let tag;
       if (emoji.mxc) {
@@ -175,13 +186,9 @@ function formatAndEmojifyText(mx, roomList, roomId, text) {
       } else {
         tag = emoji.unicode;
       }
-
-      formattedText = formattedText.substr(0, shortcodeMatch.index)
-        + tag
-        + formattedText.substr(shortcodeMatch.index + shortcodeMatch[0].length);
-    });
-
-  return formattedText;
+      return tag;
+    },
+  );
 }
 
 class RoomsInput extends EventEmitter {
@@ -274,6 +281,7 @@ class RoomsInput extends EventEmitter {
   }
 
   async sendInput(roomId) {
+    const room = this.matrixClient.getRoom(roomId);
     const input = this.getInput(roomId);
     input.isSending = true;
     this.roomIdToInput.set(roomId, input);
@@ -283,19 +291,27 @@ class RoomsInput extends EventEmitter {
     }
 
     if (this.getMessage(roomId).trim() !== '') {
+      const rawMessage = input.message;
       let content = {
-        body: input.message,
+        body: rawMessage,
         msgtype: 'm.text',
       };
 
       // Apply formatting if relevant
-      const formattedBody = formatAndEmojifyText(
-        this.matrixClient,
-        this.roomList,
-        roomId,
-        input.message,
+      let formattedBody = settings.isMarkdown
+        ? getFormattedBody(rawMessage)
+        : sanitizeText(rawMessage);
+
+      formattedBody = formatUserPill(room, formattedBody);
+      formattedBody = formatEmoji(this.matrixClient, room, this.roomList, formattedBody);
+
+      content.body = findAndReplace(
+        content.body,
+        MXID_REGEX,
+        (match) => room.currentState.userIdsToDisplayNames[match[0]],
+        (match) => `@${room.currentState.userIdsToDisplayNames[match[0]]}`,
       );
-      if (formattedBody !== input.message) {
+      if (formattedBody !== sanitizeText(rawMessage)) {
         // Formatting was applied, and we need to switch to custom HTML
         content.format = 'org.matrix.custom.html';
         content.formatted_body = formattedBody;
@@ -340,7 +356,7 @@ class RoomsInput extends EventEmitter {
   }
 
   async sendFile(roomId, file) {
-    const fileType = file.type.slice(0, file.type.indexOf('/'));
+    const fileType = getBlobSafeMimeType(file.type).slice(0, file.type.indexOf('/'));
     const info = {
       mimetype: file.type,
       size: file.size,
@@ -446,6 +462,7 @@ class RoomsInput extends EventEmitter {
   }
 
   async sendEditedMessage(roomId, mEvent, editedBody) {
+    const room = this.matrixClient.getRoom(roomId);
     const isReply = typeof mEvent.getWireContent()['m.relates_to']?.['m.in_reply_to'] !== 'undefined';
 
     const content = {
@@ -462,13 +479,19 @@ class RoomsInput extends EventEmitter {
     };
 
     // Apply formatting if relevant
-    const formattedBody = formatAndEmojifyText(
-      this.matrixClient,
-      this.roomList,
-      roomId,
-      editedBody,
+    let formattedBody = settings.isMarkdown
+      ? getFormattedBody(editedBody)
+      : sanitizeText(editedBody);
+    formattedBody = formatUserPill(room, formattedBody);
+    formattedBody = formatEmoji(this.matrixClient, room, this.roomList, formattedBody);
+
+    content.body = findAndReplace(
+      content.body,
+      MXID_REGEX,
+      (match) => room.currentState.userIdsToDisplayNames[match[0]],
+      (match) => `@${room.currentState.userIdsToDisplayNames[match[0]]}`,
     );
-    if (formattedBody !== editedBody) {
+    if (formattedBody !== sanitizeText(editedBody)) {
       content.formatted_body = ` * ${formattedBody}`;
       content.format = 'org.matrix.custom.html';
       content['m.new_content'].formatted_body = formattedBody;

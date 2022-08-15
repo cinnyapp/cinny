@@ -15,43 +15,7 @@ import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
 import PlaySVG from '../../../../public/res/ic/outlined/play.svg';
 
 import '../../i18n';
-
-// https://github.com/matrix-org/matrix-react-sdk/blob/cd15e08fc285da42134817cce50de8011809cd53/src/utils/blobs.ts#L73
-const ALLOWED_BLOB_MIMETYPES = [
-  'image/jpeg',
-  'image/gif',
-  'image/png',
-  'image/apng',
-  'image/webp',
-  'image/avif',
-
-  'video/mp4',
-  'video/webm',
-  'video/ogg',
-  'video/quicktime',
-
-  'audio/mp4',
-  'audio/webm',
-  'audio/aac',
-  'audio/mpeg',
-  'audio/ogg',
-  'audio/wave',
-  'audio/wav',
-  'audio/x-wav',
-  'audio/x-pn-wav',
-  'audio/flac',
-  'audio/x-flac',
-];
-function getBlobSafeMimeType(mimetype) {
-  if (!ALLOWED_BLOB_MIMETYPES.includes(mimetype)) {
-    return 'application/octet-stream';
-  }
-  // Required for Chromium browsers
-  if (mimetype === 'video/quicktime') {
-    return 'video/mp4';
-  }
-  return mimetype;
-}
+import { getBlobSafeMimeType } from '../../../util/mimetypes';
 
 async function getDecryptedBlob(response, type, decryptData) {
   const arrayBuffer = await response.arrayBuffer();
@@ -163,6 +127,7 @@ function Image({
   name, width, height, link, file, type, blurhash,
 }) {
   const [url, setUrl] = useState(null);
+  const [blur, setBlur] = useState(true);
 
   useEffect(() => {
     let unmounted = false;
@@ -181,8 +146,8 @@ function Image({
     <div className="file-container">
       <FileHeader name={name} link={url || link} type={type} external />
       <div style={{ height: width !== null ? getNativeHeight(width, height) : 'unset' }} className="image-container">
-        { blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
-        { url !== null && <img src={url || link} alt={name} />}
+        { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
+        { url !== null && <img style={{ display: blur ? 'none' : 'unset' }} onLoad={() => setBlur(false)} src={url || link} alt={name} />}
       </div>
     </div>
   );
@@ -231,11 +196,11 @@ function Sticker({
 Sticker.defaultProps = {
   file: null,
   type: '',
+  width: null,
+  height: null,
 };
 Sticker.propTypes = {
   name: PropTypes.string.isRequired,
-  width: null,
-  height: null,
   width: PropTypes.number,
   height: PropTypes.number,
   link: PropTypes.string.isRequired,
@@ -295,6 +260,7 @@ function Video({
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState(null);
   const [thumbUrl, setThumbUrl] = useState(null);
+  const [blur, setBlur] = useState(true);
 
   useEffect(() => {
     let unmounted = false;
@@ -309,16 +275,16 @@ function Video({
     };
   }, []);
 
-  async function loadVideo() {
+  const loadVideo = async () => {
     const myUrl = await getUrl(link, type, file);
     setUrl(myUrl);
     setIsLoading(false);
-  }
+  };
 
-  function handlePlayVideo() {
+  const handlePlayVideo = () => {
     setIsLoading(true);
     loadVideo();
-  }
+  };
 
   const { t } = useTranslation();
 
@@ -331,15 +297,17 @@ function Video({
         }}
         className="video-container"
       >
-        { url === null && blurhash && <BlurhashCanvas hash={blurhash} punch={1} />}
-        { url === null && thumbUrl !== null && (
-          /* eslint-disable-next-line jsx-a11y/alt-text */
-          <img src={thumbUrl} />
-        )}
-        { url === null && isLoading && <Spinner size="small" /> }
-        { url === null && !isLoading && <IconButton onClick={handlePlayVideo} tooltip={t('Molecules.Media.play_video')} src={PlaySVG} />}
-        { url !== null && (
-        /* eslint-disable-next-line jsx-a11y/media-has-caption */
+        { url === null ? (
+          <>
+            { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
+            { thumbUrl !== null && (
+              <img style={{ display: blur ? 'none' : 'unset' }} src={thumbUrl} onLoad={() => setBlur(false)} alt={name} />
+            )}
+            {isLoading && <Spinner size="small" />}
+            {!isLoading && <IconButton onClick={handlePlayVideo} tooltip={t('Molecules.Media.play_video')} src={PlaySVG} />}
+          </>
+        ) : (
+          /* eslint-disable-next-line jsx-a11y/media-has-caption */
           <video autoPlay controls poster={thumbUrl}>
             <source src={url} type={getBlobSafeMimeType(type)} />
           </video>

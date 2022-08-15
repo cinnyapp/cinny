@@ -252,6 +252,58 @@ function EmojiBoard({ onSelect, searchRef }) {
 
   return (
     <div id="emoji-board" className="emoji-board">
+      <ScrollView invisible>
+        <div className="emoji-board__nav">
+          {recentEmojis.length > 0 && (
+            <IconButton
+              onClick={() => openGroup(0)}
+              src={RecentClockIC}
+              tooltip="Recent"
+              tooltipPlacement="left"
+            />
+          )}
+          <div className="emoji-board__nav-custom">
+            {
+              availableEmojis.map((pack) => {
+                const src = initMatrix.matrixClient
+                  .mxcUrlToHttp(pack.avatarUrl ?? pack.getEmojis()[0].mxc);
+                return (
+                  <IconButton
+                    onClick={() => openGroup(recentOffset + pack.packIndex)}
+                    src={src}
+                    key={pack.packIndex}
+                    tooltip={pack.displayName ?? 'Unknown'}
+                    tooltipPlacement="left"
+                    isImage
+                  />
+                );
+              })
+            }
+          </div>
+          <div className="emoji-board__nav-twemoji">
+            {
+              [
+                [0, EmojiIC, 'Smilies'],
+                [1, DogIC, 'Animals'],
+                [2, CupIC, 'Food'],
+                [3, BallIC, 'Activities'],
+                [4, PhotoIC, 'Travel'],
+                [5, BulbIC, 'Objects'],
+                [6, PeaceIC, 'Symbols'],
+                [7, FlagIC, 'Flags'],
+              ].map(([indx, ico, name]) => (
+                <IconButton
+                  onClick={() => openGroup(recentOffset + availableEmojis.length + indx)}
+                  key={indx}
+                  src={ico}
+                  tooltip={name}
+                  tooltipPlacement="left"
+                />
+              ))
+            }
+          </div>
+        </div>
+      </ScrollView>
       <div className="emoji-board__content">
         <div className="emoji-board__content__search">
           <RawIcon size="small" src={SearchIC} />
@@ -285,58 +337,6 @@ function EmojiBoard({ onSelect, searchRef }) {
           <Text>:slight_smile:</Text>
         </div>
       </div>
-      <ScrollView invisible>
-        <div className="emoji-board__nav">
-          {recentEmojis.length > 0 && (
-            <IconButton
-              onClick={() => openGroup(0)}
-              src={RecentClockIC}
-              tooltip="Recent"
-              tooltipPlacement="right"
-            />
-          )}
-          <div className="emoji-board__nav-custom">
-            {
-              availableEmojis.map((pack) => {
-                const src = initMatrix.matrixClient
-                  .mxcUrlToHttp(pack.avatarUrl ?? pack.getEmojis()[0].mxc);
-                return (
-                  <IconButton
-                    onClick={() => openGroup(recentOffset + pack.packIndex)}
-                    src={src}
-                    key={pack.packIndex}
-                    tooltip={pack.displayName ?? 'Unknown'}
-                    tooltipPlacement="right"
-                    isImage
-                  />
-                );
-              })
-            }
-          </div>
-          <div className="emoji-board__nav-twemoji">
-            {
-              [
-                [0, EmojiIC, 'Smilies'],
-                [1, DogIC, 'Animals'],
-                [2, CupIC, 'Food'],
-                [3, BallIC, 'Activities'],
-                [4, PhotoIC, 'Travel'],
-                [5, BulbIC, 'Objects'],
-                [6, PeaceIC, 'Symbols'],
-                [7, FlagIC, 'Flags'],
-              ].map(([indx, ico, name]) => (
-                <IconButton
-                  onClick={() => openGroup(recentOffset + availableEmojis.length + indx)}
-                  key={indx}
-                  src={ico}
-                  tooltip={name}
-                  tooltipPlacement="right"
-                />
-              ))
-            }
-          </div>
-        </div>
-      </ScrollView>
     </div>
   );
 }

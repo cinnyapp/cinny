@@ -38,6 +38,7 @@ import CmdIC from '../../../../public/res/ic/outlined/cmd.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
+import { getBlobSafeMimeType } from '../../../util/mimetypes';
 
 import '../../i18n';
 
@@ -210,7 +211,13 @@ const MessageBody = React.memo(({
   let content = null;
   if (isCustomHTML) {
     try {
-      content = twemojify(sanitizeCustomHtml(body), undefined, true, false, true);
+      content = twemojify(
+        sanitizeCustomHtml(initMatrix.matrixClient, body),
+        undefined,
+        true,
+        false,
+        true,
+      );
     } catch {
       console.error('Malformed custom html: ', body);
       content = twemojify(body, undefined);
@@ -626,7 +633,12 @@ function genMediaContent(mE) {
   if (typeof mediaMXC === 'undefined' || mediaMXC === '') return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
 
   let msgType = mE.getContent()?.msgtype;
-  if (mE.getType() === 'm.sticker') msgType = 'm.sticker';
+  const safeMimetype = getBlobSafeMimeType(mContent.info?.mimetype);
+  if (mE.getType() === 'm.sticker') {
+    msgType = 'm.sticker';
+  } else if (safeMimetype === 'application/octet-stream') {
+    msgType = 'm.file';
+  }
 
   const blurhash = mContent?.info?.['xyz.amorgan.blurhash'];
 
