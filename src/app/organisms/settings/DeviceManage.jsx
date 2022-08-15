@@ -83,39 +83,6 @@ function DeviceManage() {
 
   const { t } = useTranslation();
 
-  const promptDeviceName = async (deviceName) => new Promise((resolve) => {
-    let isCompleted = false;
-    const renderContent = (onComplete) => {
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        const name = e.target.session.value;
-        if (typeof name !== 'string') onComplete(null);
-        onComplete(name);
-      };
-      return (
-        <form className="device-manage__rename" onSubmit={handleSubmit}>
-          <Input value={deviceName} label={t('Organisms.DeviceManage.edit_session_name_subtitle')} name="session" />
-          <div className="device-manage__rename-btn">
-            <Button variant="primary" type="submit">{t('common.save')}</Button>
-            <Button onClick={() => onComplete(null)}>{t('common.cancel')}</Button>
-          </div>
-        </form>
-      );
-    };
-
-    openReusableDialog(
-      <Text variant="s1" weight="medium">{t('Organisms.DeviceManage.edit_session_name_title')}</Text>,
-      (requestClose) => renderContent((name) => {
-        isCompleted = true;
-        resolve(name);
-        requestClose();
-      }),
-      () => {
-        if (!isCompleted) resolve(null);
-      },
-    );
-  });
-
   const addToProcessing = (device) => {
     const old = [...processing];
     old.push(device.device_id);
