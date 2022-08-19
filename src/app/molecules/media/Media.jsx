@@ -8,6 +8,7 @@ import { BlurhashCanvas } from 'react-blurhash';
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
 import Spinner from '../../atoms/spinner/Spinner';
+import ImageLightbox from '../image-lightbox/ImageLightbox';
 
 import DownloadSVG from '../../../../public/res/ic/outlined/download.svg';
 import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
@@ -124,6 +125,7 @@ function Image({
 }) {
   const [url, setUrl] = useState(null);
   const [blur, setBlur] = useState(true);
+  const [lightbox, setLightbox] = useState(false);
 
   useEffect(() => {
     let unmounted = false;
@@ -138,14 +140,42 @@ function Image({
     };
   }, []);
 
+  const toggleLightbox = () => {
+    if (!url) return;
+    setLightbox(!lightbox);
+  };
+
   return (
-    <div className="file-container">
-      <FileHeader name={name} link={url || link} type={type} external />
-      <div style={{ height: width !== null ? getNativeHeight(width, height) : 'unset' }} className="image-container">
-        { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
-        { url !== null && <img style={{ display: blur ? 'none' : 'unset' }} onLoad={() => setBlur(false)} src={url || link} alt={name} />}
+    <>
+      <div className="file-container">
+        <div
+          style={{ height: width !== null ? getNativeHeight(width, height) : 'unset' }}
+          className="image-container"
+          role="button"
+          tabIndex="0"
+          onClick={toggleLightbox}
+          onKeyDown={toggleLightbox}
+        >
+          { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
+          { url !== null && (
+            <img
+              style={{ display: blur ? 'none' : 'unset' }}
+              onLoad={() => setBlur(false)}
+              src={url || link}
+              alt={name}
+            />
+          )}
+        </div>
       </div>
-    </div>
+      {url && (
+        <ImageLightbox
+          url={url}
+          alt={name}
+          isOpen={lightbox}
+          onRequestClose={toggleLightbox}
+        />
+      )}
+    </>
   );
 }
 Image.defaultProps = {
