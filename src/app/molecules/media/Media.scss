@@ -62,8 +62,12 @@
     margin: 0 !important;
   }
 }
-.image-container img {
-  cursor: pointer;
+.image-container {
+  max-height: 460px;
+  img {
+    cursor: pointer;
+    object-fit: cover;
+  }
 }
 
 .video-container {
