@@ -73,7 +73,7 @@ class Navigation extends EventEmitter {
   _selectRoom(roomId, eventId) {
     const prevSelectedRoomId = this.selectedRoomId;
     this.selectedRoomId = roomId;
-    this._addSelectedSpaceToRoom(roomId);
+    if (prevSelectedRoomId !== roomId) this._addSelectedSpaceToRoom(roomId);
     this.removeRecentRoom(prevSelectedRoomId);
     this.addRecentRoom(prevSelectedRoomId);
     this.removeRecentRoom(this.selectedRoomId);
@@ -87,6 +87,32 @@ class Navigation extends EventEmitter {
       prevSelectedRoomId,
       eventId,
     );
+  }
+
+  _selectTabWithRoom(roomId) {
+    const { roomList } = this.initMatrix;
+
+    if (roomList.directs.has(roomId)) {
+      this._selectSpace(null, true, false);
+      this._selectTab(cons.tabs.DIRECTS, false);
+      return;
+    }
+    if (roomList.isOrphan(roomId)) {
+      this._selectSpace(null, true, false);
+      this._selectTab(cons.tabs.HOME, false);
+      return;
+    }
+
+    const parents = [...roomList.roomIdToParents.get(roomId)];
+    if (parents) {
+      const sortedParents = parents.sort((p1, p2) => {
+        const t1 = this.selectedSpaceToRoom.get(p1)?.timestamp ?? 0;
+        const t2 = this.selectedSpaceToRoom.get(p2)?.timestamp ?? 0;
+        return t2 - t1;
+      });
+      this._selectSpace(sortedParents[0], true, false);
+      this._selectTab(sortedParents[0], false);
+    }
   }
 
   _getLatestActiveRoomId(roomIds) {
@@ -104,6 +130,19 @@ class Navigation extends EventEmitter {
       }
     });
     return roomId;
+  }
+
+  _selectTab(tabId, selectRoom = true) {
+    this.selectedTab = tabId;
+    if (selectRoom) this._selectRoomWithTab(this.selectedTab);
+    this.emit(cons.events.navigation.TAB_SELECTED, this.selectedTab);
+  }
+
+  _selectSpace(roomId, asBase, selectRoom = true) {
+    this._setSpacePath(roomId, asBase);
+    this.selectedSpaceId = roomId;
+    if (!asBase && selectRoom) this._selectRoomWithSpace(this.selectedSpaceId);
+    this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
   }
 
   _selectRoomWithSpace(spaceId) {
@@ -167,17 +206,13 @@ class Navigation extends EventEmitter {
   navigate(action) {
     const actions = {
       [cons.actions.navigation.SELECT_TAB]: () => {
-        this.selectedTab = action.tabId;
-        this._selectRoomWithTab(this.selectedTab);
-        this.emit(cons.events.navigation.TAB_SELECTED, this.selectedTab);
+        this._selectTab(action.tabId);
       },
       [cons.actions.navigation.SELECT_SPACE]: () => {
-        this._setSpacePath(action.roomId, action.asBase);
-        this.selectedSpaceId = action.roomId;
-        if (!action.asBase) this._selectRoomWithSpace(this.selectedSpaceId);
-        this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
+        this._selectSpace(action.roomId, action.asBase);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
+        this._selectTabWithRoom(action.roomId);
         this._selectRoom(action.roomId, action.eventId);
       },
       [cons.actions.navigation.OPEN_SPACE_SETTINGS]: () => {
