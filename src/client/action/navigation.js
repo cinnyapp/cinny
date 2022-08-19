@@ -2,6 +2,14 @@ import appDispatcher from '../dispatcher';
 import cons from '../state/cons';
 
 export function selectTab(tabId) {
+  const roomId = (tabId !== cons.tabs.HOME && tabId !== cons.tabs.DIRECTS) ? tabId : null;
+
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.SELECT_SPACE,
+    roomId,
+    asBase: true,
+  });
+
   appDispatcher.dispatch({
     type: cons.actions.navigation.SELECT_TAB,
     tabId,
