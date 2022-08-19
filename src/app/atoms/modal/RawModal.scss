@@ -48,15 +48,11 @@
 
 @keyframes raw-modal--content {
   0% {
-    transform: scale(1.1);
+    transform: translateY(100px);
     opacity: .5;
   }
-  80% {
-    transform: scale(.995);
-    opacity: 1;
-  }
   100% {
-    transform: scale(1) translateY(0);
+    transform: translateY(0);
     opacity: 1;
   }
 }
