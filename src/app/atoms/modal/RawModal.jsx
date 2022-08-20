@@ -42,7 +42,6 @@ function RawModal({
       shouldCloseOnEsc={closeFromOutside}
       shouldCloseOnOverlayClick={closeFromOutside}
       shouldReturnFocusAfterClose={false}
-      closeTimeoutMS={300}
     >
       {children}
     </Modal>

@@ -38,10 +38,10 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
 
   const handleMarkAsRead = () => {
     const spaceChildren = roomList.getCategorizedSpaces([roomId]);
-    spaceChildren?.forEach((childIds, spaceId) => {
+    spaceChildren?.forEach((childIds) => {
       childIds?.forEach((childId) => {
         markAsRead(childId);
-      })
+      });
     });
     afterOptionSelect();
   };
