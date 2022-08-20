@@ -89,7 +89,7 @@ class RoomList extends EventEmitter {
 
       child.forEach((childId) => {
         const room = this.matrixClient.getRoom(childId);
-        if (room === null) return;
+        if (room === null || room.getMyMembership() !== 'join') return;
         if (room.isSpaceRoom()) categorizeSpace(childId);
         else mappedChild.add(childId);
       });
