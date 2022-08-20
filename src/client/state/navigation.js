@@ -16,17 +16,17 @@ class Navigation extends EventEmitter {
     this.isRoomSettings = false;
     this.recentRooms = [];
 
-    this.selectedSpaceToRoom = new Map();
+    this.spaceToRoom = new Map();
 
     this.rawModelStack = [];
   }
 
-  _setSpacePath(roomId, asBase) {
+  _addToSpacePath(roomId, asRoot) {
     if (typeof roomId !== 'string') {
       this.selectedSpacePath = [cons.tabs.HOME];
       return;
     }
-    if (asBase) {
+    if (asRoot) {
       this.selectedSpacePath = [roomId];
       return;
     }
@@ -38,21 +38,21 @@ class Navigation extends EventEmitter {
     this.selectedSpacePath.push(roomId);
   }
 
-  _addSelectedSpaceToRoom(roomId) {
+  _mapRoomToSpace(roomId) {
     const { roomList } = this.initMatrix;
     if (
       this.selectedTab === cons.tabs.HOME
       && roomList.rooms.has(roomId)
       && !roomList.roomIdToParents.has(roomId)
     ) {
-      this.selectedSpaceToRoom.set(cons.tabs.HOME, {
+      this.spaceToRoom.set(cons.tabs.HOME, {
         roomId,
         timestamp: Date.now(),
       });
       return;
     }
     if (this.selectedTab === cons.tabs.DIRECTS && roomList.directs.has(roomId)) {
-      this.selectedSpaceToRoom.set(cons.tabs.DIRECTS, {
+      this.spaceToRoom.set(cons.tabs.DIRECTS, {
         roomId,
         timestamp: Date.now(),
       });
@@ -63,7 +63,7 @@ class Navigation extends EventEmitter {
     if (!parents) return;
 
     if (parents.has(this.selectedSpaceId)) {
-      this.selectedSpaceToRoom.set(this.selectedSpaceId, {
+      this.spaceToRoom.set(this.selectedSpaceId, {
         roomId,
         timestamp: Date.now(),
       });
@@ -73,7 +73,7 @@ class Navigation extends EventEmitter {
   _selectRoom(roomId, eventId) {
     const prevSelectedRoomId = this.selectedRoomId;
     this.selectedRoomId = roomId;
-    if (prevSelectedRoomId !== roomId) this._addSelectedSpaceToRoom(roomId);
+    if (prevSelectedRoomId !== roomId) this._mapRoomToSpace(roomId);
     this.removeRecentRoom(prevSelectedRoomId);
     this.addRecentRoom(prevSelectedRoomId);
     this.removeRecentRoom(this.selectedRoomId);
@@ -90,7 +90,7 @@ class Navigation extends EventEmitter {
   }
 
   _selectTabWithRoom(roomId) {
-    const { roomList } = this.initMatrix;
+    const { roomList, accountData } = this.initMatrix;
 
     if (roomList.directs.has(roomId)) {
       this._selectSpace(null, true, false);
@@ -103,11 +103,28 @@ class Navigation extends EventEmitter {
       return;
     }
 
-    const parents = [...roomList.roomIdToParents.get(roomId)];
-    if (parents) {
-      const sortedParents = parents.sort((p1, p2) => {
-        const t1 = this.selectedSpaceToRoom.get(p1)?.timestamp ?? 0;
-        const t2 = this.selectedSpaceToRoom.get(p2)?.timestamp ?? 0;
+    const parents = roomList.roomIdToParents.get(roomId);
+
+    const { categorizedSpaces } = accountData;
+    if (categorizedSpaces.has(this.selectedSpaceId)) {
+      const allChildSpaces = roomList.getCategorizedSpaces([this.selectedSpaceId]);
+      if ([...parents].find((pId) => allChildSpaces.has(pId))) {
+        // No need to select tab
+        // As one of parent is child of selected categorized space.
+        return;
+      }
+    }
+
+    const spaceInPath = [...this.selectedSpacePath].reverse().find((sId) => parents.has(sId));
+    if (spaceInPath) {
+      this._selectSpace(spaceInPath, false, false);
+      return;
+    }
+
+    if (parents.size > 0) {
+      const sortedParents = [...parents].sort((p1, p2) => {
+        const t1 = this.spaceToRoom.get(p1)?.timestamp ?? 0;
+        const t2 = this.spaceToRoom.get(p2)?.timestamp ?? 0;
         return t2 - t1;
       });
       this._selectSpace(sortedParents[0], true, false);
@@ -138,22 +155,28 @@ class Navigation extends EventEmitter {
     this.emit(cons.events.navigation.TAB_SELECTED, this.selectedTab);
   }
 
-  _selectSpace(roomId, asBase, selectRoom = true) {
-    this._setSpacePath(roomId, asBase);
+  _selectSpace(roomId, asRoot, selectRoom = true) {
+    this._addToSpacePath(roomId, asRoot);
     this.selectedSpaceId = roomId;
-    if (!asBase && selectRoom) this._selectRoomWithSpace(this.selectedSpaceId);
+    if (!asRoot && selectRoom) this._selectRoomWithSpace(this.selectedSpaceId);
     this.emit(cons.events.navigation.SPACE_SELECTED, this.selectedSpaceId);
   }
 
   _selectRoomWithSpace(spaceId) {
     if (!spaceId) return;
-    const data = this.selectedSpaceToRoom.get(spaceId);
+    const data = this.spaceToRoom.get(spaceId);
     if (data) {
       this._selectRoom(data.roomId);
       return;
     }
 
     const { roomList } = this.initMatrix;
+    // TODO:
+    /**
+     * if space is categorized get -r all child rooms
+     * filter the one with with latest ts
+     * select
+     */
     const children = roomList.getSpaceChildren(spaceId);
     if (!children) {
       this._selectRoom(null);
@@ -165,7 +188,7 @@ class Navigation extends EventEmitter {
   _selectRoomWithTab(tabId) {
     const { roomList } = this.initMatrix;
     if (tabId === cons.tabs.HOME || tabId === cons.tabs.DIRECTS) {
-      const data = this.selectedSpaceToRoom.get(tabId);
+      const data = this.spaceToRoom.get(tabId);
       if (data) {
         this._selectRoom(data.roomId);
         return;
@@ -206,10 +229,15 @@ class Navigation extends EventEmitter {
   navigate(action) {
     const actions = {
       [cons.actions.navigation.SELECT_TAB]: () => {
+        const roomId = (
+          action.tabId !== cons.tabs.HOME && action.tabId !== cons.tabs.DIRECTS
+        ) ? action.tabId : null;
+
+        this._selectSpace(roomId, true);
         this._selectTab(action.tabId);
       },
       [cons.actions.navigation.SELECT_SPACE]: () => {
-        this._selectSpace(action.roomId, action.asBase);
+        this._selectSpace(action.roomId, false);
       },
       [cons.actions.navigation.SELECT_ROOM]: () => {
         this._selectTabWithRoom(action.roomId);
