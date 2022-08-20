@@ -17,6 +17,7 @@ class Navigation extends EventEmitter {
     this.recentRooms = [];
 
     this.spaceToRoom = new Map();
+    window.spaceToRoom = this.spaceToRoom;
 
     this.rawModelStack = [];
   }
@@ -62,12 +63,12 @@ class Navigation extends EventEmitter {
     const parents = roomList.roomIdToParents.get(roomId);
     if (!parents) return;
 
-    if (parents.has(this.selectedSpaceId)) {
-      this.spaceToRoom.set(this.selectedSpaceId, {
+    [...parents].forEach((pId) => {
+      this.spaceToRoom.set(pId, {
         roomId,
         timestamp: Date.now(),
       });
-    }
+    });
   }
 
   _selectRoom(roomId, eventId) {
@@ -105,10 +106,14 @@ class Navigation extends EventEmitter {
 
     const parents = roomList.roomIdToParents.get(roomId);
 
+    if (parents.has(this.selectedSpaceId)) {
+      return;
+    }
+
     const { categorizedSpaces } = accountData;
     if (categorizedSpaces.has(this.selectedSpaceId)) {
-      const allChildSpaces = roomList.getCategorizedSpaces([this.selectedSpaceId]);
-      if ([...parents].find((pId) => allChildSpaces.has(pId))) {
+      const categories = roomList.getCategorizedSpaces([this.selectedSpaceId]);
+      if ([...parents].find((pId) => categories.has(pId))) {
         // No need to select tab
         // As one of parent is child of selected categorized space.
         return;
@@ -149,6 +154,22 @@ class Navigation extends EventEmitter {
     return roomId;
   }
 
+  _getLatestSelectedRoomId(spaceIds) {
+    let ts = 0;
+    let roomId = null;
+
+    spaceIds.forEach((sId) => {
+      const data = this.spaceToRoom.get(sId);
+      if (!data) return;
+      const newTs = data.timestamp;
+      if (newTs > ts) {
+        ts = newTs;
+        roomId = data.roomId;
+      }
+    });
+    return roomId;
+  }
+
   _selectTab(tabId, selectRoom = true) {
     this.selectedTab = tabId;
     if (selectRoom) this._selectRoomWithTab(this.selectedTab);
@@ -164,24 +185,45 @@ class Navigation extends EventEmitter {
 
   _selectRoomWithSpace(spaceId) {
     if (!spaceId) return;
+    const { roomList, accountData, matrixClient } = this.initMatrix;
+    const { categorizedSpaces } = accountData;
+
     const data = this.spaceToRoom.get(spaceId);
-    if (data) {
+    if (data && !categorizedSpaces.has(spaceId)) {
       this._selectRoom(data.roomId);
       return;
     }
 
-    const { roomList } = this.initMatrix;
-    // TODO:
-    /**
-     * if space is categorized get -r all child rooms
-     * filter the one with with latest ts
-     * select
-     */
-    const children = roomList.getSpaceChildren(spaceId);
+    const children = [];
+
+    if (categorizedSpaces.has(spaceId)) {
+      const categories = roomList.getCategorizedSpaces([spaceId]);
+
+      const latestSelectedRoom = this._getLatestSelectedRoomId([...categories.keys()]);
+
+      if (latestSelectedRoom) {
+        this._selectRoom(latestSelectedRoom);
+        return;
+      }
+
+      categories?.forEach((categoryId) => {
+        categoryId?.forEach((childId) => {
+          children.push(childId);
+        });
+      });
+    } else {
+      roomList.getSpaceChildren(spaceId).forEach((id) => {
+        if (matrixClient.getRoom(id)?.isSpaceRoom() === false) {
+          children.push(id);
+        }
+      });
+    }
+
     if (!children) {
       this._selectRoom(null);
       return;
     }
+
     this._selectRoom(this._getLatestActiveRoomId(children));
   }
 
