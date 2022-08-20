@@ -1,33 +1,9 @@
-.ReactModal__Overlay {
-  opacity: 0;
-  transition: opacity 200ms var(--fluid-slide-up);
-}
-.ReactModal__Overlay--after-open{
-  opacity: 1;
-}
-.ReactModal__Overlay--before-close{
-  opacity: 0;
-}
-
-.ReactModal__Content {
-  transform: translateY(100%);
-  transition: transform 200ms var(--fluid-slide-up);
-}
-
-.ReactModal__Content--after-open{
-  transform: translateY(0);
-}
-
-.ReactModal__Content--before-close{
-  transform: translateY(100%);
-}
-
 .raw-modal {
   --small-modal-width: 525px;
   --medium-modal-width: 712px;
   --large-modal-width: 1024px;
 
-
+  position: relative;
   width: 100%;
   max-height: 100%;
   border-radius: var(--bo-radius);
@@ -59,5 +35,32 @@
     width: 100%;
     height: 100%;
     background-color: var(--bg-overlay);
+  }
+}
+
+.ReactModal__Overlay {
+  animation: raw-modal--overlay 150ms;
+}
+
+.ReactModal__Content {
+  animation: raw-modal--content 150ms;
+}
+
+@keyframes raw-modal--content {
+  0% {
+    transform: translateY(100px);
+    opacity: .5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes raw-modal--overlay {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }

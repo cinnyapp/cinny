@@ -70,6 +70,7 @@
   &__preview > img {
     max-height: 40px;
     border-radius: var(--bo-radius);
+    max-width: 150px;
   }
   &__icon {
     padding: var(--sp-extra-tight);
