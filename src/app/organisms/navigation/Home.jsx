@@ -30,7 +30,7 @@ function Home({ spaceId }) {
     roomIds = spaceChildIds.filter((roomId) => rooms.has(roomId));
     directIds = spaceChildIds.filter((roomId) => directs.has(roomId));
   } else {
-    spaceIds = roomList.getOrphanSpaces();
+    spaceIds = roomList.getOrphanSpaces().filter((id) => !accountData.spaceShortcut.has(id));
     roomIds = roomList.getOrphanRooms();
   }
 
@@ -80,10 +80,10 @@ function Home({ spaceId }) {
         <RoomsCategory name="People" roomIds={directIds.sort(roomIdByActivity)} drawerPostie={drawerPostie} />
       )}
 
-      { isCategorized && [...categories].map(([catId, childIds]) => {
+      { isCategorized && [...categories.keys()].sort(roomIdByAtoZ).map((catId) => {
         const rms = [];
         const dms = [];
-        childIds.forEach((id) => {
+        categories.get(catId).forEach((id) => {
           if (directs.has(id)) dms.push(id);
           else rms.push(id);
         });
