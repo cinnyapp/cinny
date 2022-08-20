@@ -17,7 +17,6 @@ class Navigation extends EventEmitter {
     this.recentRooms = [];
 
     this.spaceToRoom = new Map();
-    window.spaceToRoom = this.spaceToRoom;
 
     this.rawModelStack = [];
   }
