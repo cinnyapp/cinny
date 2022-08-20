@@ -91,13 +91,14 @@ class Navigation extends EventEmitter {
 
   _selectTabWithRoom(roomId) {
     const { roomList, accountData } = this.initMatrix;
+    const { categorizedSpaces } = accountData;
 
-    if (roomList.directs.has(roomId)) {
-      this._selectSpace(null, true, false);
-      this._selectTab(cons.tabs.DIRECTS, false);
-      return;
-    }
     if (roomList.isOrphan(roomId)) {
+      if (roomList.directs.has(roomId)) {
+        this._selectSpace(null, true, false);
+        this._selectTab(cons.tabs.DIRECTS, false);
+        return;
+      }
       this._selectSpace(null, true, false);
       this._selectTab(cons.tabs.HOME, false);
       return;
@@ -109,7 +110,6 @@ class Navigation extends EventEmitter {
       return;
     }
 
-    const { categorizedSpaces } = accountData;
     if (categorizedSpaces.has(this.selectedSpaceId)) {
       const categories = roomList.getCategorizedSpaces([this.selectedSpaceId]);
       if ([...parents].find((pId) => categories.has(pId))) {
@@ -122,6 +122,12 @@ class Navigation extends EventEmitter {
     const spaceInPath = [...this.selectedSpacePath].reverse().find((sId) => parents.has(sId));
     if (spaceInPath) {
       this._selectSpace(spaceInPath, false, false);
+      return;
+    }
+
+    if (roomList.directs.has(roomId)) {
+      this._selectSpace(null, true, false);
+      this._selectTab(cons.tabs.DIRECTS, false);
       return;
     }
 
