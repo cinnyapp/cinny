@@ -290,6 +290,11 @@ function MessageEdit({ body, onSave, onCancel }) {
   }, []);
 
   const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      onCancel();
+    }
+
     if (e.key === 'Enter' && e.shiftKey === false) {
       e.preventDefault();
       onSave(editInputRef.current.value);
