@@ -4,6 +4,16 @@ import { selectTab, selectSpace, selectRoom } from '../action/navigation';
 
 function initRoomListListener(roomList) {
   const listenRoomLeave = (roomId) => {
+    const parents = roomList.roomIdToParents.get(roomId);
+    if (parents) {
+      [...parents].forEach((pId) => {
+        const data = navigation.spaceToRoom.get(pId);
+        if (data?.roomId === roomId) {
+          navigation.spaceToRoom.delete(pId);
+        }
+      });
+    }
+
     if (navigation.selectedRoomId === roomId) {
       selectRoom(null);
     }
