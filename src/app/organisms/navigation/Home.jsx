@@ -80,10 +80,10 @@ function Home({ spaceId }) {
         <RoomsCategory name="People" roomIds={directIds.sort(roomIdByActivity)} drawerPostie={drawerPostie} />
       )}
 
-      { isCategorized && [...categories].map(([catId, childIds]) => {
+      { isCategorized && [...categories.keys()].sort(roomIdByAtoZ).map((catId) => {
         const rms = [];
         const dms = [];
-        childIds.forEach((id) => {
+        categories.get(catId).forEach((id) => {
           if (directs.has(id)) dms.push(id);
           else rms.push(id);
         });
