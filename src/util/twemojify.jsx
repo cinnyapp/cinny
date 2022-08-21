@@ -5,6 +5,7 @@ import linkifyHtml from 'linkify-html';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { sanitizeText } from './sanitize';
+import PropTypes from 'prop-types';
 
 const Math = lazy(() => import('../app/atoms/math/Math'));
 
@@ -51,3 +52,19 @@ export function twemojify(text, opts, linkify = false, sanitize = true, maths = 
   }
   return parse(content, maths ? mathOptions : null);
 }
+
+export function Twemojify({ text }) {
+  return (
+    <>
+      {twemojify(text)}
+    </>
+  );
+}
+
+Twemojify.defaultProps = {
+  text: null,
+};
+
+Twemojify.propTypes = {
+  text: PropTypes.string,
+};

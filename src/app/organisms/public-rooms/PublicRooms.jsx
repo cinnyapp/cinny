@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './PublicRooms.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { selectRoom, selectTab } from '../../../client/action/navigation';
@@ -18,9 +19,13 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
 
+import '../../i18n';
+
 const SEARCH_LIMIT = 20;
 
 function TryJoinWithAlias({ alias, onRequestClose }) {
+  const { t } = useTranslation();
+
   const [status, setStatus] = useState({
     isJoining: false,
     error: null,
@@ -53,7 +58,7 @@ function TryJoinWithAlias({ alias, onRequestClose }) {
     } catch (e) {
       setStatus({
         isJoining: false,
-        error: `Unable to join ${alias}. Either room is private or doesn't exist.`,
+        error: t('Organisms.PublicRooms.could_not_join_alias', { alias }),
         roomId: null,
         tempRoomId: null,
       });
@@ -63,16 +68,16 @@ function TryJoinWithAlias({ alias, onRequestClose }) {
   return (
     <div className="try-join-with-alias">
       {status.roomId === null && !status.isJoining && status.error === null && (
-        <Button onClick={() => joinWithAlias()}>{`Try joining ${alias}`}</Button>
+        <Button onClick={() => joinWithAlias()}>{t('Organisms.PublicRooms.try_joining_alias', { alias })}</Button>
       )}
       {status.isJoining && (
         <>
           <Spinner size="small" />
-          <Text>{`Joining ${alias}...`}</Text>
+          <Text>{t('Organisms.PublicRooms.joining_alias', { alias })}</Text>
         </>
       )}
       {status.roomId !== null && (
-        <Button onClick={() => { onRequestClose(); selectRoom(status.roomId); }}>Open</Button>
+        <Button onClick={() => { onRequestClose(); selectRoom(status.roomId); }}>{t('common.open')}</Button>
       )}
       {status.error !== null && <Text variant="b2"><span style={{ color: 'var(--bg-danger)' }}>{status.error}</span></Text>}
     </div>
@@ -92,6 +97,7 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
   const [searchQuery, updateSearchQuery] = useState({});
   const [joiningRooms, updateJoiningRooms] = useState(new Set());
 
+  const { t } = useTranslation();
   const roomNameRef = useRef(null);
   const hsRef = useRef(null);
   const userId = initMatrix.matrixClient.getUserId();
@@ -140,14 +146,14 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
       if (totalRooms.length === 0) {
         updateSearchQuery({
           error: inputRoomName === ''
-            ? `No public rooms on ${inputHs}`
-            : `No result found for "${inputRoomName}" on ${inputHs}`,
+            ? t('Organisms.PublicRooms.no_public_rooms', { homeserver: inputHs })
+            : t('Organisms.PublicRooms.no_result_found', { homeserver: inputHs, input: inputRoomName }),
           alias: isInputAlias ? inputRoomName : null,
         });
       }
     } catch (e) {
       updatePublicRooms([]);
-      let err = 'Something went wrong!';
+      let err = t('errors.generic');
       if (e?.httpStatus >= 400 && e?.httpStatus < 500) {
         err = e.message;
       }
@@ -206,8 +212,8 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
           desc={typeof room.topic === 'string' ? room.topic : null}
           options={(
             <>
-              {isJoined && <Button onClick={() => handleViewRoom(room.room_id)}>Open</Button>}
-              {!isJoined && (joiningRooms.has(room.room_id) ? <Spinner size="small" /> : <Button onClick={() => joinRoom(room.aliases?.[0] || room.room_id)} variant="primary">Join</Button>)}
+              {isJoined && <Button onClick={() => handleViewRoom(room.room_id)}>{t('common.open')}</Button>}
+              {!isJoined && (joiningRooms.has(room.room_id) ? <Spinner size="small" /> : <Button onClick={() => joinRoom(room.aliases?.[0] || room.room_id)} variant="primary">{t('commom.join')}</Button>)}
             </>
           )}
         />
@@ -218,17 +224,17 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
   return (
     <PopupWindow
       isOpen={isOpen}
-      title="Public rooms"
-      contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip="Close" />}
+      title={t('Organisms.PublicRooms.title')}
+      contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip={t('common.close')} />}
       onRequestClose={onRequestClose}
     >
       <div className="public-rooms">
         <form className="public-rooms__form" onSubmit={(e) => { e.preventDefault(); searchRooms(); }}>
           <div className="public-rooms__input-wrapper">
-            <Input value={searchTerm} forwardRef={roomNameRef} label="Room name or alias" />
-            <Input forwardRef={hsRef} value={userId.slice(userId.indexOf(':') + 1)} label="Homeserver" required />
+            <Input value={searchTerm} forwardRef={roomNameRef} label={t('Organisms.PublicRooms.search_room_name_alias')} />
+            <Input forwardRef={hsRef} value={userId.slice(userId.indexOf(':') + 1)} label={t('common.homeserver')} required />
           </div>
-          <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">Search</Button>
+          <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">{t('Organisms.PublicRooms.search_button')}</Button>
         </form>
         <div className="public-rooms__search-status">
           {
@@ -237,13 +243,13 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
                 ? (
                   <div className="flex--center">
                     <Spinner size="small" />
-                    <Text variant="b2">{`Loading public rooms from ${searchQuery.homeserver}...`}</Text>
+                    <Text variant="b2">{t('Organisms.PublicRooms.loading', { homeserver: searchQuery.homeserver })}</Text>
                   </div>
                 )
                 : (
                   <div className="flex--center">
                     <Spinner size="small" />
-                    <Text variant="b2">{`Searching for "${searchQuery.name}" on ${searchQuery.homeserver}...`}</Text>
+                    <Text variant="b2">{t('Organisms.PublicRooms.searching', { homeserver: searchQuery.homeserver, query: searchQuery.name })}</Text>
                   </div>
                 )
             )
@@ -251,8 +257,8 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
           {
             typeof searchQuery.name !== 'undefined' && !isSearching && (
               searchQuery.name === ''
-                ? <Text variant="b2">{`Public rooms on ${searchQuery.homeserver}.`}</Text>
-                : <Text variant="b2">{`Search result for "${searchQuery.name}" on ${searchQuery.homeserver}.`}</Text>
+                ? <Text variant="b2">{t('Organisms.PublicRooms.result_title', { homeserver: searchQuery.homeserver })}</Text>
+                : <Text variant="b2">{t('Organisms.PublicRooms.search_result_title', { homeserver: searchQuery.homeserver, query: searchQuery.name })}</Text>
             )
           }
           { searchQuery.error && (
@@ -272,7 +278,7 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
         { publicRooms.length !== 0 && publicRooms.length % SEARCH_LIMIT === 0 && (
           <div className="public-rooms__view-more">
             { isViewMore !== true && (
-              <Button onClick={() => searchRooms(true)}>View more</Button>
+              <Button onClick={() => searchRooms(true)}>{t('commom.view_more')}</Button>
             )}
             { isViewMore && <Spinner /> }
           </div>

@@ -5,7 +5,8 @@ import React, {
 import PropTypes from 'prop-types';
 import './Message.scss';
 
-import { twemojify } from '../../../util/twemojify';
+import { useTranslation, Trans } from 'react-i18next';
+import { twemojify, Twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { getUsername, getUsernameOfRoomMember, parseReply } from '../../../util/matrixUtil';
@@ -38,6 +39,8 @@ import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
+
+import '../../i18n';
 
 function PlaceholderMessage() {
   return (
@@ -125,6 +128,7 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
   useEffect(() => {
     const mx = initMatrix.matrixClient;
     const timelineSet = roomTimeline.getUnfilteredTimelineSet();
+
     const loadReply = async () => {
       try {
         const eTimeline = await mx.getEventTimeline(timelineSet, eventId);
@@ -263,7 +267,7 @@ const MessageBody = React.memo(({
         )}
         { content }
       </div>
-      { isEdited && <Text className="message__body-edited" variant="b3">(edited)</Text>}
+      { isEdited && <Text className="message__body-edited" variant="b3"><Trans i18nKey="Molecules.Message.edited" /></Text>}
     </div>
   );
 });
@@ -282,6 +286,8 @@ MessageBody.propTypes = {
 
 function MessageEdit({ body, onSave, onCancel }) {
   const editInputRef = useRef(null);
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     // makes the cursor end up at the end of the line instead of the beginning
@@ -307,14 +313,14 @@ function MessageEdit({ body, onSave, onCancel }) {
         forwardRef={editInputRef}
         onKeyDown={handleKeyDown}
         value={body}
-        placeholder="Edit message"
+        placeholder={t('Molecules.Message.edit_placeholder')}
         required
         resizable
         autoFocus
       />
       <div className="message__edit-btns">
-        <Button type="submit" variant="primary">Save</Button>
-        <Button onClick={onCancel}>Cancel</Button>
+        <Button type="submit" variant="primary">{t('common.save')}</Button>
+        <Button onClick={onCancel}>{t('common.cancel')}</Button>
       </div>
     </form>
   );
@@ -531,6 +537,8 @@ const MessageOptions = React.memo(({
   const canIRedact = room.currentState.hasSufficientPowerLevelFor('redact', myPowerlevel);
   const canSendReaction = room.currentState.maySendEvent('m.reaction', mx.getUserId());
 
+  const { t } = useTranslation();
+
   return (
     <div className="message__options">
       {canSendReaction && (
@@ -538,38 +546,38 @@ const MessageOptions = React.memo(({
           onClick={(e) => pickEmoji(e, roomId, mEvent.getId(), roomTimeline)}
           src={EmojiAddIC}
           size="extra-small"
-          tooltip="Add reaction"
+          tooltip={t('Molecules.Message.add_reaction_tooltip')}
         />
       )}
       <IconButton
         onClick={() => reply()}
         src={ReplyArrowIC}
         size="extra-small"
-        tooltip="Reply"
+        tooltip={t('Molecules.Message.reply_tooltip')}
       />
       {(senderId === mx.getUserId() && !isMedia(mEvent)) && (
         <IconButton
           onClick={() => edit(true)}
           src={PencilIC}
           size="extra-small"
-          tooltip="Edit"
+          tooltip={t('Molecules.Message.edit_tooltip')}
         />
       )}
       <ContextMenu
         content={() => (
           <>
-            <MenuHeader>Options</MenuHeader>
+            <MenuHeader>{t('Molecules.Message.options_header')}</MenuHeader>
             <MenuItem
               iconSrc={TickMarkIC}
               onClick={() => openReadReceipts(roomId, roomTimeline.getEventReaders(mEvent))}
             >
-              Read receipts
+              {t('Molecules.Message.read_receipts')}
             </MenuItem>
             <MenuItem
               iconSrc={CmdIC}
               onClick={() => handleOpenViewSource(mEvent, roomTimeline)}
             >
-              View source
+              {t('Molecules.Message.view_source')}
             </MenuItem>
             {(canIRedact || senderId === mx.getUserId()) && (
               <>
@@ -579,9 +587,9 @@ const MessageOptions = React.memo(({
                   iconSrc={BinIC}
                   onClick={async () => {
                     const isConfirmed = await confirmDialog(
-                      'Delete message',
-                      'Are you sure that you want to delete this message?',
-                      'Delete',
+                      t('Molecules.Message.delete_message_prompt'),
+                      t('Molecules.Message.delete_message_confirmation'),
+                      t('Molecules.Message.delete_message_button'),
                       'danger',
                     );
                     if (!isConfirmed) return;
@@ -599,7 +607,7 @@ const MessageOptions = React.memo(({
             onClick={toggleMenu}
             src={VerticalMenuIC}
             size="extra-small"
-            tooltip="Options"
+            tooltip={t('Molecules.Message.options_tooltip')}
           />
         )}
       />

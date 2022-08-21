@@ -2,11 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './RoomHistoryVisibility.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 
 import Text from '../../atoms/text/Text';
 import RadioButton from '../../atoms/button/RadioButton';
 import { MenuItem } from '../../atoms/context-menu/ContextMenu';
+
+import '../../i18n';
 
 const visibility = {
   WORLD_READABLE: 'world_readable',
@@ -17,19 +20,19 @@ const visibility = {
 
 const items = [{
   iconSrc: null,
-  text: 'Anyone (including guests)',
+  text: 'Molecules.RoomHistoryVisibility.world_readable',
   type: visibility.WORLD_READABLE,
 }, {
   iconSrc: null,
-  text: 'Members (all messages)',
+  text: 'Molecules.RoomHistoryVisibility.shared',
   type: visibility.SHARED,
 }, {
   iconSrc: null,
-  text: 'Members (messages after invite)',
+  text: 'Molecules.RoomHistoryVisibility.invited',
   type: visibility.INVITED,
 }, {
   iconSrc: null,
-  text: 'Members (messages after join)',
+  text: 'Molecules.RoomHistoryVisibility.joined',
   type: visibility.JOINED,
 }];
 
@@ -37,7 +40,8 @@ function setHistoryVisibility(roomId, type) {
   const mx = initMatrix.matrixClient;
 
   return mx.sendStateEvent(
-    roomId, 'm.room.history_visibility',
+    roomId,
+    'm.room.history_visibility',
     {
       history_visibility: type,
     },
@@ -69,6 +73,8 @@ function RoomHistoryVisibility({ roomId }) {
 
   const canChange = currentState.maySendStateEvent('m.room.history_visibility', userId);
 
+  const { t } = useTranslation();
+
   return (
     <div className="room-history-visibility">
       {
@@ -81,13 +87,13 @@ function RoomHistoryVisibility({ roomId }) {
             disabled={(!canChange)}
           >
             <Text varient="b1">
-              <span>{item.text}</span>
+              <span>{t(item.text)}</span>
               <RadioButton isActive={activeType === item.type} />
             </Text>
           </MenuItem>
         ))
       }
-      <Text variant="b3">Changes to history visibility will only apply to future messages. The visibility of existing history will have no effect.</Text>
+      <Text variant="b3">{t('Molecules.RoomHistoryVisibility.changes_only_affect_future')}</Text>
     </div>
   );
 }

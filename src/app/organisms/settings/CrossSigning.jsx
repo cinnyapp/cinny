@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import './CrossSigning.scss';
 import FileSaver from 'file-saver';
 import { Formik } from 'formik';
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -19,57 +20,61 @@ import SettingTile from '../../molecules/setting-tile/SettingTile';
 import { authRequest } from './AuthRequest';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
 
-const failedDialog = () => {
-  const renderFailure = (requestClose) => (
-    <div className="cross-signing__failure">
-      <Text variant="h1">{twemojify('❌')}</Text>
-      <Text weight="medium">Failed to setup cross signing. Please try again.</Text>
-      <Button onClick={requestClose}>Close</Button>
-    </div>
-  );
-
-  openReusableDialog(
-    <Text variant="s1" weight="medium">Setup cross signing</Text>,
-    renderFailure,
-  );
-};
-
-const securityKeyDialog = (key) => {
-  const downloadKey = () => {
-    const blob = new Blob([key.encodedPrivateKey], {
-      type: 'text/plain;charset=us-ascii',
-    });
-    FileSaver.saveAs(blob, 'security-key.txt');
-  };
-  const copyKey = () => {
-    copyToClipboard(key.encodedPrivateKey);
-  };
-
-  const renderSecurityKey = () => (
-    <div className="cross-signing__key">
-      <Text weight="medium">Please save this security key somewhere safe.</Text>
-      <Text className="cross-signing__key-text">
-        {key.encodedPrivateKey}
-      </Text>
-      <div className="cross-signing__key-btn">
-        <Button variant="primary" onClick={() => copyKey(key)}>Copy</Button>
-        <Button onClick={() => downloadKey(key)}>Download</Button>
-      </div>
-    </div>
-  );
-
-  // Download automatically.
-  downloadKey();
-
-  openReusableDialog(
-    <Text variant="s1" weight="medium">Security Key</Text>,
-    () => renderSecurityKey(),
-  );
-};
+import '../../i18n';
 
 function CrossSigningSetup() {
+  const { t } = useTranslation();
+
   const initialValues = { phrase: '', confirmPhrase: '' };
   const [genWithPhrase, setGenWithPhrase] = useState(undefined);
+
+  const failedDialog = () => {
+    const renderFailure = (requestClose) => (
+      <div className="cross-signing__failure">
+        <Text variant="h1">{twemojify('❌')}</Text>
+        <Text weight="medium">{t('Organisms.CrossSigning.setup_failed')}</Text>
+        <Button onClick={requestClose}>{t('common.close')}</Button>
+      </div>
+    );
+
+    openReusableDialog(
+      <Text variant="s1" weight="medium">{t('Organisms.CrossSigning.setup')}</Text>,
+      renderFailure,
+    );
+  };
+
+  const securityKeyDialog = (key) => {
+    const downloadKey = () => {
+      const blob = new Blob([key.encodedPrivateKey], {
+        type: 'text/plain;charset=us-ascii',
+      });
+      FileSaver.saveAs(blob, 'security-key.txt');
+    };
+    const copyKey = () => {
+      copyToClipboard(key.encodedPrivateKey);
+    };
+
+    const renderSecurityKey = () => (
+      <div className="cross-signing__key">
+        <Text weight="medium">{t('Organisms.CrossSigning.save_security_key_message')}</Text>
+        <Text className="cross-signing__key-text">
+          {key.encodedPrivateKey}
+        </Text>
+        <div className="cross-signing__key-btn">
+          <Button variant="primary" onClick={() => copyKey(key)}>{t('common.copy')}</Button>
+          <Button onClick={() => downloadKey(key)}>{t('common.download')}</Button>
+        </div>
+      </div>
+    );
+
+    // Download automatically.
+    downloadKey();
+
+    openReusableDialog(
+      <Text variant="s1" weight="medium">{t('Organisms.CrossSigning.security_key_dialog_title')}</Text>,
+      () => renderSecurityKey(),
+    );
+  };
 
   const setup = async (securityPhrase = undefined) => {
     const mx = initMatrix.matrixClient;
@@ -121,13 +126,12 @@ function CrossSigningSetup() {
     <div className="cross-signing__setup">
       <div className="cross-signing__setup-entry">
         <Text>
-          We will generate a <b>Security Key</b>, 
-          which you can use to manage messages backup and session verification.
+          {t('Organisms.CrossSigning.security_key_generation_message')}
         </Text>
-        {genWithPhrase !== false && <Button variant="primary" onClick={() => setup()} disabled={genWithPhrase !== undefined}>Generate Key</Button>}
+        {genWithPhrase !== false && <Button variant="primary" onClick={() => setup()} disabled={genWithPhrase !== undefined}>{t('Organisms.CrossSigning.security_key_generation_button')}</Button>}
         {genWithPhrase === false && <Spinner size="small" />}
       </div>
-      <Text className="cross-signing__setup-divider">OR</Text>
+      <Text className="cross-signing__setup-divider">{t('common.or')}</Text>
       <Formik
         initialValues={initialValues}
         onSubmit={(values) => setup(values.phrase)}
@@ -142,15 +146,13 @@ function CrossSigningSetup() {
             disabled={genWithPhrase !== undefined}
           >
             <Text>
-              Alternatively you can also set a <b>Security Phrase </b>
-              so you don't have to remember long Security Key, 
-              and optionally save the Key as backup.
+              {t('Organisms.CrossSigning.security_phrase_message')}
             </Text>
             <Input
               name="phrase"
               value={values.phrase}
               onChange={handleChange}
-              label="Security Phrase"
+              label={t('Organisms.CrossSigning.security_phrase_label')}
               type="password"
               required
               disabled={genWithPhrase !== undefined}
@@ -160,13 +162,13 @@ function CrossSigningSetup() {
               name="confirmPhrase"
               value={values.confirmPhrase}
               onChange={handleChange}
-              label="Confirm Security Phrase"
+              label={t('Organisms.CrossSigning.security_phrase_confirm_label')}
               type="password"
               required
               disabled={genWithPhrase !== undefined}
             />
             {errors.confirmPhrase && <Text variant="b3" className="cross-signing__error">{errors.confirmPhrase}</Text>}
-            {genWithPhrase !== true && <Button variant="primary" type="submit" disabled={genWithPhrase !== undefined}>Set Phrase & Generate Key</Button>}
+            {genWithPhrase !== true && <Button variant="primary" type="submit" disabled={genWithPhrase !== undefined}>{t('Organisms.CrossSigning.security_phrase_set_button')}</Button>}
             {genWithPhrase === true && <Spinner size="small" />}
           </form>
         )}
@@ -183,17 +185,15 @@ const setupDialog = () => {
 };
 
 function CrossSigningReset() {
+  const { t } = useTranslation();
   return (
     <div className="cross-signing__reset">
       <Text variant="h1">{twemojify('✋🧑‍🚒🤚')}</Text>
-      <Text weight="medium">Resetting cross-signing keys is permanent.</Text>
+      <Text weight="medium">{t('Organisms.CrossSigning.reset_keys_subtitle')}</Text>
       <Text>
-        Anyone you have verified with will see security alerts and your message backup will lost. 
-        You almost certainly do not want to do this, 
-        unless you have lost <b>Security Key</b> or <b>Phrase</b> and 
-        every session you can cross-sign from.
+        {t('Organisms.CrossSigning.reset_keys_message')}
       </Text>
-      <Button variant="danger" onClick={setupDialog}>Reset</Button>
+      <Button variant="danger" onClick={setupDialog}>{t('common.reset')}</Button>
     </div>
   );
 }
@@ -206,15 +206,16 @@ const resetDialog = () => {
 };
 
 function CrossSignin() {
+  const { t } = useTranslation();
   const isCSEnabled = useCrossSigningStatus();
   return (
     <SettingTile
-      title="Cross signing"
-      content={<Text variant="b3">Setup to verify and keep track of all your sessions. Also required to backup encrypted message.</Text>}
+      title={t('Organisms.CrossSigning.title')}
+      content={<Text variant="b3">{t('Organisms.CrossSigning.setup_message')}</Text>}
       options={(
         isCSEnabled
-          ? <Button variant="danger" onClick={resetDialog}>Reset</Button>
-          : <Button variant="primary" onClick={setupDialog}>Setup</Button>
+          ? <Button variant="danger" onClick={resetDialog}>{t('common.reset')}</Button>
+          : <Button variant="primary" onClick={setupDialog}>{t('common.setup')}</Button>
       )}
     />
   );

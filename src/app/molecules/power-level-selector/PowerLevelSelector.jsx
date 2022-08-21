@@ -2,10 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './PowerLevelSelector.scss';
 
+import { useTranslation } from 'react-i18next';
 import IconButton from '../../atoms/button/IconButton';
 import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
 import CheckIC from '../../../../public/res/ic/outlined/check.svg';
+
+import '../../i18n';
 
 function PowerLevelSelector({
   value, max, onSelect,
@@ -16,6 +19,8 @@ function PowerLevelSelector({
     onSelect(Number(powerLevel));
   };
 
+  const { t } = useTranslation();
+
   return (
     <div className="power-level-selector">
       <MenuHeader>Power level selector</MenuHeader>
@@ -25,7 +30,7 @@ function PowerLevelSelector({
           defaultValue={value}
           type="number"
           name="power-level"
-          placeholder="Power level"
+          placeholder={t('Molecules.PowerLevelIndicator.placeholder')}
           max={max}
           autoComplete="off"
           required

@@ -5,6 +5,7 @@ import './RoomViewInput.scss';
 
 import TextareaAutosize from 'react-autosize-textarea';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
@@ -33,6 +34,8 @@ import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
+import '../../i18n';
+
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
 let isCmdActivated = false;
@@ -43,6 +46,8 @@ function RoomViewInput({
   const [attachment, setAttachment] = useState(null);
   const [isMarkdown, setIsMarkdown] = useState(settings.isMarkdown);
   const [replyTo, setReplyTo] = useState(null);
+
+  const { t } = useTranslation();
 
   const textAreaRef = useRef(null);
   const inputBaseRef = useRef(null);
@@ -84,7 +89,7 @@ function RoomViewInput({
   function uploadingProgress(myRoomId, { loaded, total }) {
     if (myRoomId !== roomId) return;
     const progressPer = Math.round((loaded * 100) / total);
-    uploadProgressRef.current.textContent = `Uploading: ${bytesToSize(loaded)}/${bytesToSize(total)} (${progressPer}%)`;
+    uploadProgressRef.current.textContent = t('Organisms.RoomViewInput.upload_progress', { progress: bytesToSize(loaded), total: bytesToSize(total), percent: progressPer });
     inputBaseRef.current.style.backgroundImage = `linear-gradient(90deg, var(--bg-surface-hover) ${progressPer}%, var(--bg-surface-low) ${progressPer}%)`;
   }
   function clearAttachment(myRoomId) {
@@ -320,8 +325,8 @@ function RoomViewInput({
         <Text className="room-input__alert">
           {
             tombstoneEvent
-              ? tombstoneEvent.getContent()?.body ?? 'This room has been replaced and is no longer active.'
-              : 'You do not have permission to post to this room'
+              ? tombstoneEvent.getContent()?.body ?? t('Organisms.RoomViewInput.tombstone_replaced')
+              : t('Organisms.RoomViewInput.tombstone_permission_denied')
           }
         </Text>
       );
@@ -330,7 +335,7 @@ function RoomViewInput({
       <>
         <div className={`room-input__option-container${attachment === null ? '' : ' room-attachment__option'}`}>
           <input onChange={uploadFileChange} style={{ display: 'none' }} ref={uploadInputRef} type="file" />
-          <IconButton onClick={handleUploadClick} tooltip={attachment === null ? 'Upload' : 'Cancel'} src={CirclePlusIC} />
+          <IconButton onClick={handleUploadClick} tooltip={t(attachment === null ? 'common.upload' : 'common.cancel')} src={CirclePlusIC} />
         </div>
         <div ref={inputBaseRef} className="room-input__input-container">
           {roomTimeline.isEncrypted() && <RawIcon size="extra-small" src={ShieldIC} />}
@@ -343,7 +348,7 @@ function RoomViewInput({
                 onChange={handleMsgTyping}
                 onPaste={handlePaste}
                 onKeyDown={handleKeyDown}
-                placeholder="Send a message..."
+                placeholder={t('Organisms.RoomViewInput.send_message_placeholder')}
               />
             </Text>
           </ScrollView>
@@ -380,10 +385,10 @@ function RoomViewInput({
               cords.y -= 250;
               openEmojiBoard(cords, addEmoji);
             }}
-            tooltip="Emoji"
+            tooltip={t('Organisms.RoomViewInput.emoji_tooltip')}
             src={EmojiIC}
           />
-          <IconButton onClick={sendMessage} tooltip="Send" src={SendIC} />
+          <IconButton onClick={sendMessage} tooltip={t('common.send')} src={SendIC} />
         </div>
       </>
     );
@@ -401,7 +406,7 @@ function RoomViewInput({
         </div>
         <div className="room-attachment__info">
           <Text variant="b1">{attachment.name}</Text>
-          <Text variant="b3"><span ref={uploadProgressRef}>{`size: ${bytesToSize(attachment.size)}`}</span></Text>
+          <Text variant="b3"><span ref={uploadProgressRef}>{t('Organisms.RoomViewInput.file_size', { size: bytesToSize(attachment.size) })}</span></Text>
         </div>
       </div>
     );
@@ -416,7 +421,7 @@ function RoomViewInput({
             setReplyTo(null);
           }}
           src={CrossIC}
-          tooltip="Cancel reply"
+          tooltip={t('Organisms.RoomViewInput.cancel_reply_tooltip')}
           size="extra-small"
         />
         <MessageReply

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './ShortcutSpaces.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
@@ -21,6 +22,8 @@ import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import { useSpaceShortcut } from '../../hooks/useSpaceShortcut';
+
+import '../../i18n';
 
 function ShortcutSpacesContent() {
   const mx = initMatrix.matrixClient;
@@ -105,20 +108,22 @@ function ShortcutSpacesContent() {
     );
   };
 
+  const { t } = useTranslation();
+
   return (
     <>
-      <Text className="shortcut-spaces__header" variant="b3" weight="bold">Pinned spaces</Text>
-      {spaceShortcut.length === 0 && <Text>No pinned spaces</Text>}
+      <Text className="shortcut-spaces__header" variant="b3" weight="bold">{t('Organisms.ShortcutSpaces.pinned_spaces')}</Text>
+      {spaceShortcut.length === 0 && <Text>{t('Organisms.ShortcutSpaces.no_pinned_spaces')}</Text>}
       {spaceShortcut.map((spaceId) => renderSpace(spaceId, true))}
-      <Text className="shortcut-spaces__header" variant="b3" weight="bold">Unpinned spaces</Text>
-      {spaceWithoutShortcut.length === 0 && <Text>No unpinned spaces</Text>}
+      <Text className="shortcut-spaces__header" variant="b3" weight="bold">{t('Organisms.ShortcutSpaces.unpinned_spaces')}</Text>
+      {spaceWithoutShortcut.length === 0 && <Text>{t('Organisms.ShortcutSpaces.no_unpinned_spaces')}</Text>}
       {spaceWithoutShortcut.map((spaceId) => renderSpace(spaceId, false))}
       {selected.length !== 0 && (
         <div className="shortcut-spaces__footer">
           {process && <Spinner size="small" />}
-          <Text weight="medium">{process || `${selected.length} spaces selected`}</Text>
+          <Text weight="medium">{process || t('Organisms.ShortcutSpaces.spaces_selected', { count: selected.length })}</Text>
           { !process && (
-            <Button onClick={handleAdd} variant="primary">Pin</Button>
+            <Button onClick={handleAdd} variant="primary">{t('Organisms.ShortcutSpaces.pin_button')}</Button>
           )}
         </div>
       )}
@@ -144,6 +149,7 @@ function useVisibilityToggle() {
 
 function ShortcutSpaces() {
   const [isOpen, requestClose] = useVisibilityToggle();
+  const { t } = useTranslation();
 
   return (
     <Dialog
@@ -151,10 +157,10 @@ function ShortcutSpaces() {
       className="shortcut-spaces"
       title={(
         <Text variant="s1" weight="medium" primary>
-          Pin spaces
+          {t('Organisms.ShortcutSpaces.header')}
         </Text>
       )}
-      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
+      contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip={t('common.close')} />}
       onRequestClose={requestClose}
     >
       {

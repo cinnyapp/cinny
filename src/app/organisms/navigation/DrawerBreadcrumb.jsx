@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './DrawerBreadcrumb.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -18,12 +19,16 @@ import NotificationBadge from '../../atoms/badge/NotificationBadge';
 
 import ChevronRightIC from '../../../../public/res/ic/outlined/chevron-right.svg';
 
+import '../../i18n';
+
 function DrawerBreadcrumb({ spaceId }) {
   const [, forceUpdate] = useState({});
   const scrollRef = useRef(null);
   const { roomList, notifications } = initMatrix;
   const mx = initMatrix.matrixClient;
   const spacePath = navigation.selectedSpacePath;
+
+  const { t } = useTranslation();
 
   function onNotiChanged(roomId, total, prevTotal) {
     if (total === prevTotal) return;
@@ -112,7 +117,7 @@ function DrawerBreadcrumb({ spaceId }) {
                       else selectSpace(id);
                     }}
                   >
-                    <Text variant="b2">{id === cons.tabs.HOME ? 'Home' : twemojify(mx.getRoom(id).name)}</Text>
+                    <Text variant="b2">{id === cons.tabs.HOME ? t('Organisms.DrawerBreadcrumb.home') : twemojify(mx.getRoom(id).name)}</Text>
                     { noti !== null && (
                       <NotificationBadge
                         alert={noti.highlight !== 0}

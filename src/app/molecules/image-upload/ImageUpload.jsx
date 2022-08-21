@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './ImageUpload.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 
 import Text from '../../atoms/text/Text';
@@ -11,12 +12,16 @@ import RawIcon from '../../atoms/system-icons/RawIcon';
 
 import PlusIC from '../../../../public/res/ic/outlined/plus.svg';
 
+import '../../i18n';
+
 function ImageUpload({
   text, bgColor, imageSrc, onUpload, onRequestRemove,
   size,
 }) {
   const [uploadPromise, setUploadPromise] = useState(null);
   const uploadImageRef = useRef(null);
+
+  const { t } = useTranslation();
 
   async function uploadImage(e) {
     const file = e.target.files.item(0);
@@ -59,7 +64,7 @@ function ImageUpload({
         <div className={`img-upload__process ${uploadPromise === null ? ' img-upload__process--stopped' : ''}`}>
           {uploadPromise === null && (
             size === 'large'
-              ? <Text variant="b3" weight="bold">Upload</Text>
+              ? <Text variant="b3" weight="bold">{t('Molecules.ImageUpload.prompt')}</Text>
               : <RawIcon src={PlusIC} color="white" />
           )}
           {uploadPromise !== null && <Spinner size="small" />}
@@ -71,7 +76,7 @@ function ImageUpload({
           type="button"
           onClick={uploadPromise === null ? onRequestRemove : cancelUpload}
         >
-          <Text variant="b3">{uploadPromise ? 'Cancel' : 'Remove'}</Text>
+          <Text variant="b3">{uploadPromise ? t('Molecules.ImageUpload.cancel') : t('Molecules.ImageUpload.remove')}</Text>
         </button>
       )}
       <input onChange={uploadImage} style={{ display: 'none' }} ref={uploadImageRef} type="file" />

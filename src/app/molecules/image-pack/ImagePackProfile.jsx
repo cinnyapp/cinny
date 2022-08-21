@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import './ImagePackProfile.scss';
 
+import { useTranslation } from 'react-i18next';
 import { openReusableContextMenu } from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
 
@@ -16,11 +17,14 @@ import ImagePackUsageSelector from './ImagePackUsageSelector';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 
+import '../../i18n';
+
 function ImagePackProfile({
   avatarUrl, displayName, attribution, usage,
   onUsageChange, onAvatarChange, onEditProfile,
 }) {
   const [isEdit, setIsEdit] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -70,18 +74,18 @@ function ImagePackProfile({
           isEdit
             ? (
               <form onSubmit={handleSubmit}>
-                <Input name="nameInput" label="Name" value={displayName} required />
-                <Input name="attributionInput" label="Attribution" value={attribution} resizable />
+                <Input name="nameInput" label={t('Molecules.ImagePackProfile.name_prompt')} value={displayName} required />
+                <Input name="attributionInput" label={t('Molecules.ImagePackProfile.attribution_prompt')} value={attribution} resizable />
                 <div>
-                  <Button variant="primary" type="submit">Save</Button>
-                  <Button onClick={() => setIsEdit(false)}>Cancel</Button>
+                  <Button variant="primary" type="submit">{t('common.save')}</Button>
+                  <Button onClick={() => setIsEdit(false)}>{t('common.cancel')}</Button>
                 </div>
               </form>
             ) : (
               <>
                 <div>
                   <Text>{displayName}</Text>
-                  {onEditProfile && <IconButton size="extra-small" onClick={() => setIsEdit(true)} src={PencilIC} tooltip="Edit" />}
+                  {onEditProfile && <IconButton size="extra-small" onClick={() => setIsEdit(true)} src={PencilIC} tooltip={t('Molecules.ImagePackProfile.edit_tooltip')} />}
                 </div>
                 {attribution && <Text variant="b3">{attribution}</Text>}
               </>
@@ -89,15 +93,15 @@ function ImagePackProfile({
         }
       </div>
       <div className="image-pack-profile__usage">
-        <Text variant="b3">Pack usage</Text>
+        <Text variant="b3">{t('Molecules.ImagePackProfile.pack_usage')}</Text>
         <Button
           onClick={onUsageChange ? handleUsageSelect : undefined}
           iconSrc={onUsageChange ? ChevronBottomIC : null}
         >
           <Text>
-            {usage === 'emoticon' && 'Emoji'}
-            {usage === 'sticker' && 'Sticker'}
-            {usage === 'both' && 'Both'}
+            {usage === 'emoticon' && t('Molecules.ImagePackUsageSelector.type_emoji')}
+            {usage === 'sticker' && t('Molecules.ImagePackUsageSelector.type_sticker')}
+            {usage === 'both' && t('Molecules.ImagePackUsageSelector.type_both')}
           </Text>
         </Button>
       </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import './AuthRequest.scss';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 
@@ -11,6 +12,8 @@ import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 
 import { useStore } from '../../hooks/useStore';
+
+import '../../i18n';
 
 let lastUsedPassword;
 const getAuthId = (password) => ({
@@ -25,6 +28,7 @@ const getAuthId = (password) => ({
 function AuthRequest({ onComplete, makeRequest }) {
   const [status, setStatus] = useState(false);
   const mountStore = useStore();
+  const { t } = useTranslation();
 
   const handleForm = async (e) => {
     mountStore.setItem(true);
@@ -41,10 +45,10 @@ function AuthRequest({ onComplete, makeRequest }) {
       lastUsedPassword = undefined;
       if (!mountStore.getItem()) return;
       if (err.errcode === 'M_FORBIDDEN') {
-        setStatus({ error: 'Wrong password. Please enter correct password.' });
+        setStatus({ error: t('Organisms.AuthRequest.wrong_password') });
         return;
       }
-      setStatus({ error: 'Request failed!' });
+      setStatus({ error: t('Organisms.AuthRequest.request_failed') });
     }
   };
 
@@ -57,14 +61,14 @@ function AuthRequest({ onComplete, makeRequest }) {
       <form onSubmit={handleForm}>
         <Input
           name="password"
-          label="Account password"
+          label={t('Organisms.AuthRequest.password_label')}
           type="password"
           onChange={handleChange}
           required
         />
         {status.ongoing && <Spinner size="small" />}
         {status.error && <Text variant="b3">{status.error}</Text>}
-        {(status === false || status.error) && <Button variant="primary" type="submit" disabled={!!status.error}>Continue</Button>}
+        {(status === false || status.error) && <Button variant="primary" type="submit" disabled={!!status.error}>{t('common.continue')}</Button>}
       </form>
     </div>
   );

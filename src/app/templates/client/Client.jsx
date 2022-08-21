@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Client.scss';
 
+import { useTranslation } from 'react-i18next';
 import { initHotkeys } from '../../../client/event/hotkeys';
 import { initRoomListListener } from '../../../client/event/roomList';
 
@@ -19,9 +20,11 @@ import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
 
+import '../../i18n';
+
 function Client() {
   const [isLoading, changeLoading] = useState(true);
-  const [loadingMsg, setLoadingMsg] = useState('Heating up');
+  const [loadingMsg, setLoadingMsg] = useState('Templates.Client.loading_messages.default');
   const [dragCounter, setDragCounter] = useState(0);
   const classNameHidden = 'client__item-hidden';
 
@@ -37,6 +40,8 @@ function Client() {
     roomWrapperRef.current?.classList.add(classNameHidden);
   }
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
     navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
@@ -51,8 +56,8 @@ function Client() {
     let counter = 0;
     const iId = setInterval(() => {
       const msgList = [
-        'Almost there...',
-        'Looks like you have a lot of stuff to heat up!',
+        'Templates.Client.loading_messages.message_one',
+        'Templates.Client.loading_messages.message_two',
       ];
       if (counter === msgList.length - 1) {
         setLoadingMsg(msgList[msgList.length - 1]);
@@ -75,13 +80,13 @@ function Client() {
     return (
       <div className="loading-display">
         <button className="loading__logout" onClick={logout} type="button">
-          <Text variant="b3">Logout</Text>
+          <Text variant="b3">{t('Templates.Client.logout_prompt')}</Text>
         </button>
         <Spinner />
-        <Text className="loading__message" variant="b2">{loadingMsg}</Text>
+        <Text className="loading__message" variant="b2">{t(loadingMsg)}</Text>
 
         <div className="loading__appname">
-          <Text variant="h2" weight="medium">Cinny</Text>
+          <Text variant="h2" weight="medium">{t('common.cinny')}</Text>
         </div>
       </div>
     );
