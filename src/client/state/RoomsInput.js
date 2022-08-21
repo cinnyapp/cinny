@@ -1,15 +1,12 @@
 import EventEmitter from 'events';
-import { micromark } from 'micromark';
-import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
-import { math } from 'micromark-extension-math';
 import { encode } from 'blurhash';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
-import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
 import { getBlobSafeMimeType } from '../../util/mimetypes';
 import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
+import { htmlOutput, parser } from '../../util/markdown';
 
 const blurhashField = 'xyz.amorgan.blurhash';
 const MXID_REGEX = /\B@\S+:\S+\.\S+[^.,:;?!\s]/g;
@@ -104,14 +101,11 @@ function getVideoThumbnail(video, width, height, mimeType) {
 }
 
 function getFormattedBody(markdown) {
-  const result = micromark(markdown, {
-    extensions: [gfm(), spoilerExtension(), math()],
-    htmlExtensions: [gfmHtml(), spoilerExtensionHtml, mathExtensionHtml],
-  });
-  const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
-  if (bodyParts === null) return result;
-  if (bodyParts[2].indexOf('</p>') >= 0) return result;
-  return bodyParts[2];
+  let content = parser(markdown);
+  if (content.length === 1 && content[0].type === 'paragraph') {
+    content = content[0].content;
+  }
+  return htmlOutput(content);
 }
 
 function getReplyFormattedBody(roomId, reply) {
