@@ -39,7 +39,7 @@ class Navigation extends EventEmitter {
   }
 
   _mapRoomToSpace(roomId) {
-    const { roomList } = this.initMatrix;
+    const { roomList, accountData } = this.initMatrix;
     if (
       this.selectedTab === cons.tabs.HOME
       && roomList.rooms.has(roomId)
@@ -61,13 +61,21 @@ class Navigation extends EventEmitter {
 
     const parents = roomList.roomIdToParents.get(roomId);
     if (!parents) return;
-
-    [...parents].forEach((pId) => {
-      this.spaceToRoom.set(pId, {
+    if (parents.has(this.selectedSpaceId)) {
+      this.spaceToRoom.set(this.selectedSpaceId, {
         roomId,
         timestamp: Date.now(),
       });
-    });
+    } else if (accountData.categorizedSpaces.has(this.selectedSpaceId)) {
+      const categories = roomList.getCategorizedSpaces([this.selectedSpaceId]);
+      const parent = [...parents].find((pId) => categories.has(pId));
+      if (parent) {
+        this.spaceToRoom.set(parent, {
+          roomId,
+          timestamp: Date.now(),
+        });
+      }
+    }
   }
 
   _selectRoom(roomId, eventId) {
