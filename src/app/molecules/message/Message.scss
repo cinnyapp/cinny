@@ -229,6 +229,8 @@
   padding: var(--sp-extra-tight) 0;
   &-btns button {
     margin: var(--sp-tight) 0 0 0;
+    padding: var(--sp-ultra-tight) var(--sp-tight);
+    min-width: 0;
     @include dir.side(margin, 0, var(--sp-tight));
   }
 }
