@@ -1,4 +1,4 @@
-Graphics (c) by Ajay Bura (ajbura)
+Copyright (c) 2021-present Ajay Bura (ajbura)
 
 Graphic content is licensed under a
 Creative Commons Attribution 4.0 International License.
