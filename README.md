@@ -12,12 +12,14 @@
         <img alt="Sponsor Cinny" src="https://img.shields.io/opencollective/all/cinny?logo=opencollective&style=social"></a>
 </p>
 
-A Matrix client focusing primarily on simple, elegant and secure interface. The main goal is to have an instant messaging application that is easy on people.
+A Matrix client focusing primarily on simple, elegant and secure interface. The main goal is to have an instant messaging application that is easy on people and has a modern touch.
 - [Roadmap](https://github.com/ajbura/cinny/projects/11)
 - [Contributing](./CONTRIBUTING.md)
 
 ## Getting started
-Web app is available at https://app.cinny.in and gets updated on each new release. The `dev` branch is continuously deployed at https://dev.cinny.in and could have things broken.
+Web app is available at https://app.cinny.in and gets updated on each new release. The `dev` branch is continuously deployed at https://dev.cinny.in but keep in mind that it could have things broken.
+
+You can also download our desktop app from [cinny-desktop repository](https://github.com/cinnyapp/cinny-desktop).
 
 To host Cinny on your own, download tarball of the app from [GitHub release](https://github.com/cinnyapp/cinny/releases/latest).
 You can serve the application with a webserver of your choice by simply copying `dist/` directory to the webroot. 
