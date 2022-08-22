@@ -4,7 +4,7 @@ import appDispatcher from '../dispatcher';
 import cons from './cons';
 
 function getSettings() {
-  const settings = localStorage.getItem('settings');
+  const settings = window.localStorage.getItem('settings');
   if (settings === null) return null;
   return JSON.parse(settings);
 }
@@ -13,7 +13,7 @@ function setSettings(key, value) {
   let settings = getSettings();
   if (settings === null) settings = {};
   settings[key] = value;
-  localStorage.setItem('settings', JSON.stringify(settings));
+  window.localStorage.setItem('settings', JSON.stringify(settings));
 }
 
 class Settings extends EventEmitter {

@@ -9,6 +9,7 @@ import RoomsInput from './state/RoomsInput';
 import Notifications from './state/Notifications';
 import { cryptoCallbacks } from './state/secretStorageKeys';
 import navigation from './state/navigation';
+import NamespacedStorage from './state/NamespacedStorage';
 
 global.Olm = require('@matrix-org/olm');
 
@@ -22,16 +23,19 @@ class InitMatrix extends EventEmitter {
   }
 
   async init() {
-    await this.startClient();
+    const user = window.localStorage.getItem("currentUser");
+    window.userLocalStorage = new NamespacedStorage(user, window.localStorage);
+
+    await this.startClient(user, window.userLocalStorage);
     this.setupSync();
     this.listenEvents();
   }
 
-  async startClient() {
+  async startClient(user, storage) {
     const indexedDBStore = new sdk.IndexedDBStore({
       indexedDB: global.indexedDB,
-      localStorage: global.localStorage,
-      dbName: 'web-sync-store',
+      localStorage: storage,
+      dbName: `${user}.web-sync-store`,
     });
     await indexedDBStore.startup();
 
@@ -40,7 +44,7 @@ class InitMatrix extends EventEmitter {
       accessToken: secret.accessToken,
       userId: secret.userId,
       store: indexedDBStore,
-      cryptoStore: new sdk.IndexedDBCryptoStore(global.indexedDB, 'crypto-store'),
+      cryptoStore: new sdk.IndexedDBCryptoStore(global.indexedDB, `${user}.crypto-store`),
       deviceId: secret.deviceId,
       timelineSupport: true,
       cryptoCallbacks,
@@ -98,7 +102,7 @@ class InitMatrix extends EventEmitter {
     this.matrixClient.on('Session.logged_out', () => {
       this.matrixClient.stopClient();
       this.matrixClient.clearStores();
-      window.localStorage.clear();
+      window.userLocalStorage.clear();
       window.location.reload();
     });
   }

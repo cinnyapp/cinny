@@ -1,11 +1,19 @@
 import * as sdk from 'matrix-js-sdk';
 import cons from '../state/cons';
+import NamespacedStorage from '../state/NamespacedStorage';
 
 function updateLocalStore(accessToken, deviceId, userId, baseUrl) {
-  localStorage.setItem(cons.secretKey.ACCESS_TOKEN, accessToken);
-  localStorage.setItem(cons.secretKey.DEVICE_ID, deviceId);
-  localStorage.setItem(cons.secretKey.USER_ID, userId);
-  localStorage.setItem(cons.secretKey.BASE_URL, baseUrl);
+  window.localStorage.setItem("currentUser", userId);
+  let loggedInUsers = new Set(JSON.parse(window.localStorage.getItem("loggedInUsers")));
+  loggedInUsers.add(userId);
+  window.localStorage.setItem("loggedInUsers", JSON.stringify(Array.from(loggedInUsers)));
+
+  window.userLocalStorage = new NamespacedStorage(userId, window.localStorage);
+
+  window.userLocalStorage.setItem(cons.secretKey.ACCESS_TOKEN, accessToken);
+  window.userLocalStorage.setItem(cons.secretKey.DEVICE_ID, deviceId);
+  window.userLocalStorage.setItem(cons.secretKey.USER_ID, userId);
+  window.userLocalStorage.setItem(cons.secretKey.BASE_URL, baseUrl);
 }
 
 function createTemporaryClient(baseUrl) {
@@ -14,7 +22,7 @@ function createTemporaryClient(baseUrl) {
 
 async function startSsoLogin(baseUrl, type, idpId) {
   const client = createTemporaryClient(baseUrl);
-  localStorage.setItem(cons.secretKey.BASE_URL, client.baseUrl);
+  window.userLocalStorage.setItem(cons.secretKey.BASE_URL, client.baseUrl);
   window.location.href = client.getSsoLoginUrl(window.location.href, type, idpId);
 }
 

@@ -9,7 +9,14 @@ async function logout() {
     // ignore if failed to logout
   }
   mx.clearStores();
-  window.localStorage.clear();
+
+  window.userLocalStorage.clear();
+  let currentUser = window.localStorage.getItem("currentUser");
+  let loggedInUsers = new Set(JSON.parse(window.localStorage.getItem("loggedInUsers")));
+  loggedInUsers.delete(currentUser);
+  window.localStorage.setItem("loggedInUsers", JSON.stringify(loggedInUsers));
+  window.localStorage.removeItem("currentUser");
+
   window.location.reload();
 }
 

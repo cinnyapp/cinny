@@ -5,12 +5,14 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
+import { openReusableDialog } from '../../../client/action/navigation'
 import {
   toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
   toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
 import logout from '../../../client/action/logout';
 import { usePermission } from '../../hooks/usePermission';
+import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -25,6 +27,7 @@ import SettingTile from '../../molecules/setting-tile/SettingTile';
 import ImportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ImportE2ERoomKeys';
 import ExportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ExportE2ERoomKeys';
 import { ImagePackUser, ImagePackGlobal } from '../../molecules/image-pack/ImagePack';
+import PeopleSelector from '../../molecules/people-selector/PeopleSelector';
 
 import ProfileEditor from '../profile-editor/ProfileEditor';
 import CrossSigning from './CrossSigning';
@@ -38,6 +41,7 @@ import BellIC from '../../../../public/res/ic/outlined/bell.svg';
 import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
@@ -322,6 +326,50 @@ function Settings() {
       logout();
     }
   };
+  const handleSwitchUsers = async () => {
+    const loggedInUsers = JSON.parse(window.localStorage.getItem("loggedInUsers"));
+
+    const renderUserSwitcher = () => (
+      <div>
+        {
+          loggedInUsers.map((userId) => {
+            let mx = initMatrix.matrixClient;
+            let user = mx.getUser(userId);
+            let avatarUrl = user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null;
+            return (
+              <PeopleSelector
+                key={userId}
+                onClick={() => {
+                  if (userId != window.localStorage.getItem("currentUser")) {
+                    window.localStorage.setItem("currentUser", userId);
+                    window.location.reload();
+                  }
+                }}
+                name={user.displayName}
+                avatarSrc={avatarUrl}
+                color={colorMXID(userId)}
+              />
+            );
+          })
+        }
+        <Button
+          variant="caution"
+          iconSrc={AddUserIC}
+          onClick={() => {
+            window.localStorage.removeItem("currentUser");
+            window.location.reload();
+          }}
+        >
+          Add user
+        </Button>
+      </div>
+    );
+
+    await openReusableDialog(
+      <Text variant="s1" weight="medium">Switch users</Text>,
+      renderUserSwitcher,
+    )
+  }
 
   return (
     <PopupWindow
@@ -330,6 +378,9 @@ function Settings() {
       title={<Text variant="s1" weight="medium" primary>Settings</Text>}
       contentOptions={(
         <>
+          <Button variant="caution" onClick={handleSwitchUsers}>
+            Switch users
+          </Button>
           <Button variant="danger" iconSrc={PowerIC} onClick={handleLogout}>
             Logout
           </Button>

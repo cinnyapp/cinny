@@ -9,6 +9,7 @@ import * as auth from '../../../client/action/auth';
 import cons from '../../../client/state/cons';
 import { Debounce, getUrlPrams } from '../../../util/common';
 import { getBaseUrl } from '../../../util/matrixUtil';
+import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -25,6 +26,7 @@ import EyeIC from '../../../../public/res/ic/outlined/eye.svg';
 import EyeBlindIC from '../../../../public/res/ic/outlined/eye-blind.svg';
 import CinnySvg from '../../../../public/res/svg/cinny.svg';
 import SSOButtons from '../../molecules/sso-buttons/SSOButtons';
+import PeopleSelector from '../../molecules/people-selector/PeopleSelector';
 
 const LOCALPART_SIGNUP_REGEX = /^[a-z0-9_\-.=/]+$/;
 const BAD_LOCALPART_ERROR = 'Username can only contain characters a-z, 0-9, or \'=_-./\'';
@@ -539,11 +541,11 @@ function Auth() {
 
   useEffect(async () => {
     if (!loginToken) return;
-    if (localStorage.getItem(cons.secretKey.BASE_URL) === undefined) {
+    if (window.userLocalStorage.getItem(cons.secretKey.BASE_URL) === undefined) {
       setLoginToken(null);
       return;
     }
-    const baseUrl = localStorage.getItem(cons.secretKey.BASE_URL);
+    const baseUrl = window.userLocalStorage.getItem(cons.secretKey.BASE_URL);
     try {
       await auth.loginWithToken(baseUrl, loginToken);
 
@@ -567,6 +569,24 @@ function Auth() {
                   <Text variant="h2" weight="medium">Cinny</Text>
                 </TitleWrapper>
               </Header>
+              {(() => {
+                const loggedInUsers = JSON.parse(window.localStorage.getItem("loggedInUsers"));
+                return (
+                  loggedInUsers.map((userId) => {
+                    return (
+                      <PeopleSelector
+                        key={userId}
+                        onClick={() => {
+                          window.localStorage.setItem("currentUser", userId);
+                          window.location.reload();
+                        }}
+                        name={userId}
+                        color={colorMXID(userId)}
+                      />
+                    );
+                  })
+                );
+              })()}
               <div className="auth-card__content">
                 <AuthCard />
               </div>
