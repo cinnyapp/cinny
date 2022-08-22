@@ -3,13 +3,17 @@
 <a href="https://github.com/cinnyapp/cinny-desktop/releases">
   <img alt="GitHub release downloads" src="https://img.shields.io/github/downloads/cinnyapp/cinny-desktop/total?style=social"></a>
 
-Desktop app of Cinny made with Tauri. Cinny is a matrix client focusing primarily on simple, elegant and secure interface.
-
-![Image](https://github.com/cinnyapp/cinny-desktop/blob/86b78d5cdeccd161ca6b11aa36c10ae0bbd09e5a/resources/screenshot2.png)
+Cinny is a matrix client focusing primarily on simple, elegant and secure interface. The desktop app is made with Tauri.
 
 ## Download
 
 Installers for macOS, Windows and Linux can be downloaded from [Github releases](https://github.com/cinnyapp/cinny-desktop/releases). Releases are signed with a [Ed25519](https://ed25519.cr.yp.to/) public-key.
+
+Operating System | Download
+---|---
+Windows | <a href='https://github.com/cinnyapp/cinny-desktop/releases/latest/download/Cinny_desktop-x86_64.msi'>Get it on Windows</a>
+macOS | <a href='https://github.com/cinnyapp/cinny-desktop/releases/latest/download/Cinny_desktop-x86_64.dmg'>Get it on macOS</a>
+Linux | <a href='https://github.com/cinnyapp/cinny-desktop/releases/latest/download/Cinny_desktop-x86_64.AppImage'>Get it on Linux</a>
 
 Decoded pulic key:
 > RWRflTUQD3RHFtn25QNANCmePR9+4LSK89kAKTMEEB4OKpOFpLMgc64z
