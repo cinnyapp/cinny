@@ -1,9 +1,5 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/ajbura/cinny/dev/public/res/svg/cinny.svg?sanitize=true"
-        height="16">
-    <span><b>Cinny</b></span>
-</p>
-<p align="center">
+# Cinny
+<p>
     <a href="https://github.com/ajbura/cinny/releases">
         <img alt="GitHub release downloads" src="https://img.shields.io/github/downloads/ajbura/cinny/total?logo=github&style=social"></a>
     <a href="https://hub.docker.com/r/ajbura/cinny">
@@ -16,21 +12,30 @@
         <img alt="Sponsor Cinny" src="https://img.shields.io/opencollective/all/cinny?logo=opencollective&style=social"></a>
 </p>
 
-**Cinny** is a Matrix client focusing primarily on simple, elegant and secure interface. The main goal is to have a client that is easy on end user 
-and feels a modern chat application.
-
-- [Contributing](./CONTRIBUTING.md)
+A Matrix client focusing primarily on simple, elegant and secure interface. The main goal is to have an instant messaging application that is easy on people and has a modern touch.
 - [Roadmap](https://github.com/ajbura/cinny/projects/11)
+- [Contributing](./CONTRIBUTING.md)
 
-## Building and Running
+## Getting started
+Web app is available at https://app.cinny.in and gets updated on each new release. The `dev` branch is continuously deployed at https://dev.cinny.in but keep in mind that it could have things broken.
 
-### Running pre-compiled
+You can also download our desktop app from [cinny-desktop repository](https://github.com/cinnyapp/cinny-desktop).
 
-A tarball of pre-compiled version of the app is provided with each [release](https://github.com/ajbura/cinny/releases).
-You can serve the application with a webserver of your choosing by simply copying `dist/` directory to the webroot.
+To host Cinny on your own, download tarball of the app from [GitHub release](https://github.com/cinnyapp/cinny/releases/latest).
+You can serve the application with a webserver of your choice by simply copying `dist/` directory to the webroot. 
+To set default Homeserver on login and register page, place a customized [`config.json`](config.json) in webroot of your choice.
+
+Alternatively you can just pull the [DockerHub image](https://hub.docker.com/r/ajbura/cinny) by:
+```
+docker pull ajbura/cinny
+```
+or [ghcr image](https://github.com/cinnyapp/cinny/pkgs/container/cinny) by:
+```
+docker pull ghcr.io/cinnyapp/cinny:latest
+```
 
 <details>
-<summary>PGP Public Key to verify pre-compiled tarball</summary>
+<summary>PGP Public Key to verify tarball</summary>
 
 ```
 -----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -77,48 +82,39 @@ UeGsouhyuITLwEhScounZDqop+Dx
 ```
 </details>
 
-### Building from source
+## Local development
 > We recommend using a version manager as versions change very quickly. You will likely need to switch 
 between multiple Node.js versions based on the needs of different projects you're working on. [NVM on windows](https://github.com/coreybutler/nvm-windows#installation--upgrades) on Windows and [nvm](https://github.com/nvm-sh/nvm) on Linux/macOS are pretty good choices. Also recommended nodejs version is 16.15.0 LTS.
 
-Execute the following commands to compile the app from its source code:
-
+Execute the following commands to start a development server:
 ```sh
 npm ci # Installs all dependencies
+npm start # Serve a development version
+```
+
+To build the app:
+```sh
 npm run build # Compiles the app into the dist/ directory
 ```
 
-You can then copy the files to a webserver's webroot of your choice.
-
-To serve a development version of the app locally for testing, you need to use the command `npm start`.
-
 ### Running with Docker
-
 This repository includes a Dockerfile, which builds the application from source and serves it with Nginx on port 80. To
 use this locally, you can build the container like so:
-
 ```
 docker build -t cinny:latest .
 ```
 
 You can then run the container you've built with a command similar to this:
-
 ```
 docker run -p 8080:80 cinny:latest
 ```
 
-This will forward your `localhost` port 8080 to the container's port 80. You can visit the app in your browser by
-navigating to `http://localhost:8080`.
+This will forward your `localhost` port 8080 to the container's port 80. You can visit the app in your browser by navigating to `http://localhost:8080`.
 
-Alternatively you can just pull the [DockerHub image](https://hub.docker.com/r/ajbura/cinny) by `docker pull ajbura/cinny`.
-
-### Configuring default Homeserver
-
-To set default Homeserver on login and register page, place a customized [`config.json`](config.json) in webroot of your choice.
 
 ## License
 
-Copyright (c) 2021 Ajay Bura (ajbura)
+Copyright (c) 2021-present Ajay Bura (ajbura)
 
 Code licensed under the MIT License: <http://opensource.org/licenses/MIT>
 
