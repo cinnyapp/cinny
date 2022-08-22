@@ -131,27 +131,27 @@
 
   /* font styles: font-size, letter-spacing, line-hight */
   --fs-h1: 36px;
-  --ls-h1: -1.5px;
+  --ls-h1: 0;
   --lh-h1: 38px;
 
   --fs-h2: 24px;
-  --ls-h2: -0.5px;
+  --ls-h2: 0;
   --lh-h2: 30px;
 
   --fs-s1: 18px;
-  --ls-s1: -0.2px;
+  --ls-s1: 0;
   --lh-s1: 24px;
 
   --fs-b1: 16px;
-  --ls-b1: 0.1px;
+  --ls-b1:  0;
   --lh-b1: 24px;
 
   --fs-b2: 14px;
-  --ls-b2: 0.2px;
+  --ls-b2: 0;
   --lh-b2: 20px;
 
   --fs-b3: 12px;
-  --ls-b3: 0px;
+  --ls-b3: 0;
   --lh-b3: 16px;
 
   /* font-weight */
@@ -192,8 +192,8 @@
   --fluid-slide-down: cubic-bezier(0.02, 0.82, 0.4, 0.96);
   --fluid-slide-up: cubic-bezier(0.13, 0.56, 0.25, 0.99);
   
-  --font-primary: 'Roboto', sans-serif;
-  --font-secondary: 'Roboto', sans-serif;
+  --font-primary: 'Public SansVariable', 'Noto Sans', sans-serif;
+  --font-secondary: 'Public SansVariable', 'Noto Sans', sans-serif;
 }
 
 
@@ -276,23 +276,15 @@
   --bs-primary-outline: 0 0 0 2px var(--bg-primary-border);
   
   /* font styles: font-size, letter-spacing, line-hight */
-  --fs-h1: 35.6px;
-
-  --fs-h2: 23.6px;
-
-  --fs-s1: 17.6px;
-
-  --fs-b1: 14.6px;
-  --ls-b1: 0.14px;
-
-  --fs-b2: 13.2px;
-
-  --fs-b3: 11.2px;
+  --fs-h1: 36px;
+  --fs-h2: 24px;
+  --fs-s1: 18px;
+  --fs-b1: 15px;
+  --fs-b2: 14px;
+  --fs-b3: 12px;
 
   /* override normal font weight for dark mode */
-  --fw-normal: 350;
-
-  --font-secondary: 'InterVariable', 'Roboto', sans-serif;
+  --fw-normal: 330;
 }
 
 .dark-theme,
@@ -336,33 +328,27 @@
 
   /* override font styles for primary font */
   --fs-h1: 36px;
-  --ls-h1: -1.5px;
   --lh-h1: 38px;
 
   --fs-h2: 24px;
-  --ls-h2: -0.5px;
   --lh-h2: 30px;
 
   --fs-s1: 18px;
-  --ls-s1: -0.2px;
   --lh-s1: 24px;
 
   --fs-b1: 16px;
-  --ls-b1: 0.1px;
   --lh-b1: 24px;
 
   --fs-b2: 14px;
-  --ls-b2: 0.2px;
   --lh-b2: 20px;
 
   --fs-b3: 12px;
-  --ls-b3: 0px;
   --lh-b3: 16px;
 
-  --fw-light: 300;
-  --fw-normal: 400;
-  --fw-medium: 500;
-  --fw-bold: 600;
+  --fw-light: 400;
+  --fw-normal: 500;
+  --fw-medium: 600;
+  --fw-bold: 700;
 }
 
 html {
