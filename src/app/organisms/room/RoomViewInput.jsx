@@ -33,6 +33,8 @@ import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
+import commands from './commands';
+
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
 let isCmdActivated = false;
@@ -182,9 +184,27 @@ function RoomViewInput({
     };
   }, [roomId]);
 
+  const processCommand = (cmdBody) => {
+    const spaceIndex = cmdBody.indexOf(' ');
+    const cmdName = cmdBody.slice(1, spaceIndex > -1 ? spaceIndex : undefined);
+    const cmdData = spaceIndex > -1 ? cmdBody.slice(spaceIndex + 1) : '';
+    if (!commands[cmdName]) {
+      console.log('Invalid command');
+      return;
+    }
+    commands[cmdName].exe(roomId, cmdData);
+  };
+
   const sendMessage = async () => {
     requestAnimationFrame(() => deactivateCmdAndEmit());
     const msgBody = textAreaRef.current.value;
+    if (msgBody.startsWith('/')) {
+      processCommand(msgBody.trim());
+
+      textAreaRef.current.value = '';
+      textAreaRef.current.style.height = 'unset';
+      return;
+    }
     if (roomsInput.isSending(roomId)) return;
     if (msgBody.trim() === '' && attachment === null) return;
     sendIsTyping(false);
@@ -201,7 +221,6 @@ function RoomViewInput({
     focusInput();
 
     textAreaRef.current.value = roomsInput.getMessage(roomId);
-    viewEvent.emit('message_sent');
     textAreaRef.current.style.height = 'unset';
     if (replyTo !== null) setReplyTo(null);
   };
