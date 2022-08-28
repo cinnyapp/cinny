@@ -1,8 +1,14 @@
+import React from 'react';
+import './commands.scss';
+
 import initMatrix from '../../../client/initMatrix';
 import { toggleMarkdown } from '../../../client/action/settings';
 import * as roomActions from '../../../client/action/room';
 import { hasDMWith, hasDevices } from '../../../util/matrixUtil';
-import { selectRoom } from '../../../client/action/navigation';
+import { selectRoom, openReusableDialog } from '../../../client/action/navigation';
+
+import Text from '../../atoms/text/Text';
+import SettingTile from '../../molecules/setting-tile/SettingTile';
 
 const MXID_REG = /^@\S+:\S+$/;
 const ROOM_ID_ALIAS_REG = /^(#|!)\S+:\S+$/;
@@ -26,6 +32,12 @@ const commands = {
       `¯\\_(ツ)_/¯${data.trim() !== '' ? ` ${data}` : ''}`,
       'm.text',
     ),
+  },
+  help: {
+    name: 'help',
+    description: 'View all commands',
+    // eslint-disable-next-line no-use-before-define
+    exe: () => openHelpDialog(),
   },
   markdown: {
     name: 'markdown',
@@ -171,5 +183,22 @@ const commands = {
     },
   },
 };
+
+function openHelpDialog() {
+  openReusableDialog(
+    <Text variant="s1" weight="medium">Commands</Text>,
+    () => (
+      <div className="commands-dialog">
+        {Object.keys(commands).map((cmdName) => (
+          <SettingTile
+            key={cmdName}
+            title={cmdName}
+            content={<Text variant="b3">{commands[cmdName].description}</Text>}
+          />
+        ))}
+      </div>
+    ),
+  );
+}
 
 export default commands;
