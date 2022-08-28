@@ -13,17 +13,18 @@ const commands = {
   me: {
     name: 'me',
     description: 'Display action',
-    exe: (roomId, data) => {
+    exe: (roomId, data, onSuccess) => {
       const body = data.trim();
-      if (body === '') return undefined;
-      return body;
+      if (body === '') return;
+      onSuccess(body, 'm.emote');
     },
   },
   shrug: {
     name: 'shrug',
     description: 'Send ¯\\_(ツ)_/¯ as message',
-    exe: (roomId, data) => (
-      `¯\\_(ツ)_/¯${data.trim() !== '' ? ` ${data}` : ''}`
+    exe: (roomId, data, onSuccess) => onSuccess(
+      `¯\\_(ツ)_/¯${data.trim() !== '' ? ` ${data}` : ''}`,
+      'm.text',
     ),
   },
   markdown: {

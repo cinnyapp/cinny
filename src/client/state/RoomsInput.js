@@ -274,7 +274,7 @@ class RoomsInput extends EventEmitter {
     return this.roomIdToInput.get(roomId)?.isSending || false;
   }
 
-  async sendInput(roomId) {
+  async sendInput(roomId, msgType) {
     const room = this.matrixClient.getRoom(roomId);
     const input = this.getInput(roomId);
     input.isSending = true;
@@ -288,7 +288,7 @@ class RoomsInput extends EventEmitter {
       const rawMessage = input.message;
       let content = {
         body: rawMessage,
-        msgtype: 'm.text',
+        msgtype: msgType ?? 'm.text',
       };
 
       // Apply formatting if relevant
@@ -459,12 +459,14 @@ class RoomsInput extends EventEmitter {
     const room = this.matrixClient.getRoom(roomId);
     const isReply = typeof mEvent.getWireContent()['m.relates_to']?.['m.in_reply_to'] !== 'undefined';
 
+    const msgtype = mEvent.getWireContent().msgtype ?? 'm.text';
+
     const content = {
       body: ` * ${editedBody}`,
-      msgtype: 'm.text',
+      msgtype,
       'm.new_content': {
         body: editedBody,
-        msgtype: 'm.text',
+        msgtype,
       },
       'm.relates_to': {
         event_id: mEvent.getId(),
