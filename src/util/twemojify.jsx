@@ -5,27 +5,48 @@ import linkifyHtml from 'linkify-html';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { sanitizeText } from './sanitize';
+import handleLink from './linkHandlers';
 
 const Math = lazy(() => import('../app/atoms/math/Math'));
 
-const mathOptions = {
-  replace: (node) => {
-    const maths = node.attribs?.['data-mx-maths'];
-    if (maths) {
-      return (
-        <Suspense fallback={<code>{maths}</code>}>
-          <Math
-            content={maths}
-            throwOnError={false}
-            errorColor="var(--tc-danger-normal)"
-            displayMode={node.name === 'div'}
-          />
-        </Suspense>
-      );
-    }
-    return null;
-  },
-};
+function replaceMath(node) {
+  const maths = node.attribs?.['data-mx-maths'];
+
+  return (
+    <Suspense fallback={<code>{maths}</code>}>
+      <Math
+        content={maths}
+        throwOnError={false}
+        errorColor="var(--tc-danger-normal)"
+        displayMode={node.name === 'div'}
+      />
+    </Suspense>
+  );
+}
+
+function replaceLink(node) {
+  if (node.children?.[0]?.type !== 'text') { return null; }
+
+  return (
+    <a href={node.attribs?.href} onClick={(e) => handleLink(e)}>
+      { node.children[0].data }
+    </a>
+  );
+}
+
+function parseOptions(maths = false) {
+  return {
+    replace: (node) => {
+      if (maths) {
+        if (node.attribs?.['data-mx-maths']) { return replaceMath(node); }
+      }
+
+      if (node.name === 'a') { return replaceLink(node); }
+
+      return null;
+    },
+  };
+}
 
 /**
  * @param {string} text - text to twemojify
@@ -49,5 +70,8 @@ export function twemojify(text, opts, linkify = false, sanitize = true, maths = 
       rel: 'noreferrer noopener',
     });
   }
-  return parse(content, maths ? mathOptions : null);
+
+  const elements = parse(content, parseOptions(maths));
+
+  return elements;
 }

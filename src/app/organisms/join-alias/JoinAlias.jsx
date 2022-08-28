@@ -18,6 +18,9 @@ import Dialog from '../../molecules/dialog/Dialog';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import { useStore } from '../../hooks/useStore';
+import RoomTile from '../../molecules/room-tile/RoomTile';
+
+import { Debounce } from '../../../util/common';
 
 const ALIAS_OR_ID_REG = /^[#|!].+:.+\..+$/;
 
@@ -25,9 +28,13 @@ function JoinAliasContent({ term, requestClose }) {
   const [process, setProcess] = useState(false);
   const [error, setError] = useState(undefined);
   const [lastJoinId, setLastJoinId] = useState(undefined);
+  const [preview, setPreview] = useState(undefined);
+  const [loadingPreview, setLoadingPreview] = useState(undefined)
+  const [debounce] = useState(new Debounce());
 
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
+  let roomData = null;
 
   const openRoom = (roomId) => {
     const room = mx.getRoom(roomId);
@@ -47,6 +54,33 @@ function JoinAliasContent({ term, requestClose }) {
       initMatrix.roomList.removeListener(cons.events.roomList.ROOM_JOINED, handleJoin);
     };
   }, [lastJoinId]);
+
+  const loadPreview = async (text) => {
+    setLoadingPreview(true);
+    setPreview(undefined);
+    debounce._(async () => {
+      try {
+        let room_id = text;
+
+        if(text.startsWith('#')){
+          const room = await mx.resolveRoomAlias(text);
+          room_id = room.room_id;
+        }
+
+        roomData = await mx.getRoom(room_id)
+        setLoadingPreview(false)
+        setPreview(roomData)
+      }
+      catch{
+        setLoadingPreview(false)
+        setPreview(undefined)
+      }
+      
+    }, 500)();
+  }
+
+  if(loadingPreview === undefined && term)
+    loadPreview(term)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,6 +119,9 @@ function JoinAliasContent({ term, requestClose }) {
     }
   };
 
+  if(term && loadingPreview === undefined)
+    loadPreview(term);
+
   return (
     <form className="join-alias" onSubmit={handleSubmit}>
       <Input
@@ -92,8 +129,17 @@ function JoinAliasContent({ term, requestClose }) {
         value={term}
         name="alias"
         required
+        onChange={(e) => (loadPreview(e.target.value))}
       />
       {error && <Text className="join-alias__error" variant="b3">{error}</Text>}
+      { loadingPreview ? <Spinner></Spinner> : <></> }
+      { preview ? <RoomTile
+        key={preview.roomId}
+        name={preview.name}
+        avatarSrc={initMatrix.matrixClient.getRoom(preview.roomId).getAvatarUrl(initMatrix.matrixClient.baseUrl, 42, 42, 'crop')}
+        id={preview.roomId}
+      /> : <></>
+      }
       <div className="join-alias__btn">
         {
           process
@@ -137,6 +183,7 @@ function useWindowToggle() {
 
 function JoinAlias() {
   const [data, requestClose] = useWindowToggle();
+  const [loaded, setLoaded] = useState(null);
 
   return (
     <Dialog
