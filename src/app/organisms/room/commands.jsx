@@ -2,7 +2,6 @@ import React from 'react';
 import './commands.scss';
 
 import initMatrix from '../../../client/initMatrix';
-import { toggleMarkdown } from '../../../client/action/settings';
 import * as roomActions from '../../../client/action/room';
 import { hasDMWith, hasDevices } from '../../../util/matrixUtil';
 import { selectRoom, openReusableDialog } from '../../../client/action/navigation';
@@ -39,14 +38,9 @@ const commands = {
     // eslint-disable-next-line no-use-before-define
     exe: () => openHelpDialog(),
   },
-  markdown: {
-    name: 'markdown',
-    description: 'Toggle markdown for messages',
-    exe: () => toggleMarkdown(),
-  },
   startdm: {
     name: 'startdm',
-    description: 'Start DM with user id. Example: /startdm @johndoe.matrix.org',
+    description: 'Start DM with user. Example: /startdm @johndoe.matrix.org (Accept multiple MXID)',
     exe: async (roomId, data) => {
       const mx = initMatrix.matrixClient;
       const rawIds = data.split(' ');
@@ -67,7 +61,7 @@ const commands = {
   },
   join: {
     name: 'join',
-    description: 'Join room with alias. Example: /join #cinny:matrix.org',
+    description: 'Join room with alias. Example: /join #cinny:matrix.org (Accept multiple alias)',
     exe: (roomId, data) => {
       const rawIds = data.split(' ');
       const roomIds = rawIds.filter((id) => id.match(ROOM_ID_ALIAS_REG));
@@ -76,7 +70,7 @@ const commands = {
   },
   leave: {
     name: 'leave',
-    description: 'Leave room',
+    description: 'Leave current room.',
     exe: (roomId, data) => {
       if (data.trim() === '') {
         roomActions.leave(roomId);
@@ -89,7 +83,7 @@ const commands = {
   },
   invite: {
     name: 'invite',
-    description: 'Invite user to room. Example: /invite @johndoe:matrix.org',
+    description: 'Invite user to room. Example: /invite @johndoe:matrix.org (Accept multiple MXID)',
     exe: (roomId, data) => {
       const rawIds = data.split(' ');
       const userIds = rawIds.filter((id) => id.match(MXID_REG));
@@ -98,7 +92,7 @@ const commands = {
   },
   disinvite: {
     name: 'disinvite',
-    description: 'Disinvite user to room. Example: /disinvite @johndoe:matrix.org',
+    description: 'Disinvite user to room. Example: /disinvite @johndoe:matrix.org (Accept multiple MXID)',
     exe: (roomId, data) => {
       const rawIds = data.split(' ');
       const userIds = rawIds.filter((id) => id.match(MXID_REG));
@@ -107,7 +101,7 @@ const commands = {
   },
   kick: {
     name: 'kick',
-    description: 'Kick user from room. Example: /kick @johndoe:matrix.org',
+    description: 'Kick user from room. Example: /kick @johndoe:matrix.org (Accept multiple MXID)',
     exe: (roomId, data) => {
       const rawIds = data.split(' ');
       const userIds = rawIds.filter((id) => id.match(MXID_REG));
@@ -116,7 +110,7 @@ const commands = {
   },
   ban: {
     name: 'ban',
-    description: 'Ban user from room. Example: /ban @johndoe:matrix.org',
+    description: 'Ban user from room. Example: /ban @johndoe:matrix.org (Accept multiple MXID)',
     exe: (roomId, data) => {
       const rawIds = data.split(' ');
       const userIds = rawIds.filter((id) => id.match(MXID_REG));
@@ -125,7 +119,7 @@ const commands = {
   },
   unban: {
     name: 'unban',
-    description: 'Unban user from room. Example: /unban @johndoe:matrix.org',
+    description: 'Unban user from room. Example: /unban @johndoe:matrix.org (Accept multiple MXID)',
     exe: (roomId, data) => {
       const rawIds = data.split(' ');
       const userIds = rawIds.filter((id) => id.match(MXID_REG));
@@ -134,7 +128,7 @@ const commands = {
   },
   ignore: {
     name: 'ignore',
-    description: 'Ignore user. Example: /ignore @johndoe:matrix.org',
+    description: 'Ignore user. Example: /ignore @johndoe:matrix.org (Accept multiple MXID)',
     exe: (roomId, data) => {
       const rawIds = data.split(' ');
       const userIds = rawIds.filter((id) => id.match(MXID_REG));
@@ -143,7 +137,7 @@ const commands = {
   },
   unignore: {
     name: 'unignore',
-    description: 'Unignore user. Example: /unignore @johndoe:matrix.org',
+    description: 'Unignore user. Example: /unignore @johndoe:matrix.org (Accept multiple MXID)',
     exe: (roomId, data) => {
       const rawIds = data.split(' ');
       const userIds = rawIds.filter((id) => id.match(MXID_REG));
