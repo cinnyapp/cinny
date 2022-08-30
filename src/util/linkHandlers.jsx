@@ -1,10 +1,34 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { openJoinAlias } from '../client/action/navigation';
+import initMatrix from '../client/initMatrix';
+import { selectRoom, selectTab } from '../client/action/navigation';
+
+function handleMatrix(url) {
+  const mx = initMatrix.matrixClient;
+  const rooms = mx.getRooms();
+
+  const roomName = url.hash.slice(2);
+
+  let joinedRoom;
+
+  rooms.forEach((room) => {
+    if (room.getCanonicalAlias() === roomName || roomName in room.getAltAliases()) {
+      joinedRoom = room;
+    }
+  });
+
+  if (joinedRoom) {
+    if (joinedRoom.isSpaceRoom()) selectTab(joinedRoom.roomId);
+    else selectRoom(joinedRoom.roomId);
+
+    return;
+  }
+
+  openJoinAlias(roomName);
+}
 
 const handlers = {
-  'matrix.to': (url) => {
-    openJoinAlias(url.hash.slice(2));
-  },
+  'matrix.to': (url) => handleMatrix(url),
 };
 
 export default function handleLink(e) {
