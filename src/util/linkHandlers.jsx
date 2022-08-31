@@ -1,7 +1,6 @@
 import { invoke } from '@tauri-apps/api/tauri';
-import { openJoinAlias } from '../client/action/navigation';
 import initMatrix from '../client/initMatrix';
-import { selectRoom, selectTab } from '../client/action/navigation';
+import { selectRoom, selectTab, openJoinAlias } from '../client/action/navigation';
 
 function handleMatrix(url) {
   const mx = initMatrix.matrixClient;
