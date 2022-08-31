@@ -19,7 +19,7 @@ const permittedTagToAttributes = {
   div: ['data-mx-maths'],
   a: ['name', 'target', 'href', 'rel'],
   img: ['width', 'height', 'alt', 'title', 'src', 'data-mx-emoticon'],
-  o: ['start'],
+  ol: ['start'],
   code: ['class'],
 };
 

@@ -177,7 +177,7 @@ function getUserImagePack(mx) {
   }
 
   const userImagePack = ImagePack.parsePack(mx.getUserId(), accountDataEmoji.event.content);
-  userImagePack.displayName ??= 'Personal Emoji';
+  if (userImagePack) userImagePack.displayName ??= 'Personal Emoji';
   return userImagePack;
 }
 

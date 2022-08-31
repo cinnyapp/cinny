@@ -6,7 +6,7 @@ import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
-import { selectSpace } from '../../../client/action/navigation';
+import { selectTab, selectSpace } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
 import { abbreviateNumber } from '../../../util/common';
 
@@ -107,7 +107,10 @@ function DrawerBreadcrumb({ spaceId }) {
                   { index !== 0 && <RawIcon size="extra-small" src={ChevronRightIC} />}
                   <Button
                     className={index === spacePath.length - 1 ? 'drawer-breadcrumb__btn--selected' : ''}
-                    onClick={() => selectSpace(id)}
+                    onClick={() => {
+                      if (id === cons.tabs.HOME) selectTab(id);
+                      else selectSpace(id);
+                    }}
                   >
                     <Text variant="b2">{id === cons.tabs.HOME ? 'Home' : twemojify(mx.getRoom(id).name)}</Text>
                     { noti !== null && (

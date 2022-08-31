@@ -37,3 +37,8 @@ It is not always possible to phrase every change in such a manner, but it is des
 Also, we use [ESLint](https://eslint.org/) for clean and stylistically consistent code syntax, so make sure your pull request follow it.
 
 **For any query or design discussion, join our [Matrix room](https://matrix.to/#/#cinny:matrix.org).**
+
+## Helpful links
+- [BEM methodology](http://getbem.com/introduction/)
+- [Atomic design](https://bradfrost.com/blog/post/atomic-web-design/)
+- [Matrix JavaScript SDK documentation](https://matrix-org.github.io/matrix-js-sdk/19.2.0/index.html)

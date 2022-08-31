@@ -164,7 +164,7 @@ function getUsersActionJsx(roomId, userIds, actionStr) {
 
   const othersCount = userIds.length - MAX_VISIBLE_COUNT;
   // eslint-disable-next-line react/jsx-one-expression-per-line
-  return <>{u1Jsx}, {u2Jsx}, {u3Jsx} and {othersCount} other are {actionStr}</>;
+  return <>{u1Jsx}, {u2Jsx}, {u3Jsx} and {othersCount} others are {actionStr}</>;
 }
 
 function parseTimelineChange(mEvent) {
