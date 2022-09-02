@@ -22,6 +22,15 @@ const plainRules = {
       href: `https://matrix.to/#/${encodeURIComponent(node.id)}`,
     }),
   },
+  roomMention: {
+    order: defaultRules.em.order - 0.8,
+    match: inlineRegex(/^(#\S+:\S+)/), // TODO: Handle line beginning with roomMention (instead of heading)
+    parse: (capture) => ({ content: capture[1], id: capture[1] }),
+    plain: (node) => node.content,
+    html: (node) => htmlTag('a', sanitizeText(node.content), {
+      href: `https://matrix.to/#/${encodeURIComponent(node.id)}`,
+    }),
+  },
   emoji: {
     order: defaultRules.em.order - 0.1,
     match: inlineRegex(/^:([\w-]+):/),
@@ -73,7 +82,7 @@ const markdownRules = {
   },
   codeBlock: {
     ...defaultRules.codeBlock,
-    plain: (node) => `\`\`\`${node.lang}\n${node.content}\n\`\`\``,
+    plain: (node) => `\`\`\`${node.lang || ''}\n${node.content}\n\`\`\``,
   },
   list: {
     ...defaultRules.list,
@@ -152,6 +161,7 @@ function genOut(rules) {
 
   return (source, state) => {
     let content = parser(source, state);
+    console.debug(content);
     if (content.length === 1 && content[0].type === 'paragraph') {
       content = content[0].content;
     }
