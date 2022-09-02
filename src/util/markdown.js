@@ -63,6 +63,25 @@ const plainRules = {
 const markdownRules = {
   ...defaultRules,
   ...plainRules,
+  heading: {
+    ...defaultRules.heading,
+    plain: (node, output, state) => `${'#'.repeat(node.level)} ${output(node.content, state)}`,
+  },
+  hr: {
+    ...defaultRules.hr,
+    plain: () => '---',
+  },
+  codeBlock: {
+    ...defaultRules.codeBlock,
+    plain: (node) => `\`\`\`${node.lang}\n${node.content}\n\`\`\``,
+  },
+  list: {
+    ...defaultRules.list,
+    plain: (node, output, state) => node.items.map((item, i) => {
+      const prefix = node.ordered ? `${node.start + i + 1}. ` : '* ';
+      return prefix + output(item, state).replaceAll('\n', `\n${' '.repeat(prefix.length)}`);
+    }).join('\n'),
+  },
   displayMath: {
     order: defaultRules.list.order + 0.5,
     match: blockRegex(/^\$\$\n*([\s\S]+?)\n*\$\$/),
@@ -73,6 +92,14 @@ const markdownRules = {
   escape: {
     ...defaultRules.escape,
     plain: (node, output, state) => `\\${output(node.content, state)}`,
+  },
+  link: {
+    ...defaultRules.link,
+    plain: (node, output, state) => `[${output(node.content, state)}](${node.target}${node.title && ` "${node.title}"`})`,
+  },
+  image: {
+    ...defaultRules.image,
+    plain: (node) => `![${node.alt}](${node.target}${node.title && ` "${node.title}"`})`,
   },
   em: {
     ...defaultRules.em,
@@ -132,8 +159,9 @@ function genOut(rules) {
     let plainOut;
     try {
       plainOut = plain(content, state);
-    // eslint-disable-next-line no-empty
-    } catch (_) { }
+    } catch {
+      // use source instead
+    }
 
     return {
       plain: plainOut || source,
