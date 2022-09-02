@@ -263,6 +263,11 @@ function RoomViewInput({
   };
 
   const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      roomsInput.cancelReplyTo(roomId);
+      setReplyTo(null);
+    }
     if (e.key === 'Enter' && e.shiftKey === false) {
       e.preventDefault();
       sendMessage();
@@ -421,6 +426,7 @@ function RoomViewInput({
         />
         <MessageReply
           userId={replyTo.userId}
+          onKeyDown={handleKeyDown}
           name={getUsername(replyTo.userId)}
           color={colorMXID(replyTo.userId)}
           body={replyTo.body}
