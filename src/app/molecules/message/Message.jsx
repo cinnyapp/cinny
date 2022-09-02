@@ -729,23 +729,23 @@ function Message({
   let { body } = content;
   const username = mEvent.sender ? getUsernameOfRoomMember(mEvent.sender) : getUsername(senderId);
   const avatarSrc = mEvent.sender?.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop') ?? null;
+  let isCustomHTML = content.format === 'org.matrix.custom.html';
+  let customHTML = isCustomHTML ? content.formatted_body : null;
 
   const edit = useCallback(() => {
     setEdit(eventId);
   }, []);
   const reply = useCallback(() => {
-    replyTo(senderId, mEvent.getId(), body);
-  }, [body]);
+    replyTo(senderId, mEvent.getId(), body, customHTML);
+  }, [body, customHTML]);
 
   if (msgType === 'm.emote') className.push('message--type-emote');
 
-  let isCustomHTML = content.format === 'org.matrix.custom.html';
   const isEdited = roomTimeline ? editedTimeline.has(eventId) : false;
   const haveReactions = roomTimeline
     ? reactionTimeline.has(eventId) || !!mEvent.getServerAggregatedRelation('m.annotation')
     : false;
   const isReply = !!mEvent.replyEventId;
-  let customHTML = isCustomHTML ? content.formatted_body : null;
 
   if (isEdited) {
     const editedList = editedTimeline.get(eventId);

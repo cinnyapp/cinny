@@ -143,9 +143,11 @@ function RoomViewInput({
     textAreaRef.current.focus();
   }
 
-  function setUpReply(userId, eventId, body) {
+  function setUpReply(userId, eventId, body, formattedBody) {
     setReplyTo({ userId, eventId, body });
-    roomsInput.setReplyTo(roomId, { userId, eventId, body });
+    roomsInput.setReplyTo(roomId, {
+      userId, eventId, body, formattedBody,
+    });
     focusInput();
   }
 

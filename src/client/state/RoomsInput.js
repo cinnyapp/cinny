@@ -207,9 +207,7 @@ class RoomsInput extends EventEmitter {
       msgtype: msgType ?? 'm.text',
     };
 
-    // formattedBody = formatEmoji(this.matrixClient, room, this.roomList, formattedBody);
-
-    if (sanitizeText(body.plain) !== body.html) {
+    if (sanitizeText(body.plain) !== body.html || reply?.formattedBody) {
       content.format = 'org.matrix.custom.html';
       content.formatted_body = body.html;
     }
@@ -220,12 +218,41 @@ class RoomsInput extends EventEmitter {
         event_id: edit.getId(),
         rel_type: 'm.replace',
       };
+
+      const isReply = edit.getWireContent()['m.relates_to']?.['m.in_reply_to'];
+      if (isReply) {
+        content.format = 'org.matrix.custom.html';
+        content.formatted_body = body.html;
+      }
+
       content.body = ` * ${content.body}`;
       if (content.formatted_body) content.formatted_body = ` * ${content.formatted_body}`;
+
+      if (isReply) {
+        const eBody = edit.getContent().body;
+        const replyHead = eBody.substring(0, eBody.indexOf('\n\n'));
+        if (replyHead) content.body = `${replyHead}\n\n${content.body}`;
+
+        const eFBody = edit.getContent().formatted_body;
+        const fReplyHead = eFBody.substring(0, eFBody.indexOf('</mx-reply>'));
+        if (fReplyHead) content.formatted_body = `${fReplyHead}</mx-reply>${content.formatted_body}`;
+      }
     }
 
     if (reply) {
-      // TODO: Reply
+      content['m.relates_to'] = {
+        'm.in_reply_to': {
+          event_id: reply.eventId,
+        },
+      };
+
+      content.body = `> <${reply.userId}> ${reply.body.replaceAll('\n', '\n> ')}\n\n${content.body}`;
+      if (reply.formattedBody) {
+        const replyToLink = `<a href="https://matrix.to/#/${roomId}/${reply.eventId}">In reply to</a>`;
+        const userLink = `<a href="https://matrix.to/#/${reply.userId}">${reply.userId}</a>`;
+        const fallback = `<mx-reply><blockquote>${replyToLink}${userLink}<br />${reply.formattedBody}</blockquote></mx-reply>`;
+        content.formatted_body = fallback + content.formatted_body;
+      }
     }
 
     return content;

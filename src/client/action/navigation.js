@@ -139,12 +139,13 @@ export function openViewSource(event) {
   });
 }
 
-export function replyTo(userId, eventId, body) {
+export function replyTo(userId, eventId, body, formattedBody) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.CLICK_REPLY_TO,
     userId,
     eventId,
     body,
+    formattedBody,
   });
 }
 
