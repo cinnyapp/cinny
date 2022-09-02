@@ -36,6 +36,8 @@ const CONFIRM_PASSWORD_ERROR = 'Passwords don\'t match.';
 const EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const BAD_EMAIL_ERROR = 'Invalid email address';
 
+const MATRIX_KEYWORDS = ['matrix', 'cinny', 'element', 'synapse', 'dendrite'];
+
 function isValidInput(value, regex) {
   if (typeof regex === 'string') return regex === value;
   return regex.test(value);
@@ -317,7 +319,7 @@ function Register({ registerInfo, loginFlow, baseUrl }) {
       errors.username = BAD_LOCALPART_ERROR;
     }
     if (values.password.length > 0) {
-      const result = zxcvbn(values.password);
+      const result = zxcvbn(values.password, [...MATRIX_KEYWORDS, values.username, values.email]);
       if (result.feedback) {
         errors.password = result.feedback.warning;
       }
