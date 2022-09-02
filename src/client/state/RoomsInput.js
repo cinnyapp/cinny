@@ -207,7 +207,7 @@ class RoomsInput extends EventEmitter {
       msgtype: msgType ?? 'm.text',
     };
 
-    if (sanitizeText(body.plain) !== body.html || reply?.formattedBody) {
+    if (sanitizeText(body.plain) !== body.html || reply) {
       content.format = 'org.matrix.custom.html';
       content.formatted_body = body.html;
     }
@@ -247,12 +247,11 @@ class RoomsInput extends EventEmitter {
       };
 
       content.body = `> <${reply.userId}> ${reply.body.replaceAll('\n', '\n> ')}\n\n${content.body}`;
-      if (reply.formattedBody) {
-        const replyToLink = `<a href="https://matrix.to/#/${roomId}/${reply.eventId}">In reply to</a>`;
-        const userLink = `<a href="https://matrix.to/#/${reply.userId}">${reply.userId}</a>`;
-        const fallback = `<mx-reply><blockquote>${replyToLink}${userLink}<br />${reply.formattedBody}</blockquote></mx-reply>`;
-        content.formatted_body = fallback + content.formatted_body;
-      }
+
+      const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(roomId)}/${encodeURIComponent(reply.eventId)}">In reply to</a>`;
+      const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(reply.userId)}">${sanitizeText(reply.userId)}</a>`;
+      const fallback = `<mx-reply><blockquote>${replyToLink}${userLink}<br />${reply.formattedBody || sanitizeText(reply.body)}</blockquote></mx-reply>`;
+      content.formatted_body = fallback + content.formatted_body;
     }
 
     return content;
