@@ -257,14 +257,27 @@ class RoomList extends EventEmitter {
       const latestMDirects = this.getMDirects();
 
       latestMDirects.forEach((directId) => {
-        const myRoom = this.matrixClient.getRoom(directId);
         if (this.mDirects.has(directId)) return;
         this.mDirects.add(directId);
 
+        const myRoom = this.matrixClient.getRoom(directId);
         if (myRoom === null) return;
         if (myRoom.getMyMembership() === 'join') {
           this.directs.add(directId);
           this.rooms.delete(directId);
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        }
+      });
+
+      [...this.directs].forEach((directId) => {
+        if (latestMDirects.has(directId)) return;
+        this.mDirects.delete(directId);
+
+        const myRoom = this.matrixClient.getRoom(directId);
+        if (myRoom === null) return;
+        if (myRoom.getMyMembership() === 'join') {
+          this.directs.delete(directId);
+          this.rooms.add(directId);
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);
         }
       });

@@ -11,7 +11,7 @@ import { selectRoom, openReusableContextMenu } from '../../../client/action/navi
 import * as roomActions from '../../../client/action/room';
 
 import {
-  getUsername, getUsernameOfRoomMember, getPowerLabel, hasDMWith, hasDevices
+  getUsername, getUsernameOfRoomMember, getPowerLabel, hasDMWith, hasDevices,
 } from '../../../util/matrixUtil';
 import { getEventCords } from '../../../util/common';
 import colorMXID from '../../../util/colorMXID';
@@ -209,19 +209,18 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   };
 
   const toggleIgnore = async () => {
-    const ignoredUsers = mx.getIgnoredUsers();
-    const uIndex = ignoredUsers.indexOf(userId);
-    if (uIndex >= 0) {
-      if (uIndex === -1) return;
-      ignoredUsers.splice(uIndex, 1);
-    } else ignoredUsers.push(userId);
+    const isIgnored = mx.getIgnoredUsers().includes(userId);
 
     try {
       setIsIgnoring(true);
-      await mx.setIgnoredUsers(ignoredUsers);
+      if (isIgnored) {
+        await roomActions.unignore([userId]);
+      } else {
+        await roomActions.ignore([userId]);
+      }
 
       if (isMountedRef.current === false) return;
-      setIsUserIgnored(uIndex < 0);
+      setIsUserIgnored(!isIgnored);
       setIsIgnoring(false);
     } catch {
       setIsIgnoring(false);

@@ -21,6 +21,7 @@ import ScrollView from '../../atoms/scroll/ScrollView';
 import { MessageReply } from '../../molecules/message/Message';
 
 import StickerBoard from '../sticker-board/StickerBoard';
+import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
@@ -32,6 +33,8 @@ import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
 import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+
+import commands from './commands';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
@@ -182,28 +185,52 @@ function RoomViewInput({
     };
   }, [roomId]);
 
-  const sendMessage = async () => {
-    requestAnimationFrame(() => deactivateCmdAndEmit());
-    const msgBody = textAreaRef.current.value;
+  const sendBody = async (body, msgType = 'm.text') => {
     if (roomsInput.isSending(roomId)) return;
-    if (msgBody.trim() === '' && attachment === null) return;
     sendIsTyping(false);
 
-    roomsInput.setMessage(roomId, msgBody);
+    roomsInput.setMessage(roomId, body);
     if (attachment !== null) {
       roomsInput.setAttachment(roomId, attachment);
     }
     textAreaRef.current.disabled = true;
     textAreaRef.current.style.cursor = 'not-allowed';
-    await roomsInput.sendInput(roomId);
+    await roomsInput.sendInput(roomId, msgType);
     textAreaRef.current.disabled = false;
     textAreaRef.current.style.cursor = 'unset';
     focusInput();
 
     textAreaRef.current.value = roomsInput.getMessage(roomId);
-    viewEvent.emit('message_sent');
     textAreaRef.current.style.height = 'unset';
     if (replyTo !== null) setReplyTo(null);
+  };
+
+  const processCommand = (cmdBody) => {
+    const spaceIndex = cmdBody.indexOf(' ');
+    const cmdName = cmdBody.slice(1, spaceIndex > -1 ? spaceIndex : undefined);
+    const cmdData = spaceIndex > -1 ? cmdBody.slice(spaceIndex + 1) : '';
+    if (!commands[cmdName]) {
+      confirmDialog('Invalid Command', `"${cmdName}" is not a valid command.`, 'Alright');
+      return;
+    }
+    if (['me', 'shrug'].includes(cmdName)) {
+      commands[cmdName].exe(roomId, cmdData, (message, msgType) => sendBody(message, msgType));
+      return;
+    }
+    commands[cmdName].exe(roomId, cmdData);
+  };
+
+  const sendMessage = async () => {
+    requestAnimationFrame(() => deactivateCmdAndEmit());
+    const msgBody = textAreaRef.current.value.trim();
+    if (msgBody.startsWith('/')) {
+      processCommand(msgBody.trim());
+      textAreaRef.current.value = '';
+      textAreaRef.current.style.height = 'unset';
+      return;
+    }
+    if (msgBody === '' && attachment === null) return;
+    sendBody(msgBody, 'm.text');
   };
 
   const handleSendSticker = async (data) => {

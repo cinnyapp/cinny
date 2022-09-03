@@ -8,13 +8,6 @@ import twemoji from 'twemoji';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
-import { toggleMarkdown } from '../../../client/action/settings';
-import * as roomActions from '../../../client/action/room';
-import {
-  openCreateRoom,
-  openPublicRooms,
-  openInviteUser,
-} from '../../../client/action/navigation';
 import { getEmojiForCompletion } from '../emoji-board/custom-emoji';
 import AsyncSearch from '../../../util/AsyncSearch';
 
@@ -22,37 +15,7 @@ import Text from '../../atoms/text/Text';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import FollowingMembers from '../../molecules/following-members/FollowingMembers';
 import { addRecentEmoji, getRecentEmojis } from '../emoji-board/recent';
-
-const commands = [{
-  name: 'markdown',
-  description: 'Toggle markdown for messages.',
-  exe: () => toggleMarkdown(),
-}, {
-  name: 'startDM',
-  isOptions: true,
-  description: 'Start direct message with user. Example: /startDM/@johndoe.matrix.org',
-  exe: (roomId, searchTerm) => openInviteUser(undefined, searchTerm),
-}, {
-  name: 'createRoom',
-  description: 'Create new room',
-  exe: () => openCreateRoom(),
-}, {
-  name: 'join',
-  isOptions: true,
-  description: 'Join room with alias. Example: /join/#cinny:matrix.org',
-  exe: (roomId, searchTerm) => openPublicRooms(searchTerm),
-}, {
-  name: 'leave',
-  description: 'Leave current room',
-  exe: (roomId) => {
-    roomActions.leave(roomId);
-  },
-}, {
-  name: 'invite',
-  isOptions: true,
-  description: 'Invite user to room. Example: /invite/@johndoe:matrix.org',
-  exe: (roomId, searchTerm) => openInviteUser(roomId, searchTerm),
-}];
+import commands from './commands';
 
 function CmdItem({ onClick, children }) {
   return (
@@ -71,16 +34,16 @@ function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
     const cmdOptString = (typeof option === 'string') ? `/${option}` : '/?';
     return cmds.map((cmd) => (
       <CmdItem
-        key={cmd.name}
+        key={cmd}
         onClick={() => {
           fireCmd({
             prefix: cmdPrefix,
             option,
-            result: cmd,
+            result: commands[cmd],
           });
         }}
       >
-        <Text variant="b2">{`${cmd.name}${cmd.isOptions ? cmdOptString : ''}`}</Text>
+        <Text variant="b2">{`${cmd}${cmd.isOptions ? cmdOptString : ''}`}</Text>
       </CmdItem>
     ));
   }
@@ -209,8 +172,8 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
     const mx = initMatrix.matrixClient;
     const setupSearch = {
       '/': () => {
-        asyncSearch.setup(commands, { keys: ['name'], isContain: true });
-        setCmd({ prefix, suggestions: commands });
+        asyncSearch.setup(Object.keys(commands), { isContain: true });
+        setCmd({ prefix, suggestions: Object.keys(commands) });
       },
       ':': () => {
         const parentIds = initMatrix.roomList.getAllParentSpaces(roomId);
@@ -242,8 +205,9 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
   }
   function fireCmd(myCmd) {
     if (myCmd.prefix === '/') {
-      myCmd.result.exe(roomId, myCmd.option);
-      viewEvent.emit('cmd_fired');
+      viewEvent.emit('cmd_fired', {
+        replace: `/${myCmd.result.name}`,
+      });
     }
     if (myCmd.prefix === ':') {
       if (!myCmd.result.mxc) addRecentEmoji(myCmd.result.unicode);

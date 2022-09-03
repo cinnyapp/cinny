@@ -6,7 +6,7 @@ import { getIdServer } from '../../util/matrixUtil';
 /**
  * https://github.com/matrix-org/matrix-react-sdk/blob/1e6c6e9d800890c732d60429449bc280de01a647/src/Rooms.js#L73
  * @param {string} roomId Id of room to add
- * @param {string} userId User id to which dm
+ * @param {string} userId User id to which dm || undefined to remove
  * @returns {Promise} A promise
  */
 function addRoomToMDirect(roomId, userId) {
@@ -79,13 +79,23 @@ function guessDMRoomTargetId(room, myUserId) {
   return oldestMember.userId;
 }
 
+function convertToDm(roomId) {
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
+  return addRoomToMDirect(roomId, guessDMRoomTargetId(room, mx.getUserId()));
+}
+
+function convertToRoom(roomId) {
+  return addRoomToMDirect(roomId, undefined);
+}
+
 /**
  *
  * @param {string} roomId
  * @param {boolean} isDM
  * @param {string[]} via
  */
-async function join(roomIdOrAlias, isDM, via) {
+async function join(roomIdOrAlias, isDM = false, via = undefined) {
   const mx = initMatrix.matrixClient;
   const roomIdParts = roomIdOrAlias.split(':');
   const viaServers = via || [roomIdParts[1]];
@@ -150,10 +160,10 @@ async function create(options, isDM = false) {
   }
 }
 
-async function createDM(userId, isEncrypted = true) {
+async function createDM(userIdOrIds, isEncrypted = true) {
   const options = {
     is_direct: true,
-    invite: [userId],
+    invite: Array.isArray(userIdOrIds) ? userIdOrIds : [userIdOrIds],
     visibility: 'private',
     preset: 'trusted_private_chat',
     initial_state: [],
@@ -262,10 +272,10 @@ async function createRoom(opts) {
   return result;
 }
 
-async function invite(roomId, userId) {
+async function invite(roomId, userId, reason) {
   const mx = initMatrix.matrixClient;
 
-  const result = await mx.invite(roomId, userId);
+  const result = await mx.invite(roomId, userId, undefined, reason);
   return result;
 }
 
@@ -290,6 +300,21 @@ async function unban(roomId, userId) {
   return result;
 }
 
+async function ignore(userIds) {
+  const mx = initMatrix.matrixClient;
+
+  let ignoredUsers = mx.getIgnoredUsers().concat(userIds);
+  ignoredUsers = [...new Set(ignoredUsers)];
+  await mx.setIgnoredUsers(ignoredUsers);
+}
+
+async function unignore(userIds) {
+  const mx = initMatrix.matrixClient;
+
+  const ignoredUsers = mx.getIgnoredUsers();
+  await mx.setIgnoredUsers(ignoredUsers.filter((id) => !userIds.includes(id)));
+}
+
 async function setPowerLevel(roomId, userId, powerLevel) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
@@ -300,9 +325,37 @@ async function setPowerLevel(roomId, userId, powerLevel) {
   return result;
 }
 
+async function setMyRoomNick(roomId, nick) {
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
+  const mEvent = room.currentState.getStateEvents('m.room.member', mx.getUserId());
+  const content = mEvent?.getContent();
+  if (!content) return;
+  await mx.sendStateEvent(roomId, 'm.room.member', {
+    ...content,
+    displayname: nick,
+  }, mx.getUserId());
+}
+
+async function setMyRoomAvatar(roomId, mxc) {
+  const mx = initMatrix.matrixClient;
+  const room = mx.getRoom(roomId);
+  const mEvent = room.currentState.getStateEvents('m.room.member', mx.getUserId());
+  const content = mEvent?.getContent();
+  if (!content) return;
+  await mx.sendStateEvent(roomId, 'm.room.member', {
+    ...content,
+    avatar_url: mxc,
+  }, mx.getUserId());
+}
+
 export {
+  convertToDm,
+  convertToRoom,
   join, leave,
   createDM, createRoom,
   invite, kick, ban, unban,
+  ignore, unignore,
   setPowerLevel,
+  setMyRoomNick, setMyRoomAvatar,
 };

@@ -1,0 +1,10 @@
+.commands-dialog {
+  & > * {
+    padding: var(--sp-tight) var(--sp-normal);
+    border-bottom: 1px solid var(--bg-surface-border);
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: var(--sp-extra-loose);
+    }
+  }
+}
