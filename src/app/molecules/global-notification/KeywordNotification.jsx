@@ -1,17 +1,21 @@
 import React from 'react';
+import './KeywordNotification.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import { openReusableContextMenu } from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
+import Chip from '../../atoms/chip/Chip';
+import Input from '../../atoms/input/Input';
 import Button from '../../atoms/button/Button';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import SettingTile from '../setting-tile/SettingTile';
 
 import NotificationSelector from './NotificationSelector';
 
-import ChevronBottom from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
+import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import { useAccountData } from '../../hooks/useAccountData';
 import {
@@ -91,6 +95,22 @@ function useKeywordNotif() {
     mx.setAccountData('m.push_rules', evtContent);
   };
 
+  const addKeyword = (keyword) => {
+    if (content.find((r) => r.rule_id === keyword)) return;
+    content.push({
+      rule_id: keyword,
+      pattern: keyword,
+      enabled: true,
+      default: false,
+      actions: getTypeActions(rulesToType[KEYWORD] ?? notifType.NOISY, true),
+    });
+    mx.setAccountData('m.push_rules', pushRules);
+  };
+  const removeKeyword = (rule) => {
+    pushRules.global.content = content.filter((r) => r.rule_id !== rule.rule_id);
+    mx.setAccountData('m.push_rules', pushRules);
+  };
+
   const dsRule = override.find((rule) => rule.rule_id === DISPLAY_NAME);
   const roomRule = override.find((rule) => rule.rule_id === ROOM_PING);
   const usernameRule = content.find((rule) => rule.rule_id === USERNAME);
@@ -101,11 +121,25 @@ function useKeywordNotif() {
   if (usernameRule) rulesToType[USERNAME] = getActionType(usernameRule);
   if (keywordRule) rulesToType[KEYWORD] = getActionType(keywordRule);
 
-  return [rulesToType, setRule];
+  return {
+    rulesToType,
+    pushRules,
+    setRule,
+    addKeyword,
+    removeKeyword,
+  };
 }
 
 function GlobalNotification() {
-  const [rulesToType, setRule] = useKeywordNotif();
+  const {
+    rulesToType,
+    pushRules,
+    setRule,
+    addKeyword,
+    removeKeyword,
+  } = useKeywordNotif();
+
+  const keywordRules = pushRules?.global?.content.filter((r) => r.rule_id !== USERNAME) ?? [];
 
   const onSelect = (evt, rule) => {
     openReusableContextMenu(
@@ -123,13 +157,22 @@ function GlobalNotification() {
     );
   };
 
+  const handleSubmit = (evt) => {
+    evt.preventDefault();
+    const { keywordInput } = evt.target.elements;
+    const value = keywordInput.value.trim();
+    if (value === '') return;
+    addKeyword(value);
+    keywordInput.value = '';
+  };
+
   return (
     <div className="keyword-notification">
       <MenuHeader>Mentions & keywords</MenuHeader>
       <SettingTile
         title="Message containing my display name"
         options={(
-          <Button onClick={(evt) => onSelect(evt, DISPLAY_NAME)} iconSrc={ChevronBottom}>
+          <Button onClick={(evt) => onSelect(evt, DISPLAY_NAME)} iconSrc={ChevronBottomIC}>
             { typeToLabel[rulesToType[DISPLAY_NAME]] }
           </Button>
         )}
@@ -138,7 +181,7 @@ function GlobalNotification() {
       <SettingTile
         title="Message containing my username"
         options={(
-          <Button onClick={(evt) => onSelect(evt, USERNAME)} iconSrc={ChevronBottom}>
+          <Button onClick={(evt) => onSelect(evt, USERNAME)} iconSrc={ChevronBottomIC}>
             { typeToLabel[rulesToType[USERNAME]] }
           </Button>
         )}
@@ -147,7 +190,7 @@ function GlobalNotification() {
       <SettingTile
         title="Message containing @room"
         options={(
-          <Button onClick={(evt) => onSelect(evt, ROOM_PING)} iconSrc={ChevronBottom}>
+          <Button onClick={(evt) => onSelect(evt, ROOM_PING)} iconSrc={ChevronBottomIC}>
             {typeToLabel[rulesToType[ROOM_PING]]}
           </Button>
         )}
@@ -157,13 +200,38 @@ function GlobalNotification() {
         <SettingTile
           title="Message containing keywords"
           options={(
-            <Button onClick={(evt) => onSelect(evt, KEYWORD)} iconSrc={ChevronBottom}>
+            <Button onClick={(evt) => onSelect(evt, KEYWORD)} iconSrc={ChevronBottomIC}>
               {typeToLabel[rulesToType[KEYWORD]]}
             </Button>
           )}
           content={<Text variant="b3">Default notification settings for all message containing keywords.</Text>}
         />
       )}
+      <SettingTile
+        title="Keywords"
+        content={(
+          <div className="keyword-notification__keyword">
+            <Text variant="b3">Get notification when a message contains keyword.</Text>
+            <form onSubmit={handleSubmit}>
+              <Input name="keywordInput" required />
+              <Button variant="primary" type="submit">Add</Button>
+            </form>
+            {keywordRules.length > 0 && (
+              <div>
+                {keywordRules.map((rule) => (
+                  <Chip
+                    iconSrc={CrossIC}
+                    key={rule.rule_id}
+                    text={rule.pattern}
+                    iconColor={CrossIC}
+                    onClick={() => removeKeyword(rule)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      />
     </div>
   );
 }
