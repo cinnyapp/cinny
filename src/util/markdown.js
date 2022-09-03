@@ -84,6 +84,10 @@ const markdownRules = {
     ...defaultRules.codeBlock,
     plain: (node) => `\`\`\`${node.lang || ''}\n${node.content}\n\`\`\``,
   },
+  fence: {
+    ...defaultRules.fence,
+    match: blockRegex(/^ *(`{3,}|~{3,}) *(?:(\S+) *)?\n([\s\S]+?)\n?\1 *(?:\n *)*\n/),
+  },
   list: {
     ...defaultRules.list,
     plain: (node, output, state) => node.items.map((item, i) => {
@@ -93,7 +97,7 @@ const markdownRules = {
   },
   displayMath: {
     order: defaultRules.list.order + 0.5,
-    match: blockRegex(/^\$\$\n*([\s\S]+?)\n*\$\$/),
+    match: blockRegex(/^ *\$\$ *\n?([\s\S]+?)\n?\$\$ *(?:\n *)*\n/),
     parse: (capture) => ({ content: capture[1] }),
     plain: (node) => `$$\n${node.content}\n$$`,
     html: (node) => mathHtml('div', node),
@@ -137,7 +141,7 @@ const markdownRules = {
       content: parse(capture[1], state),
       reason: capture[2],
     }),
-    // plain: (node) => `[spoiler${node.reason ? `: ${node.reason}` : ''}](mxc://somewhere)`,
+    plain: (node, output, state) => `[spoiler${node.reason ? `: ${node.reason}` : ''}](${output(node.content, state)})`,
     html: (node, output, state) => htmlTag(
       'span',
       output(node.content, state),
