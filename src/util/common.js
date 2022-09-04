@@ -120,7 +120,12 @@ export function cssVar(name) {
 }
 
 export function setFavicon(url) {
-  document.querySelector('[rel=icon]').href = url;
+  const oldFav = document.querySelector('[rel=icon]');
+  oldFav.parentElement.removeChild(oldFav);
+  const fav = document.createElement('link');
+  fav.rel = 'icon';
+  fav.href = url;
+  document.head.appendChild(fav);
 }
 
 export async function getBadgedFavicon(favUrl, color) {
