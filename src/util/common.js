@@ -120,7 +120,9 @@ export function cssVar(name) {
 }
 
 export function setFavicon(url) {
-  document.querySelector('[rel=icon]').href = url;
+  const favicon = document.querySelector('#favicon');
+  if (!favicon) return;
+  favicon.setAttribute('href', url);
 }
 
 export function copyToClipboard(text) {
