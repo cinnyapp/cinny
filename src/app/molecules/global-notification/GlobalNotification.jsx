@@ -53,7 +53,7 @@ export function getTypeActions(type, highlightValue = false) {
 
 function useGlobalNotif() {
   const mx = initMatrix.matrixClient;
-  const pushRules = useAccountData('m.push_rules');
+  const pushRules = useAccountData('m.push_rules')?.getContent();
   const underride = pushRules?.global?.underride ?? [];
   const rulesToType = {
     [DM]: notifType.ON,
