@@ -102,6 +102,11 @@ const markdownRules = {
     plain: (node) => `$$\n${node.content}\n$$`,
     html: (node) => mathHtml('div', node),
   },
+  shrug: {
+    order: defaultRules.escape.order - 0.5,
+    match: inlineRegex(/^¯\\_\(ツ\)_\/¯/),
+    parse: (capture) => ({ type: 'text', content: capture[0] }),
+  },
   escape: {
     ...defaultRules.escape,
     plain: (node, output, state) => `\\${output(node.content, state)}`,
