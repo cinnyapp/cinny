@@ -36,6 +36,7 @@ function RoomViewHeader({ roomId }) {
   let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
   avatarSrc = isDM ? mx.getRoom(roomId).getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop') : avatarSrc;
   const roomName = mx.getRoom(roomId).name;
+  let partnerLocalTime = null;
 
   const roomHeaderBtnRef = useRef(null);
   useEffect(() => {
@@ -72,6 +73,19 @@ function RoomViewHeader({ roomId }) {
     );
   };
 
+  if (isDM) {
+    const room = mx.getRoom(roomId);
+    const partner = room.getAvatarFallbackMember();
+    const timezone = room.currentState.getStateEvents('in.cinny.share_timezone', partner.userId)?.event?.content?.user_timezone;
+    const date = new Date();
+
+    try {
+      partnerLocalTime = date.toLocaleTimeString([], { timeZone: timezone, hour: '2-digit', minute: '2-digit' });
+    } catch {
+      partnerLocalTime = null;
+    }
+  }
+
   return (
     <Header>
       <IconButton
@@ -93,6 +107,7 @@ function RoomViewHeader({ roomId }) {
         </TitleWrapper>
         <RawIcon src={ChevronBottomIC} />
       </button>
+      <Text>{partnerLocalTime}</Text>
       <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="Search" src={SearchIC} />
       <IconButton className="room-header__drawer-btn" onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
       <IconButton className="room-header__members-btn" onClick={() => toggleRoomSettings(tabText.MEMBERS)} tooltip="Members" src={UserIC} />
