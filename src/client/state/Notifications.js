@@ -104,7 +104,8 @@ class Notifications extends EventEmitter {
   }
 
   getTotalNoti(roomId) {
-    const { total } = this.getNoti(roomId);
+    const { total, highlight } = this.getNoti(roomId);
+    if (highlight > total) return highlight;
     return total;
   }
 
