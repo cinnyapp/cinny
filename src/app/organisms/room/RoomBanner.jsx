@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
@@ -17,36 +17,43 @@ function RoomBanner({ roomId }) {
   const isDM = initMatrix.roomList.directs.has(roomId);
   const room = mx.getRoom(roomId);
 
-  let partnerLocalTime = null;
+  const [time, setTime] = useState(null);
+
   let partner = null;
 
-  if (isDM) {
-    partner = room.getAvatarFallbackMember();
-    const timezone = room.currentState.getStateEvents('in.cinny.share_timezone', partner.userId)?.event?.content?.user_timezone;
-    const date = new Date();
+  const updateTime = () => {
+    if (isDM) {
+      partner = room.getAvatarFallbackMember();
+      const timezone = room.currentState.getStateEvents('in.cinny.share_timezone', partner.userId)?.event?.content?.user_timezone;
+      const date = new Date();
 
-    try {
-      partnerLocalTime = date.toLocaleTimeString([], { timeZone: timezone, hour: '2-digit', minute: '2-digit' });
-      const userTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      // if the partner time and user time are the same, its not worth showing
-      if (userTime === partnerLocalTime) { partnerLocalTime = null; }
-    } catch {
-      partnerLocalTime = null;
+      try {
+        const partnerLocalTime = date.toLocaleTimeString([], { timeZone: timezone, hour: '2-digit', minute: '2-digit' });
+        const userTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // if the partner time and user time are the same, we wont show the time
+        if (userTime !== partnerLocalTime) { setTime(`${getUsernameOfRoomMember(partner)}'s local time is: ${partnerLocalTime}`); }
+      } catch {
+        setTime(null);
+      }
     }
-  }
+  };
+
+  useEffect(() => {
+    updateTime();
+    const interval = setInterval(() => updateTime(), 20000);
+    return () => {
+      setTime(null);
+      clearInterval(interval);
+    };
+  }, [room]);
 
   return (
     <div>
-      { isDM && partnerLocalTime ? (
+      { time ? (
         <div className="room-view__banner">
           <RawIcon src={RecentClockIC} size="small" />
           <Text>
-            <b>{ twemojify(getUsernameOfRoomMember(partner)) }</b>
-            {'\'s local time is: '}
-            <b>
-              {partnerLocalTime}
-            </b>
+            { twemojify(time) }
           </Text>
         </div>
       )
