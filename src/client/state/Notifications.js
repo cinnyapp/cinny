@@ -5,9 +5,11 @@ import { selectRoom } from '../action/navigation';
 import cons from './cons';
 import navigation from './navigation';
 import settings from './settings';
-import { getBadgedFavicon, setFavicon, cssVar } from '../../util/common';
+import { setFavicon } from '../../util/common';
 
 import LogoSVG from '../../../public/res/svg/cinny.svg';
+import LogoUnreadSVG from '../../../public/res/svg/cinny-unread.svg';
+import LogoHighlightSVG from '../../../public/res/svg/cinny-highlight.svg';
 
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
@@ -35,9 +37,6 @@ class Notifications extends EventEmitter {
   constructor(roomList) {
     super();
 
-    this.LOGO_HIGHLIGH = LogoSVG;
-    this.LOGO_UNREAD = LogoSVG;
-
     this.matrixClient = roomList.matrixClient;
     this.roomList = roomList;
 
@@ -52,8 +51,6 @@ class Notifications extends EventEmitter {
 
   async _initNoti() {
     this.roomIdToNoti = new Map();
-    this.LOGO_HIGHLIGH = await getBadgedFavicon(LogoSVG, cssVar('--bg-positive'));
-    this.LOGO_UNREAD = await getBadgedFavicon(LogoSVG, cssVar('--bg-badge'));
 
     const addNoti = (roomId) => {
       const room = this.matrixClient.getRoom(roomId);
@@ -153,7 +150,7 @@ class Notifications extends EventEmitter {
       setFavicon(LogoSVG);
       return;
     }
-    setFavicon(highlight ? this.LOGO_HIGHLIGH : this.LOGO_UNREAD);
+    setFavicon(highlight ? LogoHighlightSVG : LogoUnreadSVG);
   }
 
   _setNoti(roomId, total, highlight) {
