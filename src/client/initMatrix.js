@@ -76,6 +76,7 @@ class InitMatrix extends EventEmitter {
           this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
           this.notifications = new Notifications(this.roomList);
           this.emit('init_loading_finished');
+          this.notifications._initNoti();
         } else {
           this.notifications._initNoti();
         }

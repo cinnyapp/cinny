@@ -51,6 +51,7 @@ class Notifications extends EventEmitter {
   }
 
   async _initNoti() {
+    this.roomIdToNoti = new Map();
     this.LOGO_HIGHLIGH = await getBadgedFavicon(LogoSVG, cssVar('--bg-positive'));
     this.LOGO_UNREAD = await getBadgedFavicon(LogoSVG, cssVar('--bg-badge'));
 
