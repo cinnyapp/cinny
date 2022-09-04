@@ -56,6 +56,7 @@ module.exports = {
         { from: 'olm.wasm' },
         { from: '_redirects' },
         { from: 'config.json' },
+        { from: 'public/res/android'}
       ],
     }),
     new webpack.ProvidePlugin({
