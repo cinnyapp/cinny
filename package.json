@@ -19,6 +19,7 @@
     "@fontsource/roboto": "^4.5.8",
     "@khanacademy/simple-markdown": "^0.8.3",
     "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.12.tgz",
+    "@tauri-apps/api": "^1.0.2",
     "@tippyjs/react": "^4.2.6",
     "babel-polyfill": "^6.26.0",
     "blurhash": "^1.1.5",
