@@ -1,8 +1,26 @@
 import SimpleMarkdown from '@khanacademy/simple-markdown';
 
 const {
-  defaultRules, parserFor, outputFor, anyScopeRegex, blockRegex, inlineRegex, htmlTag, sanitizeText,
+  defaultRules, parserFor, outputFor, anyScopeRegex, blockRegex, inlineRegex,
+  sanitizeText, sanitizeUrl,
 } = SimpleMarkdown;
+
+function htmlTag(tagName, content, attributes, isClosed) {
+  let s = '';
+  Object.entries(attributes || {}).forEach(([k, v]) => {
+    if (v !== undefined) {
+      s += ` ${sanitizeText(k)}`;
+      if (v !== null) s += `="${sanitizeText(v)}"`;
+    }
+  });
+
+  s = `<${tagName}${s}>`;
+
+  if (isClosed === false) {
+    return s;
+  }
+  return `${s}${content}</${tagName}>`;
+}
 
 function mathHtml(wrap, node) {
   return htmlTag(wrap, htmlTag('code', sanitizeText(node.content)), { 'data-mx-maths': node.content });
@@ -40,7 +58,7 @@ const plainRules = {
       : emoji.unicode),
     html: ({ emoji }) => (emoji.mxc
       ? htmlTag('img', null, {
-        'data-mx-emoticon': '',
+        'data-mx-emoticon': null,
         src: emoji.mxc,
         alt: `:${emoji.shortcode}:`,
         title: `:${emoji.shortcode}:`,
@@ -113,11 +131,20 @@ const markdownRules = {
   },
   link: {
     ...defaultRules.link,
-    plain: (node, output, state) => `[${output(node.content, state)}](${node.target}${node.title && ` "${node.title}"`})`,
+    plain: (node, output, state) => `[${output(node.content, state)}](${sanitizeUrl(node.target) || ''}${node.title ? ` "${node.title}"` : ''})`,
+    html: (node, output, state) => htmlTag('a', output(node.content, state), {
+      href: sanitizeUrl(node.target) || '',
+      title: node.title,
+    }),
   },
   image: {
     ...defaultRules.image,
-    plain: (node) => `![${node.alt}](${node.target}${node.title && ` "${node.title}"`})`,
+    plain: (node) => `![${node.alt}](${sanitizeUrl(node.target) || ''}${node.title ? ` "${node.title}"` : ''})`,
+    html: (node, output, state) => htmlTag('img', output(node.content, state), {
+      src: sanitizeUrl(node.target) || '',
+      alt: node.alt,
+      title: node.title,
+    }),
   },
   em: {
     ...defaultRules.em,
@@ -150,7 +177,7 @@ const markdownRules = {
     html: (node, output, state) => htmlTag(
       'span',
       output(node.content, state),
-      { 'data-mx-spoiler': node.reason },
+      { 'data-mx-spoiler': node.reason || null },
     ),
   },
   inlineMath: {
