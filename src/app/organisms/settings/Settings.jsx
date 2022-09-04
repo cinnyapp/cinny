@@ -25,6 +25,8 @@ import SettingTile from '../../molecules/setting-tile/SettingTile';
 import ImportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ImportE2ERoomKeys';
 import ExportE2ERoomKeys from '../../molecules/import-export-e2e-room-keys/ExportE2ERoomKeys';
 import { ImagePackUser, ImagePackGlobal } from '../../molecules/image-pack/ImagePack';
+import GlobalNotification from '../../molecules/global-notification/GlobalNotification';
+import KeywordNotification from '../../molecules/global-notification/KeywordNotification';
 
 import ProfileEditor from '../profile-editor/ProfileEditor';
 import CrossSigning from './CrossSigning';
@@ -150,24 +152,28 @@ function NotificationsSection() {
   };
 
   return (
-    <div className="settings-notifications">
-      <MenuHeader>Notification & Sound</MenuHeader>
-      <SettingTile
-        title="Desktop notification"
-        options={renderOptions()}
-        content={<Text variant="b3">Show desktop notification when new messages arrive.</Text>}
-      />
-      <SettingTile
-        title="Notification Sound"
-        options={(
-          <Toggle
-            isActive={settings.isNotificationSounds}
-            onToggle={() => { toggleNotificationSounds(); updateState({}); }}
-          />
-          )}
-        content={<Text variant="b3">Play sound when new messages arrive.</Text>}
-      />
-    </div>
+    <>
+      <div className="settings-notifications">
+        <MenuHeader>Notification & Sound</MenuHeader>
+        <SettingTile
+          title="Desktop notification"
+          options={renderOptions()}
+          content={<Text variant="b3">Show desktop notification when new messages arrive.</Text>}
+        />
+        <SettingTile
+          title="Notification Sound"
+          options={(
+            <Toggle
+              isActive={settings.isNotificationSounds}
+              onToggle={() => { toggleNotificationSounds(); updateState({}); }}
+            />
+            )}
+          content={<Text variant="b3">Play sound when new messages arrive.</Text>}
+        />
+      </div>
+      <GlobalNotification />
+      <KeywordNotification />
+    </>
   );
 }
 

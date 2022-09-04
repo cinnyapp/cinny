@@ -115,6 +115,19 @@ export function avatarInitials(text) {
   return [...text][0];
 }
 
+export function cssVar(name) {
+  return getComputedStyle(document.body).getPropertyValue(name);
+}
+
+export function setFavicon(url) {
+  const oldFav = document.querySelector('[rel=icon]');
+  oldFav.parentElement.removeChild(oldFav);
+  const fav = document.createElement('link');
+  fav.rel = 'icon';
+  fav.href = url;
+  document.head.appendChild(fav);
+}
+
 export function copyToClipboard(text) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text);

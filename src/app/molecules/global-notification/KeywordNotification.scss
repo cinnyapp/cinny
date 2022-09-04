@@ -1,0 +1,16 @@
+.keyword-notification {
+  &__keyword {
+    & form,
+    & > div:last-child {
+      display: flex;
+      gap: var(--sp-tight);
+    }
+
+    & form {
+      margin: var(--sp-ultra-tight) 0 var(--sp-normal);
+      .input-container {
+        flex-grow: 1;
+      }
+    }
+  }
+}

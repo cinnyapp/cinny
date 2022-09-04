@@ -1,8 +1,4 @@
-import { avatarInitials } from '../../../util/common';
-
-function cssVar(name) {
-  return getComputedStyle(document.body).getPropertyValue(name);
-}
+import { avatarInitials, cssVar } from '../../../util/common';
 
 // renders the avatar and returns it as an URL
 export default async function renderAvatar({
