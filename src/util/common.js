@@ -126,8 +126,10 @@ export function setFavicon(url) {
 export async function getBadgedFavicon(favUrl, color) {
   try {
     const canvas = document.createElement('canvas');
-    canvas.width = 48;
-    canvas.height = 48;
+    const size = 48;
+    const badgeSize = 8;
+    canvas.width = size;
+    canvas.height = size;
 
     const ctx = canvas.getContext('2d');
 
@@ -140,18 +142,26 @@ export async function getBadgedFavicon(favUrl, color) {
     img.src = favUrl;
     await imgPromise;
 
-    ctx.drawImage(img, 0, 0, 48, 48);
+    ctx.drawImage(img, 0, 0, size, size);
+
+    ctx.beginPath();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = '#ffffff';
+    ctx.arc(size - badgeSize, size - badgeSize, badgeSize + 4, 0, 2 * Math.PI);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
 
     ctx.beginPath();
     ctx.fillStyle = color;
-    ctx.arc(40, 8, 8, 0, 2 * Math.PI);
+    ctx.arc(size - badgeSize, size - badgeSize, badgeSize, 0, 2 * Math.PI);
     ctx.closePath();
     ctx.fill();
 
     return canvas.toDataURL();
   } catch (e) {
     console.error(e);
-    return undefined;
+    return favUrl;
   }
 }
 

@@ -51,8 +51,8 @@ class Notifications extends EventEmitter {
   }
 
   async _initNoti() {
-    this.LOGO_HIGHLIGH = await getBadgedFavicon(LogoSVG, cssVar('--bg-positive')) ?? LogoSVG;
-    this.LOGO_UNREAD = await getBadgedFavicon(LogoSVG, cssVar('--bg-badge')) ?? LogoSVG;
+    this.LOGO_HIGHLIGH = await getBadgedFavicon(LogoSVG, cssVar('--bg-positive'));
+    this.LOGO_UNREAD = await getBadgedFavicon(LogoSVG, cssVar('--bg-badge'));
 
     const addNoti = (roomId) => {
       const room = this.matrixClient.getRoom(roomId);
