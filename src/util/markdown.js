@@ -2,7 +2,7 @@ import SimpleMarkdown from '@khanacademy/simple-markdown';
 
 const {
   defaultRules, parserFor, outputFor, anyScopeRegex, blockRegex, inlineRegex,
-  sanitizeText, sanitizeUrl,
+  sanitizeText, sanitizeUrl, parseRef,
 } = SimpleMarkdown;
 
 function htmlTag(tagName, content, attributes, isClosed) {
@@ -24,6 +24,10 @@ function htmlTag(tagName, content, attributes, isClosed) {
 
 function mathHtml(wrap, node) {
   return htmlTag(wrap, htmlTag('code', sanitizeText(node.content)), { 'data-mx-maths': node.content });
+}
+
+function normalizeRef(s) {
+  return s.replace(/\s+/g, ' ').toLowerCase().toUpperCase();
 }
 
 const plainRules = {
@@ -120,6 +124,14 @@ const markdownRules = {
     plain: (node) => `$$\n${node.content}\n$$`,
     html: (node) => mathHtml('div', node),
   },
+  def: {
+    ...defaultRules.def,
+    parse: (capture, parse, state) => {
+      const c = [null, normalizeRef(capture[1]), capture[2], capture[3]];
+      return defaultRules.def.parse(c, parse, state);
+    },
+    plain: () => '',
+  },
   shrug: {
     order: defaultRules.escape.order - 0.5,
     match: inlineRegex(/^¯\\_\(ツ\)_\/¯/),
@@ -145,6 +157,22 @@ const markdownRules = {
       alt: node.alt,
       title: node.title,
     }),
+  },
+  reflink: {
+    ...defaultRules.reflink,
+    parse: (capture, parse, state) => defaultRules.reflink.parse(
+      [null, capture[1], normalizeRef(capture[2] || capture[1])],
+      parse,
+      state,
+    ),
+  },
+  refimage: {
+    ...defaultRules.refimage,
+    parse: (capture, parse, state) => defaultRules.refimage.parse(
+      [null, capture[1], normalizeRef(capture[2] || capture[1])],
+      parse,
+      state,
+    ),
   },
   em: {
     ...defaultRules.em,
@@ -210,7 +238,7 @@ function genOut(rules) {
     }
 
     return {
-      plain: plainOut || source,
+      plain: plainOut.trim() || source,
       // plain: plain(content, state),
       html: html(content, state),
     };
