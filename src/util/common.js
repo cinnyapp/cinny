@@ -128,48 +128,6 @@ export function setFavicon(url) {
   document.head.appendChild(fav);
 }
 
-export async function getBadgedFavicon(favUrl, color) {
-  try {
-    const canvas = document.createElement('canvas');
-    const size = 48;
-    const badgeSize = 8;
-    canvas.width = size;
-    canvas.height = size;
-
-    const ctx = canvas.getContext('2d');
-
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    const imgPromise = new Promise((resolve, reject) => {
-      img.onerror = reject;
-      img.onload = resolve;
-    });
-    img.src = favUrl;
-    await imgPromise;
-
-    ctx.drawImage(img, 0, 0, size, size);
-
-    ctx.beginPath();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = '#ffffff';
-    ctx.arc(size - badgeSize, size - badgeSize, badgeSize + 4, 0, 2 * Math.PI);
-    ctx.closePath();
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
-
-    ctx.beginPath();
-    ctx.fillStyle = color;
-    ctx.arc(size - badgeSize, size - badgeSize, badgeSize, 0, 2 * Math.PI);
-    ctx.closePath();
-    ctx.fill();
-
-    return canvas.toDataURL();
-  } catch (e) {
-    console.error(e);
-    return favUrl;
-  }
-}
-
 export function copyToClipboard(text) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text);
