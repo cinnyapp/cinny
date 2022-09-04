@@ -120,12 +120,7 @@ export function cssVar(name) {
 }
 
 export function setFavicon(url) {
-  const oldFav = document.querySelector('[rel=icon]');
-  oldFav.parentElement.removeChild(oldFav);
-  const fav = document.createElement('link');
-  fav.rel = 'icon';
-  fav.href = url;
-  document.head.appendChild(fav);
+  document.querySelector('[rel=icon]').href = url;
 }
 
 export function copyToClipboard(text) {

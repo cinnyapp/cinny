@@ -37,6 +37,8 @@ class Notifications extends EventEmitter {
   constructor(roomList) {
     super();
 
+    this.initialized = false;
+    this.favicon = LogoSVG;
     this.matrixClient = roomList.matrixClient;
     this.roomList = roomList;
 
@@ -50,6 +52,7 @@ class Notifications extends EventEmitter {
   }
 
   async _initNoti() {
+    this.initialized = false;
     this.roomIdToNoti = new Map();
 
     const addNoti = (roomId) => {
@@ -63,6 +66,8 @@ class Notifications extends EventEmitter {
     };
     [...this.roomList.rooms].forEach(addNoti);
     [...this.roomList.directs].forEach(addNoti);
+
+    this.initialized = true;
     this._updateFavicon();
   }
 
@@ -136,6 +141,7 @@ class Notifications extends EventEmitter {
   }
 
   async _updateFavicon() {
+    if (!this.initialized) return;
     let unread = false;
     let highlight = false;
     [...this.roomIdToNoti.values()].find((noti) => {
@@ -146,11 +152,16 @@ class Notifications extends EventEmitter {
       if (unread && highlight) return true;
       return false;
     });
-    if (!unread) {
-      setFavicon(LogoSVG);
-      return;
+    let newFavicon = LogoSVG;
+    if (unread && !highlight) {
+      newFavicon = LogoUnreadSVG;
     }
-    setFavicon(highlight ? LogoHighlightSVG : LogoUnreadSVG);
+    if (unread && highlight) {
+      newFavicon = LogoHighlightSVG;
+    }
+    if (newFavicon === this.favicon) return;
+    this.favicon = newFavicon;
+    setFavicon(this.favicon);
   }
 
   _setNoti(roomId, total, highlight) {
