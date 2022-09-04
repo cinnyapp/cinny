@@ -11,7 +11,9 @@ function handleMatrix(url) {
   let joinedRoom;
 
   rooms.forEach((room) => {
-    if (room.getCanonicalAlias() === roomName || roomName in room.getAltAliases()) {
+    if (room.roomId === roomName
+      || room.getCanonicalAlias() === roomName
+      || roomName in room.getAltAliases()) {
       joinedRoom = room;
     }
   });
@@ -43,11 +45,9 @@ export default function handleLink(e) {
   // if running inside tauri, check if the tauri backend has a custom handler for this link
   // useful so we can open urls in a specified app
   if (window.__TAURI__) {
-    invoke('open_link', { url: e.target.href })
-      .then(() => e.preventDefault())
-      .catch((error) => console.error(error));
+    e.preventDefault();
+    invoke('open_link', { url: e.target.href, bypassHandlers: false });
   } else {
-    // open in new tab
     window.open(e.target.href);
     e.preventDefault();
   }
