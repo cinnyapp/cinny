@@ -12,6 +12,7 @@ import RoomViewContent from './RoomViewContent';
 import RoomViewFloating from './RoomViewFloating';
 import RoomViewInput from './RoomViewInput';
 import RoomViewCmdBar from './RoomViewCmdBar';
+import RoomBanner from './RoomBanner';
 
 const viewEvent = new EventEmitter();
 
@@ -42,6 +43,7 @@ function RoomView({ roomTimeline, eventId }) {
   return (
     <div className="room-view" ref={roomViewRef}>
       <RoomViewHeader roomId={roomId} />
+      <RoomBanner roomId={roomId} />
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
           <RoomViewContent
