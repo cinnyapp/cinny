@@ -115,6 +115,46 @@ export function avatarInitials(text) {
   return [...text][0];
 }
 
+export function cssVar(name) {
+  return getComputedStyle(document.body).getPropertyValue(name);
+}
+
+export function setFavicon(url) {
+  document.querySelector('[rel=icon]').href = url;
+}
+
+export async function getBadgedFavicon(favUrl, color) {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 48;
+    canvas.height = 48;
+
+    const ctx = canvas.getContext('2d');
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const imgPromise = new Promise((resolve, reject) => {
+      img.onerror = reject;
+      img.onload = resolve;
+    });
+    img.src = favUrl;
+    await imgPromise;
+
+    ctx.drawImage(img, 0, 0, 48, 48);
+
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(40, 8, 8, 0, 2 * Math.PI);
+    ctx.closePath();
+    ctx.fill();
+
+    return canvas.toDataURL();
+  } catch (e) {
+    console.error(e);
+    return undefined;
+  }
+}
+
 export function copyToClipboard(text) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text);

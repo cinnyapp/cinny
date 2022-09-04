@@ -5,6 +5,9 @@ import { selectRoom } from '../action/navigation';
 import cons from './cons';
 import navigation from './navigation';
 import settings from './settings';
+import { getBadgedFavicon, setFavicon, cssVar } from '../../util/common';
+
+import LogoSVG from '../../../public/res/svg/cinny.svg';
 
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
@@ -32,22 +35,25 @@ class Notifications extends EventEmitter {
   constructor(roomList) {
     super();
 
+    this.LOGO_HIGHLIGH = LogoSVG;
+    this.LOGO_UNREAD = LogoSVG;
+
     this.matrixClient = roomList.matrixClient;
     this.roomList = roomList;
 
     this.roomIdToNoti = new Map();
 
-    this._initNoti();
+    // this._initNoti();
     this._listenEvents();
 
     // Ask for permission by default after loading
     window.Notification?.requestPermission();
-
-    // TODO:
-    window.notifications = this;
   }
 
-  _initNoti() {
+  async _initNoti() {
+    this.LOGO_HIGHLIGH = await getBadgedFavicon(LogoSVG, cssVar('--bg-positive')) ?? LogoSVG;
+    this.LOGO_UNREAD = await getBadgedFavicon(LogoSVG, cssVar('--bg-badge')) ?? LogoSVG;
+
     const addNoti = (roomId) => {
       const room = this.matrixClient.getRoom(roomId);
       if (this.getNotiType(room.roomId) === cons.notifs.MUTE) return;
@@ -59,6 +65,7 @@ class Notifications extends EventEmitter {
     };
     [...this.roomList.rooms].forEach(addNoti);
     [...this.roomList.directs].forEach(addNoti);
+    this._updateFavicon();
   }
 
   doesRoomHaveUnread(room) {
@@ -130,6 +137,24 @@ class Notifications extends EventEmitter {
     }
   }
 
+  async _updateFavicon() {
+    let unread = false;
+    let highlight = false;
+    [...this.roomIdToNoti.values()].find((noti) => {
+      if (!unread) {
+        unread = noti.total > 0 || noti.highlight > 0;
+      }
+      highlight = noti.highlight > 0;
+      if (unread && highlight) return true;
+      return false;
+    });
+    if (!unread) {
+      setFavicon(LogoSVG);
+      return;
+    }
+    setFavicon(highlight ? this.LOGO_HIGHLIGH : this.LOGO_UNREAD);
+  }
+
   _setNoti(roomId, total, highlight) {
     const addNoti = (id, t, h, fromId) => {
       const prevTotal = this.roomIdToNoti.get(id)?.total ?? null;
@@ -156,6 +181,7 @@ class Notifications extends EventEmitter {
     allParentSpaces.forEach((spaceId) => {
       addNoti(spaceId, addT, addH, roomId);
     });
+    this._updateFavicon();
   }
 
   _deleteNoti(roomId, total, highlight) {
@@ -188,6 +214,7 @@ class Notifications extends EventEmitter {
     allParentSpaces.forEach((spaceId) => {
       removeNoti(spaceId, total, highlight, roomId);
     });
+    this._updateFavicon();
   }
 
   async _displayPopupNoti(mEvent, room) {
