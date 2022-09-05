@@ -29,7 +29,7 @@ const KEYWORD = 'keyword';
 
 function useKeywordNotif() {
   const mx = initMatrix.matrixClient;
-  const pushRules = useAccountData('m.push_rules');
+  const pushRules = useAccountData('m.push_rules')?.getContent();
   const override = pushRules?.global?.override ?? [];
   const content = pushRules?.global?.content ?? [];
 
