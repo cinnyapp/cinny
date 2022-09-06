@@ -8,7 +8,9 @@ import './Message.scss';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
-import { getUsername, getUsernameOfRoomMember, parseReply } from '../../../util/matrixUtil';
+import {
+  getUsername, getUsernameOfRoomMember, parseReply, trimHTMLReply,
+} from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { getEventCords } from '../../../util/common';
 import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
@@ -755,6 +757,7 @@ function Message({
 
   if (isReply) {
     body = parseReply(body)?.body ?? body;
+    customHTML = trimHTMLReply(customHTML);
   }
 
   if (typeof body !== 'string') body = '';

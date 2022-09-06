@@ -79,6 +79,15 @@ export function parseReply(rawBody) {
   };
 }
 
+export function trimHTMLReply(html) {
+  const suffix = '</mx-reply>';
+  const i = html.indexOf(suffix);
+  if (i < 0) {
+    return html;
+  }
+  return html.slice(i + suffix.length);
+}
+
 export function hasDMWith(userId) {
   const mx = initMatrix.matrixClient;
   const directIds = [...initMatrix.roomList.directs];
