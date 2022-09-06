@@ -165,7 +165,7 @@ class Notifications extends EventEmitter {
 
   _setNoti(roomId, total, highlight) {
     const addNoti = (id, t, h, fromId) => {
-      const prevTotal = this.roomIdToNoti.has(id) ? this.getT : null;
+      const prevTotal = this.roomIdToNoti.get(id)?.total ?? null;
       const noti = this.getNoti(id);
 
       noti.total += t;
