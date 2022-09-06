@@ -21,7 +21,7 @@ import ChevronRightIC from '../../../../public/res/ic/outlined/chevron-right.svg
 function DrawerBreadcrumb({ spaceId }) {
   const [, forceUpdate] = useState({});
   const scrollRef = useRef(null);
-  const { roomList, notifications } = initMatrix;
+  const { roomList, notifications, accountData } = initMatrix;
   const mx = initMatrix.matrixClient;
   const spacePath = navigation.selectedSpacePath;
 
@@ -49,9 +49,9 @@ function DrawerBreadcrumb({ spaceId }) {
   }, [spaceId]);
 
   function getHomeNotiExcept(childId) {
-    const orphans = roomList.getOrphans();
-    const childIndex = orphans.indexOf(childId);
-    if (childId !== -1) orphans.splice(childIndex, 1);
+    const orphans = roomList.getOrphans()
+      .filter((id) => (id !== childId))
+      .filter((id) => !accountData.spaceShortcut.has(id));
 
     let noti = null;
 

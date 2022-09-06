@@ -114,8 +114,7 @@ class Notifications extends EventEmitter {
   }
 
   getTotalNoti(roomId) {
-    const { total, highlight } = this.getNoti(roomId);
-    if (highlight > total) return highlight;
+    const { total } = this.getNoti(roomId);
     return total;
   }
 
@@ -166,7 +165,7 @@ class Notifications extends EventEmitter {
 
   _setNoti(roomId, total, highlight) {
     const addNoti = (id, t, h, fromId) => {
-      const prevTotal = this.roomIdToNoti.get(id)?.total ?? null;
+      const prevTotal = this.roomIdToNoti.has(id) ? this.getT : null;
       const noti = this.getNoti(id);
 
       noti.total += t;
@@ -181,7 +180,7 @@ class Notifications extends EventEmitter {
     };
 
     const noti = this.getNoti(roomId);
-    const addT = total - noti.total;
+    const addT = (highlight > total ? highlight : total) - noti.total;
     const addH = highlight - noti.highlight;
     if (addT < 0 || addH < 0) return;
 
