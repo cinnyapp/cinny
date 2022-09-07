@@ -180,13 +180,15 @@ function DeviceManage() {
         }
         content={(
           <>
-            <Text variant="b3">
-              Last activity
-              <span style={{ color: 'var(--tc-surface-normal)' }}>
-                {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
-              </span>
-              {lastIP ? ` at ${lastIP}` : ''}
-            </Text>
+            {lastTS && (
+              <Text variant="b3">
+                Last activity
+                <span style={{ color: 'var(--tc-surface-normal)' }}>
+                  {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
+                </span>
+                {lastIP ? ` at ${lastIP}` : ''}
+              </Text>
+            )}
             {isCurrentDevice && (
               <Text style={{ marginTop: 'var(--sp-ultra-tight)' }} variant="b3">
                 {`Session Key: ${initMatrix.matrixClient.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
