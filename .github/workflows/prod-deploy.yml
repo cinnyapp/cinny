@@ -9,7 +9,7 @@ jobs:
     name: 'Netlify deploy and tarball'
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
+      - name: Checkout repository
         uses: actions/checkout@v3.0.2
       - name: Setup node
         uses: actions/setup-node@v3.4.1
