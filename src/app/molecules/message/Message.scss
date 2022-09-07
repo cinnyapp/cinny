@@ -174,7 +174,7 @@
     white-space: initial !important;
   }
 
-  & p:not(:last-child) {
+  & > .text > p:not(:last-child) {
     margin-bottom: var(--sp-normal);
   }
 

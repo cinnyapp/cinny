@@ -80,6 +80,7 @@ export function parseReply(rawBody) {
 }
 
 export function trimHTMLReply(html) {
+  if (!html) return html;
   const suffix = '</mx-reply>';
   const i = html.indexOf(suffix);
   if (i < 0) {
