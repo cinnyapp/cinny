@@ -250,7 +250,7 @@ const MessageBody = React.memo(({
   if (!isCustomHTML) {
     // If this is a plaintext message, wrap it in a <p> element (automatically applying
     // white-space: pre-wrap) in order to preserve newlines
-    content = (<p>{content}</p>);
+    content = (<p className="message__body-plain">{content}</p>);
   }
 
   return (
