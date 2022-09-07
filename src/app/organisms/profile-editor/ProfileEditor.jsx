@@ -16,11 +16,11 @@ import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import './ProfileEditor.scss';
 
-// TODO Fix bug that prevents 'Save' button from enabling up until second changed.
 function ProfileEditor({ userId }) {
   const [isEditing, setIsEditing] = useState(false);
   const mx = initMatrix.matrixClient;
   const user = mx.getUser(mx.getUserId());
+  const fallbackUsername = userId.match(/^@?(\S+):(\S+)$/)[1];
 
   const displayNameRef = useRef(null);
   const [avatarSrc, setAvatarSrc] = useState(user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null);
@@ -96,7 +96,7 @@ function ProfileEditor({ userId }) {
   const renderInfo = () => (
     <div className="profile-editor__info" style={{ marginBottom: avatarSrc ? '24px' : '0' }}>
       <div>
-        <Text variant="h2" primary weight="medium">{twemojify(username)}</Text>
+        <Text variant="h2" primary weight="medium">{twemojify(username) ?? fallbackUsername}</Text>
         <IconButton
           src={PencilIC}
           size="extra-small"
@@ -111,7 +111,7 @@ function ProfileEditor({ userId }) {
   return (
     <div className="profile-editor">
       <ImageUpload
-        text={username}
+        text={username ?? fallbackUsername}
         bgColor={colorMXID(userId)}
         imageSrc={avatarSrc}
         onUpload={handleAvatarUpload}
