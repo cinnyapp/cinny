@@ -238,7 +238,7 @@ function genOut(rules) {
     }
 
     return {
-      plain: plainOut.trim() || source,
+      plain: plainOut?.trim() || source,
       // plain: plain(content, state),
       html: html(content, state),
     };
