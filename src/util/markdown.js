@@ -2,7 +2,7 @@ import SimpleMarkdown from '@khanacademy/simple-markdown';
 
 const {
   defaultRules, parserFor, outputFor, anyScopeRegex, blockRegex, inlineRegex,
-  sanitizeText, sanitizeUrl, parseRef,
+  sanitizeText, sanitizeUrl,
 } = SimpleMarkdown;
 
 function htmlTag(tagName, content, attributes, isClosed) {
@@ -109,6 +109,10 @@ const markdownRules = {
   fence: {
     ...defaultRules.fence,
     match: blockRegex(/^ *(`{3,}|~{3,}) *(?:(\S+) *)?\n([\s\S]+?)\n?\1 *(?:\n *)*\n/),
+  },
+  blockQuote: {
+    ...defaultRules.blockQuote,
+    plain: (node, output, state) => `> ${output(node.content, state).replaceAll('\n', '\n> ')}`,
   },
   list: {
     ...defaultRules.list,
