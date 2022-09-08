@@ -26,10 +26,6 @@ function mathHtml(wrap, node) {
   return htmlTag(wrap, htmlTag('code', sanitizeText(node.content)), { 'data-mx-maths': node.content });
 }
 
-function normalizeRef(s) {
-  return s.replace(/\s+/g, ' ').toLowerCase().toUpperCase();
-}
-
 const plainRules = {
   Array: {
     ...defaultRules.Array,
@@ -128,14 +124,7 @@ const markdownRules = {
     plain: (node) => `$$\n${node.content}\n$$`,
     html: (node) => mathHtml('div', node),
   },
-  def: {
-    ...defaultRules.def,
-    parse: (capture, parse, state) => {
-      const c = [null, normalizeRef(capture[1]), capture[2], capture[3]];
-      return defaultRules.def.parse(c, parse, state);
-    },
-    plain: () => '',
-  },
+  def: undefined,
   shrug: {
     order: defaultRules.escape.order - 0.5,
     match: inlineRegex(/^¯\\_\(ツ\)_\/¯/),
@@ -162,22 +151,8 @@ const markdownRules = {
       title: node.title,
     }),
   },
-  reflink: {
-    ...defaultRules.reflink,
-    parse: (capture, parse, state) => defaultRules.reflink.parse(
-      [null, capture[1], normalizeRef(capture[2] || capture[1])],
-      parse,
-      state,
-    ),
-  },
-  refimage: {
-    ...defaultRules.refimage,
-    parse: (capture, parse, state) => defaultRules.refimage.parse(
-      [null, capture[1], normalizeRef(capture[2] || capture[1])],
-      parse,
-      state,
-    ),
-  },
+  reflink: undefined,
+  refimage: undefined,
   em: {
     ...defaultRules.em,
     plain: (node, output, state) => `_${output(node.content, state)}_`,
