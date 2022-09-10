@@ -1,4 +1,4 @@
-import { openSearch, toggleRoomSettings } from '../action/navigation';
+import { openSearch, toggleRoomSettings, requestClose } from '../action/navigation';
 import navigation from '../state/navigation';
 import { markAsRead } from '../action/notifications';
 
@@ -50,9 +50,12 @@ function listenKeyboard(event) {
   }
 
   if (!event.ctrlKey && !event.altKey && !event.metaKey) {
-    if (navigation.isRawModalVisible) return;
-
     if (event.key === 'Escape') {
+      if (navigation.isRawModalVisible) {
+        requestClose();
+        return;
+      }
+
       if (navigation.isRoomSettings) {
         toggleRoomSettings();
         return;
@@ -62,6 +65,7 @@ function listenKeyboard(event) {
         return;
       }
     }
+    if (navigation.isRawModalVisible) return;
 
     if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) {
       return;

@@ -27,7 +27,7 @@ function RawModal({
   }
 
   useEffect(() => {
-    navigation.setIsRawModalVisible(isOpen);
+    navigation.isRawModalVisible = isOpen;
   }, [isOpen]);
 
   const modalOverlayClass = (overlayClassName !== null) ? `${overlayClassName} ` : '';

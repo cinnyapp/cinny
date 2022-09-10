@@ -44,6 +44,7 @@ function useVisiblityToggle(setResult) {
   }, [isOpen]);
 
   const requestClose = () => setIsOpen(false);
+  navigation.on(cons.events.navigation.REQUEST_CLOSE, requestClose);
 
   return [isOpen, requestClose];
 }
@@ -154,6 +155,12 @@ function Search() {
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Backspace' && searchRef.current.value.length === 0) {
+      requestClose();
+    }
+  };
+
   const openItem = (roomId, type) => {
     if (type === 'space') selectTab(roomId);
     else selectRoom(roomId);
@@ -210,6 +217,7 @@ function Search() {
             onChange={handleOnChange}
             forwardRef={searchRef}
             placeholder="Search"
+            onKeyDown={handleKeyPress}
           />
           <IconButton size="small" src={CrossIC} type="reset" onClick={handleCross} tabIndex={-1} />
         </form>

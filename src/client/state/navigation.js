@@ -276,7 +276,7 @@ class Navigation extends EventEmitter {
     return this.rawModelStack.length > 0;
   }
 
-  setIsRawModalVisible(visible) {
+  set isRawModalVisible(visible) {
     if (visible) this.rawModelStack.push(true);
     else this.rawModelStack.pop();
   }
@@ -381,6 +381,11 @@ class Navigation extends EventEmitter {
         this.emit(
           cons.events.navigation.SEARCH_OPENED,
           action.term,
+        );
+      },
+      [cons.actions.navigation.REQUEST_CLOSE]: () => {
+        this.emit(
+          cons.events.navigation.REQUEST_CLOSE,
         );
       },
       [cons.actions.navigation.OPEN_REUSABLE_CONTEXT_MENU]: () => {

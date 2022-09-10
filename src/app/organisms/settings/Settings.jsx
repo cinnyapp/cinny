@@ -317,6 +317,8 @@ function useWindowToggle(setSelectedTab) {
 
   const requestClose = () => setIsOpen(false);
 
+  navigation.on(cons.events.navigation.REQUEST_CLOSE, requestClose);
+
   return [isOpen, requestClose];
 }
 
