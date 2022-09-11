@@ -38,7 +38,7 @@
     @extend .cp-fx__column;
   }
   &__nav-twemoji {
-    background: inherit;
+    background-color: var(--bg-surface);
     position: sticky;
     bottom: -70%;
     z-index: 999;

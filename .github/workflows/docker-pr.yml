@@ -9,8 +9,6 @@ on:
 jobs:
   docker-build:
     runs-on: ubuntu-latest
-    env:
-      PR_NUMBER: ${{github.event.number}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.0.2

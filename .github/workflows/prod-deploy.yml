@@ -5,8 +5,8 @@ on:
     types: [published]
 
 jobs:
-  create-release-tar:
-    name: 'Create release tar'
+  deploy-and-tarball:
+    name: 'Netlify deploy and tarball'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -15,10 +15,25 @@ jobs:
         uses: actions/setup-node@v3.4.1
         with:
           node-version: 17.9.0
-      - name: Build
-        run: |
-          npm ci
-          npm run build
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build app
+        run: npm run build
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@b7c1504e00c6b8a249d1848cc1b522a4865eed99
+        with:
+          publish-dir: dist
+          deploy-message: "Prod deploy ${{ github.ref_name }}"
+          enable-commit-comment: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          production-deploy: true
+          github-deployment-environment: stable
+          github-deployment-description: 'Stable deployment on each release'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
       - name: Get version from tag
         id: vars
         run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
@@ -41,29 +56,7 @@ jobs:
             cinny-${{ steps.vars.outputs.tag }}.tar.gz
             cinny-${{ steps.vars.outputs.tag }}.tar.gz.asc
 
-  deploy-to-netlify:
-    name: 'Deploy to Netlify'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3.0.2
-      - name: Setup node
-        uses: actions/setup-node@v3.4.1
-        with:
-          node-version: 17.9.0
-      - name: Build and deploy to Netlify
-        uses: jsmrcaga/action-netlify-deploy@53de32e559b0b3833615b9788c7a090cd2fddb03
-        with:
-          install_command: "npm ci"
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          BUILD_DIRECTORY: "dist"
-          NETLIFY_DEPLOY_MESSAGE: "Prod deploy v${{ github.ref }}"
-          NETLIFY_DEPLOY_TO_PROD: true
-
-  push-to-dockerhub:
+  publish-image:
     name: Push Docker image to Docker Hub, ghcr
     runs-on: ubuntu-latest
     permissions:
