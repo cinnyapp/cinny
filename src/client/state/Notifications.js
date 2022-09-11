@@ -43,6 +43,8 @@ class Notifications extends EventEmitter {
     this.roomList = roomList;
 
     this.roomIdToNoti = new Map();
+    this.roomIdToPopupNotis = new Map();
+    this.eventIdToPopupNoti = new Map();
 
     // this._initNoti();
     this._listenEvents();
@@ -258,15 +260,36 @@ class Notifications extends EventEmitter {
       const noti = new window.Notification(title, {
         body: mEvent.getContent().body,
         icon,
+        tag: mEvent.getId(),
         silent: settings.isNotificationSounds,
       });
       if (settings.isNotificationSounds) {
         noti.onshow = () => this._playNotiSound();
       }
       noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
+
+      this.eventIdToPopupNoti.set(mEvent.getId(), noti);
+      if (this.roomIdToPopupNotis.has(room.roomId)) {
+        this.roomIdToPopupNotis.get(room.roomId).push(noti);
+      } else {
+        this.roomIdToPopupNotis.set(room.roomId, [noti]);
+      }
     } else {
       this._playNotiSound();
     }
+  }
+
+  _deletePopupNoti(eventId) {
+    this.eventIdToPopupNoti.get(eventId)?.close();
+    this.eventIdToPopupNoti.delete(eventId);
+  }
+
+  _deletePopupRoomNotis(roomId) {
+    this.roomIdToPopupNotis.get(roomId)?.forEach((n) => {
+      this.eventIdToPopupNoti.delete(n.tag);
+      n.close();
+    });
+    this.roomIdToPopupNotis.delete(roomId);
   }
 
   _playNotiSound() {
@@ -285,6 +308,8 @@ class Notifications extends EventEmitter {
 
   _listenEvents() {
     this.matrixClient.on('Room.timeline', (mEvent, room) => {
+      if (mEvent.isRedaction()) this._deletePopupNoti(mEvent.event.redacts);
+
       if (room.isSpaceRoom()) return;
       if (!isNotifEvent(mEvent)) return;
 
@@ -355,6 +380,8 @@ class Notifications extends EventEmitter {
         if (readerUserId !== this.matrixClient.getUserId()) return;
 
         this.deleteNoti(room.roomId);
+
+        this._deletePopupRoomNotis(room.roomId);
       }
     });
 
