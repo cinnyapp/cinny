@@ -203,7 +203,7 @@ class RoomsInput extends EventEmitter {
 
     const content = {
       body: body.plain,
-      msgtype: msgType ?? 'm.text',
+      msgtype: msgType,
     };
 
     if (sanitizeText(body.plain) !== body.html || reply) {
