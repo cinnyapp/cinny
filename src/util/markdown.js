@@ -120,12 +120,71 @@ const markdownRules = {
   def: undefined,
   table: {
     ...defaultRules.table,
+    plain: (node, output, state) => {
+      const header = node.header.map((content) => output(content, state));
+
+      function lineWidth(i) {
+        switch (node.align[i]) {
+          case 'left':
+          case 'right':
+            return 2;
+          case 'center':
+            return 3;
+          default:
+            return 1;
+        }
+      }
+      const colWidth = header.map((s, i) => Math.max(s.length, lineWidth(i)));
+
+      const cells = node.cells.map((row) => row.map((content, i) => {
+        const s = output(content, state);
+        if (s.length > colWidth[i]) {
+          colWidth[i] = s.length;
+        }
+        return s;
+      }));
+
+      function pad(s, i) {
+        switch (node.align[i]) {
+          case 'right':
+            return s.padStart(colWidth[i]);
+          case 'center':
+            return s
+              .padStart(s.length + Math.floor((colWidth[i] - s.length) / 2))
+              .padEnd(colWidth[i]);
+          default:
+            return s.padEnd(colWidth[i]);
+        }
+      }
+
+      const line = colWidth.map((len, i) => {
+        switch (node.align[i]) {
+          case 'left':
+            return `:${'-'.repeat(len - 1)}`;
+          case 'center':
+            return `:${'-'.repeat(len - 2)}:`;
+          case 'right':
+            return `${'-'.repeat(len - 1)}:`;
+          default:
+            return '-'.repeat(len);
+        }
+      });
+
+      const table = [
+        header.map(pad),
+        line,
+        ...cells.map((row) => row.map(pad))];
+
+      return table.map((row) => `| ${row.join(' | ')} |\n`).join('');
+    },
   },
   displayMath: {
     order: defaultRules.table.order + 0.1,
     match: blockRegex(/^ *\$\$ *\n?([\s\S]+?)\n?\$\$ *(?:\n *)*\n/),
     parse: (capture) => ({ content: capture[1] }),
-    plain: (node) => `$$\n${node.content}\n$$`,
+    plain: (node) => (node.content.includes('\n')
+      ? `$$\n${node.content}\n$$\n`
+      : `$$${node.content}$$\n`),
     html: (node) => mathHtml('div', node),
   },
   shrug: {
@@ -215,16 +274,8 @@ function genOut(rules) {
       content = content[0].content;
     }
 
-    let plainOut;
-    try {
-      plainOut = plain(content, state);
-    } catch {
-      // use source instead
-    }
-
     return {
-      plain: plainOut?.trim() || source,
-      // plain: plain(content, state),
+      plain: plain(content, state).trim(),
       html: html(content, state),
     };
   };
