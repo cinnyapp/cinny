@@ -737,7 +737,6 @@ function Message({
     replyTo(senderId, mEvent.getId(), body);
   }, [body]);
 
-  if (body === undefined) return null;
   if (msgType === 'm.emote') className.push('message--type-emote');
 
   let isCustomHTML = content.format === 'org.matrix.custom.html';
@@ -752,12 +751,13 @@ function Message({
     const editedList = editedTimeline.get(eventId);
     const editedMEvent = editedList[editedList.length - 1];
     [body, isCustomHTML, customHTML] = getEditedBody(editedMEvent);
-    if (typeof body !== 'string') return null;
   }
 
   if (isReply) {
     body = parseReply(body)?.body ?? body;
   }
+
+  if (typeof body !== 'string') body = '';
 
   return (
     <div className={className.join(' ')}>
