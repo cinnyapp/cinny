@@ -26,6 +26,7 @@ export const ALLOWED_BLOB_MIMETYPES = [
 ];
 
 export function getBlobSafeMimeType(mimetype) {
+  if (typeof mimetype !== 'string') return 'application/octet-stream';
   const [type] = mimetype.split(';');
   if (!ALLOWED_BLOB_MIMETYPES.includes(type)) {
     return 'application/octet-stream';
