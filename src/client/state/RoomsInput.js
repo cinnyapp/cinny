@@ -274,7 +274,8 @@ class RoomsInput extends EventEmitter {
     return this.roomIdToInput.get(roomId)?.isSending || false;
   }
 
-  async sendInput(roomId, msgType) {
+  async sendInput(roomId, options) {
+    const { msgType, autoMarkdown } = options;
     const room = this.matrixClient.getRoom(roomId);
     const input = this.getInput(roomId);
     input.isSending = true;
@@ -292,19 +293,22 @@ class RoomsInput extends EventEmitter {
       };
 
       // Apply formatting if relevant
-      let formattedBody = settings.isMarkdown
+      let formattedBody = settings.isMarkdown && autoMarkdown
         ? getFormattedBody(rawMessage)
         : sanitizeText(rawMessage);
 
-      formattedBody = formatUserPill(room, formattedBody);
-      formattedBody = formatEmoji(this.matrixClient, room, this.roomList, formattedBody);
+      if (autoMarkdown) {
+        formattedBody = formatUserPill(room, formattedBody);
+        formattedBody = formatEmoji(this.matrixClient, room, this.roomList, formattedBody);
 
-      content.body = findAndReplace(
-        content.body,
-        MXID_REGEX,
-        (match) => room.currentState.userIdsToDisplayNames[match[0]],
-        (match) => `@${room.currentState.userIdsToDisplayNames[match[0]]}`,
-      );
+        content.body = findAndReplace(
+          content.body,
+          MXID_REGEX,
+          (match) => room.currentState.userIdsToDisplayNames[match[0]],
+          (match) => `@${room.currentState.userIdsToDisplayNames[match[0]]}`,
+        );
+      }
+
       if (formattedBody !== sanitizeText(rawMessage)) {
         // Formatting was applied, and we need to switch to custom HTML
         content.format = 'org.matrix.custom.html';
