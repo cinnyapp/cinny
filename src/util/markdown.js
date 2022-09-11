@@ -93,16 +93,16 @@ const markdownRules = {
   heading: {
     ...defaultRules.heading,
     plain: (node, output, state) => {
-      const s = output(node.content, state);
+      const out = output(node.content, state);
       if (node.level <= 2) {
-        return `${s}\n${(node.level === 1 ? '=' : '-').repeat(s.length)}\n\n`;
+        return `${out}\n${(node.level === 1 ? '=' : '-').repeat(out.length)}\n\n`;
       }
-      return `${'#'.repeat(node.level)} ${s}\n\n`;
+      return `${'#'.repeat(node.level)} ${out}\n\n`;
     },
   },
   hr: {
     ...defaultRules.hr,
-    plain: () => '---',
+    plain: () => '---\n\n',
   },
   codeBlock: {
     ...defaultRules.codeBlock,
@@ -118,10 +118,10 @@ const markdownRules = {
   },
   list: {
     ...defaultRules.list,
-    plain: (node, output, state) => node.items.map((item, i) => {
+    plain: (node, output, state) => `${node.items.map((item, i) => {
       const prefix = node.ordered ? `${node.start + i + 1}. ` : '* ';
       return prefix + output(item, state).replaceAll('\n', `\n${' '.repeat(prefix.length)}`);
-    }).join('\n'),
+    }).join('\n')}\n`,
   },
   def: undefined,
   table: {
@@ -208,7 +208,14 @@ const markdownRules = {
   },
   link: {
     ...defaultRules.link,
-    plain: (node, output, state) => `[${output(node.content, state)}](${sanitizeUrl(node.target) || ''}${node.title ? ` "${node.title}"` : ''})`,
+    plain: (node, output, state) => {
+      const out = output(node.content, state);
+      const target = sanitizeUrl(node.target) || '';
+      if (out !== target || node.title) {
+        return `[${out}](${target}${node.title ? ` "${node.title}"` : ''})`;
+      }
+      return out;
+    },
     html: (node, output, state) => htmlTag('a', output(node.content, state), {
       href: sanitizeUrl(node.target) || '',
       title: node.title,
@@ -243,7 +250,7 @@ const markdownRules = {
   },
   inlineCode: {
     ...defaultRules.inlineCode,
-    plain: (node, output, state) => `\`${output(node.content, state)}\``,
+    plain: (node) => `\`${node.content}\``,
   },
   spoiler: {
     order: defaultRules.inlineCode.order + 0.1,
