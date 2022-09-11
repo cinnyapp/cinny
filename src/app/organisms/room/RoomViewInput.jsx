@@ -30,7 +30,6 @@ import StickerIC from '../../../../public/res/ic/outlined/sticker.svg';
 import ShieldIC from '../../../../public/res/ic/outlined/shield.svg';
 import VLCIC from '../../../../public/res/ic/outlined/vlc.svg';
 import VolumeFullIC from '../../../../public/res/ic/outlined/volume-full.svg';
-import MarkdownIC from '../../../../public/res/ic/outlined/markdown.svg';
 import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
@@ -44,7 +43,6 @@ function RoomViewInput({
   roomId, roomTimeline, viewEvent,
 }) {
   const [attachment, setAttachment] = useState(null);
-  const [isMarkdown, setIsMarkdown] = useState(settings.isMarkdown);
   const [replyTo, setReplyTo] = useState(null);
 
   const textAreaRef = useRef(null);
@@ -63,11 +61,9 @@ function RoomViewInput({
   }
 
   useEffect(() => {
-    settings.on(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
     roomsInput.on(cons.events.roomsInput.ATTACHMENT_SET, setAttachment);
     viewEvent.on('focus_msg_input', requestFocusInput);
     return () => {
-      settings.removeListener(cons.events.settings.MARKDOWN_TOGGLED, setIsMarkdown);
       roomsInput.removeListener(cons.events.roomsInput.ATTACHMENT_SET, setAttachment);
       viewEvent.removeListener('focus_msg_input', requestFocusInput);
     };
@@ -379,7 +375,6 @@ function RoomViewInput({
               />
             </Text>
           </ScrollView>
-          {isMarkdown && <RawIcon size="extra-small" src={MarkdownIC} />}
         </div>
         <div ref={rightOptionsRef} className="room-input__option-container">
           <IconButton
