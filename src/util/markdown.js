@@ -117,22 +117,29 @@ const markdownRules = {
       return prefix + output(item, state).replaceAll('\n', `\n${' '.repeat(prefix.length)}`);
     }).join('\n'),
   },
+  def: undefined,
+  table: {
+    ...defaultRules.table,
+  },
   displayMath: {
-    order: defaultRules.list.order + 0.5,
+    order: defaultRules.table.order + 0.1,
     match: blockRegex(/^ *\$\$ *\n?([\s\S]+?)\n?\$\$ *(?:\n *)*\n/),
     parse: (capture) => ({ content: capture[1] }),
     plain: (node) => `$$\n${node.content}\n$$`,
     html: (node) => mathHtml('div', node),
   },
-  def: undefined,
   shrug: {
-    order: defaultRules.escape.order - 0.5,
+    order: defaultRules.escape.order - 0.1,
     match: inlineRegex(/^¯\\_\(ツ\)_\/¯/),
     parse: (capture) => ({ type: 'text', content: capture[0] }),
   },
   escape: {
     ...defaultRules.escape,
     plain: (node, output, state) => `\\${output(node.content, state)}`,
+  },
+  tableSeparator: {
+    ...defaultRules.tableSeparator,
+    plain: () => ' | ',
   },
   link: {
     ...defaultRules.link,
@@ -174,7 +181,7 @@ const markdownRules = {
     plain: (node, output, state) => `\`${output(node.content, state)}\``,
   },
   spoiler: {
-    order: defaultRules.del.order + 0.1,
+    order: defaultRules.inlineCode.order + 0.1,
     match: inlineRegex(/^\|\|([\s\S]+?)\|\|(?:\(([\s\S]+?)\))?/),
     parse: (capture, parse, state) => ({
       content: parse(capture[1], state),
@@ -204,7 +211,6 @@ function genOut(rules) {
 
   return (source, state) => {
     let content = parser(source, state);
-    console.debug(content);
     if (content.length === 1 && content[0].type === 'paragraph') {
       content = content[0].content;
     }

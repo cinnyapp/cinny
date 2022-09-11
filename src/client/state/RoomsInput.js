@@ -200,7 +200,6 @@ class RoomsInput extends EventEmitter {
 
     const output = settings.isMarkdown && autoMarkdown ? markdown : plain;
     const body = output(message, { userNames, emojis });
-    console.debug(body);
 
     const content = {
       body: body.plain,
