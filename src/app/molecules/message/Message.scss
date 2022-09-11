@@ -174,8 +174,8 @@
     white-space: initial !important;
   }
 
-  & > .text > p:not(:last-child) {
-    margin-bottom: var(--sp-normal);
+  & > .text > p + p {
+    margin-top: var(--sp-normal);
   }
 
   & span[data-mx-pill] {

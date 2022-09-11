@@ -92,7 +92,13 @@ const markdownRules = {
   ...plainRules,
   heading: {
     ...defaultRules.heading,
-    plain: (node, output, state) => `${'#'.repeat(node.level)} ${output(node.content, state)}`,
+    plain: (node, output, state) => {
+      const s = output(node.content, state);
+      if (node.level <= 2) {
+        return `${s}\n${(node.level === 1 ? '=' : '-').repeat(s.length)}\n\n`;
+      }
+      return `${'#'.repeat(node.level)} ${s}\n\n`;
+    },
   },
   hr: {
     ...defaultRules.hr,
