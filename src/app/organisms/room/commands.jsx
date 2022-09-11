@@ -57,7 +57,7 @@ const commands = {
   },
   startdm: {
     name: 'startdm',
-    description: 'Start DM with user. Example: /startdm userId1 userId2',
+    description: 'Start direct message with user. Example: /startdm userId1',
     exe: async (roomId, data) => {
       const mx = initMatrix.matrixClient;
       const rawIds = data.split(' ');
@@ -78,7 +78,7 @@ const commands = {
   },
   join: {
     name: 'join',
-    description: 'Join room with alias. Example: /join alias1 alias2',
+    description: 'Join room with address. Example: /join address1 address2',
     exe: (roomId, data) => {
       const rawIds = data.split(' ');
       const roomIds = rawIds.filter((id) => id.match(ROOM_ID_ALIAS_REG));
@@ -159,7 +159,7 @@ const commands = {
   },
   myroomnick: {
     name: 'myroomnick',
-    description: 'Change my room nick',
+    description: 'Change nick in current room.',
     exe: (roomId, data) => {
       const nick = data.trim();
       if (nick === '') return;
@@ -168,7 +168,7 @@ const commands = {
   },
   myroomavatar: {
     name: 'myroomavatar',
-    description: 'Change my room avatar. Example /myroomavatar mxc://xyzabc',
+    description: 'Change profile picture in current room. Example /myroomavatar mxc://xyzabc',
     exe: (roomId, data) => {
       if (data.match(MXC_REG)) {
         roomActions.setMyRoomAvatar(roomId, data);
