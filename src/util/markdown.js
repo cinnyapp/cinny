@@ -145,11 +145,11 @@ const markdownRules = {
   image: {
     ...defaultRules.image,
     plain: (node) => `![${node.alt}](${sanitizeUrl(node.target) || ''}${node.title ? ` "${node.title}"` : ''})`,
-    html: (node, output, state) => htmlTag('img', output(node.content, state), {
+    html: (node) => htmlTag('img', '', {
       src: sanitizeUrl(node.target) || '',
       alt: node.alt,
       title: node.title,
-    }),
+    }, false),
   },
   reflink: undefined,
   refimage: undefined,
