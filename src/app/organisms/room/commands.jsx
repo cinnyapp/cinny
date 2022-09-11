@@ -38,7 +38,7 @@ const commands = {
     exe: (roomId, data, onSuccess) => {
       const body = data.trim();
       if (body === '') return;
-      onSuccess(body, 'm.emote');
+      onSuccess(body, { msgType: 'm.emote' });
     },
   },
   shrug: {
@@ -46,8 +46,17 @@ const commands = {
     description: 'Send ¯\\_(ツ)_/¯ as message',
     exe: (roomId, data, onSuccess) => onSuccess(
       `¯\\_(ツ)_/¯${data.trim() !== '' ? ` ${data}` : ''}`,
-      'm.text',
+      { msgType: 'm.text' },
     ),
+  },
+  plain: {
+    name: 'plain',
+    description: 'Send plain text message',
+    exe: (roomId, data, onSuccess) => {
+      const body = data.trim();
+      if (body === '') return;
+      onSuccess(body, { msgType: 'm.text', autoMarkdown: false });
+    },
   },
   help: {
     name: 'help',

@@ -181,7 +181,10 @@ function RoomViewInput({
     };
   }, [roomId]);
 
-  const sendBody = async (body, msgType = 'm.text') => {
+  const sendBody = async (body, options) => {
+    const opt = options ?? {};
+    if (!opt.msgType) opt.msgType = 'm.text';
+    if (typeof opt.autoMarkdown !== 'boolean') opt.autoMarkdown = true;
     if (roomsInput.isSending(roomId)) return;
     sendIsTyping(false);
 
@@ -191,7 +194,7 @@ function RoomViewInput({
     }
     textAreaRef.current.disabled = true;
     textAreaRef.current.style.cursor = 'not-allowed';
-    await roomsInput.sendInput(roomId, msgType);
+    await roomsInput.sendInput(roomId, opt);
     textAreaRef.current.disabled = false;
     textAreaRef.current.style.cursor = 'unset';
     focusInput();
@@ -209,8 +212,8 @@ function RoomViewInput({
       confirmDialog('Invalid Command', `"${cmdName}" is not a valid command.`, 'Alright');
       return;
     }
-    if (['me', 'shrug'].includes(cmdName)) {
-      commands[cmdName].exe(roomId, cmdData, (message, msgType) => sendBody(message, msgType));
+    if (['me', 'shrug', 'plain'].includes(cmdName)) {
+      commands[cmdName].exe(roomId, cmdData, sendBody);
       return;
     }
     commands[cmdName].exe(roomId, cmdData);
@@ -226,7 +229,7 @@ function RoomViewInput({
       return;
     }
     if (msgBody === '' && attachment === null) return;
-    sendBody(msgBody, 'm.text');
+    sendBody(msgBody);
   };
 
   const handleSendSticker = async (data) => {
