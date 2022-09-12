@@ -26,6 +26,8 @@ function mathHtml(wrap, node) {
   return htmlTag(wrap, htmlTag('code', sanitizeText(node.content)), { 'data-mx-maths': node.content });
 }
 
+const emojiRegex = /^:([\w-]+):/;
+
 const plainRules = {
   Array: {
     ...defaultRules.Array,
@@ -51,7 +53,14 @@ const plainRules = {
   },
   emoji: {
     order: defaultRules.em.order - 0.1,
-    match: inlineRegex(/^:([\w-]+):/),
+    match: (source, state) => {
+      if (!state.inline) return null;
+      const capture = emojiRegex.exec(source);
+      if (!capture) return null;
+      const emoji = state.emojis.get(capture[1]);
+      if (emoji) return capture;
+      return null;
+    },
     parse: (capture, _, state) => ({ content: capture[1], emoji: state.emojis.get(capture[1]) }),
     plain: ({ emoji }) => (emoji.mxc
       ? `:${emoji.shortcode}:`
