@@ -36,7 +36,10 @@ const plainRules = {
   userMention: {
     order: defaultRules.em.order - 0.9,
     match: inlineRegex(/^(@\S+:\S+)/),
-    parse: (capture, _, state) => ({ content: `@${state.userNames[capture[1]]}`, id: capture[1] }),
+    parse: (capture, _, state) => ({
+      content: state.userNames[capture[1]] ? `@${state.userNames[capture[1]]}` : capture[1],
+      id: capture[1],
+    }),
     plain: (node) => node.content,
     html: (node) => htmlTag('a', sanitizeText(node.content), {
       href: `https://matrix.to/#/${encodeURIComponent(node.id)}`,
