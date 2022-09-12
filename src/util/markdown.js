@@ -287,18 +287,26 @@ const markdownRules = {
 function genOut(rules) {
   const parser = parserFor(rules);
 
-  const plain = outputFor(rules, 'plain');
-  const html = outputFor(rules, 'html');
+  const plainOut = outputFor(rules, 'plain');
+  const htmlOut = outputFor(rules, 'html');
 
   return (source, state) => {
     let content = parser(source, state);
+
     if (content.length === 1 && content[0].type === 'paragraph') {
       content = content[0].content;
     }
 
+    const plain = plainOut(content, state).trim();
+    const html = htmlOut(content, state);
+
+    const plainHtml = html.replaceAll('<br>', '\n').replaceAll('</p><p>', '\n\n').replace(/<\/?p>/g, '');
+    const onlyPlain = sanitizeText(plain) !== plainHtml;
+
     return {
-      plain: plain(content, state).trim(),
-      html: html(content, state),
+      onlyPlain,
+      plain,
+      html,
     };
   };
 }

@@ -206,7 +206,7 @@ class RoomsInput extends EventEmitter {
       msgtype: msgType,
     };
 
-    if (sanitizeText(body.plain) !== body.html || reply) {
+    if (body.onlyPlain || reply) {
       content.format = 'org.matrix.custom.html';
       content.formatted_body = body.html;
     }
