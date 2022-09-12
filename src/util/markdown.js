@@ -114,7 +114,7 @@ const markdownRules = {
   },
   blockQuote: {
     ...defaultRules.blockQuote,
-    plain: (node, output, state) => `> ${output(node.content, state).replaceAll('\n', '\n> ')}`,
+    plain: (node, output, state) => `> ${output(node.content, state).trim().replaceAll('\n', '\n> ')}\n\n`,
   },
   list: {
     ...defaultRules.list,
