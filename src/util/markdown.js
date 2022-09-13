@@ -126,13 +126,13 @@ const markdownRules = {
   },
   blockQuote: {
     ...defaultRules.blockQuote,
-    plain: (node, output, state) => `> ${output(node.content, state).trim().replaceAll('\n', '\n> ')}\n\n`,
+    plain: (node, output, state) => `> ${output(node.content, state).trim().replace(/\n/g, '\n> ')}\n\n`,
   },
   list: {
     ...defaultRules.list,
     plain: (node, output, state) => `${node.items.map((item, i) => {
       const prefix = node.ordered ? `${node.start + i + 1}. ` : '* ';
-      return prefix + output(item, state).replaceAll('\n', `\n${' '.repeat(prefix.length)}`);
+      return prefix + output(item, state).replace(/\n/g, `\n${' '.repeat(prefix.length)}`);
     }).join('\n')}\n`,
   },
   def: undefined,
@@ -303,7 +303,7 @@ function genOut(rules) {
     const plain = plainOut(content, state).trim();
     const html = htmlOut(content, state);
 
-    const plainHtml = html.replaceAll('<br>', '\n').replaceAll('</p><p>', '\n\n').replace(/<\/?p>/g, '');
+    const plainHtml = html.replace(/<br>/g, '\n').replace(/<\/p><p>/g, '\n\n').replace(/<\/?p>/g, '');
     const onlyPlain = sanitizeText(plain) === plainHtml;
 
     return {

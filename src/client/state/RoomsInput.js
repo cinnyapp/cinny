@@ -245,7 +245,7 @@ class RoomsInput extends EventEmitter {
         },
       };
 
-      content.body = `> <${reply.userId}> ${reply.body.replaceAll('\n', '\n> ')}\n\n${content.body}`;
+      content.body = `> <${reply.userId}> ${reply.body.replace(/\n/g, '\n> ')}\n\n${content.body}`;
 
       const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(roomId)}/${encodeURIComponent(reply.eventId)}">In reply to</a>`;
       const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(reply.userId)}">${sanitizeText(reply.userId)}</a>`;
