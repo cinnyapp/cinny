@@ -304,7 +304,7 @@ function genOut(rules) {
     const html = htmlOut(content, state);
 
     const plainHtml = html.replaceAll('<br>', '\n').replaceAll('</p><p>', '\n\n').replace(/<\/?p>/g, '');
-    const onlyPlain = sanitizeText(plain) !== plainHtml;
+    const onlyPlain = sanitizeText(plain) === plainHtml;
 
     return {
       onlyPlain,
