@@ -115,6 +115,9 @@ const markdownRules = {
   codeBlock: {
     ...defaultRules.codeBlock,
     plain: (node) => `\`\`\`${node.lang || ''}\n${node.content}\n\`\`\``,
+    html: (node) => htmlTag('pre', htmlTag('code', sanitizeText(node.content), {
+      class: node.lang ? `language-${node.lang}` : undefined,
+    })),
   },
   fence: {
     ...defaultRules.fence,
@@ -312,13 +315,26 @@ function mapElement(el) {
       return [{ type: 'heading', level: Number(el.tagName[1]), content: mapChildren(el) }];
     case 'HR':
       return [{ type: 'hr' }];
+    case 'PRE': {
+      let lang;
+      el.firstChild?.classList.find((c) => {
+        const langPrefix = 'language-';
+        if (c.startsWith(langPrefix)) {
+          lang = c.slice(langPrefix.length);
+          return true;
+        }
+        return false;
+      });
+      return [{ type: 'codeBlock', lang, content: el.innerText }];
+    }
     case 'BLOCKQUOTE':
       return [{ type: 'blockQuote', content: mapChildren(el) }];
     case 'UL':
+      return [{ type: 'list', items: mapChildren(el) }];
     case 'OL':
       return [{
         type: 'list',
-        ordered: el.tagName === 'OL',
+        ordered: true,
         start: el.getAttribute('start'),
         items: mapChildren(el),
       }];
@@ -337,12 +353,15 @@ function mapElement(el) {
         title: el.getAttribute('title'),
       }];
     case 'EM':
+    case 'I':
       return [{ type: 'em', content: mapChildren(el) }];
     case 'STRONG':
+    case 'B':
       return [{ type: 'strong', content: mapChildren(el) }];
     case 'U':
       return [{ type: 'u', content: mapChildren(el) }];
     case 'DEL':
+    case 'STRIKE':
       return [{ type: 'del', content: mapChildren(el) }];
     case 'CODE':
       return [{ type: 'code', content: el.innerText }];
@@ -360,7 +379,6 @@ function mapElement(el) {
         return [{ type: 'inlineMath', content: el.getAttribute('data-mx-maths') }];
       }
       return mapChildren(el);
-
     default:
       return mapChildren(el);
   }
