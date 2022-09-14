@@ -47,7 +47,7 @@ const plainRules = {
   },
   roomMention: {
     order: defaultRules.em.order - 0.8,
-    match: inlineRegex(/^(#\S+:\S+)/), // TODO: Handle line beginning with roomMention (instead of heading)
+    match: inlineRegex(/^(#\S+:\S+)/),
     parse: (capture) => ({ content: capture[1], id: capture[1] }),
     plain: (node) => node.content,
     html: (node) => htmlTag('a', sanitizeText(node.content), {
@@ -104,13 +104,8 @@ const markdownRules = {
   ...plainRules,
   heading: {
     ...defaultRules.heading,
-    plain: (node, output, state) => {
-      const out = output(node.content, state);
-      if (node.level <= 2) {
-        return `${out}\n${(node.level === 1 ? '=' : '-').repeat(out.length)}\n\n`;
-      }
-      return `${'#'.repeat(node.level)} ${out}\n\n`;
-    },
+    match: blockRegex(/^ *(#{1,6}) ([^\n]+?)#* *(?:\n *)+\n/),
+    plain: (node, output, state) => `${'#'.repeat(node.level)} ${output(node.content, state)}\n\n`,
   },
   hr: {
     ...defaultRules.hr,
