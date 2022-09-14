@@ -163,7 +163,7 @@
 .message__body {
   word-break: break-word;
 
-  & > .text > * {
+  & > .text > .message__body-plain {
     white-space: pre-wrap;
   }
 
@@ -174,8 +174,8 @@
     white-space: initial !important;
   }
 
-  & p:not(:last-child) {
-    margin-bottom: var(--sp-normal);
+  & > .text > p + p {
+    margin-top: var(--sp-normal);
   }
 
   & span[data-mx-pill] {

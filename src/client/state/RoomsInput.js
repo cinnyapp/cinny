@@ -6,11 +6,9 @@ import { getBlobSafeMimeType } from '../../util/mimetypes';
 import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
-import { htmlOutput, parser } from '../../util/markdown';
+import { markdown, plain } from '../../util/markdown';
 
 const blurhashField = 'xyz.amorgan.blurhash';
-const MXID_REGEX = /\B@\S+:\S+\.\S+[^.,:;?!\s]/g;
-const SHORTCODE_REGEX = /\B:([\w-]+):\B/g;
 
 function encodeBlurhash(img) {
   const canvas = document.createElement('canvas');
@@ -98,91 +96,6 @@ function getVideoThumbnail(video, width, height, mimeType) {
       });
     }, mimeType);
   });
-}
-
-function getFormattedBody(markdown) {
-  let content = parser(markdown);
-  if (content.length === 1 && content[0].type === 'paragraph') {
-    content = content[0].content;
-  }
-  return htmlOutput(content);
-}
-
-function getReplyFormattedBody(roomId, reply) {
-  const replyToLink = `<a href="https://matrix.to/#/${roomId}/${reply.eventId}">In reply to</a>`;
-  const userLink = `<a href="https://matrix.to/#/${reply.userId}">${reply.userId}</a>`;
-  const formattedReply = getFormattedBody(reply.body.replace(/\n/g, '\n> '));
-  return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${formattedReply}</blockquote></mx-reply>`;
-}
-
-function bindReplyToContent(roomId, reply, content) {
-  const newContent = { ...content };
-  newContent.body = `> <${reply.userId}> ${reply.body.replace(/\n/g, '\n> ')}`;
-  newContent.body += `\n\n${content.body}`;
-  newContent.format = 'org.matrix.custom.html';
-  newContent['m.relates_to'] = content['m.relates_to'] || {};
-  newContent['m.relates_to']['m.in_reply_to'] = { event_id: reply.eventId };
-
-  const formattedReply = getReplyFormattedBody(roomId, reply);
-  newContent.formatted_body = formattedReply + (content.formatted_body || content.body);
-  return newContent;
-}
-
-function findAndReplace(text, regex, filter, replace) {
-  let copyText = text;
-  Array.from(copyText.matchAll(regex))
-    .filter(filter)
-    .reverse() /* to replace backward to forward */
-    .forEach((match) => {
-      const matchText = match[0];
-      const tag = replace(match);
-
-      copyText = copyText.substr(0, match.index)
-        + tag
-        + copyText.substr(match.index + matchText.length);
-    });
-  return copyText;
-}
-
-function formatUserPill(room, text) {
-  const { userIdsToDisplayNames } = room.currentState;
-  return findAndReplace(
-    text,
-    MXID_REGEX,
-    (match) => userIdsToDisplayNames[match[0]],
-    (match) => (
-      `<a href="https://matrix.to/#/${match[0]}">@${userIdsToDisplayNames[match[0]]}</a>`
-    ),
-  );
-}
-
-function formatEmoji(mx, room, roomList, text) {
-  const parentIds = roomList.getAllParentSpaces(room.roomId);
-  const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
-  const allEmoji = getShortcodeToEmoji(mx, [room, ...parentRooms]);
-
-  return findAndReplace(
-    text,
-    SHORTCODE_REGEX,
-    (match) => allEmoji.has(match[1]),
-    (match) => {
-      const emoji = allEmoji.get(match[1]);
-
-      let tag;
-      if (emoji.mxc) {
-        tag = `<img data-mx-emoticon="" src="${
-          emoji.mxc
-        }" alt=":${
-          emoji.shortcode
-        }:" title=":${
-          emoji.shortcode
-        }:" height="32" />`;
-      } else {
-        tag = emoji.unicode;
-      }
-      return tag;
-    },
-  );
 }
 
 class RoomsInput extends EventEmitter {
@@ -274,9 +187,76 @@ class RoomsInput extends EventEmitter {
     return this.roomIdToInput.get(roomId)?.isSending || false;
   }
 
-  async sendInput(roomId, options) {
-    const { msgType, autoMarkdown } = options;
+  getContent(roomId, options, message, reply, edit) {
+    const msgType = options?.msgType || 'm.text';
+    const autoMarkdown = options?.autoMarkdown ?? true;
+
     const room = this.matrixClient.getRoom(roomId);
+
+    const userNames = room.currentState.userIdsToDisplayNames;
+    const parentIds = this.roomList.getAllParentSpaces(room.roomId);
+    const parentRooms = [...parentIds].map((id) => this.matrixClient.getRoom(id));
+    const emojis = getShortcodeToEmoji(this.matrixClient, [room, ...parentRooms]);
+
+    const output = settings.isMarkdown && autoMarkdown ? markdown : plain;
+    const body = output(message, { userNames, emojis });
+
+    const content = {
+      body: body.plain,
+      msgtype: msgType,
+    };
+
+    if (!body.onlyPlain || reply) {
+      content.format = 'org.matrix.custom.html';
+      content.formatted_body = body.html;
+    }
+
+    if (edit) {
+      content['m.new_content'] = { ...content };
+      content['m.relates_to'] = {
+        event_id: edit.getId(),
+        rel_type: 'm.replace',
+      };
+
+      const isReply = edit.getWireContent()['m.relates_to']?.['m.in_reply_to'];
+      if (isReply) {
+        content.format = 'org.matrix.custom.html';
+        content.formatted_body = body.html;
+      }
+
+      content.body = ` * ${content.body}`;
+      if (content.formatted_body) content.formatted_body = ` * ${content.formatted_body}`;
+
+      if (isReply) {
+        const eBody = edit.getContent().body;
+        const replyHead = eBody.substring(0, eBody.indexOf('\n\n'));
+        if (replyHead) content.body = `${replyHead}\n\n${content.body}`;
+
+        const eFBody = edit.getContent().formatted_body;
+        const fReplyHead = eFBody.substring(0, eFBody.indexOf('</mx-reply>'));
+        if (fReplyHead) content.formatted_body = `${fReplyHead}</mx-reply>${content.formatted_body}`;
+      }
+    }
+
+    if (reply) {
+      content['m.relates_to'] = {
+        'm.in_reply_to': {
+          event_id: reply.eventId,
+        },
+      };
+
+      content.body = `> <${reply.userId}> ${reply.body.replace(/\n/g, '\n> ')}\n\n${content.body}`;
+
+      const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(roomId)}/${encodeURIComponent(reply.eventId)}">In reply to</a>`;
+      const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(reply.userId)}">${sanitizeText(reply.userId)}</a>`;
+      const fallback = `<mx-reply><blockquote>${replyToLink}${userLink}<br />${reply.formattedBody || sanitizeText(reply.body)}</blockquote></mx-reply>`;
+      content.formatted_body = fallback + content.formatted_body;
+    }
+
+    return content;
+  }
+
+  async sendInput(roomId, options) {
     const input = this.getInput(roomId);
     input.isSending = true;
     this.roomIdToInput.set(roomId, input);
@@ -286,38 +266,7 @@ class RoomsInput extends EventEmitter {
     }
 
     if (this.getMessage(roomId).trim() !== '') {
-      const rawMessage = input.message;
-      let content = {
-        body: rawMessage,
-        msgtype: msgType ?? 'm.text',
-      };
-
-      // Apply formatting if relevant
-      let formattedBody = settings.isMarkdown && autoMarkdown
-        ? getFormattedBody(rawMessage)
-        : sanitizeText(rawMessage);
-
-      if (autoMarkdown) {
-        formattedBody = formatUserPill(room, formattedBody);
-        formattedBody = formatEmoji(this.matrixClient, room, this.roomList, formattedBody);
-
-        content.body = findAndReplace(
-          content.body,
-          MXID_REGEX,
-          (match) => room.currentState.userIdsToDisplayNames[match[0]],
-          (match) => `@${room.currentState.userIdsToDisplayNames[match[0]]}`,
-        );
-      }
-
-      if (formattedBody !== sanitizeText(rawMessage)) {
-        // Formatting was applied, and we need to switch to custom HTML
-        content.format = 'org.matrix.custom.html';
-        content.formatted_body = formattedBody;
-      }
-
-      if (typeof input.replyTo !== 'undefined') {
-        content = bindReplyToContent(roomId, input.replyTo, content);
-      }
+      const content = this.getContent(roomId, options, input.message, input.replyTo);
       this.matrixClient.sendMessage(roomId, content);
     }
 
@@ -460,55 +409,13 @@ class RoomsInput extends EventEmitter {
   }
 
   async sendEditedMessage(roomId, mEvent, editedBody) {
-    const room = this.matrixClient.getRoom(roomId);
-    const isReply = typeof mEvent.getWireContent()['m.relates_to']?.['m.in_reply_to'] !== 'undefined';
-
-    const msgtype = mEvent.getWireContent().msgtype ?? 'm.text';
-
-    const content = {
-      body: ` * ${editedBody}`,
-      msgtype,
-      'm.new_content': {
-        body: editedBody,
-        msgtype,
-      },
-      'm.relates_to': {
-        event_id: mEvent.getId(),
-        rel_type: 'm.replace',
-      },
-    };
-
-    // Apply formatting if relevant
-    let formattedBody = settings.isMarkdown
-      ? getFormattedBody(editedBody)
-      : sanitizeText(editedBody);
-    formattedBody = formatUserPill(room, formattedBody);
-    formattedBody = formatEmoji(this.matrixClient, room, this.roomList, formattedBody);
-
-    content.body = findAndReplace(
-      content.body,
-      MXID_REGEX,
-      (match) => room.currentState.userIdsToDisplayNames[match[0]],
-      (match) => `@${room.currentState.userIdsToDisplayNames[match[0]]}`,
+    const content = this.getContent(
+      roomId,
+      { msgType: mEvent.getWireContent().msgtype },
+      editedBody,
+      null,
+      mEvent,
     );
-    if (formattedBody !== sanitizeText(editedBody)) {
-      content.formatted_body = ` * ${formattedBody}`;
-      content.format = 'org.matrix.custom.html';
-      content['m.new_content'].formatted_body = formattedBody;
-      content['m.new_content'].format = 'org.matrix.custom.html';
-    }
-    if (isReply) {
-      const evBody = mEvent.getContent().body;
-      const replyHead = evBody.slice(0, evBody.indexOf('\n\n'));
-      const evFBody = mEvent.getContent().formatted_body;
-      const fReplyHead = evFBody.slice(0, evFBody.indexOf('</mx-reply>'));
-
-      content.format = 'org.matrix.custom.html';
-      content.formatted_body = `${fReplyHead}</mx-reply>${(content.formatted_body || content.body)}`;
-
-      content.body = `${replyHead}\n\n${content.body}`;
-    }
-
     this.matrixClient.sendMessage(roomId, content);
   }
 }

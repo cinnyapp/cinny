@@ -375,6 +375,7 @@ class Navigation extends EventEmitter {
           action.userId,
           action.eventId,
           action.body,
+          action.formattedBody,
         );
       },
       [cons.actions.navigation.OPEN_SEARCH]: () => {
