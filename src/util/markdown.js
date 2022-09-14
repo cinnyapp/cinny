@@ -106,7 +106,13 @@ const markdownRules = {
   heading: {
     ...defaultRules.heading,
     match: blockRegex(/^ *(#{1,6}) ([^\n]+?)#* *(?:\n *)+\n/),
-    plain: (node, output, state) => `${'#'.repeat(node.level)} ${output(node.content, state)}\n\n`,
+    plain: (node, output, state) => {
+      const out = output(node.content, state);
+      if (state.kind === 'edit' || state.kind === 'notification' || node.level > 2) {
+        return `${'#'.repeat(node.level)} ${out}\n\n`;
+      }
+      return `${out}\n${(node.level === 1 ? '=' : '-').repeat(out.length)}\n\n`;
+    },
   },
   hr: {
     ...defaultRules.hr,
@@ -140,8 +146,8 @@ const markdownRules = {
     plain: (node, output, state) => {
       const header = node.header.map((content) => output(content, state));
 
-      function lineWidth(i) {
-        switch (node.align[i]) {
+      const colWidth = node.align.map((align) => {
+        switch (align) {
           case 'left':
           case 'right':
             return 2;
@@ -150,12 +156,14 @@ const markdownRules = {
           default:
             return 1;
         }
-      }
-      const colWidth = header.map((s, i) => Math.max(s.length, lineWidth(i)));
+      });
+      header.forEach((s, i) => {
+        if (s.length > colWidth[i])colWidth[i] = s.length;
+      });
 
       const cells = node.cells.map((row) => row.map((content, i) => {
         const s = output(content, state);
-        if (s.length > colWidth[i]) {
+        if (colWidth[i] === undefined || s.length > colWidth[i]) {
           colWidth[i] = s.length;
         }
         return s;
@@ -338,6 +346,19 @@ function mapElement(el) {
         start: el.getAttribute('start'),
         items: mapChildren(el),
       }];
+    case 'TABLE': {
+      const headerEl = Array.from(el.querySelector('thead > tr').childNodes);
+      const align = headerEl.map((childE) => childE.style['text-align']);
+      return [{
+        type: 'table',
+        header: headerEl.map(mapChildren),
+        align,
+        cells: Array.from(el.querySelectorAll('tbody > tr')).map((rowEl) => Array.from(rowEl.childNodes).map((childEl, i) => {
+          if (align[i] === undefined) align[i] = childEl.style['text-align'];
+          return mapChildren(childEl);
+        })),
+      }];
+    }
     case 'A':
       return [{
         type: 'link',
