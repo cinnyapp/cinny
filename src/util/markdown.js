@@ -266,7 +266,17 @@ const markdownRules = {
       content: parse(capture[1], state),
       reason: capture[2],
     }),
-    plain: (node, output, state) => `[spoiler${node.reason ? `: ${node.reason}` : ''}](${output(node.content, state)})`,
+    plain: (node, output, state) => {
+      const warning = `spoiler${node.reason ? `: ${node.reason}` : ''}`;
+      switch (state.kind) {
+        case 'edit':
+          return `||${output(node.content, state)}||`;
+        case 'notification':
+          return `<${warning}>`;
+        default:
+          return `[${warning}](${output(node.content, state)})`;
+      }
+    },
     html: (node, output, state) => htmlTag(
       'span',
       output(node.content, state),
