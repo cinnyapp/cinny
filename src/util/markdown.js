@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 import SimpleMarkdown from '@khanacademy/simple-markdown';
 
 const {
@@ -270,7 +271,7 @@ const markdownRules = {
       const warning = `spoiler${node.reason ? `: ${node.reason}` : ''}`;
       switch (state.kind) {
         case 'edit':
-          return `||${output(node.content, state)}||`;
+          return `||${output(node.content, state)}||${node.reason ? `(${node.reason})` : ''}`;
         case 'notification':
           return `<${warning}>`;
         default:
@@ -292,32 +293,134 @@ const markdownRules = {
   },
 };
 
-function genOut(rules) {
-  const parser = parserFor(rules);
+function mapElement(el) {
+  switch (el.tagName) {
+    case 'MX-REPLY':
+      return [];
 
-  const plainOut = outputFor(rules, 'plain');
-  const htmlOut = outputFor(rules, 'html');
+    case 'P':
+      return [{ type: 'paragraph', content: mapChildren(el) }];
+    case 'BR':
+      return [{ type: 'br' }];
 
-  return (source, state) => {
-    let content = parser(source, state);
+    case 'H1':
+    case 'H2':
+    case 'H3':
+    case 'H4':
+    case 'H5':
+    case 'H6':
+      return [{ type: 'heading', level: Number(el.tagName[1]), content: mapChildren(el) }];
+    case 'HR':
+      return [{ type: 'hr' }];
+    case 'BLOCKQUOTE':
+      return [{ type: 'blockQuote', content: mapChildren(el) }];
+    case 'UL':
+    case 'OL':
+      return [{
+        type: 'list',
+        ordered: el.tagName === 'OL',
+        start: el.getAttribute('start'),
+        items: mapChildren(el),
+      }];
+    case 'A':
+      return [{
+        type: 'link',
+        target: el.getAttribute('href'),
+        title: el.getAttribute('title'),
+        content: mapChildren(el),
+      }];
+    case 'IMG':
+      return [{
+        type: 'img',
+        alt: el.getAttribute('alt'),
+        target: el.getAttribute('src'),
+        title: el.getAttribute('title'),
+      }];
+    case 'EM':
+      return [{ type: 'em', content: mapChildren(el) }];
+    case 'STRONG':
+      return [{ type: 'strong', content: mapChildren(el) }];
+    case 'U':
+      return [{ type: 'u', content: mapChildren(el) }];
+    case 'DEL':
+      return [{ type: 'del', content: mapChildren(el) }];
+    case 'CODE':
+      return [{ type: 'code', content: el.innerText }];
 
-    if (content.length === 1 && content[0].type === 'paragraph') {
-      content = content[0].content;
-    }
+    case 'DIV':
+      if (el.hasAttribute('data-mx-maths')) {
+        return [{ type: 'displayMath', content: el.getAttribute('data-mx-maths') }];
+      }
+      return mapChildren(el);
+    case 'SPAN':
+      if (el.hasAttribute('data-mx-spoiler')) {
+        return [{ type: 'spoiler', reason: el.getAttribute('data-mx-spoiler'), content: mapChildren(el) }];
+      }
+      if (el.hasAttribute('data-mx-maths')) {
+        return [{ type: 'inlineMath', content: el.getAttribute('data-mx-maths') }];
+      }
+      return mapChildren(el);
 
-    const plain = plainOut(content, state).trim();
-    const html = htmlOut(content, state);
+    default:
+      return mapChildren(el);
+  }
+}
 
-    const plainHtml = html.replace(/<br>/g, '\n').replace(/<\/p><p>/g, '\n\n').replace(/<\/?p>/g, '');
-    const onlyPlain = sanitizeText(plain) === plainHtml;
+function mapNode(n) {
+  switch (n.nodeType) {
+    case Node.TEXT_NODE:
+      return [{ type: 'text', content: n.textContent }];
+    case Node.ELEMENT_NODE:
+      return mapElement(n);
+    default:
+      return [];
+  }
+}
 
-    return {
-      onlyPlain,
-      plain,
-      html,
-    };
+function mapChildren(n) {
+  return Array.from(n.childNodes).reduce((ast, childN) => {
+    ast.push(...mapNode(childN));
+    return ast;
+  }, []);
+}
+
+function render(content, state, plainOut, htmlOut) {
+  let c = content;
+  if (content.length === 1 && content[0].type === 'paragraph') {
+    c = c[0].content;
+  }
+
+  const plainStr = plainOut(c, state).trim();
+  const htmlStr = htmlOut(c, state);
+
+  const plainHtml = htmlStr.replace(/<br>/g, '\n').replace(/<\/p><p>/g, '\n\n').replace(/<\/?p>/g, '');
+  const onlyPlain = sanitizeText(plainStr) === plainHtml;
+
+  return {
+    onlyPlain,
+    plain: plainStr,
+    html: htmlStr,
   };
 }
 
-export const plain = genOut(plainRules);
-export const markdown = genOut(markdownRules);
+const plainParser = parserFor(plainRules);
+const plainPlainOut = outputFor(plainRules, 'plain');
+const plainHtmlOut = outputFor(plainRules, 'html');
+
+const mdParser = parserFor(markdownRules);
+const mdPlainOut = outputFor(markdownRules, 'plain');
+const mdHtmlOut = outputFor(markdownRules, 'html');
+
+export function plain(source, state) {
+  return render(plainParser(source, state), state, plainPlainOut, plainHtmlOut);
+}
+
+export function markdown(source, state) {
+  return render(mdParser(source, state), state, mdPlainOut, mdHtmlOut);
+}
+
+export function html(source, state) {
+  const el = document.createElement('template');
+  el.innerHTML = source;
+  return render(mapChildren(el.content), state, mdPlainOut, mdHtmlOut);
+}

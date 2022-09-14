@@ -199,7 +199,7 @@ class RoomsInput extends EventEmitter {
     const emojis = getShortcodeToEmoji(this.matrixClient, [room, ...parentRooms]);
 
     const output = settings.isMarkdown && autoMarkdown ? markdown : plain;
-    const body = output(message, { kind: 'edit', userNames, emojis });
+    const body = output(message, { userNames, emojis });
 
     const content = {
       body: body.plain,
