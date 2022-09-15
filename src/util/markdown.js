@@ -138,7 +138,7 @@ const markdownRules = {
   list: {
     ...defaultRules.list,
     plain: (node, output, state) => `${node.items.map((item, i) => {
-      const prefix = node.ordered ? `${node.start + i + 1}. ` : '* ';
+      const prefix = node.ordered ? `${node.start + i}. ` : '* ';
       return prefix + output(item, state).replace(/\n/g, `\n${' '.repeat(prefix.length)}`);
     }).join('\n')}\n`,
   },
@@ -327,14 +327,16 @@ function mapElement(el) {
       return [{ type: 'hr' }];
     case 'PRE': {
       let lang;
-      el.firstChild?.classList.find((c) => {
-        const langPrefix = 'language-';
-        if (c.startsWith(langPrefix)) {
-          lang = c.slice(langPrefix.length);
-          return true;
-        }
-        return false;
-      });
+      if (el.firstChild) {
+        Array.from(el.firstChild.classList).some((c) => {
+          const langPrefix = 'language-';
+          if (c.startsWith(langPrefix)) {
+            lang = c.slice(langPrefix.length);
+            return true;
+          }
+          return false;
+        });
+      }
       return [{ type: 'codeBlock', lang, content: el.innerText }];
     }
     case 'BLOCKQUOTE':
@@ -345,7 +347,7 @@ function mapElement(el) {
       return [{
         type: 'list',
         ordered: true,
-        start: el.getAttribute('start'),
+        start: Number(el.getAttribute('start')),
         items: mapChildren(el),
       }];
     case 'TABLE': {
@@ -387,7 +389,7 @@ function mapElement(el) {
     case 'STRIKE':
       return [{ type: 'del', content: mapChildren(el) }];
     case 'CODE':
-      return [{ type: 'code', content: el.innerText }];
+      return [{ type: 'inlineCode', content: el.innerText }];
 
     case 'DIV':
       if (el.hasAttribute('data-mx-maths')) {
