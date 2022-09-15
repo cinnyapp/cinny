@@ -29,6 +29,11 @@ function mathHtml(wrap, node) {
 
 const emojiRegex = /^:([\w-]+):/;
 
+function idRegex(sigil) {
+  const servername = '(?:[a-zA-Z0-9-.]+|\\[\\S+?\\])(?::\\d+)?';
+  return new RegExp(`^(${sigil}\\S+:${servername})`);
+}
+
 const plainRules = {
   Array: {
     ...defaultRules.Array,
@@ -36,7 +41,7 @@ const plainRules = {
   },
   userMention: {
     order: defaultRules.em.order - 0.9,
-    match: inlineRegex(/^(@\S+:\S+)/),
+    match: inlineRegex(idRegex('@')),
     parse: (capture, _, state) => ({
       content: state.userNames[capture[1]] ? `@${state.userNames[capture[1]]}` : capture[1],
       id: capture[1],
@@ -48,7 +53,7 @@ const plainRules = {
   },
   roomMention: {
     order: defaultRules.em.order - 0.8,
-    match: inlineRegex(/^(#\S+:\S+)/),
+    match: inlineRegex(idRegex('#')),
     parse: (capture) => ({ content: capture[1], id: capture[1] }),
     plain: (node) => node.content,
     html: (node) => htmlTag('a', sanitizeText(node.content), {
