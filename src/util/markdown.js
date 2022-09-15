@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 import SimpleMarkdown from '@khanacademy/simple-markdown';
-import { idRegex } from './common';
+import { idRegex, parseIdUri } from './common';
 
 const {
   defaultRules, parserFor, outputFor, anyScopeRegex, blockRegex, inlineRegex,
@@ -39,19 +39,18 @@ const plainRules = {
     order: defaultRules.em.order - 0.9,
     match: inlineRegex(idRegex('@', undefined, '^')),
     parse: (capture, _, state) => ({
+      type: 'mention',
       content: state.userNames[capture[1]] ? `@${state.userNames[capture[1]]}` : capture[1],
       id: capture[1],
-    }),
-    plain: (node) => node.content,
-    html: (node) => htmlTag('a', sanitizeText(node.content), {
-      href: `https://matrix.to/#/${encodeURIComponent(node.id)}`,
     }),
   },
   roomMention: {
     order: defaultRules.em.order - 0.8,
     match: inlineRegex(idRegex('#', undefined, '^')),
-    parse: (capture) => ({ content: capture[1], id: capture[1] }),
-    plain: (node) => node.content,
+    parse: (capture) => ({ type: 'mention', content: capture[1], id: capture[1] }),
+  },
+  mention: {
+    plain: (node, _, state) => (state.kind === 'edit' ? node.id : node.content),
     html: (node) => htmlTag('a', sanitizeText(node.content), {
       href: `https://matrix.to/#/${encodeURIComponent(node.id)}`,
     }),
@@ -364,13 +363,19 @@ function mapElement(el) {
         })),
       }];
     }
-    case 'A':
+    case 'A': {
+      const href = el.getAttribute('href');
+
+      const id = parseIdUri(href);
+      if (id) return [{ type: 'mention', content: el.innerText, id }];
+
       return [{
         type: 'link',
         target: el.getAttribute('href'),
         title: el.getAttribute('title'),
         content: mapChildren(el),
       }];
+    }
     case 'IMG':
       return [{
         type: 'img',

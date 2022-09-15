@@ -215,3 +215,16 @@ export function idRegex(sigil, flags, prefix) {
   const servername = '(?:[a-zA-Z0-9-.]*[a-zA-Z0-9]+|\\[\\S+?\\])(?::\\d+)?';
   return new RegExp(`${prefix}(${sigil}\\S+:${servername})`, flags);
 }
+
+const matrixToRegex = /^https?:\/\/matrix.to\/#\/(.+:.+)/;
+/**
+ * Parses a matrix.to URL into an matrix id.
+ * This function can later be extended to support matrix: URIs
+ * @param {string} uri The URI to parse
+ * @returns {string} The id or null if the URI does not match
+ */
+export function parseIdUri(uri) {
+  const res = decodeURIComponent(uri).match(matrixToRegex);
+  if (!res) return null;
+  return res[1];
+}
