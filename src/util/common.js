@@ -204,3 +204,14 @@ export function scaleDownImage(imageFile, width, height) {
     img.src = imgURL;
   });
 }
+
+/**
+ * @param {sigil} string sigil to search for (for example '@', '#' or '$')
+ * @param {flags} string regex flags
+ * @param {prefix} string prefix appended at the beginning of the regex
+ * @returns {RegExp}
+ */
+export function idRegex(sigil, flags, prefix) {
+  const servername = '(?:[a-zA-Z0-9-.]*[a-zA-Z0-9]+|\\[\\S+?\\])(?::\\d+)?';
+  return new RegExp(`${prefix}(${sigil}\\S+:${servername})`, flags);
+}
