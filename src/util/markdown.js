@@ -97,7 +97,7 @@ const plainRules = {
     ...defaultRules.text,
     match: anyScopeRegex(/^[\s\S]+?(?=[^0-9A-Za-z\s\u00c0-\uffff]| *\n|\w+:\S|$)/),
     plain: (node, _, state) => (state.kind === 'edit'
-      ? node.content.replace(/(\*|_|\|\||\$\$?)/g, '\\$1')
+      ? node.content.replace(/(\*|_|!\[|\[|\|\||\$\$?)/g, '\\$1')
       : node.content),
   },
 };
@@ -376,13 +376,30 @@ function mapElement(el) {
         content: mapChildren(el),
       }];
     }
-    case 'IMG':
+    case 'IMG': {
+      const src = el.getAttribute('src');
+      let title = el.getAttribute('title');
+      if (el.hasAttribute('data-mx-emoticon')) {
+        if (title.length > 2 && title.startsWith(':') && title.endsWith(':')) {
+          title = title.slice(1, -1);
+        }
+        return [{
+          type: 'emoji',
+          content: title,
+          emoji: {
+            mxc: src,
+            shortcode: title,
+          },
+        }];
+      }
+
       return [{
-        type: 'img',
+        type: 'image',
         alt: el.getAttribute('alt'),
-        target: el.getAttribute('src'),
-        title: el.getAttribute('title'),
+        target: src,
+        title,
       }];
+    }
     case 'EM':
     case 'I':
       return [{ type: 'em', content: mapChildren(el) }];
