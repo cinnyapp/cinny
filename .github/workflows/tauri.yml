@@ -61,7 +61,8 @@ jobs:
 
   # Linux-x86_64
   linux-x86_64:
-    runs-on: ubuntu-latest
+    # ubuntu-latest 22.04 is too recent for Rust apps.
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.0.2
