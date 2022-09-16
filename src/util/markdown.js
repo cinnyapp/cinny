@@ -462,6 +462,8 @@ function render(content, state, plainOut, htmlOut) {
   }
 
   const plainStr = plainOut(c, state).trim();
+  if (state.onlyPlain) return { plain: plainStr };
+
   const htmlStr = htmlOut(c, state);
 
   const plainHtml = htmlStr.replace(/<br>/g, '\n').replace(/<\/p><p>/g, '\n\n').replace(/<\/?p>/g, '');

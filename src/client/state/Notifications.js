@@ -260,7 +260,7 @@ class Notifications extends EventEmitter {
 
       const content = mEvent.getContent();
 
-      const state = { kind: 'notification' };
+      const state = { kind: 'notification', onlyPlain: true };
       let body;
       if (content.format === 'org.matrix.custom.html') {
         body = html(content.formatted_body, state);

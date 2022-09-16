@@ -803,7 +803,9 @@ function Message({
         )}
         {isEdit && (
           <MessageEdit
-            body={(customHTML ? html : plain)(customHTML || body, { kind: 'edit' }).plain}
+            body={(customHTML
+              ? html(customHTML, { kind: 'edit', onlyPlain: true }).plain
+              : plain(body, { kind: 'edit', onlyPlain: true }).plain)}
             onSave={(newBody) => {
               if (newBody !== body) {
                 initMatrix.roomsInput.sendEditedMessage(roomId, mEvent, newBody);
