@@ -40,6 +40,7 @@ import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
+import { html, plain } from '../../../util/markdown';
 
 function PlaceholderMessage() {
   return (
@@ -802,7 +803,9 @@ function Message({
         )}
         {isEdit && (
           <MessageEdit
-            body={body}
+            body={(customHTML
+              ? html(customHTML, { kind: 'edit', onlyPlain: true }).plain
+              : plain(body, { kind: 'edit', onlyPlain: true }).plain)}
             onSave={(newBody) => {
               if (newBody !== body) {
                 initMatrix.roomsInput.sendEditedMessage(roomId, mEvent, newBody);

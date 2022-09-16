@@ -1,4 +1,6 @@
+/* eslint-disable no-use-before-define */
 import SimpleMarkdown from '@khanacademy/simple-markdown';
+import { idRegex, parseIdUri } from './common';
 
 const {
   defaultRules, parserFor, outputFor, anyScopeRegex, blockRegex, inlineRegex,
@@ -31,25 +33,24 @@ const emojiRegex = /^:([\w-]+):/;
 const plainRules = {
   Array: {
     ...defaultRules.Array,
-    plain: (arr, output, state) => arr.map((node) => output(node, state)).join(''),
+    plain: defaultRules.Array.html,
   },
   userMention: {
     order: defaultRules.em.order - 0.9,
-    match: inlineRegex(/^(@\S+:\S+)/),
+    match: inlineRegex(idRegex('@', undefined, '^')),
     parse: (capture, _, state) => ({
+      type: 'mention',
       content: state.userNames[capture[1]] ? `@${state.userNames[capture[1]]}` : capture[1],
       id: capture[1],
-    }),
-    plain: (node) => node.content,
-    html: (node) => htmlTag('a', sanitizeText(node.content), {
-      href: `https://matrix.to/#/${encodeURIComponent(node.id)}`,
     }),
   },
   roomMention: {
     order: defaultRules.em.order - 0.8,
-    match: inlineRegex(/^(#\S+:\S+)/), // TODO: Handle line beginning with roomMention (instead of heading)
-    parse: (capture) => ({ content: capture[1], id: capture[1] }),
-    plain: (node) => node.content,
+    match: inlineRegex(idRegex('#', undefined, '^')),
+    parse: (capture) => ({ type: 'mention', content: capture[1], id: capture[1] }),
+  },
+  mention: {
+    plain: (node, _, state) => (state.kind === 'edit' ? node.id : node.content),
     html: (node) => htmlTag('a', sanitizeText(node.content), {
       href: `https://matrix.to/#/${encodeURIComponent(node.id)}`,
     }),
@@ -95,7 +96,7 @@ const plainRules = {
   text: {
     ...defaultRules.text,
     match: anyScopeRegex(/^[\s\S]+?(?=[^0-9A-Za-z\s\u00c0-\uffff]| *\n|\w+:\S|$)/),
-    plain: (node) => node.content,
+    plain: (node) => node.content.replace(/(\*|_|!\[|\[|\|\||\$\$?)/g, '\\$1'),
   },
 };
 
@@ -104,12 +105,13 @@ const markdownRules = {
   ...plainRules,
   heading: {
     ...defaultRules.heading,
+    match: blockRegex(/^ *(#{1,6})([^\n:]*?(?: [^\n]*?)?)#* *(?:\n *)+\n/),
     plain: (node, output, state) => {
       const out = output(node.content, state);
-      if (node.level <= 2) {
-        return `${out}\n${(node.level === 1 ? '=' : '-').repeat(out.length)}\n\n`;
+      if (state.kind === 'edit' || state.kind === 'notification' || node.level > 2) {
+        return `${'#'.repeat(node.level)} ${out}\n\n`;
       }
-      return `${'#'.repeat(node.level)} ${out}\n\n`;
+      return `${out}\n${(node.level === 1 ? '=' : '-').repeat(out.length)}\n\n`;
     },
   },
   hr: {
@@ -119,6 +121,9 @@ const markdownRules = {
   codeBlock: {
     ...defaultRules.codeBlock,
     plain: (node) => `\`\`\`${node.lang || ''}\n${node.content}\n\`\`\``,
+    html: (node) => htmlTag('pre', htmlTag('code', sanitizeText(node.content), {
+      class: node.lang ? `language-${node.lang}` : undefined,
+    })),
   },
   fence: {
     ...defaultRules.fence,
@@ -131,7 +136,7 @@ const markdownRules = {
   list: {
     ...defaultRules.list,
     plain: (node, output, state) => `${node.items.map((item, i) => {
-      const prefix = node.ordered ? `${node.start + i + 1}. ` : '* ';
+      const prefix = node.ordered ? `${node.start + i}. ` : '* ';
       return prefix + output(item, state).replace(/\n/g, `\n${' '.repeat(prefix.length)}`);
     }).join('\n')}\n`,
   },
@@ -141,8 +146,8 @@ const markdownRules = {
     plain: (node, output, state) => {
       const header = node.header.map((content) => output(content, state));
 
-      function lineWidth(i) {
-        switch (node.align[i]) {
+      const colWidth = node.align.map((align) => {
+        switch (align) {
           case 'left':
           case 'right':
             return 2;
@@ -151,12 +156,14 @@ const markdownRules = {
           default:
             return 1;
         }
-      }
-      const colWidth = header.map((s, i) => Math.max(s.length, lineWidth(i)));
+      });
+      header.forEach((s, i) => {
+        if (s.length > colWidth[i])colWidth[i] = s.length;
+      });
 
       const cells = node.cells.map((row) => row.map((content, i) => {
         const s = output(content, state);
-        if (s.length > colWidth[i]) {
+        if (colWidth[i] === undefined || s.length > colWidth[i]) {
           colWidth[i] = s.length;
         }
         return s;
@@ -228,10 +235,17 @@ const markdownRules = {
       }
       return out;
     },
-    html: (node, output, state) => htmlTag('a', output(node.content, state), {
-      href: sanitizeUrl(node.target) || '',
-      title: node.title,
-    }),
+    html: (node, output, state) => {
+      const out = output(node.content, state);
+      const target = sanitizeUrl(node.target) || '';
+      if (out !== target || node.title) {
+        return htmlTag('a', out, {
+          href: target,
+          title: node.title,
+        });
+      }
+      return target;
+    },
   },
   image: {
     ...defaultRules.image,
@@ -271,7 +285,17 @@ const markdownRules = {
       content: parse(capture[1], state),
       reason: capture[2],
     }),
-    plain: (node, output, state) => `[spoiler${node.reason ? `: ${node.reason}` : ''}](${output(node.content, state)})`,
+    plain: (node, output, state) => {
+      const warning = `spoiler${node.reason ? `: ${node.reason}` : ''}`;
+      switch (state.kind) {
+        case 'edit':
+          return `||${output(node.content, state)}||${node.reason ? `(${node.reason})` : ''}`;
+        case 'notification':
+          return `<${warning}>`;
+        default:
+          return `[${warning}](${output(node.content, state)})`;
+      }
+    },
     html: (node, output, state) => htmlTag(
       'span',
       output(node.content, state),
@@ -287,32 +311,189 @@ const markdownRules = {
   },
 };
 
-function genOut(rules) {
-  const parser = parserFor(rules);
+function mapElement(el) {
+  switch (el.tagName) {
+    case 'MX-REPLY':
+      return [];
 
-  const plainOut = outputFor(rules, 'plain');
-  const htmlOut = outputFor(rules, 'html');
+    case 'P':
+      return [{ type: 'paragraph', content: mapChildren(el) }];
+    case 'BR':
+      return [{ type: 'br' }];
 
-  return (source, state) => {
-    let content = parser(source, state);
-
-    if (content.length === 1 && content[0].type === 'paragraph') {
-      content = content[0].content;
+    case 'H1':
+    case 'H2':
+    case 'H3':
+    case 'H4':
+    case 'H5':
+    case 'H6':
+      return [{ type: 'heading', level: Number(el.tagName[1]), content: mapChildren(el) }];
+    case 'HR':
+      return [{ type: 'hr' }];
+    case 'PRE': {
+      let lang;
+      if (el.firstChild) {
+        Array.from(el.firstChild.classList).some((c) => {
+          const langPrefix = 'language-';
+          if (c.startsWith(langPrefix)) {
+            lang = c.slice(langPrefix.length);
+            return true;
+          }
+          return false;
+        });
+      }
+      return [{ type: 'codeBlock', lang, content: el.innerText }];
     }
+    case 'BLOCKQUOTE':
+      return [{ type: 'blockQuote', content: mapChildren(el) }];
+    case 'UL':
+      return [{ type: 'list', items: mapChildren(el) }];
+    case 'OL':
+      return [{
+        type: 'list',
+        ordered: true,
+        start: Number(el.getAttribute('start')),
+        items: mapChildren(el),
+      }];
+    case 'TABLE': {
+      const headerEl = Array.from(el.querySelector('thead > tr').childNodes);
+      const align = headerEl.map((childE) => childE.style['text-align']);
+      return [{
+        type: 'table',
+        header: headerEl.map(mapChildren),
+        align,
+        cells: Array.from(el.querySelectorAll('tbody > tr')).map((rowEl) => Array.from(rowEl.childNodes).map((childEl, i) => {
+          if (align[i] === undefined) align[i] = childEl.style['text-align'];
+          return mapChildren(childEl);
+        })),
+      }];
+    }
+    case 'A': {
+      const href = el.getAttribute('href');
 
-    const plain = plainOut(content, state).trim();
-    const html = htmlOut(content, state);
+      const id = parseIdUri(href);
+      if (id) return [{ type: 'mention', content: el.innerText, id }];
 
-    const plainHtml = html.replace(/<br>/g, '\n').replace(/<\/p><p>/g, '\n\n').replace(/<\/?p>/g, '');
-    const onlyPlain = sanitizeText(plain) === plainHtml;
+      return [{
+        type: 'link',
+        target: el.getAttribute('href'),
+        title: el.getAttribute('title'),
+        content: mapChildren(el),
+      }];
+    }
+    case 'IMG': {
+      const src = el.getAttribute('src');
+      let title = el.getAttribute('title');
+      if (el.hasAttribute('data-mx-emoticon')) {
+        if (title.length > 2 && title.startsWith(':') && title.endsWith(':')) {
+          title = title.slice(1, -1);
+        }
+        return [{
+          type: 'emoji',
+          content: title,
+          emoji: {
+            mxc: src,
+            shortcode: title,
+          },
+        }];
+      }
 
-    return {
-      onlyPlain,
-      plain,
-      html,
-    };
+      return [{
+        type: 'image',
+        alt: el.getAttribute('alt'),
+        target: src,
+        title,
+      }];
+    }
+    case 'EM':
+    case 'I':
+      return [{ type: 'em', content: mapChildren(el) }];
+    case 'STRONG':
+    case 'B':
+      return [{ type: 'strong', content: mapChildren(el) }];
+    case 'U':
+      return [{ type: 'u', content: mapChildren(el) }];
+    case 'DEL':
+    case 'STRIKE':
+      return [{ type: 'del', content: mapChildren(el) }];
+    case 'CODE':
+      return [{ type: 'inlineCode', content: el.innerText }];
+
+    case 'DIV':
+      if (el.hasAttribute('data-mx-maths')) {
+        return [{ type: 'displayMath', content: el.getAttribute('data-mx-maths') }];
+      }
+      return mapChildren(el);
+    case 'SPAN':
+      if (el.hasAttribute('data-mx-spoiler')) {
+        return [{ type: 'spoiler', reason: el.getAttribute('data-mx-spoiler'), content: mapChildren(el) }];
+      }
+      if (el.hasAttribute('data-mx-maths')) {
+        return [{ type: 'inlineMath', content: el.getAttribute('data-mx-maths') }];
+      }
+      return mapChildren(el);
+    default:
+      return mapChildren(el);
+  }
+}
+
+function mapNode(n) {
+  switch (n.nodeType) {
+    case Node.TEXT_NODE:
+      return [{ type: 'text', content: n.textContent }];
+    case Node.ELEMENT_NODE:
+      return mapElement(n);
+    default:
+      return [];
+  }
+}
+
+function mapChildren(n) {
+  return Array.from(n.childNodes).reduce((ast, childN) => {
+    ast.push(...mapNode(childN));
+    return ast;
+  }, []);
+}
+
+function render(content, state, plainOut, htmlOut) {
+  let c = content;
+  if (content.length === 1 && content[0].type === 'paragraph') {
+    c = c[0].content;
+  }
+
+  const plainStr = plainOut(c, state).trim();
+  if (state.onlyPlain) return { plain: plainStr };
+
+  const htmlStr = htmlOut(c, state);
+
+  const plainHtml = htmlStr.replace(/<br>/g, '\n').replace(/<\/p><p>/g, '\n\n').replace(/<\/?p>/g, '');
+  const onlyPlain = sanitizeText(plainStr) === plainHtml;
+
+  return {
+    onlyPlain,
+    plain: plainStr,
+    html: htmlStr,
   };
 }
 
-export const plain = genOut(plainRules);
-export const markdown = genOut(markdownRules);
+const plainParser = parserFor(plainRules);
+const plainPlainOut = outputFor(plainRules, 'plain');
+const plainHtmlOut = outputFor(plainRules, 'html');
+
+const mdParser = parserFor(markdownRules);
+const mdPlainOut = outputFor(markdownRules, 'plain');
+const mdHtmlOut = outputFor(markdownRules, 'html');
+
+export function plain(source, state) {
+  return render(plainParser(source, state), state, plainPlainOut, plainHtmlOut);
+}
+
+export function markdown(source, state) {
+  return render(mdParser(source, state), state, mdPlainOut, mdHtmlOut);
+}
+
+export function html(source, state) {
+  const el = document.createElement('template');
+  el.innerHTML = source;
+  return render(mapChildren(el.content), state, mdPlainOut, mdHtmlOut);
+}

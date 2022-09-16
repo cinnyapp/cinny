@@ -204,3 +204,27 @@ export function scaleDownImage(imageFile, width, height) {
     img.src = imgURL;
   });
 }
+
+/**
+ * @param {sigil} string sigil to search for (for example '@', '#' or '$')
+ * @param {flags} string regex flags
+ * @param {prefix} string prefix appended at the beginning of the regex
+ * @returns {RegExp}
+ */
+export function idRegex(sigil, flags, prefix) {
+  const servername = '(?:[a-zA-Z0-9-.]*[a-zA-Z0-9]+|\\[\\S+?\\])(?::\\d+)?';
+  return new RegExp(`${prefix}(${sigil}\\S+:${servername})`, flags);
+}
+
+const matrixToRegex = /^https?:\/\/matrix.to\/#\/(\S+:\S+)/;
+/**
+ * Parses a matrix.to URL into an matrix id.
+ * This function can later be extended to support matrix: URIs
+ * @param {string} uri The URI to parse
+ * @returns {string|null} The id or null if the URI does not match
+ */
+export function parseIdUri(uri) {
+  const res = decodeURIComponent(uri).match(matrixToRegex);
+  if (!res) return null;
+  return res[1];
+}
