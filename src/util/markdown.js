@@ -96,7 +96,9 @@ const plainRules = {
   text: {
     ...defaultRules.text,
     match: anyScopeRegex(/^[\s\S]+?(?=[^0-9A-Za-z\s\u00c0-\uffff]| *\n|\w+:\S|$)/),
-    plain: (node) => node.content.replace(/(\*|_|!\[|\[|\|\||\$\$?)/g, '\\$1'),
+    plain: (node, _, state) => (state.kind === 'edit'
+      ? node.content.replace(/(\*|_|!\[|\[|\|\||\$\$?)/g, '\\$1')
+      : node.content),
   },
 };
 
