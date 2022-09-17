@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-use-before-define */
 import SimpleMarkdown from '@khanacademy/simple-markdown';
 import { idRegex, parseIdUri } from './common';
@@ -137,10 +138,22 @@ const markdownRules = {
   },
   list: {
     ...defaultRules.list,
-    plain: (node, output, state) => `${node.items.map((item, i) => {
-      const prefix = node.ordered ? `${node.start + i}. ` : '* ';
-      return prefix + output(item, state).replace(/\n/g, `\n${' '.repeat(prefix.length)}`);
-    }).join('\n')}\n`,
+    plain: (node, output, state) => {
+      const oldList = state._list;
+      state._list = true;
+
+      let items = node.items.map((item, i) => {
+        const prefix = node.ordered ? `${node.start + i}. ` : '* ';
+        return prefix + output(item, state).replace(/\n/g, `\n${' '.repeat(prefix.length)}`);
+      }).join('\n');
+
+      state._list = oldList;
+
+      if (!state._list) {
+        items += '\n\n';
+      }
+      return items;
+    },
   },
   def: undefined,
   table: {
@@ -349,13 +362,13 @@ function mapElement(el) {
     case 'BLOCKQUOTE':
       return [{ type: 'blockQuote', content: mapChildren(el) }];
     case 'UL':
-      return [{ type: 'list', items: mapChildren(el) }];
+      return [{ type: 'list', items: Array.from(el.childNodes).map(mapNode) }];
     case 'OL':
       return [{
         type: 'list',
         ordered: true,
         start: Number(el.getAttribute('start')),
-        items: mapChildren(el),
+        items: Array.from(el.childNodes).map(mapNode),
       }];
     case 'TABLE': {
       const headerEl = Array.from(el.querySelector('thead > tr').childNodes);
