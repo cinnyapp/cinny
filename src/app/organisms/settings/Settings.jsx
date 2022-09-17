@@ -9,7 +9,6 @@ import {
   toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
   toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
-import logout from '../../../client/action/logout';
 import { usePermission } from '../../hooks/usePermission';
 
 import Text from '../../atoms/text/Text';
@@ -239,7 +238,7 @@ function AboutSection() {
             <div className="settings-about__btns">
               <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>Source code</Button>
               <Button onClick={() => window.open('https://cinny.in/#sponsor')}>Support</Button>
-              <Button onClick={() => settings.clearCacheAndReload()} variant="danger">Clear cache & reload</Button>
+              <Button onClick={() => initMatrix.clearCacheAndReload()} variant="danger">Clear cache & reload</Button>
             </div>
           </div>
         </div>
@@ -328,7 +327,7 @@ function Settings() {
   const handleTabChange = (tabItem) => setSelectedTab(tabItem);
   const handleLogout = async () => {
     if (await confirmDialog('Logout', 'Are you sure that you want to logout your session?', 'Logout', 'danger')) {
-      logout();
+      initMatrix.logout();
     }
   };
 

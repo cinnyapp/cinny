@@ -7,17 +7,20 @@ import { initRoomListListener } from '../../../client/event/roomList';
 import Text from '../../atoms/text/Text';
 import Spinner from '../../atoms/spinner/Spinner';
 import Navigation from '../../organisms/navigation/Navigation';
+import ContextMenu, { MenuItem } from '../../atoms/context-menu/ContextMenu';
+import IconButton from '../../atoms/button/IconButton';
 import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
 import Room from '../../organisms/room/Room';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
-import logout from '../../../client/action/logout';
 
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
+
+import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
@@ -74,9 +77,20 @@ function Client() {
   if (isLoading) {
     return (
       <div className="loading-display">
-        <button className="loading__logout" onClick={logout} type="button">
-          <Text variant="b3">Logout</Text>
-        </button>
+        <div className="loading__menu">
+          <ContextMenu
+            placement="bottom"
+            content={(
+              <>
+                <MenuItem onClick={() => initMatrix.clearCacheAndReload()}>
+                  Clear cache & reload
+                </MenuItem>
+                <MenuItem onClick={() => initMatrix.logout()}>Logout</MenuItem>
+              </>
+            )}
+            render={(toggle) => <IconButton size="extra-small" onClick={toggle} src={VerticalMenuIC} />}
+          />
+        </div>
         <Spinner />
         <Text className="loading__message" variant="b2">{loadingMsg}</Text>
 
