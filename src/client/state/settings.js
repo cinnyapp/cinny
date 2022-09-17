@@ -147,6 +147,14 @@ class Settings extends EventEmitter {
     return settings.isNotificationSounds;
   }
 
+  clearCacheAndReload() {
+    const mx = initMatrix.matrixClient;
+    mx.stopClient()
+    mx.store.deleteAllData().then(() => {
+        window.location.reload();
+    });
+}
+
   setter(action) {
     const actions = {
       [cons.actions.settings.TOGGLE_SYSTEM_THEME]: () => {
