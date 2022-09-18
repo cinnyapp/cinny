@@ -123,7 +123,7 @@ const markdownRules = {
   },
   codeBlock: {
     ...defaultRules.codeBlock,
-    plain: (node) => `\`\`\`${node.lang || ''}\n${node.content}\n\`\`\``,
+    plain: (node) => `\`\`\`${node.lang || ''}\n${node.content}\n\`\`\`\n`,
     html: (node) => htmlTag('pre', htmlTag('code', sanitizeText(node.content), {
       class: node.lang ? `language-${node.lang}` : undefined,
     })),
@@ -291,6 +291,7 @@ const markdownRules = {
   },
   inlineCode: {
     ...defaultRules.inlineCode,
+    match: inlineRegex(/^(`+)([^\n]*?[^`\n])\1(?!`)/),
     plain: (node) => `\`${node.content}\``,
   },
   spoiler: {
