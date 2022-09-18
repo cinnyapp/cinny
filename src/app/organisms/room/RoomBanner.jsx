@@ -21,10 +21,18 @@ function RoomBanner({ roomId }) {
 
   let partner = null;
 
+  if (isDM) {
+    partner = room.getAvatarFallbackMember();
+  }
+
+  const timezoneEventId = room.currentState.getStateEvents('in.cinny.shared_timezone', partner?.userId)?.event?.content?.user_timezone_event;
+  const timezoneEvent = room.findEventById(timezoneEventId);
+
+  let timezoneContent = null;
+
   const updateTime = () => {
     if (isDM) {
-      partner = room.getAvatarFallbackMember();
-      const timezone = room.currentState.getStateEvents('in.cinny.share_timezone', partner.userId)?.event?.content?.user_timezone;
+      const timezone = timezoneContent?.user_timezone;
       const date = new Date();
 
       try {
@@ -37,6 +45,18 @@ function RoomBanner({ roomId }) {
       }
     }
   };
+
+  if (timezoneEvent) {
+    if (!timezoneEvent.getClearContent()) {
+      timezoneEvent.attemptDecryption(mx.crypto);
+    }
+
+    timezoneContent = timezoneEvent.getContent();
+    timezoneEvent.getDecryptionPromise()?.then(() => {
+      timezoneContent = timezoneEvent.getContent();
+      updateTime();
+    });
+  }
 
   useEffect(() => {
     updateTime();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
@@ -12,19 +12,30 @@ function RoomTimezone({ roomId }) {
   const room = mx.getRoom(roomId);
   const userId = mx.getUserId();
 
-  const currentTimezone = room.currentState.getStateEvents('in.cinny.share_timezone', userId)?.event?.content?.user_timezone;
+  const timezoneEventId = room.currentState.getStateEvents('in.cinny.shared_timezone', userId)?.event?.content?.user_timezone_event;
+  const timezoneEvent = room.findEventById(timezoneEventId);
+  const timezoneContent = timezoneEvent?.getContent();
 
-  const [timezone, setTimezone] = useState(currentTimezone);
+  const [timezone, setTimezone] = useState(timezoneContent?.user_timezone);
 
   const clearTimezone = () => {
-    mx.sendStateEvent(roomId, 'in.cinny.share_timezone', { }, userId);
+    const eventKey = room.currentState.getStateEvents('in.cinny.shared_timezone', userId)?.event?.content?.user_timezone_event;
+    mx.redactEvent(roomId, eventKey);
+    mx.sendStateEvent(roomId, 'in.cinny.shared_timezone', { }, userId);
     setTimezone(null);
   };
 
   const shareTimezone = () => {
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setTimezone(userTimezone);
-    mx.sendStateEvent(roomId, 'in.cinny.share_timezone', { user_timezone: userTimezone }, userId);
+    const content = {
+      user_timezone: userTimezone,
+      msgtype: 'in.cinny.share_timezone',
+    };
+    mx.sendEvent(roomId, 'in.cinny.share_timezone', content).then((event) => {
+      // Append the shared timezone event to the room state
+      mx.sendStateEvent(roomId, 'in.cinny.shared_timezone', { user_timezone_event: event.event_id }, userId);
+    });
   };
 
   return (
