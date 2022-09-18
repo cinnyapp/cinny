@@ -115,6 +115,16 @@ export function avatarInitials(text) {
   return [...text][0];
 }
 
+export function cssVar(name) {
+  return getComputedStyle(document.body).getPropertyValue(name);
+}
+
+export function setFavicon(url) {
+  const favicon = document.querySelector('#favicon');
+  if (!favicon) return;
+  favicon.setAttribute('href', url);
+}
+
 export function copyToClipboard(text) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text);

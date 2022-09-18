@@ -7,10 +7,8 @@ on:
 
 jobs:
   deploy-to-netlify:
-    name: 'Deploy'
+    name: 'Deploy to Netlify'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3.0.2
@@ -18,12 +16,22 @@ jobs:
         uses: actions/setup-node@v3.4.1
         with:
           node-version: 17.9.0
-      - name: Build and deploy to Netlify
-        uses: jsmrcaga/action-netlify-deploy@53de32e559b0b3833615b9788c7a090cd2fddb03
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build app
+        run: npm run build
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@b7c1504e00c6b8a249d1848cc1b522a4865eed99
         with:
-          install_command: "npm ci"
+          publish-dir: dist
+          deploy-message: "Dev deploy ${{ github.sha }}"
+          enable-commit-comment: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          production-deploy: true
+          github-deployment-environment: nightly
+          github-deployment-description: 'Nightly deployment on each commit to dev branch'
+        env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE2_ID }}
-          BUILD_DIRECTORY: "dist"
-          NETLIFY_DEPLOY_MESSAGE: "Dev deploy v${{ github.ref }}"
-          NETLIFY_DEPLOY_TO_PROD: true
+        timeout-minutes: 1

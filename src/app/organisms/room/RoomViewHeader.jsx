@@ -33,9 +33,10 @@ function RoomViewHeader({ roomId }) {
   const [, forceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
-  let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
-  avatarSrc = isDM ? mx.getRoom(roomId).getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop') : avatarSrc;
-  const roomName = mx.getRoom(roomId).name;
+  const room = mx.getRoom(roomId);
+  let avatarSrc = room.getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
+  avatarSrc = isDM ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop') : avatarSrc;
+  const roomName = room.name;
 
   const roomHeaderBtnRef = useRef(null);
   useEffect(() => {
@@ -93,7 +94,7 @@ function RoomViewHeader({ roomId }) {
         </TitleWrapper>
         <RawIcon src={ChevronBottomIC} />
       </button>
-      <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="Search" src={SearchIC} />
+      {mx.isRoomEncrypted(roomId) === false && <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="Search" src={SearchIC} />}
       <IconButton className="room-header__drawer-btn" onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
       <IconButton className="room-header__members-btn" onClick={() => toggleRoomSettings(tabText.MEMBERS)} tooltip="Members" src={UserIC} />
       <IconButton

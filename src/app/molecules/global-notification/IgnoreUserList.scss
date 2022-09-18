@@ -1,0 +1,17 @@
+.ignore-user-list {
+  &__users {
+    & form,
+    & > div:last-child {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-tight);
+    }
+
+    & form {
+      margin: var(--sp-extra-tight) 0 var(--sp-normal);
+      .input-container {
+        flex-grow: 1;
+      }
+    }
+  }
+}

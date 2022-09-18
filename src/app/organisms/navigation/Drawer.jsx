@@ -56,7 +56,9 @@ function Drawer() {
 
   useEffect(() => {
     requestAnimationFrame(() => {
-      scrollRef.current.scrollTop = 0;
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = 0;
+      }
     });
   }, [selectedTab]);
 

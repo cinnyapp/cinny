@@ -1,5 +1,4 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require('webpack');
 
@@ -52,27 +51,12 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({ template: './public/index.html' }),
-    new FaviconsWebpackPlugin({
-      logo: './public/res/svg/cinny.svg',
-      mode: 'webapp',
-      devMode: 'light',
-      favicons: {
-        appName: 'Cinny',
-        appDescription: 'Yet another matrix client',
-        developerName: 'Ajay Bura',
-        developerURL: 'https://github.com/ajbura',
-        icons: {
-          coast: false,
-          yandex: false,
-          appleStartup: false,
-        }
-      }
-    }),
     new CopyPlugin({
       patterns: [
-        { from: 'olm.wasm' },
+        { from: 'node_modules/@matrix-org/olm/olm.wasm' },
         { from: '_redirects' },
         { from: 'config.json' },
+        { from: 'public/res/android'}
       ],
     }),
     new webpack.ProvidePlugin({
