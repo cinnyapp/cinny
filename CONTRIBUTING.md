@@ -41,4 +41,4 @@ Also, we use [ESLint](https://eslint.org/) for clean and stylistically consisten
 ## Helpful links
 - [BEM methodology](http://getbem.com/introduction/)
 - [Atomic design](https://bradfrost.com/blog/post/atomic-web-design/)
-- [Matrix JavaScript SDK documentation](https://matrix-org.github.io/matrix-js-sdk/19.2.0/index.html)
+- [Matrix JavaScript SDK documentation](https://matrix-org.github.io/matrix-js-sdk/index.html)
