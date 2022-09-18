@@ -108,7 +108,7 @@ const markdownRules = {
   ...plainRules,
   heading: {
     ...defaultRules.heading,
-    match: blockRegex(/^ *(#{1,6})([^\n:]*?(?: [^\n]*?)?)#* *(?:\n *)+\n/),
+    match: blockRegex(/^ *(#{1,6})([^\n:]*?(?: [^\n]*?)?)#* *(?:\n *)*\n/),
     plain: (node, output, state) => {
       const out = output(node.content, state);
       if (state.kind === 'edit' || state.kind === 'notification' || node.level > 2) {
