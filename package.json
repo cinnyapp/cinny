@@ -31,7 +31,7 @@
     "html-react-parser": "3.0.4",
     "katex": "0.16.2",
     "linkify-html": "4.0.0",
-    "linkifyjs": "4.0.0-beta.5",
+    "linkifyjs": "4.0.0",
     "matrix-js-sdk": "19.5.0",
     "prop-types": "15.8.1",
     "react": "17.0.2",
