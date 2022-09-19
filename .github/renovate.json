@@ -1,7 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:base",
+    ":dependencyDashboardApproval"
   ],
   "labels": [ "Dependencies" ],
   "packageRules": [
@@ -10,6 +11,5 @@
     }
   ],
   "lockFileMaintenance": { "enabled": true },
-  "dependencyDashboard": true,
-  "dependencyDashboardApproval": true
+  "dependencyDashboard": true
 }
