@@ -89,6 +89,10 @@ const plainRules = {
     plain: (node, output, state) => `${output(node.content, state)}\n\n`,
     html: (node, output, state) => htmlTag('p', output(node.content, state)),
   },
+  escape: {
+    ...defaultRules.escape,
+    plain: (node, output, state) => `\\${output(node.content, state)}`,
+  },
   br: {
     ...defaultRules.br,
     match: anyScopeRegex(/^ *\n/),
@@ -231,10 +235,6 @@ const markdownRules = {
     order: defaultRules.escape.order - 0.1,
     match: inlineRegex(/^¯\\_\(ツ\)_\/¯/),
     parse: (capture) => ({ type: 'text', content: capture[0] }),
-  },
-  escape: {
-    ...defaultRules.escape,
-    plain: (node, output, state) => `\\${output(node.content, state)}`,
   },
   tableSeparator: {
     ...defaultRules.tableSeparator,
