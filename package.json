@@ -17,7 +17,7 @@
   "dependencies": {
     "@fontsource/inter": "4.5.12",
     "@fontsource/roboto": "4.5.8",
-    "@khanacademy/simple-markdown": "0.8.3",
+    "@khanacademy/simple-markdown": "0.8.4",
     "@matrix-org/olm": "3.2.12",
     "@tippyjs/react": "4.2.6",
     "babel-polyfill": "6.26.0",
