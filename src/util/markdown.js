@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-use-before-define */
 import SimpleMarkdown from '@khanacademy/simple-markdown';
 import { idRegex, parseIdUri } from './common';
@@ -88,6 +89,10 @@ const plainRules = {
     plain: (node, output, state) => `${output(node.content, state)}\n\n`,
     html: (node, output, state) => htmlTag('p', output(node.content, state)),
   },
+  escape: {
+    ...defaultRules.escape,
+    plain: (node, output, state) => `\\${output(node.content, state)}`,
+  },
   br: {
     ...defaultRules.br,
     match: anyScopeRegex(/^ *\n/),
@@ -107,7 +112,7 @@ const markdownRules = {
   ...plainRules,
   heading: {
     ...defaultRules.heading,
-    match: blockRegex(/^ *(#{1,6})([^\n:]*?(?: [^\n]*?)?)#* *(?:\n *)+\n/),
+    match: blockRegex(/^ *(#{1,6})([^\n:]*?(?: [^\n]*?)?)#* *(?:\n *)*\n/),
     plain: (node, output, state) => {
       const out = output(node.content, state);
       if (state.kind === 'edit' || state.kind === 'notification' || node.level > 2) {
@@ -122,7 +127,7 @@ const markdownRules = {
   },
   codeBlock: {
     ...defaultRules.codeBlock,
-    plain: (node) => `\`\`\`${node.lang || ''}\n${node.content}\n\`\`\``,
+    plain: (node) => `\`\`\`${node.lang || ''}\n${node.content}\n\`\`\`\n`,
     html: (node) => htmlTag('pre', htmlTag('code', sanitizeText(node.content), {
       class: node.lang ? `language-${node.lang}` : undefined,
     })),
@@ -137,10 +142,22 @@ const markdownRules = {
   },
   list: {
     ...defaultRules.list,
-    plain: (node, output, state) => `${node.items.map((item, i) => {
-      const prefix = node.ordered ? `${node.start + i}. ` : '* ';
-      return prefix + output(item, state).replace(/\n/g, `\n${' '.repeat(prefix.length)}`);
-    }).join('\n')}\n`,
+    plain: (node, output, state) => {
+      const oldList = state._list;
+      state._list = true;
+
+      let items = node.items.map((item, i) => {
+        const prefix = node.ordered ? `${node.start + i}. ` : '* ';
+        return prefix + output(item, state).replace(/\n/g, `\n${' '.repeat(prefix.length)}`);
+      }).join('\n');
+
+      state._list = oldList;
+
+      if (!state._list) {
+        items += '\n\n';
+      }
+      return items;
+    },
   },
   def: undefined,
   table: {
@@ -219,10 +236,6 @@ const markdownRules = {
     match: inlineRegex(/^¯\\_\(ツ\)_\/¯/),
     parse: (capture) => ({ type: 'text', content: capture[0] }),
   },
-  escape: {
-    ...defaultRules.escape,
-    plain: (node, output, state) => `\\${output(node.content, state)}`,
-  },
   tableSeparator: {
     ...defaultRules.tableSeparator,
     plain: () => ' | ',
@@ -278,6 +291,7 @@ const markdownRules = {
   },
   inlineCode: {
     ...defaultRules.inlineCode,
+    match: inlineRegex(/^(`+)([^\n]*?[^`\n])\1(?!`)/),
     plain: (node) => `\`${node.content}\``,
   },
   spoiler: {
@@ -349,13 +363,13 @@ function mapElement(el) {
     case 'BLOCKQUOTE':
       return [{ type: 'blockQuote', content: mapChildren(el) }];
     case 'UL':
-      return [{ type: 'list', items: mapChildren(el) }];
+      return [{ type: 'list', items: Array.from(el.childNodes).map(mapNode) }];
     case 'OL':
       return [{
         type: 'list',
         ordered: true,
         start: Number(el.getAttribute('start')),
-        items: mapChildren(el),
+        items: Array.from(el.childNodes).map(mapNode),
       }];
     case 'TABLE': {
       const headerEl = Array.from(el.querySelector('thead > tr').childNodes);
