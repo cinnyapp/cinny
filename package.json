@@ -30,7 +30,7 @@
     "formik": "2.2.9",
     "html-react-parser": "3.0.4",
     "katex": "0.16.2",
-    "linkify-html": "4.0.0",
+    "linkify-html": "4.0.1",
     "linkifyjs": "4.0.1",
     "matrix-js-sdk": "20.0.1",
     "prop-types": "15.8.1",
