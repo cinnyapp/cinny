@@ -331,7 +331,7 @@ const markdownRules = {
   },
   inlineMath: {
     order: defaultRules.del.order + 0.2,
-    match: inlineRegex(/^\$(\S[\s\S]+?\S|\S)\$(?!\d)/),
+    match: inlineRegex(/^\$(\S[^\n]*?\S|\S)\$(?!\d)/),
     parse: (capture) => ({ content: capture[1] }),
     plain: (node) => `$${node.content}$`,
     html: (node) => mathHtml('span', node),
@@ -359,7 +359,7 @@ function mapElement(el) {
       return [{ type: 'hr' }];
     case 'PRE': {
       let lang;
-      if (el.firstChild) {
+      if (el.firstChild && el.firstChild.tagName === 'CODE') {
         Array.from(el.firstChild.classList).some((c) => {
           const langPrefix = 'language-';
           if (c.startsWith(langPrefix)) {
