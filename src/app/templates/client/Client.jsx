@@ -37,10 +37,14 @@ function Client() {
   function onRoomSelected() {
     navWrapperRef.current?.classList.add(classNameHidden);
     roomWrapperRef.current?.classList.remove(classNameHidden);
-    selectRoom(navigation.selectedRoomId);
+    if (settings.hideNavigation) {
+      selectRoom(navigation.selectedRoomId);
+      navWrapperRef.current?.classList.add(toggleHidden);
+    }
   }
   function onNavigationSelected() {
     navWrapperRef.current?.classList.remove(classNameHidden);
+    navWrapperRef.current?.classList.remove(toggleHidden);
     roomWrapperRef.current?.classList.add(classNameHidden);
   }
   function onNavigationToggled() {
