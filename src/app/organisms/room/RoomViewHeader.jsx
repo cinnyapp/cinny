@@ -8,7 +8,7 @@ import { blurOnBubbling } from '../../atoms/button/script';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { toggleRoomSettings, openReusableContextMenu, openNavigation } from '../../../client/action/navigation';
+import { toggleNavigation, toggleRoomSettings, openReusableContextMenu, openNavigation } from '../../../client/action/navigation';
 import { togglePeopleDrawer } from '../../../client/action/settings';
 import colorMXID from '../../../util/colorMXID';
 import { getEventCords } from '../../../util/common';
@@ -24,6 +24,7 @@ import RoomOptions from '../../molecules/room-options/RoomOptions';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
+import HomeIC from '../../../../public/res/ic/outlined/home.svg';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 import BackArrowIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 
@@ -76,10 +77,16 @@ function RoomViewHeader({ roomId }) {
   return (
     <Header>
       <IconButton
-        src={BackArrowIC}
+        src={HomeIC}
         className="room-header__back-btn"
         tooltip="Return to navigation"
         onClick={() => openNavigation()}
+      />
+      <IconButton
+        src={BackArrowIC}
+        className="room-header__hide-navigation-btn"
+        tooltip="Hide Navigation"
+        onClick={() => toggleNavigation()}
       />
       <button
         ref={roomHeaderBtnRef}

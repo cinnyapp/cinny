@@ -30,6 +30,12 @@ export function openNavigation() {
   });
 }
 
+export function toggleNavigation() {
+  appDispatcher.dispatch({
+    type: cons.actions.navigation.TOGGLE_NAVIGATION,
+  });
+}
+
 export function openSpaceSettings(roomId, tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SPACE_SETTINGS,

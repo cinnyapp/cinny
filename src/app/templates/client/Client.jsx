@@ -15,6 +15,7 @@ import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 
+import settings from '../../../client/state/settings';
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
@@ -24,9 +25,11 @@ import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
+  const [roomSelected, selectRoom] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
   const classNameHidden = 'client__item-hidden';
+  const toggleHidden = 'toggle-hidden';
 
   const navWrapperRef = useRef(null);
   const roomWrapperRef = useRef(null);
@@ -34,19 +37,25 @@ function Client() {
   function onRoomSelected() {
     navWrapperRef.current?.classList.add(classNameHidden);
     roomWrapperRef.current?.classList.remove(classNameHidden);
+    selectRoom(navigation.selectedRoomId);
   }
   function onNavigationSelected() {
     navWrapperRef.current?.classList.remove(classNameHidden);
     roomWrapperRef.current?.classList.add(classNameHidden);
   }
+  function onNavigationToggled() {
+    navWrapperRef.current?.classList.toggle(toggleHidden);
+  }
 
   useEffect(() => {
     navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
     navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
+    navigation.on(cons.events.navigation.NAVIGATION_TOGGLED, onNavigationToggled);
 
     return (() => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
       navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
+      navigation.removeListener(cons.events.navigation.NAVIGATION_TOGGLED, onNavigationToggled);
     });
   }, []);
 
@@ -165,7 +174,7 @@ function Client() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="navigation__wrapper" ref={navWrapperRef}>
+      <div className={`navigation__wrapper ${settings.hideNavigation && roomSelected ? toggleHidden : ''}`} ref={navWrapperRef}>
         <Navigation />
       </div>
       <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>

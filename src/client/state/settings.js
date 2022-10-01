@@ -25,6 +25,7 @@ class Settings extends EventEmitter {
 
     this.useSystemTheme = this.getUseSystemTheme();
     this.isMarkdown = this.getIsMarkdown();
+    this.hideNavigation = this.getHideNavigation();
     this.isPeopleDrawer = this.getIsPeopleDrawer();
     this.hideMembershipEvents = this.getHideMembershipEvents();
     this.hideNickAvatarEvents = this.getHideNickAvatarEvents();
@@ -86,6 +87,15 @@ class Settings extends EventEmitter {
     if (settings === null) return true;
     if (typeof settings.useSystemTheme === 'undefined') return true;
     return settings.useSystemTheme;
+  }
+
+  getHideNavigation() {
+    if (typeof this.hideNavigation === 'boolean') return this.hideNavigation;
+
+    const settings = getSettings();
+    if (settings === null) return false;
+    if (typeof settings.hideNavigation === 'undefined') return false;
+    return settings.hideNavigation;
   }
 
   getIsMarkdown() {
@@ -166,6 +176,11 @@ class Settings extends EventEmitter {
         this.hideMembershipEvents = !this.hideMembershipEvents;
         setSettings('hideMembershipEvents', this.hideMembershipEvents);
         this.emit(cons.events.settings.MEMBERSHIP_EVENTS_TOGGLED, this.hideMembershipEvents);
+      },
+      [cons.actions.settings.TOGGLE_HIDE_NAVIGATION]: () => {
+        this.hideNavigation = !this.hideNavigation;
+        setSettings('hideNavigation', this.hideNavigation);
+        this.emit(cons.events.settings.HIDE_NAVIGATION_TOGGLED, this.hideNavigation);
       },
       [cons.actions.settings.TOGGLE_NICKAVATAR_EVENT]: () => {
         this.hideNickAvatarEvents = !this.hideNickAvatarEvents;

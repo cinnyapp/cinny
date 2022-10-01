@@ -7,7 +7,7 @@ import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
   toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
-  toggleNotifications, toggleNotificationSounds,
+  toggleNotifications, toggleNotificationSounds, toggleHideNavigation,
 } from '../../../client/action/settings';
 import { usePermission } from '../../hooks/usePermission';
 
@@ -102,6 +102,16 @@ function AppearanceSection() {
             />
           )}
           content={<Text variant="b3">Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and Ban)</Text>}
+        />
+        <SettingTile
+          title="Hide navigation by default"
+          options={(
+            <Toggle
+              isActive={settings.hideNavigation}
+              onToggle={() => { toggleHideNavigation(); updateState({}); }}
+            />
+          )}
+          content={<Text variant="b3">Hide the navigation bar by default, when cinny is opened.</Text>}
         />
         <SettingTile
           title="Hide nick/avatar events"

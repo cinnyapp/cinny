@@ -25,6 +25,12 @@ export function toggleMembershipEvents() {
   });
 }
 
+export function toggleHideNavigation() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_HIDE_NAVIGATION,
+  });
+}
+
 export function toggleNickAvatarEvents() {
   appDispatcher.dispatch({
     type: cons.actions.settings.TOGGLE_NICKAVATAR_EVENT,
