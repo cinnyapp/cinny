@@ -153,10 +153,21 @@ const markdownRules = {
 
       state._list = oldList;
 
-      if (!state._list) {
+      if (state._list) {
+        items = `\n${items}`;
+      } else {
         items += '\n\n';
       }
       return items;
+    },
+    html: (node, output, state) => {
+      const items = node.items
+        .map((item) => htmlTag('li', output(item, state)))
+        .join('');
+
+      return htmlTag(node.ordered ? 'ol' : 'ul', items, {
+        start: node.start === 1 ? undefined : node.start,
+      });
     },
   },
   def: undefined,
@@ -358,7 +369,7 @@ function mapElement(el) {
           return false;
         });
       }
-      return [{ type: 'codeBlock', lang, content: el.innerText }];
+      return [{ type: 'codeBlock', lang, content: el.textContent }];
     }
     case 'BLOCKQUOTE':
       return [{ type: 'blockQuote', content: mapChildren(el) }];
@@ -368,7 +379,7 @@ function mapElement(el) {
       return [{
         type: 'list',
         ordered: true,
-        start: Number(el.getAttribute('start')),
+        start: Number(el.getAttribute('start')) || 1,
         items: Array.from(el.childNodes).map(mapNode),
       }];
     case 'TABLE': {
@@ -433,7 +444,7 @@ function mapElement(el) {
     case 'STRIKE':
       return [{ type: 'del', content: mapChildren(el) }];
     case 'CODE':
-      return [{ type: 'inlineCode', content: el.innerText }];
+      return [{ type: 'inlineCode', content: el.textContent }];
 
     case 'DIV':
       if (el.hasAttribute('data-mx-maths')) {

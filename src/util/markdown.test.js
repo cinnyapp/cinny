@@ -1,17 +1,21 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-undef */
 
-import { markdown } from './markdown';
+import { html, markdown } from './markdown';
 
-function mdTest(source, plain, html) {
+function mdTest(source, plain, htmlStr) {
   test(source, () => {
-    if (html === undefined) {
-      html = plain;
+    if (htmlStr === undefined) {
+      htmlStr = plain;
       plain = source;
     }
+
     const content = markdown(source, { kind: 'edit' });
     expect(content.plain).toBe(plain);
-    expect(content.html).toBe(html);
+    expect(content.html).toBe(htmlStr);
+
+    const htmlContent = html(htmlStr, { kind: 'edit', onlyPlain: true });
+    expect(htmlContent.plain).toBe(plain);
   });
 }
 
@@ -84,4 +88,20 @@ describe('blockquote', () => {
   mdTest('> multiline\nquote', '> multiline\n> quote', '<blockquote>multiline<br>quote</blockquote>');
 
   mdTest('> quote\n\ntext after', '<blockquote>quote</blockquote>text after');
+});
+
+describe('list', () => {
+  mdTest('* item1\n* item2', '<ul><li>item1</li><li>item2</li></ul>');
+  mdTest('- item1\n- item2', '* item1\n* item2', '<ul><li>item1</li><li>item2</li></ul>');
+
+  mdTest('1. item1\n2. item2', '<ol><li>item1</li><li>item2</li></ol>');
+  mdTest('2. item2\n3. item3', '<ol start="2"><li>item2</li><li>item3</li></ol>');
+
+  mdTest('* item1\n  * subitem1\n  * subitem2\n* item2', '<ul><li>item1<ul><li>subitem1</li><li>subitem2</li></ul></li><li>item2</li></ul>');
+
+  const elementHtml = '<ul><li>item1<ul><li>subitem1</li><li>subitem2</li></ul></li><li>item2</li></ul>';
+  test(elementHtml, () => {
+    const content = html(elementHtml, { kind: 'edit', onlyPlain: true });
+    expect(content.plain).toBe('* item1\n  * subitem1\n  * subitem2\n* item2');
+  });
 });
