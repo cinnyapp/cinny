@@ -89,7 +89,11 @@ describe('link', () => {
 //   mdTest('>quote', '> quote', '<blockquote>quote</blockquote>');
 //   mdTest('>    quote', '> quote', '<blockquote>quote</blockquote>');
 
-//   mdTest('> multiline\nquote', '> multiline\n> quote', '<blockquote>multiline<br>quote</blockquote>');
+// mdTest(
+//   '> multiline\nquote',
+//   '> multiline\n> quote',
+//   '<blockquote>multiline<br>quote</blockquote>',
+// );
 
 //   mdTest('> quote\n\ntext after', '<blockquote>quote</blockquote>text after');
 // });
@@ -101,11 +105,34 @@ describe('list', () => {
   mdTest('1. item1\n2. item2', '<ol><li>item1</li><li>item2</li></ol>');
   mdTest('2. item2\n3. item3', '<ol start="2"><li>item2</li><li>item3</li></ol>');
 
-  // mdTest('* item1\n  * subitem1\n  * subitem2\n* item2', '<ul><li>item1<ul><li>subitem1</li><li>subitem2</li></ul></li><li>item2</li></ul>');
+  // mdTest(
+  //   '* item1\n  * subitem1\n  * subitem2\n* item2',
+  //   '<ul><li>item1<ul><li>subitem1</li><li>subitem2</li></ul></li><li>item2</li></ul>',
+  // );
 
   const elementHtml = '<ul><li>item1<ul><li>subitem1</li><li>subitem2</li></ul></li><li>item2</li></ul>';
   test(elementHtml, () => {
     const content = html(elementHtml, { kind: 'edit', onlyPlain: true });
     expect(content.plain).toBe('* item1\n  * subitem1\n  * subitem2\n* item2');
+  });
+});
+
+describe('table', () => {
+  mdTest(
+    '|head1|head2|\n|-|-|\n|cell1|cell2|\n|cell3|cell4|',
+    '| head1 | head2 |\n| ----- | ----- |\n| cell1 | cell2 |\n| cell3 | cell4 |',
+    '<table><thead><tr><th scope="col">head1</th><th scope="col">head2</th></tr></thead><tbody><tr><td>cell1</td><td>cell2</td></tr><tr><td>cell3</td><td>cell4</td></tr></tbody></table>',
+  );
+
+  mdTest(
+    '| left | center | right |\n| :--- | :----: | ----: |\n| l    |   c    |     r |',
+    '<table><thead><tr><th scope="col" align="left">left</th><th scope="col" align="center">center</th><th scope="col" align="right">right</th></tr></thead><tbody><tr><td align="left">l</td><td align="center">c</td><td align="right">r</td></tr></tbody></table>',
+  );
+
+  const unknownAlignHtml = '<table><thead><tr><th align="unknown">head</th></tr></thead><tbody><tr><td>cell</td></tr></tbody></table>';
+  test(unknownAlignHtml, () => {
+    const content = html(unknownAlignHtml, { kind: 'edit' });
+    expect(content.plain).toBe('| head |\n| ---- |\n| cell |');
+    expect(content.html).toBe('<table><thead><tr><th scope="col">head</th></tr></thead><tbody><tr><td>cell</td></tr></tbody></table>');
   });
 });

@@ -199,7 +199,7 @@ const markdownRules = {
         return s;
       }));
 
-      function pad(s, i) {
+      const pad = (s, i) => {
         switch (node.align[i]) {
           case 'right':
             return s.padStart(colWidth[i]);
@@ -210,7 +210,7 @@ const markdownRules = {
           default:
             return s.padEnd(colWidth[i]);
         }
-      }
+      };
 
       const line = colWidth.map((len, i) => {
         switch (node.align[i]) {
@@ -231,6 +231,31 @@ const markdownRules = {
         ...cells.map((row) => row.map(pad))];
 
       return table.map((row) => `| ${row.join(' | ')} |\n`).join('');
+    },
+    html: (node, output, state) => {
+      const header = node.header
+        .map((content, i) => htmlTag('th', output(content, state), {
+          scope: 'col',
+          align: node.align[i] || undefined,
+        }))
+        .join('');
+
+      const rows = node.cells
+        .map((row) => {
+          const cols = row
+            .map((content, i) => htmlTag('td', output(content, state), {
+              align: node.align[i] || undefined,
+            }))
+            .join('');
+
+          return htmlTag('tr', cols);
+        })
+        .join('');
+
+      const thead = htmlTag('thead', htmlTag('tr', header));
+      const tbody = htmlTag('tbody', rows);
+
+      return htmlTag('table', thead + tbody);
     },
   },
   displayMath: {
@@ -383,14 +408,16 @@ function mapElement(el) {
         items: Array.from(el.childNodes).map(mapNode),
       }];
     case 'TABLE': {
+      const parseAlign = (s) => (['left', 'right', 'center'].includes(s) ? s : null);
+
       const headerEl = Array.from(el.querySelector('thead > tr').childNodes);
-      const align = headerEl.map((childE) => childE.style['text-align']);
+      const align = headerEl.map((childE) => parseAlign(childE.align));
       return [{
         type: 'table',
         header: headerEl.map(mapChildren),
         align,
         cells: Array.from(el.querySelectorAll('tbody > tr')).map((rowEl) => Array.from(rowEl.childNodes).map((childEl, i) => {
-          if (align[i] === undefined) align[i] = childEl.style['text-align'];
+          if (align[i] === undefined) align[i] = parseAlign(childEl.align);
           return mapChildren(childEl);
         })),
       }];
