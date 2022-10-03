@@ -89,10 +89,6 @@ const plainRules = {
     plain: (node, output, state) => `${output(node.content, state)}\n\n`,
     html: (node, output, state) => htmlTag('p', output(node.content, state)),
   },
-  escape: {
-    ...defaultRules.escape,
-    plain: (node, output, state) => `\\${output(node.content, state)}`,
-  },
   br: {
     ...defaultRules.br,
     match: anyScopeRegex(/^ *\n/),
@@ -153,10 +149,21 @@ const markdownRules = {
 
       state._list = oldList;
 
-      if (!state._list) {
+      if (state._list) {
+        items = `\n${items}`;
+      } else {
         items += '\n\n';
       }
       return items;
+    },
+    html: (node, output, state) => {
+      const items = node.items
+        .map((item) => htmlTag('li', output(item, state)))
+        .join('');
+
+      return htmlTag(node.ordered ? 'ol' : 'ul', items, {
+        start: node.start === 1 ? undefined : node.start,
+      });
     },
   },
   def: undefined,
@@ -177,7 +184,7 @@ const markdownRules = {
         }
       });
       header.forEach((s, i) => {
-        if (s.length > colWidth[i])colWidth[i] = s.length;
+        if (s.length > colWidth[i]) colWidth[i] = s.length;
       });
 
       const cells = node.cells.map((row) => row.map((content, i) => {
@@ -188,7 +195,7 @@ const markdownRules = {
         return s;
       }));
 
-      function pad(s, i) {
+      const pad = (s, i) => {
         switch (node.align[i]) {
           case 'right':
             return s.padStart(colWidth[i]);
@@ -199,7 +206,7 @@ const markdownRules = {
           default:
             return s.padEnd(colWidth[i]);
         }
-      }
+      };
 
       const line = colWidth.map((len, i) => {
         switch (node.align[i]) {
@@ -220,6 +227,31 @@ const markdownRules = {
         ...cells.map((row) => row.map(pad))];
 
       return table.map((row) => `| ${row.join(' | ')} |\n`).join('');
+    },
+    html: (node, output, state) => {
+      const header = node.header
+        .map((content, i) => htmlTag('th', output(content, state), {
+          scope: 'col',
+          align: node.align[i] || undefined,
+        }))
+        .join('');
+
+      const rows = node.cells
+        .map((row) => {
+          const cols = row
+            .map((content, i) => htmlTag('td', output(content, state), {
+              align: node.align[i] || undefined,
+            }))
+            .join('');
+
+          return htmlTag('tr', cols);
+        })
+        .join('');
+
+      const thead = htmlTag('thead', htmlTag('tr', header));
+      const tbody = htmlTag('tbody', rows);
+
+      return htmlTag('table', thead + tbody);
     },
   },
   displayMath: {
@@ -320,7 +352,7 @@ const markdownRules = {
   },
   inlineMath: {
     order: defaultRules.del.order + 0.2,
-    match: inlineRegex(/^\$(\S[\s\S]+?\S|\S)\$(?!\d)/),
+    match: inlineRegex(/^\$(\S[^\n]*?\S|\S)\$(?!\d)/),
     parse: (capture) => ({ content: capture[1] }),
     plain: (node) => `$${node.content}$`,
     html: (node) => mathHtml('span', node),
@@ -348,7 +380,7 @@ function mapElement(el) {
       return [{ type: 'hr' }];
     case 'PRE': {
       let lang;
-      if (el.firstChild) {
+      if (el.firstChild && el.firstChild.tagName === 'CODE') {
         Array.from(el.firstChild.classList).some((c) => {
           const langPrefix = 'language-';
           if (c.startsWith(langPrefix)) {
@@ -358,7 +390,7 @@ function mapElement(el) {
           return false;
         });
       }
-      return [{ type: 'codeBlock', lang, content: el.innerText }];
+      return [{ type: 'codeBlock', lang, content: el.textContent }];
     }
     case 'BLOCKQUOTE':
       return [{ type: 'blockQuote', content: mapChildren(el) }];
@@ -368,18 +400,20 @@ function mapElement(el) {
       return [{
         type: 'list',
         ordered: true,
-        start: Number(el.getAttribute('start')),
+        start: Number(el.getAttribute('start')) || 1,
         items: Array.from(el.childNodes).map(mapNode),
       }];
     case 'TABLE': {
+      const parseAlign = (s) => (['left', 'right', 'center'].includes(s) ? s : null);
+
       const headerEl = Array.from(el.querySelector('thead > tr').childNodes);
-      const align = headerEl.map((childE) => childE.style['text-align']);
+      const align = headerEl.map((childE) => parseAlign(childE.align));
       return [{
         type: 'table',
         header: headerEl.map(mapChildren),
         align,
         cells: Array.from(el.querySelectorAll('tbody > tr')).map((rowEl) => Array.from(rowEl.childNodes).map((childEl, i) => {
-          if (align[i] === undefined) align[i] = childEl.style['text-align'];
+          if (align[i] === undefined) align[i] = parseAlign(childEl.align);
           return mapChildren(childEl);
         })),
       }];
@@ -433,7 +467,7 @@ function mapElement(el) {
     case 'STRIKE':
       return [{ type: 'del', content: mapChildren(el) }];
     case 'CODE':
-      return [{ type: 'inlineCode', content: el.innerText }];
+      return [{ type: 'inlineCode', content: el.textContent }];
 
     case 'DIV':
       if (el.hasAttribute('data-mx-maths')) {
