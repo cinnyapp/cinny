@@ -5,11 +5,6 @@
     ":dependencyDashboardApproval"
   ],
   "labels": [ "Dependencies" ],
-  "packageRules": [
-    {
-    "matchUpdateTypes": [ "lockFileMaintenance" ]
-    }
-  ],
   "lockFileMaintenance": { "enabled": true },
   "dependencyDashboard": true
 }
