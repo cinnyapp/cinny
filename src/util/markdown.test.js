@@ -3,19 +3,33 @@
 
 import { html, markdown } from './markdown';
 
-function mdTest(source, plain, htmlStr) {
+function mdTest(source, plain, htmlStr, state) {
   test(source, () => {
+    if (typeof htmlStr === 'object') {
+      state = htmlStr;
+      htmlStr = undefined;
+    }
     if (htmlStr === undefined) {
       htmlStr = plain;
       plain = source;
     }
 
-    const content = markdown(source, { kind: 'edit' });
+    const content = markdown(source, { kind: 'edit', ...state });
     expect(content.plain).toBe(plain);
     expect(content.html).toBe(htmlStr);
 
-    const htmlContent = html(htmlStr, { kind: 'edit', onlyPlain: true });
+    const htmlContent = html(htmlStr, { kind: 'edit', onlyPlain: true, ...state });
     expect(htmlContent.plain).toBe(plain);
+  });
+}
+
+function htmlTest(source, plain, htmlStr) {
+  test(source, () => {
+    const content = html(source, { kind: 'edit', onlyPlain: htmlStr === undefined });
+    expect(content.plain).toBe(plain);
+    if (htmlStr !== undefined) {
+      expect(content.html).toBe(htmlStr);
+    }
   });
 }
 
@@ -28,6 +42,8 @@ describe('text', () => {
 
   // mdTest('¯\\_(ツ)_/¯', '¯\\_(ツ)_/¯');
   mdTest('¯\\_(ツ)_/¯', '¯\\\\_(ツ)\\_/¯', '¯\\_(ツ)_/¯');
+
+  mdTest('\\*escape*', '\\*escape\\*', '*escape*');
 });
 
 describe('inline', () => {
@@ -35,8 +51,29 @@ describe('inline', () => {
   mdTest('**bold**', '<strong>bold</strong>');
   mdTest('__underline__', '<u>underline</u>');
   mdTest('~~strikethrough~~', '<del>strikethrough</del>');
-  mdTest('||spoiler||', '<span data-mx-spoiler>spoiler</span>');
-  mdTest('||spoiler||(reason)', '<span data-mx-spoiler="reason">spoiler</span>');
+});
+
+describe('spoiler', () => {
+  mdTest('||content||', '<span data-mx-spoiler>content</span>');
+  mdTest('||content||(reason)', '<span data-mx-spoiler="reason">content</span>');
+
+  let content = markdown('||content||', { kind: 'notification', onlyPlain: true });
+  expect(content.plain).toBe('<spoiler>');
+
+  content = markdown('||content||(reason)', { kind: 'notification', onlyPlain: true });
+  expect(content.plain).toBe('<spoiler: reason>');
+
+  content = markdown('||content||', { onlyPlain: true });
+  expect(content.plain).toBe('[spoiler](content)');
+
+  content = markdown('||content||(reason)', { onlyPlain: true });
+  expect(content.plain).toBe('[spoiler: reason](content)');
+});
+
+describe('hr', () => {
+  mdTest('---', '<hr>');
+  mdTest('***', '---', '<hr>');
+  mdTest('___', '---', '<hr>');
 });
 
 describe('code', () => {
@@ -68,6 +105,9 @@ describe('heading', () => {
   mdTest('sub-heading\n---', '## sub-heading', '<h2>sub-heading</h2>');
 
   mdTest('###### small heading', '<h6>small heading</h6>');
+
+  mdTest('# heading', 'heading\n=======', '<h1>heading</h1>', { kind: '' });
+  mdTest('heading\n=======', '<h1>heading</h1>', { kind: '' });
 });
 
 describe('link', () => {
@@ -82,6 +122,30 @@ describe('link', () => {
   mdTest('[example](https://example.com)', '<a href="https://example.com">example</a>');
 
   mdTest('[empty]()', '<a href="">empty</a>');
+});
+
+describe('emoji', () => {
+  const emojis = new Map();
+
+  emojis.set('unicode', { unicode: 'u' });
+  mdTest(':unicode:', 'u', 'u', { emojis });
+
+  emojis.set('emoticon', { shortcode: 'shortcode', mxc: 'mxc://' });
+  mdTest(':emoticon:', ':shortcode:', '<img data-mx-emoticon src="mxc://" alt=":shortcode:" title=":shortcode:" height="32">', { emojis });
+
+  mdTest(':unknown:', ':unknown:', { emojis });
+  mdTest(':unicode:unknown:', 'uunknown:', 'uunknown:', { emojis });
+  mdTest(':unknown:unicode:', ':unknownu', ':unknownu', { emojis });
+});
+
+describe('mention', () => {
+  mdTest('#room:example.com', '<a href="https://matrix.to/#/%23room%3Aexample.com">#room:example.com</a>');
+});
+
+describe('image', () => {
+  mdTest('![alt](https://example.com)', '<img src="https://example.com" alt="alt">');
+
+  mdTest('![empty]()', '<img src="" alt="empty">');
 });
 
 // describe('blockquote', () => {
@@ -110,11 +174,10 @@ describe('list', () => {
   //   '<ul><li>item1<ul><li>subitem1</li><li>subitem2</li></ul></li><li>item2</li></ul>',
   // );
 
-  const elementHtml = '<ul><li>item1<ul><li>subitem1</li><li>subitem2</li></ul></li><li>item2</li></ul>';
-  test(elementHtml, () => {
-    const content = html(elementHtml, { kind: 'edit', onlyPlain: true });
-    expect(content.plain).toBe('* item1\n  * subitem1\n  * subitem2\n* item2');
-  });
+  htmlTest(
+    '<ul><li>item1<ul><li>subitem1</li><li>subitem2</li></ul></li><li>item2</li></ul>',
+    '* item1\n  * subitem1\n  * subitem2\n* item2',
+  );
 });
 
 describe('table', () => {
@@ -129,10 +192,18 @@ describe('table', () => {
     '<table><thead><tr><th scope="col" align="left">left</th><th scope="col" align="center">center</th><th scope="col" align="right">right</th></tr></thead><tbody><tr><td align="left">l</td><td align="center">c</td><td align="right">r</td></tr></tbody></table>',
   );
 
-  const unknownAlignHtml = '<table><thead><tr><th align="unknown">head</th></tr></thead><tbody><tr><td>cell</td></tr></tbody></table>';
-  test(unknownAlignHtml, () => {
-    const content = html(unknownAlignHtml, { kind: 'edit' });
-    expect(content.plain).toBe('| head |\n| ---- |\n| cell |');
-    expect(content.html).toBe('<table><thead><tr><th scope="col">head</th></tr></thead><tbody><tr><td>cell</td></tr></tbody></table>');
-  });
+  htmlTest(
+    '<table><thead><tr><th align="unknown">head</th></tr></thead><tbody><tr><td>cell</td></tr></tbody></table>',
+    '| head |\n| ---- |\n| cell |',
+    '<table><thead><tr><th scope="col">head</th></tr></thead><tbody><tr><td>cell</td></tr></tbody></table>',
+  );
+});
+
+describe('html', () => {
+  htmlTest('<div>text</div>', 'text');
+  htmlTest('<span>text</span>', 'text');
+
+  htmlTest('<!-- comment -->', '');
+
+  htmlTest('<mx-reply>reply</mx-reply>', '', '');
 });

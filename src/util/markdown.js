@@ -89,10 +89,6 @@ const plainRules = {
     plain: (node, output, state) => `${output(node.content, state)}\n\n`,
     html: (node, output, state) => htmlTag('p', output(node.content, state)),
   },
-  escape: {
-    ...defaultRules.escape,
-    plain: (node, output, state) => `\\${output(node.content, state)}`,
-  },
   br: {
     ...defaultRules.br,
     match: anyScopeRegex(/^ *\n/),
@@ -188,7 +184,7 @@ const markdownRules = {
         }
       });
       header.forEach((s, i) => {
-        if (s.length > colWidth[i])colWidth[i] = s.length;
+        if (s.length > colWidth[i]) colWidth[i] = s.length;
       });
 
       const cells = node.cells.map((row) => row.map((content, i) => {
