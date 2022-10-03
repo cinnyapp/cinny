@@ -237,7 +237,7 @@ async function createRoom(opts) {
   }
   if (parentId && joinRule === 'restricted') {
     const caps = await mx.getCapabilities();
-    if (!caps['m.room_versions'].available?.['9'] !== 'stable') {
+    if (caps['m.room_versions'].available?.['9'] !== 'stable') {
       throw new Error("ERROR: The server doesn't support restricted rooms");
     }
     if (Number(caps['m.room_versions'].default) < 9) {
