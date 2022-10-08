@@ -52,5 +52,5 @@ export function toggleShowRoomListAvatar() {
 export function toggleShowYoutubeEmbedPlayer() {
   appDispatcher.dispatch({
     type: cons.actions.settings.TOGGLE_SHOW_YOUTUBE_EMBED_PLAYER,
-  })
+  });
 }
