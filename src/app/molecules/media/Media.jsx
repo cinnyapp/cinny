@@ -15,6 +15,7 @@ import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
 import PlaySVG from '../../../../public/res/ic/outlined/play.svg';
 
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
+import initMatrix from '../../../client/initMatrix';
 
 async function getDecryptedBlob(response, type, decryptData) {
   const arrayBuffer = await response.arrayBuffer();
@@ -361,6 +362,83 @@ Video.propTypes = {
   blurhash: PropTypes.string,
 };
 
+function YoutubeEmbed({ link }) {
+  const url = new URL(link);
+
+  const [urlPreviewInfo, setUrlPreviewInfo] = useState(null);
+  const [videoStarted, setVideoStarted] = useState(false);
+
+  const mx = initMatrix.matrixClient;
+
+  const handlePlayVideo = () => {
+    setVideoStarted(true);
+  };
+
+  useEffect(() => {
+    let unmounted = false;
+
+    async function getThumbnail() {
+      const info = await mx.getUrlPreview(link, 0);
+      if (unmounted) return;
+
+      setUrlPreviewInfo(info);
+    }
+
+    getThumbnail();
+
+    return () => {
+      unmounted = true;
+    };
+  });
+
+  let embedURL = `https://www.youtube-nocookie.com/embed/${url.searchParams.get('v')}?autoplay=1`;
+  if (url.searchParams.has('t')) {
+    embedURL += `&start=${url.searchParams.get('t')}`;
+  }
+
+  return (
+    <div className="file-container">
+      {urlPreviewInfo !== null && (
+        <div>
+
+          <div className="file-header">
+            <Text className="file-name" variant="b3">{`Youtube - ${urlPreviewInfo['og:title']}`}</Text>
+
+            <IconButton
+              size="extra-small"
+              tooltip="Open in new tab"
+              src={ExternalSVG}
+              onClick={() => window.open(link)}
+            />
+          </div>
+
+          <div
+            className="video-container"
+          >
+            {!videoStarted && <img src={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])} alt="Youtube thumbnail" />}
+            {!videoStarted && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
+
+            {videoStarted && (
+            <iframe
+              src={embedURL}
+              title="YouTube video player"
+              frameborder="0"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+            )}
+
+          </div>
+        </div>
+      )}
+    </div>
+
+  );
+}
+YoutubeEmbed.propTypes = {
+  link: PropTypes.string.isRequired,
+};
+
 export {
-  File, Image, Sticker, Audio, Video,
+  File, Image, Sticker, Audio, Video, YoutubeEmbed,
 };

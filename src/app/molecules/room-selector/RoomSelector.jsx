@@ -5,10 +5,12 @@ import './RoomSelector.scss';
 import { twemojify } from '../../../util/twemojify';
 import colorMXID from '../../../util/colorMXID';
 
+import initMatrix from '../../../client/initMatrix';
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
 import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
+import settings from '../../../client/state/settings';
 
 function RoomSelectorWrapper({
   isSelected, isMuted, isUnread, onClick,
@@ -54,6 +56,13 @@ function RoomSelector({
   isSelected, isMuted, isUnread, notificationCount, isAlert,
   options, onClick, onContextMenu,
 }) {
+  let avatarSrc;
+  if (settings.showRoomListAvatar) {
+    const mx = initMatrix.matrixClient;
+    const room = mx.getRoom(roomId);
+    avatarSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop');
+  }
+
   return (
     <RoomSelectorWrapper
       isSelected={isSelected}
@@ -61,6 +70,7 @@ function RoomSelector({
       isUnread={isUnread}
       content={(
         <>
+          {!settings.showRoomListAvatar && (
           <Avatar
             text={name}
             bgColor={colorMXID(roomId)}
@@ -69,6 +79,15 @@ function RoomSelector({
             iconSrc={iconSrc}
             size="extra-small"
           />
+          )}
+          {settings.showRoomListAvatar && (
+          <Avatar
+            text={name}
+            bgColor={colorMXID(roomId)}
+            imageSrc={avatarSrc}
+            size="extra-small"
+          />
+          )}
           <Text variant="b1" weight={isUnread ? 'medium' : 'normal'}>
             {twemojify(name)}
             {parentName && (

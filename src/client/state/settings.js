@@ -30,6 +30,8 @@ class Settings extends EventEmitter {
     this.hideNickAvatarEvents = this.getHideNickAvatarEvents();
     this._showNotifications = this.getShowNotifications();
     this.isNotificationSounds = this.getIsNotificationSounds();
+    this.showRoomListAvatar = this.getShowRoomListAvatar();
+    this.showYoutubeEmbedPlayer = this.getShowYoutubeEmbedPlayer();
 
     this.isTouchScreenDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
   }
@@ -147,6 +149,38 @@ class Settings extends EventEmitter {
     return settings.isNotificationSounds;
   }
 
+  toggleShowRoomListAvatar() {
+    this.showRoomListAvatar = !this.showRoomListAvatar;
+    setSettings('showRoomListAvatar', this.showRoomListAvatar);
+
+    this.emit(cons.events.settings.SHOW_ROOM_LIST_AVATAR_TOGGLED, this.showRoomListAvatar);
+  }
+
+  getShowRoomListAvatar() {
+    if (typeof this.showRoomListAvatar === 'boolean') return this.showRoomListAvatar;
+
+    const settings = getSettings();
+    if (settings === null) return false;
+    if (typeof settings.showRoomListAvatar === 'undefined') return false;
+    return settings.showRoomListAvatar;
+  }
+
+  toggleShowYoutubeEmbedPlayer() {
+    this.showYoutubeEmbedPlayer = !this.showYoutubeEmbedPlayer;
+    setSettings('showYoutubeEmbedPlayer', this.showYoutubeEmbedPlayer);
+
+    this.emit(cons.events.settings.SHOW_YOUTUBE_EMBED_PLAYER_TOGGLED, this.showYoutubeEmbedPlayer);
+  }
+
+  getShowYoutubeEmbedPlayer() {
+    if (typeof this.showYoutubeEmbedPlayer === 'boolean') return this.showYoutubeEmbedPlayer;
+
+    const settings = getSettings();
+    if (settings === null) return false;
+    if (typeof settings.showYoutubeEmbedPlayer === 'undefined') return false;
+    return settings.showYoutubeEmbedPlayer;
+  }
+
   setter(action) {
     const actions = {
       [cons.actions.settings.TOGGLE_SYSTEM_THEME]: () => {
@@ -185,6 +219,12 @@ class Settings extends EventEmitter {
         this.isNotificationSounds = !this.isNotificationSounds;
         setSettings('isNotificationSounds', this.isNotificationSounds);
         this.emit(cons.events.settings.NOTIFICATION_SOUNDS_TOGGLED, this.isNotificationSounds);
+      },
+      [cons.actions.settings.TOGGLE_SHOW_ROOM_LIST_AVATAR]: () => {
+        this.toggleShowRoomListAvatar();
+      },
+      [cons.actions.settings.TOGGLE_SHOW_YOUTUBE_EMBED_PLAYER]: () => {
+        this.toggleShowYoutubeEmbedPlayer();
       },
     };
 

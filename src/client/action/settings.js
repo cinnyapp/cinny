@@ -42,3 +42,15 @@ export function toggleNotificationSounds() {
     type: cons.actions.settings.TOGGLE_NOTIFICATION_SOUNDS,
   });
 }
+
+export function toggleShowRoomListAvatar() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_SHOW_ROOM_LIST_AVATAR,
+  });
+}
+
+export function toggleShowYoutubeEmbedPlayer() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_SHOW_YOUTUBE_EMBED_PLAYER,
+  })
+}

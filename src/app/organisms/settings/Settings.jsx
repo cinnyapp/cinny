@@ -7,7 +7,7 @@ import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
   toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
-  toggleNotifications, toggleNotificationSounds,
+  toggleNotifications, toggleNotificationSounds, toggleShowRoomListAvatar, toggleShowYoutubeEmbedPlayer,
 } from '../../../client/action/settings';
 import { usePermission } from '../../hooks/usePermission';
 
@@ -79,6 +79,26 @@ function AppearanceSection() {
               }}
             />
         )}
+        />
+        <SettingTile
+          title="Show room-list avatar"
+          options={(
+            <Toggle
+              isActive={settings.showRoomListAvatar}
+              onToggle={() => { toggleShowRoomListAvatar(); updateState({}); }}
+            />
+          )}
+          content={<Text variant="b3">Will show room avatars in the room list.</Text>}
+        />
+        <SettingTile
+          title="Show Youtube embed player"
+          options={(
+            <Toggle
+              isActive={settings.showYoutubeEmbedPlayer}
+              onToggle={() => { toggleShowYoutubeEmbedPlayer(); updateState({}); }}
+            />
+              )}
+          content={<Text variant="b3">Will show a youtube embed player for youtube links.</Text>}
         />
       </div>
       <div className="settings-appearance__card">
