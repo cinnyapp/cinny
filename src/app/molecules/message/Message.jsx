@@ -5,6 +5,7 @@ import React, {
 import PropTypes from 'prop-types';
 import './Message.scss';
 
+import { find } from 'linkifyjs';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -29,7 +30,6 @@ import IconButton from '../../atoms/button/IconButton';
 import Time from '../../atoms/time/Time';
 import ContextMenu, { MenuHeader, MenuItem, MenuBorder } from '../../atoms/context-menu/ContextMenu';
 import * as Media from '../media/Media';
-import settings from '../../../client/state/settings';
 
 import ReplyArrowIC from '../../../../public/res/ic/outlined/reply-arrow.svg';
 import EmojiAddIC from '../../../../public/res/ic/outlined/emoji-add.svg';
@@ -42,7 +42,7 @@ import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
 import { html, plain } from '../../../util/markdown';
-import { YoutubeEmbed } from '../media/Media';
+import { Embed } from '../media/Media';
 
 function PlaceholderMessage() {
   return (
@@ -718,8 +718,9 @@ function getEditedBody(editedMEvent) {
   return [parsedContent.body, isCustomHTML, newContent.formatted_body ?? null];
 }
 
-function findYoutubeLinks(body) {
-  return [...new Set(body.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[^ \n]+/g))] ?? [];
+function findLinks(body) {
+  return find(body, 'url')
+    .filter((v, i, a) => a.findIndex((v2) => (v2.href === v.href)) === i);
 }
 
 function Message({
@@ -807,8 +808,8 @@ function Message({
             isEdited={isEdited}
           />
         )}
-        {settings.showYoutubeEmbedPlayer && findYoutubeLinks(body).map((link) => (
-          <YoutubeEmbed key={link} link={link} />
+        {findLinks(body).map((link) => (
+          <Embed key={link.href} link={link.href} />
         ))}
         {isEdit && (
           <MessageEdit

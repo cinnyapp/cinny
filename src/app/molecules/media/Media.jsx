@@ -16,6 +16,7 @@ import PlaySVG from '../../../../public/res/ic/outlined/play.svg';
 
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
 import initMatrix from '../../../client/initMatrix';
+import settings from '../../../client/state/settings';
 
 async function getDecryptedBlob(response, type, decryptData) {
   const arrayBuffer = await response.arrayBuffer();
@@ -362,23 +363,106 @@ Video.propTypes = {
   blurhash: PropTypes.string,
 };
 
-function YoutubeEmbed({ link }) {
-  const url = new URL(link);
-
-  const [urlPreviewInfo, setUrlPreviewInfo] = useState(null);
+function IframePlayer({
+  children, link, sitename, title, thumbnail,
+}) {
   const [videoStarted, setVideoStarted] = useState(false);
-
-  const mx = initMatrix.matrixClient;
 
   const handlePlayVideo = () => {
     setVideoStarted(true);
   };
 
+  return (
+    <div className="file-container">
+      <div className="file-header">
+        <Text className="file-name" variant="b3">{`${sitename} - ${title}`}</Text>
+
+        <IconButton
+          size="extra-small"
+          tooltip="Open in new tab"
+          src={ExternalSVG}
+          onClick={() => window.open(link)}
+        />
+      </div>
+
+      <div
+        className="video-container"
+      >
+        {!videoStarted && <img src={thumbnail} alt={`${sitename} thumbnail`} />}
+        {!videoStarted && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
+
+        {videoStarted && (
+          <div>
+            {children}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+IframePlayer.propTypes = {
+  children: PropTypes.node.isRequired,
+  link: PropTypes.string.isRequired,
+  sitename: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  thumbnail: PropTypes.string.isRequired,
+};
+
+function Embed({ link }) {
+  const url = new URL(link);
+
+  if (settings.showYoutubeEmbedPlayer && (((url.host === 'www.youtube.com' || url.host === 'youtube.com') && url.pathname === '/watch') || url.host === 'youtu.be' || url.host === 'www.youtu.be')) {
+    return <YoutubeEmbed link={link} />;
+  }
+
+  // TODO: url preview
+  // const [urlPreviewInfo, setUrlPreviewInfo] = useState(null);
+  // const mx = initMatrix.matrixClient;
+
+  // useEffect(() => {
+  //   let unmounted = false;
+
+  //   async function getThumbnail() {
+  //     const info = await mx.getUrlPreview(link, 0);
+  //     console.log('DEBUG', info);
+  //     if (unmounted) return;
+
+  //     setUrlPreviewInfo(info);
+  //   }
+
+  //   getThumbnail();
+
+  //   return () => {
+  //     unmounted = true;
+  //   };
+  // });
+
+  // if (urlPreviewInfo !== null) {
+  //   return <div>url preview here!/div>;
+  // }
+
+  return null;
+}
+Embed.propTypes = {
+  link: PropTypes.string.isRequired,
+};
+
+function YoutubeEmbed({ link }) {
+  const [urlPreviewInfo, setUrlPreviewInfo] = useState(null);
+  const mx = initMatrix.matrixClient;
+  const url = new URL(link);
+
+  // fix for no embed information on www.youtu.be
+  if (url.host === 'www.youtu.be') {
+    url.host = 'youtu.be';
+  }
+
   useEffect(() => {
     let unmounted = false;
 
     async function getThumbnail() {
-      const info = await mx.getUrlPreview(link, 0);
+      const info = await mx.getUrlPreview(url.toString(), 0);
       if (unmounted) return;
 
       setUrlPreviewInfo(info);
@@ -391,54 +475,38 @@ function YoutubeEmbed({ link }) {
     };
   });
 
-  let embedURL = `https://www.youtube-nocookie.com/embed/${url.searchParams.get('v')}?autoplay=1`;
-  if (url.searchParams.has('t')) {
+  let videoID;
+  if (url.host === 'youtu.be' || url.host === 'www.youtu.be') {
+    videoID = url.pathname.slice(1);
+  } else {
+    videoID = url.searchParams.get('v');
+  }
+
+  let embedURL = `https://www.youtube-nocookie.com/embed/${videoID}?autoplay=1`;
+  if (url.searchParams.has('t')) { // timestamp flag
     embedURL += `&start=${url.searchParams.get('t')}`;
   }
 
-  return (
-    <div className="file-container">
-      {urlPreviewInfo !== null && (
-        <div>
+  if (urlPreviewInfo !== null) {
+    return (
+      <IframePlayer link={link} sitename="Youtube" title={urlPreviewInfo['og:title']} thumbnail={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}>
+        <iframe
+          src={embedURL}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </IframePlayer>
+    );
+  }
 
-          <div className="file-header">
-            <Text className="file-name" variant="b3">{`Youtube - ${urlPreviewInfo['og:title']}`}</Text>
-
-            <IconButton
-              size="extra-small"
-              tooltip="Open in new tab"
-              src={ExternalSVG}
-              onClick={() => window.open(link)}
-            />
-          </div>
-
-          <div
-            className="video-container"
-          >
-            {!videoStarted && <img src={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])} alt="Youtube thumbnail" />}
-            {!videoStarted && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
-
-            {videoStarted && (
-            <iframe
-              src={embedURL}
-              title="YouTube video player"
-              frameborder="0"
-              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-            )}
-
-          </div>
-        </div>
-      )}
-    </div>
-
-  );
+  return null;
 }
 YoutubeEmbed.propTypes = {
   link: PropTypes.string.isRequired,
 };
 
 export {
-  File, Image, Sticker, Audio, Video, YoutubeEmbed,
+  File, Image, Sticker, Audio, Video, YoutubeEmbed, Embed, IframePlayer,
 };
