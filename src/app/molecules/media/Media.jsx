@@ -412,7 +412,7 @@ IframePlayer.propTypes = {
 function Embed({ link }) {
   const url = new URL(link);
 
-  if (settings.showYoutubeEmbedPlayer && (((url.host === 'www.youtube.com' || url.host === 'youtube.com') && url.pathname === '/watch') || url.host === 'youtu.be' || url.host === 'www.youtu.be')) {
+  if (settings.showYoutubeEmbedPlayer && (((url.host === 'www.youtube.com' || url.host === 'youtube.com') && (url.pathname === '/watch' || url.pathname.startsWith('/shorts/'))) || url.host === 'youtu.be' || url.host === 'www.youtu.be')) {
     return <YoutubeEmbed link={link} />;
   }
 
@@ -478,6 +478,8 @@ function YoutubeEmbed({ link }) {
   let videoID;
   if (url.host === 'youtu.be' || url.host === 'www.youtu.be') {
     videoID = url.pathname.slice(1);
+  } else if (url.pathname.startsWith('/shorts/')) {
+    videoID = url.pathname.slice(8);
   } else {
     videoID = url.searchParams.get('v');
   }
