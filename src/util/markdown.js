@@ -86,7 +86,8 @@ const plainRules = {
   },
   paragraph: {
     ...defaultRules.paragraph,
-    plain: (node, output, state) => `${output(node.content, state)}\n\n`,
+    match: blockRegex(/^((?:[^\n]|\n(?! *\n))+)(?:\n *)+\n/),
+    plain: (node, output, state) => `${output(node.content, state)}\n`,
     html: (node, output, state) => htmlTag('p', output(node.content, state)),
   },
   escape: {
@@ -101,9 +102,7 @@ const plainRules = {
   text: {
     ...defaultRules.text,
     match: anyScopeRegex(/^[\s\S]+?(?=[^0-9A-Za-z\s\u00c0-\uffff]| *\n|\w+:\S|$)/),
-    plain: (node, _, state) => (state.kind === 'edit'
-      ? node.content.replace(/(\*|_|!\[|\[|\|\||\$\$?)/g, '\\$1')
-      : node.content),
+    plain: (node) => node.content,
   },
 };
 
@@ -138,7 +137,15 @@ const markdownRules = {
   },
   blockQuote: {
     ...defaultRules.blockQuote,
-    plain: (node, output, state) => `> ${output(node.content, state).trim().replace(/\n/g, '\n> ')}\n\n`,
+    match: blockRegex(/^( *>[^\n]+(\n *>+[^\n]+)*\n?)+/),
+    parse: (capture, parse, state) => {
+      const content = capture[0].replace(/^ *> ?/gm, '');
+      return {
+        content: parse(`${content}\n`, state), // TODO: remove /n after fixing paragraph
+      };
+    },
+    plain: (node, output, state) => `> ${output(node.content, state).trim().replace(/\n/g, '\n> ')}`,
+    html: (node, output, state) => htmlTag('blockquote', output(node.content, state)),
   },
   list: {
     ...defaultRules.list,
