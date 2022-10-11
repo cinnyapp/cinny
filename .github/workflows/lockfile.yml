@@ -14,7 +14,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.1.0
       - name: NPM Lockfile Changes
         uses: codepunkt/npm-lockfile-changes@b40543471c36394409466fdb277a73a0856d7891
         with:
