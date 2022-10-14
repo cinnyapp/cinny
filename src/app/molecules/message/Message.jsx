@@ -808,7 +808,7 @@ function Message({
             isEdited={isEdited}
           />
         )}
-        {findLinks(body).map((link) => (
+        {msgType === 'm.text' && findLinks(body).map((link) => (
           <Embed key={link.href} link={link.href} />
         ))}
         {isEdit && (
