@@ -13,7 +13,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download pr number
-        uses: dawidd6/action-download-artifact@7847792dd435a50521b8e3bd3576dae7459d1fa8
+        uses: dawidd6/action-download-artifact@46b4ae883bf0726f5949d025d31cb62c7a5ac70c
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
@@ -22,7 +22,7 @@ jobs:
         id: pr
         run: echo "::set-output name=id::$(<pr.txt)"
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@7847792dd435a50521b8e3bd3576dae7459d1fa8
+        uses: dawidd6/action-download-artifact@46b4ae883bf0726f5949d025d31cb62c7a5ac70c
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
