@@ -18,7 +18,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup node
-        uses: actions/setup-node@v3.5.0
+        uses: actions/setup-node@v3.5.1
         with:
           node-version: 17.9.0
       - name: Install Rust stable
@@ -74,7 +74,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup node
-        uses: actions/setup-node@v3.5.0
+        uses: actions/setup-node@v3.5.1
         with:
           node-version: 17.9.0
       - name: Install Rust stable
@@ -131,7 +131,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup node
-        uses: actions/setup-node@v3.5.0
+        uses: actions/setup-node@v3.5.1
         with:
           node-version: 17.9.0
       - name: Install Rust stable
