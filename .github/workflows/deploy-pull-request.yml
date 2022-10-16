@@ -13,7 +13,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download pr number
-        uses: dawidd6/action-download-artifact@7847792dd435a50521b8e3bd3576dae7459d1fa8
+        uses: dawidd6/action-download-artifact@46b4ae883bf0726f5949d025d31cb62c7a5ac70c
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
@@ -22,7 +22,7 @@ jobs:
         id: pr
         run: echo "::set-output name=id::$(<pr.txt)"
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@7847792dd435a50521b8e3bd3576dae7459d1fa8
+        uses: dawidd6/action-download-artifact@46b4ae883bf0726f5949d025d31cb62c7a5ac70c
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
@@ -30,7 +30,7 @@ jobs:
           path: dist
       - name: Deploy to Netlify
         id: netlify
-        uses: nwtgck/actions-netlify@b7c1504e00c6b8a249d1848cc1b522a4865eed99
+        uses: nwtgck/actions-netlify@ac1cb16858bada08a9c71a81240a85cfc3f72913
         with:
           publish-dir: dist
           deploy-message: "Deploy PR ${{ steps.pr.outputs.id }}"
