@@ -15,7 +15,7 @@
   "author": "Ajay Bura",
   "license": "MIT",
   "dependencies": {
-    "@fontsource/inter": "4.5.13",
+    "@fontsource/inter": "4.5.14",
     "@fontsource/roboto": "4.5.8",
     "@khanacademy/simple-markdown": "0.8.5",
     "@matrix-org/olm": "3.2.13",
