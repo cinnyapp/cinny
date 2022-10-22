@@ -82,13 +82,22 @@ const plainRules = {
   },
   newline: {
     ...defaultRules.newline,
+    match: blockRegex(/^ *\n/),
     plain: () => '\n',
+    html: () => '<br>',
   },
   paragraph: {
     ...defaultRules.paragraph,
-    match: blockRegex(/^((?:[^\n]|\n(?! *\n))+)(?:\n *)+\n/),
-    plain: (node, output, state) => `${output(node.content, state)}\n`,
-    html: (node, output, state) => htmlTag('p', output(node.content, state)),
+    match: (source, state) => {
+      const endMatch = blockRegex(/^([^\n]*)\n*$/);
+      if (endMatch) {
+        state.end = true;
+        return endMatch(source, state);
+      }
+      return blockRegex(/^([^\n]*)\n?/)(source, state);
+    },
+    plain: (node, output, state) => `${output(node.content, state)}${state.end ? '' : '\n'}`,
+    html: (node, output, state) => `${output(node.content, state)}${state.end ? '' : '<br>'}`,
   },
   escape: {
     ...defaultRules.escape,
@@ -141,10 +150,10 @@ const markdownRules = {
     parse: (capture, parse, state) => {
       const content = capture[0].replace(/^ *> ?/gm, '');
       return {
-        content: parse(`${content}\n`, state), // TODO: remove /n after fixing paragraph
+        content: parse(`${content}`, state),
       };
     },
-    plain: (node, output, state) => `> ${output(node.content, state).trim().replace(/\n/g, '\n> ')}`,
+    plain: (node, output, state) => `> ${output(node.content, state).trim().replace(/\n/g, '\n> ')}\n`,
     html: (node, output, state) => htmlTag('blockquote', output(node.content, state)),
   },
   list: {
@@ -499,11 +508,11 @@ function render(content, state, plainOut, htmlOut) {
   };
 }
 
-const plainParser = parserFor(plainRules);
+const plainParser = parserFor(plainRules, { disableAutoBlockNewlines: true });
 const plainPlainOut = outputFor(plainRules, 'plain');
 const plainHtmlOut = outputFor(plainRules, 'html');
 
-const mdParser = parserFor(markdownRules);
+const mdParser = parserFor(markdownRules, { disableAutoBlockNewlines: true });
 const mdPlainOut = outputFor(markdownRules, 'plain');
 const mdHtmlOut = outputFor(markdownRules, 'html');
 
