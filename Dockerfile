@@ -10,7 +10,7 @@ RUN npm run build
 
 
 ## App
-FROM nginx:1.23.1-alpine
+FROM nginx:1.23.2-alpine
 
 COPY --from=builder /src/dist /app
 
