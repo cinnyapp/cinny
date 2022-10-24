@@ -23,7 +23,7 @@ jobs:
       - name: Build app
         run: npm run build
       - name: Upload artifact
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: preview
           path: dist
@@ -31,7 +31,7 @@ jobs:
       - name: Save pr number
         run: echo ${PR_NUMBER} > ./pr.txt
       - name: Upload pr number
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: pr
           path: ./pr.txt
