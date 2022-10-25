@@ -1,7 +1,7 @@
 {
   "defaultHomeserver": 2,
   "homeserverList": [
-    "converser.eu"
+    "converser.eu",
     "envs.net",
     "matrix.org",
     "mozilla.org"
