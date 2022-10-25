@@ -29,7 +29,7 @@
     "flux": "4.0.3",
     "formik": "2.2.9",
     "html-react-parser": "3.0.4",
-    "katex": "0.16.2",
+    "katex": "0.16.3",
     "linkify-html": "4.0.2",
     "linkifyjs": "4.0.2",
     "matrix-js-sdk": "20.1.0",
