@@ -51,7 +51,7 @@
     "@babel/preset-env": "7.19.4",
     "@babel/preset-react": "7.18.6",
     "assert": "2.0.0",
-    "babel-loader": "8.2.5",
+    "babel-loader": "9.0.1",
     "browserify-fs": "1.0.0",
     "buffer": "6.0.3",
     "clean-webpack-plugin": "4.0.0",
