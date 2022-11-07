@@ -19,7 +19,8 @@ jobs:
     - name: Setup node
       uses: actions/setup-node@v3.5.1
       with:
-        node-version: 18.12.0
+        node-version: 18.12.1
+        cache: 'npm'
     - name: Install Rust stable
       uses: actions-rs/toolchain@v1.0.7
       with:
