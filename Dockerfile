@@ -1,5 +1,5 @@
 ## Builder
-FROM node:17.9.0-alpine3.15 as builder
+FROM node:18.12.1-alpine3.15 as builder
 
 WORKDIR /src
 
@@ -10,7 +10,7 @@ RUN npm run build
 
 
 ## App
-FROM nginx:1.23.1-alpine
+FROM nginx:1.23.2-alpine
 
 COPY --from=builder /src/dist /app
 

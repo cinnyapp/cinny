@@ -27,9 +27,7 @@ function ImagePackUpload({ onUpload }) {
 
     setProgress(true);
     const image = await scaleDownImage(imgFile, 512, 512);
-    const url = await mx.uploadContent(image, {
-      onlyContentUri: true,
-    });
+    const { content_uri: url } = await mx.uploadContent(image);
 
     onUpload(shortcode, url);
     setProgress(false);
