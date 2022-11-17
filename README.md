@@ -84,7 +84,7 @@ UeGsouhyuITLwEhScounZDqop+Dx
 
 ## Local development
 > We recommend using a version manager as versions change very quickly. You will likely need to switch 
-between multiple Node.js versions based on the needs of different projects you're working on. [NVM on windows](https://github.com/coreybutler/nvm-windows#installation--upgrades) on Windows and [nvm](https://github.com/nvm-sh/nvm) on Linux/macOS are pretty good choices. Also recommended nodejs version is 16.15.0 LTS.
+between multiple Node.js versions based on the needs of different projects you're working on. [NVM on windows](https://github.com/coreybutler/nvm-windows#installation--upgrades) on Windows and [nvm](https://github.com/nvm-sh/nvm) on Linux/macOS are pretty good choices. Also recommended nodejs version Hydrogen LTS (v18).
 
 Execute the following commands to start a development server:
 ```sh

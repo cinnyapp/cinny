@@ -395,7 +395,7 @@ class RoomsInput extends EventEmitter {
     input.attachment.uploadingPromise = uploadingPromise;
     this.roomIdToInput.set(roomId, input);
 
-    const url = await uploadingPromise;
+    const { content_uri: url } = await uploadingPromise;
 
     delete input.attachment.uploadingPromise;
     this.roomIdToInput.set(roomId, input);

@@ -236,16 +236,12 @@ async function createRoom(opts) {
     });
   }
   if (parentId && joinRule === 'restricted') {
-    try {
-      const caps = await mx.getCapabilities();
-      options.room_version = caps
-        ?.['m.room_versions']
-        ?.['org.matrix.msc3244.room_capabilities']
-        ?.restricted
-        ?.preferred
-        || undefined;
-    } catch {
-      console.error('Can\'t find room version for restricted.');
+    const caps = await mx.getCapabilities();
+    if (caps['m.room_versions'].available?.['9'] !== 'stable') {
+      throw new Error("ERROR: The server doesn't support restricted rooms");
+    }
+    if (Number(caps['m.room_versions'].default) < 9) {
+      options.room_version = '9';
     }
     options.initial_state.push({
       type: 'm.room.join_rules',

@@ -22,7 +22,7 @@ function ImageUpload({
     const file = e.target.files.item(0);
     if (file === null) return;
     try {
-      const uPromise = initMatrix.matrixClient.uploadContent(file, { onlyContentUri: false });
+      const uPromise = initMatrix.matrixClient.uploadContent(file);
       setUploadPromise(uPromise);
 
       const res = await uPromise;
