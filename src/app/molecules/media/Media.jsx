@@ -423,9 +423,13 @@ function Embed({ link }) {
     let unmounted = false;
 
     async function getUrlPreview() {
-      const info = await mx.getUrlPreview(link, 0);
-      if (unmounted) return;
-      setUrlPreviewInfo(info);
+      try {
+        const info = await mx.getUrlPreview(link, 0);
+        if (unmounted) return;
+        setUrlPreviewInfo(info);
+      } catch {
+        setUrlPreviewInfo();
+      }
     }
 
     getUrlPreview();
