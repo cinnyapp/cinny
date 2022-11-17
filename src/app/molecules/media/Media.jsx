@@ -416,7 +416,7 @@ function Embed({ link }) {
     return <YoutubeEmbed link={link} />;
   }
 
-  const [urlPreviewInfo, setUrlPreviewInfo] = useState({});
+  const [urlPreviewInfo, setUrlPreviewInfo] = useState();
   const mx = initMatrix.matrixClient;
 
   useEffect(() => {
@@ -435,15 +435,15 @@ function Embed({ link }) {
     };
   });
 
-  if (urlPreviewInfo !== undefined) {
+  if (urlPreviewInfo != null) {
     // Image only embed
     if (urlPreviewInfo['og:image'] != null && urlPreviewInfo['og:image:width'] != null && urlPreviewInfo['og:image:height'] != null && urlPreviewInfo['og:title'] == null && urlPreviewInfo['og:description'] == null) {
       return (
         <div className="file-container">
           <Image
             link={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}
-            height={urlPreviewInfo['og:image:height']}
-            width={urlPreviewInfo['og:image:width']}
+            height={parseInt(urlPreviewInfo['og:image:height'], 10)}
+            width={parseInt(urlPreviewInfo['og:image:width'], 10)}
             name={urlPreviewInfo['og:image:alt'] || urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'] || ''}
             type={urlPreviewInfo['og:image:type']}
           />
@@ -479,8 +479,8 @@ function Embed({ link }) {
           {urlPreviewInfo['og:image'] != null && urlPreviewInfo['og:image:width'] != null && urlPreviewInfo['og:image:height'] != null && (
             <Image
               link={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}
-              height={urlPreviewInfo['og:image:height']}
-              width={urlPreviewInfo['og:image:width']}
+              height={parseInt(urlPreviewInfo['og:image:height'], 10)}
+              width={parseInt(urlPreviewInfo['og:image:width'], 10)}
               name={urlPreviewInfo['og:image:alt'] || urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'] || ''}
               type={urlPreviewInfo['og:image:type']}
             />
