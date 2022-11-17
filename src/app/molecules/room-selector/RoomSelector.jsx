@@ -70,23 +70,22 @@ function RoomSelector({
       isUnread={isUnread}
       content={(
         <>
-          {!settings.showRoomListAvatar && (
-          <Avatar
-            text={name}
-            bgColor={colorMXID(roomId)}
-            imageSrc={imageSrc}
-            iconColor="var(--ic-surface-low)"
-            iconSrc={iconSrc}
-            size="extra-small"
-          />
-          )}
-          {settings.showRoomListAvatar && (
-          <Avatar
-            text={name}
-            bgColor={colorMXID(roomId)}
-            imageSrc={avatarSrc}
-            size="extra-small"
-          />
+          {settings.showRoomListAvatar ? (
+            <Avatar
+              text={name}
+              bgColor={colorMXID(roomId)}
+              imageSrc={avatarSrc}
+              size="extra-small"
+            />
+          ) : (
+            <Avatar
+              text={name}
+              bgColor={colorMXID(roomId)}
+              imageSrc={imageSrc}
+              iconColor="var(--ic-surface-low)"
+              iconSrc={iconSrc}
+              size="extra-small"
+            />
           )}
           <Text variant="b1" weight={isUnread ? 'medium' : 'normal'}>
             {twemojify(name)}

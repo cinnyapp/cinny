@@ -440,28 +440,27 @@ function Embed({ link }) {
   });
 
   if (urlPreviewInfo != null) {
+    const imageURL = urlPreviewInfo['og:image'] || urlPreviewInfo['og:image:secure_url'];
+    const image = (imageURL != null) ? (
+      <Image
+        link={mx.mxcUrlToHttp(imageURL)}
+        height={urlPreviewInfo['og:image:height'] != null ? parseInt(urlPreviewInfo['og:image:height'], 10) : null}
+        width={urlPreviewInfo['og:image:width'] != null ? parseInt(urlPreviewInfo['og:image:width'], 10) : null}
+        name={urlPreviewInfo['og:image:alt'] || urlPreviewInfo['og:site_name'] || ''}
+        type={urlPreviewInfo['og:image:type'] != null ? urlPreviewInfo['og:image:type'] : null}
+      />
+    ) : null;
+
     // Image only embed
-    if (urlPreviewInfo['og:image'] != null && urlPreviewInfo['og:image:width'] != null && urlPreviewInfo['og:image:height'] != null && urlPreviewInfo['og:title'] == null && urlPreviewInfo['og:description'] == null) {
+    if (image != null && urlPreviewInfo['og:title'] == null && urlPreviewInfo['og:description'] == null) {
       return (
         <div className="file-container">
-          <Image
-            link={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}
-            height={parseInt(urlPreviewInfo['og:image:height'], 10)}
-            width={parseInt(urlPreviewInfo['og:image:width'], 10)}
-            name={urlPreviewInfo['og:image:alt'] || urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'] || ''}
-            type={urlPreviewInfo['og:image:type']}
-          />
+          {image}
         </div>
       );
     }
 
-    let embedTitle;
-
-    if (urlPreviewInfo['og:site_name'] != null && urlPreviewInfo['og:title'] != null) {
-      embedTitle = `${urlPreviewInfo['og:site_name']} - ${urlPreviewInfo['og:title']}`;
-    } else {
-      embedTitle = urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'];
-    }
+    const embedTitle = urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'];
 
     return (
       <div className="file-container">
@@ -480,15 +479,9 @@ function Embed({ link }) {
             )}
           </div>
 
-          {urlPreviewInfo['og:image'] != null && urlPreviewInfo['og:image:width'] != null && urlPreviewInfo['og:image:height'] != null && (
-            <Image
-              link={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}
-              height={parseInt(urlPreviewInfo['og:image:height'], 10)}
-              width={parseInt(urlPreviewInfo['og:image:width'], 10)}
-              name={urlPreviewInfo['og:image:alt'] || urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'] || ''}
-              type={urlPreviewInfo['og:image:type']}
-            />
-          )}
+          <div className="embed-media">
+            {image}
+          </div>
         </div>
       </div>
     );

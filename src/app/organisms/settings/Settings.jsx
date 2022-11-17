@@ -91,6 +91,9 @@ function AppearanceSection() {
           )}
           content={<Text variant="b3">Will show room avatars in the room list.</Text>}
         />
+      </div>
+      <div className="settings-appearance__card">
+        <MenuHeader>URL Previews</MenuHeader>
         <SettingTile
           title="Show URL previews"
           options={(
@@ -107,9 +110,10 @@ function AppearanceSection() {
             <Toggle
               isActive={settings.showYoutubeEmbedPlayer}
               onToggle={() => { toggleShowYoutubeEmbedPlayer(); updateState({}); }}
+              disabled={!settings.showUrlPreview}
             />
               )}
-          content={<Text variant="b3">Will show a youtube embed player for youtube links. (You need to enable url previews for this)</Text>}
+          content={<Text variant="b3">Will show a youtube embed player for youtube links.</Text>}
         />
       </div>
       <div className="settings-appearance__card">
