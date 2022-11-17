@@ -43,6 +43,7 @@ import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
 import { html, plain } from '../../../util/markdown';
 import { Embed } from '../media/Media';
+import settings from '../../../client/state/settings';
 
 function PlaceholderMessage() {
   return (
@@ -808,7 +809,7 @@ function Message({
             isEdited={isEdited}
           />
         )}
-        {msgType === 'm.text' && findLinks(body).map((link) => (
+        {settings.showUrlPreview && msgType === 'm.text' && findLinks(body).map((link) => (
           <Embed key={link.href} link={link.href} />
         ))}
         {isEdit && (

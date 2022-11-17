@@ -7,7 +7,8 @@ import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
   toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
-  toggleNotifications, toggleNotificationSounds, toggleShowRoomListAvatar, toggleShowYoutubeEmbedPlayer,
+  toggleNotifications, toggleNotificationSounds, toggleShowRoomListAvatar,
+  toggleShowYoutubeEmbedPlayer, toggleShowUrlPreview,
 } from '../../../client/action/settings';
 import { usePermission } from '../../hooks/usePermission';
 
@@ -91,6 +92,16 @@ function AppearanceSection() {
           content={<Text variant="b3">Will show room avatars in the room list.</Text>}
         />
         <SettingTile
+          title="Show URL previews"
+          options={(
+            <Toggle
+              isActive={settings.showUrlPreview}
+              onToggle={() => { toggleShowUrlPreview(); updateState({}); }}
+            />
+              )}
+          content={<Text variant="b3">Show additional info about urls.</Text>}
+        />
+        <SettingTile
           title="Show Youtube embed player"
           options={(
             <Toggle
@@ -98,7 +109,7 @@ function AppearanceSection() {
               onToggle={() => { toggleShowYoutubeEmbedPlayer(); updateState({}); }}
             />
               )}
-          content={<Text variant="b3">Will show a youtube embed player for youtube links.</Text>}
+          content={<Text variant="b3">Will show a youtube embed player for youtube links. (You need to enable url previews for this)</Text>}
         />
       </div>
       <div className="settings-appearance__card">

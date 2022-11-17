@@ -54,3 +54,9 @@ export function toggleShowYoutubeEmbedPlayer() {
     type: cons.actions.settings.TOGGLE_SHOW_YOUTUBE_EMBED_PLAYER,
   });
 }
+
+export function toggleShowUrlPreview() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_SHOW_URL_PREVIEW,
+  });
+}

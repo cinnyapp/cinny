@@ -32,6 +32,7 @@ class Settings extends EventEmitter {
     this.isNotificationSounds = this.getIsNotificationSounds();
     this.showRoomListAvatar = this.getShowRoomListAvatar();
     this.showYoutubeEmbedPlayer = this.getShowYoutubeEmbedPlayer();
+    this.showUrlPreview = this.getShowUrlPreview();
 
     this.isTouchScreenDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
   }
@@ -181,6 +182,22 @@ class Settings extends EventEmitter {
     return settings.showYoutubeEmbedPlayer;
   }
 
+  toggleShowUrlPreview() {
+    this.showUrlPreview = !this.showUrlPreview;
+    setSettings('showUrlPreview', this.showUrlPreview);
+
+    this.emit(cons.events.settings.SHOW_URL_PREVIEW_TOGGLED, this.showUrlPreview);
+  }
+
+  getShowUrlPreview() {
+    if (typeof this.showUrlPreview === 'boolean') return this.showUrlPreview;
+
+    const settings = getSettings();
+    if (settings === null) return false;
+    if (typeof settings.showUrlPreview === 'undefined') return false;
+    return settings.showUrlPreview;
+  }
+
   setter(action) {
     const actions = {
       [cons.actions.settings.TOGGLE_SYSTEM_THEME]: () => {
@@ -225,6 +242,9 @@ class Settings extends EventEmitter {
       },
       [cons.actions.settings.TOGGLE_SHOW_YOUTUBE_EMBED_PLAYER]: () => {
         this.toggleShowYoutubeEmbedPlayer();
+      },
+      [cons.actions.settings.TOGGLE_SHOW_URL_PREVIEW]: () => {
+        this.toggleShowUrlPreview();
       },
     };
 
