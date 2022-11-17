@@ -416,31 +416,79 @@ function Embed({ link }) {
     return <YoutubeEmbed link={link} />;
   }
 
-  // TODO: url preview
-  // const [urlPreviewInfo, setUrlPreviewInfo] = useState(null);
-  // const mx = initMatrix.matrixClient;
+  const [urlPreviewInfo, setUrlPreviewInfo] = useState({});
+  const mx = initMatrix.matrixClient;
 
-  // useEffect(() => {
-  //   let unmounted = false;
+  useEffect(() => {
+    let unmounted = false;
 
-  //   async function getThumbnail() {
-  //     const info = await mx.getUrlPreview(link, 0);
-  //     console.log('DEBUG', info);
-  //     if (unmounted) return;
+    async function getUrlPreview() {
+      const info = await mx.getUrlPreview(link, 0);
+      if (unmounted) return;
+      setUrlPreviewInfo(info);
+    }
 
-  //     setUrlPreviewInfo(info);
-  //   }
+    getUrlPreview();
 
-  //   getThumbnail();
+    return () => {
+      unmounted = true;
+    };
+  });
 
-  //   return () => {
-  //     unmounted = true;
-  //   };
-  // });
+  if (urlPreviewInfo !== undefined) {
+    // Image only embed
+    if (urlPreviewInfo['og:image'] != null && urlPreviewInfo['og:image:width'] != null && urlPreviewInfo['og:image:height'] != null && urlPreviewInfo['og:title'] == null && urlPreviewInfo['og:description'] == null) {
+      return (
+        <div className="file-container">
+          <Image
+            link={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}
+            height={urlPreviewInfo['og:image:height']}
+            width={urlPreviewInfo['og:image:width']}
+            name={urlPreviewInfo['og:image:alt'] || urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'] || ''}
+            type={urlPreviewInfo['og:image:type']}
+          />
+        </div>
+      );
+    }
 
-  // if (urlPreviewInfo !== null) {
-  //   return <div>url preview here!/div>;
-  // }
+    let embedTitle;
+
+    if (urlPreviewInfo['og:site_name'] != null && urlPreviewInfo['og:title'] != null) {
+      embedTitle = `${urlPreviewInfo['og:site_name']} - ${urlPreviewInfo['og:title']}`;
+    } else {
+      embedTitle = urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'];
+    }
+
+    return (
+      <div className="file-container">
+        <div className="embed-container">
+          <div className="embed-text">
+            {(embedTitle != null) && (
+              <Text className="embed-title" variant="h2">
+                {embedTitle}
+              </Text>
+            )}
+
+            {(urlPreviewInfo['og:description'] != null) && (
+              <Text className="embed-description" variant="b3">
+                {urlPreviewInfo['og:description']}
+              </Text>
+            )}
+          </div>
+
+          {urlPreviewInfo['og:image'] != null && urlPreviewInfo['og:image:width'] != null && urlPreviewInfo['og:image:height'] != null && (
+            <Image
+              link={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}
+              height={urlPreviewInfo['og:image:height']}
+              width={urlPreviewInfo['og:image:width']}
+              name={urlPreviewInfo['og:image:alt'] || urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'] || ''}
+              type={urlPreviewInfo['og:image:type']}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return null;
 }
