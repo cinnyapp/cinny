@@ -373,30 +373,31 @@ function IframePlayer({
   };
 
   return (
-    <div className="file-container">
-      <div className="file-header">
-        <Text className="file-name" variant="b3">{`${sitename} - ${title}`}</Text>
+    <div className="iframeplayer">
+      <div className="file-container">
+        <div className="file-header">
+          <Text className="file-name" variant="b3">{`${sitename} - ${title}`}</Text>
 
-        <IconButton
-          size="extra-small"
-          tooltip="Open in new tab"
-          src={ExternalSVG}
-          onClick={() => window.open(link)}
-        />
-      </div>
+          <IconButton
+            size="extra-small"
+            tooltip="Open in new tab"
+            src={ExternalSVG}
+            onClick={() => window.open(link)}
+          />
+        </div>
 
-      <div
-        className="video-container"
-      >
-        {!videoStarted && <img src={thumbnail} alt={`${sitename} thumbnail`} />}
-        {!videoStarted && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
-
-        {videoStarted && (
-          <div>
-            {children}
-          </div>
-        )}
-
+        <div className="video-container">
+          {videoStarted ? (
+            <div>
+              {children}
+            </div>
+          ) : (
+            <>
+              <img src={thumbnail} alt={`${sitename} thumbnail`} />
+              <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -454,8 +455,10 @@ function Embed({ link }) {
     // Image only embed
     if (image != null && urlPreviewInfo['og:title'] == null && urlPreviewInfo['og:description'] == null) {
       return (
-        <div className="file-container">
-          {image}
+        <div className="embed-container">
+          <div className="file-container">
+            {image}
+          </div>
         </div>
       );
     }
@@ -463,8 +466,8 @@ function Embed({ link }) {
     const embedTitle = urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'];
 
     return (
-      <div className="file-container">
-        <div className="embed-container">
+      <div className="embed-container">
+        <div className="file-container embed">
           <div className="embed-text">
             {(embedTitle != null) && (
               <Text className="embed-title" variant="h2">
@@ -536,15 +539,17 @@ function YoutubeEmbed({ link }) {
 
   if (urlPreviewInfo !== null) {
     return (
-      <IframePlayer link={link} sitename="Youtube" title={urlPreviewInfo['og:title']} thumbnail={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}>
-        <iframe
-          src={embedURL}
-          title="YouTube video player"
-          frameBorder="0"
-          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </IframePlayer>
+      <div className="embed-container">
+        <IframePlayer link={link} sitename="Youtube" title={urlPreviewInfo['og:title']} thumbnail={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}>
+          <iframe
+            src={embedURL}
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </IframePlayer>
+      </div>
     );
   }
 
