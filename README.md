@@ -97,6 +97,13 @@ To build the app:
 npm run build # Compiles the app into the dist/ directory
 ```
 
+### Dev Container
+A Dev Container configuration is included with the repository: it setups Node and configures Visual Studio Code for you, and, if you're using GitHub Codespaces, automatically tweaks the webpack configuration to allow remote development.
+
+Inside the codespace, you'll still need to install all dependencies as described in [the section above](local-development).
+
+> You can read more about [Dev Containers](https://code.visualstudio.com/docs/devcontainers/create-dev-container) and [Codespaces](https://github.com/features/codespaces) on their respective documentation page.
+
 ### Running with Docker
 This repository includes a Dockerfile, which builds the application from source and serves it with Nginx on port 80. To
 use this locally, you can build the container like so:
