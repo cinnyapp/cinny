@@ -2,7 +2,8 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require("webpack");
 
-const pluginsDir = "cinny/plugins/";
+const bundleDir = "cinny/bundle";
+const assetsDir = "cinny/assets";
 
 module.exports = {
   entry: {
@@ -55,10 +56,10 @@ module.exports = {
     new HtmlWebpackPlugin({ template: "./public/index.html" }),
     new CopyPlugin({
       patterns: [
-        { from: "node_modules/@matrix-org/olm/olm.wasm", to: pluginsDir },
-        { from: "_redirects", to: pluginsDir },
+        { from: "node_modules/@matrix-org/olm/olm.wasm", to: bundleDir },
+        { from: "_redirects", to: bundleDir },
         { from: "config.json" },
-        { from: "public/res/android", to: pluginsDir },
+        { from: "public/res/android", to: assetsDir },
       ],
     }),
     new webpack.ProvidePlugin({
