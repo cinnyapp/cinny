@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@actions/github": "5.1.1",
-    "@tauri-apps/cli": "1.2.0",
+    "@tauri-apps/cli": "1.2.1",
     "node-fetch": "3.3.0"
   }
 }
