@@ -40,6 +40,7 @@ import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
+import { html, plain } from '../../../util/markdown';
 
 function PlaceholderMessage() {
   return (
@@ -299,12 +300,12 @@ function MessageEdit({ body, onSave, onCancel }) {
 
     if (e.key === 'Enter' && e.shiftKey === false) {
       e.preventDefault();
-      onSave(editInputRef.current.value);
+      onSave(editInputRef.current.value, body);
     }
   };
 
   return (
-    <form className="message__edit" onSubmit={(e) => { e.preventDefault(); onSave(editInputRef.current.value); }}>
+    <form className="message__edit" onSubmit={(e) => { e.preventDefault(); onSave(editInputRef.current.value, body); }}>
       <Input
         forwardRef={editInputRef}
         onKeyDown={handleKeyDown}
@@ -802,9 +803,11 @@ function Message({
         )}
         {isEdit && (
           <MessageEdit
-            body={body}
-            onSave={(newBody) => {
-              if (newBody !== body) {
+            body={(customHTML
+              ? html(customHTML, { kind: 'edit', onlyPlain: true }).plain
+              : plain(body, { kind: 'edit', onlyPlain: true }).plain)}
+            onSave={(newBody, oldBody) => {
+              if (newBody !== oldBody) {
                 initMatrix.roomsInput.sendEditedMessage(roomId, mEvent, newBody);
               }
               cancelEdit();

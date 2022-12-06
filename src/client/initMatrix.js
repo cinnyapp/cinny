@@ -98,10 +98,29 @@ class InitMatrix extends EventEmitter {
   }
 
   listenEvents() {
-    this.matrixClient.on('Session.logged_out', () => {
+    this.matrixClient.on('Session.logged_out', async () => {
       this.matrixClient.stopClient();
-      this.matrixClient.clearStores();
+      await this.matrixClient.clearStores();
       window.localStorage.clear();
+      window.location.reload();
+    });
+  }
+
+  async logout() {
+    this.matrixClient.stopClient();
+    try {
+      await this.matrixClient.logout();
+    } catch {
+      // ignore if failed to logout
+    }
+    await this.matrixClient.clearStores();
+    window.localStorage.clear();
+    window.location.reload();
+  }
+
+  clearCacheAndReload() {
+    this.matrixClient.stopClient();
+    this.matrixClient.store.deleteAllData().then(() => {
       window.location.reload();
     });
   }

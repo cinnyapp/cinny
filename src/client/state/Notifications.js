@@ -10,6 +10,7 @@ import { setFavicon } from '../../util/common';
 import LogoSVG from '../../../public/res/svg/cinny.svg';
 import LogoUnreadSVG from '../../../public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '../../../public/res/svg/cinny-highlight.svg';
+import { html, plain } from '../../util/markdown';
 
 function isNotifEvent(mEvent) {
   const eType = mEvent.getType();
@@ -257,8 +258,18 @@ class Notifications extends EventEmitter {
         scale: 8,
       });
 
+      const content = mEvent.getContent();
+
+      const state = { kind: 'notification', onlyPlain: true };
+      let body;
+      if (content.format === 'org.matrix.custom.html') {
+        body = html(content.formatted_body, state);
+      } else {
+        body = plain(content.body, state);
+      }
+
       const noti = new window.Notification(title, {
-        body: mEvent.getContent().body,
+        body: body.plain,
         icon,
         tag: mEvent.getId(),
         silent: settings.isNotificationSounds,

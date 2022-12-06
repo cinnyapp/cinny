@@ -25,7 +25,7 @@ function Home({ spaceId }) {
   let directIds = [];
 
   if (spaceId) {
-    const spaceChildIds = roomList.getSpaceChildren(spaceId);
+    const spaceChildIds = roomList.getSpaceChildren(spaceId) ?? [];
     spaceIds = spaceChildIds.filter((roomId) => spaces.has(roomId));
     roomIds = spaceChildIds.filter((roomId) => rooms.has(roomId));
     directIds = spaceChildIds.filter((roomId) => directs.has(roomId));
