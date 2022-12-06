@@ -53,7 +53,7 @@ jobs:
       - name: Move msi.zip.sig
         run: mv "src-tauri\target\release\bundle\msi\Cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi.zip.sig" "src-tauri\target\release\bundle\msi\Cinny_desktop-x86_64.msi.zip.sig"
       - name: Upload tagged release
-        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           files: |
             src-tauri\target\release\bundle\msi\Cinny_desktop-x86_64.msi
@@ -111,7 +111,7 @@ jobs:
       - name: Move AppImage.tar.gz.sig
         run: mv "src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage.tar.gz.sig" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage.tar.gz.sig"
       - name: Upload tagged release
-        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           files: |
             src-tauri/target/release/bundle/deb/Cinny_desktop-x86_64.deb
@@ -163,7 +163,7 @@ jobs:
       - name: Move app.tar.gz.sig
         run: mv "src-tauri/target/release/bundle/macos/Cinny.app.tar.gz.sig" "src-tauri/target/release/bundle/macos/Cinny_desktop-x86_64.app.tar.gz.sig"
       - name: Upload tagged release
-        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           files: |
             src-tauri/target/release/bundle/dmg/Cinny_desktop-x86_64.dmg
@@ -222,7 +222,7 @@ jobs:
   #       run: mv "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Cinny.app.tar.gz.sig" "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Cinny_desktop-aarch64.app.tar.gz.sig"
   #     - name: Upload tagged release
   #       if: always()
-  #       uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+  #       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
   #       with:
   #         files: |
   #           src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Cinny_desktop-aarch64.dmg
