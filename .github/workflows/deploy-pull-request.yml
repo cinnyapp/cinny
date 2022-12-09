@@ -42,12 +42,13 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE3_ID }}
         timeout-minutes: 1
-      - name: Edit PR Description
-        uses: Beakyn/gha-comment-pull-request@2167a7aee24f9e61ce76a23039f322e49a990409
+      - name: Comment preview on PR
+        uses: thollander/actions-comment-pull-request@c22fb302208b7b170d252a61a505d2ea27245eff
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          pull-request-number: ${{ steps.pr.outputs.id }}
-          description-message: |
+          pr_number: ${{ steps.pr.outputs.id }}
+          comment_tag: ${{ steps.pr.outputs.id }}
+          message: |
               Preview: ${{ steps.netlify.outputs.deploy-url }}
               ⚠️ Exercise caution. Use test accounts. ⚠️
