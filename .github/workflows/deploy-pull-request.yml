@@ -30,7 +30,7 @@ jobs:
           path: dist
       - name: Deploy to Netlify
         id: netlify
-        uses: nwtgck/actions-netlify@ac1cb16858bada08a9c71a81240a85cfc3f72913
+        uses: nwtgck/actions-netlify@5da65c9f74c7961c5501a3ba329b8d0912f39c03
         with:
           publish-dir: dist
           deploy-message: "Deploy PR ${{ steps.pr.outputs.id }}"
