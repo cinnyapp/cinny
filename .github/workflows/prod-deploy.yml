@@ -1,4 +1,4 @@
-name: 'Production deploy'
+name: Production deploy
 
 on:
   release:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy-and-tarball:
-    name: 'Netlify deploy and tarball'
+    name: Netlify deploy and tarball
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -15,7 +15,7 @@ jobs:
         uses: actions/setup-node@v3.5.1
         with:
           node-version: 18.12.1
-          cache: 'npm'
+          cache: "npm"
       - name: Install dependencies
         run: npm ci
       - name: Build app
@@ -32,7 +32,7 @@ jobs:
           github-deployment-description: 'Stable deployment on each release'
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_APP }}
         timeout-minutes: 1
       - name: Get version from tag
         id: vars

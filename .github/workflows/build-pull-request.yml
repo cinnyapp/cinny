@@ -1,4 +1,4 @@
-name: 'Build pull request'
+name: Build pull request
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-pull-request:
-    name: 'Build pull request'
+    name: Build pull request
     runs-on: ubuntu-latest
     env:
       PR_NUMBER: ${{github.event.number}}
@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-node@v3.5.1
         with:
           node-version: 18.12.1
-          cache: 'npm'
+          cache: "npm"
       - name: Install dependencies
         run: npm ci
       - name: Build app

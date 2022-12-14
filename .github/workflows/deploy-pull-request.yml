@@ -1,11 +1,13 @@
 name: Deploy PR to Netlify
+
 on:
   workflow_run:
       workflows: ["Build pull request"]
       types: [completed]
+
 jobs:
   deploy-pull-request:
-    name: 'Deploy pull request'
+    name: Deploy pull request
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,7 +42,7 @@ jobs:
           enable-commit-comment: false
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE3_ID }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_PR_CINNY }}
         timeout-minutes: 1
       - name: Comment preview on PR
         uses: thollander/actions-comment-pull-request@c22fb302208b7b170d252a61a505d2ea27245eff
