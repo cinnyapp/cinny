@@ -2,6 +2,7 @@ const path = require('path');
 const common = require('./webpack.common');
 const { merge } = require('webpack-merge');
 
+
 module.exports = merge(common, {
   mode: 'development',
   output: {
@@ -11,6 +12,10 @@ module.exports = merge(common, {
   },
   devServer: {
     historyApiFallback: true,
+    client: {
+      webSocketURL: "auto://0.0.0.0:0/ws"
+    },
+    allowedHosts: process.env.CODESPACES ? [".preview.app.github.dev"] : "auto"
   },
   module: {
     rules: [
