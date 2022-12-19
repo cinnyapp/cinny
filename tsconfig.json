@@ -5,8 +5,10 @@
     "target": "ES6",
     "allowJs": true,
     "esModuleInterop": true,
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "outDir": "dist",
+    "skipLibCheck": true
   },
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "dist"],
   "include": ["src"]
 }
