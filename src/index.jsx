@@ -9,7 +9,4 @@ import App from './app/pages/App';
 
 settings.applyTheme();
 
-ReactDom.render(
-  <App />,
-  document.getElementById('root'),
-);
+ReactDom.render(<App />, document.getElementById('root'));
