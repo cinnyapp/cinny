@@ -1,4 +1,5 @@
 import { openSearch, toggleRoomSettings } from '../action/navigation';
+import { toggleNavigationBar, togglePeopleDrawer } from '../action/settings';
 import navigation from '../state/navigation';
 import { markAsRead } from '../action/notifications';
 
@@ -46,6 +47,13 @@ function listenKeyboard(event) {
         && ['input', 'textarea'].includes(activeElement.tagName.toLowerCase())
       ) return;
       msgTextarea?.focus();
+    }
+
+    // toggle navigation bar
+    if (event.key === ',') {
+      event.preventDefault();
+      if (navigation.isRawModalVisible) return;
+      toggleNavigationBar();
     }
   }
 
