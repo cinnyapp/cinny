@@ -41,4 +41,7 @@ export default defineConfig({
     sourcemap: true,
     copyPublicDir: false,
   },
+  optimizeDeps: {
+    include: ["folds"],
+  }
 });
