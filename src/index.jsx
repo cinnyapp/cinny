@@ -1,5 +1,10 @@
+/* eslint-disable import/first */
 import React from 'react';
 import ReactDom from 'react-dom';
+import { enableMapSet } from 'immer';
+
+enableMapSet();
+
 import './font';
 import './index.scss';
 
