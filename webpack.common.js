@@ -56,7 +56,7 @@ module.exports = {
     new HtmlWebpackPlugin({ template: "./public/index.html" }),
     new CopyPlugin({
       patterns: [
-        { from: "node_modules/@matrix-org/olm/olm.wasm", to: bundleDir },
+        { from: "node_modules/@matrix-org/olm/olm.wasm", to: "." },
         { from: "_redirects", to: bundleDir },
         { from: "config.json" },
         { from: "public/res/android", to: assetsDir },
