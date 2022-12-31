@@ -1,0 +1,47 @@
+import { atom } from 'jotai';
+
+export interface Settings {
+  themeIndex: number;
+  useSystemTheme: boolean;
+  isMarkdown: boolean;
+  isPeopleDrawer: boolean;
+
+  hideMembershipEvents: boolean;
+  hideNickAvatarEvents: boolean;
+
+  showNotifications: boolean;
+  isNotificationSounds: boolean;
+}
+
+const defaultSettings: Settings = {
+  themeIndex: 0,
+  useSystemTheme: true,
+  isMarkdown: true,
+  isPeopleDrawer: true,
+
+  hideMembershipEvents: false,
+  hideNickAvatarEvents: true,
+
+  showNotifications: true,
+  isNotificationSounds: true,
+};
+
+export const getSettings = () => {
+  const settings = localStorage.getItem('settings');
+  if (settings === null) return defaultSettings;
+  return JSON.parse(settings) as Settings;
+};
+
+export const setSettings = (settings: Settings) => {
+  const STORAGE_KEY = 'settings';
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+};
+
+const baseSettings = atom<Settings>(getSettings());
+export const settingsAtom = atom<Settings, Settings>(
+  (get) => get(baseSettings),
+  (get, set, update) => {
+    set(baseSettings, update);
+    setSettings(update);
+  }
+);
