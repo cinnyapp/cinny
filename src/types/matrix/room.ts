@@ -31,4 +31,29 @@ export enum RoomType {
   Space = 'm.space',
 }
 
+export enum NotificationType {
+  Default = 'default',
+  AllMessages = 'all_messages',
+  MentionsAndKeywords = 'mentions_and_keywords',
+  Mute = 'mute',
+}
+
 export type RoomToParents = Map<string, Set<string>>;
+export type RoomToUnread = Map<
+  string,
+  {
+    total: number;
+    highlight: number;
+    from: Set<string> | null;
+  }
+>;
+export type UnreadInfo = {
+  roomId: string;
+  total: number;
+  highlight: number;
+};
+
+export type MuteChanges = {
+  added: string[];
+  removed: string[];
+};
