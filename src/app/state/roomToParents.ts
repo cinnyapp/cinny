@@ -1,7 +1,14 @@
 import produce from 'immer';
-import { atom } from 'jotai';
-import { ClientEvent, MatrixEvent, Room, RoomEvent, RoomStateEvent } from 'matrix-js-sdk';
-import { mx } from '../../client/mx';
+import { atom, useSetAtom, WritableAtom } from 'jotai';
+import {
+  ClientEvent,
+  MatrixClient,
+  MatrixEvent,
+  Room,
+  RoomEvent,
+  RoomStateEvent,
+} from 'matrix-js-sdk';
+import { useEffect } from 'react';
 import { Membership, RoomToParents, StateEvent } from '../../types/matrix/room';
 import {
   getRoomToParents,
@@ -11,69 +18,103 @@ import {
   mapParentWithChildren,
 } from '../utils/room';
 
-export const roomToParentsAtom = atom<RoomToParents>(new Map());
-roomToParentsAtom.onMount = (setAtom) => {
-  setAtom(getRoomToParents(mx()));
-
-  const deleteFromAtom = (roomId: string) => {
-    setAtom(
-      produce((roomToParents) => {
-        const noParentRooms: string[] = [];
-        roomToParents.delete(roomId);
-        roomToParents.forEach((parents, child) => {
-          parents.delete(roomId);
-          if (parents.size === 0) noParentRooms.push(child);
-        });
-        noParentRooms.forEach((room) => roomToParents.delete(room));
-        return roomToParents;
-      })
-    );
-  };
-
-  const addToAtom = (parent: string, children: string[]) => {
-    setAtom(
-      produce((roomToParents) => {
-        mapParentWithChildren(roomToParents, parent, children);
-        return roomToParents;
-      })
-    );
-  };
-
-  const handleAddRoom = (room: Room) => {
-    if (isSpace(room) && room.getMyMembership() !== Membership.Invite) {
-      addToAtom(room.roomId, getSpaceChildren(room));
+export type RoomToParentsAction =
+  | {
+      type: 'INITIALIZE';
+      roomToParents: RoomToParents;
     }
-  };
-
-  const handleMembershipChange = (room: Room, membership: string) => {
-    if (isSpace(room) && membership === Membership.Join) {
-      addToAtom(room.roomId, getSpaceChildren(room));
+  | {
+      type: 'PUT';
+      parent: string;
+      children: string[];
     }
-  };
+  | {
+      type: 'DELETE';
+      roomId: string;
+    };
 
-  const handleStateChange = (mEvent: MatrixEvent) => {
-    if (mEvent.getType() === StateEvent.SpaceChild) {
-      const childId = mEvent.getStateKey();
-      const roomId = mEvent.getRoomId();
-      if (childId && roomId) {
-        if (isValidChild(mEvent)) addToAtom(roomId, [childId]);
-        else deleteFromAtom(childId);
+const baseRoomToParents = atom<RoomToParents>(new Map());
+export const roomToParentsAtom = atom<RoomToParents, RoomToParentsAction>(
+  (get) => get(baseRoomToParents),
+  (get, set, action) => {
+    if (action.type === 'INITIALIZE') {
+      set(baseRoomToParents, action.roomToParents);
+      return;
+    }
+    if (action.type === 'PUT') {
+      set(
+        baseRoomToParents,
+        produce(get(baseRoomToParents), (draftRoomToParents) => {
+          mapParentWithChildren(draftRoomToParents, action.parent, action.children);
+        })
+      );
+      return;
+    }
+    if (action.type === 'DELETE') {
+      set(
+        baseRoomToParents,
+        produce(get(baseRoomToParents), (draftRoomToParents) => {
+          const noParentRooms: string[] = [];
+          draftRoomToParents.delete(action.roomId);
+          draftRoomToParents.forEach((parents, child) => {
+            parents.delete(action.roomId);
+            if (parents.size === 0) noParentRooms.push(child);
+          });
+          noParentRooms.forEach((room) => draftRoomToParents.delete(room));
+        })
+      );
+    }
+  }
+);
+
+export const useBindRoomToParentsAtom = (
+  mx: MatrixClient,
+  roomToParents: WritableAtom<RoomToParents, RoomToParentsAction>
+) => {
+  const setRoomToParents = useSetAtom(roomToParents);
+
+  useEffect(() => {
+    setRoomToParents({ type: 'INITIALIZE', roomToParents: getRoomToParents(mx) });
+
+    const handleAddRoom = (room: Room) => {
+      if (isSpace(room) && room.getMyMembership() !== Membership.Invite) {
+        setRoomToParents({ type: 'PUT', parent: room.roomId, children: getSpaceChildren(room) });
       }
-    }
-  };
+    };
 
-  const handleDeleteRoom = (roomId: string) => {
-    deleteFromAtom(roomId);
-  };
+    const handleMembershipChange = (room: Room, membership: string) => {
+      if (isSpace(room) && membership === Membership.Join) {
+        setRoomToParents({ type: 'PUT', parent: room.roomId, children: getSpaceChildren(room) });
+      }
+    };
 
-  mx().on(ClientEvent.Room, handleAddRoom);
-  mx().on(RoomEvent.MyMembership, handleMembershipChange);
-  mx().on(RoomStateEvent.Events, handleStateChange);
-  mx().on(ClientEvent.DeleteRoom, handleDeleteRoom);
-  return () => {
-    mx().removeListener(ClientEvent.Room, handleAddRoom);
-    mx().removeListener(RoomEvent.MyMembership, handleMembershipChange);
-    mx().removeListener(RoomStateEvent.Events, handleStateChange);
-    mx().removeListener(ClientEvent.DeleteRoom, handleDeleteRoom);
-  };
+    const handleStateChange = (mEvent: MatrixEvent) => {
+      if (mEvent.getType() === StateEvent.SpaceChild) {
+        const childId = mEvent.getStateKey();
+        const roomId = mEvent.getRoomId();
+        if (childId && roomId) {
+          if (isValidChild(mEvent)) {
+            setRoomToParents({ type: 'PUT', parent: roomId, children: [childId] });
+          } else {
+            setRoomToParents({ type: 'DELETE', roomId: childId });
+          }
+        }
+      }
+    };
+
+    const handleDeleteRoom = (roomId: string) => {
+      setRoomToParents({ type: 'DELETE', roomId });
+    };
+
+    mx.on(ClientEvent.Room, handleAddRoom);
+    mx.on(RoomEvent.MyMembership, handleMembershipChange);
+    mx.on(RoomStateEvent.Events, handleStateChange);
+    mx.on(ClientEvent.DeleteRoom, handleDeleteRoom);
+    return () => {
+      mx.removeListener(ClientEvent.Room, handleAddRoom);
+      mx.removeListener(RoomEvent.MyMembership, handleMembershipChange);
+      mx.removeListener(RoomStateEvent.Events, handleStateChange);
+      mx.removeListener(ClientEvent.DeleteRoom, handleDeleteRoom);
+    };
+  }, [mx, setRoomToParents]);
 };

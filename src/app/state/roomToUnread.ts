@@ -20,7 +20,7 @@ import {
 } from '../utils/room';
 import { roomToParentsAtom } from './roomToParents';
 
-type RoomToUnreadAction =
+export type RoomToUnreadAction =
   | {
       type: 'RESET';
       unreadInfos: UnreadInfo[];

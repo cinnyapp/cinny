@@ -1,27 +1,31 @@
-import { atom } from 'jotai';
-import { mx } from '../../client/mx';
+import { atom, WritableAtom } from 'jotai';
+import { MatrixClient } from 'matrix-js-sdk';
+import { useMemo } from 'react';
 import { Membership } from '../../types/matrix/room';
-import { isRoom, isSpace, isUnsupportedRoom } from '../utils/room';
-import { mDirectAtom } from './mDirectList';
-import { atomRoomsWithMemberships } from './utils';
+import { RoomsAction, useBindRoomsWithMembershipsAtom } from './utils';
 
-export const allRoomsAtom = atom<string[]>([]);
-allRoomsAtom.onMount = (setAtom) => atomRoomsWithMemberships(setAtom, mx(), [Membership.Join]);
-
-export const spacesAtom = atom((get) =>
-  get(allRoomsAtom).filter((roomId) => isSpace(mx().getRoom(roomId)))
+const baseRoomsAtom = atom<string[]>([]);
+export const allRoomsAtom = atom<string[], RoomsAction>(
+  (get) => get(baseRoomsAtom),
+  (get, set, action) => {
+    if (action.type === 'INITIALIZE') {
+      set(baseRoomsAtom, action.rooms);
+      return;
+    }
+    set(baseRoomsAtom, (ids) => {
+      const newIds = ids.filter((id) => id !== action.roomId);
+      if (action.type === 'PUT') newIds.push(action.roomId);
+      return newIds;
+    });
+  }
 );
-
-export const roomsAtom = atom((get) =>
-  get(allRoomsAtom).filter(
-    (roomId) => isRoom(mx().getRoom(roomId)) && !get(mDirectAtom).has(roomId)
-  )
-);
-
-export const directsAtom = atom((get) =>
-  get(allRoomsAtom).filter((roomId) => isRoom(mx().getRoom(roomId)) && get(mDirectAtom).has(roomId))
-);
-
-export const unsupportedRoomsAtom = atom((get) =>
-  get(allRoomsAtom).filter((roomId) => isUnsupportedRoom(mx().getRoom(roomId)))
-);
+export const useBindAllRoomsAtom = (
+  mx: MatrixClient,
+  allRooms: WritableAtom<string[], RoomsAction>
+) => {
+  useBindRoomsWithMembershipsAtom(
+    mx,
+    allRooms,
+    useMemo(() => [Membership.Join], [])
+  );
+};

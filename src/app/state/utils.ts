@@ -1,46 +1,50 @@
-import { SetStateAction } from 'jotai';
+import { useSetAtom, WritableAtom } from 'jotai';
 import { ClientEvent, MatrixClient, Room, RoomEvent } from 'matrix-js-sdk';
+import { useEffect } from 'react';
 import { Membership } from '../../types/matrix/room';
-import { disposable } from '../utils/disposable';
 
-export const atomRoomsWithMemberships = disposable(
-  (
-    setAtom: (update: SetStateAction<string[]>) => void,
-    mx: MatrixClient,
-    memberships: Membership[]
-  ) => {
+export type RoomsAction =
+  | {
+      type: 'INITIALIZE';
+      rooms: string[];
+    }
+  | {
+      type: 'PUT' | 'DELETE';
+      roomId: string;
+    };
+
+export const useBindRoomsWithMembershipsAtom = (
+  mx: MatrixClient,
+  roomsAtom: WritableAtom<string[], RoomsAction>,
+  memberships: Membership[]
+) => {
+  const setRoomsAtom = useSetAtom(roomsAtom);
+
+  useEffect(() => {
     const satisfyMembership = (room: Room): boolean =>
       !!memberships.find((membership) => membership === room.getMyMembership());
-
-    setAtom(
-      mx
+    setRoomsAtom({
+      type: 'INITIALIZE',
+      rooms: mx
         .getRooms()
         .filter(satisfyMembership)
-        .map((room) => room.roomId)
-    );
-
-    const updateAtom = (type: 'PUT' | 'DELETE', roomId: string) => {
-      setAtom((ids) => {
-        const newIds = ids.filter((id) => id !== roomId);
-        if (type === 'PUT') newIds.push(roomId);
-        return newIds;
-      });
-    };
+        .map((room) => room.roomId),
+    });
 
     const handleAddRoom = (room: Room) => {
       if (satisfyMembership(room)) {
-        updateAtom('PUT', room.roomId);
+        setRoomsAtom({ type: 'PUT', roomId: room.roomId });
       }
     };
 
     const handleMembershipChange = (room: Room) => {
       if (!satisfyMembership(room)) {
-        updateAtom('DELETE', room.roomId);
+        setRoomsAtom({ type: 'DELETE', roomId: room.roomId });
       }
     };
 
     const handleDeleteRoom = (roomId: string) => {
-      updateAtom('DELETE', roomId);
+      setRoomsAtom({ type: 'DELETE', roomId });
     };
 
     mx.on(ClientEvent.Room, handleAddRoom);
@@ -51,5 +55,10 @@ export const atomRoomsWithMemberships = disposable(
       mx.removeListener(RoomEvent.MyMembership, handleMembershipChange);
       mx.removeListener(ClientEvent.DeleteRoom, handleDeleteRoom);
     };
-  }
-);
+  }, [mx, memberships, setRoomsAtom]);
+};
+
+export const compareRoomsEqual = (a: string[], b: string[]) => {
+  if (a.length !== b.length) return false;
+  return a.every((roomId, roomIdIndex) => roomId === b[roomIdIndex]);
+};

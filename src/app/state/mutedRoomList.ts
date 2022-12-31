@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { MuteChanges } from '../../types/matrix/room';
 import { findMutedRule, isMutedRule } from '../utils/room';
 
-type MutedRoomsUpdate =
+export type MutedRoomsUpdate =
   | {
       type: 'INITIALIZE';
       addRooms: string[];
