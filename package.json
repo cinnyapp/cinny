@@ -31,6 +31,7 @@
     "file-saver": "2.0.5",
     "flux": "4.0.3",
     "formik": "2.2.9",
+    "he": "1.2.0",
     "html-react-parser": "3.0.4",
     "katex": "0.16.4",
     "linkify-html": "4.0.2",
