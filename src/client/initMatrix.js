@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import * as sdk from 'matrix-js-sdk';
+import Olm from '@matrix-org/olm';
 // import { logger } from 'matrix-js-sdk/lib/logger';
 
 import { secret } from './state/auth';
@@ -10,7 +11,7 @@ import Notifications from './state/Notifications';
 import { cryptoCallbacks } from './state/secretStorageKeys';
 import navigation from './state/navigation';
 
-global.Olm = require('@matrix-org/olm');
+global.Olm = Olm;
 
 // logger.disableAll();
 
@@ -78,7 +79,7 @@ class InitMatrix extends EventEmitter {
           this.emit('init_loading_finished');
           this.notifications._initNoti();
         } else {
-          this.notifications._initNoti();
+          this.notifications?._initNoti();
         }
       },
       RECONNECTING: () => {
