@@ -8,6 +8,20 @@ import { sanitizeText } from './sanitize';
 
 const Math = lazy(() => import('../app/atoms/math/Math'));
 
+const CDN_LOCAL = "/public/res/twemoji/assets/"
+const CDN_EXTERNAL = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/";
+
+export const GetTwemojiCDN = () => {
+  if(window.__TAURI__){
+    return CDN_LOCAL
+  }
+  else{
+    return CDN_EXTERNAL
+  }
+};
+
+
+
 const mathOptions = {
   replace: (node) => {
     const maths = node.attribs?.['data-mx-maths'];
@@ -42,7 +56,15 @@ export function twemojify(text, opts, linkify = false, sanitize = true, maths = 
   if (sanitize) {
     content = sanitizeText(content);
   }
+  
+  if(opts){
+    opts.base = GetTwemojiCDN()
+  } else {
+    opts = { base: GetTwemojiCDN() }
+  }
+  
   content = twemoji.parse(content, opts);
+  
   if (linkify) {
     content = linkifyHtml(content, {
       target: '_blank',
