@@ -8,11 +8,13 @@ import { sanitizeText } from './sanitize';
 
 const Math = lazy(() => import('../app/atoms/math/Math'));
 
-const CDN_LOCAL = "/public/res/twemoji/assets/"
+const CDN_LOCAL = "/public/twemoji/assets/"
 const CDN_EXTERNAL = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/";
 
+var use_local = false;
+
 export const GetTwemojiCDN = () => {
-  if(window.__TAURI__){
+  if(window.__TAURI__ || use_local){
     return CDN_LOCAL
   }
   else{
