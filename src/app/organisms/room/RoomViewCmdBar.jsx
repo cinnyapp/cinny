@@ -5,7 +5,7 @@ import './RoomViewCmdBar.scss';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 
-import { GetTwemojiCDN, twemojify } from '../../../util/twemojify';
+import { getTwemojiCDN, twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { getEmojiForCompletion } from '../emoji-board/custom-emoji';
@@ -60,7 +60,7 @@ function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
             unicode: emoji.unicode,
             shortcodes: emoji.shortcodes?.toString(),
           }),
-          base: GetTwemojiCDN()
+          base: getTwemojiCDN()
         },
       ));
     }

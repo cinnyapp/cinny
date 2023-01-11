@@ -8,12 +8,12 @@ import { sanitizeText } from './sanitize';
 
 const Math = lazy(() => import('../app/atoms/math/Math'));
 
-const CDN_LOCAL = "/public/twemoji/assets/"
-const CDN_EXTERNAL = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/";
+const CDN_LOCAL = '/public/twemoji/assets/'
+const CDN_EXTERNAL = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/';
 
 var use_local = false;
 
-export const GetTwemojiCDN = () => {
+export const getTwemojiCDN = () => {
   if(window.__TAURI__ || use_local){
     return CDN_LOCAL
   }
@@ -21,8 +21,6 @@ export const GetTwemojiCDN = () => {
     return CDN_EXTERNAL
   }
 };
-
-
 
 const mathOptions = {
   replace: (node) => {
@@ -60,9 +58,9 @@ export function twemojify(text, opts, linkify = false, sanitize = true, maths = 
   }
   
   if(opts){
-    opts.base = GetTwemojiCDN()
+    opts.base = getTwemojiCDN()
   } else {
-    opts = { base: GetTwemojiCDN() }
+    opts = { base: getTwemojiCDN() }
   }
   
   content = twemoji.parse(content, opts);
