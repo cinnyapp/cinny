@@ -30,7 +30,7 @@ import PhotoIC from '../../../../public/res/ic/outlined/photo.svg';
 import BulbIC from '../../../../public/res/ic/outlined/bulb.svg';
 import PeaceIC from '../../../../public/res/ic/outlined/peace.svg';
 import FlagIC from '../../../../public/res/ic/outlined/flag.svg';
-import { getTwemojiCDN } from '../../../util/twemojify';
+import { getTwemojiBaseUrl } from '../../../util/twemojify';
 
 const ROW_EMOJIS_COUNT = 7;
 
@@ -38,7 +38,7 @@ const EmojiGroup = React.memo(({ name, groupEmojis }) => {
   function getEmojiBoard() {
     const emojiBoard = [];
     const totalEmojis = groupEmojis.length;
-    var cdn = getTwemojiCDN()
+
     for (let r = 0; r < totalEmojis; r += ROW_EMOJIS_COUNT) {
       const emojiRow = [];
       for (let c = r; c < r + ROW_EMOJIS_COUNT; c += 1) {
@@ -59,7 +59,7 @@ const EmojiGroup = React.memo(({ name, groupEmojis }) => {
                       hexcode: emoji.hexcode,
                       loading: 'lazy',
                     }),
-                    base: cdn,
+                    base: getTwemojiBaseUrl(),
                   },
                 ))
                 // This is a custom emoji, and should be render as an mxc
@@ -252,8 +252,6 @@ function EmojiBoard({ onSelect, searchRef }) {
     $emojiContent.children[tabIndex].scrollIntoView();
   }
 
-  var cdn = getTwemojiCDN()
-
   return (
     <div id="emoji-board" className="emoji-board">
       <ScrollView invisible>
@@ -337,7 +335,7 @@ function EmojiBoard({ onSelect, searchRef }) {
           </ScrollView>
         </div>
         <div ref={emojiInfo} className="emoji-board__content__info">
-          <div>{ parse(twemoji.parse('🙂', {base: cdn})) }</div>
+          <div>{ parse(twemoji.parse('🙂', {base: getTwemojiBaseUrl()})) }</div>
           <Text>:slight_smile:</Text>
         </div>
       </div>

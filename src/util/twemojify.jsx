@@ -8,19 +8,9 @@ import { sanitizeText } from './sanitize';
 
 const Math = lazy(() => import('../app/atoms/math/Math'));
 
-const CDN_LOCAL = '/public/twemoji/assets/'
-const CDN_EXTERNAL = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/';
+const TWEMOJI_BASE_URL = '/public/twemoji/assets/'
 
-var use_local = false;
-
-export const getTwemojiCDN = () => {
-  if(window.__TAURI__ || use_local){
-    return CDN_LOCAL
-  }
-  else{
-    return CDN_EXTERNAL
-  }
-};
+export const getTwemojiBaseUrl = () => TWEMOJI_BASE_URL;
 
 const mathOptions = {
   replace: (node) => {
@@ -57,13 +47,16 @@ export function twemojify(text, opts, linkify = false, sanitize = true, maths = 
     content = sanitizeText(content);
   }
   
-  if(opts){
-    opts.base = getTwemojiCDN()
-  } else {
-    opts = { base: getTwemojiCDN() }
+  let options = opts;
+
+  if(!options){
+    options = { base: getTwemojiBaseUrl() }
+  } 
+  else if(!options.base){
+    options.base = getTwemojiBaseUrl()
   }
-  
-  content = twemoji.parse(content, opts);
+
+  content = twemoji.parse(content, options);
   
   if (linkify) {
     content = linkifyHtml(content, {
