@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3.2.0
+        with: 
+          submodules: true
       - name: NPM Lockfile Changes
         uses: codepunkt/npm-lockfile-changes@b40543471c36394409466fdb277a73a0856d7891
         with:
