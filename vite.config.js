@@ -20,6 +20,10 @@ const copyFiles = {
     {
       src: 'public/res/android',
       dest: 'public/',
+    },
+    {
+      src: 'deps/twemoji/assets',
+      dest: 'public/twemoji'
     }
   ],
 }

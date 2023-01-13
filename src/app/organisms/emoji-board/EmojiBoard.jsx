@@ -30,6 +30,7 @@ import PhotoIC from '../../../../public/res/ic/outlined/photo.svg';
 import BulbIC from '../../../../public/res/ic/outlined/bulb.svg';
 import PeaceIC from '../../../../public/res/ic/outlined/peace.svg';
 import FlagIC from '../../../../public/res/ic/outlined/flag.svg';
+import { getTwemojiBaseUrl } from '../../../util/twemojify';
 
 const ROW_EMOJIS_COUNT = 7;
 
@@ -58,6 +59,7 @@ const EmojiGroup = React.memo(({ name, groupEmojis }) => {
                       hexcode: emoji.hexcode,
                       loading: 'lazy',
                     }),
+                    base: getTwemojiBaseUrl(),
                   },
                 ))
                 // This is a custom emoji, and should be render as an mxc
@@ -333,7 +335,7 @@ function EmojiBoard({ onSelect, searchRef }) {
           </ScrollView>
         </div>
         <div ref={emojiInfo} className="emoji-board__content__info">
-          <div>{ parse(twemoji.parse('🙂')) }</div>
+          <div>{ parse(twemoji.parse('🙂', {base: getTwemojiBaseUrl()})) }</div>
           <Text>:slight_smile:</Text>
         </div>
       </div>

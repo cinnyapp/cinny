@@ -8,6 +8,10 @@ import { sanitizeText } from './sanitize';
 
 const Math = lazy(() => import('../app/atoms/math/Math'));
 
+const TWEMOJI_BASE_URL = '/public/twemoji/assets/'
+
+export const getTwemojiBaseUrl = () => TWEMOJI_BASE_URL;
+
 const mathOptions = {
   replace: (node) => {
     const maths = node.attribs?.['data-mx-maths'];
@@ -42,7 +46,18 @@ export function twemojify(text, opts, linkify = false, sanitize = true, maths = 
   if (sanitize) {
     content = sanitizeText(content);
   }
-  content = twemoji.parse(content, opts);
+  
+  let options = opts;
+
+  if(!options){
+    options = { base: getTwemojiBaseUrl() }
+  } 
+  else if(!options.base){
+    options.base = getTwemojiBaseUrl()
+  }
+
+  content = twemoji.parse(content, options);
+  
   if (linkify) {
     content = linkifyHtml(content, {
       target: '_blank',
