@@ -4,10 +4,16 @@ import { isAuthenticated } from '../../client/state/auth';
 import Auth from '../templates/auth/Auth';
 import Client from '../templates/client/Client';
 
-import InitAuthBroadcastChannel from '../../shire/EventsChannel';
+import {
+  handleCrossSigningEventsChannel,
+  handleEncryptionKeysExportEvent,
+  handleEncryptionKeysImportEvent,
+} from '../../shire/EventsChannel';
 
 function App() {
-  InitAuthBroadcastChannel();
+  handleCrossSigningEventsChannel();
+  handleEncryptionKeysExportEvent();
+  handleEncryptionKeysImportEvent();
   return isAuthenticated() ? <Client /> : <Auth />;
 }
 

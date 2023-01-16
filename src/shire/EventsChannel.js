@@ -1,7 +1,10 @@
 import SetupCrossSigningUsingPassPhrase from './CrossSigningSetup';
 
-function InitAuthBroadcastChannel() {
-  const crossSigningChannel = new BroadcastChannel('CrossSigningChannel');
+const crossSigningChannel = new BroadcastChannel('CrossSigningChannel');
+const encryptionKeysImportChannel = new BroadcastChannel('EncryptionImport');
+const encryptionKeysExportChannel = new BroadcastChannel('EncryptionExport');
+
+function handleCrossSigningEventsChannel() {
   crossSigningChannel.onmessage = async (event) => {
     console.log('Cross Signing Event Handler Triggered');
     const passPhrase = event.data.passphrase;
@@ -17,8 +20,32 @@ function InitAuthBroadcastChannel() {
   };
 }
 
-const encryptionKeysImportChannel = new BroadcastChannel('EncryptionImport');
+function handleEncryptionKeysImportEvent() {
+  encryptionKeysImportChannel.onmessage = async (event) => {
+    console.log('E2EE Import Event Handler Triggered');
+    try {
+      // TODO add import logic
+    } catch (error) {
+      console.log('E2EE Import Failed Error Occured');
+      console.log(error);
+    }
+  };
+}
 
-const encryptionKeysExportChannel = new BroadcastChannel('EncryptionExport');
+function handleEncryptionKeysExportEvent() {
+  encryptionKeysExportChannel.onmessage = async (event) => {
+    console.log('E2EE Export Event Handler Triggered');
+    try {
+      // TODO add export logic
+    } catch (error) {
+      console.log('E2EE Export Failed Error Occured');
+      console.log(error);
+    }
+  };
+}
 
-export default InitAuthBroadcastChannel;
+export {
+  handleCrossSigningEventsChannel,
+  handleEncryptionKeysExportEvent,
+  handleEncryptionKeysImportEvent,
+};
