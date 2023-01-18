@@ -1,4 +1,5 @@
 import SetupCrossSigningUsingPassPhrase from './CrossSigningSetup';
+import { getE2ERoomKeys } from './E2EKeyManagement';
 
 const crossSigningChannel = new BroadcastChannel('CrossSigningChannel');
 const encryptionKeysImportChannel = new BroadcastChannel('EncryptionImport');
@@ -36,7 +37,9 @@ function handleEncryptionKeysExportEvent() {
   encryptionKeysExportChannel.onmessage = async (event) => {
     console.log('E2EE Export Event Handler Triggered');
     try {
-      // TODO add export logic
+      const password = event.data.encryptionPassword;
+      const keysBuffer = await getE2ERoomKeys(password);
+      encryptionKeysExportChannel.postMessage({ keys: keysBuffer });
     } catch (error) {
       console.log('E2EE Export Failed Error Occured');
       console.log(error);
