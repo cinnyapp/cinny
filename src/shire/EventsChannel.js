@@ -1,5 +1,5 @@
 import SetupCrossSigningUsingPassPhrase from './CrossSigningSetup';
-import { getE2ERoomKeys } from './E2EKeyManagement';
+import { getE2ERoomKeys, importE2EERoomKeys } from './E2EKeyManagement';
 
 const crossSigningChannel = new BroadcastChannel('CrossSigningChannel');
 const encryptionKeysImportChannel = new BroadcastChannel('EncryptionImport');
@@ -25,7 +25,9 @@ function handleEncryptionKeysImportEvent() {
   encryptionKeysImportChannel.onmessage = async (event) => {
     console.log('E2EE Import Event Handler Triggered');
     try {
-      // TODO add import logic
+      const encryptionKeysBuffer = event.data.keysBuffer;
+      const encryptionPassword = event.data.keysPassword;
+      await importE2EERoomKeys(encryptionKeysBuffer, encryptionPassword);
     } catch (error) {
       console.log('E2EE Import Failed Error Occured');
       console.log(error);
