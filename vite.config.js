@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { wasm } from '@rollup/plugin-wasm';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { svgLoader } from './viteSvgLoader';
 
 const copyFiles = {
   targets: [
@@ -33,6 +34,7 @@ export default defineConfig({
   },
   plugins: [
     viteStaticCopy(copyFiles),
+    svgLoader(),
     wasm(),
     react(),
   ],
