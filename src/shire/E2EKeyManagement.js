@@ -30,7 +30,7 @@ async function importE2EERoomKeys(encryptedKeys, encrpytionPassword) {
     console.log('############### after decrypt ############');
     console.log(keys);
     console.log(JSON.parse(keys));
-    await initMatrix.matrixClient.importRoomKeys(keys);
+    await initMatrix.matrixClient.importRoomKeys(JSON.parse(keys));
     return keys;
   } catch (e) {
     // TODO fill in the catch function
