@@ -60,7 +60,7 @@ export default defineConfig({
     copyPublicDir: false,
     rollupOptions: {
       plugins: [
-        inject({ Buffer: ['Buffer', 'Buffer'] })
+        inject({ Buffer: ['buffer', 'Buffer'] })
       ]
     }
   },
