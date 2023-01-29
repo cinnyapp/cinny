@@ -28,6 +28,7 @@ const copyFiles = {
 export default defineConfig({
   appType: 'spa',
   publicDir: false,
+  base: "",
   server: {
     port: 8080,
     host: true,
