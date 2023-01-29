@@ -28,6 +28,7 @@ const copyFiles = {
 }
 
 const nodePolyfillAliases = {
+  // https://github.com/ionic-team/rollup-plugin-node-polyfills/tree/master/polyfills
   util: 'rollup-plugin-node-polyfills/polyfills/util',
   // sys: 'util',
   // events: 'rollup-plugin-node-polyfills/polyfills/events',
@@ -59,7 +60,7 @@ const nodePolyfillAliases = {
   // tty: 'rollup-plugin-node-polyfills/polyfills/tty',
   // domain: 'rollup-plugin-node-polyfills/polyfills/domain',
   buffer: 'rollup-plugin-node-polyfills/polyfills/buffer-es6',
-  process: 'rollup-plugin-node-polyfills/polyfills/process-es6'
+  // process: 'rollup-plugin-node-polyfills/polyfills/process-es6',
 }
 
 export default defineConfig({
@@ -91,7 +92,7 @@ export default defineConfig({
           }),
         ]
     }
-},
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,
@@ -100,7 +101,7 @@ export default defineConfig({
       plugins: [
         // Enable rollup polyfills plugin
         // used during production bundling
-        rollupNodePolyFill({ crypto: true }),
+        rollupNodePolyFill({ crypto: true, fs: true }),
       ]
     }
   },
