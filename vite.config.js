@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { wasm } from '@rollup/plugin-wasm';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
-import rollupNodePolyFill from 'rollup-plugin-node-polyfills'
+import inject from '@rollup/plugin-inject';
 import { svgLoader } from './viteSvgLoader';
 
 const copyFiles = {
@@ -34,9 +34,6 @@ export default defineConfig({
     port: 8080,
     host: true,
   },
-  define: {
-    global: "globalThis",
-  },
   plugins: [
     viteStaticCopy(copyFiles),
     svgLoader(),
@@ -63,9 +60,7 @@ export default defineConfig({
     copyPublicDir: false,
     rollupOptions: {
       plugins: [
-        // Enable rollup polyfills plugin
-        // used during production bundling
-        rollupNodePolyFill(),
+        inject({ Buffer: ['Buffer', 'Buffer'] })
       ]
     }
   },
