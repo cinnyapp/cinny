@@ -36,7 +36,7 @@ jobs:
         timeout-minutes: 1
       - name: Get version from tag
         id: vars
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
       - name: Create tar.gz
         run: tar -czvf cinny-${{ steps.vars.outputs.tag }}.tar.gz dist
       - name: Sign tar.gz
