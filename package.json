@@ -24,13 +24,18 @@
     "@khanacademy/simple-markdown": "0.8.6",
     "@matrix-org/olm": "3.2.14",
     "@tippyjs/react": "4.2.6",
+    "@vanilla-extract/css": "1.9.3",
+    "@vanilla-extract/recipes": "0.3.0",
+    "@vanilla-extract/vite-plugin": "3.7.1",
     "blurhash": "2.0.4",
     "browser-encrypt-attachment": "0.3.0",
+    "classnames": "2.3.2",
     "dateformat": "5.0.3",
     "emojibase-data": "7.0.1",
     "file-saver": "2.0.5",
     "flux": "4.0.3",
-    "folds": "1.0.2",
+    "focus-trap-react": "10.0.2",
+    "folds": "1.0.4",
     "formik": "2.2.9",
     "html-react-parser": "3.0.4",
     "immer": "9.0.16",
@@ -69,7 +74,7 @@
     "prettier": "2.8.1",
     "sass": "1.56.2",
     "typescript": "4.9.4",
-    "vite": "4.0.1",
+    "vite": "4.0.4",
     "vite-plugin-static-copy": "0.13.0"
   }
 }
