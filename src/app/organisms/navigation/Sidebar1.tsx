@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon, Icons, Badge, AvatarFallback, Text } from 'folds';
+import { useAtom } from 'jotai';
 
 import {
   Sidebar,
@@ -8,8 +9,11 @@ import {
   SidebarStack,
   SidebarAvatar,
 } from '../../components/sidebar';
+import { selectedTabAtom, SidebarTab } from '../../state/selectedTab';
 
 export function Sidebar1() {
+  const [selectedTab, setSelectedTab] = useAtom(selectedTabAtom);
+
   return (
     <Sidebar>
       <SidebarContent
@@ -17,12 +21,19 @@ export function Sidebar1() {
           <>
             <SidebarStack>
               <SidebarAvatar
-                active
+                active={selectedTab === SidebarTab.Home}
                 outlined
                 tooltip="Home"
                 avatarChildren={<Icon src={Icons.Home} filled />}
+                onClick={() => setSelectedTab(SidebarTab.Home)}
               />
-              <SidebarAvatar outlined tooltip="People" avatarChildren={<Icon src={Icons.User} />} />
+              <SidebarAvatar
+                active={selectedTab === SidebarTab.People}
+                outlined
+                tooltip="People"
+                avatarChildren={<Icon src={Icons.User} />}
+                onClick={() => setSelectedTab(SidebarTab.People)}
+              />
             </SidebarStack>
             <SidebarStackSeparator />
             <SidebarStack>
