@@ -25,6 +25,14 @@ export const mutedRoomsAtom = atom<Set<string>, MutedRoomsUpdate>(
   (get) => get(baseMutedRoomsAtom),
   (get, set, action) => {
     const mutedRooms = new Set([...get(mutedRoomsAtom)]);
+    if (action.type === 'INITIALIZE') {
+      set(baseMutedRoomsAtom, new Set([...action.addRooms]));
+      set(muteChangesAtom, {
+        added: [...action.addRooms],
+        removed: [],
+      });
+      return;
+    }
     if (action.type === 'UPDATE') {
       action.removeRooms.forEach((roomId) => mutedRooms.delete(roomId));
       action.addRooms.forEach((roomId) => mutedRooms.add(roomId));
