@@ -1,5 +1,6 @@
 import { atom } from 'jotai';
 
+const STORAGE_KEY = 'settings';
 export interface Settings {
   themeIndex: number;
   useSystemTheme: boolean;
@@ -27,13 +28,12 @@ const defaultSettings: Settings = {
 };
 
 export const getSettings = () => {
-  const settings = localStorage.getItem('settings');
+  const settings = localStorage.getItem(STORAGE_KEY);
   if (settings === null) return defaultSettings;
   return JSON.parse(settings) as Settings;
 };
 
 export const setSettings = (settings: Settings) => {
-  const STORAGE_KEY = 'settings';
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 };
 
