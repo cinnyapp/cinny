@@ -42,3 +42,9 @@ export function toggleNotificationSounds() {
     type: cons.actions.settings.TOGGLE_NOTIFICATION_SOUNDS,
   });
 }
+
+export function toggleReadReceipts() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_READ_RECEIPTS,
+  });
+}

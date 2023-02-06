@@ -1,4 +1,10 @@
 import initMatrix from '../initMatrix';
+import settings from '../state/settings';
+
+const ReceiptType = {
+  Read: 'm.read',
+  ReadPrivate: 'm.read.private',
+};
 
 // eslint-disable-next-line import/prefer-default-export
 export async function markAsRead(roomId) {
@@ -22,5 +28,6 @@ export async function markAsRead(roomId) {
   const latestEvent = getLatestValidEvent();
   if (latestEvent === null) return;
 
-  await mx.sendReadReceipt(latestEvent);
+  const receiptType = settings.sendReadReceipts ? ReceiptType.Read : ReceiptType.ReadPrivate;
+  await mx.sendReadReceipt(latestEvent, receiptType);
 }
