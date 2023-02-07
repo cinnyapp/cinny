@@ -3,20 +3,30 @@ import appDispatcher from '../dispatcher';
 
 import cons from './cons';
 
-function getSettings() {
+function getSettings(): Settings {
   const settings = localStorage.getItem('settings');
   if (settings === null) return null;
   return JSON.parse(settings);
 }
 
-function setSettings(key, value) {
+function setSettings(key: string, value) {
   let settings = getSettings();
-  if (settings === null) settings = {};
+  if (settings === null) settings = new Settings();
   settings[key] = value;
   localStorage.setItem('settings', JSON.stringify(settings));
 }
 
 class Settings extends EventEmitter {
+  themes: string[];
+  themeIndex: number;
+  useSystemTheme: boolean;
+  isMarkdown: boolean;
+  isPeopleDrawer: boolean;
+  hideMembershipEvents: boolean;
+  hideNickAvatarEvents: boolean;
+  _showNotifications: boolean;
+  isNotificationSounds: boolean;
+  isTouchScreenDevice: boolean;
   constructor() {
     super();
 
@@ -31,7 +41,10 @@ class Settings extends EventEmitter {
     this._showNotifications = this.getShowNotifications();
     this.isNotificationSounds = this.getIsNotificationSounds();
 
-    this.isTouchScreenDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+    this.isTouchScreenDevice =
+      // https://github.com/microsoft/vscode/issues/127822#issuecomment-874324028
+      // msMaxTouchPoints is for IE 10 which we don't support anymore, we can remove that.
+      'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }
 
   getThemeIndex() {
@@ -41,7 +54,7 @@ class Settings extends EventEmitter {
     if (settings === null) return 0;
     if (typeof settings.themeIndex === 'undefined') return 0;
     // eslint-disable-next-line radix
-    return parseInt(settings.themeIndex);
+    return Math.floor(settings.themeIndex);
   }
 
   getThemeName() {
