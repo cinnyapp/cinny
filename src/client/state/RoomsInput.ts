@@ -1,17 +1,18 @@
 import EventEmitter from 'events';
 import encrypt from 'browser-encrypt-attachment';
 import { encode } from 'blurhash';
+import { IContent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
 import { getBlobSafeMimeType } from '../../util/mimetypes';
 import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
 import { markdown, plain } from '../../util/markdown';
-import { IContent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import RoomList from './RoomList';
 
 const blurhashField = 'xyz.amorgan.blurhash';
 
+// eslint-disable-next-line no-undef
 function encodeBlurhash(img: CanvasImageSource) {
   const canvas = document.createElement('canvas');
   canvas.width = 100;
@@ -66,6 +67,7 @@ function loadVideo(videoFile: Blob) {
   });
 }
 function getVideoThumbnail(
+  // eslint-disable-next-line no-undef
   video: CanvasImageSource,
   width: number,
   height: number,
@@ -107,8 +109,11 @@ function getVideoThumbnail(
 
 class RoomsInput extends EventEmitter {
   matrixClient: MatrixClient;
+
   roomList: RoomList;
+
   roomIdToInput: Map<any, any>;
+
   constructor(mx: MatrixClient, roomList: RoomList) {
     super();
 
@@ -221,7 +226,7 @@ class RoomsInput extends EventEmitter {
     const autoMarkdown = options?.autoMarkdown ?? true;
 
     const room = this.matrixClient.getRoom(roomId);
-    //@ts-ignore
+    // @ts-ignore
     const userNames = room.currentState.userIdsToDisplayNames;
     const parentIds = this.roomList.getAllParentSpaces(room.roomId);
     const parentRooms = [...parentIds].map((id) => this.matrixClient.getRoom(id));

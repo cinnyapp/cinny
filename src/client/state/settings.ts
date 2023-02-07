@@ -3,6 +3,7 @@ import appDispatcher from '../dispatcher';
 
 import cons from './cons';
 
+// eslint-disable-next-line no-use-before-define
 function getSettings(): Settings {
   const settings = localStorage.getItem('settings');
   if (settings === null) return null;
@@ -11,6 +12,7 @@ function getSettings(): Settings {
 
 function setSettings(key: string, value) {
   let settings = getSettings();
+  // eslint-disable-next-line no-use-before-define
   if (settings === null) settings = new Settings();
   settings[key] = value;
   localStorage.setItem('settings', JSON.stringify(settings));
@@ -18,15 +20,25 @@ function setSettings(key: string, value) {
 
 class Settings extends EventEmitter {
   themes: string[];
+
   themeIndex: number;
+
   useSystemTheme: boolean;
+
   isMarkdown: boolean;
+
   isPeopleDrawer: boolean;
+
   hideMembershipEvents: boolean;
+
   hideNickAvatarEvents: boolean;
+
   _showNotifications: boolean;
+
   isNotificationSounds: boolean;
+
   isTouchScreenDevice: boolean;
+
   constructor() {
     super();
 

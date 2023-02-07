@@ -1,5 +1,6 @@
 class Postie {
   _topics: Map<string, Map<string, Set<Function>>>;
+
   constructor() {
     this._topics = new Map();
   }
@@ -78,7 +79,7 @@ class Postie {
    * @param {*} data - Data to deliver to subscriber
    */
   post(topic: string, address: string | string[], data: any) {
-    const sendPost = (inboxes: Set<Function>, addr: string) => {
+      const sendPost = (inboxes: Set<Function>, addr: string) => {
       if (inboxes === undefined) {
         throw new Error(
           `Unable to post on topic:"${topic}" at address:"${addr}". Subscriber doesn't exist.`

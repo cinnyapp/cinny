@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import { MatrixClient, MatrixEvent, NotificationCountType, Room } from 'matrix-js-sdk';
 import renderAvatar from '../../app/atoms/avatar/render';
 import { cssColorMXID } from '../../util/colorMXID';
 import { selectRoom } from '../action/navigation';
@@ -11,7 +12,6 @@ import LogoSVG from '../../../public/res/svg/cinny.svg';
 import LogoUnreadSVG from '../../../public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '../../../public/res/svg/cinny-highlight.svg';
 import { html, plain } from '../../util/markdown';
-import { MatrixClient, MatrixEvent, NotificationCountType, Room } from 'matrix-js-sdk';
 import RoomList from './RoomList';
 
 function isNotifEvent(mEvent: MatrixEvent) {
@@ -35,14 +35,23 @@ function findMutedRule(overrideRules, roomId) {
 
 class Notifications extends EventEmitter {
   initialized: boolean;
+
   favicon: string;
+
   matrixClient: MatrixClient;
+
   roomList: RoomList;
+
   roomIdToNoti: Map<string, any>;
+
   roomIdToPopupNotis: Map<string, any>;
+
   eventIdToPopupNoti: Map<any, any>;
+
   _notiAudio: any;
+
   _inviteAudio: any;
+
   constructor(roomList) {
     super();
 
@@ -333,7 +342,7 @@ class Notifications extends EventEmitter {
   }
 
   _listenEvents() {
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('Room.timeline', (mEvent: MatrixEvent, room: Room) => {
       if (mEvent.isRedaction()) this._deletePopupNoti(mEvent.event.redacts);
 
@@ -360,7 +369,7 @@ class Notifications extends EventEmitter {
         this._displayPopupNoti(mEvent, room);
       }
     });
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('accountData', (mEvent: MatrixEvent, oldMEvent: MatrixEvent) => {
       if (mEvent.getType() === 'm.push_rules') {
         const override = mEvent?.getContent()?.global?.override;
@@ -397,7 +406,7 @@ class Notifications extends EventEmitter {
         });
       }
     });
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('Room.receipt', (mEvent: MatrixEvent, room: Room) => {
       if (mEvent.getType() === 'm.receipt') {
         if (room.isSpaceRoom()) return;
@@ -411,7 +420,7 @@ class Notifications extends EventEmitter {
         this._deletePopupRoomNotis(room.roomId);
       }
     });
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('Room.myMembership', (room: Room, membership) => {
       if (membership === 'leave' && this.hasNoti(room.roomId)) {
         this.deleteNoti(room.roomId);

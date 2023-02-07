@@ -16,7 +16,7 @@ export function getPrivateKey(keyId) {
 }
 
 export function deletePrivateKey(keyId) {
-  //@ts-ignore
+  // @ts-ignore
   delete secretStorageKeys.delete(keyId);
 }
 

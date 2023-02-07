@@ -3,10 +3,15 @@ import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy';
 
 class RoomsHierarchy {
   matrixClient: MatrixClient;
+
   _maxDepth: number;
+
   _suggestedOnly: boolean;
+
   _limit: number;
+
   roomIdToHierarchy: Map<any, any>;
+
   constructor(matrixClient: MatrixClient, limit = 20, maxDepth = 1, suggestedOnly = false) {
     this.matrixClient = matrixClient;
     this._maxDepth = maxDepth;

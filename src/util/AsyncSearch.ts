@@ -2,17 +2,29 @@ import EventEmitter from 'events';
 
 class AsyncSearch extends EventEmitter {
   RESULT_SENT: string;
+
   dataList: (string | object)[];
+
   term: any;
+
   searchKeys: any;
+
   isContain: boolean;
+
   isCaseSensitive: boolean;
+
   normalizeUnicode: boolean;
+
   ignoreWhitespace: boolean;
+
   limit: number;
+
   findingList: any[];
+
   searchUptoIndex: number;
+
   sessionStartTimestamp: number;
+
   constructor() {
     super();
 

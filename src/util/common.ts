@@ -54,6 +54,7 @@ export function abbreviateNumber(number: number) {
 
 export class Debounce {
   timeoutId: any;
+
   constructor() {
     this.timeoutId = null;
   }
@@ -63,7 +64,7 @@ export class Debounce {
    * @param {number} wait - wait in milliseconds to call func
    * @returns {func} debounceCallback - to pass arguments to func callback
    */
-  _(func: Function, wait: number) {
+  _(func: (...args) => void, wait: number) {
     const debounceCallback = (...args) => {
       clearTimeout(this.timeoutId);
       this.timeoutId = setTimeout(() => {
@@ -77,6 +78,7 @@ export class Debounce {
 
 export class Throttle {
   timeoutId: any;
+
   constructor() {
     this.timeoutId = null;
   }
@@ -86,7 +88,7 @@ export class Throttle {
    * @param {number} wait - wait in milliseconds to call func
    * @returns {function} throttleCallback - to pass arguments to func callback
    */
-  _(func: Function, wait: number) {
+  _(func: (...args) => void, wait: number) {
     const throttleCallback = (...args) => {
       if (this.timeoutId !== null) return;
       this.timeoutId = setTimeout(() => {
@@ -146,7 +148,7 @@ export function copyToClipboard(text: string) {
   }
 }
 
-export function suffixRename(name: string | number, validator: Function) {
+export function suffixRename(name: string, validator: (newName: string) => boolean) {
   let suffix = 2;
   let newName = name;
   do {

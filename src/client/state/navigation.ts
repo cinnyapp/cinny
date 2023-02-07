@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { MatrixClient, Room } from 'matrix-js-sdk';
+import { MatrixClient } from 'matrix-js-sdk';
 import appDispatcher from '../dispatcher';
 import AccountData from './AccountData';
 import cons from './cons';
@@ -7,18 +7,27 @@ import RoomList from './RoomList';
 
 class Navigation extends EventEmitter {
   initMatrix: { roomList: RoomList; accountData: AccountData; matrixClient: MatrixClient };
+
   selectedTab: string;
+
   selectedSpaceId: string;
+
   selectedSpacePath: string[];
+
   selectedRoomId: string;
+
   isRoomSettings: boolean;
+
   recentRooms: string[];
+
   spaceToRoom: Map<string, any>;
+
   rawModelStack: any[];
+
   constructor() {
     super();
     // this will attached by initMatrix
-    //@ts-ignore
+    // @ts-ignore
     this.initMatrix = {};
 
     this.selectedTab = cons.tabs.HOME;

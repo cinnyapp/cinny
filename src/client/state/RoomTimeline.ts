@@ -5,7 +5,6 @@ import {
   MatrixClient,
   MatrixEvent,
   Room,
-  TimelineIndex,
 } from 'matrix-js-sdk';
 import initMatrix from '../initMatrix';
 import cons from './cons';
@@ -53,18 +52,18 @@ function addToMap(myMap: Map<string, MatrixEvent[]>, mEvent: MatrixEvent) {
 
 function getFirstLinkedTimeline(timeline: EventTimeline) {
   let tm = timeline;
-  //@ts-ignore
+  // @ts-ignore
   while (tm.prevTimeline) {
-    //@ts-ignore
+    // @ts-ignore
     tm = tm.prevTimeline;
   }
   return tm;
 }
 function getLastLinkedTimeline(timeline: EventTimeline) {
   let tm = timeline;
-  //@ts-ignore
+  // @ts-ignore
   while (tm.nextTimeline) {
-    //@ts-ignore
+    // @ts-ignore
     tm = tm.nextTimeline;
   }
   return tm;
@@ -78,9 +77,9 @@ function iterateLinkedTimelines(
   let tm = timeline;
   while (tm) {
     callback(tm);
-    //@ts-ignore
+    // @ts-ignore
     if (backwards) tm = tm.prevTimeline;
-    //@ts-ignore
+    // @ts-ignore
     else tm = tm.nextTimeline;
   }
 }
@@ -89,7 +88,7 @@ function isTimelineLinked(tm1: EventTimeline, tm2: EventTimeline) {
   let tm = getFirstLinkedTimeline(tm1);
   while (tm) {
     if (tm === tm2) return true;
-    //@ts-ignore
+    // @ts-ignore
     tm = tm.nextTimeline;
   }
   return false;
@@ -97,17 +96,29 @@ function isTimelineLinked(tm1: EventTimeline, tm2: EventTimeline) {
 
 class RoomTimeline extends EventEmitter {
   timeline: any[];
+
   editedTimeline: Map<any, any>;
+
   reactionTimeline: Map<any, any>;
+
   typingMembers: Set<unknown>;
+
   matrixClient: MatrixClient;
+
   roomId: string;
+
   room: any;
+
   liveTimeline;
+
   activeTimeline: any;
+
   isOngoingPagination: boolean;
+
   ongoingDecryptionCount: number;
+
   initialized: boolean;
+
   _listenRoomTimeline: (
     event: any,
     room: any,
@@ -115,10 +126,15 @@ class RoomTimeline extends EventEmitter {
     removed: any,
     data: any
   ) => void;
+
   _listenDecryptEvent: (event: any) => void;
+
   _listenRedaction: (mEvent: MatrixEvent, room: any) => void;
+
   _listenTypingEvent: (event: any, member: any) => void;
+
   _listenReciptEvent: (event: any, room: any) => void;
+
   constructor(roomId: string) {
     super();
     // These are local timelines
@@ -141,7 +157,7 @@ class RoomTimeline extends EventEmitter {
     setTimeout(() => this.room.loadMembersIfNeeded());
 
     // TODO: remove below line
-    //@ts-ignore
+    // @ts-ignore
     window.selectedRoom = this;
   }
 
@@ -440,29 +456,29 @@ class RoomTimeline extends EventEmitter {
         this.emit(cons.events.roomTimeline.LIVE_RECEIPT);
       }
     };
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('Room.timeline', this._listenRoomTimeline);
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('Room.redaction', this._listenRedaction);
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('Event.decrypted', this._listenDecryptEvent);
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('RoomMember.typing', this._listenTypingEvent);
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('Room.receipt', this._listenReciptEvent);
   }
 
   removeInternalListeners() {
     if (!this.initialized) return;
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.removeListener('Room.timeline', this._listenRoomTimeline);
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.removeListener('Room.redaction', this._listenRedaction);
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.removeListener('Event.decrypted', this._listenDecryptEvent);
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.removeListener('RoomMember.typing', this._listenTypingEvent);
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.removeListener('Room.receipt', this._listenReciptEvent);
   }
 }
