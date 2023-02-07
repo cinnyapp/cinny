@@ -13,7 +13,4 @@ const secret = {
   baseUrl: getSecret(cons.secretKey.BASE_URL),
 };
 
-export {
-  isAuthenticated,
-  secret,
-};
+export { isAuthenticated, secret };

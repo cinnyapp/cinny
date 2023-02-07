@@ -11,8 +11,10 @@ import LogoSVG from '../../../public/res/svg/cinny.svg';
 import LogoUnreadSVG from '../../../public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '../../../public/res/svg/cinny-highlight.svg';
 import { html, plain } from '../../util/markdown';
+import { MatrixClient, MatrixEvent, NotificationCountType, Room } from 'matrix-js-sdk';
+import RoomList from './RoomList';
 
-function isNotifEvent(mEvent) {
+function isNotifEvent(mEvent: MatrixEvent) {
   const eType = mEvent.getType();
   if (!cons.supportEventTypes.includes(eType)) return false;
   if (eType === 'm.room.member') return false;
@@ -28,13 +30,19 @@ function isMutedRule(rule) {
 }
 
 function findMutedRule(overrideRules, roomId) {
-  return overrideRules.find((rule) => (
-    rule.rule_id === roomId
-    && isMutedRule(rule)
-  ));
+  return overrideRules.find((rule) => rule.rule_id === roomId && isMutedRule(rule));
 }
 
 class Notifications extends EventEmitter {
+  initialized: boolean;
+  favicon: string;
+  matrixClient: MatrixClient;
+  roomList: RoomList;
+  roomIdToNoti: Map<string, any>;
+  roomIdToPopupNotis: Map<string, any>;
+  eventIdToPopupNoti: Map<any, any>;
+  _notiAudio: any;
+  _inviteAudio: any;
   constructor(roomList) {
     super();
 
@@ -63,8 +71,8 @@ class Notifications extends EventEmitter {
       if (this.getNotiType(room.roomId) === cons.notifs.MUTE) return;
       if (this.doesRoomHaveUnread(room) === false) return;
 
-      const total = room.getUnreadNotificationCount('total');
-      const highlight = room.getUnreadNotificationCount('highlight');
+      const total = room.getUnreadNotificationCount(NotificationCountType.Total);
+      const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
       this._setNoti(room.roomId, total ?? 0, highlight ?? 0);
     };
     [...this.roomList.rooms].forEach(addNoti);
@@ -187,7 +195,7 @@ class Notifications extends EventEmitter {
     const addH = highlight - noti.highlight;
     if (addT < 0 || addH < 0) return;
 
-    addNoti(roomId, addT, addH);
+    addNoti(roomId, addT, addH, undefined);
     const allParentSpaces = this.roomList.getAllParentSpaces(roomId);
     allParentSpaces.forEach((spaceId) => {
       addNoti(spaceId, addT, addH, roomId);
@@ -220,7 +228,7 @@ class Notifications extends EventEmitter {
       }
     };
 
-    removeNoti(roomId, total, highlight);
+    removeNoti(roomId, total, highlight, undefined);
     const allParentSpaces = this.roomList.getAllParentSpaces(roomId);
     allParentSpaces.forEach((spaceId) => {
       removeNoti(spaceId, total, highlight, roomId);
@@ -228,7 +236,7 @@ class Notifications extends EventEmitter {
     this._updateFavicon();
   }
 
-  async _displayPopupNoti(mEvent, room) {
+  async _displayPopupNoti(mEvent: MatrixEvent, room) {
     if (!settings.showNotifications && !settings.isNotificationSounds) return;
 
     const actions = this.matrixClient.getPushActionsForEvent(mEvent);
@@ -252,7 +260,14 @@ class Notifications extends EventEmitter {
       const icon = await renderAvatar({
         text: mEvent.sender.name,
         bgColor: cssColorMXID(mEvent.getSender()),
-        imageSrc: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, iconSize, iconSize, 'crop'),
+        imageSrc: mEvent.sender?.getAvatarUrl(
+          this.matrixClient.baseUrl,
+          iconSize,
+          iconSize,
+          'crop',
+          undefined,
+          undefined
+        ),
         size: iconSize,
         borderRadius: 8,
         scale: 8,
@@ -318,7 +333,8 @@ class Notifications extends EventEmitter {
   }
 
   _listenEvents() {
-    this.matrixClient.on('Room.timeline', (mEvent, room) => {
+    //@ts-ignore
+    this.matrixClient.on('Room.timeline', (mEvent: MatrixEvent, room: Room) => {
       if (mEvent.isRedaction()) this._deletePopupNoti(mEvent.event.redacts);
 
       if (room.isSpaceRoom()) return;
@@ -330,11 +346,11 @@ class Notifications extends EventEmitter {
       if (lastTimelineEvent.getId() !== mEvent.getId()) return;
       if (mEvent.getSender() === this.matrixClient.getUserId()) return;
 
-      const total = room.getUnreadNotificationCount('total');
-      const highlight = room.getUnreadNotificationCount('highlight');
+      const total = room.getUnreadNotificationCount(NotificationCountType.Total);
+      const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
 
       if (this.getNotiType(room.roomId) === cons.notifs.MUTE) {
-        this.deleteNoti(room.roomId, total ?? 0, highlight ?? 0);
+        this._deleteNoti(room.roomId, total ?? 0, highlight ?? 0);
         return;
       }
 
@@ -344,8 +360,8 @@ class Notifications extends EventEmitter {
         this._displayPopupNoti(mEvent, room);
       }
     });
-
-    this.matrixClient.on('accountData', (mEvent, oldMEvent) => {
+    //@ts-ignore
+    this.matrixClient.on('accountData', (mEvent: MatrixEvent, oldMEvent: MatrixEvent) => {
       if (mEvent.getType() === 'm.push_rules') {
         const override = mEvent?.getContent()?.global?.override;
         const oldOverride = oldMEvent?.getContent()?.global?.override;
@@ -375,14 +391,14 @@ class Notifications extends EventEmitter {
           this.emit(cons.events.notifications.MUTE_TOGGLED, rule.rule_id, false);
           const room = this.matrixClient.getRoom(rule.rule_id);
           if (!this.doesRoomHaveUnread(room)) return;
-          const total = room.getUnreadNotificationCount('total');
-          const highlight = room.getUnreadNotificationCount('highlight');
+          const total = room.getUnreadNotificationCount(NotificationCountType.Total);
+          const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
           this._setNoti(room.roomId, total ?? 0, highlight ?? 0);
         });
       }
     });
-
-    this.matrixClient.on('Room.receipt', (mEvent, room) => {
+    //@ts-ignore
+    this.matrixClient.on('Room.receipt', (mEvent: MatrixEvent, room: Room) => {
       if (mEvent.getType() === 'm.receipt') {
         if (room.isSpaceRoom()) return;
         const content = mEvent.getContent();
@@ -395,8 +411,8 @@ class Notifications extends EventEmitter {
         this._deletePopupRoomNotis(room.roomId);
       }
     });
-
-    this.matrixClient.on('Room.myMembership', (room, membership) => {
+    //@ts-ignore
+    this.matrixClient.on('Room.myMembership', (room: Room, membership) => {
       if (membership === 'leave' && this.hasNoti(room.roomId)) {
         this.deleteNoti(room.roomId);
       }

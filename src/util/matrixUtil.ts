@@ -81,7 +81,7 @@ export function parseReply(rawBody: string) {
   };
 }
 
-export function trimHTMLReply(html: string | string[]) {
+export function trimHTMLReply(html: string) {
   if (!html) return html;
   const suffix = '</mx-reply>';
   const i = html.indexOf(suffix);
@@ -95,7 +95,7 @@ export function hasDMWith(userId: string) {
   const mx = initMatrix.matrixClient;
   const directIds = [...initMatrix.roomList.directs];
 
-  return directIds.find((roomId) => {
+  return directIds.find((roomId: string) => {
     const dRoom = mx.getRoom(roomId);
     const roomMembers = dRoom.getMembers();
     if (roomMembers.length <= 2 && dRoom.getMember(userId)) {

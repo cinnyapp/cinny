@@ -1,18 +1,26 @@
 import EventEmitter from 'events';
+import {
+  Direction,
+  EventTimeline,
+  MatrixClient,
+  MatrixEvent,
+  Room,
+  TimelineIndex,
+} from 'matrix-js-sdk';
 import initMatrix from '../initMatrix';
 import cons from './cons';
 
 import settings from './settings';
 
-function isEdited(mEvent) {
+function isEdited(mEvent: MatrixEvent) {
   return mEvent.getRelation()?.rel_type === 'm.replace';
 }
 
-function isReaction(mEvent) {
+function isReaction(mEvent: MatrixEvent) {
   return mEvent.getType() === 'm.reaction';
 }
 
-function hideMemberEvents(mEvent) {
+function hideMemberEvents(mEvent: MatrixEvent) {
   const content = mEvent.getContent();
   const prevContent = mEvent.getPrevContent();
   const { membership } = content;
@@ -26,12 +34,12 @@ function hideMemberEvents(mEvent) {
   return false;
 }
 
-function getRelateToId(mEvent) {
+function getRelateToId(mEvent: MatrixEvent) {
   const relation = mEvent.getRelation();
-  return relation && relation.event_id;
+  return relation?.event_id;
 }
 
-function addToMap(myMap, mEvent) {
+function addToMap(myMap: Map<string, MatrixEvent[]>, mEvent: MatrixEvent) {
   const relateToId = getRelateToId(mEvent);
   if (relateToId === null) return null;
   const mEventId = mEvent.getId();
@@ -43,41 +51,75 @@ function addToMap(myMap, mEvent) {
   return mEvent;
 }
 
-function getFirstLinkedTimeline(timeline) {
+function getFirstLinkedTimeline(timeline: EventTimeline) {
   let tm = timeline;
+  //@ts-ignore
   while (tm.prevTimeline) {
+    //@ts-ignore
     tm = tm.prevTimeline;
   }
   return tm;
 }
-function getLastLinkedTimeline(timeline) {
+function getLastLinkedTimeline(timeline: EventTimeline) {
   let tm = timeline;
+  //@ts-ignore
   while (tm.nextTimeline) {
+    //@ts-ignore
     tm = tm.nextTimeline;
   }
   return tm;
 }
 
-function iterateLinkedTimelines(timeline, backwards, callback) {
+function iterateLinkedTimelines(
+  timeline: EventTimeline,
+  backwards: boolean,
+  callback: (tm: EventTimeline) => void
+) {
   let tm = timeline;
   while (tm) {
     callback(tm);
+    //@ts-ignore
     if (backwards) tm = tm.prevTimeline;
+    //@ts-ignore
     else tm = tm.nextTimeline;
   }
 }
 
-function isTimelineLinked(tm1, tm2) {
+function isTimelineLinked(tm1: EventTimeline, tm2: EventTimeline) {
   let tm = getFirstLinkedTimeline(tm1);
   while (tm) {
     if (tm === tm2) return true;
+    //@ts-ignore
     tm = tm.nextTimeline;
   }
   return false;
 }
 
 class RoomTimeline extends EventEmitter {
-  constructor(roomId) {
+  timeline: any[];
+  editedTimeline: Map<any, any>;
+  reactionTimeline: Map<any, any>;
+  typingMembers: Set<unknown>;
+  matrixClient: MatrixClient;
+  roomId: string;
+  room: any;
+  liveTimeline;
+  activeTimeline: any;
+  isOngoingPagination: boolean;
+  ongoingDecryptionCount: number;
+  initialized: boolean;
+  _listenRoomTimeline: (
+    event: any,
+    room: any,
+    toStartOfTimeline: any,
+    removed: any,
+    data: any
+  ) => void;
+  _listenDecryptEvent: (event: any) => void;
+  _listenRedaction: (mEvent: MatrixEvent, room: any) => void;
+  _listenTypingEvent: (event: any, member: any) => void;
+  _listenReciptEvent: (event: any, room: any) => void;
+  constructor(roomId: string) {
     super();
     // These are local timelines
     this.timeline = [];
@@ -99,6 +141,7 @@ class RoomTimeline extends EventEmitter {
     setTimeout(() => this.room.loadMembersIfNeeded());
 
     // TODO: remove below line
+    //@ts-ignore
     window.selectedRoom = this;
   }
 
@@ -109,7 +152,7 @@ class RoomTimeline extends EventEmitter {
   canPaginateBackward() {
     if (this.timeline[0]?.getType() === 'm.room.create') return false;
     const tm = getFirstLinkedTimeline(this.activeTimeline);
-    return tm.getPaginationToken('b') !== null;
+    return tm.getPaginationToken(Direction.Backward) !== null;
   }
 
   canPaginateForward() {
@@ -124,7 +167,7 @@ class RoomTimeline extends EventEmitter {
     this.timeline = [];
   }
 
-  addToTimeline(mEvent) {
+  addToTimeline(mEvent: MatrixEvent) {
     if (mEvent.getType() === 'm.room.member' && hideMemberEvents(mEvent)) {
       return;
     }
@@ -141,10 +184,10 @@ class RoomTimeline extends EventEmitter {
     this.timeline.push(mEvent);
   }
 
-  _populateAllLinkedEvents(timeline) {
+  _populateAllLinkedEvents(timeline: EventTimeline) {
     const firstTimeline = getFirstLinkedTimeline(timeline);
     iterateLinkedTimelines(firstTimeline, false, (tm) => {
-      tm.getEvents().forEach((mEvent) => this.addToTimeline(mEvent));
+      tm.getEvents().forEach((mEvent: MatrixEvent) => this.addToTimeline(mEvent));
     });
   }
 
@@ -169,7 +212,7 @@ class RoomTimeline extends EventEmitter {
     return true;
   }
 
-  async loadEventTimeline(eventId) {
+  async loadEventTimeline(eventId: string) {
     // we use first unfiltered EventTimelineSet for room pagination.
     const timelineSet = this.getUnfilteredTimelineSet();
     try {
@@ -193,7 +236,10 @@ class RoomTimeline extends EventEmitter {
       ? getFirstLinkedTimeline(this.activeTimeline)
       : getLastLinkedTimeline(this.activeTimeline);
 
-    if (timelineToPaginate.getPaginationToken(backwards ? 'b' : 'f') === null) {
+    if (
+      timelineToPaginate.getPaginationToken(backwards ? Direction.Backward : Direction.Forward) ===
+      null
+    ) {
       this.emit(cons.events.roomTimeline.PAGINATED, backwards, 0);
       this.isOngoingPagination = false;
       return false;
@@ -252,7 +298,7 @@ class RoomTimeline extends EventEmitter {
   }
 
   getLiveReaders() {
-    const liveEvents = this.liveTimeline.getEvents();
+    const liveEvents: MatrixEvent[] = this.liveTimeline.getEvents();
     const getLatestVisibleEvent = () => {
       for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
         const mEvent = liveEvents[i];
@@ -260,11 +306,13 @@ class RoomTimeline extends EventEmitter {
           // eslint-disable-next-line no-continue
           continue;
         }
-        if (!mEvent.isRedacted()
-          && !isReaction(mEvent)
-          && !isEdited(mEvent)
-          && cons.supportEventTypes.includes(mEvent.getType())
-        ) return mEvent;
+        if (
+          !mEvent.isRedacted() &&
+          !isReaction(mEvent) &&
+          !isEdited(mEvent) &&
+          cons.supportEventTypes.includes(mEvent.getType())
+        )
+          return mEvent;
       }
       return liveEvents[liveEvents.length - 1];
     };
@@ -311,7 +359,13 @@ class RoomTimeline extends EventEmitter {
   }
 
   _listenEvents() {
-    this._listenRoomTimeline = (event, room, toStartOfTimeline, removed, data) => {
+    this._listenRoomTimeline = (
+      event: MatrixEvent,
+      room: Room,
+      toStartOfTimeline,
+      removed,
+      data
+    ) => {
       if (room.roomId !== this.roomId) return;
       if (this.isOngoingPagination) return;
 
@@ -340,7 +394,7 @@ class RoomTimeline extends EventEmitter {
       this.emit(cons.events.roomTimeline.EVENT, event);
     };
 
-    this._listenDecryptEvent = (event) => {
+    this._listenDecryptEvent = (event: MatrixEvent) => {
       if (event.getRoomId() !== this.roomId) return;
       if (this.isOngoingPagination) return;
 
@@ -386,20 +440,29 @@ class RoomTimeline extends EventEmitter {
         this.emit(cons.events.roomTimeline.LIVE_RECEIPT);
       }
     };
-
+    //@ts-ignore
     this.matrixClient.on('Room.timeline', this._listenRoomTimeline);
+    //@ts-ignore
     this.matrixClient.on('Room.redaction', this._listenRedaction);
+    //@ts-ignore
     this.matrixClient.on('Event.decrypted', this._listenDecryptEvent);
+    //@ts-ignore
     this.matrixClient.on('RoomMember.typing', this._listenTypingEvent);
+    //@ts-ignore
     this.matrixClient.on('Room.receipt', this._listenReciptEvent);
   }
 
   removeInternalListeners() {
     if (!this.initialized) return;
+    //@ts-ignore
     this.matrixClient.removeListener('Room.timeline', this._listenRoomTimeline);
+    //@ts-ignore
     this.matrixClient.removeListener('Room.redaction', this._listenRedaction);
+    //@ts-ignore
     this.matrixClient.removeListener('Event.decrypted', this._listenDecryptEvent);
+    //@ts-ignore
     this.matrixClient.removeListener('RoomMember.typing', this._listenTypingEvent);
+    //@ts-ignore
     this.matrixClient.removeListener('Room.receipt', this._listenReciptEvent);
   }
 }

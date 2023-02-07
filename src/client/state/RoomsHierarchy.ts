@@ -1,7 +1,13 @@
+import { MatrixClient, Room } from 'matrix-js-sdk';
 import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy';
 
 class RoomsHierarchy {
-  constructor(matrixClient, limit = 20, maxDepth = 1, suggestedOnly = false) {
+  matrixClient: MatrixClient;
+  _maxDepth: number;
+  _suggestedOnly: boolean;
+  _limit: number;
+  roomIdToHierarchy: Map<any, any>;
+  constructor(matrixClient: MatrixClient, limit = 20, maxDepth = 1, suggestedOnly = false) {
     this.matrixClient = matrixClient;
     this._maxDepth = maxDepth;
     this._suggestedOnly = suggestedOnly;
@@ -10,29 +16,29 @@ class RoomsHierarchy {
     this.roomIdToHierarchy = new Map();
   }
 
-  getHierarchy(roomId) {
+  getHierarchy(roomId: string) {
     return this.roomIdToHierarchy.get(roomId);
   }
 
-  removeHierarchy(roomId) {
+  removeHierarchy(roomId: string) {
     return this.roomIdToHierarchy.delete(roomId);
   }
 
-  canLoadMore(roomId) {
+  canLoadMore(roomId: string) {
     const roomHierarchy = this.getHierarchy(roomId);
     if (!roomHierarchy) return true;
     return roomHierarchy.canLoadMore;
   }
 
-  async load(roomId, limit = this._limit) {
+  async load(roomId: string, limit = this._limit) {
     let roomHierarchy = this.getHierarchy(roomId);
 
     if (!roomHierarchy) {
       roomHierarchy = new RoomHierarchy(
-        { roomId, client: this.matrixClient },
+        { roomId, client: this.matrixClient } as Room,
         limit,
         this._maxDepth,
-        this._suggestedOnly,
+        this._suggestedOnly
       );
       this.roomIdToHierarchy.set(roomId, roomHierarchy);
     }

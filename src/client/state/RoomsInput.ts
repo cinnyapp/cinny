@@ -7,10 +7,12 @@ import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
 import { markdown, plain } from '../../util/markdown';
+import { IContent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
+import RoomList from './RoomList';
 
 const blurhashField = 'xyz.amorgan.blurhash';
 
-function encodeBlurhash(img) {
+function encodeBlurhash(img: CanvasImageSource) {
   const canvas = document.createElement('canvas');
   canvas.width = 100;
   canvas.height = 100;
@@ -20,7 +22,7 @@ function encodeBlurhash(img) {
   return encode(data.data, data.width, data.height, 4, 4);
 }
 
-function loadImage(url) {
+function loadImage(url: string) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
@@ -29,7 +31,7 @@ function loadImage(url) {
   });
 }
 
-function loadVideo(videoFile) {
+function loadVideo(videoFile: Blob) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
     video.preload = 'metadata';
@@ -48,7 +50,7 @@ function loadVideo(videoFile) {
         reject(e);
       };
 
-      video.src = ev.target.result;
+      video.src = ev.target.result as string;
       video.load();
       video.play();
     };
@@ -63,7 +65,12 @@ function loadVideo(videoFile) {
     }
   });
 }
-function getVideoThumbnail(video, width, height, mimeType) {
+function getVideoThumbnail(
+  video: CanvasImageSource,
+  width: number,
+  height: number,
+  mimeType: string
+) {
   return new Promise((resolve) => {
     const MAX_WIDTH = 800;
     const MAX_HEIGHT = 600;
@@ -99,7 +106,10 @@ function getVideoThumbnail(video, width, height, mimeType) {
 }
 
 class RoomsInput extends EventEmitter {
-  constructor(mx, roomList) {
+  matrixClient: MatrixClient;
+  roomList: RoomList;
+  roomIdToInput: Map<any, any>;
+  constructor(mx: MatrixClient, roomList: RoomList) {
     super();
 
     this.matrixClient = mx;
@@ -107,53 +117,57 @@ class RoomsInput extends EventEmitter {
     this.roomIdToInput = new Map();
   }
 
-  cleanEmptyEntry(roomId) {
+  cleanEmptyEntry(roomId: string) {
     const input = this.getInput(roomId);
-    const isEmpty = typeof input.attachment === 'undefined'
-      && typeof input.replyTo === 'undefined'
-      && (typeof input.message === 'undefined' || input.message === '');
+    const isEmpty =
+      typeof input.attachment === 'undefined' &&
+      typeof input.replyTo === 'undefined' &&
+      (typeof input.message === 'undefined' || input.message === '');
     if (isEmpty) {
       this.roomIdToInput.delete(roomId);
     }
   }
 
-  getInput(roomId) {
+  getInput(roomId: string) {
     return this.roomIdToInput.get(roomId) || {};
   }
 
-  setMessage(roomId, message) {
+  setMessage(roomId: string, message: string) {
     const input = this.getInput(roomId);
     input.message = message;
     this.roomIdToInput.set(roomId, input);
     if (message === '') this.cleanEmptyEntry(roomId);
   }
 
-  getMessage(roomId) {
+  getMessage(roomId: string) {
     const input = this.getInput(roomId);
     if (typeof input.message === 'undefined') return '';
     return input.message;
   }
 
-  setReplyTo(roomId, replyTo) {
+  setReplyTo(
+    roomId: string,
+    replyTo: { userId: any; eventId: any; body: any; formattedBody: any }
+  ) {
     const input = this.getInput(roomId);
     input.replyTo = replyTo;
     this.roomIdToInput.set(roomId, input);
   }
 
-  getReplyTo(roomId) {
+  getReplyTo(roomId: string) {
     const input = this.getInput(roomId);
     if (typeof input.replyTo === 'undefined') return null;
     return input.replyTo;
   }
 
-  cancelReplyTo(roomId) {
+  cancelReplyTo(roomId: string) {
     const input = this.getInput(roomId);
     if (typeof input.replyTo === 'undefined') return;
     delete input.replyTo;
     this.roomIdToInput.set(roomId, input);
   }
 
-  setAttachment(roomId, file) {
+  setAttachment(roomId: string, file: any) {
     const input = this.getInput(roomId);
     input.attachment = {
       file,
@@ -161,13 +175,13 @@ class RoomsInput extends EventEmitter {
     this.roomIdToInput.set(roomId, input);
   }
 
-  getAttachment(roomId) {
+  getAttachment(roomId: string) {
     const input = this.getInput(roomId);
     if (typeof input.attachment === 'undefined') return null;
     return input.attachment.file;
   }
 
-  cancelAttachment(roomId) {
+  cancelAttachment(roomId: string) {
     const input = this.getInput(roomId);
     if (typeof input.attachment === 'undefined') return;
 
@@ -183,16 +197,31 @@ class RoomsInput extends EventEmitter {
     this.emit(cons.events.roomsInput.ATTACHMENT_CANCELED, roomId);
   }
 
-  isSending(roomId) {
+  isSending(roomId: string) {
     return this.roomIdToInput.get(roomId)?.isSending || false;
   }
 
-  getContent(roomId, options, message, reply, edit) {
+  getContent(
+    roomId: string,
+    options,
+    message: any,
+    reply: {
+      eventId: string;
+      userId: string;
+      body: string;
+      formattedBody: any;
+    },
+    edit: {
+      getId: () => any;
+      getWireContent;
+      getContent;
+    }
+  ) {
     const msgType = options?.msgType || 'm.text';
     const autoMarkdown = options?.autoMarkdown ?? true;
 
     const room = this.matrixClient.getRoom(roomId);
-
+    //@ts-ignore
     const userNames = room.currentState.userIdsToDisplayNames;
     const parentIds = this.roomList.getAllParentSpaces(room.roomId);
     const parentRooms = [...parentIds].map((id) => this.matrixClient.getRoom(id));
@@ -204,7 +233,7 @@ class RoomsInput extends EventEmitter {
     const content = {
       body: body.plain,
       msgtype: msgType,
-    };
+    } as IContent;
 
     if (!body.onlyPlain || reply) {
       content.format = 'org.matrix.custom.html';
@@ -234,7 +263,8 @@ class RoomsInput extends EventEmitter {
 
         const eFBody = edit.getContent().formatted_body;
         const fReplyHead = eFBody.substring(0, eFBody.indexOf('</mx-reply>'));
-        if (fReplyHead) content.formatted_body = `${fReplyHead}</mx-reply>${content.formatted_body}`;
+        if (fReplyHead)
+          content.formatted_body = `${fReplyHead}</mx-reply>${content.formatted_body}`;
       }
     }
 
@@ -247,16 +277,22 @@ class RoomsInput extends EventEmitter {
 
       content.body = `> <${reply.userId}> ${reply.body.replace(/\n/g, '\n> ')}\n\n${content.body}`;
 
-      const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(roomId)}/${encodeURIComponent(reply.eventId)}">In reply to</a>`;
-      const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(reply.userId)}">${sanitizeText(reply.userId)}</a>`;
-      const fallback = `<mx-reply><blockquote>${replyToLink}${userLink}<br />${reply.formattedBody || sanitizeText(reply.body)}</blockquote></mx-reply>`;
+      const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(
+        roomId
+      )}/${encodeURIComponent(reply.eventId)}">In reply to</a>`;
+      const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(
+        reply.userId
+      )}">${sanitizeText(reply.userId)}</a>`;
+      const fallback = `<mx-reply><blockquote>${replyToLink}${userLink}<br />${
+        reply.formattedBody || sanitizeText(reply.body)
+      }</blockquote></mx-reply>`;
       content.formatted_body = fallback + content.formatted_body;
     }
 
     return content;
   }
 
-  async sendInput(roomId, options) {
+  async sendInput(roomId: string, options: any) {
     const input = this.getInput(roomId);
     input.isSending = true;
     this.roomIdToInput.set(roomId, input);
@@ -266,7 +302,7 @@ class RoomsInput extends EventEmitter {
     }
 
     if (this.getMessage(roomId).trim() !== '') {
-      const content = this.getContent(roomId, options, input.message, input.replyTo);
+      const content = this.getContent(roomId, options, input.message, input.replyTo, undefined);
       this.matrixClient.sendMessage(roomId, content);
     }
 
@@ -274,9 +310,16 @@ class RoomsInput extends EventEmitter {
     this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
   }
 
-  async sendSticker(roomId, data) {
+  async sendSticker(roomId: string, data: { mxc: any; body: any; httpUrl: string }) {
     const { mxc: url, body, httpUrl } = data;
-    const info = {};
+    const info = {
+      w: undefined,
+      h: undefined,
+      mimetype: undefined,
+      size: undefined,
+      thumbnail_info: undefined,
+      thumbnail_url: undefined,
+    };
 
     const img = new Image();
     img.src = httpUrl;
@@ -302,17 +345,22 @@ class RoomsInput extends EventEmitter {
     this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
   }
 
-  async sendFile(roomId, file) {
+  async sendFile(roomId: string, file: Blob) {
     const fileType = getBlobSafeMimeType(file.type).slice(0, file.type.indexOf('/'));
     const info = {
       mimetype: file.type,
       size: file.size,
+      w: undefined,
+      h: undefined,
+      thumbnail_info: undefined,
+      thumbnail_url: undefined,
+      thumbnail_file: undefined,
     };
-    const content = { info };
+    const content = { info } as IContent;
     let uploadData = null;
 
     if (fileType === 'image') {
-      const img = await loadImage(URL.createObjectURL(file));
+      const img = (await loadImage(URL.createObjectURL(file))) as HTMLImageElement;
 
       info.w = img.width;
       info.h = img.height;
@@ -325,14 +373,23 @@ class RoomsInput extends EventEmitter {
       content.body = file.name || 'Video';
 
       try {
-        const video = await loadVideo(file);
+        const video = (await loadVideo(file)) as HTMLVideoElement;
 
         info.w = video.videoWidth;
         info.h = video.videoHeight;
         info[blurhashField] = encodeBlurhash(video);
 
-        const thumbnailData = await getVideoThumbnail(video, video.videoWidth, video.videoHeight, 'image/jpeg');
-        const thumbnailUploadData = await this.uploadFile(roomId, thumbnailData.thumbnail);
+        const thumbnailData = (await getVideoThumbnail(
+          video,
+          video.videoWidth,
+          video.videoHeight,
+          'image/jpeg'
+        )) as IContent;
+        const thumbnailUploadData = await this.uploadFile(
+          roomId,
+          thumbnailData.thumbnail,
+          undefined
+        );
         info.thumbnail_info = thumbnailData.info;
         if (this.matrixClient.isRoomEncrypted(roomId)) {
           info.thumbnail_file = thumbnailUploadData.file;
@@ -352,7 +409,7 @@ class RoomsInput extends EventEmitter {
     }
 
     try {
-      uploadData = await this.uploadFile(roomId, file, (data) => {
+      uploadData = await this.uploadFile(roomId, file, (data: any) => {
         // data have two properties: data.loaded, data.total
         this.emit(cons.events.roomsInput.UPLOAD_PROGRESS_CHANGES, roomId, data);
       });
@@ -370,7 +427,7 @@ class RoomsInput extends EventEmitter {
     }
   }
 
-  async uploadFile(roomId, file, progressHandler) {
+  async uploadFile(roomId: string, file, progressHandler) {
     const isEncryptedRoom = this.matrixClient.isRoomEncrypted(roomId);
 
     let encryptInfo = null;
@@ -378,9 +435,11 @@ class RoomsInput extends EventEmitter {
 
     if (isEncryptedRoom) {
       const dataBuffer = await file.arrayBuffer();
-      if (typeof this.getInput(roomId).attachment === 'undefined') throw new Error('Attachment canceled');
+      if (typeof this.getInput(roomId).attachment === 'undefined')
+        throw new Error('Attachment canceled');
       const encryptedResult = await encrypt.encryptAttachment(dataBuffer);
-      if (typeof this.getInput(roomId).attachment === 'undefined') throw new Error('Attachment canceled');
+      if (typeof this.getInput(roomId).attachment === 'undefined')
+        throw new Error('Attachment canceled');
       encryptInfo = encryptedResult.info;
       encryptBlob = new Blob([encryptedResult.data]);
     }
@@ -408,13 +467,13 @@ class RoomsInput extends EventEmitter {
     return { url };
   }
 
-  async sendEditedMessage(roomId, mEvent, editedBody) {
+  async sendEditedMessage(roomId: string, mEvent: MatrixEvent, editedBody: any) {
     const content = this.getContent(
       roomId,
       { msgType: mEvent.getWireContent().msgtype },
       editedBody,
       null,
-      mEvent,
+      mEvent
     );
     this.matrixClient.sendMessage(roomId, content);
   }

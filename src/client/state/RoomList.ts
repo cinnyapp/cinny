@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import { Direction, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
 
@@ -11,18 +12,29 @@ function isMEventSpaceChild(mEvent) {
  * @param {number} timeout timeout to callback
  * @param {number} maxTry maximum callback try > 0. -1 means no limit
  */
-async function waitFor(callback, timeout = 400, maxTry = -1) {
+async function waitFor(callback: () => boolean, timeout: number = 400, maxTry: number = -1) {
   if (maxTry === 0) return false;
-  const isOver = async () => new Promise((resolve) => {
-    setTimeout(() => resolve(callback()), timeout);
-  });
+  const isOver = async () =>
+    new Promise((resolve) => {
+      setTimeout(() => resolve(callback()), timeout);
+    });
 
   if (await isOver()) return true;
   return waitFor(callback, timeout, maxTry - 1);
 }
 
 class RoomList extends EventEmitter {
-  constructor(matrixClient) {
+  matrixClient: MatrixClient;
+  mDirects: Set<unknown>;
+  roomIdToParents: Map<string, Set<string>>;
+  inviteDirects: Set<string>;
+  inviteSpaces: Set<string>;
+  inviteRooms: Set<string>;
+  directs: Set<string>;
+  spaces: Set<string>;
+  rooms: Set<string>;
+  processingRooms: Map<any, any>;
+  constructor(matrixClient: MatrixClient) {
     super();
     this.matrixClient = matrixClient;
     this.mDirects = this.getMDirects();
@@ -47,7 +59,7 @@ class RoomList extends EventEmitter {
     appDispatcher.register(this.roomActions.bind(this));
   }
 
-  isOrphan(roomId) {
+  isOrphan(roomId: string) {
     return !this.roomIdToParents.has(roomId);
   }
 
@@ -64,12 +76,12 @@ class RoomList extends EventEmitter {
     return rooms.filter((roomId) => !this.roomIdToParents.has(roomId));
   }
 
-  getSpaceChildren(roomId) {
+  getSpaceChildren(roomId: string) {
     const space = this.matrixClient.getRoom(roomId);
     if (space === null) return null;
     const mSpaceChild = space?.currentState.getStateEvents('m.space.child');
 
-    const children = [];
+    const children: string[] = [];
     mSpaceChild.forEach((mEvent) => {
       const childId = mEvent.event.state_key;
       if (isMEventSpaceChild(mEvent)) children.push(childId);
@@ -77,12 +89,12 @@ class RoomList extends EventEmitter {
     return children;
   }
 
-  getCategorizedSpaces(spaceIds) {
-    const categorized = new Map();
+  getCategorizedSpaces(spaceIds: string[]) {
+    const categorized = new Map<string, Set<string>>();
 
     const categorizeSpace = (spaceId) => {
       if (categorized.has(spaceId)) return;
-      const mappedChild = new Set();
+      const mappedChild = new Set<string>();
       categorized.set(spaceId, mappedChild);
 
       const child = this.getSpaceChildren(spaceId);
@@ -99,7 +111,7 @@ class RoomList extends EventEmitter {
     return categorized;
   }
 
-  addToRoomIdToParents(roomId, parentRoomId) {
+  addToRoomIdToParents(roomId: string, parentRoomId: string) {
     if (!this.roomIdToParents.has(roomId)) {
       this.roomIdToParents.set(roomId, new Set());
     }
@@ -107,17 +119,17 @@ class RoomList extends EventEmitter {
     parents.add(parentRoomId);
   }
 
-  removeFromRoomIdToParents(roomId, parentRoomId) {
+  removeFromRoomIdToParents(roomId: string, parentRoomId: string) {
     if (!this.roomIdToParents.has(roomId)) return;
     const parents = this.roomIdToParents.get(roomId);
     parents.delete(parentRoomId);
     if (parents.size === 0) this.roomIdToParents.delete(roomId);
   }
 
-  getAllParentSpaces(roomId) {
-    const allParents = new Set();
+  getAllParentSpaces(roomId: string) {
+    const allParents = new Set<string>();
 
-    const addAllParentIds = (rId) => {
+    const addAllParentIds = (rId: string) => {
       if (allParents.has(rId)) return;
       allParents.add(rId);
 
@@ -131,7 +143,7 @@ class RoomList extends EventEmitter {
     return allParents;
   }
 
-  addToSpaces(roomId) {
+  addToSpaces(roomId: string) {
     this.spaces.add(roomId);
 
     const allParentSpaces = this.getAllParentSpaces(roomId);
@@ -142,7 +154,7 @@ class RoomList extends EventEmitter {
     });
   }
 
-  deleteFromSpaces(roomId) {
+  deleteFromSpaces(roomId: string) {
     this.spaces.delete(roomId);
 
     const spaceChildren = this.getSpaceChildren(roomId);
@@ -152,7 +164,7 @@ class RoomList extends EventEmitter {
   }
 
   roomActions(action) {
-    const addRoom = (roomId, isDM) => {
+    const addRoom = (roomId: string, isDM: boolean) => {
       const myRoom = this.matrixClient.getRoom(roomId);
       if (myRoom === null) return false;
 
@@ -196,10 +208,8 @@ class RoomList extends EventEmitter {
   }
 
   getMDirects() {
-    const mDirectsId = new Set();
-    const mDirect = this.matrixClient
-      .getAccountData('m.direct')
-      ?.getContent();
+    const mDirectsId = new Set<string>();
+    const mDirect = this.matrixClient.getAccountData('m.direct')?.getContent();
 
     if (typeof mDirect === 'undefined') return mDirectsId;
 
@@ -251,6 +261,7 @@ class RoomList extends EventEmitter {
 
   _listenEvents() {
     // Update roomList when m.direct changes
+    //@ts-ignore
     this.matrixClient.on('accountData', (event) => {
       if (event.getType() !== 'm.direct') return;
 
@@ -282,13 +293,13 @@ class RoomList extends EventEmitter {
         }
       });
     });
-
-    this.matrixClient.on('Room.name', (room) => {
+    //@ts-ignore
+    this.matrixClient.on('Room.name', (room: Room) => {
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
       this.emit(cons.events.roomList.ROOM_PROFILE_UPDATED, room.roomId);
     });
-
-    this.matrixClient.on('RoomState.events', (mEvent, state) => {
+    //@ts-ignore
+    this.matrixClient.on('RoomState.events', (mEvent: MatrixEvent, state) => {
       if (mEvent.getType() === 'm.space.child') {
         const roomId = mEvent.event.room_id;
         const childId = mEvent.event.state_key;
@@ -316,74 +327,78 @@ class RoomList extends EventEmitter {
       }
     });
 
-    this.matrixClient.on('Room.myMembership', async (room, membership, prevMembership) => {
-      // room => prevMembership = null | invite | join | leave | kick | ban | unban
-      // room => membership = invite | join | leave | kick | ban | unban
-      const { roomId } = room;
-      const isRoomReady = () => this.matrixClient.getRoom(roomId) !== null;
-      if (['join', 'invite'].includes(membership) && isRoomReady() === false) {
-        if (await waitFor(isRoomReady, 200, 100) === false) return;
+    this.matrixClient.on(
+      //@ts-ignore
+      'Room.myMembership',
+      async (room: Room, membership: string, prevMembership: string) => {
+        // room => prevMembership = null | invite | join | leave | kick | ban | unban
+        // room => membership = invite | join | leave | kick | ban | unban
+        const { roomId } = room;
+        const isRoomReady = () => this.matrixClient.getRoom(roomId) !== null;
+        if (['join', 'invite'].includes(membership) && isRoomReady() === false) {
+          if ((await waitFor(isRoomReady, 200, 100)) === false) return;
+        }
+
+        if (membership === 'unban') return;
+
+        if (membership === 'invite') {
+          if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
+          else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
+          else this.inviteRooms.add(roomId);
+
+          this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
+          return;
+        }
+
+        if (prevMembership === 'invite') {
+          if (this.inviteDirects.has(roomId)) this.inviteDirects.delete(roomId);
+          else if (this.inviteSpaces.has(roomId)) this.inviteSpaces.delete(roomId);
+          else this.inviteRooms.delete(roomId);
+
+          this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
+        }
+
+        if (['leave', 'kick', 'ban'].includes(membership)) {
+          if (this.directs.has(roomId)) this.directs.delete(roomId);
+          else if (this.spaces.has(roomId)) this.deleteFromSpaces(roomId);
+          else this.rooms.delete(roomId);
+          this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+          return;
+        }
+
+        // when user create room/DM OR accept room/dm invite from this client.
+        // we will update this.rooms/this.directs with user action
+        if (membership === 'join' && this.processingRooms.has(roomId)) {
+          const procRoomInfo = this.processingRooms.get(roomId);
+
+          if (procRoomInfo.isDM) this.directs.add(roomId);
+          else if (room.isSpaceRoom()) this.addToSpaces(roomId);
+          else this.rooms.add(roomId);
+
+          if (procRoomInfo.task === 'CREATE') this.emit(cons.events.roomList.ROOM_CREATED, roomId);
+          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+
+          this.processingRooms.delete(roomId);
+          return;
+        }
+
+        if (this.mDirects.has(roomId) && membership === 'join') {
+          this.directs.add(roomId);
+          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+          return;
+        }
+
+        if (membership === 'join') {
+          if (room.isSpaceRoom()) this.addToSpaces(roomId);
+          else this.rooms.add(roomId);
+          this.emit(cons.events.roomList.ROOM_JOINED, roomId);
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        }
       }
-
-      if (membership === 'unban') return;
-
-      if (membership === 'invite') {
-        if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
-        else if (room.isSpaceRoom()) this.inviteSpaces.add(roomId);
-        else this.inviteRooms.add(roomId);
-
-        this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
-        return;
-      }
-
-      if (prevMembership === 'invite') {
-        if (this.inviteDirects.has(roomId)) this.inviteDirects.delete(roomId);
-        else if (this.inviteSpaces.has(roomId)) this.inviteSpaces.delete(roomId);
-        else this.inviteRooms.delete(roomId);
-
-        this.emit(cons.events.roomList.INVITELIST_UPDATED, roomId);
-      }
-
-      if (['leave', 'kick', 'ban'].includes(membership)) {
-        if (this.directs.has(roomId)) this.directs.delete(roomId);
-        else if (this.spaces.has(roomId)) this.deleteFromSpaces(roomId);
-        else this.rooms.delete(roomId);
-        this.emit(cons.events.roomList.ROOM_LEAVED, roomId);
-        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-        return;
-      }
-
-      // when user create room/DM OR accept room/dm invite from this client.
-      // we will update this.rooms/this.directs with user action
-      if (membership === 'join' && this.processingRooms.has(roomId)) {
-        const procRoomInfo = this.processingRooms.get(roomId);
-
-        if (procRoomInfo.isDM) this.directs.add(roomId);
-        else if (room.isSpaceRoom()) this.addToSpaces(roomId);
-        else this.rooms.add(roomId);
-
-        if (procRoomInfo.task === 'CREATE') this.emit(cons.events.roomList.ROOM_CREATED, roomId);
-        this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-
-        this.processingRooms.delete(roomId);
-        return;
-      }
-
-      if (this.mDirects.has(roomId) && membership === 'join') {
-        this.directs.add(roomId);
-        this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-        return;
-      }
-
-      if (membership === 'join') {
-        if (room.isSpaceRoom()) this.addToSpaces(roomId);
-        else this.rooms.add(roomId);
-        this.emit(cons.events.roomList.ROOM_JOINED, roomId);
-        this.emit(cons.events.roomList.ROOMLIST_UPDATED);
-      }
-    });
+    );
   }
 }
 export default RoomList;

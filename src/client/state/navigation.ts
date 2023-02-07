@@ -1,11 +1,24 @@
 import EventEmitter from 'events';
+import { MatrixClient, Room } from 'matrix-js-sdk';
 import appDispatcher from '../dispatcher';
+import AccountData from './AccountData';
 import cons from './cons';
+import RoomList from './RoomList';
 
 class Navigation extends EventEmitter {
+  initMatrix: { roomList: RoomList; accountData: AccountData; matrixClient: MatrixClient };
+  selectedTab: string;
+  selectedSpaceId: string;
+  selectedSpacePath: string[];
+  selectedRoomId: string;
+  isRoomSettings: boolean;
+  recentRooms: string[];
+  spaceToRoom: Map<string, any>;
+  rawModelStack: any[];
   constructor() {
     super();
     // this will attached by initMatrix
+    //@ts-ignore
     this.initMatrix = {};
 
     this.selectedTab = cons.tabs.HOME;
@@ -41,9 +54,9 @@ class Navigation extends EventEmitter {
   _mapRoomToSpace(roomId) {
     const { roomList, accountData } = this.initMatrix;
     if (
-      this.selectedTab === cons.tabs.HOME
-      && roomList.rooms.has(roomId)
-      && !roomList.roomIdToParents.has(roomId)
+      this.selectedTab === cons.tabs.HOME &&
+      roomList.rooms.has(roomId) &&
+      !roomList.roomIdToParents.has(roomId)
     ) {
       this.spaceToRoom.set(cons.tabs.HOME, {
         roomId,
@@ -93,11 +106,11 @@ class Navigation extends EventEmitter {
       cons.events.navigation.ROOM_SELECTED,
       this.selectedRoomId,
       prevSelectedRoomId,
-      eventId,
+      eventId
     );
   }
 
-  _selectTabWithRoom(roomId) {
+  _selectTabWithRoom(roomId: string) {
     const { roomList, accountData } = this.initMatrix;
     const { categorizedSpaces } = accountData;
 
@@ -203,7 +216,7 @@ class Navigation extends EventEmitter {
 
     const data = this.spaceToRoom.get(spaceId);
     if (data && !categorizedSpaces.has(spaceId)) {
-      this._selectRoom(data.roomId);
+      this._selectRoom(data.roomId, undefined);
       return;
     }
 
@@ -215,7 +228,7 @@ class Navigation extends EventEmitter {
       const latestSelectedRoom = this._getLatestSelectedRoomId([...categories.keys()]);
 
       if (latestSelectedRoom) {
-        this._selectRoom(latestSelectedRoom);
+        this._selectRoom(latestSelectedRoom, undefined);
         return;
       }
 
@@ -233,11 +246,11 @@ class Navigation extends EventEmitter {
     }
 
     if (!children) {
-      this._selectRoom(null);
+      this._selectRoom(null, null);
       return;
     }
 
-    this._selectRoom(this._getLatestActiveRoomId(children));
+    this._selectRoom(this._getLatestActiveRoomId(children), undefined);
   }
 
   _selectRoomWithTab(tabId) {
@@ -245,11 +258,11 @@ class Navigation extends EventEmitter {
     if (tabId === cons.tabs.HOME || tabId === cons.tabs.DIRECTS) {
       const data = this.spaceToRoom.get(tabId);
       if (data) {
-        this._selectRoom(data.roomId);
+        this._selectRoom(data.roomId, undefined);
         return;
       }
       const children = tabId === cons.tabs.HOME ? roomList.getOrphanRooms() : [...roomList.directs];
-      this._selectRoom(this._getLatestActiveRoomId(children));
+      this._selectRoom(this._getLatestActiveRoomId(children), undefined);
       return;
     }
     this._selectRoomWithSpace(tabId);
@@ -284,9 +297,10 @@ class Navigation extends EventEmitter {
   navigate(action) {
     const actions = {
       [cons.actions.navigation.SELECT_TAB]: () => {
-        const roomId = (
+        const roomId =
           action.tabId !== cons.tabs.HOME && action.tabId !== cons.tabs.DIRECTS
-        ) ? action.tabId : null;
+            ? action.tabId
+            : null;
 
         this._selectSpace(roomId, true);
         this._selectTab(action.tabId);
@@ -312,7 +326,7 @@ class Navigation extends EventEmitter {
         this.emit(
           cons.events.navigation.ROOM_SETTINGS_TOGGLED,
           this.isRoomSettings,
-          action.tabText,
+          action.tabText
         );
       },
       [cons.actions.navigation.OPEN_SHORTCUT_SPACES]: () => {
@@ -325,17 +339,10 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.PUBLIC_ROOMS_OPENED, action.searchTerm);
       },
       [cons.actions.navigation.OPEN_CREATE_ROOM]: () => {
-        this.emit(
-          cons.events.navigation.CREATE_ROOM_OPENED,
-          action.isSpace,
-          action.parentId,
-        );
+        this.emit(cons.events.navigation.CREATE_ROOM_OPENED, action.isSpace, action.parentId);
       },
       [cons.actions.navigation.OPEN_JOIN_ALIAS]: () => {
-        this.emit(
-          cons.events.navigation.JOIN_ALIAS_OPENED,
-          action.term,
-        );
+        this.emit(cons.events.navigation.JOIN_ALIAS_OPENED, action.term);
       },
       [cons.actions.navigation.OPEN_INVITE_USER]: () => {
         this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId, action.searchTerm);
@@ -353,21 +360,14 @@ class Navigation extends EventEmitter {
         this.emit(
           cons.events.navigation.EMOJIBOARD_OPENED,
           action.cords,
-          action.requestEmojiCallback,
+          action.requestEmojiCallback
         );
       },
       [cons.actions.navigation.OPEN_READRECEIPTS]: () => {
-        this.emit(
-          cons.events.navigation.READRECEIPTS_OPENED,
-          action.roomId,
-          action.userIds,
-        );
+        this.emit(cons.events.navigation.READRECEIPTS_OPENED, action.roomId, action.userIds);
       },
       [cons.actions.navigation.OPEN_VIEWSOURCE]: () => {
-        this.emit(
-          cons.events.navigation.VIEWSOURCE_OPENED,
-          action.event,
-        );
+        this.emit(cons.events.navigation.VIEWSOURCE_OPENED, action.event);
       },
       [cons.actions.navigation.CLICK_REPLY_TO]: () => {
         this.emit(
@@ -375,14 +375,11 @@ class Navigation extends EventEmitter {
           action.userId,
           action.eventId,
           action.body,
-          action.formattedBody,
+          action.formattedBody
         );
       },
       [cons.actions.navigation.OPEN_SEARCH]: () => {
-        this.emit(
-          cons.events.navigation.SEARCH_OPENED,
-          action.term,
-        );
+        this.emit(cons.events.navigation.SEARCH_OPENED, action.term);
       },
       [cons.actions.navigation.OPEN_REUSABLE_CONTEXT_MENU]: () => {
         this.emit(
@@ -390,7 +387,7 @@ class Navigation extends EventEmitter {
           action.placement,
           action.cords,
           action.render,
-          action.afterClose,
+          action.afterClose
         );
       },
       [cons.actions.navigation.OPEN_REUSABLE_DIALOG]: () => {
@@ -398,14 +395,14 @@ class Navigation extends EventEmitter {
           cons.events.navigation.REUSABLE_DIALOG_OPENED,
           action.title,
           action.render,
-          action.afterClose,
+          action.afterClose
         );
       },
       [cons.actions.navigation.OPEN_EMOJI_VERIFICATION]: () => {
         this.emit(
           cons.events.navigation.EMOJI_VERIFICATION_OPENED,
           action.request,
-          action.targetDevice,
+          action.targetDevice
         );
       },
     };
