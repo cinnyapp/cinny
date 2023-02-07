@@ -6,10 +6,12 @@ import HashLockIC from '../../public/res/ic/outlined/hash-lock.svg';
 import SpaceIC from '../../public/res/ic/outlined/space.svg';
 import SpaceGlobeIC from '../../public/res/ic/outlined/space-globe.svg';
 import SpaceLockIC from '../../public/res/ic/outlined/space-lock.svg';
+import { RoomMember } from 'matrix-js-sdk';
+import { Room } from 'matrix-js-sdk';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
-export async function getBaseUrl(servername) {
+export async function getBaseUrl(servername: string) {
   let protocol = 'https://';
   if (servername.match(/^https?:\/\//) !== null) protocol = '';
   const serverDiscoveryUrl = `${protocol}${servername}${WELL_KNOWN_URI}`;
@@ -24,7 +26,7 @@ export async function getBaseUrl(servername) {
   }
 }
 
-export function getUsername(userId) {
+export function getUsername(userId: string) {
   const mx = initMatrix.matrixClient;
   const user = mx.getUser(userId);
   if (user === null) return userId;
@@ -35,11 +37,11 @@ export function getUsername(userId) {
   return username;
 }
 
-export function getUsernameOfRoomMember(roomMember) {
+export function getUsernameOfRoomMember(roomMember: RoomMember) {
   return roomMember.name || roomMember.userId;
 }
 
-export async function isRoomAliasAvailable(alias) {
+export async function isRoomAliasAvailable(alias: string) {
   try {
     const result = await initMatrix.matrixClient.resolveRoomAlias(alias);
     if (result.room_id) return false;
@@ -50,7 +52,7 @@ export async function isRoomAliasAvailable(alias) {
   }
 }
 
-export function getPowerLabel(powerLevel) {
+export function getPowerLabel(powerLevel: number) {
   if (powerLevel > 9000) return 'Goku';
   if (powerLevel > 100) return 'Founder';
   if (powerLevel === 100) return 'Admin';
@@ -58,7 +60,7 @@ export function getPowerLabel(powerLevel) {
   return null;
 }
 
-export function parseReply(rawBody) {
+export function parseReply(rawBody: string) {
   if (rawBody?.indexOf('>') !== 0) return null;
   let body = rawBody.slice(rawBody.indexOf('<') + 1);
   const user = body.slice(0, body.indexOf('>'));
@@ -79,7 +81,7 @@ export function parseReply(rawBody) {
   };
 }
 
-export function trimHTMLReply(html) {
+export function trimHTMLReply(html: string | string[]) {
   if (!html) return html;
   const suffix = '</mx-reply>';
   const i = html.indexOf(suffix);
@@ -89,7 +91,7 @@ export function trimHTMLReply(html) {
   return html.slice(i + suffix.length);
 }
 
-export function hasDMWith(userId) {
+export function hasDMWith(userId: string) {
   const mx = initMatrix.matrixClient;
   const directIds = [...initMatrix.roomList.directs];
 
@@ -103,18 +105,22 @@ export function hasDMWith(userId) {
   });
 }
 
-export function joinRuleToIconSrc(joinRule, isSpace) {
-  return ({
-    restricted: () => (isSpace ? SpaceIC : HashIC),
-    knock: () => (isSpace ? SpaceLockIC : HashLockIC),
-    invite: () => (isSpace ? SpaceLockIC : HashLockIC),
-    public: () => (isSpace ? SpaceGlobeIC : HashGlobeIC),
-  }[joinRule]?.() || null);
+export function joinRuleToIconSrc(joinRule: string | number, isSpace: boolean) {
+  return (
+    {
+      restricted: () => (isSpace ? SpaceIC : HashIC),
+      knock: () => (isSpace ? SpaceLockIC : HashLockIC),
+      invite: () => (isSpace ? SpaceLockIC : HashLockIC),
+      public: () => (isSpace ? SpaceGlobeIC : HashGlobeIC),
+    }[joinRule]?.() || null
+  );
 }
 
 // NOTE: it gives userId with minimum power level 50;
-function getHighestPowerUserId(room) {
-  const userIdToPower = room.currentState.getStateEvents('m.room.power_levels', '')?.getContent().users;
+function getHighestPowerUserId(room: Room) {
+  const userIdToPower = room.currentState
+    .getStateEvents('m.room.power_levels', '')
+    ?.getContent().users;
   let powerUserId = null;
   if (!userIdToPower) return powerUserId;
 
@@ -131,12 +137,12 @@ function getHighestPowerUserId(room) {
   return powerUserId;
 }
 
-export function getIdServer(userId) {
+export function getIdServer(userId: string) {
   const idParts = userId.split(':');
   return idParts[1];
 }
 
-export function getServerToPopulation(room) {
+export function getServerToPopulation(room: Room) {
   const members = room.getMembers();
   const serverToPop = {};
 
@@ -154,7 +160,7 @@ export function getServerToPopulation(room) {
   return serverToPop;
 }
 
-export function genRoomVia(room) {
+export function genRoomVia(room: Room) {
   const via = [];
   const userId = getHighestPowerUserId(room);
   if (userId) {
@@ -163,7 +169,7 @@ export function genRoomVia(room) {
   }
   const serverToPop = getServerToPopulation(room);
   const sortedServers = Object.keys(serverToPop).sort(
-    (svrA, svrB) => serverToPop[svrB] - serverToPop[svrA],
+    (svrA, svrB) => serverToPop[svrB] - serverToPop[svrA]
   );
   const mostPop3 = sortedServers.slice(0, 3);
   if (via.length === 0) return mostPop3;
@@ -173,7 +179,7 @@ export function genRoomVia(room) {
   return via.concat(mostPop3.slice(0, 2));
 }
 
-export function isCrossVerified(deviceId) {
+export function isCrossVerified(deviceId: string) {
   try {
     const mx = initMatrix.matrixClient;
     const crossSignInfo = mx.getStoredCrossSigningForUser(mx.getUserId());
@@ -201,7 +207,7 @@ export function getDefaultSSKey() {
   }
 }
 
-export function getSSKeyInfo(key) {
+export function getSSKeyInfo(key: string) {
   const mx = initMatrix.matrixClient;
   try {
     return mx.getAccountData(`m.secret_storage.key.${key}`).getContent();
@@ -210,12 +216,13 @@ export function getSSKeyInfo(key) {
   }
 }
 
-export async function hasDevices(userId) {
+export async function hasDevices(userId: string) {
   const mx = initMatrix.matrixClient;
   try {
     const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
-    return Object.values(usersDeviceMap)
-      .every((userDevices) => (Object.keys(userDevices).length > 0));
+    return Object.values(usersDeviceMap).every(
+      (userDevices) => Object.keys(userDevices).length > 0
+    );
   } catch (e) {
     console.error("Error determining if it's possible to encrypt to all users: ", e);
     return false;

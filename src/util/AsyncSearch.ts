@@ -1,6 +1,18 @@
 import EventEmitter from 'events';
 
 class AsyncSearch extends EventEmitter {
+  RESULT_SENT: string;
+  dataList: (string | object)[];
+  term: any;
+  searchKeys: any;
+  isContain: boolean;
+  isCaseSensitive: boolean;
+  normalizeUnicode: boolean;
+  ignoreWhitespace: boolean;
+  limit: number;
+  findingList: any[];
+  searchUptoIndex: number;
+  sessionStartTimestamp: number;
   constructor() {
     super();
 
@@ -44,7 +56,17 @@ class AsyncSearch extends EventEmitter {
    * @param {boolean} [opts.ignoreWhitespace=true]
    * @param {number} [opts.limit=null] - Stop search after limit
    */
-  setup(dataList, opts) {
+  setup(
+    dataList: (string | object)[],
+    opts: {
+      keys?: string | string[];
+      isContain?: boolean;
+      isCaseSensitive?: boolean;
+      normalizeUnicode?: boolean;
+      ignoreWhitespace?: boolean;
+      limit: number;
+    }
+  ) {
     this._reset();
     this.dataList = dataList;
     this.searchKeys = opts?.keys || null;
@@ -55,7 +77,7 @@ class AsyncSearch extends EventEmitter {
     this.limit = opts?.limit || null;
   }
 
-  search(term) {
+  search(term: any) {
     this._softReset();
 
     this.term = this._normalize(term);
@@ -67,7 +89,7 @@ class AsyncSearch extends EventEmitter {
     this._find(this.sessionStartTimestamp, 0);
   }
 
-  _find(sessionTimestamp, lastFindingCount) {
+  _find(sessionTimestamp: number, lastFindingCount: number) {
     if (sessionTimestamp !== this.sessionStartTimestamp) return;
     this.sessionStartTimestamp = window.performance.now();
 
@@ -93,12 +115,12 @@ class AsyncSearch extends EventEmitter {
       }
     }
 
-    if (lastFindingCount !== this.findingList.length
-      || lastFindingCount === 0) this._sendFindings();
+    if (lastFindingCount !== this.findingList.length || lastFindingCount === 0)
+      this._sendFindings();
     this._softReset();
   }
 
-  _match(item) {
+  _match(item: string | object) {
     if (typeof item === 'string') {
       return this._compare(item);
     }
@@ -113,14 +135,14 @@ class AsyncSearch extends EventEmitter {
     return false;
   }
 
-  _compare(item) {
+  _compare(item: string) {
     if (typeof item !== 'string') return false;
     const myItem = this._normalize(item);
     if (this.isContain) return myItem.indexOf(this.term) !== -1;
     return myItem.startsWith(this.term);
   }
 
-  _normalize(item) {
+  _normalize(item: string) {
     let myItem = item.normalize(this.normalizeUnicode ? 'NFKC' : 'NFC');
     if (!this.isCaseSensitive) myItem = myItem.toLocaleLowerCase();
     if (this.ignoreWhitespace) myItem = myItem.replace(/\s/g, '');

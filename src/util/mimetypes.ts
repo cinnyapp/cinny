@@ -25,7 +25,7 @@ export const ALLOWED_BLOB_MIMETYPES = [
   'audio/x-flac',
 ];
 
-export function getBlobSafeMimeType(mimetype) {
+export function getBlobSafeMimeType(mimetype: string) {
   if (typeof mimetype !== 'string') return 'application/octet-stream';
   const [type] = mimetype.split(';');
   if (!ALLOWED_BLOB_MIMETYPES.includes(type)) {
