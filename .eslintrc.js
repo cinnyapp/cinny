@@ -55,5 +55,7 @@ module.exports = {
     "react-hooks/exhaustive-deps": "error",
 
     "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
   },
 };

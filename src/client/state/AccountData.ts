@@ -4,10 +4,15 @@ import cons from './cons';
 
 class AccountData extends EventEmitter {
   matrixClient: any;
+
   roomList: any;
+
   spaces: any;
+
   spaceShortcut: Set<unknown>;
+
   categorizedSpaces: Set<unknown>;
+
   constructor(roomList) {
     super();
 

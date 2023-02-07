@@ -1,5 +1,4 @@
 import { MatrixClient } from 'matrix-js-sdk';
-import { HTMLAttributes } from 'react';
 import sanitizeHtml from 'sanitize-html';
 
 const MAX_TAG_NESTING = 100;

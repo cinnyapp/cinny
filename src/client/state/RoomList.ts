@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { Direction, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
+import { MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
 
@@ -12,7 +12,7 @@ function isMEventSpaceChild(mEvent) {
  * @param {number} timeout timeout to callback
  * @param {number} maxTry maximum callback try > 0. -1 means no limit
  */
-async function waitFor(callback: () => boolean, timeout: number = 400, maxTry: number = -1) {
+async function waitFor(callback: () => boolean, timeout = 400, maxTry = -1) {
   if (maxTry === 0) return false;
   const isOver = async () =>
     new Promise((resolve) => {
@@ -25,15 +25,25 @@ async function waitFor(callback: () => boolean, timeout: number = 400, maxTry: n
 
 class RoomList extends EventEmitter {
   matrixClient: MatrixClient;
+
   mDirects: Set<unknown>;
+
   roomIdToParents: Map<string, Set<string>>;
+
   inviteDirects: Set<string>;
+
   inviteSpaces: Set<string>;
+
   inviteRooms: Set<string>;
+
   directs: Set<string>;
+
   spaces: Set<string>;
+
   rooms: Set<string>;
+
   processingRooms: Map<any, any>;
+
   constructor(matrixClient: MatrixClient) {
     super();
     this.matrixClient = matrixClient;
@@ -261,7 +271,7 @@ class RoomList extends EventEmitter {
 
   _listenEvents() {
     // Update roomList when m.direct changes
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('accountData', (event) => {
       if (event.getType() !== 'm.direct') return;
 
@@ -293,12 +303,12 @@ class RoomList extends EventEmitter {
         }
       });
     });
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('Room.name', (room: Room) => {
       this.emit(cons.events.roomList.ROOMLIST_UPDATED);
       this.emit(cons.events.roomList.ROOM_PROFILE_UPDATED, room.roomId);
     });
-    //@ts-ignore
+    // @ts-ignore
     this.matrixClient.on('RoomState.events', (mEvent: MatrixEvent, state) => {
       if (mEvent.getType() === 'm.space.child') {
         const roomId = mEvent.event.room_id;
@@ -328,7 +338,7 @@ class RoomList extends EventEmitter {
     });
 
     this.matrixClient.on(
-      //@ts-ignore
+      // @ts-ignore
       'Room.myMembership',
       async (room: Room, membership: string, prevMembership: string) => {
         // room => prevMembership = null | invite | join | leave | kick | ban | unban

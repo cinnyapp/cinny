@@ -1,3 +1,4 @@
+import { Room, RoomMember } from 'matrix-js-sdk';
 import initMatrix from '../client/initMatrix';
 
 import HashIC from '../../public/res/ic/outlined/hash.svg';
@@ -6,8 +7,6 @@ import HashLockIC from '../../public/res/ic/outlined/hash-lock.svg';
 import SpaceIC from '../../public/res/ic/outlined/space.svg';
 import SpaceGlobeIC from '../../public/res/ic/outlined/space-globe.svg';
 import SpaceLockIC from '../../public/res/ic/outlined/space-lock.svg';
-import { RoomMember } from 'matrix-js-sdk';
-import { Room } from 'matrix-js-sdk';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
