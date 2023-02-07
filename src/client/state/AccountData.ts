@@ -1,11 +1,13 @@
 import EventEmitter from 'events';
+import { MatrixClient } from 'matrix-js-sdk';
 import appDispatcher from '../dispatcher';
 import cons from './cons';
+import RoomList from './RoomList';
 
 class AccountData extends EventEmitter {
-  matrixClient: any;
+  matrixClient: MatrixClient;
 
-  roomList: any;
+  roomList: RoomList;
 
   spaces: any;
 
@@ -13,7 +15,7 @@ class AccountData extends EventEmitter {
 
   categorizedSpaces: Set<unknown>;
 
-  constructor(roomList) {
+  constructor(roomList: RoomList) {
     super();
 
     this.matrixClient = roomList.matrixClient;
@@ -127,6 +129,7 @@ class AccountData extends EventEmitter {
   }
 
   _listenEvents() {
+    // @ts-ignore
     this.matrixClient.on('accountData', (event) => {
       if (event.getType() !== cons.IN_CINNY_SPACES) return;
       this._populateSpaceShortcut();
