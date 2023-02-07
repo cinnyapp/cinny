@@ -111,8 +111,9 @@ export function getScrollInfo(target: HTMLElement) {
     top: Math.round(target.scrollTop),
     height: Math.round(target.scrollHeight),
     viewHeight: Math.round(target.offsetHeight),
-    isScrollable: this.height > this.viewHeight,
+    isScrollable: undefined,
   };
+  scroll.isScrollable = scroll.height > scroll.viewHeight;
   return scroll;
 }
 
