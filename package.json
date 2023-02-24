@@ -17,7 +17,7 @@
   },
   "keywords": [],
   "author": "Ajay Bura",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "dependencies": {
     "@fontsource/inter": "4.5.14",
     "@fontsource/roboto": "4.5.8",
