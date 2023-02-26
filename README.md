@@ -16,6 +16,8 @@ A Matrix client focusing primarily on simple, elegant and secure interface. The 
 - [Roadmap](https://github.com/ajbura/cinny/projects/11)
 - [Contributing](./CONTRIBUTING.md)
 
+<img align="center" src="https://raw.githubusercontent.com/cinnyapp/cinny-site/main/assets/preview2-light.png" height="380">
+
 ## Getting started
 Web app is available at https://app.cinny.in and gets updated on each new release. The `dev` branch is continuously deployed at https://dev.cinny.in but keep in mind that it could have things broken.
 
