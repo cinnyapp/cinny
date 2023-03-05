@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "vite",
-    "build": "vite --max_old_space_size=8198 build",
+    "build": "vite build --max_old_space_size=8198",
     "lint": "yarn check:eslint && yarn check:prettier",
     "check:eslint": "eslint src/*",
     "check:prettier": "prettier --check .",
