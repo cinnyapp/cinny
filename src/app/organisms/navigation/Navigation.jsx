@@ -1,14 +1,14 @@
 import React from 'react';
 import './Navigation.scss';
 
-import { Sidebar1 } from './Sidebar1';
 import SideBar from './SideBar';
 import Drawer from './Drawer';
+import { EditorPreview } from '../../components/editor/Editor.preview';
 
 function Navigation() {
   return (
     <div className="navigation">
-      <Sidebar1 />
+      <EditorPreview />
       <SideBar />
       <Drawer />
     </div>
