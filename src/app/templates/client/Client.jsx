@@ -17,6 +17,7 @@ import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
+import settings from '../../../client/state/settings';
 import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
 
@@ -26,6 +27,7 @@ function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
+  const [navBarVis, setNavBarVis] = useState(true);
   const classNameHidden = 'client__item-hidden';
 
   const navWrapperRef = useRef(null);
@@ -39,14 +41,25 @@ function Client() {
     navWrapperRef.current?.classList.remove(classNameHidden);
     roomWrapperRef.current?.classList.add(classNameHidden);
   }
+  function onNavigationBarToggle() {
+    setNavBarVis(navBarVis => {
+      if (!navBarVis)
+        navWrapperRef.current.style.display = '';
+      else
+        navWrapperRef.current.style.display = 'none';
+      return !navBarVis;
+    });
+  }
 
   useEffect(() => {
     navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
     navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
+    settings.on(cons.events.settings.NAVIGATION_BAR_TOGGLED, onNavigationBarToggle);
 
     return (() => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
       navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
+      settings.removeListener(cons.events.settings.NAVIGATION_BAR_TOGGLED, onNavigationBarToggle);
     });
   }, []);
 

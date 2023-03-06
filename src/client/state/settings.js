@@ -157,6 +157,9 @@ class Settings extends EventEmitter {
         setSettings('isMarkdown', this.isMarkdown);
         this.emit(cons.events.settings.MARKDOWN_TOGGLED, this.isMarkdown);
       },
+      [cons.actions.settings.TOGGLE_NAVIGATION_BAR]: () => {
+        this.emit(cons.events.settings.NAVIGATION_BAR_TOGGLED, this.isMarkdown);
+      },
       [cons.actions.settings.TOGGLE_PEOPLE_DRAWER]: () => {
         this.isPeopleDrawer = !this.isPeopleDrawer;
         setSettings('isPeopleDrawer', this.isPeopleDrawer);

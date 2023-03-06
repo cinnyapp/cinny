@@ -13,6 +13,12 @@ export function toggleMarkdown() {
   });
 }
 
+export function toggleNavigationBar() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_NAVIGATION_BAR,
+  });
+}
+
 export function togglePeopleDrawer() {
   appDispatcher.dispatch({
     type: cons.actions.settings.TOGGLE_PEOPLE_DRAWER,
