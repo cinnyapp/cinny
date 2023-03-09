@@ -296,7 +296,7 @@ function RoomViewInput({
       roomsInput.cancelReplyTo(roomId);
       setReplyTo(null);
     }
-    if (e.key === 'Enter' && e.shiftKey === false) {
+    if (e.key === 'Enter' && e.shiftKey === false && e.keyCode !== 229) {
       e.preventDefault();
       sendMessage();
     }
