@@ -60,7 +60,7 @@
     "@typescript-eslint/parser": "5.46.1",
     "@vitejs/plugin-react": "3.0.0",
     "buffer": "6.0.3",
-    "eslint": "8.29.0",
+    "eslint": "8.36.0",
     "eslint-config-airbnb": "19.0.4",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-import": "2.26.0",
