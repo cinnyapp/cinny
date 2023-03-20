@@ -68,7 +68,7 @@ function Room() {
     return (
       <JitsiMeeting
         domain="meet.calyx.net"
-        roomName={roomTimeline.roomName}
+        roomName={`${roomTimeline.roomName  } ${  roomTimeline.roomId.replace(':matrix.org', '')}`}
         configOverwrite={{
           startWithAudioMuted: true,
           disableModeratorIndicator: true,
