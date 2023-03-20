@@ -68,12 +68,44 @@ function Room() {
     return (
       <JitsiMeeting
         domain="meet.calyx.net"
-        roomName={`${roomTimeline.roomName  } ${  roomTimeline.roomId.replace(':matrix.org', '')}`}
+        roomName={`${roomTimeline.roomName} ${roomTimeline.roomId.replace(':matrix.org', '')}`}
         configOverwrite={{
-          startWithAudioMuted: true,
-          disableModeratorIndicator: true,
-          startScreenSharing: true,
-          enableEmailInStats: false,
+          disableReactions: true,
+          disablePolls: true,
+          prejoinConfig: { enabled: false },
+          liveStreaming: { enabled: false },
+
+          constraints: {
+            video: {
+              height: {
+                ideal: 1080,
+                max: 2160,
+                min: 720,
+              },
+            },
+          },
+          maxBitratesVideo: {
+            H264: {
+              low: 200000,
+              standard: 500000,
+              high: 1500000,
+            },
+            VP8: {
+              low: 200000,
+              standard: 500000,
+              high: 1500000,
+            },
+            VP9: {
+              low: 100000,
+              standard: 300000,
+              high: 1200000,
+            },
+          },
+          desktopSharingFrameRate: {
+            min: 30,
+            max: 60,
+          },
+          resolution: 1080,
         }}
         interfaceConfigOverwrite={{
           DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
