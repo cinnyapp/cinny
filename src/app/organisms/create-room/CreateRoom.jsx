@@ -36,6 +36,7 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
   const [joinRule, setJoinRule] = useState(parentId ? 'restricted' : 'invite');
   const [isEncrypted, setIsEncrypted] = useState(true);
+  const [isVideoRoom, setIsVideoRoom] = useState(false);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [creatingError, setCreatingError] = useState(null);
 
@@ -76,8 +77,11 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
     setCreatingError(null);
 
     const name = target.name.value;
-    let topic = target.topic.value;
-    if (topic.trim() === '') topic = undefined;
+    let topic = target.topic?.value;
+    if (topic && topic.trim() === '') topic = undefined;
+    if (isVideoRoom) {
+      topic = 'd38dd491fefa1cfffc27f9c57f2bdb4a';
+    }
     let roomAlias;
     if (joinRule === 'public') {
       roomAlias = addressRef?.current?.value;
@@ -92,7 +96,7 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
         topic,
         joinRule,
         alias: roomAlias,
-        isEncrypted: (isSpace || joinRule === 'public') ? false : isEncrypted,
+        isEncrypted: isSpace || joinRule === 'public' ? false : isEncrypted,
         powerLevel,
         isSpace,
         parentId,
@@ -168,52 +172,73 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
       <form className="create-room__form" onSubmit={handleSubmit}>
         <SettingTile
           title="Visibility"
-          options={(
+          options={
             <Button onClick={handleJoinRule} iconSrc={ChevronBottomIC}>
               {joinRuleShortText[joinRules.indexOf(joinRule)]}
             </Button>
-          )}
-          content={<Text variant="b3">{`Select who can join this ${isSpace ? 'space' : 'room'}.`}</Text>}
+          }
+          content={
+            <Text variant="b3">{`Select who can join this ${isSpace ? 'space' : 'room'}.`}</Text>
+          }
         />
         {joinRule === 'public' && (
           <div>
-            <Text className="create-room__address__label" variant="b2">{isSpace ? 'Space address' : 'Room address'}</Text>
+            <Text className="create-room__address__label" variant="b2">
+              {isSpace ? 'Space address' : 'Room address'}
+            </Text>
             <div className="create-room__address">
               <Text variant="b1">#</Text>
               <Input
                 value={addressValue}
                 onChange={validateAddress}
-                state={(isValidAddress === false) ? 'error' : 'normal'}
+                state={isValidAddress === false ? 'error' : 'normal'}
                 forwardRef={addressRef}
                 placeholder="my_address"
                 required
               />
               <Text variant="b1">{`:${userHs}`}</Text>
             </div>
-            {isValidAddress === false && <Text className="create-room__address__tip" variant="b3"><span style={{ color: 'var(--bg-danger)' }}>{`#${addressValue}:${userHs} is already in use`}</span></Text>}
+            {isValidAddress === false && (
+              <Text className="create-room__address__tip" variant="b3">
+                <span
+                  style={{ color: 'var(--bg-danger)' }}
+                >{`#${addressValue}:${userHs} is already in use`}</span>
+              </Text>
+            )}
           </div>
         )}
         {!isSpace && joinRule !== 'public' && (
           <SettingTile
             title="Enable end-to-end encryption"
             options={<Toggle isActive={isEncrypted} onToggle={setIsEncrypted} />}
-            content={<Text variant="b3">You can’t disable this later. Bridges & most bots won’t work yet.</Text>}
+            content={
+              <Text variant="b3">
+                You can’t disable this later. Bridges & most bots won’t work yet.
+              </Text>
+            }
           />
         )}
         <SettingTile
+          title="Video room"
+          options={<Toggle isActive={isVideoRoom} onToggle={setIsVideoRoom} />}
+          content={<Text variant="b3">Use jitsi for voice/video calls</Text>}
+        />
+        <SettingTile
           title="Select your role"
-          options={(
+          options={
             <SegmentControl
               selected={roleIndex}
               segments={[{ text: 'Admin' }, { text: 'Founder' }]}
               onSelect={setRoleIndex}
             />
-          )}
-          content={(
+          }
+          content={
             <Text variant="b3">Selecting Admin sets 100 power level whereas Founder sets 101.</Text>
-          )}
+          }
         />
-        <Input name="topic" minHeight={174} resizable label="Topic (optional)" />
+        {!isVideoRoom && (
+          <Input name="topic" minHeight={174} resizable label="Topic (optional)" />
+        )}
         <div className="create-room__name-wrapper">
           <Input name="name" label={`${isSpace ? 'Space' : 'Room'} name`} required />
           <Button
@@ -231,7 +256,11 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
             <Text>{`Creating ${isSpace ? 'space' : 'room'}...`}</Text>
           </div>
         )}
-        {typeof creatingError === 'string' && <Text className="create-room__error" variant="b3">{creatingError}</Text>}
+        {typeof creatingError === 'string' && (
+          <Text className="create-room__error" variant="b3">
+            {creatingError}
+          </Text>
+        )}
       </form>
     </div>
   );

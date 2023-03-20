@@ -88,6 +88,8 @@ class RoomTimeline extends EventEmitter {
     this.matrixClient = initMatrix.matrixClient;
     this.roomId = roomId;
     this.room = this.matrixClient.getRoom(roomId);
+    this.roomName = this.matrixClient.getRoom(roomId).name;
+    this.roomTopic = this.matrixClient.getRoom(roomId).topic;
 
     this.liveTimeline = this.room.getLiveTimeline();
     this.activeTimeline = this.liveTimeline;

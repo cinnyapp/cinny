@@ -1,4 +1,5 @@
 @use '../../partials/screen';
+@use '../../partials/flex';
 
 .client-container {
   display: flex;
@@ -7,15 +8,15 @@
 
 .navigation__wrapper {
   width: var(--navigation-width);
-  
+
   @include screen.smallerThan(mobileBreakpoint) {
     width: 100%;
   }
 }
 
 .room__wrapper {
-  flex: 1;
-  min-width: 0;
+  display:grid;
+  @extend .cp-fx__item-one;
 }
 
 @include screen.smallerThan(mobileBreakpoint) {

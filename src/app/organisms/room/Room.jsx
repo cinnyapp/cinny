@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Room.scss';
+import { JitsiMeeting } from '@jitsi/react-sdk';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -12,6 +13,7 @@ import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
 import RoomSettings from './RoomSettings';
 import PeopleDrawer from './PeopleDrawer';
+import { getUsername } from '../../../util/matrixUtil';
 
 function Room() {
   const [roomInfo, setRoomInfo] = useState({
@@ -57,6 +59,34 @@ function Room() {
   if (roomTimeline === null) {
     setTimeout(() => openNavigation());
     return <Welcome />;
+  }
+
+  if (
+    roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic ===
+    'd38dd491fefa1cfffc27f9c57f2bdb4a'
+  ) {
+    return (
+      <JitsiMeeting
+        domain="meet.calyx.net"
+        roomName={roomTimeline.roomName}
+        configOverwrite={{
+          startWithAudioMuted: true,
+          disableModeratorIndicator: true,
+          startScreenSharing: true,
+          enableEmailInStats: false,
+        }}
+        interfaceConfigOverwrite={{
+          DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+        }}
+        userInfo={{
+          displayName: getUsername(mx.getUserId()),
+        }}
+        onApiReady={(externalApi) => {
+          // here you can attach custom event listeners to the Jitsi Meet External API
+          // you can also store it locally to execute commands
+        }}
+      />
+    );
   }
 
   return (
