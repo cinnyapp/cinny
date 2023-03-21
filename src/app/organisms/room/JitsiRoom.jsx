@@ -146,9 +146,8 @@ function JitsiRoom(props) {
         />
       </div>
     );
-  } else {
-    return <div className="hiddenJitsiCall" />;
   }
+  return null;
 }
 
 export default JitsiRoom;
