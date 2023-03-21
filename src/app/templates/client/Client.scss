@@ -19,6 +19,29 @@
   @extend .cp-fx__item-one;
 }
 
+.jitsi_room__wrapper {
+  display: grid;
+  position: absolute;
+  top: 20rem;
+  left: 55rem;
+  z-index: 2000;
+  border: 1px solid gray;
+  border-radius: 5px;
+}
+
+.call_header{
+  z-index: 2001;
+  cursor: move;
+  text-align: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.call{
+  user-select: none;
+  background-color: darkgray;
+}
+
 @include screen.smallerThan(mobileBreakpoint) {
   .client__item-hidden {
     display: none;

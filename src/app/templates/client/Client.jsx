@@ -11,6 +11,7 @@ import ContextMenu, { MenuItem } from '../../atoms/context-menu/ContextMenu';
 import IconButton from '../../atoms/button/IconButton';
 import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
 import Room from '../../organisms/room/Room';
+import JitsiRoom from '../../organisms/room/JitsiRoom';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
@@ -165,6 +166,9 @@ function Client() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      <div className="jitsi_room__wrapper">
+        <JitsiRoom />
+      </div>
       <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation />
       </div>
