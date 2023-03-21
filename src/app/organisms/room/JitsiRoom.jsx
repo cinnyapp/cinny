@@ -26,10 +26,17 @@ function JitsiRoom() {
     const handleRoomSelected = (rId, pRoomId, eId) => {
       roomInfo.roomTimeline?.removeInternalListeners();
       if (mx.getRoom(rId)) {
+        const roomTimeline = new RoomTimeline(rId);
         setRoomInfo({
-          roomTimeline: new RoomTimeline(rId),
+          roomTimeline,
           eventId: eId ?? null,
         });
+        if (
+          roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic ===
+          'd38dd491fefa1cfffc27f9c57f2bdb4a'
+        ) {
+          setActiveCall(true);
+        }
       } else {
         // TODO: add ability to join room if roomId is invalid
         setRoomInfo({
@@ -51,23 +58,23 @@ function JitsiRoom() {
     return null;
   }
 
-  if (
-    roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent()
-      .topic === 'd38dd491fefa1cfffc27f9c57f2bdb4a' ||
-    activeCall
-  ) {
-    if (!activeCall) {
-      setActiveCall(true);
-      if (roomName === '') {
-        setRoomName(roomTimeline.roomName);
-      }
+  if (activeCall) {
+    if (roomName === '') {
+      setRoomName(roomTimeline.roomName);
     }
     return (
       <div className="call">
         <div className="call_header" id="header" ref={openerRef}>
           {roomName}
         </div>
-        <Button onclick={() => setActiveCall(false)}>X</Button>
+        <Button
+          onClick={() => {
+            setActiveCall(false);
+            setRoomName('');
+          }}
+        >
+          X
+        </Button>
         <Button>Return</Button>
         <JitsiMeeting
           domain="meet.calyx.net"
@@ -126,7 +133,7 @@ function JitsiRoom() {
   }
 
   if (!activeCall) {
-    return (<div className="hiddenJitsiCall" />);
+    return <div className="hiddenJitsiCall" />;
   }
 }
 
