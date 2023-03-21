@@ -14,7 +14,7 @@ import RoomSettings from './RoomSettings';
 import PeopleDrawer from './PeopleDrawer';
 import Button from '../../atoms/button/Button';
 
-function Room() {
+function Room(props) {
   const [roomInfo, setRoomInfo] = useState({
     roomTimeline: null,
     eventId: null,
@@ -27,8 +27,9 @@ function Room() {
     const handleRoomSelected = (rId, pRoomId, eId) => {
       roomInfo.roomTimeline?.removeInternalListeners();
       if (mx.getRoom(rId)) {
+        const roomTimeline = new RoomTimeline(rId);
         setRoomInfo({
-          roomTimeline: new RoomTimeline(rId),
+          roomTimeline,
           eventId: eId ?? null,
         });
       } else {
@@ -40,10 +41,7 @@ function Room() {
       }
     };
 
-    navigation.on(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
-    return () => {
-      navigation.removeListener(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
-    };
+    navigation.once(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
   }, [roomInfo]);
 
   useEffect(() => {
@@ -60,16 +58,11 @@ function Room() {
     return <Welcome />;
   }
 
-  if (
+  const isJitsiChannel =
     roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic ===
-    'd38dd491fefa1cfffc27f9c57f2bdb4a'
-  ) {
-    return (
-      <div className="room__content">
-        You are already in another call, do you want to switch to this one?
-        <Button>Join call</Button>
-        </div>
-    );
+    'd38dd491fefa1cfffc27f9c57f2bdb4a';
+  if (isJitsiChannel) {
+    return null;
   }
 
   return (

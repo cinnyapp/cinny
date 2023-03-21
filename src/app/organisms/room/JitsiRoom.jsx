@@ -10,12 +10,13 @@ import { openNavigation } from '../../../client/action/navigation';
 import { getUsername } from '../../../util/matrixUtil';
 import Button from '../../atoms/button/Button';
 
-function JitsiRoom() {
+function JitsiRoom(props) {
+  const { jitsiCallId, setJitsiCallId } = props;
+
   const [roomInfo, setRoomInfo] = useState({
     roomTimeline: null,
     eventId: null,
   });
-  const [activeCall, setActiveCall] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [roomId, setRoomId] = useState('');
   const openerRef = useRef(null);
@@ -27,15 +28,23 @@ function JitsiRoom() {
       roomInfo.roomTimeline?.removeInternalListeners();
       if (mx.getRoom(rId)) {
         const roomTimeline = new RoomTimeline(rId);
-        setRoomInfo({
-          roomTimeline,
-          eventId: eId ?? null,
-        });
         if (
           roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic ===
+            'd38dd491fefa1cfffc27f9c57f2bdb4a' &&
+          confirm('aaa')
+        ) {
+          setRoomInfo({
+            roomTimeline,
+            eventId: eId ?? null,
+          });
+        } else if (
+          roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic !==
           'd38dd491fefa1cfffc27f9c57f2bdb4a'
         ) {
-          setActiveCall(true);
+          setRoomInfo({
+            roomTimeline,
+            eventId: eId ?? null,
+          });
         }
       } else {
         // TODO: add ability to join room if roomId is invalid
@@ -46,11 +55,21 @@ function JitsiRoom() {
       }
     };
 
-    navigation.on(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
-    return () => {
-      navigation.removeListener(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
-    };
+    navigation.once(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
   }, [mx, roomInfo]);
+
+  useEffect(() => {
+    if (
+      roomInfo.roomTimeline?.room.currentState.getStateEvents('m.room.topic')[0]?.getContent()
+        .topic === 'd38dd491fefa1cfffc27f9c57f2bdb4a' &&
+      !jitsiCallId
+    ) {
+      setJitsiCallId(roomInfo.roomTimeline.roomId);
+      if (roomName === '') {
+        setRoomName(roomInfo.roomTimeline.roomName);
+      }
+    }
+  }, [roomInfo.roomTimeline?.roomName]);
 
   const { roomTimeline } = roomInfo;
   if (roomTimeline === null) {
@@ -58,10 +77,7 @@ function JitsiRoom() {
     return null;
   }
 
-  if (activeCall) {
-    if (roomName === '') {
-      setRoomName(roomTimeline.roomName);
-    }
+  if (jitsiCallId) {
     return (
       <div className="call">
         <div className="call_header" id="header" ref={openerRef}>
@@ -69,7 +85,7 @@ function JitsiRoom() {
         </div>
         <Button
           onClick={() => {
-            setActiveCall(false);
+            setJitsiCallId(null);
             setRoomName('');
           }}
         >
@@ -130,9 +146,7 @@ function JitsiRoom() {
         />
       </div>
     );
-  }
-
-  if (!activeCall) {
+  } else {
     return <div className="hiddenJitsiCall" />;
   }
 }

@@ -27,6 +27,7 @@ function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
+  const [jitsiCallId, setJitsiCallId] = useState(null);
   const classNameHidden = 'client__item-hidden';
 
   const navWrapperRef = useRef(null);
@@ -45,19 +46,16 @@ function Client() {
     navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
     navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
 
-    return (() => {
+    return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
       navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
-    });
+    };
   }, []);
 
   useEffect(() => {
     let counter = 0;
     const iId = setInterval(() => {
-      const msgList = [
-        'Almost there...',
-        'Looks like you have a lot of stuff to heat up!',
-      ];
+      const msgList = ['Almost there...', 'Looks like you have a lot of stuff to heat up!'];
       if (counter === msgList.length - 1) {
         setLoadingMsg(msgList[msgList.length - 1]);
         clearInterval(iId);
@@ -81,22 +79,28 @@ function Client() {
         <div className="loading__menu">
           <ContextMenu
             placement="bottom"
-            content={(
+            content={
               <>
                 <MenuItem onClick={() => initMatrix.clearCacheAndReload()}>
                   Clear cache & reload
                 </MenuItem>
                 <MenuItem onClick={() => initMatrix.logout()}>Logout</MenuItem>
               </>
+            }
+            render={(toggle) => (
+              <IconButton size="extra-small" onClick={toggle} src={VerticalMenuIC} />
             )}
-            render={(toggle) => <IconButton size="extra-small" onClick={toggle} src={VerticalMenuIC} />}
           />
         </div>
         <Spinner />
-        <Text className="loading__message" variant="b2">{loadingMsg}</Text>
+        <Text className="loading__message" variant="b2">
+          {loadingMsg}
+        </Text>
 
         <div className="loading__appname">
-          <Text variant="h2" weight="medium">Cinny</Text>
+          <Text variant="h2" weight="medium">
+            Cinny
+          </Text>
         </div>
       </div>
     );
@@ -167,13 +171,13 @@ function Client() {
       onDrop={handleDrop}
     >
       <div className="jitsi_room__wrapper">
-        <JitsiRoom />
+        <JitsiRoom jitsiCallId={jitsiCallId} setJitsiCallId={setJitsiCallId} />
       </div>
       <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation />
       </div>
       <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
-        <Room />
+        <Room jitsiCallId={jitsiCallId} setJitsiCallId={setJitsiCallId} />
       </div>
       <Windows />
       <Dialogs />
