@@ -10,6 +10,8 @@ import { openNavigation } from '../../../client/action/navigation';
 import { getUsername } from '../../../util/matrixUtil';
 import Button from '../../atoms/button/Button';
 
+const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a'
+
 function JitsiRoom(props) {
   const { jitsiCallId, setJitsiCallId } = props;
 
@@ -26,26 +28,14 @@ function JitsiRoom(props) {
   useEffect(() => {
     const handleRoomSelected = (rId, pRoomId, eId) => {
       roomInfo.roomTimeline?.removeInternalListeners();
-      if (mx.getRoom(rId)) {
-        const roomTimeline = new RoomTimeline(rId);
-        if (
-          roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic ===
-            'd38dd491fefa1cfffc27f9c57f2bdb4a' &&
-          confirm('aaa')
-        ) {
-          setRoomInfo({
-            roomTimeline,
-            eventId: eId ?? null,
-          });
-        } else if (
-          roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic !==
-          'd38dd491fefa1cfffc27f9c57f2bdb4a'
-        ) {
-          setRoomInfo({
-            roomTimeline,
-            eventId: eId ?? null,
-          });
-        }
+      const roomTimeline = new RoomTimeline(rId);
+      const topic = roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic
+
+      if (mx.getRoom(rId) && topic === TOPIC_JITSI_CALL && confirm('Do you want to join this call?')) {
+        setRoomInfo({
+          roomTimeline,
+          eventId: eId ?? null,
+        });
       } else {
         // TODO: add ability to join room if roomId is invalid
         setRoomInfo({
