@@ -20,7 +20,7 @@ function JitsiRoom(props) {
     eventId: null,
   });
   const [roomName, setRoomName] = useState('');
-  const [roomId, setRoomId] = useState('');
+  const [counter, setCounter] = useState(0);
   const openerRef = useRef(null);
 
   const mx = initMatrix.matrixClient;
@@ -53,17 +53,12 @@ function JitsiRoom(props) {
   }, [mx, roomInfo]);
 
   useEffect(() => {
-    const topic = roomInfo.roomTimeline?.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic
-    if (
-      topic === TOPIC_JITSI_CALL &&
-      !jitsiCallId
-    ) {
+    if (roomInfo?.roomTimeline) {
       setJitsiCallId(roomInfo.roomTimeline.roomId);
-      if (roomName === '') {
-        setRoomName(roomInfo.roomTimeline.roomName);
-      }
+      setRoomName(roomInfo.roomTimeline.roomName);
+      setCounter(counter + 1);
     }
-  }, [roomInfo.roomTimeline?.roomName]);
+  }, [roomInfo]);
 
   const { roomTimeline } = roomInfo;
   if (roomTimeline === null) {
@@ -91,8 +86,9 @@ function JitsiRoom(props) {
         </Button>
         <Button>Return</Button>
         <JitsiMeeting
+          key={counter}
           domain="meet.calyx.net"
-          roomName={`${roomTimeline.roomName} ${roomTimeline.roomId.replace(':matrix.org', '')}`}
+          roomName={`${roomName} ${roomTimeline.roomId.replace(':matrix.org', '')}`}
           configOverwrite={{
             disableReactions: true,
             disablePolls: true,
