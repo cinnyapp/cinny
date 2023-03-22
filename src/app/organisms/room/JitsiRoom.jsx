@@ -45,7 +45,10 @@ function JitsiRoom(props) {
       }
     };
 
-    navigation.once(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
+    navigation.on(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
+    return () => {
+      navigation.removeListener(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
+    };
   }, [mx, roomInfo]);
 
   useEffect(() => {
