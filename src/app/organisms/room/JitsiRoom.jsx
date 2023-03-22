@@ -53,9 +53,9 @@ function JitsiRoom(props) {
   }, [mx, roomInfo]);
 
   useEffect(() => {
+    const topic = roomInfo.roomTimeline?.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic
     if (
-      roomInfo.roomTimeline?.room.currentState.getStateEvents('m.room.topic')[0]?.getContent()
-        .topic === 'd38dd491fefa1cfffc27f9c57f2bdb4a' &&
+      topic === TOPIC_JITSI_CALL &&
       !jitsiCallId
     ) {
       setJitsiCallId(roomInfo.roomTimeline.roomId);
