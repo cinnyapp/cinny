@@ -13,7 +13,7 @@ import RoomView from './RoomView';
 import RoomSettings from './RoomSettings';
 import PeopleDrawer from './PeopleDrawer';
 
-function Room() {
+function Room({ isJitsiRoom }) {
   const [roomInfo, setRoomInfo] = useState({
     roomTimeline: null,
     eventId: null,
@@ -60,10 +60,7 @@ function Room() {
     return <Welcome />;
   }
 
-  const isJitsiChannel =
-    roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic ===
-    'd38dd491fefa1cfffc27f9c57f2bdb4a';
-  if (isJitsiChannel) {
+  if (isJitsiRoom) {
     return null;
   }
 

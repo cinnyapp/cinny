@@ -12,7 +12,7 @@ import Button from '../../atoms/button/Button';
 
 const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a'
 
-function JitsiRoom() {
+function JitsiRoom({ setIsJitsiRoom }) {
   const [jitsiCallId, setJitsiCallId] = useState(null);
 
   const [roomInfo, setRoomInfo] = useState({
@@ -47,6 +47,8 @@ function JitsiRoom() {
           });
         }
       }
+
+      setIsJitsiRoom(topic === TOPIC_JITSI_CALL)
     };
 
     navigation.on(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);

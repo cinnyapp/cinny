@@ -27,6 +27,7 @@ function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
+  const [isJitsiRoom, setIsJitsiRoom] = useState(false);
   const classNameHidden = 'client__item-hidden';
 
   const navWrapperRef = useRef(null);
@@ -161,6 +162,9 @@ function Client() {
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
   }
 
+  const JITSI_ROOM_CLASS = 'jitsi_room__wrapper'
+  const ROOM_CLASS = `room__wrapper ${classNameHidden}`
+
   return (
     <div
       className="client-container"
@@ -169,14 +173,14 @@ function Client() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="jitsi_room__wrapper">
-        <JitsiRoom />
-      </div>
       <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation />
       </div>
-      <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
-        <Room />
+      <div className={isJitsiRoom ? ROOM_CLASS : JITSI_ROOM_CLASS}>
+        <JitsiRoom setIsJitsiRoom={setIsJitsiRoom} />
+      </div>
+      <div className={isJitsiRoom ? 'hidden' : ROOM_CLASS} ref={roomWrapperRef}>
+        <Room isJitsiRoom={isJitsiRoom} />
       </div>
       <Windows />
       <Dialogs />
