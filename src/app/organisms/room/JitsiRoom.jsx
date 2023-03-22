@@ -31,17 +31,18 @@ function JitsiRoom(props) {
       const roomTimeline = new RoomTimeline(rId);
       const topic = roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic
 
-      if (mx.getRoom(rId) && topic === TOPIC_JITSI_CALL && confirm('Do you want to join this call?')) {
-        setRoomInfo({
-          roomTimeline,
-          eventId: eId ?? null,
-        });
-      } else {
-        // TODO: add ability to join room if roomId is invalid
-        setRoomInfo({
-          roomTimeline: null,
-          eventId: null,
-        });
+      if (mx.getRoom(rId) && topic === TOPIC_JITSI_CALL) {
+        if (confirm('Do you want to join this call?')) {
+          setRoomInfo({
+            roomTimeline,
+            eventId: eId ?? null,
+          });
+        } else if (!jitsiCallId) {
+          setRoomInfo({
+            roomTimeline: null,
+            eventId: null,
+          });
+        }
       }
     };
 
@@ -80,6 +81,10 @@ function JitsiRoom(props) {
           onClick={() => {
             setJitsiCallId(null);
             setRoomName('');
+            setRoomInfo({
+              roomTimeline: null,
+              eventId: null,
+            });
           }}
         >
           X
