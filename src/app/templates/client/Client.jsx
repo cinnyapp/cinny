@@ -27,7 +27,6 @@ function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
-  const [jitsiCallId, setJitsiCallId] = useState(null);
   const classNameHidden = 'client__item-hidden';
 
   const navWrapperRef = useRef(null);
@@ -171,13 +170,13 @@ function Client() {
       onDrop={handleDrop}
     >
       <div className="jitsi_room__wrapper">
-        <JitsiRoom jitsiCallId={jitsiCallId} setJitsiCallId={setJitsiCallId} />
+        <JitsiRoom />
       </div>
       <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation />
       </div>
       <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
-        <Room jitsiCallId={jitsiCallId} setJitsiCallId={setJitsiCallId} />
+        <Room />
       </div>
       <Windows />
       <Dialogs />

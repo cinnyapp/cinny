@@ -12,8 +12,8 @@ import Button from '../../atoms/button/Button';
 
 const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a'
 
-function JitsiRoom(props) {
-  const { jitsiCallId, setJitsiCallId } = props;
+function JitsiRoom() {
+  const [jitsiCallId, setJitsiCallId] = useState(null);
 
   const [roomInfo, setRoomInfo] = useState({
     roomTimeline: null,
@@ -31,12 +31,15 @@ function JitsiRoom(props) {
       const roomTimeline = new RoomTimeline(rId);
       const topic = roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic
 
-      if (mx.getRoom(rId) && topic === TOPIC_JITSI_CALL) {
+      if (mx.getRoom(rId) && topic === TOPIC_JITSI_CALL && jitsiCallId !== rId) {
         if (confirm('Do you want to join this call?')) {
+          setJitsiCallId(rId);
+          setRoomName(roomTimeline.roomName);
           setRoomInfo({
             roomTimeline,
             eventId: eId ?? null,
           });
+          setCounter(counter + 1);
         } else if (!jitsiCallId) {
           setRoomInfo({
             roomTimeline: null,
@@ -50,14 +53,6 @@ function JitsiRoom(props) {
     return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
     };
-  }, [mx, roomInfo]);
-
-  useEffect(() => {
-    if (roomInfo?.roomTimeline) {
-      setJitsiCallId(roomInfo.roomTimeline.roomId);
-      setRoomName(roomInfo.roomTimeline.roomName);
-      setCounter(counter + 1);
-    }
   }, [roomInfo]);
 
   const { roomTimeline } = roomInfo;

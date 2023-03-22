@@ -12,9 +12,8 @@ import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
 import RoomSettings from './RoomSettings';
 import PeopleDrawer from './PeopleDrawer';
-import Button from '../../atoms/button/Button';
 
-function Room(props) {
+function Room() {
   const [roomInfo, setRoomInfo] = useState({
     roomTimeline: null,
     eventId: null,
