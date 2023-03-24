@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './JitsiRoom.scss';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import SearchIC from '../../../../public/res/ic/filled/hangup_call.svg';
+import Draggable from 'react-draggable';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -68,84 +69,86 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom }) {
 
   if (jitsiCallId) {
     return (
-      <div className="call">
-        <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'} ref={openerRef}>
-          {roomName}
-        </div>
-        <div className="call_iframe">
-          <JitsiMeeting
-            key={counter}
-            domain="meet.calyx.net"
-            roomName={`${roomName} ${roomTimeline.roomId.replace(':matrix.org', '')}`}
-            configOverwrite={{
-              disableReactions: true,
-              disablePolls: true,
-              prejoinConfig: { enabled: false },
-              liveStreaming: { enabled: false },
+      <Draggable disabled={isJitsiRoom}>
+        <div className="call">
+          <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'} ref={openerRef}>
+            {roomName}
+            <div className="call_buttons">
+              <Button
+                onClick={() => {
+                  setJitsiCallId(null);
+                  setRoomName('');
+                  setRoomInfo({
+                    roomTimeline: null,
+                    eventId: null,
+                  });
+                }}
+                className="close_button"
+              >
+                <img src={SearchIC} alt="hangup" />
+              </Button>
+            </div>
+          </div>
+          <div className="call_iframe">
+            <JitsiMeeting
+              key={counter}
+              domain="meet.calyx.net"
+              roomName={`${roomName} ${roomTimeline.roomId.replace(':matrix.org', '')}`}
+              configOverwrite={{
+                disableReactions: true,
+                disablePolls: true,
+                prejoinConfig: { enabled: false },
+                liveStreaming: { enabled: false },
 
-              constraints: {
-                video: {
-                  height: {
-                    ideal: 1080,
-                    max: 2160,
-                    min: 720,
+                constraints: {
+                  video: {
+                    height: {
+                      ideal: 1080,
+                      max: 2160,
+                      min: 720,
+                    },
                   },
                 },
-              },
-              maxBitratesVideo: {
-                H264: {
-                  low: 200000,
-                  standard: 500000,
-                  high: 1500000,
+                maxBitratesVideo: {
+                  H264: {
+                    low: 200000,
+                    standard: 500000,
+                    high: 1500000,
+                  },
+                  VP8: {
+                    low: 200000,
+                    standard: 500000,
+                    high: 1500000,
+                  },
+                  VP9: {
+                    low: 100000,
+                    standard: 300000,
+                    high: 1200000,
+                  },
                 },
-                VP8: {
-                  low: 200000,
-                  standard: 500000,
-                  high: 1500000,
+                desktopSharingFrameRate: {
+                  min: 30,
+                  max: 60,
                 },
-                VP9: {
-                  low: 100000,
-                  standard: 300000,
-                  high: 1200000,
-                },
-              },
-              desktopSharingFrameRate: {
-                min: 30,
-                max: 60,
-              },
-              resolution: 1080,
-            }}
-            interfaceConfigOverwrite={{
-              DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-            }}
-            userInfo={{
-              displayName: getUsername(mx.getUserId()),
-            }}
-            onApiReady={(externalApi) => {
-              // here you can attach custom event listeners to the Jitsi Meet External API
-              // you can also store it locally to execute commands
-            }}
-            getIFrameRef={(iframeRef) => {
-              iframeRef.style.height = '96%';
-            }}
-          />
+                resolution: 1080,
+              }}
+              interfaceConfigOverwrite={{
+                DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+              }}
+              userInfo={{
+                displayName: getUsername(mx.getUserId()),
+              }}
+              onApiReady={(externalApi) => {
+                // here you can attach custom event listeners to the Jitsi Meet External API
+                // you can also store it locally to execute commands
+              }}
+              getIFrameRef={(iframeRef) => {
+                iframeRef.style.height = '96%';
+              }}
+            />
+          </div>
         </div>
-        <div className="call_buttons">
-          <Button
-            onClick={() => {
-              setJitsiCallId(null);
-              setRoomName('');
-              setRoomInfo({
-                roomTimeline: null,
-                eventId: null,
-              });
-            }}
-            className="close_button"
-          >
-            <img src={SearchIC} alt="hangup" />
-          </Button>
-        </div>
-      </div>
+      </Draggable>
     );
   }
   return null;
