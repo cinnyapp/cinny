@@ -71,7 +71,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom }) {
   if (jitsiCallId) {
     return (
       <Draggable disabled={isJitsiRoom}>
-        <div className="call">
+        <div className={isJitsiRoom ? 'call reset_pip' : 'call'}>
           <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'} ref={openerRef}>
             {roomName} / {spaceName}
             <div className="call_buttons">
