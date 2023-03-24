@@ -14,12 +14,15 @@
   background-color: var(--bg-surface);
 }
 
-.call_header{
-  z-index: 2001;
-  cursor: move;
+.call_header {
   text-align: center;
   margin-top: 1rem;
   margin-bottom: 1rem;
+}
+
+.pip_header {
+  z-index: 2001;
+  cursor: move;
 }
 
 .call_buttons {

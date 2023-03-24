@@ -13,7 +13,7 @@ import Button from '../../atoms/button/Button';
 
 const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a'
 
-function JitsiRoom({ setIsJitsiRoom }) {
+function JitsiRoom({ isJitsiRoom, setIsJitsiRoom }) {
   const [jitsiCallId, setJitsiCallId] = useState(null);
 
   const [roomInfo, setRoomInfo] = useState({
@@ -30,7 +30,9 @@ function JitsiRoom({ setIsJitsiRoom }) {
     const handleRoomSelected = (rId, pRoomId, eId) => {
       roomInfo.roomTimeline?.removeInternalListeners();
       const roomTimeline = new RoomTimeline(rId);
-      const topic = roomTimeline.room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic
+      const topic = roomTimeline.room.currentState
+        .getStateEvents('m.room.topic')[0]
+        ?.getContent().topic;
 
       if (mx.getRoom(rId) && topic === TOPIC_JITSI_CALL && jitsiCallId !== rId) {
         if (confirm('Do you want to join this call?')) {
@@ -49,7 +51,7 @@ function JitsiRoom({ setIsJitsiRoom }) {
         }
       }
 
-      setIsJitsiRoom(topic === TOPIC_JITSI_CALL)
+      setIsJitsiRoom(topic === TOPIC_JITSI_CALL);
     };
 
     navigation.on(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
@@ -67,7 +69,7 @@ function JitsiRoom({ setIsJitsiRoom }) {
   if (jitsiCallId) {
     return (
       <div className="call">
-        <div className="call_header" id="header" ref={openerRef}>
+        <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'} ref={openerRef}>
           {roomName}
         </div>
         <div className="call_iframe">

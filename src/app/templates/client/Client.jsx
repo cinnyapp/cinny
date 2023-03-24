@@ -177,7 +177,7 @@ function Client() {
         <Navigation />
       </div>
       <div className={isJitsiRoom ? ROOM_CLASS : JITSI_ROOM_CLASS}>
-        <JitsiRoom setIsJitsiRoom={setIsJitsiRoom} />
+        <JitsiRoom isJitsiRoom={isJitsiRoom} setIsJitsiRoom={setIsJitsiRoom} />
       </div>
       <div className={isJitsiRoom ? 'hidden' : ROOM_CLASS} ref={roomWrapperRef}>
         <Room isJitsiRoom={isJitsiRoom} />
