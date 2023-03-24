@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './JitsiRoom.scss';
 import { JitsiMeeting } from '@jitsi/react-sdk';
-import SearchIC from '../../../../public/res/ic/filled/hangup_call.svg';
 import Draggable from 'react-draggable';
+import SearchIC from '../../../../public/res/ic/filled/hangup_call.svg';
+import { openNavigation } from '../../../client/action/navigation';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import RoomTimeline from '../../../client/state/RoomTimeline';
 import navigation from '../../../client/state/navigation';
-import { openNavigation } from '../../../client/action/navigation';
 import { getUsername } from '../../../util/matrixUtil';
 import Button from '../../atoms/button/Button';
+import { useSelectedSpace } from '../../hooks/useSelectedSpace';
 
 const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a'
 
 function JitsiRoom({ isJitsiRoom, setIsJitsiRoom }) {
   const [jitsiCallId, setJitsiCallId] = useState(null);
-
   const [roomInfo, setRoomInfo] = useState({
     roomTimeline: null,
     eventId: null,
@@ -26,6 +26,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom }) {
   const openerRef = useRef(null);
 
   const mx = initMatrix.matrixClient;
+  const spaceName = mx.getRoom(useSelectedSpace())?.name;
 
   useEffect(() => {
     const handleRoomSelected = (rId, pRoomId, eId) => {
@@ -72,7 +73,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom }) {
       <Draggable disabled={isJitsiRoom}>
         <div className="call">
           <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'} ref={openerRef}>
-            {roomName}
+            {roomName} / {spaceName}
             <div className="call_buttons">
               <Button
                 onClick={() => {
