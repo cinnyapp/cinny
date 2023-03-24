@@ -1,0 +1,34 @@
+@use '../../partials/flex';
+@use '../../partials/screen';
+
+.call_iframe {
+  width: 100%;
+  height: 100%;
+}
+
+.call{
+  user-select: none;
+  border: 1px solid var(--bg-surface-border);
+  border-radius: var(--bo-radius);
+  color: var(--tc-surface-normal-low);
+  background-color: var(--bg-surface);
+}
+
+.call_header{
+  z-index: 2001;
+  cursor: move;
+  text-align: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.call_buttons {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.1rem;
+}
+
+.close_button {
+  filter: invert(26%) sepia(90%) saturate(1997%) hue-rotate(345deg) brightness(113%) contrast(91%);
+  height: 3rem;
+}

@@ -19,7 +19,7 @@
   @extend .cp-fx__item-one;
 }
 
-.jitsi_room__wrapper {
+.jitsi_pip {
   display: grid;
   position: absolute;
   top: 20rem;
@@ -29,30 +29,10 @@
   width: 25rem;
 }
 
-.call_header{
-  z-index: 2001;
-  cursor: move;
-  text-align: center;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-}
-
-.call{
-  user-select: none;
-  border: 1px solid var(--bg-surface-border);
-  border-radius: var(--bo-radius);
-  color: var(--tc-surface-normal-low);
-  background-color: var(--bg-surface);
-}
-
 @include screen.smallerThan(mobileBreakpoint) {
   .client__item-hidden {
     display: none;
   }
-}
-
-.hidden {
-  display: none;
 }
 
 .loading-display {

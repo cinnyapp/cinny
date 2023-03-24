@@ -162,7 +162,7 @@ function Client() {
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
   }
 
-  const JITSI_ROOM_CLASS = 'jitsi_room__wrapper'
+  const JITSI_ROOM_CLASS = 'jitsi_pip'
   const ROOM_CLASS = `room__wrapper ${classNameHidden}`
 
   return (
