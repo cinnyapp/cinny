@@ -23,11 +23,24 @@ function Home({ spaceId, jitsiCallId }) {
   let spaceIds = [];
   let roomIds = [];
   let directIds = [];
+  let videoRoomIds = [];
 
   if (spaceId) {
     const spaceChildIds = roomList.getSpaceChildren(spaceId) ?? [];
+    const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a';
     spaceIds = spaceChildIds.filter((roomId) => spaces.has(roomId));
-    roomIds = spaceChildIds.filter((roomId) => rooms.has(roomId));
+    roomIds = spaceChildIds.filter(
+      (roomId) =>
+        rooms.has(roomId) &&
+        mx.getRoom(roomId).currentState.getStateEvents('m.room.topic')[0]?.getContent().topic !==
+          TOPIC_JITSI_CALL
+    );
+    videoRoomIds = spaceChildIds.filter(
+      (roomId) =>
+        rooms.has(roomId) &&
+        mx.getRoom(roomId).currentState.getStateEvents('m.room.topic')[0]?.getContent().topic ===
+          TOPIC_JITSI_CALL
+    );
     directIds = spaceChildIds.filter((roomId) => directs.has(roomId));
   } else {
     spaceIds = roomList.getOrphanSpaces().filter((id) => !accountData.spaceShortcut.has(id));
@@ -78,8 +91,16 @@ function Home({ spaceId, jitsiCallId }) {
 
       {roomIds.length !== 0 && (
         <RoomsCategory
-          name="Rooms"
+          name="Text Rooms"
           roomIds={roomIds.sort(roomIdByAtoZ)}
+          drawerPostie={drawerPostie}
+        />
+      )}
+
+      {videoRoomIds.length !== 0 && (
+        <RoomsCategory
+          name="Video Rooms"
+          roomIds={videoRoomIds}
           drawerPostie={drawerPostie}
           jitsiCallId={jitsiCallId}
         />
