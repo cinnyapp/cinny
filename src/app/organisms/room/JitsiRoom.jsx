@@ -13,7 +13,7 @@ import { getUsername } from '../../../util/matrixUtil';
 import Button from '../../atoms/button/Button';
 import { useSelectedSpace } from '../../hooks/useSelectedSpace';
 
-const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a'
+const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a';
 
 function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId }) {
   const [roomInfo, setRoomInfo] = useState({
@@ -21,11 +21,11 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
     eventId: null,
   });
   const [roomName, setRoomName] = useState('');
+  const [spaceName, setSpaceName] = useState(null);
   const [counter, setCounter] = useState(0);
-  const openerRef = useRef(null);
 
   const mx = initMatrix.matrixClient;
-  const spaceName = mx.getRoom(useSelectedSpace())?.name;
+  const sn = mx.getRoom(useSelectedSpace())?.name;
 
   useEffect(() => {
     const handleRoomSelected = (rId, pRoomId, eId) => {
@@ -43,19 +43,18 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
       if (topic === TOPIC_JITSI_CALL && jitsiCallId !== rId) {
         setJitsiCallId(rId);
         setRoomName(roomTimeline.roomName);
+        setSpaceName(sn);
         setRoomInfo({
           roomTimeline,
           eventId: eId ?? null,
         });
         setCounter(counter + 1);
-      }
-      else if (!jitsiCallId) {
+      } else if (!jitsiCallId) {
         setRoomInfo({
           roomTimeline: null,
           eventId: null,
         });
       }
-
 
       setIsJitsiRoom(topic === TOPIC_JITSI_CALL);
     };
@@ -76,13 +75,14 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
     return (
       <Draggable disabled={isJitsiRoom}>
         <div className={isJitsiRoom ? 'call reset_pip' : 'call'}>
-          <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'} ref={openerRef}>
-            {roomName} ({spaceName})
+          <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'}>
+            {roomName} ({spaceName || sn})
             <div className="call_buttons">
               <Button
                 onClick={() => {
                   setJitsiCallId(null);
                   setRoomName('');
+                  setSpaceName(null);
                   setRoomInfo({
                     roomTimeline: null,
                     eventId: null,
@@ -98,7 +98,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
             <JitsiMeeting
               key={counter}
               domain="meet.calyx.net"
-              roomName={`${roomName.replace(':', '')} ${spaceName?.replace(
+              roomName={`${roomName.replace(':', '')} ${(spaceName || sn)?.replace(
                 ':',
                 ''
               )} ${roomTimeline.roomId.replace(':matrix.org', '')}`}
