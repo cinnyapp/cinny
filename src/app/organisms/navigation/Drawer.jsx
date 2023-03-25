@@ -36,7 +36,7 @@ function useSystemState() {
   return [systemState];
 }
 
-function Drawer() {
+function Drawer({jitsiCallId}) {
   const [systemState] = useSystemState();
   const [selectedTab] = useSelectedTab();
   const [spaceId] = useSelectedSpace();
@@ -72,16 +72,16 @@ function Drawer() {
         <div className="rooms__wrapper">
           <ScrollView ref={scrollRef} autoHide>
             <div className="rooms-container">
-              {
-                selectedTab !== cons.tabs.DIRECTS
-                  ? <Home spaceId={spaceId} />
-                  : <Directs size={roomList.directs.size} />
-              }
+              {selectedTab !== cons.tabs.DIRECTS ? (
+                <Home spaceId={spaceId} jitsiCallId={jitsiCallId} />
+              ) : (
+                <Directs size={roomList.directs.size} />
+              )}
             </div>
           </ScrollView>
         </div>
       </div>
-      { systemState !== null && (
+      {systemState !== null && (
         <div className="drawer__state">
           <Text>{systemState.status}</Text>
         </div>

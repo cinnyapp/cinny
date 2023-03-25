@@ -12,7 +12,7 @@ import RoomsCategory from './RoomsCategory';
 import { useCategorizedSpaces } from '../../hooks/useCategorizedSpaces';
 
 const drawerPostie = new Postie();
-function Home({ spaceId }) {
+function Home({ spaceId, jitsiCallId }) {
   const mx = initMatrix.matrixClient;
   const { roomList, notifications, accountData } = initMatrix;
   const { spaces, rooms, directs } = roomList;
@@ -68,37 +68,51 @@ function Home({ spaceId }) {
 
   return (
     <>
-      { !isCategorized && spaceIds.length !== 0 && (
-        <RoomsCategory name="Spaces" roomIds={spaceIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
+      {!isCategorized && spaceIds.length !== 0 && (
+        <RoomsCategory
+          name="Spaces"
+          roomIds={spaceIds.sort(roomIdByAtoZ)}
+          drawerPostie={drawerPostie}
+        />
       )}
 
-      { roomIds.length !== 0 && (
-        <RoomsCategory name="Rooms" roomIds={roomIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
+      {roomIds.length !== 0 && (
+        <RoomsCategory
+          name="Rooms"
+          roomIds={roomIds.sort(roomIdByAtoZ)}
+          drawerPostie={drawerPostie}
+          jitsiCallId={jitsiCallId}
+        />
       )}
 
-      { directIds.length !== 0 && (
-        <RoomsCategory name="People" roomIds={directIds.sort(roomIdByActivity)} drawerPostie={drawerPostie} />
+      {directIds.length !== 0 && (
+        <RoomsCategory
+          name="People"
+          roomIds={directIds.sort(roomIdByActivity)}
+          drawerPostie={drawerPostie}
+        />
       )}
 
-      { isCategorized && [...categories.keys()].sort(roomIdByAtoZ).map((catId) => {
-        const rms = [];
-        const dms = [];
-        categories.get(catId).forEach((id) => {
-          if (directs.has(id)) dms.push(id);
-          else rms.push(id);
-        });
-        rms.sort(roomIdByAtoZ);
-        dms.sort(roomIdByActivity);
-        return (
-          <RoomsCategory
-            key={catId}
-            spaceId={catId}
-            name={mx.getRoom(catId).name}
-            roomIds={rms.concat(dms)}
-            drawerPostie={drawerPostie}
-          />
-        );
-      })}
+      {isCategorized &&
+        [...categories.keys()].sort(roomIdByAtoZ).map((catId) => {
+          const rms = [];
+          const dms = [];
+          categories.get(catId).forEach((id) => {
+            if (directs.has(id)) dms.push(id);
+            else rms.push(id);
+          });
+          rms.sort(roomIdByAtoZ);
+          dms.sort(roomIdByActivity);
+          return (
+            <RoomsCategory
+              key={catId}
+              spaceId={catId}
+              name={mx.getRoom(catId).name}
+              roomIds={rms.concat(dms)}
+              drawerPostie={drawerPostie}
+            />
+          );
+        })}
     </>
   );
 }

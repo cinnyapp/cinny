@@ -15,8 +15,7 @@ import { useSelectedSpace } from '../../hooks/useSelectedSpace';
 
 const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a'
 
-function JitsiRoom({ isJitsiRoom, setIsJitsiRoom }) {
-  const [jitsiCallId, setJitsiCallId] = useState(null);
+function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId }) {
   const [roomInfo, setRoomInfo] = useState({
     roomTimeline: null,
     eventId: null,
@@ -37,21 +36,21 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom }) {
         ?.getContent().topic;
 
       if (mx.getRoom(rId) && topic === TOPIC_JITSI_CALL && jitsiCallId !== rId) {
-        if (confirm('Do you want to join this call?')) {
-          setJitsiCallId(rId);
-          setRoomName(roomTimeline.roomName);
-          setRoomInfo({
-            roomTimeline,
-            eventId: eId ?? null,
-          });
-          setCounter(counter + 1);
-        } else if (!jitsiCallId) {
-          setRoomInfo({
-            roomTimeline: null,
-            eventId: null,
-          });
-        }
+        setJitsiCallId(rId);
+        setRoomName(roomTimeline.roomName);
+        setRoomInfo({
+          roomTimeline,
+          eventId: eId ?? null,
+        });
+        setCounter(counter + 1);
       }
+      else if (!jitsiCallId) {
+        setRoomInfo({
+          roomTimeline: null,
+          eventId: null,
+        });
+      }
+
 
       setIsJitsiRoom(topic === TOPIC_JITSI_CALL);
     };
