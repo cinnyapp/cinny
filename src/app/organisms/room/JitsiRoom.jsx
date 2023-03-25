@@ -93,7 +93,10 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
             <JitsiMeeting
               key={counter}
               domain="meet.calyx.net"
-              roomName={`${roomName} ${roomTimeline.roomId.replace(':matrix.org', '')}`}
+              roomName={`${roomName.replace(':', '')} ${spaceName.replace(
+                ':',
+                ''
+              )} ${roomTimeline.roomId.replace(':matrix.org', '')}`}
               configOverwrite={{
                 disableReactions: true,
                 disablePolls: true,
@@ -103,17 +106,17 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
                 startWithVideoMuted: true,
                 disableProfile: true,
                 toolbarButtons: [
-                   'camera',
-                   'desktop',
-                   'fullscreen',
-                   'invite',
-                   'microphone',
-                   'noisesuppression',
-                   'settings',
-                   'sharedvideo',
-                   'shortcuts',
-                   'tileview',
-                   'videoquality'
+                  'camera',
+                  'desktop',
+                  'fullscreen',
+                  'invite',
+                  'microphone',
+                  'noisesuppression',
+                  'settings',
+                  'sharedvideo',
+                  'shortcuts',
+                  'tileview',
+                  'videoquality',
                 ],
 
                 constraints: {
@@ -149,7 +152,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
                 resolution: 1080,
               }}
               interfaceConfigOverwrite={{
-                DISABLE_JOIN_LEAVE_NOTIFICATIONS: true
+                DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
               }}
               userInfo={{
                 displayName: getUsername(mx.getUserId()),
