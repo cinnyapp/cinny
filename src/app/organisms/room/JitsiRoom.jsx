@@ -99,6 +99,22 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
                 disablePolls: true,
                 prejoinConfig: { enabled: false },
                 liveStreaming: { enabled: false },
+                maxFullResolutionParticipants: 1,
+                startWithVideoMuted: true,
+                disableProfile: true,
+                toolbarButtons: [
+                   'camera',
+                   'desktop',
+                   'fullscreen',
+                   'invite',
+                   'microphone',
+                   'noisesuppression',
+                   'settings',
+                   'sharedvideo',
+                   'shortcuts',
+                   'tileview',
+                   'videoquality'
+                ],
 
                 constraints: {
                   video: {
@@ -133,7 +149,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
                 resolution: 1080,
               }}
               interfaceConfigOverwrite={{
-                DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+                DISABLE_JOIN_LEAVE_NOTIFICATIONS: true
               }}
               userInfo={{
                 displayName: getUsername(mx.getUserId()),
