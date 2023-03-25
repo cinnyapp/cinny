@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './JitsiRoom.scss';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import Draggable from 'react-draggable';
