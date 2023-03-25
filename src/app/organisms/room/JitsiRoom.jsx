@@ -29,13 +29,18 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
 
   useEffect(() => {
     const handleRoomSelected = (rId, pRoomId, eId) => {
+      let topic = '';
+      let roomTimeline = null;
       roomInfo.roomTimeline?.removeInternalListeners();
-      const roomTimeline = new RoomTimeline(rId);
-      const topic = roomTimeline.room.currentState
-        .getStateEvents('m.room.topic')[0]
-        ?.getContent().topic;
 
-      if (mx.getRoom(rId) && topic === TOPIC_JITSI_CALL && jitsiCallId !== rId) {
+      if (mx.getRoom(rId)) {
+        roomTimeline = new RoomTimeline(rId);
+        topic = roomTimeline.room?.currentState
+          .getStateEvents('m.room.topic')[0]
+          ?.getContent().topic;
+      }
+
+      if (topic === TOPIC_JITSI_CALL && jitsiCallId !== rId) {
         setJitsiCallId(rId);
         setRoomName(roomTimeline.roomName);
         setRoomInfo({
@@ -93,7 +98,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
             <JitsiMeeting
               key={counter}
               domain="meet.calyx.net"
-              roomName={`${roomName.replace(':', '')} ${spaceName.replace(
+              roomName={`${roomName.replace(':', '')} ${spaceName?.replace(
                 ':',
                 ''
               )} ${roomTimeline.roomId.replace(':matrix.org', '')}`}
