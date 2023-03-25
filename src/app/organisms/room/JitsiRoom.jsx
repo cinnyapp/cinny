@@ -72,7 +72,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
       <Draggable disabled={isJitsiRoom}>
         <div className={isJitsiRoom ? 'call reset_pip' : 'call'}>
           <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'} ref={openerRef}>
-            {roomName} / {spaceName}
+            {roomName} ({spaceName})
             <div className="call_buttons">
               <Button
                 onClick={() => {
