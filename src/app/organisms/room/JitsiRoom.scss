@@ -6,12 +6,16 @@
   height: 100%;
 }
 
-.call{
+.call {
   user-select: none;
   border: 1px solid var(--bg-surface-border);
   border-radius: var(--bo-radius);
   color: var(--tc-surface-normal-low);
-  background-color: var(--bg-surface);
+  background-color: var(--bg-surface-extra-low);
+}
+
+.call_icon {
+  width: 2rem;
 }
 
 .reset_pip {
@@ -19,9 +23,9 @@
 }
 
 .call_header {
-  text-align: center;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
 }
 
 .pip_header {
@@ -29,13 +33,38 @@
   cursor: move;
 }
 
+.call_room_title {
+  text-align: center;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 70%;
+  margin: 0 auto;
+}
+
+.pip {
+  max-width: 20rem;
+  width: 20rem;
+  max-height: 10rem;
+  height: 10rem;
+  user-select: none;
+  border: 1px solid var(--bg-surface-border);
+  border-radius: var(--bo-radius);
+  color: var(--tc-surface-normal-low);
+  background-color: var(--bg-surface-extra-low);
+}
+
 .call_buttons {
   position: absolute;
-  top: 0.15rem;
-  right: 0.1rem;
+  top: 0.05rem;
+  right: 0.5rem;
 }
 
 .close_button {
   filter: invert(26%) sepia(90%) saturate(1997%) hue-rotate(345deg) brightness(113%) contrast(91%);
-  height: 3rem;
+  width: 2rem;
+  height: 2rem;
+  min-width: 0;
+  min-height: 0;
+  box-shadow: none;
 }

@@ -74,9 +74,11 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
   if (jitsiCallId) {
     return (
       <Draggable disabled={isJitsiRoom}>
-        <div className={isJitsiRoom ? 'call reset_pip' : 'call'}>
+        <div className={isJitsiRoom ? 'call reset_pip' : 'pip'}>
           <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'}>
-            {roomName} ({spaceName || sn})
+            <div className='call_room_title'>
+              {roomName} ({spaceName || sn})
+            </div>
             <div className="call_buttons">
               <Button
                 onClick={() => {
@@ -90,7 +92,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
                 }}
                 className="close_button"
               >
-                <img src={SearchIC} alt="hangup" />
+                <img src={SearchIC} className="call_icon" alt="hangup" />
               </Button>
             </div>
           </div>
