@@ -165,6 +165,9 @@ function Client() {
 
   const JITSI_ROOM_CLASS = 'jitsi_pip'
   const ROOM_CLASS = `room__wrapper ${classNameHidden}`
+  let jitsiPip = '';
+  if (isJitsiRoom) jitsiPip = ROOM_CLASS;
+  else if (jitsiCallId) jitsiPip = JITSI_ROOM_CLASS;
 
   return (
     <div
@@ -177,7 +180,7 @@ function Client() {
       <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation jitsiCallId={jitsiCallId} />
       </div>
-      <div className={isJitsiRoom ? ROOM_CLASS : JITSI_ROOM_CLASS}>
+      <div className={jitsiPip}>
         <JitsiRoom
           isJitsiRoom={isJitsiRoom}
           setIsJitsiRoom={setIsJitsiRoom}
