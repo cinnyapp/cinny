@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './JitsiRoom.scss';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import Draggable from 'react-draggable';
+import useWindowDimensions from './windowDimensions';
 import SearchIC from '../../../../public/res/ic/filled/hangup_call.svg';
 import { openNavigation } from '../../../client/action/navigation';
 
@@ -23,6 +24,8 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
   const [roomName, setRoomName] = useState('');
   const [spaceName, setSpaceName] = useState(null);
   const [counter, setCounter] = useState(0);
+
+  const { windowDimensions, key } = useWindowDimensions();
 
   const mx = initMatrix.matrixClient;
   const sn = mx.getRoom(useSelectedSpace())?.name;
@@ -73,10 +76,19 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
 
   if (jitsiCallId) {
     return (
-      <Draggable disabled={isJitsiRoom}>
+      <Draggable
+        disabled={isJitsiRoom}
+        bounds={{
+          left: -windowDimensions.width * 0.5 + 90,
+          top: -windowDimensions.height * 0.5 + 170,
+          right: windowDimensions.width * 0.5 - 250,
+          bottom: windowDimensions.height * 0.5 - 40,
+        }}
+        key={key}
+      >
         <div className={isJitsiRoom ? 'call reset_pip' : 'pip'}>
           <div className={isJitsiRoom ? 'call_header' : 'call_header pip_header'}>
-            <div className='call_room_title'>
+            <div className="call_room_title">
               {roomName} ({spaceName || sn})
             </div>
             <div className="call_buttons">
