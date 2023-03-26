@@ -218,11 +218,13 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
             }
           />
         )}
-        <SettingTile
-          title="Video room"
-          options={<Toggle isActive={isVideoRoom} onToggle={setIsVideoRoom} />}
-          content={<Text variant="b3">Use jitsi for voice/video calls</Text>}
-        />
+        {!isSpace && (
+          <SettingTile
+            title="Video room"
+            options={<Toggle isActive={isVideoRoom} onToggle={setIsVideoRoom} />}
+            content={<Text variant="b3">Use jitsi for voice/video calls</Text>}
+          />
+        )}
         <SettingTile
           title="Select your role"
           options={
@@ -236,9 +238,7 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
             <Text variant="b3">Selecting Admin sets 100 power level whereas Founder sets 101.</Text>
           }
         />
-        {!isVideoRoom && (
-          <Input name="topic" minHeight={174} resizable label="Topic (optional)" />
-        )}
+        {!isVideoRoom && <Input name="topic" minHeight={174} resizable label="Topic (optional)" />}
         <div className="create-room__name-wrapper">
           <Input name="name" label={`${isSpace ? 'Space' : 'Room'} name`} required />
           <Button
