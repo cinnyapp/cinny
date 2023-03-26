@@ -1,4 +1,4 @@
-import SetupCrossSigningUsingPassPhrase from './CrossSigningSetup';
+import { createCrossSigningUsingKey } from './CrossSigningSetup';
 import { getE2ERoomKeys, importE2EERoomKeys } from './E2EKeyManagement';
 
 const crossSigningChannel = new BroadcastChannel('CrossSigningChannel');
@@ -11,7 +11,7 @@ function handleCrossSigningEventsChannel() {
     const passPhrase = event.data.passphrase;
     console.log('Pass phrase is:', passPhrase);
     try {
-      await SetupCrossSigningUsingPassPhrase(passPhrase);
+      await createCrossSigningUsingKey(passPhrase);
       console.log('#######################');
       console.log('Verification Successful');
     } catch (error) {

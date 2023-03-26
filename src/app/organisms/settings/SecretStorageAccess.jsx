@@ -27,9 +27,11 @@ function SecretStorageAccess({ onComplete }) {
 
   const toggleWithPhrase = () => setWithPhrase(!withPhrase);
 
+  // TODO Rework this function for cross signing
   const processInput = async ({ key, phrase }) => {
-    mountStore.setItem(true);
+    console.log(mountStore.setItem(true));
     setProcess(true);
+    console.log("this is the process input");
     try {
       const { salt, iterations } = sSKeyInfo.passphrase || {};
       const privateKey = key
@@ -37,12 +39,20 @@ function SecretStorageAccess({ onComplete }) {
         : await deriveKey(phrase, salt, iterations);
       const isCorrect = await mx.checkSecretStorageKey(privateKey, sSKeyInfo);
 
+      console.log(mountStore.getItem());
       if (!mountStore.getItem()) return;
       if (!isCorrect) {
         setError(`Incorrect Security ${key ? 'Key' : 'Phrase'}`);
         setProcess(false);
         return;
       }
+      console.log("test here the secret storage");
+      console.log({
+        keyId: sSKeyId,
+        key,
+        phrase,
+        privateKey,
+      });
       onComplete({
         keyId: sSKeyId,
         key,
@@ -56,6 +66,7 @@ function SecretStorageAccess({ onComplete }) {
     }
   };
 
+  // TODO rework this function
   const handleForm = async (e) => {
     e.preventDefault();
     const password = e.target.password.value;
@@ -63,6 +74,8 @@ function SecretStorageAccess({ onComplete }) {
     const data = {};
     if (withPhrase) data.phrase = password;
     else data.key = password;
+    console.log("this will trigger the process input");
+    console.log(data);
     processInput(data);
   };
 

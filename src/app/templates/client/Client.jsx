@@ -21,6 +21,10 @@ import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
 
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
+import { deleteBackup, downloadBackup, restoreBackup } from '../../../shire/KeysBackup';
+import { createCrossSigningUsingKey, verifyCrossSigningWithKey } from '../../../shire/CrossSigningSetup';
+import executeFlow from '../../../shire/flow';
+
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
@@ -157,26 +161,36 @@ function Client() {
     initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
   }
 
+  // TODO continue the flow execution
+
+  executeFlow();
+
   return (
-    <div
-      className="client-container"
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <div className="navigation__wrapper" ref={navWrapperRef}>
-        <Navigation />
+    <>
+      <button onClick={() => verifyCrossSigningWithKey()}>verify</button>
+      <button onClick={() => restoreBackup()}>download</button>
+      <button onClick={() => deleteBackup()}>delete</button>
+      <button onClick={() => downloadBackup()}>create</button>
+      <div
+        className="client-container"
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className="navigation__wrapper" ref={navWrapperRef}>
+          <Navigation />
+        </div>
+        <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
+          <Room />
+        </div>
+        <Windows />
+        <Dialogs />
+        <EmojiBoardOpener />
+        <ReusableContextMenu />
+        <DragDrop isOpen={dragCounter !== 0} />
       </div>
-      <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
-        <Room />
-      </div>
-      <Windows />
-      <Dialogs />
-      <EmojiBoardOpener />
-      <ReusableContextMenu />
-      <DragDrop isOpen={dragCounter !== 0} />
-    </div>
+    </>
   );
 }
 

@@ -1,6 +1,8 @@
 {
-  "defaultHomeserver": 3,
+  "defaultHomeserver": 0,
   "homeserverList": [
+    "http://localhost:8008/",
+    "matrix.org",
     "converser.eu",
     "envs.net",
     "halogen.city",

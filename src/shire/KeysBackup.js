@@ -1,10 +1,12 @@
 import initMatrix from '../client/initMatrix';
 import { deletePrivateKey } from '../client/state/secretStorageKeys';
 
+// TODO: helper functions for cross signing
 const restoreBackup = async () => {
     const mx = initMatrix.matrixClient;
     // setStatus(false);
 
+    console.log("restore triggered");
     let meBreath = true;
     const progressCallback = (progress) => {
         if (!progress.successes) return;
@@ -20,12 +22,16 @@ const restoreBackup = async () => {
 
     try {
         const backupInfo = await mx.getKeyBackupVersion();
+        console.log("######### backup info");
+        console.log(backupInfo);
         const info = await mx.restoreKeyBackupWithSecretStorage(
             backupInfo,
             undefined,
             undefined,
             { progressCallback },
         );
+        console.log("info after restoring");
+        console.log(info);
         // if (!mountStore.getItem()) return;
         // setStatus({ done: `Successfully restored backup keys (${info.imported}/${info.total}).` });
         console.log(`Successfully restored backup keys (${info.imported}/${info.total}).`);
@@ -61,7 +67,7 @@ const deleteBackup = async () => {
     }
 };
 
-const downloadBackup = async () => {
+const createBackup = async () => {
     const mx = initMatrix.matrixClient;
     // setDone(false);
     let info;
@@ -84,4 +90,4 @@ const downloadBackup = async () => {
     }
 };
 
-export { restoreBackup, deleteBackup, downloadBackup }
+export { restoreBackup, deleteBackup, createBackup as downloadBackup }
