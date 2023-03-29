@@ -247,7 +247,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "cinny"
-version = "2.2.4"
+version = "2.2.6"
 dependencies = [
  "serde",
  "serde_json",

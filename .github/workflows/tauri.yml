@@ -36,6 +36,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
         with:
           releaseId: ${{ steps.get_release.outputs.upload_url }}
       - name: Get app version (windows)
@@ -100,6 +101,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
         with:
           releaseId: ${{ steps.get_release.outputs.upload_url }}
       - name: Get app version
@@ -154,6 +156,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
         with:
           releaseId: ${{ steps.get_release.outputs.upload_url }}
       - name: Get app version
@@ -207,6 +210,7 @@ jobs:
   #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   #         TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
   #         TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+  #         NODE_OPTIONS: "--max_old_space_size=4096"
   #       with:
   #         args: --target aarch64-apple-darwin
   #         releaseId: ${{ steps.get_release.outputs.upload_url }}
