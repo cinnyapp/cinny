@@ -19,6 +19,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build app
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
         run: npm run build
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@5da65c9f74c7961c5501a3ba329b8d0912f39c03
