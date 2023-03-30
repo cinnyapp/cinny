@@ -1,6 +1,6 @@
 {
   "name": "cinny",
-  "version": "2.2.4",
+  "version": "2.2.6",
   "description": "Yet another matrix client",
   "main": "index.js",
   "engines": {
@@ -17,7 +17,7 @@
   },
   "keywords": [],
   "author": "Ajay Bura",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "dependencies": {
     "@fontsource/inter": "4.5.14",
     "@fontsource/roboto": "4.5.8",
@@ -35,7 +35,7 @@
     "katex": "0.16.4",
     "linkify-html": "4.0.2",
     "linkifyjs": "4.0.2",
-    "matrix-js-sdk": "22.0.0",
+    "matrix-js-sdk": "24.0.0",
     "prop-types": "15.8.1",
     "react": "17.0.2",
     "react-autosize-textarea": "7.1.0",
