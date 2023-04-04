@@ -87,7 +87,6 @@ function RestoreKeyBackupDialog({ keyData }) {
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
 
-  //TODO this is where restore backup lives
   const restoreBackup = async () => {
     setStatus(false);
 
@@ -161,7 +160,6 @@ function DeleteKeyBackupDialog({ requestClose }) {
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
 
-  //TODO this where delete backup lives
   const deleteBackup = async () => {
     mountStore.setItem(true);
     setIsDeleting(true);
