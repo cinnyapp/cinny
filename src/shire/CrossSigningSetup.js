@@ -29,10 +29,9 @@ async function createCrossSigningUsingKey(verificationPhrase = undefined) {
     setupNewSecretStorage: true,
   });
 
-  const t = await mx.bootstrapCrossSigning({
+  await mx.bootstrapCrossSigning({
     setupNewCrossSigning: true,
   });
-
 }
 
 async function verifyCrossSigningWithKey(verificationPhrase) {

@@ -54,7 +54,6 @@ const deleteBackup = async () => {
     try {
         const backupInfo = await mx.getKeyBackupVersion();
         if (backupInfo) await mx.deleteKeyBackupVersion(backupInfo.version);
-        console.log("Messages backup deleted successfully");
     } catch (e) {
         console.log("Failed to delete messages backup", "error:", e);
         console.log("Error:", e);

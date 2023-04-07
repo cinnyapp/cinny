@@ -21,6 +21,7 @@ import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
 
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
+import { shirePortalChannel } from '../../../shire/EventsChannel';
 
 
 function Client() {
@@ -71,6 +72,7 @@ function Client() {
       initHotkeys();
       initRoomListListener(initMatrix.roomList);
       changeLoading(false);
+      shirePortalChannel.postMessage({ type: "loading_complete" });
     });
     initMatrix.init();
   }, []);
