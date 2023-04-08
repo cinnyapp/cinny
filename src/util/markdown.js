@@ -29,7 +29,7 @@ function mathHtml(wrap, node) {
   return htmlTag(wrap, htmlTag('code', sanitizeText(node.content)), { 'data-mx-maths': node.content });
 }
 
-const emojiRegex = /^:([\w-]+):/;
+const emojiRegex = /^:([^:]+):/;
 
 const plainRules = {
   Array: {
