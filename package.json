@@ -1,6 +1,6 @@
 {
   "name": "cinny",
-  "version": "2.2.2",
+  "version": "2.2.6",
   "description": "Yet another matrix client",
   "main": "index.js",
   "engines": {
@@ -17,7 +17,7 @@
   },
   "keywords": [],
   "author": "Ajay Bura",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "dependencies": {
     "@fontsource/inter": "4.5.14",
     "@fontsource/roboto": "4.5.8",
@@ -44,7 +44,7 @@
     "katex": "0.16.4",
     "linkify-html": "4.0.2",
     "linkifyjs": "4.0.2",
-    "matrix-js-sdk": "22.0.0",
+    "matrix-js-sdk": "24.0.0",
     "prop-types": "15.8.1",
     "react": "17.0.2",
     "react-autosize-textarea": "7.1.0",
@@ -62,13 +62,17 @@
     "ua-parser-js": "1.0.35"
   },
   "devDependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "0.2.3",
+    "@rollup/plugin-inject": "5.0.3",
     "@rollup/plugin-wasm": "6.1.1",
+    "@types/node": "18.11.18",
     "@types/react": "18.0.26",
     "@types/react-dom": "18.0.9",
     "@types/ua-parser-js": "0.7.36",
     "@typescript-eslint/eslint-plugin": "5.46.1",
     "@typescript-eslint/parser": "5.46.1",
     "@vitejs/plugin-react": "3.0.0",
+    "buffer": "6.0.3",
     "eslint": "8.29.0",
     "eslint-config-airbnb": "19.0.4",
     "eslint-config-prettier": "8.5.0",
@@ -76,6 +80,7 @@
     "eslint-plugin-jsx-a11y": "6.6.1",
     "eslint-plugin-react": "7.31.11",
     "eslint-plugin-react-hooks": "4.6.0",
+    "mini-svg-data-uri": "1.4.4",
     "prettier": "2.8.1",
     "sass": "1.56.2",
     "typescript": "4.9.4",

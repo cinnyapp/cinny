@@ -6,6 +6,8 @@ import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 import { sanitizeText } from './sanitize';
 
+export const TWEMOJI_BASE_URL = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/';
+
 const Math = lazy(() => import('../app/atoms/math/Math'));
 
 const mathOptions = {
@@ -38,11 +40,16 @@ const mathOptions = {
 export function twemojify(text, opts, linkify = false, sanitize = true, maths = false) {
   if (typeof text !== 'string') return text;
   let content = text;
+  const options = opts ?? { base: TWEMOJI_BASE_URL };
+  if (!options.base) {
+    options.base = TWEMOJI_BASE_URL;
+  }
 
   if (sanitize) {
     content = sanitizeText(content);
   }
-  content = twemoji.parse(content, opts);
+
+  content = twemoji.parse(content, options);
   if (linkify) {
     content = linkifyHtml(content, {
       target: '_blank',
