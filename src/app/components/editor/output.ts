@@ -1,4 +1,4 @@
-import { Text } from 'slate';
+import { Descendant, Text } from 'slate';
 import { sanitizeText } from '../../utils/sanitize';
 import { BlockType } from './Elements';
 import { CustomElement, FormattedText } from './slate';
@@ -38,7 +38,8 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
   }
 };
 
-export const toMatrixCustomHTML = (node: CustomElement | Text): string => {
+export const toMatrixCustomHTML = (node: Descendant | Descendant[]): string => {
+  if (Array.isArray(node)) return node.map((n) => toMatrixCustomHTML(n)).join('');
   if (Text.isText(node)) return textToCustomHtml(node);
 
   const children = node.children.map((n) => toMatrixCustomHTML(n)).join('');
@@ -48,9 +49,9 @@ export const toMatrixCustomHTML = (node: CustomElement | Text): string => {
 const elementToPlainText = (node: CustomElement, children: string): string => {
   switch (node.type) {
     case BlockType.Paragraph:
-      return `${children}\n\n`;
+      return `${children}\n`;
     case BlockType.Heading:
-      return `${children}\n\n`;
+      return `${children}\n`;
     case BlockType.CodeLine:
       return `${children}\n`;
     case BlockType.CodeBlock:
@@ -70,8 +71,9 @@ const elementToPlainText = (node: CustomElement, children: string): string => {
   }
 };
 
-export const toPlainText = (node: CustomElement | Text): string => {
-  if (Text.isText(node)) return sanitizeText(node.text);
+export const toPlainText = (node: Descendant | Descendant[]): string => {
+  if (Array.isArray(node)) return node.map((n) => toPlainText(n)).join('');
+  if (Text.isText(node)) return sanitizeText(node.text).trim();
 
   const children = node.children.map((n) => toPlainText(n)).join('');
   return elementToPlainText(node, children);

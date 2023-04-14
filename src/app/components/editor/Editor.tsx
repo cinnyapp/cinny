@@ -1,6 +1,8 @@
 import React, { KeyboardEventHandler, ReactNode, useCallback, useState } from 'react';
+import isHotkey from 'is-hotkey';
+
 import { Box, Scroll } from 'folds';
-import { createEditor } from 'slate';
+import { Editor, createEditor } from 'slate';
 import { Slate, Editable, withReact, RenderLeafProps, RenderElementProps } from 'slate-react';
 import { BlockType, RenderElement, RenderLeaf } from './Elements';
 import { CustomElement } from './slate';
@@ -10,9 +12,14 @@ import { toggleKeyboardShortcut } from './keyboard';
 const initialValue: CustomElement[] = [
   {
     type: BlockType.Paragraph,
-    children: [{ text: 'A line of text in paragraph' }],
+    children: [{ text: '' }],
   },
 ];
+
+export const useEditor = (): Editor => {
+  const [editor] = useState(() => withReact(createEditor()));
+  return editor;
+};
 
 type CustomEditorProps = {
   top?: ReactNode;
@@ -20,7 +27,10 @@ type CustomEditorProps = {
   before?: ReactNode;
   after?: ReactNode;
   maxHeight?: string;
+  editor: Editor;
   placeholder?: string;
+  submitKey?: 'enter' | 'shift+enter';
+  onSubmit?: (editor: Editor) => void;
 };
 export function CustomEditor({
   top,
@@ -28,10 +38,11 @@ export function CustomEditor({
   before,
   after,
   maxHeight = '50vh',
+  editor,
   placeholder,
+  submitKey = 'enter',
+  onSubmit,
 }: CustomEditorProps) {
-  const [editor] = useState(() => withReact(createEditor()));
-
   const renderElement = useCallback(
     (props: RenderElementProps) => <RenderElement {...props} />,
     []
@@ -41,9 +52,14 @@ export function CustomEditor({
 
   const handleKeydown: KeyboardEventHandler = useCallback(
     (evt) => {
+      if (isHotkey(submitKey, evt)) {
+        evt.preventDefault();
+        onSubmit?.(editor);
+        return;
+      }
       toggleKeyboardShortcut(editor, evt);
     },
-    [editor]
+    [editor, submitKey, onSubmit]
   );
 
   return (

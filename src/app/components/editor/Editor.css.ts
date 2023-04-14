@@ -7,6 +7,7 @@ export const Editor = style([
     backgroundColor: color.SurfaceVariant.Container,
     border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
     borderRadius: config.radii.R400,
+    overflow: 'hidden',
   },
 ]);
 

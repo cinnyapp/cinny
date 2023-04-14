@@ -94,3 +94,14 @@ export const toggleBlock = (editor: Editor, format: BlockType, option?: BlockOpt
     type: format,
   });
 };
+
+export const resetEditor = (editor: Editor) => {
+  Transforms.delete(editor, {
+    at: {
+      anchor: Editor.start(editor, []),
+      focus: Editor.end(editor, []),
+    },
+  });
+
+  toggleBlock(editor, BlockType.Paragraph);
+};

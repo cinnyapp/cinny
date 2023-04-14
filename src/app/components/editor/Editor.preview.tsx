@@ -12,11 +12,12 @@ import {
   OverlayCenter,
 } from 'folds';
 
-import { CustomEditor } from './Editor';
+import { CustomEditor, useEditor } from './Editor';
 import { Toolbar } from './Toolbar';
 
 export function EditorPreview() {
   const [open, setOpen] = useState(false);
+  const editor = useEditor();
   const [toolbar, setToolbar] = useState(false);
 
   return (
@@ -36,6 +37,7 @@ export function EditorPreview() {
             <Modal size="500">
               <div style={{ padding: config.space.S400 }}>
                 <CustomEditor
+                  editor={editor}
                   placeholder="Send a message..."
                   before={
                     <IconButton variant="SurfaceVariant" size="300" radii="300">

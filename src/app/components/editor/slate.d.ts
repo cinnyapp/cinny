@@ -4,6 +4,8 @@ import { BlockType } from './Elements';
 
 export type HeadingLevel = 1 | 2 | 3;
 
+export type Editor = BaseEditor & ReactEditor;
+
 export type Text = {
   text: string;
 };

@@ -12,6 +12,7 @@ import RoomViewContent from './RoomViewContent';
 import RoomViewFloating from './RoomViewFloating';
 import RoomViewInput from './RoomViewInput';
 import RoomViewCmdBar from './RoomViewCmdBar';
+import { RoomInput } from './RoomInput';
 
 const viewEvent = new EventEmitter();
 
@@ -44,26 +45,19 @@ function RoomView({ roomTimeline, eventId }) {
       <RoomViewHeader roomId={roomId} />
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
-          <RoomViewContent
-            eventId={eventId}
-            roomTimeline={roomTimeline}
-          />
-          <RoomViewFloating
-            roomId={roomId}
-            roomTimeline={roomTimeline}
-          />
+          <RoomViewContent eventId={eventId} roomTimeline={roomTimeline} />
+          <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
         </div>
         <div className="room-view__sticky">
-          <RoomViewInput
+          {/* <RoomViewInput
             roomId={roomId}
             roomTimeline={roomTimeline}
             viewEvent={viewEvent}
-          />
-          <RoomViewCmdBar
-            roomId={roomId}
-            roomTimeline={roomTimeline}
-            viewEvent={viewEvent}
-          />
+          /> */}
+          <div className="room-view__editor">
+            <RoomInput roomId={roomId} />
+          </div>
+          <RoomViewCmdBar roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
         </div>
       </div>
     </div>
