@@ -16,7 +16,7 @@ import {
   toRem,
 } from 'folds';
 import React, { ReactNode, useState } from 'react';
-import { useSlate } from 'slate-react';
+import { ReactEditor, useSlate } from 'slate-react';
 import { isBlockActive, isMarkActive, toggleBlock, toggleMark } from './common';
 import * as css from './Editor.css';
 import { BlockType, MarkType } from './Elements';
@@ -45,13 +45,18 @@ type MarkButtonProps = { format: MarkType; icon: IconSrc; tooltip: ReactNode };
 export function MarkButton({ format, icon, tooltip }: MarkButtonProps) {
   const editor = useSlate();
 
+  const handleClick = () => {
+    toggleMark(editor, format);
+    ReactEditor.focus(editor);
+  };
+
   return (
     <TooltipProvider tooltip={tooltip} delay={500}>
       {(triggerRef) => (
         <IconButton
           ref={triggerRef}
           variant="SurfaceVariant"
-          onClick={() => toggleMark(editor, format)}
+          onClick={handleClick}
           aria-pressed={isMarkActive(editor, format)}
           size="300"
           radii="300"
@@ -70,13 +75,19 @@ type BlockButtonProps = {
 };
 export function BlockButton({ format, icon, tooltip }: BlockButtonProps) {
   const editor = useSlate();
+
+  const handleClick = () => {
+    toggleBlock(editor, format, { level: 1 });
+    ReactEditor.focus(editor);
+  };
+
   return (
     <TooltipProvider tooltip={tooltip} delay={500}>
       {(triggerRef) => (
         <IconButton
           ref={triggerRef}
           variant="SurfaceVariant"
-          onClick={() => toggleBlock(editor, format, { level: 1 })}
+          onClick={handleClick}
           aria-pressed={isBlockActive(editor, format)}
           size="300"
           radii="300"
@@ -98,6 +109,7 @@ export function HeadingBlockButton() {
     setOpen(false);
     setLevel(selectedLevel);
     toggleBlock(editor, BlockType.Heading, { level: selectedLevel });
+    ReactEditor.focus(editor);
   };
 
   return (
