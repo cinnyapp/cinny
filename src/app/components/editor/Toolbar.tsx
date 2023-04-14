@@ -1,42 +1,90 @@
 import FocusTrap from 'focus-trap-react';
-import { Box, config, Icon, IconButton, Icons, IconSrc, Line, Menu, PopOut, toRem } from 'folds';
-import React, { useState } from 'react';
+import {
+  Badge,
+  Box,
+  config,
+  Icon,
+  IconButton,
+  Icons,
+  IconSrc,
+  Line,
+  Menu,
+  PopOut,
+  Text,
+  Tooltip,
+  TooltipProvider,
+  toRem,
+} from 'folds';
+import React, { ReactNode, useState } from 'react';
 import { useSlate } from 'slate-react';
 import { isBlockActive, isMarkActive, toggleBlock, toggleMark } from './common';
 import * as css from './Editor.css';
 import { BlockType, MarkType } from './Elements';
 import { HeadingLevel } from './slate';
+import { isMacOS } from '../../utils/user-agent';
+import { KeySymbol } from '../../utils/key-symbol';
 
-type MarkButtonProps = { format: MarkType; icon: IconSrc };
-export function MarkButton({ format, icon }: MarkButtonProps) {
-  const editor = useSlate();
-
+function BtnTooltip({ text, shortCode }: { text: string; shortCode?: string }) {
   return (
-    <IconButton
-      variant="SurfaceVariant"
-      onClick={() => toggleMark(editor, format)}
-      aria-pressed={isMarkActive(editor, format)}
-      size="300"
-      radii="300"
-    >
-      <Icon size="50" src={icon} />
-    </IconButton>
+    <Tooltip style={{ padding: config.space.S300 }}>
+      <Box gap="200" direction="Column" alignItems="Center">
+        <Text align="Center">{text}</Text>
+        {shortCode && (
+          <Badge as="kbd" radii="300" size="500">
+            <Text size="T200" align="Center">
+              {shortCode}
+            </Text>
+          </Badge>
+        )}
+      </Box>
+    </Tooltip>
   );
 }
 
-type BlockButtonProps = { format: BlockType; icon: IconSrc };
-export function BlockButton({ format, icon }: BlockButtonProps) {
+type MarkButtonProps = { format: MarkType; icon: IconSrc; tooltip: ReactNode };
+export function MarkButton({ format, icon, tooltip }: MarkButtonProps) {
+  const editor = useSlate();
+
+  return (
+    <TooltipProvider tooltip={tooltip} delay={500}>
+      {(triggerRef) => (
+        <IconButton
+          ref={triggerRef}
+          variant="SurfaceVariant"
+          onClick={() => toggleMark(editor, format)}
+          aria-pressed={isMarkActive(editor, format)}
+          size="300"
+          radii="300"
+        >
+          <Icon size="50" src={icon} />
+        </IconButton>
+      )}
+    </TooltipProvider>
+  );
+}
+
+type BlockButtonProps = {
+  format: BlockType;
+  icon: IconSrc;
+  tooltip: ReactNode;
+};
+export function BlockButton({ format, icon, tooltip }: BlockButtonProps) {
   const editor = useSlate();
   return (
-    <IconButton
-      variant="SurfaceVariant"
-      onClick={() => toggleBlock(editor, format, { level: 1 })}
-      aria-pressed={isBlockActive(editor, format)}
-      size="300"
-      radii="300"
-    >
-      <Icon size="50" src={icon} />
-    </IconButton>
+    <TooltipProvider tooltip={tooltip} delay={500}>
+      {(triggerRef) => (
+        <IconButton
+          ref={triggerRef}
+          variant="SurfaceVariant"
+          onClick={() => toggleBlock(editor, format, { level: 1 })}
+          aria-pressed={isBlockActive(editor, format)}
+          size="300"
+          radii="300"
+        >
+          <Icon size="50" src={icon} />
+        </IconButton>
+      )}
+    </TooltipProvider>
   );
 }
 
@@ -105,25 +153,75 @@ export function HeadingBlockButton() {
 export function Toolbar() {
   const editor = useSlate();
   const allowInline = !isBlockActive(editor, BlockType.CodeBlock);
+  const modKey = isMacOS() ? KeySymbol.Command : 'Ctrl';
 
   return (
     <Box className={css.EditorToolbar} alignItems="Center" gap="300">
       <Box gap="100">
         <HeadingBlockButton />
-        <BlockButton format={BlockType.OrderedList} icon={Icons.OrderList} />
-        <BlockButton format={BlockType.UnorderedList} icon={Icons.UnorderList} />
-        <BlockButton format={BlockType.BlockQuote} icon={Icons.BlockQuote} />
-        <BlockButton format={BlockType.CodeBlock} icon={Icons.BlockCode} />
+        <BlockButton
+          format={BlockType.OrderedList}
+          icon={Icons.OrderList}
+          tooltip={
+            <BtnTooltip text="Ordered List" shortCode={`${modKey} + ${KeySymbol.Shift} + 0`} />
+          }
+        />
+        <BlockButton
+          format={BlockType.UnorderedList}
+          icon={Icons.UnorderList}
+          tooltip={
+            <BtnTooltip text="Unordered List" shortCode={`${modKey} + ${KeySymbol.Shift} + 8`} />
+          }
+        />
+        <BlockButton
+          format={BlockType.BlockQuote}
+          icon={Icons.BlockQuote}
+          tooltip={
+            <BtnTooltip text="Block Quote" shortCode={`${modKey} + ${KeySymbol.Shift} + .`} />
+          }
+        />
+        <BlockButton
+          format={BlockType.CodeBlock}
+          icon={Icons.BlockCode}
+          tooltip={
+            <BtnTooltip text="Block Code" shortCode={`${modKey} + ${KeySymbol.Shift} + M`} />
+          }
+        />
       </Box>
       {allowInline && (
         <>
           <Line direction="Vertical" style={{ height: toRem(12) }} />
           <Box gap="100">
-            <MarkButton format={MarkType.Bold} icon={Icons.Bold} />
-            <MarkButton format={MarkType.Italic} icon={Icons.Italic} />
-            <MarkButton format={MarkType.Underline} icon={Icons.Underline} />
-            <MarkButton format={MarkType.StrikeThrough} icon={Icons.Strike} />
-            <MarkButton format={MarkType.Code} icon={Icons.Code} />
+            <MarkButton
+              format={MarkType.Bold}
+              icon={Icons.Bold}
+              tooltip={<BtnTooltip text="Bold" shortCode={`${modKey} + B`} />}
+            />
+            <MarkButton
+              format={MarkType.Italic}
+              icon={Icons.Italic}
+              tooltip={<BtnTooltip text="Italic" shortCode={`${modKey} + I`} />}
+            />
+            <MarkButton
+              format={MarkType.Underline}
+              icon={Icons.Underline}
+              tooltip={<BtnTooltip text="Underline" shortCode={`${modKey} + U`} />}
+            />
+            <MarkButton
+              format={MarkType.StrikeThrough}
+              icon={Icons.Strike}
+              tooltip={
+                <BtnTooltip
+                  text="Strike Through"
+                  shortCode={`${modKey} + ${KeySymbol.Shift} + U`}
+                />
+              }
+            />
+            <MarkButton
+              format={MarkType.Code}
+              icon={Icons.Code}
+              tooltip={<BtnTooltip text="Inline Code" shortCode={`${modKey} + [`} />}
+            />
           </Box>
         </>
       )}
