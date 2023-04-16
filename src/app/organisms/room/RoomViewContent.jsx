@@ -114,6 +114,7 @@ function handleOnClickCapture(e) {
 
   const spoiler = nativeEvent.composedPath().find((el) => el?.hasAttribute?.('data-mx-spoiler'));
   if (spoiler) {
+    if (!spoiler.classList.contains('data-mx-spoiler--visible')) e.preventDefault();
     spoiler.classList.toggle('data-mx-spoiler--visible');
   }
 }
