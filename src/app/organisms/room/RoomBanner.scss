@@ -1,0 +1,28 @@
+@use '../../partials/flex';
+@use '../../partials/text';
+@use '../../partials/dir';
+
+.room-view {
+  &__banner {
+    background-color: var(--bg-surface-low);
+    width: calc(100% - var(--sp-extra-loose));
+
+    padding: var(--sp-ultra-tight);
+    border-radius: var(--bo-radius);
+    align-items: center;
+
+    position: relative;
+    @include dir.prop(left, var(--sp-normal), unset);
+    @include dir.prop(right, unset, var(--sp-normal));
+    display: flex;
+    z-index: 999;
+    transform: translate(0%, 10%);
+    box-shadow: 0 0 2px 0 rgba(0, 0, 0, 20%);
+
+    & .ic-raw {
+      opacity: 0.4;
+      margin: 0 var(--sp-extra-tight);
+    }
+    
+  }
+}
