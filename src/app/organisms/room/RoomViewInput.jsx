@@ -44,6 +44,7 @@ function RoomViewInput({
 }) {
   const [attachment, setAttachment] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
+  const [message, setMessage] = useState('');
 
   const textAreaRef = useRef(null);
   const inputBaseRef = useRef(null);
@@ -129,11 +130,12 @@ function RoomViewInput({
     return leadingInput + replacement + msg.slice(cursor);
   }
   function firedCmd(cmdData) {
-    const msg = textAreaRef.current.value;
-    textAreaRef.current.value = replaceCmdWith(
-      msg,
-      cmdCursorPos,
-      typeof cmdData?.replace !== 'undefined' ? cmdData.replace : '',
+    setMessage(
+      replaceCmdWith(
+        message,
+        cmdCursorPos,
+        typeof cmdData?.replace !== 'undefined' ? cmdData.replace : ''
+      )
     );
     deactivateCmd();
   }
@@ -157,12 +159,10 @@ function RoomViewInput({
     roomsInput.on(cons.events.roomsInput.FILE_UPLOADED, clearAttachment);
     viewEvent.on('cmd_fired', firedCmd);
     navigation.on(cons.events.navigation.REPLY_TO_CLICKED, setUpReply);
-    if (textAreaRef?.current !== null) {
-      isTyping = false;
-      textAreaRef.current.value = roomsInput.getMessage(roomId);
-      setAttachment(roomsInput.getAttachment(roomId));
-      setReplyTo(roomsInput.getReplyTo(roomId));
-    }
+    isTyping = false;
+    setMessage(roomsInput.getMessage(roomId));
+    setAttachment(roomsInput.getAttachment(roomId));
+    setReplyTo(roomsInput.getReplyTo(roomId));
     return () => {
       roomsInput.removeListener(cons.events.roomsInput.UPLOAD_PROGRESS_CHANGES, uploadingProgress);
       roomsInput.removeListener(cons.events.roomsInput.ATTACHMENT_CANCELED, clearAttachment);
@@ -172,16 +172,21 @@ function RoomViewInput({
       if (isCmdActivated) deactivateCmd();
       if (textAreaRef?.current === null) return;
 
-      const msg = textAreaRef.current.value;
       textAreaRef.current.style.height = 'unset';
       inputBaseRef.current.style.backgroundImage = 'unset';
-      if (msg.trim() === '') {
-        roomsInput.setMessage(roomId, '');
-        return;
-      }
-      roomsInput.setMessage(roomId, msg);
     };
   }, [roomId]);
+
+  useEffect(
+    () => () => {
+      if (message.trim() === '') {
+        roomsInput.setMessage(roomId, '');
+      } else {
+        roomsInput.setMessage(roomId, message);
+      }
+    },
+    [message, roomId]
+  );
 
   const sendBody = async (body, options) => {
     const opt = options ?? {};
@@ -201,7 +206,7 @@ function RoomViewInput({
     textAreaRef.current.style.cursor = 'unset';
     focusInput();
 
-    textAreaRef.current.value = roomsInput.getMessage(roomId);
+    setMessage(roomsInput.getMessage(roomId));
     textAreaRef.current.style.height = 'unset';
     if (replyTo !== null) setReplyTo(null);
   };
@@ -223,10 +228,10 @@ function RoomViewInput({
 
   const sendMessage = async () => {
     requestAnimationFrame(() => deactivateCmdAndEmit());
-    const msgBody = textAreaRef.current.value.trim();
+    const msgBody = message.trim();
     if (msgBody.startsWith('/')) {
       processCommand(msgBody.trim());
-      textAreaRef.current.value = '';
+      setMessage('');
       textAreaRef.current.style.height = 'unset';
       return;
     }
@@ -286,6 +291,7 @@ function RoomViewInput({
 
   const handleMsgTyping = (e) => {
     const msg = e.target.value;
+    setMessage(msg);
     recognizeCmd(e.target.value);
     if (!isCmdActivated) processTyping(msg);
   };
@@ -329,7 +335,7 @@ function RoomViewInput({
   };
 
   function addEmoji(emoji) {
-    textAreaRef.current.value += emoji.unicode;
+    setMessage(message + emoji.unicode);
     textAreaRef.current.focus();
   }
 
@@ -373,6 +379,7 @@ function RoomViewInput({
                 dir="auto"
                 id="message-textarea"
                 ref={textAreaRef}
+                value={message}
                 onChange={handleMsgTyping}
                 onPaste={handlePaste}
                 onKeyDown={handleKeyDown}
