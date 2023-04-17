@@ -45,6 +45,7 @@ function RoomViewInput({
   const [attachment, setAttachment] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const [message, setMessage] = useState('');
+  const [addedEmoji, setAddedEmoji] = useState('');
 
   const textAreaRef = useRef(null);
   const inputBaseRef = useRef(null);
@@ -335,9 +336,15 @@ function RoomViewInput({
   };
 
   function addEmoji(emoji) {
-    setMessage(message + emoji.unicode);
+    setAddedEmoji(emoji.unicode);
     textAreaRef.current.focus();
   }
+
+  useEffect(() => {
+    setMessage(message + addedEmoji);
+    // this does not create an infinite loop because addedEmoji value remains the same
+    setAddedEmoji('');
+  }, [addedEmoji]);
 
   const handleUploadClick = () => {
     if (attachment === null) uploadInputRef.current.click();
