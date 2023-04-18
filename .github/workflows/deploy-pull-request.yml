@@ -1,11 +1,13 @@
 name: Deploy PR to Netlify
+
 on:
   workflow_run:
       workflows: ["Build pull request"]
       types: [completed]
+
 jobs:
   deploy-pull-request:
-    name: 'Deploy pull request'
+    name: Deploy pull request
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,7 +32,7 @@ jobs:
           path: dist
       - name: Deploy to Netlify
         id: netlify
-        uses: nwtgck/actions-netlify@ac1cb16858bada08a9c71a81240a85cfc3f72913
+        uses: nwtgck/actions-netlify@5da65c9f74c7961c5501a3ba329b8d0912f39c03
         with:
           publish-dir: dist
           deploy-message: "Deploy PR ${{ steps.pr.outputs.id }}"
@@ -40,14 +42,15 @@ jobs:
           enable-commit-comment: false
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE3_ID }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_PR_CINNY }}
         timeout-minutes: 1
-      - name: Edit PR Description
-        uses: Beakyn/gha-comment-pull-request@2167a7aee24f9e61ce76a23039f322e49a990409
+      - name: Comment preview on PR
+        uses: thollander/actions-comment-pull-request@c22fb302208b7b170d252a61a505d2ea27245eff
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          pull-request-number: ${{ steps.pr.outputs.id }}
-          description-message: |
+          pr_number: ${{ steps.pr.outputs.id }}
+          comment_tag: ${{ steps.pr.outputs.id }}
+          message: |
               Preview: ${{ steps.netlify.outputs.deploy-url }}
               ⚠️ Exercise caution. Use test accounts. ⚠️
