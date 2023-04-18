@@ -7,7 +7,7 @@ import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
   toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
-  toggleNotifications, toggleNotificationSounds,
+  toggleNotifications, toggleNotificationSounds, toggleTime12,
 } from '../../../client/action/settings';
 import { usePermission } from '../../hooks/usePermission';
 
@@ -112,6 +112,16 @@ function AppearanceSection() {
             />
           )}
           content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
+        />
+        <SettingTile
+          title="12-hour time"
+          options={(
+            <Toggle
+              isActive={settings.isTime12}
+              onToggle={() => { toggleTime12(); updateState({}); }}
+            />
+          )}
+          content={<Text variant="b3">Show timestamps in 12-hour format.</Text>}
         />
       </div>
     </div>
