@@ -178,17 +178,6 @@ function RoomViewInput({
     };
   }, [roomId]);
 
-  useEffect(
-    () => () => {
-      if (message.trim() === '') {
-        roomsInput.setMessage(roomId, '');
-      } else {
-        roomsInput.setMessage(roomId, message);
-      }
-    },
-    [message, roomId]
-  );
-
   const sendBody = async (body, options) => {
     const opt = options ?? {};
     if (!opt.msgType) opt.msgType = 'm.text';
@@ -293,7 +282,12 @@ function RoomViewInput({
   const handleMsgTyping = (e) => {
     const msg = e.target.value;
     setMessage(msg);
-    recognizeCmd(e.target.value);
+    if (msg.trim() === '') {
+      roomsInput.setMessage(roomId, '');
+    } else {
+      roomsInput.setMessage(roomId, msg);
+    }
+    recognizeCmd(msg);
     if (!isCmdActivated) processTyping(msg);
   };
 
@@ -342,6 +336,7 @@ function RoomViewInput({
 
   useEffect(() => {
     setMessage(message + addedEmoji);
+    roomsInput.setMessage(roomId, message + addedEmoji);
     // this does not create an infinite loop because addedEmoji value remains the same
     setAddedEmoji('');
   }, [addedEmoji]);
