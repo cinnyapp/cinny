@@ -11,7 +11,7 @@ module.exports = merge(common, {
   mode: "production",
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: buildDirectory + "bundle/[name].[contenthash].bundle.js",
+    filename: buildDirectory + "bundle/[name].bundle.js",
     assetModuleFilename: buildDirectory + "assets/[hash][ext][query]",
   },
   optimization: {
@@ -29,7 +29,7 @@ module.exports = merge(common, {
   plugins: [
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
-      filename: buildDirectory + "bundle/[name].[contenthash].bundle.css",
+      filename: buildDirectory + "bundle/[name].bundle.css",
     }),
   ],
 });

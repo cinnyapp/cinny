@@ -21,6 +21,8 @@ import cons from '../../../client/state/cons';
 import DragDrop from '../../organisms/drag-drop/DragDrop';
 
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
+import { shirePortalChannel } from '../../../shire/EventsChannel';
+
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
@@ -70,6 +72,7 @@ function Client() {
       initHotkeys();
       initRoomListListener(initMatrix.roomList);
       changeLoading(false);
+      shirePortalChannel.postMessage({ type: "loading_complete" });
     });
     initMatrix.init();
   }, []);
@@ -158,25 +161,27 @@ function Client() {
   }
 
   return (
-    <div
-      className="client-container"
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <div className="navigation__wrapper" ref={navWrapperRef}>
-        <Navigation />
+    <>
+      <div
+        className="client-container"
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className="navigation__wrapper" ref={navWrapperRef}>
+          <Navigation />
+        </div>
+        <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
+          <Room />
+        </div> 
+        <Windows />
+        <Dialogs />
+        <EmojiBoardOpener />
+        <ReusableContextMenu />
+        <DragDrop isOpen={dragCounter !== 0} />
       </div>
-      <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
-        <Room />
-      </div>
-      <Windows />
-      <Dialogs />
-      <EmojiBoardOpener />
-      <ReusableContextMenu />
-      <DragDrop isOpen={dragCounter !== 0} />
-    </div>
+    </>
   );
 }
 

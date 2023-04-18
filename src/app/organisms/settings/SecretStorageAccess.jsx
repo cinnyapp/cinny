@@ -28,7 +28,6 @@ function SecretStorageAccess({ onComplete }) {
   const toggleWithPhrase = () => setWithPhrase(!withPhrase);
 
   const processInput = async ({ key, phrase }) => {
-    mountStore.setItem(true);
     setProcess(true);
     try {
       const { salt, iterations } = sSKeyInfo.passphrase || {};
