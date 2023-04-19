@@ -39,7 +39,7 @@ class Navigation extends EventEmitter {
   }
 
   _mapRoomToSpace(roomId) {
-    const { roomList, accountData } = this.initMatrix;
+    const { roomList } = this.initMatrix;
     if (
       this.selectedTab === cons.tabs.HOME
       && roomList.rooms.has(roomId)
@@ -59,23 +59,10 @@ class Navigation extends EventEmitter {
       return;
     }
 
-    const parents = roomList.roomIdToParents.get(roomId);
-    if (!parents) return;
-    if (parents.has(this.selectedSpaceId)) {
-      this.spaceToRoom.set(this.selectedSpaceId, {
-        roomId,
-        timestamp: Date.now(),
-      });
-    } else if (accountData.categorizedSpaces.has(this.selectedSpaceId)) {
-      const categories = roomList.getCategorizedSpaces([this.selectedSpaceId]);
-      const parent = [...parents].find((pId) => categories.has(pId));
-      if (parent) {
-        this.spaceToRoom.set(parent, {
-          roomId,
-          timestamp: Date.now(),
-        });
-      }
-    }
+    this.spaceToRoom.set(this.selectedSpaceId, {
+      roomId,
+      timestamp: Date.now(),
+    });
   }
 
   _selectRoom(roomId, eventId) {
@@ -202,7 +189,7 @@ class Navigation extends EventEmitter {
     const { categorizedSpaces } = accountData;
 
     const data = this.spaceToRoom.get(spaceId);
-    if (data && !categorizedSpaces.has(spaceId)) {
+    if (data) {
       this._selectRoom(data.roomId);
       return;
     }
@@ -211,13 +198,6 @@ class Navigation extends EventEmitter {
 
     if (categorizedSpaces.has(spaceId)) {
       const categories = roomList.getCategorizedSpaces([spaceId]);
-
-      const latestSelectedRoom = this._getLatestSelectedRoomId([...categories.keys()]);
-
-      if (latestSelectedRoom) {
-        this._selectRoom(latestSelectedRoom);
-        return;
-      }
 
       categories?.forEach((categoryId) => {
         categoryId?.forEach((childId) => {
