@@ -150,7 +150,7 @@ function PeopleDrawer({ roomId }) {
                     return getSegmentIndex[membership];
                   })()
                 }
-                segments={[{ text: 'Joined' }, { text: 'Invited' }, { text: 'Banned' }]}
+                segments={[{ text: 'Joined' }, { text: 'Invited' }/* temporarily disabling for Alpha, { text: 'Banned' } */]}
                 onSelect={(index) => {
                   const selectSegment = [
                     () => setMembership('join'),

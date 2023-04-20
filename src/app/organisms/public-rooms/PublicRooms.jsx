@@ -226,7 +226,10 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
         <form className="public-rooms__form" onSubmit={(e) => { e.preventDefault(); searchRooms(); }}>
           <div className="public-rooms__input-wrapper">
             <Input value={searchTerm} forwardRef={roomNameRef} label="Room name or alias" />
-            <Input forwardRef={hsRef} value={userId.slice(userId.indexOf(':') + 1)} label="Homeserver" required />
+            {/* Disabled for Alpha
+              <Input forwardRef={hsRef} value={userId.slice(userId.indexOf(':') + 1)}
+            label="Homeserver" required />
+            */}
           </div>
           <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">Search</Button>
         </form>
@@ -237,13 +240,13 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
                 ? (
                   <div className="flex--center">
                     <Spinner size="small" />
-                    <Text variant="b2">{`Loading public rooms from ${searchQuery.homeserver}...`}</Text>
+                    <Text variant="b2">Loading public rooms...</Text>
                   </div>
                 )
                 : (
                   <div className="flex--center">
                     <Spinner size="small" />
-                    <Text variant="b2">{`Searching for "${searchQuery.name}" on ${searchQuery.homeserver}...`}</Text>
+                    <Text variant="b2">{`Searching for "${searchQuery.name}" ...`}</Text>
                   </div>
                 )
             )
@@ -251,8 +254,8 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
           {
             typeof searchQuery.name !== 'undefined' && !isSearching && (
               searchQuery.name === ''
-                ? <Text variant="b2">{`Public rooms on ${searchQuery.homeserver}.`}</Text>
-                : <Text variant="b2">{`Search result for "${searchQuery.name}" on ${searchQuery.homeserver}.`}</Text>
+                ? <Text variant="b2">Public rooms.</Text>
+                : <Text variant="b2">{`Search result for "${searchQuery.name}".`}</Text>
             )
           }
           { searchQuery.error && (

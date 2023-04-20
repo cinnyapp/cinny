@@ -35,7 +35,7 @@ import EmojiAddIC from '../../../../public/res/ic/outlined/emoji-add.svg';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
-import CmdIC from '../../../../public/res/ic/outlined/cmd.svg';
+// Alpha import CmdIC from '../../../../public/res/ic/outlined/cmd.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
@@ -568,12 +568,13 @@ const MessageOptions = React.memo(({
             >
               Read receipts
             </MenuItem>
-            <MenuItem
+            {/* <MenuItem
               iconSrc={CmdIC}
               onClick={() => handleOpenViewSource(mEvent, roomTimeline)}
             >
               View source
             </MenuItem>
+        */}
             {(canIRedact || senderId === mx.getUserId()) && (
               <>
                 <MenuBorder />

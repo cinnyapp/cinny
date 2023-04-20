@@ -20,7 +20,7 @@ import RoomProfile from '../../molecules/room-profile/RoomProfile';
 import RoomSearch from '../../molecules/room-search/RoomSearch';
 import RoomNotification from '../../molecules/room-notification/RoomNotification';
 import RoomVisibility from '../../molecules/room-visibility/RoomVisibility';
-import RoomAliases from '../../molecules/room-aliases/RoomAliases';
+/* disabling for alpha import RoomAliases from '../../molecules/room-aliases/RoomAliases'; */
 import RoomHistoryVisibility from '../../molecules/room-history-visibility/RoomHistoryVisibility';
 import RoomEncryption from '../../molecules/room-encryption/RoomEncryption';
 import RoomPermissions from '../../molecules/room-permissions/RoomPermissions';
@@ -116,10 +116,12 @@ function GeneralSettings({ roomId }) {
         <MenuHeader>Room visibility (who can join)</MenuHeader>
         <RoomVisibility roomId={roomId} />
       </div>
+      {/* Temporarily disabled for Alpha
       <div className="room-settings__card">
         <MenuHeader>Room addresses</MenuHeader>
         <RoomAliases roomId={roomId} />
       </div>
+      */}
     </>
   );
 }
