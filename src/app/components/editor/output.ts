@@ -33,6 +33,8 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
       return `<ol>${children}</ol>`;
     case BlockType.UnorderedList:
       return `<ul>${children}</ul>`;
+    case BlockType.Mention:
+      return `<a href="https://matrix.to/#/${node.id}">${node.name}</a>`;
     default:
       return children;
   }
@@ -66,6 +68,8 @@ const elementToPlainText = (node: CustomElement, children: string): string => {
       return `${children}\n`;
     case BlockType.UnorderedList:
       return `${children}\n`;
+    case BlockType.Mention:
+      return node.id;
     default:
       return children;
   }
@@ -73,7 +77,7 @@ const elementToPlainText = (node: CustomElement, children: string): string => {
 
 export const toPlainText = (node: Descendant | Descendant[]): string => {
   if (Array.isArray(node)) return node.map((n) => toPlainText(n)).join('');
-  if (Text.isText(node)) return sanitizeText(node.text).trim();
+  if (Text.isText(node)) return sanitizeText(node.text);
 
   const children = node.children.map((n) => toPlainText(n)).join('');
   return elementToPlainText(node, children);

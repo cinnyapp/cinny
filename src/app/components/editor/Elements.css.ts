@@ -1,5 +1,6 @@
 import { style } from '@vanilla-extract/css';
-import { color, config, DefaultReset } from 'folds';
+import { recipe } from '@vanilla-extract/recipes';
+import { color, config, DefaultReset, toRem } from 'folds';
 
 const MarginBottom = style({
   marginBottom: config.space.S200,
@@ -53,3 +54,28 @@ export const List = style([
     paddingLeft: config.space.S600,
   },
 ]);
+
+export const Mention = recipe({
+  base: {
+    backgroundColor: color.Secondary.Container,
+    color: color.Secondary.OnContainer,
+    boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Secondary.ContainerLine}`,
+    padding: `0 ${toRem(2)}`,
+    borderRadius: config.radii.R300,
+    fontWeight: config.fontWeight.W500,
+  },
+  variants: {
+    highlight: {
+      true: {
+        backgroundColor: color.Success.Container,
+        color: color.Success.OnContainer,
+        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Success.ContainerLine}`,
+      },
+    },
+    focus: {
+      true: {
+        boxShadow: `0 0 0 ${config.borderWidth.B500} ${color.SurfaceVariant.ContainerLine}`,
+      },
+    },
+  },
+});

@@ -5,7 +5,7 @@ export const Editor = style([
   DefaultReset,
   {
     backgroundColor: color.SurfaceVariant.Container,
-    border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
+    boxShadow: `inset 0 0 0 ${config.borderWidth.B300} ${color.SurfaceVariant.ContainerLine}`,
     borderRadius: config.radii.R400,
     overflow: 'hidden',
   },

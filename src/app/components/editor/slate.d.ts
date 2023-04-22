@@ -25,16 +25,14 @@ export type LinkElement = {
 };
 export type SpoilerElement = {
   type: 'spoiler';
+  alert?: string;
   children: FormattedText[];
 };
-export type UserPillElement = {
-  type: 'user-pill';
-  userId: string;
-  children: Text[];
-};
-export type RoomPillElement = {
-  type: 'room-pill';
-  roomId: string;
+export type MentionElement = {
+  type: BlockType.Mention;
+  id: string;
+  highlight: boolean;
+  name: string;
   children: Text[];
 };
 export type EmoticonElement = {
@@ -84,8 +82,7 @@ export type UnorderedListElement = {
 export type CustomElement =
   // | LinkElement
   // | SpoilerElement
-  // | UserPillElement
-  // | RoomPillElement
+  | MentionElement
   // | EmoticonElement
   | ParagraphElement
   | HeadingElement

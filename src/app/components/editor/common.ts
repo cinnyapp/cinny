@@ -1,4 +1,4 @@
-import { Editor, Element, Transforms } from 'slate';
+import { BasePoint, BaseRange, Editor, Element, Point, Range, Transforms } from 'slate';
 import { BlockType, MarkType } from './Elements';
 import { HeadingLevel } from './slate';
 
@@ -104,4 +104,72 @@ export const resetEditor = (editor: Editor) => {
   });
 
   toggleBlock(editor, BlockType.Paragraph);
+};
+
+export const insertMention = (editor: Editor, id: string, name: string, highlight: boolean) => {
+  Transforms.insertNodes(editor, {
+    type: BlockType.Mention,
+    id,
+    highlight,
+    name,
+    children: [{ text: '' }],
+  });
+  Transforms.move(editor);
+};
+
+interface PointUntilCharOptions {
+  match: (char: string) => boolean;
+  reverse?: boolean;
+}
+export const getPointUntilChar = (
+  editor: Editor,
+  at: BasePoint,
+  options: PointUntilCharOptions
+): BasePoint | undefined => {
+  let targetPoint: BasePoint | undefined;
+  let char: string | undefined;
+
+  const pointItr = Editor.positions(editor, {
+    at: {
+      anchor: Editor.start(editor, []),
+      focus: Editor.point(editor, at, { edge: 'start' }),
+    },
+    unit: 'character',
+    reverse: options.reverse,
+  });
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const point of pointItr) {
+    char = Editor.string(editor, {
+      anchor: point,
+      focus: {
+        ...point,
+        offset: point.offset + 1,
+      },
+    });
+
+    if (options.match(char)) break;
+
+    if (!Point.equals(point, at)) {
+      targetPoint = point;
+    }
+  }
+  return targetPoint;
+};
+
+export const getPrevWorldRange = (editor: Editor): BaseRange | undefined => {
+  const { selection } = editor;
+  if (!selection || !Range.isCollapsed(selection)) return undefined;
+
+  const [cursorPoint] = Range.edges(selection);
+  const worldStartPoint = getPointUntilChar(editor, cursorPoint, {
+    reverse: true,
+    match: (char) => char === ' ',
+  });
+  return worldStartPoint && Editor.range(editor, worldStartPoint, cursorPoint);
+};
+
+export const getWordPrefix = (editor: Editor, wordRange: BaseRange): string | undefined => {
+  const world = Editor.string(editor, wordRange);
+  return world[0] || undefined;
 };

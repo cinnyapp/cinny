@@ -1,8 +1,8 @@
+/* eslint-disable no-param-reassign */
 import React, { KeyboardEventHandler, ReactNode, useCallback, useState } from 'react';
-import isHotkey from 'is-hotkey';
 
 import { Box, Scroll } from 'folds';
-import { Editor, createEditor } from 'slate';
+import { Descendant, Editor, createEditor } from 'slate';
 import { Slate, Editable, withReact, RenderLeafProps, RenderElementProps } from 'slate-react';
 import { BlockType, RenderElement, RenderLeaf } from './Elements';
 import { CustomElement } from './slate';
@@ -16,11 +16,21 @@ const initialValue: CustomElement[] = [
   },
 ];
 
-export const useEditor = (): Editor => {
-  const [editor] = useState(() => withReact(createEditor()));
+const withMentions = (editor: Editor) => {
+  const { isInline, isVoid } = editor;
+
+  editor.isInline = (element) => element.type === BlockType.Mention || isInline(element);
+  editor.isVoid = (element) => element.type === BlockType.Mention || isVoid(element);
+
   return editor;
 };
 
+export const useEditor = (): Editor => {
+  const [editor] = useState(withMentions(withReact(createEditor())));
+  return editor;
+};
+
+export type EditorChangeHandler = ((value: Descendant[]) => void) | undefined;
 type CustomEditorProps = {
   top?: ReactNode;
   bottom?: ReactNode;
@@ -29,8 +39,8 @@ type CustomEditorProps = {
   maxHeight?: string;
   editor: Editor;
   placeholder?: string;
-  submitKey?: 'enter' | 'shift+enter';
-  onSubmit?: (editor: Editor) => void;
+  onKeyDown?: KeyboardEventHandler;
+  onChange?: EditorChangeHandler;
 };
 export function CustomEditor({
   top,
@@ -40,8 +50,8 @@ export function CustomEditor({
   maxHeight = '50vh',
   editor,
   placeholder,
-  submitKey = 'enter',
-  onSubmit,
+  onKeyDown,
+  onChange,
 }: CustomEditorProps) {
   const renderElement = useCallback(
     (props: RenderElementProps) => <RenderElement {...props} />,
@@ -52,19 +62,15 @@ export function CustomEditor({
 
   const handleKeydown: KeyboardEventHandler = useCallback(
     (evt) => {
-      if (isHotkey(submitKey, evt)) {
-        evt.preventDefault();
-        onSubmit?.(editor);
-        return;
-      }
+      onKeyDown?.(evt);
       toggleKeyboardShortcut(editor, evt);
     },
-    [editor, submitKey, onSubmit]
+    [editor, onKeyDown]
   );
 
   return (
     <div className={css.Editor}>
-      <Slate editor={editor} value={initialValue}>
+      <Slate editor={editor} value={initialValue} onChange={onChange}>
         {top}
         <Box alignItems="Start">
           {before && (
