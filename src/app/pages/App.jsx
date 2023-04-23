@@ -7,8 +7,8 @@ import Client from '../templates/client/Client';
 import { CrossSigningEventHandler, MessagesBackupEventHandler } from '../../shire/EventsChannel';
 
 function App() {
-  CrossSigningEventHandler();
-  MessagesBackupEventHandler();
+  // CrossSigningEventHandler();
+  // MessagesBackupEventHandler();
   return isAuthenticated() ? <Client /> : <Auth />;
 }
 

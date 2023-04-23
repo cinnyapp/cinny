@@ -16,6 +16,8 @@ A Matrix client focusing primarily on simple, elegant and secure interface. The 
 - [Roadmap](https://github.com/ajbura/cinny/projects/11)
 - [Contributing](./CONTRIBUTING.md)
 
+<img align="center" src="https://raw.githubusercontent.com/cinnyapp/cinny-site/main/assets/preview2-light.png" height="380">
+
 ## Getting started
 Web app is available at https://app.cinny.in and gets updated on each new release. The `dev` branch is continuously deployed at https://dev.cinny.in but keep in mind that it could have things broken.
 
@@ -110,12 +112,3 @@ docker run -p 8080:80 cinny:latest
 ```
 
 This will forward your `localhost` port 8080 to the container's port 80. You can visit the app in your browser by navigating to `http://localhost:8080`.
-
-
-## License
-
-Copyright (c) 2021-present Ajay Bura (ajbura)
-
-Code licensed under the MIT License: <http://opensource.org/licenses/MIT>
-
-Graphics licensed under CC-BY 4.0: <https://creativecommons.org/licenses/by/4.0/>
