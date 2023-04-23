@@ -12,6 +12,7 @@ export const AUTOCOMPLETE_PREFIXES: readonly AutocompletePrefix[] = [
 ];
 
 export type AutocompleteQuery<TPrefix extends string> = {
+  range: BaseRange;
   prefix: TPrefix;
   text: string;
 };
@@ -38,6 +39,7 @@ export const getAutocompleteQuery = <TPrefix extends string>(
   const prefix = getAutocompletePrefix(editor, queryRange, validPrefixes);
   if (!prefix) return undefined;
   return {
+    range: queryRange,
     prefix,
     text: getAutocompleteQueryText(editor, queryRange),
   };

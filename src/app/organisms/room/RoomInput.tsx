@@ -19,6 +19,7 @@ import {
   getPrevWorldRange,
   resetEditor,
 } from '../../components/editor';
+import { AutocompleteRoomMention } from '../../components/editor/autocomplete/AutocompleteRoomMention';
 
 interface RoomInputProps {
   roomId: string;
@@ -29,7 +30,6 @@ export function RoomInput({ roomId }: RoomInputProps) {
   const [toolbar, setToolbar] = useState(false);
   const [autocompleteQuery, setAutocompleteQuery] =
     useState<AutocompleteQuery<AutocompletePrefix>>();
-  console.log(autocompleteQuery);
 
   useEffect(() => {
     ReactEditor.focus(editor);
@@ -71,7 +71,13 @@ export function RoomInput({ roomId }: RoomInputProps) {
 
   return (
     <div>
-      <div />
+      {autocompleteQuery?.prefix === AutocompletePrefix.RoomMention && (
+        <AutocompleteRoomMention
+          editor={editor}
+          query={autocompleteQuery}
+          requestClose={() => setAutocompleteQuery(undefined)}
+        />
+      )}
       <CustomEditor
         editor={editor}
         placeholder="Send a message..."

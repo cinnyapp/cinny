@@ -1,6 +1,9 @@
+import { IconName, IconSrc } from 'folds';
+
 import {
   IPushRule,
   IPushRules,
+  JoinRule,
   MatrixClient,
   MatrixEvent,
   NotificationCountType,
@@ -214,4 +217,32 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
     return unread;
   }, []);
   return unreadInfos;
+};
+
+export const joinRuleToIconSrc = (
+  icons: Record<IconName, IconSrc>,
+  joinRule: JoinRule,
+  space: boolean
+): IconSrc | undefined => {
+  if (joinRule === JoinRule.Restricted) {
+    return space ? icons.Space : icons.Hash;
+  }
+  if (joinRule === JoinRule.Knock) {
+    return space ? icons.SpaceLock : icons.HashLock;
+  }
+  if (joinRule === JoinRule.Invite) {
+    return space ? icons.SpaceLock : icons.HashLock;
+  }
+  if (joinRule === JoinRule.Public) {
+    return space ? icons.SpaceGlobe : icons.HashGlobe;
+  }
+  return undefined;
+};
+
+export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefined => {
+  const url =
+    room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop', undefined, false) ??
+    undefined;
+  if (url) return url;
+  return room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') ?? undefined;
 };
