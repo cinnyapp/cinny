@@ -1,6 +1,6 @@
 import { BasePoint, BaseRange, Editor, Element, Point, Range, Transforms } from 'slate';
 import { BlockType, MarkType } from './Elements';
-import { HeadingLevel } from './slate';
+import { HeadingLevel, MentionElement } from './slate';
 
 export const isMarkActive = (editor: Editor, format: MarkType) => {
   const marks = Editor.marks(editor);
@@ -106,15 +106,25 @@ export const resetEditor = (editor: Editor) => {
   toggleBlock(editor, BlockType.Paragraph);
 };
 
-export const insertMention = (editor: Editor, id: string, name: string, highlight: boolean) => {
-  Transforms.insertNodes(editor, {
-    type: BlockType.Mention,
-    id,
-    highlight,
-    name,
-    children: [{ text: '' }],
-  });
-  Transforms.move(editor);
+export const createMentionElement = (
+  id: string,
+  name: string,
+  highlight: boolean
+): MentionElement => ({
+  type: BlockType.Mention,
+  id,
+  highlight,
+  name,
+  children: [{ text: '' }],
+});
+
+export const replaceWithElement = (editor: Editor, selectRange: BaseRange, element: Element) => {
+  Transforms.select(editor, selectRange);
+  Transforms.insertNodes(editor, element);
+  setTimeout(() => {
+    // It doesn't move cursor without timeout
+    Transforms.move(editor);
+  }, 1);
 };
 
 interface PointUntilCharOptions {
@@ -123,16 +133,17 @@ interface PointUntilCharOptions {
 }
 export const getPointUntilChar = (
   editor: Editor,
-  at: BasePoint,
+  cursorPoint: BasePoint,
   options: PointUntilCharOptions
 ): BasePoint | undefined => {
   let targetPoint: BasePoint | undefined;
+  let prevPoint: BasePoint | undefined;
   let char: string | undefined;
 
   const pointItr = Editor.positions(editor, {
     at: {
       anchor: Editor.start(editor, []),
-      focus: Editor.point(editor, at, { edge: 'start' }),
+      focus: Editor.point(editor, cursorPoint, { edge: 'start' }),
     },
     unit: 'character',
     reverse: options.reverse,
@@ -140,19 +151,13 @@ export const getPointUntilChar = (
 
   // eslint-disable-next-line no-restricted-syntax
   for (const point of pointItr) {
-    char = Editor.string(editor, {
-      anchor: point,
-      focus: {
-        ...point,
-        offset: point.offset + 1,
-      },
-    });
+    if (!Point.equals(point, cursorPoint) && prevPoint) {
+      char = Editor.string(editor, { anchor: point, focus: prevPoint });
 
-    if (options.match(char)) break;
-
-    if (!Point.equals(point, at)) {
+      if (options.match(char)) break;
       targetPoint = point;
     }
+    prevPoint = point;
   }
   return targetPoint;
 };
@@ -160,16 +165,10 @@ export const getPointUntilChar = (
 export const getPrevWorldRange = (editor: Editor): BaseRange | undefined => {
   const { selection } = editor;
   if (!selection || !Range.isCollapsed(selection)) return undefined;
-
   const [cursorPoint] = Range.edges(selection);
   const worldStartPoint = getPointUntilChar(editor, cursorPoint, {
     reverse: true,
     match: (char) => char === ' ',
   });
   return worldStartPoint && Editor.range(editor, worldStartPoint, cursorPoint);
-};
-
-export const getWordPrefix = (editor: Editor, wordRange: BaseRange): string | undefined => {
-  const world = Editor.string(editor, wordRange);
-  return world[0] || undefined;
 };
