@@ -35,8 +35,8 @@ export type MentionElement = {
   name: string;
   children: Text[];
 };
-export type EmoticonElement = {
-  type: 'emoticon';
+export type EmojiElement = {
+  type: 'emoji';
   mxc: string;
   children: Text[];
 };
