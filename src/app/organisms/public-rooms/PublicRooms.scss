@@ -35,7 +35,8 @@
     }
 
     & > div:last-child .input {
-      width: 120px;
+      // TODO change the default public room search input width
+      // width: 120px;
       @include dir.prop(border-left-width, 0, 1px);
       @include dir.prop(border-right-width, 1px, 0);
       @include dir.prop(border-radius,
