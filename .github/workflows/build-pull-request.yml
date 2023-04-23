@@ -1,4 +1,4 @@
-name: 'Build pull request'
+name: Build pull request
 
 on:
   pull_request:
@@ -6,21 +6,23 @@ on:
 
 jobs:
   build-pull-request:
-    name: 'Build pull request'
+    name: Build pull request
     runs-on: ubuntu-latest
     env:
       PR_NUMBER: ${{github.event.number}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v3.2.0
       - name: Setup node
         uses: actions/setup-node@v3.5.1
         with:
           node-version: 18.12.1
-          cache: 'npm'
+          cache: "npm"
       - name: Install dependencies
         run: npm ci
       - name: Build app
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-artifact@v3.1.1

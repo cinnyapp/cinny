@@ -1,4 +1,4 @@
-name: 'Deploy to Netlify (dev)'
+name: Deploy to Netlify (dev)
 
 on:
   push:
@@ -7,22 +7,24 @@ on:
 
 jobs:
   deploy-to-netlify:
-    name: 'Deploy to Netlify'
+    name: Deploy to Netlify
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v3.2.0
       - name: Setup node
         uses: actions/setup-node@v3.5.1
         with:
           node-version: 18.12.1
-          cache: 'npm'
+          cache: "npm"
       - name: Install dependencies
         run: npm ci
       - name: Build app
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
         run: npm run build
       - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@ac1cb16858bada08a9c71a81240a85cfc3f72913
+        uses: nwtgck/actions-netlify@5da65c9f74c7961c5501a3ba329b8d0912f39c03
         with:
           publish-dir: dist
           deploy-message: "Dev deploy ${{ github.sha }}"
@@ -33,5 +35,5 @@ jobs:
           github-deployment-description: 'Nightly deployment on each commit to dev branch'
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE2_ID }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_DEV }}
         timeout-minutes: 1

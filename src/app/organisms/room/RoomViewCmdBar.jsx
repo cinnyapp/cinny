@@ -5,7 +5,7 @@ import './RoomViewCmdBar.scss';
 import parse from 'html-react-parser';
 import twemoji from 'twemoji';
 
-import { twemojify } from '../../../util/twemojify';
+import { twemojify, TWEMOJI_BASE_URL } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { getEmojiForCompletion } from '../emoji-board/custom-emoji';
@@ -31,7 +31,7 @@ CmdItem.propTypes = {
 
 function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
   function renderCmdSuggestions(cmdPrefix, cmds) {
-    const cmdOptString = (typeof option === 'string') ? `/${option}` : '/?';
+    const cmdOptString = typeof option === 'string' ? `/${option}` : '/?';
     return cmds.map((cmd) => (
       <CmdItem
         key={cmd}
@@ -53,15 +53,15 @@ function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
 
     // Renders a small Twemoji
     function renderTwemoji(emoji) {
-      return parse(twemoji.parse(
-        emoji.unicode,
-        {
+      return parse(
+        twemoji.parse(emoji.unicode, {
           attributes: () => ({
             unicode: emoji.unicode,
             shortcodes: emoji.shortcodes?.toString(),
           }),
-        },
-      ));
+          base: TWEMOJI_BASE_URL,
+        })
+      );
     }
 
     // Render a custom emoji
@@ -87,10 +87,12 @@ function renderSuggestions({ prefix, option, suggestions }, fireCmd) {
     return emos.map((emoji) => (
       <CmdItem
         key={emoji.shortcode}
-        onClick={() => fireCmd({
-          prefix: emPrefix,
-          result: emoji,
-        })}
+        onClick={() =>
+          fireCmd({
+            prefix: emPrefix,
+            result: emoji,
+          })
+        }
       >
         <Text variant="b1">{renderEmoji(emoji)}</Text>
         <Text variant="b2">{`:${emoji.shortcode}:`}</Text>
@@ -187,10 +189,13 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
         });
       },
       '@': () => {
-        const members = mx.getRoom(roomId).getJoinedMembers().map((member) => ({
-          name: member.name,
-          userId: member.userId.slice(1),
-        }));
+        const members = mx
+          .getRoom(roomId)
+          .getJoinedMembers()
+          .map((member) => ({
+            name: member.name,
+            userId: member.userId.slice(1),
+          }));
         asyncSearch.setup(members, { keys: ['name', 'userId'], limit: 20 });
         const endIndex = members.length > 20 ? 20 : members.length;
         setCmd({ prefix, suggestions: members.slice(0, endIndex) });
@@ -277,9 +282,7 @@ function RoomViewCmdBar({ roomId, roomTimeline, viewEvent }) {
       </div>
       <div className="cmd-bar__content">
         <ScrollView horizontal vertical={false} invisible>
-          <div className="cmd-bar__content-suggestions">
-            { renderSuggestions(cmd, fireCmd) }
-          </div>
+          <div className="cmd-bar__content-suggestions">{renderSuggestions(cmd, fireCmd)}</div>
         </ScrollView>
       </div>
     </div>

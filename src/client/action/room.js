@@ -160,7 +160,7 @@ async function create(options, isDM = false) {
   }
 }
 
-async function createDM(userIdOrIds, isEncrypted = true) {
+async function createDM(userIdOrIds, isEncrypted = false) {
   const options = {
     is_direct: true,
     invite: Array.isArray(userIdOrIds) ? userIdOrIds : [userIdOrIds],
@@ -168,6 +168,7 @@ async function createDM(userIdOrIds, isEncrypted = true) {
     preset: 'trusted_private_chat',
     initial_state: [],
   };
+  isEncrypted = false;
   if (isEncrypted) {
     options.initial_state.push({
       type: 'm.room.encryption',
