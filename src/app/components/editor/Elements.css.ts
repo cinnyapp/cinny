@@ -74,7 +74,7 @@ export const Mention = recipe({
     },
     focus: {
       true: {
-        boxShadow: `0 0 0 ${config.borderWidth.B500} ${color.SurfaceVariant.ContainerLine}`,
+        boxShadow: `0 0 0 ${config.borderWidth.B500} ${color.SurfaceVariant.OnContainer}`,
       },
     },
   },
