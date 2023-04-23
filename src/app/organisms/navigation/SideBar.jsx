@@ -379,7 +379,8 @@ function SideBar() {
               notificationBadge={<NotificationBadge alert content={totalInvites} />}
             />
           )}
-          <CrossSigninAlert />
+          {/* TODO hide cross signing alert */}
+          {/* <CrossSigninAlert /> */}
           <ProfileAvatarMenu />
         </div>
       </div>

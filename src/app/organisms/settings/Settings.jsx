@@ -288,12 +288,15 @@ const tabItems = [{
   iconSrc: EmojiIC,
   disabled: false,
   render: () => <EmojiSection />,
-}, {
-  text: tabText.SECURITY,
-  iconSrc: LockIC,
-  disabled: false,
-  render: () => <SecuritySection />,
-}, {
+}, 
+// TODO Security tab in user profile
+// {
+//   text: tabText.SECURITY,
+//   iconSrc: LockIC,
+//   disabled: false,
+//   render: () => <SecuritySection />,
+// }, 
+{
   text: tabText.ABOUT,
   iconSrc: InfoIC,
   disabled: false,

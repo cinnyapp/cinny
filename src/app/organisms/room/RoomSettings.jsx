@@ -69,11 +69,14 @@ const tabItems = [{
   iconSrc: ShieldUserIC,
   text: tabText.PERMISSIONS,
   disabled: false,
-}, {
-  iconSrc: LockIC,
-  text: tabText.SECURITY,
-  disabled: false,
-}];
+}, 
+// TODO security tab in rooms
+// {
+//   iconSrc: LockIC,
+//   text: tabText.SECURITY,
+//   disabled: false,
+// }
+];
 
 function GeneralSettings({ roomId }) {
   const mx = initMatrix.matrixClient;
