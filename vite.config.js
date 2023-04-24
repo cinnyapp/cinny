@@ -43,16 +43,16 @@ export default defineConfig({
   ],
   optimizeDeps: {
     esbuildOptions: {
-        define: {
-          global: 'globalThis'
-        },
-        plugins: [
-          // Enable esbuild polyfill plugins
-          NodeGlobalsPolyfillPlugin({
-            process: false,
-            buffer: true,
-          }),
-        ]
+      define: {
+        global: 'globalThis'
+      },
+      plugins: [
+        // Enable esbuild polyfill plugins
+        NodeGlobalsPolyfillPlugin({
+          process: false,
+          buffer: true,
+        }),
+      ]
     }
   },
   build: {
@@ -60,6 +60,19 @@ export default defineConfig({
     sourcemap: true,
     copyPublicDir: false,
     rollupOptions: {
+      output: {
+        entryFileNames: `bundle/[name].js`,
+        chunkFileNames: `bundle/[name].js`,
+        assetFileNames: (assetInfo) => {
+          let extType = assetInfo.name.split('.').at(1);
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
+            extType = 'img';
+          }
+          if (extType === "css")
+            return "bundle/[name].[ext]"
+          return "assets/[name]-[hash].[ext]";
+        },
+      },
       plugins: [
         inject({ Buffer: ['buffer', 'Buffer'] })
       ]
