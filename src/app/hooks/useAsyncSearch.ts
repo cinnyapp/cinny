@@ -16,16 +16,16 @@ export type UseAsyncSearchOptions = AsyncSearchOption & {
   normalizeOptions?: NormalizeOption;
 };
 
-export type ItemStrGetter<TSearchItem extends object | string> = (
+export type ItemStrGetter<TSearchItem extends object | string | number> = (
   searchItem: TSearchItem
 ) => string | string[];
 
-export type UseAsyncSearchResult<TSearchItem extends object | string> = {
+export type UseAsyncSearchResult<TSearchItem extends object | string | number> = {
   query: string;
   items: TSearchItem[];
 };
 
-export const useAsyncSearch = <TSearchItem extends object | string>(
+export const useAsyncSearch = <TSearchItem extends object | string | number>(
   list: TSearchItem[],
   getItemStr: ItemStrGetter<TSearchItem>,
   options?: UseAsyncSearchOptions

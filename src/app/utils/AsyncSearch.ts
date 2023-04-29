@@ -12,11 +12,11 @@ export type AsyncSearchOption = {
   limit?: number;
 };
 
-export type MatchHandler<TSearchItem extends object | string> = (
+export type MatchHandler<TSearchItem extends object | string | number> = (
   item: TSearchItem,
   query: string
 ) => boolean;
-export type ResultHandler<TSearchItem extends object | string> = (
+export type ResultHandler<TSearchItem extends object | string | number> = (
   results: TSearchItem[],
   query: string
 ) => void;
@@ -35,7 +35,7 @@ export const matchQuery = (item: string, query: string, options?: MatchQueryOpti
   return item.startsWith(query);
 };
 
-export const AsyncSearch = <TSearchItem extends object | string>(
+export const AsyncSearch = <TSearchItem extends object | string | number>(
   list: TSearchItem[],
   match: MatchHandler<TSearchItem>,
   onResult: ResultHandler<TSearchItem>,
