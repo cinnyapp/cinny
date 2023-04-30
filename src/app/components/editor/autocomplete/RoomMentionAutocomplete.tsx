@@ -18,7 +18,7 @@ import { useKeyDown } from '../../../hooks/useKeyDown';
 type MentionAutoCompleteHandler = (roomId: string, name: string) => void;
 
 const roomAliasFromQueryText = (mx: MatrixClient, text: string) =>
-  validMxId(`#${text}`) ? text : `#${text}:${getMxIdServer(mx.getUserId() ?? '')}`;
+  validMxId(`#${text}`) ? `#${text}` : `#${text}:${getMxIdServer(mx.getUserId() ?? '')}`;
 
 function UnknownRoomMentionItem({
   query,
