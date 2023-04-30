@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Editor } from 'slate';
 import { Avatar, AvatarFallback, AvatarImage, Icon, Icons, MenuItem, Text, color } from 'folds';
+import { MatrixClient } from 'matrix-js-sdk';
 
 import { createMentionElement, replaceWithElement } from '../common';
 import { getRoomAvatarUrl, joinRuleToIconSrc } from '../../../utils/room';
@@ -12,8 +13,12 @@ import { AutocompleteMenu } from './AutocompleteMenu';
 import { getMxIdServer, validMxId } from '../../../utils/matrix';
 import { UseAsyncSearchOptions, useAsyncSearch } from '../../../hooks/useAsyncSearch';
 import { onTabPress } from '../../../utils/keyboard';
+import { useKeyDown } from '../../../hooks/useKeyDown';
 
 type MentionAutoCompleteHandler = (roomId: string, name: string) => void;
+
+const roomAliasFromQueryText = (mx: MatrixClient, text: string) =>
+  validMxId(`#${text}`) ? text : `#${text}:${getMxIdServer(mx.getUserId() ?? '')}`;
 
 function UnknownRoomMentionItem({
   query,
@@ -23,16 +28,14 @@ function UnknownRoomMentionItem({
   handleAutocomplete: MentionAutoCompleteHandler;
 }) {
   const mx = useMatrixClient();
-  const roomId: string = validMxId(`#${query.text}`)
-    ? query.text
-    : `#${query.text}:${getMxIdServer(mx.getUserId() ?? '')}`;
+  const roomAlias: string = roomAliasFromQueryText(mx, query.text);
 
   return (
     <MenuItem
       as="button"
       radii="300"
-      onKeyDown={(evt) => onTabPress(evt, () => handleAutocomplete(roomId, roomId))}
-      onClick={() => handleAutocomplete(roomId, roomId)}
+      onKeyDown={(evt) => onTabPress(evt, () => handleAutocomplete(roomAlias, roomAlias))}
+      onClick={() => handleAutocomplete(roomAlias, roomAlias)}
       before={
         <Avatar size="200">
           <Icon src={Icons.Hash} size="100" />
@@ -40,7 +43,7 @@ function UnknownRoomMentionItem({
       }
     >
       <Text style={{ flexGrow: 1 }} size="B400">
-        {roomId}
+        {roomAlias}
       </Text>
     </MenuItem>
   );
@@ -104,6 +107,19 @@ export function RoomMentionAutocomplete({
     replaceWithElement(editor, query.range, mentionEl);
     requestClose();
   };
+
+  useKeyDown(window, (evt: KeyboardEvent) => {
+    onTabPress(evt, () => {
+      if (autoCompleteRoomIds.length === 0) {
+        const alias = roomAliasFromQueryText(mx, query.text);
+        handleAutocomplete(alias, alias);
+        return;
+      }
+      const rId = autoCompleteRoomIds[0];
+      const name = mx.getRoom(rId)?.name ?? rId;
+      handleAutocomplete(rId, name);
+    });
+  });
 
   return (
     <AutocompleteMenu headerContent={<Text size="L400">Rooms</Text>} requestClose={requestClose}>
