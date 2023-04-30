@@ -59,7 +59,12 @@ export const useAsyncSearch = <TSearchItem extends object | string | number>(
 
   const searchHandler: AsyncSearchHandler = useCallback(
     (query) => {
-      searchCallback(normalize(query, options?.normalizeOptions));
+      const normalizedQuery = normalize(query, options?.normalizeOptions);
+      if (!normalizedQuery) {
+        setResult(undefined);
+        return;
+      }
+      searchCallback(normalizedQuery);
     },
     [searchCallback, options?.normalizeOptions]
   );
