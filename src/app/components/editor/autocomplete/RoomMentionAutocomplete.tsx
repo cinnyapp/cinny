@@ -15,10 +15,12 @@ import { UseAsyncSearchOptions, useAsyncSearch } from '../../../hooks/useAsyncSe
 import { onTabPress } from '../../../utils/keyboard';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 
-type MentionAutoCompleteHandler = (roomId: string, name: string) => void;
+type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 
 const roomAliasFromQueryText = (mx: MatrixClient, text: string) =>
-  validMxId(`#${text}`) ? `#${text}` : `#${text}:${getMxIdServer(mx.getUserId() ?? '')}`;
+  validMxId(`#${text}`)
+    ? `#${text}`
+    : `#${text}${text.endsWith(':') ? '' : ':'}${getMxIdServer(mx.getUserId() ?? '')}`;
 
 function UnknownRoomMentionItem({
   query,
@@ -98,11 +100,11 @@ export function RoomMentionAutocomplete({
     search(query.text);
   }, [query.text, search]);
 
-  const handleAutocomplete: MentionAutoCompleteHandler = (rId, name) => {
+  const handleAutocomplete: MentionAutoCompleteHandler = (roomAliasOrId, name) => {
     const mentionEl = createMentionElement(
-      rId,
+      roomAliasOrId,
       name.startsWith('#') ? name : `#${name}`,
-      roomId === rId
+      roomId === roomAliasOrId || mx.getRoom(roomId)?.getCanonicalAlias() === roomAliasOrId
     );
     replaceWithElement(editor, query.range, mentionEl);
     requestClose();
