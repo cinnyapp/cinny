@@ -16,7 +16,7 @@ export type UseAsyncSearchOptions = AsyncSearchOption & {
   normalizeOptions?: NormalizeOption;
 };
 
-export type ItemStrGetter<TSearchItem extends object | string | number> = (
+export type SearchItemStrGetter<TSearchItem extends object | string | number> = (
   searchItem: TSearchItem
 ) => string | string[];
 
@@ -27,7 +27,7 @@ export type UseAsyncSearchResult<TSearchItem extends object | string | number> =
 
 export const useAsyncSearch = <TSearchItem extends object | string | number>(
   list: TSearchItem[],
-  getItemStr: ItemStrGetter<TSearchItem>,
+  getItemStr: SearchItemStrGetter<TSearchItem>,
   options?: UseAsyncSearchOptions
 ): [UseAsyncSearchResult<TSearchItem> | undefined, AsyncSearchHandler] => {
   const [result, setResult] = useState<UseAsyncSearchResult<TSearchItem>>();
