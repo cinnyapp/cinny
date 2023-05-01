@@ -19,6 +19,7 @@ import {
   getPrevWorldRange,
   resetEditor,
   RoomMentionAutocomplete,
+  UserMentionAutocomplete,
 } from '../../components/editor';
 
 interface RoomInputProps {
@@ -73,6 +74,14 @@ export function RoomInput({ roomId }: RoomInputProps) {
     <div>
       {autocompleteQuery?.prefix === AutocompletePrefix.RoomMention && (
         <RoomMentionAutocomplete
+          roomId={roomId}
+          editor={editor}
+          query={autocompleteQuery}
+          requestClose={() => setAutocompleteQuery(undefined)}
+        />
+      )}
+      {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
+        <UserMentionAutocomplete
           roomId={roomId}
           editor={editor}
           query={autocompleteQuery}
