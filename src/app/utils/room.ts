@@ -241,8 +241,8 @@ export const joinRuleToIconSrc = (
 
 export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefined => {
   const url =
-    room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop', undefined, false) ??
+    room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 32, 32, 'crop', undefined, false) ??
     undefined;
   if (url) return url;
-  return room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') ?? undefined;
+  return room.getAvatarUrl(mx.baseUrl, 32, 32, 'crop') ?? undefined;
 };
