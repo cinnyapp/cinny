@@ -67,9 +67,9 @@ export const Mention = recipe({
   variants: {
     highlight: {
       true: {
-        backgroundColor: color.Success.Container,
-        color: color.Success.OnContainer,
-        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Success.ContainerLine}`,
+        backgroundColor: color.Primary.Container,
+        color: color.Primary.OnContainer,
+        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Primary.ContainerLine}`,
       },
     },
     focus: {
