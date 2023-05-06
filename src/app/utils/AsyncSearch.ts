@@ -45,14 +45,18 @@ export const AsyncSearch = <TSearchItem extends object | string | number>(
 
   let searchUptoIndex = 0;
   let sessionStartTimestamp = 0;
+  let sessionScheduleId: number | undefined;
 
   const sessionReset = () => {
     resultList = [];
     searchUptoIndex = 0;
     sessionStartTimestamp = 0;
+    if (sessionScheduleId) clearTimeout(sessionScheduleId);
+    sessionScheduleId = undefined;
   };
 
   const find = (query: string, sessionTimestamp: number, lastFindingCount: number) => {
+    sessionScheduleId = undefined;
     // return if find session got reset
     if (sessionTimestamp !== sessionStartTimestamp) return;
 
@@ -60,7 +64,9 @@ export const AsyncSearch = <TSearchItem extends object | string | number>(
     for (let searchIndex = searchUptoIndex; searchIndex < list.length; searchIndex += 1) {
       if (match(list[searchIndex], query)) {
         resultList.push(list[searchIndex]);
-        if (typeof options?.limit === 'number' && resultList.length >= options.limit) break;
+        if (typeof options?.limit === 'number' && resultList.length >= options.limit) {
+          break;
+        }
       }
 
       const matchFinishTime = window.performance.now();
@@ -70,7 +76,10 @@ export const AsyncSearch = <TSearchItem extends object | string | number>(
         if (lastFindingCount !== thisFindingCount) onResult(resultList, query);
 
         searchUptoIndex = searchIndex + 1;
-        setTimeout(() => find(query, thisSessionTimestamp, thisFindingCount), 1);
+        sessionScheduleId = window.setTimeout(
+          () => find(query, thisSessionTimestamp, thisFindingCount),
+          1
+        );
         return;
       }
     }
