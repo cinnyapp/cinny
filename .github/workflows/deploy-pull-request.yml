@@ -2,8 +2,8 @@ name: Deploy PR to Netlify
 
 on:
   workflow_run:
-      workflows: ["Build pull request"]
-      types: [completed]
+    workflows: ['Build pull request']
+    types: [completed]
 
 jobs:
   deploy-pull-request:
@@ -35,7 +35,7 @@ jobs:
         uses: nwtgck/actions-netlify@5da65c9f74c7961c5501a3ba329b8d0912f39c03
         with:
           publish-dir: dist
-          deploy-message: "Deploy PR ${{ steps.pr.outputs.id }}"
+          deploy-message: 'Deploy PR ${{ steps.pr.outputs.id }}'
           alias: ${{ steps.pr.outputs.id }}
           # These don't work because we're in workflow_run
           enable-pull-request-comment: false
@@ -52,5 +52,5 @@ jobs:
           pr_number: ${{ steps.pr.outputs.id }}
           comment_tag: ${{ steps.pr.outputs.id }}
           message: |
-              Preview: ${{ steps.netlify.outputs.deploy-url }}
-              ⚠️ Exercise caution. Use test accounts. ⚠️
+            Preview: ${{ steps.netlify.outputs.deploy-url }}
+            ⚠️ Exercise caution. Use test accounts. ⚠️

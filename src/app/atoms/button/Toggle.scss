@@ -22,8 +22,7 @@
     height: 16px;
     background-color: var(--tc-surface-low);
     border-radius: calc(var(--bo-radius) / 2);
-    transition: transform 200ms ease-in-out,
-      opacity 200ms ease-in-out;
+    transition: transform 200ms ease-in-out, opacity 200ms ease-in-out;
     opacity: 0.6;
   }
 

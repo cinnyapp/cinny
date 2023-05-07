@@ -27,9 +27,9 @@ function ShortcutSpacesContent() {
   const { spaces, roomIdToParents } = initMatrix.roomList;
 
   const [spaceShortcut] = useSpaceShortcut();
-  const spaceWithoutShortcut = [...spaces].filter(
-    (spaceId) => !spaceShortcut.includes(spaceId),
-  ).sort(roomIdByAtoZ);
+  const spaceWithoutShortcut = [...spaces]
+    .filter((spaceId) => !spaceShortcut.includes(spaceId))
+    .sort(roomIdByAtoZ);
 
   const [process, setProcess] = useState(null);
   const [selected, setSelected] = useState([]);
@@ -85,40 +85,48 @@ function ShortcutSpacesContent() {
         notificationCount={0}
         isAlert={false}
         onClick={isShortcut ? deleteShortcut : toggleSelected}
-        options={isShortcut ? (
-          <IconButton
-            src={isShortcut ? PinFilledIC : PinIC}
-            size="small"
-            onClick={deleteShortcut}
-            disabled={process !== null}
-          />
-        ) : (
-          <Checkbox
-            isActive={selected.includes(spaceId)}
-            variant="positive"
-            onToggle={toggleSelected}
-            tabIndex={-1}
-            disabled={process !== null}
-          />
-        )}
+        options={
+          isShortcut ? (
+            <IconButton
+              src={isShortcut ? PinFilledIC : PinIC}
+              size="small"
+              onClick={deleteShortcut}
+              disabled={process !== null}
+            />
+          ) : (
+            <Checkbox
+              isActive={selected.includes(spaceId)}
+              variant="positive"
+              onToggle={toggleSelected}
+              tabIndex={-1}
+              disabled={process !== null}
+            />
+          )
+        }
       />
     );
   };
 
   return (
     <>
-      <Text className="shortcut-spaces__header" variant="b3" weight="bold">Pinned spaces</Text>
+      <Text className="shortcut-spaces__header" variant="b3" weight="bold">
+        Pinned spaces
+      </Text>
       {spaceShortcut.length === 0 && <Text>No pinned spaces</Text>}
       {spaceShortcut.map((spaceId) => renderSpace(spaceId, true))}
-      <Text className="shortcut-spaces__header" variant="b3" weight="bold">Unpinned spaces</Text>
+      <Text className="shortcut-spaces__header" variant="b3" weight="bold">
+        Unpinned spaces
+      </Text>
       {spaceWithoutShortcut.length === 0 && <Text>No unpinned spaces</Text>}
       {spaceWithoutShortcut.map((spaceId) => renderSpace(spaceId, false))}
       {selected.length !== 0 && (
         <div className="shortcut-spaces__footer">
           {process && <Spinner size="small" />}
           <Text weight="medium">{process || `${selected.length} spaces selected`}</Text>
-          { !process && (
-            <Button onClick={handleAdd} variant="primary">Pin</Button>
+          {!process && (
+            <Button onClick={handleAdd} variant="primary">
+              Pin
+            </Button>
           )}
         </div>
       )}
@@ -149,19 +157,15 @@ function ShortcutSpaces() {
     <Dialog
       isOpen={isOpen}
       className="shortcut-spaces"
-      title={(
+      title={
         <Text variant="s1" weight="medium" primary>
           Pin spaces
         </Text>
-      )}
+      }
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
       onRequestClose={requestClose}
     >
-      {
-        isOpen
-          ? <ShortcutSpacesContent />
-          : <div />
-      }
+      {isOpen ? <ShortcutSpacesContent /> : <div />}
     </Dialog>
   );
 }

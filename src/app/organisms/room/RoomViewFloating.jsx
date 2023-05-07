@@ -83,9 +83,7 @@ function useScrollToBottom(roomTimeline) {
   return [isAtBottom, setIsAtBottom];
 }
 
-function RoomViewFloating({
-  roomId, roomTimeline,
-}) {
+function RoomViewFloating({ roomId, roomTimeline }) {
   const [isJumpToEvent, jumpToEvent, cancelJumpToEvent] = useJumpToEvent(roomTimeline);
   const [typingMembers] = useTypingMembers(roomTimeline);
   const [isAtBottom, setIsAtBottom] = useScrollToBottom(roomTimeline);
@@ -99,19 +97,29 @@ function RoomViewFloating({
     <>
       <div className={`room-view__unread ${isJumpToEvent ? 'room-view__unread--open' : ''}`}>
         <Button iconSrc={MessageUnreadIC} onClick={jumpToEvent} variant="primary">
-          <Text variant="b3" weight="medium">Jump to unread messages</Text>
+          <Text variant="b3" weight="medium">
+            Jump to unread messages
+          </Text>
         </Button>
         <Button iconSrc={TickMarkIC} onClick={cancelJumpToEvent} variant="primary">
-          <Text variant="b3" weight="bold">Mark as read</Text>
+          <Text variant="b3" weight="bold">
+            Mark as read
+          </Text>
         </Button>
       </div>
-      <div className={`room-view__typing${typingMembers.size > 0 ? ' room-view__typing--open' : ''}`}>
-        <div className="bouncing-loader"><div /></div>
+      <div
+        className={`room-view__typing${typingMembers.size > 0 ? ' room-view__typing--open' : ''}`}
+      >
+        <div className="bouncing-loader">
+          <div />
+        </div>
         <Text variant="b2">{getUsersActionJsx(roomId, [...typingMembers], 'typing...')}</Text>
       </div>
       <div className={`room-view__STB${isAtBottom ? '' : ' room-view__STB--open'}`}>
         <Button iconSrc={MessageIC} onClick={handleScrollToBottom}>
-          <Text variant="b3" weight="medium">Jump to latest</Text>
+          <Text variant="b3" weight="medium">
+            Jump to latest
+          </Text>
         </Button>
       </div>
     </>

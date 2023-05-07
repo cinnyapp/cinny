@@ -40,18 +40,22 @@
     & + .segment-btn .segment-btn__base {
       border: none;
     }
-    &:first-child{
+    &:first-child {
       border-left: none;
     }
     &:last-child {
       border-right: none;
     }
-    [dir=rtl] & {
+    [dir='rtl'] & {
       border-left: 1px solid var(--bg-surface-border);
       border-right: 1px solid var(--bg-surface-border);
 
-      &:first-child { border-right: none;}
-      &:last-child { border-left: none;}
+      &:first-child {
+        border-right: none;
+      }
+      &:last-child {
+        border-left: none;
+      }
     }
   }
 }

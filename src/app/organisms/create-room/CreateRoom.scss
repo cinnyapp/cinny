@@ -49,7 +49,7 @@
       @include dir.prop(
         border-radius,
         var(--bo-radius) 0 0 var(--bo-radius),
-        0 var(--bo-radius) var(--bo-radius) 0,
+        0 var(--bo-radius) var(--bo-radius) 0
       );
     }
     & .text:last-child {
@@ -57,7 +57,7 @@
       @include dir.prop(
         border-radius,
         0 var(--bo-radius) var(--bo-radius) 0,
-        var(--bo-radius) 0 0 var(--bo-radius),
+        var(--bo-radius) 0 0 var(--bo-radius)
       );
     }
   }

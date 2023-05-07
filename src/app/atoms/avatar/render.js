@@ -1,9 +1,7 @@
 import { avatarInitials, cssVar } from '../../../util/common';
 
 // renders the avatar and returns it as an URL
-export default async function renderAvatar({
-  text, bgColor, imageSrc, size, borderRadius, scale,
-}) {
+export default async function renderAvatar({ text, bgColor, imageSrc, size, borderRadius, scale }) {
   try {
     const canvas = document.createElement('canvas');
     canvas.width = size * scale;

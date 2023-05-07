@@ -16,23 +16,17 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 
-function ImagePackItem({
-  url, shortcode, usage, onUsageChange, onDelete, onRename,
-}) {
+function ImagePackItem({ url, shortcode, usage, onUsageChange, onDelete, onRename }) {
   const handleUsageSelect = (event) => {
-    openReusableContextMenu(
-      'bottom',
-      getEventCords(event, '.btn-surface'),
-      (closeMenu) => (
-        <ImagePackUsageSelector
-          usage={usage}
-          onSelect={(newUsage) => {
-            onUsageChange(shortcode, newUsage);
-            closeMenu();
-          }}
-        />
-      ),
-    );
+    openReusableContextMenu('bottom', getEventCords(event, '.btn-surface'), (closeMenu) => (
+      <ImagePackUsageSelector
+        usage={usage}
+        onSelect={(newUsage) => {
+          onUsageChange(shortcode, newUsage);
+          closeMenu();
+        }}
+      />
+    ));
   };
 
   return (
@@ -43,8 +37,22 @@ function ImagePackItem({
       </div>
       <div className="image-pack-item__usage">
         <div className="image-pack-item__btn">
-          {onRename && <IconButton tooltip="Rename" size="extra-small" src={PencilIC} onClick={() => onRename(shortcode)} />}
-          {onDelete && <IconButton tooltip="Delete" size="extra-small" src={BinIC} onClick={() => onDelete(shortcode)} />}
+          {onRename && (
+            <IconButton
+              tooltip="Rename"
+              size="extra-small"
+              src={PencilIC}
+              onClick={() => onRename(shortcode)}
+            />
+          )}
+          {onDelete && (
+            <IconButton
+              tooltip="Delete"
+              size="extra-small"
+              src={BinIC}
+              onClick={() => onDelete(shortcode)}
+            />
+          )}
         </div>
         <Button onClick={onUsageChange ? handleUsageSelect : undefined}>
           {onUsageChange && <RawIcon src={ChevronBottomIC} size="extra-small" />}

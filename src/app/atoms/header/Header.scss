@@ -15,7 +15,7 @@
     display: flex;
     align-items: center;
     margin: 0 var(--sp-tight);
-    
+
     &:first-child {
       @include dir.side(margin, 0, var(--sp-tight));
     }
@@ -24,7 +24,7 @@
       @extend .cp-txt__ellipsis;
       min-width: 0;
     }
-    & > .text-b3{
+    & > .text-b3 {
       flex: 1;
       min-width: 0;
 

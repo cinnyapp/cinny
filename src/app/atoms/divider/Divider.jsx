@@ -8,7 +8,11 @@ function Divider({ text, variant, align }) {
   const dividerClass = ` divider--${variant} divider--${align}`;
   return (
     <div className={`divider${dividerClass}`}>
-      {text !== null && <Text className="divider__text" variant="b3" weight="bold">{text}</Text>}
+      {text !== null && (
+        <Text className="divider__text" variant="b3" weight="bold">
+          {text}
+        </Text>
+      )}
     </div>
   );
 }

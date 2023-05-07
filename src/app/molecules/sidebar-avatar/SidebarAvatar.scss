@@ -6,7 +6,7 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  
+
   & .notification-badge {
     position: absolute;
     @include dir.prop(left, unset, 0);
@@ -39,7 +39,7 @@
   &:hover::before,
   &:focus::before,
   &--active::before {
-    content: "";
+    content: '';
     display: block;
     position: absolute;
     @include dir.prop(left, -11px, unset);

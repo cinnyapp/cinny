@@ -1,6 +1,4 @@
-import React, {
-  useState, useEffect, useCallback,
-} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './RoomMembers.scss';
 
@@ -45,8 +43,7 @@ function useMemberOfMembership(roomId, membership) {
       if (isLoadingMembers) return;
       if (event && event?.getRoomId() !== roomId) return;
       const memberOfMembership = normalizeMembers(
-        room.getMembersWithMembership(membership)
-          .sort(memberByAtoZ).sort(memberByPowerLevel),
+        room.getMembersWithMembership(membership).sort(memberByAtoZ).sort(memberByPowerLevel)
       );
       setMembers(memberOfMembership);
     };
@@ -125,20 +122,16 @@ function RoomMembers({ roomId }) {
   return (
     <div className="room-members">
       <MenuHeader>Search member</MenuHeader>
-      <Input
-        onChange={handleSearch}
-        placeholder="Search for name"
-        autoFocus
-      />
+      <Input onChange={handleSearch} placeholder="Search for name" autoFocus />
       <div className="room-members__header">
-        <MenuHeader>{`${searchMembers ? `Found — ${mList.length}` : members.length} members`}</MenuHeader>
+        <MenuHeader>{`${
+          searchMembers ? `Found — ${mList.length}` : members.length
+        } members`}</MenuHeader>
         <SegmentedControls
-          selected={
-            (() => {
-              const getSegmentIndex = { join: 0, invite: 1, ban: 2 };
-              return getSegmentIndex[membership];
-            })()
-          }
+          selected={(() => {
+            const getSegmentIndex = { join: 0, invite: 1, ban: 2 };
+            return getSegmentIndex[membership];
+          })()}
           segments={[{ text: 'Joined' }, { text: 'Invited' }, { text: 'Banned' }]}
           onSelect={(index) => {
             const memberships = ['join', 'invite', 'ban'];
@@ -157,22 +150,18 @@ function RoomMembers({ roomId }) {
             peopleRole={member.peopleRole}
           />
         ))}
-        {
-          (searchMembers?.data.length === 0 || members.length === 0)
-          && (
-            <div className="room-members__status">
-              <Text variant="b2">
-                {searchMembers ? `No results found for "${searchMembers.term}"` : 'No members to display'}
-              </Text>
-            </div>
-          )
-        }
-        {
-          mList.length !== 0
-          && members.length > itemCount
-          && searchMembers === null
-          && <Button onClick={loadMorePeople}>View more</Button>
-        }
+        {(searchMembers?.data.length === 0 || members.length === 0) && (
+          <div className="room-members__status">
+            <Text variant="b2">
+              {searchMembers
+                ? `No results found for "${searchMembers.term}"`
+                : 'No members to display'}
+            </Text>
+          </div>
+        )}
+        {mList.length !== 0 && members.length > itemCount && searchMembers === null && (
+          <Button onClick={loadMorePeople}>View more</Button>
+        )}
       </div>
     </div>
   );

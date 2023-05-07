@@ -4,7 +4,11 @@ import PropTypes from 'prop-types';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
-import { openSpaceSettings, openSpaceManage, openInviteUser } from '../../../client/action/navigation';
+import {
+  openSpaceSettings,
+  openSpaceManage,
+  openInviteUser,
+} from '../../../client/action/navigation';
 import { markAsRead } from '../../../client/action/notifications';
 import { leave } from '../../../client/action/room';
 import {
@@ -74,7 +78,7 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
       'Leave space',
       `Are you sure that you want to leave "${room.name}" space?`,
       'Leave',
-      'danger',
+      'danger'
     );
     if (!isConfirmed) return;
     leave(roomId);
@@ -82,34 +86,31 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
 
   return (
     <div style={{ maxWidth: 'calc(var(--navigation-drawer-width) - var(--sp-normal))' }}>
-      <MenuHeader>{twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}</MenuHeader>
-      <MenuItem iconSrc={TickMarkIC} onClick={handleMarkAsRead}>Mark as read</MenuItem>
+      <MenuHeader>
+        {twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}
+      </MenuHeader>
+      <MenuItem iconSrc={TickMarkIC} onClick={handleMarkAsRead}>
+        Mark as read
+      </MenuItem>
       <MenuItem
         onClick={handleCategorizeClick}
         iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}
       >
         {isCategorized ? 'Uncategorize subspaces' : 'Categorize subspaces'}
       </MenuItem>
-      <MenuItem
-        onClick={handlePinClick}
-        iconSrc={isPinned ? PinFilledIC : PinIC}
-      >
+      <MenuItem onClick={handlePinClick} iconSrc={isPinned ? PinFilledIC : PinIC}>
         {isPinned ? 'Unpin from sidebar' : 'Pin to sidebar'}
       </MenuItem>
-      <MenuItem
-        iconSrc={AddUserIC}
-        onClick={handleInviteClick}
-        disabled={!canInvite}
-      >
+      <MenuItem iconSrc={AddUserIC} onClick={handleInviteClick} disabled={!canInvite}>
         Invite
       </MenuItem>
-      <MenuItem onClick={handleManageRoom} iconSrc={HashSearchIC}>Manage rooms</MenuItem>
-      <MenuItem onClick={handleSettingsClick} iconSrc={SettingsIC}>Settings</MenuItem>
-      <MenuItem
-        variant="danger"
-        onClick={handleLeaveClick}
-        iconSrc={LeaveArrowIC}
-      >
+      <MenuItem onClick={handleManageRoom} iconSrc={HashSearchIC}>
+        Manage rooms
+      </MenuItem>
+      <MenuItem onClick={handleSettingsClick} iconSrc={SettingsIC}>
+        Settings
+      </MenuItem>
+      <MenuItem variant="danger" onClick={handleLeaveClick} iconSrc={LeaveArrowIC}>
         Leave
       </MenuItem>
     </div>

@@ -17,8 +17,13 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 
 function ImagePackProfile({
-  avatarUrl, displayName, attribution, usage,
-  onUsageChange, onAvatarChange, onEditProfile,
+  avatarUrl,
+  displayName,
+  attribution,
+  usage,
+  onUsageChange,
+  onAvatarChange,
+  onEditProfile,
 }) {
   const [isEdit, setIsEdit] = useState(false);
 
@@ -34,59 +39,59 @@ function ImagePackProfile({
   };
 
   const handleUsageSelect = (event) => {
-    openReusableContextMenu(
-      'bottom',
-      getEventCords(event, '.btn-surface'),
-      (closeMenu) => (
-        <ImagePackUsageSelector
-          usage={usage}
-          onSelect={(newUsage) => {
-            onUsageChange(newUsage);
-            closeMenu();
-          }}
-        />
-      ),
-    );
+    openReusableContextMenu('bottom', getEventCords(event, '.btn-surface'), (closeMenu) => (
+      <ImagePackUsageSelector
+        usage={usage}
+        onSelect={(newUsage) => {
+          onUsageChange(newUsage);
+          closeMenu();
+        }}
+      />
+    ));
   };
 
   return (
     <div className="image-pack-profile">
-      {
-        onAvatarChange
-          ? (
-            <ImageUpload
-              bgColor="#555"
-              text={displayName}
-              imageSrc={avatarUrl}
-              size="normal"
-              onUpload={onAvatarChange}
-              onRequestRemove={() => onAvatarChange(undefined)}
-            />
-          )
-          : <Avatar bgColor="#555" text={displayName} imageSrc={avatarUrl} size="normal" />
-      }
+      {onAvatarChange ? (
+        <ImageUpload
+          bgColor="#555"
+          text={displayName}
+          imageSrc={avatarUrl}
+          size="normal"
+          onUpload={onAvatarChange}
+          onRequestRemove={() => onAvatarChange(undefined)}
+        />
+      ) : (
+        <Avatar bgColor="#555" text={displayName} imageSrc={avatarUrl} size="normal" />
+      )}
       <div className="image-pack-profile__content">
-        {
-          isEdit
-            ? (
-              <form onSubmit={handleSubmit}>
-                <Input name="nameInput" label="Name" value={displayName} required />
-                <Input name="attributionInput" label="Attribution" value={attribution} resizable />
-                <div>
-                  <Button variant="primary" type="submit">Save</Button>
-                  <Button onClick={() => setIsEdit(false)}>Cancel</Button>
-                </div>
-              </form>
-            ) : (
-              <>
-                <div>
-                  <Text>{displayName}</Text>
-                  {onEditProfile && <IconButton size="extra-small" onClick={() => setIsEdit(true)} src={PencilIC} tooltip="Edit" />}
-                </div>
-                {attribution && <Text variant="b3">{attribution}</Text>}
-              </>
-            )
-        }
+        {isEdit ? (
+          <form onSubmit={handleSubmit}>
+            <Input name="nameInput" label="Name" value={displayName} required />
+            <Input name="attributionInput" label="Attribution" value={attribution} resizable />
+            <div>
+              <Button variant="primary" type="submit">
+                Save
+              </Button>
+              <Button onClick={() => setIsEdit(false)}>Cancel</Button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div>
+              <Text>{displayName}</Text>
+              {onEditProfile && (
+                <IconButton
+                  size="extra-small"
+                  onClick={() => setIsEdit(true)}
+                  src={PencilIC}
+                  tooltip="Edit"
+                />
+              )}
+            </div>
+            {attribution && <Text variant="b3">{attribution}</Text>}
+          </>
+        )}
       </div>
       <div className="image-pack-profile__usage">
         <Text variant="b3">Pack usage</Text>

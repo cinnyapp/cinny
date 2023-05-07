@@ -8,7 +8,11 @@ function NotificationBadge({ alert, content }) {
   const notificationClass = alert ? ' notification-badge--alert' : '';
   return (
     <div className={`notification-badge${notificationClass}`}>
-      {content !== null && <Text variant="b3" weight="bold">{content}</Text>}
+      {content !== null && (
+        <Text variant="b3" weight="bold">
+          {content}
+        </Text>
+      )}
     </div>
   );
 }
@@ -20,10 +24,7 @@ NotificationBadge.defaultProps = {
 
 NotificationBadge.propTypes = {
   alert: PropTypes.bool,
-  content: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]),
+  content: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default NotificationBadge;

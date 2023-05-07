@@ -113,19 +113,15 @@ function GlobalNotification() {
   const [rulesToType, setRule] = useGlobalNotif();
 
   const onSelect = (evt, rule) => {
-    openReusableContextMenu(
-      'bottom',
-      getEventCords(evt, '.btn-surface'),
-      (requestClose) => (
-        <NotificationSelector
-          value={rulesToType[rule]}
-          onSelect={(value) => {
-            if (rulesToType[rule] !== value) setRule(rule, value);
-            requestClose();
-          }}
-        />
-      ),
-    );
+    openReusableContextMenu('bottom', getEventCords(evt, '.btn-surface'), (requestClose) => (
+      <NotificationSelector
+        value={rulesToType[rule]}
+        onSelect={(value) => {
+          if (rulesToType[rule] !== value) setRule(rule, value);
+          requestClose();
+        }}
+      />
+    ));
   };
 
   return (
@@ -133,39 +129,43 @@ function GlobalNotification() {
       <MenuHeader>Global Notifications</MenuHeader>
       <SettingTile
         title="Direct messages"
-        options={(
+        options={
           <Button onClick={(evt) => onSelect(evt, DM)} iconSrc={ChevronBottomIC}>
-            { typeToLabel[rulesToType[DM]] }
+            {typeToLabel[rulesToType[DM]]}
           </Button>
-        )}
+        }
         content={<Text variant="b3">Default notification settings for all direct message.</Text>}
       />
       <SettingTile
         title="Encrypted direct messages"
-        options={(
+        options={
           <Button onClick={(evt) => onSelect(evt, ENC_DM)} iconSrc={ChevronBottomIC}>
             {typeToLabel[rulesToType[ENC_DM]]}
           </Button>
-        )}
-        content={<Text variant="b3">Default notification settings for all encrypted direct message.</Text>}
+        }
+        content={
+          <Text variant="b3">Default notification settings for all encrypted direct message.</Text>
+        }
       />
       <SettingTile
         title="Rooms messages"
-        options={(
+        options={
           <Button onClick={(evt) => onSelect(evt, ROOM)} iconSrc={ChevronBottomIC}>
             {typeToLabel[rulesToType[ROOM]]}
           </Button>
-        )}
+        }
         content={<Text variant="b3">Default notification settings for all room message.</Text>}
       />
       <SettingTile
         title="Encrypted rooms messages"
-        options={(
+        options={
           <Button onClick={(evt) => onSelect(evt, ENC_ROOM)} iconSrc={ChevronBottomIC}>
             {typeToLabel[rulesToType[ENC_ROOM]]}
           </Button>
-        )}
-        content={<Text variant="b3">Default notification settings for all encrypted room message.</Text>}
+        }
+        content={
+          <Text variant="b3">Default notification settings for all encrypted room message.</Text>
+        }
       />
     </div>
   );

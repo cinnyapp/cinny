@@ -65,11 +65,14 @@ function useRoomSearch(roomId) {
     };
     try {
       const res = await mx.search({ body });
-      const data = mx.processRoomEventsSearch({
-        _query: body,
-        results: [],
-        highlights: [],
-      }, res);
+      const data = mx.processRoomEventsSearch(
+        {
+          _query: body,
+          results: [],
+          highlights: [],
+        },
+        res
+      );
       if (!mountStore.getItem()) return;
       setStatus({ type: cons.status.SUCCESS, term });
       setSearchData(data);
@@ -117,15 +120,11 @@ function RoomSearch({ roomId }) {
 
   const renderTimeline = (timeline) => (
     <div className="room-search__result-item" key={timeline[0].getId()}>
-      { timeline.map((mEvent) => {
+      {timeline.map((mEvent) => {
         const id = mEvent.getId();
         return (
           <React.Fragment key={id}>
-            <Message
-              mEvent={mEvent}
-              isBodyOnly={false}
-              fullTime
-            />
+            <Message mEvent={mEvent} isBodyOnly={false} fullTime />
             <Button onClick={() => selectRoom(roomId, id)}>View</Button>
           </React.Fragment>
         );
@@ -144,7 +143,9 @@ function RoomSearch({ roomId }) {
             disabled={isRoomEncrypted}
             autoFocus
           />
-          <Button iconSrc={SearchIC} variant="primary" type="submit">Search</Button>
+          <Button iconSrc={SearchIC} variant="primary" type="submit">
+            Search
+          </Button>
         </div>
         {searchData?.results.length > 0 && (
           <Text>{`${searchData.count} results for "${searchTerm}"`}</Text>

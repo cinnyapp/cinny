@@ -10,9 +10,7 @@ import IconButton from '../../atoms/button/IconButton';
 import DownloadSVG from '../../../../public/res/ic/outlined/download.svg';
 import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
 
-function ImageLightbox({
-  url, alt, isOpen, onRequestClose,
-}) {
+function ImageLightbox({ url, alt, isOpen, onRequestClose }) {
   const handleDownload = () => {
     FileSaver.saveAs(url, alt);
   };
@@ -26,7 +24,9 @@ function ImageLightbox({
       size="large"
     >
       <div className="image-lightbox__header">
-        <Text variant="b2" weight="medium">{alt}</Text>
+        <Text variant="b2" weight="medium">
+          {alt}
+        </Text>
         <IconButton onClick={() => window.open(url)} size="small" src={ExternalSVG} />
         <IconButton onClick={handleDownload} size="small" src={DownloadSVG} />
       </div>

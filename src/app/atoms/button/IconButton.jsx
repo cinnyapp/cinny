@@ -7,36 +7,45 @@ import Tooltip from '../tooltip/Tooltip';
 import { blurOnBubbling } from './script';
 import Text from '../text/Text';
 
-const IconButton = React.forwardRef(({
-  variant, size, type,
-  tooltip, tooltipPlacement, src,
-  onClick, tabIndex, disabled, isImage,
-  className,
-}, ref) => {
-  const btn = (
-    <button
-      ref={ref}
-      className={`ic-btn ic-btn-${variant} ${className}`}
-      onMouseUp={(e) => blurOnBubbling(e, `.ic-btn-${variant}`)}
-      onClick={onClick}
-      // eslint-disable-next-line react/button-has-type
-      type={type}
-      tabIndex={tabIndex}
-      disabled={disabled}
-    >
-      <RawIcon size={size} src={src} isImage={isImage} />
-    </button>
-  );
-  if (tooltip === null) return btn;
-  return (
-    <Tooltip
-      placement={tooltipPlacement}
-      content={<Text variant="b2">{tooltip}</Text>}
-    >
-      {btn}
-    </Tooltip>
-  );
-});
+const IconButton = React.forwardRef(
+  (
+    {
+      variant,
+      size,
+      type,
+      tooltip,
+      tooltipPlacement,
+      src,
+      onClick,
+      tabIndex,
+      disabled,
+      isImage,
+      className,
+    },
+    ref
+  ) => {
+    const btn = (
+      <button
+        ref={ref}
+        className={`ic-btn ic-btn-${variant} ${className}`}
+        onMouseUp={(e) => blurOnBubbling(e, `.ic-btn-${variant}`)}
+        onClick={onClick}
+        // eslint-disable-next-line react/button-has-type
+        type={type}
+        tabIndex={tabIndex}
+        disabled={disabled}
+      >
+        <RawIcon size={size} src={src} isImage={isImage} />
+      </button>
+    );
+    if (tooltip === null) return btn;
+    return (
+      <Tooltip placement={tooltipPlacement} content={<Text variant="b2">{tooltip}</Text>}>
+        {btn}
+      </Tooltip>
+    );
+  }
+);
 
 IconButton.defaultProps = {
   variant: 'surface',

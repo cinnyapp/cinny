@@ -70,7 +70,9 @@ function JoinAliasContent({ term, requestClose }) {
       } catch (err) {
         if (!mountStore.getItem()) return;
         setProcess(false);
-        setError(`Unable to find room/space with ${alias}. Either room/space is private or doesn't exist.`);
+        setError(
+          `Unable to find room/space with ${alias}. Either room/space is private or doesn't exist.`
+        );
       }
     }
     try {
@@ -87,24 +89,23 @@ function JoinAliasContent({ term, requestClose }) {
 
   return (
     <form className="join-alias" onSubmit={handleSubmit}>
-      <Input
-        label="Address"
-        value={term}
-        name="alias"
-        required
-      />
-      {error && <Text className="join-alias__error" variant="b3">{error}</Text>}
+      <Input label="Address" value={term} name="alias" required />
+      {error && (
+        <Text className="join-alias__error" variant="b3">
+          {error}
+        </Text>
+      )}
       <div className="join-alias__btn">
-        {
-          process
-            ? (
-              <>
-                <Spinner size="small" />
-                <Text>{process}</Text>
-              </>
-            )
-            : <Button variant="primary" type="submit">Join</Button>
-        }
+        {process ? (
+          <>
+            <Spinner size="small" />
+            <Text>{process}</Text>
+          </>
+        ) : (
+          <Button variant="primary" type="submit">
+            Join
+          </Button>
+        )}
       </div>
     </form>
   );
@@ -141,13 +142,15 @@ function JoinAlias() {
   return (
     <Dialog
       isOpen={data !== null}
-      title={(
-        <Text variant="s1" weight="medium" primary>Join with address</Text>
-      )}
+      title={
+        <Text variant="s1" weight="medium" primary>
+          Join with address
+        </Text>
+      }
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
       onRequestClose={requestClose}
     >
-      { data ? <JoinAliasContent term={data.term} requestClose={requestClose} /> : <div /> }
+      {data ? <JoinAliasContent term={data.term} requestClose={requestClose} /> : <div />}
     </Dialog>
   );
 }

@@ -4,7 +4,7 @@
 .room-members {
   & .input-container {
     margin: var(--sp-normal);
-  } 
+  }
 
   &__header {
     display: flex;
@@ -23,7 +23,6 @@
     }
   }
   &__list {
-    
     & .people-selector__container:last-child {
       margin-bottom: var(--sp-extra-tight);
     }
@@ -32,7 +31,7 @@
       margin: var(--sp-normal);
     }
   }
-  
+
   &__status {
     margin: var(--sp-normal);
   }

@@ -109,9 +109,10 @@ class RoomsInput extends EventEmitter {
 
   cleanEmptyEntry(roomId) {
     const input = this.getInput(roomId);
-    const isEmpty = typeof input.attachment === 'undefined'
-      && typeof input.replyTo === 'undefined'
-      && (typeof input.message === 'undefined' || input.message === '');
+    const isEmpty =
+      typeof input.attachment === 'undefined' &&
+      typeof input.replyTo === 'undefined' &&
+      (typeof input.message === 'undefined' || input.message === '');
     if (isEmpty) {
       this.roomIdToInput.delete(roomId);
     }
@@ -234,7 +235,8 @@ class RoomsInput extends EventEmitter {
 
         const eFBody = edit.getContent().formatted_body;
         const fReplyHead = eFBody.substring(0, eFBody.indexOf('</mx-reply>'));
-        if (fReplyHead) content.formatted_body = `${fReplyHead}</mx-reply>${content.formatted_body}`;
+        if (fReplyHead)
+          content.formatted_body = `${fReplyHead}</mx-reply>${content.formatted_body}`;
       }
     }
 
@@ -247,9 +249,15 @@ class RoomsInput extends EventEmitter {
 
       content.body = `> <${reply.userId}> ${reply.body.replace(/\n/g, '\n> ')}\n\n${content.body}`;
 
-      const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(roomId)}/${encodeURIComponent(reply.eventId)}">In reply to</a>`;
-      const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(reply.userId)}">${sanitizeText(reply.userId)}</a>`;
-      const fallback = `<mx-reply><blockquote>${replyToLink}${userLink}<br />${reply.formattedBody || sanitizeText(reply.body)}</blockquote></mx-reply>`;
+      const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(
+        roomId
+      )}/${encodeURIComponent(reply.eventId)}">In reply to</a>`;
+      const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(
+        reply.userId
+      )}">${sanitizeText(reply.userId)}</a>`;
+      const fallback = `<mx-reply><blockquote>${replyToLink}${userLink}<br />${
+        reply.formattedBody || sanitizeText(reply.body)
+      }</blockquote></mx-reply>`;
       content.formatted_body = fallback + content.formatted_body;
     }
 
@@ -331,7 +339,12 @@ class RoomsInput extends EventEmitter {
         info.h = video.videoHeight;
         info[blurhashField] = encodeBlurhash(video);
 
-        const thumbnailData = await getVideoThumbnail(video, video.videoWidth, video.videoHeight, 'image/jpeg');
+        const thumbnailData = await getVideoThumbnail(
+          video,
+          video.videoWidth,
+          video.videoHeight,
+          'image/jpeg'
+        );
         const thumbnailUploadData = await this.uploadFile(roomId, thumbnailData.thumbnail);
         info.thumbnail_info = thumbnailData.info;
         if (this.matrixClient.isRoomEncrypted(roomId)) {
@@ -378,9 +391,11 @@ class RoomsInput extends EventEmitter {
 
     if (isEncryptedRoom) {
       const dataBuffer = await file.arrayBuffer();
-      if (typeof this.getInput(roomId).attachment === 'undefined') throw new Error('Attachment canceled');
+      if (typeof this.getInput(roomId).attachment === 'undefined')
+        throw new Error('Attachment canceled');
       const encryptedResult = await encrypt.encryptAttachment(dataBuffer);
-      if (typeof this.getInput(roomId).attachment === 'undefined') throw new Error('Attachment canceled');
+      if (typeof this.getInput(roomId).attachment === 'undefined')
+        throw new Error('Attachment canceled');
       encryptInfo = encryptedResult.info;
       encryptBlob = new Blob([encryptedResult.data]);
     }
@@ -414,7 +429,7 @@ class RoomsInput extends EventEmitter {
       { msgType: mEvent.getWireContent().msgtype },
       editedBody,
       null,
-      mEvent,
+      mEvent
     );
     this.matrixClient.sendMessage(roomId, content);
   }

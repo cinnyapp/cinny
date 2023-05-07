@@ -8,19 +8,19 @@
   #{$property}: {
     left: $left;
     right: $right;
-  };
-  
-  [dir=rtl] & {
+  }
+
+  [dir='rtl'] & {
     #{$property}: {
       left: $right;
       right: $left;
-    };
+    }
   }
 }
 
 @mixin prop($property, $ltr, $rtl) {
   #{$property}: $ltr;
-  [dir=rtl] & {
+  [dir='rtl'] & {
     #{$property}: $rtl;
   }
 }

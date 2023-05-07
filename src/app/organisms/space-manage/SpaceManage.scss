@@ -14,7 +14,7 @@
 
 .space-manage__content {
   margin-bottom: var(--sp-extra-loose);
-  
+
   & > .text {
     margin-top: var(--sp-extra-tight);
     padding: var(--sp-extra-tight) var(--sp-normal);
@@ -27,7 +27,7 @@
       padding: var(--sp-extra-tight);
     }
   }
-  
+
   & > button {
     margin: var(--sp-normal);
   }
@@ -73,7 +73,6 @@
       background-color: var(--bg-surface);
     }
   }
-
 }
 
 .space-manage-item {
@@ -101,8 +100,7 @@
   & .checkbox {
     @include dir.side(margin, 0, var(--sp-tight));
   }
-  
-  
+
   &__btn {
     @extend .cp-fx__item-one;
     display: flex;

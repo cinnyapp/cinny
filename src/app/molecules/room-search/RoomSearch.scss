@@ -6,8 +6,8 @@
     & div:nth-child(2) {
       display: flex;
       align-items: flex-end;
-      padding: var(--sp-normal);;
-      
+      padding: var(--sp-normal);
+
       & .input-container {
         @extend .cp-fx__item-one;
         @include dir.side(margin, 0, var(--sp-normal));
@@ -29,7 +29,7 @@
     @extend .cp-fx__column--c-c;
 
     & .ic-raw {
-      opacity: .5;
+      opacity: 0.5;
     }
     .text {
       margin-top: var(--sp-normal);

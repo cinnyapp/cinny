@@ -16,7 +16,7 @@ export function useCategorizedSpaces() {
     return () => {
       accountData.removeListener(
         cons.events.accountData.CATEGORIZE_SPACE_UPDATED,
-        handleCategorizedSpaces,
+        handleCategorizedSpaces
       );
     };
   }, []);

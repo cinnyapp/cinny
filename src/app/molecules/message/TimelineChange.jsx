@@ -12,9 +12,7 @@ import InviteArraowIC from '../../../../public/res/ic/outlined/invite-arrow.svg'
 import InviteCancelArraowIC from '../../../../public/res/ic/outlined/invite-cancel-arrow.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 
-function TimelineChange({
-  variant, content, timestamp, onClick,
-}) {
+function TimelineChange({ variant, content, timestamp, onClick }) {
   let iconSrc;
 
   switch (variant) {
@@ -39,14 +37,17 @@ function TimelineChange({
   }
 
   return (
-    <button style={{ cursor: onClick === null ? 'default' : 'pointer' }} onClick={onClick} type="button" className="timeline-change">
+    <button
+      style={{ cursor: onClick === null ? 'default' : 'pointer' }}
+      onClick={onClick}
+      type="button"
+      className="timeline-change"
+    >
       <div className="timeline-change__avatar-container">
         <RawIcon src={iconSrc} size="extra-small" />
       </div>
       <div className="timeline-change__content">
-        <Text variant="b2">
-          {content}
-        </Text>
+        <Text variant="b2">{content}</Text>
       </div>
       <div className="timeline-change__time">
         <Text variant="b3">
@@ -63,14 +64,8 @@ TimelineChange.defaultProps = {
 };
 
 TimelineChange.propTypes = {
-  variant: PropTypes.oneOf([
-    'join', 'leave', 'invite',
-    'invite-cancel', 'avatar', 'other',
-  ]),
-  content: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.node,
-  ]).isRequired,
+  variant: PropTypes.oneOf(['join', 'leave', 'invite', 'invite-cancel', 'avatar', 'other']),
+  content: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   timestamp: PropTypes.number.isRequired,
   onClick: PropTypes.func,
 };

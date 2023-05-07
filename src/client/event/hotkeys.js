@@ -8,18 +8,18 @@ function shouldFocusMessageField(code) {
 
   // do not focus on numlock/scroll lock
   if (
-    code.metaKey
-    || code.startsWith('OS')
-    || code.startsWith('Meta')
-    || code.startsWith('Shift')
-    || code.startsWith('Alt')
-    || code.startsWith('Control')
-    || code.startsWith('Arrow')
-    || code === 'Tab'
-    || code === 'Space'
-    || code === 'Enter'
-    || code === 'NumLock'
-    || code === 'ScrollLock'
+    code.metaKey ||
+    code.startsWith('OS') ||
+    code.startsWith('Meta') ||
+    code.startsWith('Shift') ||
+    code.startsWith('Alt') ||
+    code.startsWith('Control') ||
+    code.startsWith('Arrow') ||
+    code === 'Tab' ||
+    code === 'Space' ||
+    code === 'Enter' ||
+    code === 'NumLock' ||
+    code === 'ScrollLock'
   ) {
     return false;
   }
@@ -42,9 +42,11 @@ function listenKeyboard(event) {
       if (navigation.isRawModalVisible) return;
       const msgTextarea = document.getElementById('message-textarea');
       const { activeElement } = document;
-      if (activeElement !== msgTextarea
-        && ['input', 'textarea'].includes(activeElement.tagName.toLowerCase())
-      ) return;
+      if (
+        activeElement !== msgTextarea &&
+        ['input', 'textarea'].includes(activeElement.tagName.toLowerCase())
+      )
+        return;
       msgTextarea?.focus();
     }
   }

@@ -57,7 +57,10 @@ async function verifyEmail(baseUrl, email, client_secret, send_attempt, next_lin
   const res = await fetch(`${baseUrl}/_matrix/client/r0/register/email/requestToken`, {
     method: 'POST',
     body: JSON.stringify({
-      email, client_secret, send_attempt, next_link,
+      email,
+      client_secret,
+      send_attempt,
+      next_link,
     }),
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
@@ -68,9 +71,7 @@ async function verifyEmail(baseUrl, email, client_secret, send_attempt, next_lin
   return data;
 }
 
-async function completeRegisterStage(
-  baseUrl, username, password, auth,
-) {
+async function completeRegisterStage(baseUrl, username, password, auth) {
   const tempClient = createTemporaryClient(baseUrl);
 
   try {
@@ -98,7 +99,10 @@ async function completeRegisterStage(
 }
 
 export {
-  createTemporaryClient, login, verifyEmail,
-  loginWithToken, startSsoLogin,
+  createTemporaryClient,
+  login,
+  verifyEmail,
+  loginWithToken,
+  startSsoLogin,
   completeRegisterStage,
 };

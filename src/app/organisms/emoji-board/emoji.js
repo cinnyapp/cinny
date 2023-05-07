@@ -2,39 +2,48 @@ import emojisData from 'emojibase-data/en/compact.json';
 import joypixels from 'emojibase-data/en/shortcodes/joypixels.json';
 import emojibase from 'emojibase-data/en/shortcodes/emojibase.json';
 
-const emojiGroups = [{
-  name: 'Smileys & people',
-  order: 0,
-  emojis: [],
-}, {
-  name: 'Animals & nature',
-  order: 1,
-  emojis: [],
-}, {
-  name: 'Food & drinks',
-  order: 2,
-  emojis: [],
-}, {
-  name: 'Activity',
-  order: 3,
-  emojis: [],
-}, {
-  name: 'Travel & places',
-  order: 4,
-  emojis: [],
-}, {
-  name: 'Objects',
-  order: 5,
-  emojis: [],
-}, {
-  name: 'Symbols',
-  order: 6,
-  emojis: [],
-}, {
-  name: 'Flags',
-  order: 7,
-  emojis: [],
-}];
+const emojiGroups = [
+  {
+    name: 'Smileys & people',
+    order: 0,
+    emojis: [],
+  },
+  {
+    name: 'Animals & nature',
+    order: 1,
+    emojis: [],
+  },
+  {
+    name: 'Food & drinks',
+    order: 2,
+    emojis: [],
+  },
+  {
+    name: 'Activity',
+    order: 3,
+    emojis: [],
+  },
+  {
+    name: 'Travel & places',
+    order: 4,
+    emojis: [],
+  },
+  {
+    name: 'Objects',
+    order: 5,
+    emojis: [],
+  },
+  {
+    name: 'Symbols',
+    order: 6,
+    emojis: [],
+  },
+  {
+    name: 'Flags',
+    order: 7,
+    emojis: [],
+  },
+];
 Object.freeze(emojiGroups);
 
 function addEmoji(emoji, order) {
@@ -64,6 +73,4 @@ emojisData.forEach((emoji) => {
   emojis.push(em);
 });
 
-export {
-  emojis, emojiGroups,
-};
+export { emojis, emojiGroups };

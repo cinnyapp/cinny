@@ -8,12 +8,7 @@ import IconButton from '../button/IconButton';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-function InfoCard({
-  className, style,
-  variant, iconSrc,
-  title, content,
-  rounded, requestClose,
-}) {
+function InfoCard({ className, style, variant, iconSrc, title, content, rounded, requestClose }) {
   const classes = [`info-card info-card--${variant}`];
   if (rounded) classes.push('info-card--rounded');
   if (className) classes.push(className);
@@ -28,9 +23,7 @@ function InfoCard({
         <Text>{title}</Text>
         {content}
       </div>
-      {requestClose && (
-        <IconButton src={CrossIC} variant={variant} onClick={requestClose} />
-      )}
+      {requestClose && <IconButton src={CrossIC} variant={variant} onClick={requestClose} />}
     </div>
   );
 }

@@ -58,7 +58,10 @@ function guessDMRoomTargetId(room, myUserId) {
   room.getJoinedMembers().forEach((member) => {
     if (member.userId === myUserId) return;
 
-    if (typeof oldestMemberTs === 'undefined' || (member.events.member && member.events.member.getTs() < oldestMemberTs)) {
+    if (
+      typeof oldestMemberTs === 'undefined' ||
+      (member.events.member && member.events.member.getTs() < oldestMemberTs)
+    ) {
       oldestMember = member;
       oldestMemberTs = member.events.member.getTs();
     }
@@ -69,7 +72,10 @@ function guessDMRoomTargetId(room, myUserId) {
   room.currentState.getMembers().forEach((member) => {
     if (member.userId === myUserId) return;
 
-    if (typeof oldestMemberTs === 'undefined' || (member.events.member && member.events.member.getTs() < oldestMemberTs)) {
+    if (
+      typeof oldestMemberTs === 'undefined' ||
+      (member.events.member && member.events.member.getTs() < oldestMemberTs)
+    ) {
       oldestMember = member;
       oldestMemberTs = member.events.member.getTs();
     }
@@ -152,7 +158,13 @@ async function create(options, isDM = false) {
     });
     return result;
   } catch (e) {
-    const errcodes = ['M_UNKNOWN', 'M_BAD_JSON', 'M_ROOM_IN_USE', 'M_INVALID_ROOM_STATE', 'M_UNSUPPORTED_ROOM_VERSION'];
+    const errcodes = [
+      'M_UNKNOWN',
+      'M_BAD_JSON',
+      'M_ROOM_IN_USE',
+      'M_INVALID_ROOM_STATE',
+      'M_UNSUPPORTED_ROOM_VERSION',
+    ];
     if (errcodes.includes(e.errcode)) {
       throw new Error(e);
     }
@@ -247,10 +259,12 @@ async function createRoom(opts) {
       type: 'm.room.join_rules',
       content: {
         join_rule: 'restricted',
-        allow: [{
-          type: 'm.room_membership',
-          room_id: parentId,
-        }],
+        allow: [
+          {
+            type: 'm.room_membership',
+            room_id: parentId,
+          },
+        ],
       },
     });
   }
@@ -258,11 +272,16 @@ async function createRoom(opts) {
   const result = await create(options);
 
   if (parentId) {
-    await mx.sendStateEvent(parentId, 'm.space.child', {
-      auto_join: false,
-      suggested: false,
-      via: [getIdServer(mx.getUserId())],
-    }, result.room_id);
+    await mx.sendStateEvent(
+      parentId,
+      'm.space.child',
+      {
+        auto_join: false,
+        suggested: false,
+        via: [getIdServer(mx.getUserId())],
+      },
+      result.room_id
+    );
   }
 
   return result;
@@ -327,10 +346,15 @@ async function setMyRoomNick(roomId, nick) {
   const mEvent = room.currentState.getStateEvents('m.room.member', mx.getUserId());
   const content = mEvent?.getContent();
   if (!content) return;
-  await mx.sendStateEvent(roomId, 'm.room.member', {
-    ...content,
-    displayname: nick,
-  }, mx.getUserId());
+  await mx.sendStateEvent(
+    roomId,
+    'm.room.member',
+    {
+      ...content,
+      displayname: nick,
+    },
+    mx.getUserId()
+  );
 }
 
 async function setMyRoomAvatar(roomId, mxc) {
@@ -339,19 +363,31 @@ async function setMyRoomAvatar(roomId, mxc) {
   const mEvent = room.currentState.getStateEvents('m.room.member', mx.getUserId());
   const content = mEvent?.getContent();
   if (!content) return;
-  await mx.sendStateEvent(roomId, 'm.room.member', {
-    ...content,
-    avatar_url: mxc,
-  }, mx.getUserId());
+  await mx.sendStateEvent(
+    roomId,
+    'm.room.member',
+    {
+      ...content,
+      avatar_url: mxc,
+    },
+    mx.getUserId()
+  );
 }
 
 export {
   convertToDm,
   convertToRoom,
-  join, leave,
-  createDM, createRoom,
-  invite, kick, ban, unban,
-  ignore, unignore,
+  join,
+  leave,
+  createDM,
+  createRoom,
+  invite,
+  kick,
+  ban,
+  unban,
+  ignore,
+  unignore,
   setPowerLevel,
-  setMyRoomNick, setMyRoomAvatar,
+  setMyRoomNick,
+  setMyRoomAvatar,
 };

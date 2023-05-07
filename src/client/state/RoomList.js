@@ -13,9 +13,10 @@ function isMEventSpaceChild(mEvent) {
  */
 async function waitFor(callback, timeout = 400, maxTry = -1) {
   if (maxTry === 0) return false;
-  const isOver = async () => new Promise((resolve) => {
-    setTimeout(() => resolve(callback()), timeout);
-  });
+  const isOver = async () =>
+    new Promise((resolve) => {
+      setTimeout(() => resolve(callback()), timeout);
+    });
 
   if (await isOver()) return true;
   return waitFor(callback, timeout, maxTry - 1);
@@ -197,9 +198,7 @@ class RoomList extends EventEmitter {
 
   getMDirects() {
     const mDirectsId = new Set();
-    const mDirect = this.matrixClient
-      .getAccountData('m.direct')
-      ?.getContent();
+    const mDirect = this.matrixClient.getAccountData('m.direct')?.getContent();
 
     if (typeof mDirect === 'undefined') return mDirectsId;
 
@@ -322,7 +321,7 @@ class RoomList extends EventEmitter {
       const { roomId } = room;
       const isRoomReady = () => this.matrixClient.getRoom(roomId) !== null;
       if (['join', 'invite'].includes(membership) && isRoomReady() === false) {
-        if (await waitFor(isRoomReady, 200, 100) === false) return;
+        if ((await waitFor(isRoomReady, 200, 100)) === false) return;
       }
 
       if (membership === 'unban') return;

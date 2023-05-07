@@ -5,53 +5,68 @@ import './Input.scss';
 import TextareaAutosize from 'react-autosize-textarea';
 
 function Input({
-  id, label, name, value, placeholder,
-  required, type, onChange, forwardRef,
-  resizable, minHeight, onResize, state,
-  onKeyDown, disabled, autoFocus,
+  id,
+  label,
+  name,
+  value,
+  placeholder,
+  required,
+  type,
+  onChange,
+  forwardRef,
+  resizable,
+  minHeight,
+  onResize,
+  state,
+  onKeyDown,
+  disabled,
+  autoFocus,
 }) {
   return (
     <div className="input-container">
-      { label !== '' && <label className="input__label text-b2" htmlFor={id}>{label}</label> }
-      { resizable
-        ? (
-          <TextareaAutosize
-            dir="auto"
-            style={{ minHeight: `${minHeight}px` }}
-            name={name}
-            id={id}
-            className={`input input--resizable${state !== 'normal' ? ` input--${state}` : ''}`}
-            ref={forwardRef}
-            type={type}
-            placeholder={placeholder}
-            required={required}
-            defaultValue={value}
-            autoComplete="off"
-            onChange={onChange}
-            onResize={onResize}
-            onKeyDown={onKeyDown}
-            disabled={disabled}
-            autoFocus={autoFocus}
-          />
-        ) : (
-          <input
-            dir="auto"
-            ref={forwardRef}
-            id={id}
-            name={name}
-            className={`input ${state !== 'normal' ? ` input--${state}` : ''}`}
-            type={type}
-            placeholder={placeholder}
-            required={required}
-            defaultValue={value}
-            autoComplete="off"
-            onChange={onChange}
-            onKeyDown={onKeyDown}
-            disabled={disabled}
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus={autoFocus}
-          />
-        )}
+      {label !== '' && (
+        <label className="input__label text-b2" htmlFor={id}>
+          {label}
+        </label>
+      )}
+      {resizable ? (
+        <TextareaAutosize
+          dir="auto"
+          style={{ minHeight: `${minHeight}px` }}
+          name={name}
+          id={id}
+          className={`input input--resizable${state !== 'normal' ? ` input--${state}` : ''}`}
+          ref={forwardRef}
+          type={type}
+          placeholder={placeholder}
+          required={required}
+          defaultValue={value}
+          autoComplete="off"
+          onChange={onChange}
+          onResize={onResize}
+          onKeyDown={onKeyDown}
+          disabled={disabled}
+          autoFocus={autoFocus}
+        />
+      ) : (
+        <input
+          dir="auto"
+          ref={forwardRef}
+          id={id}
+          name={name}
+          className={`input ${state !== 'normal' ? ` input--${state}` : ''}`}
+          type={type}
+          placeholder={placeholder}
+          required={required}
+          defaultValue={value}
+          autoComplete="off"
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          disabled={disabled}
+          // eslint-disable-next-line jsx-a11y/no-autofocus
+          autoFocus={autoFocus}
+        />
+      )}
     </div>
   );
 }

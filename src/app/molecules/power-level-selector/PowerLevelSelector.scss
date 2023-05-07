@@ -9,7 +9,7 @@
   & form {
     margin: var(--sp-normal);
     display: flex;
-      
+
     & input {
       @extend .cp-fx__item-one;
       @include dir.side(margin, 0, var(--sp-tight));

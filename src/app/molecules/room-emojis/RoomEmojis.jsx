@@ -40,7 +40,8 @@ function useRoomPacks(room) {
     };
   }, [room, mx]);
 
-  const isStateKeyAvailable = (key) => !room.currentState.getStateEvents('im.ponies.room_emotes', key);
+  const isStateKeyAvailable = (key) =>
+    !room.currentState.getStateEvents('im.ponies.room_emotes', key);
 
   const createPack = async (name) => {
     const packContent = {
@@ -54,10 +55,7 @@ function useRoomPacks(room) {
     } else {
       stateKey = packContent.pack.display_name.replace(/\s/g, '-');
       if (!isStateKeyAvailable(stateKey)) {
-        stateKey = suffixRename(
-          stateKey,
-          isStateKeyAvailable,
-        );
+        stateKey = suffixRename(stateKey, isStateKeyAvailable);
       }
     }
     await mx.sendStateEvent(room.roomId, 'im.ponies.room_emotes', packContent, stateKey);
@@ -95,30 +93,33 @@ function RoomEmojis({ roomId }) {
 
   return (
     <div className="room-emojis">
-      { canChange && (
+      {canChange && (
         <div className="room-emojis__add-pack">
           <MenuHeader>Create Pack</MenuHeader>
           <form onSubmit={handlePackCreate}>
             <Input name="nameInput" placeholder="Pack Name" required />
-            <Button variant="primary" type="submit">Create pack</Button>
+            <Button variant="primary" type="submit">
+              Create pack
+            </Button>
           </form>
         </div>
       )}
-      {
-        usablePacks.length > 0
-          ? usablePacks.reverse().map((mEvent) => (
+      {usablePacks.length > 0 ? (
+        usablePacks
+          .reverse()
+          .map((mEvent) => (
             <ImagePack
               key={mEvent.getId()}
               roomId={roomId}
               stateKey={mEvent.getStateKey()}
               handlePackDelete={canChange ? deletePack : undefined}
             />
-          )) : (
-            <div className="room-emojis__empty">
-              <Text>No emoji or sticker pack.</Text>
-            </div>
-          )
-      }
+          ))
+      ) : (
+        <div className="room-emojis__empty">
+          <Text>No emoji or sticker pack.</Text>
+        </div>
+      )}
     </div>
   );
 }

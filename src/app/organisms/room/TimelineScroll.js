@@ -47,7 +47,7 @@ class TimelineScroll {
 
     if (offsetTop === undefined) return;
     // if msg is already in visible are we don't need to scroll to that
-    if (offsetTop > scrollInfo.top && offsetTop < (scrollInfo.top + scrollInfo.viewHeight)) return;
+    if (offsetTop > scrollInfo.top && offsetTop < scrollInfo.top + scrollInfo.viewHeight) return;
     const to = offsetTop - offset;
 
     this._scrollTo(scrollInfo, to);
@@ -68,7 +68,7 @@ class TimelineScroll {
 
     const maxScrollTop = scrollInfo.height - scrollInfo.viewHeight;
 
-    sInfo.top = (scrollTop > maxScrollTop) ? maxScrollTop : scrollTop;
+    sInfo.top = scrollTop > maxScrollTop ? maxScrollTop : scrollTop;
     this._updateCalc(sInfo);
   }
 
@@ -81,12 +81,11 @@ class TimelineScroll {
 
     // TODO: classname 'ph-msg' prevent this class from being used
     const PLACEHOLDER_COUNT = 2;
-    this.topMsg = msgs[0]?.className === 'ph-msg'
-      ? msgs[PLACEHOLDER_COUNT]
-      : msgs[0];
-    this.bottomMsg = msgs[lMsgIndex]?.className === 'ph-msg'
-      ? msgs[lMsgIndex - PLACEHOLDER_COUNT]
-      : msgs[lMsgIndex];
+    this.topMsg = msgs[0]?.className === 'ph-msg' ? msgs[PLACEHOLDER_COUNT] : msgs[0];
+    this.bottomMsg =
+      msgs[lMsgIndex]?.className === 'ph-msg'
+        ? msgs[lMsgIndex - PLACEHOLDER_COUNT]
+        : msgs[lMsgIndex];
   }
 
   // we calculate the difference between first/last message and current scrollTop.

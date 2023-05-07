@@ -65,9 +65,7 @@ function ReadReceipts() {
       contentOptions={<IconButton src={CrossIC} onClick={() => setIsOpen(false)} tooltip="Close" />}
     >
       <div style={{ marginTop: 'var(--sp-tight)', marginBottom: 'var(--sp-extra-loose)' }}>
-        {
-          readers.map(renderPeople)
-        }
+        {readers.map(renderPeople)}
       </div>
     </Dialog>
   );

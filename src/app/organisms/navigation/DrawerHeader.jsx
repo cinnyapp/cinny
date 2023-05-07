@@ -7,8 +7,13 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import {
-  openPublicRooms, openCreateRoom, openSpaceManage, openJoinAlias,
-  openSpaceAddExisting, openInviteUser, openReusableContextMenu,
+  openPublicRooms,
+  openCreateRoom,
+  openSpaceManage,
+  openJoinAlias,
+  openSpaceAddExisting,
+  openInviteUser,
+  openReusableContextMenu,
 } from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
 
@@ -40,46 +45,64 @@ export function HomeSpaceOptions({ spaceId, afterOptionSelect }) {
       <MenuHeader>Add rooms or spaces</MenuHeader>
       <MenuItem
         iconSrc={SpacePlusIC}
-        onClick={() => { afterOptionSelect(); openCreateRoom(true, spaceId); }}
+        onClick={() => {
+          afterOptionSelect();
+          openCreateRoom(true, spaceId);
+        }}
         disabled={!canManage}
       >
         Create new space
       </MenuItem>
       <MenuItem
         iconSrc={HashPlusIC}
-        onClick={() => { afterOptionSelect(); openCreateRoom(false, spaceId); }}
+        onClick={() => {
+          afterOptionSelect();
+          openCreateRoom(false, spaceId);
+        }}
         disabled={!canManage}
       >
         Create new room
       </MenuItem>
-      { !spaceId && (
+      {!spaceId && (
         <MenuItem
           iconSrc={HashGlobeIC}
-          onClick={() => { afterOptionSelect(); openPublicRooms(); }}
+          onClick={() => {
+            afterOptionSelect();
+            openPublicRooms();
+          }}
         >
           Explore public rooms
         </MenuItem>
       )}
-      { !spaceId && (
+      {!spaceId && (
         <MenuItem
           iconSrc={PlusIC}
-          onClick={() => { afterOptionSelect(); openJoinAlias(); }}
+          onClick={() => {
+            afterOptionSelect();
+            openJoinAlias();
+          }}
         >
           Join with address
         </MenuItem>
       )}
-      { spaceId && (
+      {spaceId && (
         <MenuItem
           iconSrc={PlusIC}
-          onClick={() => { afterOptionSelect(); openSpaceAddExisting(spaceId); }}
+          onClick={() => {
+            afterOptionSelect();
+            openSpaceAddExisting(spaceId);
+          }}
           disabled={!canManage}
         >
           Add existing
         </MenuItem>
       )}
-      { spaceId && (
+      {spaceId && (
         <MenuItem
-          onClick={() => { afterOptionSelect(); openSpaceManage(spaceId); }}
+          onClick={() => {
+            afterOptionSelect();
+            openSpaceManage(spaceId);
+          }}
           iconSrc={HashSearchIC}
         >
           Manage rooms
@@ -102,24 +125,20 @@ function DrawerHeader({ selectedTab, spaceId }) {
 
   const isDMTab = selectedTab === cons.tabs.DIRECTS;
   const room = mx.getRoom(spaceId);
-  const spaceName = isDMTab ? null : (room?.name || null);
+  const spaceName = isDMTab ? null : room?.name || null;
 
   const openSpaceOptions = (e) => {
     e.preventDefault();
-    openReusableContextMenu(
-      'bottom',
-      getEventCords(e, '.header'),
-      (closeMenu) => <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />,
-    );
+    openReusableContextMenu('bottom', getEventCords(e, '.header'), (closeMenu) => (
+      <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />
+    ));
   };
 
   const openHomeSpaceOptions = (e) => {
     e.preventDefault();
-    openReusableContextMenu(
-      'right',
-      getEventCords(e, '.ic-btn'),
-      (closeMenu) => <HomeSpaceOptions spaceId={spaceId} afterOptionSelect={closeMenu} />,
-    );
+    openReusableContextMenu('right', getEventCords(e, '.ic-btn'), (closeMenu) => (
+      <HomeSpaceOptions spaceId={spaceId} afterOptionSelect={closeMenu} />
+    ));
   };
 
   return (
@@ -132,18 +151,31 @@ function DrawerHeader({ selectedTab, spaceId }) {
           onMouseUp={(e) => blurOnBubbling(e, '.drawer-header__btn')}
         >
           <TitleWrapper>
-            <Text variant="s1" weight="medium" primary>{twemojify(spaceName)}</Text>
+            <Text variant="s1" weight="medium" primary>
+              {twemojify(spaceName)}
+            </Text>
           </TitleWrapper>
           <RawIcon size="small" src={ChevronBottomIC} />
         </button>
       ) : (
         <TitleWrapper>
-          <Text variant="s1" weight="medium" primary>{tabName}</Text>
+          <Text variant="s1" weight="medium" primary>
+            {tabName}
+          </Text>
         </TitleWrapper>
       )}
 
-      { isDMTab && <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="small" /> }
-      { !isDMTab && <IconButton onClick={openHomeSpaceOptions} tooltip="Add rooms/spaces" src={PlusIC} size="small" /> }
+      {isDMTab && (
+        <IconButton onClick={() => openInviteUser()} tooltip="Start DM" src={PlusIC} size="small" />
+      )}
+      {!isDMTab && (
+        <IconButton
+          onClick={openHomeSpaceOptions}
+          tooltip="Add rooms/spaces"
+          src={PlusIC}
+          size="small"
+        />
+      )}
     </Header>
   );
 }

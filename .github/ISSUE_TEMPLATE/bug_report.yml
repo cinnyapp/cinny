@@ -40,12 +40,12 @@ body:
     id: info
     attributes:
       label: Platform and versions
-      description: "Provide OS, browser and Cinny version with your Homeserver."
+      description: 'Provide OS, browser and Cinny version with your Homeserver.'
       placeholder: |
-       1. OS: [e.g. Windows 10, MacOS]
-       2. Browser: [e.g. chrome 99.5, firefox 97.2]
-       3. Cinny version: [e.g. 1.8.1 (app.cinny.in)]
-       4. Matrix homeserver: [e.g. matrix.org]
+        1. OS: [e.g. Windows 10, MacOS]
+        2. Browser: [e.g. chrome 99.5, firefox 97.2]
+        3. Cinny version: [e.g. 1.8.1 (app.cinny.in)]
+        4. Matrix homeserver: [e.g. matrix.org]
       render: shell
     validations:
       required: true

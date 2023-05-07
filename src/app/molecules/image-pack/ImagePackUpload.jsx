@@ -50,19 +50,26 @@ function ImagePackUpload({ onUpload }) {
 
   return (
     <form onSubmit={handleSubmit} className="image-pack-upload">
-      <input ref={inputRef} onChange={handleFileChange} style={{ display: 'none' }} type="file" accept=".png, .gif, .webp" required />
-      {
-        imgFile
-          ? (
-            <div className="image-pack-upload__file">
-              <IconButton onClick={handleRemove} src={CirclePlusIC} tooltip="Remove file" />
-              <Text>{imgFile.name}</Text>
-            </div>
-          )
-          : <Button onClick={() => inputRef.current.click()}>Import image</Button>
-      }
+      <input
+        ref={inputRef}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+        type="file"
+        accept=".png, .gif, .webp"
+        required
+      />
+      {imgFile ? (
+        <div className="image-pack-upload__file">
+          <IconButton onClick={handleRemove} src={CirclePlusIC} tooltip="Remove file" />
+          <Text>{imgFile.name}</Text>
+        </div>
+      ) : (
+        <Button onClick={() => inputRef.current.click()}>Import image</Button>
+      )}
       <Input forwardRef={shortcodeRef} name="shortcodeInput" placeholder="shortcode" required />
-      <Button disabled={progress} variant="primary" type="submit">{progress ? 'Uploading...' : 'Upload'}</Button>
+      <Button disabled={progress} variant="primary" type="submit">
+        {progress ? 'Uploading...' : 'Upload'}
+      </Button>
     </form>
   );
 }

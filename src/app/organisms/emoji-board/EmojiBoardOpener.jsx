@@ -49,9 +49,7 @@ function EmojiBoardOpener() {
 
   return (
     <ContextMenu
-      content={(
-        <EmojiBoard onSelect={addEmoji} searchRef={searchRef} />
-      )}
+      content={<EmojiBoard onSelect={addEmoji} searchRef={searchRef} />}
       afterToggle={afterEmojiBoardToggle}
       render={(toggleMenu) => (
         <input

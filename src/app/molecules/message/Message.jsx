@@ -1,7 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, {
-  useState, useEffect, useCallback, useRef,
-} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './Message.scss';
 
@@ -9,13 +7,20 @@ import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import {
-  getUsername, getUsernameOfRoomMember, parseReply, trimHTMLReply,
+  getUsername,
+  getUsernameOfRoomMember,
+  parseReply,
+  trimHTMLReply,
 } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 import { getEventCords } from '../../../util/common';
 import { redactEvent, sendReaction } from '../../../client/action/roomTimeline';
 import {
-  openEmojiBoard, openProfileViewer, openReadReceipts, openViewSource, replyTo,
+  openEmojiBoard,
+  openProfileViewer,
+  openReadReceipts,
+  openViewSource,
+  replyTo,
 } from '../../../client/action/navigation';
 import { sanitizeCustomHtml } from '../../../util/sanitize';
 
@@ -27,7 +32,11 @@ import Input from '../../atoms/input/Input';
 import Avatar from '../../atoms/avatar/Avatar';
 import IconButton from '../../atoms/button/IconButton';
 import Time from '../../atoms/time/Time';
-import ContextMenu, { MenuHeader, MenuItem, MenuBorder } from '../../atoms/context-menu/ContextMenu';
+import ContextMenu, {
+  MenuHeader,
+  MenuItem,
+  MenuBorder,
+} from '../../atoms/context-menu/ContextMenu';
 import * as Media from '../media/Media';
 
 import ReplyArrowIC from '../../../../public/res/ic/outlined/reply-arrow.svg';
@@ -61,9 +70,7 @@ function PlaceholderMessage() {
   );
 }
 
-const MessageAvatar = React.memo(({
-  roomId, avatarSrc, userId, username,
-}) => (
+const MessageAvatar = React.memo(({ roomId, avatarSrc, userId, username }) => (
   <div className="message__avatar-container">
     <button type="button" onClick={() => openProfileViewer(userId, roomId)}>
       <Avatar imageSrc={avatarSrc} text={username} bgColor={colorMXID(userId)} size="small" />
@@ -71,9 +78,7 @@ const MessageAvatar = React.memo(({
   </div>
 ));
 
-const MessageHeader = React.memo(({
-  userId, username, timestamp, fullTime,
-}) => (
+const MessageHeader = React.memo(({ userId, username, timestamp, fullTime }) => (
   <div className="message__header">
     <Text
       style={{ color: colorMXID(userId) }}
@@ -107,9 +112,7 @@ function MessageReply({ name, color, body }) {
     <div className="message__reply">
       <Text variant="b2">
         <RawIcon color={color} size="extra-small" src={ReplyArrowIC} />
-        <span style={{ color }}>{twemojify(name)}</span>
-        {' '}
-        {twemojify(body)}
+        <span style={{ color }}>{twemojify(name)}</span> {twemojify(body)}
       </Text>
     </div>
   );
@@ -143,7 +146,9 @@ const MessageReplyWrapper = React.memo(({ roomTimeline, eventId }) => {
         const username = getUsernameOfRoomMember(mEvent.sender);
 
         if (isMountedRef.current === false) return;
-        const fallbackBody = mEvent.isRedacted() ? '*** This message has been deleted ***' : '*** Unable to load reply ***';
+        const fallbackBody = mEvent.isRedacted()
+          ? '*** This message has been deleted ***'
+          : '*** Unable to load reply ***';
         let parsedBody = parseReply(rawBody)?.body ?? rawBody ?? fallbackBody;
         if (editedList && parsedBody.startsWith(' * ')) {
           parsedBody = parsedBody.slice(3);
@@ -197,13 +202,7 @@ MessageReplyWrapper.propTypes = {
   eventId: PropTypes.string.isRequired,
 };
 
-const MessageBody = React.memo(({
-  senderName,
-  body,
-  isCustomHTML,
-  isEdited,
-  msgType,
-}) => {
+const MessageBody = React.memo(({ senderName, body, isCustomHTML, isEdited, msgType }) => {
   // if body is not string it is a React element.
   if (typeof body !== 'string') return <div className="message__body">{body}</div>;
 
@@ -215,7 +214,7 @@ const MessageBody = React.memo(({
         undefined,
         true,
         false,
-        true,
+        true
       );
     } catch {
       console.error('Malformed custom html: ', body);
@@ -240,10 +239,14 @@ const MessageBody = React.memo(({
     const nEmojis = content.filter((e) => e.type === 'img').length;
 
     // Make sure there's no text besides whitespace and variation selector U+FE0F
-    if (nEmojis <= 10 && content.every((element) => (
-      (typeof element === 'object' && element.type === 'img')
-      || (typeof element === 'string' && /^[\s\ufe0f]*$/g.test(element))
-    ))) {
+    if (
+      nEmojis <= 10 &&
+      content.every(
+        (element) =>
+          (typeof element === 'object' && element.type === 'img') ||
+          (typeof element === 'string' && /^[\s\ufe0f]*$/g.test(element))
+      )
+    ) {
       emojiOnly = true;
     }
   }
@@ -251,22 +254,25 @@ const MessageBody = React.memo(({
   if (!isCustomHTML) {
     // If this is a plaintext message, wrap it in a <p> element (automatically applying
     // white-space: pre-wrap) in order to preserve newlines
-    content = (<p className="message__body-plain">{content}</p>);
+    content = <p className="message__body-plain">{content}</p>;
   }
 
   return (
     <div className="message__body">
       <div dir="auto" className={`text ${emojiOnly ? 'text-h1' : 'text-b1'}`}>
-        { msgType === 'm.emote' && (
+        {msgType === 'm.emote' && (
           <>
             {'* '}
-            {twemojify(senderName)}
-            {' '}
+            {twemojify(senderName)}{' '}
           </>
         )}
-        { content }
+        {content}
       </div>
-      { isEdited && <Text className="message__body-edited" variant="b3">(edited)</Text>}
+      {isEdited && (
+        <Text className="message__body-edited" variant="b3">
+          (edited)
+        </Text>
+      )}
     </div>
   );
 });
@@ -305,7 +311,13 @@ function MessageEdit({ body, onSave, onCancel }) {
   };
 
   return (
-    <form className="message__edit" onSubmit={(e) => { e.preventDefault(); onSave(editInputRef.current.value, body); }}>
+    <form
+      className="message__edit"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSave(editInputRef.current.value, body);
+      }}
+    >
       <Input
         forwardRef={editInputRef}
         onKeyDown={handleKeyDown}
@@ -316,7 +328,9 @@ function MessageEdit({ body, onSave, onCancel }) {
         autoFocus
       />
       <div className="message__edit-btns">
-        <Button type="submit" variant="primary">Save</Button>
+        <Button type="submit" variant="primary">
+          Save
+        </Button>
         <Button onClick={onCancel}>Cancel</Button>
       </div>
     </form>
@@ -368,9 +382,7 @@ function genReactionMsg(userIds, reaction, shortcode) {
         <React.Fragment key={userId}>
           {twemojify(getUsername(userId))}
           {index < userIds.length - 1 && (
-            <span style={{ opacity: '.6' }}>
-              {index === userIds.length - 2 ? ' and ' : ', '}
-            </span>
+            <span style={{ opacity: '.6' }}>{index === userIds.length - 2 ? ' and ' : ', '}</span>
           )}
         </React.Fragment>
       ))}
@@ -380,9 +392,7 @@ function genReactionMsg(userIds, reaction, shortcode) {
   );
 }
 
-function MessageReaction({
-  reaction, shortcode, count, users, isActive, onClick,
-}) {
+function MessageReaction({ reaction, shortcode, count, users, isActive, onClick }) {
   let customEmojiUrl = null;
   if (reaction.match(/^mxc:\/\/\S+$/)) {
     customEmojiUrl = initMatrix.matrixClient.mxcUrlToHttp(reaction);
@@ -390,19 +400,32 @@ function MessageReaction({
   return (
     <Tooltip
       className="msg__reaction-tooltip"
-      content={<Text variant="b2">{users.length > 0 ? genReactionMsg(users, reaction, shortcode) : 'Unable to load who has reacted'}</Text>}
+      content={
+        <Text variant="b2">
+          {users.length > 0
+            ? genReactionMsg(users, reaction, shortcode)
+            : 'Unable to load who has reacted'}
+        </Text>
+      }
     >
       <button
         onClick={onClick}
         type="button"
         className={`msg__reaction${isActive ? ' msg__reaction--active' : ''}`}
       >
-        {
-          customEmojiUrl
-            ? <img className="react-emoji" draggable="false" alt={shortcode ?? reaction} src={customEmojiUrl} />
-            : twemojify(reaction, { className: 'react-emoji' })
-        }
-        <Text variant="b3" className="msg__reaction-count">{count}</Text>
+        {customEmojiUrl ? (
+          <img
+            className="react-emoji"
+            draggable="false"
+            alt={shortcode ?? reaction}
+            src={customEmojiUrl}
+          />
+        ) : (
+          twemojify(reaction, { className: 'react-emoji' })
+        )}
+        <Text variant="b3" className="msg__reaction-count">
+          {count}
+        </Text>
       </button>
     </Tooltip>
   );
@@ -468,21 +491,19 @@ function MessageReactionGroup({ roomTimeline, mEvent }) {
 
   return (
     <div className="message__reactions text text-b3 noselect">
-      {
-        Object.keys(reactions).map((key) => (
-          <MessageReaction
-            key={key}
-            reaction={key}
-            shortcode={reactions[key].shortcode}
-            count={reactions[key].count}
-            users={reactions[key].users}
-            isActive={reactions[key].isActive}
-            onClick={() => {
-              toggleEmoji(roomId, mEvent.getId(), key, reactions[key].shortcode, roomTimeline);
-            }}
-          />
-        ))
-      }
+      {Object.keys(reactions).map((key) => (
+        <MessageReaction
+          key={key}
+          reaction={key}
+          shortcode={reactions[key].shortcode}
+          count={reactions[key].count}
+          users={reactions[key].users}
+          isActive={reactions[key].isActive}
+          onClick={() => {
+            toggleEmoji(roomId, mEvent.getId(), key, reactions[key].shortcode, roomTimeline);
+          }}
+        />
+      ))}
       {canSendReaction && (
         <IconButton
           onClick={(e) => {
@@ -503,11 +524,11 @@ MessageReactionGroup.propTypes = {
 
 function isMedia(mE) {
   return (
-    mE.getContent()?.msgtype === 'm.file'
-    || mE.getContent()?.msgtype === 'm.image'
-    || mE.getContent()?.msgtype === 'm.audio'
-    || mE.getContent()?.msgtype === 'm.video'
-    || mE.getType() === 'm.sticker'
+    mE.getContent()?.msgtype === 'm.file' ||
+    mE.getContent()?.msgtype === 'm.image' ||
+    mE.getContent()?.msgtype === 'm.audio' ||
+    mE.getContent()?.msgtype === 'm.video' ||
+    mE.getType() === 'm.sticker'
   );
 }
 
@@ -523,9 +544,7 @@ function handleOpenViewSource(mEvent, roomTimeline) {
   openViewSource(editedMEvent !== undefined ? editedMEvent : mEvent);
 }
 
-const MessageOptions = React.memo(({
-  roomTimeline, mEvent, edit, reply,
-}) => {
+const MessageOptions = React.memo(({ roomTimeline, mEvent, edit, reply }) => {
   const { roomId, room } = roomTimeline;
   const mx = initMatrix.matrixClient;
   const senderId = mEvent.getSender();
@@ -544,19 +563,9 @@ const MessageOptions = React.memo(({
           tooltip="Add reaction"
         />
       )}
-      <IconButton
-        onClick={() => reply()}
-        src={ReplyArrowIC}
-        size="extra-small"
-        tooltip="Reply"
-      />
-      {(senderId === mx.getUserId() && !isMedia(mEvent)) && (
-        <IconButton
-          onClick={() => edit(true)}
-          src={PencilIC}
-          size="extra-small"
-          tooltip="Edit"
-        />
+      <IconButton onClick={() => reply()} src={ReplyArrowIC} size="extra-small" tooltip="Reply" />
+      {senderId === mx.getUserId() && !isMedia(mEvent) && (
+        <IconButton onClick={() => edit(true)} src={PencilIC} size="extra-small" tooltip="Edit" />
       )}
       <ContextMenu
         content={() => (
@@ -568,10 +577,7 @@ const MessageOptions = React.memo(({
             >
               Read receipts
             </MenuItem>
-            <MenuItem
-              iconSrc={CmdIC}
-              onClick={() => handleOpenViewSource(mEvent, roomTimeline)}
-            >
+            <MenuItem iconSrc={CmdIC} onClick={() => handleOpenViewSource(mEvent, roomTimeline)}>
               View source
             </MenuItem>
             {(canIRedact || senderId === mx.getUserId()) && (
@@ -585,7 +591,7 @@ const MessageOptions = React.memo(({
                       'Delete message',
                       'Are you sure that you want to delete this message?',
                       'Delete',
-                      'danger',
+                      'danger'
                     );
                     if (!isConfirmed) return;
                     redactEvent(roomId, mEvent.getId());
@@ -619,7 +625,8 @@ MessageOptions.propTypes = {
 function genMediaContent(mE) {
   const mx = initMatrix.matrixClient;
   const mContent = mE.getContent();
-  if (!mContent || !mContent.body) return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
+  if (!mContent || !mContent.body)
+    return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
 
   let mediaMXC = mContent?.url;
   const isEncryptedFile = typeof mediaMXC === 'undefined';
@@ -627,7 +634,8 @@ function genMediaContent(mE) {
 
   let thumbnailMXC = mContent?.info?.thumbnail_url;
 
-  if (typeof mediaMXC === 'undefined' || mediaMXC === '') return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
+  if (typeof mediaMXC === 'undefined' || mediaMXC === '')
+    return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
 
   let msgType = mE.getContent()?.msgtype;
   const safeMimetype = getBlobSafeMimeType(mContent.info?.mimetype);
@@ -717,13 +725,19 @@ function getEditedBody(editedMEvent) {
 }
 
 function Message({
-  mEvent, isBodyOnly, roomTimeline,
-  focus, fullTime, isEdit, setEdit, cancelEdit,
+  mEvent,
+  isBodyOnly,
+  roomTimeline,
+  focus,
+  fullTime,
+  isEdit,
+  setEdit,
+  cancelEdit,
 }) {
   const roomId = mEvent.getRoomId();
   const { editedTimeline, reactionTimeline } = roomTimeline ?? {};
 
-  const className = ['message', (isBodyOnly ? 'message--body-only' : 'message--full')];
+  const className = ['message', isBodyOnly ? 'message--body-only' : 'message--full'];
   if (focus) className.push('message--focus');
   const content = mEvent.getContent();
   const eventId = mEvent.getId();
@@ -731,7 +745,8 @@ function Message({
   const senderId = mEvent.getSender();
   let { body } = content;
   const username = mEvent.sender ? getUsernameOfRoomMember(mEvent.sender) : getUsername(senderId);
-  const avatarSrc = mEvent.sender?.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop') ?? null;
+  const avatarSrc =
+    mEvent.sender?.getAvatarUrl(initMatrix.matrixClient.baseUrl, 36, 36, 'crop') ?? null;
   let isCustomHTML = content.format === 'org.matrix.custom.html';
   let customHTML = isCustomHTML ? content.formatted_body : null;
 
@@ -765,18 +780,16 @@ function Message({
 
   return (
     <div className={className.join(' ')}>
-      {
-        isBodyOnly
-          ? <div className="message__avatar-container" />
-          : (
-            <MessageAvatar
-              roomId={roomId}
-              avatarSrc={avatarSrc}
-              userId={senderId}
-              username={username}
-            />
-          )
-      }
+      {isBodyOnly ? (
+        <div className="message__avatar-container" />
+      ) : (
+        <MessageAvatar
+          roomId={roomId}
+          avatarSrc={avatarSrc}
+          userId={senderId}
+          username={username}
+        />
+      )}
       <div className="message__main-container">
         {!isBodyOnly && (
           <MessageHeader
@@ -787,10 +800,7 @@ function Message({
           />
         )}
         {roomTimeline && isReply && (
-          <MessageReplyWrapper
-            roomTimeline={roomTimeline}
-            eventId={mEvent.replyEventId}
-          />
+          <MessageReplyWrapper roomTimeline={roomTimeline} eventId={mEvent.replyEventId} />
         )}
         {!isEdit && (
           <MessageBody
@@ -803,9 +813,11 @@ function Message({
         )}
         {isEdit && (
           <MessageEdit
-            body={(customHTML
-              ? html(customHTML, { kind: 'edit', onlyPlain: true }).plain
-              : plain(body, { kind: 'edit', onlyPlain: true }).plain)}
+            body={
+              customHTML
+                ? html(customHTML, { kind: 'edit', onlyPlain: true }).plain
+                : plain(body, { kind: 'edit', onlyPlain: true }).plain
+            }
             onSave={(newBody, oldBody) => {
               if (newBody !== oldBody) {
                 initMatrix.roomsInput.sendEditedMessage(roomId, mEvent, newBody);
@@ -815,16 +827,9 @@ function Message({
             onCancel={cancelEdit}
           />
         )}
-        {haveReactions && (
-          <MessageReactionGroup roomTimeline={roomTimeline} mEvent={mEvent} />
-        )}
+        {haveReactions && <MessageReactionGroup roomTimeline={roomTimeline} mEvent={mEvent} />}
         {roomTimeline && !isEdit && (
-          <MessageOptions
-            roomTimeline={roomTimeline}
-            mEvent={mEvent}
-            edit={edit}
-            reply={reply}
-          />
+          <MessageOptions roomTimeline={roomTimeline} mEvent={mEvent} edit={edit} reply={reply} />
         )}
       </div>
     </div>

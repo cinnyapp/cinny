@@ -3,9 +3,7 @@ import PropTypes from 'prop-types';
 import './Tooltip.scss';
 import Tippy from '@tippyjs/react';
 
-function Tooltip({
-  className, placement, content, delay, children,
-}) {
+function Tooltip({ className, placement, content, delay, children }) {
   return (
     <Tippy
       content={content}

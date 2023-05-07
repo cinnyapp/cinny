@@ -3,11 +3,7 @@ import PropTypes from 'prop-types';
 import './Header.scss';
 
 function Header({ children }) {
-  return (
-    <div className="header">
-      {children}
-    </div>
-  );
+  return <div className="header">{children}</div>;
 }
 
 Header.propTypes = {
@@ -15,11 +11,7 @@ Header.propTypes = {
 };
 
 function TitleWrapper({ children }) {
-  return (
-    <div className="header__title-wrapper">
-      {children}
-    </div>
-  );
+  return <div className="header__title-wrapper">{children}</div>;
 }
 
 TitleWrapper.propTypes = {

@@ -18,9 +18,7 @@ import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
-function Selector({
-  roomId, isDM, drawerPostie, onClick,
-}) {
+function Selector({ roomId, isDM, drawerPostie, onClick }) {
   const mx = initMatrix.matrixClient;
   const noti = initMatrix.notifications;
   const room = mx.getRoom(roomId);
@@ -48,7 +46,7 @@ function Selector({
       getEventCords(e, '.room-selector'),
       room.isSpaceRoom()
         ? (closeMenu) => <SpaceOptions roomId={roomId} afterOptionSelect={closeMenu} />
-        : (closeMenu) => <RoomOptions roomId={roomId} afterOptionSelect={closeMenu} />,
+        : (closeMenu) => <RoomOptions roomId={roomId} afterOptionSelect={closeMenu} />
     );
   };
 
@@ -66,7 +64,7 @@ function Selector({
       isAlert={noti.getHighlightNoti(roomId) !== 0}
       onClick={onClick}
       onContextMenu={openOptions}
-      options={(
+      options={
         <IconButton
           size="extra-small"
           tooltip="Options"
@@ -74,7 +72,7 @@ function Selector({
           src={VerticalMenuIC}
           onClick={openOptions}
         />
-      )}
+      }
     />
   );
 }

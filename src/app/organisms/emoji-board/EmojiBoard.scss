@@ -8,7 +8,7 @@
   display: flex;
   max-width: 90vw;
   max-height: 90vh;
-  
+
   &__content {
     @extend .cp-fx__item-one;
     @extend .cp-fx__column;
@@ -28,7 +28,7 @@
     @include dir.side(border, none, 1px solid var(--bg-surface-border));
 
     position: relative;
-    
+
     & .ic-btn-surface {
       opacity: 0.8;
     }
@@ -48,7 +48,7 @@
 .emoji-board__content__search {
   padding: var(--sp-extra-tight);
   position: relative;
-  
+
   & .ic-raw {
     position: absolute;
     @include dir.prop(left, var(--sp-normal), unset);
@@ -101,7 +101,7 @@
   --emoji-padding: 6px;
   position: relative;
   margin-bottom: var(--sp-normal);
-  
+
   &__header {
     position: sticky;
     top: 0;

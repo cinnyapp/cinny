@@ -30,7 +30,10 @@ function TryJoinWithAlias({ alias, onRequestClose }) {
   function handleOnRoomAdded(roomId) {
     if (status.tempRoomId !== null && status.tempRoomId !== roomId) return;
     setStatus({
-      isJoining: false, error: null, roomId, tempRoomId: null,
+      isJoining: false,
+      error: null,
+      roomId,
+      tempRoomId: null,
     });
   }
 
@@ -43,12 +46,18 @@ function TryJoinWithAlias({ alias, onRequestClose }) {
 
   async function joinWithAlias() {
     setStatus({
-      isJoining: true, error: null, roomId: null, tempRoomId: null,
+      isJoining: true,
+      error: null,
+      roomId: null,
+      tempRoomId: null,
     });
     try {
       const roomId = await roomActions.join(alias, false);
       setStatus({
-        isJoining: true, error: null, roomId: null, tempRoomId: roomId,
+        isJoining: true,
+        error: null,
+        roomId: null,
+        tempRoomId: roomId,
       });
     } catch (e) {
       setStatus({
@@ -72,9 +81,20 @@ function TryJoinWithAlias({ alias, onRequestClose }) {
         </>
       )}
       {status.roomId !== null && (
-        <Button onClick={() => { onRequestClose(); selectRoom(status.roomId); }}>Open</Button>
+        <Button
+          onClick={() => {
+            onRequestClose();
+            selectRoom(status.roomId);
+          }}
+        >
+          Open
+        </Button>
       )}
-      {status.error !== null && <Text variant="b2"><span style={{ color: 'var(--bg-danger)' }}>{status.error}</span></Text>}
+      {status.error !== null && (
+        <Text variant="b2">
+          <span style={{ color: 'var(--bg-danger)' }}>{status.error}</span>
+        </Text>
+      )}
     </div>
   );
 }
@@ -102,17 +122,19 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
     if (typeof inputRoomName === 'string') {
       isInputAlias = inputRoomName[0] === '#' && inputRoomName.indexOf(':') > 1;
     }
-    const hsFromAlias = (isInputAlias) ? inputRoomName.slice(inputRoomName.indexOf(':') + 1) : null;
+    const hsFromAlias = isInputAlias ? inputRoomName.slice(inputRoomName.indexOf(':') + 1) : null;
     let inputHs = hsFromAlias || hsRef?.current?.value;
 
     if (typeof inputHs !== 'string') inputHs = userId.slice(userId.indexOf(':') + 1);
     if (typeof inputRoomName !== 'string') inputRoomName = '';
 
     if (isSearching) return;
-    if (viewMore !== true
-      && inputRoomName === searchQuery.name
-      && inputHs === searchQuery.homeserver
-    ) return;
+    if (
+      viewMore !== true &&
+      inputRoomName === searchQuery.name &&
+      inputHs === searchQuery.homeserver
+    )
+      return;
 
     updateSearchQuery({
       name: inputRoomName,
@@ -139,9 +161,10 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
       updateIsViewMore(false);
       if (totalRooms.length === 0) {
         updateSearchQuery({
-          error: inputRoomName === ''
-            ? `No public rooms on ${inputHs}`
-            : `No result found for "${inputRoomName}" on ${inputHs}`,
+          error:
+            inputRoomName === ''
+              ? `No public rooms on ${inputHs}`
+              : `No result found for "${inputRoomName}" on ${inputHs}`,
           alias: isInputAlias ? inputRoomName : null,
         });
       }
@@ -199,17 +222,31 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
       return (
         <RoomTile
           key={room.room_id}
-          avatarSrc={typeof room.avatar_url === 'string' ? initMatrix.matrixClient.mxcUrlToHttp(room.avatar_url, 42, 42, 'crop') : null}
+          avatarSrc={
+            typeof room.avatar_url === 'string'
+              ? initMatrix.matrixClient.mxcUrlToHttp(room.avatar_url, 42, 42, 'crop')
+              : null
+          }
           name={name}
           id={alias}
           memberCount={room.num_joined_members}
           desc={typeof room.topic === 'string' ? room.topic : null}
-          options={(
+          options={
             <>
               {isJoined && <Button onClick={() => handleViewRoom(room.room_id)}>Open</Button>}
-              {!isJoined && (joiningRooms.has(room.room_id) ? <Spinner size="small" /> : <Button onClick={() => joinRoom(room.aliases?.[0] || room.room_id)} variant="primary">Join</Button>)}
+              {!isJoined &&
+                (joiningRooms.has(room.room_id) ? (
+                  <Spinner size="small" />
+                ) : (
+                  <Button
+                    onClick={() => joinRoom(room.aliases?.[0] || room.room_id)}
+                    variant="primary"
+                  >
+                    Join
+                  </Button>
+                ))}
             </>
-          )}
+          }
         />
       );
     });
@@ -223,58 +260,65 @@ function PublicRooms({ isOpen, searchTerm, onRequestClose }) {
       onRequestClose={onRequestClose}
     >
       <div className="public-rooms">
-        <form className="public-rooms__form" onSubmit={(e) => { e.preventDefault(); searchRooms(); }}>
+        <form
+          className="public-rooms__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            searchRooms();
+          }}
+        >
           <div className="public-rooms__input-wrapper">
             <Input value={searchTerm} forwardRef={roomNameRef} label="Room name or alias" />
-            <Input forwardRef={hsRef} value={userId.slice(userId.indexOf(':') + 1)} label="Homeserver" required />
+            <Input
+              forwardRef={hsRef}
+              value={userId.slice(userId.indexOf(':') + 1)}
+              label="Homeserver"
+              required
+            />
           </div>
-          <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">Search</Button>
+          <Button disabled={isSearching} iconSrc={HashSearchIC} variant="primary" type="submit">
+            Search
+          </Button>
         </form>
         <div className="public-rooms__search-status">
-          {
-            typeof searchQuery.name !== 'undefined' && isSearching && (
-              searchQuery.name === ''
-                ? (
-                  <div className="flex--center">
-                    <Spinner size="small" />
-                    <Text variant="b2">{`Loading public rooms from ${searchQuery.homeserver}...`}</Text>
-                  </div>
-                )
-                : (
-                  <div className="flex--center">
-                    <Spinner size="small" />
-                    <Text variant="b2">{`Searching for "${searchQuery.name}" on ${searchQuery.homeserver}...`}</Text>
-                  </div>
-                )
-            )
-          }
-          {
-            typeof searchQuery.name !== 'undefined' && !isSearching && (
-              searchQuery.name === ''
-                ? <Text variant="b2">{`Public rooms on ${searchQuery.homeserver}.`}</Text>
-                : <Text variant="b2">{`Search result for "${searchQuery.name}" on ${searchQuery.homeserver}.`}</Text>
-            )
-          }
-          { searchQuery.error && (
+          {typeof searchQuery.name !== 'undefined' &&
+            isSearching &&
+            (searchQuery.name === '' ? (
+              <div className="flex--center">
+                <Spinner size="small" />
+                <Text variant="b2">{`Loading public rooms from ${searchQuery.homeserver}...`}</Text>
+              </div>
+            ) : (
+              <div className="flex--center">
+                <Spinner size="small" />
+                <Text variant="b2">{`Searching for "${searchQuery.name}" on ${searchQuery.homeserver}...`}</Text>
+              </div>
+            ))}
+          {typeof searchQuery.name !== 'undefined' &&
+            !isSearching &&
+            (searchQuery.name === '' ? (
+              <Text variant="b2">{`Public rooms on ${searchQuery.homeserver}.`}</Text>
+            ) : (
+              <Text variant="b2">{`Search result for "${searchQuery.name}" on ${searchQuery.homeserver}.`}</Text>
+            ))}
+          {searchQuery.error && (
             <>
-              <Text className="public-rooms__search-error" variant="b2">{searchQuery.error}</Text>
+              <Text className="public-rooms__search-error" variant="b2">
+                {searchQuery.error}
+              </Text>
               {typeof searchQuery.alias === 'string' && (
                 <TryJoinWithAlias onRequestClose={onRequestClose} alias={searchQuery.alias} />
               )}
             </>
           )}
         </div>
-        { publicRooms.length !== 0 && (
-          <div className="public-rooms__content">
-            { renderRoomList(publicRooms) }
-          </div>
+        {publicRooms.length !== 0 && (
+          <div className="public-rooms__content">{renderRoomList(publicRooms)}</div>
         )}
-        { publicRooms.length !== 0 && publicRooms.length % SEARCH_LIMIT === 0 && (
+        {publicRooms.length !== 0 && publicRooms.length % SEARCH_LIMIT === 0 && (
           <div className="public-rooms__view-more">
-            { isViewMore !== true && (
-              <Button onClick={() => searchRooms(true)}>View more</Button>
-            )}
-            { isViewMore && <Spinner /> }
+            {isViewMore !== true && <Button onClick={() => searchRooms(true)}>View more</Button>}
+            {isViewMore && <Spinner />}
           </div>
         )}
       </div>

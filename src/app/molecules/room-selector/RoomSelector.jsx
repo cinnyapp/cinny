@@ -11,8 +11,13 @@ import NotificationBadge from '../../atoms/badge/NotificationBadge';
 import { blurOnBubbling } from '../../atoms/button/script';
 
 function RoomSelectorWrapper({
-  isSelected, isMuted, isUnread, onClick,
-  content, options, onContextMenu,
+  isSelected,
+  isMuted,
+  isUnread,
+  onClick,
+  content,
+  options,
+  onContextMenu,
 }) {
   const classes = ['room-selector'];
   if (isMuted) classes.push('room-selector--muted');
@@ -50,16 +55,26 @@ RoomSelectorWrapper.propTypes = {
 };
 
 function RoomSelector({
-  name, parentName, roomId, imageSrc, iconSrc,
-  isSelected, isMuted, isUnread, notificationCount, isAlert,
-  options, onClick, onContextMenu,
+  name,
+  parentName,
+  roomId,
+  imageSrc,
+  iconSrc,
+  isSelected,
+  isMuted,
+  isUnread,
+  notificationCount,
+  isAlert,
+  options,
+  onClick,
+  onContextMenu,
 }) {
   return (
     <RoomSelectorWrapper
       isSelected={isSelected}
       isMuted={isMuted}
       isUnread={isUnread}
-      content={(
+      content={
         <>
           <Avatar
             text={name}
@@ -78,14 +93,14 @@ function RoomSelector({
               </Text>
             )}
           </Text>
-          { isUnread && (
+          {isUnread && (
             <NotificationBadge
               alert={isAlert}
               content={notificationCount !== 0 ? notificationCount : null}
             />
           )}
         </>
-      )}
+      }
       options={options}
       onClick={onClick}
       onContextMenu={onContextMenu}
@@ -110,10 +125,7 @@ RoomSelector.propTypes = {
   isSelected: PropTypes.bool,
   isMuted: PropTypes.bool,
   isUnread: PropTypes.bool.isRequired,
-  notificationCount: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]).isRequired,
+  notificationCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   isAlert: PropTypes.bool.isRequired,
   options: PropTypes.node,
   onClick: PropTypes.func.isRequired,

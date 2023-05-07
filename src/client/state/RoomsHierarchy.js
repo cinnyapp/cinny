@@ -32,7 +32,7 @@ class RoomsHierarchy {
         { roomId, client: this.matrixClient },
         limit,
         this._maxDepth,
-        this._suggestedOnly,
+        this._suggestedOnly
       );
       this.roomIdToHierarchy.set(roomId, roomHierarchy);
     }

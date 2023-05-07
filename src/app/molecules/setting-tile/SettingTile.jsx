@@ -9,11 +9,7 @@ function SettingTile({ title, options, content }) {
     <div className="setting-tile">
       <div className="setting-tile__content">
         <div className="setting-tile__title">
-          {
-            typeof title === 'string'
-              ? <Text variant="b1">{title}</Text>
-              : title
-          }
+          {typeof title === 'string' ? <Text variant="b1">{title}</Text> : title}
         </div>
         {content}
       </div>

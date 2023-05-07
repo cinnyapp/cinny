@@ -19,10 +19,9 @@ function StickerBoard({ roomId, onSelect }) {
   const parentIds = initMatrix.roomList.getAllParentSpaces(room.roomId);
   const parentRooms = [...parentIds].map((id) => mx.getRoom(id));
 
-  const packs = getRelevantPacks(
-    mx,
-    [room, ...parentRooms],
-  ).filter((pack) => pack.getStickers().length !== 0);
+  const packs = getRelevantPacks(mx, [room, ...parentRooms]).filter(
+    (pack) => pack.getStickers().length !== 0
+  );
 
   function isTargetNotSticker(target) {
     return target.classList.contains('sticker-board__sticker') === false;
@@ -47,7 +46,9 @@ function StickerBoard({ roomId, onSelect }) {
 
   const renderPack = (pack) => (
     <div className="sticker-board__pack" key={pack.id}>
-      <Text className="sticker-board__pack-header" variant="b2" weight="bold">{pack.displayName ?? 'Unknown'}</Text>
+      <Text className="sticker-board__pack-header" variant="b2" weight="bold">
+        {pack.displayName ?? 'Unknown'}
+      </Text>
       <div className="sticker-board__pack-items">
         {pack.getStickers().map((sticker) => (
           <img
@@ -87,19 +88,14 @@ function StickerBoard({ roomId, onSelect }) {
       )}
       <div className="sticker-board__container">
         <ScrollView autoHide ref={scrollRef}>
-          <div
-            onClick={handleOnSelect}
-            className="sticker-board__content"
-          >
-            {
-              packs.length > 0
-                ? packs.map(renderPack)
-                : (
-                  <div className="sticker-board__empty">
-                    <Text>There is no sticker pack.</Text>
-                  </div>
-                )
-            }
+          <div onClick={handleOnSelect} className="sticker-board__content">
+            {packs.length > 0 ? (
+              packs.map(renderPack)
+            ) : (
+              <div className="sticker-board__empty">
+                <Text>There is no sticker pack.</Text>
+              </div>
+            )}
           </div>
         </ScrollView>
       </div>

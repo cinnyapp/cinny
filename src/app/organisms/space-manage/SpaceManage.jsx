@@ -37,32 +37,37 @@ function SpaceManageBreadcrumb({ path, onSelect }) {
     <div className="space-manage-breadcrumb__wrapper">
       <ScrollView horizontal vertical={false} invisible>
         <div className="space-manage-breadcrumb">
-          {
-            path.map((item, index) => (
-              <React.Fragment key={item.roomId}>
-                {index > 0 && <RawIcon size="extra-small" src={ChevronRightIC} />}
-                <Button onClick={() => onSelect(item.roomId, item.name)}>
-                  <Text variant="b2">{twemojify(item.name)}</Text>
-                </Button>
-              </React.Fragment>
-            ))
-          }
+          {path.map((item, index) => (
+            <React.Fragment key={item.roomId}>
+              {index > 0 && <RawIcon size="extra-small" src={ChevronRightIC} />}
+              <Button onClick={() => onSelect(item.roomId, item.name)}>
+                <Text variant="b2">{twemojify(item.name)}</Text>
+              </Button>
+            </React.Fragment>
+          ))}
         </div>
       </ScrollView>
     </div>
   );
 }
 SpaceManageBreadcrumb.propTypes = {
-  path: PropTypes.arrayOf(PropTypes.exact({
-    roomId: PropTypes.string,
-    name: PropTypes.string,
-  })).isRequired,
+  path: PropTypes.arrayOf(
+    PropTypes.exact({
+      roomId: PropTypes.string,
+      name: PropTypes.string,
+    })
+  ).isRequired,
   onSelect: PropTypes.func.isRequired,
 };
 
 function SpaceManageItem({
-  parentId, roomInfo, onSpaceClick, requestClose,
-  isSelected, onSelect, roomHierarchy,
+  parentId,
+  roomInfo,
+  onSpaceClick,
+  requestClose,
+  isSelected,
+  onSelect,
+  roomHierarchy,
 }) {
   const [isExpand, setIsExpand] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
@@ -72,8 +77,11 @@ function SpaceManageItem({
   const parentRoom = mx.getRoom(parentId);
   const isSpace = roomInfo.room_type === 'm.space';
   const roomId = roomInfo.room_id;
-  const canManage = parentRoom?.currentState.maySendStateEvent('m.space.child', mx.getUserId()) || false;
-  const isSuggested = parentRoom?.currentState.getStateEvents('m.space.child', roomId)?.getContent().suggested === true;
+  const canManage =
+    parentRoom?.currentState.maySendStateEvent('m.space.child', mx.getUserId()) || false;
+  const isSuggested =
+    parentRoom?.currentState.getStateEvents('m.space.child', roomId)?.getContent().suggested ===
+    true;
 
   const room = mx.getRoom(roomId);
   const isJoined = !!(room?.getMyMembership() === 'join' || null);
@@ -103,11 +111,7 @@ function SpaceManageItem({
       bgColor={colorMXID(roomId)}
       imageSrc={isDM ? imageSrc : null}
       iconColor="var(--ic-surface-low)"
-      iconSrc={
-        isDM
-          ? null
-          : joinRuleToIconSrc((roomInfo.join_rules || roomInfo.join_rule), isSpace)
-      }
+      iconSrc={isDM ? null : joinRuleToIconSrc(roomInfo.join_rules || roomInfo.join_rule, isSpace)}
       size="extra-small"
     />
   );
@@ -130,11 +134,11 @@ function SpaceManageItem({
   );
 
   return (
-    <div
-      className={`space-manage-item${isSpace ? '--space' : ''}`}
-    >
+    <div className={`space-manage-item${isSpace ? '--space' : ''}`}>
       <div>
-        {canManage && <Checkbox isActive={isSelected} onToggle={() => onSelect(roomId)} variant="positive" />}
+        {canManage && (
+          <Checkbox isActive={isSelected} onToggle={() => onSelect(roomId)} variant="positive" />
+        )}
         <button
           className="space-manage-item__btn"
           onClick={isSpace ? () => onSpaceClick(roomId, name) : null}
@@ -145,13 +149,17 @@ function SpaceManageItem({
           {isSuggested && <Text variant="b2">Suggested</Text>}
         </button>
         {roomInfo.topic && expandBtnJsx}
-        {
-          isJoined
-            ? <Button onClick={handleOpen}>Open</Button>
-            : <Button variant="primary" onClick={handleJoin} disabled={isJoining}>{isJoining ? 'Joining...' : 'Join'}</Button>
-        }
+        {isJoined ? (
+          <Button onClick={handleOpen}>Open</Button>
+        ) : (
+          <Button variant="primary" onClick={handleJoin} disabled={isJoining}>
+            {isJoining ? 'Joining...' : 'Join'}
+          </Button>
+        )}
       </div>
-      {isExpand && roomInfo.topic && <Text variant="b2">{twemojify(roomInfo.topic, undefined, true)}</Text>}
+      {isExpand && roomInfo.topic && (
+        <Text variant="b2">{twemojify(roomInfo.topic, undefined, true)}</Text>
+      )}
     </div>
   );
 }
@@ -201,9 +209,11 @@ function SpaceManageFooter({ parentId, selected }) {
     <div className="space-manage__footer">
       {process && <Spinner size="small" />}
       <Text weight="medium">{process || `${selected.length} item selected`}</Text>
-      { !process && (
+      {!process && (
         <>
-          <Button onClick={handleRemove} variant="danger">Remove</Button>
+          <Button onClick={handleRemove} variant="danger">
+            Remove
+          </Button>
           <Button
             onClick={() => handleToggleSuggested(!allSuggested)}
             variant={allSuggested ? 'surface' : 'primary'}
@@ -336,20 +346,19 @@ function SpaceManageContent({ roomId, requestClose }) {
   if (!currentHierarchy) loadRoomHierarchy();
   return (
     <div className="space-manage__content">
-      {spacePath.length > 1 && (
-        <SpaceManageBreadcrumb path={spacePath} onSelect={addPathItem} />
-      )}
-      <Text variant="b3" weight="bold">Rooms and spaces</Text>
+      {spacePath.length > 1 && <SpaceManageBreadcrumb path={spacePath} onSelect={addPathItem} />}
+      <Text variant="b3" weight="bold">
+        Rooms and spaces
+      </Text>
       <div className="space-manage__content-items">
         {!isLoading && currentHierarchy?.rooms?.length === 1 && (
           <Text>
             Either the space contains private rooms or you need to join space to view it's rooms.
           </Text>
         )}
-        {currentHierarchy && (currentHierarchy.rooms?.map((roomInfo) => (
-          roomInfo.room_id === currentPath.roomId
-            ? null
-            : (
+        {currentHierarchy &&
+          currentHierarchy.rooms?.map((roomInfo) =>
+            roomInfo.room_id === currentPath.roomId ? null : (
               <SpaceManageItem
                 key={roomInfo.room_id}
                 isSelected={selected.includes(roomInfo.room_id)}
@@ -361,7 +370,7 @@ function SpaceManageContent({ roomId, requestClose }) {
                 onSelect={handleSelected}
               />
             )
-        )))}
+          )}
         {!currentHierarchy && <Text>loading...</Text>}
       </div>
       {currentHierarchy?.canLoadMore && !isLoading && (
@@ -410,20 +419,16 @@ function SpaceManage() {
     <PopupWindow
       isOpen={roomId !== null}
       className="space-manage"
-      title={(
+      title={
         <Text variant="s1" weight="medium" primary>
           {roomId && twemojify(room.name)}
           <span style={{ color: 'var(--tc-surface-low)' }}> — manage rooms</span>
         </Text>
-      )}
+      }
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
       onRequestClose={requestClose}
     >
-      {
-        roomId
-          ? <SpaceManageContent roomId={roomId} requestClose={requestClose} />
-          : <div />
-      }
+      {roomId ? <SpaceManageContent roomId={roomId} requestClose={requestClose} /> : <div />}
     </PopupWindow>
   );
 }

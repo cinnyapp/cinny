@@ -3,7 +3,11 @@ import PropTypes from 'prop-types';
 import './RoomsCategory.scss';
 
 import initMatrix from '../../../client/initMatrix';
-import { selectSpace, selectRoom, openReusableContextMenu } from '../../../client/action/navigation';
+import {
+  selectSpace,
+  selectRoom,
+  openReusableContextMenu,
+} from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
@@ -18,28 +22,22 @@ import HorizontalMenuIC from '../../../../public/res/ic/outlined/horizontal-menu
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import ChevronRightIC from '../../../../public/res/ic/outlined/chevron-right.svg';
 
-function RoomsCategory({
-  spaceId, name, hideHeader, roomIds, drawerPostie,
-}) {
+function RoomsCategory({ spaceId, name, hideHeader, roomIds, drawerPostie }) {
   const { spaces, directs } = initMatrix.roomList;
   const [isOpen, setIsOpen] = useState(true);
 
   const openSpaceOptions = (e) => {
     e.preventDefault();
-    openReusableContextMenu(
-      'bottom',
-      getEventCords(e, '.header'),
-      (closeMenu) => <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />,
-    );
+    openReusableContextMenu('bottom', getEventCords(e, '.header'), (closeMenu) => (
+      <SpaceOptions roomId={spaceId} afterOptionSelect={closeMenu} />
+    ));
   };
 
   const openHomeSpaceOptions = (e) => {
     e.preventDefault();
-    openReusableContextMenu(
-      'right',
-      getEventCords(e, '.ic-btn'),
-      (closeMenu) => <HomeSpaceOptions spaceId={spaceId} afterOptionSelect={closeMenu} />,
-    );
+    openReusableContextMenu('right', getEventCords(e, '.ic-btn'), (closeMenu) => (
+      <HomeSpaceOptions spaceId={spaceId} afterOptionSelect={closeMenu} />
+    ));
   };
 
   const renderSelector = (roomId) => {
@@ -61,18 +59,36 @@ function RoomsCategory({
     <div className="room-category">
       {!hideHeader && (
         <div className="room-category__header">
-          <button className="room-category__toggle" onClick={() => setIsOpen(!isOpen)} type="button">
+          <button
+            className="room-category__toggle"
+            onClick={() => setIsOpen(!isOpen)}
+            type="button"
+          >
             <RawIcon src={isOpen ? ChevronBottomIC : ChevronRightIC} size="extra-small" />
-            <Text className="cat-header" variant="b3" weight="medium">{name}</Text>
+            <Text className="cat-header" variant="b3" weight="medium">
+              {name}
+            </Text>
           </button>
-          {spaceId && <IconButton onClick={openSpaceOptions} tooltip="Space options" src={HorizontalMenuIC} size="extra-small" />}
-          {spaceId && <IconButton onClick={openHomeSpaceOptions} tooltip="Add rooms/spaces" src={PlusIC} size="extra-small" />}
+          {spaceId && (
+            <IconButton
+              onClick={openSpaceOptions}
+              tooltip="Space options"
+              src={HorizontalMenuIC}
+              size="extra-small"
+            />
+          )}
+          {spaceId && (
+            <IconButton
+              onClick={openHomeSpaceOptions}
+              tooltip="Add rooms/spaces"
+              src={PlusIC}
+              size="extra-small"
+            />
+          )}
         </div>
       )}
       {(isOpen || hideHeader) && (
-        <div className="room-category__content">
-          {roomIds.map(renderSelector)}
-        </div>
+        <div className="room-category__content">{roomIds.map(renderSelector)}</div>
       )}
     </div>
   );

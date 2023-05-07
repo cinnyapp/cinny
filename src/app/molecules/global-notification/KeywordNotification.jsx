@@ -18,9 +18,7 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import { useAccountData } from '../../hooks/useAccountData';
-import {
-  notifType, typeToLabel, getActionType, getTypeActions,
-} from './GlobalNotification';
+import { notifType, typeToLabel, getActionType, getTypeActions } from './GlobalNotification';
 
 const DISPLAY_NAME = '.m.rule.contains_display_name';
 const ROOM_PING = '.m.rule.roomnotif';
@@ -131,30 +129,20 @@ function useKeywordNotif() {
 }
 
 function GlobalNotification() {
-  const {
-    rulesToType,
-    pushRules,
-    setRule,
-    addKeyword,
-    removeKeyword,
-  } = useKeywordNotif();
+  const { rulesToType, pushRules, setRule, addKeyword, removeKeyword } = useKeywordNotif();
 
   const keywordRules = pushRules?.global?.content.filter((r) => r.rule_id !== USERNAME) ?? [];
 
   const onSelect = (evt, rule) => {
-    openReusableContextMenu(
-      'bottom',
-      getEventCords(evt, '.btn-surface'),
-      (requestClose) => (
-        <NotificationSelector
-          value={rulesToType[rule]}
-          onSelect={(value) => {
-            if (rulesToType[rule] !== value) setRule(rule, value);
-            requestClose();
-          }}
-        />
-      ),
-    );
+    openReusableContextMenu('bottom', getEventCords(evt, '.btn-surface'), (requestClose) => (
+      <NotificationSelector
+        value={rulesToType[rule]}
+        onSelect={(value) => {
+          if (rulesToType[rule] !== value) setRule(rule, value);
+          requestClose();
+        }}
+      />
+    ));
   };
 
   const handleSubmit = (evt) => {
@@ -171,50 +159,66 @@ function GlobalNotification() {
       <MenuHeader>Mentions & keywords</MenuHeader>
       <SettingTile
         title="Message containing my display name"
-        options={(
+        options={
           <Button onClick={(evt) => onSelect(evt, DISPLAY_NAME)} iconSrc={ChevronBottomIC}>
-            { typeToLabel[rulesToType[DISPLAY_NAME]] }
+            {typeToLabel[rulesToType[DISPLAY_NAME]]}
           </Button>
-        )}
-        content={<Text variant="b3">Default notification settings for all message containing your display name.</Text>}
+        }
+        content={
+          <Text variant="b3">
+            Default notification settings for all message containing your display name.
+          </Text>
+        }
       />
       <SettingTile
         title="Message containing my username"
-        options={(
+        options={
           <Button onClick={(evt) => onSelect(evt, USERNAME)} iconSrc={ChevronBottomIC}>
-            { typeToLabel[rulesToType[USERNAME]] }
+            {typeToLabel[rulesToType[USERNAME]]}
           </Button>
-        )}
-        content={<Text variant="b3">Default notification settings for all message containing your username.</Text>}
+        }
+        content={
+          <Text variant="b3">
+            Default notification settings for all message containing your username.
+          </Text>
+        }
       />
       <SettingTile
         title="Message containing @room"
-        options={(
+        options={
           <Button onClick={(evt) => onSelect(evt, ROOM_PING)} iconSrc={ChevronBottomIC}>
             {typeToLabel[rulesToType[ROOM_PING]]}
           </Button>
-        )}
-        content={<Text variant="b3">Default notification settings for all messages containing @room.</Text>}
+        }
+        content={
+          <Text variant="b3">Default notification settings for all messages containing @room.</Text>
+        }
       />
-      { rulesToType[KEYWORD] && (
+      {rulesToType[KEYWORD] && (
         <SettingTile
           title="Message containing keywords"
-          options={(
+          options={
             <Button onClick={(evt) => onSelect(evt, KEYWORD)} iconSrc={ChevronBottomIC}>
               {typeToLabel[rulesToType[KEYWORD]]}
             </Button>
-          )}
-          content={<Text variant="b3">Default notification settings for all message containing keywords.</Text>}
+          }
+          content={
+            <Text variant="b3">
+              Default notification settings for all message containing keywords.
+            </Text>
+          }
         />
       )}
       <SettingTile
         title="Keywords"
-        content={(
+        content={
           <div className="keyword-notification__keyword">
             <Text variant="b3">Get notification when a message contains keyword.</Text>
             <form onSubmit={handleSubmit}>
               <Input name="keywordInput" required />
-              <Button variant="primary" type="submit">Add</Button>
+              <Button variant="primary" type="submit">
+                Add
+              </Button>
             </form>
             {keywordRules.length > 0 && (
               <div>
@@ -230,7 +234,7 @@ function GlobalNotification() {
               </div>
             )}
           </div>
-        )}
+        }
       />
     </div>
   );

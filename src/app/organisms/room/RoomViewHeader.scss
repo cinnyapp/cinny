@@ -8,12 +8,12 @@
   @include dir.side(margin, 0, auto);
   border-radius: var(--bo-radius);
   cursor: pointer;
-  
+
   & .ic-raw {
     @include dir.side(margin, 0, var(--sp-extra-tight));
     transition: transform 200ms ease-in-out;
   }
-  @media (hover:hover) {
+  @media (hover: hover) {
     &:hover {
       background-color: var(--bg-surface-hover);
       box-shadow: var(--bs-surface-outline);

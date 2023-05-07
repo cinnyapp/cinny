@@ -3,7 +3,7 @@ name: Deploy to Netlify (dev)
 on:
   push:
     branches:
-       - dev
+      - dev
 
 jobs:
   deploy-to-netlify:
@@ -16,18 +16,18 @@ jobs:
         uses: actions/setup-node@v3.5.1
         with:
           node-version: 18.12.1
-          cache: "npm"
+          cache: 'npm'
       - name: Install dependencies
         run: npm ci
       - name: Build app
         env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
+          NODE_OPTIONS: '--max_old_space_size=4096'
         run: npm run build
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@5da65c9f74c7961c5501a3ba329b8d0912f39c03
         with:
           publish-dir: dist
-          deploy-message: "Dev deploy ${{ github.sha }}"
+          deploy-message: 'Dev deploy ${{ github.sha }}'
           enable-commit-comment: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
           production-deploy: true

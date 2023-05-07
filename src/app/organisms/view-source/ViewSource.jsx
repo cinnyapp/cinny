@@ -18,9 +18,7 @@ function ViewSourceBlock({ title, json }) {
       <MenuHeader>{title}</MenuHeader>
       <ScrollView horizontal vertical={false} autoHide>
         <pre className="text text-b1">
-          <code className="language-json">
-            {JSON.stringify(json, null, 2)}
-          </code>
+          <code className="language-json">{JSON.stringify(json, null, 2)}</code>
         </pre>
       </ScrollView>
     </div>
@@ -52,7 +50,9 @@ function ViewSource() {
 
   const renderViewSource = () => (
     <div className="view-source">
-      {event.isEncrypted() && <ViewSourceBlock title="Decrypted source" json={event.getEffectiveEvent()} />}
+      {event.isEncrypted() && (
+        <ViewSourceBlock title="Decrypted source" json={event.getEffectiveEvent()} />
+      )}
       <ViewSourceBlock title="Original source" json={event.event} />
     </div>
   );

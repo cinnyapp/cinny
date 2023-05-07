@@ -29,7 +29,7 @@
     & .people-search {
       --search-input-height: 40px;
       min-height: var(--search-input-height);
-  
+
       margin: 0 var(--sp-extra-tight);
 
       position: relative;
@@ -64,7 +64,7 @@
 .people-drawer__content {
   padding-top: var(--sp-extra-tight);
   padding-bottom: calc(2 * var(--sp-normal));
-  
+
   & .people-selector {
     padding: var(--sp-extra-tight);
     border-radius: var(--bo-radius);
@@ -72,7 +72,7 @@
       @include dir.side(margin, var(--sp-extra-tight), 0);
     }
   }
-  
+
   & .segmented-controls {
     display: flex;
     margin-bottom: var(--sp-extra-tight);

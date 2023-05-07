@@ -5,14 +5,11 @@ import './Chip.scss';
 import Text from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 
-function Chip({
-  iconSrc, iconColor, text, children,
-  onClick,
-}) {
+function Chip({ iconSrc, iconColor, text, children, onClick }) {
   return (
     <button className="chip" type="button" onClick={onClick}>
       {iconSrc != null && <RawIcon src={iconSrc} color={iconColor} size="extra-small" />}
-      {(text != null && text !== '') && <Text variant="b3">{text}</Text>}
+      {text != null && text !== '' && <Text variant="b3">{text}</Text>}
       {children}
     </button>
   );

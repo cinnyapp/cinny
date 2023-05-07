@@ -260,11 +260,13 @@ class RoomTimeline extends EventEmitter {
           // eslint-disable-next-line no-continue
           continue;
         }
-        if (!mEvent.isRedacted()
-          && !isReaction(mEvent)
-          && !isEdited(mEvent)
-          && cons.supportEventTypes.includes(mEvent.getType())
-        ) return mEvent;
+        if (
+          !mEvent.isRedacted() &&
+          !isReaction(mEvent) &&
+          !isEdited(mEvent) &&
+          cons.supportEventTypes.includes(mEvent.getType())
+        )
+          return mEvent;
       }
       return liveEvents[liveEvents.length - 1];
     };

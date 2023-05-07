@@ -30,9 +30,7 @@ class Postie {
   }
 
   hasTopicAndSubscriber(topic, address) {
-    return (this.hasTopic(topic))
-      ? this.hasSubscriber(topic, address)
-      : false;
+    return this.hasTopic(topic) ? this.hasSubscriber(topic, address) : false;
   }
 
   /**
@@ -62,9 +60,12 @@ class Postie {
     if (!subscribers) throw new Error(`Unable to unsubscribe. Topic: "${topic}" doesn't exist.`);
 
     const inboxes = subscribers.get(address);
-    if (!inboxes) throw new Error(`Unable to unsubscribe. Subscriber on topic:"${topic}" at address:"${address}" doesn't exist`);
+    if (!inboxes)
+      throw new Error(
+        `Unable to unsubscribe. Subscriber on topic:"${topic}" at address:"${address}" doesn't exist`
+      );
 
-    if (!inboxes.delete(inbox)) throw new Error('Unable to unsubscribe. Inbox doesn\'t exist');
+    if (!inboxes.delete(inbox)) throw new Error("Unable to unsubscribe. Inbox doesn't exist");
 
     if (inboxes.size === 0) subscribers.delete(address);
     if (subscribers.size === 0) this._topics.delete(topic);
@@ -78,7 +79,9 @@ class Postie {
   post(topic, address, data) {
     const sendPost = (inboxes, addr) => {
       if (inboxes === undefined) {
-        throw new Error(`Unable to post on topic:"${topic}" at address:"${addr}". Subscriber doesn't exist.`);
+        throw new Error(
+          `Unable to post on topic:"${topic}" at address:"${addr}". Subscriber doesn't exist.`
+        );
       }
       inboxes.forEach((inbox) => inbox(data));
     };

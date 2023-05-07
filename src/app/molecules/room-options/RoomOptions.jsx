@@ -37,7 +37,7 @@ function RoomOptions({ roomId, afterOptionSelect }) {
       'Leave room',
       `Are you sure that you want to leave "${room.name}" room?`,
       'Leave',
-      'danger',
+      'danger'
     );
     if (!isConfirmed) return;
     roomActions.leave(roomId);
@@ -45,16 +45,18 @@ function RoomOptions({ roomId, afterOptionSelect }) {
 
   return (
     <div style={{ maxWidth: '256px' }}>
-      <MenuHeader>{twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}</MenuHeader>
-      <MenuItem iconSrc={TickMarkIC} onClick={handleMarkAsRead}>Mark as read</MenuItem>
-      <MenuItem
-        iconSrc={AddUserIC}
-        onClick={handleInviteClick}
-        disabled={!canInvite}
-      >
+      <MenuHeader>
+        {twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}
+      </MenuHeader>
+      <MenuItem iconSrc={TickMarkIC} onClick={handleMarkAsRead}>
+        Mark as read
+      </MenuItem>
+      <MenuItem iconSrc={AddUserIC} onClick={handleInviteClick} disabled={!canInvite}>
         Invite
       </MenuItem>
-      <MenuItem iconSrc={LeaveArrowIC} variant="danger" onClick={handleLeaveClick}>Leave</MenuItem>
+      <MenuItem iconSrc={LeaveArrowIC} variant="danger" onClick={handleLeaveClick}>
+        Leave
+      </MenuItem>
       <MenuHeader>Notification</MenuHeader>
       <RoomNotification roomId={roomId} />
     </div>

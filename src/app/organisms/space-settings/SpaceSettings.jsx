@@ -48,23 +48,28 @@ const tabText = {
   PERMISSIONS: 'Permissions',
 };
 
-const tabItems = [{
-  iconSrc: SettingsIC,
-  text: tabText.GENERAL,
-  disabled: false,
-}, {
-  iconSrc: UserIC,
-  text: tabText.MEMBERS,
-  disabled: false,
-}, {
-  iconSrc: EmojiIC,
-  text: tabText.EMOJIS,
-  disabled: false,
-}, {
-  iconSrc: ShieldUserIC,
-  text: tabText.PERMISSIONS,
-  disabled: false,
-}];
+const tabItems = [
+  {
+    iconSrc: SettingsIC,
+    text: tabText.GENERAL,
+    disabled: false,
+  },
+  {
+    iconSrc: UserIC,
+    text: tabText.MEMBERS,
+    disabled: false,
+  },
+  {
+    iconSrc: EmojiIC,
+    text: tabText.EMOJIS,
+    disabled: false,
+  },
+  {
+    iconSrc: ShieldUserIC,
+    text: tabText.PERMISSIONS,
+    disabled: false,
+  },
+];
 
 function GeneralSettings({ roomId }) {
   const isPinned = initMatrix.accountData.spaceShortcut.has(roomId);
@@ -103,7 +108,7 @@ function GeneralSettings({ roomId }) {
               'Leave space',
               `Are you sure that you want to leave "${roomName}" space?`,
               'Leave',
-              'danger',
+              'danger'
             );
             if (isConfirmed) leave(roomId);
           }}
@@ -165,12 +170,12 @@ function SpaceSettings() {
     <PopupWindow
       isOpen={isOpen}
       className="space-settings"
-      title={(
+      title={
         <Text variant="s1" weight="medium" primary>
           {isOpen && twemojify(room.name)}
           <span style={{ color: 'var(--tc-surface-low)' }}> — space settings</span>
         </Text>
-      )}
+      }
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
       onRequestClose={requestClose}
     >

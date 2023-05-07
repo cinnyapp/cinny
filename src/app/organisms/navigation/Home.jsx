@@ -43,8 +43,10 @@ function Home({ spaceId }) {
     const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
       if (!drawerPostie.hasTopic('selector-change')) return;
       const addresses = [];
-      if (drawerPostie.hasSubscriber('selector-change', selectedRoomId)) addresses.push(selectedRoomId);
-      if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId)) addresses.push(prevSelectedRoomId);
+      if (drawerPostie.hasSubscriber('selector-change', selectedRoomId))
+        addresses.push(selectedRoomId);
+      if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId))
+        addresses.push(prevSelectedRoomId);
       if (addresses.length === 0) return;
       drawerPostie.post('selector-change', addresses, selectedRoomId);
     };
@@ -68,37 +70,50 @@ function Home({ spaceId }) {
 
   return (
     <>
-      { !isCategorized && spaceIds.length !== 0 && (
-        <RoomsCategory name="Spaces" roomIds={spaceIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
+      {!isCategorized && spaceIds.length !== 0 && (
+        <RoomsCategory
+          name="Spaces"
+          roomIds={spaceIds.sort(roomIdByAtoZ)}
+          drawerPostie={drawerPostie}
+        />
       )}
 
-      { roomIds.length !== 0 && (
-        <RoomsCategory name="Rooms" roomIds={roomIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
+      {roomIds.length !== 0 && (
+        <RoomsCategory
+          name="Rooms"
+          roomIds={roomIds.sort(roomIdByAtoZ)}
+          drawerPostie={drawerPostie}
+        />
       )}
 
-      { directIds.length !== 0 && (
-        <RoomsCategory name="People" roomIds={directIds.sort(roomIdByActivity)} drawerPostie={drawerPostie} />
+      {directIds.length !== 0 && (
+        <RoomsCategory
+          name="People"
+          roomIds={directIds.sort(roomIdByActivity)}
+          drawerPostie={drawerPostie}
+        />
       )}
 
-      { isCategorized && [...categories.keys()].sort(roomIdByAtoZ).map((catId) => {
-        const rms = [];
-        const dms = [];
-        categories.get(catId).forEach((id) => {
-          if (directs.has(id)) dms.push(id);
-          else rms.push(id);
-        });
-        rms.sort(roomIdByAtoZ);
-        dms.sort(roomIdByActivity);
-        return (
-          <RoomsCategory
-            key={catId}
-            spaceId={catId}
-            name={mx.getRoom(catId).name}
-            roomIds={rms.concat(dms)}
-            drawerPostie={drawerPostie}
-          />
-        );
-      })}
+      {isCategorized &&
+        [...categories.keys()].sort(roomIdByAtoZ).map((catId) => {
+          const rms = [];
+          const dms = [];
+          categories.get(catId).forEach((id) => {
+            if (directs.has(id)) dms.push(id);
+            else rms.push(id);
+          });
+          rms.sort(roomIdByAtoZ);
+          dms.sort(roomIdByActivity);
+          return (
+            <RoomsCategory
+              key={catId}
+              spaceId={catId}
+              name={mx.getRoom(catId).name}
+              roomIds={rms.concat(dms)}
+              drawerPostie={drawerPostie}
+            />
+          );
+        })}
     </>
   );
 }

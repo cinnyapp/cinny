@@ -107,8 +107,14 @@ function ImportE2ERoomKeys() {
     <div className="import-e2e-room-keys">
       <input ref={inputRef} onChange={handleFileChange} style={{ display: 'none' }} type="file" />
 
-      <form className="import-e2e-room-keys__form" onSubmit={(e) => { e.preventDefault(); importE2ERoomKeys(); }}>
-        { keyFile !== null && (
+      <form
+        className="import-e2e-room-keys__form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          importE2ERoomKeys();
+        }}
+      >
+        {keyFile !== null && (
           <div className="import-e2e-room-keys__file">
             <IconButton onClick={removeImportKeysFile} src={CirclePlusIC} tooltip="Remove file" />
             <Text>{keyFile.name}</Text>
@@ -116,16 +122,26 @@ function ImportE2ERoomKeys() {
         )}
         {keyFile === null && <Button onClick={() => inputRef.current.click()}>Import keys</Button>}
         <Input forwardRef={passwordRef} type="password" placeholder="Password" required />
-        <Button disabled={status.isOngoing} variant="primary" type="submit">Decrypt</Button>
+        <Button disabled={status.isOngoing} variant="primary" type="submit">
+          Decrypt
+        </Button>
       </form>
-      { status.type === cons.status.IN_FLIGHT && (
+      {status.type === cons.status.IN_FLIGHT && (
         <div className="import-e2e-room-keys__process">
           <Spinner size="small" />
           <Text variant="b2">{status.msg}</Text>
         </div>
       )}
-      {status.type === cons.status.SUCCESS && <Text className="import-e2e-room-keys__success" variant="b2">{status.msg}</Text>}
-      {status.type === cons.status.ERROR && <Text className="import-e2e-room-keys__error" variant="b2">{status.msg}</Text>}
+      {status.type === cons.status.SUCCESS && (
+        <Text className="import-e2e-room-keys__success" variant="b2">
+          {status.msg}
+        </Text>
+      )}
+      {status.type === cons.status.ERROR && (
+        <Text className="import-e2e-room-keys__error" variant="b2">
+          {status.msg}
+        </Text>
+      )}
     </div>
   );
 }

@@ -28,10 +28,7 @@ function isMutedRule(rule) {
 }
 
 function findMutedRule(overrideRules, roomId) {
-  return overrideRules.find((rule) => (
-    rule.rule_id === roomId
-    && isMutedRule(rule)
-  ));
+  return overrideRules.find((rule) => rule.rule_id === roomId && isMutedRule(rule));
 }
 
 class Notifications extends EventEmitter {
@@ -252,7 +249,12 @@ class Notifications extends EventEmitter {
       const icon = await renderAvatar({
         text: mEvent.sender.name,
         bgColor: cssColorMXID(mEvent.getSender()),
-        imageSrc: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, iconSize, iconSize, 'crop'),
+        imageSrc: mEvent.sender?.getAvatarUrl(
+          this.matrixClient.baseUrl,
+          iconSize,
+          iconSize,
+          'crop'
+        ),
         size: iconSize,
         borderRadius: 8,
         scale: 8,

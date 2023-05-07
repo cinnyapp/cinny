@@ -5,10 +5,7 @@ import './Tabs.scss';
 import Button from '../button/Button';
 import ScrollView from '../scroll/ScrollView';
 
-function TabItem({
-  selected, iconSrc,
-  onClick, children, disabled,
-}) {
+function TabItem({ selected, iconSrc, onClick, children, disabled }) {
   const isSelected = selected ? 'tab-item--selected' : '';
 
   return (
@@ -78,7 +75,7 @@ Tabs.propTypes = {
       iconSrc: PropTypes.string,
       text: PropTypes.string,
       disabled: PropTypes.bool,
-    }),
+    })
   ).isRequired,
   defaultSelected: PropTypes.number,
   onSelect: PropTypes.func.isRequired,

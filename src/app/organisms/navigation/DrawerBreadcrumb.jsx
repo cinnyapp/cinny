@@ -49,8 +49,9 @@ function DrawerBreadcrumb({ spaceId }) {
   }, [spaceId]);
 
   function getHomeNotiExcept(childId) {
-    const orphans = roomList.getOrphans()
-      .filter((id) => (id !== childId))
+    const orphans = roomList
+      .getOrphans()
+      .filter((id) => id !== childId)
       .filter((id) => !accountData.spaceShortcut.has(id));
 
     let noti = null;
@@ -94,36 +95,37 @@ function DrawerBreadcrumb({ spaceId }) {
     <div className="drawer-breadcrumb__wrapper">
       <ScrollView ref={scrollRef} horizontal vertical={false} invisible>
         <div className="drawer-breadcrumb">
-          {
-            spacePath.map((id, index) => {
-              const noti = (id !== cons.tabs.HOME && index < spacePath.length)
-                ? getNotiExcept(id, (index === spacePath.length - 1) ? null : spacePath[index + 1])
-                : getHomeNotiExcept((index === spacePath.length - 1) ? null : spacePath[index + 1]);
+          {spacePath.map((id, index) => {
+            const noti =
+              id !== cons.tabs.HOME && index < spacePath.length
+                ? getNotiExcept(id, index === spacePath.length - 1 ? null : spacePath[index + 1])
+                : getHomeNotiExcept(index === spacePath.length - 1 ? null : spacePath[index + 1]);
 
-              return (
-                <React.Fragment
-                  key={id}
+            return (
+              <React.Fragment key={id}>
+                {index !== 0 && <RawIcon size="extra-small" src={ChevronRightIC} />}
+                <Button
+                  className={
+                    index === spacePath.length - 1 ? 'drawer-breadcrumb__btn--selected' : ''
+                  }
+                  onClick={() => {
+                    if (id === cons.tabs.HOME) selectTab(id);
+                    else selectSpace(id);
+                  }}
                 >
-                  { index !== 0 && <RawIcon size="extra-small" src={ChevronRightIC} />}
-                  <Button
-                    className={index === spacePath.length - 1 ? 'drawer-breadcrumb__btn--selected' : ''}
-                    onClick={() => {
-                      if (id === cons.tabs.HOME) selectTab(id);
-                      else selectSpace(id);
-                    }}
-                  >
-                    <Text variant="b2">{id === cons.tabs.HOME ? 'Home' : twemojify(mx.getRoom(id).name)}</Text>
-                    { noti !== null && (
-                      <NotificationBadge
-                        alert={noti.highlight !== 0}
-                        content={noti.total > 0 ? abbreviateNumber(noti.total) : null}
-                      />
-                    )}
-                  </Button>
-                </React.Fragment>
-              );
-            })
-          }
+                  <Text variant="b2">
+                    {id === cons.tabs.HOME ? 'Home' : twemojify(mx.getRoom(id).name)}
+                  </Text>
+                  {noti !== null && (
+                    <NotificationBadge
+                      alert={noti.highlight !== 0}
+                      content={noti.total > 0 ? abbreviateNumber(noti.total) : null}
+                    />
+                  )}
+                </Button>
+              </React.Fragment>
+            );
+          })}
           <div style={{ width: 'var(--sp-extra-tight)', height: '100%' }} />
         </div>
       </ScrollView>

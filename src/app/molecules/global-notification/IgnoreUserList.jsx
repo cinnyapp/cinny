@@ -34,12 +34,16 @@ function IgnoreUserList() {
       <MenuHeader>Ignored users</MenuHeader>
       <SettingTile
         title="Ignore user"
-        content={(
+        content={
           <div className="ignore-user-list__users">
-            <Text variant="b3">Ignore userId if you do not want to receive their messages or invites.</Text>
+            <Text variant="b3">
+              Ignore userId if you do not want to receive their messages or invites.
+            </Text>
             <form onSubmit={handleSubmit}>
               <Input name="ignoreInput" required />
-              <Button variant="primary" type="submit">Ignore</Button>
+              <Button variant="primary" type="submit">
+                Ignore
+              </Button>
             </form>
             {ignoredUsers.length > 0 && (
               <div>
@@ -55,7 +59,7 @@ function IgnoreUserList() {
               </div>
             )}
           </div>
-        )}
+        }
       />
     </div>
   );

@@ -15,33 +15,35 @@ const visibility = {
   JOINED: 'joined',
 };
 
-const items = [{
-  iconSrc: null,
-  text: 'Anyone (including guests)',
-  type: visibility.WORLD_READABLE,
-}, {
-  iconSrc: null,
-  text: 'Members (all messages)',
-  type: visibility.SHARED,
-}, {
-  iconSrc: null,
-  text: 'Members (messages after invite)',
-  type: visibility.INVITED,
-}, {
-  iconSrc: null,
-  text: 'Members (messages after join)',
-  type: visibility.JOINED,
-}];
+const items = [
+  {
+    iconSrc: null,
+    text: 'Anyone (including guests)',
+    type: visibility.WORLD_READABLE,
+  },
+  {
+    iconSrc: null,
+    text: 'Members (all messages)',
+    type: visibility.SHARED,
+  },
+  {
+    iconSrc: null,
+    text: 'Members (messages after invite)',
+    type: visibility.INVITED,
+  },
+  {
+    iconSrc: null,
+    text: 'Members (messages after join)',
+    type: visibility.JOINED,
+  },
+];
 
 function setHistoryVisibility(roomId, type) {
   const mx = initMatrix.matrixClient;
 
-  return mx.sendStateEvent(
-    roomId, 'm.room.history_visibility',
-    {
-      history_visibility: type,
-    },
-  );
+  return mx.sendStateEvent(roomId, 'm.room.history_visibility', {
+    history_visibility: type,
+  });
 }
 
 function useVisibility(roomId) {
@@ -51,11 +53,14 @@ function useVisibility(roomId) {
   const [activeType, setActiveType] = useState(room.getHistoryVisibility());
   useEffect(() => setActiveType(room.getHistoryVisibility()), [roomId]);
 
-  const setVisibility = useCallback((item) => {
-    if (item.type === activeType.type) return;
-    setActiveType(item.type);
-    setHistoryVisibility(roomId, item.type);
-  }, [activeType, roomId]);
+  const setVisibility = useCallback(
+    (item) => {
+      if (item.type === activeType.type) return;
+      setActiveType(item.type);
+      setHistoryVisibility(roomId, item.type);
+    },
+    [activeType, roomId]
+  );
 
   return [activeType, setVisibility];
 }
@@ -71,23 +76,24 @@ function RoomHistoryVisibility({ roomId }) {
 
   return (
     <div className="room-history-visibility">
-      {
-        items.map((item) => (
-          <MenuItem
-            variant={activeType === item.type ? 'positive' : 'surface'}
-            key={item.type}
-            iconSrc={item.iconSrc}
-            onClick={() => setVisibility(item)}
-            disabled={(!canChange)}
-          >
-            <Text varient="b1">
-              <span>{item.text}</span>
-              <RadioButton isActive={activeType === item.type} />
-            </Text>
-          </MenuItem>
-        ))
-      }
-      <Text variant="b3">Changes to history visibility will only apply to future messages. The visibility of existing history will have no effect.</Text>
+      {items.map((item) => (
+        <MenuItem
+          variant={activeType === item.type ? 'positive' : 'surface'}
+          key={item.type}
+          iconSrc={item.iconSrc}
+          onClick={() => setVisibility(item)}
+          disabled={!canChange}
+        >
+          <Text varient="b1">
+            <span>{item.text}</span>
+            <RadioButton isActive={activeType === item.type} />
+          </Text>
+        </MenuItem>
+      ))}
+      <Text variant="b3">
+        Changes to history visibility will only apply to future messages. The visibility of existing
+        history will have no effect.
+      </Text>
     </div>
   );
 }

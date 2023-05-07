@@ -23,46 +23,39 @@ const copyFiles = {
     {
       src: 'public/res/android',
       dest: 'public/',
-    }
+    },
   ],
-}
+};
 
 export default defineConfig({
   appType: 'spa',
   publicDir: false,
-  base: "",
+  base: '',
   server: {
     port: 8080,
     host: true,
   },
-  plugins: [
-    viteStaticCopy(copyFiles),
-    svgLoader(),
-    wasm(),
-    react(),
-  ],
+  plugins: [viteStaticCopy(copyFiles), svgLoader(), wasm(), react()],
   optimizeDeps: {
     esbuildOptions: {
-        define: {
-          global: 'globalThis'
-        },
-        plugins: [
-          // Enable esbuild polyfill plugins
-          NodeGlobalsPolyfillPlugin({
-            process: false,
-            buffer: true,
-          }),
-        ]
-    }
+      define: {
+        global: 'globalThis',
+      },
+      plugins: [
+        // Enable esbuild polyfill plugins
+        NodeGlobalsPolyfillPlugin({
+          process: false,
+          buffer: true,
+        }),
+      ],
+    },
   },
   build: {
     outDir: 'dist',
     sourcemap: true,
     copyPublicDir: false,
     rollupOptions: {
-      plugins: [
-        inject({ Buffer: ['buffer', 'Buffer'] })
-      ]
-    }
+      plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
+    },
   },
 });

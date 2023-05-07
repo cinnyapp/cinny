@@ -39,8 +39,10 @@ function Directs({ size }) {
     const selectorChanged = (selectedRoomId, prevSelectedRoomId) => {
       if (!drawerPostie.hasTopic('selector-change')) return;
       const addresses = [];
-      if (drawerPostie.hasSubscriber('selector-change', selectedRoomId)) addresses.push(selectedRoomId);
-      if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId)) addresses.push(prevSelectedRoomId);
+      if (drawerPostie.hasSubscriber('selector-change', selectedRoomId))
+        addresses.push(selectedRoomId);
+      if (drawerPostie.hasSubscriber('selector-change', prevSelectedRoomId))
+        addresses.push(prevSelectedRoomId);
       if (addresses.length === 0) return;
       drawerPostie.post('selector-change', addresses, selectedRoomId);
     };

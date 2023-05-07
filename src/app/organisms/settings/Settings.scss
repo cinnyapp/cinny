@@ -6,7 +6,7 @@
   & .pw {
     background-color: var(--bg-surface-low);
   }
-  
+
   .header .btn-danger {
     margin: 0 var(--sp-tight);
     box-shadow: none;
@@ -14,7 +14,7 @@
 
   & .profile-editor {
     padding: var(--sp-loose) var(--sp-extra-loose);
-  } 
+  }
 
   & .tabs__content {
     padding: 0 var(--sp-normal);
@@ -48,7 +48,7 @@
   @extend .settings-window__card;
 }
 
-.settings-window__cards-wrapper{
+.settings-window__cards-wrapper {
   & .setting-tile {
     margin: 0 var(--sp-normal);
     margin-top: var(--sp-normal);
@@ -70,11 +70,10 @@
   &__branding {
     padding: var(--sp-normal);
     display: flex;
-    
+
     & > div {
       margin: 0 var(--sp-loose);
     }
-    
   }
   &__btns {
     & button {
@@ -82,7 +81,7 @@
       @include dir.side(margin, 0, var(--sp-tight));
     }
   }
-  
+
   &__credits {
     padding: 0 var(--sp-normal);
     & ul {

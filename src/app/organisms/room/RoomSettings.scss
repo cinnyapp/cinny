@@ -18,8 +18,8 @@
     padding: var(--sp-ultra-tight) var(--sp-extra-tight);
     border-radius: calc(var(--bo-radius) / 2);
     cursor: pointer;
-    
-    @media (hover:hover) {
+
+    @media (hover: hover) {
       &:hover {
         background-color: var(--bg-surface-hover);
         box-shadow: var(--bs-surface-outline);
@@ -40,21 +40,20 @@
       margin: var(--sp-extra-loose);
     }
   }
-  
+
   & .tabs {
     position: sticky;
     top: 0;
     z-index: 999;
     width: 100%;
     background-color: var(--bg-surface-low);
-    box-shadow: 0 -4px 0 var(--bg-surface-low),
-      inset 0 -1px 0 var(--bg-surface-border);
+    box-shadow: 0 -4px 0 var(--bg-surface-low), inset 0 -1px 0 var(--bg-surface-border);
 
     &__content {
       padding: 0 var(--sp-normal);
     }
   }
-  
+
   &__cards-wrapper {
     padding: 0 var(--sp-normal);
     @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
@@ -75,7 +74,7 @@
 
 .room-settings .room-permissions__card,
 .room-settings .room-search__form,
-.room-settings .room-search__result-item ,
+.room-settings .room-search__result-item,
 .room-settings .room-members {
   @extend .room-settings__card;
 }

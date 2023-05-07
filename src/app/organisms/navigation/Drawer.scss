@@ -5,10 +5,7 @@
   @extend .cp-fx__column;
   @extend .cp-fx__item-one;
   min-width: 0;
-  @include dir.side(border,
-    none,
-    1px solid var(--bg-surface-border),
-  );
+  @include dir.side(border, none, 1px solid var(--bg-surface-border));
 
   & .header {
     padding: var(--sp-extra-tight);
@@ -51,6 +48,7 @@
     background-image: linear-gradient(
       to bottom,
       var(--bg-surface-low),
-      var(--bg-surface-low-transparent));
+      var(--bg-surface-low-transparent)
+    );
   }
 }

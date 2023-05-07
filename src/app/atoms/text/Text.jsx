@@ -2,10 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Text.scss';
 
-function Text({
-  className, style, variant, weight,
-  primary, span, children,
-}) {
+function Text({ className, style, variant, weight, primary, span, children }) {
   const classes = [];
   if (className) classes.push(className);
 
@@ -13,11 +10,35 @@ function Text({
   if (primary) classes.push('font-primary');
 
   const textClass = classes.join(' ');
-  if (span) return <span className={textClass} style={style}>{ children }</span>;
-  if (variant === 'h1') return <h1 className={textClass} style={style}>{ children }</h1>;
-  if (variant === 'h2') return <h2 className={textClass} style={style}>{ children }</h2>;
-  if (variant === 's1') return <h4 className={textClass} style={style}>{ children }</h4>;
-  return <p className={textClass} style={style}>{ children }</p>;
+  if (span)
+    return (
+      <span className={textClass} style={style}>
+        {children}
+      </span>
+    );
+  if (variant === 'h1')
+    return (
+      <h1 className={textClass} style={style}>
+        {children}
+      </h1>
+    );
+  if (variant === 'h2')
+    return (
+      <h2 className={textClass} style={style}>
+        {children}
+      </h2>
+    );
+  if (variant === 's1')
+    return (
+      <h4 className={textClass} style={style}>
+        {children}
+      </h4>
+    );
+  return (
+    <p className={textClass} style={style}>
+      {children}
+    </p>
+  );
 }
 
 Text.defaultProps = {

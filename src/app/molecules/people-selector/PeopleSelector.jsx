@@ -9,9 +9,7 @@ import { blurOnBubbling } from '../../atoms/button/script';
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
 
-function PeopleSelector({
-  avatarSrc, name, color, peopleRole, onClick,
-}) {
+function PeopleSelector({ avatarSrc, name, color, peopleRole, onClick }) {
   return (
     <div className="people-selector__container">
       <button
@@ -21,8 +19,14 @@ function PeopleSelector({
         type="button"
       >
         <Avatar imageSrc={avatarSrc} text={name} bgColor={color} size="extra-small" />
-        <Text className="people-selector__name" variant="b1">{twemojify(name)}</Text>
-        {peopleRole !== null && <Text className="people-selector__role" variant="b3">{peopleRole}</Text>}
+        <Text className="people-selector__name" variant="b1">
+          {twemojify(name)}
+        </Text>
+        {peopleRole !== null && (
+          <Text className="people-selector__role" variant="b3">
+            {peopleRole}
+          </Text>
+        )}
       </button>
     </div>
   );

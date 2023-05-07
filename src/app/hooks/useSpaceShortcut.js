@@ -16,7 +16,7 @@ export function useSpaceShortcut() {
     return () => {
       accountData.removeListener(
         cons.events.accountData.SPACE_SHORTCUT_UPDATED,
-        onSpaceShortcutUpdated,
+        onSpaceShortcutUpdated
       );
     };
   }, []);

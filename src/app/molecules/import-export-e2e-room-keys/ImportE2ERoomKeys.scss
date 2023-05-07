@@ -22,7 +22,7 @@
       background-color: var(--bg-caution);
       transform: rotate(45deg);
     }
-    
+
     & .text {
       @extend .cp-txt__ellipsis;
       @include dir.side(margin, var(--sp-tight), var(--sp-loose));
@@ -33,8 +33,7 @@
   &__form {
     display: flex;
     margin-top: var(--sp-extra-tight);
-    
-    
+
     & .input-container {
       flex: 1;
       margin: 0 var(--sp-tight);

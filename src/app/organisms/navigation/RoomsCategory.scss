@@ -26,7 +26,7 @@
     @extend .cp-fx__item-one;
     padding: var(--sp-extra-tight) var(--sp-tight);
     cursor: pointer;
-    
+
     & .ic-raw {
       flex-shrink: 0;
       width: 12px;
@@ -46,7 +46,7 @@
   &__content:first-child {
     margin-top: var(--sp-extra-tight);
   }
-  
+
   & .room-selector {
     width: calc(100% - var(--sp-extra-tight));
     @include dir.side(margin, auto, 0);

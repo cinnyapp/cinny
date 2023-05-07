@@ -31,7 +31,9 @@
   }
   & a {
     color: var(--tc-surface-normal);
-    &:hover { text-decoration: underline; }
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 .auth-card {
@@ -65,19 +67,21 @@
     & .input {
       background-color: var(--bg-surface);
       @include dir.prop(border-right-width, 0, 1px);
-      @include dir.prop(border-left-width, 1px, 0 );
-      @include dir.prop(border-radius,
+      @include dir.prop(border-left-width, 1px, 0);
+      @include dir.prop(
+        border-radius,
         var(--bo-radius) 0 0 var(--bo-radius),
-        0 var(--bo-radius) var(--bo-radius) 0,
+        0 var(--bo-radius) var(--bo-radius) 0
       );
     }
   }
   & .ic-btn {
     height: 46px;
     border: 1px solid var(--bg-surface-border);
-    @include dir.prop(border-radius,
+    @include dir.prop(
+      border-radius,
       0 var(--bo-radius) var(--bo-radius) 0,
-      var(--bo-radius) 0 0 var(--bo-radius),
+      var(--bo-radius) 0 0 var(--bo-radius)
     );
   }
 
@@ -101,7 +105,7 @@
   &__pass-eye-wrapper {
     margin: var(--sp-tight) 0 var(--sp-ultra-tight);
   }
-  
+
   &__heading {
     display: flex;
     justify-content: space-between;
@@ -113,7 +117,7 @@
     & .ic-btn {
       position: absolute;
       @include dir.prop(right, 6px, unset);
-      @include dir.prop(left, unset, 6px );
+      @include dir.prop(left, unset, 6px);
       bottom: 6px;
       border-radius: 4px;
     }
@@ -164,7 +168,7 @@
   min-height: 100%;
   width: 100%;
   background-color: var(--bg-surface-low);
-  opacity: .96;
+  opacity: 0.96;
 
   position: fixed;
   top: 0;

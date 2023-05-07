@@ -33,7 +33,9 @@ function RoomProfile({ roomId }) {
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
   let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
-  avatarSrc = isDM ? mx.getRoom(roomId).getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop') : avatarSrc;
+  avatarSrc = isDM
+    ? mx.getRoom(roomId).getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
+    : avatarSrc;
   const room = mx.getRoom(roomId);
   const { currentState } = room;
   const roomName = room.name;
@@ -122,7 +124,7 @@ function RoomProfile({ roomId }) {
         'Remove avatar',
         'Are you sure that you want to remove room avatar?',
         'Remove',
-        'caution',
+        'caution'
       );
       if (isConfirmed) {
         await mx.sendStateEvent(roomId, 'm.room.avatar', { url }, '');
@@ -132,15 +134,45 @@ function RoomProfile({ roomId }) {
 
   const renderEditNameAndTopic = () => (
     <form className="room-profile__edit-form" onSubmit={handleOnSubmit}>
-      {canChangeName && <Input value={roomName} name="room-name" disabled={status.type === cons.status.IN_FLIGHT} label="Name" />}
-      {canChangeTopic && <Input value={roomTopic} name="room-topic" disabled={status.type === cons.status.IN_FLIGHT} minHeight={100} resizable label="Topic" />}
-      {(!canChangeName || !canChangeTopic) && <Text variant="b3">{`You have permission to change ${room.isSpaceRoom() ? 'space' : 'room'} ${canChangeName ? 'name' : 'topic'} only.`}</Text>}
-      { status.type === cons.status.IN_FLIGHT && <Text variant="b2">{status.msg}</Text>}
-      { status.type === cons.status.SUCCESS && <Text style={{ color: 'var(--tc-positive-high)' }} variant="b2">{status.msg}</Text>}
-      { status.type === cons.status.ERROR && <Text style={{ color: 'var(--tc-danger-high)' }} variant="b2">{status.msg}</Text>}
-      { status.type !== cons.status.IN_FLIGHT && (
+      {canChangeName && (
+        <Input
+          value={roomName}
+          name="room-name"
+          disabled={status.type === cons.status.IN_FLIGHT}
+          label="Name"
+        />
+      )}
+      {canChangeTopic && (
+        <Input
+          value={roomTopic}
+          name="room-topic"
+          disabled={status.type === cons.status.IN_FLIGHT}
+          minHeight={100}
+          resizable
+          label="Topic"
+        />
+      )}
+      {(!canChangeName || !canChangeTopic) && (
+        <Text variant="b3">{`You have permission to change ${
+          room.isSpaceRoom() ? 'space' : 'room'
+        } ${canChangeName ? 'name' : 'topic'} only.`}</Text>
+      )}
+      {status.type === cons.status.IN_FLIGHT && <Text variant="b2">{status.msg}</Text>}
+      {status.type === cons.status.SUCCESS && (
+        <Text style={{ color: 'var(--tc-positive-high)' }} variant="b2">
+          {status.msg}
+        </Text>
+      )}
+      {status.type === cons.status.ERROR && (
+        <Text style={{ color: 'var(--tc-danger-high)' }} variant="b2">
+          {status.msg}
+        </Text>
+      )}
+      {status.type !== cons.status.IN_FLIGHT && (
         <div>
-          <Button type="submit" variant="primary">Save</Button>
+          <Button type="submit" variant="primary">
+            Save
+          </Button>
           <Button onClick={handleCancelEditing}>Cancel</Button>
         </div>
       )}
@@ -148,10 +180,15 @@ function RoomProfile({ roomId }) {
   );
 
   const renderNameAndTopic = () => (
-    <div className="room-profile__display" style={{ marginBottom: avatarSrc && canChangeAvatar ? '24px' : '0' }}>
+    <div
+      className="room-profile__display"
+      style={{ marginBottom: avatarSrc && canChangeAvatar ? '24px' : '0' }}
+    >
       <div>
-        <Text variant="h2" weight="medium" primary>{twemojify(roomName)}</Text>
-        { (canChangeName || canChangeTopic) && (
+        <Text variant="h2" weight="medium" primary>
+          {twemojify(roomName)}
+        </Text>
+        {(canChangeName || canChangeTopic) && (
           <IconButton
             src={PencilIC}
             size="extra-small"
@@ -168,8 +205,10 @@ function RoomProfile({ roomId }) {
   return (
     <div className="room-profile">
       <div className="room-profile__content">
-        { !canChangeAvatar && <Avatar imageSrc={avatarSrc} text={roomName} bgColor={colorMXID(roomId)} size="large" />}
-        { canChangeAvatar && (
+        {!canChangeAvatar && (
+          <Avatar imageSrc={avatarSrc} text={roomName} bgColor={colorMXID(roomId)} size="large" />
+        )}
+        {canChangeAvatar && (
           <ImageUpload
             text={roomName}
             bgColor={colorMXID(roomId)}

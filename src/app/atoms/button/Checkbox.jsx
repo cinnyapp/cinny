@@ -2,10 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Checkbox.scss';
 
-function Checkbox({
-  variant, isActive, onToggle,
-  disabled, tabIndex,
-}) {
+function Checkbox({ variant, isActive, onToggle, disabled, tabIndex }) {
   const className = `checkbox checkbox-${variant}${isActive ? ' checkbox--active' : ''}`;
   if (onToggle === null) return <span className={className} />;
   return (

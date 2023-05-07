@@ -22,7 +22,9 @@ function ProfileEditor({ userId }) {
   const user = mx.getUser(mx.getUserId());
 
   const displayNameRef = useRef(null);
-  const [avatarSrc, setAvatarSrc] = useState(user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null);
+  const [avatarSrc, setAvatarSrc] = useState(
+    user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null
+  );
   const [username, setUsername] = useState(user.displayName);
   const [disabled, setDisabled] = useState(true);
 
@@ -44,7 +46,7 @@ function ProfileEditor({ userId }) {
         'Remove avatar',
         'Are you sure that you want to remove avatar?',
         'Remove',
-        'caution',
+        'caution'
       );
       if (isConfirmed) {
         mx.setAvatarUrl('');
@@ -79,7 +81,10 @@ function ProfileEditor({ userId }) {
     <form
       className="profile-editor__form"
       style={{ marginBottom: avatarSrc ? '24px' : '0' }}
-      onSubmit={(e) => { e.preventDefault(); saveDisplayName(); }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        saveDisplayName();
+      }}
     >
       <Input
         label={`Display name of ${mx.getUserId()}`}
@@ -87,7 +92,9 @@ function ProfileEditor({ userId }) {
         value={mx.getUser(mx.getUserId()).displayName}
         forwardRef={displayNameRef}
       />
-      <Button variant="primary" type="submit" disabled={disabled}>Save</Button>
+      <Button variant="primary" type="submit" disabled={disabled}>
+        Save
+      </Button>
       <Button onClick={cancelDisplayNameChanges}>Cancel</Button>
     </form>
   );
@@ -95,7 +102,9 @@ function ProfileEditor({ userId }) {
   const renderInfo = () => (
     <div className="profile-editor__info" style={{ marginBottom: avatarSrc ? '24px' : '0' }}>
       <div>
-        <Text variant="h2" primary weight="medium">{twemojify(username) ?? userId}</Text>
+        <Text variant="h2" primary weight="medium">
+          {twemojify(username) ?? userId}
+        </Text>
         <IconButton
           src={PencilIC}
           size="extra-small"
@@ -116,9 +125,7 @@ function ProfileEditor({ userId }) {
         onUpload={handleAvatarUpload}
         onRequestRemove={() => handleAvatarUpload(null)}
       />
-      {
-        isEditing ? renderForm() : renderInfo()
-      }
+      {isEditing ? renderForm() : renderInfo()}
     </div>
   );
 }

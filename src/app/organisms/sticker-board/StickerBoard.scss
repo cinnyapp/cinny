@@ -8,7 +8,7 @@
   display: flex;
 
   & > .scrollbar {
-    width: initial;    
+    width: initial;
     height: var(--sticker-board-height);
   }
 
@@ -40,7 +40,7 @@
       top: 0;
       z-index: 99;
       background-color: var(--bg-surface);
-  
+
       @include dir.side(margin, var(--sp-extra-tight), 0);
       padding: var(--sp-extra-tight) var(--sp-ultra-tight);
       text-transform: uppercase;
@@ -55,7 +55,7 @@
       gap: var(--sp-normal) var(--sp-tight);
 
       img {
-        width: 76px;  
+        width: 76px;
         height: 76px;
         object-fit: contain;
         cursor: pointer;

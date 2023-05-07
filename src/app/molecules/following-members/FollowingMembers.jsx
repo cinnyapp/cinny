@@ -37,18 +37,19 @@ function FollowingMembers({ roomTimeline }) {
 
   const filteredM = followingMembers.filter((userId) => userId !== myUserId);
 
-  return filteredM.length !== 0 && (
-    <button
-      className="following-members"
-      onClick={() => openReadReceipts(roomId, followingMembers)}
-      type="button"
-    >
-      <RawIcon
-        size="extra-small"
-        src={TickMarkIC}
-      />
-      <Text variant="b2">{getUsersActionJsx(roomId, filteredM, 'following the conversation.')}</Text>
-    </button>
+  return (
+    filteredM.length !== 0 && (
+      <button
+        className="following-members"
+        onClick={() => openReadReceipts(roomId, followingMembers)}
+        type="button"
+      >
+        <RawIcon size="extra-small" src={TickMarkIC} />
+        <Text variant="b2">
+          {getUsersActionJsx(roomId, filteredM, 'following the conversation.')}
+        </Text>
+      </button>
+    )
   );
 }
 

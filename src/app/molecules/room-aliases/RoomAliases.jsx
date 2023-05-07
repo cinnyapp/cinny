@@ -251,7 +251,9 @@ function RoomAliases({ roomId }) {
       return (
         <div className="room-aliases__item-btns">
           <Text variant="b2">
-            <span style={{ color: isError ? 'var(--tc-danger-high' : 'inherit' }}>{deleteAlias.msg}</span>
+            <span style={{ color: isError ? 'var(--tc-danger-high' : 'inherit' }}>
+              {deleteAlias.msg}
+            </span>
           </Text>
         </div>
       );
@@ -259,10 +261,24 @@ function RoomAliases({ roomId }) {
 
     return (
       <div className="room-aliases__item-btns">
-        {canPublishAlias && !isMain && <Button onClick={() => handleSetMainAlias(alias)} variant="primary">Set as Main</Button>}
-        {!isPublished && canPublishAlias && <Button onClick={() => handlePublishAlias(alias)} variant="positive">Publish</Button>}
-        {isPublished && canPublishAlias && <Button onClick={() => handleUnPublishAlias(alias)} variant="caution">Un-Publish</Button>}
-        <Button onClick={() => handleDeleteAlias(alias)} variant="danger">Delete</Button>
+        {canPublishAlias && !isMain && (
+          <Button onClick={() => handleSetMainAlias(alias)} variant="primary">
+            Set as Main
+          </Button>
+        )}
+        {!isPublished && canPublishAlias && (
+          <Button onClick={() => handlePublishAlias(alias)} variant="positive">
+            Publish
+          </Button>
+        )}
+        {isPublished && canPublishAlias && (
+          <Button onClick={() => handleUnPublishAlias(alias)} variant="caution">
+            Un-Publish
+          </Button>
+        )}
+        <Button onClick={() => handleDeleteAlias(alias)} variant="danger">
+          Delete
+        </Button>
       </div>
     );
   };
@@ -275,7 +291,12 @@ function RoomAliases({ roomId }) {
     return (
       <React.Fragment key={`${alias}-wrapper`}>
         <div className="room-aliases__alias-item" key={alias}>
-          <Checkbox variant="positive" disabled={disabled} isActive={isActive} onToggle={() => handleAliasSelect(alias)} />
+          <Checkbox
+            variant="positive"
+            disabled={disabled}
+            isActive={isActive}
+            onToggle={() => handleAliasSelect(alias)}
+          />
           <Text>
             {alias}
             {isMain && <span>Main</span>}
@@ -293,35 +314,53 @@ function RoomAliases({ roomId }) {
     <div className="room-aliases">
       <SettingTile
         title="Publish to room directory"
-        content={<Text variant="b3">{`Publish this ${room.isSpaceRoom() ? 'space' : 'room'} to the ${hsString}'s public room directory?`}</Text>}
-        options={(
+        content={
+          <Text variant="b3">{`Publish this ${
+            room.isSpaceRoom() ? 'space' : 'room'
+          } to the ${hsString}'s public room directory?`}</Text>
+        }
+        options={
           <Toggle
             isActive={isPublic}
             onToggle={toggleDirectoryVisibility}
             disabled={!canPublishAlias}
           />
-        )}
+        }
       />
 
       <div className="room-aliases__content">
         <MenuHeader>Published addresses</MenuHeader>
-        {(aliases.published.length === 0) && <Text className="room-aliases__message">No published addresses</Text>}
-        {(aliases.published.length > 0 && !aliases.main) && <Text className="room-aliases__message">No Main address (select one from below)</Text>}
+        {aliases.published.length === 0 && (
+          <Text className="room-aliases__message">No published addresses</Text>
+        )}
+        {aliases.published.length > 0 && !aliases.main && (
+          <Text className="room-aliases__message">No Main address (select one from below)</Text>
+        )}
         {aliases.published.map(renderAlias)}
         <Text className="room-aliases__message" variant="b3">
-          {`Published addresses can be used by anyone on any server to join your ${room.isSpaceRoom() ? 'space' : 'room'}. To publish an address, it needs to be set as a local address first.`}
+          {`Published addresses can be used by anyone on any server to join your ${
+            room.isSpaceRoom() ? 'space' : 'room'
+          }. To publish an address, it needs to be set as a local address first.`}
         </Text>
       </div>
-      { isLocalVisible && (
+      {isLocalVisible && (
         <div className="room-aliases__content">
           <MenuHeader>Local addresses</MenuHeader>
-          {(aliases.local.length === 0) && <Text className="room-aliases__message">No local addresses</Text>}
+          {aliases.local.length === 0 && (
+            <Text className="room-aliases__message">No local addresses</Text>
+          )}
           {aliases.local.map(renderAlias)}
           <Text className="room-aliases__message" variant="b3">
-            {`Set local addresses for this ${room.isSpaceRoom() ? 'space' : 'room'} so users can find this ${room.isSpaceRoom() ? 'space' : 'room'} through your homeserver.`}
+            {`Set local addresses for this ${
+              room.isSpaceRoom() ? 'space' : 'room'
+            } so users can find this ${
+              room.isSpaceRoom() ? 'space' : 'room'
+            } through your homeserver.`}
           </Text>
 
-          <Text className="room-aliases__form-label" variant="b2">Add local address</Text>
+          <Text className="room-aliases__form-label" variant="b2">
+            Add local address
+          </Text>
           <form className="room-aliases__form" onSubmit={handleAliasSubmit}>
             <div className="room-aliases__input-wrapper">
               <Input
@@ -332,11 +371,21 @@ function RoomAliases({ roomId }) {
                 required
               />
             </div>
-            <Button variant="primary" type="submit">Add</Button>
+            <Button variant="primary" type="submit">
+              Add
+            </Button>
           </form>
           <div className="room-aliases__input-status">
-            {validate.status === cons.status.SUCCESS && <Text className="room-aliases__valid" variant="b2">{validate.msg}</Text>}
-            {validate.status === cons.status.ERROR && <Text className="room-aliases__invalid" variant="b2">{validate.msg}</Text>}
+            {validate.status === cons.status.SUCCESS && (
+              <Text className="room-aliases__valid" variant="b2">
+                {validate.msg}
+              </Text>
+            )}
+            {validate.status === cons.status.ERROR && (
+              <Text className="room-aliases__invalid" variant="b2">
+                {validate.msg}
+              </Text>
+            )}
           </div>
         </div>
       )}

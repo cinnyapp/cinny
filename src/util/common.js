@@ -4,7 +4,7 @@ export function bytesToSize(bytes) {
   if (bytes === 0) return 'n/a';
   const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)), 10);
   if (i === 0) return `${bytes} ${sizes[i]}`;
-  return `${(bytes / (1024 ** i)).toFixed(1)} ${sizes[i]}`;
+  return `${(bytes / 1024 ** i).toFixed(1)} ${sizes[i]}`;
 }
 
 export function diffMinutes(dt2, dt1) {
@@ -15,9 +15,9 @@ export function diffMinutes(dt2, dt1) {
 
 export function isInSameDay(dt2, dt1) {
   return (
-    dt2.getFullYear() === dt1.getFullYear()
-    && dt2.getMonth() === dt1.getMonth()
-    && dt2.getDate() === dt1.getDate()
+    dt2.getFullYear() === dt1.getFullYear() &&
+    dt2.getMonth() === dt1.getMonth() &&
+    dt2.getDate() === dt1.getDate()
   );
 }
 
@@ -29,9 +29,7 @@ export function getEventCords(ev, targetSelector) {
   let boxInfo;
 
   const path = ev.nativeEvent.composedPath();
-  const target = targetSelector
-    ? path.find((element) => element.matches?.(targetSelector))
-    : null;
+  const target = targetSelector ? path.find((element) => element.matches?.(targetSelector)) : null;
   if (target) {
     boxInfo = target.getBoundingClientRect();
   } else {

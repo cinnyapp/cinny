@@ -2,7 +2,6 @@
 @use '../../partials/dir';
 
 .room-profile {
-  
   &__content {
     @extend .cp-fx__row;
     & .avatar-container {
@@ -27,7 +26,7 @@
       word-break: break-word;
     }
   }
-  
+
   &__edit-form {
     @extend .cp-fx__item-one;
     @include dir.side(margin, var(--sp-loose), 0);
@@ -39,12 +38,12 @@
     & > .text {
       margin-bottom: var(--sp-tight);
     }
-    
+
     & > *:last-child {
       @extend .cp-fx__item-one;
       @extend .cp-fx__row;
       margin-top: var(--sp-tight);
-      
+
       .btn-primary {
         @include dir.side(margin, 0, var(--sp-tight));
       }

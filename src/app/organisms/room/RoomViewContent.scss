@@ -15,12 +15,13 @@
     & .message,
     & .ph-msg,
     & .timeline-change {
-      @include dir.prop(border-radius,
-      0 var(--bo-radius) var(--bo-radius) 0,
-      var(--bo-radius) 0 0 var(--bo-radius),
+      @include dir.prop(
+        border-radius,
+        0 var(--bo-radius) var(--bo-radius) 0,
+        var(--bo-radius) 0 0 var(--bo-radius)
       );
     }
-    
+
     & > .divider {
       margin: var(--sp-extra-tight);
       @include dir.side(margin, var(--sp-normal), var(--sp-extra-tight));

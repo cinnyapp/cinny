@@ -7,7 +7,7 @@
 
   & .room-profile {
     padding: var(--sp-loose) var(--sp-extra-loose);
-  } 
+  }
 
   & .tabs__content {
     padding: 0 var(--sp-normal);
@@ -18,7 +18,7 @@
     @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
   }
 }
-  
+
 .space-settings__card {
   margin: var(--sp-normal) 0;
   background-color: var(--bg-surface);

@@ -64,13 +64,13 @@ function mapRoomIds(roomIds) {
     if (room.isSpaceRoom()) type = 'space';
     else if (directs.has(roomId)) type = 'direct';
 
-    return ({
+    return {
       type,
       name: room.name,
       parents,
       roomId,
       room,
-    });
+    };
   });
 }
 
@@ -173,7 +173,8 @@ function Search() {
     let imageSrc = null;
     let iconSrc = null;
     if (item.type === 'direct') {
-      imageSrc = item.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
+      imageSrc =
+        item.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
     } else {
       iconSrc = joinRuleToIconSrc(item.room.getJoinRule(), item.type === 'space');
     }
@@ -204,19 +205,21 @@ function Search() {
       size="small"
     >
       <div className="search-dialog">
-        <form className="search-dialog__input" onSubmit={(e) => { e.preventDefault(); openFirstResult(); }}>
+        <form
+          className="search-dialog__input"
+          onSubmit={(e) => {
+            e.preventDefault();
+            openFirstResult();
+          }}
+        >
           <RawIcon src={SearchIC} size="small" />
-          <Input
-            onChange={handleOnChange}
-            forwardRef={searchRef}
-            placeholder="Search"
-          />
+          <Input onChange={handleOnChange} forwardRef={searchRef} placeholder="Search" />
           <IconButton size="small" src={CrossIC} type="reset" onClick={handleCross} tabIndex={-1} />
         </form>
         <div className="search-dialog__content-wrapper">
           <ScrollView autoHide>
             <div className="search-dialog__content">
-              { Array.isArray(result?.chunk) && result.chunk.map(renderRoomSelector) }
+              {Array.isArray(result?.chunk) && result.chunk.map(renderRoomSelector)}
             </div>
           </ScrollView>
         </div>

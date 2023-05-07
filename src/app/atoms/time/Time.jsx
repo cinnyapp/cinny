@@ -23,10 +23,7 @@ function Time({ timestamp, fullTime }) {
   }
 
   return (
-    <time
-      dateTime={date.toISOString()}
-      title={formattedFullTime}
-    >
+    <time dateTime={date.toISOString()} title={formattedFullTime}>
       {formattedDate}
     </time>
   );

@@ -27,9 +27,10 @@
       min-width: 0;
 
       & .input {
-        @include dir.prop(border-radius,
+        @include dir.prop(
+          border-radius,
           var(--bo-radius) 0 0 var(--bo-radius),
-          0 var(--bo-radius) var(--bo-radius) 0,
+          0 var(--bo-radius) var(--bo-radius) 0
         );
       }
     }
@@ -38,9 +39,10 @@
       width: 120px;
       @include dir.prop(border-left-width, 0, 1px);
       @include dir.prop(border-right-width, 1px, 0);
-      @include dir.prop(border-radius,
+      @include dir.prop(
+        border-radius,
         0 var(--bo-radius) var(--bo-radius) 0,
-        var(--bo-radius) 0 0 var(--bo-radius),
+        var(--bo-radius) 0 0 var(--bo-radius)
       );
     }
   }
@@ -66,7 +68,7 @@
     margin-top: var(--sp-loose);
     @include dir.side(margin, calc(var(--av-normal) + var(--sp-normal)), 0);
   }
-  
+
   & .room-tile {
     margin-top: var(--sp-normal);
     &__options {
@@ -78,8 +80,8 @@
 .try-join-with-alias {
   display: flex;
   align-items: center;
-  
-  & >.text:nth-child(2) {
+
+  & > .text:nth-child(2) {
     margin: 0 var(--sp-normal);
   }
 }

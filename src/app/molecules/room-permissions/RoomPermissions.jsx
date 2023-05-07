@@ -141,11 +141,28 @@ const permissionsInfo = {
 };
 
 const roomPermsGroups = {
-  'General Permissions': ['users_default', 'events_default', 'm.reaction', 'redact', 'notifications'],
+  'General Permissions': [
+    'users_default',
+    'events_default',
+    'm.reaction',
+    'redact',
+    'notifications',
+  ],
   'Manage members permissions': ['invite', 'kick', 'ban'],
   'Room profile permissions': ['m.room.avatar', 'm.room.name', 'm.room.topic'],
-  'Settings permissions': ['state_default', 'm.room.canonical_alias', 'm.room.power_levels', 'm.room.encryption', 'm.room.history_visibility'],
-  'Other permissions': ['m.room.tombstone', 'm.room.pinned_events', 'm.room.server_acl', 'im.vector.modular.widgets'],
+  'Settings permissions': [
+    'state_default',
+    'm.room.canonical_alias',
+    'm.room.power_levels',
+    'm.room.encryption',
+    'm.room.history_visibility',
+  ],
+  'Other permissions': [
+    'm.room.tombstone',
+    'm.room.pinned_events',
+    'm.room.server_acl',
+    'im.vector.modular.widgets',
+  ],
 };
 
 const spacePermsGroups = {
@@ -178,7 +195,10 @@ function RoomPermissions({ roomId }) {
   const room = mx.getRoom(roomId);
   const pLEvent = room.currentState.getStateEvents('m.room.power_levels')[0];
   const permissions = pLEvent.getContent();
-  const canChangePermission = room.currentState.maySendStateEvent('m.room.power_levels', mx.getUserId());
+  const canChangePermission = room.currentState.maySendStateEvent(
+    'm.room.power_levels',
+    mx.getUserId()
+  );
   const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel ?? 100;
 
   const handlePowerSelector = (e, permKey, parentKey, powerLevel) => {
@@ -203,74 +223,66 @@ function RoomPermissions({ roomId }) {
       mx.sendStateEvent(roomId, 'm.room.power_levels', newPermissions);
     };
 
-    openReusableContextMenu(
-      'bottom',
-      getEventCords(e, '.btn-surface'),
-      (closeMenu) => (
-        <PowerLevelSelector
-          value={powerLevel}
-          max={myPowerLevel}
-          onSelect={(pl) => {
-            closeMenu();
-            handlePowerLevelChange(pl);
-          }}
-        />
-      ),
-    );
+    openReusableContextMenu('bottom', getEventCords(e, '.btn-surface'), (closeMenu) => (
+      <PowerLevelSelector
+        value={powerLevel}
+        max={myPowerLevel}
+        onSelect={(pl) => {
+          closeMenu();
+          handlePowerLevelChange(pl);
+        }}
+      />
+    ));
   };
 
   const permsGroups = room.isSpaceRoom() ? spacePermsGroups : roomPermsGroups;
   return (
     <div className="room-permissions">
-      {
-        Object.keys(permsGroups).map((groupKey) => {
-          const groupedPermKeys = permsGroups[groupKey];
-          return (
-            <div className="room-permissions__card" key={groupKey}>
-              <MenuHeader>{groupKey}</MenuHeader>
-              {
-                groupedPermKeys.map((permKey) => {
-                  const permInfo = permissionsInfo[permKey];
+      {Object.keys(permsGroups).map((groupKey) => {
+        const groupedPermKeys = permsGroups[groupKey];
+        return (
+          <div className="room-permissions__card" key={groupKey}>
+            <MenuHeader>{groupKey}</MenuHeader>
+            {groupedPermKeys.map((permKey) => {
+              const permInfo = permissionsInfo[permKey];
 
-                  let powerLevel = 0;
-                  let permValue = permInfo.parent
-                    ? permissions[permInfo.parent]?.[permKey]
-                    : permissions[permKey];
+              let powerLevel = 0;
+              let permValue = permInfo.parent
+                ? permissions[permInfo.parent]?.[permKey]
+                : permissions[permKey];
 
-                  if (permValue === undefined) permValue = permInfo.default;
+              if (permValue === undefined) permValue = permInfo.default;
 
-                  if (typeof permValue === 'number') {
-                    powerLevel = permValue;
-                  } else if (permKey === 'notifications') {
-                    powerLevel = permValue.room ?? 50;
-                  }
-                  return (
-                    <SettingTile
-                      key={permKey}
-                      title={permInfo.name}
-                      content={<Text variant="b3">{permInfo.description}</Text>}
-                      options={(
-                        <Button
-                          onClick={
-                            canChangePermission
-                              ? (e) => handlePowerSelector(e, permKey, permInfo.parent, powerLevel)
-                              : null
-                          }
-                          iconSrc={canChangePermission ? ChevronBottomIC : null}
-                        >
-                          <Text variant="b2">
-                            {`${getPowerLabel(powerLevel) || 'Member'} - ${powerLevel}`}
-                          </Text>
-                        </Button>
-                      )}
-                    />
-                  );
-                })
+              if (typeof permValue === 'number') {
+                powerLevel = permValue;
+              } else if (permKey === 'notifications') {
+                powerLevel = permValue.room ?? 50;
               }
-            </div>
-          );
-        })
-      }
+              return (
+                <SettingTile
+                  key={permKey}
+                  title={permInfo.name}
+                  content={<Text variant="b3">{permInfo.description}</Text>}
+                  options={
+                    <Button
+                      onClick={
+                        canChangePermission
+                          ? (e) => handlePowerSelector(e, permKey, permInfo.parent, powerLevel)
+                          : null
+                      }
+                      iconSrc={canChangePermission ? ChevronBottomIC : null}
+                    >
+                      <Text variant="b2">
+                        {`${getPowerLabel(powerLevel) || 'Member'} - ${powerLevel}`}
+                      </Text>
+                    </Button>
+                  }
+                />
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }

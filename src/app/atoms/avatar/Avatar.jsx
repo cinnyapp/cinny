@@ -10,9 +10,7 @@ import RawIcon from '../system-icons/RawIcon';
 import ImageBrokenSVG from '../../../../public/res/svg/image-broken.svg';
 import { avatarInitials } from '../../../util/common';
 
-const Avatar = React.forwardRef(({
-  text, bgColor, iconSrc, iconColor, imageSrc, size,
-}, ref) => {
+const Avatar = React.forwardRef(({ text, bgColor, iconSrc, iconColor, imageSrc, size }, ref) => {
   let textSize = 's1';
   if (size === 'large') textSize = 'h1';
   if (size === 'small') textSize = 'b1';
@@ -20,34 +18,34 @@ const Avatar = React.forwardRef(({
 
   return (
     <div ref={ref} className={`avatar-container avatar-container__${size} noselect`}>
-      {
-        imageSrc !== null
-          ? (
-            <img
-              draggable="false"
-              src={imageSrc}
-              onLoad={(e) => { e.target.style.backgroundColor = 'transparent'; }}
-              onError={(e) => { e.target.src = ImageBrokenSVG; }}
-              alt=""
-            />
-          )
-          : (
-            <span
-              style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
-              className={`avatar__border${iconSrc !== null ? '--active' : ''}`}
-            >
-              {
-                iconSrc !== null
-                  ? <RawIcon size={size} src={iconSrc} color={iconColor} />
-                  : text !== null && (
-                    <Text variant={textSize} primary>
-                      {twemojify(avatarInitials(text))}
-                    </Text>
-                  )
-              }
-            </span>
-          )
-      }
+      {imageSrc !== null ? (
+        <img
+          draggable="false"
+          src={imageSrc}
+          onLoad={(e) => {
+            e.target.style.backgroundColor = 'transparent';
+          }}
+          onError={(e) => {
+            e.target.src = ImageBrokenSVG;
+          }}
+          alt=""
+        />
+      ) : (
+        <span
+          style={{ backgroundColor: iconSrc === null ? bgColor : 'transparent' }}
+          className={`avatar__border${iconSrc !== null ? '--active' : ''}`}
+        >
+          {iconSrc !== null ? (
+            <RawIcon size={size} src={iconSrc} color={iconColor} />
+          ) : (
+            text !== null && (
+              <Text variant={textSize} primary>
+                {twemojify(avatarInitials(text))}
+              </Text>
+            )
+          )}
+        </span>
+      )}
     </div>
   );
 });

@@ -1,4 +1,4 @@
- @use '../../partials/flex';
+@use '../../partials/flex';
 @use '../../partials/text';
 @use '../../partials/dir';
 
@@ -46,25 +46,24 @@
     background: var(--tc-surface-high);
     border-radius: 50%;
   }
-  
-  
+
   .bouncing-loader::before,
   .bouncing-loader::after {
-    content: "";
+    content: '';
   }
-  
+
   .bouncing-loader > div {
     margin: 0 4px;
   }
-  
+
   .bouncing-loader > div {
     animation-delay: 0.2s;
   }
-  
+
   .bouncing-loader::after {
     animation-delay: 0.4s;
   }
-  
+
   @keyframes bouncing-loader {
     to {
       opacity: 0.1;

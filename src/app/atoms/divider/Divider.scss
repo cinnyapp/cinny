@@ -36,7 +36,7 @@
 }
 .divider--primary {
   --local-divider-color: var(--bg-primary);
-  --local-divider-opacity: .8;
+  --local-divider-opacity: 0.8;
   .divider__text {
     color: var(--tc-primary-high);
     background-color: var(--bg-primary);
@@ -44,7 +44,7 @@
 }
 .divider--positive {
   --local-divider-color: var(--bg-positive);
-  --local-divider-opacity: .8;
+  --local-divider-opacity: 0.8;
   .divider__text {
     color: var(--bg-surface);
     background-color: var(--bg-positive);
@@ -52,7 +52,7 @@
 }
 .divider--danger {
   --local-divider-color: var(--bg-danger);
-  --local-divider-opacity: .8;
+  --local-divider-opacity: 0.8;
   .divider__text {
     color: var(--bg-surface);
     background-color: var(--bg-danger);
@@ -60,7 +60,7 @@
 }
 .divider--caution {
   --local-divider-color: var(--bg-caution);
-  --local-divider-opacity: .8;
+  --local-divider-opacity: 0.8;
   .divider__text {
     color: var(--bg-surface);
     background-color: var(--bg-caution);

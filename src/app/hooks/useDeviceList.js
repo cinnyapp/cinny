@@ -10,10 +10,11 @@ export function useDeviceList() {
   useEffect(() => {
     let isMounted = true;
 
-    const updateDevices = () => mx.getDevices().then((data) => {
-      if (!isMounted) return;
-      setDeviceList(data.devices || []);
-    });
+    const updateDevices = () =>
+      mx.getDevices().then((data) => {
+        if (!isMounted) return;
+        setDeviceList(data.devices || []);
+      });
     updateDevices();
 
     const handleDevicesUpdate = (users) => {

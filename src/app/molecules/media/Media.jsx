@@ -41,10 +41,7 @@ function getNativeHeight(width, height, maxWidth = 296) {
   return scale * height;
 }
 
-function FileHeader({
-  name, link, external,
-  file, type,
-}) {
+function FileHeader({ name, link, external, file, type }) {
   const [url, setUrl] = useState(null);
 
   async function getFile() {
@@ -61,19 +58,19 @@ function FileHeader({
   }
   return (
     <div className="file-header">
-      <Text className="file-name" variant="b3">{name}</Text>
-      { link !== null && (
+      <Text className="file-name" variant="b3">
+        {name}
+      </Text>
+      {link !== null && (
         <>
-          {
-            external && (
-              <IconButton
-                size="extra-small"
-                tooltip="Open in new tab"
-                src={ExternalSVG}
-                onClick={() => window.open(url || link)}
-              />
-            )
-          }
+          {external && (
+            <IconButton
+              size="extra-small"
+              tooltip="Open in new tab"
+              src={ExternalSVG}
+              onClick={() => window.open(url || link)}
+            />
+          )}
           <a href={url || link} download={name} target="_blank" rel="noreferrer">
             <IconButton
               size="extra-small"
@@ -100,9 +97,7 @@ FileHeader.propTypes = {
   type: PropTypes.string.isRequired,
 };
 
-function File({
-  name, link, file, type,
-}) {
+function File({ name, link, file, type }) {
   return (
     <div className="file-container">
       <FileHeader name={name} link={link} file={file} type={type} />
@@ -120,9 +115,7 @@ File.propTypes = {
   file: PropTypes.shape({}),
 };
 
-function Image({
-  name, width, height, link, file, type, blurhash,
-}) {
+function Image({ name, width, height, link, file, type, blurhash }) {
   const [url, setUrl] = useState(null);
   const [blur, setBlur] = useState(true);
   const [lightbox, setLightbox] = useState(false);
@@ -156,8 +149,8 @@ function Image({
           onClick={toggleLightbox}
           onKeyDown={toggleLightbox}
         >
-          { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
-          { url !== null && (
+          {blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
+          {url !== null && (
             <img
               style={{ display: blur ? 'none' : 'unset' }}
               onLoad={() => setBlur(false)}
@@ -168,12 +161,7 @@ function Image({
         </div>
       </div>
       {url && (
-        <ImageLightbox
-          url={url}
-          alt={name}
-          isOpen={lightbox}
-          onRequestClose={toggleLightbox}
-        />
+        <ImageLightbox url={url} alt={name} isOpen={lightbox} onRequestClose={toggleLightbox} />
       )}
     </>
   );
@@ -195,9 +183,7 @@ Image.propTypes = {
   blurhash: PropTypes.string,
 };
 
-function Sticker({
-  name, height, width, link, file, type,
-}) {
+function Sticker({ name, height, width, link, file, type }) {
   const [url, setUrl] = useState(null);
 
   useEffect(() => {
@@ -214,8 +200,11 @@ function Sticker({
   }, []);
 
   return (
-    <div className="sticker-container" style={{ height: width !== null ? getNativeHeight(width, height, 128) : 'unset' }}>
-      { url !== null && <img src={url || link} title={name} alt={name} />}
+    <div
+      className="sticker-container"
+      style={{ height: width !== null ? getNativeHeight(width, height, 128) : 'unset' }}
+    >
+      {url !== null && <img src={url || link} title={name} alt={name} />}
     </div>
   );
 }
@@ -234,9 +223,7 @@ Sticker.propTypes = {
   type: PropTypes.string,
 };
 
-function Audio({
-  name, link, type, file,
-}) {
+function Audio({ name, link, type, file }) {
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState(null);
 
@@ -254,9 +241,11 @@ function Audio({
     <div className="file-container">
       <FileHeader name={name} link={file !== null ? url : url || link} type={type} external />
       <div className="audio-container">
-        { url === null && isLoading && <Spinner size="small" /> }
-        { url === null && !isLoading && <IconButton onClick={handlePlayAudio} tooltip="Play audio" src={PlaySVG} />}
-        { url !== null && (
+        {url === null && isLoading && <Spinner size="small" />}
+        {url === null && !isLoading && (
+          <IconButton onClick={handlePlayAudio} tooltip="Play audio" src={PlaySVG} />
+        )}
+        {url !== null && (
           /* eslint-disable-next-line jsx-a11y/media-has-caption */
           <audio autoPlay controls>
             <source src={url} type={getBlobSafeMimeType(type)} />
@@ -278,8 +267,16 @@ Audio.propTypes = {
 };
 
 function Video({
-  name, link, thumbnail, thumbnailFile, thumbnailType,
-  width, height, file, type, blurhash,
+  name,
+  link,
+  thumbnail,
+  thumbnailFile,
+  thumbnailType,
+  width,
+  height,
+  file,
+  type,
+  blurhash,
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [url, setUrl] = useState(null);
@@ -319,14 +316,21 @@ function Video({
         }}
         className="video-container"
       >
-        { url === null ? (
+        {url === null ? (
           <>
-            { blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
-            { thumbUrl !== null && (
-              <img style={{ display: blur ? 'none' : 'unset' }} src={thumbUrl} onLoad={() => setBlur(false)} alt={name} />
+            {blurhash && blur && <BlurhashCanvas hash={blurhash} punch={1} />}
+            {thumbUrl !== null && (
+              <img
+                style={{ display: blur ? 'none' : 'unset' }}
+                src={thumbUrl}
+                onLoad={() => setBlur(false)}
+                alt={name}
+              />
             )}
             {isLoading && <Spinner size="small" />}
-            {!isLoading && <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />}
+            {!isLoading && (
+              <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />
+            )}
           </>
         ) : (
           /* eslint-disable-next-line jsx-a11y/media-has-caption */
@@ -361,6 +365,4 @@ Video.propTypes = {
   blurhash: PropTypes.string,
 };
 
-export {
-  File, Image, Sticker, Audio, Video,
-};
+export { File, Image, Sticker, Audio, Video };

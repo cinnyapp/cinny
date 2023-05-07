@@ -2,7 +2,7 @@
 @use '_scrollbar';
 
 @mixin paddingForSafari($padding) {
-	@media not all and (min-resolution:.001dpcm) {
+  @media not all and (min-resolution: 0.001dpcm) {
     @include dir.side(padding, 0, $padding);
   }
 }

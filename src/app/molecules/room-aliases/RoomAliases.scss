@@ -15,7 +15,7 @@
     padding: var(--sp-extra-tight) var(--sp-normal);
     @extend .cp-fx__row--s-c;
     &.checkbox {
-      @include dir.side(margin, 0 , var(--sp-tight));
+      @include dir.side(margin, 0, var(--sp-tight));
     }
     & .text {
       @extend .cp-fx__item-one;
@@ -50,7 +50,7 @@
       margin: 0 var(--sp-normal);
     }
   }
-  
+
   &__form {
     padding: var(--sp-normal);
     padding-top: 0;
@@ -59,12 +59,12 @@
       padding: var(--sp-normal) var(--sp-normal) var(--sp-ultra-tight);
     }
   }
-  
+
   &__input-wrapper {
     display: flex;
     @extend .cp-fx__item-one;
     @include dir.side(margin, 0, var(--sp-tight));
-    
+
     & .input-container {
       @extend .cp-fx__item-one;
     }

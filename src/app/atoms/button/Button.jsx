@@ -6,28 +6,27 @@ import Text from '../text/Text';
 import RawIcon from '../system-icons/RawIcon';
 import { blurOnBubbling } from './script';
 
-const Button = React.forwardRef(({
-  id, className, variant, iconSrc,
-  type, onClick, children, disabled,
-}, ref) => {
-  const iconClass = (iconSrc === null) ? '' : `btn-${variant}--icon`;
-  return (
-    <button
-      ref={ref}
-      id={id === '' ? undefined : id}
-      className={`${className ? `${className} ` : ''}btn-${variant} ${iconClass} noselect`}
-      onMouseUp={(e) => blurOnBubbling(e, `.btn-${variant}`)}
-      onClick={onClick}
-      // eslint-disable-next-line react/button-has-type
-      type={type}
-      disabled={disabled}
-    >
-      {iconSrc !== null && <RawIcon size="small" src={iconSrc} />}
-      {typeof children === 'string' && <Text variant="b1">{ children }</Text>}
-      {typeof children !== 'string' && children }
-    </button>
-  );
-});
+const Button = React.forwardRef(
+  ({ id, className, variant, iconSrc, type, onClick, children, disabled }, ref) => {
+    const iconClass = iconSrc === null ? '' : `btn-${variant}--icon`;
+    return (
+      <button
+        ref={ref}
+        id={id === '' ? undefined : id}
+        className={`${className ? `${className} ` : ''}btn-${variant} ${iconClass} noselect`}
+        onMouseUp={(e) => blurOnBubbling(e, `.btn-${variant}`)}
+        onClick={onClick}
+        // eslint-disable-next-line react/button-has-type
+        type={type}
+        disabled={disabled}
+      >
+        {iconSrc !== null && <RawIcon size="small" src={iconSrc} />}
+        {typeof children === 'string' && <Text variant="b1">{children}</Text>}
+        {typeof children !== 'string' && children}
+      </button>
+    );
+  }
+);
 
 Button.defaultProps = {
   id: '',
