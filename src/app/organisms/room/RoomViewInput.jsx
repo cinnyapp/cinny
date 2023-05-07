@@ -15,6 +15,7 @@ import { getUsername } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
+import Tooltip from '../../atoms/tooltip/Tooltip';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 import IconButton from '../../atoms/button/IconButton';
 import ScrollView from '../../atoms/scroll/ScrollView';
@@ -34,7 +35,6 @@ import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import commands from './commands';
-import Tooltip from '../../atoms/tooltip/Tooltip';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
