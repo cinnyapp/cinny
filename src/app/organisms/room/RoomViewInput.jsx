@@ -34,6 +34,7 @@ import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import commands from './commands';
+import Tooltip from '../../atoms/tooltip/Tooltip';
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
@@ -366,7 +367,7 @@ function RoomViewInput({
           <IconButton onClick={handleUploadClick} tooltip={attachment === null ? 'Upload' : 'Cancel'} src={CirclePlusIC} />
         </div>
         <div ref={inputBaseRef} className="room-input__input-container">
-          {roomTimeline.isEncrypted() && <RawIcon size="extra-small" src={ShieldIC} />}
+          {roomTimeline.isEncrypted() && <Tooltip content="This room is encrypted"><RawIcon size="extra-small" src={ShieldIC} /></Tooltip>}
           <ScrollView autoHide>
             <Text className="room-input__textarea-wrapper">
               <TextareaAutosize
