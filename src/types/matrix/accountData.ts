@@ -3,4 +3,7 @@ export enum AccountDataEvent {
   Direct = 'm.direct',
   IgnoredUserList = 'm.ignored_user_list',
   CinnySpaces = 'in.cinny.spaces',
+
+  PoniesUserEmotes = 'im.ponies.user_emotes',
+  PoniesEmoteRooms = 'im.ponies.emote_rooms',
 }

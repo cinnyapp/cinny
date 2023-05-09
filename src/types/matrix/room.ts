@@ -25,6 +25,8 @@ export enum StateEvent {
 
   SpaceChild = 'm.space.child',
   SpaceParent = 'm.space.parent',
+
+  PoniesRoomEmotes = 'im.ponies.room_emotes',
 }
 
 export enum RoomType {
