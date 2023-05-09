@@ -229,7 +229,7 @@ export function EmojiBoard({
       const shortcode = targetEl.getAttribute('data-emoji-shortcode');
       if (unicode && shortcode) {
         onEmojiSelect?.(unicode, shortcode);
-        if (!evt.altKey) requestClose();
+        if (!evt.altKey && !evt.shiftKey) requestClose();
       }
     }
   };
