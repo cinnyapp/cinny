@@ -1,4 +1,5 @@
 import isHotkey from 'is-hotkey';
+import { KeyboardEventHandler } from 'react';
 
 export interface KeyboardEventLike {
   key: string;
@@ -14,5 +15,11 @@ export const onTabPress = (evt: KeyboardEventLike, callback: () => void) => {
   if (isHotkey('tab', evt)) {
     evt.preventDefault();
     callback();
+  }
+};
+
+export const preventScrollWithArrowKey: KeyboardEventHandler = (evt) => {
+  if (isHotkey(['arrowup', 'arrowright', 'arrowdown', 'arrowleft'], evt)) {
+    evt.preventDefault();
   }
 };
