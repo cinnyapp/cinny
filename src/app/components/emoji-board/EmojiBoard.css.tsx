@@ -49,7 +49,7 @@ export const EmojiGroupContent = style([
   },
 ]);
 
-export const EmojiItem = style([
+export const EmojiContainer = style([
   DefaultReset,
   FocusOutline,
   {
@@ -63,5 +63,13 @@ export const EmojiItem = style([
     ':hover': {
       backgroundColor: color.Surface.ContainerHover,
     },
+  },
+]);
+
+export const CustomEmojiImage = style([
+  DefaultReset,
+  {
+    width: toRem(32),
+    height: toRem(32),
   },
 ]);

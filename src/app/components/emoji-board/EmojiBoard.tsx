@@ -14,6 +14,7 @@ import {
   as,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { MatrixClient } from 'matrix-js-sdk';
 import isHotkey from 'is-hotkey';
 
 import * as css from './EmojiBoard.css';
@@ -21,6 +22,9 @@ import { EmojiGroupId, IEmoji, IEmojiGroup, emojiGroups } from './emoji';
 import { IEmojiGroupLabels, useEmojiGroupLabels } from './useEmojiGroupLabels';
 import { IEmojiGroupIcons, useEmojiGroupIcons } from './useEmojiGroupIcons';
 import { preventScrollWithArrowKey } from '../../utils/keyboard';
+import { useRelevantEmojiPacks } from './useImagePacks';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { ExtendedPackImage } from './custom-emoji';
 
 enum EmojiType {
   Emoji = 'emoji',
@@ -172,7 +176,7 @@ export const EmojiItem = as<'button', { emoji: IEmoji }>(({ emoji, ...props }, r
   <Box
     as="button"
     aria-label={emoji.label}
-    className={css.EmojiItem}
+    className={css.EmojiContainer}
     type="button"
     alignItems="Center"
     justifyContent="Center"
@@ -185,6 +189,30 @@ export const EmojiItem = as<'button', { emoji: IEmoji }>(({ emoji, ...props }, r
     {emoji.unicode}
   </Box>
 ));
+
+export const CustomEmojiItem = as<'button', { mx: MatrixClient; image: ExtendedPackImage }>(
+  ({ mx, image, ...props }, ref) => (
+    <Box
+      as="button"
+      aria-label={image.shortcode}
+      className={css.EmojiContainer}
+      type="button"
+      alignItems="Center"
+      justifyContent="Center"
+      data-emoji-type={EmojiType.CustomEmoji}
+      data-emoji-mxc={image.url}
+      data-emoji-shortcode={image.shortcode}
+      {...props}
+      ref={ref}
+    >
+      <img
+        className={css.CustomEmojiImage}
+        src={mx.mxcUrlToHttp(image.url) ?? image.url}
+        alt={image.shortcode}
+      />
+    </Box>
+  )
+);
 
 export const NativeEmojiGroups = memo(
   ({ groups, labels }: { groups: IEmojiGroup[]; labels: IEmojiGroupLabels }) => (
@@ -211,8 +239,10 @@ export function EmojiBoard({
   returnFocusOnDeactivate?: boolean;
   onEmojiSelect?: (unicode: string, shortcode: string) => void;
 }) {
+  const mx = useMatrixClient();
   const emojiGroupLabels = useEmojiGroupLabels();
   const emojiGroupIcons = useEmojiGroupIcons();
+  const emojiPacks = useRelevantEmojiPacks(mx);
 
   const handleScrollToGroup = (groupId: string) => {
     const groupElement = document.getElementById(groupId);
@@ -238,7 +268,7 @@ export function EmojiBoard({
   };
 
   return (
-    // TODO: handle on focus move to show emoji info in footer
+    // TODO: handle on focus move to show emoji info in footer use focusin event: see TODO for more
     <FocusTrap
       focusTrapOptions={{
         returnFocusOnDeactivate,
@@ -298,6 +328,15 @@ export function EmojiBoard({
               direction="Column"
               gap="200"
             >
+              {emojiPacks.map((pack) => (
+                <EmojiGroup key={pack.id} id={pack.id} label={pack.displayName || 'Unknown'}>
+                  <Box wrap="Wrap">
+                    {pack.getEmojis().map((image) => (
+                      <CustomEmojiItem key={image.shortcode} mx={mx} image={image} />
+                    ))}
+                  </Box>
+                </EmojiGroup>
+              ))}
               <NativeEmojiGroups groups={emojiGroups} labels={emojiGroupLabels} />
             </Box>
           </Scroll>
