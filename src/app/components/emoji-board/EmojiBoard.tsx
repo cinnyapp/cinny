@@ -318,6 +318,7 @@ export function EmojiBoard({
   const handleEmojiHover: MouseEventHandler = (evt) => {
     const targetEl = evt.target as HTMLButtonElement;
     handleEmojiPreview(targetEl);
+    targetEl.focus();
   };
   const handleEmojiFocus: FocusEventHandler = (evt) => {
     const targetEl = evt.target as HTMLButtonElement;
