@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, ReactNode, memo } from 'react';
+import React, { FocusEventHandler, MouseEventHandler, ReactNode, memo, useRef } from 'react';
 import {
   Badge,
   Box,
@@ -14,22 +14,41 @@ import {
   as,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { MatrixClient } from 'matrix-js-sdk';
 import isHotkey from 'is-hotkey';
+import classNames from 'classnames';
 
 import * as css from './EmojiBoard.css';
-import { EmojiGroupId, IEmoji, IEmojiGroup, emojiGroups } from './emoji';
+import { EmojiGroupId, IEmojiGroup, emojiGroups } from './emoji';
 import { IEmojiGroupLabels, useEmojiGroupLabels } from './useEmojiGroupLabels';
 import { IEmojiGroupIcons, useEmojiGroupIcons } from './useEmojiGroupIcons';
 import { preventScrollWithArrowKey } from '../../utils/keyboard';
 import { useRelevantEmojiPacks } from './useImagePacks';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { ExtendedPackImage } from './custom-emoji';
 
 enum EmojiType {
   Emoji = 'emoji',
   CustomEmoji = 'customEmoji',
 }
+
+export type EmojiItemInfo = {
+  type: EmojiType;
+  data: string;
+  shortcode: string;
+};
+
+const getEmojiItemInfo = (element: HTMLButtonElement): EmojiItemInfo | undefined => {
+  const type = element.getAttribute('data-emoji-type') as EmojiType | undefined;
+  const data = element.getAttribute('data-emoji-data');
+  const shortcode = element.getAttribute('data-emoji-shortcode');
+
+  if (type && data && shortcode)
+    return {
+      type,
+      data,
+      shortcode,
+    };
+  return undefined;
+};
 
 function Sidebar({ children }: { children: ReactNode }) {
   return (
@@ -78,8 +97,14 @@ const EmojiBoardLayout = as<
     footer?: ReactNode;
     children: ReactNode;
   }
->(({ header, sidebar, footer, children }, ref) => (
-  <Box ref={ref} display="InlineFlex" className={css.Base} direction="Row">
+>(({ className, header, sidebar, footer, children, ...props }, ref) => (
+  <Box
+    display="InlineFlex"
+    className={classNames(css.Base, className)}
+    direction="Row"
+    {...props}
+    ref={ref}
+  >
     <Box direction="Column">
       {header}
       <Line size="300" variant="Surface" />
@@ -161,8 +186,15 @@ export const EmojiGroup = as<
     label: string;
     children: ReactNode;
   }
->(({ id, label, children, ...props }, ref) => (
-  <Box id={id} className={css.EmojiGroup} direction="Column" gap="100" {...props} ref={ref}>
+>(({ className, id, label, children, ...props }, ref) => (
+  <Box
+    id={id}
+    className={classNames(css.EmojiGroup, className)}
+    direction="Column"
+    gap="100"
+    {...props}
+    ref={ref}
+  >
     <Text id={`EmojiGroup-${id}-label`} as="label" className={css.EmojiGroupLabel} size="O400">
       {label}
     </Text>
@@ -172,47 +204,44 @@ export const EmojiGroup = as<
   </Box>
 ));
 
-export const EmojiItem = as<'button', { emoji: IEmoji }>(({ emoji, ...props }, ref) => (
-  <Box
-    as="button"
-    aria-label={emoji.label}
-    className={css.EmojiContainer}
-    type="button"
-    alignItems="Center"
-    justifyContent="Center"
-    data-emoji-type={EmojiType.Emoji}
-    data-emoji-unicode={emoji.unicode}
-    data-emoji-shortcode={emoji.shortcode}
-    {...props}
-    ref={ref}
-  >
-    {emoji.unicode}
-  </Box>
-));
-
-export const CustomEmojiItem = as<'button', { mx: MatrixClient; image: ExtendedPackImage }>(
-  ({ mx, image, ...props }, ref) => (
+export function EmojiItem({
+  label,
+  type,
+  data,
+  shortcode,
+  children,
+}: {
+  label: string;
+  type: EmojiType;
+  data: string;
+  shortcode: string;
+  children: ReactNode;
+}) {
+  return (
     <Box
       as="button"
-      aria-label={image.shortcode}
-      className={css.EmojiContainer}
+      className={css.EmojiItem}
       type="button"
       alignItems="Center"
       justifyContent="Center"
-      data-emoji-type={EmojiType.CustomEmoji}
-      data-emoji-mxc={image.url}
-      data-emoji-shortcode={image.shortcode}
-      {...props}
-      ref={ref}
+      aria-label={label}
+      data-emoji-type={type}
+      data-emoji-data={data}
+      data-emoji-shortcode={shortcode}
     >
-      <img
-        className={css.CustomEmojiImage}
-        src={mx.mxcUrlToHttp(image.url) ?? image.url}
-        alt={image.shortcode}
-      />
+      {children}
     </Box>
-  )
-);
+  );
+}
+
+export const CustomEmojiImg = as<'img'>(({ className, ...props }, ref) => (
+  <img
+    className={classNames(css.CustomEmojiImg, className)}
+    alt="custom-emoji"
+    {...props}
+    ref={ref}
+  />
+));
 
 export const NativeEmojiGroups = memo(
   ({ groups, labels }: { groups: IEmojiGroup[]; labels: IEmojiGroupLabels }) => (
@@ -221,7 +250,15 @@ export const NativeEmojiGroups = memo(
         <EmojiGroup key={emojiGroup.id} id={emojiGroup.id} label={labels[emojiGroup.id]}>
           <Box wrap="Wrap">
             {emojiGroup.emojis.map((emoji) => (
-              <EmojiItem key={emoji.unicode} emoji={emoji} />
+              <EmojiItem
+                key={emoji.unicode}
+                label={emoji.label}
+                type={EmojiType.Emoji}
+                data={emoji.unicode}
+                shortcode={emoji.shortcode}
+              >
+                {emoji.unicode}
+              </EmojiItem>
             ))}
           </Box>
         </EmojiGroup>
@@ -244,6 +281,9 @@ export function EmojiBoard({
   const emojiGroupIcons = useEmojiGroupIcons();
   const emojiPacks = useRelevantEmojiPacks(mx);
 
+  const emojiPreviewRef = useRef<HTMLDivElement>(null);
+  const emojiPreviewTextRef = useRef<HTMLParagraphElement>(null);
+
   const handleScrollToGroup = (groupId: string) => {
     const groupElement = document.getElementById(groupId);
     groupElement?.scrollIntoView();
@@ -251,20 +291,37 @@ export function EmojiBoard({
 
   const handleEmojiClick: MouseEventHandler = (evt) => {
     const targetEl = evt.target as HTMLButtonElement;
-    if (
-      targetEl.hasAttribute('data-emoji-type') &&
-      targetEl.getAttribute('data-emoji-type') === EmojiType.Emoji
-    ) {
-      const unicode = targetEl.getAttribute('data-emoji-unicode');
-      const shortcode = targetEl.getAttribute('data-emoji-shortcode');
-      if (unicode && shortcode) {
-        onEmojiSelect?.(unicode, shortcode);
-        if (!evt.altKey && !evt.shiftKey) requestClose();
-      }
+    const emojiInfo = getEmojiItemInfo(targetEl);
+    if (!emojiInfo) return;
+    if (emojiInfo.type === EmojiType.Emoji) {
+      onEmojiSelect?.(emojiInfo.data, emojiInfo.shortcode);
+      if (!evt.altKey && !evt.shiftKey) requestClose();
     }
   };
-  const handleEmojiHover: MouseEventHandler = () => {
-    // console.log(evt.target);
+
+  const handleEmojiPreview = (element: HTMLButtonElement) => {
+    const emojiInfo = getEmojiItemInfo(element);
+    if (!emojiInfo || !emojiPreviewRef.current || !emojiPreviewTextRef.current) return;
+    if (emojiInfo.type === EmojiType.Emoji) {
+      emojiPreviewRef.current.textContent = emojiInfo.data;
+    } else {
+      const img = document.createElement('img');
+      img.className = css.CustomEmojiImg;
+      img.setAttribute('src', mx.mxcUrlToHttp(emojiInfo.data) || emojiInfo.data);
+      img.setAttribute('alt', emojiInfo.shortcode);
+      emojiPreviewRef.current.textContent = '';
+      emojiPreviewRef.current.appendChild(img);
+    }
+    emojiPreviewTextRef.current.textContent = `:${emojiInfo.shortcode}:`;
+  };
+
+  const handleEmojiHover: MouseEventHandler = (evt) => {
+    const targetEl = evt.target as HTMLButtonElement;
+    handleEmojiPreview(targetEl);
+  };
+  const handleEmojiFocus: FocusEventHandler = (evt) => {
+    const targetEl = evt.target as HTMLButtonElement;
+    handleEmojiPreview(targetEl);
   };
 
   return (
@@ -316,7 +373,12 @@ export function EmojiBoard({
         }
         footer={
           <Footer>
-            <Text size="H6">TODO:Emoji:</Text>
+            <div ref={emojiPreviewRef} className={css.EmojiPreview}>
+              😃
+            </div>
+            <Text ref={emojiPreviewTextRef} size="H5">
+              :Smiley:
+            </Text>
           </Footer>
         }
       >
@@ -325,6 +387,7 @@ export function EmojiBoard({
             <Box
               onClick={handleEmojiClick}
               onMouseMove={handleEmojiHover}
+              onFocus={handleEmojiFocus}
               direction="Column"
               gap="200"
             >
@@ -332,7 +395,18 @@ export function EmojiBoard({
                 <EmojiGroup key={pack.id} id={pack.id} label={pack.displayName || 'Unknown'}>
                   <Box wrap="Wrap">
                     {pack.getEmojis().map((image) => (
-                      <CustomEmojiItem key={image.shortcode} mx={mx} image={image} />
+                      <EmojiItem
+                        key={image.shortcode}
+                        label={image.body || image.shortcode}
+                        type={EmojiType.CustomEmoji}
+                        data={image.url}
+                        shortcode={image.shortcode}
+                      >
+                        <CustomEmojiImg
+                          alt={image.body || image.shortcode}
+                          src={mx.mxcUrlToHttp(image.url) ?? image.url}
+                        />
+                      </EmojiItem>
                     ))}
                   </Box>
                 </EmojiGroup>

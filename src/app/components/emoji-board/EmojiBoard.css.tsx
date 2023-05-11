@@ -49,7 +49,17 @@ export const EmojiGroupContent = style([
   },
 ]);
 
-export const EmojiContainer = style([
+export const EmojiPreview = style([
+  DefaultReset,
+  {
+    width: toRem(36),
+    height: toRem(36),
+    fontSize: toRem(36),
+    lineHeight: toRem(36),
+  },
+]);
+
+export const EmojiItem = style([
   DefaultReset,
   FocusOutline,
   {
@@ -66,7 +76,7 @@ export const EmojiContainer = style([
   },
 ]);
 
-export const CustomEmojiImage = style([
+export const CustomEmojiImg = style([
   DefaultReset,
   {
     width: toRem(32),
