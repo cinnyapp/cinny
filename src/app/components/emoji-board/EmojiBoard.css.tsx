@@ -2,13 +2,15 @@ import { style } from '@vanilla-extract/css';
 import { DefaultReset, FocusOutline, color, config, toRem } from 'folds';
 
 export const Base = style({
-  width: toRem(420),
+  maxWidth: toRem(420),
+  width: '100%',
   height: toRem(450),
   backgroundColor: color.Surface.Container,
   color: color.Surface.OnContainer,
   border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
   borderRadius: config.radii.R400,
   boxShadow: config.shadow.E200,
+  overflow: 'hidden',
 });
 
 export const Sidebar = style({

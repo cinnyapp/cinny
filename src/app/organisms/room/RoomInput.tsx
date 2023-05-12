@@ -119,6 +119,7 @@ export function RoomInput({ roomId }: RoomInputProps) {
               {(emojiBoard, setEmojiBoard) => (
                 <PopOut
                   offset={16}
+                  alignOffset={-44}
                   position="top"
                   align="end"
                   open={emojiBoard}

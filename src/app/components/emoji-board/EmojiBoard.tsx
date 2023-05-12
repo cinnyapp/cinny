@@ -243,6 +243,8 @@ export const CustomEmojiImg = as<'img'>(({ className, ...props }, ref) => (
   />
 ));
 
+// export const CustomEmoji TODO:
+
 export const NativeEmojiGroups = memo(
   ({ groups, labels }: { groups: IEmojiGroup[]; labels: IEmojiGroupLabels }) => (
     <>
@@ -377,7 +379,7 @@ export function EmojiBoard({
             <div ref={emojiPreviewRef} className={css.EmojiPreview}>
               😃
             </div>
-            <Text ref={emojiPreviewTextRef} size="H5">
+            <Text ref={emojiPreviewTextRef} size="H5" truncate>
               :Smiley:
             </Text>
           </Footer>
