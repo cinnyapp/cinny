@@ -31,7 +31,7 @@ interface RoomInputProps {
 export function RoomInput({ roomId }: RoomInputProps) {
   const mx = useMatrixClient();
   const editor = useEditor();
-  const allParentSpaces = [...(initMatrix.roomList?.getAllParentSpaces(roomId) ?? [])];
+  const allParentSpaces = [roomId, ...(initMatrix.roomList?.getAllParentSpaces(roomId) ?? [])];
   const imagePackRooms: Room[] = allParentSpaces.reduce<Room[]>((list, rId) => {
     const r = mx.getRoom(rId);
     if (r) list.push(r);
