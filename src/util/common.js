@@ -228,3 +228,21 @@ export function parseIdUri(uri) {
   if (!res) return null;
   return res[1];
 }
+
+/**
+ * @param {string} base64
+ * @param {string} filename
+ * @param {string} type
+ * @returns {File}
+ */
+export function base64ToFile(base64,filename, type) {
+  const binary = atob(base64)
+  let n = binary.length
+  const u8arr = new Uint8Array(n);
+
+  while(n--){
+    u8arr[n] = binary.charCodeAt(n);
+  }
+
+  return new File([u8arr], filename, {type});
+}
