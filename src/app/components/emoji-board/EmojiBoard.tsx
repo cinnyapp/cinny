@@ -16,14 +16,17 @@ import {
 import FocusTrap from 'focus-trap-react';
 import isHotkey from 'is-hotkey';
 import classNames from 'classnames';
+import { MatrixClient } from 'matrix-js-sdk';
 
 import * as css from './EmojiBoard.css';
-import { EmojiGroupId, IEmojiGroup, emojiGroups } from './emoji';
+import { EmojiGroupId, IEmoji, IEmojiGroup, emojiGroups } from './emoji';
 import { IEmojiGroupLabels, useEmojiGroupLabels } from './useEmojiGroupLabels';
 import { IEmojiGroupIcons, useEmojiGroupIcons } from './useEmojiGroupIcons';
 import { preventScrollWithArrowKey } from '../../utils/keyboard';
 import { useRelevantEmojiPacks } from './useImagePacks';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useRecentEmoji } from './useRecentEmoji';
+import { ImagePack } from './custom-emoji';
 
 enum EmojiType {
   Emoji = 'emoji',
@@ -138,44 +141,38 @@ function SidebarTabs() {
   );
 }
 
-function SidebarNativeEmojiStack({
-  groups,
-  icons,
-  labels,
+export function SidebarBtn<T extends string>({
+  label,
+  id,
   onItemClick,
+  children,
 }: {
-  groups: IEmojiGroup[];
-  icons: IEmojiGroupIcons;
-  labels: IEmojiGroupLabels;
-  onItemClick: (id: EmojiGroupId) => void;
+  label: string;
+  id: T;
+  onItemClick: (id: T) => void;
+  children: ReactNode;
 }) {
   return (
-    <SidebarStack>
-      {groups.map((group) => (
-        <TooltipProvider
-          key={group.id}
-          position="left"
-          tooltip={
-            <Tooltip id={`SidebarStackItem-${group.id}-label`}>
-              <Text size="T300">{labels[group.id]}</Text>
-            </Tooltip>
-          }
+    <TooltipProvider
+      position="left"
+      tooltip={
+        <Tooltip id={`SidebarStackItem-${id}-label`}>
+          <Text size="T300">{label}</Text>
+        </Tooltip>
+      }
+    >
+      {(ref) => (
+        <IconButton
+          aria-labelledby={`SidebarStackItem-${id}-label`}
+          ref={ref}
+          onClick={() => onItemClick(id)}
+          size="300"
+          variant="Background"
         >
-          {(ref) => (
-            <IconButton
-              key={group.id}
-              aria-labelledby={`SidebarStackItem-${group.id}-label`}
-              ref={ref}
-              onClick={() => onItemClick(group.id)}
-              size="300"
-              variant="Background"
-            >
-              <Icon src={icons[group.id]} />
-            </IconButton>
-          )}
-        </TooltipProvider>
-      ))}
-    </SidebarStack>
+          {children}
+        </IconButton>
+      )}
+    </TooltipProvider>
   );
 }
 
@@ -199,7 +196,7 @@ export const EmojiGroup = as<
       {label}
     </Text>
     <div aria-labelledby={`EmojiGroup-${id}-label`} className={css.EmojiGroupContent}>
-      {children}
+      <Box wrap="Wrap">{children}</Box>
     </div>
   </Box>
 ));
@@ -243,31 +240,102 @@ export const CustomEmojiImg = as<'img'>(({ className, ...props }, ref) => (
   />
 ));
 
-// export const CustomEmoji TODO:
+function NativeEmojiSidebarStack({
+  groups,
+  icons,
+  labels,
+  onItemClick,
+}: {
+  groups: IEmojiGroup[];
+  icons: IEmojiGroupIcons;
+  labels: IEmojiGroupLabels;
+  onItemClick: (id: EmojiGroupId) => void;
+}) {
+  return (
+    <SidebarStack>
+      {groups.map((group) => (
+        <SidebarBtn key={group.id} id={group.id} label={labels[group.id]} onItemClick={onItemClick}>
+          <Icon src={icons[group.id]} />
+        </SidebarBtn>
+      ))}
+    </SidebarStack>
+  );
+}
+
+export function RecentEmojiGroup({
+  label,
+  id,
+  emojis,
+}: {
+  label: string;
+  id: string;
+  emojis: IEmoji[];
+}) {
+  return (
+    <EmojiGroup key={id} id={id} label={label}>
+      {emojis.map((emoji) => (
+        <EmojiItem
+          key={emoji.unicode}
+          label={emoji.label}
+          type={EmojiType.Emoji}
+          data={emoji.unicode}
+          shortcode={emoji.shortcode}
+        >
+          {emoji.unicode}
+        </EmojiItem>
+      ))}
+    </EmojiGroup>
+  );
+}
+
+export const CustomEmojiGroups = memo(
+  ({ mx, groups }: { mx: MatrixClient; groups: ImagePack[] }) => (
+    <>
+      {groups.map((pack) => (
+        <EmojiGroup key={pack.id} id={pack.id} label={pack.displayName || 'Unknown'}>
+          {pack.getEmojis().map((image) => (
+            <EmojiItem
+              key={image.shortcode}
+              label={image.body || image.shortcode}
+              type={EmojiType.CustomEmoji}
+              data={image.url}
+              shortcode={image.shortcode}
+            >
+              <CustomEmojiImg
+                alt={image.body || image.shortcode}
+                src={mx.mxcUrlToHttp(image.url) ?? image.url}
+              />
+            </EmojiItem>
+          ))}
+        </EmojiGroup>
+      ))}
+    </>
+  )
+);
 
 export const NativeEmojiGroups = memo(
   ({ groups, labels }: { groups: IEmojiGroup[]; labels: IEmojiGroupLabels }) => (
     <>
       {groups.map((emojiGroup) => (
         <EmojiGroup key={emojiGroup.id} id={emojiGroup.id} label={labels[emojiGroup.id]}>
-          <Box wrap="Wrap">
-            {emojiGroup.emojis.map((emoji) => (
-              <EmojiItem
-                key={emoji.unicode}
-                label={emoji.label}
-                type={EmojiType.Emoji}
-                data={emoji.unicode}
-                shortcode={emoji.shortcode}
-              >
-                {emoji.unicode}
-              </EmojiItem>
-            ))}
-          </Box>
+          {emojiGroup.emojis.map((emoji) => (
+            <EmojiItem
+              key={emoji.unicode}
+              label={emoji.label}
+              type={EmojiType.Emoji}
+              data={emoji.unicode}
+              shortcode={emoji.shortcode}
+            >
+              {emoji.unicode}
+            </EmojiItem>
+          ))}
         </EmojiGroup>
       ))}
     </>
   )
 );
+
+const RECENT_GROUP_ID = 'recent_group';
 
 export function EmojiBoard({
   requestClose,
@@ -282,6 +350,7 @@ export function EmojiBoard({
   const emojiGroupLabels = useEmojiGroupLabels();
   const emojiGroupIcons = useEmojiGroupIcons();
   const emojiPacks = useRelevantEmojiPacks(mx);
+  const recentEmojis = useRecentEmoji(mx, 21);
 
   const emojiPreviewRef = useRef<HTMLDivElement>(null);
   const emojiPreviewTextRef = useRef<HTMLParagraphElement>(null);
@@ -360,12 +429,18 @@ export function EmojiBoard({
           <Sidebar>
             <SidebarStack>
               <SidebarStack>
-                <IconButton size="300" variant="Background">
-                  <Icon src={Icons.RecentClock} />
-                </IconButton>
+                {recentEmojis.length > 0 && (
+                  <SidebarBtn
+                    id={RECENT_GROUP_ID}
+                    label="Recent Emoji"
+                    onItemClick={() => handleScrollToGroup(RECENT_GROUP_ID)}
+                  >
+                    <Icon src={Icons.RecentClock} />
+                  </SidebarBtn>
+                )}
               </SidebarStack>
               <SidebarDivider />
-              <SidebarNativeEmojiStack
+              <NativeEmojiSidebarStack
                 groups={emojiGroups}
                 icons={emojiGroupIcons}
                 labels={emojiGroupLabels}
@@ -394,26 +469,10 @@ export function EmojiBoard({
               direction="Column"
               gap="200"
             >
-              {emojiPacks.map((pack) => (
-                <EmojiGroup key={pack.id} id={pack.id} label={pack.displayName || 'Unknown'}>
-                  <Box wrap="Wrap">
-                    {pack.getEmojis().map((image) => (
-                      <EmojiItem
-                        key={image.shortcode}
-                        label={image.body || image.shortcode}
-                        type={EmojiType.CustomEmoji}
-                        data={image.url}
-                        shortcode={image.shortcode}
-                      >
-                        <CustomEmojiImg
-                          alt={image.body || image.shortcode}
-                          src={mx.mxcUrlToHttp(image.url) ?? image.url}
-                        />
-                      </EmojiItem>
-                    ))}
-                  </Box>
-                </EmojiGroup>
-              ))}
+              {recentEmojis.length > 0 && (
+                <RecentEmojiGroup id={RECENT_GROUP_ID} label="Recent Emoji" emojis={recentEmojis} />
+              )}
+              <CustomEmojiGroups mx={mx} groups={emojiPacks} />
               <NativeEmojiGroups groups={emojiGroups} labels={emojiGroupLabels} />
             </Box>
           </Scroll>
