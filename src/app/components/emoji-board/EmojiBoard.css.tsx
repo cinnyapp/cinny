@@ -15,9 +15,21 @@ export const Base = style({
 
 export const Sidebar = style({
   width: toRem(48),
-  padding: `${config.space.S200} 0`,
   backgroundColor: color.Background.Container,
   color: color.Background.OnContainer,
+  position: 'relative',
+});
+
+export const SidebarStack = style({
+  padding: `${config.space.S200} 0`,
+  width: '100%',
+  backgroundColor: color.Background.Container,
+});
+
+export const NativeEmojiSidebarStack = style({
+  position: 'sticky',
+  bottom: '-69%',
+  zIndex: 1,
 });
 
 export const SidebarDivider = style({

@@ -11,10 +11,15 @@ export type EmoteRoomsContent = {
   rooms?: EmoteRoomIdToPackEvents;
 };
 
+export enum PackUsage {
+  Emoticon = 'emoticon',
+  Sticker = 'sticker',
+}
+
 export type PackImage = {
   url: string;
   body?: string;
-  usage?: string[];
+  usage?: PackUsage[];
   info?: IImageInfo;
 };
 
@@ -24,7 +29,7 @@ export type PackMeta = {
   display_name?: string;
   avatar_url?: string;
   attribution?: string;
-  usage?: string[];
+  usage?: PackUsage[];
 };
 
 export type ExtendedPackImage = PackImage & {
@@ -45,7 +50,7 @@ export class ImagePack {
 
   public avatarUrl?: string;
 
-  public usage?: string[];
+  public usage?: PackUsage[];
 
   public attribution?: string;
 
@@ -80,7 +85,7 @@ export class ImagePack {
 
     this.displayName = pack.display_name;
     this.avatarUrl = pack.avatar_url;
-    this.usage = pack.usage ?? ['emoticon', 'sticker'];
+    this.usage = pack.usage ?? [PackUsage.Emoticon, PackUsage.Sticker];
     this.attribution = pack.attribution;
   }
 
@@ -106,10 +111,10 @@ export class ImagePack {
       };
 
       this.images.set(shortcode, image);
-      if (usage && usage.includes('emoticon')) {
+      if (usage && usage.includes(PackUsage.Emoticon)) {
         this.emoticons.push(image);
       }
-      if (usage && usage.includes('sticker')) {
+      if (usage && usage.includes(PackUsage.Sticker)) {
         this.stickers.push(image);
       }
     });
@@ -125,6 +130,12 @@ export class ImagePack {
 
   getStickers() {
     return this.stickers;
+  }
+
+  getImagesFor(usage: PackUsage) {
+    if (usage === PackUsage.Emoticon) return this.getEmojis();
+    if (usage === PackUsage.Sticker) return this.getStickers();
+    return this.getEmojis;
   }
 
   getContent() {
@@ -151,7 +162,7 @@ export class ImagePack {
     this._updatePackProperty('attribution', attribution);
   }
 
-  setUsage(usage?: string[]) {
+  setUsage(usage?: PackUsage[]) {
     this._updatePackProperty('usage', usage);
   }
 
@@ -201,7 +212,7 @@ export class ImagePack {
     this._updateImageProperty(key, 'info', info);
   }
 
-  setImageUsage(key: string, usage?: string[]) {
+  setImageUsage(key: string, usage?: PackUsage[]) {
     this._updateImageProperty(key, 'usage', usage);
   }
 }

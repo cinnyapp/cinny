@@ -12,11 +12,12 @@ import {
   Tooltip,
   TooltipProvider,
   as,
+  toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import isHotkey from 'is-hotkey';
 import classNames from 'classnames';
-import { MatrixClient } from 'matrix-js-sdk';
+import { MatrixClient, Room } from 'matrix-js-sdk';
 
 import * as css from './EmojiBoard.css';
 import { EmojiGroupId, IEmoji, IEmojiGroup, emojiGroups } from './emoji';
@@ -26,7 +27,7 @@ import { preventScrollWithArrowKey } from '../../utils/keyboard';
 import { useRelevantEmojiPacks } from './useImagePacks';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRecentEmoji } from './useRecentEmoji';
-import { ImagePack } from './custom-emoji';
+import { ImagePack, PackUsage } from './custom-emoji';
 
 enum EmojiType {
   Emoji = 'emoji',
@@ -56,18 +57,27 @@ const getEmojiItemInfo = (element: HTMLButtonElement): EmojiItemInfo | undefined
 function Sidebar({ children }: { children: ReactNode }) {
   return (
     <Box className={css.Sidebar} shrink="No">
-      <Scroll size="0">{children}</Scroll>
+      <Scroll size="0">
+        <Box direction="Column" alignItems="Center">
+          {children}
+        </Box>
+      </Scroll>
     </Box>
   );
 }
 
-function SidebarStack({ children }: { children: ReactNode }) {
-  return (
-    <Box direction="Column" alignItems="Center" gap="300">
-      {children}
-    </Box>
-  );
-}
+const SidebarStack = as<'div'>(({ className, children, ...props }, ref) => (
+  <Box
+    className={classNames(css.SidebarStack, className)}
+    direction="Column"
+    alignItems="Center"
+    gap="300"
+    {...props}
+    ref={ref}
+  >
+    {children}
+  </Box>
+));
 function SidebarDivider() {
   return <Line className={css.SidebarDivider} size="300" variant="Background" />;
 }
@@ -167,6 +177,7 @@ export function SidebarBtn<T extends string>({
           ref={ref}
           onClick={() => onItemClick(id)}
           size="300"
+          radii="300"
           variant="Background"
         >
           {children}
@@ -221,7 +232,7 @@ export function EmojiItem({
       type="button"
       alignItems="Center"
       justifyContent="Center"
-      aria-label={label}
+      aria-label={`${label} emoji`}
       data-emoji-type={type}
       data-emoji-data={data}
       data-emoji-shortcode={shortcode}
@@ -240,6 +251,33 @@ export const CustomEmojiImg = as<'img'>(({ className, ...props }, ref) => (
   />
 ));
 
+function ImagePackSidebarStack({
+  mx,
+  packs,
+  onItemClick,
+}: {
+  mx: MatrixClient;
+  packs: ImagePack[];
+  onItemClick: (id: string) => void;
+}) {
+  return (
+    <SidebarStack>
+      {packs.map((pack) => (
+        <SidebarBtn key={pack.id} id={pack.id} label={pack.displayName!} onItemClick={onItemClick}>
+          <img
+            style={{
+              width: toRem(24),
+              height: toRem(24),
+            }}
+            src={mx.mxcUrlToHttp(pack.avatarUrl ?? '') || pack.avatarUrl}
+            alt={pack.displayName!}
+          />
+        </SidebarBtn>
+      ))}
+    </SidebarStack>
+  );
+}
+
 function NativeEmojiSidebarStack({
   groups,
   icons,
@@ -252,7 +290,7 @@ function NativeEmojiSidebarStack({
   onItemClick: (id: EmojiGroupId) => void;
 }) {
   return (
-    <SidebarStack>
+    <SidebarStack className={css.NativeEmojiSidebarStack}>
       {groups.map((group) => (
         <SidebarBtn key={group.id} id={group.id} label={labels[group.id]} onItemClick={onItemClick}>
           <Icon src={icons[group.id]} />
@@ -338,10 +376,12 @@ export const NativeEmojiGroups = memo(
 const RECENT_GROUP_ID = 'recent_group';
 
 export function EmojiBoard({
+  imagePackRooms,
   requestClose,
   returnFocusOnDeactivate,
   onEmojiSelect,
 }: {
+  imagePackRooms: Room[];
   requestClose: () => void;
   returnFocusOnDeactivate?: boolean;
   onEmojiSelect?: (unicode: string, shortcode: string) => void;
@@ -349,7 +389,7 @@ export function EmojiBoard({
   const mx = useMatrixClient();
   const emojiGroupLabels = useEmojiGroupLabels();
   const emojiGroupIcons = useEmojiGroupIcons();
-  const emojiPacks = useRelevantEmojiPacks(mx);
+  const emojiPacks = useRelevantEmojiPacks(mx, PackUsage.Emoticon, imagePackRooms);
   const recentEmojis = useRecentEmoji(mx, 21);
 
   const emojiPreviewRef = useRef<HTMLDivElement>(null);
@@ -428,25 +468,25 @@ export function EmojiBoard({
         sidebar={
           <Sidebar>
             <SidebarStack>
-              <SidebarStack>
-                {recentEmojis.length > 0 && (
-                  <SidebarBtn
-                    id={RECENT_GROUP_ID}
-                    label="Recent Emoji"
-                    onItemClick={() => handleScrollToGroup(RECENT_GROUP_ID)}
-                  >
-                    <Icon src={Icons.RecentClock} />
-                  </SidebarBtn>
-                )}
-              </SidebarStack>
-              <SidebarDivider />
-              <NativeEmojiSidebarStack
-                groups={emojiGroups}
-                icons={emojiGroupIcons}
-                labels={emojiGroupLabels}
-                onItemClick={handleScrollToGroup}
-              />
+              {recentEmojis.length > 0 && (
+                <SidebarBtn
+                  id={RECENT_GROUP_ID}
+                  label="Recent Emoji"
+                  onItemClick={() => handleScrollToGroup(RECENT_GROUP_ID)}
+                >
+                  <Icon src={Icons.RecentClock} />
+                </SidebarBtn>
+              )}
             </SidebarStack>
+            <SidebarDivider />
+            <ImagePackSidebarStack mx={mx} packs={emojiPacks} onItemClick={handleScrollToGroup} />
+            <SidebarDivider />
+            <NativeEmojiSidebarStack
+              groups={emojiGroups}
+              icons={emojiGroupIcons}
+              labels={emojiGroupLabels}
+              onItemClick={handleScrollToGroup}
+            />
           </Sidebar>
         }
         footer={

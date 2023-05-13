@@ -1,6 +1,6 @@
 import React, { KeyboardEventHandler, useCallback, useEffect, useState } from 'react';
 import isHotkey from 'is-hotkey';
-import { MsgType } from 'matrix-js-sdk';
+import { MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 
 import { Icon, IconButton, Icons, Line, PopOut } from 'folds';
@@ -23,6 +23,7 @@ import {
 } from '../../components/editor';
 import { EmojiBoard } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
+import initMatrix from '../../../client/initMatrix';
 
 interface RoomInputProps {
   roomId: string;
@@ -30,6 +31,12 @@ interface RoomInputProps {
 export function RoomInput({ roomId }: RoomInputProps) {
   const mx = useMatrixClient();
   const editor = useEditor();
+  const allParentSpaces = [...(initMatrix.roomList?.getAllParentSpaces(roomId) ?? [])];
+  const imagePackRooms: Room[] = allParentSpaces.reduce<Room[]>((list, rId) => {
+    const r = mx.getRoom(rId);
+    if (r) list.push(r);
+    return list;
+  }, []);
   const [toolbar, setToolbar] = useState(false);
   const [autocompleteQuery, setAutocompleteQuery] =
     useState<AutocompleteQuery<AutocompletePrefix>>();
@@ -125,6 +132,7 @@ export function RoomInput({ roomId }: RoomInputProps) {
                   open={emojiBoard}
                   content={
                     <EmojiBoard
+                      imagePackRooms={imagePackRooms}
                       returnFocusOnDeactivate={false}
                       onEmojiSelect={handleEmojiSelect}
                       requestClose={() => {
