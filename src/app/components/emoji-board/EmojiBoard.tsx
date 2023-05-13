@@ -58,7 +58,7 @@ function Sidebar({ children }: { children: ReactNode }) {
   return (
     <Box className={css.Sidebar} shrink="No">
       <Scroll size="0">
-        <Box direction="Column" alignItems="Center">
+        <Box className={css.SidebarContent} direction="Column" alignItems="Center" gap="100">
           {children}
         </Box>
       </Scroll>
@@ -71,7 +71,7 @@ const SidebarStack = as<'div'>(({ className, children, ...props }, ref) => (
     className={classNames(css.SidebarStack, className)}
     direction="Column"
     alignItems="Center"
-    gap="300"
+    gap="100"
     {...props}
     ref={ref}
   >
@@ -176,7 +176,7 @@ export function SidebarBtn<T extends string>({
           aria-labelledby={`SidebarStackItem-${id}-label`}
           ref={ref}
           onClick={() => onItemClick(id)}
-          size="300"
+          size="400"
           radii="300"
           variant="Background"
         >
@@ -262,6 +262,7 @@ function ImagePackSidebarStack({
 }) {
   return (
     <SidebarStack>
+      <SidebarDivider />
       {packs.map((pack) => (
         <SidebarBtn key={pack.id} id={pack.id} label={pack.displayName!} onItemClick={onItemClick}>
           <img
@@ -291,6 +292,7 @@ function NativeEmojiSidebarStack({
 }) {
   return (
     <SidebarStack className={css.NativeEmojiSidebarStack}>
+      <SidebarDivider />
       {groups.map((group) => (
         <SidebarBtn key={group.id} id={group.id} label={labels[group.id]} onItemClick={onItemClick}>
           <Icon src={icons[group.id]} />
@@ -478,9 +480,7 @@ export function EmojiBoard({
                 </SidebarBtn>
               )}
             </SidebarStack>
-            <SidebarDivider />
             <ImagePackSidebarStack mx={mx} packs={emojiPacks} onItemClick={handleScrollToGroup} />
-            <SidebarDivider />
             <NativeEmojiSidebarStack
               groups={emojiGroups}
               icons={emojiGroupIcons}

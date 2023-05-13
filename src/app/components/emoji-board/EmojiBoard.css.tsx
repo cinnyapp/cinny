@@ -20,15 +20,18 @@ export const Sidebar = style({
   position: 'relative',
 });
 
+export const SidebarContent = style({
+  padding: `${config.space.S100} 0`,
+});
+
 export const SidebarStack = style({
-  padding: `${config.space.S200} 0`,
   width: '100%',
   backgroundColor: color.Background.Container,
 });
 
 export const NativeEmojiSidebarStack = style({
   position: 'sticky',
-  bottom: '-69%',
+  bottom: '-68%',
   zIndex: 1,
 });
 
