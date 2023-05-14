@@ -1,4 +1,14 @@
-import React, { FocusEventHandler, MouseEventHandler, ReactNode, memo, useRef } from 'react';
+import React, {
+  ChangeEventHandler,
+  FocusEventHandler,
+  MouseEventHandler,
+  ReactNode,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import {
   Badge,
   Box,
@@ -20,18 +30,21 @@ import classNames from 'classnames';
 import { MatrixClient, Room } from 'matrix-js-sdk';
 
 import * as css from './EmojiBoard.css';
-import { EmojiGroupId, IEmoji, IEmojiGroup, emojiGroups } from './emoji';
+import { EmojiGroupId, IEmoji, IEmojiGroup, emojiGroups, emojis } from './emoji';
 import { IEmojiGroupLabels, useEmojiGroupLabels } from './useEmojiGroupLabels';
 import { IEmojiGroupIcons, useEmojiGroupIcons } from './useEmojiGroupIcons';
 import { preventScrollWithArrowKey } from '../../utils/keyboard';
 import { useRelevantEmojiPacks } from './useImagePacks';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRecentEmoji } from './useRecentEmoji';
-import { ImagePack, PackUsage } from './custom-emoji';
+import { ExtendedPackImage, ImagePack, PackUsage } from './custom-emoji';
 import { isUserId } from '../../utils/matrix';
-import { targetFromEvent } from '../../utils/dom';
+import { editableActiveElement, targetFromEvent } from '../../utils/dom';
+import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const RECENT_GROUP_ID = 'recent_group';
+const SEARCH_GROUP_ID = 'search_group';
 
 export enum EmojiBoardTab {
   Emoji = 'Emoji',
@@ -370,7 +383,7 @@ function NativeEmojiSidebarStack({
 export function RecentEmojiGroup({
   label,
   id,
-  emojis,
+  emojis: recentEmojis,
 }: {
   label: string;
   id: string;
@@ -378,7 +391,7 @@ export function RecentEmojiGroup({
 }) {
   return (
     <EmojiGroup key={id} id={id} label={label}>
-      {emojis.map((emoji) => (
+      {recentEmojis.map((emoji) => (
         <EmojiItem
           key={emoji.unicode}
           label={emoji.label}
@@ -389,6 +402,72 @@ export function RecentEmojiGroup({
           {emoji.unicode}
         </EmojiItem>
       ))}
+    </EmojiGroup>
+  );
+}
+
+export function SearchEmojiGroup({
+  mx,
+  tab,
+  label,
+  id,
+  emojis: recentEmojis,
+}: {
+  mx: MatrixClient;
+  tab: EmojiBoardTab;
+  label: string;
+  id: string;
+  emojis: Array<ExtendedPackImage | IEmoji>;
+}) {
+  return (
+    <EmojiGroup key={id} id={id} label={label}>
+      {tab === EmojiBoardTab.Emoji
+        ? recentEmojis.map((emoji) =>
+            'unicode' in emoji ? (
+              <EmojiItem
+                key={emoji.unicode}
+                label={emoji.label}
+                type={EmojiType.Emoji}
+                data={emoji.unicode}
+                shortcode={emoji.shortcode}
+              >
+                {emoji.unicode}
+              </EmojiItem>
+            ) : (
+              <EmojiItem
+                key={emoji.shortcode}
+                label={emoji.body || emoji.shortcode}
+                type={EmojiType.CustomEmoji}
+                data={emoji.url}
+                shortcode={emoji.shortcode}
+              >
+                <img
+                  loading="lazy"
+                  className={css.CustomEmojiImg}
+                  alt={emoji.body || emoji.shortcode}
+                  src={mx.mxcUrlToHttp(emoji.url) ?? emoji.url}
+                />
+              </EmojiItem>
+            )
+          )
+        : recentEmojis.map((emoji) =>
+            'unicode' in emoji ? null : (
+              <StickerItem
+                key={emoji.shortcode}
+                label={emoji.body || emoji.shortcode}
+                type={EmojiType.CustomEmoji}
+                data={emoji.url}
+                shortcode={emoji.shortcode}
+              >
+                <img
+                  loading="lazy"
+                  className={css.StickerImg}
+                  alt={emoji.body || emoji.shortcode}
+                  src={mx.mxcUrlToHttp(emoji.url) ?? emoji.url}
+                />
+              </StickerItem>
+            )
+          )}
     </EmojiGroup>
   );
 }
@@ -467,6 +546,14 @@ export const NativeEmojiGroups = memo(
   )
 );
 
+const getSearchListItemStr = (item: ExtendedPackImage | IEmoji) => `:${item.shortcode}:`;
+const SEARCH_OPTIONS: UseAsyncSearchOptions = {
+  limit: 26,
+  matchOptions: {
+    contain: true,
+  },
+};
+
 export function EmojiBoard({
   tab = EmojiBoardTab.Emoji,
   onTabChange,
@@ -488,18 +575,42 @@ export function EmojiBoard({
 }) {
   const emojiTab = tab === EmojiBoardTab.Emoji;
   const stickerTab = tab === EmojiBoardTab.Sticker;
+  const usage = emojiTab ? PackUsage.Emoticon : PackUsage.Sticker;
+
   const mx = useMatrixClient();
   const emojiGroupLabels = useEmojiGroupLabels();
   const emojiGroupIcons = useEmojiGroupIcons();
-  const imagePacks = useRelevantEmojiPacks(
-    mx,
-    emojiTab ? PackUsage.Emoticon : PackUsage.Sticker,
-    imagePackRooms
-  );
+  const imagePacks = useRelevantEmojiPacks(mx, usage, imagePackRooms);
   const recentEmojis = useRecentEmoji(mx, 21);
 
+  const contentScrollRef = useRef<HTMLDivElement>(null);
   const emojiPreviewRef = useRef<HTMLDivElement>(null);
   const emojiPreviewTextRef = useRef<HTMLParagraphElement>(null);
+
+  const searchList = useMemo(() => {
+    let list: Array<ExtendedPackImage | IEmoji> = [];
+    list = list.concat(imagePacks.flatMap((pack) => pack.getImagesFor(usage)));
+    if (emojiTab) list = list.concat(emojis);
+    return list;
+  }, [emojiTab, usage, imagePacks]);
+
+  const [result, search] = useAsyncSearch(searchList, getSearchListItemStr, SEARCH_OPTIONS);
+  useEffect(() => {
+    if (result)
+      contentScrollRef.current?.scrollTo({
+        top: 0,
+      });
+  }, [result]);
+
+  const handleOnChange: ChangeEventHandler<HTMLInputElement> = useCallback(
+    (evt) => {
+      const term = evt.target.value;
+      search(term);
+    },
+    [search]
+  );
+
+  const debounceOnChange = useDebounce(handleOnChange, { wait: 200 });
 
   const handleScrollToGroup = (groupId: string) => {
     const groupElement = document.getElementById(getDOMGroupId(groupId));
@@ -559,8 +670,10 @@ export function EmojiBoard({
         onDeactivate: requestClose,
         clickOutsideDeactivates: true,
         allowOutsideClick: true,
-        isKeyForward: (evt: KeyboardEvent) => isHotkey(['arrowdown', 'arrowright'], evt),
-        isKeyBackward: (evt: KeyboardEvent) => isHotkey(['arrowup', 'arrowleft'], evt),
+        isKeyForward: (evt: KeyboardEvent) =>
+          !editableActiveElement() && isHotkey(['arrowdown', 'arrowright'], evt),
+        isKeyBackward: (evt: KeyboardEvent) =>
+          !editableActiveElement() && isHotkey(['arrowup', 'arrowleft'], evt),
       }}
     >
       <EmojiBoardLayout
@@ -575,6 +688,7 @@ export function EmojiBoard({
                 placeholder="Search"
                 maxLength={50}
                 after={<Icon src={Icons.Search} size="50" />}
+                onChange={debounceOnChange}
                 autoFocus
               />
             </Box>
@@ -630,7 +744,7 @@ export function EmojiBoard({
         }
       >
         <Content>
-          <Scroll size="400" onKeyDown={preventScrollWithArrowKey}>
+          <Scroll ref={contentScrollRef} size="400" onKeyDown={preventScrollWithArrowKey}>
             <Box
               onClick={handleEmojiClick}
               onMouseMove={handleEmojiHover}
@@ -638,6 +752,15 @@ export function EmojiBoard({
               direction="Column"
               gap="200"
             >
+              {result && (
+                <SearchEmojiGroup
+                  mx={mx}
+                  tab={tab}
+                  id={SEARCH_GROUP_ID}
+                  label={result.items.length ? 'Search Results' : 'No Results found'}
+                  emojis={result.items}
+                />
+              )}
               {emojiTab && recentEmojis.length > 0 && (
                 <RecentEmojiGroup id={RECENT_GROUP_ID} label="Recent Emoji" emojis={recentEmojis} />
               )}
