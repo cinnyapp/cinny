@@ -353,6 +353,7 @@ function ImagePackSidebarStack({
           </SidebarBtn>
         );
       })}
+      {usage === PackUsage.Emoticon && <SidebarDivider />}
     </SidebarStack>
   );
 }
@@ -370,7 +371,6 @@ function NativeEmojiSidebarStack({
 }) {
   return (
     <SidebarStack className={css.NativeEmojiSidebarStack}>
-      <SidebarDivider />
       {groups.map((group) => (
         <SidebarBtn key={group.id} id={group.id} label={labels[group.id]} onItemClick={onItemClick}>
           <Icon src={icons[group.id]} />
@@ -722,7 +722,7 @@ export function EmojiBoard({
             )}
             <ImagePackSidebarStack
               mx={mx}
-              usage={PackUsage.Emoticon}
+              usage={usage}
               packs={imagePacks}
               onItemClick={handleScrollToGroup}
             />
