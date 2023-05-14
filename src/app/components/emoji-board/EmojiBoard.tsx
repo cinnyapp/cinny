@@ -636,27 +636,39 @@ export function EmojiBoard({
     }
   };
 
-  const handleEmojiPreview = (element: HTMLButtonElement) => {
-    const emojiInfo = getEmojiItemInfo(element);
-    if (!emojiInfo || !emojiPreviewTextRef.current) return;
-    if (emojiInfo.type === EmojiType.Emoji && emojiPreviewRef.current) {
-      emojiPreviewRef.current.textContent = emojiInfo.data;
-    } else if (emojiInfo.type === EmojiType.CustomEmoji && emojiPreviewRef.current) {
-      const img = document.createElement('img');
-      img.className = css.CustomEmojiImg;
-      img.setAttribute('src', mx.mxcUrlToHttp(emojiInfo.data) || emojiInfo.data);
-      img.setAttribute('alt', emojiInfo.shortcode);
-      emojiPreviewRef.current.textContent = '';
-      emojiPreviewRef.current.appendChild(img);
-    }
-    emojiPreviewTextRef.current.textContent = `:${emojiInfo.shortcode}:`;
-  };
+  const handleEmojiPreview = useCallback(
+    (element: HTMLButtonElement) => {
+      const emojiInfo = getEmojiItemInfo(element);
+      if (!emojiInfo || !emojiPreviewTextRef.current) return;
+      if (emojiInfo.type === EmojiType.Emoji && emojiPreviewRef.current) {
+        emojiPreviewRef.current.textContent = emojiInfo.data;
+      } else if (emojiInfo.type === EmojiType.CustomEmoji && emojiPreviewRef.current) {
+        const img = document.createElement('img');
+        img.className = css.CustomEmojiImg;
+        img.setAttribute('src', mx.mxcUrlToHttp(emojiInfo.data) || emojiInfo.data);
+        img.setAttribute('alt', emojiInfo.shortcode);
+        emojiPreviewRef.current.textContent = '';
+        emojiPreviewRef.current.appendChild(img);
+      }
+      emojiPreviewTextRef.current.textContent = `:${emojiInfo.shortcode}:`;
+    },
+    [mx]
+  );
 
-  const handleEmojiHover: MouseEventHandler = (evt) => {
-    const targetEl = evt.target as HTMLButtonElement;
-    handleEmojiPreview(targetEl);
-    targetEl.focus();
-  };
+  const handleEmojiHover: MouseEventHandler = useDebounce(
+    useCallback(
+      (evt) => {
+        const targetEl = targetFromEvent(evt.nativeEvent, 'button') as
+          | HTMLButtonElement
+          | undefined;
+        if (!targetEl) return;
+        handleEmojiPreview(targetEl);
+        targetEl.focus();
+      },
+      [handleEmojiPreview]
+    ),
+    { wait: 20, immediate: true }
+  );
   const handleEmojiFocus: FocusEventHandler = (evt) => {
     const targetEl = evt.target as HTMLButtonElement;
     handleEmojiPreview(targetEl);

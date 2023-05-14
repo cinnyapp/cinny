@@ -2,7 +2,9 @@
 
 @font-face {
   font-family: Twemoji;
-  src: url('../public/font/Twemoji.Mozilla.v0.7.0.ttf');
+  src: url('../public/font/Twemoji.Mozilla.v.7.0.woff2'),
+    url('../public/font/Twemoji.Mozilla.v0.7.0.ttf');
+  font-display: swap;
 }
 
 :root {

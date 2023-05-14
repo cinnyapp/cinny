@@ -125,7 +125,7 @@ export function RoomInput({ roomId }: RoomInputProps) {
             >
               <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
             </IconButton>
-            <UseStateProvider initial={EmojiBoardTab.Emoji}>
+            <UseStateProvider initial={undefined}>
               {(emojiBoardTab: EmojiBoardTab | undefined, setEmojiBoardTab) => (
                 <PopOut
                   offset={16}
