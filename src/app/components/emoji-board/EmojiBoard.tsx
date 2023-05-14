@@ -382,11 +382,13 @@ export function EmojiBoard({
   requestClose,
   returnFocusOnDeactivate,
   onEmojiSelect,
+  onCustomEmojiSelect,
 }: {
   imagePackRooms: Room[];
   requestClose: () => void;
   returnFocusOnDeactivate?: boolean;
   onEmojiSelect?: (unicode: string, shortcode: string) => void;
+  onCustomEmojiSelect?: (mxc: string, shortcode: string) => void;
 }) {
   const mx = useMatrixClient();
   const emojiGroupLabels = useEmojiGroupLabels();
@@ -408,6 +410,10 @@ export function EmojiBoard({
     if (!emojiInfo) return;
     if (emojiInfo.type === EmojiType.Emoji) {
       onEmojiSelect?.(emojiInfo.data, emojiInfo.shortcode);
+      if (!evt.altKey && !evt.shiftKey) requestClose();
+    }
+    if (emojiInfo.type === EmojiType.CustomEmoji) {
+      onCustomEmojiSelect?.(emojiInfo.data, emojiInfo.shortcode);
       if (!evt.altKey && !evt.shiftKey) requestClose();
     }
   };
@@ -439,7 +445,6 @@ export function EmojiBoard({
   };
 
   return (
-    // TODO: handle on focus move to show emoji info in footer use focusin event: see TODO for more
     <FocusTrap
       focusTrapOptions={{
         returnFocusOnDeactivate,

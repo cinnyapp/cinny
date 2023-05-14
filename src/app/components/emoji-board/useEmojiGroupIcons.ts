@@ -9,7 +9,7 @@ export const useEmojiGroupIcons = (): IEmojiGroupIcons =>
   useMemo(
     () => ({
       [EmojiGroupId.People]: Icons.Smile,
-      [EmojiGroupId.Nature]: Icons.Sun,
+      [EmojiGroupId.Nature]: Icons.Leaf,
       [EmojiGroupId.Food]: Icons.Cup,
       [EmojiGroupId.Activity]: Icons.Ball,
       [EmojiGroupId.Travel]: Icons.Photo,
