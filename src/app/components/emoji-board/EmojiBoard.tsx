@@ -612,14 +612,20 @@ export function EmojiBoard({
         }
         footer={
           <Footer>
-            {emojiTab && (
-              <div ref={emojiPreviewRef} className={css.EmojiPreview}>
-                😃
-              </div>
+            {emojiTab ? (
+              <>
+                <div ref={emojiPreviewRef} className={css.EmojiPreview}>
+                  😃
+                </div>
+                <Text ref={emojiPreviewTextRef} size="H5" truncate>
+                  :smiley:
+                </Text>
+              </>
+            ) : (
+              <Text ref={emojiPreviewTextRef} size="H5" truncate>
+                :smiley:
+              </Text>
             )}
-            <Text ref={emojiPreviewTextRef} size="H5" truncate>
-              :smiley:
-            </Text>
           </Footer>
         }
       >
