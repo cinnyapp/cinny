@@ -43,6 +43,10 @@ export const Header = style({
   padding: config.space.S400,
 });
 
+export const EmojiBoardTab = style({
+  cursor: 'pointer',
+});
+
 export const Footer = style({
   padding: `${config.space.S300} ${config.space.S400}`,
 });
@@ -93,10 +97,26 @@ export const EmojiItem = style([
   },
 ]);
 
+export const StickerItem = style([
+  EmojiItem,
+  {
+    width: toRem(112),
+    height: toRem(112),
+  },
+]);
+
 export const CustomEmojiImg = style([
   DefaultReset,
   {
     width: toRem(32),
     height: toRem(32),
+  },
+]);
+
+export const StickerImg = style([
+  DefaultReset,
+  {
+    width: toRem(96),
+    height: toRem(96),
   },
 ]);

@@ -29,10 +29,19 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRecentEmoji } from './useRecentEmoji';
 import { ImagePack, PackUsage } from './custom-emoji';
 import { isUserId } from '../../utils/matrix';
+import { targetFromEvent } from '../../utils/dom';
+
+const RECENT_GROUP_ID = 'recent_group';
+
+export enum EmojiBoardTab {
+  Emoji = 'Emoji',
+  Sticker = 'Sticker',
+}
 
 enum EmojiType {
   Emoji = 'emoji',
   CustomEmoji = 'customEmoji',
+  Sticker = 'sticker',
 }
 
 export type EmojiItemInfo = {
@@ -41,7 +50,9 @@ export type EmojiItemInfo = {
   shortcode: string;
 };
 
-const getEmojiItemInfo = (element: HTMLButtonElement): EmojiItemInfo | undefined => {
+const getDOMGroupId = (id: string): string => `EmojiBoardGroup-${id}`;
+
+const getEmojiItemInfo = (element: Element): EmojiItemInfo | undefined => {
   const type = element.getAttribute('data-emoji-type') as EmojiType | undefined;
   const data = element.getAttribute('data-emoji-data');
   const shortcode = element.getAttribute('data-emoji-shortcode');
@@ -135,15 +146,35 @@ const EmojiBoardLayout = as<
   </Box>
 ));
 
-function SidebarTabs() {
+function EmojiBoardTabs({
+  tab,
+  onTabChange,
+}: {
+  tab: EmojiBoardTab;
+  onTabChange: (tab: EmojiBoardTab) => void;
+}) {
   return (
     <Box gap="100">
-      <Badge as="button" variant="Secondary" fill="Solid" size="500">
+      <Badge
+        className={css.EmojiBoardTab}
+        as="button"
+        variant="Secondary"
+        fill={tab === EmojiBoardTab.Emoji ? 'Solid' : 'None'}
+        size="500"
+        onClick={() => onTabChange(EmojiBoardTab.Emoji)}
+      >
         <Text as="span" size="L400">
           Emoji
         </Text>
       </Badge>
-      <Badge as="button" variant="Secondary" fill="None" size="500">
+      <Badge
+        className={css.EmojiBoardTab}
+        as="button"
+        variant="Secondary"
+        fill={tab === EmojiBoardTab.Sticker ? 'Solid' : 'None'}
+        size="500"
+        onClick={() => onTabChange(EmojiBoardTab.Sticker)}
+      >
         <Text as="span" size="L400">
           Sticker
         </Text>
@@ -197,7 +228,7 @@ export const EmojiGroup = as<
   }
 >(({ className, id, label, children, ...props }, ref) => (
   <Box
-    id={id}
+    id={getDOMGroupId(id)}
     className={classNames(css.EmojiGroup, className)}
     direction="Column"
     gap="100"
@@ -233,6 +264,7 @@ export function EmojiItem({
       type="button"
       alignItems="Center"
       justifyContent="Center"
+      title={label}
       aria-label={`${label} emoji`}
       data-emoji-type={type}
       data-emoji-data={data}
@@ -243,14 +275,36 @@ export function EmojiItem({
   );
 }
 
-export const CustomEmojiImg = as<'img'>(({ className, ...props }, ref) => (
-  <img
-    className={classNames(css.CustomEmojiImg, className)}
-    alt="custom-emoji"
-    {...props}
-    ref={ref}
-  />
-));
+export function StickerItem({
+  label,
+  type,
+  data,
+  shortcode,
+  children,
+}: {
+  label: string;
+  type: EmojiType;
+  data: string;
+  shortcode: string;
+  children: ReactNode;
+}) {
+  return (
+    <Box
+      as="button"
+      className={css.StickerItem}
+      type="button"
+      alignItems="Center"
+      justifyContent="Center"
+      title={label}
+      aria-label={`${label} sticker`}
+      data-emoji-type={type}
+      data-emoji-data={data}
+      data-emoji-shortcode={shortcode}
+    >
+      {children}
+    </Box>
+  );
+}
 
 function ImagePackSidebarStack({
   mx,
@@ -265,7 +319,6 @@ function ImagePackSidebarStack({
 }) {
   return (
     <SidebarStack>
-      <SidebarDivider />
       {packs.map((pack) => {
         let label = pack.displayName;
         if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
@@ -353,7 +406,9 @@ export const CustomEmojiGroups = memo(
               data={image.url}
               shortcode={image.shortcode}
             >
-              <CustomEmojiImg
+              <img
+                loading="lazy"
+                className={css.CustomEmojiImg}
                 alt={image.body || image.shortcode}
                 src={mx.mxcUrlToHttp(image.url) ?? image.url}
               />
@@ -364,6 +419,31 @@ export const CustomEmojiGroups = memo(
     </>
   )
 );
+
+export const StickerGroups = memo(({ mx, groups }: { mx: MatrixClient; groups: ImagePack[] }) => (
+  <>
+    {groups.map((pack) => (
+      <EmojiGroup key={pack.id} id={pack.id} label={pack.displayName || 'Unknown'}>
+        {pack.getStickers().map((image) => (
+          <StickerItem
+            key={image.shortcode}
+            label={image.body || image.shortcode}
+            type={EmojiType.Sticker}
+            data={image.url}
+            shortcode={image.shortcode}
+          >
+            <img
+              loading="lazy"
+              className={css.StickerImg}
+              alt={image.body || image.shortcode}
+              src={mx.mxcUrlToHttp(image.url) ?? image.url}
+            />
+          </StickerItem>
+        ))}
+      </EmojiGroup>
+    ))}
+  </>
+));
 
 export const NativeEmojiGroups = memo(
   ({ groups, labels }: { groups: IEmojiGroup[]; labels: IEmojiGroupLabels }) => (
@@ -387,37 +467,48 @@ export const NativeEmojiGroups = memo(
   )
 );
 
-const RECENT_GROUP_ID = 'recent_group';
-
 export function EmojiBoard({
+  tab = EmojiBoardTab.Emoji,
+  onTabChange,
   imagePackRooms,
   requestClose,
   returnFocusOnDeactivate,
   onEmojiSelect,
   onCustomEmojiSelect,
+  onStickerSelect,
 }: {
+  tab?: EmojiBoardTab;
+  onTabChange?: (tab: EmojiBoardTab) => void;
   imagePackRooms: Room[];
   requestClose: () => void;
   returnFocusOnDeactivate?: boolean;
   onEmojiSelect?: (unicode: string, shortcode: string) => void;
   onCustomEmojiSelect?: (mxc: string, shortcode: string) => void;
+  onStickerSelect?: (mxc: string, shortcode: string) => void;
 }) {
+  const emojiTab = tab === EmojiBoardTab.Emoji;
+  const stickerTab = tab === EmojiBoardTab.Sticker;
   const mx = useMatrixClient();
   const emojiGroupLabels = useEmojiGroupLabels();
   const emojiGroupIcons = useEmojiGroupIcons();
-  const emojiPacks = useRelevantEmojiPacks(mx, PackUsage.Emoticon, imagePackRooms);
+  const imagePacks = useRelevantEmojiPacks(
+    mx,
+    emojiTab ? PackUsage.Emoticon : PackUsage.Sticker,
+    imagePackRooms
+  );
   const recentEmojis = useRecentEmoji(mx, 21);
 
   const emojiPreviewRef = useRef<HTMLDivElement>(null);
   const emojiPreviewTextRef = useRef<HTMLParagraphElement>(null);
 
   const handleScrollToGroup = (groupId: string) => {
-    const groupElement = document.getElementById(groupId);
+    const groupElement = document.getElementById(getDOMGroupId(groupId));
     groupElement?.scrollIntoView();
   };
 
   const handleEmojiClick: MouseEventHandler = (evt) => {
-    const targetEl = evt.target as HTMLButtonElement;
+    const targetEl = targetFromEvent(evt.nativeEvent, 'button');
+    if (!targetEl) return;
     const emojiInfo = getEmojiItemInfo(targetEl);
     if (!emojiInfo) return;
     if (emojiInfo.type === EmojiType.Emoji) {
@@ -428,14 +519,18 @@ export function EmojiBoard({
       onCustomEmojiSelect?.(emojiInfo.data, emojiInfo.shortcode);
       if (!evt.altKey && !evt.shiftKey) requestClose();
     }
+    if (emojiInfo.type === EmojiType.Sticker) {
+      onStickerSelect?.(emojiInfo.data, emojiInfo.shortcode);
+      if (!evt.altKey && !evt.shiftKey) requestClose();
+    }
   };
 
   const handleEmojiPreview = (element: HTMLButtonElement) => {
     const emojiInfo = getEmojiItemInfo(element);
-    if (!emojiInfo || !emojiPreviewRef.current || !emojiPreviewTextRef.current) return;
-    if (emojiInfo.type === EmojiType.Emoji) {
+    if (!emojiInfo || !emojiPreviewTextRef.current) return;
+    if (emojiInfo.type === EmojiType.Emoji && emojiPreviewRef.current) {
       emojiPreviewRef.current.textContent = emojiInfo.data;
-    } else {
+    } else if (emojiInfo.type === EmojiType.CustomEmoji && emojiPreviewRef.current) {
       const img = document.createElement('img');
       img.className = css.CustomEmojiImg;
       img.setAttribute('src', mx.mxcUrlToHttp(emojiInfo.data) || emojiInfo.data);
@@ -472,12 +567,13 @@ export function EmojiBoard({
         header={
           <Header>
             <Box direction="Column" gap="200">
-              <SidebarTabs />
+              {onTabChange && <EmojiBoardTabs tab={tab} onTabChange={onTabChange} />}
               <Input
                 variant="Background"
                 size="300"
                 radii="300"
                 placeholder="Search"
+                maxLength={50}
                 after={<Icon src={Icons.Search} size="50" />}
                 autoFocus
               />
@@ -486,8 +582,8 @@ export function EmojiBoard({
         }
         sidebar={
           <Sidebar>
-            <SidebarStack>
-              {recentEmojis.length > 0 && (
+            {emojiTab && recentEmojis.length > 0 && (
+              <SidebarStack>
                 <SidebarBtn
                   id={RECENT_GROUP_ID}
                   label="Recent Emoji"
@@ -495,29 +591,34 @@ export function EmojiBoard({
                 >
                   <Icon src={Icons.RecentClock} />
                 </SidebarBtn>
-              )}
-            </SidebarStack>
+                <SidebarDivider />
+              </SidebarStack>
+            )}
             <ImagePackSidebarStack
               mx={mx}
               usage={PackUsage.Emoticon}
-              packs={emojiPacks}
+              packs={imagePacks}
               onItemClick={handleScrollToGroup}
             />
-            <NativeEmojiSidebarStack
-              groups={emojiGroups}
-              icons={emojiGroupIcons}
-              labels={emojiGroupLabels}
-              onItemClick={handleScrollToGroup}
-            />
+            {emojiTab && (
+              <NativeEmojiSidebarStack
+                groups={emojiGroups}
+                icons={emojiGroupIcons}
+                labels={emojiGroupLabels}
+                onItemClick={handleScrollToGroup}
+              />
+            )}
           </Sidebar>
         }
         footer={
           <Footer>
-            <div ref={emojiPreviewRef} className={css.EmojiPreview}>
-              😃
-            </div>
+            {emojiTab && (
+              <div ref={emojiPreviewRef} className={css.EmojiPreview}>
+                😃
+              </div>
+            )}
             <Text ref={emojiPreviewTextRef} size="H5" truncate>
-              :Smiley:
+              :smiley:
             </Text>
           </Footer>
         }
@@ -531,11 +632,12 @@ export function EmojiBoard({
               direction="Column"
               gap="200"
             >
-              {recentEmojis.length > 0 && (
+              {emojiTab && recentEmojis.length > 0 && (
                 <RecentEmojiGroup id={RECENT_GROUP_ID} label="Recent Emoji" emojis={recentEmojis} />
               )}
-              <CustomEmojiGroups mx={mx} groups={emojiPacks} />
-              <NativeEmojiGroups groups={emojiGroups} labels={emojiGroupLabels} />
+              {emojiTab && <CustomEmojiGroups mx={mx} groups={imagePacks} />}
+              {stickerTab && <StickerGroups mx={mx} groups={imagePacks} />}
+              {emojiTab && <NativeEmojiGroups groups={emojiGroups} labels={emojiGroupLabels} />}
             </Box>
           </Scroll>
         </Content>

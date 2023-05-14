@@ -21,7 +21,7 @@ import {
   RoomMentionAutocomplete,
   UserMentionAutocomplete,
 } from '../../components/editor';
-import { EmojiBoard } from '../../components/emoji-board';
+import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import initMatrix from '../../../client/initMatrix';
 
@@ -82,6 +82,9 @@ export function RoomInput({ roomId }: RoomInputProps) {
   const handleEmojiSelect = (unicode: string) => {
     editor.insertText(unicode);
   };
+  const handleCustomEmojiSelect = (mxc: string, shortcode: string) => {
+    editor.insertText(shortcode);
+  };
 
   return (
     <div>
@@ -122,39 +125,47 @@ export function RoomInput({ roomId }: RoomInputProps) {
             >
               <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
             </IconButton>
-            <UseStateProvider initial={false}>
-              {(emojiBoard, setEmojiBoard) => (
-                <PopOut
-                  offset={16}
-                  alignOffset={-44}
-                  position="top"
-                  align="end"
-                  open={emojiBoard}
-                  content={
-                    <EmojiBoard
-                      imagePackRooms={imagePackRooms}
-                      returnFocusOnDeactivate={false}
-                      onEmojiSelect={handleEmojiSelect}
-                      requestClose={() => {
-                        setEmojiBoard(false);
-                        ReactEditor.focus(editor);
-                      }}
-                    />
-                  }
-                >
-                  {(anchorRef) => (
-                    <IconButton
-                      aria-pressed={emojiBoard}
-                      ref={anchorRef}
-                      onClick={() => setEmojiBoard(!emojiBoard)}
-                      variant="SurfaceVariant"
-                      size="300"
-                      radii="300"
+            <UseStateProvider initial={EmojiBoardTab.Emoji}>
+              {(emojiBoardTab, setEmojiBoardTab) => (
+                <UseStateProvider initial={false}>
+                  {(emojiBoard, setEmojiBoard) => (
+                    <PopOut
+                      offset={16}
+                      alignOffset={-44}
+                      position="top"
+                      align="end"
+                      open={emojiBoard}
+                      content={
+                        <EmojiBoard
+                          tab={emojiBoardTab}
+                          onTabChange={setEmojiBoardTab}
+                          imagePackRooms={imagePackRooms}
+                          returnFocusOnDeactivate={false}
+                          onEmojiSelect={handleEmojiSelect}
+                          onCustomEmojiSelect={handleCustomEmojiSelect}
+                          onStickerSelect={(mxc, shortcode) => console.log(shortcode)}
+                          requestClose={() => {
+                            setEmojiBoard(false);
+                            ReactEditor.focus(editor);
+                          }}
+                        />
+                      }
                     >
-                      <Icon src={Icons.Smile} />
-                    </IconButton>
+                      {(anchorRef) => (
+                        <IconButton
+                          aria-pressed={emojiBoard}
+                          ref={anchorRef}
+                          onClick={() => setEmojiBoard(!emojiBoard)}
+                          variant="SurfaceVariant"
+                          size="300"
+                          radii="300"
+                        >
+                          <Icon src={Icons.Smile} />
+                        </IconButton>
+                      )}
+                    </PopOut>
                   )}
-                </PopOut>
+                </UseStateProvider>
               )}
             </UseStateProvider>
             <IconButton onClick={submit} variant="SurfaceVariant" size="300" radii="300">
