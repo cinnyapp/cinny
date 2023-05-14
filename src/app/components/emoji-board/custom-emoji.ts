@@ -135,14 +135,18 @@ export class ImagePack {
   getImagesFor(usage: PackUsage) {
     if (usage === PackUsage.Emoticon) return this.getEmojis();
     if (usage === PackUsage.Sticker) return this.getStickers();
-    return this.getEmojis;
+    return this.getEmojis();
   }
 
   getContent() {
     return this.content;
   }
 
-  _updatePackProperty<K extends keyof PackMeta>(property: K, value: PackMeta[K]) {
+  getPackAvatarUrl(usage: PackUsage): string | undefined {
+    return this.avatarUrl || this.getImagesFor(usage)[0].url;
+  }
+
+  private updatePackProperty<K extends keyof PackMeta>(property: K, value: PackMeta[K]) {
     if (this.content.pack === undefined) {
       this.content.pack = {};
     }
@@ -151,19 +155,19 @@ export class ImagePack {
   }
 
   setAvatarUrl(avatarUrl?: string) {
-    this._updatePackProperty('avatar_url', avatarUrl);
+    this.updatePackProperty('avatar_url', avatarUrl);
   }
 
   setDisplayName(displayName?: string) {
-    this._updatePackProperty('display_name', displayName);
+    this.updatePackProperty('display_name', displayName);
   }
 
   setAttribution(attribution?: string) {
-    this._updatePackProperty('attribution', attribution);
+    this.updatePackProperty('attribution', attribution);
   }
 
   setUsage(usage?: PackUsage[]) {
-    this._updatePackProperty('usage', usage);
+    this.updatePackProperty('usage', usage);
   }
 
   addImage(key: string, imgContent: PackImage) {
@@ -193,7 +197,11 @@ export class ImagePack {
     this.applyImages(this.content);
   }
 
-  _updateImageProperty<K extends keyof PackImage>(key: string, property: K, value: PackImage[K]) {
+  private updateImageProperty<K extends keyof PackImage>(
+    key: string,
+    property: K,
+    value: PackImage[K]
+  ) {
     if (!this.content.images) return;
     if (this.content.images[key] === undefined) return;
     this.content.images[key][property] = value;
@@ -201,19 +209,19 @@ export class ImagePack {
   }
 
   setImageUrl(key: string, url: string) {
-    this._updateImageProperty(key, 'url', url);
+    this.updateImageProperty(key, 'url', url);
   }
 
   setImageBody(key: string, body?: string) {
-    this._updateImageProperty(key, 'body', body);
+    this.updateImageProperty(key, 'body', body);
   }
 
   setImageInfo(key: string, info?: IImageInfo) {
-    this._updateImageProperty(key, 'info', info);
+    this.updateImageProperty(key, 'info', info);
   }
 
   setImageUsage(key: string, usage?: PackUsage[]) {
-    this._updateImageProperty(key, 'usage', usage);
+    this.updateImageProperty(key, 'usage', usage);
   }
 }
 
@@ -226,8 +234,6 @@ export function getRoomImagePacks(room: Room): ImagePack[] {
     if (!packId || !content) return roomPacks;
     const pack = ImagePack.parsePack(packId, content);
     if (pack) {
-      pack.displayName ??= room.name;
-      pack.avatarUrl ??= room.getMxcAvatarUrl() ?? undefined;
       roomPacks.push(pack);
     }
     return roomPacks;
@@ -265,7 +271,6 @@ export function getUserImagePack(mx: MatrixClient): ImagePack | undefined {
   }
 
   const userImagePack = ImagePack.parsePack(userId, userPackContent);
-  if (userImagePack) userImagePack.displayName ??= 'Personal Emoji';
   return userImagePack;
 }
 

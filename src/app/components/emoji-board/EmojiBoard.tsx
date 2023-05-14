@@ -28,6 +28,7 @@ import { useRelevantEmojiPacks } from './useImagePacks';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRecentEmoji } from './useRecentEmoji';
 import { ImagePack, PackUsage } from './custom-emoji';
+import { isUserId } from '../../utils/matrix';
 
 enum EmojiType {
   Emoji = 'emoji',
@@ -254,27 +255,38 @@ export const CustomEmojiImg = as<'img'>(({ className, ...props }, ref) => (
 function ImagePackSidebarStack({
   mx,
   packs,
+  usage,
   onItemClick,
 }: {
   mx: MatrixClient;
   packs: ImagePack[];
+  usage: PackUsage;
   onItemClick: (id: string) => void;
 }) {
   return (
     <SidebarStack>
       <SidebarDivider />
-      {packs.map((pack) => (
-        <SidebarBtn key={pack.id} id={pack.id} label={pack.displayName!} onItemClick={onItemClick}>
-          <img
-            style={{
-              width: toRem(24),
-              height: toRem(24),
-            }}
-            src={mx.mxcUrlToHttp(pack.avatarUrl ?? '') || pack.avatarUrl}
-            alt={pack.displayName!}
-          />
-        </SidebarBtn>
-      ))}
+      {packs.map((pack) => {
+        let label = pack.displayName;
+        if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+        return (
+          <SidebarBtn
+            key={pack.id}
+            id={pack.id}
+            label={label || 'Unknown Pack'}
+            onItemClick={onItemClick}
+          >
+            <img
+              style={{
+                width: toRem(24),
+                height: toRem(24),
+              }}
+              src={mx.mxcUrlToHttp(pack.getPackAvatarUrl(usage) ?? '') || pack.avatarUrl}
+              alt={label || 'Unknown Pack'}
+            />
+          </SidebarBtn>
+        );
+      })}
     </SidebarStack>
   );
 }
@@ -485,7 +497,12 @@ export function EmojiBoard({
                 </SidebarBtn>
               )}
             </SidebarStack>
-            <ImagePackSidebarStack mx={mx} packs={emojiPacks} onItemClick={handleScrollToGroup} />
+            <ImagePackSidebarStack
+              mx={mx}
+              usage={PackUsage.Emoticon}
+              packs={emojiPacks}
+              onItemClick={handleScrollToGroup}
+            />
             <NativeEmojiSidebarStack
               groups={emojiGroups}
               icons={emojiGroupIcons}
