@@ -1,6 +1,6 @@
 import { BasePoint, BaseRange, Editor, Element, Point, Range, Transforms } from 'slate';
 import { BlockType, MarkType } from './Elements';
-import { HeadingLevel, MentionElement } from './slate';
+import { EmoticonElement, HeadingLevel, MentionElement } from './slate';
 
 export const isMarkActive = (editor: Editor, format: MarkType) => {
   const marks = Editor.marks(editor);
@@ -115,6 +115,13 @@ export const createMentionElement = (
   id,
   highlight,
   name,
+  children: [{ text: '' }],
+});
+
+export const createEmoticonElement = (key: string, shortcode: string): EmoticonElement => ({
+  type: BlockType.Emoticon,
+  key,
+  shortcode,
   children: [{ text: '' }],
 });
 

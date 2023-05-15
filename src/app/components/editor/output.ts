@@ -35,6 +35,10 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
       return `<ul>${children}</ul>`;
     case BlockType.Mention:
       return `<a href="https://matrix.to/#/${node.id}">${node.name}</a>`;
+    case BlockType.Emoticon:
+      return node.key.startsWith('mxc://')
+        ? `<img data-mx-emoticon src="${node.key}" alt="${node.shortcode}" title="${node.shortcode}" height="32">`
+        : node.key;
     default:
       return children;
   }
@@ -70,6 +74,8 @@ const elementToPlainText = (node: CustomElement, children: string): string => {
       return `${children}\n`;
     case BlockType.Mention:
       return node.id;
+    case BlockType.Emoticon:
+      return node.key.startsWith('mxc://') ? `:${node.shortcode}:` : node.key;
     default:
       return children;
   }

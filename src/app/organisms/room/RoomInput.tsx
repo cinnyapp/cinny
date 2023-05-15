@@ -20,10 +20,12 @@ import {
   resetEditor,
   RoomMentionAutocomplete,
   UserMentionAutocomplete,
+  createEmoticonElement,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import initMatrix from '../../../client/initMatrix';
+import { Transforms } from 'slate';
 
 interface RoomInputProps {
   roomId: string;
@@ -79,11 +81,19 @@ export function RoomInput({ roomId }: RoomInputProps) {
     setAutocompleteQuery(query);
   };
 
-  const handleEmojiSelect = (unicode: string) => {
-    editor.insertText(unicode);
+  const handleEmojiSelect = (unicode: string, shortcode: string) => {
+    editor.insertNode(createEmoticonElement(unicode, shortcode));
+    setTimeout(() => {
+      // It doesn't move cursor without timeout
+      Transforms.move(editor);
+    }, 1);
   };
   const handleCustomEmojiSelect = (mxc: string, shortcode: string) => {
-    editor.insertText(shortcode);
+    editor.insertNode(createEmoticonElement(mxc, shortcode));
+    setTimeout(() => {
+      // It doesn't move cursor without timeout
+      Transforms.move(editor);
+    }, 1);
   };
 
   return (

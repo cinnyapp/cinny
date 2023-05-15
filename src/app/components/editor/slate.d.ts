@@ -35,9 +35,10 @@ export type MentionElement = {
   name: string;
   children: Text[];
 };
-export type EmojiElement = {
-  type: 'emoji';
-  mxc: string;
+export type EmoticonElement = {
+  type: BlockType.Emoticon;
+  key: string;
+  shortcode: string;
   children: Text[];
 };
 
@@ -83,7 +84,7 @@ export type CustomElement =
   // | LinkElement
   // | SpoilerElement
   | MentionElement
-  // | EmoticonElement
+  | EmoticonElement
   | ParagraphElement
   | HeadingElement
   | CodeLineElement

@@ -3,7 +3,8 @@ import React from 'react';
 import { RenderElementProps, RenderLeafProps, useFocused, useSelected } from 'slate-react';
 
 import * as css from './Elements.css';
-import { MentionElement } from './slate';
+import { EmoticonElement, MentionElement } from './slate';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 export enum MarkType {
   Bold = 'bold',
@@ -24,6 +25,7 @@ export enum BlockType {
   OrderedList = 'ordered-list',
   UnorderedList = 'unordered-list',
   Mention = 'mention',
+  Emoticon = 'emoticon',
 }
 
 function RenderMentionElement({
@@ -45,6 +47,38 @@ function RenderMentionElement({
     >
       {element.name}
       {children}
+    </span>
+  );
+}
+
+function RenderEmoticonElement({
+  attributes,
+  element,
+  children,
+}: { element: EmoticonElement } & RenderElementProps) {
+  const mx = useMatrixClient();
+  const selected = useSelected();
+  const focused = useFocused();
+
+  return (
+    <span className={css.EmoticonBase} {...attributes}>
+      <span
+        className={css.Emoticon({
+          focus: selected && focused,
+        })}
+        contentEditable={false}
+      >
+        {element.key.startsWith('mxc://') ? (
+          <img
+            className={css.EmoticonImg}
+            src={mx.mxcUrlToHttp(element.key) ?? element.key}
+            alt={element.shortcode}
+          />
+        ) : (
+          element.key
+        )}
+        {children}
+      </span>
     </span>
   );
 }
@@ -122,6 +156,12 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
         <RenderMentionElement attributes={attributes} element={element}>
           {children}
         </RenderMentionElement>
+      );
+    case BlockType.Emoticon:
+      return (
+        <RenderEmoticonElement attributes={attributes} element={element}>
+          {children}
+        </RenderEmoticonElement>
       );
     default:
       return (

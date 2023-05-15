@@ -56,14 +56,17 @@ export const List = style([
 ]);
 
 export const Mention = recipe({
-  base: {
-    backgroundColor: color.Secondary.Container,
-    color: color.Secondary.OnContainer,
-    boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Secondary.ContainerLine}`,
-    padding: `0 ${toRem(2)}`,
-    borderRadius: config.radii.R300,
-    fontWeight: config.fontWeight.W500,
-  },
+  base: [
+    DefaultReset,
+    {
+      backgroundColor: color.Secondary.Container,
+      color: color.Secondary.OnContainer,
+      boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Secondary.ContainerLine}`,
+      padding: `0 ${toRem(2)}`,
+      borderRadius: config.radii.R300,
+      fontWeight: config.fontWeight.W500,
+    },
+  ],
   variants: {
     highlight: {
       true: {
@@ -79,3 +82,47 @@ export const Mention = recipe({
     },
   },
 });
+
+export const EmoticonBase = style([
+  DefaultReset,
+  {
+    display: 'inline-flex',
+    height: config.fontSize.T400,
+    minWidth: config.lineHeight.T400,
+    position: 'relative',
+  },
+]);
+
+export const Emoticon = recipe({
+  base: [
+    DefaultReset,
+    {
+      display: 'inline-flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: config.lineHeight.T400,
+      minWidth: config.lineHeight.T400,
+      fontSize: config.lineHeight.T400,
+      lineHeight: config.lineHeight.T400,
+      verticalAlign: 'middle',
+      position: 'absolute',
+      top: '-0.05em',
+      borderRadius: config.radii.R300,
+    },
+  ],
+  variants: {
+    focus: {
+      true: {
+        boxShadow: `0 0 0 ${config.borderWidth.B500} ${color.SurfaceVariant.OnContainer}`,
+      },
+    },
+  },
+});
+
+export const EmoticonImg = style([
+  DefaultReset,
+  {
+    height: config.lineHeight.T400,
+    cursor: 'default',
+  },
+]);
