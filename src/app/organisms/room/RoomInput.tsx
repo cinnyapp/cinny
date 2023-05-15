@@ -2,6 +2,7 @@ import React, { KeyboardEventHandler, useCallback, useEffect, useState } from 'r
 import isHotkey from 'is-hotkey';
 import { MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
+import { Transforms } from 'slate';
 
 import { Icon, IconButton, Icons, Line, PopOut } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -25,7 +26,6 @@ import {
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import initMatrix from '../../../client/initMatrix';
-import { Transforms } from 'slate';
 
 interface RoomInputProps {
   roomId: string;
@@ -81,15 +81,8 @@ export function RoomInput({ roomId }: RoomInputProps) {
     setAutocompleteQuery(query);
   };
 
-  const handleEmojiSelect = (unicode: string, shortcode: string) => {
-    editor.insertNode(createEmoticonElement(unicode, shortcode));
-    setTimeout(() => {
-      // It doesn't move cursor without timeout
-      Transforms.move(editor);
-    }, 1);
-  };
-  const handleCustomEmojiSelect = (mxc: string, shortcode: string) => {
-    editor.insertNode(createEmoticonElement(mxc, shortcode));
+  const handleEmoticonSelect = (key: string, shortcode: string) => {
+    editor.insertNode(createEmoticonElement(key, shortcode));
     setTimeout(() => {
       // It doesn't move cursor without timeout
       Transforms.move(editor);
@@ -149,8 +142,8 @@ export function RoomInput({ roomId }: RoomInputProps) {
                       onTabChange={setEmojiBoardTab}
                       imagePackRooms={imagePackRooms}
                       returnFocusOnDeactivate={false}
-                      onEmojiSelect={handleEmojiSelect}
-                      onCustomEmojiSelect={handleCustomEmojiSelect}
+                      onEmojiSelect={handleEmoticonSelect}
+                      onCustomEmojiSelect={handleEmoticonSelect}
                       onStickerSelect={(mxc, shortcode) => console.log(shortcode)}
                       requestClose={() => {
                         setEmojiBoardTab(undefined);
