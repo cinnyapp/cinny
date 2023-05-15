@@ -45,6 +45,7 @@ import { isUserId } from '../../utils/matrix';
 import { editableActiveElement, inVisibleScrollArea, targetFromEvent } from '../../utils/dom';
 import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useThrottle } from '../../hooks/useThrottle';
 
 const RECENT_GROUP_ID = 'recent_group';
 const SEARCH_GROUP_ID = 'search_group';
@@ -654,7 +655,7 @@ export function EmojiBoard({
       },
       [search]
     ),
-    { wait: 50 }
+    { wait: 200 }
   );
 
   const syncActiveGroupId = useCallback(() => {
@@ -666,8 +667,8 @@ export function EmojiBoard({
     setActiveGroupId(groupId);
   }, [setActiveGroupId]);
 
-  const handleOnScroll: UIEventHandler<HTMLDivElement> = useDebounce(syncActiveGroupId, {
-    wait: 200,
+  const handleOnScroll: UIEventHandler<HTMLDivElement> = useThrottle(syncActiveGroupId, {
+    wait: 500,
   });
 
   const handleScrollToGroup = (groupId: string) => {
@@ -714,7 +715,7 @@ export function EmojiBoard({
     [mx]
   );
 
-  const handleEmojiHover: MouseEventHandler = useDebounce(
+  const handleEmojiHover: MouseEventHandler = useThrottle(
     useCallback(
       (evt) => {
         const targetEl = targetFromEvent(evt.nativeEvent, 'button') as
@@ -726,8 +727,9 @@ export function EmojiBoard({
       },
       [handleEmojiPreview]
     ),
-    { wait: 20, immediate: true }
+    { wait: 500, immediate: true }
   );
+
   const handleEmojiFocus: FocusEventHandler = (evt) => {
     const targetEl = evt.target as HTMLButtonElement;
     handleEmojiPreview(targetEl);
