@@ -3,11 +3,10 @@ import { DefaultReset, FocusOutline, color, config, toRem } from 'folds';
 
 export const Base = style({
   maxWidth: toRem(420),
-  width: '100%',
+  width: `calc(100vw - 2 * ${config.space.S400})`,
   height: toRem(450),
   backgroundColor: color.Surface.Container,
   color: color.Surface.OnContainer,
-  border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
   borderRadius: config.radii.R400,
   boxShadow: config.shadow.E200,
   overflow: 'hidden',
@@ -40,7 +39,8 @@ export const SidebarDivider = style({
 });
 
 export const Header = style({
-  padding: config.space.S400,
+  padding: config.space.S300,
+  paddingBottom: 0,
 });
 
 export const EmojiBoardTab = style({
@@ -48,19 +48,29 @@ export const EmojiBoardTab = style({
 });
 
 export const Footer = style({
-  padding: `${config.space.S300} ${config.space.S400}`,
+  padding: config.space.S200,
+  margin: config.space.S300,
+  marginTop: 0,
+
+  borderRadius: config.radii.R400,
+  backgroundColor: color.SurfaceVariant.Container,
+  color: color.SurfaceVariant.OnContainer,
 });
 
 export const EmojiGroup = style({
-  padding: `${config.space.S200} 0`,
+  padding: `${config.space.S300} 0`,
 });
 
 export const EmojiGroupLabel = style({
   position: 'sticky',
-  top: 0,
+  top: config.space.S200,
   zIndex: 1,
-  padding: `${config.space.S200} ${config.space.S400}`,
-  backgroundColor: color.Surface.Container,
+
+  margin: 'auto',
+  padding: `${config.space.S100} ${config.space.S200}`,
+  borderRadius: config.radii.Pill,
+  backgroundColor: color.SurfaceVariant.Container,
+  color: color.SurfaceVariant.OnContainer,
 });
 
 export const EmojiGroupContent = style([
@@ -73,10 +83,10 @@ export const EmojiGroupContent = style([
 export const EmojiPreview = style([
   DefaultReset,
   {
-    width: toRem(36),
-    height: toRem(36),
-    fontSize: toRem(36),
-    lineHeight: toRem(36),
+    width: toRem(32),
+    height: toRem(32),
+    fontSize: toRem(32),
+    lineHeight: toRem(32),
   },
 ]);
 
