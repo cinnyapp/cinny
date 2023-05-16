@@ -2,7 +2,6 @@ import React, { KeyboardEventHandler, useCallback, useEffect, useState } from 'r
 import isHotkey from 'is-hotkey';
 import { MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
-import { Transforms } from 'slate';
 
 import { Icon, IconButton, Icons, Line, PopOut } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -22,6 +21,7 @@ import {
   RoomMentionAutocomplete,
   UserMentionAutocomplete,
   createEmoticonElement,
+  moveCursor,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -83,10 +83,7 @@ export function RoomInput({ roomId }: RoomInputProps) {
 
   const handleEmoticonSelect = (key: string, shortcode: string) => {
     editor.insertNode(createEmoticonElement(key, shortcode));
-    setTimeout(() => {
-      // It doesn't move cursor without timeout
-      Transforms.move(editor);
-    }, 1);
+    moveCursor(editor);
   };
 
   return (

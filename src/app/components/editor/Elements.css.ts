@@ -77,7 +77,7 @@ export const Mention = recipe({
     },
     focus: {
       true: {
-        boxShadow: `0 0 0 ${config.borderWidth.B500} ${color.SurfaceVariant.OnContainer}`,
+        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.SurfaceVariant.OnContainer}`,
       },
     },
   },
@@ -86,10 +86,10 @@ export const Mention = recipe({
 export const EmoticonBase = style([
   DefaultReset,
   {
-    display: 'inline-flex',
+    display: 'inline-block',
+    padding: '0 .1rem',
     height: config.fontSize.T400,
-    minWidth: config.lineHeight.T400,
-    position: 'relative',
+    verticalAlign: 'middle',
   },
 ]);
 
@@ -105,15 +105,15 @@ export const Emoticon = recipe({
       fontSize: config.lineHeight.T400,
       lineHeight: config.lineHeight.T400,
       verticalAlign: 'middle',
-      position: 'absolute',
-      top: '-0.05em',
+      position: 'relative',
+      top: '-0.2em',
       borderRadius: config.radii.R300,
     },
   ],
   variants: {
     focus: {
       true: {
-        boxShadow: `0 0 0 ${config.borderWidth.B500} ${color.SurfaceVariant.OnContainer}`,
+        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.SurfaceVariant.OnContainer}`,
       },
     },
   },

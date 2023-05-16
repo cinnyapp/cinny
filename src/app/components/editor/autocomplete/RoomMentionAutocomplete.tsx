@@ -3,7 +3,7 @@ import { Editor } from 'slate';
 import { Avatar, AvatarFallback, AvatarImage, Icon, Icons, MenuItem, Text, color } from 'folds';
 import { MatrixClient } from 'matrix-js-sdk';
 
-import { createMentionElement, replaceWithElement } from '../common';
+import { createMentionElement, moveCursor, replaceWithElement } from '../common';
 import { getRoomAvatarUrl, joinRuleToIconSrc } from '../../../utils/room';
 import { roomIdByActivity } from '../../../../util/sort';
 import initMatrix from '../../../../client/initMatrix';
@@ -107,6 +107,7 @@ export function RoomMentionAutocomplete({
       roomId === roomAliasOrId || mx.getRoom(roomId)?.getCanonicalAlias() === roomAliasOrId
     );
     replaceWithElement(editor, query.range, mentionEl);
+    moveCursor(editor, true);
     requestClose();
   };
 

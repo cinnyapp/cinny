@@ -128,10 +128,14 @@ export const createEmoticonElement = (key: string, shortcode: string): EmoticonE
 export const replaceWithElement = (editor: Editor, selectRange: BaseRange, element: Element) => {
   Transforms.select(editor, selectRange);
   Transforms.insertNodes(editor, element);
+};
+
+export const moveCursor = (editor: Editor, withSpace?: boolean) => {
   setTimeout(() => {
     // It doesn't move cursor without timeout
     Transforms.move(editor);
-  }, 1);
+    if (withSpace) editor.insertText(' ');
+  }, 10);
 };
 
 interface PointUntilCharOptions {
