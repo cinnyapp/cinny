@@ -3,12 +3,12 @@ import { BaseRange, Editor } from 'slate';
 export enum AutocompletePrefix {
   RoomMention = '#',
   UserMention = '@',
-  EmojiCode = ':',
+  Emoticon = ':',
 }
 export const AUTOCOMPLETE_PREFIXES: readonly AutocompletePrefix[] = [
   AutocompletePrefix.RoomMention,
   AutocompletePrefix.UserMention,
-  AutocompletePrefix.EmojiCode,
+  AutocompletePrefix.Emoticon,
 ];
 
 export type AutocompleteQuery<TPrefix extends string> = {

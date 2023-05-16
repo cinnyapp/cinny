@@ -1,4 +1,4 @@
-import React, { KeyboardEventHandler, useCallback, useEffect, useState } from 'react';
+import React, { KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import isHotkey from 'is-hotkey';
 import { MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
@@ -26,6 +26,7 @@ import {
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import initMatrix from '../../../client/initMatrix';
+import { EmoticonAutocomplete } from '../../components/editor/autocomplete/EmoticonAutocomplete';
 
 interface RoomInputProps {
   roomId: string;
@@ -33,12 +34,14 @@ interface RoomInputProps {
 export function RoomInput({ roomId }: RoomInputProps) {
   const mx = useMatrixClient();
   const editor = useEditor();
-  const allParentSpaces = [roomId, ...(initMatrix.roomList?.getAllParentSpaces(roomId) ?? [])];
-  const imagePackRooms: Room[] = allParentSpaces.reduce<Room[]>((list, rId) => {
-    const r = mx.getRoom(rId);
-    if (r) list.push(r);
-    return list;
-  }, []);
+  const imagePackRooms: Room[] = useMemo(() => {
+    const allParentSpaces = [roomId, ...(initMatrix.roomList?.getAllParentSpaces(roomId) ?? [])];
+    return allParentSpaces.reduce<Room[]>((list, rId) => {
+      const r = mx.getRoom(rId);
+      if (r) list.push(r);
+      return list;
+    }, []);
+  }, [mx, roomId]);
   const [toolbar, setToolbar] = useState(false);
   const [autocompleteQuery, setAutocompleteQuery] =
     useState<AutocompleteQuery<AutocompletePrefix>>();
@@ -99,6 +102,14 @@ export function RoomInput({ roomId }: RoomInputProps) {
       {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
         <UserMentionAutocomplete
           roomId={roomId}
+          editor={editor}
+          query={autocompleteQuery}
+          requestClose={() => setAutocompleteQuery(undefined)}
+        />
+      )}
+      {autocompleteQuery?.prefix === AutocompletePrefix.Emoticon && (
+        <EmoticonAutocomplete
+          imagePackRooms={imagePackRooms}
           editor={editor}
           query={autocompleteQuery}
           requestClose={() => setAutocompleteQuery(undefined)}

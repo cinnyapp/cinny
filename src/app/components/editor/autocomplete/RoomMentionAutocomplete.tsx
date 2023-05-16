@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useMemo } from 'react';
 import { Editor } from 'slate';
 import { Avatar, AvatarFallback, AvatarImage, Icon, Icons, MenuItem, Text, color } from 'folds';
 import { MatrixClient } from 'matrix-js-sdk';
@@ -36,7 +36,9 @@ function UnknownRoomMentionItem({
     <MenuItem
       as="button"
       radii="300"
-      onKeyDown={(evt) => onTabPress(evt, () => handleAutocomplete(roomAlias, roomAlias))}
+      onKeyDown={(evt: ReactKeyboardEvent<HTMLButtonElement>) =>
+        onTabPress(evt, () => handleAutocomplete(roomAlias, roomAlias))
+      }
       onClick={() => handleAutocomplete(roomAlias, roomAlias)}
       before={
         <Avatar size="200">
@@ -141,10 +143,12 @@ export function RoomMentionAutocomplete({
               key={rId}
               as="button"
               radii="300"
-              onKeyDown={(evt) => onTabPress(evt, () => handleAutocomplete(rId, room.name))}
+              onKeyDown={(evt: ReactKeyboardEvent<HTMLButtonElement>) =>
+                onTabPress(evt, () => handleAutocomplete(rId, room.name))
+              }
               onClick={() => handleAutocomplete(rId, room.name)}
               after={
-                <Text size="T200" priority="300">
+                <Text size="T200" priority="300" truncate>
                   {room.getCanonicalAlias() ?? ''}
                 </Text>
               }
@@ -165,7 +169,7 @@ export function RoomMentionAutocomplete({
                 </Avatar>
               }
             >
-              <Text style={{ flexGrow: 1 }} size="B400">
+              <Text style={{ flexGrow: 1 }} size="B400" truncate>
                 {room.name}
               </Text>
             </MenuItem>

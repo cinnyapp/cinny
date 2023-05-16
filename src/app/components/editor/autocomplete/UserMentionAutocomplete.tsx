@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Editor } from 'slate';
 import { Avatar, AvatarFallback, AvatarImage, MenuItem, Text, color } from 'folds';
 import { MatrixClient, RoomMember } from 'matrix-js-sdk';
@@ -39,7 +39,9 @@ function UnknownMentionItem({
     <MenuItem
       as="button"
       radii="300"
-      onKeyDown={(evt) => onTabPress(evt, () => handleAutocomplete(userId, name))}
+      onKeyDown={(evt: ReactKeyboardEvent<HTMLButtonElement>) =>
+        onTabPress(evt, () => handleAutocomplete(userId, name))
+      }
       onClick={() => handleAutocomplete(userId, name)}
       before={
         <Avatar size="200">
@@ -151,12 +153,12 @@ export function UserMentionAutocomplete({
               key={roomMember.userId}
               as="button"
               radii="300"
-              onKeyDown={(evt) =>
+              onKeyDown={(evt: ReactKeyboardEvent<HTMLButtonElement>) =>
                 onTabPress(evt, () => handleAutocomplete(roomMember.userId, roomMember.name))
               }
               onClick={() => handleAutocomplete(roomMember.userId, roomMember.name)}
               after={
-                <Text size="T200" priority="300">
+                <Text size="T200" priority="300" truncate>
                   {roomMember.userId}
                 </Text>
               }
@@ -177,7 +179,7 @@ export function UserMentionAutocomplete({
                 </Avatar>
               }
             >
-              <Text style={{ flexGrow: 1 }} size="B400">
+              <Text style={{ flexGrow: 1 }} size="B400" truncate>
                 {roomMember.name}
               </Text>
             </MenuItem>
