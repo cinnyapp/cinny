@@ -87,8 +87,8 @@ export const EmoticonBase = style([
   DefaultReset,
   {
     display: 'inline-block',
-    padding: '0 .1rem',
-    height: config.fontSize.T400,
+    padding: '0.05rem',
+    height: '1em',
     verticalAlign: 'middle',
   },
 ]);
@@ -100,10 +100,11 @@ export const Emoticon = recipe({
       display: 'inline-flex',
       justifyContent: 'center',
       alignItems: 'center',
-      height: config.lineHeight.T400,
-      minWidth: config.lineHeight.T400,
-      fontSize: config.lineHeight.T400,
-      lineHeight: config.lineHeight.T400,
+
+      height: '1em',
+      minWidth: '1em',
+      fontSize: '1.47em',
+      lineHeight: '1em',
       verticalAlign: 'middle',
       position: 'relative',
       top: '-0.25em',
@@ -122,7 +123,7 @@ export const Emoticon = recipe({
 export const EmoticonImg = style([
   DefaultReset,
   {
-    height: config.lineHeight.T400,
+    height: '1em',
     cursor: 'default',
   },
 ]);
