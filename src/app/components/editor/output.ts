@@ -39,6 +39,8 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
       return node.key.startsWith('mxc://')
         ? `<img data-mx-emoticon src="${node.key}" alt="${node.shortcode}" title="${node.shortcode}" height="32">`
         : node.key;
+    case BlockType.Link:
+      return `<a href="${node.href}">${node.children}</a>`;
     default:
       return children;
   }
@@ -76,6 +78,8 @@ const elementToPlainText = (node: CustomElement, children: string): string => {
       return node.id;
     case BlockType.Emoticon:
       return node.key.startsWith('mxc://') ? `:${node.shortcode}:` : node.key;
+    case BlockType.Link:
+      return `[${node.children}](${node.href})`;
     default:
       return children;
   }

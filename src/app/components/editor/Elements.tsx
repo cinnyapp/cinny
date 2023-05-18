@@ -3,7 +3,7 @@ import React from 'react';
 import { RenderElementProps, RenderLeafProps, useFocused, useSelected } from 'slate-react';
 
 import * as css from './Elements.css';
-import { EmoticonElement, MentionElement } from './slate';
+import { EmoticonElement, LinkElement, MentionElement } from './slate';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 export enum MarkType {
@@ -26,6 +26,17 @@ export enum BlockType {
   UnorderedList = 'unordered-list',
   Mention = 'mention',
   Emoticon = 'emoticon',
+  Link = 'link',
+}
+
+// Put this at the start and end of an inline component to work around this Chromium bug:
+// https://bugs.chromium.org/p/chromium/issues/detail?id=1249405
+function InlineChromiumBugfix() {
+  return (
+    <span className={css.InlineChromiumBugfix} contentEditable={false}>
+      {String.fromCodePoint(160) /* Non-breaking space */}
+    </span>
+  );
 }
 
 function RenderMentionElement({
@@ -80,6 +91,20 @@ function RenderEmoticonElement({
         {children}
       </span>
     </span>
+  );
+}
+
+function RenderLinkElement({
+  attributes,
+  element,
+  children,
+}: { element: LinkElement } & RenderElementProps) {
+  return (
+    <a href={element.href} {...attributes}>
+      <InlineChromiumBugfix />
+      {children}
+      <InlineChromiumBugfix />
+    </a>
   );
 }
 
@@ -163,6 +188,12 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
           {children}
         </RenderEmoticonElement>
       );
+    case BlockType.Link:
+      return (
+        <RenderLinkElement attributes={attributes} element={element}>
+          {children}
+        </RenderLinkElement>
+      );
     default:
       return (
         <Text className={css.Paragraph} {...attributes}>
@@ -174,14 +205,44 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
 
 export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
   let child = children;
-  if (leaf.bold) child = <strong {...attributes}>{child}</strong>;
-  if (leaf.italic) child = <i {...attributes}>{child}</i>;
-  if (leaf.underline) child = <u {...attributes}>{child}</u>;
-  if (leaf.strikeThrough) child = <s {...attributes}>{child}</s>;
+  if (leaf.bold)
+    child = (
+      <strong {...attributes}>
+        <InlineChromiumBugfix />
+        {child}
+        <InlineChromiumBugfix />
+      </strong>
+    );
+  if (leaf.italic)
+    child = (
+      <i {...attributes}>
+        <InlineChromiumBugfix />
+        {child}
+        <InlineChromiumBugfix />
+      </i>
+    );
+  if (leaf.underline)
+    child = (
+      <u {...attributes}>
+        <InlineChromiumBugfix />
+        {child}
+        <InlineChromiumBugfix />
+      </u>
+    );
+  if (leaf.strikeThrough)
+    child = (
+      <s {...attributes}>
+        <InlineChromiumBugfix />
+        {child}
+        <InlineChromiumBugfix />
+      </s>
+    );
   if (leaf.code)
     child = (
       <code className={css.Code} {...attributes}>
+        <InlineChromiumBugfix />
         {child}
+        <InlineChromiumBugfix />
       </code>
     );
 

@@ -2,8 +2,9 @@ import React, { KeyboardEventHandler, useCallback, useEffect, useMemo, useState 
 import isHotkey from 'is-hotkey';
 import { MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
-
+import { Transforms, Range } from 'slate';
 import { Icon, IconButton, Icons, Line, PopOut } from 'folds';
+
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   CustomEditor,
@@ -20,13 +21,13 @@ import {
   resetEditor,
   RoomMentionAutocomplete,
   UserMentionAutocomplete,
+  EmoticonAutocomplete,
   createEmoticonElement,
   moveCursor,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import initMatrix from '../../../client/initMatrix';
-import { EmoticonAutocomplete } from '../../components/editor/autocomplete/EmoticonAutocomplete';
 
 interface RoomInputProps {
   roomId: string;
@@ -67,12 +68,23 @@ export function RoomInput({ roomId }: RoomInputProps) {
 
   const handleKeyDown: KeyboardEventHandler = useCallback(
     (evt) => {
+      const { selection } = editor;
       if (isHotkey('enter', evt)) {
         evt.preventDefault();
         submit();
       }
+      if (selection && Range.isCollapsed(selection)) {
+        if (isHotkey('arrowleft', evt)) {
+          evt.preventDefault();
+          Transforms.move(editor, { unit: 'offset', reverse: true });
+        }
+        if (isHotkey('arrowright', evt)) {
+          evt.preventDefault();
+          Transforms.move(editor, { unit: 'offset' });
+        }
+      }
     },
-    [submit]
+    [submit, editor]
   );
 
   const handleChange: EditorChangeHandler = () => {
@@ -152,7 +164,7 @@ export function RoomInput({ roomId }: RoomInputProps) {
                       returnFocusOnDeactivate={false}
                       onEmojiSelect={handleEmoticonSelect}
                       onCustomEmojiSelect={handleEmoticonSelect}
-                      onStickerSelect={(mxc, shortcode) => console.log(shortcode)}
+                      onStickerSelect={(mxc, shortcode) => console.log(mxc, shortcode)}
                       requestClose={() => {
                         setEmojiBoardTab(undefined);
                         ReactEditor.focus(editor);

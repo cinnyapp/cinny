@@ -55,6 +55,11 @@ export const List = style([
   },
 ]);
 
+export const InlineChromiumBugfix = style({
+  fontSize: 0,
+  lineHeight: 0,
+});
+
 export const Mention = recipe({
   base: [
     DefaultReset,

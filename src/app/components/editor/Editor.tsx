@@ -16,26 +16,27 @@ const initialValue: CustomElement[] = [
   },
 ];
 
-const withMentions = (editor: Editor): Editor => {
-  const { isInline, isVoid } = editor;
+const withInline = (editor: Editor): Editor => {
+  const { isInline } = editor;
 
-  editor.isInline = (element) => element.type === BlockType.Mention || isInline(element);
-  editor.isVoid = (element) => element.type === BlockType.Mention || isVoid(element);
+  editor.isInline = (element) =>
+    [BlockType.Mention, BlockType.Emoticon, BlockType.Link].includes(element.type) ||
+    isInline(element);
 
   return editor;
 };
 
-const withEmoticons = (editor: Editor): Editor => {
-  const { isInline, isVoid } = editor;
+const withVoid = (editor: Editor): Editor => {
+  const { isVoid } = editor;
 
-  editor.isInline = (element) => element.type === BlockType.Emoticon || isInline(element);
-  editor.isVoid = (element) => element.type === BlockType.Emoticon || isVoid(element);
+  editor.isVoid = (element) =>
+    [BlockType.Mention, BlockType.Emoticon].includes(element.type) || isVoid(element);
 
   return editor;
 };
 
 export const useEditor = (): Editor => {
-  const [editor] = useState(withEmoticons(withMentions(withReact(createEditor()))));
+  const [editor] = useState(withInline(withVoid(withReact(createEditor()))));
   return editor;
 };
 

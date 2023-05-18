@@ -1,6 +1,6 @@
 import { BasePoint, BaseRange, Editor, Element, Point, Range, Transforms } from 'slate';
 import { BlockType, MarkType } from './Elements';
-import { EmoticonElement, HeadingLevel, MentionElement } from './slate';
+import { EmoticonElement, FormattedText, HeadingLevel, LinkElement, MentionElement } from './slate';
 
 export const isMarkActive = (editor: Editor, format: MarkType) => {
   const marks = Editor.marks(editor);
@@ -125,17 +125,23 @@ export const createEmoticonElement = (key: string, shortcode: string): EmoticonE
   children: [{ text: '' }],
 });
 
+export const createLinkElement = (
+  href: string,
+  children: string | FormattedText[]
+): LinkElement => ({
+  type: BlockType.Link,
+  href,
+  children: typeof children === 'string' ? [{ text: children }] : children,
+});
+
 export const replaceWithElement = (editor: Editor, selectRange: BaseRange, element: Element) => {
   Transforms.select(editor, selectRange);
   Transforms.insertNodes(editor, element);
 };
 
 export const moveCursor = (editor: Editor, withSpace?: boolean) => {
-  setTimeout(() => {
-    // It doesn't move cursor without timeout
-    Transforms.move(editor);
-    if (withSpace) editor.insertText(' ');
-  }, 10);
+  Transforms.move(editor);
+  if (withSpace) editor.insertText(' ');
 };
 
 interface PointUntilCharOptions {

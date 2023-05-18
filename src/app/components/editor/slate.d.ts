@@ -19,7 +19,7 @@ export type FormattedText = Text & {
 };
 
 export type LinkElement = {
-  type: 'link';
+  type: BlockType.Link;
   href: string;
   children: FormattedText[];
 };
@@ -81,7 +81,7 @@ export type UnorderedListElement = {
 };
 
 export type CustomElement =
-  // | LinkElement
+  | LinkElement
   // | SpoilerElement
   | MentionElement
   | EmoticonElement
