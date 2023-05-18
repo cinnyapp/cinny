@@ -234,6 +234,11 @@ export function Toolbar() {
               icon={Icons.Code}
               tooltip={<BtnTooltip text="Inline Code" shortCode={`${modKey} + [`} />}
             />
+            <MarkButton
+              format={MarkType.Spoiler}
+              icon={Icons.EyeBlind}
+              tooltip={<BtnTooltip text="Spoiler" shortCode={`${modKey} + H`} />}
+            />
           </Box>
         </>
       )}

@@ -10,6 +10,7 @@ const textToCustomHtml = (node: FormattedText): string => {
   if (node.underline) string = `<u>${string}</u>`;
   if (node.strikeThrough) string = `<s>${string}</s>`;
   if (node.code) string = `<code>${string}</code>`;
+  if (node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
   return string;
 };
 

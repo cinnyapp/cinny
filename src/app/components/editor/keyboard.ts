@@ -10,6 +10,7 @@ export const INLINE_HOTKEYS: Record<string, MarkType> = {
   'mod+u': MarkType.Underline,
   'mod+shift+u': MarkType.StrikeThrough,
   'mod+[': MarkType.Code,
+  'mod+h': MarkType.Spoiler,
 };
 const INLINE_KEYS = Object.keys(INLINE_HOTKEYS);
 

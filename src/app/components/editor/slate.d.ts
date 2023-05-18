@@ -16,6 +16,7 @@ export type FormattedText = Text & {
   underline?: boolean;
   strikeThrough?: boolean;
   code?: boolean;
+  spoiler?: boolean;
 };
 
 export type LinkElement = {

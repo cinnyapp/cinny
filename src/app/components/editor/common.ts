@@ -140,8 +140,11 @@ export const replaceWithElement = (editor: Editor, selectRange: BaseRange, eleme
 };
 
 export const moveCursor = (editor: Editor, withSpace?: boolean) => {
-  Transforms.move(editor);
-  if (withSpace) editor.insertText(' ');
+  // without timeout it works properly when we select autocomplete with Tab or Space
+  setTimeout(() => {
+    Transforms.move(editor);
+    if (withSpace) editor.insertText(' ');
+  }, 1);
 };
 
 interface PointUntilCharOptions {

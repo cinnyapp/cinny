@@ -40,6 +40,14 @@ export const Code = style([
     padding: `0 ${config.space.S100}`,
   },
 ]);
+export const Spoiler = style([
+  DefaultReset,
+  {
+    padding: `0 ${config.space.S100}`,
+    backgroundColor: color.SurfaceVariant.ContainerActive,
+    borderRadius: config.radii.R300,
+  },
+]);
 
 export const CodeBlock = style([DefaultReset, BaseCode, MarginBottom]);
 export const CodeBlockInternal = style({

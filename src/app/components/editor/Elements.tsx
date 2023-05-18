@@ -12,6 +12,7 @@ export enum MarkType {
   Underline = 'underline',
   StrikeThrough = 'strikeThrough',
   Code = 'code',
+  Spoiler = 'spoiler',
 }
 
 export enum BlockType {
@@ -244,6 +245,14 @@ export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
         {child}
         <InlineChromiumBugfix />
       </code>
+    );
+  if (leaf.spoiler)
+    child = (
+      <span className={css.Spoiler} {...attributes}>
+        <InlineChromiumBugfix />
+        {child}
+        <InlineChromiumBugfix />
+      </span>
     );
 
   if (child !== children) return child;
