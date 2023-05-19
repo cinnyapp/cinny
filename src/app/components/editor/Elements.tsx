@@ -104,7 +104,6 @@ function RenderLinkElement({
     <a href={element.href} {...attributes}>
       <InlineChromiumBugfix />
       {children}
-      <InlineChromiumBugfix />
     </a>
   );
 }
@@ -211,7 +210,6 @@ export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
       <strong {...attributes}>
         <InlineChromiumBugfix />
         {child}
-        <InlineChromiumBugfix />
       </strong>
     );
   if (leaf.italic)
@@ -219,7 +217,6 @@ export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
       <i {...attributes}>
         <InlineChromiumBugfix />
         {child}
-        <InlineChromiumBugfix />
       </i>
     );
   if (leaf.underline)
@@ -227,7 +224,6 @@ export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
       <u {...attributes}>
         <InlineChromiumBugfix />
         {child}
-        <InlineChromiumBugfix />
       </u>
     );
   if (leaf.strikeThrough)
@@ -235,7 +231,6 @@ export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
       <s {...attributes}>
         <InlineChromiumBugfix />
         {child}
-        <InlineChromiumBugfix />
       </s>
     );
   if (leaf.code)
@@ -243,7 +238,6 @@ export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
       <code className={css.Code} {...attributes}>
         <InlineChromiumBugfix />
         {child}
-        <InlineChromiumBugfix />
       </code>
     );
   if (leaf.spoiler)
@@ -251,7 +245,6 @@ export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
       <span className={css.Spoiler} {...attributes}>
         <InlineChromiumBugfix />
         {child}
-        <InlineChromiumBugfix />
       </span>
     );
 

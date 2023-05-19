@@ -37,6 +37,23 @@ export const EditorTextarea = style([
   },
 ]);
 
+export const EditorPlaceholder = style([
+  DefaultReset,
+  {
+    position: 'absolute',
+    zIndex: 1,
+    opacity: config.opacity.Placeholder,
+    pointerEvents: 'none',
+    userSelect: 'none',
+
+    selectors: {
+      '&:not(:first-child)': {
+        display: 'none',
+      },
+    },
+  },
+]);
+
 export const EditorToolbar = style([
   DefaultReset,
   {
