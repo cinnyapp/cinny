@@ -444,7 +444,7 @@ export function SearchEmojiGroup({
   tab,
   label,
   id,
-  emojis: recentEmojis,
+  emojis: searchResult,
 }: {
   mx: MatrixClient;
   tab: EmojiBoardTab;
@@ -455,7 +455,7 @@ export function SearchEmojiGroup({
   return (
     <EmojiGroup key={id} id={id} label={label}>
       {tab === EmojiBoardTab.Emoji
-        ? recentEmojis.map((emoji) =>
+        ? searchResult.map((emoji) =>
             'unicode' in emoji ? (
               <EmojiItem
                 key={emoji.unicode}
@@ -483,12 +483,12 @@ export function SearchEmojiGroup({
               </EmojiItem>
             )
           )
-        : recentEmojis.map((emoji) =>
+        : searchResult.map((emoji) =>
             'unicode' in emoji ? null : (
               <StickerItem
                 key={emoji.shortcode}
                 label={emoji.body || emoji.shortcode}
-                type={EmojiType.CustomEmoji}
+                type={EmojiType.Sticker}
                 data={emoji.url}
                 shortcode={emoji.shortcode}
               >
