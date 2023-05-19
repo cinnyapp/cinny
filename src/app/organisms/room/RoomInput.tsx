@@ -144,7 +144,6 @@ export function RoomInput({ roomId }: RoomInputProps) {
               size="300"
               radii="300"
               onClick={() => setToolbar(!toolbar)}
-              aria-pressed={toolbar}
             >
               <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
             </IconButton>

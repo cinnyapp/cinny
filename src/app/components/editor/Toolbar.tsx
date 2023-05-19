@@ -189,14 +189,14 @@ export function Toolbar() {
           format={BlockType.BlockQuote}
           icon={Icons.BlockQuote}
           tooltip={
-            <BtnTooltip text="Block Quote" shortCode={`${modKey} + ${KeySymbol.Shift} + .`} />
+            <BtnTooltip text="Block Quote" shortCode={`${modKey} + ${KeySymbol.Shift} + '`} />
           }
         />
         <BlockButton
           format={BlockType.CodeBlock}
           icon={Icons.BlockCode}
           tooltip={
-            <BtnTooltip text="Block Code" shortCode={`${modKey} + ${KeySymbol.Shift} + M`} />
+            <BtnTooltip text="Block Code" shortCode={`${modKey} + ${KeySymbol.Shift} + ;`} />
           }
         />
       </Box>
