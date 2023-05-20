@@ -9,7 +9,7 @@ import React, {
 import isHotkey from 'is-hotkey';
 import { EventType, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
-import { Transforms, Range } from 'slate';
+import { Transforms, Range, Editor, Element } from 'slate';
 import { Icon, IconButton, Icons, Line, PopOut } from 'folds';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -36,6 +36,7 @@ import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import initMatrix from '../../../client/initMatrix';
 import { getImageInfo } from '../../utils/matrix';
+import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
 
 interface RoomInputProps {
   roomId: string;
@@ -52,9 +53,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(({ roomId },
       return list;
     }, []);
   }, [mx, roomId]);
+
   const [toolbar, setToolbar] = useState(false);
   const [autocompleteQuery, setAutocompleteQuery] =
     useState<AutocompleteQuery<AutocompletePrefix>>();
+  const sendTypingStatus = useTypingStatusUpdater(mx, roomId);
 
   useEffect(() => {
     ReactEditor.focus(editor);
@@ -66,6 +69,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(({ roomId },
 
     if (plainText === '') return;
 
+    sendTypingStatus(false);
     mx.sendMessage(roomId, {
       msgtype: MsgType.Text,
       body: plainText,
@@ -73,7 +77,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(({ roomId },
       formatted_body: customHtml,
     });
     resetEditor(editor);
-  }, [mx, roomId, editor]);
+  }, [mx, roomId, editor, sendTypingStatus]);
 
   const handleKeyDown: KeyboardEventHandler = useCallback(
     (evt) => {
@@ -96,13 +100,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(({ roomId },
     [submit, editor]
   );
 
-  const handleChange: EditorChangeHandler = () => {
+  const handleChange: EditorChangeHandler = (value) => {
     const prevWordRange = getPrevWorldRange(editor);
     const query = prevWordRange
       ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
       : undefined;
 
     setAutocompleteQuery(query);
+
+    const descendant = value[0];
+    if (descendant && Element.isElement(descendant)) {
+      const isEmpty = value.length === 1 && Editor.isEmpty(editor, descendant);
+      sendTypingStatus(!isEmpty);
+    }
   };
 
   const handleEmoticonSelect = (key: string, shortcode: string) => {
@@ -235,4 +245,4 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(({ roomId },
       />
     </div>
   );
-})
+});
