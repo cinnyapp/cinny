@@ -1,6 +1,6 @@
 import React, { KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import isHotkey from 'is-hotkey';
-import { MsgType, Room } from 'matrix-js-sdk';
+import { EventType, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Range } from 'slate';
 import { Icon, IconButton, Icons, Line, PopOut } from 'folds';
@@ -28,6 +28,7 @@ import {
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import initMatrix from '../../../client/initMatrix';
+import { getImageInfo } from '../../utils/matrix';
 
 interface RoomInputProps {
   roomId: string;
@@ -101,6 +102,19 @@ export function RoomInput({ roomId }: RoomInputProps) {
     moveCursor(editor);
   };
 
+  const handleStickerSelect = async (mxc: string, shortcode: string) => {
+    const stickerUrl = mx.mxcUrlToHttp(mxc);
+    if (!stickerUrl) return;
+
+    const info = await getImageInfo(stickerUrl);
+
+    mx.sendEvent(roomId, EventType.Sticker, {
+      body: shortcode,
+      url: mxc,
+      info,
+    });
+  };
+
   return (
     <div>
       {autocompleteQuery?.prefix === AutocompletePrefix.RoomMention && (
@@ -163,7 +177,7 @@ export function RoomInput({ roomId }: RoomInputProps) {
                       returnFocusOnDeactivate={false}
                       onEmojiSelect={handleEmoticonSelect}
                       onCustomEmojiSelect={handleEmoticonSelect}
-                      onStickerSelect={(mxc, shortcode) => console.log(mxc, shortcode)}
+                      onStickerSelect={handleStickerSelect}
                       requestClose={() => {
                         setEmojiBoardTab(undefined);
                         ReactEditor.focus(editor);
