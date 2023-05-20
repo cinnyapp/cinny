@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import React, { KeyboardEventHandler, ReactNode, useCallback, useState } from 'react';
+import React, { KeyboardEventHandler, ReactNode, forwardRef, useCallback, useState } from 'react';
 
 import { Box, Scroll, Text } from 'folds';
 import { Descendant, Editor, createEditor } from 'slate';
@@ -59,78 +59,73 @@ type CustomEditorProps = {
   onKeyDown?: KeyboardEventHandler;
   onChange?: EditorChangeHandler;
 };
-export function CustomEditor({
-  top,
-  bottom,
-  before,
-  after,
-  maxHeight = '50vh',
-  editor,
-  placeholder,
-  onKeyDown,
-  onChange,
-}: CustomEditorProps) {
-  const renderElement = useCallback(
-    (props: RenderElementProps) => <RenderElement {...props} />,
-    []
-  );
-
-  const renderLeaf = useCallback((props: RenderLeafProps) => <RenderLeaf {...props} />, []);
-
-  const handleKeydown: KeyboardEventHandler = useCallback(
-    (evt) => {
-      onKeyDown?.(evt);
-      toggleKeyboardShortcut(editor, evt);
-    },
-    [editor, onKeyDown]
-  );
-
-  const renderPlaceholder = useCallback(({ attributes, children }: RenderPlaceholderProps) => {
-    // drop style attribute as we use our custom placeholder css.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { style, ...props } = attributes;
-    return (
-      <Text as="span" {...props} className={css.EditorPlaceholder} contentEditable={false}>
-        {children}
-      </Text>
+export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
+  (
+    { top, bottom, before, after, maxHeight = '50vh', editor, placeholder, onKeyDown, onChange },
+    ref
+  ) => {
+    const renderElement = useCallback(
+      (props: RenderElementProps) => <RenderElement {...props} />,
+      []
     );
-  }, []);
 
-  return (
-    <div className={css.Editor}>
-      <Slate editor={editor} value={initialValue} onChange={onChange}>
-        {top}
-        <Box alignItems="Start">
-          {before && (
-            <Box className={css.EditorOptions} alignItems="Center" gap="100" shrink="No">
-              {before}
-            </Box>
-          )}
-          <Scroll
-            className={css.EditorTextareaScroll}
-            variant="SurfaceVariant"
-            style={{ maxHeight }}
-            size="300"
-            visibility="Hover"
-            hideTrack
-          >
-            <Editable
-              className={css.EditorTextarea}
-              placeholder={placeholder}
-              renderPlaceholder={renderPlaceholder}
-              renderElement={renderElement}
-              renderLeaf={renderLeaf}
-              onKeyDown={handleKeydown}
-            />
-          </Scroll>
-          {after && (
-            <Box className={css.EditorOptions} alignItems="Center" gap="100" shrink="No">
-              {after}
-            </Box>
-          )}
-        </Box>
-        {bottom}
-      </Slate>
-    </div>
-  );
-}
+    const renderLeaf = useCallback((props: RenderLeafProps) => <RenderLeaf {...props} />, []);
+
+    const handleKeydown: KeyboardEventHandler = useCallback(
+      (evt) => {
+        onKeyDown?.(evt);
+        toggleKeyboardShortcut(editor, evt);
+      },
+      [editor, onKeyDown]
+    );
+
+    const renderPlaceholder = useCallback(({ attributes, children }: RenderPlaceholderProps) => {
+      // drop style attribute as we use our custom placeholder css.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { style, ...props } = attributes;
+      return (
+        <Text as="span" {...props} className={css.EditorPlaceholder} contentEditable={false}>
+          {children}
+        </Text>
+      );
+    }, []);
+
+    return (
+      <div className={css.Editor} ref={ref}>
+        <Slate editor={editor} value={initialValue} onChange={onChange}>
+          {top}
+          <Box alignItems="Start">
+            {before && (
+              <Box className={css.EditorOptions} alignItems="Center" gap="100" shrink="No">
+                {before}
+              </Box>
+            )}
+            <Scroll
+              className={css.EditorTextareaScroll}
+              variant="SurfaceVariant"
+              style={{ maxHeight }}
+              size="300"
+              visibility="Hover"
+              hideTrack
+            >
+              <Editable
+                className={css.EditorTextarea}
+                placeholder={placeholder}
+                renderPlaceholder={renderPlaceholder}
+                renderElement={renderElement}
+                renderLeaf={renderLeaf}
+                onKeyDown={handleKeydown}
+              />
+            </Scroll>
+            {after && (
+              <Box className={css.EditorOptions} alignItems="Center" gap="100" shrink="No">
+                {after}
+              </Box>
+            )}
+          </Box>
+          {bottom}
+        </Slate>
+      </div>
+    );
+  }
+);

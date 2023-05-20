@@ -1,4 +1,11 @@
-import React, { KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  KeyboardEventHandler,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import isHotkey from 'is-hotkey';
 import { EventType, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
@@ -36,6 +43,8 @@ interface RoomInputProps {
 export function RoomInput({ roomId }: RoomInputProps) {
   const mx = useMatrixClient();
   const editor = useEditor();
+  const editorBaseRef = useRef<HTMLDivElement>(null);
+
   const imagePackRooms: Room[] = useMemo(() => {
     const allParentSpaces = [roomId, ...(initMatrix.roomList?.getAllParentSpaces(roomId) ?? [])];
     return allParentSpaces.reduce<Room[]>((list, rId) => {
@@ -142,6 +151,7 @@ export function RoomInput({ roomId }: RoomInputProps) {
         />
       )}
       <CustomEditor
+        ref={editorBaseRef}
         editor={editor}
         placeholder="Send a message..."
         onKeyDown={handleKeyDown}

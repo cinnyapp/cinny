@@ -13,9 +13,9 @@ import {
 } from '../../../hooks/useAsyncSearch';
 import { onTabPress } from '../../../utils/keyboard';
 import { createEmoticonElement, moveCursor, replaceWithElement } from '../common';
-import { useRecentEmoji } from '../../emoji-board/useRecentEmoji';
+import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import { ExtendedPackImage, PackUsage } from '../../emoji-board/custom-emoji';
-import { useRelevantEmojiPacks } from '../../emoji-board/useImagePacks';
+import { useRelevantImagePacks } from '../../../hooks/useImagePacks';
 import { IEmoji, emojis } from '../../emoji-board';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 
@@ -49,7 +49,7 @@ export function EmoticonAutocomplete({
 }: EmoticonAutocompleteProps) {
   const mx = useMatrixClient();
 
-  const imagePacks = useRelevantEmojiPacks(mx, PackUsage.Emoticon, imagePackRooms);
+  const imagePacks = useRelevantImagePacks(mx, PackUsage.Emoticon, imagePackRooms);
   const recentEmoji = useRecentEmoji(mx, 20);
 
   const searchList = useMemo(() => {

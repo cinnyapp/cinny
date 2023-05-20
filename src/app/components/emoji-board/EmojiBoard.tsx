@@ -37,9 +37,9 @@ import { EmojiGroupId, IEmoji, IEmojiGroup, emojiGroups, emojis } from './emoji'
 import { IEmojiGroupLabels, useEmojiGroupLabels } from './useEmojiGroupLabels';
 import { IEmojiGroupIcons, useEmojiGroupIcons } from './useEmojiGroupIcons';
 import { preventScrollWithArrowKey } from '../../utils/keyboard';
-import { useRelevantEmojiPacks } from './useImagePacks';
+import { useRelevantImagePacks } from '../../hooks/useImagePacks';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRecentEmoji } from './useRecentEmoji';
+import { useRecentEmoji } from '../../hooks/useRecentEmoji';
 import { ExtendedPackImage, ImagePack, PackUsage } from './custom-emoji';
 import { isUserId } from '../../utils/matrix';
 import { editableActiveElement, inVisibleScrollArea, targetFromEvent } from '../../utils/dom';
@@ -631,7 +631,7 @@ export function EmojiBoard({
   const mx = useMatrixClient();
   const emojiGroupLabels = useEmojiGroupLabels();
   const emojiGroupIcons = useEmojiGroupIcons();
-  const imagePacks = useRelevantEmojiPacks(mx, usage, imagePackRooms);
+  const imagePacks = useRelevantImagePacks(mx, usage, imagePackRooms);
   const recentEmojis = useRecentEmoji(mx, 21);
 
   const contentScrollRef = useRef<HTMLDivElement>(null);
