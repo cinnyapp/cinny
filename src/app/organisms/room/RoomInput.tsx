@@ -1,9 +1,9 @@
 import React, {
   KeyboardEventHandler,
+  forwardRef,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import isHotkey from 'is-hotkey';
@@ -40,10 +40,9 @@ import { getImageInfo } from '../../utils/matrix';
 interface RoomInputProps {
   roomId: string;
 }
-export function RoomInput({ roomId }: RoomInputProps) {
+export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(({ roomId }, ref) => {
   const mx = useMatrixClient();
   const editor = useEditor();
-  const editorBaseRef = useRef<HTMLDivElement>(null);
 
   const imagePackRooms: Room[] = useMemo(() => {
     const allParentSpaces = [roomId, ...(initMatrix.roomList?.getAllParentSpaces(roomId) ?? [])];
@@ -125,7 +124,7 @@ export function RoomInput({ roomId }: RoomInputProps) {
   };
 
   return (
-    <div>
+    <div ref={ref}>
       {autocompleteQuery?.prefix === AutocompletePrefix.RoomMention && (
         <RoomMentionAutocomplete
           roomId={roomId}
@@ -151,7 +150,6 @@ export function RoomInput({ roomId }: RoomInputProps) {
         />
       )}
       <CustomEditor
-        ref={editorBaseRef}
         editor={editor}
         placeholder="Send a message..."
         onKeyDown={handleKeyDown}
@@ -237,4 +235,4 @@ export function RoomInput({ roomId }: RoomInputProps) {
       />
     </div>
   );
-}
+})

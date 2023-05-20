@@ -17,6 +17,7 @@ import { RoomInput } from './RoomInput';
 const viewEvent = new EventEmitter();
 
 function RoomView({ roomTimeline, eventId }) {
+  const roomInputRef = useRef(null);
   const roomViewRef = useRef(null);
   // eslint-disable-next-line react/prop-types
   const { roomId } = roomTimeline;
@@ -45,7 +46,7 @@ function RoomView({ roomTimeline, eventId }) {
       <RoomViewHeader roomId={roomId} />
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
-          <RoomViewContent eventId={eventId} roomTimeline={roomTimeline} />
+          <RoomViewContent eventId={eventId} roomTimeline={roomTimeline} roomInputRef={roomInputRef} />
           <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
         </div>
         <div className="room-view__sticky">
@@ -55,7 +56,7 @@ function RoomView({ roomTimeline, eventId }) {
             viewEvent={viewEvent}
           /> */}
           <div className="room-view__editor">
-            <RoomInput roomId={roomId} />
+            <RoomInput roomId={roomId} ref={roomInputRef} />
           </div>
           <RoomViewCmdBar roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
         </div>
