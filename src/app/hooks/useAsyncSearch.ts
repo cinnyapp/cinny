@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   MatchHandler,
   AsyncSearch,
@@ -32,7 +32,7 @@ export const useAsyncSearch = <TSearchItem extends object | string | number>(
 ): [UseAsyncSearchResult<TSearchItem> | undefined, AsyncSearchHandler] => {
   const [result, setResult] = useState<UseAsyncSearchResult<TSearchItem>>();
 
-  const searchCallback = useMemo(() => {
+  const [searchCallback, terminateSearch] = useMemo(() => {
     setResult(undefined);
 
     const handleMatch: MatchHandler<TSearchItem> = (item, query) => {
@@ -67,6 +67,14 @@ export const useAsyncSearch = <TSearchItem extends object | string | number>(
       searchCallback(normalizedQuery);
     },
     [searchCallback, options?.normalizeOptions]
+  );
+
+  useEffect(
+    () => () => {
+      // terminate any ongoing search request on unmount.
+      terminateSearch();
+    },
+    [terminateSearch]
   );
 
   return [result, searchHandler];
