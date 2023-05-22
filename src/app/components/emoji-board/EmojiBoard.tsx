@@ -110,7 +110,7 @@ const SidebarStack = as<'div'>(({ className, children, ...props }, ref) => (
   </Box>
 ));
 function SidebarDivider() {
-  return <Line className={css.SidebarDivider} size="300" variant="Background" />;
+  return <Line className={css.SidebarDivider} size="300" variant="Surface" />;
 }
 
 function Header({ children }: { children: ReactNode }) {
@@ -149,12 +149,13 @@ const EmojiBoardLayout = as<
     {...props}
     ref={ref}
   >
-    {sidebar}
     <Box direction="Column" grow="Yes">
       {header}
       {children}
       {footer}
     </Box>
+    <Line size="300" direction="Vertical" />
+    {sidebar}
   </Box>
 ));
 
@@ -226,7 +227,7 @@ export function SidebarBtn<T extends string>({
           onClick={() => onItemClick(id)}
           size="400"
           radii="300"
-          variant="Background"
+          variant="Surface"
         >
           {children}
         </IconButton>
@@ -715,20 +716,16 @@ export function EmojiBoard({
     [mx]
   );
 
-  const handleEmojiHover: MouseEventHandler = useThrottle(
-    useCallback(
-      (evt) => {
-        const targetEl = targetFromEvent(evt.nativeEvent, 'button') as
-          | HTMLButtonElement
-          | undefined;
-        if (!targetEl) return;
-        handleEmojiPreview(targetEl);
-        targetEl.focus();
-      },
-      [handleEmojiPreview]
-    ),
-    { wait: 500, immediate: true }
-  );
+  const throttleEmojiHover = useThrottle(handleEmojiPreview, {
+    wait: 200,
+    immediate: true,
+  });
+
+  const handleEmojiHover: MouseEventHandler = (evt) => {
+    const targetEl = targetFromEvent(evt.nativeEvent, 'button') as HTMLButtonElement | undefined;
+    if (!targetEl) return;
+    throttleEmojiHover(targetEl);
+  };
 
   const handleEmojiFocus: FocusEventHandler = (evt) => {
     const targetEl = evt.target as HTMLButtonElement;
@@ -830,6 +827,7 @@ export function EmojiBoard({
             size="400"
             onScroll={handleOnScroll}
             onKeyDown={preventScrollWithArrowKey}
+            hideTrack
           >
             <Box
               onClick={handleEmojiClick}

@@ -2,7 +2,7 @@ import { style } from '@vanilla-extract/css';
 import { DefaultReset, FocusOutline, color, config, toRem } from 'folds';
 
 export const Base = style({
-  maxWidth: toRem(420),
+  maxWidth: toRem(432),
   width: `calc(100vw - 2 * ${config.space.S400})`,
   height: toRem(450),
   backgroundColor: color.Surface.Container,
@@ -13,24 +13,24 @@ export const Base = style({
 });
 
 export const Sidebar = style({
-  width: toRem(48),
-  backgroundColor: color.Background.Container,
-  color: color.Background.OnContainer,
+  width: toRem(54),
+  backgroundColor: color.Surface.Container,
+  color: color.Surface.OnContainer,
   position: 'relative',
 });
 
 export const SidebarContent = style({
-  padding: `${config.space.S100} 0`,
+  padding: `${config.space.S200} 0`,
 });
 
 export const SidebarStack = style({
   width: '100%',
-  backgroundColor: color.Background.Container,
+  backgroundColor: color.Surface.Container,
 });
 
 export const NativeEmojiSidebarStack = style({
   position: 'sticky',
-  bottom: '-68%',
+  bottom: '-67%',
   zIndex: 1,
 });
 
@@ -51,6 +51,7 @@ export const Footer = style({
   padding: config.space.S200,
   margin: config.space.S300,
   marginTop: 0,
+  minHeight: toRem(40),
 
   borderRadius: config.radii.R400,
   backgroundColor: color.SurfaceVariant.Container,
