@@ -1,5 +1,12 @@
 /* eslint-disable no-param-reassign */
-import React, { KeyboardEventHandler, ReactNode, forwardRef, useCallback, useState } from 'react';
+import React, {
+  ClipboardEventHandler,
+  KeyboardEventHandler,
+  ReactNode,
+  forwardRef,
+  useCallback,
+  useState,
+} from 'react';
 
 import { Box, Scroll, Text } from 'folds';
 import { Descendant, Editor, createEditor } from 'slate';
@@ -58,10 +65,22 @@ type CustomEditorProps = {
   placeholder?: string;
   onKeyDown?: KeyboardEventHandler;
   onChange?: EditorChangeHandler;
+  onPaste?: ClipboardEventHandler;
 };
 export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
   (
-    { top, bottom, before, after, maxHeight = '50vh', editor, placeholder, onKeyDown, onChange },
+    {
+      top,
+      bottom,
+      before,
+      after,
+      maxHeight = '50vh',
+      editor,
+      placeholder,
+      onKeyDown,
+      onChange,
+      onPaste,
+    },
     ref
   ) => {
     const renderElement = useCallback(
@@ -115,6 +134,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
                 renderElement={renderElement}
                 renderLeaf={renderLeaf}
                 onKeyDown={handleKeydown}
+                onPaste={onPaste}
               />
             </Scroll>
             {after && (
