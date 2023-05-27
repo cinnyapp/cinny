@@ -115,8 +115,8 @@ export function HeadingBlockButton() {
   return (
     <PopOut
       open={open}
-      align="start"
-      position="top"
+      align="Start"
+      position="Top"
       content={
         <FocusTrap
           focusTrapOptions={{

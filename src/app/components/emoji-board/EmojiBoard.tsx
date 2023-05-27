@@ -212,7 +212,7 @@ export function SidebarBtn<T extends string>({
   return (
     <TooltipProvider
       delay={500}
-      position="left"
+      position="Left"
       tooltip={
         <Tooltip id={`SidebarStackItem-${id}-label`}>
           <Text size="T300">{label}</Text>
