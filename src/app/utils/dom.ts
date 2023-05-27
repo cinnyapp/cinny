@@ -21,3 +21,37 @@ export const inVisibleScrollArea = (
   if (childTop < scrollTop && childBottom > scrollTop) return true;
   return false;
 };
+
+export type FilesOrFile<T extends boolean | undefined = undefined> = T extends true ? File[] : File;
+
+export const selectFile = <M extends boolean | undefined = undefined>(
+  accept: string,
+  multiple?: M
+): Promise<FilesOrFile<M> | undefined> =>
+  new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    if (accept) input.accept = accept;
+    if (multiple) input.multiple = true;
+
+    const changeHandler = () => {
+      const fileList = input.files;
+      if (!fileList) {
+        resolve(undefined);
+      } else {
+        const files: File[] = [...fileList].filter((file) => file && file.type);
+        resolve((multiple ? files : files[0]) as FilesOrFile<M>);
+      }
+      input.removeEventListener('change', changeHandler);
+    };
+
+    input.addEventListener('change', changeHandler);
+    input.click();
+  });
+
+export const getDataTransferFiles = (dataTransfer: DataTransfer): File[] | undefined => {
+  const fileList = dataTransfer.files;
+  const files = [...fileList].filter((file) => file && file.type);
+  if (files.length === 0) return undefined;
+  return files;
+};
