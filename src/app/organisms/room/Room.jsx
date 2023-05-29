@@ -13,7 +13,7 @@ import RoomView from './RoomView';
 import RoomSettings from './RoomSettings';
 import PeopleDrawer from './PeopleDrawer';
 
-function Room() {
+function Room({ isJitsiRoom }) {
   const [roomInfo, setRoomInfo] = useState({
     roomTimeline: null,
     eventId: null,
@@ -26,8 +26,9 @@ function Room() {
     const handleRoomSelected = (rId, pRoomId, eId) => {
       roomInfo.roomTimeline?.removeInternalListeners();
       if (mx.getRoom(rId)) {
+        const roomTimeline = new RoomTimeline(rId);
         setRoomInfo({
-          roomTimeline: new RoomTimeline(rId),
+          roomTimeline,
           eventId: eId ?? null,
         });
       } else {
@@ -57,6 +58,10 @@ function Room() {
   if (roomTimeline === null) {
     setTimeout(() => openNavigation());
     return <Welcome />;
+  }
+
+  if (isJitsiRoom) {
+    return null;
   }
 
   return (

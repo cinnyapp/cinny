@@ -19,10 +19,11 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 import ChevronRightIC from '../../../../public/res/ic/outlined/chevron-right.svg';
 
 function RoomsCategory({
-  spaceId, name, hideHeader, roomIds, drawerPostie,
+  spaceId, name, hideHeader, roomIds, drawerPostie, jitsiCallId
 }) {
   const { spaces, directs } = initMatrix.roomList;
   const [isOpen, setIsOpen] = useState(true);
+  const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a'
 
   const openSpaceOptions = (e) => {
     e.preventDefault();
@@ -45,6 +46,7 @@ function RoomsCategory({
   const renderSelector = (roomId) => {
     const isSpace = spaces.has(roomId);
     const isDM = directs.has(roomId);
+    const mx = initMatrix.matrixClient
 
     return (
       <Selector
@@ -52,7 +54,23 @@ function RoomsCategory({
         roomId={roomId}
         isDM={isDM}
         drawerPostie={drawerPostie}
-        onClick={() => (isSpace ? selectSpace(roomId) : selectRoom(roomId))}
+        onClick={() => {
+          if (isSpace) {
+            selectSpace(roomId);
+            return;
+          }
+
+          if (
+            mx.getRoom(roomId).currentState.getStateEvents('m.room.topic')[0]?.getContent()
+              .topic === TOPIC_JITSI_CALL
+          ) {
+            if (jitsiCallId !== roomId && !confirm(`Do you want to join ${mx.getRoom(roomId).name}?`)) {
+              return;
+            }
+          }
+
+          selectRoom(roomId);
+        }}
       />
     );
   };
@@ -87,6 +105,7 @@ RoomsCategory.propTypes = {
   hideHeader: PropTypes.bool,
   roomIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   drawerPostie: PropTypes.shape({}).isRequired,
+  jitsiCallId: PropTypes.string
 };
 
 export default RoomsCategory;

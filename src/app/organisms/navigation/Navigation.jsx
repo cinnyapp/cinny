@@ -4,11 +4,11 @@ import './Navigation.scss';
 import SideBar from './SideBar';
 import Drawer from './Drawer';
 
-function Navigation() {
+function Navigation({jitsiCallId}) {
   return (
     <div className="navigation">
       <SideBar />
-      <Drawer />
+      <Drawer jitsiCallId={jitsiCallId} />
     </div>
   );
 }

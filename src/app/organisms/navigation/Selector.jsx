@@ -52,13 +52,16 @@ function Selector({
     );
   };
 
+  const TOPIC_JITSI_CALL = 'd38dd491fefa1cfffc27f9c57f2bdb4a';
+
   return (
     <RoomSelector
       key={roomId}
       name={room.name}
       roomId={roomId}
       imageSrc={isDM ? imageSrc : null}
-      iconSrc={isDM ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())}
+      iconSrc={isDM ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom(), room.currentState.getStateEvents('m.room.topic')[0]?.getContent().topic ===
+          TOPIC_JITSI_CALL)}
       isSelected={navigation.selectedRoomId === roomId}
       isMuted={isMuted}
       isUnread={!isMuted && noti.hasNoti(roomId)}

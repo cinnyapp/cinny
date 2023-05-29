@@ -6,6 +6,7 @@ import HashLockIC from '../../public/res/ic/outlined/hash-lock.svg';
 import SpaceIC from '../../public/res/ic/outlined/space.svg';
 import SpaceGlobeIC from '../../public/res/ic/outlined/space-globe.svg';
 import SpaceLockIC from '../../public/res/ic/outlined/space-lock.svg';
+import VideoIC from '../../public/res/ic/filled/call.svg';
 
 const WELL_KNOWN_URI = '/.well-known/matrix/client';
 
@@ -103,7 +104,10 @@ export function hasDMWith(userId) {
   });
 }
 
-export function joinRuleToIconSrc(joinRule, isSpace) {
+export function joinRuleToIconSrc(joinRule, isSpace, isVideoRoom) {
+  if (isVideoRoom) {
+    return VideoIC;
+  }
   return ({
     restricted: () => (isSpace ? SpaceIC : HashIC),
     knock: () => (isSpace ? SpaceLockIC : HashLockIC),
