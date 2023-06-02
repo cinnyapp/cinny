@@ -71,6 +71,7 @@ function AppearanceSection() {
                 { text: 'Silver' },
                 { text: 'Dark' },
                 { text: 'Butter' },
+                { text: 'Dracula' },
               ]}
               onSelect={(index) => {
                 if (settings.useSystemTheme) toggleSystemTheme();

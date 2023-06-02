@@ -296,7 +296,8 @@
 }
 
 .dark-theme,
-.butter-theme {
+.butter-theme,
+.dracula-theme {
   @include dark-mode();
 }
 
@@ -306,6 +307,42 @@
   }
 }
 
+.dracula-theme {
+    --bg-surface: hsl(231, 15%, 18%);
+    --bg-surface-transparent: hsl(231, 15%, 18%, 0);
+    --bg-surface-low: hsl(231, 15%, 14%);
+    --bg-surface-low-transparent: hsl(231, 15%, 18%, 0);
+    --bg-surface-extra-low: hsl(231, 15%, 12%);
+    --bg-surface-extra-low-transparent: hsl(231, 15%, 18%, 0);
+    --bg-surface-hover: hsl(231, 15%, 25%, 30%);
+    --bg-surface-active: hsl(231, 15%, 30%);
+    --bg-surface-border: hsl(231, 15%, 8%);
+
+    --bg-primary: hsl(265, 89%, 78%);
+    --bg-primary-hover: hsl(265, 89%, 70%);
+    --bg-primary-active: hsl(265, 89%, 65%);
+    --bg-primary-border: white;
+
+    --bg-tooltip: hsl(225, 27%, 51%);
+    --bg-badge: hsl(231, 15%, 18%);
+    --bg-ping: hsla(135, 94%, 65%, 50%);
+    --bg-ping-hover: hsla(135, 94%, 65%, 60%);
+    --bg-divider: hsl(232, 14%, 31%);
+
+    --tc-surface-high: hsla(60, 30%, 96%, 98%);
+    --tc-surface-normal: hsla(60, 30%, 96%, 94%);
+    --tc-surface-normal-low: hsla(60, 30%, 96%, 60%);
+    --tc-surface-low: hsla(60, 30%, 96%, 58%);
+
+    --tc-code: hsl(326, 100%, 74%);
+    --tc-link: hsl(265, 89%, 78%);
+    --tc-badge: hsl(265, 89%, 78%);
+
+    --ic-surface-high: hsl(60, 30%, 96%);
+    --ic-surface-normal: hsla(60, 30%, 96%, 84%);
+    --ic-surface-low: hsla(60, 30%, 96%, 64%);
+
+}
 .butter-theme {
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(64, 6%, 14%);
