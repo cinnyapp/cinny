@@ -111,24 +111,45 @@ EmojiGroup.propTypes = {
 
 const asyncSearch = new AsyncSearch();
 asyncSearch.setup(emojis, { keys: ['shortcode'], isContain: true, limit: 40 });
-function SearchedEmoji() {
+
+let lastTerm = null;
+let emojiSearchSet = [];
+
+function SearchedEmoji({ availableEmoji }) {
   const [searchedEmojis, setSearchedEmojis] = useState(null);
 
   function handleSearchEmoji(resultEmojis, term) {
-    if (term === '' || resultEmojis.length === 0) {
+    if (term === '') {
       if (term === '') setSearchedEmojis(null);
-      else setSearchedEmojis({ emojis: [] });
       return;
     }
-    setSearchedEmojis({ emojis: resultEmojis });
+
+    if (lastTerm == term) {
+      emojiSearchSet = emojiSearchSet.concat(resultEmojis);
+    } else {
+      lastTerm = term;
+      emojiSearchSet = null;
+      emojiSearchSet = resultEmojis;
+    }
+    setSearchedEmojis({ emojis: emojiSearchSet });
   }
 
   useEffect(() => {
     asyncSearch.on(asyncSearch.RESULT_SENT, handleSearchEmoji);
+    if (availableEmoji && availableEmoji.length) {
+      availableEmoji.forEach((pack) => {
+        pack.asyncSearch.on(asyncSearch.RESULT_SENT, handleSearchEmoji);
+      });
+    }
     return () => {
       asyncSearch.removeListener(asyncSearch.RESULT_SENT, handleSearchEmoji);
+      if (availableEmoji && availableEmoji.length) {
+        availableEmoji.forEach((pack) => {
+          pack.asyncSearch.removeListener(asyncSearch.RESULT_SENT, handleSearchEmoji);
+        });
+      }
     };
-  }, []);
+  }, [availableEmoji]);
 
   if (searchedEmojis === null) return false;
 
@@ -203,7 +224,13 @@ function EmojiBoard({ onSelect, searchRef }) {
 
   function handleSearchChange() {
     const term = searchRef.current.value;
+    // Search Default Emoji
     asyncSearch.search(term);
+    // Search Custom Emoji
+    availableEmojis.forEach((pack) => {
+      pack.asyncSearch.search(term);
+    });
+
     scrollEmojisRef.current.scrollTop = 0;
   }
 
@@ -228,10 +255,19 @@ function EmojiBoard({ onSelect, searchRef }) {
           (pack) => pack.getEmojis().length !== 0
         );
 
-        // Set an index for each pack so that we know where to jump when the user uses the nav
         for (let i = 0; i < packs.length; i += 1) {
+          // Set an index for each pack so that we know where to jump when the user uses the nav
           packs[i].packIndex = i;
+
+          // Add a search to each pack
+          packs[i].asyncSearch = new AsyncSearch();
+          packs[i].asyncSearch.setup(packs[i].emoticons, {
+            keys: ['shortcode'],
+            isContain: true,
+            limit: 10, //Shorter than Default Emoji as this is per pack
+          });
         }
+
         setAvailableEmojis(packs);
       }
     };
@@ -321,7 +357,7 @@ function EmojiBoard({ onSelect, searchRef }) {
         <div className="emoji-board__content__emojis">
           <ScrollView ref={scrollEmojisRef} autoHide>
             <div onMouseMove={hoverEmoji} onClick={selectEmoji}>
-              <SearchedEmoji />
+              <SearchedEmoji availableEmoji={availableEmojis} />
               {recentEmojis.length > 0 && (
                 <EmojiGroup name="Recently used" groupEmojis={recentEmojis} />
               )}
