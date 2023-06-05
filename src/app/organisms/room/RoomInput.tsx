@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useAtom } from 'jotai';
@@ -69,7 +70,12 @@ import {
   roomUploadAtomFamily,
 } from '../../state/roomInputDrafts';
 import { UploadCardRenderer } from '../../components/upload-card/UploadCardRenderer';
-import { UploadBoard, UploadBoardContent, UploadBoardHeader } from './UploadBoard';
+import {
+  UploadBoard,
+  UploadBoardContent,
+  UploadBoardHeader,
+  UploadBoardImperativeHandlers,
+} from './UploadBoard';
 import {
   Upload,
   UploadStatus,
@@ -240,6 +246,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       roomUploadAtomFamily,
       selectedFiles.map((f) => f.file)
     );
+    const uploadBoardHandlers = useRef<UploadBoardImperativeHandlers>();
 
     const imagePackRooms: Room[] = useMemo(() => {
       const allParentSpaces = [roomId, ...(initMatrix.roomList?.getAllParentSpaces(roomId) ?? [])];
@@ -309,7 +316,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
-      uploads.map(async (upload) => {
+      const sendPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (fileItem && fileItem.file.type.startsWith('image')) {
           const [imgError, imgContent] = await to(getImageMsgContent(fileItem, upload.mxc));
@@ -332,9 +339,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
       });
       handleCancelUpload(uploads);
+      await Promise.allSettled(sendPromises);
     };
 
     const submit = useCallback(() => {
+      uploadBoardHandlers.current?.handleSend();
+
       const plainText = toPlainText(editor.children).trim();
       const customHtml = toMatrixCustomHTML(editor.children);
 
@@ -417,6 +427,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 onToggle={() => setUploadBoard(!uploadBoard)}
                 uploadFamilyObserverAtom={uploadFamilyObserverAtom}
                 onSend={handleSendUpload}
+                imperativeHandlerRef={uploadBoardHandlers}
                 onCancel={handleCancelUpload}
               />
             }
@@ -424,16 +435,18 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             {uploadBoard && (
               <Scroll size="300" hideTrack visibility="Hover">
                 <UploadBoardContent>
-                  {selectedFiles.map((fileItem, index) => (
-                    <UploadCardRenderer
-                      // eslint-disable-next-line react/no-array-index-key
-                      key={index}
-                      file={fileItem.file}
-                      isEncrypted={!!fileItem.encInfo}
-                      uploadAtom={roomUploadAtomFamily(fileItem.file)}
-                      onRemove={handleRemoveUpload}
-                    />
-                  ))}
+                  {Array.from(selectedFiles)
+                    .reverse()
+                    .map((fileItem, index) => (
+                      <UploadCardRenderer
+                        // eslint-disable-next-line react/no-array-index-key
+                        key={index}
+                        file={fileItem.file}
+                        isEncrypted={!!fileItem.encInfo}
+                        uploadAtom={roomUploadAtomFamily(fileItem.file)}
+                        onRemove={handleRemoveUpload}
+                      />
+                    ))}
                 </UploadBoardContent>
               </Scroll>
             )}

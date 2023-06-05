@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { MutableRefObject, ReactNode, useImperativeHandle, useRef } from 'react';
 import { Badge, Box, Chip, Header, Icon, Icons, Spinner, Text, as, percent } from 'folds';
 import classNames from 'classnames';
 import { useAtomValue } from 'jotai';
@@ -13,23 +13,26 @@ export const UploadBoard = as<'div', UploadBoardProps>(({ header, children, ...p
   <Box className={css.UploadBoardBase} {...props} ref={ref}>
     <Box className={css.UploadBoardContainer} justifyContent="End">
       <Box className={classNames(css.UploadBoard)} direction="Column">
-        <Box direction="Column" shrink="No">
-          {header}
-        </Box>
         <Box grow="Yes" direction="Column">
           {children}
+        </Box>
+        <Box direction="Column" shrink="No">
+          {header}
         </Box>
       </Box>
     </Box>
   </Box>
 ));
 
+export type UploadBoardImperativeHandlers = { handleSend: () => Promise<void> };
+
 type UploadBoardHeaderProps = {
   open: boolean;
   onToggle: () => void;
   uploadFamilyObserverAtom: TUploadFamilyObserverAtom;
   onCancel: (uploads: Upload[]) => void;
-  onSend: (uploads: UploadSuccess[]) => void;
+  onSend: (uploads: UploadSuccess[]) => Promise<void>;
+  imperativeHandlerRef: MutableRefObject<UploadBoardImperativeHandlers | undefined>;
 };
 
 export function UploadBoardHeader({
@@ -38,7 +41,9 @@ export function UploadBoardHeader({
   uploadFamilyObserverAtom,
   onCancel,
   onSend,
+  imperativeHandlerRef,
 }: UploadBoardHeaderProps) {
+  const sendingRef = useRef(false);
   const uploads = useAtomValue(uploadFamilyObserverAtom);
 
   const isSuccess = uploads.every((upload) => upload.status === UploadStatus.Success);
@@ -57,8 +62,18 @@ export function UploadBoardHeader({
     { loaded: 0, total: 0 }
   );
 
-  const handleSend = () =>
-    onSend(uploads.filter((upload) => upload.status === UploadStatus.Success) as UploadSuccess[]);
+  const handleSend = async () => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+    await onSend(
+      uploads.filter((upload) => upload.status === UploadStatus.Success) as UploadSuccess[]
+    );
+    sendingRef.current = false;
+  };
+
+  useImperativeHandle(imperativeHandlerRef, () => ({
+    handleSend,
+  }));
   const handleCancel = () => onCancel(uploads);
 
   return (
@@ -72,14 +87,13 @@ export function UploadBoardHeader({
         grow="Yes"
         gap="100"
       >
-        <Icon src={open ? Icons.ChevronBottom : Icons.ChevronRight} size="50" />
+        <Icon src={open ? Icons.ChevronTop : Icons.ChevronRight} size="50" />
         <Text size="H6">Files</Text>
       </Box>
       <Box className={css.UploadBoardHeaderContent} alignItems="Center" gap="100">
         {isSuccess && (
           <Chip
             as="button"
-            aria-label="Send Files"
             onClick={handleSend}
             variant="Primary"
             radii="Pill"
@@ -105,13 +119,12 @@ export function UploadBoardHeader({
         {!isSuccess && open && (
           <Chip
             as="button"
-            aria-label="Remove All"
             onClick={handleCancel}
             variant="SurfaceVariant"
             radii="Pill"
             after={<Icon src={Icons.Cross} size="50" />}
           >
-            <Text size="B300">Remove All</Text>
+            <Text size="B300">{uploads.length === 1 ? 'Remove' : 'Remove All'}</Text>
           </Chip>
         )}
       </Box>

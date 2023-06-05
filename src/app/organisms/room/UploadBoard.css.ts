@@ -40,6 +40,6 @@ export const UploadBoardHeaderContent = style({
 
 export const UploadBoardContent = style({
   padding: config.space.S200,
-  paddingTop: 0,
+  paddingBottom: 0,
   paddingRight: 0,
 });
