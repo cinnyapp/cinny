@@ -46,7 +46,11 @@ function RoomView({ roomTimeline, eventId }) {
       <RoomViewHeader roomId={roomId} />
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
-          <RoomViewContent eventId={eventId} roomTimeline={roomTimeline} roomInputRef={roomInputRef} />
+          <RoomViewContent
+            eventId={eventId}
+            roomTimeline={roomTimeline}
+            roomInputRef={roomInputRef}
+          />
           <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
         </div>
         <div className="room-view__sticky">
@@ -56,7 +60,7 @@ function RoomView({ roomTimeline, eventId }) {
             viewEvent={viewEvent}
           /> */}
           <div className="room-view__editor">
-            <RoomInput roomId={roomId} ref={roomInputRef} />
+            <RoomInput roomId={roomId} roomViewRef={roomViewRef} ref={roomInputRef} />
           </div>
           <RoomViewCmdBar roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
         </div>

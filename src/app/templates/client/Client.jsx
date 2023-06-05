@@ -18,7 +18,6 @@ import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
-import DragDrop from '../../organisms/drag-drop/DragDrop';
 
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 import { MatrixClientProvider } from '../../hooks/useMatrixClient';
@@ -26,7 +25,6 @@ import { MatrixClientProvider } from '../../hooks/useMatrixClient';
 function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
-  const [dragCounter, setDragCounter] = useState(0);
   const classNameHidden = 'client__item-hidden';
 
   const navWrapperRef = useRef(null);
@@ -52,6 +50,7 @@ function Client() {
   }, []);
 
   useEffect(() => {
+    changeLoading(true);
     let counter = 0;
     const iId = setInterval(() => {
       const msgList = ['Almost there...', 'Looks like you have a lot of stuff to heat up!'];
@@ -105,71 +104,9 @@ function Client() {
     );
   }
 
-  function dragContainsFiles(e) {
-    if (!e.dataTransfer.types) return false;
-
-    for (let i = 0; i < e.dataTransfer.types.length; i += 1) {
-      if (e.dataTransfer.types[i] === 'Files') return true;
-    }
-    return false;
-  }
-
-  function modalOpen() {
-    return navigation.isRawModalVisible && dragCounter <= 0;
-  }
-
-  function handleDragOver(e) {
-    if (!dragContainsFiles(e)) return;
-
-    e.preventDefault();
-
-    if (!navigation.selectedRoomId || modalOpen()) {
-      e.dataTransfer.dropEffect = 'none';
-    }
-  }
-
-  function handleDragEnter(e) {
-    e.preventDefault();
-
-    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
-      setDragCounter(dragCounter + 1);
-    }
-  }
-
-  function handleDragLeave(e) {
-    e.preventDefault();
-
-    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
-      setDragCounter(dragCounter - 1);
-    }
-  }
-
-  function handleDrop(e) {
-    e.preventDefault();
-
-    setDragCounter(0);
-
-    if (modalOpen()) return;
-
-    const roomId = navigation.selectedRoomId;
-    if (!roomId) return;
-
-    const { files } = e.dataTransfer;
-    if (!files?.length) return;
-    const file = files[0];
-    initMatrix.roomsInput.setAttachment(roomId, file);
-    initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
-  }
-
   return (
     <MatrixClientProvider value={initMatrix.matrixClient}>
-      <div
-        className="client-container"
-        onDragOver={handleDragOver}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
+      <div className="client-container">
         <div className="navigation__wrapper" ref={navWrapperRef}>
           <Navigation />
         </div>
@@ -180,7 +117,6 @@ function Client() {
         <Dialogs />
         <EmojiBoardOpener />
         <ReusableContextMenu />
-        <DragDrop isOpen={dragCounter !== 0} />
       </div>
     </MatrixClientProvider>
   );
