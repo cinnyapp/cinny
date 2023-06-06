@@ -214,7 +214,7 @@ function RoomViewInput({
       confirmDialog('Invalid Command', `"${cmdName}" is not a valid command.`, 'Alright');
       return;
     }
-    if (['me', 'shrug', 'plain'].includes(cmdName)) {
+    if (['me', 'shrug', 'plain', 'html'].includes(cmdName)) {
       commands[cmdName].exe(roomId, cmdData, sendBody);
       return;
     }

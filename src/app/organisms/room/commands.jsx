@@ -32,6 +32,15 @@ export function processMxidAndReason(data) {
 }
 
 const commands = {
+  html: {
+    name: 'html',
+    description: 'Send html message',
+    exe: (roomId, data, onSuccess) => {
+      const body = data.trim();
+      if (body === '') return;
+      onSuccess(body, { msgType: 'm.text', htmlFormat: true });
+    },
+  },
   me: {
     name: 'me',
     description: 'Display action',
