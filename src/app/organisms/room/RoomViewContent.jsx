@@ -114,6 +114,7 @@ function handleOnClickCapture(e) {
 
   const spoiler = nativeEvent.composedPath().find((el) => el?.hasAttribute?.('data-mx-spoiler'));
   if (spoiler) {
+    if (!spoiler.classList.contains('data-mx-spoiler--visible')) e.preventDefault();
     spoiler.classList.toggle('data-mx-spoiler--visible');
   }
 }
@@ -357,7 +358,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
       const isViewingLive = roomTimeline.isServingLiveTimeline() && limit.length >= tLength - 1;
       const isAttached = timelineScroll.bottom < SCROLL_TRIGGER_POS;
 
-      if (isViewingLive && isAttached) {
+      if (isViewingLive && isAttached && document.hasFocus()) {
         limit.setFrom(tLength - limit.maxEvents);
         trySendReadReceipt(event);
         setEvent(event);
