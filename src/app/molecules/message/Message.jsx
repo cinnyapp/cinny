@@ -619,7 +619,7 @@ MessageOptions.propTypes = {
 function genMediaContent(mE) {
   const mx = initMatrix.matrixClient;
   const mContent = mE.getContent();
-  if (!mContent || !mContent.body) return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
+  if (mE.getType() !== "m.sticker" && (!mContent || !mContent.body)) return <span style={{ color: 'var(--bg-danger)' }}>Malformed event</span>;
 
   let mediaMXC = mContent?.url;
   const isEncryptedFile = typeof mediaMXC === 'undefined';

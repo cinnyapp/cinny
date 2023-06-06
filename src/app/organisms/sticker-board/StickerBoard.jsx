@@ -29,7 +29,7 @@ function StickerBoard({ roomId, onSelect }) {
   }
   function getStickerData(target) {
     const mxc = target.getAttribute('data-mx-sticker');
-    const body = target.getAttribute('title');
+    const body = target.getAttribute('title') ? target.getAttribute('title') : target.getAttribute('alt');
     const httpUrl = target.getAttribute('src');
     return { mxc, body, httpUrl };
   }
