@@ -202,7 +202,7 @@ export function Toolbar() {
       </Box>
       {allowInline && (
         <>
-          <Line direction="Vertical" style={{ height: toRem(12) }} />
+          <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />
           <Box gap="100">
             <MarkButton
               format={MarkType.Bold}

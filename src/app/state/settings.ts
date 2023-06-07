@@ -5,6 +5,7 @@ export interface Settings {
   themeIndex: number;
   useSystemTheme: boolean;
   isMarkdown: boolean;
+  editorToolbar: boolean;
   isPeopleDrawer: boolean;
 
   hideMembershipEvents: boolean;
@@ -18,6 +19,7 @@ const defaultSettings: Settings = {
   themeIndex: 0,
   useSystemTheme: true,
   isMarkdown: true,
+  editorToolbar: false,
   isPeopleDrawer: true,
 
   hideMembershipEvents: false,
