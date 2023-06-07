@@ -59,6 +59,7 @@ import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
 import { useFileDropZone } from '../../hooks/useFileDrop';
 import {
   TUploadItem,
+  roomIdToMsgDraftAtomFamily,
   roomIdToUploadItemsAtomFamily,
   roomUploadAtomFamily,
 } from '../../state/roomInputDrafts';
@@ -97,6 +98,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const editor = useEditor();
     const room = mx.getRoom(roomId);
 
+    const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
     const uploadFamilyObserverAtom = createUploadFamilyObserverAtom(
@@ -148,8 +150,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const dropZoneVisible = useFileDropZone(roomViewRef, handleFiles);
 
     useEffect(() => {
+      Transforms.insertFragment(editor, msgDraft);
+    }, [editor, msgDraft]);
+
+    useEffect(() => {
       ReactEditor.focus(editor);
-    }, [roomId, editor]);
+      return () => {
+        const parsedDraft = JSON.parse(JSON.stringify(editor.children));
+        setMsgDraft(parsedDraft);
+        resetEditor(editor);
+      };
+    }, [roomId, editor, setMsgDraft]);
 
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
