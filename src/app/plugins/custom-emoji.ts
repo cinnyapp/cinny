@@ -1,7 +1,7 @@
 import { IImageInfo, MatrixClient, Room } from 'matrix-js-sdk';
-import { AccountDataEvent } from '../../../types/matrix/accountData';
-import { getAccountData, getStateEvents } from '../../utils/room';
-import { StateEvent } from '../../../types/matrix/room';
+import { AccountDataEvent } from '../../types/matrix/accountData';
+import { getAccountData, getStateEvents } from '../utils/room';
+import { StateEvent } from '../../types/matrix/room';
 
 // https://github.com/Sorunome/matrix-doc/blob/soru/emotes/proposals/2545-emotes.md
 

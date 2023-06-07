@@ -33,14 +33,14 @@ import { MatrixClient, Room } from 'matrix-js-sdk';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 import * as css from './EmojiBoard.css';
-import { EmojiGroupId, IEmoji, IEmojiGroup, emojiGroups, emojis } from './emoji';
+import { EmojiGroupId, IEmoji, IEmojiGroup, emojiGroups, emojis } from '../../plugins/emoji';
 import { IEmojiGroupLabels, useEmojiGroupLabels } from './useEmojiGroupLabels';
 import { IEmojiGroupIcons, useEmojiGroupIcons } from './useEmojiGroupIcons';
 import { preventScrollWithArrowKey } from '../../utils/keyboard';
 import { useRelevantImagePacks } from '../../hooks/useImagePacks';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../hooks/useRecentEmoji';
-import { ExtendedPackImage, ImagePack, PackUsage } from './custom-emoji';
+import { ExtendedPackImage, ImagePack, PackUsage } from '../../plugins/custom-emoji';
 import { isUserId } from '../../utils/matrix';
 import { editableActiveElement, inVisibleScrollArea, targetFromEvent } from '../../utils/dom';
 import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';

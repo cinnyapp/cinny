@@ -15,7 +15,8 @@ import { onTabPress } from '../../../utils/keyboard';
 import { createEmoticonElement, moveCursor, replaceWithElement } from '../common';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import { useRelevantImagePacks } from '../../../hooks/useImagePacks';
-import { IEmoji, emojis, ExtendedPackImage, PackUsage } from '../../emoji-board';
+import { IEmoji, emojis } from '../../../plugins/emoji';
+import { ExtendedPackImage, PackUsage } from '../../../plugins/custom-emoji';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 
 type EmoticonCompleteHandler = (key: string, shortcode: string) => void;

@@ -1,6 +1,6 @@
 import { ClientEvent, MatrixClient, MatrixEvent, Room, RoomStateEvent } from 'matrix-js-sdk';
 import { useEffect, useMemo } from 'react';
-import { getRelevantPacks, ImagePack, PackUsage } from '../components/emoji-board/custom-emoji';
+import { getRelevantPacks, ImagePack, PackUsage } from '../plugins/custom-emoji';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import { StateEvent } from '../../types/matrix/room';
 import { useForceUpdate } from './useForceUpdate';

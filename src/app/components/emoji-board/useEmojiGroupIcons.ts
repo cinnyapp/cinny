@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { IconSrc, Icons } from 'folds';
 
-import { EmojiGroupId } from './emoji';
+import { EmojiGroupId } from '../../plugins/emoji';
 
 export type IEmojiGroupIcons = Record<EmojiGroupId, IconSrc>;
 

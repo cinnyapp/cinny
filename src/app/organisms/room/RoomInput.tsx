@@ -69,13 +69,13 @@ import {
   roomIdToUploadItemsAtomFamily,
   roomUploadAtomFamily,
 } from '../../state/roomInputDrafts';
-import { UploadCardRenderer } from '../../components/upload-card/UploadCardRenderer';
+import { UploadCardRenderer } from '../../components/upload-card';
 import {
   UploadBoard,
   UploadBoardContent,
   UploadBoardHeader,
   UploadBoardImperativeHandlers,
-} from './UploadBoard';
+} from '../../components/upload-board';
 import {
   Upload,
   UploadStatus,
