@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { useAtom } from 'jotai';
 import isHotkey from 'is-hotkey';
-import { EventType, IContent, MatrixClient, MsgType, Room } from 'matrix-js-sdk';
+import { EventType, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Range, Editor, Element } from 'slate';
 import {
@@ -52,13 +52,7 @@ import {
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import initMatrix from '../../../client/initMatrix';
-import {
-  TUploadContent,
-  encryptFile,
-  getImageInfo,
-  getThumbnailContent,
-  getVideoInfo,
-} from '../../utils/matrix';
+import { TUploadContent, encryptFile, getImageInfo } from '../../utils/matrix';
 import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
 import { useFilePicker } from '../../hooks/useFilePicker';
 import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
@@ -81,155 +75,17 @@ import {
   UploadSuccess,
   createUploadFamilyObserverAtom,
 } from '../../state/upload';
-import {
-  getImageFileUrl,
-  getImageUrlBlob,
-  getThumbnail,
-  getThumbnailDimensions,
-  getVideoFileUrl,
-  loadImageElement,
-  loadVideoElement,
-} from '../../utils/dom';
+import { getImageUrlBlob, loadImageElement } from '../../utils/dom';
 import { safeFile } from '../../utils/mimeTypes';
 import { fulfilledPromiseSettledResult } from '../../utils/common';
-import { MATRIX_BLUR_HASH_PROPERTY_NAME, encodeBlurHash } from '../../utils/blurHash';
-import { IThumbnailContent } from '../../../types/matrix/common';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-
-const generateThumbnailContent = async (
-  mx: MatrixClient,
-  img: HTMLImageElement | HTMLVideoElement,
-  dimensions: [number, number],
-  encrypt: boolean
-): Promise<IThumbnailContent> => {
-  const thumbnail = await getThumbnail(img, ...dimensions);
-  if (!thumbnail) throw new Error('Can not create video thumbnail!');
-  const encThumbData = encrypt ? await encryptFile(thumbnail) : undefined;
-  const thumbnailFile = encThumbData?.file ?? thumbnail;
-  if (!thumbnailFile) throw new Error('Can not create video thumbnail!');
-
-  const data = await mx.uploadContent(thumbnailFile);
-  const thumbMxc = data?.content_uri;
-  if (!thumbMxc) throw new Error('Failed when uploading video thumbnail!');
-  const thumbnailContent = getThumbnailContent({
-    thumbnail: thumbnailFile,
-    encInfo: encThumbData?.encInfo,
-    mxc: thumbMxc,
-    width: dimensions[0],
-    height: dimensions[1],
-  });
-  return thumbnailContent;
-};
-
-const getImageMsgContent = async (item: TUploadItem, mxc: string): Promise<IContent> => {
-  const { file, originalFile, encInfo } = item;
-  const [imgError, imgEl] = await to(loadImageElement(getImageFileUrl(originalFile)));
-  if (imgError) console.warn(imgError);
-
-  const content: IContent = {
-    msgtype: MsgType.Image,
-    body: file.name,
-  };
-  if (imgEl) {
-    content.info = {
-      ...getImageInfo(imgEl, file),
-      [MATRIX_BLUR_HASH_PROPERTY_NAME]: encodeBlurHash(imgEl),
-    };
-  }
-  if (encInfo) {
-    content.file = {
-      ...encInfo,
-      url: mxc,
-    };
-  } else {
-    content.url = mxc;
-  }
-  return content;
-};
-
-const getVideoMsgContent = async (
-  mx: MatrixClient,
-  item: TUploadItem,
-  mxc: string
-): Promise<IContent> => {
-  const { file, originalFile, encInfo } = item;
-
-  const [videoError, videoEl] = await to(loadVideoElement(getVideoFileUrl(originalFile)));
-  if (videoError) console.warn(videoError);
-
-  const content: IContent = {
-    msgtype: MsgType.Video,
-    body: file.name,
-  };
-  if (videoEl) {
-    const [thumbError, thumbContent] = await to(
-      generateThumbnailContent(
-        mx,
-        videoEl,
-        getThumbnailDimensions(videoEl.videoWidth, videoEl.videoHeight),
-        !!encInfo
-      )
-    );
-    if (thumbError) console.warn(thumbError);
-    content.info = {
-      ...getVideoInfo(videoEl, file),
-      ...thumbContent,
-    };
-  }
-  if (encInfo) {
-    content.file = {
-      ...encInfo,
-      url: mxc,
-    };
-  } else {
-    content.url = mxc;
-  }
-  return content;
-};
-
-const getAudioMsgContent = (item: TUploadItem, mxc: string): IContent => {
-  const { file, encInfo } = item;
-  const content: IContent = {
-    msgtype: MsgType.Audio,
-    body: file.name,
-    info: {
-      mimetype: file.type,
-      size: file.size,
-    },
-  };
-  if (encInfo) {
-    content.file = {
-      ...encInfo,
-      url: mxc,
-    };
-  } else {
-    content.url = mxc;
-  }
-  return content;
-};
-
-const getFileMsgContent = (item: TUploadItem, mxc: string): IContent => {
-  const { file, encInfo } = item;
-  const content: IContent = {
-    msgtype: MsgType.File,
-    body: file.name,
-    filename: file.name,
-    info: {
-      mimetype: file.type,
-      size: file.size,
-    },
-  };
-  if (encInfo) {
-    content.file = {
-      ...encInfo,
-      url: mxc,
-    };
-  } else {
-    content.url = mxc;
-  }
-  return content;
-};
+import {
+  getAudioMsgContent,
+  getFileMsgContent,
+  getImageMsgContent,
+  getVideoMsgContent,
+} from './msgContent';
 
 interface RoomInputProps {
   roomViewRef: RefObject<HTMLElement>;
