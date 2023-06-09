@@ -4,7 +4,7 @@ import ReactDom from 'react-dom';
 import { enableMapSet } from 'immer';
 import '@fontsource/inter/variable.css';
 import 'folds/dist/style.css';
-import { lightTheme, configClass, varsClass } from 'folds';
+import { configClass, varsClass } from 'folds';
 
 enableMapSet();
 
@@ -15,8 +15,7 @@ import settings from './client/state/settings';
 
 import App from './app/pages/App';
 
-document.body.classList.add(lightTheme, configClass, varsClass);
-// document.body.style.fontFamily = config.font.Inter;
+document.body.classList.add(configClass, varsClass);
 
 settings.applyTheme();
 

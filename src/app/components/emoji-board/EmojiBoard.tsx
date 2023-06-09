@@ -760,7 +760,7 @@ export function EmojiBoard({
             <Box direction="Column" gap="200">
               {onTabChange && <EmojiBoardTabs tab={tab} onTabChange={onTabChange} />}
               <Input
-                variant="Background"
+                variant="SurfaceVariant"
                 size="400"
                 placeholder="Search"
                 maxLength={50}

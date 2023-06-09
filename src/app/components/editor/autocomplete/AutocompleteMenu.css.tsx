@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { DefaultReset, color, config } from 'folds';
+import { DefaultReset, config } from 'folds';
 
 export const AutocompleteMenuBase = style([
   DefaultReset,
@@ -26,7 +26,6 @@ export const AutocompleteMenu = style([
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
   },
 ]);
 

@@ -1,7 +1,9 @@
+import { lightTheme } from 'folds';
 import EventEmitter from 'events';
 import appDispatcher from '../dispatcher';
 
 import cons from './cons';
+import { darkTheme, butterTheme, silverTheme } from '../../colors.css';
 
 function getSettings() {
   const settings = localStorage.getItem('settings');
@@ -20,6 +22,7 @@ class Settings extends EventEmitter {
   constructor() {
     super();
 
+    this.themeClasses = [lightTheme, silverTheme, darkTheme, butterTheme];
     this.themes = ['', 'silver-theme', 'dark-theme', 'butter-theme'];
     this.themeIndex = this.getThemeIndex();
 
@@ -50,9 +53,9 @@ class Settings extends EventEmitter {
 
   _clearTheme() {
     document.body.classList.remove('system-theme');
-    this.themes.forEach((themeName) => {
-      if (themeName === '') return;
-      document.body.classList.remove(themeName);
+    this.themes.forEach((themeName, index) => {
+      if (themeName !== '') document.body.classList.remove(themeName);
+      document.body.classList.remove(this.themeClasses[index]);
     });
   }
 
@@ -60,8 +63,9 @@ class Settings extends EventEmitter {
     this._clearTheme();
     if (this.useSystemTheme) {
       document.body.classList.add('system-theme');
-    } else if (this.themes[this.themeIndex]) {
-      document.body.classList.add(this.themes[this.themeIndex]);
+    } else if (this.themes[this.themeIndex] !== undefined) {
+      if (this.themes[this.themeIndex]) document.body.classList.add(this.themes[this.themeIndex]);
+      document.body.classList.add(this.themeClasses[this.themeIndex]);
     }
   }
 

@@ -29,6 +29,7 @@ export const UploadBoard = style({
   color: color.Surface.OnContainer,
   borderRadius: config.radii.R400,
   boxShadow: config.shadow.E200,
+  border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
   overflow: 'hidden',
   pointerEvents: 'all',
 });
