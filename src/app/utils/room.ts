@@ -246,3 +246,20 @@ export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefin
   if (url) return url;
   return room.getAvatarUrl(mx.baseUrl, 32, 32, 'crop') ?? undefined;
 };
+
+export const parseReplyBody = (userId: string, body: string) =>
+  `> <${userId}> ${body.replace(/\n/g, '\n> ')}\n\n`;
+
+export const parseReplyFormattedBody = (
+  roomId: string,
+  userId: string,
+  eventId: string,
+  formattedBody: string
+): string => {
+  const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(
+    roomId
+  )}/${encodeURIComponent(eventId)}">In reply to</a>`;
+  const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(userId)}">${userId}</a>`;
+
+  return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${formattedBody}</blockquote></mx-reply>`;
+};

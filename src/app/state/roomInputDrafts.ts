@@ -34,3 +34,15 @@ export type TMsgDraftAtom = ReturnType<typeof createMsgDraftAtom>;
 export const roomIdToMsgDraftAtomFamily = atomFamily<string, TMsgDraftAtom>(() =>
   createMsgDraftAtom()
 );
+
+export type IReplyDraft = {
+  userId: string;
+  eventId: string;
+  body: string;
+  formattedBody?: string;
+};
+const createReplyDraftAtom = () => atom<IReplyDraft | undefined>(undefined);
+export type TReplyDraftAtom = ReturnType<typeof createReplyDraftAtom>;
+export const roomIdToReplyDraftAtomFamily = atomFamily<string, TReplyDraftAtom>(() =>
+  createReplyDraftAtom()
+);

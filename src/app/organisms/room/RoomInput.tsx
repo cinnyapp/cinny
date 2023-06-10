@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { useAtom } from 'jotai';
 import isHotkey from 'is-hotkey';
-import { EventType, MsgType, Room } from 'matrix-js-sdk';
+import { EventType, IContent, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Range, Editor, Element } from 'slate';
 import {
@@ -25,6 +25,7 @@ import {
   PopOut,
   Scroll,
   Text,
+  config,
   toRem,
 } from 'folds';
 import to from 'await-to-js';
@@ -60,6 +61,7 @@ import { useFileDropZone } from '../../hooks/useFileDrop';
 import {
   TUploadItem,
   roomIdToMsgDraftAtomFamily,
+  roomIdToReplyDraftAtomFamily,
   roomIdToUploadItemsAtomFamily,
   roomUploadAtomFamily,
 } from '../../state/roomInputDrafts';
@@ -87,6 +89,12 @@ import {
   getImageMsgContent,
   getVideoMsgContent,
 } from './msgContent';
+import navigation from '../../../client/state/navigation';
+import cons from '../../../client/state/cons';
+import { MessageReply } from '../../molecules/message/Message';
+import colorMXID from '../../../util/colorMXID';
+import { parseReplyBody, parseReplyFormattedBody } from '../../utils/room';
+import { sanitizeText } from '../../utils/sanitize';
 
 interface RoomInputProps {
   roomViewRef: RefObject<HTMLElement>;
@@ -99,6 +107,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const room = mx.getRoom(roomId);
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
+    const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
     const uploadFamilyObserverAtom = createUploadFamilyObserverAtom(
@@ -162,6 +171,26 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       };
     }, [roomId, editor, setMsgDraft]);
 
+    useEffect(() => {
+      const handleReplyTo = (
+        userId: string,
+        eventId: string,
+        body: string,
+        formattedBody: string
+      ) => {
+        setReplyDraft({
+          userId,
+          eventId,
+          body,
+          formattedBody,
+        });
+      };
+      navigation.on(cons.events.navigation.REPLY_TO_CLICKED, handleReplyTo);
+      return () => {
+        navigation.removeListener(cons.events.navigation.REPLY_TO_CLICKED, handleReplyTo);
+      };
+    }, [setReplyDraft]);
+
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
         const uploads = Array.isArray(upload) ? upload : [upload];
@@ -218,15 +247,37 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
       if (plainText === '') return;
 
-      sendTypingStatus(false);
-      mx.sendMessage(roomId, {
+      let body = plainText;
+      let formattedBody = customHtml;
+      if (replyDraft) {
+        body = parseReplyBody(replyDraft.userId, replyDraft.userId) + body;
+        formattedBody =
+          parseReplyFormattedBody(
+            roomId,
+            replyDraft.userId,
+            replyDraft.eventId,
+            replyDraft.formattedBody ?? sanitizeText(replyDraft.body)
+          ) + formattedBody;
+      }
+
+      const content: IContent = {
         msgtype: MsgType.Text,
-        body: plainText,
+        body,
         format: 'org.matrix.custom.html',
-        formatted_body: customHtml,
-      });
+        formatted_body: formattedBody,
+      };
+      if (replyDraft) {
+        content['m.relates_to'] = {
+          'm.in_reply_to': {
+            event_id: replyDraft.eventId,
+          },
+        };
+      }
+      mx.sendMessage(roomId, content);
       resetEditor(editor);
-    }, [mx, roomId, editor, sendTypingStatus]);
+      setReplyDraft();
+      sendTypingStatus(false);
+    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -234,6 +285,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         if (isHotkey('enter', evt)) {
           evt.preventDefault();
           submit();
+        }
+        if (isHotkey('escape', evt)) {
+          evt.preventDefault();
+          setReplyDraft();
         }
         if (selection && Range.isCollapsed(selection)) {
           if (isHotkey('arrowleft', evt)) {
@@ -246,7 +301,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           }
         }
       },
-      [submit, editor]
+      [submit, editor, setReplyDraft]
     );
 
     const handleChange: EditorChangeHandler = (value) => {
@@ -373,6 +428,31 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           onKeyDown={handleKeyDown}
           onChange={handleChange}
           onPaste={handlePaste}
+          top={
+            replyDraft && (
+              <div>
+                <Box
+                  alignItems="Center"
+                  gap="300"
+                  style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
+                >
+                  <IconButton
+                    onClick={() => setReplyDraft()}
+                    variant="SurfaceVariant"
+                    size="300"
+                    radii="300"
+                  >
+                    <Icon src={Icons.Cross} size="50" />
+                  </IconButton>
+                  <MessageReply
+                    color={colorMXID(replyDraft.userId)}
+                    name={room?.getMember(replyDraft.userId)?.name ?? replyDraft.userId}
+                    body={replyDraft.body}
+                  />
+                </Box>
+              </div>
+            )
+          }
           before={
             <IconButton
               onClick={() => pickFile('*')}
