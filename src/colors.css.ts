@@ -189,7 +189,7 @@ const darkThemeData = {
   },
 
   Other: {
-    FocusRing: 'rgba(0, 0, 0, 0.5)',
+    FocusRing: 'rgba(255, 255, 255, 0.5)',
     Shadow: 'rgba(0, 0, 0, 1)',
     Overlay: 'rgba(255, 255, 255, 0.1)',
   },

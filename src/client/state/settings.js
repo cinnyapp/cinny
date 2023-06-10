@@ -34,6 +34,10 @@ class Settings extends EventEmitter {
     this._showNotifications = this.getShowNotifications();
     this.isNotificationSounds = this.getIsNotificationSounds();
 
+    this.darkModeQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
+    this.darkModeQueryList.addEventListener('change', () => this.applyTheme())
+
     this.isTouchScreenDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
   }
 
@@ -52,7 +56,6 @@ class Settings extends EventEmitter {
   }
 
   _clearTheme() {
-    document.body.classList.remove('system-theme');
     this.themes.forEach((themeName, index) => {
       if (themeName !== '') document.body.classList.remove(themeName);
       document.body.classList.remove(this.themeClasses[index]);
@@ -61,12 +64,11 @@ class Settings extends EventEmitter {
 
   applyTheme() {
     this._clearTheme();
-    if (this.useSystemTheme) {
-      document.body.classList.add('system-theme');
-    } else if (this.themes[this.themeIndex] !== undefined) {
-      if (this.themes[this.themeIndex]) document.body.classList.add(this.themes[this.themeIndex]);
-      document.body.classList.add(this.themeClasses[this.themeIndex]);
-    }
+    const autoThemeIndex = this.darkModeQueryList.matches ? 2 : 0;
+    const themeIndex = this.useSystemTheme ? autoThemeIndex : this.themeIndex;
+    if (this.themes[themeIndex] === undefined) return
+    if (this.themes[themeIndex]) document.body.classList.add(this.themes[themeIndex]);
+    document.body.classList.add(this.themeClasses[themeIndex]);
   }
 
   setTheme(themeIndex) {
