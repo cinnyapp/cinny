@@ -220,12 +220,6 @@ class RoomList extends EventEmitter {
     this.inviteRooms.clear();
     this.matrixClient.getRooms().forEach((room) => {
       const { roomId } = room;
-      const tombstone = room.currentState.events.get('m.room.tombstone');
-      if (tombstone?.get('') !== undefined) {
-        const repRoomId = tombstone.get('').getContent().replacement_room;
-        const repRoomMembership = this.matrixClient.getRoom(repRoomId)?.getMyMembership();
-        if (repRoomMembership === 'join') return;
-      }
 
       if (room.getMyMembership() === 'invite') {
         if (this._isDMInvite(room)) this.inviteDirects.add(roomId);

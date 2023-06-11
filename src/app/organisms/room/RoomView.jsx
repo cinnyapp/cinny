@@ -10,17 +10,21 @@ import navigation from '../../../client/state/navigation';
 import RoomViewHeader from './RoomViewHeader';
 import RoomViewContent from './RoomViewContent';
 import RoomViewFloating from './RoomViewFloating';
-import RoomViewInput from './RoomViewInput';
 import RoomViewCmdBar from './RoomViewCmdBar';
 import { RoomInput } from './RoomInput';
+import { useStateEvent } from '../../hooks/useStateEvent';
+import { StateEvent } from '../../../types/matrix/room';
+import { RoomTombstone } from './RoomTombstone';
 
 const viewEvent = new EventEmitter();
 
-function RoomView({ roomTimeline, eventId }) {
+function RoomView({ room, roomTimeline, eventId }) {
   const roomInputRef = useRef(null);
   const roomViewRef = useRef(null);
   // eslint-disable-next-line react/prop-types
   const { roomId } = roomTimeline;
+
+  const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
 
   useEffect(() => {
     const settingsToggle = (isVisible) => {
@@ -54,13 +58,16 @@ function RoomView({ roomTimeline, eventId }) {
           <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
         </div>
         <div className="room-view__sticky">
-          {/* <RoomViewInput
-            roomId={roomId}
-            roomTimeline={roomTimeline}
-            viewEvent={viewEvent}
-          /> */}
           <div className="room-view__editor">
-            <RoomInput roomId={roomId} roomViewRef={roomViewRef} ref={roomInputRef} />
+            {tombstoneEvent ? (
+              <RoomTombstone
+                roomId={roomId}
+                body={tombstoneEvent.getContent().body}
+                replacementRoomId={tombstoneEvent.getContent().replacement_room}
+              />
+            ) : (
+              <RoomInput roomId={roomId} roomViewRef={roomViewRef} ref={roomInputRef} />
+            )}
           </div>
           <RoomViewCmdBar roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
         </div>
@@ -73,6 +80,7 @@ RoomView.defaultProps = {
   eventId: null,
 };
 RoomView.propTypes = {
+  room: PropTypes.shape({}).isRequired,
   roomTimeline: PropTypes.shape({}).isRequired,
   eventId: PropTypes.string,
 };

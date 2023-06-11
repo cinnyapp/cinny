@@ -22,7 +22,7 @@ export const getStateEvent = (
   room: Room,
   eventType: StateEvent,
   stateKey = ''
-): MatrixEvent | null => room.currentState.getStateEvents(eventType, stateKey);
+): MatrixEvent | undefined => room.currentState.getStateEvents(eventType, stateKey) ?? undefined;
 
 export const getStateEvents = (room: Room, eventType: StateEvent): MatrixEvent[] =>
   room.currentState.getStateEvents(eventType);
