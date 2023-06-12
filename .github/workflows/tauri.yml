@@ -9,7 +9,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v3.5.3
         with: 
           submodules: true
       - name: Get release
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v3.5.3
         with: 
           submodules: true
       - name: Get release
@@ -129,7 +129,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v3.5.3
         with: 
           submodules: true
       - name: Get release
@@ -181,7 +181,7 @@ jobs:
   #   runs-on: macos-12
   #   steps:
   #     - name: Checkout repository
-  #       uses: actions/checkout@v3.3.0
+  #       uses: actions/checkout@v3.5.3
   #       with: 
   #         submodules: true
   #     - name: Get release
@@ -243,7 +243,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v3.5.3
       - name: Install dependencies
         run: npm ci
       - name: Run release.json
