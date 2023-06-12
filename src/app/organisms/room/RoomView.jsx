@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './RoomView.scss';
+import { Text, config } from 'folds';
 
 import EventEmitter from 'events';
 
@@ -15,6 +16,9 @@ import { RoomInput } from './RoomInput';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { StateEvent } from '../../../types/matrix/room';
 import { RoomTombstone } from './RoomTombstone';
+import { usePowerLevels } from '../../hooks/usePowerLevels';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 
 const viewEvent = new EventEmitter();
 
@@ -24,7 +28,11 @@ function RoomView({ room, roomTimeline, eventId }) {
   // eslint-disable-next-line react/prop-types
   const { roomId } = roomTimeline;
 
+  const mx = useMatrixClient();
   const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
+  const { getPowerLevel, canSendEvent } = usePowerLevels(room);
+  const myUserId = mx.getUserId();
+  const canMessage = myUserId ? canSendEvent(undefined, getPowerLevel(myUserId)) : false;
 
   useEffect(() => {
     const settingsToggle = (isVisible) => {
@@ -66,7 +74,20 @@ function RoomView({ room, roomTimeline, eventId }) {
                 replacementRoomId={tombstoneEvent.getContent().replacement_room}
               />
             ) : (
-              <RoomInput roomId={roomId} roomViewRef={roomViewRef} ref={roomInputRef} />
+              <>
+                {canMessage && (
+                  <RoomInput roomId={roomId} roomViewRef={roomViewRef} ref={roomInputRef} />
+                )}
+                {!canMessage && (
+                  <RoomInputPlaceholder
+                    style={{ padding: config.space.S200 }}
+                    alignItems="Center"
+                    justifyContent="Center"
+                  >
+                    <Text align="Center">You do not have permission to post in this room</Text>
+                  </RoomInputPlaceholder>
+                )}
+              </>
             )}
           </div>
           <RoomViewCmdBar roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />

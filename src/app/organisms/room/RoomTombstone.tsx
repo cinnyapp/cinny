@@ -8,6 +8,7 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { genRoomVia } from '../../../util/matrixUtil';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { Membership } from '../../../types/matrix/room';
+import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 
 type RoomTombstoneProps = { roomId: string; body?: string; replacementRoomId: string };
 export function RoomTombstone({ roomId, body, replacementRoomId }: RoomTombstoneProps) {
@@ -30,7 +31,7 @@ export function RoomTombstone({ roomId, body, replacementRoomId }: RoomTombstone
   };
 
   return (
-    <Box alignItems="Center" gap="600" className={css.RoomTombstone}>
+    <RoomInputPlaceholder alignItems="Center" gap="600" className={css.RoomTombstone}>
       <Box direction="Column" grow="Yes">
         <Text size="T400">{body || 'This room has been replaced and is no longer active.'}</Text>
         {joinState.status === AsyncStatus.Error && (
@@ -61,6 +62,6 @@ export function RoomTombstone({ roomId, body, replacementRoomId }: RoomTombstone
           <Text size="B300">Join New Room</Text>
         </Button>
       )}
-    </Box>
+    </RoomInputPlaceholder>
   );
 }
