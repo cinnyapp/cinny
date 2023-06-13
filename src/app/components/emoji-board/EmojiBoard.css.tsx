@@ -122,6 +122,7 @@ export const CustomEmojiImg = style([
   {
     width: toRem(32),
     height: toRem(32),
+    objectFit: 'contain',
   },
 ]);
 
@@ -130,5 +131,6 @@ export const StickerImg = style([
   {
     width: toRem(96),
     height: toRem(96),
+    objectFit: 'contain',
   },
 ]);

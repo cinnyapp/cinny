@@ -104,7 +104,7 @@ export function EmoticonAutocomplete({
                   as="img"
                   src={mx.mxcUrlToHttp(key) || key}
                   alt={emoticon.shortcode}
-                  style={{ width: toRem(24), height: toRem(24) }}
+                  style={{ width: toRem(24), height: toRem(24), objectFit: 'contain' }}
                 />
               ) : (
                 <Box

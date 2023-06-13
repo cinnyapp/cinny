@@ -1,7 +1,7 @@
 import { isHotkey } from 'is-hotkey';
 import { KeyboardEvent } from 'react';
 import { Editor } from 'slate';
-import { isBlockActive, toggleBlock, toggleMark } from './common';
+import { isAnyMarkActive, isBlockActive, removeAllMark, toggleBlock, toggleMark } from './common';
 import { BlockType, MarkType } from './Elements';
 
 export const INLINE_HOTKEYS: Record<string, MarkType> = {
@@ -22,19 +22,42 @@ export const BLOCK_HOTKEYS: Record<string, BlockType> = {
 };
 const BLOCK_KEYS = Object.keys(BLOCK_HOTKEYS);
 
-export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Element>) => {
-  BLOCK_KEYS.forEach((hotkey) => {
+/**
+ * @return boolean true if shortcut is toggled.
+ */
+export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Element>): boolean => {
+  if (isHotkey('escape', event)) {
+    if (isAnyMarkActive(editor)) {
+      removeAllMark(editor);
+      return true;
+    }
+    console.log(isBlockActive(editor, BlockType.Paragraph));
+    if (!isBlockActive(editor, BlockType.Paragraph)) {
+      toggleBlock(editor, BlockType.Paragraph);
+      return true;
+    }
+    return false;
+  }
+
+  const blockToggled = BLOCK_KEYS.find((hotkey) => {
     if (isHotkey(hotkey, event)) {
       event.preventDefault();
       toggleBlock(editor, BLOCK_HOTKEYS[hotkey]);
+      return true;
     }
+    return false;
   });
+  if (blockToggled) return true;
 
-  if (!isBlockActive(editor, BlockType.CodeBlock))
-    INLINE_KEYS.forEach((hotkey) => {
-      if (isHotkey(hotkey, event)) {
-        event.preventDefault();
-        toggleMark(editor, INLINE_HOTKEYS[hotkey]);
-      }
-    });
+  const inlineToggled = isBlockActive(editor, BlockType.CodeBlock)
+    ? false
+    : INLINE_KEYS.find((hotkey) => {
+        if (isHotkey(hotkey, event)) {
+          event.preventDefault();
+          toggleMark(editor, INLINE_HOTKEYS[hotkey]);
+          return true;
+        }
+        return false;
+      });
+  return !!inlineToggled;
 };

@@ -2,9 +2,23 @@ import { BasePoint, BaseRange, Editor, Element, Point, Range, Transforms } from 
 import { BlockType, MarkType } from './Elements';
 import { EmoticonElement, FormattedText, HeadingLevel, LinkElement, MentionElement } from './slate';
 
+const ALL_MARK_TYPE: MarkType[] = [
+  MarkType.Bold,
+  MarkType.Code,
+  MarkType.Italic,
+  MarkType.Spoiler,
+  MarkType.StrikeThrough,
+  MarkType.Underline,
+];
+
 export const isMarkActive = (editor: Editor, format: MarkType) => {
   const marks = Editor.marks(editor);
   return marks ? marks[format] === true : false;
+};
+
+export const isAnyMarkActive = (editor: Editor) => {
+  const marks = Editor.marks(editor);
+  return marks && !!ALL_MARK_TYPE.find((type) => marks[type] === true);
 };
 
 export const toggleMark = (editor: Editor, format: MarkType) => {
@@ -15,6 +29,10 @@ export const toggleMark = (editor: Editor, format: MarkType) => {
   } else {
     Editor.addMark(editor, format, true);
   }
+};
+
+export const removeAllMark = (editor: Editor) => {
+  ALL_MARK_TYPE.forEach((mark) => Editor.removeMark(editor, mark));
 };
 
 export const isBlockActive = (editor: Editor, format: BlockType) => {
@@ -140,11 +158,11 @@ export const replaceWithElement = (editor: Editor, selectRange: BaseRange, eleme
 };
 
 export const moveCursor = (editor: Editor, withSpace?: boolean) => {
-  // without timeout it works properly when we select autocomplete with Tab or Space
+  // without timeout move cursor doesn't works properly.
   setTimeout(() => {
     Transforms.move(editor);
     if (withSpace) editor.insertText(' ');
-  }, 1);
+  }, 100);
 };
 
 interface PointUntilCharOptions {

@@ -88,7 +88,7 @@ const elementToPlainText = (node: CustomElement, children: string): string => {
 
 export const toPlainText = (node: Descendant | Descendant[]): string => {
   if (Array.isArray(node)) return node.map((n) => toPlainText(n)).join('');
-  if (Text.isText(node)) return sanitizeText(node.text);
+  if (Text.isText(node)) return node.text;
 
   const children = node.children.map((n) => toPlainText(n)).join('');
   return elementToPlainText(node, children);
