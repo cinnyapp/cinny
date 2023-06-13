@@ -184,12 +184,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           body,
           formattedBody,
         });
+        ReactEditor.focus(editor);
       };
       navigation.on(cons.events.navigation.REPLY_TO_CLICKED, handleReplyTo);
       return () => {
         navigation.removeListener(cons.events.navigation.REPLY_TO_CLICKED, handleReplyTo);
       };
-    }, [setReplyDraft]);
+    }, [setReplyDraft, editor]);
 
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
