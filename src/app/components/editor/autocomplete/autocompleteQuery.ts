@@ -23,13 +23,14 @@ export const getAutocompletePrefix = <TPrefix extends string>(
   validPrefixes: readonly TPrefix[]
 ): TPrefix | undefined => {
   const world = Editor.string(editor, queryRange);
-  const prefix = world[0] as TPrefix | undefined;
-  if (!prefix) return undefined;
-  return validPrefixes.includes(prefix) ? prefix : undefined;
+  return validPrefixes.find((p) => world.startsWith(p));
 };
 
-export const getAutocompleteQueryText = (editor: Editor, queryRange: BaseRange): string =>
-  Editor.string(editor, queryRange).slice(1);
+export const getAutocompleteQueryText = (
+  editor: Editor,
+  queryRange: BaseRange,
+  prefix: string
+): string => Editor.string(editor, queryRange).slice(prefix.length);
 
 export const getAutocompleteQuery = <TPrefix extends string>(
   editor: Editor,
@@ -41,6 +42,6 @@ export const getAutocompleteQuery = <TPrefix extends string>(
   return {
     range: queryRange,
     prefix,
-    text: getAutocompleteQueryText(editor, queryRange),
+    text: getAutocompleteQueryText(editor, queryRange, prefix),
   };
 };
