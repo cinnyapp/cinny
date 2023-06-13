@@ -373,6 +373,7 @@ function ImagePackSidebarStack({
               style={{
                 width: toRem(24),
                 height: toRem(24),
+                objectFit: 'contain',
               }}
               src={mx.mxcUrlToHttp(pack.getPackAvatarUrl(usage) ?? '') || pack.avatarUrl}
               alt={label || 'Unknown Pack'}
