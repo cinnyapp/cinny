@@ -122,6 +122,7 @@ export const resetEditor = (editor: Editor) => {
   });
 
   toggleBlock(editor, BlockType.Paragraph);
+  removeAllMark(editor);
 };
 
 export const resetEditorHistory = (editor: Editor) => {
