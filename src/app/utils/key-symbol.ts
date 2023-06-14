@@ -3,4 +3,7 @@ export enum KeySymbol {
   Shift = '⇧',
   Option = '⌥',
   Control = '⌃',
+  Hyper = '✦',
+  Super = '❖',
+  Escape = '⎋',
 }

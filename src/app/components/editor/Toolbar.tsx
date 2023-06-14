@@ -17,7 +17,14 @@ import {
 } from 'folds';
 import React, { ReactNode, useState } from 'react';
 import { ReactEditor, useSlate } from 'slate-react';
-import { isBlockActive, isMarkActive, toggleBlock, toggleMark } from './common';
+import {
+  isAnyMarkActive,
+  isBlockActive,
+  isMarkActive,
+  removeAllMark,
+  toggleBlock,
+  toggleMark,
+} from './common';
 import * as css from './Editor.css';
 import { BlockType, MarkType } from './Elements';
 import { HeadingLevel } from './slate';
@@ -162,10 +169,42 @@ export function HeadingBlockButton() {
   );
 }
 
+type EscapeButtonProps = { tooltip: ReactNode };
+export function EscapeButton({ tooltip }: EscapeButtonProps) {
+  const editor = useSlate();
+
+  const handleClick = () => {
+    if (isAnyMarkActive(editor)) {
+      removeAllMark(editor);
+    } else if (!isBlockActive(editor, BlockType.Paragraph)) {
+      toggleBlock(editor, BlockType.Paragraph);
+    }
+    ReactEditor.focus(editor);
+  };
+
+  return (
+    <TooltipProvider tooltip={tooltip} delay={500}>
+      {(triggerRef) => (
+        <IconButton
+          ref={triggerRef}
+          variant="SurfaceVariant"
+          onClick={handleClick}
+          size="300"
+          radii="300"
+        >
+          <Text size="B300">{`${KeySymbol.Hyper} ESC`}</Text>
+        </IconButton>
+      )}
+    </TooltipProvider>
+  );
+}
+
 export function Toolbar() {
   const editor = useSlate();
   const allowInline = !isBlockActive(editor, BlockType.CodeBlock);
   const modKey = isMacOS() ? KeySymbol.Command : 'Ctrl';
+
+  const canEscape = isAnyMarkActive(editor) || !isBlockActive(editor, BlockType.Paragraph);
 
   return (
     <Box className={css.EditorToolbar} alignItems="Center" gap="300">
@@ -238,6 +277,16 @@ export function Toolbar() {
               format={MarkType.Spoiler}
               icon={Icons.EyeBlind}
               tooltip={<BtnTooltip text="Spoiler" shortCode={`${modKey} + H`} />}
+            />
+          </Box>
+        </>
+      )}
+      {canEscape && (
+        <>
+          <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />
+          <Box gap="100">
+            <EscapeButton
+              tooltip={<BtnTooltip text="Escape Formatting" shortCode={`${modKey} + Esc`} />}
             />
           </Box>
         </>
