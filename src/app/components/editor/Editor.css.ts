@@ -55,9 +55,10 @@ export const EditorPlaceholder = style([
   },
 ]);
 
-export const EditorToolbar = style([
-  DefaultReset,
-  {
-    padding: config.space.S100,
-  },
-]);
+export const EditorToolbarBase = style({
+  padding: `0 ${config.borderWidth.B300}`,
+});
+
+export const EditorToolbar = style({
+  padding: config.space.S100,
+});

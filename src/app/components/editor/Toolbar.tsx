@@ -10,6 +10,7 @@ import {
   Line,
   Menu,
   PopOut,
+  Scroll,
   Text,
   Tooltip,
   TooltipProvider,
@@ -207,90 +208,97 @@ export function Toolbar() {
   const canEscape = isAnyMarkActive(editor) || !isBlockActive(editor, BlockType.Paragraph);
 
   return (
-    <Box className={css.EditorToolbar} alignItems="Center" gap="300">
-      <Box gap="100">
-        <HeadingBlockButton />
-        <BlockButton
-          format={BlockType.OrderedList}
-          icon={Icons.OrderList}
-          tooltip={
-            <BtnTooltip text="Ordered List" shortCode={`${modKey} + ${KeySymbol.Shift} + 0`} />
-          }
-        />
-        <BlockButton
-          format={BlockType.UnorderedList}
-          icon={Icons.UnorderList}
-          tooltip={
-            <BtnTooltip text="Unordered List" shortCode={`${modKey} + ${KeySymbol.Shift} + 8`} />
-          }
-        />
-        <BlockButton
-          format={BlockType.BlockQuote}
-          icon={Icons.BlockQuote}
-          tooltip={
-            <BtnTooltip text="Block Quote" shortCode={`${modKey} + ${KeySymbol.Shift} + '`} />
-          }
-        />
-        <BlockButton
-          format={BlockType.CodeBlock}
-          icon={Icons.BlockCode}
-          tooltip={
-            <BtnTooltip text="Block Code" shortCode={`${modKey} + ${KeySymbol.Shift} + ;`} />
-          }
-        />
-      </Box>
-      {allowInline && (
-        <>
-          <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />
-          <Box gap="100">
-            <MarkButton
-              format={MarkType.Bold}
-              icon={Icons.Bold}
-              tooltip={<BtnTooltip text="Bold" shortCode={`${modKey} + B`} />}
+    <Box className={css.EditorToolbarBase}>
+      <Scroll direction="Horizontal" size="0">
+        <Box className={css.EditorToolbar} alignItems="Center" gap="300">
+          <Box shrink="No" gap="100">
+            <HeadingBlockButton />
+            <BlockButton
+              format={BlockType.OrderedList}
+              icon={Icons.OrderList}
+              tooltip={
+                <BtnTooltip text="Ordered List" shortCode={`${modKey} + ${KeySymbol.Shift} + 0`} />
+              }
             />
-            <MarkButton
-              format={MarkType.Italic}
-              icon={Icons.Italic}
-              tooltip={<BtnTooltip text="Italic" shortCode={`${modKey} + I`} />}
-            />
-            <MarkButton
-              format={MarkType.Underline}
-              icon={Icons.Underline}
-              tooltip={<BtnTooltip text="Underline" shortCode={`${modKey} + U`} />}
-            />
-            <MarkButton
-              format={MarkType.StrikeThrough}
-              icon={Icons.Strike}
+            <BlockButton
+              format={BlockType.UnorderedList}
+              icon={Icons.UnorderList}
               tooltip={
                 <BtnTooltip
-                  text="Strike Through"
-                  shortCode={`${modKey} + ${KeySymbol.Shift} + U`}
+                  text="Unordered List"
+                  shortCode={`${modKey} + ${KeySymbol.Shift} + 8`}
                 />
               }
             />
-            <MarkButton
-              format={MarkType.Code}
-              icon={Icons.Code}
-              tooltip={<BtnTooltip text="Inline Code" shortCode={`${modKey} + [`} />}
+            <BlockButton
+              format={BlockType.BlockQuote}
+              icon={Icons.BlockQuote}
+              tooltip={
+                <BtnTooltip text="Block Quote" shortCode={`${modKey} + ${KeySymbol.Shift} + '`} />
+              }
             />
-            <MarkButton
-              format={MarkType.Spoiler}
-              icon={Icons.EyeBlind}
-              tooltip={<BtnTooltip text="Spoiler" shortCode={`${modKey} + H`} />}
-            />
-          </Box>
-        </>
-      )}
-      {canEscape && (
-        <>
-          <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />
-          <Box gap="100">
-            <EscapeButton
-              tooltip={<BtnTooltip text="Escape Formatting" shortCode={`${modKey} + Esc`} />}
+            <BlockButton
+              format={BlockType.CodeBlock}
+              icon={Icons.BlockCode}
+              tooltip={
+                <BtnTooltip text="Block Code" shortCode={`${modKey} + ${KeySymbol.Shift} + ;`} />
+              }
             />
           </Box>
-        </>
-      )}
+          {allowInline && (
+            <>
+              <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />
+              <Box shrink="No" gap="100">
+                <MarkButton
+                  format={MarkType.Bold}
+                  icon={Icons.Bold}
+                  tooltip={<BtnTooltip text="Bold" shortCode={`${modKey} + B`} />}
+                />
+                <MarkButton
+                  format={MarkType.Italic}
+                  icon={Icons.Italic}
+                  tooltip={<BtnTooltip text="Italic" shortCode={`${modKey} + I`} />}
+                />
+                <MarkButton
+                  format={MarkType.Underline}
+                  icon={Icons.Underline}
+                  tooltip={<BtnTooltip text="Underline" shortCode={`${modKey} + U`} />}
+                />
+                <MarkButton
+                  format={MarkType.StrikeThrough}
+                  icon={Icons.Strike}
+                  tooltip={
+                    <BtnTooltip
+                      text="Strike Through"
+                      shortCode={`${modKey} + ${KeySymbol.Shift} + U`}
+                    />
+                  }
+                />
+                <MarkButton
+                  format={MarkType.Code}
+                  icon={Icons.Code}
+                  tooltip={<BtnTooltip text="Inline Code" shortCode={`${modKey} + [`} />}
+                />
+                <MarkButton
+                  format={MarkType.Spoiler}
+                  icon={Icons.EyeBlind}
+                  tooltip={<BtnTooltip text="Spoiler" shortCode={`${modKey} + H`} />}
+                />
+              </Box>
+            </>
+          )}
+          {canEscape && (
+            <>
+              <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />
+              <Box shrink="No" gap="100">
+                <EscapeButton
+                  tooltip={<BtnTooltip text="Escape Formatting" shortCode={`${modKey} + Esc`} />}
+                />
+              </Box>
+            </>
+          )}
+        </Box>
+      </Scroll>
     </Box>
   );
 }
