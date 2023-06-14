@@ -58,6 +58,7 @@
     "react-modal": "3.16.1",
     "sanitize-html": "2.8.0",
     "slate": "0.90.0",
+    "slate-history": "0.93.0",
     "slate-react": "0.90.0",
     "tippy.js": "6.3.7",
     "twemoji": "14.0.2",

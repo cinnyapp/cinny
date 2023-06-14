@@ -49,6 +49,7 @@ import {
   EmoticonAutocomplete,
   createEmoticonElement,
   moveCursor,
+  resetEditorHistory,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -168,6 +169,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         const parsedDraft = JSON.parse(JSON.stringify(editor.children));
         setMsgDraft(parsedDraft);
         resetEditor(editor);
+        resetEditorHistory(editor);
       };
     }, [roomId, editor, setMsgDraft]);
 
@@ -276,6 +278,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       }
       mx.sendMessage(roomId, content);
       resetEditor(editor);
+      resetEditorHistory(editor);
       setReplyDraft();
       sendTypingStatus(false);
     }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft]);

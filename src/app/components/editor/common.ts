@@ -124,6 +124,14 @@ export const resetEditor = (editor: Editor) => {
   toggleBlock(editor, BlockType.Paragraph);
 };
 
+export const resetEditorHistory = (editor: Editor) => {
+  // eslint-disable-next-line no-param-reassign
+  editor.history = {
+    undos: [],
+    redos: [],
+  };
+};
+
 export const createMentionElement = (
   id: string,
   name: string,
