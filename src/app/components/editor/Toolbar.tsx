@@ -2,7 +2,6 @@ import FocusTrap from 'focus-trap-react';
 import {
   Badge,
   Box,
-  Chip,
   config,
   Icon,
   IconButton,
