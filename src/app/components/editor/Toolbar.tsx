@@ -178,8 +178,8 @@ export function HeadingBlockButton() {
   );
 }
 
-type EscapeButtonProps = { tooltip: ReactNode };
-export function EscapeButton({ tooltip }: EscapeButtonProps) {
+type ExitFormattingProps = { tooltip: ReactNode };
+export function ExitFormatting({ tooltip }: ExitFormattingProps) {
   const editor = useSlate();
 
   const handleClick = () => {
@@ -194,16 +194,15 @@ export function EscapeButton({ tooltip }: EscapeButtonProps) {
   return (
     <TooltipProvider tooltip={tooltip} delay={500}>
       {(triggerRef) => (
-        <Chip
+        <IconButton
           ref={triggerRef}
           variant="SurfaceVariant"
           onClick={handleClick}
-          size="500"
+          size="400"
           radii="300"
-          before={<Text size="B400">{KeySymbol.Hyper}</Text>}
         >
-          <Text size="B400">ESC</Text>
-        </Chip>
+          <Text size="B400">{`Exit ${KeySymbol.Hyper}`}</Text>
+        </IconButton>
       )}
     </TooltipProvider>
   );
@@ -278,7 +277,7 @@ export function Toolbar() {
               format={BlockType.OrderedList}
               icon={Icons.OrderList}
               tooltip={
-                <BtnTooltip text="Ordered List" shortCode={`${modKey} + ${KeySymbol.Shift} + 0`} />
+                <BtnTooltip text="Ordered List" shortCode={`${modKey} + ${KeySymbol.Shift} + 7`} />
               }
             />
             <BlockButton
@@ -297,8 +296,8 @@ export function Toolbar() {
             <>
               <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />
               <Box shrink="No" gap="100">
-                <EscapeButton
-                  tooltip={<BtnTooltip text="Escape Formatting" shortCode={`${modKey} + Esc`} />}
+                <ExitFormatting
+                  tooltip={<BtnTooltip text="Exit Formatting" shortCode={`${modKey} + E`} />}
                 />
               </Box>
             </>
