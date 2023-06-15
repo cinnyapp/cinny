@@ -104,7 +104,13 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { style, ...props } = attributes;
       return (
-        <Text as="span" {...props} className={css.EditorPlaceholder} contentEditable={false}>
+        <Text
+          as="span"
+          {...props}
+          className={css.EditorPlaceholder}
+          contentEditable={false}
+          truncate
+        >
           {children}
         </Text>
       );

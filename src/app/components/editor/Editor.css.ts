@@ -43,6 +43,7 @@ export const EditorPlaceholder = style([
   {
     position: 'absolute',
     zIndex: 1,
+    width: '100%',
     opacity: config.opacity.Placeholder,
     pointerEvents: 'none',
     userSelect: 'none',
