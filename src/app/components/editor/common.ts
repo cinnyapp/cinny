@@ -32,7 +32,9 @@ export const toggleMark = (editor: Editor, format: MarkType) => {
 };
 
 export const removeAllMark = (editor: Editor) => {
-  ALL_MARK_TYPE.forEach((mark) => Editor.removeMark(editor, mark));
+  ALL_MARK_TYPE.forEach((mark) => {
+    if (isMarkActive(editor, mark)) Editor.removeMark(editor, mark);
+  });
 };
 
 export const isBlockActive = (editor: Editor, format: BlockType) => {

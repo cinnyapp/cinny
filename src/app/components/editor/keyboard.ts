@@ -15,7 +15,7 @@ export const INLINE_HOTKEYS: Record<string, MarkType> = {
 const INLINE_KEYS = Object.keys(INLINE_HOTKEYS);
 
 export const BLOCK_HOTKEYS: Record<string, BlockType> = {
-  'mod+shift+0': BlockType.OrderedList,
+  'mod+shift+7': BlockType.OrderedList,
   'mod+shift+8': BlockType.UnorderedList,
   "mod+shift+'": BlockType.BlockQuote,
   'mod+shift+;': BlockType.CodeBlock,
@@ -26,12 +26,12 @@ const BLOCK_KEYS = Object.keys(BLOCK_HOTKEYS);
  * @return boolean true if shortcut is toggled.
  */
 export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Element>): boolean => {
-  if (isHotkey('escape', event)) {
+  if (isHotkey('mod+e', event)) {
     if (isAnyMarkActive(editor)) {
       removeAllMark(editor);
       return true;
     }
-    console.log(isBlockActive(editor, BlockType.Paragraph));
+
     if (!isBlockActive(editor, BlockType.Paragraph)) {
       toggleBlock(editor, BlockType.Paragraph);
       return true;
