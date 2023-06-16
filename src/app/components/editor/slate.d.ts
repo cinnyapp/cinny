@@ -1,10 +1,11 @@
 import { BaseEditor } from 'slate';
 import { ReactEditor } from 'slate-react';
+import { HistoryEditor } from 'slate-history';
 import { BlockType } from './Elements';
 
 export type HeadingLevel = 1 | 2 | 3;
 
-export type Editor = BaseEditor & ReactEditor;
+export type Editor = BaseEditor & HistoryEditor & ReactEditor;
 
 export type Text = {
   text: string;
@@ -96,11 +97,9 @@ export type CustomElement =
   | OrderedListElement
   | UnorderedListElement;
 
-export type CustomEditor = BaseEditor & ReactEditor;
-
 declare module 'slate' {
   interface CustomTypes {
-    Editor: BaseEditor & ReactEditor;
+    Editor: Editor;
     Element: CustomElement;
     Text: FormattedText & Text;
   }

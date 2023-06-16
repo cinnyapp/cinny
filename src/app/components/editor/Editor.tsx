@@ -7,7 +7,6 @@ import React, {
   useCallback,
   useState,
 } from 'react';
-
 import { Box, Scroll, Text } from 'folds';
 import { Descendant, Editor, createEditor } from 'slate';
 import {
@@ -18,6 +17,7 @@ import {
   RenderElementProps,
   RenderPlaceholderProps,
 } from 'slate-react';
+import { withHistory } from 'slate-history';
 import { BlockType, RenderElement, RenderLeaf } from './Elements';
 import { CustomElement } from './slate';
 import * as css from './Editor.css';
@@ -50,7 +50,7 @@ const withVoid = (editor: Editor): Editor => {
 };
 
 export const useEditor = (): Editor => {
-  const [editor] = useState(withInline(withVoid(withReact(createEditor()))));
+  const [editor] = useState(withInline(withVoid(withReact(withHistory(createEditor())))));
   return editor;
 };
 
