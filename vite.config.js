@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { wasm } from '@rollup/plugin-wasm';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import inject from '@rollup/plugin-inject';
 import { svgLoader } from './viteSvgLoader';
@@ -37,6 +38,7 @@ export default defineConfig({
   },
   plugins: [
     viteStaticCopy(copyFiles),
+    vanillaExtractPlugin(),
     svgLoader(),
     wasm(),
     react(),

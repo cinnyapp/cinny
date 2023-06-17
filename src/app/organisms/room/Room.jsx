@@ -15,6 +15,7 @@ import PeopleDrawer from './PeopleDrawer';
 
 function Room() {
   const [roomInfo, setRoomInfo] = useState({
+    room: null,
     roomTimeline: null,
     eventId: null,
   });
@@ -25,14 +26,17 @@ function Room() {
   useEffect(() => {
     const handleRoomSelected = (rId, pRoomId, eId) => {
       roomInfo.roomTimeline?.removeInternalListeners();
-      if (mx.getRoom(rId)) {
+      const r = mx.getRoom(rId);
+      if (r) {
         setRoomInfo({
+          room: r,
           roomTimeline: new RoomTimeline(rId),
           eventId: eId ?? null,
         });
       } else {
         // TODO: add ability to join room if roomId is invalid
         setRoomInfo({
+          room: r,
           roomTimeline: null,
           eventId: null,
         });
@@ -43,7 +47,7 @@ function Room() {
     return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, handleRoomSelected);
     };
-  }, [roomInfo]);
+  }, [roomInfo, mx]);
 
   useEffect(() => {
     const handleDrawerToggling = (visiblity) => setIsDrawer(visiblity);
@@ -53,7 +57,7 @@ function Room() {
     };
   }, []);
 
-  const { roomTimeline, eventId } = roomInfo;
+  const { room, roomTimeline, eventId } = roomInfo;
   if (roomTimeline === null) {
     setTimeout(() => openNavigation());
     return <Welcome />;
@@ -63,7 +67,7 @@ function Room() {
     <div className="room">
       <div className="room__content">
         <RoomSettings roomId={roomTimeline.roomId} />
-        <RoomView roomTimeline={roomTimeline} eventId={eventId} />
+        <RoomView room={room} roomTimeline={roomTimeline} eventId={eventId} />
       </div>
       {isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />}
     </div>
