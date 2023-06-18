@@ -163,12 +163,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const [mobile, setMobile] = useState(document.body.clientWidth < 500);
     useResizeObserver(
-      document.body,
       useCallback((entries) => {
         const bodyEntry = getResizeObserverEntry(document.body, entries);
         if (bodyEntry && bodyEntry.contentRect.width < 500) setMobile(true);
         else setMobile(false);
-      }, [])
+      }, []),
+      document.body
     );
 
     useEffect(() => {
