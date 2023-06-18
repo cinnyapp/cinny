@@ -8,15 +8,18 @@ export const useRoomMembers = (mx: MatrixClient, roomId: string): RoomMember[] =
 
   useEffect(() => {
     const room = mx.getRoom(roomId);
+    let loadingMembers = true;
 
     const updateMemberList = (event?: MatrixEvent) => {
       if (!room || !alive || (event && event.getRoomId() !== roomId)) return;
+      if (loadingMembers) return;
       setMembers(room.getMembers());
     };
 
     if (room) {
-      updateMemberList();
+      setMembers(room.getMembers());
       room.loadMembersIfNeeded().then(() => {
+        loadingMembers = false;
         if (!alive) return;
         updateMemberList();
       });
