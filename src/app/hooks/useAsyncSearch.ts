@@ -51,7 +51,7 @@ export const useAsyncSearch = <TSearchItem extends object | string | number>(
     const handleResult: ResultHandler<TSearchItem> = (results, query) =>
       setResult({
         query,
-        items: results,
+        items: [...results],
       });
 
     return AsyncSearch(list, handleMatch, handleResult, options);
