@@ -48,5 +48,10 @@ export const MembersGroup = style({
   paddingLeft: config.space.S200,
 });
 export const MembersGroupLabel = style({
-  padding: `0 ${config.space.S100}`,
+  padding: config.space.S200,
+  selectors: {
+    '&:not(:first-child)': {
+      paddingTop: config.space.S500,
+    },
+  },
 });

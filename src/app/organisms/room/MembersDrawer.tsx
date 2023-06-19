@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { ChangeEventHandler, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Avatar,
   AvatarFallback,
@@ -33,6 +33,8 @@ import {
 } from '../../hooks/useIntersectionObserver';
 import { Membership } from '../../../types/matrix/room';
 import { UseStateProvider } from '../../components/UseStateProvider';
+import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearch';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -108,11 +110,11 @@ const useSortFilterMenu = (): SortFilter[] =>
   useMemo(
     () => [
       {
-        name: 'Ascending',
+        name: 'A to Z',
         filterFn: SortFilters.filterAscending,
       },
       {
-        name: 'Descending',
+        name: 'Z to A',
         filterFn: SortFilters.filterDescending,
       },
       {
@@ -132,14 +134,61 @@ export type MembersFilterOptions = {
   sortFilter: SortFilter;
 };
 
+type PowerLevelTag = {
+  name: string;
+};
+export const usePowerLevelTag = () => {
+  const powerLevelTags = useMemo(
+    () => ({
+      9000: {
+        name: 'Goku',
+      },
+      101: {
+        name: 'Founder',
+      },
+      100: {
+        name: 'Admin',
+      },
+      50: {
+        name: 'Moderator',
+      },
+      0: {
+        name: 'Default',
+      },
+    }),
+    []
+  );
+
+  return useCallback(
+    (powerLevel: number): PowerLevelTag => {
+      if (powerLevel >= 9000) return powerLevelTags[9000];
+      if (powerLevel >= 101) return powerLevelTags[101];
+      if (powerLevel === 100) return powerLevelTags[100];
+      if (powerLevel >= 50) return powerLevelTags[50];
+      return powerLevelTags[0];
+    },
+    [powerLevelTags]
+  );
+};
+
+const SEARCH_OPTIONS: UseAsyncSearchOptions = {
+  limit: 100,
+  matchOptions: {
+    contain: true,
+  },
+};
+const getMemberItemStr = (m: RoomMember) => [m.name, m.userId];
+
 type MembersDrawerProps = {
   room: Room;
 };
 export function MembersDrawer({ room }: MembersDrawerProps) {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const filterOptionsRef = useRef<HTMLDivElement>(null);
   const members = useRoomMembers(mx, room.roomId);
+  const getPowerLevelTag = usePowerLevelTag();
 
   const membershipFilterMenu = useMembershipFilterMenu();
   const sortFilterMenu = useSortFilterMenu();
@@ -149,13 +198,36 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   });
   const [onTop, setOnTop] = useState(true);
 
-  const filteredMembers: RoomMember[] = useMemo(
-    () => members.filter(filter.membershipFilter.filterFn).sort(filter.sortFilter.filterFn),
+  const filteredMembers = useMemo(
+    () =>
+      members
+        .filter(filter.membershipFilter.filterFn)
+        .sort(filter.sortFilter.filterFn)
+        .sort((a, b) => b.powerLevel - a.powerLevel),
     [members, filter]
   );
 
+  const [result, search] = useAsyncSearch(filteredMembers, getMemberItemStr, SEARCH_OPTIONS);
+  if (!result && searchInputRef.current) searchInputRef.current.value = '';
+
+  const processMembers = result ? result.items : filteredMembers;
+
+  const PLTagOrRoomMember = useMemo(() => {
+    let prevTag: PowerLevelTag | undefined;
+    const tagOrMember: Array<PowerLevelTag | RoomMember> = [];
+    processMembers.forEach((m) => {
+      const plTag = getPowerLevelTag(m.powerLevel);
+      if (plTag !== prevTag) {
+        prevTag = plTag;
+        tagOrMember.push(plTag);
+      }
+      tagOrMember.push(m);
+    });
+    return tagOrMember;
+  }, [processMembers, getPowerLevelTag]);
+
   const virtualizer = useVirtualizer({
-    count: filteredMembers.length,
+    count: PLTagOrRoomMember.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 40,
     overscan: 10,
@@ -169,6 +241,11 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
     }, []),
     useCallback(() => ({ root: scrollRef.current }), []),
     useCallback(() => filterOptionsRef.current, [])
+  );
+
+  const handleSearchChange: ChangeEventHandler<HTMLInputElement> = useDebounce(
+    useCallback((evt) => search(evt.target.value.trim()), [search]),
+    { wait: 200 }
   );
 
   return (
@@ -190,11 +267,6 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
       <Box className={css.MemberDrawerContentBase} grow="Yes">
         <Scroll ref={scrollRef} variant="Background" size="300" visibility="Hover">
           <Box className={css.MemberDrawerContent} direction="Column" gap="400">
-            <Box className={css.DrawerGroup} direction="Column" gap="100">
-              <Text size="L400">Search</Text>
-              <Input placeholder="Type name..." variant="Surface" size="300" outlined />
-            </Box>
-
             <Box ref={filterOptionsRef} className={css.DrawerGroup} direction="Column" gap="100">
               <Text size="L400">Filter</Text>
               <Box alignItems="Center" gap="100" wrap="Wrap">
@@ -241,7 +313,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           ref={anchorRef}
                           onClick={() => setOpen(!open)}
                           variant={filter.membershipFilter.color}
-                          radii="Pill"
+                          radii="400"
                           outlined
                           after={<Icon src={Icons.ChevronBottom} size="50" />}
                         >
@@ -291,7 +363,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           ref={anchorRef}
                           onClick={() => setOpen(!open)}
                           variant="Surface"
-                          radii="Pill"
+                          radii="400"
                           outlined
                           after={<Icon src={Icons.ChevronBottom} size="50" />}
                         >
@@ -302,6 +374,36 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   )}
                 </UseStateProvider>
               </Box>
+            </Box>
+
+            <Box className={css.DrawerGroup} direction="Column" gap="100">
+              <Text size="L400">Search</Text>
+              <Input
+                ref={searchInputRef}
+                onChange={handleSearchChange}
+                style={{ paddingRight: config.space.S200 }}
+                placeholder="Type name..."
+                variant="Surface"
+                size="400"
+                outlined
+                radii="400"
+                before={<Icon size="50" src={Icons.Search} />}
+                after={
+                  result && (
+                    <Chip
+                      variant={result.items.length > 0 ? 'Success' : 'Critical'}
+                      size="400"
+                      radii="Pill"
+                      onClick={() => search('')}
+                      after={<Icon size="50" src={Icons.Cross} />}
+                    >
+                      <Text size="B300">{`${result.items.length || 'No'} ${
+                        result.items.length === 1 ? 'Result' : 'Results'
+                      }`}</Text>
+                    </Chip>
+                  )
+                }
+              />
             </Box>
 
             {!onTop && (
@@ -320,9 +422,6 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
             )}
 
             <Box className={css.MembersGroup} direction="Column" gap="100">
-              <Text className={css.MembersGroupLabel} size="L400">
-                Admins
-              </Text>
               <div
                 style={{
                   position: 'relative',
@@ -330,7 +429,29 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                 }}
               >
                 {virtualizer.getVirtualItems().map((vItem) => {
-                  const member = filteredMembers[vItem.index];
+                  const tagOrMember = PLTagOrRoomMember[vItem.index];
+                  if (!('userId' in tagOrMember)) {
+                    return (
+                      <Text
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          transform: `translateY(${vItem.start}px)`,
+                        }}
+                        data-index={vItem.index}
+                        ref={virtualizer.measureElement}
+                        key={`${room.roomId}-${vItem.index}`}
+                        className={css.MembersGroupLabel}
+                        size="O400"
+                      >
+                        {tagOrMember.name}
+                      </Text>
+                    );
+                  }
+
+                  const member = tagOrMember;
                   const avatarUrl = member.getAvatarUrl(
                     mx.baseUrl,
                     100,
