@@ -17,6 +17,8 @@ import {
   Scroll,
   Spinner,
   Text,
+  Tooltip,
+  TooltipProvider,
   color,
   config,
 } from 'folds';
@@ -25,6 +27,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import millify from 'millify';
 
+import { openInviteUser } from '../../../client/action/navigation';
 import * as css from './MembersDrawer.css';
 import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -259,9 +262,25 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
             </Text>
           </Box>
           <Box shrink="No" alignItems="Center">
-            <IconButton variant="Background">
-              <Icon src={Icons.UserPlus} />
-            </IconButton>
+            <TooltipProvider
+              position="Bottom"
+              align="End"
+              tooltip={
+                <Tooltip>
+                  <Text>Invite Member</Text>
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => (
+                <IconButton
+                  ref={triggerRef}
+                  variant="Background"
+                  onClick={() => openInviteUser(room.roomId)}
+                >
+                  <Icon src={Icons.UserPlus} />
+                </IconButton>
+              )}
+            </TooltipProvider>
           </Box>
         </Box>
       </Header>
