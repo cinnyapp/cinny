@@ -1,4 +1,11 @@
-import React, { ChangeEventHandler, useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  ChangeEventHandler,
+  MouseEventHandler,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Avatar,
   AvatarFallback,
@@ -19,15 +26,15 @@ import {
   Text,
   Tooltip,
   TooltipProvider,
-  color,
   config,
 } from 'folds';
 import { Room, RoomMember } from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import millify from 'millify';
+import classNames from 'classnames';
 
-import { openInviteUser } from '../../../client/action/navigation';
+import { openInviteUser, openProfileViewer } from '../../../client/action/navigation';
 import * as css from './MembersDrawer.css';
 import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -39,6 +46,7 @@ import { Membership } from '../../../types/matrix/room';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
+import colorMXID from '../../../util/colorMXID';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -193,6 +201,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
   const members = useRoomMembers(mx, room.roomId);
   const getPowerLevelTag = usePowerLevelTag();
+  const fetchingMembers = members.length < room.getJoinedMemberCount();
 
   const membershipFilterMenu = useMembershipFilterMenu();
   const sortFilterMenu = useSortFilterMenu();
@@ -251,6 +260,12 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
     useCallback((evt) => search(evt.target.value.trim()), [search]),
     { wait: 200 }
   );
+
+  const handleMemberClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const btn = evt.currentTarget as HTMLButtonElement;
+    const userId = btn.getAttribute('data-user-id');
+    openProfileViewer(userId, room.roomId);
+  };
 
   return (
     <Box className={css.MembersDrawer} direction="Column">
@@ -441,6 +456,12 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
               </Box>
             )}
 
+            {!fetchingMembers && !result && processMembers.length === 0 && (
+              <Text style={{ padding: config.space.S300 }} align="Center">
+                {`No "${filter.membershipFilter.name}" Members`}
+              </Text>
+            )}
+
             <Box className={css.MembersGroup} direction="Column" gap="100">
               <div
                 style={{
@@ -454,16 +475,12 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                     return (
                       <Text
                         style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
                           transform: `translateY(${vItem.start}px)`,
                         }}
                         data-index={vItem.index}
                         ref={virtualizer.measureElement}
                         key={`${room.roomId}-${vItem.index}`}
-                        className={css.MembersGroupLabel}
+                        className={classNames(css.MembersGroupLabel, css.DrawerVirtualItem)}
                         size="O400"
                       >
                         {tagOrMember.name}
@@ -482,45 +499,46 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   );
 
                   return (
-                    <Box
+                    <MenuItem
                       style={{
                         padding: config.space.S200,
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
                         transform: `translateY(${vItem.start}px)`,
                       }}
                       data-index={vItem.index}
+                      data-user-id={member.userId}
                       ref={virtualizer.measureElement}
                       key={`${room.roomId}-${member.userId}`}
-                      alignItems="Center"
-                      gap="200"
+                      className={css.DrawerVirtualItem}
+                      variant="Background"
+                      radii="400"
+                      onClick={handleMemberClick}
+                      before={
+                        <Avatar size="200">
+                          {avatarUrl ? (
+                            <AvatarImage src={avatarUrl} />
+                          ) : (
+                            <AvatarFallback
+                              style={{
+                                background: colorMXID(member.userId),
+                                color: 'white',
+                              }}
+                            >
+                              <Text size="T200">{member.name[0]}</Text>
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                      }
                     >
-                      <Avatar size="200">
-                        {avatarUrl ? (
-                          <AvatarImage src={avatarUrl} />
-                        ) : (
-                          <AvatarFallback
-                            style={{
-                              background: color.Secondary.Container,
-                              color: color.Secondary.OnContainer,
-                            }}
-                          >
-                            <Text size="T200">{member.name[0]}</Text>
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
                       <Text size="T400" truncate>
                         {member.name}
                       </Text>
-                    </Box>
+                    </MenuItem>
                   );
                 })}
               </div>
             </Box>
 
-            {members.length < room.getJoinedMemberCount() && (
+            {fetchingMembers && (
               <Box justifyContent="Center">
                 <Spinner />
               </Box>
