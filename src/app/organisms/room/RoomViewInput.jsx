@@ -10,7 +10,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import { openEmojiBoard, openReusableContextMenu } from '../../../client/action/navigation';
 import navigation from '../../../client/state/navigation';
-import { bytesToSize, getEventCords } from '../../../util/common';
+import { base64ToFile, bytesToSize, getEventCords } from '../../../util/common';
 import { getUsername } from '../../../util/matrixUtil';
 import colorMXID from '../../../util/colorMXID';
 
@@ -34,6 +34,7 @@ import FileIC from '../../../../public/res/ic/outlined/file.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import commands from './commands';
+import { invoke } from '@tauri-apps/api/tauri'
 
 const CMD_REGEX = /(^\/|:|@)(\S*)$/;
 let isTyping = false;
@@ -302,7 +303,24 @@ function RoomViewInput({
     }
   };
 
-  const handlePaste = (e) => {
+  const handlePaste = async (e) => {
+    // If running in Tauri, try to read any images from the clipboard.
+    // If none are found, proceed as normal.
+    if (window.__TAURI__) {
+      try {
+        const result = await invoke('clipboard_read_image')
+        const file = base64ToFile(result, 'image.png', 'image/png')
+
+        e.preventDefault()
+
+        if (attachment === null) {
+          attachImage(roomId, file)
+        }
+      } catch (e) {
+        // No image found, proceed as normal.
+      }
+    }
+
     if (e.clipboardData === false) {
       return;
     }
@@ -314,19 +332,20 @@ function RoomViewInput({
     for (let i = 0; i < e.clipboardData.items.length; i += 1) {
       const item = e.clipboardData.items[i];
       if (item.type.indexOf('image') !== -1) {
-        const image = item.getAsFile();
-        if (attachment === null) {
-          setAttachment(image);
-          if (image !== null) {
-            roomsInput.setAttachment(roomId, image);
-            return;
-          }
-        } else {
+        if (attachment !== null) {
           return;
         }
+        attachImage(roomId, item.getAsFile())
       }
     }
   };
+
+  function attachImage(roomId, image) {
+    if (image) {
+      setAttachment(image);
+      roomsInput.setAttachment(roomId, image);
+    }
+  }
 
   function addEmoji(emoji) {
     textAreaRef.current.value += emoji.unicode;
