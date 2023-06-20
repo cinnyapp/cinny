@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Room.scss';
+import { Line } from 'folds';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -12,7 +13,6 @@ import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
 import RoomSettings from './RoomSettings';
 import { MembersDrawer } from './MembersDrawer';
-import { Line } from 'folds';
 
 function Room() {
   const [roomInfo, setRoomInfo] = useState({
