@@ -11,8 +11,8 @@ import { openNavigation } from '../../../client/action/navigation';
 import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
 import RoomSettings from './RoomSettings';
-import PeopleDrawer from './PeopleDrawer';
 import { MembersDrawer } from './MembersDrawer';
+import { Line } from 'folds';
 
 function Room() {
   const [roomInfo, setRoomInfo] = useState({
@@ -70,8 +70,13 @@ function Room() {
         <RoomSettings roomId={roomTimeline.roomId} />
         <RoomView room={room} roomTimeline={roomTimeline} eventId={eventId} />
       </div>
-      {/* {isDrawer && <PeopleDrawer roomId={roomTimeline.roomId} />} */}
-      {isDrawer && <MembersDrawer room={room} />}
+
+      {isDrawer && (
+        <>
+          <Line variant="Background" direction="Vertical" size="300" />
+          <MembersDrawer room={room} />
+        </>
+      )}
     </div>
   );
 }
