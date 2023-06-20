@@ -15,6 +15,7 @@ import {
   MenuItem,
   PopOut,
   Scroll,
+  Spinner,
   Text,
   color,
   config,
@@ -186,7 +187,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const filterOptionsRef = useRef<HTMLDivElement>(null);
+  const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
   const members = useRoomMembers(mx, room.roomId);
   const getPowerLevelTag = usePowerLevelTag();
 
@@ -235,12 +236,12 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
 
   useIntersectionObserver(
     useCallback((intersectionEntries) => {
-      if (!filterOptionsRef.current) return;
-      const entry = getIntersectionObserverEntry(filterOptionsRef.current, intersectionEntries);
+      if (!scrollTopAnchorRef.current) return;
+      const entry = getIntersectionObserverEntry(scrollTopAnchorRef.current, intersectionEntries);
       if (entry) setOnTop(entry.isIntersecting);
     }, []),
     useCallback(() => ({ root: scrollRef.current }), []),
-    useCallback(() => filterOptionsRef.current, [])
+    useCallback(() => scrollTopAnchorRef.current, [])
   );
 
   const handleSearchChange: ChangeEventHandler<HTMLInputElement> = useDebounce(
@@ -267,7 +268,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
       <Box className={css.MemberDrawerContentBase} grow="Yes">
         <Scroll ref={scrollRef} variant="Background" size="300" visibility="Hover">
           <Box className={css.MemberDrawerContent} direction="Column" gap="400">
-            <Box ref={filterOptionsRef} className={css.DrawerGroup} direction="Column" gap="100">
+            <Box className={css.DrawerGroup} direction="Column" gap="100">
               <Text size="L400">Filter</Text>
               <Box alignItems="Center" gap="100" wrap="Wrap">
                 <UseStateProvider initial={false}>
@@ -376,7 +377,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
               </Box>
             </Box>
 
-            <Box className={css.DrawerGroup} direction="Column" gap="100">
+            <Box ref={scrollTopAnchorRef} className={css.DrawerGroup} direction="Column" gap="100">
               <Text size="L400">Search</Text>
               <Input
                 ref={searchInputRef}
@@ -499,6 +500,12 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                 })}
               </div>
             </Box>
+
+            {members.length < room.getJoinedMemberCount() && (
+              <Box justifyContent="Center">
+                <Spinner />
+              </Box>
+            )}
           </Box>
         </Scroll>
       </Box>
