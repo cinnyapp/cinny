@@ -1,17 +1,16 @@
 import { MatrixClient, MatrixEvent, RoomMember, RoomMemberEvent } from 'matrix-js-sdk';
 import { useEffect, useState } from 'react';
-import { useAlive } from './useAlive';
 
 export const useRoomMembers = (mx: MatrixClient, roomId: string): RoomMember[] => {
   const [members, setMembers] = useState<RoomMember[]>([]);
-  const alive = useAlive();
 
   useEffect(() => {
     const room = mx.getRoom(roomId);
     let loadingMembers = true;
+    let disposed = false;
 
     const updateMemberList = (event?: MatrixEvent) => {
-      if (!room || !alive || (event && event.getRoomId() !== roomId)) return;
+      if (!room || disposed || (event && event.getRoomId() !== roomId)) return;
       if (loadingMembers) return;
       setMembers(room.getMembers());
     };
@@ -20,7 +19,7 @@ export const useRoomMembers = (mx: MatrixClient, roomId: string): RoomMember[] =
       setMembers(room.getMembers());
       room.loadMembersIfNeeded().then(() => {
         loadingMembers = false;
-        if (!alive) return;
+        if (disposed) return;
         updateMemberList();
       });
     }
@@ -28,10 +27,11 @@ export const useRoomMembers = (mx: MatrixClient, roomId: string): RoomMember[] =
     mx.on(RoomMemberEvent.Membership, updateMemberList);
     mx.on(RoomMemberEvent.PowerLevel, updateMemberList);
     return () => {
+      disposed = true;
       mx.removeListener(RoomMemberEvent.Membership, updateMemberList);
       mx.removeListener(RoomMemberEvent.PowerLevel, updateMemberList);
     };
-  }, [mx, roomId, alive]);
+  }, [mx, roomId]);
 
   return members;
 };
