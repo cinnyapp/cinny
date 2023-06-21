@@ -47,6 +47,7 @@ import { UseStateProvider } from '../../components/UseStateProvider';
 import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
 import colorMXID from '../../../util/colorMXID';
+import { usePowerLevelTags, PowerLevelTag } from '../../hooks/usePowerLevelTags';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -146,43 +147,6 @@ export type MembersFilterOptions = {
   sortFilter: SortFilter;
 };
 
-type PowerLevelTag = {
-  name: string;
-};
-export const usePowerLevelTag = () => {
-  const powerLevelTags = useMemo(
-    () => ({
-      9000: {
-        name: 'Goku',
-      },
-      101: {
-        name: 'Founder',
-      },
-      100: {
-        name: 'Admin',
-      },
-      50: {
-        name: 'Moderator',
-      },
-      0: {
-        name: 'Default',
-      },
-    }),
-    []
-  );
-
-  return useCallback(
-    (powerLevel: number): PowerLevelTag => {
-      if (powerLevel >= 9000) return powerLevelTags[9000];
-      if (powerLevel >= 101) return powerLevelTags[101];
-      if (powerLevel === 100) return powerLevelTags[100];
-      if (powerLevel >= 50) return powerLevelTags[50];
-      return powerLevelTags[0];
-    },
-    [powerLevelTags]
-  );
-};
-
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 100,
   matchOptions: {
@@ -200,7 +164,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
   const members = useRoomMembers(mx, room.roomId);
-  const getPowerLevelTag = usePowerLevelTag();
+  const getPowerLevelTag = usePowerLevelTags();
   const fetchingMembers = members.length < room.getJoinedMemberCount();
 
   const membershipFilterMenu = useMembershipFilterMenu();
