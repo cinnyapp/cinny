@@ -8,8 +8,11 @@ import { blurOnBubbling } from '../../atoms/button/script';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { toggleRoomSettings, openReusableContextMenu, openNavigation } from '../../../client/action/navigation';
-import { togglePeopleDrawer } from '../../../client/action/settings';
+import {
+  toggleRoomSettings,
+  openReusableContextMenu,
+  openNavigation,
+} from '../../../client/action/navigation';
 import colorMXID from '../../../util/colorMXID';
 import { getEventCords } from '../../../util/common';
 
@@ -28,23 +31,26 @@ import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg
 import BackArrowIC from '../../../../public/res/ic/outlined/chevron-left.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
+import { useSetSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 function RoomViewHeader({ roomId }) {
   const [, forceUpdate] = useForceUpdate();
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
   const room = mx.getRoom(roomId);
+  const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
   let avatarSrc = room.getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
-  avatarSrc = isDM ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop') : avatarSrc;
+  avatarSrc = isDM
+    ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
+    : avatarSrc;
   const roomName = room.name;
 
   const roomHeaderBtnRef = useRef(null);
   useEffect(() => {
     const settingsToggle = (isVisibile) => {
       const rawIcon = roomHeaderBtnRef.current.lastElementChild;
-      rawIcon.style.transform = isVisibile
-        ? 'rotateX(180deg)'
-        : 'rotateX(0deg)';
+      rawIcon.style.transform = isVisibile ? 'rotateX(180deg)' : 'rotateX(0deg)';
     };
     navigation.on(cons.events.navigation.ROOM_SETTINGS_TOGGLED, settingsToggle);
     return () => {
@@ -66,11 +72,9 @@ function RoomViewHeader({ roomId }) {
   }, [roomId]);
 
   const openRoomOptions = (e) => {
-    openReusableContextMenu(
-      'bottom',
-      getEventCords(e, '.ic-btn'),
-      (closeMenu) => <RoomOptions roomId={roomId} afterOptionSelect={closeMenu} />,
-    );
+    openReusableContextMenu('bottom', getEventCords(e, '.ic-btn'), (closeMenu) => (
+      <RoomOptions roomId={roomId} afterOptionSelect={closeMenu} />
+    ));
   };
 
   return (
@@ -90,18 +94,34 @@ function RoomViewHeader({ roomId }) {
       >
         <Avatar imageSrc={avatarSrc} text={roomName} bgColor={colorMXID(roomId)} size="small" />
         <TitleWrapper>
-          <Text variant="h2" weight="medium" primary>{twemojify(roomName)}</Text>
+          <Text variant="h2" weight="medium" primary>
+            {twemojify(roomName)}
+          </Text>
         </TitleWrapper>
         <RawIcon src={ChevronBottomIC} />
       </button>
-      {mx.isRoomEncrypted(roomId) === false && <IconButton onClick={() => toggleRoomSettings(tabText.SEARCH)} tooltip="Search" src={SearchIC} />}
-      <IconButton className="room-header__drawer-btn" onClick={togglePeopleDrawer} tooltip="People" src={UserIC} />
-      <IconButton className="room-header__members-btn" onClick={() => toggleRoomSettings(tabText.MEMBERS)} tooltip="Members" src={UserIC} />
+      {mx.isRoomEncrypted(roomId) === false && (
+        <IconButton
+          onClick={() => toggleRoomSettings(tabText.SEARCH)}
+          tooltip="Search"
+          src={SearchIC}
+        />
+      )}
       <IconButton
-        onClick={openRoomOptions}
-        tooltip="Options"
-        src={VerticalMenuIC}
+        className="room-header__drawer-btn"
+        onClick={() => {
+          setPeopleDrawer((t) => !t);
+        }}
+        tooltip="People"
+        src={UserIC}
       />
+      <IconButton
+        className="room-header__members-btn"
+        onClick={() => toggleRoomSettings(tabText.MEMBERS)}
+        tooltip="Members"
+        src={UserIC}
+      />
+      <IconButton onClick={openRoomOptions} tooltip="Options" src={VerticalMenuIC} />
     </Header>
   );
 }

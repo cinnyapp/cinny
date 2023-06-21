@@ -4,7 +4,6 @@ import { Line } from 'folds';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
-import settings from '../../../client/state/settings';
 import RoomTimeline from '../../../client/state/RoomTimeline';
 import navigation from '../../../client/state/navigation';
 import { openNavigation } from '../../../client/action/navigation';
@@ -13,6 +12,9 @@ import Welcome from '../welcome/Welcome';
 import RoomView from './RoomView';
 import RoomSettings from './RoomSettings';
 import { MembersDrawer } from './MembersDrawer';
+import { ScreenSize, useScreenSize } from '../../hooks/useScreenSize';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 function Room() {
   const [roomInfo, setRoomInfo] = useState({
@@ -20,7 +22,8 @@ function Room() {
     roomTimeline: null,
     eventId: null,
   });
-  const [isDrawer, setIsDrawer] = useState(settings.isPeopleDrawer);
+  const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const [screenSize] = useScreenSize();
 
   const mx = initMatrix.matrixClient;
 
@@ -50,14 +53,6 @@ function Room() {
     };
   }, [roomInfo, mx]);
 
-  useEffect(() => {
-    const handleDrawerToggling = (visiblity) => setIsDrawer(visiblity);
-    settings.on(cons.events.settings.PEOPLE_DRAWER_TOGGLED, handleDrawerToggling);
-    return () => {
-      settings.removeListener(cons.events.settings.PEOPLE_DRAWER_TOGGLED, handleDrawerToggling);
-    };
-  }, []);
-
   const { room, roomTimeline, eventId } = roomInfo;
   if (roomTimeline === null) {
     setTimeout(() => openNavigation());
@@ -71,7 +66,7 @@ function Room() {
         <RoomView room={room} roomTimeline={roomTimeline} eventId={eventId} />
       </div>
 
-      {isDrawer && (
+      {screenSize === ScreenSize.Desktop && isDrawer && (
         <>
           <Line variant="Background" direction="Vertical" size="300" />
           <MembersDrawer room={room} />
