@@ -75,7 +75,7 @@ const useMembershipFilterMenu = (): MembershipFilter[] =>
       {
         name: 'Joined',
         filterFn: MembershipFilters.filterJoined,
-        color: 'Primary',
+        color: 'Surface',
       },
       {
         name: 'Invited',
@@ -184,8 +184,12 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
     [members, filter]
   );
 
-  const [result, search] = useAsyncSearch(filteredMembers, getMemberItemStr, SEARCH_OPTIONS);
-  if (!result && searchInputRef.current) searchInputRef.current.value = '';
+  const [result, search, resetSearch] = useAsyncSearch(
+    filteredMembers,
+    getMemberItemStr,
+    SEARCH_OPTIONS
+  );
+  if (!result && searchInputRef.current?.value) search(searchInputRef.current.value);
 
   const processMembers = result ? result.items : filteredMembers;
 
@@ -221,7 +225,13 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   );
 
   const handleSearchChange: ChangeEventHandler<HTMLInputElement> = useDebounce(
-    useCallback((evt) => search(evt.target.value.trim()), [search]),
+    useCallback(
+      (evt) => {
+        if (evt.target.value) search(evt.target.value);
+        else resetSearch();
+      },
+      [search, resetSearch]
+    ),
     { wait: 200 }
   );
 
@@ -393,7 +403,10 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                       variant={result.items.length > 0 ? 'Success' : 'Critical'}
                       size="400"
                       radii="Pill"
-                      onClick={() => search('')}
+                      onClick={() => {
+                        if (searchInputRef.current) searchInputRef.current.value = '';
+                        resetSearch();
+                      }}
                       after={<Icon size="50" src={Icons.Cross} />}
                     >
                       <Text size="B300">{`${result.items.length || 'No'} ${
