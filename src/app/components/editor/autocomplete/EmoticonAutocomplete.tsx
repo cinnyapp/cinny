@@ -60,12 +60,13 @@ export function EmoticonAutocomplete({
     );
   }, [imagePacks]);
 
-  const [result, search] = useAsyncSearch(searchList, getEmoticonStr, SEARCH_OPTIONS);
+  const [result, search, resetSearch] = useAsyncSearch(searchList, getEmoticonStr, SEARCH_OPTIONS);
   const autoCompleteEmoticon = result ? result.items : recentEmoji;
 
   useEffect(() => {
-    search(query.text);
-  }, [query.text, search]);
+    if (query.text) search(query.text);
+    else resetSearch();
+  }, [query.text, search, resetSearch]);
 
   const handleAutocomplete: EmoticonCompleteHandler = (key, shortcode) => {
     const emoticonEl = createEmoticonElement(key, shortcode);

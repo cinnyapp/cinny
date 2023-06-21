@@ -25,11 +25,13 @@ export type UseAsyncSearchResult<TSearchItem extends object | string | number> =
   items: TSearchItem[];
 };
 
+export type SearchResetHandler = () => void;
+
 export const useAsyncSearch = <TSearchItem extends object | string | number>(
   list: TSearchItem[],
   getItemStr: SearchItemStrGetter<TSearchItem>,
   options?: UseAsyncSearchOptions
-): [UseAsyncSearchResult<TSearchItem> | undefined, AsyncSearchHandler] => {
+): [UseAsyncSearchResult<TSearchItem> | undefined, AsyncSearchHandler, SearchResetHandler] => {
   const [result, setResult] = useState<UseAsyncSearchResult<TSearchItem>>();
 
   const [searchCallback, terminateSearch] = useMemo(() => {
@@ -60,14 +62,15 @@ export const useAsyncSearch = <TSearchItem extends object | string | number>(
   const searchHandler: AsyncSearchHandler = useCallback(
     (query) => {
       const normalizedQuery = normalize(query, options?.normalizeOptions);
-      if (!normalizedQuery) {
-        setResult(undefined);
-        return;
-      }
       searchCallback(normalizedQuery);
     },
     [searchCallback, options?.normalizeOptions]
   );
+
+  const resetHandler: SearchResetHandler = useCallback(() => {
+    terminateSearch();
+    setResult(undefined);
+  }, [terminateSearch]);
 
   useEffect(
     () => () => {
@@ -77,5 +80,5 @@ export const useAsyncSearch = <TSearchItem extends object | string | number>(
     [terminateSearch]
   );
 
-  return [result, searchHandler];
+  return [result, searchHandler, resetHandler];
 };

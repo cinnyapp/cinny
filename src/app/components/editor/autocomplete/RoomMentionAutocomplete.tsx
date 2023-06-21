@@ -81,7 +81,7 @@ export function RoomMentionAutocomplete({
     return [...spaces, ...rooms, ...directs].sort(roomIdByActivity);
   }, []);
 
-  const [result, search] = useAsyncSearch(
+  const [result, search, resetSearch] = useAsyncSearch(
     allRoomId,
     useCallback(
       (rId) => {
@@ -99,8 +99,9 @@ export function RoomMentionAutocomplete({
   const autoCompleteRoomIds = result ? result.items : allRoomId.slice(0, 20);
 
   useEffect(() => {
-    search(query.text);
-  }, [query.text, search]);
+    if (query.text) search(query.text);
+    else resetSearch();
+  }, [query.text, search, resetSearch]);
 
   const handleAutocomplete: MentionAutoCompleteHandler = (roomAliasOrId, name) => {
     const mentionEl = createMentionElement(
