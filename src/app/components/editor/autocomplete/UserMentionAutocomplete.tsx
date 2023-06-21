@@ -94,12 +94,13 @@ export function UserMentionAutocomplete({
   const roomAliasOrId = room?.getCanonicalAlias() || roomId;
   const members = useRoomMembers(mx, roomId);
 
-  const [result, search] = useAsyncSearch(members, getRoomMemberStr, SEARCH_OPTIONS);
+  const [result, search, resetSearch] = useAsyncSearch(members, getRoomMemberStr, SEARCH_OPTIONS);
   const autoCompleteMembers = result ? result.items : members.slice(0, 20);
 
   useEffect(() => {
-    search(query.text);
-  }, [query.text, search]);
+    if (query.text) search(query.text);
+    else resetSearch();
+  }, [query.text, search, resetSearch]);
 
   const handleAutocomplete: MentionAutoCompleteHandler = (uId, name) => {
     const mentionEl = createMentionElement(

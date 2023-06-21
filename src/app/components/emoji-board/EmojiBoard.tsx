@@ -647,15 +647,20 @@ export function EmojiBoard({
     return list;
   }, [emojiTab, usage, imagePacks]);
 
-  const [result, search] = useAsyncSearch(searchList, getSearchListItemStr, SEARCH_OPTIONS);
+  const [result, search, resetSearch] = useAsyncSearch(
+    searchList,
+    getSearchListItemStr,
+    SEARCH_OPTIONS
+  );
 
   const handleOnChange: ChangeEventHandler<HTMLInputElement> = useDebounce(
     useCallback(
       (evt) => {
         const term = evt.target.value;
-        search(term);
+        if (term) search(term);
+        else resetSearch();
       },
-      [search]
+      [search, resetSearch]
     ),
     { wait: 200 }
   );

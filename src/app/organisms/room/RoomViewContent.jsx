@@ -486,7 +486,6 @@ function RoomViewContent({ roomInputRef, eventId, roomTimeline }) {
   }, [newEvent]);
 
   useResizeObserver(
-    roomInputRef.current,
     useCallback((entries) => {
       if (!roomInputRef.current) return;
       const editorBaseEntry = getResizeObserverEntry(roomInputRef.current, entries);
@@ -497,7 +496,8 @@ function RoomViewContent({ roomInputRef, eventId, roomTimeline }) {
       if (timelineScroll.bottom < 40 && !roomTimeline.canPaginateForward() && document.visibilityState === 'visible') {
         timelineScroll.scrollToBottom();
       }
-    }, [roomInputRef])
+    }, [roomInputRef]),
+    useCallback(() => roomInputRef.current, [roomInputRef]),
   );
   
   const listenKeyboard = useCallback((event) => {
