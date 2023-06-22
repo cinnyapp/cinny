@@ -458,7 +458,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         ref={virtualizer.measureElement}
                         key={`${room.roomId}-${vItem.index}`}
                         className={classNames(css.MembersGroupLabel, css.DrawerVirtualItem)}
-                        size="O400"
+                        size="L400"
                       >
                         {tagOrMember.name}
                       </Text>
