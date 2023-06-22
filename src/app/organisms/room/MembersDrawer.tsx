@@ -75,7 +75,7 @@ const useMembershipFilterMenu = (): MembershipFilter[] =>
       {
         name: 'Joined',
         filterFn: MembershipFilters.filterJoined,
-        color: 'Surface',
+        color: 'Background',
       },
       {
         name: 'Invited',
@@ -131,11 +131,11 @@ const useSortFilterMenu = (): SortFilter[] =>
         filterFn: SortFilters.filterDescending,
       },
       {
-        name: 'Newest First',
+        name: 'New First',
         filterFn: SortFilters.filterNewestFirst,
       },
       {
-        name: 'Oldest First',
+        name: 'Old First',
         filterFn: SortFilters.filterOldest,
       },
     ],
@@ -275,10 +275,9 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
       </Header>
       <Box className={css.MemberDrawerContentBase} grow="Yes">
         <Scroll ref={scrollRef} variant="Background" size="300" visibility="Hover">
-          <Box className={css.MemberDrawerContent} direction="Column" gap="400">
-            <Box className={css.DrawerGroup} direction="Column" gap="100">
-              <Text size="L400">Filter</Text>
-              <Box alignItems="Center" gap="100" wrap="Wrap">
+          <Box className={css.MemberDrawerContent} direction="Column" gap="300">
+            <Box ref={scrollTopAnchorRef} className={css.DrawerGroup} direction="Column" gap="100">
+              <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
                 <UseStateProvider initial={false}>
                   {(open, setOpen) => (
                     <PopOut
@@ -304,6 +303,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                                     ? menuItem.color
                                     : 'Surface'
                                 }
+                                aria-pressed={menuItem.name === filter.membershipFilter.name}
                                 radii="300"
                                 onClick={() => {
                                   setFilter((f) => ({ ...f, membershipFilter: menuItem }));
@@ -322,9 +322,9 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           ref={anchorRef}
                           onClick={() => setOpen(!open)}
                           variant={filter.membershipFilter.color}
-                          radii="400"
-                          outlined
-                          after={<Icon src={Icons.ChevronBottom} size="50" />}
+                          size="400"
+                          radii="300"
+                          before={<Icon src={Icons.Funnel} size="50" />}
                         >
                           <Text size="T200">{filter.membershipFilter.name}</Text>
                         </Chip>
@@ -337,7 +337,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                     <PopOut
                       open={open}
                       position="Bottom"
-                      align="Start"
+                      align="End"
                       content={
                         <FocusTrap
                           focusTrapOptions={{
@@ -371,51 +371,51 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         <Chip
                           ref={anchorRef}
                           onClick={() => setOpen(!open)}
-                          variant="Surface"
-                          radii="400"
-                          outlined
-                          after={<Icon src={Icons.ChevronBottom} size="50" />}
+                          variant="Background"
+                          size="400"
+                          radii="300"
+                          after={<Icon src={Icons.Category} size="50" />}
                         >
-                          <Text size="T200">{`Order: ${filter.sortFilter.name}`}</Text>
+                          <Text size="T200">{filter.sortFilter.name}</Text>
                         </Chip>
                       )}
                     </PopOut>
                   )}
                 </UseStateProvider>
               </Box>
-            </Box>
 
-            <Box ref={scrollTopAnchorRef} className={css.DrawerGroup} direction="Column" gap="100">
-              <Text size="L400">Search</Text>
-              <Input
-                ref={searchInputRef}
-                onChange={handleSearchChange}
-                style={{ paddingRight: config.space.S200 }}
-                placeholder="Type name..."
-                variant="Surface"
-                size="400"
-                outlined
-                radii="400"
-                before={<Icon size="50" src={Icons.Search} />}
-                after={
-                  result && (
-                    <Chip
-                      variant={result.items.length > 0 ? 'Success' : 'Critical'}
-                      size="400"
-                      radii="Pill"
-                      onClick={() => {
-                        if (searchInputRef.current) searchInputRef.current.value = '';
-                        resetSearch();
-                      }}
-                      after={<Icon size="50" src={Icons.Cross} />}
-                    >
-                      <Text size="B300">{`${result.items.length || 'No'} ${
-                        result.items.length === 1 ? 'Result' : 'Results'
-                      }`}</Text>
-                    </Chip>
-                  )
-                }
-              />
+              <Box direction="Column" gap="100">
+                <Input
+                  ref={searchInputRef}
+                  onChange={handleSearchChange}
+                  style={{ paddingRight: config.space.S200 }}
+                  placeholder="Type name..."
+                  variant="Surface"
+                  before={<Icon size="50" src={Icons.Search} />}
+                  after={
+                    result && (
+                      <Chip
+                        variant={result.items.length > 0 ? 'Success' : 'Critical'}
+                        size="400"
+                        radii="Pill"
+                        aria-pressed
+                        onClick={() => {
+                          if (searchInputRef.current) {
+                            searchInputRef.current.value = '';
+                            searchInputRef.current.focus();
+                          }
+                          resetSearch();
+                        }}
+                        after={<Icon size="50" src={Icons.Cross} />}
+                      >
+                        <Text size="B300">{`${result.items.length || 'No'} ${
+                          result.items.length === 1 ? 'Result' : 'Results'
+                        }`}</Text>
+                      </Chip>
+                    )
+                  }
+                />
+              </Box>
             </Box>
 
             {!onTop && (
@@ -458,7 +458,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         ref={virtualizer.measureElement}
                         key={`${room.roomId}-${vItem.index}`}
                         className={classNames(css.MembersGroupLabel, css.DrawerVirtualItem)}
-                        size="O400"
+                        size="L400"
                       >
                         {tagOrMember.name}
                       </Text>

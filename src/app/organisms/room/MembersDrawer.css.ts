@@ -41,7 +41,7 @@ export const DrawerScrollTop = style({
 });
 
 export const DrawerGroup = style({
-  padding: `0 ${config.space.S100} 0 ${config.space.S300}`,
+  paddingLeft: config.space.S200,
 });
 
 export const MembersGroup = style({
