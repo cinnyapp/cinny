@@ -19,7 +19,7 @@ export const MemberDrawerContentBase = style({
 });
 
 export const MemberDrawerContent = style({
-  padding: `${config.space.S300} 0`,
+  padding: `${config.space.S200} 0`,
 });
 
 const ScrollBtnAnime = keyframes({

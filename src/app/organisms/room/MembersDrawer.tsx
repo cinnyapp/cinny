@@ -131,11 +131,11 @@ const useSortFilterMenu = (): SortFilter[] =>
         filterFn: SortFilters.filterDescending,
       },
       {
-        name: 'New First',
+        name: 'Newest',
         filterFn: SortFilters.filterNewestFirst,
       },
       {
-        name: 'Old First',
+        name: 'Oldest',
         filterFn: SortFilters.filterOldest,
       },
     ],
@@ -254,6 +254,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
             <TooltipProvider
               position="Bottom"
               align="End"
+              offset={4}
               tooltip={
                 <Tooltip>
                   <Text>Invite Member</Text>
@@ -275,8 +276,8 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
       </Header>
       <Box className={css.MemberDrawerContentBase} grow="Yes">
         <Scroll ref={scrollRef} variant="Background" size="300" visibility="Hover">
-          <Box className={css.MemberDrawerContent} direction="Column" gap="300">
-            <Box ref={scrollTopAnchorRef} className={css.DrawerGroup} direction="Column" gap="100">
+          <Box className={css.MemberDrawerContent} direction="Column" gap="200">
+            <Box ref={scrollTopAnchorRef} className={css.DrawerGroup} direction="Column" gap="200">
               <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
                 <UseStateProvider initial={false}>
                   {(open, setOpen) => (
@@ -284,6 +285,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                       open={open}
                       position="Bottom"
                       align="Start"
+                      offset={4}
                       content={
                         <FocusTrap
                           focusTrapOptions={{
@@ -324,7 +326,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           variant={filter.membershipFilter.color}
                           size="400"
                           radii="300"
-                          before={<Icon src={Icons.Funnel} size="50" />}
+                          before={<Icon src={Icons.Filter} size="50" />}
                         >
                           <Text size="T200">{filter.membershipFilter.name}</Text>
                         </Chip>
@@ -338,6 +340,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                       open={open}
                       position="Bottom"
                       align="End"
+                      offset={4}
                       content={
                         <FocusTrap
                           focusTrapOptions={{
@@ -374,7 +377,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           variant="Background"
                           size="400"
                           radii="300"
-                          after={<Icon src={Icons.Category} size="50" />}
+                          after={<Icon src={Icons.Sort} size="50" />}
                         >
                           <Text size="T200">{filter.sortFilter.name}</Text>
                         </Chip>
@@ -383,7 +386,6 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   )}
                 </UseStateProvider>
               </Box>
-
               <Box direction="Column" gap="100">
                 <Input
                   ref={searchInputRef}
@@ -391,6 +393,8 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   style={{ paddingRight: config.space.S200 }}
                   placeholder="Type name..."
                   variant="Surface"
+                  size="400"
+                  radii="400"
                   before={<Icon size="50" src={Icons.Search} />}
                   after={
                     result && (
