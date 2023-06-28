@@ -47,7 +47,7 @@ export function usePowerLevels(room: Room) {
   const canSendEvent = useCallback(
     (eventType: string | undefined, powerLevel: number) => {
       const { events, events_default: eventsDefault } = powerLevels;
-      if (events && eventType && typeof events[eventType] === 'string') {
+      if (events && eventType && typeof events[eventType] === 'number') {
         return powerLevel >= events[eventType];
       }
       return powerLevel >= (eventsDefault ?? DefaultPowerLevels.eventsDefault);

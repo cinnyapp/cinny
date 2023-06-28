@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './RoomView.scss';
 import { Text, config } from 'folds';
+import { EventType } from 'matrix-js-sdk';
 
 import EventEmitter from 'events';
 
@@ -32,7 +33,9 @@ function RoomView({ room, roomTimeline, eventId }) {
   const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
   const { getPowerLevel, canSendEvent } = usePowerLevels(room);
   const myUserId = mx.getUserId();
-  const canMessage = myUserId ? canSendEvent(undefined, getPowerLevel(myUserId)) : false;
+  const canMessage = myUserId
+    ? canSendEvent(EventType.RoomMessage, getPowerLevel(myUserId))
+    : false;
 
   useEffect(() => {
     const settingsToggle = (isVisible) => {
