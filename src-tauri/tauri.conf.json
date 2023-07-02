@@ -1,0 +1,77 @@
+{
+  "package": {
+    "productName": "Cinny",
+    "version": "2.2.6"
+  },
+  "build": {
+    "distDir": "../dist",
+    "devPath": "http://localhost:8080",
+    "beforeDevCommand": "npm start",
+    "beforeBuildCommand": "npm run build"
+  },
+  "tauri": {
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "in.cinny.app",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "resources": [],
+      "externalBin": [],
+      "copyright": "",
+      "category": "SocialNetworking",
+      "shortDescription": "Yet another matrix client",
+      "longDescription": "",
+      "deb": {
+        "depends": []
+      },
+      "macOS": {
+        "frameworks": [],
+        "minimumSystemVersion": "",
+        "exceptionDomain": "",
+        "signingIdentity": null,
+        "providerShortName": null,
+        "entitlements": null
+      },
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": "",
+        "wix": {
+          "bannerPath": "wix/banner.bmp",
+          "dialogImagePath": "wix/dialogImage.bmp"
+        }
+      }
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+          "https://github.com/cinnyapp/cinny/releases/download/tauri/release.json"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE2NDc3NDBGMTAzNTk1NUYKUldSZmxUVVFEM1JIRnRuMjVRTkFOQ21lUFI5KzRMU0s4OWtBS1RNRUVCNE9LcE9GcExNZ2M2NHoK"
+    },
+    "allowlist": {
+      "all": true
+    },
+    "windows": [
+      {
+        "title": "Cinny",
+        "width": 1024,
+        "height": 724,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "fileDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "script-src blob: data: filesystem: ws: wss: http: https: tauri: 'unsafe-eval' 'unsafe-inline' 'self' img-src: 'self'"
+    }
+  }
+}
