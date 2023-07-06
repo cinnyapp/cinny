@@ -40,6 +40,7 @@
     "focus-trap-react": "10.0.2",
     "folds": "1.3.0",
     "formik": "2.2.9",
+    "he": "1.2.0",
     "html-react-parser": "3.0.4",
     "immer": "9.0.16",
     "is-hotkey": "0.2.0",
