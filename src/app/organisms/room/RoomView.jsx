@@ -20,6 +20,7 @@ import { RoomTombstone } from './RoomTombstone';
 import { usePowerLevels } from '../../hooks/usePowerLevels';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
+import { RoomTimeline } from './RoomTimeline';
 
 const viewEvent = new EventEmitter();
 
@@ -61,11 +62,12 @@ function RoomView({ room, roomTimeline, eventId }) {
       <RoomViewHeader roomId={roomId} />
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
-          <RoomViewContent
+          <RoomTimeline key={roomId} room={room} />
+          {/* <RoomViewContent
             eventId={eventId}
             roomTimeline={roomTimeline}
             roomInputRef={roomInputRef}
-          />
+          /> */}
           <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
         </div>
         <div className="room-view__sticky">
