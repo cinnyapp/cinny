@@ -30,3 +30,19 @@ export const fulfilledPromiseSettledResult = <T>(prs: PromiseSettledResult<T>[])
     if (pr.status === 'fulfilled') values.push(pr.value);
     return values;
   }, []);
+
+export const binarySearch = <T>(items: T[], match: (item: T) => -1 | 0 | 1): T | undefined => {
+  const search = (start: number, end: number): T | undefined => {
+    if (start > end) return undefined;
+
+    const mid = Math.floor((start + end) / 2);
+
+    const result = match(items[mid]);
+    if (result === 0) return items[mid];
+
+    if (result === 1) return search(start, mid - 1);
+    return search(mid + 1, end);
+  };
+
+  return search(0, items.length - 1);
+};
