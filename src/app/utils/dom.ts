@@ -131,3 +131,16 @@ export const getThumbnail = (
       resolve(thumbnail ?? undefined);
     }, thumbnailMimeType ?? 'image/jpeg');
   });
+
+export type ScrollInfo = {
+  top: number;
+  height: number;
+  viewHeight: number;
+  scrollable: boolean;
+};
+export const getScrollInfo = (target: HTMLElement): ScrollInfo => ({
+  top: Math.round(target.scrollTop),
+  height: Math.round(target.scrollHeight),
+  viewHeight: Math.round(target.offsetHeight),
+  scrollable: target.scrollHeight > target.offsetHeight,
+});
