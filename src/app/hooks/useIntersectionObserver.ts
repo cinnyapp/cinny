@@ -25,6 +25,8 @@ export const useIntersectionObserver = (
     setIntersectionObserver(new IntersectionObserver(onIntersectionCallback, initOpts));
   }, [onIntersectionCallback, opts]);
 
+  useEffect(() => () => intersectionObserver?.disconnect(), [intersectionObserver]);
+
   useEffect(() => {
     const element = typeof observeElement === 'function' ? observeElement() : observeElement;
     if (element) intersectionObserver?.observe(element);
