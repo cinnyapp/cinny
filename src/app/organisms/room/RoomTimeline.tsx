@@ -9,7 +9,7 @@ import React, {
 import { Direction, EventTimeline, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import parse from 'html-react-parser';
 import to from 'await-to-js';
-import { Box, Scroll, Text, color } from 'folds';
+import { Box, Line, Scroll, Text, color, config } from 'folds';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
 import { sanitizeCustomHtml } from '../../../util/sanitize';
@@ -208,20 +208,33 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                 key={mEvent.getId()}
                 data-message-item={item}
               >
-                <Box gap="100">
+                <Box gap="200">
                   <Text
                     truncate
                     align="Right"
                     style={{
                       flexShrink: 0,
+                      alignSelf: 'flex-start',
+                      position: 'sticky',
+                      top: config.space.S100,
                       width: '100%',
-                      maxWidth: 80,
+                      maxWidth: 120,
                       color: colorMXID(mEvent.getSender()),
                     }}
                   >
                     <b>{getMxIdLocalPart(mEvent?.getSender() ?? '')}</b>
                   </Text>
-                  <Text>{customBody ? parse(sanitizeCustomHtml(mx, customBody)) : body}</Text>
+                  <Line
+                    style={{
+                      margin: ` ${config.space.S100} 0`,
+                      borderColor: colorMXID(mEvent.getSender()),
+                    }}
+                    direction="Vertical"
+                    size="400"
+                  />
+                  <Text as="div">
+                    {customBody ? parse(sanitizeCustomHtml(mx, customBody)) : body}
+                  </Text>
                 </Box>
               </div>
             );
