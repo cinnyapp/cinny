@@ -105,7 +105,6 @@ const useObserveAnchorHandle = (
     let anchor: HTMLElement | null = null;
     return (element) => {
       if (element === anchor) return;
-      console.log('start observing----');
       if (anchor) intersectionObserver?.unobserve(anchor);
       if (!element) return;
       anchor = element;
@@ -119,18 +118,22 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 ): VirtualPaginator => {
   const { count, limit, range, onRangeChange, getScrollElement, getItemElement, onEnd } = options;
 
-  const rangeRef = useRef(range);
-  rangeRef.current = range;
-  const countRef = useRef(count);
-  countRef.current = count;
-
   const initialRenderRef = useRef(true);
 
   const restoreScrollRef = useRef<{
     offsetTop: number;
     anchorItem: number;
   }>();
-  console.log(count, { ...range });
+
+  const rangeRef = useRef(range);
+  rangeRef.current = range;
+  const countRef = useRef(count);
+  if (countRef.current !== count) {
+    // Clear restoreScrollRef on count change
+    // As restoreScrollRef.current.anchorItem might changes
+    restoreScrollRef.current = undefined;
+  }
+  countRef.current = count;
 
   const getItems = useMemo(() => {
     const items = generateItems(range);
@@ -150,8 +153,13 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
   const scrollToItem = useCallback(
     (index: number) => {
-      // TODO: what if index is not in view?
-      // update start end.
+      const currentRange = rangeRef.current;
+      if (index < currentRange.start || index > currentRange.end) {
+        // TODO: what if index is not in range?
+        // update range
+        // scroll to after rerender in layout affect
+        return;
+      }
       const itemElement = getItemElement(index);
       if (!itemElement) return;
       scrollToElement(itemElement);
@@ -164,17 +172,16 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       const scrollEl = getScrollElement();
       const currentRange = rangeRef.current;
       const currentCount = countRef.current;
-      restoreScrollRef.current = undefined;
       let { start, end } = currentRange;
 
       if (direction === Direction.Backward) {
-        if (scrollEl) {
+        restoreScrollRef.current = undefined;
+        if (scrollEl && start > 0) {
           const [restoreAnchorItem, restoreAnchorEl] = getRestoreAnchor(
             { start, end },
             getItemElement
           );
-
-          if (restoreAnchorItem && restoreAnchorEl) {
+          if (restoreAnchorItem !== undefined && restoreAnchorEl) {
             restoreScrollRef.current = {
               anchorItem: restoreAnchorItem,
               offsetTop: restoreAnchorEl.offsetTop,
@@ -238,10 +245,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   const observeBackAnchor = useObserveAnchorHandle(intersectionObserver, Direction.Backward);
   const observeFrontAnchor = useObserveAnchorHandle(intersectionObserver, Direction.Forward);
 
+  // Restore scroll when scrolling backward
+  // restoreScrollRef.current only gets set
+  // when pagination is trigger in backward direction
   useLayoutEffect(() => {
-    // TODO: Document that we only need to restore scroll when scrolling backward
-    // also if scrollTop is greater then old scrollTop we don't need to restore scroll?
-    // - NO as offsetDiff become negative
     const scrollEl = getScrollElement();
     if (!restoreScrollRef.current || !scrollEl) return;
     const { offsetTop: oldOffsetTop, anchorItem } = restoreScrollRef.current;
@@ -256,10 +263,13 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     restoreScrollRef.current = undefined;
   }, [range, getScrollElement, getItemElement]);
 
+  // Continue pagination to fill view height with scroll items
+  // check if pagination anchor are in visible view height
+  // and trigger pagination
   useEffect(() => {
-    // Do not trigger pagination on initial render
-    // anchor intersection observable will trigger pagination on mount
     if (initialRenderRef.current) {
+      // Do not trigger pagination on initial render
+      // anchor intersection observable will trigger pagination on mount
       initialRenderRef.current = false;
       return;
     }
