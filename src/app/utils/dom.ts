@@ -133,12 +133,14 @@ export const getThumbnail = (
   });
 
 export type ScrollInfo = {
+  offsetTop: number;
   top: number;
   height: number;
   viewHeight: number;
   scrollable: boolean;
 };
 export const getScrollInfo = (target: HTMLElement): ScrollInfo => ({
+  offsetTop: Math.round(target.offsetTop),
   top: Math.round(target.scrollTop),
   height: Math.round(target.scrollHeight),
   viewHeight: Math.round(target.offsetHeight),

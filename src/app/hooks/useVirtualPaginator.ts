@@ -14,6 +14,12 @@ export type ItemRange = {
   end: number;
 };
 
+export type ScrollToOptions = {
+  offset?: number;
+  align?: 'start' | 'center' | 'end';
+  behavior?: 'auto' | 'instant' | 'smooth';
+};
+
 type HandleObserveAnchor = (element: HTMLElement | null) => void;
 
 type VirtualPaginatorOptions<TScrollElement extends HTMLElement> = {
@@ -125,6 +131,8 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     anchorItem: number;
   }>();
 
+  const scrollToItemRef = useRef<number>();
+
   const rangeRef = useRef(range);
   rangeRef.current = range;
   const countRef = useRef(count);
@@ -141,30 +149,49 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   }, [range]);
 
   const scrollToElement = useCallback(
-    (element: HTMLElement) => {
+    (element: HTMLElement, opts?: ScrollToOptions) => {
       const scrollElement = getScrollElement();
+      if (!scrollElement) return;
 
-      scrollElement?.scrollTo({
-        top: element.offsetTop,
+      let scrollTo = element.offsetTop;
+      if (opts?.align === 'center') {
+        const scrollInfo = getScrollInfo(scrollElement);
+        scrollTo =
+          element.offsetTop +
+          Math.round(scrollInfo.viewHeight / 2) -
+          Math.round(element.clientHeight / 2);
+      } else if (opts?.align === 'end') {
+        const scrollInfo = getScrollInfo(scrollElement);
+        scrollTo = element.offsetTop + Math.round(scrollInfo.viewHeight) - element.clientHeight;
+      }
+
+      scrollElement.scrollTo({
+        top: scrollTo + (opts?.offset ?? 0),
+        behavior: opts?.behavior,
       });
     },
     [getScrollElement]
   );
 
   const scrollToItem = useCallback(
-    (index: number) => {
+    (index: number, opts?: ScrollToOptions) => {
+      if (index < 0 || index > countRef.current) return;
       const currentRange = rangeRef.current;
+      // index is not in range change range
+      // and trigger scrollToItem in layoutEffect hook
       if (index < currentRange.start || index > currentRange.end) {
-        // TODO: what if index is not in range?
-        // update range
-        // scroll to after rerender in layout affect
+        onRangeChange({
+          start: Math.max(index, 0),
+          end: Math.min(index, countRef.current),
+        });
+        scrollToItemRef.current = index;
         return;
       }
       const itemElement = getItemElement(index);
       if (!itemElement) return;
-      scrollToElement(itemElement);
+      scrollToElement(itemElement, opts);
     },
-    [scrollToElement, getItemElement]
+    [scrollToElement, getItemElement, onRangeChange]
   );
 
   const paginate = useCallback(
@@ -262,6 +289,13 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     });
     restoreScrollRef.current = undefined;
   }, [range, getScrollElement, getItemElement]);
+
+  // Scroll to item after range changes
+  // when scrollToItem index was not in range.
+  useLayoutEffect(() => {
+    if (scrollToItemRef.current === undefined) return;
+    scrollToItem(scrollToItemRef.current);
+  }, [range, scrollToItem]);
 
   // Continue pagination to fill view height with scroll items
   // check if pagination anchor are in visible view height
