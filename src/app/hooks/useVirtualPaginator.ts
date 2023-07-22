@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { OnIntersectionCallback, useIntersectionObserver } from './useIntersectionObserver';
 import { getScrollInfo, inVisibleScrollArea } from '../utils/dom';
 
@@ -104,6 +104,7 @@ const useObserveAnchorHandle = (
   useMemo<HandleObserveAnchor>(() => {
     let anchor: HTMLElement | null = null;
     return (element) => {
+      if (element === anchor) return;
       console.log('start observing----');
       if (anchor) intersectionObserver?.unobserve(anchor);
       if (!element) return;
@@ -120,6 +121,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
   const rangeRef = useRef(range);
   rangeRef.current = range;
+  const countRef = useRef(count);
+  countRef.current = count;
+
+  const initialRenderRef = useRef(true);
 
   const restoreScrollRef = useRef<{
     offsetTop: number;
@@ -155,23 +160,24 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   );
 
   const paginate = useCallback(
-    (anchorElement: HTMLElement, anchorType: Direction) => {
+    (direction: Direction) => {
       const scrollEl = getScrollElement();
       const currentRange = rangeRef.current;
+      const currentCount = countRef.current;
       restoreScrollRef.current = undefined;
       let { start, end } = currentRange;
 
-      if (anchorType === Direction.Backward) {
+      if (direction === Direction.Backward) {
         if (scrollEl) {
-          const [scrollAnchorItem, scrollAnchorEl] = getRestoreAnchor(
+          const [restoreAnchorItem, restoreAnchorEl] = getRestoreAnchor(
             { start, end },
             getItemElement
           );
 
-          if (scrollAnchorItem && scrollAnchorEl) {
+          if (restoreAnchorItem && restoreAnchorEl) {
             restoreScrollRef.current = {
-              anchorItem: scrollAnchorItem,
-              offsetTop: scrollAnchorEl.offsetTop,
+              anchorItem: restoreAnchorItem,
+              offsetTop: restoreAnchorEl.offsetTop,
             };
           }
         }
@@ -185,32 +191,24 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
         start = Math.max(start - limit, 0);
       }
 
-      if (anchorType === Direction.Forward) {
-        if (end === count) {
+      if (direction === Direction.Forward) {
+        if (end === currentCount) {
           onEnd?.(Direction.Forward);
           return;
         }
-        end = Math.min(end + limit, count);
+        end = Math.min(end + limit, currentCount);
         if (scrollEl) {
-          start = getDropIndex(scrollEl, currentRange, Direction.Backward, getItemElement) ?? start;
+          start =
+            getDropIndex(scrollEl, currentRange, Direction.Backward, getItemElement, 2) ?? start;
         }
       }
-
-      // schedule to check if anchor intersect after state update
-      setTimeout(() => {
-        const scrollElement = getScrollElement();
-        // TODO: use isIntersection state in ref instead of inVisibleScrollArea
-        if (scrollElement && inVisibleScrollArea(scrollElement, anchorElement)) {
-          paginate(anchorElement, anchorType);
-        }
-      }, 100);
 
       onRangeChange({
         start,
         end,
       });
     },
-    [count, limit, getScrollElement, getItemElement, onEnd, onRangeChange]
+    [limit, getScrollElement, getItemElement, onEnd, onRangeChange]
   );
 
   const handlePaginatorElIntersection: OnIntersectionCallback = useCallback(
@@ -218,11 +216,11 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       const anchorB = entries.find(
         (entry) => entry.target.getAttribute(PAGINATOR_ANCHOR_ATTR) === Direction.Backward
       );
-      if (anchorB?.isIntersecting) paginate(anchorB.target as HTMLElement, Direction.Backward);
+      if (anchorB?.isIntersecting) paginate(Direction.Backward);
       const anchorF = entries.find(
         (entry) => entry.target.getAttribute(PAGINATOR_ANCHOR_ATTR) === Direction.Forward
       );
-      if (anchorF?.isIntersecting) paginate(anchorF.target as HTMLElement, Direction.Forward);
+      if (anchorF?.isIntersecting) paginate(Direction.Forward);
     },
     [paginate]
   );
@@ -243,6 +241,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   useLayoutEffect(() => {
     // TODO: Document that we only need to restore scroll when scrolling backward
     // also if scrollTop is greater then old scrollTop we don't need to restore scroll?
+    // - NO as offsetDiff become negative
     const scrollEl = getScrollElement();
     if (!restoreScrollRef.current || !scrollEl) return;
     const { offsetTop: oldOffsetTop, anchorItem } = restoreScrollRef.current;
@@ -256,6 +255,31 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     });
     restoreScrollRef.current = undefined;
   }, [range, getScrollElement, getItemElement]);
+
+  useEffect(() => {
+    // Do not trigger pagination on initial render
+    // anchor intersection observable will trigger pagination on mount
+    if (initialRenderRef.current) {
+      initialRenderRef.current = false;
+      return;
+    }
+    const scrollElement = getScrollElement();
+    if (!scrollElement) return;
+    const backAnchor = scrollElement.querySelector(
+      `[${PAGINATOR_ANCHOR_ATTR}="${Direction.Backward}"]`
+    ) as HTMLElement | null;
+    const fontAnchor = scrollElement.querySelector(
+      `[${PAGINATOR_ANCHOR_ATTR}="${Direction.Forward}"]`
+    ) as HTMLElement | null;
+
+    if (backAnchor && inVisibleScrollArea(scrollElement, backAnchor)) {
+      paginate(Direction.Backward);
+      return;
+    }
+    if (fontAnchor && inVisibleScrollArea(scrollElement, fontAnchor)) {
+      paginate(Direction.Forward);
+    }
+  }, [range, getScrollElement, paginate]);
 
   return {
     getItems,

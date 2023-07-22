@@ -76,7 +76,7 @@ type RoomTimelineProps = {
   eventId?: string;
 };
 
-const PAGINATION_LIMIT = 40;
+const PAGINATION_LIMIT = 80;
 
 type Timeline = {
   linkedTimelines: EventTimeline[];
@@ -122,11 +122,6 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     }, []),
     onEnd: useCallback(
       async (direction: ScrollDirection) => {
-        // TODO: fetch timeline
-        // trigger re-render roomTimeline with reducer
-        // useVirtualPaginator count will update
-        // we can update initialIndex
-        // we can restore scroll in hook with restoreAnchor
         const backwards = direction === ScrollDirection.Backward;
         console.log(direction);
         const { linkedTimelines: lTimelines } = timelineRef.current;
