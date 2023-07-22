@@ -217,6 +217,26 @@ function DeviceManage() {
     <div className="device-manage">
       <div>
         <MenuHeader>Unverified sessions</MenuHeader>
+        {!isMeVerified && (
+          <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
+            <InfoCard
+              rounded
+              variant="primary"
+              iconSrc={InfoIC}
+              title="Verify this session either with your Security Key/Phrase here or by initiating emoji verification from a verified session."
+            />
+          </div>
+        )}
+        {isMeVerified && unverified.length > 0 && (
+          <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
+            <InfoCard
+              rounded
+              variant="surface"
+              iconSrc={InfoIC}
+              title="Verify other sessions by emoji verification or remove unfamiliar ones."
+            />
+          </div>
+        )}
         {!isCSEnabled && (
           <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
             <InfoCard
