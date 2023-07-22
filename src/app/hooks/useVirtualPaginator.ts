@@ -29,7 +29,7 @@ type VirtualPaginatorOptions<TScrollElement extends HTMLElement> = {
   onRangeChange: (range: ItemRange) => void;
   getScrollElement: () => TScrollElement | null;
   getItemElement: (index: number) => HTMLElement | undefined;
-  onEnd?: (direction: Direction) => void;
+  onEnd?: (back: boolean) => void;
 };
 
 type VirtualPaginator = {
@@ -216,7 +216,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
           }
         }
         if (start === 0) {
-          onEnd?.(Direction.Backward);
+          onEnd?.(true);
           return;
         }
         if (scrollEl) {
@@ -227,7 +227,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
       if (direction === Direction.Forward) {
         if (end === currentCount) {
-          onEnd?.(Direction.Forward);
+          onEnd?.(false);
           return;
         }
         end = Math.min(end + limit, currentCount);

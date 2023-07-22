@@ -1,4 +1,11 @@
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Direction, EventTimeline, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import parse from 'html-react-parser';
 import to from 'await-to-js';
@@ -7,11 +14,7 @@ import { getMxIdLocalPart } from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
 import { sanitizeCustomHtml } from '../../../util/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import {
-  useVirtualPaginator,
-  Direction as ScrollDirection,
-  ItemRange,
-} from '../../hooks/useVirtualPaginator';
+import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
@@ -83,12 +86,58 @@ type Timeline = {
   range: ItemRange;
 };
 
+const useTimelinePagination = (
+  mx: MatrixClient,
+  timeline: Timeline,
+  setTimeline: Dispatch<SetStateAction<Timeline>>,
+  limit: number
+) => {
+  const timelineRef = useRef(timeline);
+  timelineRef.current = timeline;
+  const alive = useAlive();
+
+  const handleTimelinePagination = useCallback(
+    async (backwards: boolean) => {
+      const { linkedTimelines: lTimelines } = timelineRef.current;
+      const oldLength = getTimelinesTotalLength(lTimelines);
+      const timelineToPaginate = backwards ? lTimelines[0] : lTimelines[lTimelines.length - 1];
+
+      const paginationToken = timelineToPaginate.getPaginationToken(
+        backwards ? Direction.Backward : Direction.Forward
+      );
+      if (!paginationToken) return;
+
+      await to(
+        mx.paginateEventTimeline(timelineToPaginate, {
+          backwards,
+          limit,
+        })
+      );
+      if (alive()) {
+        const newLTimelines = getLinkedTimelines(timelineToPaginate);
+        const newLength = getTimelinesTotalLength(newLTimelines);
+        const lengthDiff = Math.max(newLength - oldLength, 0);
+
+        setTimeline((currentTimeline) => ({
+          linkedTimelines: newLTimelines,
+          range: backwards
+            ? {
+                start: currentTimeline.range.start + lengthDiff,
+                end: currentTimeline.range.end + lengthDiff,
+              }
+            : currentTimeline.range,
+        }));
+      }
+    },
+    [mx, alive, setTimeline, limit]
+  );
+  return handleTimelinePagination;
+};
+
 export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const alive = useAlive();
 
-  console.log('==============');
   const [timeline, setTimeline] = useState<Timeline>(() => {
     const linkedTimelines = eventId ? [] : getLinkedTimelines(getLiveTimeline(room));
     const evLength = getTimelinesTotalLength(linkedTimelines);
@@ -101,62 +150,27 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     };
   });
   const eventsLength = getTimelinesTotalLength(timeline.linkedTimelines);
-  const timelineRef = useRef(timeline);
-  timelineRef.current = timeline;
+
+  const handleTimelinePagination = useTimelinePagination(
+    mx,
+    timeline,
+    setTimeline,
+    PAGINATION_LIMIT
+  );
 
   const paginator = useVirtualPaginator({
     count: eventsLength,
     limit: PAGINATION_LIMIT,
     range: timeline.range,
-    onRangeChange: useCallback(
-      (r) => setTimeline((currentState) => ({ ...currentState, range: r })),
+    onRangeChange: useCallback((r) => setTimeline((cs) => ({ ...cs, range: r })), []),
+    getScrollElement: useCallback(() => scrollRef.current, []),
+    getItemElement: useCallback(
+      (index: number) =>
+        (scrollRef.current?.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
+        undefined,
       []
     ),
-    getScrollElement: useCallback(() => scrollRef.current, []),
-    getItemElement: useCallback((index: number) => {
-      if (!scrollRef.current) return undefined;
-      return (
-        (scrollRef.current.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
-        undefined
-      );
-    }, []),
-    onEnd: useCallback(
-      async (direction: ScrollDirection) => {
-        const backwards = direction === ScrollDirection.Backward;
-        console.log(direction);
-        const { linkedTimelines: lTimelines } = timelineRef.current;
-        const oldLength = getTimelinesTotalLength(lTimelines);
-        const timelineToPaginate = backwards ? lTimelines[0] : lTimelines[lTimelines.length - 1];
-
-        const paginationToken = timelineToPaginate.getPaginationToken(
-          backwards ? Direction.Backward : Direction.Forward
-        );
-        if (!paginationToken) return;
-
-        await to(
-          mx.paginateEventTimeline(timelineToPaginate, {
-            backwards,
-            limit: PAGINATION_LIMIT,
-          })
-        );
-        if (alive()) {
-          const newLTimelines = getLinkedTimelines(timelineToPaginate);
-          const newLength = getTimelinesTotalLength(newLTimelines);
-          const lengthDiff = Math.max(newLength - oldLength, 0);
-
-          setTimeline((currentTimeline) => ({
-            linkedTimelines: newLTimelines,
-            range: backwards
-              ? {
-                  start: currentTimeline.range.start + lengthDiff,
-                  end: currentTimeline.range.end + lengthDiff,
-                }
-              : currentTimeline.range,
-          }));
-        }
-      },
-      [mx, alive]
-    ),
+    onEnd: handleTimelinePagination,
   });
 
   useLayoutEffect(() => {
