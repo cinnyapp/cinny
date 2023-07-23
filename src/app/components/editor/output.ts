@@ -17,7 +17,7 @@ const textToCustomHtml = (node: FormattedText): string => {
 const elementToCustomHtml = (node: CustomElement, children: string): string => {
   switch (node.type) {
     case BlockType.Paragraph:
-      return `<p>${children}</p>`;
+      return `${children}<br/>`;
     case BlockType.Heading:
       return `<h${node.level}>${children}</h${node.level}>`;
     case BlockType.CodeLine:
@@ -25,7 +25,7 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
     case BlockType.CodeBlock:
       return `<pre><code>${children}</code></pre>`;
     case BlockType.QuoteLine:
-      return `<p>${children}</p>`;
+      return `${children}<br/>`;
     case BlockType.BlockQuote:
       return `<blockquote>${children}</blockquote>`;
     case BlockType.ListItem:
@@ -56,6 +56,7 @@ export const toMatrixCustomHTML = (node: Descendant | Descendant[]): string => {
 };
 
 const elementToPlainText = (node: CustomElement, children: string): string => {
+  console.log(node.type);
   switch (node.type) {
     case BlockType.Paragraph:
       return `${children}\n`;
@@ -93,3 +94,8 @@ export const toPlainText = (node: Descendant | Descendant[]): string => {
   const children = node.children.map((n) => toPlainText(n)).join('');
   return elementToPlainText(node, children);
 };
+
+export const customHtmlEqualsPlainText = (customHtml: string, plain: string): boolean =>
+  customHtml.replace(/<br\/>/g, '\n') === plain;
+
+export const trimCustomHtml = (customHtml: string) => customHtml.replace(/<br\/>$/g, '');
