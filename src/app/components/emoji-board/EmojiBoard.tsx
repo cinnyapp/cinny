@@ -598,7 +598,13 @@ export const NativeEmojiGroups = memo(
   )
 );
 
-const getSearchListItemStr = (item: ExtendedPackImage | IEmoji) => `:${item.shortcode}:`;
+const getSearchListItemStr = (item: ExtendedPackImage | IEmoji) => {
+  const shortcode = `:${item.shortcode}:`;
+  if ('body' in item) {
+    return [shortcode, item.body ?? ''];
+  }
+  return shortcode;
+};
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 26,
   matchOptions: {
