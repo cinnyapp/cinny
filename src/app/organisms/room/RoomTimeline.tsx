@@ -18,7 +18,7 @@ import {
 } from 'matrix-js-sdk';
 import parse from 'html-react-parser';
 import to from 'await-to-js';
-import { Box, Line, Scroll, Text, color, config } from 'folds';
+import { Box, Line, Scroll, Text, color, config, toRem } from 'folds';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
 import { sanitizeCustomHtml } from '../../../util/sanitize';
@@ -272,30 +272,29 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                 key={mEvent.getId()}
                 data-message-item={item}
               >
-                <Box gap="200">
-                  <Text
-                    truncate
-                    align="Right"
+                <Box gap="200" alignItems="Start">
+                  <Box
                     style={{
-                      flexShrink: 0,
-                      alignSelf: 'flex-start',
                       position: 'sticky',
                       top: config.space.S100,
-                      width: '100%',
-                      maxWidth: 120,
-                      color: colorMXID(mEvent.getSender()),
                     }}
+                    gap="200"
+                    shrink="No"
+                    alignItems="Center"
                   >
-                    <b>{getMxIdLocalPart(mEvent?.getSender() ?? '')}</b>
-                  </Text>
-                  <Line
-                    style={{
-                      margin: ` ${config.space.S100} 0`,
-                      borderColor: colorMXID(mEvent.getSender()),
-                    }}
-                    direction="Vertical"
-                    size="400"
-                  />
+                    <Text size="T300" priority="300">
+                      {new Date(mEvent.getTs()).toLocaleTimeString()}
+                    </Text>
+                    <Text
+                      truncate
+                      style={{
+                        maxWidth: 120,
+                        color: colorMXID(mEvent.getSender()),
+                      }}
+                    >
+                      <b>{getMxIdLocalPart(mEvent?.getSender() ?? '')}</b>
+                    </Text>
+                  </Box>
                   <Text as="div">
                     {customBody ? parse(sanitizeCustomHtml(mx, customBody)) : body}
                   </Text>
