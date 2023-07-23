@@ -280,9 +280,9 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                     }}
                     gap="200"
                     shrink="No"
-                    alignItems="Center"
+                    alignItems="Baseline"
                   >
-                    <Text size="T300" priority="300">
+                    <Text size="T200" priority="300">
                       {new Date(mEvent.getTs()).toLocaleTimeString()}
                     </Text>
                     <Text
