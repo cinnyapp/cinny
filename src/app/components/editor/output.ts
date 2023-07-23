@@ -56,7 +56,6 @@ export const toMatrixCustomHTML = (node: Descendant | Descendant[]): string => {
 };
 
 const elementToPlainText = (node: CustomElement, children: string): string => {
-  console.log(node.type);
   switch (node.type) {
     case BlockType.Paragraph:
       return `${children}\n`;
