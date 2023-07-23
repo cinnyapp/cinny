@@ -95,10 +95,10 @@ export const toPlainText = (node: Descendant | Descendant[]): string => {
 };
 
 /**
- * Check if custom html is equals to plainText
+ * Check if customHtml is equals to plainText
  * by replacing `<br/>` with `/n` in customHtml
- * and sanitize plainText before comparison
- * because text are sanitize in customHtml
+ * and sanitizing plainText before comparison
+ * because text are sanitized in customHtml
  * @param customHtml string
  * @param plain string
  * @returns boolean
