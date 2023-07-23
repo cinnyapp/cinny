@@ -26,6 +26,8 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
 import { scrollToBottom } from '../../utils/dom';
+import { CompactMessagePlaceholder } from '../../components/message';
+import { CompactMessage } from '../../components/message/CompactMessage';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -249,6 +251,15 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S200} 0` }}
         >
+          {timeline.linkedTimelines[0].getPaginationToken(Direction.Backward) && (
+            <>
+              <CompactMessagePlaceholder />
+              <CompactMessagePlaceholder />
+              <CompactMessagePlaceholder />
+              <CompactMessagePlaceholder />
+              <CompactMessagePlaceholder />
+            </>
+          )}
           <div style={{ height: 1 }} ref={paginator.observeBackAnchor} />
           {paginator.getItems().map((item) => {
             const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(
@@ -265,45 +276,45 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
             if (!body) return null;
             const customBody = mEvent.getContent().formatted_body;
             return (
-              <div
-                style={{
-                  padding: '4px 16px',
-                }}
-                key={mEvent.getId()}
-                data-message-item={item}
-              >
-                <Box gap="200" alignItems="Start">
-                  <Box
+              <CompactMessage key={mEvent.getId()} data-message-item={item}>
+                <Box
+                  style={{
+                    position: 'sticky',
+                    top: config.space.S100,
+                  }}
+                  gap="200"
+                  shrink="No"
+                  alignItems="Baseline"
+                >
+                  <Text size="T200" priority="300">
+                    {new Date(mEvent.getTs()).toLocaleTimeString()}
+                  </Text>
+                  <Text
+                    truncate
                     style={{
-                      position: 'sticky',
-                      top: config.space.S100,
+                      maxWidth: 120,
+                      color: colorMXID(mEvent.getSender()),
                     }}
-                    gap="200"
-                    shrink="No"
-                    alignItems="Baseline"
                   >
-                    <Text size="T200" priority="300">
-                      {new Date(mEvent.getTs()).toLocaleTimeString()}
-                    </Text>
-                    <Text
-                      truncate
-                      style={{
-                        maxWidth: 120,
-                        color: colorMXID(mEvent.getSender()),
-                      }}
-                    >
-                      <b>{getMxIdLocalPart(mEvent?.getSender() ?? '')}</b>
-                    </Text>
-                  </Box>
-                  <Text as="div">
-                    {customBody ? parse(sanitizeCustomHtml(mx, customBody)) : body}
+                    <b>{getMxIdLocalPart(mEvent?.getSender() ?? '')}</b>
                   </Text>
                 </Box>
-              </div>
+                <Text as="div">
+                  {customBody ? parse(sanitizeCustomHtml(mx, customBody)) : body}
+                </Text>
+              </CompactMessage>
             );
           })}
 
-          <div style={{ height: 1 }} ref={paginator.observeFrontAnchor} />
+          {(!liveTimelineLinked || !rangeAtEnd) && (
+            <>
+              <CompactMessagePlaceholder ref={paginator.observeFrontAnchor} />
+              <CompactMessagePlaceholder />
+              <CompactMessagePlaceholder />
+              <CompactMessagePlaceholder />
+              <CompactMessagePlaceholder />
+            </>
+          )}
         </Box>
       </Scroll>
     </Box>
