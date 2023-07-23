@@ -18,7 +18,7 @@ import {
 } from 'matrix-js-sdk';
 import parse from 'html-react-parser';
 import to from 'await-to-js';
-import { Box, Line, Scroll, Text, color, config, toRem } from 'folds';
+import { Box, Scroll, Text, color, config } from 'folds';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
 import { sanitizeCustomHtml } from '../../../util/sanitize';
