@@ -46,3 +46,6 @@ export const binarySearch = <T>(items: T[], match: (item: T) => -1 | 0 | 1): T |
 
   return search(0, items.length - 1);
 };
+
+export const randomNumberBetween = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
