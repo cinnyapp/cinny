@@ -2,11 +2,20 @@ import React, {
   Dispatch,
   SetStateAction,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
-import { Direction, EventTimeline, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
+import {
+  Direction,
+  EventTimeline,
+  EventTimelineSetHandlerMap,
+  MatrixClient,
+  MatrixEvent,
+  Room,
+  RoomEvent,
+} from 'matrix-js-sdk';
 import parse from 'html-react-parser';
 import to from 'await-to-js';
 import { Box, Line, Scroll, Text, color, config } from 'folds';
@@ -16,6 +25,7 @@ import { sanitizeCustomHtml } from '../../../util/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
+import { scrollToBottom } from '../../utils/dom';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -134,9 +144,30 @@ const useTimelinePagination = (
   return handleTimelinePagination;
 };
 
+const useLiveEventArrive = (mx: MatrixClient, roomId: string | undefined, onArrive: () => void) => {
+  useEffect(() => {
+    const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = (
+      mEvent,
+      eventRoom,
+      toStartOfTimeline,
+      removed,
+      data
+    ) => {
+      if (eventRoom?.roomId !== roomId || !data.liveEvent) return;
+      onArrive();
+    };
+
+    mx.on(RoomEvent.Timeline, handleTimelineEvent);
+    return () => {
+      mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
+    };
+  }, [mx, roomId, onArrive]);
+};
+
 export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const eventArriveCountRef = useRef(0);
 
   const [timeline, setTimeline] = useState<Timeline>(() => {
     const linkedTimelines = eventId ? [] : getLinkedTimelines(getLiveTimeline(room));
@@ -150,6 +181,9 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     };
   });
   const eventsLength = getTimelinesTotalLength(timeline.linkedTimelines);
+  const liveTimelineLinked =
+    timeline.linkedTimelines[timeline.linkedTimelines.length - 1] === getLiveTimeline(room);
+  const rangeAtEnd = timeline.range.end === eventsLength;
 
   const handleTimelinePagination = useTimelinePagination(
     mx,
@@ -173,18 +207,48 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     onEnd: handleTimelinePagination,
   });
 
+  useLiveEventArrive(
+    mx,
+    liveTimelineLinked && rangeAtEnd ? room.roomId : undefined,
+    useCallback(() => {
+      const { offsetHeight = 0, scrollTop = 0, scrollHeight = 0 } = scrollRef.current ?? {};
+      const scrollBottom = scrollTop + offsetHeight;
+      if (Math.round(scrollHeight - scrollBottom) > 100) {
+        setTimeline((ct) => ({ ...ct }));
+        return;
+      }
+      eventArriveCountRef.current += 1;
+      setTimeline((ct) => ({
+        ...ct,
+        range: {
+          start: ct.range.start + 1,
+          end: ct.range.end + 1,
+        },
+      }));
+    }, [])
+  );
+
   useLayoutEffect(() => {
     const scrollEl = scrollRef.current;
-    if (!scrollEl) return;
-    scrollEl.scrollTo({
-      top: Math.round(scrollEl.scrollHeight - scrollEl.offsetHeight),
-    });
+    if (scrollEl) scrollToBottom(scrollEl);
   }, []);
+
+  const eventArriveCount = eventArriveCountRef.current;
+  useEffect(() => {
+    if (eventArriveCount > 0) {
+      const scrollEl = scrollRef.current;
+      if (scrollEl) scrollToBottom(scrollEl, 'smooth');
+    }
+  }, [eventArriveCount]);
 
   return (
     <Box style={{ height: '100%', color: color.Surface.OnContainer }} grow="Yes">
       <Scroll ref={scrollRef}>
-        <Box direction="Column" justifyContent="End" style={{ minHeight: '100%' }}>
+        <Box
+          direction="Column"
+          justifyContent="End"
+          style={{ minHeight: '100%', padding: `${config.space.S200} 0` }}
+        >
           <div style={{ height: 1 }} ref={paginator.observeBackAnchor} />
           {paginator.getItems().map((item) => {
             const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(

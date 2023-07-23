@@ -146,3 +146,10 @@ export const getScrollInfo = (target: HTMLElement): ScrollInfo => ({
   viewHeight: Math.round(target.offsetHeight),
   scrollable: target.scrollHeight > target.offsetHeight,
 });
+
+export const scrollToBottom = (scrollEl: HTMLElement, behavior?: 'auto' | 'instant' | 'smooth') => {
+  scrollEl.scrollTo({
+    top: Math.round(scrollEl.scrollHeight - scrollEl.offsetHeight),
+    behavior,
+  });
+};
