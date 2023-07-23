@@ -51,6 +51,8 @@ import {
   createEmoticonElement,
   moveCursor,
   resetEditorHistory,
+  customHtmlEqualsPlainText,
+  trimCustomHtml,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -251,7 +253,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       uploadBoardHandlers.current?.handleSend();
 
       const plainText = toPlainText(editor.children).trim();
-      const customHtml = toMatrixCustomHTML(editor.children);
+      const customHtml = trimCustomHtml(toMatrixCustomHTML(editor.children));
 
       if (plainText === '') return;
 
@@ -271,9 +273,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const content: IContent = {
         msgtype: MsgType.Text,
         body,
-        format: 'org.matrix.custom.html',
-        formatted_body: formattedBody,
       };
+      if (replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
+        content.format = 'org.matrix.custom.html';
+        content.formatted_body = formattedBody;
+      }
       if (replyDraft) {
         content['m.relates_to'] = {
           'm.in_reply_to': {
