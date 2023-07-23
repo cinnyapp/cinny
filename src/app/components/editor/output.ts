@@ -94,7 +94,16 @@ export const toPlainText = (node: Descendant | Descendant[]): string => {
   return elementToPlainText(node, children);
 };
 
+/**
+ * Check if custom html is equals to plainText
+ * by replacing `<br/>` with `/n` in customHtml
+ * and sanitize plainText before comparison
+ * because text are sanitize in customHtml
+ * @param customHtml string
+ * @param plain string
+ * @returns boolean
+ */
 export const customHtmlEqualsPlainText = (customHtml: string, plain: string): boolean =>
-  customHtml.replace(/<br\/>/g, '\n') === plain;
+  customHtml.replace(/<br\/>/g, '\n') === sanitizeText(plain);
 
 export const trimCustomHtml = (customHtml: string) => customHtml.replace(/<br\/>$/g, '');
