@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { useAtom } from 'jotai';
 import isHotkey from 'is-hotkey';
-import { EventType, IContent, MsgType, Room } from 'matrix-js-sdk';
+import { EventType, IContent, IEventRelation, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Range, Editor, Element } from 'slate';
 import {
@@ -185,13 +185,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         userId: string,
         eventId: string,
         body: string,
-        formattedBody: string
+        formattedBody: string | null,
+        relatesTo: IEventRelation | undefined,
       ) => {
         setReplyDraft({
           userId,
           eventId,
           body,
           formattedBody,
+          relatesTo,
         });
         ReactEditor.focus(editor);
       };
@@ -284,6 +286,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             event_id: replyDraft.eventId,
           },
         };
+        if (replyDraft.relatesTo?.rel_type === "m.thread") {
+          content['m.relates_to'].event_id = replyDraft.relatesTo.event_id;
+          content['m.relates_to'].rel_type = "m.thread";
+        }
       }
       mx.sendMessage(roomId, content);
       resetEditor(editor);

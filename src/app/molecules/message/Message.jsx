@@ -739,7 +739,7 @@ function Message({
     setEdit(eventId);
   }, []);
   const reply = useCallback(() => {
-    replyTo(senderId, mEvent.getId(), body, customHTML);
+    replyTo(senderId, mEvent.getId(), body, customHTML, content["m.relates_to"] );
   }, [body, customHTML]);
 
   if (msgType === 'm.emote') className.push('message--type-emote');
