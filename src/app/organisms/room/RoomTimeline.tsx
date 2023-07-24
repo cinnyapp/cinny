@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -16,18 +17,21 @@ import {
   Room,
   RoomEvent,
 } from 'matrix-js-sdk';
-import parse from 'html-react-parser';
+import parse, { HTMLReactParserOptions } from 'html-react-parser';
 import to from 'await-to-js';
 import { Box, Scroll, Text, color, config } from 'folds';
+import Linkify from 'linkify-react';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
-import { sanitizeCustomHtml } from '../../../util/sanitize';
+import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
 import { scrollToBottom } from '../../utils/dom';
 import { CompactMessagePlaceholder } from '../../components/message';
 import { CompactMessage } from '../../components/message/CompactMessage';
+import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
+import { getMemberDisplayName } from '../../utils/room';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -171,6 +175,11 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventArriveCountRef = useRef(0);
 
+  const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
+    () => getReactCustomHtmlParser(mx, room),
+    [mx, room]
+  );
+
   const [timeline, setTimeline] = useState<Timeline>(() => {
     const linkedTimelines = eventId ? [] : getLinkedTimelines(getLiveTimeline(room));
     const evLength = getTimelinesTotalLength(linkedTimelines);
@@ -275,33 +284,51 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
             const { body } = mEvent.getContent();
             if (!body) return null;
             const customBody = mEvent.getContent().formatted_body;
+            const senderId = mEvent.getSender() ?? '';
+
             return (
               <CompactMessage key={mEvent.getId()} data-message-item={item}>
                 <Box
                   style={{
                     position: 'sticky',
                     top: config.space.S100,
+                    maxWidth: 170,
+                    width: '100%',
                   }}
                   gap="200"
                   shrink="No"
+                  justifyContent="SpaceBetween"
                   alignItems="Baseline"
                 >
-                  <Text size="T200" priority="300">
+                  <Text style={{ flexShrink: 0 }} size="T200" priority="300">
                     {new Date(mEvent.getTs()).toLocaleTimeString()}
                   </Text>
                   <Text
                     truncate
                     style={{
-                      maxWidth: 120,
-                      color: colorMXID(mEvent.getSender()),
+                      color: colorMXID(senderId),
                     }}
                   >
-                    <b>{getMxIdLocalPart(mEvent?.getSender() ?? '')}</b>
+                    <b>{getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId)}</b>
                   </Text>
                 </Box>
-                <Text as="div">
-                  {customBody ? parse(sanitizeCustomHtml(mx, customBody)) : body}
-                </Text>
+                <Box
+                  grow="Yes"
+                  direction="Column"
+                  // style={{
+                  //   borderRadius: 8,
+                  //   padding: 8,
+                  //   backgroundColor: color.SurfaceVariant.Container,
+                  // }}
+                >
+                  <Text as="div" style={{ whiteSpace: !customBody ? 'pre-wrap' : 'initial' }}>
+                    {customBody ? (
+                      parse(sanitizeCustomHtml(customBody), htmlReactParserOptions)
+                    ) : (
+                      <Linkify options={LINKIFY_OPTS}>{body}</Linkify>
+                    )}
+                  </Text>
+                </Box>
               </CompactMessage>
             );
           })}

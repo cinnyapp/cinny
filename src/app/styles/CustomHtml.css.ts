@@ -2,34 +2,49 @@ import { style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 import { color, config, DefaultReset, toRem } from 'folds';
 
-const MarginBottom = style({
+export const MarginSpaced = style({
   marginBottom: config.space.S200,
+  marginTop: config.space.S200,
   selectors: {
+    '&:first-child': {
+      marginTop: 0,
+    },
     '&:last-child': {
       marginBottom: 0,
     },
   },
 });
 
-export const Paragraph = style([MarginBottom]);
+export const Paragraph = style([DefaultReset]);
 
-export const Heading = style([MarginBottom]);
+export const Heading = style([
+  DefaultReset,
+  MarginSpaced,
+  {
+    marginTop: config.space.S400,
+    selectors: {
+      '&:first-child': {
+        marginTop: 0,
+      },
+    },
+  },
+]);
 
 export const BlockQuote = style([
   DefaultReset,
-  MarginBottom,
+  MarginSpaced,
   {
     paddingLeft: config.space.S200,
-    borderLeft: `${config.borderWidth.B700} solid ${color.SurfaceVariant.ContainerLine}`,
+    borderLeft: `${config.borderWidth.B700} solid ${color.Surface.ContainerLine}`,
     fontStyle: 'italic',
   },
 ]);
 
 const BaseCode = style({
   fontFamily: 'monospace',
-  color: color.Warning.OnContainer,
-  background: color.Warning.Container,
-  border: `${config.borderWidth.B300} solid ${color.Warning.ContainerLine}`,
+  color: color.Secondary.OnContainer,
+  background: color.Secondary.Container,
+  border: `${config.borderWidth.B300} solid ${color.Secondary.ContainerLine}`,
   borderRadius: config.radii.R300,
 });
 
@@ -40,26 +55,45 @@ export const Code = style([
     padding: `0 ${config.space.S100}`,
   },
 ]);
-export const Spoiler = style([
-  DefaultReset,
-  {
-    padding: `0 ${config.space.S100}`,
-    backgroundColor: color.SurfaceVariant.ContainerActive,
-    borderRadius: config.radii.R300,
-  },
-]);
 
-export const CodeBlock = style([DefaultReset, BaseCode, MarginBottom]);
+export const Spoiler = recipe({
+  base: [
+    DefaultReset,
+    {
+      padding: `0 ${config.space.S100}`,
+      backgroundColor: color.SurfaceVariant.ContainerActive,
+      borderRadius: config.radii.R300,
+    },
+  ],
+  variants: {
+    active: {
+      true: {
+        color: 'transparent',
+      },
+    },
+  },
+});
+
+export const CodeBlock = style([DefaultReset, BaseCode, MarginSpaced]);
 export const CodeBlockInternal = style({
   padding: `${config.space.S200} ${config.space.S200} 0`,
 });
 
 export const List = style([
   DefaultReset,
-  MarginBottom,
+  MarginSpaced,
   {
     padding: `0 ${config.space.S100}`,
     paddingLeft: config.space.S600,
+  },
+]);
+
+export const Img = style([
+  DefaultReset,
+  MarginSpaced,
+  {
+    maxWidth: toRem(296),
+    borderRadius: config.radii.R300,
   },
 ]);
 
@@ -83,9 +117,9 @@ export const Mention = recipe({
   variants: {
     highlight: {
       true: {
-        backgroundColor: color.Primary.Container,
-        color: color.Primary.OnContainer,
-        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Primary.ContainerLine}`,
+        backgroundColor: color.Success.Container,
+        color: color.Success.OnContainer,
+        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Success.ContainerLine}`,
       },
     },
     focus: {
