@@ -263,3 +263,10 @@ export const parseReplyFormattedBody = (
 
   return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${formattedBody}</blockquote></mx-reply>`;
 };
+
+export const getMemberDisplayName = (room: Room, userId: string): string | undefined => {
+  const member = room.getMember(userId);
+  const name = member?.rawDisplayName;
+  if (name === userId) return undefined;
+  return name;
+};
