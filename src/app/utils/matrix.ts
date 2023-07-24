@@ -1,5 +1,5 @@
 import { EncryptedAttachmentInfo, encryptAttachment } from 'browser-encrypt-attachment';
-import { MatrixClient, MatrixError, UploadProgress, UploadResponse } from 'matrix-js-sdk';
+import { MatrixClient, MatrixError, Room, UploadProgress, UploadResponse } from 'matrix-js-sdk';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 
 export const matchMxId = (id: string): RegExpMatchArray | null =>
@@ -12,6 +12,9 @@ export const getMxIdServer = (userId: string): string | undefined => matchMxId(u
 export const getMxIdLocalPart = (userId: string): string | undefined => matchMxId(userId)?.[2];
 
 export const isUserId = (id: string): boolean => validMxId(id) && id.startsWith('@');
+
+export const getRoomWithCanonicalAlias = (mx: MatrixClient, alias: string): Room | undefined =>
+  mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias);
 
 export const getImageInfo = (img: HTMLImageElement, fileOrBlob: File | Blob): IImageInfo => {
   const info: IImageInfo = {};
