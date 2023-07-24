@@ -19,6 +19,10 @@ const cons = {
     'm.room.member',
     'm.sticker',
   ],
+  supportReceiptTypes: [
+    'm.read',
+    'm.read.private',
+  ],
   notifs: {
     DEFAULT: 'default',
     ALL_MESSAGES: 'all_messages',
