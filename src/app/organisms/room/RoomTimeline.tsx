@@ -12,8 +12,10 @@ import {
   Direction,
   EventTimeline,
   EventTimelineSetHandlerMap,
+  EventType,
   MatrixClient,
   MatrixEvent,
+  RelationType,
   Room,
   RoomEvent,
 } from 'matrix-js-sdk';
@@ -28,7 +30,7 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
 import { scrollToBottom } from '../../utils/dom';
-import { CompactMessagePlaceholder } from '../../components/message';
+import { CompactMessagePlaceholder, Reaction } from '../../components/message';
 import { CompactMessage } from '../../components/message/CompactMessage';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import { getMemberDisplayName } from '../../utils/room';
@@ -252,6 +254,16 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     }
   }, [eventArriveCount]);
 
+  const reactionRenderer = useCallback(
+    ([key, events]: [string, Set<MatrixEvent>]) => {
+      const isPressed = !!Array.from(events).find((ev) => ev.getSender() === mx.getUserId());
+      return (
+        <Reaction aria-pressed={isPressed} key={key} mx={mx} reaction={key} count={events.size} />
+      );
+    },
+    [mx]
+  );
+
   return (
     <Box style={{ height: '100%', color: color.Surface.OnContainer }} grow="Yes">
       <Scroll ref={scrollRef}>
@@ -275,12 +287,21 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
               timeline.linkedTimelines,
               item
             );
-            const mEvent =
-              eventTimeline &&
-              getTimelineEvent(eventTimeline, getTimelineRelativeIndex(item, baseIndex));
+            if (!eventTimeline) return null;
+            const timelineSet = eventTimeline?.getTimelineSet();
+            const mEvent = getTimelineEvent(
+              eventTimeline,
+              getTimelineRelativeIndex(item, baseIndex)
+            );
+            const mEventId = mEvent?.getId();
 
-            if (!mEvent) return null;
+            if (!mEvent || !mEventId) return null;
 
+            const reactions = timelineSet.relations.getChildEventsForEvent(
+              mEventId,
+              RelationType.Annotation,
+              EventType.Reaction
+            );
             const { body } = mEvent.getContent();
             if (!body) return null;
             const customBody = mEvent.getContent().formatted_body;
@@ -303,31 +324,29 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                   <Text style={{ flexShrink: 0 }} size="T200" priority="300">
                     {new Date(mEvent.getTs()).toLocaleTimeString()}
                   </Text>
-                  <Text
-                    truncate
-                    style={{
-                      color: colorMXID(senderId),
-                    }}
-                  >
+                  <Text truncate style={{ color: colorMXID(senderId) }}>
                     <b>{getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId)}</b>
                   </Text>
                 </Box>
                 <Box
-                  grow="Yes"
+                  // grow="Yes"
                   direction="Column"
                   // style={{
                   //   borderRadius: 8,
-                  //   padding: 8,
+                  //   padding: '8px 12px',
                   //   backgroundColor: color.SurfaceVariant.Container,
                   // }}
                 >
-                  <Text as="div" style={{ whiteSpace: !customBody ? 'pre-wrap' : 'initial' }}>
+                  <Text as="div" style={{ whiteSpace: customBody ? 'initial' : 'pre-wrap' }}>
                     {customBody ? (
                       parse(sanitizeCustomHtml(customBody), htmlReactParserOptions)
                     ) : (
                       <Linkify options={LINKIFY_OPTS}>{body}</Linkify>
                     )}
                   </Text>
+                  <Box gap="200" wrap="Wrap" style={{ marginTop: config.space.S100 }}>
+                    {reactions?.getSortedAnnotationsByKey()?.map(reactionRenderer)}
+                  </Box>
                 </Box>
               </CompactMessage>
             );
