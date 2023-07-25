@@ -128,7 +128,7 @@ export const getReactCustomHtmlParser = (mx: MatrixClient, room: Room): HTMLReac
           );
         }
 
-        if (name === 'code' && parent && 'name' in parent && parent.name !== 'pre') {
+        if (name === 'code' && !(parent && 'name' in parent && parent.name === 'pre')) {
           return (
             <code className={css.Code} {...props}>
               {domToReact(children, opts)}
@@ -212,7 +212,8 @@ export const getReactCustomHtmlParser = (mx: MatrixClient, room: Room): HTMLReac
 
       if (
         domNode instanceof DOMText &&
-        !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'code')
+        !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'code') &&
+        !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'a')
       ) {
         return <Linkify options={LINKIFY_OPTS}>{domNode.data}</Linkify>;
       }
