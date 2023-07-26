@@ -106,9 +106,9 @@ export const Mention = recipe({
   base: [
     DefaultReset,
     {
-      backgroundColor: color.Secondary.Container,
-      color: color.Secondary.OnContainer,
-      boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Secondary.ContainerLine}`,
+      backgroundColor: color.SurfaceVariant.Container,
+      color: color.SurfaceVariant.OnContainer,
+      boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.SurfaceVariant.ContainerLine}`,
       padding: `0 ${toRem(2)}`,
       borderRadius: config.radii.R300,
       fontWeight: config.fontWeight.W500,
