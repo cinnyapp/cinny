@@ -21,16 +21,16 @@ import {
 } from 'matrix-js-sdk';
 import parse, { HTMLReactParserOptions } from 'html-react-parser';
 import to from 'await-to-js';
-import { Box, Scroll, Text, color, config } from 'folds';
+import { Box, Scroll, Text, Tooltip, TooltipProvider, color, config, toRem } from 'folds';
 import Linkify from 'linkify-react';
-import { getMxIdLocalPart, matrixEventByRecency } from '../../utils/matrix';
+import { factoryEventSentBy, getMxIdLocalPart, matrixEventByRecency } from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
 import { scrollToBottom } from '../../utils/dom';
-import { CompactMessagePlaceholder, Reaction } from '../../components/message';
+import { CompactMessagePlaceholder, Reaction, ReactionTooltipMsg } from '../../components/message';
 import { CompactMessage } from '../../components/message/CompactMessage';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import { getMemberDisplayName } from '../../utils/room';
@@ -265,12 +265,35 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
 
   const reactionRenderer = useCallback(
     ([key, events]: [string, Set<MatrixEvent>]) => {
-      const isPressed = !!Array.from(events).find((ev) => ev.getSender() === mx.getUserId());
+      const currentUserId = mx.getUserId();
+      const rEvents = Array.from(events);
+      const isPressed = !!(currentUserId && rEvents.find(factoryEventSentBy(currentUserId)));
+
       return (
-        <Reaction aria-pressed={isPressed} key={key} mx={mx} reaction={key} count={events.size} />
+        <TooltipProvider
+          position="Top"
+          tooltip={
+            <Tooltip style={{ maxWidth: toRem(300) }}>
+              <Text size="T300">
+                <ReactionTooltipMsg room={room} reaction={key} events={rEvents} />
+              </Text>
+            </Tooltip>
+          }
+        >
+          {(targetRef) => (
+            <Reaction
+              ref={targetRef}
+              aria-pressed={isPressed}
+              key={key}
+              mx={mx}
+              reaction={key}
+              count={events.size}
+            />
+          )}
+        </TooltipProvider>
       );
     },
-    [mx]
+    [mx, room]
   );
 
   const eventRenderer = (item: number) => {
