@@ -128,3 +128,6 @@ export const uploadContent = async (
 };
 
 export const matrixEventByRecency = (m1: MatrixEvent, m2: MatrixEvent) => m2.getTs() - m1.getTs();
+
+export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
+  ev.getSender() === senderId;
