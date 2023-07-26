@@ -23,7 +23,7 @@ import parse, { HTMLReactParserOptions } from 'html-react-parser';
 import to from 'await-to-js';
 import { Box, Scroll, Text, color, config } from 'folds';
 import Linkify from 'linkify-react';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMxIdLocalPart, matrixEventByRecency } from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -91,6 +91,15 @@ export const getTimelineRelativeIndex = (absoluteIndex: number, timelineBaseInde
 
 export const getTimelineEvent = (timeline: EventTimeline, index: number): MatrixEvent | undefined =>
   timeline.getEvents()[index];
+
+export const getLatestEdit = (
+  targetEvent: MatrixEvent,
+  editEvents: MatrixEvent[]
+): MatrixEvent | undefined => {
+  const eventByTargetSender = (rEvent: MatrixEvent) =>
+    rEvent.getSender() === targetEvent.getSender();
+  return editEvents.sort(matrixEventByRecency).find(eventByTargetSender);
+};
 
 type RoomTimelineProps = {
   room: Room;
@@ -264,6 +273,86 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     [mx]
   );
 
+  const eventRenderer = (item: number) => {
+    const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
+    if (!eventTimeline) return null;
+    const timelineSet = eventTimeline?.getTimelineSet();
+    const mEvent = getTimelineEvent(eventTimeline, getTimelineRelativeIndex(item, baseIndex));
+    const mEventId = mEvent?.getId();
+
+    if (!mEvent || !mEventId) return null;
+    if (mEvent.getRelation()?.rel_type === RelationType.Replace) return null;
+
+    const reactions = timelineSet.relations.getChildEventsForEvent(
+      mEventId,
+      RelationType.Annotation,
+      EventType.Reaction
+    );
+    const edits = timelineSet.relations.getChildEventsForEvent(
+      mEventId,
+      RelationType.Replace,
+      EventType.RoomMessage
+    );
+    const editEvent = edits && getLatestEdit(mEvent, edits.getRelations());
+    const newContent = editEvent?.getContent()['m.new_content'];
+
+    const { body, formatted_body: customBody } = newContent ?? mEvent.getContent();
+    if (!body) return null;
+    const senderId = mEvent.getSender() ?? '';
+
+    return (
+      <CompactMessage key={mEvent.getId()} data-message-item={item}>
+        <Box
+          style={{
+            position: 'sticky',
+            top: config.space.S100,
+            maxWidth: 170,
+            width: '100%',
+          }}
+          gap="200"
+          shrink="No"
+          justifyContent="SpaceBetween"
+          alignItems="Baseline"
+        >
+          <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+            {new Date(mEvent.getTs()).toLocaleTimeString()}
+          </Text>
+          <Text truncate style={{ color: colorMXID(senderId) }}>
+            <b>{getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId)}</b>
+          </Text>
+        </Box>
+        <Box
+          // grow="Yes"
+          direction="Column"
+          // style={{
+          //   borderRadius: 8,
+          //   padding: '8px 12px',
+          //   backgroundColor: color.SurfaceVariant.Container,
+          // }}
+        >
+          <Text as="div" style={{ whiteSpace: customBody ? 'initial' : 'pre-wrap' }}>
+            {customBody ? (
+              parse(sanitizeCustomHtml(customBody), htmlReactParserOptions)
+            ) : (
+              <Linkify options={LINKIFY_OPTS}>{body}</Linkify>
+            )}
+            {!!newContent && (
+              <>
+                {' '}
+                <Text as="span" size="T200" priority="300">
+                  (edited)
+                </Text>
+              </>
+            )}
+          </Text>
+          <Box gap="200" wrap="Wrap" style={{ marginTop: config.space.S100 }}>
+            {reactions?.getSortedAnnotationsByKey()?.map(reactionRenderer)}
+          </Box>
+        </Box>
+      </CompactMessage>
+    );
+  };
+
   return (
     <Box style={{ height: '100%', color: color.Surface.OnContainer }} grow="Yes">
       <Scroll ref={scrollRef}>
@@ -278,79 +367,11 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
               <CompactMessagePlaceholder />
               <CompactMessagePlaceholder />
               <CompactMessagePlaceholder />
-              <CompactMessagePlaceholder />
+              <CompactMessagePlaceholder ref={paginator.observeBackAnchor} />
             </>
           )}
-          <div style={{ height: 1 }} ref={paginator.observeBackAnchor} />
-          {paginator.getItems().map((item) => {
-            const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(
-              timeline.linkedTimelines,
-              item
-            );
-            if (!eventTimeline) return null;
-            const timelineSet = eventTimeline?.getTimelineSet();
-            const mEvent = getTimelineEvent(
-              eventTimeline,
-              getTimelineRelativeIndex(item, baseIndex)
-            );
-            const mEventId = mEvent?.getId();
 
-            if (!mEvent || !mEventId) return null;
-
-            const reactions = timelineSet.relations.getChildEventsForEvent(
-              mEventId,
-              RelationType.Annotation,
-              EventType.Reaction
-            );
-            const { body } = mEvent.getContent();
-            if (!body) return null;
-            const customBody = mEvent.getContent().formatted_body;
-            const senderId = mEvent.getSender() ?? '';
-
-            return (
-              <CompactMessage key={mEvent.getId()} data-message-item={item}>
-                <Box
-                  style={{
-                    position: 'sticky',
-                    top: config.space.S100,
-                    maxWidth: 170,
-                    width: '100%',
-                  }}
-                  gap="200"
-                  shrink="No"
-                  justifyContent="SpaceBetween"
-                  alignItems="Baseline"
-                >
-                  <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-                    {new Date(mEvent.getTs()).toLocaleTimeString()}
-                  </Text>
-                  <Text truncate style={{ color: colorMXID(senderId) }}>
-                    <b>{getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId)}</b>
-                  </Text>
-                </Box>
-                <Box
-                  // grow="Yes"
-                  direction="Column"
-                  // style={{
-                  //   borderRadius: 8,
-                  //   padding: '8px 12px',
-                  //   backgroundColor: color.SurfaceVariant.Container,
-                  // }}
-                >
-                  <Text as="div" style={{ whiteSpace: customBody ? 'initial' : 'pre-wrap' }}>
-                    {customBody ? (
-                      parse(sanitizeCustomHtml(customBody), htmlReactParserOptions)
-                    ) : (
-                      <Linkify options={LINKIFY_OPTS}>{body}</Linkify>
-                    )}
-                  </Text>
-                  <Box gap="200" wrap="Wrap" style={{ marginTop: config.space.S100 }}>
-                    {reactions?.getSortedAnnotationsByKey()?.map(reactionRenderer)}
-                  </Box>
-                </Box>
-              </CompactMessage>
-            );
-          })}
+          {paginator.getItems().map(eventRenderer)}
 
           {(!liveTimelineLinked || !rangeAtEnd) && (
             <>

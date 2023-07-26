@@ -1,5 +1,12 @@
 import { EncryptedAttachmentInfo, encryptAttachment } from 'browser-encrypt-attachment';
-import { MatrixClient, MatrixError, Room, UploadProgress, UploadResponse } from 'matrix-js-sdk';
+import {
+  MatrixClient,
+  MatrixError,
+  MatrixEvent,
+  Room,
+  UploadProgress,
+  UploadResponse,
+} from 'matrix-js-sdk';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 
 export const matchMxId = (id: string): RegExpMatchArray | null =>
@@ -119,3 +126,5 @@ export const uploadContent = async (
     onError(new MatrixError({ error, errcode }));
   }
 };
+
+export const matrixEventByRecency = (m1: MatrixEvent, m2: MatrixEvent) => m2.getTs() - m1.getTs();
