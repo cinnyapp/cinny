@@ -270,3 +270,8 @@ export const getMemberDisplayName = (room: Room, userId: string): string | undef
   if (name === userId) return undefined;
   return name;
 };
+
+export const getMemberAvatarMxc = (room: Room, userId: string): string | undefined => {
+  const member = room.getMember(userId);
+  return member?.getMxcAvatarUrl();
+};

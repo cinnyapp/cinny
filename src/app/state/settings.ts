@@ -8,6 +8,7 @@ export interface Settings {
   editorToolbar: boolean;
   isPeopleDrawer: boolean;
 
+  messageLayout: number;
   hideMembershipEvents: boolean;
   hideNickAvatarEvents: boolean;
 
@@ -22,6 +23,7 @@ const defaultSettings: Settings = {
   editorToolbar: false,
   isPeopleDrawer: true,
 
+  messageLayout: 0,
   hideMembershipEvents: false,
   hideNickAvatarEvents: true,
 
@@ -32,7 +34,10 @@ const defaultSettings: Settings = {
 export const getSettings = () => {
   const settings = localStorage.getItem(STORAGE_KEY);
   if (settings === null) return defaultSettings;
-  return JSON.parse(settings) as Settings;
+  return ({
+    ...defaultSettings,
+    ...JSON.parse(settings) as Settings
+  });
 };
 
 export const setSettings = (settings: Settings) => {

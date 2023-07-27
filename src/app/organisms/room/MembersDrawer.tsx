@@ -504,7 +504,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                                 color: 'white',
                               }}
                             >
-                              <Text size="T200">{member.name[0]}</Text>
+                              <Text size="H6">{member.name[0]}</Text>
                             </AvatarFallback>
                           )}
                         </Avatar>

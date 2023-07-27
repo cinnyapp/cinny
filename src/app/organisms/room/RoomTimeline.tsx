@@ -21,7 +21,19 @@ import {
 } from 'matrix-js-sdk';
 import parse, { HTMLReactParserOptions } from 'html-react-parser';
 import to from 'await-to-js';
-import { Box, Scroll, Text, Tooltip, TooltipProvider, color, config, toRem } from 'folds';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Box,
+  Scroll,
+  Text,
+  Tooltip,
+  TooltipProvider,
+  color,
+  config,
+  toRem,
+} from 'folds';
 import Linkify from 'linkify-react';
 import { factoryEventSentBy, getMxIdLocalPart, matrixEventByRecency } from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
@@ -30,10 +42,19 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
 import { scrollToBottom } from '../../utils/dom';
-import { CompactMessagePlaceholder, Reaction, ReactionTooltipMsg } from '../../components/message';
-import { CompactMessage } from '../../components/message/CompactMessage';
+import {
+  DefaultLayout,
+  CompactLayout,
+  BubbleLayout,
+  DefaultPlaceholder,
+  CompactPlaceholder,
+  Reaction,
+  ReactionTooltipMsg,
+} from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
-import { getMemberDisplayName } from '../../utils/room';
+import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -183,6 +204,7 @@ const useLiveEventArrive = (mx: MatrixClient, roomId: string | undefined, onArri
 
 export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const mx = useMatrixClient();
+  const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventArriveCountRef = useRef(0);
 
@@ -263,6 +285,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     }
   }, [eventArriveCount]);
 
+  let prevEvent: MatrixEvent | undefined;
   const reactionRenderer = useCallback(
     ([key, events]: [string, Set<MatrixEvent>]) => {
       const currentUserId = mx.getUserId();
@@ -273,7 +296,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         <TooltipProvider
           position="Top"
           tooltip={
-            <Tooltip style={{ maxWidth: toRem(300) }}>
+            <Tooltip style={{ maxWidth: toRem(200) }}>
               <Text size="T300">
                 <ReactionTooltipMsg room={room} reaction={key} events={rEvents} />
               </Text>
@@ -322,57 +345,133 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     const { body, formatted_body: customBody } = newContent ?? mEvent.getContent();
     if (!body) return null;
     const senderId = mEvent.getSender() ?? '';
+    const prevSenderId = prevEvent?.getSender();
+    const collapsed = prevSenderId === senderId;
+    prevEvent = mEvent;
+
+    const senderDisplayName =
+      getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+    const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
+
+    const msgTimeJSX = (
+      <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+        {new Date(mEvent.getTs()).toLocaleTimeString()}
+      </Text>
+    );
+
+    const msgNameJSX = (
+      <Text
+        size={messageLayout === 2 ? 'T300' : 'T400'}
+        style={{ color: colorMXID(senderId) }}
+        truncate
+      >
+        <b>{senderDisplayName}</b>
+      </Text>
+    );
+
+    const avatarJSX = (
+      <Avatar size="300">
+        {senderAvatarMxc ? (
+          <AvatarImage src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc} />
+        ) : (
+          <AvatarFallback
+            style={{
+              background: colorMXID(senderId),
+              color: 'white',
+            }}
+          >
+            <Text size="H4">{senderDisplayName[0]}</Text>
+          </AvatarFallback>
+        )}
+      </Avatar>
+    );
+
+    const msgContentJSX = (
+      <Box direction="Column">
+        <Text
+          as="div"
+          style={{ whiteSpace: customBody ? 'initial' : 'pre-wrap', wordBreak: 'break-word' }}
+        >
+          {customBody ? (
+            parse(sanitizeCustomHtml(customBody), htmlReactParserOptions)
+          ) : (
+            <Linkify options={LINKIFY_OPTS}>{body}</Linkify>
+          )}
+          {!!newContent && (
+            <>
+              {' '}
+              <Text as="span" size="T200" priority="300">
+                (edited)
+              </Text>
+            </>
+          )}
+        </Text>
+        {reactions && (
+          <Box gap="200" wrap="Wrap" style={{ margin: `${config.space.S100} 0` }}>
+            {reactions.getSortedAnnotationsByKey()?.map(reactionRenderer)}
+          </Box>
+        )}
+      </Box>
+    );
+
+    if (messageLayout === 1)
+      return (
+        <CompactLayout
+          key={mEvent.getId()}
+          data-message-item={item}
+          collapse={collapsed}
+          header={
+            !collapsed && (
+              <>
+                {msgTimeJSX}
+                {msgNameJSX}
+              </>
+            )
+          }
+        >
+          {msgContentJSX}
+        </CompactLayout>
+      );
+
+    if (messageLayout === 2) {
+      return (
+        <BubbleLayout
+          key={mEvent.getId()}
+          data-message-item={item}
+          reverse={senderId === mx.getUserId()}
+          collapse={collapsed}
+          avatar={!collapsed && avatarJSX}
+          header={
+            !collapsed && (
+              <>
+                {msgNameJSX}
+                {msgTimeJSX}
+              </>
+            )
+          }
+        >
+          {msgContentJSX}
+        </BubbleLayout>
+      );
+    }
 
     return (
-      <CompactMessage key={mEvent.getId()} data-message-item={item}>
-        <Box
-          style={{
-            position: 'sticky',
-            top: config.space.S100,
-            maxWidth: 170,
-            width: '100%',
-          }}
-          gap="200"
-          shrink="No"
-          justifyContent="SpaceBetween"
-          alignItems="Baseline"
-        >
-          <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-            {new Date(mEvent.getTs()).toLocaleTimeString()}
-          </Text>
-          <Text truncate style={{ color: colorMXID(senderId) }}>
-            <b>{getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId)}</b>
-          </Text>
-        </Box>
-        <Box
-          // grow="Yes"
-          direction="Column"
-          // style={{
-          //   borderRadius: 8,
-          //   padding: '8px 12px',
-          //   backgroundColor: color.SurfaceVariant.Container,
-          // }}
-        >
-          <Text as="div" style={{ whiteSpace: customBody ? 'initial' : 'pre-wrap' }}>
-            {customBody ? (
-              parse(sanitizeCustomHtml(customBody), htmlReactParserOptions)
-            ) : (
-              <Linkify options={LINKIFY_OPTS}>{body}</Linkify>
-            )}
-            {!!newContent && (
-              <>
-                {' '}
-                <Text as="span" size="T200" priority="300">
-                  (edited)
-                </Text>
-              </>
-            )}
-          </Text>
-          <Box gap="200" wrap="Wrap" style={{ marginTop: config.space.S100 }}>
-            {reactions?.getSortedAnnotationsByKey()?.map(reactionRenderer)}
-          </Box>
-        </Box>
-      </CompactMessage>
+      <DefaultLayout
+        key={mEvent.getId()}
+        data-message-item={item}
+        collapse={collapsed}
+        avatar={!collapsed && avatarJSX}
+        header={
+          !collapsed && (
+            <>
+              {msgNameJSX}
+              {msgTimeJSX}
+            </>
+          )
+        }
+      >
+        {msgContentJSX}
+      </DefaultLayout>
     );
   };
 
@@ -384,27 +483,45 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S200} 0` }}
         >
-          {timeline.linkedTimelines[0].getPaginationToken(Direction.Backward) && (
-            <>
-              <CompactMessagePlaceholder />
-              <CompactMessagePlaceholder />
-              <CompactMessagePlaceholder />
-              <CompactMessagePlaceholder />
-              <CompactMessagePlaceholder ref={paginator.observeBackAnchor} />
-            </>
-          )}
+          {timeline.linkedTimelines[0].getPaginationToken(Direction.Backward) &&
+            (messageLayout === 1 ? (
+              <>
+                <CompactPlaceholder />
+                <CompactPlaceholder />
+                <CompactPlaceholder />
+                <CompactPlaceholder />
+                <CompactPlaceholder ref={paginator.observeBackAnchor} />
+              </>
+            ) : (
+              <>
+                <DefaultPlaceholder />
+                <DefaultPlaceholder />
+                <DefaultPlaceholder />
+                <DefaultPlaceholder />
+                <DefaultPlaceholder ref={paginator.observeBackAnchor} />
+              </>
+            ))}
 
           {paginator.getItems().map(eventRenderer)}
 
-          {(!liveTimelineLinked || !rangeAtEnd) && (
-            <>
-              <CompactMessagePlaceholder ref={paginator.observeFrontAnchor} />
-              <CompactMessagePlaceholder />
-              <CompactMessagePlaceholder />
-              <CompactMessagePlaceholder />
-              <CompactMessagePlaceholder />
-            </>
-          )}
+          {(!liveTimelineLinked || !rangeAtEnd) &&
+            (messageLayout === 1 ? (
+              <>
+                <CompactPlaceholder ref={paginator.observeFrontAnchor} />
+                <CompactPlaceholder />
+                <CompactPlaceholder />
+                <CompactPlaceholder />
+                <CompactPlaceholder />
+              </>
+            ) : (
+              <>
+                <DefaultPlaceholder ref={paginator.observeFrontAnchor} />
+                <DefaultPlaceholder />
+                <DefaultPlaceholder />
+                <DefaultPlaceholder />
+                <DefaultPlaceholder />
+              </>
+            ))}
         </Box>
       </Scroll>
     </Box>

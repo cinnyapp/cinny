@@ -1,3 +1,3 @@
-export * from './MessagePlaceholder';
-export * from './CompactMessagePlaceholder';
+export * from './layout';
+export * from './placeholder';
 export * from './Reaction';

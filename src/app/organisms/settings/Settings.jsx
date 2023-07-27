@@ -43,9 +43,13 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 function AppearanceSection() {
   const [, updateState] = useState({});
+
+  const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
 
   return (
     <div className="settings-appearance">
@@ -83,6 +87,21 @@ function AppearanceSection() {
       </div>
       <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
+        <SettingTile
+          title="Message Layout"
+          options={(
+          <SegmentedControls
+            selected={messageLayout}
+            segments={[
+              { text: 'Modern' },
+              { text: 'Compact' },
+              { text: 'Bubble' },
+            ]}
+            onSelect={(index) => setMessageLayout(index)}
+          />
+          )}
+          content={<Text variant="b3">Select how message should appear in room.</Text>}
+        />
         <SettingTile
           title="Markdown formatting"
           options={(
