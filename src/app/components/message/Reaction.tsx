@@ -24,7 +24,7 @@ export const Reaction = as<
     {...props}
     ref={ref}
   >
-    <Text className={css.ReactionText} as="span" size="T500">
+    <Text className={css.ReactionText} as="span" size="T400">
       {reaction.startsWith('mxc://') ? (
         <img
           className={css.ReactionImg}
@@ -38,7 +38,7 @@ export const Reaction = as<
       )}
     </Text>
     <Text as="span" size="T300">
-      {count}
+      <b>{count}</b>
     </Text>
   </Box>
 ));

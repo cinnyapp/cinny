@@ -50,7 +50,8 @@ export const ReactionText = style([
     minWidth: 0,
     maxWidth: toRem(150),
     display: 'inline-flex',
-    lineHeight: '1em',
+    alignItems: 'center',
+    lineHeight: toRem(20),
   },
 ]);
 
