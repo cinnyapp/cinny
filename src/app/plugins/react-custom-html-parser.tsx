@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/alt-text */
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import {
   Element,
   Text as DOMText,
@@ -12,9 +12,13 @@ import classNames from 'classnames';
 import { Scroll, Text } from 'folds';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import Linkify from 'linkify-react';
+import { ErrorBoundary } from 'react-error-boundary';
 import * as css from '../styles/CustomHtml.css';
 import { getMxIdLocalPart, getRoomWithCanonicalAlias } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
+import { sanitizeText } from '../utils/sanitize';
+
+const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
 export const LINKIFY_OPTS: LinkifyOpts = {
   attributes: {
@@ -128,12 +132,33 @@ export const getReactCustomHtmlParser = (mx: MatrixClient, room: Room): HTMLReac
           );
         }
 
-        if (name === 'code' && !(parent && 'name' in parent && parent.name === 'pre')) {
-          return (
-            <code className={css.Code} {...props}>
-              {domToReact(children, opts)}
-            </code>
-          );
+        if (name === 'code') {
+          if (parent && 'name' in parent && parent.name === 'pre') {
+            const codeReact = domToReact(children, opts);
+            if (typeof codeReact === 'string') {
+              let lang = props.className;
+              if (lang === 'language-rs') lang = 'language-rust';
+              return (
+                <ErrorBoundary fallback={<code {...props}>{codeReact}</code>}>
+                  <Suspense fallback={<code {...props}>{codeReact}</code>}>
+                    <ReactPrism>
+                      {(ref) => (
+                        <code ref={ref} {...props} className={lang}>
+                          {sanitizeText(codeReact)}
+                        </code>
+                      )}
+                    </ReactPrism>
+                  </Suspense>
+                </ErrorBoundary>
+              );
+            }
+          } else {
+            return (
+              <code className={css.Code} {...props}>
+                {domToReact(children, opts)}
+              </code>
+            );
+          }
         }
 
         if (name === 'a') {

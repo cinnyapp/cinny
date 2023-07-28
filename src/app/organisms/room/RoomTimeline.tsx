@@ -294,6 +294,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
 
       return (
         <TooltipProvider
+          key={key}
           position="Top"
           tooltip={
             <Tooltip style={{ maxWidth: toRem(200) }}>
