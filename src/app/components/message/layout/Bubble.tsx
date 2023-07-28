@@ -6,14 +6,13 @@ import * as css from './layout.css';
 export const BubbleLayout = as<
   'div',
   {
-    collapse?: boolean;
     reverse?: boolean;
     avatar?: ReactNode;
     header?: ReactNode;
-  }
->(({ className, collapse, reverse, avatar, header, children, ...props }, ref) => (
+  } & css.BaseMessageVariants
+>(({ className, collapse, space, reverse, avatar, header, children, ...props }, ref) => (
   <Box
-    className={classNames(css.Bubble({ collapse }), className)}
+    className={classNames(css.BaseMessage({ collapse, space }), className)}
     alignItems="Start"
     direction={reverse ? 'RowReverse' : 'Row'}
     gap="300"
@@ -25,7 +24,7 @@ export const BubbleLayout = as<
     </Box>
     <Box className={css.BubbleContent} direction="Column">
       {header && (
-        <Box alignItems="Baseline" justifyContent="SpaceBetween" gap="200">
+        <Box alignItems="Baseline" gap="200">
           {header}
         </Box>
       )}

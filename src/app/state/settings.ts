@@ -9,6 +9,7 @@ export interface Settings {
   isPeopleDrawer: boolean;
 
   messageLayout: number;
+  messageSpacing: '0' | '100' | '200' | '300' | '400' | '500';
   hideMembershipEvents: boolean;
   hideNickAvatarEvents: boolean;
 
@@ -24,6 +25,7 @@ const defaultSettings: Settings = {
   isPeopleDrawer: true,
 
   messageLayout: 0,
+  messageSpacing: '400',
   hideMembershipEvents: false,
   hideNickAvatarEvents: true,
 
@@ -34,10 +36,10 @@ const defaultSettings: Settings = {
 export const getSettings = () => {
   const settings = localStorage.getItem(STORAGE_KEY);
   if (settings === null) return defaultSettings;
-  return ({
+  return {
     ...defaultSettings,
-    ...JSON.parse(settings) as Settings
-  });
+    ...(JSON.parse(settings) as Settings),
+  };
 };
 
 export const setSettings = (settings: Settings) => {

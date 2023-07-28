@@ -6,12 +6,11 @@ import * as css from './layout.css';
 export const CompactLayout = as<
   'div',
   {
-    collapse?: boolean;
     header?: ReactNode;
-  }
->(({ className, collapse, header, children, ...props }, ref) => (
+  } & css.BaseMessageVariants
+>(({ className, space, collapse, header, children, ...props }, ref) => (
   <Box
-    className={classNames(css.Compact({ collapse }), className)}
+    className={classNames(css.BaseMessage({ collapse, space }), className)}
     alignItems="Start"
     gap="200"
     {...props}

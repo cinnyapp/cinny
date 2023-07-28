@@ -50,6 +50,8 @@ function AppearanceSection() {
   const [, updateState] = useState({});
 
   const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
+  const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
+  const spacings = ['0', '100', '200', '300', '400', '500']
 
   return (
     <div className="settings-appearance">
@@ -89,8 +91,8 @@ function AppearanceSection() {
         <MenuHeader>Room messages</MenuHeader>
         <SettingTile
           title="Message Layout"
-          options={(
-          <SegmentedControls
+          content={
+            <SegmentedControls
             selected={messageLayout}
             segments={[
               { text: 'Modern' },
@@ -99,8 +101,26 @@ function AppearanceSection() {
             ]}
             onSelect={(index) => setMessageLayout(index)}
           />
-          )}
-          content={<Text variant="b3">Select how message should appear in room.</Text>}
+          }
+        />
+        <SettingTile
+          title="Message Spacing"
+          content={
+            <SegmentedControls
+            selected={spacings.findIndex((s) => s === messageSpacing)}
+            segments={[
+              { text: 'No' },
+              { text: 'XXS' },
+              { text: 'XS' },
+              { text: 'S' },
+              { text: 'M' },
+              { text: 'L' },
+            ]}
+            onSelect={(index) => {
+              setMessageSpacing(spacings[index])
+            }}
+          />
+          }
         />
         <SettingTile
           title="Markdown formatting"

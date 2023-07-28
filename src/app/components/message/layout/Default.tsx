@@ -6,13 +6,12 @@ import * as css from './layout.css';
 export const DefaultLayout = as<
   'div',
   {
-    collapse?: boolean;
     avatar?: ReactNode;
     header?: ReactNode;
-  }
->(({ className, collapse, avatar, header, children, ...props }, ref) => (
+  } & css.BaseMessageVariants
+>(({ className, space, collapse, avatar, header, children, ...props }, ref) => (
   <Box
-    className={classNames(css.Default({ collapse }), className)}
+    className={classNames(css.BaseMessage({ collapse, space }), className)}
     alignItems="Start"
     gap="300"
     {...props}

@@ -205,6 +205,7 @@ const useLiveEventArrive = (mx: MatrixClient, roomId: string | undefined, onArri
 export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
+  const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventArriveCountRef = useRef(0);
 
@@ -420,6 +421,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         <CompactLayout
           key={mEvent.getId()}
           data-message-item={item}
+          space={messageSpacing}
           collapse={collapsed}
           header={
             !collapsed && (
@@ -439,6 +441,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         <BubbleLayout
           key={mEvent.getId()}
           data-message-item={item}
+          space={messageSpacing}
           reverse={senderId === mx.getUserId()}
           collapse={collapsed}
           avatar={!collapsed && avatarJSX}
@@ -460,6 +463,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       <DefaultLayout
         key={mEvent.getId()}
         data-message-item={item}
+        space={messageSpacing}
         collapse={collapsed}
         avatar={!collapsed && avatarJSX}
         header={
@@ -478,11 +482,11 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
 
   return (
     <Box style={{ height: '100%', color: color.Surface.OnContainer }} grow="Yes">
-      <Scroll ref={scrollRef}>
+      <Scroll ref={scrollRef} visibility="Hover">
         <Box
           direction="Column"
           justifyContent="End"
-          style={{ minHeight: '100%', padding: `${config.space.S200} 0` }}
+          style={{ minHeight: '100%', padding: `${config.space.S500} 0` }}
         >
           {timeline.linkedTimelines[0].getPaginationToken(Direction.Backward) &&
             (messageLayout === 1 ? (

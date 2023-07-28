@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { recipe } from '@vanilla-extract/recipes';
+import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { DefaultReset, color, config, toRem } from 'folds';
 
 export const StickySection = style({
@@ -7,18 +7,45 @@ export const StickySection = style({
   top: config.space.S100,
 });
 
-export const Compact = recipe({
+export const BaseMessage = recipe({
   base: {
-    padding: `${config.space.S100} ${config.space.S400}`,
+    marginTop: config.space.S400,
+    padding: `${config.space.S100} ${config.space.S200} ${config.space.S100} ${config.space.S400}`,
   },
   variants: {
+    space: {
+      '0': {
+        marginTop: config.space.S0,
+      },
+      '100': {
+        marginTop: config.space.S100,
+      },
+      '200': {
+        marginTop: config.space.S200,
+      },
+      '300': {
+        marginTop: config.space.S300,
+      },
+      '400': {
+        marginTop: config.space.S400,
+      },
+      '500': {
+        marginTop: config.space.S500,
+      },
+    },
     collapse: {
       true: {
+        marginTop: 0,
         paddingTop: 0,
       },
     },
   },
+  defaultVariants: {
+    space: '400',
+  },
 });
+
+export type BaseMessageVariants = RecipeVariants<typeof BaseMessage>;
 
 export const CompactHeader = style([
   DefaultReset,
@@ -29,35 +56,9 @@ export const CompactHeader = style([
   },
 ]);
 
-export const Default = recipe({
-  base: {
-    padding: `${config.space.S200} ${config.space.S200} ${config.space.S200} ${config.space.S400}`,
-  },
-  variants: {
-    collapse: {
-      true: {
-        paddingTop: 0,
-      },
-    },
-  },
-});
-
 export const DefaultAvatar = style({
   paddingTop: toRem(4),
   minWidth: toRem(36),
-});
-
-export const Bubble = recipe({
-  base: {
-    padding: `${config.space.S200} ${config.space.S200} ${config.space.S200} ${config.space.S400}`,
-  },
-  variants: {
-    collapse: {
-      true: {
-        paddingTop: 0,
-      },
-    },
-  },
 });
 
 export const BubbleAvatar = style({
@@ -66,6 +67,7 @@ export const BubbleAvatar = style({
 });
 
 export const BubbleContent = style({
+  maxWidth: toRem(800),
   padding: `${config.space.S100} ${config.space.S200}`,
   backgroundColor: color.SurfaceVariant.Container,
   color: color.SurfaceVariant.OnContainer,

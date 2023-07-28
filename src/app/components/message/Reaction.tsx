@@ -38,7 +38,7 @@ export const Reaction = as<
       )}
     </Text>
     <Text as="span" size="T300">
-      <b>{count}</b>
+      {count}
     </Text>
   </Box>
 ));
