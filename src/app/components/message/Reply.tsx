@@ -61,7 +61,7 @@ export const Reply = as<'div', ReplyProps>(
             </Text>
           )}
         </Box>
-        <Box grow="Yes">
+        <Box grow="Yes" className={css.ReplyContent}>
           {replyEvent !== undefined ? (
             <Text size="T300" truncate>
               {(body && trimReplyFromBody(body)) ?? fallbackBody}

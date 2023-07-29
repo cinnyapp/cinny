@@ -7,11 +7,13 @@ export const Reply = style({
   cursor: 'pointer',
   minWidth: 0,
   maxWidth: '100%',
+});
 
+export const ReplyContent = style({
   opacity: config.opacity.P300,
 
   selectors: {
-    '&:hover': {
+    [`${Reply} &:hover`]: {
       opacity: config.opacity.P500,
     },
   },
