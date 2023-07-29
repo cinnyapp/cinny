@@ -55,6 +55,7 @@ import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-cust
 import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
+import { Reply } from '../../components/message/Reply';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -144,8 +145,11 @@ const useTimelinePagination = (
   timelineRef.current = timeline;
   const alive = useAlive();
 
-  const handleTimelinePagination = useCallback(
-    async (backwards: boolean) => {
+  const handleTimelinePagination = useMemo(() => {
+    let fetching = false;
+    return async (backwards: boolean) => {
+      console.log('---> onEnd');
+      if (fetching) return;
       const { linkedTimelines: lTimelines } = timelineRef.current;
       const oldLength = getTimelinesTotalLength(lTimelines);
       const timelineToPaginate = backwards ? lTimelines[0] : lTimelines[lTimelines.length - 1];
@@ -155,12 +159,15 @@ const useTimelinePagination = (
       );
       if (!paginationToken) return;
 
+      fetching = true;
+      console.log('---> paginating...');
       await to(
         mx.paginateEventTimeline(timelineToPaginate, {
           backwards,
           limit,
         })
       );
+      fetching = false;
       if (alive()) {
         const newLTimelines = getLinkedTimelines(timelineToPaginate);
         const newLength = getTimelinesTotalLength(newLTimelines);
@@ -176,9 +183,8 @@ const useTimelinePagination = (
             : currentTimeline.range,
         }));
       }
-    },
-    [mx, alive, setTimeline, limit]
-  );
+    };
+  }, [mx, alive, setTimeline, limit]);
   return handleTimelinePagination;
 };
 
@@ -251,6 +257,8 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     ),
     onEnd: handleTimelinePagination,
   });
+
+  console.log('---> Updated Range', { ...timeline.range });
 
   useLiveEventArrive(
     mx,
@@ -341,11 +349,15 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       RelationType.Replace,
       EventType.RoomMessage
     );
+
     const editEvent = edits && getLatestEdit(mEvent, edits.getRelations());
     const newContent = editEvent?.getContent()['m.new_content'];
+    const { replyEventId } = mEvent;
 
     const { body, formatted_body: customBody } = newContent ?? mEvent.getContent();
-    if (!body) return null;
+    const isEncrypted = mEvent.getType() === EventType.RoomMessageEncrypted;
+    // FIXME: Fix encrypted msg not returning body
+    if (!body && !isEncrypted) return null;
     const senderId = mEvent.getSender() ?? '';
     const prevSenderId = prevEvent?.getSender();
     const collapsed = prevSenderId === senderId;
@@ -388,8 +400,13 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       </Avatar>
     );
 
+    const replyJSX = replyEventId ? (
+      <Reply mx={mx} room={room} timelineSet={timelineSet} eventId={replyEventId} />
+    ) : undefined;
+
     const msgContentJSX = (
       <Box direction="Column">
+        {replyJSX}
         <Text
           as="div"
           style={{ whiteSpace: customBody ? 'initial' : 'pre-wrap', wordBreak: 'break-word' }}
@@ -397,7 +414,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           {customBody ? (
             parse(sanitizeCustomHtml(customBody), htmlReactParserOptions)
           ) : (
-            <Linkify options={LINKIFY_OPTS}>{body}</Linkify>
+            <Linkify options={LINKIFY_OPTS}>{body ?? '*** Loading Message ***'}</Linkify>
           )}
           {!!newContent && (
             <>

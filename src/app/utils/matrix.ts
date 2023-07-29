@@ -131,3 +131,11 @@ export const matrixEventByRecency = (m1: MatrixEvent, m2: MatrixEvent) => m2.get
 
 export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
   ev.getSender() === senderId;
+
+export const trimReplyFromBody = (body: string): string => {
+  if (body.match(/^> <@.+:.+>/) === null) return body;
+
+  const trimmedBody = body.slice(body.indexOf('\n\n') + 2);
+
+  return trimmedBody || body;
+};
