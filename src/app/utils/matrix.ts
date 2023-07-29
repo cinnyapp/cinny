@@ -133,7 +133,7 @@ export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
   ev.getSender() === senderId;
 
 export const trimReplyFromBody = (body: string): string => {
-  if (body.match(/^> <@.+:.+>/) === null) return body;
+  if (body.match(/^> <.+>/) === null) return body;
 
   const trimmedBody = body.slice(body.indexOf('\n\n') + 2);
 
