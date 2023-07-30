@@ -82,6 +82,14 @@ export const CompactHeader = style([
 export const DefaultAvatar = style({
   paddingTop: toRem(4),
   minWidth: toRem(36),
+  cursor: 'pointer',
+  transition: 'transform 200ms cubic-bezier(0, 0.8, 0.67, 0.97)',
+
+  selectors: {
+    '&:hover': {
+      transform: `translateY(${toRem(-4)})`,
+    },
+  },
 });
 
 export const BubbleAvatar = style({

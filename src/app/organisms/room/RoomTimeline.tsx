@@ -61,6 +61,7 @@ import {
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { Reply } from '../../components/message/Reply';
+import { openProfileViewer } from '../../../client/action/navigation';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -330,13 +331,20 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       if (absoluteIndex) {
         setHighlightedId(replyId);
         paginator.scrollToItem(absoluteIndex, {
-          // behavior: 'smooth',
           align: 'center',
           stopInView: true,
         });
       }
     },
     [room, timeline, paginator]
+  );
+
+  const handleAvatarClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (evt) => {
+      const avatarId = evt.currentTarget.getAttribute('data-avatar-id');
+      openProfileViewer(avatarId, room.roomId);
+    },
+    [room]
   );
 
   let prevEvent: MatrixEvent | undefined;
@@ -429,7 +437,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     );
 
     const avatarJSX = (
-      <Avatar size="300">
+      <Avatar size="300" data-avatar-id={senderId} onClick={handleAvatarClick}>
         {senderAvatarMxc ? (
           <AvatarImage src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc} />
         ) : (
