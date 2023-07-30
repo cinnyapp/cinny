@@ -61,6 +61,7 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     copyPublicDir: false,
+    assetsInlineLimit: 0,
     rollupOptions: {
       plugins: [
         inject({ Buffer: ['buffer', 'Buffer'] })
