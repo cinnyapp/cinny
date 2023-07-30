@@ -13,7 +13,7 @@ export const ReplyContent = style({
   opacity: config.opacity.P300,
 
   selectors: {
-    [`${Reply} &:hover`]: {
+    [`${Reply}:hover &`]: {
       opacity: config.opacity.P500,
     },
   },
