@@ -135,7 +135,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     anchorItem: number;
   }>();
 
-  const scrollToItemRef = useRef<number>();
+  const scrollToItemRef = useRef<{
+    index: number;
+    opts?: ScrollToOptions;
+  }>();
 
   const rangeRef = useRef(range);
   rangeRef.current = range;
@@ -192,9 +195,12 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       if (index < currentRange.start || index > currentRange.end) {
         onRangeChange({
           start: Math.max(index, 0),
-          end: Math.min(index, countRef.current),
+          end: Math.min(index + 1, countRef.current),
         });
-        scrollToItemRef.current = index;
+        scrollToItemRef.current = {
+          index,
+          opts,
+        };
         return;
       }
       const itemElement = getItemElement(index);
@@ -260,11 +266,15 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       const anchorB = entries.find(
         (entry) => entry.target.getAttribute(PAGINATOR_ANCHOR_ATTR) === Direction.Backward
       );
-      if (anchorB?.isIntersecting) paginate(Direction.Backward);
+      if (anchorB?.isIntersecting) {
+        paginate(Direction.Backward);
+      }
       const anchorF = entries.find(
         (entry) => entry.target.getAttribute(PAGINATOR_ANCHOR_ATTR) === Direction.Forward
       );
-      if (anchorF?.isIntersecting) paginate(Direction.Forward);
+      if (anchorF?.isIntersecting) {
+        paginate(Direction.Forward);
+      }
     },
     [paginate]
   );
@@ -305,7 +315,9 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   // when scrollToItem index was not in range.
   useLayoutEffect(() => {
     if (scrollToItemRef.current === undefined) return;
-    scrollToItem(scrollToItemRef.current);
+    const { index, opts } = scrollToItemRef.current;
+    scrollToItem(index, opts);
+    scrollToItemRef.current = undefined;
   }, [range, scrollToItem]);
 
   // Continue pagination to fill view height with scroll items
