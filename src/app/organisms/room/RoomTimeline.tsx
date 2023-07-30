@@ -52,7 +52,11 @@ import {
   ReactionTooltipMsg,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
-import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
+import {
+  decryptAllTimelineEvent,
+  getMemberAvatarMxc,
+  getMemberDisplayName,
+} from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { Reply } from '../../components/message/Reply';
@@ -167,6 +171,14 @@ const useTimelinePagination = (
           limit,
         })
       );
+      const fetchedTimeline =
+        timelineToPaginate.getNeighbouringTimeline(
+          backwards ? Direction.Backward : Direction.Forward
+        ) ?? timelineToPaginate;
+      if (mx.isRoomEncrypted(fetchedTimeline.getRoomId() ?? '')) {
+        await to(decryptAllTimelineEvent(mx, fetchedTimeline));
+      }
+
       fetching = false;
       if (alive()) {
         const newLTimelines = getLinkedTimelines(timelineToPaginate);
@@ -518,8 +530,6 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
               <>
                 <DefaultPlaceholder />
                 <DefaultPlaceholder />
-                <DefaultPlaceholder />
-                <DefaultPlaceholder />
                 <DefaultPlaceholder ref={paginator.observeBackAnchor} />
               </>
             ))}
@@ -538,8 +548,6 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
             ) : (
               <>
                 <DefaultPlaceholder ref={paginator.observeFrontAnchor} />
-                <DefaultPlaceholder />
-                <DefaultPlaceholder />
                 <DefaultPlaceholder />
                 <DefaultPlaceholder />
               </>

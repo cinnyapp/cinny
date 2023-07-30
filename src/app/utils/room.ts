@@ -1,6 +1,7 @@
 import { IconName, IconSrc } from 'folds';
 
 import {
+  EventTimeline,
   IPushRule,
   IPushRules,
   JoinRule,
@@ -9,6 +10,7 @@ import {
   NotificationCountType,
   Room,
 } from 'matrix-js-sdk';
+import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import {
   NotificationType,
@@ -274,4 +276,15 @@ export const getMemberDisplayName = (room: Room, userId: string): string | undef
 export const getMemberAvatarMxc = (room: Room, userId: string): string | undefined => {
   const member = room.getMember(userId);
   return member?.getMxcAvatarUrl();
+};
+
+export const decryptAllTimelineEvent = async (mx: MatrixClient, timeline: EventTimeline) => {
+  const crypto = mx.getCrypto();
+  if (!crypto) return;
+  const decryptionPromises = timeline
+    .getEvents()
+    .filter((event) => event.isEncrypted())
+    .reverse()
+    .map((event) => event.attemptDecryption(crypto as CryptoBackend, { isRetry: true }));
+  await Promise.allSettled(decryptionPromises);
 };
