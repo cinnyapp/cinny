@@ -10,9 +10,9 @@ export const BubbleLayout = as<
     avatar?: ReactNode;
     header?: ReactNode;
   } & css.BaseMessageVariants
->(({ className, collapse, space, reverse, avatar, header, children, ...props }, ref) => (
+>(({ className, collapse, space, highlight, reverse, avatar, header, children, ...props }, ref) => (
   <Box
-    className={classNames(css.BaseMessage({ collapse, space }), className)}
+    className={classNames(css.BaseMessage({ collapse, space, highlight }), className)}
     alignItems="Start"
     direction={reverse ? 'RowReverse' : 'Row'}
     gap="300"

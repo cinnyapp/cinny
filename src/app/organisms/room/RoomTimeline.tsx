@@ -1,5 +1,6 @@
 import React, {
   Dispatch,
+  MouseEventHandler,
   SetStateAction,
   useCallback,
   useEffect,
@@ -118,6 +119,23 @@ export const getTimelineRelativeIndex = (absoluteIndex: number, timelineBaseInde
 export const getTimelineEvent = (timeline: EventTimeline, index: number): MatrixEvent | undefined =>
   timeline.getEvents()[index];
 
+export const findTimelineEventAbsoluteIndex = (
+  room: Room,
+  timelines: EventTimeline[],
+  eventId: string
+): number | undefined => {
+  const eventTimeline = getEventTimeline(room, eventId);
+  if (!eventTimeline) return undefined;
+  const timelineIndex = timelines.findIndex((t) => t === eventTimeline);
+  if (timelineIndex === -1) return undefined;
+  const eventIndex = eventTimeline.getEvents().findIndex((evt) => evt.getId() === eventId);
+  if (eventIndex === -1) return undefined;
+  const baseIndex = timelines
+    .slice(0, timelineIndex)
+    .reduce((accValue, timeline) => timeline.getEvents().length + accValue, 0);
+  return baseIndex + eventIndex;
+};
+
 export const getLatestEdit = (
   targetEvent: MatrixEvent,
   editEvents: MatrixEvent[]
@@ -225,6 +243,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventArriveCountRef = useRef(0);
+  const [highlightId, setHighlightedId] = useState<string>();
 
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () => getReactCustomHtmlParser(mx, room),
@@ -302,6 +321,23 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       if (scrollEl) scrollToBottom(scrollEl, 'smooth');
     }
   }, [eventArriveCount]);
+
+  const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (evt) => {
+      const replyId = evt.currentTarget.getAttribute('data-reply-id');
+      if (typeof replyId !== 'string') return;
+      const absoluteIndex = findTimelineEventAbsoluteIndex(room, timeline.linkedTimelines, replyId);
+      if (absoluteIndex) {
+        setHighlightedId(replyId);
+        paginator.scrollToItem(absoluteIndex, {
+          // behavior: 'smooth',
+          align: 'center',
+          stopInView: true,
+        });
+      }
+    },
+    [room, timeline, paginator]
+  );
 
   let prevEvent: MatrixEvent | undefined;
   const reactionRenderer = useCallback(
@@ -410,7 +446,15 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     );
 
     const replyJSX = replyEventId ? (
-      <Reply mx={mx} room={room} timelineSet={timelineSet} eventId={replyEventId} />
+      <Reply
+        as="button"
+        mx={mx}
+        room={room}
+        timelineSet={timelineSet}
+        eventId={replyEventId}
+        data-reply-id={replyEventId}
+        onClick={handleReplyClick}
+      />
     ) : undefined;
 
     const msgContentJSX = (
@@ -449,6 +493,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           data-message-item={item}
           space={messageSpacing}
           collapse={collapsed}
+          highlight={highlightId === mEvent.getId()}
           header={
             !collapsed && (
               <>
@@ -470,6 +515,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           space={messageSpacing}
           reverse={senderId === mx.getUserId()}
           collapse={collapsed}
+          highlight={highlightId === mEvent.getId()}
           avatar={!collapsed && avatarJSX}
           header={
             !collapsed && (
@@ -491,6 +537,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         data-message-item={item}
         space={messageSpacing}
         collapse={collapsed}
+        highlight={highlightId === mEvent.getId()}
         avatar={!collapsed && avatarJSX}
         header={
           !collapsed && (
@@ -514,7 +561,8 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S500} 0` }}
         >
-          {timeline.linkedTimelines[0].getPaginationToken(Direction.Backward) &&
+          {(timeline.linkedTimelines[0].getPaginationToken(Direction.Backward) ||
+            timeline.range.start !== 0) &&
             (messageLayout === 1 ? (
               <>
                 <CompactPlaceholder />

@@ -1,10 +1,28 @@
-import { style } from '@vanilla-extract/css';
+import { keyframes, style } from '@vanilla-extract/css';
 import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { DefaultReset, color, config, toRem } from 'folds';
 
 export const StickySection = style({
   position: 'sticky',
   top: config.space.S100,
+});
+
+const highlightAnime = keyframes({
+  '0%': {
+    backgroundColor: color.Primary.Container,
+  },
+  '25%': {
+    backgroundColor: color.Primary.ContainerActive,
+  },
+  '50%': {
+    backgroundColor: color.Primary.Container,
+  },
+  '75%': {
+    backgroundColor: color.Primary.ContainerActive,
+  },
+  '100%': {
+    backgroundColor: color.Primary.Container,
+  },
 });
 
 export const BaseMessage = recipe({
@@ -37,6 +55,11 @@ export const BaseMessage = recipe({
       true: {
         marginTop: 0,
         paddingTop: 0,
+      },
+    },
+    highlight: {
+      true: {
+        animation: `${highlightAnime} 2000ms ease-in-out`,
       },
     },
   },

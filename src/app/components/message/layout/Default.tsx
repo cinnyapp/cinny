@@ -9,9 +9,9 @@ export const DefaultLayout = as<
     avatar?: ReactNode;
     header?: ReactNode;
   } & css.BaseMessageVariants
->(({ className, space, collapse, avatar, header, children, ...props }, ref) => (
+>(({ className, space, collapse, highlight, avatar, header, children, ...props }, ref) => (
   <Box
-    className={classNames(css.BaseMessage({ collapse, space }), className)}
+    className={classNames(css.BaseMessage({ collapse, space, highlight }), className)}
     alignItems="Start"
     gap="300"
     {...props}
