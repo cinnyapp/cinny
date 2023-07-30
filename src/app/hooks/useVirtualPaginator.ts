@@ -34,8 +34,8 @@ type VirtualPaginatorOptions<TScrollElement extends HTMLElement> = {
 
 type VirtualPaginator = {
   getItems: () => number[];
-  scrollToElement: (element: HTMLElement) => void;
-  scrollToItem: (index: number) => void;
+  scrollToElement: (element: HTMLElement, opts?: ScrollToOptions) => void;
+  scrollToItem: (index: number, opts?: ScrollToOptions) => void;
   observeBackAnchor: HandleObserveAnchor;
   observeFrontAnchor: HandleObserveAnchor;
 };
@@ -157,16 +157,16 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       if (opts?.align === 'center') {
         const scrollInfo = getScrollInfo(scrollElement);
         scrollTo =
-          element.offsetTop +
-          Math.round(scrollInfo.viewHeight / 2) -
+          element.offsetTop -
+          Math.round(scrollInfo.viewHeight / 2) +
           Math.round(element.clientHeight / 2);
       } else if (opts?.align === 'end') {
         const scrollInfo = getScrollInfo(scrollElement);
-        scrollTo = element.offsetTop + Math.round(scrollInfo.viewHeight) - element.clientHeight;
+        scrollTo = element.offsetTop - Math.round(scrollInfo.viewHeight) + element.clientHeight;
       }
 
       scrollElement.scrollTo({
-        top: scrollTo + (opts?.offset ?? 0),
+        top: scrollTo - (opts?.offset ?? 0),
         behavior: opts?.behavior,
       });
     },
