@@ -20,6 +20,9 @@ export type ScrollToOptions = {
   behavior?: 'auto' | 'instant' | 'smooth';
 };
 
+export type ScrollToElement = (element: HTMLElement, opts?: ScrollToOptions) => void;
+export type ScrollToItem = (index: number, opts?: ScrollToOptions) => void;
+
 type HandleObserveAnchor = (element: HTMLElement | null) => void;
 
 type VirtualPaginatorOptions<TScrollElement extends HTMLElement> = {
@@ -34,8 +37,8 @@ type VirtualPaginatorOptions<TScrollElement extends HTMLElement> = {
 
 type VirtualPaginator = {
   getItems: () => number[];
-  scrollToElement: (element: HTMLElement, opts?: ScrollToOptions) => void;
-  scrollToItem: (index: number, opts?: ScrollToOptions) => void;
+  scrollToElement: ScrollToElement;
+  scrollToItem: ScrollToItem;
   observeBackAnchor: HandleObserveAnchor;
   observeFrontAnchor: HandleObserveAnchor;
 };
@@ -148,8 +151,8 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     return () => items;
   }, [range]);
 
-  const scrollToElement = useCallback(
-    (element: HTMLElement, opts?: ScrollToOptions) => {
+  const scrollToElement = useCallback<ScrollToElement>(
+    (element, opts) => {
       const scrollElement = getScrollElement();
       if (!scrollElement) return;
 
@@ -173,8 +176,8 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     [getScrollElement]
   );
 
-  const scrollToItem = useCallback(
-    (index: number, opts?: ScrollToOptions) => {
+  const scrollToItem = useCallback<ScrollToItem>(
+    (index, opts) => {
       if (index < 0 || index > countRef.current) return;
       const currentRange = rangeRef.current;
       // index is not in range change range
