@@ -156,6 +156,7 @@ const useTimelinePagination = (
       if (fetching) return;
       const { linkedTimelines: lTimelines } = timelineRef.current;
       const oldLength = getTimelinesTotalLength(lTimelines);
+      // FIXME: get fist timeline before paginating
       const timelineToPaginate = backwards ? lTimelines[0] : lTimelines[lTimelines.length - 1];
 
       const paginationToken = timelineToPaginate.getPaginationToken(
