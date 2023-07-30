@@ -18,6 +18,7 @@ export type ScrollToOptions = {
   offset?: number;
   align?: 'start' | 'center' | 'end';
   behavior?: 'auto' | 'instant' | 'smooth';
+  stopInView?: boolean;
 };
 
 export type ScrollToElement = (element: HTMLElement, opts?: ScrollToOptions) => void;
@@ -156,6 +157,12 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       const scrollElement = getScrollElement();
       if (!scrollElement) return;
 
+      if (opts?.stopInView) {
+        const scrollInfo = getScrollInfo(scrollElement);
+        const top = scrollInfo.offsetTop + scrollInfo.top;
+        const bottom = scrollInfo.offsetTop + scrollInfo.top + scrollInfo.height;
+        if (element.offsetTop >= top && element.offsetTop + element.offsetHeight <= bottom) return;
+      }
       let scrollTo = element.offsetTop;
       if (opts?.align === 'center') {
         const scrollInfo = getScrollInfo(scrollElement);
