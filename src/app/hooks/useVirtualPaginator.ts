@@ -201,9 +201,6 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       const currentCount = countRef.current;
       let { start, end } = currentRange;
 
-      console.log('---> onPaginate');
-      console.log('---> Current Range', { ...currentRange });
-
       if (direction === Direction.Backward) {
         restoreScrollRef.current = undefined;
         if (scrollEl && start > 0) {
@@ -240,7 +237,6 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
         }
       }
 
-      console.log(`---> Local paginating: ${direction}`);
       onRangeChange({
         start,
         end,
@@ -280,17 +276,14 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   // restoreScrollRef.current only gets set
   // when pagination is trigger in backward direction
   useLayoutEffect(() => {
-    console.log('---> Restoring scroll');
-    console.log(restoreScrollRef.current);
     const scrollEl = getScrollElement();
     if (!restoreScrollRef.current || !scrollEl) return;
     const { offsetTop: oldOffsetTop, anchorItem } = restoreScrollRef.current;
     const anchorEl = getItemElement(anchorItem);
-    console.log(anchorEl);
+
     if (!anchorEl) return;
     const { offsetTop } = anchorEl;
     const offsetDiff = offsetTop - oldOffsetTop;
-    console.log(offsetDiff);
 
     scrollEl.scrollTo({
       top: offsetDiff,
@@ -325,12 +318,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     ) as HTMLElement | null;
 
     if (backAnchor && inVisibleScrollArea(scrollElement, backAnchor)) {
-      console.log('---> Back filling View');
       paginate(Direction.Backward);
       return;
     }
     if (fontAnchor && inVisibleScrollArea(scrollElement, fontAnchor)) {
-      console.log('---> Front filling View');
       paginate(Direction.Forward);
     }
   }, [range, getScrollElement, paginate]);

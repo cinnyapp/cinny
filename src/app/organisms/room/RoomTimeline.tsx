@@ -152,7 +152,6 @@ const useTimelinePagination = (
   const handleTimelinePagination = useMemo(() => {
     let fetching = false;
     return async (backwards: boolean) => {
-      console.log('---> onEnd');
       if (fetching) return;
       const { linkedTimelines: lTimelines } = timelineRef.current;
       const oldLength = getTimelinesTotalLength(lTimelines);
@@ -165,7 +164,6 @@ const useTimelinePagination = (
       if (!paginationToken) return;
 
       fetching = true;
-      console.log('---> paginating...');
       await to(
         mx.paginateEventTimeline(timelineToPaginate, {
           backwards,
@@ -270,8 +268,6 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     ),
     onEnd: handleTimelinePagination,
   });
-
-  console.log('---> Updated Range', { ...timeline.range });
 
   useLiveEventArrive(
     mx,
