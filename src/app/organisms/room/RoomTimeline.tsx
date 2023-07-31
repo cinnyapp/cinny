@@ -62,6 +62,7 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { Reply } from '../../components/message/Reply';
 import { openProfileViewer } from '../../../client/action/navigation';
+import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -70,9 +71,6 @@ export const getEventTimeline = (room: Room, eventId: string): EventTimeline | u
   const timelineSet = room.getUnfilteredTimelineSet();
   return timelineSet.getTimelineForEvent(eventId) ?? undefined;
 };
-
-export const fetchEventTimeline = (mx: MatrixClient, room: Room, eventId: string) =>
-  mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId);
 
 export const getFirstLinkedTimeline = (
   timeline: EventTimeline,
@@ -120,13 +118,11 @@ export const getTimelineRelativeIndex = (absoluteIndex: number, timelineBaseInde
 export const getTimelineEvent = (timeline: EventTimeline, index: number): MatrixEvent | undefined =>
   timeline.getEvents()[index];
 
-export const findTimelineEventAbsoluteIndex = (
-  room: Room,
+export const getEventIdAbsoluteIndex = (
   timelines: EventTimeline[],
+  eventTimeline: EventTimeline,
   eventId: string
 ): number | undefined => {
-  const eventTimeline = getEventTimeline(room, eventId);
-  if (!eventTimeline) return undefined;
   const timelineIndex = timelines.findIndex((t) => t === eventTimeline);
   if (timelineIndex === -1) return undefined;
   const eventIndex = eventTimeline.getEvents().findIndex((evt) => evt.getId() === eventId);
@@ -158,6 +154,37 @@ type Timeline = {
   range: ItemRange;
 };
 
+const useEventTimelineLoader = (
+  mx: MatrixClient,
+  room: Room,
+  onLoad: (eventId: string, linkedTimelines: EventTimeline[], evtAbsIndex: number) => void,
+  onError: (err: Error | null) => void
+) => {
+  const loadEventTimeline = useCallback(
+    async (eventId: string) => {
+      const [err, replyEvtTimeline] = await to(
+        mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId)
+      );
+      if (!replyEvtTimeline) {
+        onError(err ?? null);
+        return;
+      }
+      const linkedTimelines = getLinkedTimelines(replyEvtTimeline);
+      const absIndex = getEventIdAbsoluteIndex(linkedTimelines, replyEvtTimeline, eventId);
+
+      if (absIndex === undefined) {
+        onError(err ?? null);
+        return;
+      }
+
+      onLoad(eventId, linkedTimelines, absIndex);
+    },
+    [mx, room, onLoad, onError]
+  );
+
+  return loadEventTimeline;
+};
+
 const useTimelinePagination = (
   mx: MatrixClient,
   timeline: Timeline,
@@ -174,8 +201,9 @@ const useTimelinePagination = (
       if (fetching) return;
       const { linkedTimelines: lTimelines } = timelineRef.current;
       const oldLength = getTimelinesTotalLength(lTimelines);
-      // FIXME: get fist timeline before paginating
+
       const timelineToPaginate = backwards ? lTimelines[0] : lTimelines[lTimelines.length - 1];
+      if (!timelineToPaginate) return;
 
       const paginationToken = timelineToPaginate.getPaginationToken(
         backwards ? Direction.Backward : Direction.Forward
@@ -210,7 +238,7 @@ const useTimelinePagination = (
                 start: currentTimeline.range.start + lengthDiff,
                 end: currentTimeline.range.end + lengthDiff,
               }
-            : currentTimeline.range,
+            : { ...currentTimeline.range },
         }));
       }
     };
@@ -244,7 +272,12 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventArriveCountRef = useRef(0);
-  const [highlightId, setHighlightedId] = useState<string>();
+  const highlightItem = useRef<{
+    index: number;
+    scrollTo: boolean;
+  }>();
+  const alive = useAlive();
+  const [, forceUpdate] = useForceUpdate();
 
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () => getReactCustomHtmlParser(mx, room),
@@ -289,6 +322,38 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     onEnd: handleTimelinePagination,
   });
 
+  const loadEventTimeline = useEventTimelineLoader(
+    mx,
+    room,
+    useCallback(
+      (evtId, lTimelines, evtAbsIndex) => {
+        if (!alive()) return;
+        const evLength = getTimelinesTotalLength(lTimelines);
+
+        highlightItem.current = {
+          index: evtAbsIndex,
+          scrollTo: true,
+        };
+        setTimeline({
+          linkedTimelines: lTimelines,
+          range: {
+            start: Math.max(evtAbsIndex - PAGINATION_LIMIT, 0),
+            end: Math.min(evtAbsIndex + PAGINATION_LIMIT, evLength),
+          },
+        });
+      },
+      [alive]
+    ),
+    useCallback(
+      (err) => {
+        if (!alive()) return;
+        console.log('---> Error loading timeline', err);
+        // FIXME: initialize to start?
+      },
+      [alive]
+    )
+  );
+
   useLiveEventArrive(
     mx,
     liveTimelineLinked && rangeAtEnd ? room.roomId : undefined,
@@ -311,9 +376,22 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   );
 
   useLayoutEffect(() => {
+    // FIXME: only scroll to bottom if event timeline is not loaded
     const scrollEl = scrollRef.current;
     if (scrollEl) scrollToBottom(scrollEl);
   }, []);
+
+  const highlightItm = highlightItem.current;
+  useLayoutEffect(() => {
+    if (highlightItm && highlightItm.scrollTo) {
+      paginator.scrollToItem(highlightItm.index, {
+        behavior: 'instant',
+        align: 'center',
+        stopInView: true,
+      });
+    }
+    highlightItem.current = undefined;
+  }, [highlightItm, paginator]);
 
   const eventArriveCount = eventArriveCountRef.current;
   useEffect(() => {
@@ -324,19 +402,33 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   }, [eventArriveCount]);
 
   const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (evt) => {
+    async (evt) => {
       const replyId = evt.currentTarget.getAttribute('data-reply-id');
       if (typeof replyId !== 'string') return;
-      const absoluteIndex = findTimelineEventAbsoluteIndex(room, timeline.linkedTimelines, replyId);
-      if (absoluteIndex) {
-        setHighlightedId(replyId);
+      const replyTimeline = getEventTimeline(room, replyId);
+      const absoluteIndex =
+        replyTimeline && getEventIdAbsoluteIndex(timeline.linkedTimelines, replyTimeline, replyId);
+
+      if (typeof absoluteIndex === 'number') {
         paginator.scrollToItem(absoluteIndex, {
+          behavior: 'smooth',
           align: 'center',
           stopInView: true,
         });
+        highlightItem.current = {
+          index: absoluteIndex,
+          scrollTo: false,
+        };
+        forceUpdate();
+      } else {
+        setTimeline({
+          range: { start: 0, end: 0 },
+          linkedTimelines: [],
+        });
+        loadEventTimeline(replyId);
       }
     },
-    [room, timeline, paginator]
+    [room, timeline, paginator, loadEventTimeline, forceUpdate]
   );
 
   const handleAvatarClick: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -414,6 +506,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     const senderId = mEvent.getSender() ?? '';
     const prevSenderId = prevEvent?.getSender();
     const collapsed = prevSenderId === senderId;
+    const highlighted = highlightItem.current?.index === item;
     prevEvent = mEvent;
 
     const senderDisplayName =
@@ -501,7 +594,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           data-message-item={item}
           space={messageSpacing}
           collapse={collapsed}
-          highlight={highlightId === mEvent.getId()}
+          highlight={highlighted}
           header={
             !collapsed && (
               <>
@@ -523,7 +616,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           space={messageSpacing}
           reverse={senderId === mx.getUserId()}
           collapse={collapsed}
-          highlight={highlightId === mEvent.getId()}
+          highlight={highlighted}
           avatar={!collapsed && avatarJSX}
           header={
             !collapsed && (
@@ -545,7 +638,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         data-message-item={item}
         space={messageSpacing}
         collapse={collapsed}
-        highlight={highlightId === mEvent.getId()}
+        highlight={highlighted}
         avatar={!collapsed && avatarJSX}
         header={
           !collapsed && (
@@ -569,7 +662,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S500} 0` }}
         >
-          {(timeline.linkedTimelines[0].getPaginationToken(Direction.Backward) ||
+          {(timeline.linkedTimelines[0]?.getPaginationToken(Direction.Backward) !== null ||
             timeline.range.start !== 0) &&
             (messageLayout === 1 ? (
               <>
