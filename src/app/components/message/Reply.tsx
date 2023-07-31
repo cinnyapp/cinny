@@ -34,12 +34,12 @@ export const Reply = as<'div', ReplyProps>(
       if (replyEvent) return;
 
       const loadEvent = async () => {
-        const [err] = await to(mx.getEventTimeline(timelineSet, eventId));
-        if (err) {
+        await to(mx.getEventTimeline(timelineSet, eventId));
+        const targetEvent = timelineSet.findEventById(eventId);
+        if (!targetEvent) {
           setReplyEvent(null);
           return;
         }
-        const targetEvent = timelineSet.findEventById(eventId);
         setReplyEvent(targetEvent);
       };
       loadEvent();

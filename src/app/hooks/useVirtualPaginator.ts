@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { OnIntersectionCallback, useIntersectionObserver } from './useIntersectionObserver';
-import { getScrollInfo, inVisibleScrollArea } from '../utils/dom';
+import {
+  canFitInScrollView,
+  getScrollInfo,
+  isInScrollView,
+  isIntersectingScrollView,
+} from '../utils/dom';
 
 const PAGINATOR_ANCHOR_ATTR = 'data-paginator-anchor';
 
@@ -140,15 +145,21 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     opts?: ScrollToOptions;
   }>();
 
-  const rangeRef = useRef(range);
-  rangeRef.current = range;
-  const countRef = useRef(count);
-  if (countRef.current !== count) {
+  const propRef = useRef({
+    range,
+    limit,
+    count,
+  });
+  if (propRef.current.count !== count) {
     // Clear restoreScrollRef on count change
     // As restoreScrollRef.current.anchorItem might changes
     restoreScrollRef.current = undefined;
   }
-  countRef.current = count;
+  propRef.current = {
+    range,
+    count,
+    limit,
+  };
 
   const getItems = useMemo(() => {
     const items = generateItems(range);
@@ -160,20 +171,17 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       const scrollElement = getScrollElement();
       if (!scrollElement) return;
 
-      if (opts?.stopInView) {
-        const scrollInfo = getScrollInfo(scrollElement);
-        const top = scrollInfo.offsetTop + scrollInfo.top;
-        const bottom = scrollInfo.offsetTop + scrollInfo.top + scrollInfo.height;
-        if (element.offsetTop >= top && element.offsetTop + element.offsetHeight <= bottom) return;
+      if (opts?.stopInView && isInScrollView(scrollElement, element)) {
+        return;
       }
       let scrollTo = element.offsetTop;
-      if (opts?.align === 'center') {
+      if (opts?.align === 'center' && canFitInScrollView(scrollElement, element)) {
         const scrollInfo = getScrollInfo(scrollElement);
         scrollTo =
           element.offsetTop -
           Math.round(scrollInfo.viewHeight / 2) +
           Math.round(element.clientHeight / 2);
-      } else if (opts?.align === 'end') {
+      } else if (opts?.align === 'end' && canFitInScrollView(scrollElement, element)) {
         const scrollInfo = getScrollInfo(scrollElement);
         scrollTo = element.offsetTop - Math.round(scrollInfo.viewHeight) + element.clientHeight;
       }
@@ -188,14 +196,15 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
   const scrollToItem = useCallback<ScrollToItem>(
     (index, opts) => {
-      if (index < 0 || index > countRef.current) return;
-      const currentRange = rangeRef.current;
+      const { range: currentRange, limit: currentLimit, count: currentCount } = propRef.current;
+
+      if (index < 0 || index > currentCount) return;
       // index is not in range change range
       // and trigger scrollToItem in layoutEffect hook
       if (index < currentRange.start || index > currentRange.end) {
         onRangeChange({
-          start: Math.max(index, 0),
-          end: Math.min(index + 1, countRef.current),
+          start: Math.max(index - currentLimit, 0),
+          end: Math.min(index + currentLimit, currentCount),
         });
         scrollToItemRef.current = {
           index,
@@ -203,6 +212,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
         };
         return;
       }
+
       const itemElement = getItemElement(index);
       if (!itemElement) return;
       scrollToElement(itemElement, opts);
@@ -213,8 +223,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   const paginate = useCallback(
     (direction: Direction) => {
       const scrollEl = getScrollElement();
-      const currentRange = rangeRef.current;
-      const currentCount = countRef.current;
+      const { range: currentRange, limit: currentLimit, count: currentCount } = propRef.current;
       let { start, end } = currentRange;
 
       if (direction === Direction.Backward) {
@@ -238,7 +247,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
         if (scrollEl) {
           end = getDropIndex(scrollEl, currentRange, Direction.Forward, getItemElement, 2) ?? end;
         }
-        start = Math.max(start - limit, 0);
+        start = Math.max(start - currentLimit, 0);
       }
 
       if (direction === Direction.Forward) {
@@ -246,7 +255,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
           onEnd?.(false);
           return;
         }
-        end = Math.min(end + limit, currentCount);
+        end = Math.min(end + currentLimit, currentCount);
         if (scrollEl) {
           start =
             getDropIndex(scrollEl, currentRange, Direction.Backward, getItemElement, 2) ?? start;
@@ -258,7 +267,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
         end,
       });
     },
-    [limit, getScrollElement, getItemElement, onEnd, onRangeChange]
+    [getScrollElement, getItemElement, onEnd, onRangeChange]
   );
 
   const handlePaginatorElIntersection: OnIntersectionCallback = useCallback(
@@ -316,7 +325,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   useLayoutEffect(() => {
     if (scrollToItemRef.current === undefined) return;
     const { index, opts } = scrollToItemRef.current;
-    scrollToItem(index, opts);
+    scrollToItem(index, {
+      ...opts,
+      behavior: 'instant',
+    });
     scrollToItemRef.current = undefined;
   }, [range, scrollToItem]);
 
@@ -339,11 +351,11 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       `[${PAGINATOR_ANCHOR_ATTR}="${Direction.Forward}"]`
     ) as HTMLElement | null;
 
-    if (backAnchor && inVisibleScrollArea(scrollElement, backAnchor)) {
+    if (backAnchor && isIntersectingScrollView(scrollElement, backAnchor)) {
       paginate(Direction.Backward);
       return;
     }
-    if (fontAnchor && inVisibleScrollArea(scrollElement, fontAnchor)) {
+    if (fontAnchor && isIntersectingScrollView(scrollElement, fontAnchor)) {
       paginate(Direction.Forward);
     }
   }, [range, getScrollElement, paginate]);

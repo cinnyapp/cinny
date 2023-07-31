@@ -7,7 +7,7 @@ export const editableActiveElement = (): boolean =>
   !!document.activeElement &&
   /^(input)|(textarea)$/.test(document.activeElement.nodeName.toLowerCase());
 
-export const inVisibleScrollArea = (
+export const isIntersectingScrollView = (
   scrollElement: HTMLElement,
   childElement: HTMLElement
 ): boolean => {
@@ -18,9 +18,24 @@ export const inVisibleScrollArea = (
   const childBottom = childTop + childElement.clientHeight;
 
   if (childTop >= scrollTop && childTop < scrollBottom) return true;
-  if (childTop < scrollTop && childBottom > scrollTop) return true;
+  if (childBottom > scrollTop && childBottom <= scrollBottom) return true;
+  if (childTop < scrollTop && childBottom > scrollBottom) return true;
   return false;
 };
+
+export const isInScrollView = (scrollElement: HTMLElement, childElement: HTMLElement): boolean => {
+  const scrollTop = scrollElement.offsetTop + scrollElement.scrollTop;
+  const scrollBottom = scrollTop + scrollElement.offsetHeight;
+  return (
+    childElement.offsetTop >= scrollTop &&
+    childElement.offsetTop + childElement.offsetHeight <= scrollBottom
+  );
+};
+
+export const canFitInScrollView = (
+  scrollElement: HTMLElement,
+  childElement: HTMLElement
+): boolean => childElement.offsetHeight < scrollElement.offsetHeight;
 
 export type FilesOrFile<T extends boolean | undefined = undefined> = T extends true ? File[] : File;
 
