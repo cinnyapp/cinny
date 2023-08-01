@@ -344,14 +344,18 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       },
       [alive]
     ),
-    useCallback(
-      (err) => {
-        if (!alive()) return;
-        console.log('---> Error loading timeline', err);
-        // FIXME: initialize to start?
-      },
-      [alive]
-    )
+    useCallback(() => {
+      if (!alive()) return;
+      const lTimelines = getLinkedTimelines(getLiveTimeline(room));
+      const evLength = getTimelinesTotalLength(lTimelines);
+      setTimeline({
+        linkedTimelines: lTimelines,
+        range: {
+          start: Math.max(evLength - PAGINATION_LIMIT, 0),
+          end: evLength,
+        },
+      });
+    }, [alive, room])
   );
 
   useLiveEventArrive(
@@ -375,8 +379,13 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     }, [])
   );
 
+  useEffect(() => {
+    if (eventId) {
+      loadEventTimeline(eventId);
+    }
+  }, [eventId, loadEventTimeline]);
+
   useLayoutEffect(() => {
-    // FIXME: only scroll to bottom if event timeline is not loaded
     const scrollEl = scrollRef.current;
     if (scrollEl) scrollToBottom(scrollEl);
   }, []);
@@ -390,6 +399,8 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         stopInView: true,
       });
     }
+    // FIXME: remove it with timer
+    // because it remove highlight if state update happen just after highlight update
     highlightItem.current = undefined;
   }, [highlightItm, paginator]);
 
