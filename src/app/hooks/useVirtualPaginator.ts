@@ -136,7 +136,8 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   const initialRenderRef = useRef(true);
 
   const restoreScrollRef = useRef<{
-    offsetTop: number;
+    scrollTop: number;
+    anchorOffsetTop: number;
     anchorItem: number;
   }>();
 
@@ -235,8 +236,9 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
           );
           if (restoreAnchorItem !== undefined && restoreAnchorEl) {
             restoreScrollRef.current = {
+              scrollTop: scrollEl.scrollTop,
               anchorItem: restoreAnchorItem,
-              offsetTop: restoreAnchorEl.offsetTop,
+              anchorOffsetTop: restoreAnchorEl.offsetTop,
             };
           }
         }
@@ -307,16 +309,24 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   useLayoutEffect(() => {
     const scrollEl = getScrollElement();
     if (!restoreScrollRef.current || !scrollEl) return;
-    const { offsetTop: oldOffsetTop, anchorItem } = restoreScrollRef.current;
+    const {
+      anchorOffsetTop: oldOffsetTop,
+      anchorItem,
+      scrollTop: oldScrollTop,
+    } = restoreScrollRef.current;
     const anchorEl = getItemElement(anchorItem);
 
     if (!anchorEl) return;
     const { offsetTop } = anchorEl;
-    const offsetDiff = offsetTop - oldOffsetTop;
+    const offsetAddition = offsetTop - oldOffsetTop;
+    const restoreTop = oldScrollTop + offsetAddition;
 
-    scrollEl.scrollTo({
-      top: offsetDiff,
-    });
+    if (restoreTop > scrollEl.scrollTop) {
+      scrollEl.scrollTo({
+        top: restoreTop,
+        behavior: 'instant',
+      });
+    }
     restoreScrollRef.current = undefined;
   }, [range, getScrollElement, getItemElement]);
 
