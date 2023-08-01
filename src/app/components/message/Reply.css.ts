@@ -7,6 +7,7 @@ export const Reply = style({
   cursor: 'pointer',
   minWidth: 0,
   maxWidth: '100%',
+  minHeight: config.lineHeight.T300,
 });
 
 export const ReplyContent = style({
