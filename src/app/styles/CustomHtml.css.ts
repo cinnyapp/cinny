@@ -42,9 +42,9 @@ export const BlockQuote = style([
 
 const BaseCode = style({
   fontFamily: 'monospace',
-  color: color.Warning.Main,
-  background: color.SurfaceVariant.Container,
-  border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
+  color: color.Secondary.OnContainer,
+  background: color.Secondary.Container,
+  border: `${config.borderWidth.B300} solid ${color.Secondary.ContainerLine}`,
   borderRadius: config.radii.R300,
 });
 
