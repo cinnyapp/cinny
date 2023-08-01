@@ -95,8 +95,12 @@ export const getLinkedTimelines = (timeline: EventTimeline): EventTimeline[] => 
   return timelines;
 };
 
-export const getTimelinesTotalLength = (timelines: EventTimeline[]): number =>
-  timelines.reduce((length, tm) => length + tm.getEvents().length, 0);
+export const timelineToEventsCount = (t: EventTimeline) => t.getEvents().length;
+export const getTimelinesEventsCount = (timelines: EventTimeline[]): number => {
+  const timelineEventCountReducer = (count: number, tm: EventTimeline) =>
+    count + timelineToEventsCount(tm);
+  return timelines.reduce(timelineEventCountReducer, 0);
+};
 
 export const getTimelineAndBaseIndex = (
   timelines: EventTimeline[],
@@ -197,10 +201,39 @@ const useTimelinePagination = (
 
   const handleTimelinePagination = useMemo(() => {
     let fetching = false;
+
+    const recalibratePagination = (
+      linkedTimelines: EventTimeline[],
+      timelinesEventsCount: number[],
+      backwards: boolean
+    ) => {
+      const topTimeline = linkedTimelines[0];
+      const timelineMatch = (mt: EventTimeline) => (t: EventTimeline) => t === mt;
+
+      const newLTimelines = getLinkedTimelines(topTimeline);
+      const topTmIndex = newLTimelines.findIndex(timelineMatch(topTimeline));
+      const topAddedTm = topTmIndex === -1 ? [] : newLTimelines.slice(0, topTmIndex);
+
+      const topTmAddedEvt =
+        timelineToEventsCount(newLTimelines[topTmIndex]) - timelinesEventsCount[0];
+      const offsetRange = getTimelinesEventsCount(topAddedTm) + (backwards ? topTmAddedEvt : 0);
+
+      setTimeline((currentTimeline) => ({
+        linkedTimelines: newLTimelines,
+        range:
+          offsetRange > 0
+            ? {
+                start: currentTimeline.range.start + offsetRange,
+                end: currentTimeline.range.end + offsetRange,
+              }
+            : { ...currentTimeline.range },
+      }));
+    };
+
     return async (backwards: boolean) => {
       if (fetching) return;
       const { linkedTimelines: lTimelines } = timelineRef.current;
-      const oldLength = getTimelinesTotalLength(lTimelines);
+      const timelinesEventsCount = lTimelines.map(timelineToEventsCount);
 
       const timelineToPaginate = backwards ? lTimelines[0] : lTimelines[lTimelines.length - 1];
       if (!timelineToPaginate) return;
@@ -208,7 +241,14 @@ const useTimelinePagination = (
       const paginationToken = timelineToPaginate.getPaginationToken(
         backwards ? Direction.Backward : Direction.Forward
       );
-      if (!paginationToken) return;
+      if (
+        !paginationToken &&
+        getTimelinesEventsCount(lTimelines) !==
+          getTimelinesEventsCount(getLinkedTimelines(timelineToPaginate))
+      ) {
+        recalibratePagination(lTimelines, timelinesEventsCount, backwards);
+        return;
+      }
 
       fetching = true;
       await to(
@@ -221,25 +261,14 @@ const useTimelinePagination = (
         timelineToPaginate.getNeighbouringTimeline(
           backwards ? Direction.Backward : Direction.Forward
         ) ?? timelineToPaginate;
+      // Decrypt all event ahead of render cycle
       if (mx.isRoomEncrypted(fetchedTimeline.getRoomId() ?? '')) {
         await to(decryptAllTimelineEvent(mx, fetchedTimeline));
       }
 
       fetching = false;
       if (alive()) {
-        const newLTimelines = getLinkedTimelines(timelineToPaginate);
-        const newLength = getTimelinesTotalLength(newLTimelines);
-        const lengthDiff = Math.max(newLength - oldLength, 0);
-
-        setTimeline((currentTimeline) => ({
-          linkedTimelines: newLTimelines,
-          range: backwards
-            ? {
-                start: currentTimeline.range.start + lengthDiff,
-                end: currentTimeline.range.end + lengthDiff,
-              }
-            : { ...currentTimeline.range },
-        }));
+        recalibratePagination(lTimelines, timelinesEventsCount, backwards);
       }
     };
   }, [mx, alive, setTimeline, limit]);
@@ -286,7 +315,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
 
   const [timeline, setTimeline] = useState<Timeline>(() => {
     const linkedTimelines = eventId ? [] : getLinkedTimelines(getLiveTimeline(room));
-    const evLength = getTimelinesTotalLength(linkedTimelines);
+    const evLength = getTimelinesEventsCount(linkedTimelines);
     return {
       linkedTimelines,
       range: {
@@ -295,7 +324,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       },
     };
   });
-  const eventsLength = getTimelinesTotalLength(timeline.linkedTimelines);
+  const eventsLength = getTimelinesEventsCount(timeline.linkedTimelines);
   const liveTimelineLinked =
     timeline.linkedTimelines[timeline.linkedTimelines.length - 1] === getLiveTimeline(room);
   const rangeAtEnd = timeline.range.end === eventsLength;
@@ -328,7 +357,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     useCallback(
       (evtId, lTimelines, evtAbsIndex) => {
         if (!alive()) return;
-        const evLength = getTimelinesTotalLength(lTimelines);
+        const evLength = getTimelinesEventsCount(lTimelines);
 
         highlightItem.current = {
           index: evtAbsIndex,
@@ -347,7 +376,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     useCallback(() => {
       if (!alive()) return;
       const lTimelines = getLinkedTimelines(getLiveTimeline(room));
-      const evLength = getTimelinesTotalLength(lTimelines);
+      const evLength = getTimelinesEventsCount(lTimelines);
       setTimeline({
         linkedTimelines: lTimelines,
         range: {
@@ -591,7 +620,11 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           )}
         </Text>
         {reactions && (
-          <Box gap="200" wrap="Wrap" style={{ margin: `${config.space.S100} 0` }}>
+          <Box
+            gap="200"
+            wrap="Wrap"
+            style={{ margin: `${config.space.S200} 0 ${config.space.S100}` }}
+          >
             {reactions.getSortedAnnotationsByKey()?.map(reactionRenderer)}
           </Box>
         )}
