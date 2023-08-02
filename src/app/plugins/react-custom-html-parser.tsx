@@ -16,7 +16,6 @@ import { ErrorBoundary } from 'react-error-boundary';
 import * as css from '../styles/CustomHtml.css';
 import { getMxIdLocalPart, getRoomWithCanonicalAlias } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
-import { sanitizeText } from '../utils/sanitize';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
@@ -144,7 +143,7 @@ export const getReactCustomHtmlParser = (mx: MatrixClient, room: Room): HTMLReac
                     <ReactPrism>
                       {(ref) => (
                         <code ref={ref} {...props} className={lang}>
-                          {sanitizeText(codeReact)}
+                          {codeReact}
                         </code>
                       )}
                     </ReactPrism>
