@@ -185,8 +185,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         userId: string,
         eventId: string,
         body: string,
-        formattedBody: string | null,
-        relatesTo: IEventRelation | undefined,
+        formattedBody?: string | null,
+        relatesTo?: IEventRelation | undefined,
       ) => {
         setReplyDraft({
           userId,

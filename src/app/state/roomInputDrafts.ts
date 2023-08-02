@@ -40,8 +40,8 @@ export type IReplyDraft = {
   userId: string;
   eventId: string;
   body: string;
-  formattedBody: string | null;
-  relatesTo: IEventRelation | undefined;
+  formattedBody?: string | null;
+  relatesTo?: IEventRelation | undefined;
 };
 const createReplyDraftAtom = () => atom<IReplyDraft | undefined>(undefined);
 export type TReplyDraftAtom = ReturnType<typeof createReplyDraftAtom>;
