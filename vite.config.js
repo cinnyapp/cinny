@@ -22,9 +22,13 @@ const copyFiles = {
       dest: '',
     },
     {
+      src: `public/manifest.json`,
+      dest: ``,
+    },
+    {
       src: 'public/res/android',
       dest: 'public/',
-    }
+    },
   ],
 }
 
@@ -61,7 +65,6 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     copyPublicDir: false,
-    assetsInlineLimit: 0,
     rollupOptions: {
       plugins: [
         inject({ Buffer: ['buffer', 'Buffer'] })
