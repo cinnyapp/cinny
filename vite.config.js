@@ -22,8 +22,8 @@ const copyFiles = {
       dest: '',
     },
     {
-      src: `public/manifest.json`,
-      dest: ``,
+      src: 'public/manifest.json',
+      dest: '',
     },
     {
       src: 'public/res/android',
