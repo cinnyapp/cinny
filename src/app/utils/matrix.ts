@@ -1,4 +1,8 @@
-import { EncryptedAttachmentInfo, encryptAttachment } from 'browser-encrypt-attachment';
+import {
+  EncryptedAttachmentInfo,
+  decryptAttachment,
+  encryptAttachment,
+} from 'browser-encrypt-attachment';
 import {
   MatrixClient,
   MatrixError,
@@ -87,6 +91,16 @@ export const encryptFile = async (
     file: encFile,
     originalFile: file,
   };
+};
+
+export const decryptFile = async (
+  dataBuffer: ArrayBuffer,
+  type: string,
+  encInfo: EncryptedAttachmentInfo
+): Promise<Blob> => {
+  const dataArray = await decryptAttachment(dataBuffer, encInfo);
+  const blob = new Blob([dataArray], { type });
+  return blob;
 };
 
 export type TUploadContent = File | Blob;
