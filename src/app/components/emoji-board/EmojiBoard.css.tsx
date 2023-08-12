@@ -7,7 +7,7 @@ export const Base = style({
   height: toRem(450),
   backgroundColor: color.Surface.Container,
   color: color.Surface.OnContainer,
-  border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
+  border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
   borderRadius: config.radii.R400,
   boxShadow: config.shadow.E200,
   overflow: 'hidden',

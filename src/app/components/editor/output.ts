@@ -17,7 +17,7 @@ const textToCustomHtml = (node: FormattedText): string => {
 const elementToCustomHtml = (node: CustomElement, children: string): string => {
   switch (node.type) {
     case BlockType.Paragraph:
-      return `<p>${children}</p>`;
+      return `${children}<br/>`;
     case BlockType.Heading:
       return `<h${node.level}>${children}</h${node.level}>`;
     case BlockType.CodeLine:
@@ -25,7 +25,7 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
     case BlockType.CodeBlock:
       return `<pre><code>${children}</code></pre>`;
     case BlockType.QuoteLine:
-      return `<p>${children}</p>`;
+      return `${children}<br/>`;
     case BlockType.BlockQuote:
       return `<blockquote>${children}</blockquote>`;
     case BlockType.ListItem:
@@ -93,3 +93,17 @@ export const toPlainText = (node: Descendant | Descendant[]): string => {
   const children = node.children.map((n) => toPlainText(n)).join('');
   return elementToPlainText(node, children);
 };
+
+/**
+ * Check if customHtml is equals to plainText
+ * by replacing `<br/>` with `/n` in customHtml
+ * and sanitizing plainText before comparison
+ * because text are sanitized in customHtml
+ * @param customHtml string
+ * @param plain string
+ * @returns boolean
+ */
+export const customHtmlEqualsPlainText = (customHtml: string, plain: string): boolean =>
+  customHtml.replace(/<br\/>/g, '\n') === sanitizeText(plain);
+
+export const trimCustomHtml = (customHtml: string) => customHtml.replace(/<br\/>$/g, '');

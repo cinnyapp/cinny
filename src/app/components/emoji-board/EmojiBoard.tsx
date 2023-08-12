@@ -598,7 +598,13 @@ export const NativeEmojiGroups = memo(
   )
 );
 
-const getSearchListItemStr = (item: ExtendedPackImage | IEmoji) => `:${item.shortcode}:`;
+const getSearchListItemStr = (item: ExtendedPackImage | IEmoji) => {
+  const shortcode = `:${item.shortcode}:`;
+  if ('body' in item) {
+    return [shortcode, item.body ?? ''];
+  }
+  return shortcode;
+};
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 26,
   matchOptions: {
@@ -647,15 +653,20 @@ export function EmojiBoard({
     return list;
   }, [emojiTab, usage, imagePacks]);
 
-  const [result, search] = useAsyncSearch(searchList, getSearchListItemStr, SEARCH_OPTIONS);
+  const [result, search, resetSearch] = useAsyncSearch(
+    searchList,
+    getSearchListItemStr,
+    SEARCH_OPTIONS
+  );
 
   const handleOnChange: ChangeEventHandler<HTMLInputElement> = useDebounce(
     useCallback(
       (evt) => {
         const term = evt.target.value;
-        search(term);
+        if (term) search(term);
+        else resetSearch();
       },
-      [search]
+      [search, resetSearch]
     ),
     { wait: 200 }
   );

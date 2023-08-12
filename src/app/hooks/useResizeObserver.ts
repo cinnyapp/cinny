@@ -8,17 +8,18 @@ export const getResizeObserverEntry = (
 ): ResizeObserverEntry | undefined => entries.find((entry) => entry.target === target);
 
 export const useResizeObserver = (
-  element: Element | null,
-  onResizeCallback: OnResizeCallback
+  onResizeCallback: OnResizeCallback,
+  observeElement?: Element | null | (() => Element | null)
 ): ResizeObserver => {
   const resizeObserver = useMemo(() => new ResizeObserver(onResizeCallback), [onResizeCallback]);
 
   useEffect(() => {
+    const element = typeof observeElement === 'function' ? observeElement() : observeElement;
     if (element) resizeObserver.observe(element);
     return () => {
       if (element) resizeObserver.unobserve(element);
     };
-  }, [resizeObserver, element]);
+  }, [resizeObserver, observeElement]);
 
   return resizeObserver;
 };

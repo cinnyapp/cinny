@@ -1,4 +1,4 @@
-import { IImageInfo, MatrixClient, Room } from 'matrix-js-sdk';
+import { IImageInfo, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import { getAccountData, getStateEvents } from '../utils/room';
 import { StateEvent } from '../../types/matrix/room';
@@ -225,19 +225,22 @@ export class ImagePack {
   }
 }
 
-export function getRoomImagePacks(room: Room): ImagePack[] {
-  const dataEvents = getStateEvents(room, StateEvent.PoniesRoomEmotes);
-
-  return dataEvents.reduce<ImagePack[]>((roomPacks, packEvent) => {
+export function packEventsToImagePacks(packEvents: MatrixEvent[]): ImagePack[] {
+  return packEvents.reduce<ImagePack[]>((imagePacks, packEvent) => {
     const packId = packEvent?.getId();
     const content = packEvent?.getContent() as PackContent | undefined;
-    if (!packId || !content) return roomPacks;
+    if (!packId || !content) return imagePacks;
     const pack = ImagePack.parsePack(packId, content);
     if (pack) {
-      roomPacks.push(pack);
+      imagePacks.push(pack);
     }
-    return roomPacks;
+    return imagePacks;
   }, []);
+}
+
+export function getRoomImagePacks(room: Room): ImagePack[] {
+  const dataEvents = getStateEvents(room, StateEvent.PoniesRoomEmotes);
+  return packEventsToImagePacks(dataEvents);
 }
 
 export function getGlobalImagePacks(mx: MatrixClient): ImagePack[] {
@@ -255,7 +258,14 @@ export function getGlobalImagePacks(mx: MatrixClient): ImagePack[] {
     if (typeof rooms[roomId] !== 'object') return [];
     const room = mx.getRoom(roomId);
     if (!room) return [];
-    return getRoomImagePacks(room);
+    const packEventIdToUnknown = rooms[roomId];
+    const roomPacks = getStateEvents(room, StateEvent.PoniesRoomEmotes);
+    const globalPacks = roomPacks.filter((mE) => {
+      const packKey = mE.getStateKey();
+      if (typeof packKey === 'string') return !!packEventIdToUnknown[packKey];
+      return false;
+    });
+    return packEventsToImagePacks(globalPacks);
   });
 
   return packs;

@@ -51,6 +51,8 @@ import {
   createEmoticonElement,
   moveCursor,
   resetEditorHistory,
+  customHtmlEqualsPlainText,
+  trimCustomHtml,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -97,7 +99,7 @@ import { MessageReply } from '../../molecules/message/Message';
 import colorMXID from '../../../util/colorMXID';
 import { parseReplyBody, parseReplyFormattedBody } from '../../utils/room';
 import { sanitizeText } from '../../utils/sanitize';
-import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
+import { useScreenSize } from '../../hooks/useScreenSize';
 
 interface RoomInputProps {
   roomViewRef: RefObject<HTMLElement>;
@@ -161,15 +163,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const handlePaste = useFilePasteHandler(handleFiles);
     const dropZoneVisible = useFileDropZone(roomViewRef, handleFiles);
 
-    const [mobile, setMobile] = useState(document.body.clientWidth < 500);
-    useResizeObserver(
-      document.body,
-      useCallback((entries) => {
-        const bodyEntry = getResizeObserverEntry(document.body, entries);
-        if (bodyEntry && bodyEntry.contentRect.width < 500) setMobile(true);
-        else setMobile(false);
-      }, [])
-    );
+    const [, screenWidth] = useScreenSize();
+    const hideStickerBtn = screenWidth < 500;
 
     useEffect(() => {
       Transforms.insertFragment(editor, msgDraft);
@@ -258,7 +253,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       uploadBoardHandlers.current?.handleSend();
 
       const plainText = toPlainText(editor.children).trim();
-      const customHtml = toMatrixCustomHTML(editor.children);
+      const customHtml = trimCustomHtml(toMatrixCustomHTML(editor.children));
 
       if (plainText === '') return;
 
@@ -278,9 +273,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const content: IContent = {
         msgtype: MsgType.Text,
         body,
-        format: 'org.matrix.custom.html',
-        formatted_body: formattedBody,
       };
+      if (replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
+        content.format = 'org.matrix.custom.html';
+        content.formatted_body = formattedBody;
+      }
       if (replyDraft) {
         content['m.relates_to'] = {
           'm.in_reply_to': {
@@ -515,7 +512,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   >
                     {(anchorRef) => (
                       <>
-                        {!mobile && (
+                        {!hideStickerBtn && (
                           <IconButton
                             aria-pressed={emojiBoardTab === EmojiBoardTab.Sticker}
                             onClick={() => setEmojiBoardTab(EmojiBoardTab.Sticker)}
@@ -532,7 +529,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         <IconButton
                           ref={anchorRef}
                           aria-pressed={
-                            mobile ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
+                            hideStickerBtn ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
                           }
                           onClick={() => setEmojiBoardTab(EmojiBoardTab.Emoji)}
                           variant="SurfaceVariant"
@@ -542,7 +539,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                           <Icon
                             src={Icons.Smile}
                             filled={
-                              mobile ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
+                              hideStickerBtn
+                                ? !!emojiBoardTab
+                                : emojiBoardTab === EmojiBoardTab.Emoji
                             }
                           />
                         </IconButton>
