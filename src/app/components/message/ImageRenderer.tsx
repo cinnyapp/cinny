@@ -2,7 +2,7 @@ import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { Box, as } from 'folds';
 import { IImageInfo } from 'matrix-js-sdk';
 import to from 'await-to-js';
-import { MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../utils/blurHash';
+import { MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../types/matrix/common';
 
 export type ImageRendererProps = {
   info: IImageInfo;

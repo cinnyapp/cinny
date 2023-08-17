@@ -1,11 +1,14 @@
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { MsgType } from 'matrix-js-sdk';
 
+export const MATRIX_BLUR_HASH_PROPERTY_NAME = 'xyz.amorgan.blurhash';
+
 export type IImageInfo = {
   w?: number;
   h?: number;
   mimetype?: string;
   size?: number;
+  [MATRIX_BLUR_HASH_PROPERTY_NAME]?: string;
 };
 
 export type IVideoInfo = {

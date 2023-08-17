@@ -1,6 +1,6 @@
 import { IContent, MatrixClient, MsgType } from 'matrix-js-sdk';
 import to from 'await-to-js';
-import { IThumbnailContent } from '../../../types/matrix/common';
+import { IThumbnailContent, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../types/matrix/common';
 import {
   getImageFileUrl,
   getThumbnail,
@@ -11,7 +11,7 @@ import {
 } from '../../utils/dom';
 import { encryptFile, getImageInfo, getThumbnailContent, getVideoInfo } from '../../utils/matrix';
 import { TUploadItem } from '../../state/roomInputDrafts';
-import { MATRIX_BLUR_HASH_PROPERTY_NAME, encodeBlurHash } from '../../utils/blurHash';
+import { encodeBlurHash } from '../../utils/blurHash';
 
 const generateThumbnailContent = async (
   mx: MatrixClient,
@@ -35,6 +35,9 @@ const generateThumbnailContent = async (
     width: dimensions[0],
     height: dimensions[1],
   });
+  if (thumbnailContent.thumbnail_info) {
+    thumbnailContent.thumbnail_info[MATRIX_BLUR_HASH_PROPERTY_NAME] = encodeBlurHash(img);
+  }
   return thumbnailContent;
 };
 
