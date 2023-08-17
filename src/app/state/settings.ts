@@ -8,7 +8,7 @@ export interface Settings {
   editorToolbar: boolean;
   isPeopleDrawer: boolean;
 
-  messageLayout: number;
+  messageLayout: 0 | 1 | 2;
   messageSpacing: '0' | '100' | '200' | '300' | '400' | '500';
   hideMembershipEvents: boolean;
   hideNickAvatarEvents: boolean;
