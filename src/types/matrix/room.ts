@@ -29,6 +29,13 @@ export enum StateEvent {
   PoniesRoomEmotes = 'im.ponies.room_emotes',
 }
 
+export enum MessageEvent {
+  RoomMessage = 'm.room.message',
+  RoomMessageEncrypted = 'm.room.encrypted',
+  Sticker = 'm.sticker',
+  RoomRedaction = 'm.room.redaction',
+}
+
 export enum RoomType {
   Space = 'm.space',
 }
