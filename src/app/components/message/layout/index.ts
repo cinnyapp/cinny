@@ -1,3 +1,4 @@
-export * from './Default';
+export * from './Modern';
 export * from './Compact';
 export * from './Bubble';
+export * from './MessageBase';

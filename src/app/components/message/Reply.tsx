@@ -9,6 +9,7 @@ import { getMxIdLocalPart, trimReplyFromBody } from '../../utils/matrix';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
 import * as css from './Reply.css';
+import { MessageDeletedContent, MessageFailedContent } from './MessageContentFallback';
 
 type ReplyProps = {
   mx: MatrixClient;
@@ -26,9 +27,11 @@ export const Reply = as<'div', ReplyProps>(
     const { body } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
 
-    const fallbackBody = replyEvent?.isRedacted()
-      ? '*** This message has been deleted ***'
-      : '*** Unable to load reply ***';
+    const fallbackBody = replyEvent?.isRedacted() ? (
+      <MessageDeletedContent />
+    ) : (
+      <MessageFailedContent />
+    );
 
     useEffect(() => {
       if (replyEvent) return;

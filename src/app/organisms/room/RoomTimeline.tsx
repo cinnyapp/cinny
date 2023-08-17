@@ -12,8 +12,11 @@ import React, {
 import {
   Direction,
   EventTimeline,
+  EventTimelineSet,
   EventTimelineSetHandlerMap,
   EventType,
+  IEncryptedFile,
+  IImageInfo,
   MatrixClient,
   MatrixEvent,
   RelationType,
@@ -35,8 +38,14 @@ import {
   config,
   toRem,
 } from 'folds';
+import { BlurhashCanvas } from 'react-blurhash';
 import Linkify from 'linkify-react';
-import { factoryEventSentBy, getMxIdLocalPart, matrixEventByRecency } from '../../utils/matrix';
+import {
+  decryptFile,
+  factoryEventSentBy,
+  getMxIdLocalPart,
+  matrixEventByRecency,
+} from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -44,13 +53,21 @@ import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator'
 import { useAlive } from '../../hooks/useAlive';
 import { scrollToBottom } from '../../utils/dom';
 import {
-  DefaultLayout,
+  ModernLayout,
   CompactLayout,
   BubbleLayout,
   DefaultPlaceholder,
   CompactPlaceholder,
   Reaction,
   ReactionTooltipMsg,
+  Reply,
+  MediaContainer,
+  MessageBase,
+  MessageDeletedContent,
+  MessageBrokenContent,
+  MessageUnsupportedContent,
+  MessageEditedContent,
+  MessageEmptyContent,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
@@ -60,9 +77,13 @@ import {
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-import { Reply } from '../../components/message/Reply';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
+import { Image } from '../../components/media';
+import { scaleYDimension } from '../../utils/common';
+import { ImageRenderer } from '../../components/message/ImageRenderer';
+import { useMatrixEventRenderer } from '../../components/message/useMatrixEventRenderer';
+import { useRoomMsgContentRenderer } from '../../components/message/useRoomMsgContentRenderer';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -137,6 +158,16 @@ export const getEventIdAbsoluteIndex = (
   return baseIndex + eventIndex;
 };
 
+export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string) =>
+  timelineSet.relations.getChildEventsForEvent(
+    eventId,
+    RelationType.Annotation,
+    EventType.Reaction
+  );
+
+export const getEventEdits = (timelineSet: EventTimelineSet, eventId: string, eventType: string) =>
+  timelineSet.relations.getChildEventsForEvent(eventId, RelationType.Replace, eventType);
+
 export const getLatestEdit = (
   targetEvent: MatrixEvent,
   editEvents: MatrixEvent[]
@@ -145,6 +176,27 @@ export const getLatestEdit = (
     rEvent.getSender() === targetEvent.getSender();
   return editEvents.sort(matrixEventByRecency).find(eventByTargetSender);
 };
+
+export const getEditedEvent = (
+  mEventId: string,
+  mEvent: MatrixEvent,
+  timelineSet: EventTimelineSet
+): MatrixEvent | undefined => {
+  const edits = getEventEdits(timelineSet, mEventId, mEvent.getType());
+  return edits && getLatestEdit(mEvent, edits.getRelations());
+};
+
+export const factoryGetFileSrcUrl =
+  (httpUrl: string, mimeType: string, encFile?: IEncryptedFile) => async (): Promise<string> => {
+    if (encFile) {
+      if (typeof httpUrl !== 'string') throw new Error('Malformed event');
+      const encRes = await fetch(httpUrl, { method: 'GET' });
+      const encData = await encRes.arrayBuffer();
+      const decryptedBlob = await decryptFile(encData, mimeType, encFile);
+      return URL.createObjectURL(decryptedBlob);
+    }
+    return httpUrl;
+  };
 
 type RoomTimelineProps = {
   room: Room;
@@ -251,12 +303,16 @@ const useTimelinePagination = (
       }
 
       fetching = true;
-      await to(
+      const [err] = await to(
         mx.paginateEventTimeline(timelineToPaginate, {
           backwards,
           limit,
         })
       );
+      if (err) {
+        // TODO: handle pagination error.
+        return;
+      }
       const fetchedTimeline =
         timelineToPaginate.getNeighbouringTimeline(
           backwards ? Direction.Backward : Direction.Forward
@@ -327,6 +383,9 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const eventsLength = getTimelinesEventsCount(timeline.linkedTimelines);
   const liveTimelineLinked =
     timeline.linkedTimelines[timeline.linkedTimelines.length - 1] === getLiveTimeline(room);
+  const canPaginateBack =
+    typeof timeline.linkedTimelines[0]?.getPaginationToken(Direction.Backward) === 'string';
+  const rangeAtStart = timeline.range.start === 0;
   const rangeAtEnd = timeline.range.end === eventsLength;
 
   const handleTimelinePagination = useTimelinePagination(
@@ -479,7 +538,6 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     [room]
   );
 
-  let prevEvent: MatrixEvent | undefined;
   const reactionRenderer = useCallback(
     ([key, events]: [string, Set<MatrixEvent>]) => {
       const currentUserId = mx.getUserId();
@@ -514,6 +572,251 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     [mx, room]
   );
 
+  const renderBody = (body: string, customBody?: string) => {
+    if (body === '') <MessageEmptyContent />;
+    if (customBody) {
+      if (customBody === '') <MessageEmptyContent />;
+      return parse(sanitizeCustomHtml(customBody), htmlReactParserOptions);
+    }
+    return <Linkify options={LINKIFY_OPTS}>{body}</Linkify>;
+  };
+
+  const renderRoomMsgContent = useRoomMsgContentRenderer<[EventTimelineSet]>({
+    renderText: (mEventId, mEvent, timelineSet) => {
+      const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
+      const { body, formatted_body: customBody }: Record<string, unknown> =
+        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+
+      if (typeof body !== 'string') return null;
+      return (
+        <Text
+          as="div"
+          style={{
+            whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+          priority="400"
+        >
+          {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
+          {!!editedEvent && <MessageEditedContent />}
+        </Text>
+      );
+    },
+    renderEmote: (mEventId, mEvent, timelineSet) => {
+      const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
+      const { body, formatted_body: customBody } =
+        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+      const senderId = mEvent.getSender() ?? '';
+
+      const senderDisplayName =
+        getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+      return (
+        <Text
+          as="div"
+          style={{
+            color: color.Success.Main,
+            fontStyle: 'italic',
+            whiteSpace: customBody ? 'initial' : 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+          priority="400"
+        >
+          <b>{`${senderDisplayName} `}</b>
+          {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
+          {!!editedEvent && <MessageEditedContent />}
+        </Text>
+      );
+    },
+    renderNotice: (mEventId, mEvent, timelineSet) => {
+      const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
+      const { body, formatted_body: customBody }: Record<string, unknown> =
+        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+
+      if (typeof body !== 'string') return null;
+      return (
+        <Text
+          as="div"
+          style={{
+            whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+          priority="300"
+        >
+          {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
+          {!!editedEvent && <MessageEditedContent />}
+        </Text>
+      );
+    },
+    renderImage: (mEventId, mEvent) => {
+      const imgInfo = mEvent.getContent()?.info as IImageInfo | undefined;
+      const encImgFile = mEvent.getContent()?.file as IEncryptedFile | undefined;
+      const imgMxc = encImgFile ? encImgFile.url : (mEvent.getContent().url as unknown);
+      if (!imgInfo) return null;
+      if (typeof imgMxc !== 'string') return null;
+      return (
+        <MediaContainer
+          style={{
+            height: imgInfo?.w
+              ? toRem(scaleYDimension(imgInfo.w, 400, imgInfo.h ?? 100))
+              : 'inherit',
+          }}
+        >
+          <ImageRenderer
+            info={imgInfo}
+            getSrc={factoryGetFileSrcUrl(
+              mx.mxcUrlToHttp(imgMxc) ?? '',
+              imgInfo.mimetype ?? '',
+              encImgFile
+            )}
+            renderBlurHash={(blurHash) => (
+              <BlurhashCanvas style={{ width: '100%', height: '100%' }} hash={blurHash} punch={1} />
+            )}
+            renderImage={(src, onLoad, onError) => (
+              <Image
+                alt={mEvent.getContent()?.body ?? ''}
+                title={mEvent.getContent()?.body ?? ''}
+                src={src}
+                onLoad={onLoad}
+                onError={onError}
+              />
+            )}
+          />
+        </MediaContainer>
+      );
+    },
+    renderUnsupported: (mEventId, mEvent) => {
+      if (mEvent.isRedacted()) {
+        return (
+          <Text>
+            <MessageDeletedContent />
+          </Text>
+        );
+      }
+      return (
+        <Text>
+          <MessageUnsupportedContent />
+        </Text>
+      );
+    },
+    renderBrokenFallback: (mEventId, mEvent) => {
+      if (mEvent.isRedacted()) {
+        return (
+          <Text>
+            <MessageDeletedContent />
+          </Text>
+        );
+      }
+      return (
+        <Text>
+          <MessageBrokenContent />
+        </Text>
+      );
+    },
+  });
+
+  const renderMatrixEvent = useMatrixEventRenderer<
+    [number, EventTimelineSet, MatrixEvent | undefined]
+  >({
+    renderRoomMessage: (mEventId, mEvent, item, timelineSet, prevEvent) => {
+      const reactions = getEventReactions(timelineSet, mEventId);
+
+      const { replyEventId } = mEvent;
+
+      // FIXME: Fix encrypted msg not returning body
+      const senderId = mEvent.getSender() ?? '';
+      const collapsed = prevEvent?.getSender() === senderId;
+      const highlighted = highlightItem.current?.index === item;
+
+      const senderDisplayName =
+        getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+      const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
+
+      const headerJSX = !collapsed && (
+        <Box
+          gap="300"
+          direction={messageLayout === 1 ? 'RowReverse' : 'Row'}
+          justifyContent="SpaceBetween"
+          alignItems="Baseline"
+        >
+          <Text
+            size={messageLayout === 2 ? 'T300' : 'T400'}
+            style={{ color: colorMXID(senderId) }}
+            truncate
+          >
+            <b>{senderDisplayName}</b>
+          </Text>
+          <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+            {new Date(mEvent.getTs()).toLocaleTimeString()}
+          </Text>
+        </Box>
+      );
+
+      const avatarJSX = !collapsed && messageLayout !== 1 && (
+        <Avatar size="300" data-avatar-id={senderId} onClick={handleAvatarClick}>
+          {senderAvatarMxc ? (
+            <AvatarImage
+              src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
+            />
+          ) : (
+            <AvatarFallback
+              style={{
+                background: colorMXID(senderId),
+                color: 'white',
+              }}
+            >
+              <Text size="H4">{senderDisplayName[0]}</Text>
+            </AvatarFallback>
+          )}
+        </Avatar>
+      );
+
+      const msgContentJSX = (
+        <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
+          {replyEventId && (
+            <Reply
+              as="button"
+              mx={mx}
+              room={room}
+              timelineSet={timelineSet}
+              eventId={replyEventId}
+              data-reply-id={replyEventId}
+              onClick={handleReplyClick}
+            />
+          )}
+          {renderRoomMsgContent(mEventId, mEvent, timelineSet)}
+          {reactions && (
+            <Box
+              gap="200"
+              wrap="Wrap"
+              style={{ margin: `${config.space.S200} 0 ${config.space.S100}` }}
+            >
+              {reactions.getSortedAnnotationsByKey()?.map(reactionRenderer)}
+            </Box>
+          )}
+        </Box>
+      );
+
+      return (
+        <MessageBase
+          key={mEvent.getId()}
+          data-message-item={item}
+          space={messageSpacing}
+          collapse={collapsed}
+          highlight={highlighted}
+        >
+          {messageLayout === 1 && <CompactLayout header={headerJSX} content={msgContentJSX} />}
+          {messageLayout === 2 && (
+            <BubbleLayout avatar={avatarJSX} header={headerJSX} content={msgContentJSX} />
+          )}
+          {messageLayout !== 1 && messageLayout !== 2 && (
+            <ModernLayout avatar={avatarJSX} header={headerJSX} content={msgContentJSX} />
+          )}
+        </MessageBase>
+      );
+    },
+  });
+
+  let prevEvent: MatrixEvent | undefined;
   const eventRenderer = (item: number) => {
     const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
     if (!eventTimeline) return null;
@@ -522,180 +825,14 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     const mEventId = mEvent?.getId();
 
     if (!mEvent || !mEventId) return null;
-    if (mEvent.getRelation()?.rel_type === RelationType.Replace) return null;
-
-    const reactions = timelineSet.relations.getChildEventsForEvent(
-      mEventId,
-      RelationType.Annotation,
-      EventType.Reaction
-    );
-    const edits = timelineSet.relations.getChildEventsForEvent(
-      mEventId,
-      RelationType.Replace,
-      EventType.RoomMessage
-    );
-
-    const editEvent = edits && getLatestEdit(mEvent, edits.getRelations());
-    const newContent = editEvent?.getContent()['m.new_content'];
-    const { replyEventId } = mEvent;
-
-    const { body, formatted_body: customBody } = newContent ?? mEvent.getContent();
-    const isEncrypted = mEvent.getType() === EventType.RoomMessageEncrypted;
-    // FIXME: Fix encrypted msg not returning body
-    if (!body && !isEncrypted) return null;
-    const senderId = mEvent.getSender() ?? '';
-    const prevSenderId = prevEvent?.getSender();
-    const collapsed = prevSenderId === senderId;
-    const highlighted = highlightItem.current?.index === item;
-    prevEvent = mEvent;
-
-    const senderDisplayName =
-      getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
-    const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
-
-    const msgTimeJSX = (
-      <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-        {new Date(mEvent.getTs()).toLocaleTimeString()}
-      </Text>
-    );
-
-    const msgNameJSX = (
-      <Text
-        size={messageLayout === 2 ? 'T300' : 'T400'}
-        style={{ color: colorMXID(senderId) }}
-        truncate
-      >
-        <b>{senderDisplayName}</b>
-      </Text>
-    );
-
-    const avatarJSX = (
-      <Avatar size="300" data-avatar-id={senderId} onClick={handleAvatarClick}>
-        {senderAvatarMxc ? (
-          <AvatarImage src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc} />
-        ) : (
-          <AvatarFallback
-            style={{
-              background: colorMXID(senderId),
-              color: 'white',
-            }}
-          >
-            <Text size="H4">{senderDisplayName[0]}</Text>
-          </AvatarFallback>
-        )}
-      </Avatar>
-    );
-
-    const replyJSX = replyEventId ? (
-      <Reply
-        as="button"
-        mx={mx}
-        room={room}
-        timelineSet={timelineSet}
-        eventId={replyEventId}
-        data-reply-id={replyEventId}
-        onClick={handleReplyClick}
-      />
-    ) : undefined;
-
-    const msgContentJSX = (
-      <Box direction="Column">
-        {replyJSX}
-        <Text
-          as="div"
-          style={{ whiteSpace: customBody ? 'initial' : 'pre-wrap', wordBreak: 'break-word' }}
-        >
-          {customBody ? (
-            parse(sanitizeCustomHtml(customBody), htmlReactParserOptions)
-          ) : (
-            <Linkify options={LINKIFY_OPTS}>{body ?? '*** Loading Message ***'}</Linkify>
-          )}
-          {!!newContent && (
-            <>
-              {' '}
-              <Text as="span" size="T200" priority="300">
-                (edited)
-              </Text>
-            </>
-          )}
-        </Text>
-        {reactions && (
-          <Box
-            gap="200"
-            wrap="Wrap"
-            style={{ margin: `${config.space.S200} 0 ${config.space.S100}` }}
-          >
-            {reactions.getSortedAnnotationsByKey()?.map(reactionRenderer)}
-          </Box>
-        )}
-      </Box>
-    );
-
-    if (messageLayout === 1)
-      return (
-        <CompactLayout
-          key={mEvent.getId()}
-          data-message-item={item}
-          space={messageSpacing}
-          collapse={collapsed}
-          highlight={highlighted}
-          header={
-            !collapsed && (
-              <>
-                {msgTimeJSX}
-                {msgNameJSX}
-              </>
-            )
-          }
-        >
-          {msgContentJSX}
-        </CompactLayout>
-      );
-
-    if (messageLayout === 2) {
-      return (
-        <BubbleLayout
-          key={mEvent.getId()}
-          data-message-item={item}
-          space={messageSpacing}
-          reverse={senderId === mx.getUserId()}
-          collapse={collapsed}
-          highlight={highlighted}
-          avatar={!collapsed && avatarJSX}
-          header={
-            !collapsed && (
-              <>
-                {msgNameJSX}
-                {msgTimeJSX}
-              </>
-            )
-          }
-        >
-          {msgContentJSX}
-        </BubbleLayout>
-      );
+    if (mEvent.isRelation()) {
+      return null;
     }
-
-    return (
-      <DefaultLayout
-        key={mEvent.getId()}
-        data-message-item={item}
-        space={messageSpacing}
-        collapse={collapsed}
-        highlight={highlighted}
-        avatar={!collapsed && avatarJSX}
-        header={
-          !collapsed && (
-            <>
-              {msgNameJSX}
-              {msgTimeJSX}
-            </>
-          )
-        }
-      >
-        {msgContentJSX}
-      </DefaultLayout>
-    );
+    const eventJSX = renderMatrixEvent(mEventId, mEvent, item, timelineSet, prevEvent);
+    if (eventJSX) {
+      prevEvent = mEvent;
+    }
+    return eventJSX;
   };
 
   return (
@@ -706,8 +843,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S500} 0` }}
         >
-          {(timeline.linkedTimelines[0]?.getPaginationToken(Direction.Backward) !== null ||
-            timeline.range.start !== 0) &&
+          {(canPaginateBack || !rangeAtStart) &&
             (messageLayout === 1 ? (
               <>
                 <CompactPlaceholder />

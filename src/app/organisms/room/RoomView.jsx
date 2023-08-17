@@ -68,7 +68,7 @@ function RoomView({ room, roomTimeline, eventId }) {
             roomTimeline={roomTimeline}
             roomInputRef={roomInputRef}
           /> */}
-          <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
+          <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} eventId={eventId} />
         </div>
         <div className="room-view__sticky">
           <div className="room-view__editor">

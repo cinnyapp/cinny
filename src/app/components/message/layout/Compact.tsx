@@ -1,21 +1,14 @@
 import React, { ReactNode } from 'react';
-import classNames from 'classnames';
 import { Box, as } from 'folds';
 import * as css from './layout.css';
 
-export const CompactLayout = as<
-  'div',
-  {
-    header?: ReactNode;
-  } & css.BaseMessageVariants
->(({ className, space, collapse, highlight, header, children, ...props }, ref) => (
-  <Box
-    className={classNames(css.BaseMessage({ collapse, space, highlight }), className)}
-    alignItems="Start"
-    gap="200"
-    {...props}
-    ref={ref}
-  >
+type CompactLayoutProps = {
+  header?: ReactNode;
+  content: ReactNode;
+};
+
+export const CompactLayout = as<'div', CompactLayoutProps>(({ header, content, ...props }, ref) => (
+  <Box alignItems="Start" gap="200" {...props} ref={ref}>
     <Box
       className={css.CompactHeader}
       gap="200"
@@ -25,6 +18,6 @@ export const CompactLayout = as<
     >
       {header}
     </Box>
-    {children}
+    {content}
   </Box>
 ));

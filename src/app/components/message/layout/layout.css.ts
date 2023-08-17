@@ -25,11 +25,14 @@ const highlightAnime = keyframes({
   },
 });
 
-export const BaseMessage = recipe({
-  base: {
-    marginTop: config.space.S400,
-    padding: `${config.space.S100} ${config.space.S200} ${config.space.S100} ${config.space.S400}`,
-  },
+export const MessageBase = recipe({
+  base: [
+    DefaultReset,
+    {
+      marginTop: config.space.S400,
+      padding: `${config.space.S100} ${config.space.S200} ${config.space.S100} ${config.space.S400}`,
+    },
+  ],
   variants: {
     space: {
       '0': {
@@ -68,7 +71,7 @@ export const BaseMessage = recipe({
   },
 });
 
-export type BaseMessageVariants = RecipeVariants<typeof BaseMessage>;
+export type MessageBaseVariants = RecipeVariants<typeof MessageBase>;
 
 export const CompactHeader = style([
   DefaultReset,
@@ -79,7 +82,7 @@ export const CompactHeader = style([
   },
 ]);
 
-export const DefaultAvatar = style({
+export const ModernAvatar = style({
   paddingTop: toRem(4),
   minWidth: toRem(36),
   cursor: 'pointer',
@@ -92,10 +95,7 @@ export const DefaultAvatar = style({
   },
 });
 
-export const BubbleAvatar = style({
-  paddingTop: toRem(4),
-  minWidth: toRem(36),
-});
+export const BubbleAvatar = style([ModernAvatar]);
 
 export const BubbleContent = style({
   maxWidth: toRem(800),
