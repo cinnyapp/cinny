@@ -16,7 +16,6 @@ import {
   EventTimelineSetHandlerMap,
   EventType,
   IEncryptedFile,
-  IImageInfo,
   MatrixClient,
   MatrixEvent,
   RelationType,
@@ -30,6 +29,9 @@ import {
   AvatarFallback,
   AvatarImage,
   Box,
+  Button,
+  Icon,
+  Icons,
   Scroll,
   Text,
   Tooltip,
@@ -61,13 +63,14 @@ import {
   Reaction,
   ReactionTooltipMsg,
   Reply,
-  MediaContainer,
   MessageBase,
   MessageDeletedContent,
   MessageBrokenContent,
   MessageUnsupportedContent,
   MessageEditedContent,
   MessageEmptyContent,
+  AttachmentBox,
+  Attachment,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
@@ -84,6 +87,7 @@ import { scaleYDimension } from '../../utils/common';
 import { ImageRenderer } from '../../components/message/ImageRenderer';
 import { useMatrixEventRenderer } from '../../components/message/useMatrixEventRenderer';
 import { useRoomMsgContentRenderer } from '../../components/message/useRoomMsgContentRenderer';
+import { IImageContent } from '../../../types/matrix/common';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -648,40 +652,74 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       );
     },
     renderImage: (mEventId, mEvent) => {
-      const imgInfo = mEvent.getContent()?.info as IImageInfo | undefined;
-      const encImgFile = mEvent.getContent()?.file as IEncryptedFile | undefined;
-      const imgMxc = encImgFile ? encImgFile.url : (mEvent.getContent().url as unknown);
+      const content = mEvent.getContent<IImageContent>();
+      const imgInfo = content?.info;
+      const encImgFile = content?.file;
+      const imgMxc = encImgFile ? encImgFile.url : content.url;
       if (!imgInfo) return null;
       if (typeof imgMxc !== 'string') return null;
       return (
-        <MediaContainer
-          style={{
-            height: imgInfo?.w
-              ? toRem(scaleYDimension(imgInfo.w, 400, imgInfo.h ?? 100))
-              : 'inherit',
-          }}
-        >
-          <ImageRenderer
-            info={imgInfo}
-            getSrc={factoryGetFileSrcUrl(
-              mx.mxcUrlToHttp(imgMxc) ?? '',
-              imgInfo.mimetype ?? '',
-              encImgFile
-            )}
-            renderBlurHash={(blurHash) => (
-              <BlurhashCanvas style={{ width: '100%', height: '100%' }} hash={blurHash} punch={1} />
-            )}
-            renderImage={(src, onLoad, onError) => (
-              <Image
-                alt={mEvent.getContent()?.body ?? ''}
-                title={mEvent.getContent()?.body ?? ''}
-                src={src}
-                onLoad={onLoad}
-                onError={onError}
-              />
-            )}
-          />
-        </MediaContainer>
+        <Attachment>
+          <AttachmentBox
+            style={{
+              height: imgInfo?.w
+                ? toRem(scaleYDimension(imgInfo.w, 400, imgInfo.h ?? 100))
+                : 'inherit',
+            }}
+          >
+            <ImageRenderer
+              info={imgInfo}
+              getSrc={factoryGetFileSrcUrl(
+                mx.mxcUrlToHttp(imgMxc) ?? '',
+                imgInfo.mimetype ?? '',
+                encImgFile
+              )}
+              renderBlurHash={(blurHash) => (
+                <BlurhashCanvas
+                  style={{ width: '100%', height: '100%' }}
+                  hash={blurHash}
+                  punch={1}
+                />
+              )}
+              renderImage={(src, onLoad, onError) => (
+                <Image
+                  alt={content?.body ?? ''}
+                  title={content?.body ?? ''}
+                  src={src}
+                  loading="lazy"
+                  onLoad={onLoad}
+                  onError={onError}
+                />
+              )}
+              renderError={(error, onRetry) => (
+                <TooltipProvider
+                  tooltip={
+                    <Tooltip variant="Critical">
+                      <Text>{error.message || 'Failed to load Image!'}</Text>
+                    </Tooltip>
+                  }
+                  position="Top"
+                  align="Center"
+                >
+                  {(triggerRef) => (
+                    <Button
+                      ref={triggerRef}
+                      size="300"
+                      variant="Critical"
+                      fill="Soft"
+                      outlined
+                      radii="Pill"
+                      onClick={onRetry}
+                      before={<Icon size="Inherit" src={Icons.Warning} filled />}
+                    >
+                      <Text size="B300">Retry</Text>
+                    </Button>
+                  )}
+                </TooltipProvider>
+              )}
+            />
+          </AttachmentBox>
+        </Attachment>
       );
     },
     renderUnsupported: (mEventId, mEvent) => {

@@ -1,6 +1,6 @@
 export * from './layout';
 export * from './placeholder';
 export * from './Reaction';
-export * from './MediaContainer';
+export * from './attachment';
 export * from './Reply';
 export * from './MessageContentFallback';
