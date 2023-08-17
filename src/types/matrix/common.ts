@@ -8,7 +8,11 @@ export type IImageInfo = {
   size?: number;
 };
 
-export type IVideoInfo = IImageInfo & {
+export type IVideoInfo = {
+  w?: number;
+  h?: number;
+  mimetype?: string;
+  size?: number;
   duration?: number;
 };
 

@@ -4,14 +4,14 @@ import { IImageInfo } from 'matrix-js-sdk';
 import to from 'await-to-js';
 import { MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../utils/blurHash';
 
-export type ImageRenderProps = {
+export type ImageRendererProps = {
   info: IImageInfo;
   getSrc: () => Promise<string>;
   renderBlurHash?: (blurHash: string) => ReactNode;
   renderImage: (src: string, onLoad: () => void, onError: () => void) => ReactNode;
   renderError?: (error: Error, retry: () => void) => ReactNode;
 };
-export const ImageRenderer = as<'div', ImageRenderProps>(
+export const ImageRenderer = as<'div', ImageRendererProps>(
   ({ info, getSrc, renderBlurHash, renderImage, renderError, children, ...props }, ref) => {
     const [loaded, setLoaded] = useState<boolean>(false);
     const [src, setSrc] = useState<string>();

@@ -33,6 +33,7 @@ import {
   Icon,
   Icons,
   Scroll,
+  Spinner,
   Text,
   Tooltip,
   TooltipProvider,
@@ -82,12 +83,14 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
-import { Image } from '../../components/media';
+import { Image, Video } from '../../components/media';
 import { scaleYDimension } from '../../utils/common';
 import { ImageRenderer } from '../../components/message/ImageRenderer';
 import { useMatrixEventRenderer } from '../../components/message/useMatrixEventRenderer';
 import { useRoomMsgContentRenderer } from '../../components/message/useRoomMsgContentRenderer';
-import { IImageContent } from '../../../types/matrix/common';
+import { IImageContent, IVideoContent } from '../../../types/matrix/common';
+import { VideoRenderer } from '../../components/message/VideoRenderer';
+import { getBlobSafeMimeType } from '../../utils/mimeTypes';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -654,17 +657,15 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     renderImage: (mEventId, mEvent) => {
       const content = mEvent.getContent<IImageContent>();
       const imgInfo = content?.info;
+      if (!imgInfo) return null;
       const encImgFile = content?.file;
       const imgMxc = encImgFile ? encImgFile.url : content.url;
-      if (!imgInfo) return null;
       if (typeof imgMxc !== 'string') return null;
       return (
         <Attachment>
           <AttachmentBox
             style={{
-              height: imgInfo?.w
-                ? toRem(scaleYDimension(imgInfo.w, 400, imgInfo.h ?? 100))
-                : 'inherit',
+              height: toRem(scaleYDimension(imgInfo.w || 400, 400, imgInfo.h || 400)),
             }}
           >
             <ImageRenderer
@@ -696,6 +697,115 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                   tooltip={
                     <Tooltip variant="Critical">
                       <Text>{error.message || 'Failed to load Image!'}</Text>
+                    </Tooltip>
+                  }
+                  position="Top"
+                  align="Center"
+                >
+                  {(triggerRef) => (
+                    <Button
+                      ref={triggerRef}
+                      size="300"
+                      variant="Critical"
+                      fill="Soft"
+                      outlined
+                      radii="Pill"
+                      onClick={onRetry}
+                      before={<Icon size="Inherit" src={Icons.Warning} filled />}
+                    >
+                      <Text size="B300">Retry</Text>
+                    </Button>
+                  )}
+                </TooltipProvider>
+              )}
+            />
+          </AttachmentBox>
+        </Attachment>
+      );
+    },
+    renderVideo: (mEventId, mEvent) => {
+      const content = mEvent.getContent<IVideoContent>();
+      const videoInfo = content.info;
+      if (!videoInfo || typeof videoInfo.mimetype !== 'string') return null;
+      const safeMimeType = getBlobSafeMimeType(videoInfo.mimetype);
+      if (!safeMimeType.startsWith('video')) return null;
+      const encVideoFile = content.file;
+      const videoMxc = encVideoFile ? encVideoFile.url : content.url;
+      if (typeof videoMxc !== 'string') return null;
+
+      return (
+        <Attachment>
+          <AttachmentBox
+            style={{
+              height: toRem(scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400)),
+            }}
+          >
+            <VideoRenderer
+              info={videoInfo}
+              getSrc={factoryGetFileSrcUrl(
+                mx.mxcUrlToHttp(videoMxc) ?? '',
+                safeMimeType ?? '',
+                encVideoFile
+              )}
+              renderThumbnail={(thumbnailInfo, thumbnailUrl, thumbnailFile) => {
+                const thumbMxc = thumbnailFile ? thumbnailFile.url : thumbnailUrl;
+                if (typeof thumbMxc !== 'string') return null;
+                return (
+                  <ImageRenderer
+                    info={thumbnailInfo}
+                    getSrc={factoryGetFileSrcUrl(
+                      mx.mxcUrlToHttp(thumbMxc) ?? '',
+                      thumbnailInfo.mimetype ?? '',
+                      thumbnailFile
+                    )}
+                    renderBlurHash={(blurHash) => (
+                      <BlurhashCanvas
+                        style={{ width: '100%', height: '100%' }}
+                        hash={blurHash}
+                        punch={1}
+                      />
+                    )}
+                    renderImage={(src, onLoad, onError) => (
+                      <Image
+                        alt={content?.body ?? ''}
+                        title={content?.body ?? ''}
+                        src={src}
+                        loading="lazy"
+                        onLoad={onLoad}
+                        onError={onError}
+                      />
+                    )}
+                  />
+                );
+              }}
+              renderPreControl={(loading, onPlay) => (
+                <Button
+                  variant="Secondary"
+                  fill="Solid"
+                  radii="300"
+                  onClick={onPlay}
+                  disabled={loading}
+                  before={
+                    loading ? (
+                      <Spinner variant="Secondary" fill="Solid" size="100" />
+                    ) : (
+                      <Icon size="100" src={Icons.Play} filled />
+                    )
+                  }
+                >
+                  <Text size="B400">Watch</Text>
+                </Button>
+              )}
+              renderVideo={(src, onLoad, onError) => (
+                <Video autoPlay controls onLoad={onLoad} onError={onError}>
+                  <source src={src} type={safeMimeType} />
+                </Video>
+              )}
+              renderError={(error, onRetry) => (
+                <TooltipProvider
+                  tooltip={
+                    <Tooltip variant="Critical">
+                      <Text>{error.message || 'Failed to load Video!'}</Text>
                     </Tooltip>
                   }
                   position="Top"
@@ -775,6 +885,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           direction={messageLayout === 1 ? 'RowReverse' : 'Row'}
           justifyContent="SpaceBetween"
           alignItems="Baseline"
+          grow="Yes"
         >
           <Text
             size={messageLayout === 2 ? 'T300' : 'T400'}
