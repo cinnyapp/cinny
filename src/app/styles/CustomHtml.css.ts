@@ -74,7 +74,14 @@ export const Spoiler = recipe({
   },
 });
 
-export const CodeBlock = style([DefaultReset, BaseCode, MarginSpaced]);
+export const CodeBlock = style([
+  DefaultReset,
+  BaseCode,
+  MarginSpaced,
+  {
+    fontStyle: 'normal',
+  },
+]);
 export const CodeBlockInternal = style({
   padding: `${config.space.S200} ${config.space.S200} 0`,
 });
