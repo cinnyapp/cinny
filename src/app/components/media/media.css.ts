@@ -9,3 +9,12 @@ export const Image = style([
     height: '100%',
   },
 ]);
+
+export const Video = style([
+  DefaultReset,
+  {
+    objectFit: 'cover',
+    width: '100%',
+    height: '100%',
+  },
+]);
