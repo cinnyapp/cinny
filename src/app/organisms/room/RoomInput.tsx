@@ -226,7 +226,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const sendPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (fileItem && fileItem.file.type.startsWith('image')) {
-          const [imgError, imgContent] = await to(getImageMsgContent(fileItem, upload.mxc));
+          const [imgError, imgContent] = await to(getImageMsgContent(mx, fileItem, upload.mxc));
           if (imgError) console.warn(imgError);
           if (imgContent) mx.sendMessage(roomId, imgContent);
           return;
