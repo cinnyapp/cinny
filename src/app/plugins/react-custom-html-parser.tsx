@@ -207,7 +207,7 @@ export const getReactCustomHtmlParser = (mx: MatrixClient, room: Room): HTMLReac
         if (name === 'span' && 'data-mx-spoiler' in props) {
           return (
             <span className={css.Spoiler()} {...props}>
-              {domToReact(children)}
+              {domToReact(children, opts)}
             </span>
           );
         }
