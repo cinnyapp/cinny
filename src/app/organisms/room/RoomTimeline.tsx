@@ -28,9 +28,11 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
+  Badge,
   Box,
   Button,
   Icon,
+  IconButton,
   Icons,
   Scroll,
   Spinner,
@@ -72,6 +74,8 @@ import {
   MessageEmptyContent,
   AttachmentBox,
   Attachment,
+  AttachmentContent,
+  AttachmentHeader,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
@@ -83,14 +87,16 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
-import { Image, Video } from '../../components/media';
+import { Image, Video, Audio } from '../../components/media';
 import { scaleYDimension } from '../../utils/common';
 import { ImageRenderer } from '../../components/message/ImageRenderer';
 import { useMatrixEventRenderer } from '../../components/message/useMatrixEventRenderer';
 import { useRoomMsgContentRenderer } from '../../components/message/useRoomMsgContentRenderer';
-import { IImageContent, IVideoContent } from '../../../types/matrix/common';
+import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
 import { VideoRenderer } from '../../components/message/VideoRenderer';
 import { getBlobSafeMimeType } from '../../utils/mimeTypes';
+import { AudioRenderer } from '../../components/message/AudioRenderer';
+import { LinePlaceholder } from '../../components/message/placeholder';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -828,6 +834,49 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                 </TooltipProvider>
               )}
             />
+          </AttachmentBox>
+        </Attachment>
+      );
+    },
+    renderAudio: (mEventId, mEvent) => {
+      const content = mEvent.getContent<IAudioContent>();
+      const audioInfo = content.info;
+      if (!audioInfo || typeof audioInfo.mimetype !== 'string') return null;
+      const safeMimeType = getBlobSafeMimeType(audioInfo.mimetype);
+      if (!safeMimeType.startsWith('audio')) return null;
+      const encAudioFile = content.file;
+      const audioMxc = encAudioFile ? encAudioFile.url : content.url;
+      if (typeof audioMxc !== 'string') return null;
+
+      return (
+        <Attachment>
+          <AttachmentHeader>
+            <Box alignItems="Center" gap="200" grow="Yes">
+              <Badge variant="Secondary" radii="Pill">
+                <Text size="O400">{safeMimeType.slice(safeMimeType.indexOf('/') + 1)}</Text>
+              </Badge>
+              <Text truncate>{content.body || 'Audio File'}</Text>
+            </Box>
+            <IconButton variant="SurfaceVariant" size="300" radii="300">
+              <Icon src={Icons.VerticalDots} size="100" />
+            </IconButton>
+          </AttachmentHeader>
+          <AttachmentBox>
+            <AttachmentContent>
+              <AudioRenderer
+                getSrc={factoryGetFileSrcUrl(
+                  mx.mxcUrlToHttp(audioMxc) ?? '',
+                  safeMimeType ?? '',
+                  encAudioFile
+                )}
+                renderPlaceholder={() => <Audio />}
+                renderAudio={(src, onLoad, onError) => (
+                  <Audio onLoad={onLoad} onError={onError}>
+                    <source src={src} type={safeMimeType} />
+                  </Audio>
+                )}
+              />
+            </AttachmentContent>
           </AttachmentBox>
         </Attachment>
       );
