@@ -30,12 +30,10 @@ import {
   AvatarImage,
   Badge,
   Box,
-  Button,
   Icon,
   IconButton,
   Icons,
   Scroll,
-  Spinner,
   Text,
   Tooltip,
   TooltipProvider,
@@ -43,7 +41,6 @@ import {
   config,
   toRem,
 } from 'folds';
-import { BlurhashCanvas } from 'react-blurhash';
 import Linkify from 'linkify-react';
 import {
   decryptFile,
@@ -87,16 +84,15 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
-import { Image, Video, Audio } from '../../components/media';
+import { Audio } from '../../components/media';
 import { scaleYDimension } from '../../utils/common';
-import { ImageRenderer } from '../../components/message/ImageRenderer';
-import { useMatrixEventRenderer } from '../../components/message/useMatrixEventRenderer';
-import { useRoomMsgContentRenderer } from '../../components/message/useRoomMsgContentRenderer';
+import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
+import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer';
 import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
-import { VideoRenderer } from '../../components/message/VideoRenderer';
 import { getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { AudioRenderer } from '../../components/message/AudioRenderer';
-import { LinePlaceholder } from '../../components/message/placeholder';
+import { ImageContent } from './message';
+import { VideoContent } from './message/VideoContent';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -663,67 +659,26 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     renderImage: (mEventId, mEvent) => {
       const content = mEvent.getContent<IImageContent>();
       const imgInfo = content?.info;
-      if (!imgInfo) return null;
-      const encImgFile = content?.file;
-      const imgMxc = encImgFile ? encImgFile.url : content.url;
-      if (typeof imgMxc !== 'string') return null;
+      const mxcUrl = content.file?.url ?? content.url;
+      if (!imgInfo || typeof imgInfo.mimetype !== 'string' || typeof mxcUrl !== 'string') {
+        return null;
+        // TODO: render as file.
+      }
+      const height = scaleYDimension(imgInfo.w || 400, 400, imgInfo.h || 400);
+
       return (
         <Attachment>
           <AttachmentBox
             style={{
-              height: toRem(scaleYDimension(imgInfo.w || 400, 400, imgInfo.h || 400)),
+              height: toRem(height < 48 ? 48 : height),
             }}
           >
-            <ImageRenderer
+            <ImageContent
+              body={content.body || 'Image'}
               info={imgInfo}
-              getSrc={factoryGetFileSrcUrl(
-                mx.mxcUrlToHttp(imgMxc) ?? '',
-                imgInfo.mimetype ?? '',
-                encImgFile
-              )}
-              renderBlurHash={(blurHash) => (
-                <BlurhashCanvas
-                  style={{ width: '100%', height: '100%' }}
-                  hash={blurHash}
-                  punch={1}
-                />
-              )}
-              renderImage={(src, onLoad, onError) => (
-                <Image
-                  alt={content?.body ?? ''}
-                  title={content?.body ?? ''}
-                  src={src}
-                  loading="lazy"
-                  onLoad={onLoad}
-                  onError={onError}
-                />
-              )}
-              renderError={(error, onRetry) => (
-                <TooltipProvider
-                  tooltip={
-                    <Tooltip variant="Critical">
-                      <Text>{error.message || 'Failed to load Image!'}</Text>
-                    </Tooltip>
-                  }
-                  position="Top"
-                  align="Center"
-                >
-                  {(triggerRef) => (
-                    <Button
-                      ref={triggerRef}
-                      size="300"
-                      variant="Critical"
-                      fill="Soft"
-                      outlined
-                      radii="Pill"
-                      onClick={onRetry}
-                      before={<Icon size="Inherit" src={Icons.Warning} filled />}
-                    >
-                      <Text size="B300">Retry</Text>
-                    </Button>
-                  )}
-                </TooltipProvider>
-              )}
+              mimeType={imgInfo.mimetype}
+              url={mxcUrl}
+              encInfo={content.file}
             />
           </AttachmentBox>
         </Attachment>
@@ -731,108 +686,31 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     },
     renderVideo: (mEventId, mEvent) => {
       const content = mEvent.getContent<IVideoContent>();
-      const videoInfo = content.info;
-      if (!videoInfo || typeof videoInfo.mimetype !== 'string') return null;
-      const safeMimeType = getBlobSafeMimeType(videoInfo.mimetype);
-      if (!safeMimeType.startsWith('video')) return null;
-      const encVideoFile = content.file;
-      const videoMxc = encVideoFile ? encVideoFile.url : content.url;
-      if (typeof videoMxc !== 'string') return null;
+
+      const videoInfo = content?.info;
+      const mxcUrl = content.file?.url ?? content.url;
+      const safeMimeType = getBlobSafeMimeType(videoInfo?.mimetype ?? '');
+
+      if (!videoInfo || !safeMimeType.startsWith('video') || typeof mxcUrl !== 'string') {
+        return null;
+        // TODO: render as file.
+      }
+
+      const height = scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400);
 
       return (
         <Attachment>
           <AttachmentBox
             style={{
-              height: toRem(scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400)),
+              height: toRem(height < 48 ? 48 : height),
             }}
           >
-            <VideoRenderer
+            <VideoContent
+              body={content.body || 'Video'}
               info={videoInfo}
-              getSrc={factoryGetFileSrcUrl(
-                mx.mxcUrlToHttp(videoMxc) ?? '',
-                safeMimeType ?? '',
-                encVideoFile
-              )}
-              renderThumbnail={(thumbnailInfo, thumbnailUrl, thumbnailFile) => {
-                const thumbMxc = thumbnailFile ? thumbnailFile.url : thumbnailUrl;
-                if (typeof thumbMxc !== 'string') return null;
-                return (
-                  <ImageRenderer
-                    info={thumbnailInfo}
-                    getSrc={factoryGetFileSrcUrl(
-                      mx.mxcUrlToHttp(thumbMxc) ?? '',
-                      thumbnailInfo.mimetype ?? '',
-                      thumbnailFile
-                    )}
-                    renderBlurHash={(blurHash) => (
-                      <BlurhashCanvas
-                        style={{ width: '100%', height: '100%' }}
-                        hash={blurHash}
-                        punch={1}
-                      />
-                    )}
-                    renderImage={(src, onLoad, onError) => (
-                      <Image
-                        alt={content?.body ?? ''}
-                        title={content?.body ?? ''}
-                        src={src}
-                        loading="lazy"
-                        onLoad={onLoad}
-                        onError={onError}
-                      />
-                    )}
-                  />
-                );
-              }}
-              renderPreControl={(loading, onPlay) => (
-                <Button
-                  variant="Secondary"
-                  fill="Solid"
-                  radii="300"
-                  onClick={onPlay}
-                  disabled={loading}
-                  before={
-                    loading ? (
-                      <Spinner variant="Secondary" fill="Solid" size="100" />
-                    ) : (
-                      <Icon size="100" src={Icons.Play} filled />
-                    )
-                  }
-                >
-                  <Text size="B400">Watch</Text>
-                </Button>
-              )}
-              renderVideo={(src, onLoad, onError) => (
-                <Video autoPlay controls onLoad={onLoad} onError={onError}>
-                  <source src={src} type={safeMimeType} />
-                </Video>
-              )}
-              renderError={(error, onRetry) => (
-                <TooltipProvider
-                  tooltip={
-                    <Tooltip variant="Critical">
-                      <Text>{error.message || 'Failed to load Video!'}</Text>
-                    </Tooltip>
-                  }
-                  position="Top"
-                  align="Center"
-                >
-                  {(triggerRef) => (
-                    <Button
-                      ref={triggerRef}
-                      size="300"
-                      variant="Critical"
-                      fill="Soft"
-                      outlined
-                      radii="Pill"
-                      onClick={onRetry}
-                      before={<Icon size="Inherit" src={Icons.Warning} filled />}
-                    >
-                      <Text size="B300">Retry</Text>
-                    </Button>
-                  )}
-                </TooltipProvider>
-              )}
+              mimeType={safeMimeType}
+              url={mxcUrl}
+              encInfo={content.file}
             />
           </AttachmentBox>
         </Attachment>

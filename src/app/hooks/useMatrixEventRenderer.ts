@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { MatrixEvent } from 'matrix-js-sdk';
-import { MessageEvent, StateEvent } from '../../../types/matrix/room';
+import { MessageEvent, StateEvent } from '../../types/matrix/room';
 
 export type EventRenderer<T extends unknown[]> = (
   eventId: string,
