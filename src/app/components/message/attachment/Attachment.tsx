@@ -35,5 +35,10 @@ export const AttachmentBox = as<'div'>(({ className, ...props }, ref) => (
 ));
 
 export const AttachmentContent = as<'div'>(({ className, ...props }, ref) => (
-  <Box className={classNames(css.AttachmentContent, className)} {...props} ref={ref} />
+  <Box
+    direction="Column"
+    className={classNames(css.AttachmentContent, className)}
+    {...props}
+    ref={ref}
+  />
 ));

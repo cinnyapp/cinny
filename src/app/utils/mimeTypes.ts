@@ -25,11 +25,13 @@ export const ALLOWED_BLOB_MIMETYPES = [
   'audio/x-flac',
 ];
 
+export const FALLBACK_MIMETYPE = 'application/octet-stream';
+
 export const getBlobSafeMimeType = (mimeType: string) => {
-  if (typeof mimeType !== 'string') return 'application/octet-stream';
+  if (typeof mimeType !== 'string') return FALLBACK_MIMETYPE;
   const [type] = mimeType.split(';');
   if (!ALLOWED_BLOB_MIMETYPES.includes(type)) {
-    return 'application/octet-stream';
+    return FALLBACK_MIMETYPE;
   }
   // Required for Chromium browsers
   if (type === 'video/quicktime') {
@@ -44,4 +46,9 @@ export const safeFile = (f: File) => {
     return new File([f], f.name, { type: safeType });
   }
   return f;
+};
+
+export const mimeTypeToExt = (mimeType: string): string => {
+  const extStart = mimeType.lastIndexOf('/') + 1;
+  return mimeType.slice(extStart);
 };

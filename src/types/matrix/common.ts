@@ -21,13 +21,13 @@ export type IVideoInfo = {
 
 export type IAudioInfo = {
   mimetype?: string;
-  size?: string;
+  size?: number;
   duration?: number;
 };
 
 export type IFileInfo = {
   mimetype?: string;
-  size?: string;
+  size?: number;
 };
 
 export type IEncryptedFile = EncryptedAttachmentInfo & {

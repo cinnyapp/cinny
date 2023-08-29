@@ -68,7 +68,7 @@ export const Audio = as<'audio', { as?: never }>(({ ...props }, ref) => {
             radii="300"
             aria-label={playing ? 'Pause Media' : 'Play Media'}
           >
-            <Icon src={playing ? Icons.Pause : Icons.Play} size="400" filled />
+            <Icon src={playing ? Icons.Pause : Icons.Play} size="400" />
           </IconButton>
 
           <Text size="T200">{`${secondsToMinutesAndSeconds(

@@ -28,11 +28,7 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-  Badge,
   Box,
-  Icon,
-  IconButton,
-  Icons,
   Scroll,
   Text,
   Tooltip,
@@ -88,10 +84,16 @@ import { Audio } from '../../components/media';
 import { scaleYDimension } from '../../utils/common';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer';
-import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
-import { getBlobSafeMimeType } from '../../utils/mimeTypes';
+import {
+  IAudioContent,
+  IFileContent,
+  IImageContent,
+  IVideoContent,
+} from '../../../types/matrix/common';
+import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { AudioRenderer } from '../../components/message/AudioRenderer';
-import { ImageContent, VideoContent } from './message';
+import { ImageContent, VideoContent, FileHeader, fileRenderer } from './message';
+import { FileContent } from './message/FileContent';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -660,8 +662,10 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       const imgInfo = content?.info;
       const mxcUrl = content.file?.url ?? content.url;
       if (!imgInfo || typeof imgInfo.mimetype !== 'string' || typeof mxcUrl !== 'string') {
+        if (mxcUrl) {
+          return fileRenderer(mEventId, mEvent);
+        }
         return null;
-        // TODO: render as file.
       }
       const height = scaleYDimension(imgInfo.w || 400, 400, imgInfo.h || 400);
 
@@ -691,8 +695,10 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       const safeMimeType = getBlobSafeMimeType(videoInfo?.mimetype ?? '');
 
       if (!videoInfo || !safeMimeType.startsWith('video') || typeof mxcUrl !== 'string') {
+        if (mxcUrl) {
+          return fileRenderer(mEventId, mEvent);
+        }
         return null;
-        // TODO: render as file.
       }
 
       const height = scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400);
@@ -719,9 +725,13 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     renderAudio: (mEventId, mEvent) => {
       const content = mEvent.getContent<IAudioContent>();
       const audioInfo = content.info;
-      if (!audioInfo || typeof audioInfo.mimetype !== 'string') return null;
+      if (!audioInfo || typeof audioInfo.mimetype !== 'string') {
+        return fileRenderer(mEventId, mEvent);
+      }
       const safeMimeType = getBlobSafeMimeType(audioInfo.mimetype);
-      if (!safeMimeType.startsWith('audio')) return null;
+      if (!safeMimeType.startsWith('audio')) {
+        return fileRenderer(mEventId, mEvent);
+      }
       const encAudioFile = content.file;
       const audioMxc = encAudioFile ? encAudioFile.url : content.url;
       if (typeof audioMxc !== 'string') return null;
@@ -729,15 +739,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       return (
         <Attachment>
           <AttachmentHeader>
-            <Box alignItems="Center" gap="200" grow="Yes">
-              <Badge variant="Secondary" radii="Pill">
-                <Text size="O400">{safeMimeType.slice(safeMimeType.indexOf('/') + 1)}</Text>
-              </Badge>
-              <Text truncate>{content.body || 'Audio File'}</Text>
-            </Box>
-            <IconButton variant="SurfaceVariant" size="300" radii="300">
-              <Icon src={Icons.VerticalDots} size="100" />
-            </IconButton>
+            <FileHeader body={content.body ?? 'Audio'} mimeType={safeMimeType} />
           </AttachmentHeader>
           <AttachmentBox>
             <AttachmentContent>
@@ -759,6 +761,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         </Attachment>
       );
     },
+    renderFile: fileRenderer,
     renderUnsupported: (mEventId, mEvent) => {
       if (mEvent.isRedacted()) {
         return (
