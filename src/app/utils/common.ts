@@ -11,6 +11,19 @@ export const bytesToSize = (bytes: number): string => {
   return `${(bytes / 1000 ** sizeIndex).toFixed(1)} ${sizes[sizeIndex]}`;
 };
 
+export const millisecondsToMinutesAndSeconds = (milliseconds: number): string => {
+  const seconds = Math.floor(milliseconds / 1000);
+  const mm = Math.floor(seconds / 60);
+  const ss = Math.round(seconds % 60);
+  return `${mm}:${ss < 10 ? '0' : ''}${ss}`;
+};
+
+export const secondsToMinutesAndSeconds = (seconds: number): string => {
+  const mm = Math.floor(seconds / 60);
+  const ss = Math.round(seconds % 60);
+  return `${mm}:${ss < 10 ? '0' : ''}${ss}`;
+};
+
 export const getFileTypeIcon = (icons: Record<IconName, IconSrc>, fileType: string): IconSrc => {
   const type = fileType.toLowerCase();
   if (type.startsWith('audio')) {

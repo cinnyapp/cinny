@@ -8,6 +8,7 @@ import {
   useMediaVolume,
 } from '../../hooks/media';
 import { useThrottle } from '../../hooks/useThrottle';
+import { secondsToMinutesAndSeconds } from '../../utils/common';
 
 const PLAY_TIME_THROTTLE_OPS = {
   wait: 500,
@@ -43,44 +44,58 @@ export const Audio = as<'audio', { as?: never }>(({ ...props }, ref) => {
   };
 
   return (
-    <Box grow="Yes" alignItems="Center" gap="200">
+    <Box grow="Yes" direction="Column" gap="300">
       <audio controls={false} {...props} ref={handleRefCallback} />
-      <IconButton
-        onClick={() => setPlaying(!playing)}
-        variant="SurfaceVariant"
-        size="300"
-        radii="300"
-        aria-label="Play Audio"
-      >
-        <Icon src={playing ? Icons.Pause : Icons.Play} size="400" filled />
-      </IconButton>
-
-      <Text size="T200">{(currentTime / 60).toFixed(2).toString().replace(/\./g, ':')}</Text>
-      <Box grow="Yes" direction="Column">
-        <ProgressBar
-          as="div"
-          variant="Secondary"
-          size="300"
-          min={0}
-          max={duration}
-          value={currentTime}
-          radii="0"
-        />
+      <Box alignItems="Center" gap="200">
+        <Box grow="Yes" direction="Column">
+          <ProgressBar
+            as="div"
+            variant="Secondary"
+            size="300"
+            min={0}
+            max={duration}
+            value={currentTime}
+            radii="0"
+          />
+        </Box>
       </Box>
-      <Text size="T200">{(duration / 60).toFixed(2).toString().replace(/\./g, ':')}</Text>
+      <Box alignItems="Center" gap="200">
+        <Box alignItems="Center" grow="Yes" gap="Inherit">
+          <IconButton
+            onClick={() => setPlaying(!playing)}
+            variant="SurfaceVariant"
+            size="300"
+            radii="300"
+            aria-label={playing ? 'Pause Media' : 'Play Media'}
+          >
+            <Icon src={playing ? Icons.Pause : Icons.Play} size="400" filled />
+          </IconButton>
 
-      <IconButton variant="SurfaceVariant" size="300" radii="300" onClick={() => setMute(!mute)}>
-        <Icon src={mute ? Icons.VolumeMute : Icons.VolumeHigh} size="200" />
-      </IconButton>
-      <ProgressBar
-        style={{ width: toRem(48) }}
-        variant="Secondary"
-        size="300"
-        min={0}
-        max={1}
-        value={volume}
-        radii="0"
-      />
+          <Text size="T200">{`${secondsToMinutesAndSeconds(
+            currentTime
+          )} / ${secondsToMinutesAndSeconds(duration)}`}</Text>
+        </Box>
+
+        <Box justifyItems="End" alignItems="Center" gap="Inherit">
+          <IconButton
+            variant="SurfaceVariant"
+            size="300"
+            radii="300"
+            onClick={() => setMute(!mute)}
+          >
+            <Icon src={mute ? Icons.VolumeMute : Icons.VolumeHigh} size="200" />
+          </IconButton>
+          <ProgressBar
+            style={{ width: toRem(48) }}
+            variant="Secondary"
+            size="300"
+            min={0}
+            max={1}
+            value={volume}
+            radii="0"
+          />
+        </Box>
+      </Box>
     </Box>
   );
 });
