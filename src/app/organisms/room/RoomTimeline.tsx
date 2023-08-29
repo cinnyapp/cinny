@@ -91,8 +91,7 @@ import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer
 import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
 import { getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { AudioRenderer } from '../../components/message/AudioRenderer';
-import { ImageContent } from './message';
-import { VideoContent } from './message/VideoContent';
+import { ImageContent, VideoContent } from './message';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -711,6 +710,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
               mimeType={safeMimeType}
               url={mxcUrl}
               encInfo={content.file}
+              loadThumbnail
             />
           </AttachmentBox>
         </Attachment>

@@ -34,9 +34,10 @@ export type VideoContentProps = {
   info: IVideoInfo & IThumbnailContent;
   encInfo?: EncryptedAttachmentInfo;
   autoPlay?: boolean;
+  loadThumbnail?: boolean;
 };
 export const VideoContent = as<'div', VideoContentProps>(
-  ({ className, body, mimeType, url, info, encInfo, autoPlay, ...props }, ref) => {
+  ({ className, body, mimeType, url, info, encInfo, autoPlay, loadThumbnail, ...props }, ref) => {
     const mx = useMatrixClient();
     const blurHash = info.thumbnail_info?.[MATRIX_BLUR_HASH_PROPERTY_NAME];
 
@@ -79,8 +80,10 @@ export const VideoContent = as<'div', VideoContentProps>(
 
     useEffect(() => {
       if (autoPlay) loadSrc();
-      loadThumbSrc();
-    }, [autoPlay, loadSrc, loadThumbSrc]);
+    }, [autoPlay, loadSrc]);
+    useEffect(() => {
+      if (loadThumbnail) loadThumbSrc();
+    }, [loadThumbnail, loadThumbSrc]);
 
     return (
       <Box className={classNames(css.RelativeBase, className)} {...props} ref={ref}>
