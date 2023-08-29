@@ -34,18 +34,21 @@ export const Reply = as<'div', ReplyProps>(
     );
 
     useEffect(() => {
-      if (replyEvent) return;
-
+      let disposed = false;
       const loadEvent = async () => {
         await to(mx.getEventTimeline(timelineSet, eventId));
         const targetEvent = timelineSet.findEventById(eventId);
+        if (disposed) return;
         if (!targetEvent) {
           setReplyEvent(null);
           return;
         }
         setReplyEvent(targetEvent);
       };
-      loadEvent();
+      if (replyEvent) loadEvent();
+      return () => {
+        disposed = true;
+      };
     }, [replyEvent, mx, timelineSet, eventId]);
 
     return (
