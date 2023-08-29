@@ -13,11 +13,8 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import { BlurhashCanvas } from 'react-blurhash';
-import {
-  IEncryptedFile,
-  IImageInfo,
-  MATRIX_BLUR_HASH_PROPERTY_NAME,
-} from '../../../../types/matrix/common';
+import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
+import { IImageInfo, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getFileSrcUrl } from './util';
@@ -30,22 +27,21 @@ export type ImageContentProps = {
   mimeType: string;
   url: string;
   info: IImageInfo;
-  file?: IEncryptedFile;
-  autoView?: boolean;
+  encInfo?: EncryptedAttachmentInfo;
+  autoPlay?: boolean;
 };
 export const ImageContent = as<'div', ImageContentProps>(
-  ({ className, body, mimeType, url, info, file, autoView, ...props }, ref) => {
+  ({ className, body, mimeType, url, info, encInfo, autoPlay, ...props }, ref) => {
     const mx = useMatrixClient();
-    const mxcUrl = file?.url ?? url;
-    const blurHash = info && info[MATRIX_BLUR_HASH_PROPERTY_NAME];
+    const blurHash = info[MATRIX_BLUR_HASH_PROPERTY_NAME];
 
     const [load, setLoad] = useState(false);
     const [error, setError] = useState(false);
 
-    const [urlState, loadSrc] = useAsyncCallback(
+    const [srcState, loadSrc] = useAsyncCallback(
       useCallback(
-        () => getFileSrcUrl(mx.mxcUrlToHttp(mxcUrl) ?? '', mimeType, file),
-        [mx, mxcUrl, mimeType, file]
+        () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
+        [mx, url, mimeType, encInfo]
       )
     );
 
@@ -63,15 +59,15 @@ export const ImageContent = as<'div', ImageContentProps>(
     };
 
     useEffect(() => {
-      if (autoView) loadSrc();
-    }, [autoView, loadSrc]);
+      if (autoPlay) loadSrc();
+    }, [autoPlay, loadSrc]);
 
     return (
       <Box className={classNames(css.RelativeBase, className)} {...props} ref={ref}>
         {typeof blurHash === 'string' && !load && (
           <BlurhashCanvas style={{ width: '100%', height: '100%' }} hash={blurHash} punch={1} />
         )}
-        {!autoView && urlState.status === AsyncStatus.Idle && (
+        {!autoPlay && srcState.status === AsyncStatus.Idle && (
           <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
             <Button
               variant="Secondary"
@@ -85,25 +81,25 @@ export const ImageContent = as<'div', ImageContentProps>(
             </Button>
           </Box>
         )}
-        {urlState.status === AsyncStatus.Success && (
+        {srcState.status === AsyncStatus.Success && (
           <Box className={css.AbsoluteContainer}>
             <Image
               alt={body}
               title={body}
-              src={urlState.data}
+              src={srcState.data}
               loading="lazy"
               onLoad={handleLoad}
               onError={handleError}
             />
           </Box>
         )}
-        {(urlState.status === AsyncStatus.Loading || urlState.status === AsyncStatus.Success) &&
+        {(srcState.status === AsyncStatus.Loading || srcState.status === AsyncStatus.Success) &&
           !load && (
             <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
               <Spinner variant="Secondary" />
             </Box>
           )}
-        {(error || urlState.status === AsyncStatus.Error) && (
+        {(error || srcState.status === AsyncStatus.Error) && (
           <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
             <TooltipProvider
               tooltip={
