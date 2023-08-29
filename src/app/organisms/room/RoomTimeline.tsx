@@ -80,20 +80,12 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
-import { Audio } from '../../components/media';
 import { scaleYDimension } from '../../utils/common';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer';
-import {
-  IAudioContent,
-  IFileContent,
-  IImageContent,
-  IVideoContent,
-} from '../../../types/matrix/common';
-import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
-import { AudioRenderer } from '../../components/message/AudioRenderer';
-import { ImageContent, VideoContent, FileHeader, fileRenderer } from './message';
-import { FileContent } from './message/FileContent';
+import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
+import { getBlobSafeMimeType } from '../../utils/mimeTypes';
+import { ImageContent, VideoContent, FileHeader, fileRenderer, AudioContent } from './message';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -724,17 +716,17 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     },
     renderAudio: (mEventId, mEvent) => {
       const content = mEvent.getContent<IAudioContent>();
-      const audioInfo = content.info;
-      if (!audioInfo || typeof audioInfo.mimetype !== 'string') {
-        return fileRenderer(mEventId, mEvent);
+
+      const audioInfo = content?.info;
+      const mxcUrl = content.file?.url ?? content.url;
+      const safeMimeType = getBlobSafeMimeType(audioInfo?.mimetype ?? '');
+
+      if (!audioInfo || !safeMimeType.startsWith('audio') || typeof mxcUrl !== 'string') {
+        if (mxcUrl) {
+          return fileRenderer(mEventId, mEvent);
+        }
+        return null;
       }
-      const safeMimeType = getBlobSafeMimeType(audioInfo.mimetype);
-      if (!safeMimeType.startsWith('audio')) {
-        return fileRenderer(mEventId, mEvent);
-      }
-      const encAudioFile = content.file;
-      const audioMxc = encAudioFile ? encAudioFile.url : content.url;
-      if (typeof audioMxc !== 'string') return null;
 
       return (
         <Attachment>
@@ -743,18 +735,11 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           </AttachmentHeader>
           <AttachmentBox>
             <AttachmentContent>
-              <AudioRenderer
-                getSrc={factoryGetFileSrcUrl(
-                  mx.mxcUrlToHttp(audioMxc) ?? '',
-                  safeMimeType ?? '',
-                  encAudioFile
-                )}
-                renderPlaceholder={() => <Audio />}
-                renderAudio={(src, onLoad, onError) => (
-                  <Audio onLoad={onLoad} onError={onError}>
-                    <source src={src} type={safeMimeType} />
-                  </Audio>
-                )}
+              <AudioContent
+                info={audioInfo}
+                mimeType={safeMimeType}
+                url={mxcUrl}
+                encInfo={content.file}
               />
             </AttachmentContent>
           </AttachmentBox>
