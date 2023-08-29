@@ -53,7 +53,6 @@ export const VideoContent = as<'div', VideoContentProps>(
       useCallback(() => {
         const thumbInfo = info.thumbnail_info;
         const thumbMxcUrl = info.thumbnail_file?.url ?? info.thumbnail_url;
-        console.log(thumbInfo, thumbMxcUrl);
         if (typeof thumbMxcUrl !== 'string' || typeof thumbInfo?.mimetype !== 'string') {
           throw new Error('Failed to load thumbnail');
         }
