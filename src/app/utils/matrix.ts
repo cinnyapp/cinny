@@ -38,7 +38,7 @@ export const getImageInfo = (img: HTMLImageElement, fileOrBlob: File | Blob): II
 
 export const getVideoInfo = (video: HTMLVideoElement, fileOrBlob: File | Blob): IVideoInfo => {
   const info: IVideoInfo = {};
-  info.duration = Number.isNaN(video.duration) ? undefined : video.duration;
+  info.duration = Number.isNaN(video.duration) ? undefined : Math.floor(video.duration * 1000);
   info.w = video.videoWidth;
   info.h = video.videoHeight;
   info.mimetype = fileOrBlob.type;
