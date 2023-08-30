@@ -2,18 +2,15 @@ import React, { ReactNode } from 'react';
 import { Box, as } from 'folds';
 
 export type MediaControlProps = {
-  top?: ReactNode;
+  before?: ReactNode;
+  after?: ReactNode;
   leftControl?: ReactNode;
   rightControl?: ReactNode;
 };
 export const MediaControl = as<'div', MediaControlProps>(
-  ({ top, leftControl, rightControl, children, ...props }, ref) => (
+  ({ before, after, leftControl, rightControl, children, ...props }, ref) => (
     <Box grow="Yes" direction="Column" gap="300" {...props} ref={ref}>
-      <Box alignItems="Center" gap="200">
-        <Box grow="Yes" direction="Column">
-          {top}
-        </Box>
-      </Box>
+      {before && <Box direction="Column">{before}</Box>}
       <Box alignItems="Center" gap="200">
         <Box alignItems="Center" grow="Yes" gap="Inherit">
           {leftControl}
@@ -23,6 +20,7 @@ export const MediaControl = as<'div', MediaControlProps>(
           {rightControl}
         </Box>
       </Box>
+      {after && <Box direction="Column">{after}</Box>}
       {children}
     </Box>
   )
