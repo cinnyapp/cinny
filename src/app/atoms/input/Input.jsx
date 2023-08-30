@@ -16,6 +16,7 @@ function Input({
       { resizable
         ? (
           <TextareaAutosize
+            dir="auto"
             style={{ minHeight: `${minHeight}px` }}
             name={name}
             id={id}
@@ -34,6 +35,7 @@ function Input({
           />
         ) : (
           <input
+            dir="auto"
             ref={forwardRef}
             id={id}
             name={name}

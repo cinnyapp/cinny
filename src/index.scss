@@ -1,14 +1,20 @@
 @use './app/partials/screen';
 
-:root {
+@font-face {
+  font-family: Twemoji;
+  src: url('../public/font/Twemoji.Mozilla.v.7.0.woff2'),
+    url('../public/font/Twemoji.Mozilla.v0.7.0.ttf');
+  font-display: swap;
+}
 
+:root {
   /* background color | --bg-[background type]: value */
-  --bg-surface: #FFFFFF;
-  --bg-surface-transparent: #FFFFFF00;
-  --bg-surface-low: #F6F6F6;
-  --bg-surface-low-transparent: #F6F6F600;
-  --bg-surface-extra-low: #F6F6F6;
-  --bg-surface-extra-low-transparent: #F6F6F600;
+  --bg-surface: #ffffff;
+  --bg-surface-transparent: #ffffff00;
+  --bg-surface-low: #f6f6f6;
+  --bg-surface-low-transparent: #f6f6f600;
+  --bg-surface-extra-low: #f6f6f6;
+  --bg-surface-extra-low-transparent: #f6f6f600;
   --bg-surface-hover: rgba(0, 0, 0, 3%);
   --bg-surface-active: rgba(0, 0, 0, 5%);
   --bg-surface-border: rgba(0, 0, 0, 6%);
@@ -22,7 +28,7 @@
   --bg-positive-hover: rgba(69, 184, 59, 8%);
   --bg-positive-active: rgba(69, 184, 59, 15%);
   --bg-positive-border: rgba(69, 184, 59, 40%);
-  
+
   --bg-caution: rgb(255, 179, 0);
   --bg-caution-hover: rgba(255, 179, 0, 8%);
   --bg-caution-active: rgba(255, 179, 0, 15%);
@@ -37,18 +43,18 @@
   --bg-badge: #989898;
   --bg-ping: hsla(137deg, 100%, 68%, 40%);
   --bg-ping-hover: hsla(137deg, 100%, 68%, 50%);
-  --bg-divider: hsla(0, 0%, 0%, .1);
+  --bg-divider: hsla(0, 0%, 0%, 0.1);
 
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: #000000;
   --tc-surface-normal: rgba(0, 0, 0, 78%);
   --tc-surface-normal-low: rgba(0, 0, 0, 60%);
   --tc-surface-low: rgba(0, 0, 0, 48%);
-  
+
   --tc-primary-high: #ffffff;
   --tc-primary-normal: rgba(255, 255, 255, 68%);
   --tc-primary-low: rgba(255, 255, 255, 40%);
-  
+
   --tc-positive-high: var(--bg-positive);
   --tc-positive-normal: rgb(69, 184, 59, 80%);
   --tc-positive-low: rgb(69, 184, 59, 60%);
@@ -56,7 +62,7 @@
   --tc-caution-high: var(--bg-caution);
   --tc-caution-normal: rgb(255, 179, 0, 80%);
   --tc-caution-low: rgb(255, 179, 0, 60%);
-  
+
   --tc-danger-high: var(--bg-danger);
   --tc-danger-normal: rgba(240, 71, 71, 88%);
   --tc-danger-low: rgba(240, 71, 71, 60%);
@@ -65,7 +71,6 @@
   --tc-link: hsl(213deg 76% 56%);
   --tc-tooltip: white;
   --tc-badge: white;
-
 
   /* system icons | --ic-[background type]-[priority]: value */
   --ic-surface-high: #272727;
@@ -102,10 +107,9 @@
   --av-small: 36px;
   --av-extra-small: 24px;
 
-
   /* shadow and overlay */
   --bg-overlay: rgba(0, 0, 0, 20%);
-  --bg-overlay-low: rgba(0, 0, 0, 85%);
+  --bg-overlay-low: rgba(0, 0, 0, 50%);
 
   --bs-popup: 0 0 16px rgba(0, 0, 0, 10%);
 
@@ -124,10 +128,8 @@
   --bs-danger-border: inset 0 0 0 1px var(--bg-danger-border);
   --bs-danger-outline: 0 0 0 2px var(--bg-danger-border);
 
-
   /* border */
   --bo-radius: 8px;
-
 
   /* font styles: font-size, letter-spacing, line-hight */
   --fs-h1: 36px;
@@ -160,7 +162,6 @@
   --fw-medium: 500;
   --fw-bold: 700;
 
-
   /* spacing | --sp-[space]: value */
   --sp-none: 0px;
   --sp-ultra-tight: 4px;
@@ -169,7 +170,6 @@
   --sp-normal: 16px;
   --sp-loose: 20px;
   --sp-extra-loose: 32px;
-
 
   /* other */
   --border-width: 1px;
@@ -180,7 +180,7 @@
   --people-drawer-width: calc(268px - var(--border-width));
 
   --popup-window-drawer-width: 280px;
-  
+
   @include screen.smallerThan(tabletBreakpoint) {
     --navigation-drawer-width: calc(240px + var(--border-width));
     --people-drawer-width: calc(256px - var(--border-width));
@@ -191,11 +191,11 @@
   --fluid-push: cubic-bezier(0, 0.8, 0.67, 0.97);
   --fluid-slide-down: cubic-bezier(0.02, 0.82, 0.4, 0.96);
   --fluid-slide-up: cubic-bezier(0.13, 0.56, 0.25, 0.99);
-  
-  --font-primary: 'Roboto', sans-serif;
-  --font-secondary: 'Roboto', sans-serif;
-}
 
+  --font-emoji: 'Twemoji';
+  --font-primary: 'Roboto', var(--font-emoji), sans-serif;
+  --font-secondary: 'Roboto', var(--font-emoji), sans-serif;
+}
 
 .silver-theme {
   /* background color | --bg-[background type]: value */
@@ -207,7 +207,8 @@
   --bg-surface-extra-low-transparent: hsla(0, 0%, 91%, 0);
 }
 
-@mixin dark-mode() {
+.dark-theme,
+.butter-theme {
   /* background color | --bg-[background type]: value */
   --bg-surface: hsl(208, 8%, 20%);
   --bg-surface-transparent: hsla(208, 8%, 20%, 0);
@@ -228,15 +229,14 @@
   --bg-badge: hsl(0, 0%, 75%);
   --bg-ping: hsla(137deg, 100%, 38%, 40%);
   --bg-ping-hover: hsla(137deg, 100%, 38%, 50%);
-  --bg-divider: hsla(0, 0%, 100%, .1);
-
+  --bg-divider: hsla(0, 0%, 100%, 0.1);
 
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: rgba(255, 255, 255, 98%);
   --tc-surface-normal: rgba(255, 255, 255, 94%);
   --tc-surface-normal-low: rgba(255, 255, 255, 60%);
   --tc-surface-low: rgba(255, 255, 255, 58%);
-  
+
   --tc-primary-high: #ffffff;
   --tc-primary-normal: rgba(255, 255, 255, 0.68);
   --tc-primary-low: rgba(255, 255, 255, 0.4);
@@ -262,9 +262,10 @@
     --mx-uc-7: hsl(243, 100%, 74%);
     --mx-uc-8: hsl(94, 66%, 50%);
   }
-  
+
   /* shadow and overlay */
-  --bg-overlay: rgba(0, 0, 0, 50%);
+  --bg-overlay: rgba(0, 0, 0, 60%);
+  --bg-overlay-low: rgba(0, 0, 0, 80%);
 
   --bs-popup: 0 0 16px rgba(0, 0, 0, 25%);
 
@@ -273,7 +274,7 @@
 
   --bs-primary-border: inset 0 0 0 1px var(--bg-primary-border);
   --bs-primary-outline: 0 0 0 2px var(--bg-primary-border);
-  
+
   /* font styles: font-size, letter-spacing, line-hight */
   --fs-h1: 35.6px;
 
@@ -291,18 +292,7 @@
   /* override normal font weight for dark mode */
   --fw-normal: 350;
 
-  --font-secondary: 'InterVariable', 'Roboto', sans-serif;
-}
-
-.dark-theme,
-.butter-theme {
-  @include dark-mode();
-}
-
-@media (prefers-color-scheme: dark) {
-  .system-theme {
-    @include dark-mode();
-  }
+  --font-secondary: 'InterVariable', 'Roboto', var(--font-emoji), sans-serif;
 }
 
 .butter-theme {
@@ -316,13 +306,11 @@
 
   --bg-badge: #c4c1ab;
 
-  
   /* text color | --tc-[background type]-[priority]: value */
   --tc-surface-high: rgb(255, 251, 222, 94%);
   --tc-surface-normal: rgba(255, 251, 222, 94%);
-  --tc-surface-normal-low: rgba(255, 251, 222, 60%); 
+  --tc-surface-normal-low: rgba(255, 251, 222, 60%);
   --tc-surface-low: rgba(255, 251, 222, 58%);
-
 
   /* system icons | --ic-[background type]-[priority]: value */
   --ic-surface-high: rgb(255, 251, 222);
@@ -386,9 +374,11 @@ body {
   height: 100%;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   -webkit-tap-highlight-color: transparent;
 }
 a {
@@ -427,16 +417,16 @@ button {
 textarea,
 input,
 input[type],
-input[type=text],
-input[type=username],
-input[type=password],
-input[type=email],
-input[type=checkbox] {
+input[type='text'],
+input[type='username'],
+input[type='password'],
+input[type='email'],
+input[type='checkbox'] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
 }
-input[type=checkbox] {
+input[type='checkbox'] {
   margin: 0;
   padding: 0;
   width: 20px;
@@ -450,7 +440,7 @@ input[type=checkbox] {
   &:checked {
     background-color: var(--bg-primary);
     &::before {
-      content: "";
+      content: '';
       display: inline-block;
       width: 12px;
       height: 6px;
@@ -467,11 +457,11 @@ textarea {
 }
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-     -khtml-user-select: none; /* Konqueror HTML */
-       -moz-user-select: none; /* Old versions of Firefox */
-        -ms-user-select: none; /* Internet Explorer/Edge */
-            user-select: none; /* Non-prefixed version, currently
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Old versions of Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
 }
 

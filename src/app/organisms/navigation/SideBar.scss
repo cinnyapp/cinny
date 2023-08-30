@@ -7,10 +7,7 @@
   width: var(--navigation-sidebar-width);
   height: 100%;
   background-color: var(--bg-surface-extra-low);
-  @include dir.side(border,
-    none,
-    1px solid var(--bg-surface-border),
-  );
+  @include dir.side(border, none, 1px solid var(--bg-surface-border));
 
   &__scrollable,
   &__sticky {
@@ -24,7 +21,7 @@
 
 .scrollable-content {
   &::after {
-    content: "";
+    content: '';
     display: block;
     width: 100%;
     height: 8px;
@@ -33,7 +30,8 @@
     background-image: linear-gradient(
       to top,
       var(--bg-surface-extra-low),
-      var(--bg-surface-extra-low-transparent));
+      var(--bg-surface-extra-low-transparent)
+    );
     position: sticky;
     bottom: -1px;
     left: 0;
@@ -44,7 +42,7 @@
 .space-container,
 .sticky-container {
   @extend .cp-fx__column--c-c;
-  
+
   padding: var(--sp-ultra-tight) 0;
 
   & > .sidebar-avatar,
@@ -63,7 +61,7 @@
   box-shadow: var(--bs-danger-border);
   animation-name: pushRight;
   animation-duration: 400ms;
-  animation-iteration-count: infinite;
+  animation-iteration-count: 30;
   animation-direction: alternate;
 }
 

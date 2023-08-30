@@ -28,6 +28,7 @@ import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { parseTimelineChange } from './common';
 import TimelineScroll from './TimelineScroll';
 import EventLimit from './EventLimit';
+import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 
 const PAG_LIMIT = 30;
 const MAX_MSG_DIFF_MINUTES = 5;
@@ -114,21 +115,27 @@ function handleOnClickCapture(e) {
 
   const spoiler = nativeEvent.composedPath().find((el) => el?.hasAttribute?.('data-mx-spoiler'));
   if (spoiler) {
+    if (!spoiler.classList.contains('data-mx-spoiler--visible')) e.preventDefault();
     spoiler.classList.toggle('data-mx-spoiler--visible');
   }
 }
 
-function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
+function renderEvent(
+  roomTimeline,
+  mEvent,
+  prevMEvent,
+  isFocus,
+  isEdit,
+  setEdit,
+  cancelEdit,
+) {
   const isBodyOnly = (prevMEvent !== null
     && prevMEvent.getSender() === mEvent.getSender()
     && prevMEvent.getType() !== 'm.room.member'
     && prevMEvent.getType() !== 'm.room.create'
     && diffMinutes(mEvent.getDate(), prevMEvent.getDate()) <= MAX_MSG_DIFF_MINUTES
   );
-  const mDate = mEvent.getDate();
-  const isToday = isInSameDay(mDate, new Date());
-
-  const time = dateFormat(mDate, isToday ? 'hh:MM TT' : 'dd/mm/yyyy');
+  const timestamp = mEvent.getTs();
 
   if (mEvent.getType() === 'm.room.member') {
     const timelineChange = parseTimelineChange(mEvent);
@@ -138,7 +145,7 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
         key={mEvent.getId()}
         variant={timelineChange.variant}
         content={timelineChange.content}
-        time={time}
+        timestamp={timestamp}
       />
     );
   }
@@ -149,7 +156,10 @@ function renderEvent(roomTimeline, mEvent, prevMEvent, isFocus = false) {
       isBodyOnly={isBodyOnly}
       roomTimeline={roomTimeline}
       focus={isFocus}
-      time={time}
+      fullTime={false}
+      isEdit={isEdit}
+      setEdit={setEdit}
+      cancelEdit={cancelEdit}
     />
   );
 }
@@ -349,7 +359,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
       const isViewingLive = roomTimeline.isServingLiveTimeline() && limit.length >= tLength - 1;
       const isAttached = timelineScroll.bottom < SCROLL_TRIGGER_POS;
 
-      if (isViewingLive && isAttached) {
+      if (isViewingLive && isAttached && document.hasFocus()) {
         limit.setFrom(tLength - limit.maxEvents);
         trySendReadReceipt(event);
         setEvent(event);
@@ -383,12 +393,14 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
 
 let jumpToItemIndex = -1;
 
-function RoomViewContent({ eventId, roomTimeline }) {
+function RoomViewContent({ roomInputRef, eventId, roomTimeline }) {
   const [throttle] = useState(new Throttle());
 
   const timelineSVRef = useRef(null);
   const timelineScrollRef = useRef(null);
   const eventLimitRef = useRef(null);
+  const [editEventId, setEditEventId] = useState(null);
+  const cancelEdit = () => setEditEventId(null);
 
   const readUptoEvtStore = useStore(roomTimeline);
   const [onLimitUpdate, forceUpdateLimit] = useForceUpdate();
@@ -473,6 +485,57 @@ function RoomViewContent({ eventId, roomTimeline }) {
     }
   }, [newEvent]);
 
+  useResizeObserver(
+    useCallback((entries) => {
+      if (!roomInputRef.current) return;
+      const editorBaseEntry = getResizeObserverEntry(roomInputRef.current, entries);
+      if (!editorBaseEntry) return;
+
+      const timelineScroll = timelineScrollRef.current;
+      if (!roomTimeline.initialized) return;
+      if (timelineScroll.bottom < 40 && !roomTimeline.canPaginateForward() && document.visibilityState === 'visible') {
+        timelineScroll.scrollToBottom();
+      }
+    }, [roomInputRef]),
+    useCallback(() => roomInputRef.current, [roomInputRef]),
+  );
+  
+  const listenKeyboard = useCallback((event) => {
+    if (event.ctrlKey || event.altKey || event.metaKey) return;
+    if (event.key !== 'ArrowUp') return;
+    if (navigation.isRawModalVisible) return;
+
+    if (document.activeElement.id !== 'message-textarea') return;
+    if (document.activeElement.value !== '') return;
+
+    const {
+      timeline: tl, activeTimeline, liveTimeline, matrixClient: mx,
+    } = roomTimeline;
+    const limit = eventLimitRef.current;
+    if (activeTimeline !== liveTimeline) return;
+    if (tl.length > limit.length) return;
+
+    const mTypes = ['m.text'];
+    for (let i = tl.length - 1; i >= 0; i -= 1) {
+      const mE = tl[i];
+      if (
+        mE.getSender() === mx.getUserId()
+        && mE.getType() === 'm.room.message'
+        && mTypes.includes(mE.getContent()?.msgtype)
+      ) {
+        setEditEventId(mE.getId());
+        return;
+      }
+    }
+  }, [roomTimeline]);
+
+  useEffect(() => {
+    document.body.addEventListener('keydown', listenKeyboard);
+    return () => {
+      document.body.removeEventListener('keydown', listenKeyboard);
+    };
+  }, [listenKeyboard]);
+
   const handleTimelineScroll = (event) => {
     const timelineScroll = timelineScrollRef.current;
     if (!event.target) return;
@@ -538,7 +601,15 @@ function RoomViewContent({ eventId, roomTimeline }) {
       const isFocus = focusId === mEvent.getId();
       if (isFocus) jumpToItemIndex = itemCountIndex;
 
-      tl.push(renderEvent(roomTimeline, mEvent, isNewEvent ? null : prevMEvent, isFocus));
+      tl.push(renderEvent(
+        roomTimeline,
+        mEvent,
+        isNewEvent ? null : prevMEvent,
+        isFocus,
+        editEventId === mEvent.getId(),
+        setEditEventId,
+        cancelEdit,
+      ));
       itemCountIndex += 1;
     }
     if (roomTimeline.canPaginateForward() || limit.length < timeline.length) {
@@ -565,6 +636,9 @@ RoomViewContent.defaultProps = {
 RoomViewContent.propTypes = {
   eventId: PropTypes.string,
   roomTimeline: PropTypes.shape({}).isRequired,
+  roomInputRef: PropTypes.shape({
+    current: PropTypes.shape({})
+  }).isRequired
 };
 
 export default RoomViewContent;

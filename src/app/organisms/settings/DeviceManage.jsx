@@ -155,6 +155,7 @@ function DeviceManage() {
     const lastIP = device.last_seen_ip;
     const lastTS = device.last_seen_ts;
     const isCurrentDevice = mx.deviceId === deviceId;
+    const canVerify = isVerified === false && (isMeVerified || isCurrentDevice);
 
     return (
       <SettingTile
@@ -171,7 +172,7 @@ function DeviceManage() {
             ? <Spinner size="small" />
             : (
               <>
-                {((isMeVerified && isVerified === false) || (isCurrentDevice && isVerified === false)) && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">Verify</Button>}
+                {(isCSEnabled && canVerify) && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">Verify</Button>}
                 <IconButton size="small" onClick={() => handleRename(device)} src={PencilIC} tooltip="Rename" />
                 <IconButton size="small" onClick={() => handleRemove(device)} src={BinIC} tooltip="Remove session" />
               </>
@@ -179,13 +180,15 @@ function DeviceManage() {
         }
         content={(
           <>
-            <Text variant="b3">
-              Last activity
-              <span style={{ color: 'var(--tc-surface-normal)' }}>
-                {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
-              </span>
-              {lastIP ? ` at ${lastIP}` : ''}
-            </Text>
+            {lastTS && (
+              <Text variant="b3">
+                Last activity
+                <span style={{ color: 'var(--tc-surface-normal)' }}>
+                  {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
+                </span>
+                {lastIP ? ` at ${lastIP}` : ''}
+              </Text>
+            )}
             {isCurrentDevice && (
               <Text style={{ marginTop: 'var(--sp-ultra-tight)' }} variant="b3">
                 {`Session Key: ${initMatrix.matrixClient.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
@@ -214,6 +217,26 @@ function DeviceManage() {
     <div className="device-manage">
       <div>
         <MenuHeader>Unverified sessions</MenuHeader>
+        {!isMeVerified && (
+          <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
+            <InfoCard
+              rounded
+              variant="primary"
+              iconSrc={InfoIC}
+              title="Verify this session either with your Security Key/Phrase here or by initiating emoji verification from a verified session."
+            />
+          </div>
+        )}
+        {isMeVerified && unverified.length > 0 && (
+          <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
+            <InfoCard
+              rounded
+              variant="surface"
+              iconSrc={InfoIC}
+              title="Verify other sessions by emoji verification or remove unfamiliar ones."
+            />
+          </div>
+        )}
         {!isCSEnabled && (
           <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
             <InfoCard

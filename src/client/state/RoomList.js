@@ -89,7 +89,7 @@ class RoomList extends EventEmitter {
 
       child.forEach((childId) => {
         const room = this.matrixClient.getRoom(childId);
-        if (room === null) return;
+        if (room === null || room.getMyMembership() !== 'join') return;
         if (room.isSpaceRoom()) categorizeSpace(childId);
         else mappedChild.add(childId);
       });
@@ -220,12 +220,6 @@ class RoomList extends EventEmitter {
     this.inviteRooms.clear();
     this.matrixClient.getRooms().forEach((room) => {
       const { roomId } = room;
-      const tombstone = room.currentState.events.get('m.room.tombstone');
-      if (tombstone?.get('') !== undefined) {
-        const repRoomId = tombstone.get('').getContent().replacement_room;
-        const repRoomMembership = this.matrixClient.getRoom(repRoomId)?.getMyMembership();
-        if (repRoomMembership === 'join') return;
-      }
 
       if (room.getMyMembership() === 'invite') {
         if (this._isDMInvite(room)) this.inviteDirects.add(roomId);
@@ -257,14 +251,27 @@ class RoomList extends EventEmitter {
       const latestMDirects = this.getMDirects();
 
       latestMDirects.forEach((directId) => {
-        const myRoom = this.matrixClient.getRoom(directId);
         if (this.mDirects.has(directId)) return;
         this.mDirects.add(directId);
 
+        const myRoom = this.matrixClient.getRoom(directId);
         if (myRoom === null) return;
         if (myRoom.getMyMembership() === 'join') {
           this.directs.add(directId);
           this.rooms.delete(directId);
+          this.emit(cons.events.roomList.ROOMLIST_UPDATED);
+        }
+      });
+
+      [...this.directs].forEach((directId) => {
+        if (latestMDirects.has(directId)) return;
+        this.mDirects.delete(directId);
+
+        const myRoom = this.matrixClient.getRoom(directId);
+        if (myRoom === null) return;
+        if (myRoom.getMyMembership() === 'join') {
+          this.directs.delete(directId);
+          this.rooms.add(directId);
           this.emit(cons.events.roomList.ROOMLIST_UPDATED);
         }
       });

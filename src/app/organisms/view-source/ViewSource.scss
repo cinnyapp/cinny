@@ -5,6 +5,8 @@
 
   & pre {
     padding: var(--sp-extra-tight);
+    white-space: pre-wrap;
+    word-break: break-all;
   }
 
   &__card {

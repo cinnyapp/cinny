@@ -1,25 +1,34 @@
 import EventEmitter from 'events';
-import { micromark } from 'micromark';
-import { gfm, gfmHtml } from 'micromark-extension-gfm';
 import encrypt from 'browser-encrypt-attachment';
-import { math } from 'micromark-extension-math';
+import { encode } from 'blurhash';
 import { getShortcodeToEmoji } from '../../app/organisms/emoji-board/custom-emoji';
-import { mathExtensionHtml, spoilerExtension, spoilerExtensionHtml } from '../../util/markdown';
+import { getBlobSafeMimeType } from '../../util/mimetypes';
+import { sanitizeText } from '../../util/sanitize';
 import cons from './cons';
 import settings from './settings';
+import { markdown, plain } from '../../util/markdown';
 
-function getImageDimension(file) {
-  return new Promise((resolve) => {
+const blurhashField = 'xyz.amorgan.blurhash';
+
+function encodeBlurhash(img) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 100;
+  canvas.height = 100;
+  const context = canvas.getContext('2d');
+  context.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const data = context.getImageData(0, 0, canvas.width, canvas.height);
+  return encode(data.data, data.width, data.height, 4, 4);
+}
+
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = async () => {
-      resolve({
-        w: img.width,
-        h: img.height,
-      });
-    };
-    img.src = URL.createObjectURL(file);
+    img.onload = () => resolve(img);
+    img.onerror = (err) => reject(err);
+    img.src = url;
   });
 }
+
 function loadVideo(videoFile) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
@@ -46,7 +55,12 @@ function loadVideo(videoFile) {
     reader.onerror = (e) => {
       reject(e);
     };
-    reader.readAsDataURL(videoFile);
+    if (videoFile.type === 'video/quicktime') {
+      const quicktimeVideoFile = new File([videoFile], videoFile.name, { type: 'video/mp4' });
+      reader.readAsDataURL(quicktimeVideoFile);
+    } else {
+      reader.readAsDataURL(videoFile);
+    }
   });
 }
 function getVideoThumbnail(video, width, height, mimeType) {
@@ -84,90 +98,12 @@ function getVideoThumbnail(video, width, height, mimeType) {
   });
 }
 
-function getFormattedBody(markdown) {
-  const result = micromark(markdown, {
-    extensions: [gfm(), spoilerExtension(), math()],
-    htmlExtensions: [gfmHtml(), spoilerExtensionHtml, mathExtensionHtml],
-  });
-  const bodyParts = result.match(/^(<p>)(.*)(<\/p>)$/);
-  if (bodyParts === null) return result;
-  if (bodyParts[2].indexOf('</p>') >= 0) return result;
-  return bodyParts[2];
-}
-
-function getReplyFormattedBody(roomId, reply) {
-  const replyToLink = `<a href="https://matrix.to/#/${roomId}/${reply.eventId}">In reply to</a>`;
-  const userLink = `<a href="https://matrix.to/#/${reply.userId}">${reply.userId}</a>`;
-  const formattedReply = getFormattedBody(reply.body.replace(/\n/g, '\n> '));
-  return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${formattedReply}</blockquote></mx-reply>`;
-}
-
-function bindReplyToContent(roomId, reply, content) {
-  const newContent = { ...content };
-  newContent.body = `> <${reply.userId}> ${reply.body.replace(/\n/g, '\n> ')}`;
-  newContent.body += `\n\n${content.body}`;
-  newContent.format = 'org.matrix.custom.html';
-  newContent['m.relates_to'] = content['m.relates_to'] || {};
-  newContent['m.relates_to']['m.in_reply_to'] = { event_id: reply.eventId };
-
-  const formattedReply = getReplyFormattedBody(roomId, reply);
-  newContent.formatted_body = formattedReply + (content.formatted_body || content.body);
-  return newContent;
-}
-
-// Apply formatting to a plain text message
-//
-// This includes inserting any custom emoji that might be relevant, and (only if the
-// user has enabled it in their settings) formatting the message using markdown.
-function formatAndEmojifyText(room, text) {
-  const allEmoji = getShortcodeToEmoji(room);
-
-  // Start by applying markdown formatting (if relevant)
-  let formattedText;
-  if (settings.isMarkdown) {
-    formattedText = getFormattedBody(text);
-  } else {
-    formattedText = text;
-  }
-
-  // Check to see if there are any :shortcode-style-tags: in the message
-  Array.from(formattedText.matchAll(/\B:([\w-]+):\B/g))
-    // Then filter to only the ones corresponding to a valid emoji
-    .filter((match) => allEmoji.has(match[1]))
-    // Reversing the array ensures that indices are preserved as we start replacing
-    .reverse()
-    // Replace each :shortcode: with an <img/> tag
-    .forEach((shortcodeMatch) => {
-      const emoji = allEmoji.get(shortcodeMatch[1]);
-
-      // Render the tag that will replace the shortcode
-      let tag;
-      if (emoji.mxc) {
-        tag = `<img data-mx-emoticon="" src="${
-          emoji.mxc
-        }" alt=":${
-          emoji.shortcode
-        }:" title=":${
-          emoji.shortcode
-        }:" height="32" />`;
-      } else {
-        tag = emoji.unicode;
-      }
-
-      // Splice the tag into the text
-      formattedText = formattedText.substr(0, shortcodeMatch.index)
-        + tag
-        + formattedText.substr(shortcodeMatch.index + shortcodeMatch[0].length);
-    });
-
-  return formattedText;
-}
-
 class RoomsInput extends EventEmitter {
-  constructor(mx) {
+  constructor(mx, roomList) {
     super();
 
     this.matrixClient = mx;
+    this.roomList = roomList;
     this.roomIdToInput = new Map();
   }
 
@@ -251,7 +187,76 @@ class RoomsInput extends EventEmitter {
     return this.roomIdToInput.get(roomId)?.isSending || false;
   }
 
-  async sendInput(roomId) {
+  getContent(roomId, options, message, reply, edit) {
+    const msgType = options?.msgType || 'm.text';
+    const autoMarkdown = options?.autoMarkdown ?? true;
+
+    const room = this.matrixClient.getRoom(roomId);
+
+    const userNames = room.currentState.userIdsToDisplayNames;
+    const parentIds = this.roomList.getAllParentSpaces(room.roomId);
+    const parentRooms = [...parentIds].map((id) => this.matrixClient.getRoom(id));
+    const emojis = getShortcodeToEmoji(this.matrixClient, [room, ...parentRooms]);
+
+    const output = settings.isMarkdown && autoMarkdown ? markdown : plain;
+    const body = output(message, { userNames, emojis });
+
+    const content = {
+      body: body.plain,
+      msgtype: msgType,
+    };
+
+    if (!body.onlyPlain || reply) {
+      content.format = 'org.matrix.custom.html';
+      content.formatted_body = body.html;
+    }
+
+    if (edit) {
+      content['m.new_content'] = { ...content };
+      content['m.relates_to'] = {
+        event_id: edit.getId(),
+        rel_type: 'm.replace',
+      };
+
+      const isReply = edit.getWireContent()['m.relates_to']?.['m.in_reply_to'];
+      if (isReply) {
+        content.format = 'org.matrix.custom.html';
+        content.formatted_body = body.html;
+      }
+
+      content.body = ` * ${content.body}`;
+      if (content.formatted_body) content.formatted_body = ` * ${content.formatted_body}`;
+
+      if (isReply) {
+        const eBody = edit.getContent().body;
+        const replyHead = eBody.substring(0, eBody.indexOf('\n\n'));
+        if (replyHead) content.body = `${replyHead}\n\n${content.body}`;
+
+        const eFBody = edit.getContent().formatted_body;
+        const fReplyHead = eFBody.substring(0, eFBody.indexOf('</mx-reply>'));
+        if (fReplyHead) content.formatted_body = `${fReplyHead}</mx-reply>${content.formatted_body}`;
+      }
+    }
+
+    if (reply) {
+      content['m.relates_to'] = {
+        'm.in_reply_to': {
+          event_id: reply.eventId,
+        },
+      };
+
+      content.body = `> <${reply.userId}> ${reply.body.replace(/\n/g, '\n> ')}\n\n${content.body}`;
+
+      const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(roomId)}/${encodeURIComponent(reply.eventId)}">In reply to</a>`;
+      const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(reply.userId)}">${sanitizeText(reply.userId)}</a>`;
+      const fallback = `<mx-reply><blockquote>${replyToLink}${userLink}<br />${reply.formattedBody || sanitizeText(reply.body)}</blockquote></mx-reply>`;
+      content.formatted_body = fallback + content.formatted_body;
+    }
+
+    return content;
+  }
+
+  async sendInput(roomId, options) {
     const input = this.getInput(roomId);
     input.isSending = true;
     this.roomIdToInput.set(roomId, input);
@@ -261,25 +266,7 @@ class RoomsInput extends EventEmitter {
     }
 
     if (this.getMessage(roomId).trim() !== '') {
-      let content = {
-        body: input.message,
-        msgtype: 'm.text',
-      };
-
-      // Apply formatting if relevant
-      const formattedBody = formatAndEmojifyText(
-        this.matrixClient.getRoom(roomId),
-        input.message,
-      );
-      if (formattedBody !== input.message) {
-        // Formatting was applied, and we need to switch to custom HTML
-        content.format = 'org.matrix.custom.html';
-        content.formatted_body = formattedBody;
-      }
-
-      if (typeof input.replyTo !== 'undefined') {
-        content = bindReplyToContent(roomId, input.replyTo, content);
-      }
+      const content = this.getContent(roomId, options, input.message, input.replyTo);
       this.matrixClient.sendMessage(roomId, content);
     }
 
@@ -287,8 +274,36 @@ class RoomsInput extends EventEmitter {
     this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
   }
 
+  async sendSticker(roomId, data) {
+    const { mxc: url, body, httpUrl } = data;
+    const info = {};
+
+    const img = new Image();
+    img.src = httpUrl;
+
+    try {
+      const res = await fetch(httpUrl);
+      const blob = await res.blob();
+      info.w = img.width;
+      info.h = img.height;
+      info.mimetype = blob.type;
+      info.size = blob.size;
+      info.thumbnail_info = { ...info };
+      info.thumbnail_url = url;
+    } catch {
+      // send sticker without info
+    }
+
+    this.matrixClient.sendEvent(roomId, 'm.sticker', {
+      body,
+      url,
+      info,
+    });
+    this.emit(cons.events.roomsInput.MESSAGE_SENT, roomId);
+  }
+
   async sendFile(roomId, file) {
-    const fileType = file.type.slice(0, file.type.indexOf('/'));
+    const fileType = getBlobSafeMimeType(file.type).slice(0, file.type.indexOf('/'));
     const info = {
       mimetype: file.type,
       size: file.size,
@@ -297,10 +312,11 @@ class RoomsInput extends EventEmitter {
     let uploadData = null;
 
     if (fileType === 'image') {
-      const imgDimension = await getImageDimension(file);
+      const img = await loadImage(URL.createObjectURL(file));
 
-      info.w = imgDimension.w;
-      info.h = imgDimension.h;
+      info.w = img.width;
+      info.h = img.height;
+      info[blurhashField] = encodeBlurhash(img);
 
       content.msgtype = 'm.image';
       content.body = file.name || 'Image';
@@ -310,8 +326,11 @@ class RoomsInput extends EventEmitter {
 
       try {
         const video = await loadVideo(file);
+
         info.w = video.videoWidth;
         info.h = video.videoHeight;
+        info[blurhashField] = encodeBlurhash(video);
+
         const thumbnailData = await getVideoThumbnail(video, video.videoWidth, video.videoHeight, 'image/jpeg');
         const thumbnailUploadData = await this.uploadFile(roomId, thumbnailData.thumbnail);
         info.thumbnail_info = thumbnailData.info;
@@ -376,7 +395,7 @@ class RoomsInput extends EventEmitter {
     input.attachment.uploadingPromise = uploadingPromise;
     this.roomIdToInput.set(roomId, input);
 
-    const url = await uploadingPromise;
+    const { content_uri: url } = await uploadingPromise;
 
     delete input.attachment.uploadingPromise;
     this.roomIdToInput.set(roomId, input);
@@ -390,44 +409,13 @@ class RoomsInput extends EventEmitter {
   }
 
   async sendEditedMessage(roomId, mEvent, editedBody) {
-    const isReply = typeof mEvent.getWireContent()['m.relates_to']?.['m.in_reply_to'] !== 'undefined';
-
-    const content = {
-      body: ` * ${editedBody}`,
-      msgtype: 'm.text',
-      'm.new_content': {
-        body: editedBody,
-        msgtype: 'm.text',
-      },
-      'm.relates_to': {
-        event_id: mEvent.getId(),
-        rel_type: 'm.replace',
-      },
-    };
-
-    // Apply formatting if relevant
-    const formattedBody = formatAndEmojifyText(
-      this.matrixClient.getRoom(roomId),
+    const content = this.getContent(
+      roomId,
+      { msgType: mEvent.getWireContent().msgtype },
       editedBody,
+      null,
+      mEvent,
     );
-    if (formattedBody !== editedBody) {
-      content.formatted_body = ` * ${formattedBody}`;
-      content.format = 'org.matrix.custom.html';
-      content['m.new_content'].formatted_body = formattedBody;
-      content['m.new_content'].format = 'org.matrix.custom.html';
-    }
-    if (isReply) {
-      const evBody = mEvent.getContent().body;
-      const replyHead = evBody.slice(0, evBody.indexOf('\n\n'));
-      const evFBody = mEvent.getContent().formatted_body;
-      const fReplyHead = evFBody.slice(0, evFBody.indexOf('</mx-reply>'));
-
-      content.format = 'org.matrix.custom.html';
-      content.formatted_body = `${fReplyHead}</mx-reply>${(content.formatted_body || content.body)}`;
-
-      content.body = `${replyHead}\n\n${content.body}`;
-    }
-
     this.matrixClient.sendMessage(roomId, content);
   }
 }

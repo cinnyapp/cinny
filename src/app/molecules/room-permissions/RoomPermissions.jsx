@@ -237,12 +237,12 @@ function RoomPermissions({ roomId }) {
                     ? permissions[permInfo.parent]?.[permKey]
                     : permissions[permKey];
 
-                  if (!permValue) permValue = permInfo.default;
+                  if (permValue === undefined) permValue = permInfo.default;
 
                   if (typeof permValue === 'number') {
                     powerLevel = permValue;
                   } else if (permKey === 'notifications') {
-                    powerLevel = permValue.room || 50;
+                    powerLevel = permValue.room ?? 50;
                   }
                   return (
                     <SettingTile

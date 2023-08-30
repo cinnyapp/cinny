@@ -1,4 +1,4 @@
-name: 'Build pull request'
+name: Build pull request
 
 on:
   pull_request:
@@ -6,29 +6,35 @@ on:
 
 jobs:
   build-pull-request:
+    name: Build pull request
     runs-on: ubuntu-latest
     env:
       PR_NUMBER: ${{github.event.number}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.0.2
-      - name: Build app
-        run: npm ci && npm run build
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3.0.0
+        uses: actions/checkout@v3.5.3
+      - name: Setup node
+        uses: actions/setup-node@v3.6.0
         with:
-          name: previewbuild
+          node-version: 18.12.1
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Build app
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: npm run build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: preview
           path: dist
           retention-days: 1
-      - name: Get PR info
-        uses: actions/github-script@v6.0.0
+      - name: Save pr number
+        run: echo ${PR_NUMBER} > ./pr.txt
+      - name: Upload pr number
+        uses: actions/upload-artifact@v3.1.2
         with:
-          script: |
-            var fs = require('fs');
-            fs.writeFileSync('${{github.workspace}}/pr.json', JSON.stringify(context.payload.pull_request));
-      - name: Upload PR Info
-        uses: actions/upload-artifact@v3.0.0
-        with:
-          name: pr.json
-          path: pr.json
+          name: pr
+          path: ./pr.txt
           retention-days: 1

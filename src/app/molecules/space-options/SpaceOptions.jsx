@@ -5,6 +5,7 @@ import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import { openSpaceSettings, openSpaceManage, openInviteUser } from '../../../client/action/navigation';
+import { markAsRead } from '../../../client/action/notifications';
 import { leave } from '../../../client/action/room';
 import {
   createSpaceShortcut,
@@ -17,6 +18,7 @@ import { MenuHeader, MenuItem } from '../../atoms/context-menu/ContextMenu';
 
 import CategoryIC from '../../../../public/res/ic/outlined/category.svg';
 import CategoryFilledIC from '../../../../public/res/ic/filled/category.svg';
+import TickMarkIC from '../../../../public/res/ic/outlined/tick-mark.svg';
 import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import HashSearchIC from '../../../../public/res/ic/outlined/hash-search.svg';
@@ -28,11 +30,21 @@ import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 
 function SpaceOptions({ roomId, afterOptionSelect }) {
   const mx = initMatrix.matrixClient;
+  const { roomList } = initMatrix;
   const room = mx.getRoom(roomId);
   const canInvite = room?.canInvite(mx.getUserId());
   const isPinned = initMatrix.accountData.spaceShortcut.has(roomId);
   const isCategorized = initMatrix.accountData.categorizedSpaces.has(roomId);
 
+  const handleMarkAsRead = () => {
+    const spaceChildren = roomList.getCategorizedSpaces([roomId]);
+    spaceChildren?.forEach((childIds) => {
+      childIds?.forEach((childId) => {
+        markAsRead(childId);
+      });
+    });
+    afterOptionSelect();
+  };
   const handleInviteClick = () => {
     openInviteUser(roomId);
     afterOptionSelect();
@@ -71,6 +83,7 @@ function SpaceOptions({ roomId, afterOptionSelect }) {
   return (
     <div style={{ maxWidth: 'calc(var(--navigation-drawer-width) - var(--sp-normal))' }}>
       <MenuHeader>{twemojify(`Options for ${initMatrix.matrixClient.getRoom(roomId)?.name}`)}</MenuHeader>
+      <MenuItem iconSrc={TickMarkIC} onClick={handleMarkAsRead}>Mark as read</MenuItem>
       <MenuItem
         onClick={handleCategorizeClick}
         iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}

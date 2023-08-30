@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import * as sdk from 'matrix-js-sdk';
+import Olm from '@matrix-org/olm';
 // import { logger } from 'matrix-js-sdk/lib/logger';
 
 import { secret } from './state/auth';
@@ -8,13 +9,25 @@ import AccountData from './state/AccountData';
 import RoomsInput from './state/RoomsInput';
 import Notifications from './state/Notifications';
 import { cryptoCallbacks } from './state/secretStorageKeys';
+import navigation from './state/navigation';
 
-global.Olm = require('@matrix-org/olm');
+global.Olm = Olm;
 
 // logger.disableAll();
 
 class InitMatrix extends EventEmitter {
+  constructor() {
+    super();
+
+    navigation.initMatrix = this;
+  }
+
   async init() {
+    if (this.matrixClient) {
+      console.warn('Client is already initialized!')
+      return;
+    }
+
     await this.startClient();
     this.setupSync();
     this.listenEvents();
@@ -33,7 +46,6 @@ class InitMatrix extends EventEmitter {
       accessToken: secret.accessToken,
       userId: secret.userId,
       store: indexedDBStore,
-      sessionStore: new sdk.WebStorageSessionStore(global.localStorage),
       cryptoStore: new sdk.IndexedDBCryptoStore(global.indexedDB, 'crypto-store'),
       deviceId: secret.deviceId,
       timelineSupport: true,
@@ -61,15 +73,18 @@ class InitMatrix extends EventEmitter {
       },
       PREPARED: (prevState) => {
         console.log('PREPARED state');
-        console.log('previous state: ', prevState);
+        console.log('Previous state: ', prevState);
         // TODO: remove global.initMatrix at end
         global.initMatrix = this;
         if (prevState === null) {
           this.roomList = new RoomList(this.matrixClient);
           this.accountData = new AccountData(this.roomList);
-          this.roomsInput = new RoomsInput(this.matrixClient);
+          this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
           this.notifications = new Notifications(this.roomList);
           this.emit('init_loading_finished');
+          this.notifications._initNoti();
+        } else {
+          this.notifications?._initNoti();
         }
       },
       RECONNECTING: () => {
@@ -89,10 +104,29 @@ class InitMatrix extends EventEmitter {
   }
 
   listenEvents() {
-    this.matrixClient.on('Session.logged_out', () => {
+    this.matrixClient.on('Session.logged_out', async () => {
       this.matrixClient.stopClient();
-      this.matrixClient.clearStores();
+      await this.matrixClient.clearStores();
       window.localStorage.clear();
+      window.location.reload();
+    });
+  }
+
+  async logout() {
+    this.matrixClient.stopClient();
+    try {
+      await this.matrixClient.logout();
+    } catch {
+      // ignore if failed to logout
+    }
+    await this.matrixClient.clearStores();
+    window.localStorage.clear();
+    window.location.reload();
+  }
+
+  clearCacheAndReload() {
+    this.matrixClient.stopClient();
+    this.matrixClient.store.deleteAllData().then(() => {
       window.location.reload();
     });
   }

@@ -168,7 +168,7 @@ function Search() {
     }
   };
 
-  const notifs = initMatrix.notifications;
+  const noti = initMatrix.notifications;
   const renderRoomSelector = (item) => {
     let imageSrc = null;
     let iconSrc = null;
@@ -178,9 +178,6 @@ function Search() {
       iconSrc = joinRuleToIconSrc(item.room.getJoinRule(), item.type === 'space');
     }
 
-    const isUnread = notifs.hasNoti(item.roomId);
-    const noti = notifs.getNoti(item.roomId);
-
     return (
       <RoomSelector
         key={item.roomId}
@@ -189,9 +186,9 @@ function Search() {
         roomId={item.roomId}
         imageSrc={imageSrc}
         iconSrc={iconSrc}
-        isUnread={isUnread}
-        notificationCount={noti.total}
-        isAlert={noti.highlight > 0}
+        isUnread={noti.hasNoti(item.roomId)}
+        notificationCount={noti.getTotalNoti(item.roomId)}
+        isAlert={noti.getHighlightNoti(item.roomId) > 0}
         onClick={() => openItem(item.roomId, item.type)}
       />
     );
@@ -207,7 +204,7 @@ function Search() {
       size="small"
     >
       <div className="search-dialog">
-        <form className="search-dialog__input" onSubmit={(e) => { e.preventDefault(); openFirstResult()}}>
+        <form className="search-dialog__input" onSubmit={(e) => { e.preventDefault(); openFirstResult(); }}>
           <RawIcon src={SearchIC} size="small" />
           <Input
             onChange={handleOnChange}

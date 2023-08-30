@@ -9,13 +9,11 @@ on:
 jobs:
   docker-build:
     runs-on: ubuntu-latest
-    env:
-      PR_NUMBER: ${{github.event.number}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.5.3
       - name: Build Docker image
-        uses: docker/build-push-action@v2.10.0
+        uses: docker/build-push-action@v4.1.1
         with:
           context: .
           push: false

@@ -11,7 +11,7 @@ import { selectRoom, openReusableContextMenu } from '../../../client/action/navi
 import * as roomActions from '../../../client/action/room';
 
 import {
-  getUsername, getUsernameOfRoomMember, getPowerLabel, hasDMWith
+  getUsername, getUsernameOfRoomMember, getPowerLabel, hasDMWith, hasDevices,
 } from '../../../util/matrixUtil';
 import { getEventCords } from '../../../util/common';
 import colorMXID from '../../../util/colorMXID';
@@ -137,7 +137,7 @@ function SessionInfo({ userId }) {
         onClick={() => setIsVisible(!isVisible)}
         iconSrc={isVisible ? ChevronBottomIC : ChevronRightIC}
       >
-        <Text variant="b2">{`View ${devices?.length > 0 ? `${devices.length} ` : ''}sessions`}</Text>
+        <Text variant="b2">{`View ${devices?.length > 0 ? `${devices.length} ${devices.length == 1 ? 'session' : 'sessions'}` : 'sessions'}`}</Text>
       </MenuItem>
       {renderSessionChips()}
     </div>
@@ -201,7 +201,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     // Create new DM
     try {
       setIsCreatingDM(true);
-      await roomActions.createDM(userId);
+      await roomActions.createDM(userId, await hasDevices(userId));
     } catch {
       if (isMountedRef.current === false) return;
       setIsCreatingDM(false);
@@ -209,19 +209,18 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   };
 
   const toggleIgnore = async () => {
-    const ignoredUsers = mx.getIgnoredUsers();
-    const uIndex = ignoredUsers.indexOf(userId);
-    if (uIndex >= 0) {
-      if (uIndex === -1) return;
-      ignoredUsers.splice(uIndex, 1);
-    } else ignoredUsers.push(userId);
+    const isIgnored = mx.getIgnoredUsers().includes(userId);
 
     try {
       setIsIgnoring(true);
-      await mx.setIgnoredUsers(ignoredUsers);
+      if (isIgnored) {
+        await roomActions.unignore([userId]);
+      } else {
+        await roomActions.ignore([userId]);
+      }
 
       if (isMountedRef.current === false) return;
-      setIsUserIgnored(uIndex < 0);
+      setIsUserIgnored(!isIgnored);
       setIsIgnoring(false);
     } catch {
       setIsIgnoring(false);

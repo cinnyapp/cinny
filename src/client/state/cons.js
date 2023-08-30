@@ -1,5 +1,5 @@
 const cons = {
-  version: '2.0.0',
+  version: '2.2.6',
   secretKey: {
     ACCESS_TOKEN: 'cinny_access_token',
     DEVICE_ID: 'cinny_device_id',
@@ -12,7 +12,17 @@ const cons = {
     HOME: 'home',
     DIRECTS: 'dm',
   },
-  supportEventTypes: ['m.room.create', 'm.room.message', 'm.room.encrypted', 'm.room.member', 'm.sticker'],
+  supportEventTypes: [
+    'm.room.create',
+    'm.room.message',
+    'm.room.encrypted',
+    'm.room.member',
+    'm.sticker',
+  ],
+  supportReceiptTypes: [
+    'm.read',
+    'm.read.private',
+  ],
   notifs: {
     DEFAULT: 'default',
     ALL_MESSAGES: 'all_messages',

@@ -27,6 +27,15 @@
   white-space: initial;
 }
 
+.sticker-container {
+  display: inline-flex;
+  max-width: 128px;
+  width: 100%;
+  & img {
+    width: 100% !important;
+  }
+}
+
 .image-container,
 .video-container,
 .audio-container {
@@ -42,25 +51,40 @@
   background-size: cover;
 }
 
-.image-container {
-  & img {
+.image-container,
+.video-container {
+  & img,
+  & canvas {
     max-width: unset !important;
     width: 100% !important;
+    height: 100%;
     border-radius: 0 !important;
     margin: 0 !important;
   }
 }
+.image-container {
+  max-height: 460px;
+  img {
+    cursor: pointer;
+    object-fit: cover;
+  }
+}
 
 .video-container {
+  position: relative;
   & .ic-btn-surface {
     background-color: var(--bg-surface-low);
   }
+  & .ic-btn-surface,
+  & .donut-spinner {
+    position: absolute;
+  }
   video {
-    width: 100%
+    width: 100%;
   }
 }
 .audio-container {
   audio {
-    width: 100%
+    width: 100%;
   }
 }

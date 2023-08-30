@@ -2,25 +2,57 @@ import { openSearch, toggleRoomSettings } from '../action/navigation';
 import navigation from '../state/navigation';
 import { markAsRead } from '../action/notifications';
 
+function shouldFocusMessageField(code) {
+  // do not focus on F keys
+  if (/^F\d+$/.test(code)) return false;
+
+  // do not focus on numlock/scroll lock
+  if (
+    code.metaKey
+    || code.startsWith('OS')
+    || code.startsWith('Meta')
+    || code.startsWith('Shift')
+    || code.startsWith('Alt')
+    || code.startsWith('Control')
+    || code.startsWith('Arrow')
+    || code === 'Tab'
+    || code === 'Space'
+    || code === 'Enter'
+    || code === 'NumLock'
+    || code === 'ScrollLock'
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 function listenKeyboard(event) {
   // Ctrl/Cmd +
   if (event.ctrlKey || event.metaKey) {
-    // k - for search Modal
-    if (event.keyCode === 75) {
+    // open search modal
+    if (event.key === 'k') {
       event.preventDefault();
       if (navigation.isRawModalVisible) return;
       openSearch();
     }
+
+    // focus message field on paste
+    if (event.key === 'v') {
+      if (navigation.isRawModalVisible) return;
+      const msgTextarea = document.getElementById('message-textarea');
+      const { activeElement } = document;
+      if (activeElement !== msgTextarea
+        && ['input', 'textarea'].includes(activeElement.tagName.toLowerCase())
+      ) return;
+      msgTextarea?.focus();
+    }
   }
 
-  if (!event.ctrlKey && !event.altKey) {
+  if (!event.ctrlKey && !event.altKey && !event.metaKey) {
     if (navigation.isRawModalVisible) return;
-    if (['text', 'textarea'].includes(document.activeElement.type)) {
-      return;
-    }
 
-    // esc
-    if (event.keyCode === 27) {
+    if (event.key === 'Escape') {
       if (navigation.isRoomSettings) {
         toggleRoomSettings();
         return;
@@ -31,16 +63,16 @@ function listenKeyboard(event) {
       }
     }
 
-    // Don't allow these keys to type/focus message field
-    if ((event.keyCode !== 8 && event.keyCode < 48)
-      || (event.keyCode >= 91 && event.keyCode <= 93)
-      || (event.keyCode >= 112 && event.keyCode <= 183)) {
+    if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) {
       return;
     }
 
-    // press any key to focus and type in message field
-    const msgTextarea = document.getElementById('message-textarea');
-    msgTextarea?.focus();
+    // focus the text field on most keypresses
+    if (shouldFocusMessageField(event.code)) {
+      // press any key to focus and type in message field
+      const msgTextarea = document.getElementById('message-textarea');
+      msgTextarea?.focus();
+    }
   }
 }
 
