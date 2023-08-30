@@ -7,8 +7,22 @@ import cons from '../client/state/cons';
 
 const listeners = [];
 
+/**
+ * Old `window.location.hash` value
+ * @type {string}
+ */
+let oldHash;
+
 export function handleUriFragmentChange() {
-  if (!window.location.hash.startsWith('/#')) return;
+  // If there is no fragment, there is no need to proceed here
+  if (!window.location.hash.startsWith('/#') && !window.location.hash.startsWith('#')) return;
+
+  // Avoid falling into loops of self-triggering
+  // by detecting hashchange events which are not actually a change
+  if (window.location.hash === oldHash) {
+    return;
+  }
+  oldHash = window.location.hash;
 
   // Room must be selected AFTER client finished loading
   const pieces = window.location.hash.split('/');
@@ -16,13 +30,14 @@ export function handleUriFragmentChange() {
   // if no trailing '/' would be used for hash we would have to remove it
   // relevant array items start at index 1
 
+  // /join/<room>
   if (pieces[1] === 'join') {
     openJoinAlias(pieces[2]);
     return;
   }
 
   // /<room|home|spaceid>...
-  if (pieces.length >= 2) {
+  if (pieces.length >= 2) { 
     if (pieces[1] === 'room' || pieces[1][0] !== '!') pieces[1] = cons.tabs.HOME;
 
     selectSpace(pieces[1]);
@@ -41,9 +56,14 @@ listeners.push(
 
   navigation.on(cons.events.navigation.ROOM_SELECTED, (selectedRoom, _previousRoom, eventId) => {
     const pieces = window.location.hash.split('/');
+
+    if (_previousRoom === selectedRoom) {
+      return;
+    }
+
     if (!eventId) pieces.length = 3;
     else pieces[3] = eventId;
-    if (!selectRoom) pieces.length = 2;
+    if (!selectedRoom) pieces.length = 2;
     else pieces[2] = selectedRoom;
     if (pieces[1] === 'join') pieces[1] = cons.tabs.HOME;
     window.location.hash = pieces.join('/');
