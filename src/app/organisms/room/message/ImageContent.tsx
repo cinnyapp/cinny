@@ -5,6 +5,10 @@ import {
   Button,
   Icon,
   Icons,
+  Modal,
+  Overlay,
+  OverlayBackdrop,
+  OverlayCenter,
   Spinner,
   Text,
   Tooltip,
@@ -13,6 +17,7 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import { BlurhashCanvas } from 'react-blurhash';
+import FocusTrap from 'focus-trap-react';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { IImageInfo, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
@@ -21,6 +26,7 @@ import { getFileSrcUrl } from './util';
 import { Image } from '../../../components/media';
 import * as css from './styles.css';
 import { bytesToSize } from '../../../utils/common';
+import { ImageViewer } from '../../../components/image-viewer';
 
 export type ImageContentProps = {
   body: string;
@@ -37,6 +43,7 @@ export const ImageContent = as<'div', ImageContentProps>(
 
     const [load, setLoad] = useState(false);
     const [error, setError] = useState(false);
+    const [viewer, setViewer] = useState(false);
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(
@@ -64,6 +71,27 @@ export const ImageContent = as<'div', ImageContentProps>(
 
     return (
       <Box className={classNames(css.RelativeBase, className)} {...props} ref={ref}>
+        {srcState.status === AsyncStatus.Success && (
+          <Overlay open={viewer} backdrop={<OverlayBackdrop />}>
+            <OverlayCenter>
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  onDeactivate: () => setViewer(false),
+                  clickOutsideDeactivates: true,
+                }}
+              >
+                <Modal size="500">
+                  <ImageViewer
+                    src={srcState.data}
+                    alt={body}
+                    requestClose={() => setViewer(false)}
+                  />
+                </Modal>
+              </FocusTrap>
+            </OverlayCenter>
+          </Overlay>
+        )}
         {typeof blurHash === 'string' && !load && (
           <BlurhashCanvas style={{ width: '100%', height: '100%' }} hash={blurHash} punch={1} />
         )}
@@ -90,6 +118,8 @@ export const ImageContent = as<'div', ImageContentProps>(
               loading="lazy"
               onLoad={handleLoad}
               onError={handleError}
+              onClick={() => setViewer(true)}
+              tabIndex={0}
             />
           </Box>
         )}
