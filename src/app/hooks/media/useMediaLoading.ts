@@ -34,14 +34,12 @@ export const useMediaLoading = (
       });
     };
     targetEl?.addEventListener('loadstart', handleStart);
-    targetEl?.addEventListener('waiting', handleStart);
     targetEl?.addEventListener('loadeddata', handleStop);
     targetEl?.addEventListener('stalled', handleStop);
     targetEl?.addEventListener('suspend', handleStop);
     targetEl?.addEventListener('error', handleError);
     return () => {
       targetEl?.removeEventListener('loadstart', handleStart);
-      targetEl?.removeEventListener('waiting', handleStart);
       targetEl?.removeEventListener('loadeddata', handleStop);
       targetEl?.removeEventListener('stalled', handleStop);
       targetEl?.removeEventListener('suspend', handleStop);

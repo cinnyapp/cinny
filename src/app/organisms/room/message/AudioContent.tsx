@@ -9,6 +9,7 @@ import { IAudioInfo } from '../../../../types/matrix/common';
 import { MediaControl } from '../../../components/media';
 import {
   PlayTimeCallback,
+  useMediaLoading,
   useMediaPlay,
   useMediaPlayTimeCallback,
   useMediaVolume,
@@ -44,6 +45,7 @@ export const AudioContent = as<'div', AudioContentProps>(
     const [duration, setDuration] = useState(info.duration ?? 0);
 
     const getAudioRef = useCallback(() => audioRef.current, []);
+    const { loading } = useMediaLoading(getAudioRef);
     const { playing, setPlaying } = useMediaPlay(getAudioRef);
     const { volume, mute, setMute } = useMediaVolume(getAudioRef);
     const handlePlayTimeCallback: PlayTimeCallback = useCallback((d, ct) => {
@@ -65,7 +67,7 @@ export const AudioContent = as<'div', AudioContentProps>(
 
     return (
       <MediaControl
-        top={
+        after={
           <ProgressBar
             as="div"
             variant="Secondary"
@@ -84,7 +86,7 @@ export const AudioContent = as<'div', AudioContentProps>(
               radii="300"
               disabled={srcState.status === AsyncStatus.Loading}
               before={
-                srcState.status === AsyncStatus.Loading ? (
+                srcState.status === AsyncStatus.Loading || loading ? (
                   <Spinner variant="Secondary" size="50" />
                 ) : (
                   <Icon src={playing ? Icons.Pause : Icons.Play} size="50" />
@@ -106,6 +108,7 @@ export const AudioContent = as<'div', AudioContentProps>(
               size="300"
               radii="Pill"
               onClick={() => setMute(!mute)}
+              aria-pressed={mute}
             >
               <Icon src={mute ? Icons.VolumeMute : Icons.VolumeHigh} size="50" />
             </IconButton>
