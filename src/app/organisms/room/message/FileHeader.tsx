@@ -1,6 +1,8 @@
-import { Badge, Box, Text, as } from 'folds';
+import { Badge, Box, Text, as, toRem } from 'folds';
 import React from 'react';
 import { mimeTypeToExt } from '../../../utils/mimeTypes';
+
+const badgeStyles = { maxWidth: toRem(100) };
 
 export type FileHeaderProps = {
   body: string;
@@ -8,8 +10,10 @@ export type FileHeaderProps = {
 };
 export const FileHeader = as<'div', FileHeaderProps>(({ body, mimeType, ...props }, ref) => (
   <Box alignItems="Center" gap="200" grow="Yes" {...props} ref={ref}>
-    <Badge variant="Secondary" radii="Pill">
-      <Text size="O400">{mimeTypeToExt(mimeType)}</Text>
+    <Badge style={badgeStyles} variant="Secondary" radii="Pill">
+      <Text size="O400" truncate>
+        {mimeTypeToExt(mimeType)}
+      </Text>
     </Badge>
     <Text size="T300" truncate>
       {body}
