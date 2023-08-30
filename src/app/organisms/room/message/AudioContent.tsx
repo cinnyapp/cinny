@@ -89,7 +89,7 @@ export const AudioContent = as<'div', AudioContentProps>(
                 srcState.status === AsyncStatus.Loading || loading ? (
                   <Spinner variant="Secondary" size="50" />
                 ) : (
-                  <Icon src={playing ? Icons.Pause : Icons.Play} size="50" />
+                  <Icon src={playing ? Icons.Pause : Icons.Play} size="50" filled={playing} />
                 )
               }
             >
