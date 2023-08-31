@@ -1,12 +1,29 @@
-import React, { useCallback, useEffect } from 'react';
-import { Box, Button, Icon, Icons, Spinner, Text, Tooltip, TooltipProvider, as } from 'folds';
+import React, { useCallback, useState } from 'react';
+import {
+  Box,
+  Button,
+  Icon,
+  Icons,
+  Modal,
+  Overlay,
+  OverlayBackdrop,
+  OverlayCenter,
+  Spinner,
+  Text,
+  Tooltip,
+  TooltipProvider,
+  as,
+} from 'folds';
 import FileSaver from 'file-saver';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
+import FocusTrap from 'focus-trap-react';
 import { IFileInfo } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getFileSrcUrl } from './util';
+import { getFileSrcUrl, getSrcFile } from './util';
 import { bytesToSize } from '../../../utils/common';
+import { TextViewer } from '../../../components/text-viewer';
+import { READABLE_TEXT_MIME_TYPES } from '../../../utils/mimeTypes';
 
 export type FileContentProps = {
   body: string;
@@ -18,59 +35,126 @@ export type FileContentProps = {
 export const FileContent = as<'div', FileContentProps>(
   ({ body, mimeType, url, info, encInfo, ...props }, ref) => {
     const mx = useMatrixClient();
+    const [textViewer, setTextViewer] = useState(false);
 
-    const [srcState, loadSrc] = useAsyncCallback(
-      useCallback(
-        () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
-        [mx, url, mimeType, encInfo]
-      )
+    const loadSrc = useCallback(
+      () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
+      [mx, url, mimeType, encInfo]
     );
 
-    useEffect(() => {
-      if (srcState.status === AsyncStatus.Success) {
-        FileSaver.saveAs(srcState.data, body);
-      }
-    }, [srcState, body]);
+    const [downloadState, download] = useAsyncCallback(
+      useCallback(async () => {
+        const src = await loadSrc();
+        FileSaver.saveAs(src, body);
+        return src;
+      }, [loadSrc, body])
+    );
+
+    const [readState, read] = useAsyncCallback(
+      useCallback(async () => {
+        const src = await loadSrc();
+        const blob = await getSrcFile(src);
+        const text = blob.text();
+        setTextViewer(true);
+        return text;
+      }, [loadSrc])
+    );
+
+    const renderErrorButton = (retry: () => void, text: string) => (
+      <TooltipProvider
+        tooltip={
+          <Tooltip variant="Critical">
+            <Text>Failed to load file!</Text>
+          </Tooltip>
+        }
+        position="Top"
+        align="Center"
+      >
+        {(triggerRef) => (
+          <Button
+            ref={triggerRef}
+            size="400"
+            variant="Critical"
+            fill="Soft"
+            outlined
+            radii="300"
+            onClick={retry}
+            before={<Icon size="100" src={Icons.Warning} filled />}
+          >
+            <Text size="B400" truncate>
+              {text}
+            </Text>
+          </Button>
+        )}
+      </TooltipProvider>
+    );
 
     return (
       <Box direction="Column" gap="300" {...props} ref={ref}>
-        {srcState.status === AsyncStatus.Error ? (
-          <TooltipProvider
-            tooltip={
-              <Tooltip variant="Critical">
-                <Text>Failed to load file!</Text>
-              </Tooltip>
-            }
-            position="Top"
-            align="Center"
-          >
-            {(triggerRef) => (
-              <Button
-                ref={triggerRef}
-                size="400"
-                variant="Critical"
-                fill="Soft"
-                outlined
-                radii="300"
-                onClick={loadSrc}
-                before={<Icon size="100" src={Icons.Warning} filled />}
+        {readState.status === AsyncStatus.Success && (
+          <Overlay open={textViewer} backdrop={<OverlayBackdrop />}>
+            <OverlayCenter>
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  onDeactivate: () => setTextViewer(false),
+                  clickOutsideDeactivates: true,
+                }}
               >
-                <Text size="B400" truncate>{`Retry Download (${bytesToSize(
-                  info.size ?? 0
-                )})`}</Text>
-              </Button>
-            )}
-          </TooltipProvider>
+                <Modal size="500">
+                  <TextViewer
+                    name={body}
+                    text={readState.data}
+                    mimeType={mimeType}
+                    requestClose={() => setTextViewer(false)}
+                  />
+                </Modal>
+              </FocusTrap>
+            </OverlayCenter>
+          </Overlay>
+        )}
+        {READABLE_TEXT_MIME_TYPES.includes(mimeType) &&
+          (readState.status === AsyncStatus.Error ? (
+            renderErrorButton(read, 'Open File')
+          ) : (
+            <Button
+              variant="Secondary"
+              fill="Solid"
+              radii="300"
+              size="400"
+              onClick={() =>
+                readState.status === AsyncStatus.Success ? setTextViewer(true) : read()
+              }
+              disabled={readState.status === AsyncStatus.Loading}
+              before={
+                readState.status === AsyncStatus.Loading ? (
+                  <Spinner size="100" variant="Secondary" />
+                ) : (
+                  <Icon size="100" src={Icons.ArrowRight} filled />
+                )
+              }
+            >
+              <Text size="B400" truncate>
+                Open File
+              </Text>
+            </Button>
+          ))}
+        {downloadState.status === AsyncStatus.Error ? (
+          renderErrorButton(loadSrc, `Retry Download (${bytesToSize(info.size ?? 0)})`)
         ) : (
           <Button
             variant="Secondary"
             fill="Soft"
             radii="300"
             size="400"
-            onClick={loadSrc}
-            disabled={srcState.status === AsyncStatus.Loading}
+            onClick={() =>
+              downloadState.status === AsyncStatus.Success
+                ? FileSaver.saveAs(downloadState.data, body)
+                : download()
+            }
+            disabled={downloadState.status === AsyncStatus.Loading}
             before={
-              srcState.status === AsyncStatus.Loading ? (
+              downloadState.status === AsyncStatus.Loading ? (
                 <Spinner size="100" variant="Secondary" />
               ) : (
                 <Icon size="100" src={Icons.Download} filled />

@@ -168,3 +168,21 @@ export const scrollToBottom = (scrollEl: HTMLElement, behavior?: 'auto' | 'insta
     behavior,
   });
 };
+
+export const copyToClipboard = (text: string) => {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const host = document.body;
+    const copyInput = document.createElement('input');
+    copyInput.style.position = 'fixed';
+    copyInput.style.opacity = '0';
+    copyInput.value = text;
+    host.append(copyInput);
+
+    copyInput.select();
+    copyInput.setSelectionRange(0, 99999);
+    document.execCommand('Copy');
+    copyInput.remove();
+  }
+};

@@ -15,3 +15,9 @@ export const getFileSrcUrl = async (
   }
   return httpUrl;
 };
+
+export const getSrcFile = async (src: string): Promise<Blob> => {
+  const res = await fetch(src, { method: 'GET' });
+  const blob = await res.blob();
+  return blob;
+};

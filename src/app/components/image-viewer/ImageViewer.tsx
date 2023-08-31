@@ -38,7 +38,7 @@ export const ImageViewer = as<'div', ImageViewerProps>(
               {alt}
             </Text>
           </Box>
-          <Box alignItems="Center" gap="200">
+          <Box shrink="No" alignItems="Center" gap="200">
             <IconButton
               variant={zoom < 1 ? 'Success' : 'SurfaceVariant'}
               outlined={zoom < 1}
