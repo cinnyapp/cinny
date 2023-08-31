@@ -33,5 +33,7 @@ export const ImageViewerImg = style([
     objectFit: 'contain',
     width: '100%',
     height: '100%',
+    backgroundColor: color.Surface.Container,
+    transition: 'transform 100ms linear',
   },
 ]);

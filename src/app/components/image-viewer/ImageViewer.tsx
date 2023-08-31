@@ -1,9 +1,11 @@
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-import React, { MouseEventHandler, useState } from 'react';
+import React from 'react';
 import FileSaver from 'file-saver';
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Text, as } from 'folds';
 import * as css from './ImageViewer.css';
+import { useZoom } from '../../hooks/useZoom';
+import { usePan } from '../../hooks/usePan';
 
 export type ImageViewerProps = {
   alt: string;
@@ -11,42 +13,10 @@ export type ImageViewerProps = {
   requestClose: () => void;
 };
 
-type Zoom = {
-  scale: number;
-  translateX: number;
-  translateY: number;
-};
-
-const INITIAL_ZOOM = {
-  scale: 1,
-  translateX: 0,
-  translateY: 0,
-};
-
-const useZoom = () => {
-  const [zoom, setZoom] = useState<Zoom>(INITIAL_ZOOM);
-
-  const onMouseDown: MouseEventHandler<HTMLElement> = () => {
-    setZoom((z) => {
-      if (z.scale === 1) {
-        return {
-          ...z,
-          scale: 2,
-        };
-      }
-      return INITIAL_ZOOM;
-    });
-  };
-
-  return {
-    zoom,
-    onMouseDown,
-  };
-};
-
 export const ImageViewer = as<'div', ImageViewerProps>(
   ({ className, alt, src, requestClose, ...props }, ref) => {
-    const { zoom, onMouseDown } = useZoom();
+    const { zoom, zoomIn, zoomOut, setZoom } = useZoom(0.2);
+    const { pan, cursor, onMouseDown } = usePan(zoom !== 1);
 
     const handleDownload = () => {
       FileSaver.saveAs(src, alt);
@@ -69,8 +39,28 @@ export const ImageViewer = as<'div', ImageViewerProps>(
             </Text>
           </Box>
           <Box alignItems="Center" gap="200">
-            <IconButton size="300" radii="300" onClick={() => window.open(src)}>
-              <Icon size="50" src={Icons.External} />
+            <IconButton
+              variant={zoom < 1 ? 'Success' : 'SurfaceVariant'}
+              outlined={zoom < 1}
+              size="300"
+              radii="Pill"
+              onClick={zoomOut}
+              aria-label="Zoom Out"
+            >
+              <Icon size="50" src={Icons.Minus} />
+            </IconButton>
+            <Chip variant="SurfaceVariant" radii="Pill" onClick={() => setZoom(zoom === 1 ? 2 : 1)}>
+              <Text size="B300">{Math.round(zoom * 100)}%</Text>
+            </Chip>
+            <IconButton
+              variant={zoom > 1 ? 'Success' : 'SurfaceVariant'}
+              outlined={zoom > 1}
+              size="300"
+              radii="Pill"
+              onClick={zoomIn}
+              aria-label="Zoom In"
+            >
+              <Icon size="50" src={Icons.Plus} />
             </IconButton>
             <Chip
               variant="Primary"
@@ -91,8 +81,8 @@ export const ImageViewer = as<'div', ImageViewerProps>(
           <img
             className={css.ImageViewerImg}
             style={{
-              cursor: zoom.scale === 1 ? 'zoom-in' : 'zoom-out',
-              transform: `scale(${zoom.scale}) translate(${zoom.translateX}, ${zoom.translateY})`,
+              cursor,
+              transform: `scale(${zoom}) translate(${pan.translateX}px, ${pan.translateY}px)`,
             }}
             src={src}
             alt={alt}
