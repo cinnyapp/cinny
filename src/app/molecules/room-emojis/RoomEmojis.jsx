@@ -80,8 +80,7 @@ function RoomEmojis({ roomId }) {
 
   const { usablePacks, createPack, deletePack } = useRoomPacks(room);
 
-  const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel || 0;
-  const canChange = room.currentState.hasSufficientPowerLevelFor('state_default', myPowerlevel);
+  const canChange = room.currentState.maySendStateEvent('im.ponies.room_emote', mx.getUserId());
 
   const handlePackCreate = (e) => {
     e.preventDefault();
