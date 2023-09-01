@@ -6,7 +6,7 @@ let mx = null;
 const permittedHtmlTags = [
   'font', 'del', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
   'blockquote', 'p', 'a', 'ul', 'ol', 'sup', 'sub',
-  'li', 'b', 'i', 'u', 'strong', 'em', 'strike', 'code',
+  'li', 'b', 'i', 'u', 'strong', 'em', 'strike', 's', 'code',
   'hr', 'br', 'div', 'table', 'thead', 'tbody', 'tr', 'th',
   'td', 'caption', 'pre', 'span', 'img', 'details', 'summary',
 ];

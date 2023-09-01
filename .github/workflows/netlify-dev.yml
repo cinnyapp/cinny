@@ -11,15 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.5.3
       - name: Setup node
-        uses: actions/setup-node@v3.5.1
+        uses: actions/setup-node@v3.6.0
         with:
           node-version: 18.12.1
           cache: "npm"
       - name: Install dependencies
         run: npm ci
       - name: Build app
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
         run: npm run build
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@5da65c9f74c7961c5501a3ba329b8d0912f39c03

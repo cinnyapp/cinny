@@ -28,6 +28,7 @@ import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { parseTimelineChange } from './common';
 import TimelineScroll from './TimelineScroll';
 import EventLimit from './EventLimit';
+import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 
 const PAG_LIMIT = 30;
 const MAX_MSG_DIFF_MINUTES = 5;
@@ -114,6 +115,7 @@ function handleOnClickCapture(e) {
 
   const spoiler = nativeEvent.composedPath().find((el) => el?.hasAttribute?.('data-mx-spoiler'));
   if (spoiler) {
+    if (!spoiler.classList.contains('data-mx-spoiler--visible')) e.preventDefault();
     spoiler.classList.toggle('data-mx-spoiler--visible');
   }
 }
@@ -357,7 +359,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
       const isViewingLive = roomTimeline.isServingLiveTimeline() && limit.length >= tLength - 1;
       const isAttached = timelineScroll.bottom < SCROLL_TRIGGER_POS;
 
-      if (isViewingLive && isAttached) {
+      if (isViewingLive && isAttached && document.hasFocus()) {
         limit.setFrom(tLength - limit.maxEvents);
         trySendReadReceipt(event);
         setEvent(event);
@@ -391,7 +393,7 @@ function useEventArrive(roomTimeline, readUptoEvtStore, timelineScrollRef, event
 
 let jumpToItemIndex = -1;
 
-function RoomViewContent({ eventId, roomTimeline }) {
+function RoomViewContent({ roomInputRef, eventId, roomTimeline }) {
   const [throttle] = useState(new Throttle());
 
   const timelineSVRef = useRef(null);
@@ -483,6 +485,21 @@ function RoomViewContent({ eventId, roomTimeline }) {
     }
   }, [newEvent]);
 
+  useResizeObserver(
+    useCallback((entries) => {
+      if (!roomInputRef.current) return;
+      const editorBaseEntry = getResizeObserverEntry(roomInputRef.current, entries);
+      if (!editorBaseEntry) return;
+
+      const timelineScroll = timelineScrollRef.current;
+      if (!roomTimeline.initialized) return;
+      if (timelineScroll.bottom < 40 && !roomTimeline.canPaginateForward() && document.visibilityState === 'visible') {
+        timelineScroll.scrollToBottom();
+      }
+    }, [roomInputRef]),
+    useCallback(() => roomInputRef.current, [roomInputRef]),
+  );
+  
   const listenKeyboard = useCallback((event) => {
     if (event.ctrlKey || event.altKey || event.metaKey) return;
     if (event.key !== 'ArrowUp') return;
@@ -619,6 +636,9 @@ RoomViewContent.defaultProps = {
 RoomViewContent.propTypes = {
   eventId: PropTypes.string,
   roomTimeline: PropTypes.shape({}).isRequired,
+  roomInputRef: PropTypes.shape({
+    current: PropTypes.shape({})
+  }).isRequired
 };
 
 export default RoomViewContent;

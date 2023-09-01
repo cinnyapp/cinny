@@ -137,7 +137,7 @@ function SessionInfo({ userId }) {
         onClick={() => setIsVisible(!isVisible)}
         iconSrc={isVisible ? ChevronBottomIC : ChevronRightIC}
       >
-        <Text variant="b2">{`View ${devices?.length > 0 ? `${devices.length} ` : ''}sessions`}</Text>
+        <Text variant="b2">{`View ${devices?.length > 0 ? `${devices.length} ${devices.length == 1 ? 'session' : 'sessions'}` : 'sessions'}`}</Text>
       </MenuItem>
       {renderSessionChips()}
     </div>

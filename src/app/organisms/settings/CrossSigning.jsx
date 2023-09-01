@@ -188,7 +188,7 @@ function CrossSigningReset() {
       <Text variant="h1">{twemojify('✋🧑‍🚒🤚')}</Text>
       <Text weight="medium">Resetting cross-signing keys is permanent.</Text>
       <Text>
-        Anyone you have verified with will see security alerts and your message backup will lost. 
+        Anyone you have verified with will see security alerts and your message backup will be lost. 
         You almost certainly do not want to do this, 
         unless you have lost <b>Security Key</b> or <b>Phrase</b> and 
         every session you can cross-sign from.
