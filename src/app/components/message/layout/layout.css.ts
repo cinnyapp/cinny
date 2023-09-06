@@ -99,7 +99,7 @@ export const BubbleAvatar = style([ModernAvatar]);
 
 export const BubbleContent = style({
   maxWidth: toRem(800),
-  padding: `${config.space.S100} ${config.space.S200}`,
+  padding: config.space.S200,
   backgroundColor: color.SurfaceVariant.Container,
   color: color.SurfaceVariant.OnContainer,
   borderRadius: config.radii.R400,

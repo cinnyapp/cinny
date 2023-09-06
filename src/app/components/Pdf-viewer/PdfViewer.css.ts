@@ -1,14 +1,14 @@
 import { style } from '@vanilla-extract/css';
 import { DefaultReset, color, config } from 'folds';
 
-export const TextViewer = style([
+export const PdfViewer = style([
   DefaultReset,
   {
     height: '100%',
   },
 ]);
 
-export const TextViewerHeader = style([
+export const PdfViewerHeader = style([
   DefaultReset,
   {
     paddingLeft: config.space.S200,
@@ -18,20 +18,19 @@ export const TextViewerHeader = style([
     gap: config.space.S200,
   },
 ]);
-
-export const TextViewerContent = style([
-  DefaultReset,
+export const PdfViewerFooter = style([
+  PdfViewerHeader,
   {
-    backgroundColor: color.Background.Container,
-    color: color.Background.OnContainer,
-    overflow: 'hidden',
+    borderTopWidth: config.borderWidth.B300,
+    borderBottomWidth: 0,
   },
 ]);
 
-export const TextViewerPre = style([
+export const PdfViewerContent = style([
   DefaultReset,
   {
-    padding: config.space.S600,
-    whiteSpace: 'pre-wrap',
+    backgroundColor: color.Surface.Container,
+    color: color.Surface.OnContainer,
+    overflow: 'hidden',
   },
 ]);

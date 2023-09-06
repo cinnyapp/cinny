@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -24,6 +24,7 @@ import { getFileSrcUrl, getSrcFile } from './util';
 import { bytesToSize } from '../../../utils/common';
 import { TextViewer } from '../../../components/text-viewer';
 import { READABLE_TEXT_MIME_TYPES } from '../../../utils/mimeTypes';
+import { PdfViewer } from '../../../components/Pdf-viewer';
 
 export type FileContentProps = {
   body: string;
@@ -32,139 +33,233 @@ export type FileContentProps = {
   info: IFileInfo;
   encInfo?: EncryptedAttachmentInfo;
 };
-export const FileContent = as<'div', FileContentProps>(
-  ({ body, mimeType, url, info, encInfo, ...props }, ref) => {
-    const mx = useMatrixClient();
-    const [textViewer, setTextViewer] = useState(false);
 
-    const loadSrc = useCallback(
+const renderErrorButton = (retry: () => void, text: string) => (
+  <TooltipProvider
+    tooltip={
+      <Tooltip variant="Critical">
+        <Text>Failed to load file!</Text>
+      </Tooltip>
+    }
+    position="Top"
+    align="Center"
+  >
+    {(triggerRef) => (
+      <Button
+        ref={triggerRef}
+        size="400"
+        variant="Critical"
+        fill="Soft"
+        outlined
+        radii="300"
+        onClick={retry}
+        before={<Icon size="100" src={Icons.Warning} filled />}
+      >
+        <Text size="B400" truncate>
+          {text}
+        </Text>
+      </Button>
+    )}
+  </TooltipProvider>
+);
+
+function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'info'>) {
+  const mx = useMatrixClient();
+  const [textViewer, setTextViewer] = useState(false);
+
+  const loadSrc = useCallback(
+    () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
+    [mx, url, mimeType, encInfo]
+  );
+
+  const [textState, loadText] = useAsyncCallback(
+    useCallback(async () => {
+      const src = await loadSrc();
+      const blob = await getSrcFile(src);
+      const text = blob.text();
+      return text;
+    }, [loadSrc])
+  );
+
+  useEffect(() => {
+    if (textState.status === AsyncStatus.Success) {
+      setTextViewer(true);
+    }
+  }, [textState]);
+
+  return (
+    <>
+      {textState.status === AsyncStatus.Success && (
+        <Overlay open={textViewer} backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                onDeactivate: () => setTextViewer(false),
+                clickOutsideDeactivates: true,
+              }}
+            >
+              <Modal size="500">
+                <TextViewer
+                  name={body}
+                  text={textState.data}
+                  mimeType={mimeType}
+                  requestClose={() => setTextViewer(false)}
+                />
+              </Modal>
+            </FocusTrap>
+          </OverlayCenter>
+        </Overlay>
+      )}
+      {textState.status === AsyncStatus.Error ? (
+        renderErrorButton(loadText, 'Open File')
+      ) : (
+        <Button
+          variant="Secondary"
+          fill="Solid"
+          radii="300"
+          size="400"
+          onClick={() =>
+            textState.status === AsyncStatus.Success ? setTextViewer(true) : loadText()
+          }
+          disabled={textState.status === AsyncStatus.Loading}
+          before={
+            textState.status === AsyncStatus.Loading ? (
+              <Spinner size="100" variant="Secondary" />
+            ) : (
+              <Icon size="100" src={Icons.ArrowRight} filled />
+            )
+          }
+        >
+          <Text size="B400" truncate>
+            Open File
+          </Text>
+        </Button>
+      )}
+    </>
+  );
+}
+
+function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'info'>) {
+  const mx = useMatrixClient();
+  const [pdfViewer, setPdfViewer] = useState(false);
+
+  const [pdfState, loadPdf] = useAsyncCallback(
+    useCallback(
       () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
       [mx, url, mimeType, encInfo]
-    );
+    )
+  );
 
-    const [downloadState, download] = useAsyncCallback(
-      useCallback(async () => {
-        const src = await loadSrc();
-        FileSaver.saveAs(src, body);
-        return src;
-      }, [loadSrc, body])
-    );
+  useEffect(() => {
+    if (pdfState.status === AsyncStatus.Success) {
+      setPdfViewer(true);
+    }
+  }, [pdfState]);
 
-    const [readState, read] = useAsyncCallback(
-      useCallback(async () => {
-        const src = await loadSrc();
-        const blob = await getSrcFile(src);
-        const text = blob.text();
-        setTextViewer(true);
-        return text;
-      }, [loadSrc])
-    );
-
-    const renderErrorButton = (retry: () => void, text: string) => (
-      <TooltipProvider
-        tooltip={
-          <Tooltip variant="Critical">
-            <Text>Failed to load file!</Text>
-          </Tooltip>
-        }
-        position="Top"
-        align="Center"
-      >
-        {(triggerRef) => (
-          <Button
-            ref={triggerRef}
-            size="400"
-            variant="Critical"
-            fill="Soft"
-            outlined
-            radii="300"
-            onClick={retry}
-            before={<Icon size="100" src={Icons.Warning} filled />}
-          >
-            <Text size="B400" truncate>
-              {text}
-            </Text>
-          </Button>
-        )}
-      </TooltipProvider>
-    );
-
-    return (
-      <Box direction="Column" gap="300" {...props} ref={ref}>
-        {readState.status === AsyncStatus.Success && (
-          <Overlay open={textViewer} backdrop={<OverlayBackdrop />}>
-            <OverlayCenter>
-              <FocusTrap
-                focusTrapOptions={{
-                  initialFocus: false,
-                  onDeactivate: () => setTextViewer(false),
-                  clickOutsideDeactivates: true,
-                }}
-              >
-                <Modal size="500">
-                  <TextViewer
-                    name={body}
-                    text={readState.data}
-                    mimeType={mimeType}
-                    requestClose={() => setTextViewer(false)}
-                  />
-                </Modal>
-              </FocusTrap>
-            </OverlayCenter>
-          </Overlay>
-        )}
-        {READABLE_TEXT_MIME_TYPES.includes(mimeType) &&
-          (readState.status === AsyncStatus.Error ? (
-            renderErrorButton(read, 'Open File')
-          ) : (
-            <Button
-              variant="Secondary"
-              fill="Solid"
-              radii="300"
-              size="400"
-              onClick={() =>
-                readState.status === AsyncStatus.Success ? setTextViewer(true) : read()
-              }
-              disabled={readState.status === AsyncStatus.Loading}
-              before={
-                readState.status === AsyncStatus.Loading ? (
-                  <Spinner size="100" variant="Secondary" />
-                ) : (
-                  <Icon size="100" src={Icons.ArrowRight} filled />
-                )
-              }
+  return (
+    <>
+      {pdfState.status === AsyncStatus.Success && (
+        <Overlay open={pdfViewer} backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                onDeactivate: () => setPdfViewer(false),
+                clickOutsideDeactivates: true,
+              }}
             >
-              <Text size="B400" truncate>
-                Open File
-              </Text>
-            </Button>
-          ))}
-        {downloadState.status === AsyncStatus.Error ? (
-          renderErrorButton(loadSrc, `Retry Download (${bytesToSize(info.size ?? 0)})`)
+              <Modal size="500">
+                <PdfViewer
+                  name={body}
+                  src={pdfState.data}
+                  requestClose={() => setPdfViewer(false)}
+                />
+              </Modal>
+            </FocusTrap>
+          </OverlayCenter>
+        </Overlay>
+      )}
+      {pdfState.status === AsyncStatus.Error ? (
+        renderErrorButton(loadPdf, 'Open PDF')
+      ) : (
+        <Button
+          variant="Secondary"
+          fill="Solid"
+          radii="300"
+          size="400"
+          onClick={() => (pdfState.status === AsyncStatus.Success ? setPdfViewer(true) : loadPdf())}
+          disabled={pdfState.status === AsyncStatus.Loading}
+          before={
+            pdfState.status === AsyncStatus.Loading ? (
+              <Spinner size="100" variant="Secondary" />
+            ) : (
+              <Icon size="100" src={Icons.ArrowRight} filled />
+            )
+          }
+        >
+          <Text size="B400" truncate>
+            Open PDF
+          </Text>
+        </Button>
+      )}
+    </>
+  );
+}
+
+function DownloadFile({ body, mimeType, url, info, encInfo }: FileContentProps) {
+  const mx = useMatrixClient();
+
+  const [downloadState, download] = useAsyncCallback(
+    useCallback(
+      () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
+      [mx, url, mimeType, encInfo]
+    )
+  );
+
+  useEffect(() => {
+    if (downloadState.status === AsyncStatus.Success) {
+      FileSaver.saveAs(downloadState.data, body);
+    }
+  }, [downloadState, body]);
+
+  return downloadState.status === AsyncStatus.Error ? (
+    renderErrorButton(download, `Retry Download (${bytesToSize(info.size ?? 0)})`)
+  ) : (
+    <Button
+      variant="Secondary"
+      fill="Soft"
+      radii="300"
+      size="400"
+      onClick={() =>
+        downloadState.status === AsyncStatus.Success
+          ? FileSaver.saveAs(downloadState.data, body)
+          : download()
+      }
+      disabled={downloadState.status === AsyncStatus.Loading}
+      before={
+        downloadState.status === AsyncStatus.Loading ? (
+          <Spinner size="100" variant="Secondary" />
         ) : (
-          <Button
-            variant="Secondary"
-            fill="Soft"
-            radii="300"
-            size="400"
-            onClick={() =>
-              downloadState.status === AsyncStatus.Success
-                ? FileSaver.saveAs(downloadState.data, body)
-                : download()
-            }
-            disabled={downloadState.status === AsyncStatus.Loading}
-            before={
-              downloadState.status === AsyncStatus.Loading ? (
-                <Spinner size="100" variant="Secondary" />
-              ) : (
-                <Icon size="100" src={Icons.Download} filled />
-              )
-            }
-          >
-            <Text size="B400" truncate>{`Download (${bytesToSize(info.size ?? 0)})`}</Text>
-          </Button>
-        )}
-      </Box>
-    );
-  }
+          <Icon size="100" src={Icons.Download} filled />
+        )
+      }
+    >
+      <Text size="B400" truncate>{`Download (${bytesToSize(info.size ?? 0)})`}</Text>
+    </Button>
+  );
+}
+
+export const FileContent = as<'div', FileContentProps>(
+  ({ body, mimeType, url, info, encInfo, ...props }, ref) => (
+    <Box direction="Column" gap="300" {...props} ref={ref}>
+      {READABLE_TEXT_MIME_TYPES.includes(mimeType) && (
+        <ReadTextFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} />
+      )}
+      {mimeType === 'application/pdf' && (
+        <ReadPdfFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} />
+      )}
+      <DownloadFile body={body} mimeType={mimeType} url={url} info={info} encInfo={encInfo} />
+    </Box>
+  )
 );

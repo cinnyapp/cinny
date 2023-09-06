@@ -15,6 +15,7 @@ export const ImageViewerHeader = style([
     paddingRight: config.space.S200,
     borderBottomWidth: config.borderWidth.B300,
     flexShrink: 0,
+    gap: config.space.S200,
   },
 ]);
 

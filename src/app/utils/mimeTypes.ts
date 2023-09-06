@@ -23,14 +23,17 @@ export const AUDIO_MIME_TYPES = [
   'audio/x-flac',
 ];
 
-export const READABLE_TEXT_MIME_TYPES = [
+export const APPLICATION_MIME_TYPES = [
+  'application/pdf',
   'application/json',
   'application/x-sh',
   'application/ecmascript',
   'application/javascript',
   'application/xhtml+xml',
   'application/xml',
+];
 
+export const TEXT_MIME_TYPE = [
   'text/plain',
   'text/html',
   'text/css',
@@ -42,11 +45,23 @@ export const READABLE_TEXT_MIME_TYPES = [
   'text/x-java-source,java',
 ];
 
+export const READABLE_TEXT_MIME_TYPES = [
+  'application/json',
+  'application/x-sh',
+  'application/ecmascript',
+  'application/javascript',
+  'application/xhtml+xml',
+  'application/xml',
+
+  ...TEXT_MIME_TYPE,
+];
+
 export const ALLOWED_BLOB_MIME_TYPES = [
   ...IMAGE_MIME_TYPES,
   ...VIDEO_MIME_TYPES,
   ...AUDIO_MIME_TYPES,
-  ...READABLE_TEXT_MIME_TYPES,
+  ...APPLICATION_MIME_TYPES,
+  ...TEXT_MIME_TYPE,
 ];
 
 export const FALLBACK_MIMETYPE = 'application/octet-stream';
