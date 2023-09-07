@@ -1,7 +1,8 @@
 /* eslint-disable jsx-a11y/media-has-caption */
-import { Chip, Icon, IconButton, Icons, ProgressBar, Spinner, Text, as, toRem } from 'folds';
+import { Badge, Chip, Icon, IconButton, Icons, ProgressBar, Spinner, Text, as, toRem } from 'folds';
 import React, { useCallback, useRef, useState } from 'react';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
+import { Range } from 'react-range';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { getFileSrcUrl } from './util';
@@ -12,6 +13,7 @@ import {
   useMediaLoading,
   useMediaPlay,
   useMediaPlayTimeCallback,
+  useMediaSeek,
   useMediaVolume,
 } from '../../../hooks/media';
 import { useThrottle } from '../../../hooks/useThrottle';
@@ -47,7 +49,8 @@ export const AudioContent = as<'div', AudioContentProps>(
     const getAudioRef = useCallback(() => audioRef.current, []);
     const { loading } = useMediaLoading(getAudioRef);
     const { playing, setPlaying } = useMediaPlay(getAudioRef);
-    const { volume, mute, setMute } = useMediaVolume(getAudioRef);
+    const { seek } = useMediaSeek(getAudioRef);
+    const { volume, mute, setMute, setVolume } = useMediaVolume(getAudioRef);
     const handlePlayTimeCallback: PlayTimeCallback = useCallback((d, ct) => {
       setDuration(d);
       setCurrentTime(ct);
@@ -68,14 +71,40 @@ export const AudioContent = as<'div', AudioContentProps>(
     return (
       <MediaControl
         after={
-          <ProgressBar
-            as="div"
-            variant="Secondary"
-            size="300"
+          <Range
+            step={1}
             min={0}
-            max={duration}
-            value={currentTime}
-            radii="300"
+            max={duration || 1}
+            values={[currentTime]}
+            onChange={(values) => seek(values[0])}
+            renderTrack={(params) => (
+              <div {...params.props}>
+                {params.children}
+                <ProgressBar
+                  as="div"
+                  variant="Secondary"
+                  size="300"
+                  min={0}
+                  max={duration}
+                  value={currentTime}
+                  radii="300"
+                />
+              </div>
+            )}
+            renderThumb={(params) => (
+              <Badge
+                size="300"
+                variant="Secondary"
+                fill="Solid"
+                radii="Pill"
+                outlined
+                {...params.props}
+                style={{
+                  ...params.props.style,
+                  zIndex: 0,
+                }}
+              />
+            )}
           />
         }
         leftControl={
@@ -112,14 +141,40 @@ export const AudioContent = as<'div', AudioContentProps>(
             >
               <Icon src={mute ? Icons.VolumeMute : Icons.VolumeHigh} size="50" />
             </IconButton>
-            <ProgressBar
-              style={{ width: toRem(48) }}
-              variant="Secondary"
-              size="300"
+            <Range
+              step={0.1}
               min={0}
               max={1}
-              value={volume}
-              radii="300"
+              values={[volume]}
+              onChange={(values) => setVolume(values[0])}
+              renderTrack={(params) => (
+                <div {...params.props}>
+                  {params.children}
+                  <ProgressBar
+                    style={{ width: toRem(48) }}
+                    variant="Secondary"
+                    size="300"
+                    min={0}
+                    max={1}
+                    value={volume}
+                    radii="300"
+                  />
+                </div>
+              )}
+              renderThumb={(params) => (
+                <Badge
+                  size="300"
+                  variant="Secondary"
+                  fill="Solid"
+                  radii="Pill"
+                  outlined
+                  {...params.props}
+                  style={{
+                    ...params.props.style,
+                    zIndex: 0,
+                  }}
+                />
+              )}
             />
           </>
         }

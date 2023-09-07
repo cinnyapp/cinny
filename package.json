@@ -62,6 +62,7 @@
     "react-error-boundary": "4.0.10",
     "react-google-recaptcha": "2.1.0",
     "react-modal": "3.16.1",
+    "react-range": "1.8.14",
     "sanitize-html": "2.8.0",
     "slate": "0.90.0",
     "slate-history": "0.93.0",
