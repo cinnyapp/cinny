@@ -125,7 +125,7 @@ function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, '
           disabled={textState.status === AsyncStatus.Loading}
           before={
             textState.status === AsyncStatus.Loading ? (
-              <Spinner size="100" variant="Secondary" />
+              <Spinner fill="Solid" size="100" variant="Secondary" />
             ) : (
               <Icon size="100" src={Icons.ArrowRight} filled />
             )
@@ -192,7 +192,7 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
           disabled={pdfState.status === AsyncStatus.Loading}
           before={
             pdfState.status === AsyncStatus.Loading ? (
-              <Spinner size="100" variant="Secondary" />
+              <Spinner fill="Solid" size="100" variant="Secondary" />
             ) : (
               <Icon size="100" src={Icons.ArrowRight} filled />
             )
@@ -239,7 +239,7 @@ function DownloadFile({ body, mimeType, url, info, encInfo }: FileContentProps) 
       disabled={downloadState.status === AsyncStatus.Loading}
       before={
         downloadState.status === AsyncStatus.Loading ? (
-          <Spinner size="100" variant="Secondary" />
+          <Spinner fill="Soft" size="100" variant="Secondary" />
         ) : (
           <Icon size="100" src={Icons.Download} filled />
         )
