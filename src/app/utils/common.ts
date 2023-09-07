@@ -67,3 +67,13 @@ export const scaleYDimension = (x: number, scaledX: number, y: number): number =
   const scaleFactor = scaledX / x;
   return scaleFactor * y;
 };
+
+export const parseGeoUri = (location: string) => {
+  const [, data] = location.split(':');
+  const [cords] = data.split(';');
+  const [latitude, longitude] = cords.split(',');
+  return {
+    latitude,
+    longitude,
+  };
+};

@@ -29,6 +29,9 @@ import {
   AvatarFallback,
   AvatarImage,
   Box,
+  Chip,
+  Icon,
+  Icons,
   Scroll,
   Text,
   Tooltip,
@@ -80,7 +83,7 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
-import { scaleYDimension } from '../../utils/common';
+import { parseGeoUri, scaleYDimension } from '../../utils/common';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer';
 import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
@@ -744,6 +747,29 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
             </AttachmentContent>
           </AttachmentBox>
         </Attachment>
+      );
+    },
+    renderLocation: (mEventId, mEvent) => {
+      const content = mEvent.getContent();
+      const geoUri = content.geo_uri;
+      if (typeof geoUri !== 'string') return null;
+      const location = parseGeoUri(geoUri);
+      return (
+        <Box direction="Column" alignItems="Start" gap="100">
+          <Text size="T400">{geoUri}</Text>
+          <Chip
+            as="a"
+            size="400"
+            href={`https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=16/${location.latitude}/${location.longitude}`}
+            target="_blank"
+            rel="noreferrer noopener"
+            variant="Primary"
+            radii="Pill"
+            before={<Icon src={Icons.External} size="50" />}
+          >
+            <Text size="B300">Open Location</Text>
+          </Chip>
+        </Box>
       );
     },
     renderFile: fileRenderer,
