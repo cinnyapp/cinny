@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Box,
   Button,
@@ -77,15 +77,10 @@ function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, '
       const src = await loadSrc();
       const blob = await getSrcFile(src);
       const text = blob.text();
+      setTextViewer(true);
       return text;
     }, [loadSrc])
   );
-
-  useEffect(() => {
-    if (textState.status === AsyncStatus.Success) {
-      setTextViewer(true);
-    }
-  }, [textState]);
 
   return (
     <>
@@ -145,17 +140,12 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
   const [pdfViewer, setPdfViewer] = useState(false);
 
   const [pdfState, loadPdf] = useAsyncCallback(
-    useCallback(
-      () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
-      [mx, url, mimeType, encInfo]
-    )
-  );
-
-  useEffect(() => {
-    if (pdfState.status === AsyncStatus.Success) {
+    useCallback(async () => {
+      const httpUrl = await getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo);
       setPdfViewer(true);
-    }
-  }, [pdfState]);
+      return httpUrl;
+    }, [mx, url, mimeType, encInfo])
+  );
 
   return (
     <>
@@ -211,17 +201,12 @@ function DownloadFile({ body, mimeType, url, info, encInfo }: FileContentProps) 
   const mx = useMatrixClient();
 
   const [downloadState, download] = useAsyncCallback(
-    useCallback(
-      () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
-      [mx, url, mimeType, encInfo]
-    )
+    useCallback(async () => {
+      const httpUrl = await getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo);
+      FileSaver.saveAs(httpUrl, body);
+      return httpUrl;
+    }, [mx, url, mimeType, encInfo, body])
   );
-
-  useEffect(() => {
-    if (downloadState.status === AsyncStatus.Success) {
-      FileSaver.saveAs(downloadState.data, body);
-    }
-  }, [downloadState, body]);
 
   return downloadState.status === AsyncStatus.Error ? (
     renderErrorButton(download, `Retry Download (${bytesToSize(info.size ?? 0)})`)
