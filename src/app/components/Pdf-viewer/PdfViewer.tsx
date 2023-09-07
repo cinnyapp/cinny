@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-import React, { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FormEventHandler, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import {
   Box,
@@ -14,16 +14,16 @@ import {
   Menu,
   PopOut,
   Scroll,
+  Spinner,
   Text,
   as,
   config,
 } from 'folds';
-import type * as PdfJsDist from 'pdfjs-dist';
 import FocusTrap from 'focus-trap-react';
 import * as css from './PdfViewer.css';
 import { AsyncStatus } from '../../hooks/useAsyncCallback';
 import { useZoom } from '../../hooks/useZoom';
-import { usePdfDocumentLoader, usePdfJSLoader } from '../../plugins/pdfjs-dist';
+import { createPage, usePdfDocumentLoader, usePdfJSLoader } from '../../plugins/pdfjs-dist';
 
 export type PdfViewerProps = {
   name: string;
@@ -33,7 +33,7 @@ export type PdfViewerProps = {
 
 export const PdfViewer = as<'div', PdfViewerProps>(
   ({ className, name, src, requestClose, ...props }, ref) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const { zoom, zoomIn, zoomOut, setZoom } = useZoom(0.2);
 
@@ -42,6 +42,10 @@ export const PdfViewer = as<'div', PdfViewerProps>(
       pdfJSState.status === AsyncStatus.Success ? pdfJSState.data : undefined,
       src
     );
+    const isLoading =
+      pdfJSState.status === AsyncStatus.Loading || docState.status === AsyncStatus.Loading;
+    const isError =
+      pdfJSState.status === AsyncStatus.Error || docState.status === AsyncStatus.Error;
     const [pageNo, setPageNo] = useState(1);
     const [openJump, setOpenJump] = useState(false);
 
@@ -54,35 +58,21 @@ export const PdfViewer = as<'div', PdfViewerProps>(
       }
     }, [pdfJSState, loadPdfDocument]);
 
-    const loadPage = useCallback(
-      async (doc: PdfJsDist.PDFDocumentProxy, canvas: HTMLCanvasElement, pNo: number) => {
-        const page = await doc.getPage(pNo);
-        const pageViewport = page.getViewport({ scale: zoom });
-        const context = canvas.getContext('2d');
-        if (!context) return;
-
-        canvas.width = pageViewport.width;
-        canvas.height = pageViewport.height;
-
-        page.render({
-          canvasContext: context,
-          viewport: pageViewport,
-        });
-        scrollRef.current?.scrollTo({
-          top: 0,
-        });
-      },
-      [zoom]
-    );
-
     useEffect(() => {
-      const canvas = canvasRef.current;
-      if (canvas && docState.status === AsyncStatus.Success) {
+      if (docState.status === AsyncStatus.Success) {
         const doc = docState.data;
         if (pageNo < 0 || pageNo > doc.numPages) return;
-        loadPage(doc, canvas, pageNo);
+        createPage(doc, pageNo, { scale: zoom }).then((canvas) => {
+          const container = containerRef.current;
+          if (!container) return;
+          container.textContent = '';
+          container.append(canvas);
+          scrollRef.current?.scrollTo({
+            top: 0,
+          });
+        });
       }
-    }, [docState, pageNo, loadPage]);
+    }, [docState, pageNo, zoom]);
 
     const handleJumpSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
       evt.preventDefault();
@@ -90,12 +80,12 @@ export const PdfViewer = as<'div', PdfViewerProps>(
       const jumpInput = evt.currentTarget.jumpInput as HTMLInputElement;
       if (!jumpInput) return;
       const jumpTo = parseInt(jumpInput.value, 10);
-      setPageNo(Math.max(0, Math.min(docState.data.numPages, jumpTo)));
+      setPageNo(Math.max(1, Math.min(docState.data.numPages, jumpTo)));
       setOpenJump(false);
     };
 
     const handlePrevPage = () => {
-      setPageNo((n) => Math.max(n - 1, 0));
+      setPageNo((n) => Math.max(n - 1, 1));
     };
 
     const handleNextPage = () => {
@@ -140,24 +130,36 @@ export const PdfViewer = as<'div', PdfViewerProps>(
             </IconButton>
           </Box>
         </Header>
-        <Box
-          grow="Yes"
-          className={css.PdfViewerContent}
-          justifyContent="Center"
-          alignItems="Center"
-        >
-          <Scroll
-            ref={scrollRef}
-            size="0"
-            direction="Both"
-            hideTrack
-            variant="Surface"
-            visibility="Hover"
-          >
-            <Box alignItems="Start" justifyContent="Center">
-              <canvas ref={canvasRef} />
-            </Box>
-          </Scroll>
+        <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="200">
+          {isLoading && <Spinner variant="Secondary" size="600" />}
+          {isError && (
+            <>
+              <Text>Failed to load PDF</Text>
+              <Button
+                variant="Critical"
+                fill="Soft"
+                size="300"
+                radii="300"
+                before={<Icon src={Icons.Warning} size="50" />}
+                onClick={loadPdfJS}
+              >
+                <Text size="B300">Retry</Text>
+              </Button>
+            </>
+          )}
+          {docState.status === AsyncStatus.Success && (
+            <Scroll
+              ref={scrollRef}
+              size="300"
+              direction="Both"
+              variant="Surface"
+              visibility="Hover"
+            >
+              <Box>
+                <div className={css.PdfViewerContent} ref={containerRef} />
+              </Box>
+            </Scroll>
+          )}
         </Box>
         {docState.status === AsyncStatus.Success && (
           <Header as="footer" className={css.PdfViewerFooter} size="400">
@@ -196,7 +198,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
                           size="300"
                           variant="Background"
                           defaultValue={pageNo}
-                          min={0}
+                          min={1}
                           max={docState.data.numPages}
                           step={1}
                           outlined

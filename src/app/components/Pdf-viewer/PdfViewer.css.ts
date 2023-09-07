@@ -29,8 +29,9 @@ export const PdfViewerFooter = style([
 export const PdfViewerContent = style([
   DefaultReset,
   {
+    margin: 'auto',
+    display: 'inline-block',
     backgroundColor: color.Surface.Container,
     color: color.Surface.OnContainer,
-    overflow: 'hidden',
   },
 ]);

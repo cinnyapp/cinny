@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import type * as PdfJsDist from 'pdfjs-dist';
+import type { GetViewportParameters } from 'pdfjs-dist/types/src/display/api';
 import { useAsyncCallback } from '../hooks/useAsyncCallback';
 
 export const usePdfJSLoader = () =>
@@ -21,3 +22,26 @@ export const usePdfDocumentLoader = (pdfJS: typeof PdfJsDist | undefined, src: s
       return doc;
     }, [pdfJS, src])
   );
+
+export const createPage = async (
+  doc: PdfJsDist.PDFDocumentProxy,
+  pNo: number,
+  opts: GetViewportParameters
+): Promise<HTMLCanvasElement> => {
+  const page = await doc.getPage(pNo);
+  const pageViewport = page.getViewport(opts);
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+
+  if (!context) throw new Error('failed to render page.');
+
+  canvas.width = pageViewport.width;
+  canvas.height = pageViewport.height;
+
+  page.render({
+    canvasContext: context,
+    viewport: pageViewport,
+  });
+
+  return canvas;
+};
