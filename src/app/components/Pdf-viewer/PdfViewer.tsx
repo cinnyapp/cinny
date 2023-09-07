@@ -20,6 +20,7 @@ import {
   config,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import FileSaver from 'file-saver';
 import * as css from './PdfViewer.css';
 import { AsyncStatus } from '../../hooks/useAsyncCallback';
 import { useZoom } from '../../hooks/useZoom';
@@ -73,6 +74,10 @@ export const PdfViewer = as<'div', PdfViewerProps>(
         });
       }
     }, [docState, pageNo, zoom]);
+
+    const handleDownload = () => {
+      FileSaver.saveAs(src, name);
+    };
 
     const handleJumpSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
       evt.preventDefault();
@@ -128,6 +133,14 @@ export const PdfViewer = as<'div', PdfViewerProps>(
             >
               <Icon size="50" src={Icons.Plus} />
             </IconButton>
+            <Chip
+              variant="Primary"
+              onClick={handleDownload}
+              radii="300"
+              before={<Icon size="50" src={Icons.Download} />}
+            >
+              <Text size="B300">Download</Text>
+            </Chip>
           </Box>
         </Header>
         <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="200">
