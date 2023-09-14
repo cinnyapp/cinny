@@ -6,6 +6,14 @@ export enum Membership {
   Ban = 'ban',
 }
 
+export type IMemberContent = {
+  avatar_url?: string;
+  displayname?: string;
+  membership?: Membership;
+  reason?: string;
+  is_direct?: boolean;
+};
+
 export enum StateEvent {
   RoomCanonicalAlias = 'm.room.canonical_alias',
   RoomCreate = 'm.room.create',

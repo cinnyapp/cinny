@@ -9,22 +9,17 @@ const avatarBg: CSSProperties = { backgroundColor: color.SurfaceVariant.Containe
 
 export const DefaultPlaceholder = as<'div'>(({ ...props }, ref) => (
   <MessageBase>
-    <ModernLayout
-      {...props}
-      ref={ref}
-      avatar={<Avatar style={avatarBg} size="300" />}
-      content={
-        <Box style={contentMargin} grow="Yes" direction="Column" gap="200">
-          <Box grow="Yes" gap="200" alignItems="Center" justifyContent="SpaceBetween">
-            <LinePlaceholder style={{ maxWidth: toRem(randomNumberBetween(40, 100)) }} />
-            <LinePlaceholder style={{ maxWidth: toRem(50) }} />
-          </Box>
-          <Box grow="Yes" gap="200" wrap="Wrap">
-            <LinePlaceholder style={{ maxWidth: toRem(randomNumberBetween(80, 200)) }} />
-            <LinePlaceholder style={{ maxWidth: toRem(randomNumberBetween(80, 200)) }} />
-          </Box>
+    <ModernLayout {...props} ref={ref} before={<Avatar style={avatarBg} size="300" />}>
+      <Box style={contentMargin} grow="Yes" direction="Column" gap="200">
+        <Box grow="Yes" gap="200" alignItems="Center" justifyContent="SpaceBetween">
+          <LinePlaceholder style={{ maxWidth: toRem(randomNumberBetween(40, 100)) }} />
+          <LinePlaceholder style={{ maxWidth: toRem(50) }} />
         </Box>
-      }
-    />
+        <Box grow="Yes" gap="200" wrap="Wrap">
+          <LinePlaceholder style={{ maxWidth: toRem(randomNumberBetween(80, 200)) }} />
+          <LinePlaceholder style={{ maxWidth: toRem(randomNumberBetween(80, 200)) }} />
+        </Box>
+      </Box>
+    </ModernLayout>
   </MessageBase>
 ));

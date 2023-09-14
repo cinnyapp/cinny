@@ -3,21 +3,16 @@ import { Box, as } from 'folds';
 import * as css from './layout.css';
 
 type CompactLayoutProps = {
-  header?: ReactNode;
-  content: ReactNode;
+  before?: ReactNode;
 };
 
-export const CompactLayout = as<'div', CompactLayoutProps>(({ header, content, ...props }, ref) => (
-  <Box alignItems="Start" gap="200" {...props} ref={ref}>
-    <Box
-      className={css.CompactHeader}
-      gap="200"
-      shrink="No"
-      justifyContent="SpaceBetween"
-      alignItems="Baseline"
-    >
-      {header}
+export const CompactLayout = as<'div', CompactLayoutProps>(
+  ({ before, children, ...props }, ref) => (
+    <Box gap="200" {...props} ref={ref}>
+      <Box className={css.CompactHeader} gap="200" shrink="No">
+        {before}
+      </Box>
+      {children}
     </Box>
-    {content}
-  </Box>
-));
+  )
+);

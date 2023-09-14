@@ -1,10 +1,44 @@
-import { keyframes, style } from '@vanilla-extract/css';
+import { createVar, keyframes, style, styleVariants } from '@vanilla-extract/css';
 import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { DefaultReset, color, config, toRem } from 'folds';
 
 export const StickySection = style({
   position: 'sticky',
   top: config.space.S100,
+});
+
+const SpacingVar = createVar();
+const SpacingVariant = styleVariants({
+  '0': {
+    vars: {
+      [SpacingVar]: config.space.S0,
+    },
+  },
+  '100': {
+    vars: {
+      [SpacingVar]: config.space.S100,
+    },
+  },
+  '200': {
+    vars: {
+      [SpacingVar]: config.space.S200,
+    },
+  },
+  '300': {
+    vars: {
+      [SpacingVar]: config.space.S300,
+    },
+  },
+  '400': {
+    vars: {
+      [SpacingVar]: config.space.S400,
+    },
+  },
+  '500': {
+    vars: {
+      [SpacingVar]: config.space.S500,
+    },
+  },
 });
 
 const highlightAnime = keyframes({
@@ -24,47 +58,29 @@ const highlightAnime = keyframes({
     backgroundColor: color.Primary.Container,
   },
 });
+const HighlightVariant = styleVariants({
+  true: {
+    animation: `${highlightAnime} 2000ms ease-in-out`,
+  },
+});
 
 export const MessageBase = recipe({
   base: [
     DefaultReset,
     {
-      marginTop: config.space.S400,
+      marginTop: SpacingVar,
       padding: `${config.space.S100} ${config.space.S200} ${config.space.S100} ${config.space.S400}`,
     },
   ],
   variants: {
-    space: {
-      '0': {
-        marginTop: config.space.S0,
-      },
-      '100': {
-        marginTop: config.space.S100,
-      },
-      '200': {
-        marginTop: config.space.S200,
-      },
-      '300': {
-        marginTop: config.space.S300,
-      },
-      '400': {
-        marginTop: config.space.S400,
-      },
-      '500': {
-        marginTop: config.space.S500,
-      },
-    },
+    space: SpacingVariant,
     collapse: {
       true: {
         marginTop: 0,
         paddingTop: 0,
       },
     },
-    highlight: {
-      true: {
-        animation: `${highlightAnime} 2000ms ease-in-out`,
-      },
-    },
+    highlight: HighlightVariant,
   },
   defaultVariants: {
     space: '400',
@@ -72,6 +88,25 @@ export const MessageBase = recipe({
 });
 
 export type MessageBaseVariants = RecipeVariants<typeof MessageBase>;
+
+export const EventBase = recipe({
+  base: [
+    DefaultReset,
+    {
+      padding: `${config.space.S100} ${config.space.S200} ${config.space.S100} ${config.space.S400}`,
+      selectors: {
+        [`:not(&)+&`]: {
+          marginTop: SpacingVar,
+        },
+      },
+    },
+  ],
+  variants: {
+    space: SpacingVariant,
+    highlight: HighlightVariant,
+  },
+});
+export type EventBaseVariants = RecipeVariants<typeof EventBase>;
 
 export const CompactHeader = style([
   DefaultReset,
@@ -82,9 +117,8 @@ export const CompactHeader = style([
   },
 ]);
 
-export const ModernAvatar = style({
+export const AvatarBase = style({
   paddingTop: toRem(4),
-  minWidth: toRem(36),
   cursor: 'pointer',
   transition: 'transform 200ms cubic-bezier(0, 0.8, 0.67, 0.97)',
 
@@ -95,7 +129,11 @@ export const ModernAvatar = style({
   },
 });
 
-export const BubbleAvatar = style([ModernAvatar]);
+export const ModernBefore = style({
+  minWidth: toRem(36),
+});
+
+export const BubbleBefore = style([ModernBefore]);
 
 export const BubbleContent = style({
   maxWidth: toRem(800),

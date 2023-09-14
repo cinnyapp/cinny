@@ -9,13 +9,14 @@ export const CompactPlaceholder = as<'div'>(({ ...props }, ref) => (
     <CompactLayout
       {...props}
       ref={ref}
-      header={
+      before={
         <>
           <LinePlaceholder style={{ maxWidth: toRem(50) }} />
           <LinePlaceholder style={{ maxWidth: toRem(randomNumberBetween(40, 100)) }} />
         </>
       }
-      content={<LinePlaceholder style={{ maxWidth: toRem(randomNumberBetween(120, 500)) }} />}
-    />
+    >
+      <LinePlaceholder style={{ maxWidth: toRem(randomNumberBetween(120, 500)) }} />
+    </CompactLayout>
   </MessageBase>
 ));

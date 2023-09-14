@@ -51,6 +51,8 @@ function AppearanceSection() {
 
   const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
+  const [hideMembershipEvents, setHideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
+  const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const spacings = ['0', '100', '200', '300', '400', '500']
 
   return (
@@ -136,8 +138,8 @@ function AppearanceSection() {
           title="Hide membership events"
           options={(
             <Toggle
-              isActive={settings.hideMembershipEvents}
-              onToggle={() => { toggleMembershipEvents(); updateState({}); }}
+              isActive={hideMembershipEvents}
+              onToggle={() => setHideMembershipEvents(!hideMembershipEvents)}
             />
           )}
           content={<Text variant="b3">Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and Ban)</Text>}
@@ -146,8 +148,8 @@ function AppearanceSection() {
           title="Hide nick/avatar events"
           options={(
             <Toggle
-              isActive={settings.hideNickAvatarEvents}
-              onToggle={() => { toggleNickAvatarEvents(); updateState({}); }}
+              isActive={hideNickAvatarEvents}
+              onToggle={() => setHideNickAvatarEvents(!hideNickAvatarEvents)}
             />
           )}
           content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}

@@ -72,6 +72,8 @@ import {
   Attachment,
   AttachmentContent,
   AttachmentHeader,
+  EventBase,
+  AvatarBase,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
@@ -89,6 +91,7 @@ import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer
 import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
 import { getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { ImageContent, VideoContent, FileHeader, fileRenderer, AudioContent } from './message';
+import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -360,6 +363,8 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
+  const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
+  const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventArriveCountRef = useRef(0);
   const highlightItem = useRef<{
@@ -373,6 +378,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     () => getReactCustomHtmlParser(mx, room),
     [mx, room]
   );
+  const parseMemberEvent = useMemberEventParser();
 
   const [timeline, setTimeline] = useState<Timeline>(() => {
     const linkedTimelines = eventId ? [] : getLinkedTimelines(getLiveTimeline(room));
@@ -813,7 +819,8 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
 
       // FIXME: Fix encrypted msg not returning body
       const senderId = mEvent.getSender() ?? '';
-      const collapsed = prevEvent?.getSender() === senderId;
+      const collapsed =
+        prevEvent?.getSender() === senderId && prevEvent.getType() === mEvent.getType();
       const highlighted = highlightItem.current?.index === item;
 
       const senderDisplayName =
@@ -842,22 +849,24 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       );
 
       const avatarJSX = !collapsed && messageLayout !== 1 && (
-        <Avatar size="300" data-avatar-id={senderId} onClick={handleAvatarClick}>
-          {senderAvatarMxc ? (
-            <AvatarImage
-              src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
-            />
-          ) : (
-            <AvatarFallback
-              style={{
-                background: colorMXID(senderId),
-                color: 'white',
-              }}
-            >
-              <Text size="H4">{senderDisplayName[0]}</Text>
-            </AvatarFallback>
-          )}
-        </Avatar>
+        <AvatarBase>
+          <Avatar size="300" data-avatar-id={senderId} onClick={handleAvatarClick}>
+            {senderAvatarMxc ? (
+              <AvatarImage
+                src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
+              />
+            ) : (
+              <AvatarFallback
+                style={{
+                  background: colorMXID(senderId),
+                  color: 'white',
+                }}
+              >
+                <Text size="H4">{senderDisplayName[0]}</Text>
+              </AvatarFallback>
+            )}
+          </Avatar>
+        </AvatarBase>
       );
 
       const msgContentJSX = (
@@ -878,7 +887,9 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
             <Box
               gap="200"
               wrap="Wrap"
-              style={{ margin: `${config.space.S200} 0 ${config.space.S100}` }}
+              style={{
+                margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
+              }}
             >
               {reactions.getSortedAnnotationsByKey()?.map(reactionRenderer)}
             </Box>
@@ -894,14 +905,71 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           collapse={collapsed}
           highlight={highlighted}
         >
-          {messageLayout === 1 && <CompactLayout header={headerJSX} content={msgContentJSX} />}
+          {messageLayout === 1 && <CompactLayout before={headerJSX}>{msgContentJSX}</CompactLayout>}
           {messageLayout === 2 && (
-            <BubbleLayout avatar={avatarJSX} header={headerJSX} content={msgContentJSX} />
+            <BubbleLayout before={avatarJSX}>
+              {headerJSX}
+              {msgContentJSX}
+            </BubbleLayout>
           )}
           {messageLayout !== 1 && messageLayout !== 2 && (
-            <ModernLayout avatar={avatarJSX} header={headerJSX} content={msgContentJSX} />
+            <ModernLayout before={avatarJSX}>
+              {headerJSX}
+              {msgContentJSX}
+            </ModernLayout>
           )}
         </MessageBase>
+      );
+    },
+    renderRoomMember: (mEventId, mEvent, item) => {
+      const membershipChanged =
+        mEvent.getContent().membership !== mEvent.getPrevContent().membership;
+      if (membershipChanged && hideMembershipEvents) return null;
+      if (!membershipChanged && hideNickAvatarEvents) return null;
+
+      const highlighted = highlightItem.current?.index === item;
+      const parsed = parseMemberEvent(mEvent);
+
+      const timeJSX = (
+        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+          {new Date(mEvent.getTs()).toLocaleTimeString()}
+        </Text>
+      );
+
+      const beforeJSX = (
+        <Box gap="300" justifyContent="SpaceBetween" alignItems="Center" grow="Yes">
+          {messageLayout === 1 && timeJSX}
+          <Box
+            grow={messageLayout === 1 ? undefined : 'Yes'}
+            alignItems="Center"
+            justifyContent="Center"
+          >
+            <Icon style={{ opacity: config.opacity.P300 }} size="50" src={parsed.icon} />
+          </Box>
+        </Box>
+      );
+
+      const msgContentJSX = (
+        <Box justifyContent="SpaceBetween" alignItems="Baseline" gap="200">
+          <Box grow="Yes" direction="Column">
+            <Text size="T300" priority="300">
+              {parsed.body}
+            </Text>
+          </Box>
+          {messageLayout !== 1 && timeJSX}
+        </Box>
+      );
+
+      return (
+        <EventBase
+          key={mEvent.getId()}
+          data-message-item={item}
+          space={messageSpacing}
+          highlight={highlighted}
+        >
+          {messageLayout === 1 && <CompactLayout before={beforeJSX}>{msgContentJSX}</CompactLayout>}
+          {messageLayout !== 1 && <ModernLayout before={beforeJSX}>{msgContentJSX}</ModernLayout>}
+        </EventBase>
       );
     },
   });
