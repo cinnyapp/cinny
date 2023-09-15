@@ -16,7 +16,7 @@ export type EventRendererOpts<T extends unknown[]> = {
   renderRoomTopic?: EventRenderer<T>;
   renderRoomAvatar?: EventRenderer<T>;
   renderStateEvent?: EventRenderer<T>;
-  renderMessageEvent?: EventRenderer<T>;
+  renderEvent?: EventRenderer<T>;
 };
 
 export type RenderMatrixEvent<T extends unknown[]> = (
@@ -34,7 +34,7 @@ export const useMatrixEventRenderer =
     renderRoomTopic,
     renderRoomAvatar,
     renderStateEvent,
-    renderMessageEvent,
+    renderEvent,
   }: EventRendererOpts<T>): RenderMatrixEvent<T> =>
   (eventId, mEvent, ...args) => {
     const eventType = mEvent.getType();
@@ -70,8 +70,8 @@ export const useMatrixEventRenderer =
       return renderStateEvent(eventId, mEvent, ...args);
     }
 
-    if (typeof mEvent.getStateKey() !== 'string' && renderMessageEvent) {
-      return renderMessageEvent(eventId, mEvent, ...args);
+    if (typeof mEvent.getStateKey() !== 'string' && renderEvent) {
+      return renderEvent(eventId, mEvent, ...args);
     }
     return null;
   };

@@ -88,6 +88,7 @@ import {
   fileRenderer,
   AudioContent,
   Reactions,
+  EventContent,
 } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 
@@ -1008,28 +1009,37 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         </Text>
       );
 
-      const beforeJSX = (
-        <Box gap="300" justifyContent="SpaceBetween" alignItems="Center" grow="Yes">
-          {messageLayout === 1 && timeJSX}
-          <Box
-            grow={messageLayout === 1 ? undefined : 'Yes'}
-            alignItems="Center"
-            justifyContent="Center"
-          >
-            <Icon style={{ opacity: config.opacity.P300 }} size="50" src={parsed.icon} />
-          </Box>
-        </Box>
+      return (
+        <EventBase
+          key={mEvent.getId()}
+          data-message-item={item}
+          space={messageSpacing}
+          highlight={highlighted}
+        >
+          <EventContent
+            messageLayout={messageLayout}
+            time={timeJSX}
+            iconSrc={parsed.icon}
+            content={
+              <Box grow="Yes" direction="Column">
+                <Text size="T300" priority="300">
+                  {parsed.body}
+                </Text>
+              </Box>
+            }
+          />
+        </EventBase>
       );
+    },
+    renderRoomName: (mEventId, mEvent, item) => {
+      const highlighted = highlightItem.current?.index === item;
+      const senderId = mEvent.getSender() ?? '';
+      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const msgContentJSX = (
-        <Box justifyContent="SpaceBetween" alignItems="Baseline" gap="200">
-          <Box grow="Yes" direction="Column">
-            <Text size="T300" priority="300">
-              {parsed.body}
-            </Text>
-          </Box>
-          {messageLayout !== 1 && timeJSX}
-        </Box>
+      const timeJSX = (
+        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+          {new Date(mEvent.getTs()).toLocaleTimeString()}
+        </Text>
       );
 
       return (
@@ -1039,8 +1049,163 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           space={messageSpacing}
           highlight={highlighted}
         >
-          {messageLayout === 1 && <CompactLayout before={beforeJSX}>{msgContentJSX}</CompactLayout>}
-          {messageLayout !== 1 && <ModernLayout before={beforeJSX}>{msgContentJSX}</ModernLayout>}
+          <EventContent
+            messageLayout={messageLayout}
+            time={timeJSX}
+            iconSrc={Icons.Hash}
+            content={
+              <Box grow="Yes" direction="Column">
+                <Text size="T300" priority="300">
+                  <b>{senderName}</b>
+                  {' changed room name'}
+                </Text>
+              </Box>
+            }
+          />
+        </EventBase>
+      );
+    },
+    renderRoomTopic: (mEventId, mEvent, item) => {
+      const highlighted = highlightItem.current?.index === item;
+      const senderId = mEvent.getSender() ?? '';
+      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+
+      const timeJSX = (
+        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+          {new Date(mEvent.getTs()).toLocaleTimeString()}
+        </Text>
+      );
+
+      return (
+        <EventBase
+          key={mEvent.getId()}
+          data-message-item={item}
+          space={messageSpacing}
+          highlight={highlighted}
+        >
+          <EventContent
+            messageLayout={messageLayout}
+            time={timeJSX}
+            iconSrc={Icons.Hash}
+            content={
+              <Box grow="Yes" direction="Column">
+                <Text size="T300" priority="300">
+                  <b>{senderName}</b>
+                  {' changed room topic'}
+                </Text>
+              </Box>
+            }
+          />
+        </EventBase>
+      );
+    },
+    renderRoomAvatar: (mEventId, mEvent, item) => {
+      const highlighted = highlightItem.current?.index === item;
+      const senderId = mEvent.getSender() ?? '';
+      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+
+      const timeJSX = (
+        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+          {new Date(mEvent.getTs()).toLocaleTimeString()}
+        </Text>
+      );
+
+      return (
+        <EventBase
+          key={mEvent.getId()}
+          data-message-item={item}
+          space={messageSpacing}
+          highlight={highlighted}
+        >
+          <EventContent
+            messageLayout={messageLayout}
+            time={timeJSX}
+            iconSrc={Icons.Hash}
+            content={
+              <Box grow="Yes" direction="Column">
+                <Text size="T300" priority="300">
+                  <b>{senderName}</b>
+                  {' changed room avatar'}
+                </Text>
+              </Box>
+            }
+          />
+        </EventBase>
+      );
+    },
+    renderStateEvent: (mEventId, mEvent, item) => {
+      const highlighted = highlightItem.current?.index === item;
+      const senderId = mEvent.getSender() ?? '';
+      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+
+      const timeJSX = (
+        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+          {new Date(mEvent.getTs()).toLocaleTimeString()}
+        </Text>
+      );
+
+      return (
+        <EventBase
+          key={mEvent.getId()}
+          data-message-item={item}
+          space={messageSpacing}
+          highlight={highlighted}
+        >
+          <EventContent
+            messageLayout={messageLayout}
+            time={timeJSX}
+            iconSrc={Icons.Code}
+            content={
+              <Box grow="Yes" direction="Column">
+                <Text size="T300" priority="300">
+                  <b>{senderName}</b>
+                  {' sends '}
+                  <b>{`"${mEvent.getType()}"`}</b>
+                  {' state event'}
+                </Text>
+              </Box>
+            }
+          />
+        </EventBase>
+      );
+    },
+    renderEvent: (mEventId, mEvent, item) => {
+      if (Object.keys(mEvent.getContent()).length === 0) return null;
+      if (mEvent.getRelation()) return null;
+      if (mEvent.isRedaction()) return null;
+
+      const highlighted = highlightItem.current?.index === item;
+      const senderId = mEvent.getSender() ?? '';
+      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+
+      const timeJSX = (
+        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+          {new Date(mEvent.getTs()).toLocaleTimeString()}
+        </Text>
+      );
+
+      return (
+        <EventBase
+          key={mEvent.getId()}
+          data-message-item={item}
+          space={messageSpacing}
+          highlight={highlighted}
+        >
+          <EventContent
+            messageLayout={messageLayout}
+            time={timeJSX}
+            iconSrc={Icons.Code}
+            content={
+              <Box grow="Yes" direction="Column">
+                <Text size="T300" priority="300">
+                  <b>{senderName}</b>
+                  {' sends '}
+                  <b>{`"${mEvent.getType()}"`}</b>
+                  {' event'}
+                </Text>
+              </Box>
+            }
+          />
         </EventBase>
       );
     },
