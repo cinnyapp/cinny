@@ -883,6 +883,116 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         </MessageBase>
       );
     },
+    renderSticker: (mEventId, mEvent, item, timelineSet) => {
+      const reactions = getEventReactions(timelineSet, mEventId);
+      const senderId = mEvent.getSender() ?? '';
+      const highlighted = highlightItem.current?.index === item;
+
+      const senderDisplayName =
+        getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+      const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
+      const headerJSX = (
+        <Box
+          gap="300"
+          direction={messageLayout === 1 ? 'RowReverse' : 'Row'}
+          justifyContent="SpaceBetween"
+          alignItems="Baseline"
+          grow="Yes"
+        >
+          <Text
+            size={messageLayout === 2 ? 'T300' : 'T400'}
+            style={{ color: colorMXID(senderId) }}
+            truncate
+          >
+            <b>{senderDisplayName}</b>
+          </Text>
+          <Text style={{ flexShrink: 0 }} size="T200" priority="300">
+            {new Date(mEvent.getTs()).toLocaleTimeString()}
+          </Text>
+        </Box>
+      );
+
+      const avatarJSX = messageLayout !== 1 && (
+        <AvatarBase>
+          <Avatar size="300" data-avatar-id={senderId} onClick={handleAvatarClick}>
+            {senderAvatarMxc ? (
+              <AvatarImage
+                src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
+              />
+            ) : (
+              <AvatarFallback
+                style={{
+                  background: colorMXID(senderId),
+                  color: 'white',
+                }}
+              >
+                <Text size="H4">{senderDisplayName[0]}</Text>
+              </AvatarFallback>
+            )}
+          </Avatar>
+        </AvatarBase>
+      );
+
+      const content = mEvent.getContent<IImageContent>();
+      const imgInfo = content?.info;
+      const mxcUrl = content.file?.url ?? content.url;
+      if (!imgInfo || typeof imgInfo.mimetype !== 'string' || typeof mxcUrl !== 'string') {
+        return null;
+      }
+      const height = scaleYDimension(imgInfo.w || 152, 152, imgInfo.h || 152);
+      const msgContentJSX = (
+        <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
+          <AttachmentBox
+            style={{
+              height: toRem(height < 48 ? 48 : height),
+              width: toRem(152),
+            }}
+          >
+            <ImageContent
+              autoPlay
+              body={content.body || 'Image'}
+              info={imgInfo}
+              mimeType={imgInfo.mimetype}
+              url={mxcUrl}
+              encInfo={content.file}
+            />
+          </AttachmentBox>
+
+          {reactions && (
+            <Reactions
+              style={{
+                margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
+              }}
+              room={room}
+              relations={reactions}
+            />
+          )}
+        </Box>
+      );
+
+      return (
+        <MessageBase
+          key={mEvent.getId()}
+          data-message-item={item}
+          space={messageSpacing}
+          highlight={highlighted}
+        >
+          {messageLayout === 1 && <CompactLayout before={headerJSX}>{msgContentJSX}</CompactLayout>}
+          {messageLayout === 2 && (
+            <BubbleLayout before={avatarJSX}>
+              {headerJSX}
+              {msgContentJSX}
+            </BubbleLayout>
+          )}
+          {messageLayout !== 1 && messageLayout !== 2 && (
+            <ModernLayout before={avatarJSX}>
+              {headerJSX}
+              {msgContentJSX}
+            </ModernLayout>
+          )}
+        </MessageBase>
+      );
+    },
     renderRoomMember: (mEventId, mEvent, item) => {
       const membershipChanged =
         mEvent.getContent().membership !== mEvent.getPrevContent().membership;
