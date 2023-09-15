@@ -1159,8 +1159,8 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
               <Box grow="Yes" direction="Column">
                 <Text size="T300" priority="300">
                   <b>{senderName}</b>
-                  {' sends '}
-                  <b>{`"${mEvent.getType()}"`}</b>
+                  {' sent '}
+                  <i>{mEvent.getType()}</i>
                   {' state event'}
                 </Text>
               </Box>
@@ -1199,8 +1199,8 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
               <Box grow="Yes" direction="Column">
                 <Text size="T300" priority="300">
                   <b>{senderName}</b>
-                  {' sends '}
-                  <b>{`"${mEvent.getType()}"`}</b>
+                  {' sent '}
+                  <i>{mEvent.getType()}</i>
                   {' event'}
                 </Text>
               </Box>
