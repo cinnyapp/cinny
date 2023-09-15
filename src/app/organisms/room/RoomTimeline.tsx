@@ -34,19 +34,12 @@ import {
   Icons,
   Scroll,
   Text,
-  Tooltip,
-  TooltipProvider,
   color,
   config,
   toRem,
 } from 'folds';
 import Linkify from 'linkify-react';
-import {
-  decryptFile,
-  factoryEventSentBy,
-  getMxIdLocalPart,
-  matrixEventByRecency,
-} from '../../utils/matrix';
+import { decryptFile, getMxIdLocalPart, matrixEventByRecency } from '../../utils/matrix';
 import colorMXID from '../../../util/colorMXID';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -59,8 +52,6 @@ import {
   BubbleLayout,
   DefaultPlaceholder,
   CompactPlaceholder,
-  Reaction,
-  ReactionTooltipMsg,
   Reply,
   MessageBase,
   MessageDeletedContent,
@@ -90,7 +81,14 @@ import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer';
 import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
 import { getBlobSafeMimeType } from '../../utils/mimeTypes';
-import { ImageContent, VideoContent, FileHeader, fileRenderer, AudioContent } from './message';
+import {
+  ImageContent,
+  VideoContent,
+  FileHeader,
+  fileRenderer,
+  AudioContent,
+  Reactions,
+} from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
@@ -549,40 +547,6 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     [room]
   );
 
-  const reactionRenderer = useCallback(
-    ([key, events]: [string, Set<MatrixEvent>]) => {
-      const currentUserId = mx.getUserId();
-      const rEvents = Array.from(events);
-      const isPressed = !!(currentUserId && rEvents.find(factoryEventSentBy(currentUserId)));
-
-      return (
-        <TooltipProvider
-          key={key}
-          position="Top"
-          tooltip={
-            <Tooltip style={{ maxWidth: toRem(200) }}>
-              <Text size="T300">
-                <ReactionTooltipMsg room={room} reaction={key} events={rEvents} />
-              </Text>
-            </Tooltip>
-          }
-        >
-          {(targetRef) => (
-            <Reaction
-              ref={targetRef}
-              aria-pressed={isPressed}
-              key={key}
-              mx={mx}
-              reaction={key}
-              count={events.size}
-            />
-          )}
-        </TooltipProvider>
-      );
-    },
-    [mx, room]
-  );
-
   const renderBody = (body: string, customBody?: string) => {
     if (body === '') <MessageEmptyContent />;
     if (customBody) {
@@ -884,15 +848,13 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           )}
           {renderRoomMsgContent(mEventId, mEvent, timelineSet)}
           {reactions && (
-            <Box
-              gap="200"
-              wrap="Wrap"
+            <Reactions
               style={{
                 margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
               }}
-            >
-              {reactions.getSortedAnnotationsByKey()?.map(reactionRenderer)}
-            </Box>
+              room={room}
+              relations={reactions}
+            />
           )}
         </Box>
       );

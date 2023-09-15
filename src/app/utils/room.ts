@@ -288,3 +288,12 @@ export const decryptAllTimelineEvent = async (mx: MatrixClient, timeline: EventT
     .map((event) => event.attemptDecryption(crypto as CryptoBackend, { isRetry: true }));
   await Promise.allSettled(decryptionPromises);
 };
+
+export const getReactionContent = (eventId: string, key: string, shortcode: string) => ({
+  'm.relates_to': {
+    event_id: eventId,
+    key,
+    rel_type: 'm.annotation',
+  },
+  shortcode,
+});
