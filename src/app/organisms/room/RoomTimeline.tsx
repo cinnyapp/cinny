@@ -91,6 +91,7 @@ import {
   EventContent,
 } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
+import * as customHtmlCss from '../../styles/CustomHtml.css';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -1160,7 +1161,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                 <Text size="T300" priority="300">
                   <b>{senderName}</b>
                   {' sent '}
-                  <i>{mEvent.getType()}</i>
+                  <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
                   {' state event'}
                 </Text>
               </Box>
@@ -1200,7 +1201,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                 <Text size="T300" priority="300">
                   <b>{senderName}</b>
                   {' sent '}
-                  <i>{mEvent.getType()}</i>
+                  <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
                   {' event'}
                 </Text>
               </Box>
