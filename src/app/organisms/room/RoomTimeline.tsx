@@ -92,6 +92,7 @@ import {
 } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
+import { RoomIntro } from '../../components/room-intro';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -1239,6 +1240,17 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S500} 0` }}
         >
+          {!canPaginateBack && rangeAtStart && (
+            <div
+              style={{
+                padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${
+                  messageLayout === 1 ? config.space.S400 : toRem(64)
+                }`,
+              }}
+            >
+              <RoomIntro room={room} />
+            </div>
+          )}
           {(canPaginateBack || !rangeAtStart) &&
             (messageLayout === 1 ? (
               <>

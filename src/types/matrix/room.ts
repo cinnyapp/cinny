@@ -55,6 +55,17 @@ export enum NotificationType {
   Mute = 'mute',
 }
 
+export type IRoomCreateContent = {
+  creator?: string;
+  ['m.federate']?: boolean;
+  room_version: string;
+  type?: string;
+  predecessor?: {
+    event_id: string;
+    room_id: string;
+  };
+};
+
 export type RoomToParents = Map<string, Set<string>>;
 export type RoomToUnread = Map<
   string,
