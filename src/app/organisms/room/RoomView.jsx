@@ -10,14 +10,13 @@ import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 
 import RoomViewHeader from './RoomViewHeader';
-import RoomViewContent from './RoomViewContent';
 import RoomViewFloating from './RoomViewFloating';
 import RoomViewCmdBar from './RoomViewCmdBar';
 import { RoomInput } from './RoomInput';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { StateEvent } from '../../../types/matrix/room';
 import { RoomTombstone } from './RoomTombstone';
-import { usePowerLevels } from '../../hooks/usePowerLevels';
+import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
@@ -32,7 +31,7 @@ function RoomView({ room, roomTimeline, eventId }) {
 
   const mx = useMatrixClient();
   const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
-  const { getPowerLevel, canSendEvent } = usePowerLevels(room);
+  const { getPowerLevel, canSendEvent } = usePowerLevelsAPI();
   const myUserId = mx.getUserId();
   const canMessage = myUserId
     ? canSendEvent(EventType.RoomMessage, getPowerLevel(myUserId))
@@ -63,11 +62,6 @@ function RoomView({ room, roomTimeline, eventId }) {
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
           <RoomTimeline key={roomId} room={room} />
-          {/* <RoomViewContent
-            eventId={eventId}
-            roomTimeline={roomTimeline}
-            roomInputRef={roomInputRef}
-          /> */}
           <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} eventId={eventId} />
         </div>
         <div className="room-view__sticky">

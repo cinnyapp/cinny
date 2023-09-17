@@ -10,7 +10,6 @@ import Navigation from '../../organisms/navigation/Navigation';
 import ContextMenu, { MenuItem } from '../../atoms/context-menu/ContextMenu';
 import IconButton from '../../atoms/button/IconButton';
 import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
-import Room from '../../organisms/room/Room';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
@@ -21,6 +20,7 @@ import cons from '../../../client/state/cons';
 
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 import { MatrixClientProvider } from '../../hooks/useMatrixClient';
+import { ClientContent } from './ClientContent';
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
@@ -111,7 +111,7 @@ function Client() {
           <Navigation />
         </div>
         <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
-          <Room />
+          <ClientContent />
         </div>
         <Windows />
         <Dialogs />
