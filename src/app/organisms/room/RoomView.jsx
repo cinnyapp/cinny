@@ -61,8 +61,8 @@ function RoomView({ room, roomTimeline, eventId }) {
       <RoomViewHeader roomId={roomId} />
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
-          <RoomTimeline key={roomId} room={room} />
-          <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} eventId={eventId} />
+          <RoomTimeline key={roomId} room={room} eventId={eventId} />
+          <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
         </div>
         <div className="room-view__sticky">
           <div className="room-view__editor">
