@@ -10,6 +10,7 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
+  Badge,
   Box,
   Chip,
   ContainerColor,
@@ -33,6 +34,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import millify from 'millify';
 import classNames from 'classnames';
+import { useAtomValue } from 'jotai';
 
 import { openInviteUser, openProfileViewer } from '../../../client/action/navigation';
 import * as css from './MembersDrawer.css';
@@ -48,6 +50,8 @@ import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearc
 import { useDebounce } from '../../hooks/useDebounce';
 import colorMXID from '../../../util/colorMXID';
 import { usePowerLevelTags, PowerLevelTag } from '../../hooks/usePowerLevelTags';
+import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../state/typingMembers';
+import { TypingIndicator } from '../../components/typing-indicator';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -174,6 +178,10 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
     sortFilter: sortFilterMenu[0],
   });
   const [onTop, setOnTop] = useState(true);
+
+  useAtomValue(
+    useMemo(() => selectRoomTypingMembersAtom(room.roomId, roomIdToTypingMembersAtom), [room])
+  );
 
   const filteredMembers = useMemo(
     () =>
@@ -509,10 +517,19 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           )}
                         </Avatar>
                       }
+                      after={
+                        member.typing && (
+                          <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
+                            <TypingIndicator size="300" />
+                          </Badge>
+                        )
+                      }
                     >
-                      <Text size="T400" truncate>
-                        {member.name}
-                      </Text>
+                      <Box grow="Yes">
+                        <Text size="T400" truncate>
+                          {member.name}
+                        </Text>
+                      </Box>
                     </MenuItem>
                   );
                 })}
