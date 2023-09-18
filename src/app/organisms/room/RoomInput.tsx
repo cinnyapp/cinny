@@ -293,12 +293,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        const firstChildren = editor.children[0];
-        if (firstChildren && Element.isElement(firstChildren)) {
-          const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
-          sendTypingStatus(!isEmpty);
-        }
-
         const prevWordRange = getPrevWorldRange(editor);
         const query = prevWordRange
           ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
@@ -325,8 +319,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           }
         }
       },
-      [submit, editor, setReplyDraft, sendTypingStatus]
+      [submit, editor, setReplyDraft]
     );
+
+    const handleKeyUp: KeyboardEventHandler = useCallback(() => {
+      const firstChildren = editor.children[0];
+      if (firstChildren && Element.isElement(firstChildren)) {
+        const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
+        sendTypingStatus(!isEmpty);
+      }
+    }, [editor, sendTypingStatus]);
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
@@ -435,6 +437,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           editor={editor}
           placeholder="Send a message..."
           onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
           onPaste={handlePaste}
           top={
             replyDraft && (

@@ -64,6 +64,7 @@ type CustomEditorProps = {
   editor: Editor;
   placeholder?: string;
   onKeyDown?: KeyboardEventHandler;
+  onKeyUp?: KeyboardEventHandler;
   onChange?: EditorChangeHandler;
   onPaste?: ClipboardEventHandler;
 };
@@ -78,6 +79,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
       editor,
       placeholder,
       onKeyDown,
+      onKeyUp,
       onChange,
       onPaste,
     },
@@ -141,6 +143,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
                 renderElement={renderElement}
                 renderLeaf={renderLeaf}
                 onKeyDown={handleKeydown}
+                onKeyUp={onKeyUp}
                 onPaste={onPaste}
               />
             </Scroll>
