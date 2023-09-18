@@ -54,7 +54,7 @@ export const useEditor = (): Editor => {
   return editor;
 };
 
-export type EditorChangeHandler = ((value: Descendant[]) => void) | undefined;
+export type EditorChangeHandler = (value: Descendant[]) => void;
 type CustomEditorProps = {
   top?: ReactNode;
   bottom?: ReactNode;

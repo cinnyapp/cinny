@@ -34,7 +34,6 @@ import to from 'await-to-js';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   CustomEditor,
-  EditorChangeHandler,
   useEditor,
   Toolbar,
   toMatrixCustomHTML,
@@ -294,7 +293,18 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        const { selection } = editor;
+        const firstChildren = editor.children[0];
+        if (firstChildren && Element.isElement(firstChildren)) {
+          const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
+          sendTypingStatus(!isEmpty);
+        }
+
+        const prevWordRange = getPrevWorldRange(editor);
+        const query = prevWordRange
+          ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
+          : undefined;
+        setAutocompleteQuery(query);
+
         if (isHotkey('enter', evt)) {
           evt.preventDefault();
           submit();
@@ -303,7 +313,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           evt.preventDefault();
           setReplyDraft();
         }
-        if (selection && Range.isCollapsed(selection)) {
+
+        if (editor.selection && Range.isCollapsed(editor.selection)) {
           if (isHotkey('arrowleft', evt)) {
             evt.preventDefault();
             Transforms.move(editor, { unit: 'offset', reverse: true });
@@ -314,23 +325,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           }
         }
       },
-      [submit, editor, setReplyDraft]
+      [submit, editor, setReplyDraft, sendTypingStatus]
     );
-
-    const handleChange: EditorChangeHandler = (value) => {
-      const prevWordRange = getPrevWorldRange(editor);
-      const query = prevWordRange
-        ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
-        : undefined;
-
-      setAutocompleteQuery(query);
-
-      const descendant = value[0];
-      if (descendant && Element.isElement(descendant)) {
-        const isEmpty = value.length === 1 && Editor.isEmpty(editor, descendant);
-        sendTypingStatus(!isEmpty);
-      }
-    };
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
@@ -439,7 +435,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           editor={editor}
           placeholder="Send a message..."
           onKeyDown={handleKeyDown}
-          onChange={handleChange}
           onPaste={handlePaste}
           top={
             replyDraft && (
