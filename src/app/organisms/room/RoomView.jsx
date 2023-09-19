@@ -10,7 +10,6 @@ import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 
 import RoomViewHeader from './RoomViewHeader';
-import RoomViewFloating from './RoomViewFloating';
 import RoomViewCmdBar from './RoomViewCmdBar';
 import { RoomInput } from './RoomInput';
 import { useStateEvent } from '../../hooks/useStateEvent';
@@ -20,14 +19,16 @@ import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
+import { RoomViewTyping } from './RoomViewTyping';
 
 const viewEvent = new EventEmitter();
 
 function RoomView({ room, roomTimeline, eventId }) {
   const roomInputRef = useRef(null);
   const roomViewRef = useRef(null);
+
   // eslint-disable-next-line react/prop-types
-  const { roomId } = roomTimeline;
+  const { roomId } = room;
 
   const mx = useMatrixClient();
   const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
@@ -62,7 +63,7 @@ function RoomView({ room, roomTimeline, eventId }) {
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
           <RoomTimeline key={roomId} room={room} eventId={eventId} />
-          <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
+          <RoomViewTyping room={room} />
         </div>
         <div className="room-view__sticky">
           <div className="room-view__editor">
