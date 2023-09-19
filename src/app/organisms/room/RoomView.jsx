@@ -4,13 +4,10 @@ import './RoomView.scss';
 import { Text, config } from 'folds';
 import { EventType } from 'matrix-js-sdk';
 
-import EventEmitter from 'events';
-
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 
 import RoomViewHeader from './RoomViewHeader';
-import RoomViewCmdBar from './RoomViewCmdBar';
 import { RoomInput } from './RoomInput';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { StateEvent } from '../../../types/matrix/room';
@@ -21,9 +18,7 @@ import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
 import { RoomViewTyping } from './RoomViewTyping';
 
-const viewEvent = new EventEmitter();
-
-function RoomView({ room, roomTimeline, eventId }) {
+function RoomView({ room, eventId }) {
   const roomInputRef = useRef(null);
   const roomViewRef = useRef(null);
 
@@ -90,7 +85,6 @@ function RoomView({ room, roomTimeline, eventId }) {
               </>
             )}
           </div>
-          <RoomViewCmdBar roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
         </div>
       </div>
     </div>
@@ -102,7 +96,6 @@ RoomView.defaultProps = {
 };
 RoomView.propTypes = {
   room: PropTypes.shape({}).isRequired,
-  roomTimeline: PropTypes.shape({}).isRequired,
   eventId: PropTypes.string,
 };
 

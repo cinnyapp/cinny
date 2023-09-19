@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
-import RoomTimeline from '../../../client/state/RoomTimeline';
 import navigation from '../../../client/state/navigation';
 import { openNavigation } from '../../../client/action/navigation';
 
@@ -12,7 +11,6 @@ import { RoomBaseView } from '../../organisms/room/Room';
 export function ClientContent() {
   const [roomInfo, setRoomInfo] = useState({
     room: null,
-    roomTimeline: null,
     eventId: null,
   });
 
@@ -25,14 +23,11 @@ export function ClientContent() {
       if (r) {
         setRoomInfo({
           room: r,
-          roomTimeline: new RoomTimeline(rId),
           eventId: eId ?? null,
         });
       } else {
-        // TODO: add ability to join room if roomId is invalid
         setRoomInfo({
-          room: r,
-          roomTimeline: null,
+          room: null,
           eventId: null,
         });
       }
@@ -44,11 +39,11 @@ export function ClientContent() {
     };
   }, [roomInfo, mx]);
 
-  const { room, roomTimeline, eventId } = roomInfo;
-  if (roomTimeline === null) {
+  const { room, eventId } = roomInfo;
+  if (!room) {
     setTimeout(() => openNavigation());
     return <Welcome />;
   }
 
-  return <RoomBaseView room={room} roomTimeline={roomTimeline} eventId={eventId} />;
+  return <RoomBaseView room={room} eventId={eventId} />;
 }
