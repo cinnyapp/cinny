@@ -1311,7 +1311,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
             }}
           >
             <Chip
-              variant="Secondary"
+              variant="SurfaceVariant"
               radii="Pill"
               outlined
               before={<Icon size="50" src={Icons.ArrowBottom} />}
