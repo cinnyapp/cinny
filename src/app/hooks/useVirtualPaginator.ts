@@ -199,10 +199,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     (index, opts) => {
       const { range: currentRange, limit: currentLimit, count: currentCount } = propRef.current;
 
-      if (index < 0 || index > currentCount) return;
+      if (index < 0 || index >= currentCount) return;
       // index is not in range change range
       // and trigger scrollToItem in layoutEffect hook
-      if (index < currentRange.start || index > currentRange.end) {
+      if (index < currentRange.start || index >= currentRange.end) {
         onRangeChange({
           start: Math.max(index - currentLimit, 0),
           end: Math.min(index + currentLimit, currentCount),
@@ -330,8 +330,8 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     restoreScrollRef.current = undefined;
   }, [range, getScrollElement, getItemElement]);
 
-  // Scroll to item after range changes
-  // when scrollToItem index was not in range.
+  // When scrollToItem index was not in range.
+  // Scroll to item after range changes.
   useLayoutEffect(() => {
     if (scrollToItemRef.current === undefined) return;
     const { index, opts } = scrollToItemRef.current;
@@ -357,7 +357,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     const backAnchor = scrollElement.querySelector(
       `[${PAGINATOR_ANCHOR_ATTR}="${Direction.Backward}"]`
     ) as HTMLElement | null;
-    const fontAnchor = scrollElement.querySelector(
+    const frontAnchor = scrollElement.querySelector(
       `[${PAGINATOR_ANCHOR_ATTR}="${Direction.Forward}"]`
     ) as HTMLElement | null;
 
@@ -365,7 +365,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       paginate(Direction.Backward);
       return;
     }
-    if (fontAnchor && isIntersectingScrollView(scrollElement, fontAnchor)) {
+    if (frontAnchor && isIntersectingScrollView(scrollElement, frontAnchor)) {
       paginate(Direction.Forward);
     }
   }, [range, getScrollElement, paginate]);
