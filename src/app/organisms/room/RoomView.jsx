@@ -17,6 +17,7 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
 import { RoomViewTyping } from './RoomViewTyping';
+import { RoomViewFollowing } from './RoomViewFollowing';
 
 function RoomView({ room, eventId }) {
   const roomInputRef = useRef(null);
@@ -85,6 +86,7 @@ function RoomView({ room, eventId }) {
               </>
             )}
           </div>
+          <RoomViewFollowing room={room} />
         </div>
       </div>
     </div>

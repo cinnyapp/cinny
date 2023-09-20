@@ -38,7 +38,7 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
         ref={ref}
       >
         <TypingIndicator />
-        <Text size="T300">
+        <Text size="T300" truncate>
           {typingNames.length === 1 && (
             <>
               <b>{typingNames[0]}</b>
