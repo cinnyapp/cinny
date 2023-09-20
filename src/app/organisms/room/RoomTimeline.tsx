@@ -360,14 +360,35 @@ const useLiveEventArrive = (mx: MatrixClient, roomId: string | undefined, onArri
   }, [mx, roomId, onArrive]);
 };
 
+const getInitialTimeline = (room: Room) => {
+  const linkedTimelines = getLinkedTimelines(getLiveTimeline(room));
+  const evLength = getTimelinesEventsCount(linkedTimelines);
+  return {
+    linkedTimelines,
+    range: {
+      start: Math.max(evLength - PAGINATION_LIMIT, 0),
+      end: evLength,
+    },
+  };
+};
+
+const getEmptyTimeline = () => ({
+  range: { start: 0, end: 0 },
+  linkedTimelines: [],
+});
+
 export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
+
   const scrollRef = useRef<HTMLDivElement>(null);
-  const eventArriveCountRef = useRef(0);
+  const scrollToBottomRef = useRef({
+    count: 0,
+    smooth: true,
+  });
   const highlightItem = useRef<{
     index: number;
     scrollTo: boolean;
@@ -381,17 +402,9 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   );
   const parseMemberEvent = useMemberEventParser();
 
-  const [timeline, setTimeline] = useState<Timeline>(() => {
-    const linkedTimelines = eventId ? [] : getLinkedTimelines(getLiveTimeline(room));
-    const evLength = getTimelinesEventsCount(linkedTimelines);
-    return {
-      linkedTimelines,
-      range: {
-        start: Math.max(evLength - PAGINATION_LIMIT, 0),
-        end: evLength,
-      },
-    };
-  });
+  const [timeline, setTimeline] = useState<Timeline>(() =>
+    eventId ? getEmptyTimeline() : getInitialTimeline(room)
+  );
   const eventsLength = getTimelinesEventsCount(timeline.linkedTimelines);
   const liveTimelineLinked =
     timeline.linkedTimelines[timeline.linkedTimelines.length - 1] === getLiveTimeline(room);
@@ -446,15 +459,9 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     ),
     useCallback(() => {
       if (!alive()) return;
-      const lTimelines = getLinkedTimelines(getLiveTimeline(room));
-      const evLength = getTimelinesEventsCount(lTimelines);
-      setTimeline({
-        linkedTimelines: lTimelines,
-        range: {
-          start: Math.max(evLength - PAGINATION_LIMIT, 0),
-          end: evLength,
-        },
-      });
+      setTimeline(getInitialTimeline(room));
+      scrollToBottomRef.current.count += 1;
+      scrollToBottomRef.current.smooth = false;
     }, [alive, room])
   );
 
@@ -468,7 +475,9 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         setTimeline((ct) => ({ ...ct }));
         return;
       }
-      eventArriveCountRef.current += 1;
+
+      scrollToBottomRef.current.count += 1;
+      scrollToBottomRef.current.smooth = true;
       setTimeline((ct) => ({
         ...ct,
         range: {
@@ -504,13 +513,20 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     highlightItem.current = undefined;
   }, [highlightItm, paginator]);
 
-  const eventArriveCount = eventArriveCountRef.current;
+  const scrollToBottomCount = scrollToBottomRef.current.count;
   useEffect(() => {
-    if (eventArriveCount > 0) {
+    if (scrollToBottomCount > 0) {
       const scrollEl = scrollRef.current;
-      if (scrollEl) scrollToBottom(scrollEl, 'smooth');
+      if (scrollEl)
+        scrollToBottom(scrollEl, scrollToBottomRef.current.smooth ? 'smooth' : 'instant');
     }
-  }, [eventArriveCount]);
+  }, [scrollToBottomCount]);
+
+  const handleJumpToLatest = () => {
+    setTimeline(getInitialTimeline(room));
+    scrollToBottomRef.current.count += 1;
+    scrollToBottomRef.current.smooth = false;
+  };
 
   const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     async (evt) => {
@@ -532,10 +548,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         };
         forceUpdate();
       } else {
-        setTimeline({
-          range: { start: 0, end: 0 },
-          linkedTimelines: [],
-        });
+        setTimeline(getEmptyTimeline());
         loadEventTimeline(replyId);
       }
     },
@@ -1287,6 +1300,27 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
               </>
             ))}
         </Box>
+        {(!liveTimelineLinked || !rangeAtEnd) && (
+          <Box
+            justifyContent="Center"
+            alignItems="Center"
+            style={{
+              position: 'absolute',
+              bottom: config.space.S400,
+              width: '100%',
+            }}
+          >
+            <Chip
+              variant="Secondary"
+              radii="Pill"
+              outlined
+              before={<Icon size="50" src={Icons.ArrowBottom} />}
+              onClick={handleJumpToLatest}
+            >
+              <Text size="L400">Jump to Latest</Text>
+            </Chip>
+          </Box>
+        )}
       </Scroll>
     </Box>
   );
