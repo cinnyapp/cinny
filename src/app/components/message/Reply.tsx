@@ -1,5 +1,6 @@
 import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
+import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import React, { useEffect, useState } from 'react';
 import to from 'await-to-js';
 import classNames from 'classnames';
@@ -36,20 +37,23 @@ export const Reply = as<'div', ReplyProps>(
     useEffect(() => {
       let disposed = false;
       const loadEvent = async () => {
-        await to(mx.getEventTimeline(timelineSet, eventId));
-        const targetEvent = timelineSet.findEventById(eventId);
+        const [err, evt] = await to(mx.fetchRoomEvent(room.roomId, eventId));
+        const mEvent = new MatrixEvent(evt);
         if (disposed) return;
-        if (!targetEvent) {
+        if (err) {
           setReplyEvent(null);
           return;
         }
-        setReplyEvent(targetEvent);
+        if (mEvent.isEncrypted() && mx.getCrypto()) {
+          await to(mEvent.attemptDecryption(mx.getCrypto() as CryptoBackend));
+        }
+        setReplyEvent(mEvent);
       };
-      if (replyEvent) loadEvent();
+      if (replyEvent === undefined) loadEvent();
       return () => {
         disposed = true;
       };
-    }, [replyEvent, mx, timelineSet, eventId]);
+    }, [replyEvent, mx, room, eventId]);
 
     return (
       <Box
