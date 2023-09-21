@@ -490,6 +490,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
 
   useEffect(() => {
     if (eventId) {
+      setTimeline(getEmptyTimeline());
       loadEventTimeline(eventId);
     }
   }, [eventId, loadEventTimeline]);
@@ -513,7 +514,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   }, [highlightItm, scrollToItem]);
 
   const scrollToBottomCount = scrollToBottomRef.current.count;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (scrollToBottomCount > 0) {
       const scrollEl = scrollRef.current;
       if (scrollEl)
