@@ -96,12 +96,16 @@ const getDropIndex = (
   return dropIndex;
 };
 
+type RestoreAnchorData = [number | undefined, HTMLElement | undefined];
 const getRestoreAnchor = (
   range: ItemRange,
-  getItemElement: (index: number) => HTMLElement | undefined
-): [number | undefined, HTMLElement | undefined] => {
+  getItemElement: (index: number) => HTMLElement | undefined,
+  direction: Direction
+): RestoreAnchorData => {
   let scrollAnchorEl: HTMLElement | undefined;
-  const scrollAnchorItem = generateItems(range).find((i) => {
+  const scrollAnchorItem = (
+    direction === Direction.Backward ? generateItems(range) : generateItems(range).reverse()
+  ).find((i) => {
     const el = getItemElement(i);
     if (el) {
       scrollAnchorEl = el;
@@ -110,6 +114,18 @@ const getRestoreAnchor = (
     return false;
   });
   return [scrollAnchorItem, scrollAnchorEl];
+};
+
+const getRestoreScrollData = (scrollTop: number, restoreAnchorData: RestoreAnchorData) => {
+  const [anchorItem, anchorElement] = restoreAnchorData;
+  if (!anchorItem || !anchorElement) {
+    return undefined;
+  }
+  return {
+    scrollTop,
+    anchorItem,
+    anchorOffsetTop: anchorElement.offsetTop,
+  };
 };
 
 const useObserveAnchorHandle = (
@@ -229,22 +245,15 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
       if (direction === Direction.Backward) {
         restoreScrollRef.current = undefined;
-        if (scrollEl && start > 0) {
-          const [restoreAnchorItem, restoreAnchorEl] = getRestoreAnchor(
-            { start, end },
-            getItemElement
-          );
-          if (restoreAnchorItem !== undefined && restoreAnchorEl) {
-            restoreScrollRef.current = {
-              scrollTop: scrollEl.scrollTop,
-              anchorItem: restoreAnchorItem,
-              anchorOffsetTop: restoreAnchorEl.offsetTop,
-            };
-          }
-        }
         if (start === 0) {
           onEnd?.(true);
           return;
+        }
+        if (scrollEl) {
+          restoreScrollRef.current = getRestoreScrollData(
+            scrollEl.scrollTop,
+            getRestoreAnchor({ start, end }, getItemElement, Direction.Backward)
+          );
         }
         if (scrollEl) {
           end = getDropIndex(scrollEl, currentRange, Direction.Forward, getItemElement, 2) ?? end;
@@ -253,9 +262,16 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       }
 
       if (direction === Direction.Forward) {
+        restoreScrollRef.current = undefined;
         if (end === currentCount) {
           onEnd?.(false);
           return;
+        }
+        if (scrollEl) {
+          restoreScrollRef.current = getRestoreScrollData(
+            scrollEl.scrollTop,
+            getRestoreAnchor({ start, end }, getItemElement, Direction.Forward)
+          );
         }
         end = Math.min(end + currentLimit, currentCount);
         if (scrollEl) {
@@ -303,9 +319,9 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   const observeBackAnchor = useObserveAnchorHandle(intersectionObserver, Direction.Backward);
   const observeFrontAnchor = useObserveAnchorHandle(intersectionObserver, Direction.Forward);
 
-  // Restore scroll when scrolling backward
+  // Restore scroll when local pagination.
   // restoreScrollRef.current only gets set
-  // when pagination is trigger in backward direction
+  // when paginate() changes range itself
   useLayoutEffect(() => {
     const scrollEl = getScrollElement();
     if (!restoreScrollRef.current || !scrollEl) return;
@@ -321,12 +337,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     const offsetAddition = offsetTop - oldOffsetTop;
     const restoreTop = oldScrollTop + offsetAddition;
 
-    if (restoreTop > scrollEl.scrollTop) {
-      scrollEl.scrollTo({
-        top: restoreTop,
-        behavior: 'instant',
-      });
-    }
+    scrollEl.scrollTo({
+      top: restoreTop,
+      behavior: 'instant',
+    });
     restoreScrollRef.current = undefined;
   }, [range, getScrollElement, getItemElement]);
 
