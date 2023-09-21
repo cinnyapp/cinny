@@ -420,7 +420,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     PAGINATION_LIMIT
   );
 
-  const paginator = useVirtualPaginator({
+  const { getItems, scrollToItem, observeBackAnchor, observeFrontAnchor } = useVirtualPaginator({
     count: eventsLength,
     limit: PAGINATION_LIMIT,
     range: timeline.range,
@@ -502,16 +502,15 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   const highlightItm = highlightItem.current;
   useLayoutEffect(() => {
     if (highlightItm && highlightItm.scrollTo) {
-      paginator.scrollToItem(highlightItm.index, {
+      scrollToItem(highlightItm.index, {
         behavior: 'instant',
         align: 'center',
         stopInView: true,
       });
     }
-    // FIXME: remove it with timer
-    // because it remove highlight if state update happen just after highlight update
+
     highlightItem.current = undefined;
-  }, [highlightItm, paginator]);
+  }, [highlightItm, scrollToItem]);
 
   const scrollToBottomCount = scrollToBottomRef.current.count;
   useEffect(() => {
@@ -537,7 +536,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         replyTimeline && getEventIdAbsoluteIndex(timeline.linkedTimelines, replyTimeline, replyId);
 
       if (typeof absoluteIndex === 'number') {
-        paginator.scrollToItem(absoluteIndex, {
+        scrollToItem(absoluteIndex, {
           behavior: 'smooth',
           align: 'center',
           stopInView: true,
@@ -552,7 +551,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         loadEventTimeline(replyId);
       }
     },
-    [room, timeline, paginator, loadEventTimeline, forceUpdate]
+    [room, timeline, scrollToItem, loadEventTimeline, forceUpdate]
   );
 
   const handleAvatarClick: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -1253,7 +1252,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S600} 0` }}
         >
-          {!canPaginateBack && rangeAtStart && paginator.getItems().length > 0 && (
+          {!canPaginateBack && rangeAtStart && getItems().length > 0 && (
             <div
               style={{
                 padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${
@@ -1271,22 +1270,22 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                 <CompactPlaceholder />
                 <CompactPlaceholder />
                 <CompactPlaceholder />
-                <CompactPlaceholder ref={paginator.observeBackAnchor} />
+                <CompactPlaceholder ref={observeBackAnchor} />
               </>
             ) : (
               <>
                 <DefaultPlaceholder />
                 <DefaultPlaceholder />
-                <DefaultPlaceholder ref={paginator.observeBackAnchor} />
+                <DefaultPlaceholder ref={observeBackAnchor} />
               </>
             ))}
 
-          {paginator.getItems().map(eventRenderer)}
+          {getItems().map(eventRenderer)}
 
           {(!liveTimelineLinked || !rangeAtEnd) &&
             (messageLayout === 1 ? (
               <>
-                <CompactPlaceholder ref={paginator.observeFrontAnchor} />
+                <CompactPlaceholder ref={observeFrontAnchor} />
                 <CompactPlaceholder />
                 <CompactPlaceholder />
                 <CompactPlaceholder />
@@ -1294,7 +1293,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
               </>
             ) : (
               <>
-                <DefaultPlaceholder ref={paginator.observeFrontAnchor} />
+                <DefaultPlaceholder ref={observeFrontAnchor} />
                 <DefaultPlaceholder />
                 <DefaultPlaceholder />
               </>
