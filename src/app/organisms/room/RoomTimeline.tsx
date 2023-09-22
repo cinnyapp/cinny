@@ -1,6 +1,7 @@
 import React, {
   Dispatch,
   MouseEventHandler,
+  RefObject,
   SetStateAction,
   useCallback,
   useEffect,
@@ -28,10 +29,12 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
+  Badge,
   Box,
   Chip,
   Icon,
   Icons,
+  Line,
   Scroll,
   Text,
   color,
@@ -93,6 +96,14 @@ import {
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
 import { RoomIntro } from '../../components/room-intro';
+import {
+  OnIntersectionCallback,
+  getIntersectionObserverEntry,
+  useIntersectionObserver,
+} from '../../hooks/useIntersectionObserver';
+import { markAsRead } from '../../../client/action/notifications';
+import { useDebounce } from '../../hooks/useDebounce';
+import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -210,6 +221,7 @@ export const factoryGetFileSrcUrl =
 type RoomTimelineProps = {
   room: Room;
   eventId?: string;
+  roomInputRef: RefObject<HTMLElement>;
 };
 
 const PAGINATION_LIMIT = 80;
@@ -340,7 +352,11 @@ const useTimelinePagination = (
   return handleTimelinePagination;
 };
 
-const useLiveEventArrive = (mx: MatrixClient, roomId: string | undefined, onArrive: () => void) => {
+const useLiveEventArrive = (
+  mx: MatrixClient,
+  roomId: string | undefined,
+  onArrive: (mEvent: MatrixEvent) => void
+) => {
   useEffect(() => {
     const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = (
       mEvent,
@@ -350,7 +366,7 @@ const useLiveEventArrive = (mx: MatrixClient, roomId: string | undefined, onArri
       data
     ) => {
       if (eventRoom?.roomId !== roomId || !data.liveEvent) return;
-      onArrive();
+      onArrive(mEvent);
     };
 
     mx.on(RoomEvent.Timeline, handleTimelineEvent);
@@ -377,21 +393,43 @@ const getEmptyTimeline = () => ({
   linkedTimelines: [],
 });
 
-export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
+export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
 
+  const [unreadInfo, setUnreadInfo] = useState(() => {
+    const readUptoEventId = room.getEventReadUpTo(mx.getUserId() ?? '');
+    if (!readUptoEventId) return undefined;
+    const evtTimeline = getEventTimeline(room, readUptoEventId);
+    const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
+    return {
+      readUptoEventId,
+      inLiveTimeline: latestTimeline === room.getLiveTimeline(),
+    };
+  });
+  const readUptoEventIdRef = useRef<string>();
+  if (unreadInfo) {
+    readUptoEventIdRef.current = unreadInfo.readUptoEventId;
+  }
+
+  const atBottomAnchorRef = useRef<HTMLElement>(null);
+  const [atBottom, setAtBottom] = useState<boolean>();
+  const atBottomRef = useRef(atBottom);
+  atBottomRef.current = atBottom;
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollToBottomRef = useRef({
     count: 0,
     smooth: true,
   });
-  const highlightItem = useRef<{
+
+  const focusItem = useRef<{
     index: number;
     scrollTo: boolean;
+    highlight: boolean;
   }>();
   const alive = useAlive();
   const [, forceUpdate] = useForceUpdate();
@@ -420,12 +458,14 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     PAGINATION_LIMIT
   );
 
+  const getScrollElement = useCallback(() => scrollRef.current, []);
+
   const { getItems, scrollToItem, observeBackAnchor, observeFrontAnchor } = useVirtualPaginator({
     count: eventsLength,
     limit: PAGINATION_LIMIT,
     range: timeline.range,
     onRangeChange: useCallback((r) => setTimeline((cs) => ({ ...cs, range: r })), []),
-    getScrollElement: useCallback(() => scrollRef.current, []),
+    getScrollElement,
     getItemElement: useCallback(
       (index: number) =>
         (scrollRef.current?.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
@@ -443,9 +483,10 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
         if (!alive()) return;
         const evLength = getTimelinesEventsCount(lTimelines);
 
-        highlightItem.current = {
+        focusItem.current = {
           index: evtAbsIndex,
           scrollTo: true,
+          highlight: evtId !== unreadInfo?.readUptoEventId,
         };
         setTimeline({
           linkedTimelines: lTimelines,
@@ -455,7 +496,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           },
         });
       },
-      [alive]
+      [unreadInfo, alive]
     ),
     useCallback(() => {
       if (!alive()) return;
@@ -469,23 +510,59 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     mx,
     liveTimelineLinked && rangeAtEnd ? room.roomId : undefined,
     useCallback(() => {
-      const { offsetHeight = 0, scrollTop = 0, scrollHeight = 0 } = scrollRef.current ?? {};
-      const scrollBottom = scrollTop + offsetHeight;
-      if (Math.round(scrollHeight - scrollBottom) > 100) {
-        setTimeline((ct) => ({ ...ct }));
+      if (atBottomRef.current) {
+        scrollToBottomRef.current.count += 1;
+        scrollToBottomRef.current.smooth = true;
+        setTimeline((ct) => ({
+          ...ct,
+          range: {
+            start: ct.range.start + 1,
+            end: ct.range.end + 1,
+          },
+        }));
         return;
       }
-
-      scrollToBottomRef.current.count += 1;
-      scrollToBottomRef.current.smooth = true;
-      setTimeline((ct) => ({
-        ...ct,
-        range: {
-          start: ct.range.start + 1,
-          end: ct.range.end + 1,
-        },
-      }));
+      setTimeline((ct) => ({ ...ct }));
     }, [])
+  );
+
+  // Stay at bottom when room editor resize
+  useResizeObserver(
+    useCallback(
+      (entries) => {
+        if (!roomInputRef.current) return;
+        const editorBaseEntry = getResizeObserverEntry(roomInputRef.current, entries);
+        const scrollElement = getScrollElement();
+        if (!editorBaseEntry || !scrollElement) return;
+
+        if (atBottomRef.current) {
+          scrollToBottom(scrollElement);
+        }
+      },
+      [getScrollElement, roomInputRef]
+    ),
+    useCallback(() => roomInputRef.current, [roomInputRef])
+  );
+
+  const handleAtBottomIntersection: OnIntersectionCallback = useCallback((entries) => {
+    const target = atBottomAnchorRef.current;
+    if (!target) return;
+    const targetEntry = getIntersectionObserverEntry(target, entries);
+
+    setAtBottom(targetEntry?.isIntersecting === true);
+  }, []);
+  useIntersectionObserver(
+    useDebounce(handleAtBottomIntersection, {
+      wait: 200,
+    }),
+    useMemo(
+      () => ({
+        root: getScrollElement(),
+        rootMargin: '100px',
+      }),
+      [getScrollElement]
+    ),
+    useCallback(() => atBottomAnchorRef.current, [])
   );
 
   useEffect(() => {
@@ -495,24 +572,44 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     }
   }, [eventId, loadEventTimeline]);
 
+  // Scroll to bottom on initial timeline load
   useLayoutEffect(() => {
     const scrollEl = scrollRef.current;
     if (scrollEl) scrollToBottom(scrollEl);
   }, []);
 
-  const highlightItm = highlightItem.current;
+  // Scroll to last read message if it is linked to live timeline
   useLayoutEffect(() => {
-    if (highlightItm && highlightItm.scrollTo) {
-      scrollToItem(highlightItm.index, {
+    const { readUptoEventId, inLiveTimeline } = unreadInfo ?? {};
+    if (readUptoEventId && inLiveTimeline) {
+      const linkedTimelines = getLinkedTimelines(getLiveTimeline(room));
+      const evtTimeline = getEventTimeline(room, readUptoEventId);
+      const absoluteIndex =
+        evtTimeline && getEventIdAbsoluteIndex(linkedTimelines, evtTimeline, readUptoEventId);
+      if (absoluteIndex)
+        scrollToItem(absoluteIndex, {
+          behavior: 'instant',
+          align: 'start',
+          stopInView: true,
+        });
+    }
+  }, [room, unreadInfo, scrollToItem]);
+
+  // scroll to focused message
+  const focusItm = focusItem.current;
+  useLayoutEffect(() => {
+    if (focusItm && focusItm.scrollTo) {
+      scrollToItem(focusItm.index, {
         behavior: 'instant',
         align: 'center',
         stopInView: true,
       });
     }
 
-    highlightItem.current = undefined;
-  }, [highlightItm, scrollToItem]);
+    focusItem.current = undefined;
+  }, [focusItm, scrollToItem]);
 
+  // scroll to bottom of timeline
   const scrollToBottomCount = scrollToBottomRef.current.count;
   useLayoutEffect(() => {
     if (scrollToBottomCount > 0) {
@@ -522,10 +619,38 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     }
   }, [scrollToBottomCount]);
 
+  // send readReceipts when reach bottom
+  useEffect(() => {
+    if (liveTimelineLinked && rangeAtEnd && atBottom) {
+      if (!unreadInfo) {
+        markAsRead(room.roomId);
+        return;
+      }
+      const evtTimeline = getEventTimeline(room, unreadInfo.readUptoEventId);
+      const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
+      if (latestTimeline === room.getLiveTimeline()) {
+        markAsRead();
+        setUnreadInfo(undefined);
+      }
+    }
+  }, [room, unreadInfo, liveTimelineLinked, rangeAtEnd, atBottom]);
+
   const handleJumpToLatest = () => {
     setTimeline(getInitialTimeline(room));
     scrollToBottomRef.current.count += 1;
     scrollToBottomRef.current.smooth = false;
+  };
+
+  const handleJumpToUnread = () => {
+    if (unreadInfo?.readUptoEventId) {
+      setTimeline(getEmptyTimeline());
+      loadEventTimeline(unreadInfo.readUptoEventId);
+    }
+  };
+
+  const handleMarkAsRead = () => {
+    markAsRead(room.roomId);
+    setUnreadInfo(undefined);
   };
 
   const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -542,9 +667,10 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
           align: 'center',
           stopInView: true,
         });
-        highlightItem.current = {
+        focusItem.current = {
           index: absoluteIndex,
           scrollTo: false,
+          highlight: true,
         };
         forceUpdate();
       } else {
@@ -801,7 +927,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       const senderId = mEvent.getSender() ?? '';
       const collapsed =
         prevEvent?.getSender() === senderId && prevEvent.getType() === mEvent.getType();
-      const highlighted = highlightItem.current?.index === item;
+      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
 
       const senderDisplayName =
         getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
@@ -902,7 +1028,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
     renderSticker: (mEventId, mEvent, item, timelineSet) => {
       const reactions = getEventReactions(timelineSet, mEventId);
       const senderId = mEvent.getSender() ?? '';
-      const highlighted = highlightItem.current?.index === item;
+      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
 
       const senderDisplayName =
         getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
@@ -1015,7 +1141,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       if (membershipChanged && hideMembershipEvents) return null;
       if (!membershipChanged && hideNickAvatarEvents) return null;
 
-      const highlighted = highlightItem.current?.index === item;
+      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
       const parsed = parseMemberEvent(mEvent);
 
       const timeJSX = (
@@ -1047,7 +1173,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       );
     },
     renderRoomName: (mEventId, mEvent, item) => {
-      const highlighted = highlightItem.current?.index === item;
+      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
@@ -1081,7 +1207,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       );
     },
     renderRoomTopic: (mEventId, mEvent, item) => {
-      const highlighted = highlightItem.current?.index === item;
+      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
@@ -1115,7 +1241,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       );
     },
     renderRoomAvatar: (mEventId, mEvent, item) => {
-      const highlighted = highlightItem.current?.index === item;
+      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
@@ -1149,7 +1275,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       );
     },
     renderStateEvent: (mEventId, mEvent, item) => {
-      const highlighted = highlightItem.current?.index === item;
+      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
@@ -1189,7 +1315,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       if (mEvent.getRelation()) return null;
       if (mEvent.isRedaction()) return null;
 
-      const highlighted = highlightItem.current?.index === item;
+      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
@@ -1227,6 +1353,7 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
   });
 
   let prevEvent: MatrixEvent | undefined;
+  let showNewDivider = false;
   const eventRenderer = (item: number) => {
     const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
     if (!eventTimeline) return null;
@@ -1239,14 +1366,68 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
       return null;
     }
     const eventJSX = renderMatrixEvent(mEventId, mEvent, item, timelineSet, prevEvent);
-    if (eventJSX) {
-      prevEvent = mEvent;
+    prevEvent = mEvent;
+
+    if (showNewDivider && eventJSX && mEvent.getSender() !== mx.getUserId()) {
+      showNewDivider = false;
+      return (
+        <React.Fragment key={mEventId}>
+          <MessageBase>
+            <Box gap="0" justifyContent="Center" alignItems="Center">
+              <Line style={{ flexGrow: 1 }} variant="Success" size="300" />
+              <Badge as="span" size="500" variant="Success" fill="Solid" radii="Pill">
+                <Text size="L400">Unread Messages</Text>
+              </Badge>
+              <Line style={{ flexGrow: 1 }} variant="Success" size="300" />
+            </Box>
+          </MessageBase>
+          {eventJSX}
+        </React.Fragment>
+      );
     }
+    if (!showNewDivider) {
+      showNewDivider = mEventId === readUptoEventIdRef.current;
+    }
+
     return eventJSX;
   };
 
   return (
     <Box style={{ height: '100%', color: color.Surface.OnContainer }} grow="Yes">
+      {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && (
+        <Box
+          justifyContent="Center"
+          alignItems="Center"
+          gap="200"
+          style={{
+            position: 'absolute',
+            top: config.space.S400,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1,
+          }}
+        >
+          <Chip
+            variant="Primary"
+            radii="Pill"
+            outlined
+            before={<Icon size="50" src={Icons.MessageUnread} />}
+            onClick={handleJumpToUnread}
+          >
+            <Text size="L400">Jump to Unread</Text>
+          </Chip>
+
+          <Chip
+            variant="SurfaceVariant"
+            radii="Pill"
+            outlined
+            before={<Icon size="50" src={Icons.CheckTwice} />}
+            onClick={handleMarkAsRead}
+          >
+            <Text size="L400">Mark as Read</Text>
+          </Chip>
+        </Box>
+      )}
       <Scroll ref={scrollRef} visibility="Hover">
         <Box
           direction="Column"
@@ -1299,29 +1480,32 @@ export function RoomTimeline({ room, eventId }: RoomTimelineProps) {
                 <DefaultPlaceholder />
               </>
             ))}
+          <span ref={atBottomAnchorRef} />
         </Box>
-        {(!liveTimelineLinked || !rangeAtEnd) && (
-          <Box
-            justifyContent="Center"
-            alignItems="Center"
-            style={{
-              position: 'absolute',
-              bottom: config.space.S400,
-              width: '100%',
-            }}
-          >
-            <Chip
-              variant="SurfaceVariant"
-              radii="Pill"
-              outlined
-              before={<Icon size="50" src={Icons.ArrowBottom} />}
-              onClick={handleJumpToLatest}
-            >
-              <Text size="L400">Jump to Latest</Text>
-            </Chip>
-          </Box>
-        )}
       </Scroll>
+      {(atBottom === false || !liveTimelineLinked || !rangeAtEnd) && (
+        <Box
+          justifyContent="Center"
+          alignItems="Center"
+          style={{
+            position: 'absolute',
+            bottom: config.space.S400,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1,
+          }}
+        >
+          <Chip
+            variant="SurfaceVariant"
+            radii="Pill"
+            outlined
+            before={<Icon size="50" src={Icons.ArrowBottom} />}
+            onClick={handleJumpToLatest}
+          >
+            <Text size="L400">Jump to Latest</Text>
+          </Chip>
+        </Box>
+      )}
     </Box>
   );
 }

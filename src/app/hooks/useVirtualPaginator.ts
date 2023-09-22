@@ -230,11 +230,22 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
         return;
       }
 
-      const itemElement = getItemElement(index);
-      if (!itemElement) return;
+      // find target or it's previous rendered element to scroll to
+      const targetItems = generateItems({ start: currentRange.start, end: index + 1 });
+      const targetItem = targetItems.reverse().find((i) => getItemElement(i) !== undefined);
+      const itemElement = targetItem && getItemElement(targetItem);
+
+      if (!itemElement) {
+        const scrollElement = getScrollElement();
+        scrollElement?.scrollTo({
+          top: opts?.offset ?? 0,
+          behavior: opts?.behavior,
+        });
+        return;
+      }
       scrollToElement(itemElement, opts);
     },
-    [scrollToElement, getItemElement, onRangeChange]
+    [getScrollElement, scrollToElement, getItemElement, onRangeChange]
   );
 
   const paginate = useCallback(
