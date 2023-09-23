@@ -33,6 +33,7 @@ import {
   Badge,
   Box,
   Chip,
+  ContainerColor,
   Icon,
   Icons,
   Line,
@@ -118,6 +119,16 @@ const TimelineFloat = as<'div', css.TimelineFloatVariants>(
       {...props}
       ref={ref}
     />
+  )
+);
+
+const TimelineDivider = as<'div', { variant?: ContainerColor | 'Inherit' }>(
+  ({ variant, children, ...props }, ref) => (
+    <Box gap="100" justifyContent="Center" alignItems="Center" {...props} ref={ref}>
+      <Line style={{ flexGrow: 1 }} variant={variant} size="500" />
+      {children}
+      <Line style={{ flexGrow: 1 }} variant={variant} size="500" />
+    </Box>
   )
 );
 
@@ -1389,13 +1400,11 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
       return (
         <React.Fragment key={mEventId}>
           <MessageBase>
-            <Box gap="0" justifyContent="Center" alignItems="Center">
-              <Line style={{ flexGrow: 1 }} variant="Success" size="500" />
+            <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
               <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
                 <Text size="L400">Unread Messages</Text>
               </Badge>
-              <Line style={{ flexGrow: 1 }} variant="Success" size="500" />
-            </Box>
+            </TimelineDivider>
           </MessageBase>
           {eventJSX}
         </React.Fragment>
