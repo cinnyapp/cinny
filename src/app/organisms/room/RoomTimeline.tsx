@@ -71,6 +71,7 @@ import {
   AttachmentHeader,
   EventBase,
   AvatarBase,
+  Time,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
@@ -108,6 +109,7 @@ import { markAsRead } from '../../../client/action/notifications';
 import { useDebounce } from '../../hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import * as css from './RoomTimeline.css';
+import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -125,9 +127,9 @@ const TimelineFloat = as<'div', css.TimelineFloatVariants>(
 const TimelineDivider = as<'div', { variant?: ContainerColor | 'Inherit' }>(
   ({ variant, children, ...props }, ref) => (
     <Box gap="100" justifyContent="Center" alignItems="Center" {...props} ref={ref}>
-      <Line style={{ flexGrow: 1 }} variant={variant} size="500" />
+      <Line style={{ flexGrow: 1 }} variant={variant} size="300" />
       {children}
-      <Line style={{ flexGrow: 1 }} variant={variant} size="500" />
+      <Line style={{ flexGrow: 1 }} variant={variant} size="300" />
     </Box>
   )
 );
@@ -942,25 +944,21 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
     },
   });
 
-  const renderMatrixEvent = useMatrixEventRenderer<
-    [number, EventTimelineSet, MatrixEvent | undefined]
-  >({
-    renderRoomMessage: (mEventId, mEvent, item, timelineSet, prevEvent) => {
+  const renderMatrixEvent = useMatrixEventRenderer<[number, EventTimelineSet, boolean]>({
+    renderRoomMessage: (mEventId, mEvent, item, timelineSet, collapse) => {
       const reactions = getEventReactions(timelineSet, mEventId);
 
       const { replyEventId } = mEvent;
 
       // FIXME: Fix encrypted msg not returning body
       const senderId = mEvent.getSender() ?? '';
-      const collapsed =
-        prevEvent?.getSender() === senderId && prevEvent.getType() === mEvent.getType();
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
 
       const senderDisplayName =
         getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
       const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
 
-      const headerJSX = !collapsed && (
+      const headerJSX = !collapse && (
         <Box
           gap="300"
           direction={messageLayout === 1 ? 'RowReverse' : 'Row'}
@@ -975,13 +973,11 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
           >
             <b>{senderDisplayName}</b>
           </Text>
-          <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-            {new Date(mEvent.getTs()).toLocaleTimeString()}
-          </Text>
+          <Time ts={mEvent.getTs()} compact={messageLayout === 1} />
         </Box>
       );
 
-      const avatarJSX = !collapsed && messageLayout !== 1 && (
+      const avatarJSX = !collapse && messageLayout !== 1 && (
         <AvatarBase>
           <Avatar size="300" data-avatar-id={senderId} onClick={handleAvatarClick}>
             {senderAvatarMxc ? (
@@ -1033,7 +1029,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
           key={mEvent.getId()}
           data-message-item={item}
           space={messageSpacing}
-          collapse={collapsed}
+          collapse={collapse}
           highlight={highlighted}
         >
           {messageLayout === 1 && <CompactLayout before={headerJSX}>{msgContentJSX}</CompactLayout>}
@@ -1075,9 +1071,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
           >
             <b>{senderDisplayName}</b>
           </Text>
-          <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-            {new Date(mEvent.getTs()).toLocaleTimeString()}
-          </Text>
+          <Time ts={mEvent.getTs()} compact={messageLayout === 1} />
         </Box>
       );
 
@@ -1171,11 +1165,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
       const parsed = parseMemberEvent(mEvent);
 
-      const timeJSX = (
-        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-          {new Date(mEvent.getTs()).toLocaleTimeString()}
-        </Text>
-      );
+      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
         <EventBase
@@ -1204,11 +1194,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const timeJSX = (
-        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-          {new Date(mEvent.getTs()).toLocaleTimeString()}
-        </Text>
-      );
+      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
         <EventBase
@@ -1238,11 +1224,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const timeJSX = (
-        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-          {new Date(mEvent.getTs()).toLocaleTimeString()}
-        </Text>
-      );
+      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
         <EventBase
@@ -1272,11 +1254,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const timeJSX = (
-        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-          {new Date(mEvent.getTs()).toLocaleTimeString()}
-        </Text>
-      );
+      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
         <EventBase
@@ -1306,11 +1284,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const timeJSX = (
-        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-          {new Date(mEvent.getTs()).toLocaleTimeString()}
-        </Text>
-      );
+      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
         <EventBase
@@ -1346,11 +1320,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const timeJSX = (
-        <Text style={{ flexShrink: 0 }} size="T200" priority="300">
-          {new Date(mEvent.getTs()).toLocaleTimeString()}
-        </Text>
-      );
+      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
         <EventBase
@@ -1380,7 +1350,9 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
   });
 
   let prevEvent: MatrixEvent | undefined;
-  let showNewDivider = false;
+  let isPrevRendered = false;
+  let newDivider = false;
+  let dayDivider = false;
   const eventRenderer = (item: number) => {
     const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
     if (!eventTimeline) return null;
@@ -1389,29 +1361,67 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
     const mEventId = mEvent?.getId();
 
     if (!mEvent || !mEventId) return null;
-    if (mEvent.isRelation()) {
-      return null;
-    }
-    const eventJSX = renderMatrixEvent(mEventId, mEvent, item, timelineSet, prevEvent);
-    prevEvent = mEvent;
 
-    if (showNewDivider && eventJSX && mEvent.getSender() !== mx.getUserId()) {
-      showNewDivider = false;
+    if (!dayDivider) {
+      dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), mEvent.getTs()) : false;
+    }
+    const collapsed =
+      isPrevRendered &&
+      !dayDivider &&
+      !newDivider &&
+      prevEvent !== undefined &&
+      prevEvent.getSender() === mEvent.getSender() &&
+      prevEvent.getType() === mEvent.getType() &&
+      minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
+
+    const eventJSX = mEvent.isRelation()
+      ? undefined
+      : renderMatrixEvent(mEventId, mEvent, item, timelineSet, collapsed);
+    prevEvent = mEvent;
+    isPrevRendered = !!eventJSX;
+
+    const newDividerJSX =
+      newDivider && eventJSX && mEvent.getSender() !== mx.getUserId() ? (
+        <MessageBase>
+          <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
+            <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
+              <Text size="L400">Unread Messages</Text>
+            </Badge>
+          </TimelineDivider>
+        </MessageBase>
+      ) : undefined;
+
+    const dayDividerJSX =
+      dayDivider && eventJSX ? (
+        <MessageBase>
+          <TimelineDivider variant="Surface">
+            <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
+              <Text size="L400">
+                {(() => {
+                  if (today(mEvent.getTs())) return 'Today';
+                  if (yesterday(mEvent.getTs())) return 'Yesterday';
+                  return timeDayMonthYear(mEvent.getTs());
+                })()}
+              </Text>
+            </Badge>
+          </TimelineDivider>
+        </MessageBase>
+      ) : undefined;
+
+    if (eventJSX && (newDividerJSX || dayDividerJSX)) {
+      if (newDivider) newDivider = false;
+      if (dayDivider) dayDivider = false;
+
       return (
         <React.Fragment key={mEventId}>
-          <MessageBase>
-            <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
-              <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
-                <Text size="L400">Unread Messages</Text>
-              </Badge>
-            </TimelineDivider>
-          </MessageBase>
+          {newDividerJSX}
+          {dayDividerJSX}
           {eventJSX}
         </React.Fragment>
       );
     }
-    if (!showNewDivider) {
-      showNewDivider = mEventId === readUptoEventIdRef.current;
+    if (!newDivider) {
+      newDivider = mEventId === readUptoEventIdRef.current;
     }
 
     return eventJSX;
