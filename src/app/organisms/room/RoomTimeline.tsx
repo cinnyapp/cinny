@@ -24,6 +24,7 @@ import {
   RoomEvent,
 } from 'matrix-js-sdk';
 import parse, { HTMLReactParserOptions } from 'html-react-parser';
+import classNames from 'classnames';
 import to from 'await-to-js';
 import {
   Avatar,
@@ -37,6 +38,7 @@ import {
   Line,
   Scroll,
   Text,
+  as,
   color,
   config,
   toRem,
@@ -104,6 +106,20 @@ import {
 import { markAsRead } from '../../../client/action/notifications';
 import { useDebounce } from '../../hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
+import * as css from './RoomTimeline.css';
+
+const TimelineFloat = as<'div', css.TimelineFloatVariants>(
+  ({ position, className, ...props }, ref) => (
+    <Box
+      className={classNames(css.TimelineFloat({ position }), className)}
+      justifyContent="Center"
+      alignItems="Center"
+      gap="200"
+      {...props}
+      ref={ref}
+    />
+  )
+);
 
 export const getLiveTimeline = (room: Room): EventTimeline =>
   room.getUnfilteredTimelineSet().getLiveTimeline();
@@ -1374,11 +1390,11 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
         <React.Fragment key={mEventId}>
           <MessageBase>
             <Box gap="0" justifyContent="Center" alignItems="Center">
-              <Line style={{ flexGrow: 1 }} variant="Success" size="300" />
-              <Badge as="span" size="500" variant="Success" fill="Solid" radii="Pill">
+              <Line style={{ flexGrow: 1 }} variant="Success" size="500" />
+              <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
                 <Text size="L400">Unread Messages</Text>
               </Badge>
-              <Line style={{ flexGrow: 1 }} variant="Success" size="300" />
+              <Line style={{ flexGrow: 1 }} variant="Success" size="500" />
             </Box>
           </MessageBase>
           {eventJSX}
@@ -1395,18 +1411,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
   return (
     <Box style={{ height: '100%', color: color.Surface.OnContainer }} grow="Yes">
       {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && (
-        <Box
-          justifyContent="Center"
-          alignItems="Center"
-          gap="200"
-          style={{
-            position: 'absolute',
-            top: config.space.S400,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1,
-          }}
-        >
+        <TimelineFloat position="Top">
           <Chip
             variant="Primary"
             radii="Pill"
@@ -1426,7 +1431,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
           >
             <Text size="L400">Mark as Read</Text>
           </Chip>
-        </Box>
+        </TimelineFloat>
       )}
       <Scroll ref={scrollRef} visibility="Hover">
         <Box
@@ -1484,17 +1489,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
         </Box>
       </Scroll>
       {(atBottom === false || !liveTimelineLinked || !rangeAtEnd) && (
-        <Box
-          justifyContent="Center"
-          alignItems="Center"
-          style={{
-            position: 'absolute',
-            bottom: config.space.S400,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1,
-          }}
-        >
+        <TimelineFloat position="Bottom">
           <Chip
             variant="SurfaceVariant"
             radii="Pill"
@@ -1504,7 +1499,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
           >
             <Text size="L400">Jump to Latest</Text>
           </Chip>
-        </Box>
+        </TimelineFloat>
       )}
     </Box>
   );
