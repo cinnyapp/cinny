@@ -1362,9 +1362,13 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
 
     if (!mEvent || !mEventId) return null;
 
+    if (!newDivider) {
+      newDivider = prevEvent?.getId() === readUptoEventIdRef.current;
+    }
     if (!dayDivider) {
       dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), mEvent.getTs()) : false;
     }
+
     const collapsed =
       isPrevRendered &&
       !dayDivider &&
@@ -1375,7 +1379,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
       minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
 
     const eventJSX = mEvent.isRelation()
-      ? undefined
+      ? null
       : renderMatrixEvent(mEventId, mEvent, item, timelineSet, collapsed);
     prevEvent = mEvent;
     isPrevRendered = !!eventJSX;
@@ -1389,7 +1393,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
             </Badge>
           </TimelineDivider>
         </MessageBase>
-      ) : undefined;
+      ) : null;
 
     const dayDividerJSX =
       dayDivider && eventJSX ? (
@@ -1406,11 +1410,11 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
             </Badge>
           </TimelineDivider>
         </MessageBase>
-      ) : undefined;
+      ) : null;
 
     if (eventJSX && (newDividerJSX || dayDividerJSX)) {
-      if (newDivider) newDivider = false;
-      if (dayDivider) dayDivider = false;
+      if (newDividerJSX) newDivider = false;
+      if (dayDividerJSX) dayDivider = false;
 
       return (
         <React.Fragment key={mEventId}>
@@ -1419,9 +1423,6 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
           {eventJSX}
         </React.Fragment>
       );
-    }
-    if (!newDivider) {
-      newDivider = mEventId === readUptoEventIdRef.current;
     }
 
     return eventJSX;

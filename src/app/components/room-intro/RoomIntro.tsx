@@ -8,6 +8,7 @@ import { getMemberDisplayName, getStateEvent } from '../../utils/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
+import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
 
 export type RoomIntroProps = {
   room: Room;
@@ -65,7 +66,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             <Text size="T200" priority="300">
               {'Created by '}
               <b>@{creatorName}</b>
-              {` at ${new Date(ts)}`}
+              {` on ${timeDayMonthYear(ts)} ${timeHourMinute(ts)}`}
             </Text>
           )}
         </Box>
