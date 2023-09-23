@@ -1382,7 +1382,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
 
     const newDividerJSX =
       newDivider && eventJSX && mEvent.getSender() !== mx.getUserId() ? (
-        <MessageBase>
+        <MessageBase space={messageSpacing}>
           <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
             <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
               <Text size="L400">Unread Messages</Text>
@@ -1393,7 +1393,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
 
     const dayDividerJSX =
       dayDivider && eventJSX ? (
-        <MessageBase>
+        <MessageBase space={messageSpacing}>
           <TimelineDivider variant="Surface">
             <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
               <Text size="L400">
