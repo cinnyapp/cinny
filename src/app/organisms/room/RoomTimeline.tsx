@@ -422,6 +422,18 @@ const getEmptyTimeline = () => ({
   linkedTimelines: [],
 });
 
+const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
+  const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '');
+  if (!readUptoEventId) return undefined;
+  const evtTimeline = getEventTimeline(room, readUptoEventId);
+  const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
+  return {
+    readUptoEventId,
+    inLiveTimeline: latestTimeline === room.getLiveTimeline(),
+    scrollTo,
+  };
+};
+
 export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
@@ -429,16 +441,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
 
-  const [unreadInfo, setUnreadInfo] = useState(() => {
-    const readUptoEventId = room.getEventReadUpTo(mx.getUserId() ?? '');
-    if (!readUptoEventId) return undefined;
-    const evtTimeline = getEventTimeline(room, readUptoEventId);
-    const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
-    return {
-      readUptoEventId,
-      inLiveTimeline: latestTimeline === room.getLiveTimeline(),
-    };
-  });
+  const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
   const readUptoEventIdRef = useRef<string>();
   if (unreadInfo) {
     readUptoEventIdRef.current = unreadInfo.readUptoEventId;
@@ -538,21 +541,31 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
   useLiveEventArrive(
     mx,
     liveTimelineLinked && rangeAtEnd ? room.roomId : undefined,
-    useCallback(() => {
-      if (atBottomRef.current) {
-        scrollToBottomRef.current.count += 1;
-        scrollToBottomRef.current.smooth = true;
-        setTimeline((ct) => ({
-          ...ct,
-          range: {
-            start: ct.range.start + 1,
-            end: ct.range.end + 1,
-          },
-        }));
-        return;
-      }
-      setTimeline((ct) => ({ ...ct }));
-    }, [])
+    useCallback(
+      (mEvt: MatrixEvent) => {
+        if (atBottomRef.current && document.hasFocus()) {
+          if (!unreadInfo && mEvt.getSender() !== mx.getUserId()) {
+            markAsRead(mEvt.getRoomId());
+          }
+
+          scrollToBottomRef.current.count += 1;
+          scrollToBottomRef.current.smooth = true;
+          setTimeline((ct) => ({
+            ...ct,
+            range: {
+              start: ct.range.start + 1,
+              end: ct.range.end + 1,
+            },
+          }));
+          return;
+        }
+        setTimeline((ct) => ({ ...ct }));
+        if (!unreadInfo) {
+          setUnreadInfo(getRoomUnreadInfo(room));
+        }
+      },
+      [mx, room, unreadInfo]
+    )
   );
 
   // Stay at bottom when room editor resize
@@ -609,8 +622,8 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
 
   // Scroll to last read message if it is linked to live timeline
   useLayoutEffect(() => {
-    const { readUptoEventId, inLiveTimeline } = unreadInfo ?? {};
-    if (readUptoEventId && inLiveTimeline) {
+    const { readUptoEventId, inLiveTimeline, scrollTo } = unreadInfo ?? {};
+    if (readUptoEventId && inLiveTimeline && scrollTo) {
       const linkedTimelines = getLinkedTimelines(getLiveTimeline(room));
       const evtTimeline = getEventTimeline(room, readUptoEventId);
       const absoluteIndex =
@@ -650,7 +663,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
 
   // send readReceipts when reach bottom
   useEffect(() => {
-    if (liveTimelineLinked && rangeAtEnd && atBottom) {
+    if (liveTimelineLinked && rangeAtEnd && atBottom && document.hasFocus()) {
       if (!unreadInfo) {
         markAsRead(room.roomId);
         return;
@@ -1389,7 +1402,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
         <MessageBase space={messageSpacing}>
           <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
             <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
-              <Text size="L400">Unread Messages</Text>
+              <Text size="L400">New Messages</Text>
             </Badge>
           </TimelineDivider>
         </MessageBase>
