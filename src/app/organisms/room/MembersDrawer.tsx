@@ -52,6 +52,8 @@ import colorMXID from '../../../util/colorMXID';
 import { usePowerLevelTags, PowerLevelTag } from '../../hooks/usePowerLevelTags';
 import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../state/typingMembers';
 import { TypingIndicator } from '../../components/typing-indicator';
+import { getMemberDisplayName } from '../../utils/room';
+import { getMxIdLocalPart } from '../../utils/matrix';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -242,6 +244,9 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
     ),
     { wait: 200 }
   );
+
+  const getName = (member: RoomMember) =>
+    getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
 
   const handleMemberClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const btn = evt.currentTarget as HTMLButtonElement;
@@ -478,6 +483,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   }
 
                   const member = tagOrMember;
+                  const name = getName(member);
                   const avatarUrl = member.getAvatarUrl(
                     mx.baseUrl,
                     100,
@@ -490,7 +496,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   return (
                     <MenuItem
                       style={{
-                        padding: config.space.S200,
+                        padding: `0 ${config.space.S200}`,
                         transform: `translateY(${vItem.start}px)`,
                       }}
                       data-index={vItem.index}
@@ -512,7 +518,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                                 color: 'white',
                               }}
                             >
-                              <Text size="H6">{member.name[0]}</Text>
+                              <Text size="H6">{name[0]}</Text>
                             </AvatarFallback>
                           )}
                         </Avatar>
@@ -527,7 +533,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                     >
                       <Box grow="Yes">
                         <Text size="T400" truncate>
-                          {member.name}
+                          {name}
                         </Text>
                       </Box>
                     </MenuItem>
