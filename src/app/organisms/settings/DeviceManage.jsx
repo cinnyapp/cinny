@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './DeviceManage.scss';
-import dateFormat from 'dateformat';
 
 import initMatrix from '../../../client/initMatrix';
 import { isCrossVerified } from '../../../util/matrixUtil';
+import { DateTime } from '../../utils/time';
 import { openReusableDialog, openEmojiVerification } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
@@ -184,9 +184,9 @@ function DeviceManage() {
               <Text variant="b3">
                 Last activity
                 <span style={{ color: 'var(--tc-surface-normal)' }}>
-                  {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
+                  {` ${DateTime.full(new Date(lastTS))}`}
                 </span>
-                {lastIP ? ` at ${lastIP}` : ''}
+                {lastIP ? ` from ${lastIP}` : ''}
               </Text>
             )}
             {isCurrentDevice && (

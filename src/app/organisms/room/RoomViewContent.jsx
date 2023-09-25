@@ -7,14 +7,14 @@ import React, {
 import PropTypes from 'prop-types';
 import './RoomViewContent.scss';
 
-import dateFormat from 'dateformat';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { openProfileViewer } from '../../../client/action/navigation';
-import { diffMinutes, isInSameDay, Throttle } from '../../../util/common';
+import { Throttle } from '../../../util/common';
+import { diffMinutes, isInSameDay, DateTime } from '../../utils/time'
 import { markAsRead } from '../../../client/action/notifications';
 
 import Divider from '../../atoms/divider/Divider';
@@ -99,7 +99,7 @@ function RoomIntroContainer({ event, timeline }) {
       name={room.name}
       heading={twemojify(heading)}
       desc={desc}
-      time={event ? `Created at ${dateFormat(event.getDate(), 'dd mmmm yyyy, hh:MM TT')}` : null}
+      time={event ? `Created on ${DateTime.full(event.getDate())}` : null}
     />
   );
 }
@@ -593,7 +593,7 @@ function RoomViewContent({ roomInputRef, eventId, roomTimeline }) {
       }
       const dayDivider = prevMEvent && !isInSameDay(mEvent.getDate(), prevMEvent.getDate());
       if (dayDivider) {
-        tl.push(<Divider key={`divider-${mEvent.getId()}`} text={`${dateFormat(mEvent.getDate(), 'mmmm dd, yyyy')}`} />);
+        tl.push(<Divider key={`divider-${mEvent.getId()}`} text={`${DateTime.date(mEvent.getDate())}`} />);
         itemCountIndex += 1;
       }
 

@@ -42,3 +42,9 @@ export function toggleNotificationSounds() {
     type: cons.actions.settings.TOGGLE_NOTIFICATION_SOUNDS,
   });
 }
+
+export function toggleTime12() {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.TOGGLE_TIME12,
+  });
+}
