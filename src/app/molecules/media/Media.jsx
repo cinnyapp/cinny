@@ -15,6 +15,8 @@ import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
 import PlaySVG from '../../../../public/res/ic/outlined/play.svg';
 
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
+import initMatrix from '../../../client/initMatrix';
+import settings from '../../../client/state/settings';
 
 async function getDecryptedBlob(response, type, decryptData) {
   const arrayBuffer = await response.arrayBuffer();
@@ -361,6 +363,202 @@ Video.propTypes = {
   blurhash: PropTypes.string,
 };
 
+function IframePlayer({
+  children, link, sitename, title, thumbnail,
+}) {
+  const [videoStarted, setVideoStarted] = useState(false);
+
+  const handlePlayVideo = () => {
+    setVideoStarted(true);
+  };
+
+  return (
+    <div className="iframeplayer">
+      <div className="file-container">
+        <div className="file-header">
+          <Text className="file-name" variant="b3">{`${sitename} - ${title}`}</Text>
+
+          <IconButton
+            size="extra-small"
+            tooltip="Open in new tab"
+            src={ExternalSVG}
+            onClick={() => window.open(link)}
+          />
+        </div>
+
+        <div className="video-container">
+          {videoStarted ? (
+            <div>
+              {children}
+            </div>
+          ) : (
+            <>
+              <img src={thumbnail} alt={`${sitename} thumbnail`} />
+              <IconButton onClick={handlePlayVideo} tooltip="Play video" src={PlaySVG} />
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+IframePlayer.propTypes = {
+  children: PropTypes.node.isRequired,
+  link: PropTypes.string.isRequired,
+  sitename: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  thumbnail: PropTypes.string.isRequired,
+};
+
+function Embed({ link }) {
+  const url = new URL(link);
+
+  if (settings.showYoutubeEmbedPlayer && (((url.host === 'www.youtube.com' || url.host === 'youtube.com') && (url.pathname === '/watch' || url.pathname.startsWith('/shorts/'))) || url.host === 'youtu.be' || url.host === 'www.youtu.be')) {
+    return <YoutubeEmbed link={link} />;
+  }
+
+  const [urlPreviewInfo, setUrlPreviewInfo] = useState();
+  const mx = initMatrix.matrixClient;
+
+  useEffect(() => {
+    let unmounted = false;
+
+    async function getUrlPreview() {
+      try {
+        const info = await mx.getUrlPreview(link, 0);
+        if (unmounted) return;
+        setUrlPreviewInfo(info);
+      } catch {
+        setUrlPreviewInfo();
+      }
+    }
+
+    getUrlPreview();
+
+    return () => {
+      unmounted = true;
+    };
+  });
+
+  if (urlPreviewInfo != null) {
+    const imageURL = urlPreviewInfo['og:image'] || urlPreviewInfo['og:image:secure_url'];
+    const image = (imageURL != null) ? (
+      <Image
+        link={mx.mxcUrlToHttp(imageURL)}
+        height={urlPreviewInfo['og:image:height'] != null ? parseInt(urlPreviewInfo['og:image:height'], 10) : null}
+        width={urlPreviewInfo['og:image:width'] != null ? parseInt(urlPreviewInfo['og:image:width'], 10) : null}
+        name={urlPreviewInfo['og:image:alt'] || urlPreviewInfo['og:site_name'] || ''}
+        type={urlPreviewInfo['og:image:type'] != null ? urlPreviewInfo['og:image:type'] : null}
+      />
+    ) : null;
+
+    // Image only embed
+    if (image != null && urlPreviewInfo['og:title'] == null && urlPreviewInfo['og:description'] == null) {
+      return (
+        <div className="embed-container">
+          <div className="file-container">
+            {image}
+          </div>
+        </div>
+      );
+    }
+
+    const embedTitle = urlPreviewInfo['og:title'] || urlPreviewInfo['og:site_name'];
+
+    return (
+      <div className="embed-container">
+        <div className="file-container embed">
+          <div className="embed-text">
+            {(embedTitle != null) && (
+              <Text className="embed-title" variant="h2">
+                {embedTitle}
+              </Text>
+            )}
+
+            {(urlPreviewInfo['og:description'] != null) && (
+              <Text className="embed-description" variant="b3">
+                {urlPreviewInfo['og:description']}
+              </Text>
+            )}
+          </div>
+
+          <div className="embed-media">
+            {image}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+Embed.propTypes = {
+  link: PropTypes.string.isRequired,
+};
+
+function YoutubeEmbed({ link }) {
+  const [urlPreviewInfo, setUrlPreviewInfo] = useState(null);
+  const mx = initMatrix.matrixClient;
+  const url = new URL(link);
+
+  // fix for no embed information on www.youtu.be
+  if (url.host === 'www.youtu.be') {
+    url.host = 'youtu.be';
+  }
+
+  useEffect(() => {
+    let unmounted = false;
+
+    async function getThumbnail() {
+      const info = await mx.getUrlPreview(url.toString(), 0);
+      if (unmounted) return;
+
+      setUrlPreviewInfo(info);
+    }
+
+    getThumbnail();
+
+    return () => {
+      unmounted = true;
+    };
+  });
+
+  let videoID;
+  if (url.host === 'youtu.be' || url.host === 'www.youtu.be') {
+    videoID = url.pathname.slice(1);
+  } else if (url.pathname.startsWith('/shorts/')) {
+    videoID = url.pathname.slice(8);
+  } else {
+    videoID = url.searchParams.get('v');
+  }
+
+  let embedURL = `https://www.youtube-nocookie.com/embed/${videoID}?autoplay=1`;
+  if (url.searchParams.has('t')) { // timestamp flag
+    embedURL += `&start=${url.searchParams.get('t')}`;
+  }
+
+  if (urlPreviewInfo !== null) {
+    return (
+      <div className="embed-container">
+        <IframePlayer link={link} sitename="Youtube" title={urlPreviewInfo['og:title']} thumbnail={mx.mxcUrlToHttp(urlPreviewInfo['og:image'])}>
+          <iframe
+            src={embedURL}
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </IframePlayer>
+      </div>
+    );
+  }
+
+  return null;
+}
+YoutubeEmbed.propTypes = {
+  link: PropTypes.string.isRequired,
+};
+
 export {
-  File, Image, Sticker, Audio, Video,
+  File, Image, Sticker, Audio, Video, YoutubeEmbed, Embed, IframePlayer,
 };

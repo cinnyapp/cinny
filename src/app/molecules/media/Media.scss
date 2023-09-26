@@ -88,3 +88,18 @@
     width: 100%;
   }
 }
+
+.embed-container {
+  margin-top: 5px;
+
+  .embed {
+    color: var(--tc-surface-low);
+    background-color: var(--bg-surface-hover);
+    border-radius: calc(var(--bo-radius) / 2);
+    padding: 15px;
+
+    .embed-text {
+      margin-bottom: 5px;
+    }
+  }
+}

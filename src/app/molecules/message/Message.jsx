@@ -5,6 +5,7 @@ import React, {
 import PropTypes from 'prop-types';
 import './Message.scss';
 
+import { find } from 'linkifyjs';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -41,6 +42,8 @@ import BinIC from '../../../../public/res/ic/outlined/bin.svg';
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
 import { html, plain } from '../../../util/markdown';
+import { Embed } from '../media/Media';
+import settings from '../../../client/state/settings';
 
 function PlaceholderMessage() {
   return (
@@ -716,6 +719,11 @@ function getEditedBody(editedMEvent) {
   return [parsedContent.body, isCustomHTML, newContent.formatted_body ?? null];
 }
 
+function findLinks(body) {
+  return find(body, 'url')
+    .filter((v, i, a) => a.findIndex((v2) => (v2.href === v.href)) === i);
+}
+
 function Message({
   mEvent, isBodyOnly, roomTimeline,
   focus, fullTime, isEdit, setEdit, cancelEdit,
@@ -801,6 +809,9 @@ function Message({
             isEdited={isEdited}
           />
         )}
+        {settings.showUrlPreview && msgType === 'm.text' && findLinks(body).map((link) => (
+          <Embed key={link.href} link={link.href} />
+        ))}
         {isEdit && (
           <MessageEdit
             body={(customHTML

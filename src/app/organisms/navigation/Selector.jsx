@@ -17,6 +17,7 @@ import SpaceOptions from '../../molecules/space-options/SpaceOptions';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
+import settings from '../../../client/state/settings';
 
 function Selector({
   roomId, isDM, drawerPostie, onClick,
@@ -57,8 +58,8 @@ function Selector({
       key={roomId}
       name={room.name}
       roomId={roomId}
-      imageSrc={isDM ? imageSrc : null}
-      iconSrc={isDM ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())}
+      imageSrc={isDM || settings.showRoomListAvatar ? imageSrc : null}
+      iconSrc={isDM || settings.showRoomListAvatar ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())}
       isSelected={navigation.selectedRoomId === roomId}
       isMuted={isMuted}
       isUnread={!isMuted && noti.hasNoti(roomId)}
