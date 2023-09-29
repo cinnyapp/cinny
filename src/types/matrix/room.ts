@@ -42,6 +42,7 @@ export enum MessageEvent {
   RoomMessageEncrypted = 'm.room.encrypted',
   Sticker = 'm.sticker',
   RoomRedaction = 'm.room.redaction',
+  Reaction = 'm.reaction',
 }
 
 export enum RoomType {

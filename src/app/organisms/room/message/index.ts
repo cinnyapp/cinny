@@ -5,3 +5,4 @@ export * from './fileRenderer';
 export * from './AudioContent';
 export * from './Reactions';
 export * from './EventContent';
+export * from './Message';

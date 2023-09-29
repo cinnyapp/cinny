@@ -34,7 +34,6 @@ import to from 'await-to-js';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   CustomEditor,
-  useEditor,
   Toolbar,
   toMatrixCustomHTML,
   toPlainText,
@@ -101,13 +100,13 @@ import { sanitizeText } from '../../utils/sanitize';
 import { useScreenSize } from '../../hooks/useScreenSize';
 
 interface RoomInputProps {
+  editor: Editor;
   roomViewRef: RefObject<HTMLElement>;
   roomId: string;
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
-  ({ roomViewRef, roomId }, ref) => {
+  ({ editor, roomViewRef, roomId }, ref) => {
     const mx = useMatrixClient();
-    const editor = useEditor();
     const room = mx.getRoom(roomId);
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));

@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { DefaultReset, config } from 'folds';
+import { DefaultReset, config, toRem } from 'folds';
 
 export const RelativeBase = style([
   DefaultReset,
@@ -30,3 +30,35 @@ export const AbsoluteFooter = style([
     right: config.space.S100,
   },
 ]);
+
+export const MessageBase = style({
+  position: 'relative',
+});
+
+export const MessageOptionsBase = style([
+  DefaultReset,
+  {
+    position: 'absolute',
+    top: toRem(-30),
+    right: 0,
+    zIndex: 1,
+  },
+]);
+export const MessageOptionsBar = style([
+  DefaultReset,
+  {
+    padding: config.space.S100,
+  },
+]);
+
+export const MessageQuickReaction = style({
+  minWidth: toRem(32),
+});
+
+export const MessageMenuGroup = style({
+  padding: config.space.S100,
+});
+
+export const MessageMenuItemText = style({
+  flexGrow: 1,
+});

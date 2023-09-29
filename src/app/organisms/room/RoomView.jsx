@@ -18,6 +18,7 @@ import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
 import { RoomViewTyping } from './RoomViewTyping';
 import { RoomViewFollowing } from './RoomViewFollowing';
+import { useEditor } from '../../components/editor';
 
 function RoomView({ room, eventId }) {
   const roomInputRef = useRef(null);
@@ -25,6 +26,7 @@ function RoomView({ room, eventId }) {
 
   // eslint-disable-next-line react/prop-types
   const { roomId } = room;
+  const editor = useEditor();
 
   const mx = useMatrixClient();
   const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
@@ -58,7 +60,13 @@ function RoomView({ room, eventId }) {
       <RoomViewHeader roomId={roomId} />
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
-          <RoomTimeline key={roomId} room={room} eventId={eventId} roomInputRef={roomInputRef} />
+          <RoomTimeline
+            key={roomId}
+            room={room}
+            eventId={eventId}
+            roomInputRef={roomInputRef}
+            editor={editor}
+          />
           <RoomViewTyping room={room} />
         </div>
         <div className="room-view__sticky">
@@ -72,7 +80,12 @@ function RoomView({ room, eventId }) {
             ) : (
               <>
                 {canMessage && (
-                  <RoomInput roomId={roomId} roomViewRef={roomViewRef} ref={roomInputRef} />
+                  <RoomInput
+                    editor={editor}
+                    roomId={roomId}
+                    roomViewRef={roomViewRef}
+                    ref={roomInputRef}
+                  />
                 )}
                 {!canMessage && (
                   <RoomInputPlaceholder

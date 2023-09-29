@@ -20,7 +20,7 @@ export const Time = as<'span', TimeProps>(({ compact, ts, ...props }, ref) => {
   }
 
   return (
-    <Text style={{ flexShrink: 0 }} size="T200" priority="300" {...props} ref={ref}>
+    <Text as="time" style={{ flexShrink: 0 }} size="T200" priority="300" {...props} ref={ref}>
       {time}
     </Text>
   );

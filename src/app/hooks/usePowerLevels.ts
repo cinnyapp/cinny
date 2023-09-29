@@ -31,9 +31,9 @@ interface IPowerLevels {
   notifications?: Record<string, number>;
 }
 
-export type GetPowerLevel = (userId: string) => void;
-export type CanSend = (eventType: string | undefined, powerLevel: number) => void;
-export type CanDoAction = (action: PowerLevelActions, powerLevel: number) => void;
+export type GetPowerLevel = (userId: string) => number;
+export type CanSend = (eventType: string | undefined, powerLevel: number) => boolean;
+export type CanDoAction = (action: PowerLevelActions, powerLevel: number) => boolean;
 
 export type PowerLevelsAPI = {
   getPowerLevel: GetPowerLevel;

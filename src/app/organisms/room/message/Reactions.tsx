@@ -7,6 +7,7 @@ import { factoryEventSentBy } from '../../../utils/matrix';
 import { Reaction, ReactionTooltipMsg } from '../../../components/message';
 import { getReactionContent } from '../../../utils/room';
 import { useRelations } from '../../../hooks/useRelations';
+import { MessageEvent } from '../../../../types/matrix/room';
 
 export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string) =>
   timelineSet.relations.getChildEventsForEvent(
@@ -31,7 +32,7 @@ export const Reactions = as<'div', ReactionsProps>(({ room, relations, ...props 
     const { shortcode } = rEvent.getContent();
     const toEventId = rEvent.getRelation()?.event_id;
     if (typeof toEventId !== 'string') return;
-    mx.sendEvent(room.roomId, 'm.reaction', getReactionContent(toEventId, key, shortcode));
+    mx.sendEvent(room.roomId, MessageEvent.Reaction, getReactionContent(toEventId, key, shortcode));
   };
 
   return (

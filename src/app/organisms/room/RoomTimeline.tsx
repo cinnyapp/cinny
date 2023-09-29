@@ -25,11 +25,11 @@ import {
 } from 'matrix-js-sdk';
 import parse, { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
+import { ReactEditor } from 'slate-react';
+import { Editor } from 'slate';
 import to from 'await-to-js';
+import { useSetAtom } from 'jotai';
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
   Badge,
   Box,
   Chip,
@@ -46,16 +46,12 @@ import {
 } from 'folds';
 import Linkify from 'linkify-react';
 import { decryptFile, getMxIdLocalPart, matrixEventByRecency } from '../../utils/matrix';
-import colorMXID from '../../../util/colorMXID';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
 import { scrollToBottom } from '../../utils/dom';
 import {
-  ModernLayout,
-  CompactLayout,
-  BubbleLayout,
   DefaultPlaceholder,
   CompactPlaceholder,
   Reply,
@@ -70,15 +66,10 @@ import {
   AttachmentContent,
   AttachmentHeader,
   EventBase,
-  AvatarBase,
   Time,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
-import {
-  decryptAllTimelineEvent,
-  getMemberAvatarMxc,
-  getMemberDisplayName,
-} from '../../utils/room';
+import { decryptAllTimelineEvent, getMemberDisplayName } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { openProfileViewer } from '../../../client/action/navigation';
@@ -96,6 +87,7 @@ import {
   AudioContent,
   Reactions,
   EventContent,
+  Message,
 } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
@@ -110,6 +102,9 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import * as css from './RoomTimeline.css';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
+import { createMentionElement, moveCursor } from '../../components/editor';
+import { roomIdToReplyDraftAtomFamily } from '../../state/roomInputDrafts';
+import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -251,6 +246,7 @@ type RoomTimelineProps = {
   room: Room;
   eventId?: string;
   roomInputRef: RefObject<HTMLElement>;
+  editor: Editor;
 };
 
 const PAGINATION_LIMIT = 80;
@@ -434,12 +430,15 @@ const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
   };
 };
 
-export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps) {
+export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
+  const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
+  const { canDoAction, getPowerLevel } = usePowerLevelsAPI();
+  const canRedact = canDoAction('redact', getPowerLevel(mx.getUserId() ?? ''));
 
   const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
   const readUptoEventIdRef = useRef<string>();
@@ -695,7 +694,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
     setUnreadInfo(undefined);
   };
 
-  const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+  const handleOpenReply: MouseEventHandler<HTMLButtonElement> = useCallback(
     async (evt) => {
       const replyId = evt.currentTarget.getAttribute('data-reply-id');
       if (typeof replyId !== 'string') return;
@@ -723,12 +722,64 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
     [room, timeline, scrollToItem, loadEventTimeline, forceUpdate]
   );
 
-  const handleAvatarClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+  const handleUserClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
-      const avatarId = evt.currentTarget.getAttribute('data-avatar-id');
-      openProfileViewer(avatarId, room.roomId);
+      evt.preventDefault();
+      const userId = evt.currentTarget.getAttribute('data-user-id');
+      if (!userId) {
+        console.warn('Button should have "data-user-id" attribute!');
+        return;
+      }
+      openProfileViewer(userId, room.roomId);
     },
     [room]
+  );
+  const handleUsernameClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (evt) => {
+      evt.preventDefault();
+      const userId = evt.currentTarget.getAttribute('data-user-id');
+      if (!userId) {
+        console.warn('Button should have "data-user-id" attribute!');
+        return;
+      }
+      const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
+      editor.insertNode(
+        createMentionElement(
+          userId,
+          name.startsWith('@') ? name : `@${name}`,
+          userId === mx.getUserId()
+        )
+      );
+      ReactEditor.focus(editor);
+      moveCursor(editor);
+    },
+    [mx, room, editor]
+  );
+
+  const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (evt) => {
+      const replyId = evt.currentTarget.getAttribute('data-event-id');
+      if (!replyId) {
+        console.warn('Button should have "data-event-id" attribute!');
+        return;
+      }
+      const evtTimeline = room.getTimelineForEvent(replyId);
+      const replyEvt = evtTimeline?.getEvents().find((ev) => ev.getId() === replyId);
+      if (!replyEvt) return;
+      const editedReply = getEditedEvent(replyId, replyEvt, room.getUnfilteredTimelineSet());
+      const { body, formatted_body: formattedBody }: Record<string, string> =
+        editedReply?.getContent()['m.new.content'] ?? replyEvt.getContent();
+      const senderId = replyEvt.getSender();
+      if (senderId && typeof body === 'string') {
+        setReplyDraft({
+          userId: senderId,
+          eventId: replyId,
+          body,
+          formattedBody,
+        });
+      }
+    },
+    [room, setReplyDraft]
   );
 
   const renderBody = (body: string, customBody?: string) => {
@@ -960,154 +1011,55 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
   const renderMatrixEvent = useMatrixEventRenderer<[number, EventTimelineSet, boolean]>({
     renderRoomMessage: (mEventId, mEvent, item, timelineSet, collapse) => {
       const reactions = getEventReactions(timelineSet, mEventId);
-
       const { replyEventId } = mEvent;
-
-      // FIXME: Fix encrypted msg not returning body
-      const senderId = mEvent.getSender() ?? '';
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
-
-      const senderDisplayName =
-        getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
-      const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
-
-      const headerJSX = !collapse && (
-        <Box
-          gap="300"
-          direction={messageLayout === 1 ? 'RowReverse' : 'Row'}
-          justifyContent="SpaceBetween"
-          alignItems="Baseline"
-          grow="Yes"
-        >
-          <Text
-            size={messageLayout === 2 ? 'T300' : 'T400'}
-            style={{ color: colorMXID(senderId) }}
-            truncate
-          >
-            <b>{senderDisplayName}</b>
-          </Text>
-          <Time ts={mEvent.getTs()} compact={messageLayout === 1} />
-        </Box>
-      );
-
-      const avatarJSX = !collapse && messageLayout !== 1 && (
-        <AvatarBase>
-          <Avatar size="300" data-avatar-id={senderId} onClick={handleAvatarClick}>
-            {senderAvatarMxc ? (
-              <AvatarImage
-                src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
-              />
-            ) : (
-              <AvatarFallback
-                style={{
-                  background: colorMXID(senderId),
-                  color: 'white',
-                }}
-              >
-                <Text size="H4">{senderDisplayName[0]}</Text>
-              </AvatarFallback>
-            )}
-          </Avatar>
-        </AvatarBase>
-      );
-
-      const msgContentJSX = (
-        <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
-          {replyEventId && (
-            <Reply
-              as="button"
-              mx={mx}
-              room={room}
-              timelineSet={timelineSet}
-              eventId={replyEventId}
-              data-reply-id={replyEventId}
-              onClick={handleReplyClick}
-            />
-          )}
-          {renderRoomMsgContent(mEventId, mEvent, timelineSet)}
-          {reactions && (
-            <Reactions
-              style={{
-                margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
-              }}
-              room={room}
-              relations={reactions}
-            />
-          )}
-        </Box>
-      );
 
       return (
-        <MessageBase
+        <Message
           key={mEvent.getId()}
           data-message-item={item}
-          space={messageSpacing}
+          room={room}
+          mEvent={mEvent}
+          messageSpacing={messageSpacing}
+          messageLayout={messageLayout}
           collapse={collapse}
           highlight={highlighted}
+          canDelete={!mEvent.isRedacted() && (canRedact || mEvent.getSender() === mx.getUserId())}
+          onUserClick={handleUserClick}
+          onUsernameClick={handleUsernameClick}
+          onReplyClick={handleReplyClick}
+          reply={
+            replyEventId && (
+              <Reply
+                as="button"
+                mx={mx}
+                room={room}
+                timelineSet={timelineSet}
+                eventId={replyEventId}
+                data-reply-id={replyEventId}
+                onClick={handleOpenReply}
+              />
+            )
+          }
+          reactions={
+            reactions && (
+              <Reactions
+                style={{
+                  margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
+                }}
+                room={room}
+                relations={reactions}
+              />
+            )
+          }
         >
-          {messageLayout === 1 && <CompactLayout before={headerJSX}>{msgContentJSX}</CompactLayout>}
-          {messageLayout === 2 && (
-            <BubbleLayout before={avatarJSX}>
-              {headerJSX}
-              {msgContentJSX}
-            </BubbleLayout>
-          )}
-          {messageLayout !== 1 && messageLayout !== 2 && (
-            <ModernLayout before={avatarJSX}>
-              {headerJSX}
-              {msgContentJSX}
-            </ModernLayout>
-          )}
-        </MessageBase>
+          {renderRoomMsgContent(mEventId, mEvent, timelineSet)}
+        </Message>
       );
     },
-    renderSticker: (mEventId, mEvent, item, timelineSet) => {
+    renderSticker: (mEventId, mEvent, item, timelineSet, collapse) => {
       const reactions = getEventReactions(timelineSet, mEventId);
-      const senderId = mEvent.getSender() ?? '';
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
-
-      const senderDisplayName =
-        getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
-      const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
-      const headerJSX = (
-        <Box
-          gap="300"
-          direction={messageLayout === 1 ? 'RowReverse' : 'Row'}
-          justifyContent="SpaceBetween"
-          alignItems="Baseline"
-          grow="Yes"
-        >
-          <Text
-            size={messageLayout === 2 ? 'T300' : 'T400'}
-            style={{ color: colorMXID(senderId) }}
-            truncate
-          >
-            <b>{senderDisplayName}</b>
-          </Text>
-          <Time ts={mEvent.getTs()} compact={messageLayout === 1} />
-        </Box>
-      );
-
-      const avatarJSX = messageLayout !== 1 && (
-        <AvatarBase>
-          <Avatar size="300" data-avatar-id={senderId} onClick={handleAvatarClick}>
-            {senderAvatarMxc ? (
-              <AvatarImage
-                src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
-              />
-            ) : (
-              <AvatarFallback
-                style={{
-                  background: colorMXID(senderId),
-                  color: 'white',
-                }}
-              >
-                <Text size="H4">{senderDisplayName[0]}</Text>
-              </AvatarFallback>
-            )}
-          </Avatar>
-        </AvatarBase>
-      );
 
       const content = mEvent.getContent<IImageContent>();
       const imgInfo = content?.info;
@@ -1116,8 +1068,33 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
         return null;
       }
       const height = scaleYDimension(imgInfo.w || 152, 152, imgInfo.h || 152);
-      const msgContentJSX = (
-        <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
+
+      return (
+        <Message
+          key={mEvent.getId()}
+          data-message-item={item}
+          room={room}
+          mEvent={mEvent}
+          messageSpacing={messageSpacing}
+          messageLayout={messageLayout}
+          collapse={collapse}
+          highlight={highlighted}
+          canDelete={!mEvent.isRedacted() && (canRedact || mEvent.getSender() === mx.getUserId())}
+          onUserClick={handleUserClick}
+          onUsernameClick={handleUsernameClick}
+          onReplyClick={handleReplyClick}
+          reactions={
+            reactions && (
+              <Reactions
+                style={{
+                  margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
+                }}
+                room={room}
+                relations={reactions}
+              />
+            )
+          }
+        >
           <AttachmentBox
             style={{
               height: toRem(height < 48 ? 48 : height),
@@ -1133,40 +1110,7 @@ export function RoomTimeline({ room, eventId, roomInputRef }: RoomTimelineProps)
               encInfo={content.file}
             />
           </AttachmentBox>
-
-          {reactions && (
-            <Reactions
-              style={{
-                margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
-              }}
-              room={room}
-              relations={reactions}
-            />
-          )}
-        </Box>
-      );
-
-      return (
-        <MessageBase
-          key={mEvent.getId()}
-          data-message-item={item}
-          space={messageSpacing}
-          highlight={highlighted}
-        >
-          {messageLayout === 1 && <CompactLayout before={headerJSX}>{msgContentJSX}</CompactLayout>}
-          {messageLayout === 2 && (
-            <BubbleLayout before={avatarJSX}>
-              {headerJSX}
-              {msgContentJSX}
-            </BubbleLayout>
-          )}
-          {messageLayout !== 1 && messageLayout !== 2 && (
-            <ModernLayout before={avatarJSX}>
-              {headerJSX}
-              {msgContentJSX}
-            </ModernLayout>
-          )}
-        </MessageBase>
+        </Message>
       );
     },
     renderRoomMember: (mEventId, mEvent, item) => {

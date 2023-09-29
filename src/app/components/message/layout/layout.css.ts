@@ -142,3 +142,12 @@ export const BubbleContent = style({
   color: color.SurfaceVariant.OnContainer,
   borderRadius: config.radii.R400,
 });
+
+export const Username = style({
+  cursor: 'pointer',
+  selectors: {
+    '&:hover, &:focus-visible': {
+      textDecoration: 'underline',
+    },
+  },
+});

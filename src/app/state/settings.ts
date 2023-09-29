@@ -1,6 +1,8 @@
 import { atom } from 'jotai';
 
 const STORAGE_KEY = 'settings';
+export type MessageSpacing = '0' | '100' | '200' | '300' | '400' | '500';
+export type MessageLayout = 0 | 1 | 2;
 export interface Settings {
   themeIndex: number;
   useSystemTheme: boolean;
@@ -8,8 +10,8 @@ export interface Settings {
   editorToolbar: boolean;
   isPeopleDrawer: boolean;
 
-  messageLayout: 0 | 1 | 2;
-  messageSpacing: '0' | '100' | '200' | '300' | '400' | '500';
+  messageLayout: MessageLayout;
+  messageSpacing: MessageSpacing;
   hideMembershipEvents: boolean;
   hideNickAvatarEvents: boolean;
 
