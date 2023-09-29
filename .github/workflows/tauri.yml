@@ -1,0 +1,252 @@
+name: "Publish Tauri App"
+on:
+  release:
+    types: [published]
+
+jobs:
+  # Windows-x86_64
+  windows-x86_64:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.5.3
+        with: 
+          submodules: true
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@74c3d60f5a28f358ccf241a00c9021ea16f0569f
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup node
+        uses: actions/setup-node@v3.6.0
+        with:
+          node-version: 18.12.1
+          cache: 'npm'
+      - name: Install Rust stable
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+          toolchain: stable
+      - name: Install cinny dependencies
+        run: cd cinny && npm ci
+      - name: Install tauri dependencies
+        run: npm ci
+      - name: Build desktop app with Tauri
+        uses: tauri-apps/tauri-action@v0.3.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        with:
+          releaseId: ${{ steps.get_release.outputs.upload_url }}
+      - name: Get app version (windows)
+        run: |
+          $json = (Get-Content "src-tauri\tauri.conf.json" -Raw) | ConvertFrom-Json
+          $version = $json.package.version
+          echo "Version: ${version}"
+          echo "TAURI_VERSION=${version}" >> $Env:GITHUB_ENV
+          echo "${Env:TAURI_VERSION}"
+        shell: pwsh
+      - name: Move msi
+        run: Move-Item "src-tauri\target\release\bundle\msi\Cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi" "src-tauri\target\release\bundle\msi\Cinny_desktop-x86_64.msi"
+        shell: pwsh
+      - name: Move msi.zip
+        run: Move-Item "src-tauri\target\release\bundle\msi\Cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi.zip" "src-tauri\target\release\bundle\msi\Cinny_desktop-x86_64.msi.zip"
+        shell: pwsh
+      - name: Move msi.zip.sig
+        run: Move-Item "src-tauri\target\release\bundle\msi\Cinny_${{ env.TAURI_VERSION }}_x64_en-US.msi.zip.sig" "src-tauri\target\release\bundle\msi\Cinny_desktop-x86_64.msi.zip.sig"
+        shell: pwsh
+      - name: Upload tagged release
+        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+        with:
+          files: |
+            src-tauri\target\release\bundle\msi\Cinny_desktop-x86_64.msi
+            src-tauri\target\release\bundle\msi\Cinny_desktop-x86_64.msi.zip
+            src-tauri\target\release\bundle\msi\Cinny_desktop-x86_64.msi.zip.sig
+
+  # Linux-x86_64
+  linux-x86_64:
+    # ubuntu-latest 22.04 is too recent for Rust apps.
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.5.3
+        with: 
+          submodules: true
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@74c3d60f5a28f358ccf241a00c9021ea16f0569f
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup node
+        uses: actions/setup-node@v3.6.0
+        with:
+          node-version: 18.12.1
+          cache: 'npm'
+      - name: Install Rust stable
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+          toolchain: stable
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
+      - name: Install cinny dependencies
+        run: cd cinny && npm ci
+      - name: Install tauri dependencies
+        run: npm ci
+      - name: Build desktop app with Tauri
+        uses: tauri-apps/tauri-action@v0.3.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        with:
+          releaseId: ${{ steps.get_release.outputs.upload_url }}
+      - name: Get app version
+        id: vars
+        run: echo ::set-output name=tag::$(jq .package.version src-tauri/tauri.conf.json | tr -d '"')
+      - name: Move deb
+        run: mv "src-tauri/target/release/bundle/deb/cinny_${{ steps.vars.outputs.tag }}_amd64.deb" "src-tauri/target/release/bundle/deb/Cinny_desktop-x86_64.deb"
+      - name: Move AppImage
+        run: mv "src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage"
+      - name: Move AppImage.tar.gz
+        run: mv "src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage.tar.gz" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage.tar.gz"
+      - name: Move AppImage.tar.gz.sig
+        run: mv "src-tauri/target/release/bundle/appimage/cinny_${{ steps.vars.outputs.tag }}_amd64.AppImage.tar.gz.sig" "src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage.tar.gz.sig"
+      - name: Upload tagged release
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+        with:
+          files: |
+            src-tauri/target/release/bundle/deb/Cinny_desktop-x86_64.deb
+            src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage
+            src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage.tar.gz
+            src-tauri/target/release/bundle/appimage/Cinny_desktop-x86_64.AppImage.tar.gz.sig
+
+  # macos-x86_64
+  macos-x86_64:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.5.3
+        with: 
+          submodules: true
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@74c3d60f5a28f358ccf241a00c9021ea16f0569f
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup node
+        uses: actions/setup-node@v3.6.0
+        with:
+          node-version: 18.12.1
+          cache: 'npm'
+      - name: Install Rust stable
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+          toolchain: stable
+      - name: Install cinny dependencies
+        run: cd cinny && npm ci
+      - name: Install tauri dependencies
+        run: npm ci
+      - name: Build desktop app with Tauri
+        uses: tauri-apps/tauri-action@v0.3.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        with:
+          releaseId: ${{ steps.get_release.outputs.upload_url }}
+      - name: Get app version
+        id: vars
+        run: echo ::set-output name=tag::$(jq .package.version src-tauri/tauri.conf.json | tr -d '"')
+      - name: Move dmg
+        run: mv "src-tauri/target/release/bundle/dmg/Cinny_${{ steps.vars.outputs.tag }}_x64.dmg" "src-tauri/target/release/bundle/dmg/Cinny_desktop-x86_64.dmg"
+      - name: Move app.tar.gz
+        run: mv "src-tauri/target/release/bundle/macos/Cinny.app.tar.gz" "src-tauri/target/release/bundle/macos/Cinny_desktop-x86_64.app.tar.gz"
+      - name: Move app.tar.gz.sig
+        run: mv "src-tauri/target/release/bundle/macos/Cinny.app.tar.gz.sig" "src-tauri/target/release/bundle/macos/Cinny_desktop-x86_64.app.tar.gz.sig"
+      - name: Upload tagged release
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+        with:
+          files: |
+            src-tauri/target/release/bundle/dmg/Cinny_desktop-x86_64.dmg
+            src-tauri/target/release/bundle/macos/Cinny_desktop-x86_64.app.tar.gz
+            src-tauri/target/release/bundle/macos/Cinny_desktop-x86_64.app.tar.gz.sig
+
+  # macos-aarch64
+  # macos-aarch64:
+  #   runs-on: macos-12
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3.5.3
+  #       with: 
+  #         submodules: true
+  #     - name: Get release
+  #       id: get_release
+  #       uses: bruceadams/get-release@74c3d60f5a28f358ccf241a00c9021ea16f0569f
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Setup node
+  #       uses: actions/setup-node@v3.4.1
+  #       with:
+  #         node-version: 18.12.1
+  #         cache: 'npm'
+  #     - name: Install Rust stable
+  #       uses: actions-rs/toolchain@v1.0.7
+  #       with:
+  #         toolchain: stable
+  #     - name: Install cinny dependencies
+  #       run: cd cinny && npm ci
+  #     - name: Install tauri dependencies
+  #       run: npm ci
+  #     - name: Install rustup target aarch64 darwin
+  #       run: rustup target add aarch64-apple-darwin
+  #     - name: Build desktop app with Tauri
+  #       uses: tauri-apps/tauri-action@v0.3.1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+  #         TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+  #         NODE_OPTIONS: "--max_old_space_size=4096"
+  #       with:
+  #         args: --target aarch64-apple-darwin
+  #         releaseId: ${{ steps.get_release.outputs.upload_url }}
+  #     - name: Get app version
+  #       if: always()
+  #       id: vars
+  #       run: echo ::set-output name=tag::$(jq .package.version src-tauri/tauri.conf.json | tr -d '"')
+  #     - name: Move dmg
+  #       if: always()
+  #       run: mv "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Cinny_${{ steps.vars.outputs.tag }}_aarch64.dmg" "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Cinny_desktop-aarch64.dmg"
+  #     - name: Move app.tar.gz
+  #       if: always()
+  #       run: mv "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Cinny.app.tar.gz" "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Cinny_desktop-aarch64.app.tar.gz"
+  #     - name: Move app.tar.gz.sig
+  #       if: always()
+  #       run: mv "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Cinny.app.tar.gz.sig" "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Cinny_desktop-aarch64.app.tar.gz.sig"
+  #     - name: Upload tagged release
+  #       if: always()
+  #       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+  #       with:
+  #         files: |
+  #           src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Cinny_desktop-aarch64.dmg
+  #           src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Cinny_desktop-aarch64.tar.gz
+  #           src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Cinny_desktop-aarch64.tar.gz.sig
+
+  # Upload release.json
+  release-update:
+    if: always()
+    needs: [windows-x86_64, linux-x86_64, macos-x86_64] #, macos-aarch64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.5.3
+      - name: Install dependencies
+        run: npm ci
+      - name: Run release.json
+        run: npm run tauri:release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

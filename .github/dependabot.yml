@@ -28,3 +28,12 @@ updates:
       time: "01:00"
       timezone: "Asia/Kolkata"
     open-pull-requests-limit: 5
+
+  - package-ecosystem: cargo
+    directory: /src-tauri/
+    schedule:
+      interval: weekly
+      day: "tuesday"
+      time: "01:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 5
