@@ -286,7 +286,7 @@ export const MessageDeleteItem = as<
                       (optional)
                     </Text>
                   </Text>
-                  <Input name="reasonInput" variant="Background" outlined />
+                  <Input name="reasonInput" variant="Background" />
                   {deleteState.status === AsyncStatus.Error && (
                     <Text style={{ color: color.Critical.Main }} size="T300">
                       Failed to delete message! Please try again.
@@ -393,7 +393,7 @@ export const Message = as<'div', MessageProps>(
             <b>{senderDisplayName}</b>
           </Text>
         </Username>
-        <Box gap="100">
+        <Box shrink="No" gap="100">
           {messageLayout !== 1 && hover && (
             <>
               <Text as="span" size="T200" priority="300">
@@ -547,7 +547,9 @@ export const Message = as<'div', MessageProps>(
                         <Line size="300" />
 
                         <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                          {canDelete && <MessageDeleteItem room={room} mEvent={mEvent} />}
+                          {canDelete && (
+                            <MessageDeleteItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                          )}
                           <Button
                             variant="Critical"
                             fill="None"

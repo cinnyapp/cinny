@@ -725,6 +725,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const handleUserClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
       evt.preventDefault();
+      evt.stopPropagation();
       const userId = evt.currentTarget.getAttribute('data-user-id');
       if (!userId) {
         console.warn('Button should have "data-user-id" attribute!');
@@ -777,9 +778,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           body,
           formattedBody,
         });
+        ReactEditor.focus(editor);
       }
     },
-    [room, setReplyDraft]
+    [room, setReplyDraft, editor]
   );
 
   const renderBody = (body: string, customBody?: string) => {

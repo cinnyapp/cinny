@@ -145,6 +145,9 @@ export const BubbleContent = style({
 
 export const Username = style({
   cursor: 'pointer',
+  overflow: 'hidden',
+  whiteSpace: 'nowrap',
+  textOverflow: 'ellipsis',
   selectors: {
     '&:hover, &:focus-visible': {
       textDecoration: 'underline',
