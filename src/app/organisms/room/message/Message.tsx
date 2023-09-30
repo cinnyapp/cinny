@@ -53,6 +53,7 @@ import * as css from './styles.css';
 import { EventReaders } from '../../../components/event-readers';
 import { TextViewer } from '../../../components/text-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { EmojiBoard } from '../../../components/emoji-board';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -476,6 +477,7 @@ export type MessageProps = {
   highlight: boolean;
   canDelete?: boolean;
   canSendReaction?: boolean;
+  imagePackRooms?: Room[];
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
   onUserClick: MouseEventHandler<HTMLButtonElement>;
@@ -495,6 +497,7 @@ export const Message = as<'div', MessageProps>(
       highlight,
       canDelete,
       canSendReaction,
+      imagePackRooms,
       messageLayout,
       messageSpacing,
       onUserClick,
@@ -512,6 +515,7 @@ export const Message = as<'div', MessageProps>(
     const senderId = mEvent.getSender() ?? '';
     const [hover, setHover] = useState(false);
     const [menu, setMenu] = useState(false);
+    const [emojiBoard, setEmojiBoard] = useState(false);
 
     const senderDisplayName =
       getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
@@ -602,20 +606,53 @@ export const Message = as<'div', MessageProps>(
         space={messageSpacing}
         collapse={collapse}
         highlight={highlight}
-        selected={menu}
+        selected={menu || emojiBoard}
         {...props}
         onMouseEnter={showOptions}
         onMouseLeave={hideOptions}
         ref={ref}
       >
-        {(hover || menu) && (
+        {(hover || menu || emojiBoard) && (
           <div className={css.MessageOptionsBase}>
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
               <Box gap="100">
                 {canSendReaction && (
-                  <IconButton variant="SurfaceVariant" size="300" radii="300">
-                    <Icon src={Icons.SmilePlus} size="100" />
-                  </IconButton>
+                  <PopOut
+                    alignOffset={-65}
+                    position="Bottom"
+                    align="End"
+                    open={emojiBoard}
+                    content={
+                      <EmojiBoard
+                        imagePackRooms={imagePackRooms ?? []}
+                        returnFocusOnDeactivate={false}
+                        onEmojiSelect={(key) => {
+                          onReactionToggle(mEvent.getId()!, key);
+                          setEmojiBoard(false);
+                        }}
+                        onCustomEmojiSelect={(mxc, shortcode) => {
+                          onReactionToggle(mEvent.getId()!, mxc, shortcode);
+                          setEmojiBoard(false);
+                        }}
+                        requestClose={() => {
+                          setEmojiBoard(false);
+                        }}
+                      />
+                    }
+                  >
+                    {(anchorRef) => (
+                      <IconButton
+                        ref={anchorRef}
+                        onClick={() => setEmojiBoard(true)}
+                        variant="SurfaceVariant"
+                        size="300"
+                        radii="300"
+                        aria-pressed={emojiBoard}
+                      >
+                        <Icon src={Icons.SmilePlus} size="100" />
+                      </IconButton>
+                    )}
+                  </PopOut>
                 )}
                 <IconButton
                   onClick={onReplyClick}
@@ -656,7 +693,12 @@ export const Message = as<'div', MessageProps>(
                               size="300"
                               after={<Icon size="100" src={Icons.SmilePlus} />}
                               radii="300"
-                              onClick={() => alert('Work in Progress!')}
+                              onClick={() => {
+                                closeMenu();
+                                // open it with timeout because closeMenu
+                                // FocusTrap will return focus from emojiBoard
+                                setTimeout(() => setEmojiBoard(true), 100);
+                              }}
                             >
                               <Text
                                 className={css.MessageMenuItemText}

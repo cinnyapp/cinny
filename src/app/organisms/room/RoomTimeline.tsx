@@ -117,6 +117,7 @@ import { createMentionElement, moveCursor } from '../../components/editor';
 import { roomIdToReplyDraftAtomFamily } from '../../state/roomInputDrafts';
 import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { MessageEvent } from '../../../types/matrix/room';
+import initMatrix from '../../../client/initMatrix';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -459,6 +460,18 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const myPowerLevel = getPowerLevel(mx.getUserId() ?? '');
   const canRedact = canDoAction('redact', myPowerLevel);
   const canSendReaction = canSendEvent(MessageEvent.Reaction, myPowerLevel);
+
+  const imagePackRooms: Room[] = useMemo(() => {
+    const allParentSpaces = [
+      room.roomId,
+      ...(initMatrix.roomList?.getAllParentSpaces(room.roomId) ?? []),
+    ];
+    return allParentSpaces.reduce<Room[]>((list, rId) => {
+      const r = mx.getRoom(rId);
+      if (r) list.push(r);
+      return list;
+    }, []);
+  }, [mx, room]);
 
   const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
   const readUptoEventIdRef = useRef<string>();
@@ -1078,6 +1091,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           highlight={highlighted}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           canSendReaction={canSendReaction}
+          imagePackRooms={imagePackRooms}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
@@ -1138,6 +1152,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           highlight={highlighted}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           canSendReaction={canSendReaction}
+          imagePackRooms={imagePackRooms}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
