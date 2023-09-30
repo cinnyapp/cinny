@@ -46,7 +46,13 @@ import {
   toRem,
 } from 'folds';
 import Linkify from 'linkify-react';
-import { decryptFile, getMxIdLocalPart, matrixEventByRecency } from '../../utils/matrix';
+import {
+  decryptFile,
+  eventWithShortcode,
+  factoryEventSentBy,
+  getMxIdLocalPart,
+  matrixEventByRecency,
+} from '../../utils/matrix';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
@@ -70,7 +76,11 @@ import {
   Time,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
-import { decryptAllTimelineEvent, getMemberDisplayName } from '../../utils/room';
+import {
+  decryptAllTimelineEvent,
+  getMemberDisplayName,
+  getReactionContent,
+} from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { openProfileViewer } from '../../../client/action/navigation';
@@ -106,6 +116,7 @@ import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from 
 import { createMentionElement, moveCursor } from '../../components/editor';
 import { roomIdToReplyDraftAtomFamily } from '../../state/roomInputDrafts';
 import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
+import { MessageEvent } from '../../../types/matrix/room';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -444,8 +455,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
-  const { canDoAction, getPowerLevel } = usePowerLevelsAPI();
-  const canRedact = canDoAction('redact', getPowerLevel(mx.getUserId() ?? ''));
+  const { canDoAction, canSendEvent, getPowerLevel } = usePowerLevelsAPI();
+  const myPowerLevel = getPowerLevel(mx.getUserId() ?? '');
+  const canRedact = canDoAction('redact', myPowerLevel);
+  const canSendReaction = canSendEvent(MessageEvent.Reaction, myPowerLevel);
 
   const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
   const readUptoEventIdRef = useRef<string>();
@@ -790,6 +803,30 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     [room, setReplyDraft, editor]
   );
 
+  const handleReactionToggle = useCallback(
+    (targetEventId: string, key: string, shortcode?: string) => {
+      const relations = getEventReactions(room.getUnfilteredTimelineSet(), targetEventId);
+      const allReactions = relations?.getSortedAnnotationsByKey() ?? [];
+      const [, reactionsSet] = allReactions.find(([k]) => k === key) ?? [];
+      const reactions = reactionsSet ? Array.from(reactionsSet) : [];
+      const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
+
+      if (myReaction && !!myReaction?.isRelation()) {
+        mx.redactEvent(room.roomId, myReaction.getId()!);
+        return;
+      }
+      const rShortcode =
+        shortcode ||
+        (reactions.find(eventWithShortcode)?.getContent().shortcode as string | undefined);
+      mx.sendEvent(
+        room.roomId,
+        MessageEvent.Reaction,
+        getReactionContent(targetEventId, key, rShortcode)
+      );
+    },
+    [mx, room]
+  );
+
   const renderBody = (body: string, customBody?: string) => {
     if (body === '') <MessageEmptyContent />;
     if (customBody) {
@@ -1040,9 +1077,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           collapse={collapse}
           highlight={highlighted}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+          canSendReaction={canSendReaction}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
+          onReactionToggle={handleReactionToggle}
           reply={
             replyEventId && (
               <Reply
@@ -1064,6 +1103,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 }}
                 room={room}
                 relations={reactions}
+                mEventId={mEventId}
+                canSendReaction={canSendReaction}
+                onReactionToggle={handleReactionToggle}
               />
             )
           }
@@ -1095,9 +1137,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           collapse={collapse}
           highlight={highlighted}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+          canSendReaction={canSendReaction}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
+          onReactionToggle={handleReactionToggle}
           reactions={
             reactions && (
               <Reactions
@@ -1106,6 +1150,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 }}
                 room={room}
                 relations={reactions}
+                mEventId={mEventId}
+                canSendReaction={canSendReaction}
+                onReactionToggle={handleReactionToggle}
               />
             )
           }

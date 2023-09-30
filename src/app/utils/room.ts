@@ -289,7 +289,7 @@ export const decryptAllTimelineEvent = async (mx: MatrixClient, timeline: EventT
   await Promise.allSettled(decryptionPromises);
 };
 
-export const getReactionContent = (eventId: string, key: string, shortcode: string) => ({
+export const getReactionContent = (eventId: string, key: string, shortcode?: string) => ({
   'm.relates_to': {
     event_id: eventId,
     key,

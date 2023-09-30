@@ -21,9 +21,11 @@ export const Reaction = style([
     backgroundColor: Container,
     border: `${config.borderWidth.B300} solid ${ContainerLine}`,
     borderRadius: config.radii.R300,
-    cursor: 'pointer',
 
     selectors: {
+      'button&': {
+        cursor: 'pointer',
+      },
       '&[aria-pressed=true]': {
         vars: {
           [Container]: color.Primary.Container,
@@ -39,6 +41,9 @@ export const Reaction = style([
       },
       '&:active': {
         backgroundColor: ContainerActive,
+      },
+      '&[aria-disabled=true], &:disabled': {
+        cursor: 'not-allowed',
       },
     },
   },

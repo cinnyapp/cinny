@@ -146,6 +146,9 @@ export const matrixEventByRecency = (m1: MatrixEvent, m2: MatrixEvent) => m2.get
 export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
   ev.getSender() === senderId;
 
+export const eventWithShortcode = (ev: MatrixEvent) =>
+  typeof ev.getContent().shortcode === 'string';
+
 export const trimReplyFromBody = (body: string): string => {
   if (body.match(/^> <.+>/) === null) return body;
 

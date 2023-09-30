@@ -475,11 +475,13 @@ export type MessageProps = {
   collapse: boolean;
   highlight: boolean;
   canDelete?: boolean;
+  canSendReaction?: boolean;
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
   onUserClick: MouseEventHandler<HTMLButtonElement>;
   onUsernameClick: MouseEventHandler<HTMLButtonElement>;
   onReplyClick: MouseEventHandler<HTMLButtonElement>;
+  onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
   reply?: ReactNode;
   reactions?: ReactNode;
 };
@@ -492,11 +494,13 @@ export const Message = as<'div', MessageProps>(
       collapse,
       highlight,
       canDelete,
+      canSendReaction,
       messageLayout,
       messageSpacing,
       onUserClick,
       onUsernameClick,
       onReplyClick,
+      onReactionToggle,
       reply,
       reactions,
       children,
@@ -608,9 +612,11 @@ export const Message = as<'div', MessageProps>(
           <div className={css.MessageOptionsBase}>
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
               <Box gap="100">
-                <IconButton variant="SurfaceVariant" size="300" radii="300">
-                  <Icon src={Icons.SmilePlus} size="100" />
-                </IconButton>
+                {canSendReaction && (
+                  <IconButton variant="SurfaceVariant" size="300" radii="300">
+                    <Icon src={Icons.SmilePlus} size="100" />
+                  </IconButton>
+                )}
                 <IconButton
                   onClick={onReplyClick}
                   data-event-id={mEvent.getId()}
@@ -636,28 +642,32 @@ export const Message = as<'div', MessageProps>(
                       }}
                     >
                       <Menu {...props} ref={ref}>
-                        <MessageQuickReactions
-                          onReaction={(a, b) => {
-                            alert(`Work in Progress! ${a}: ${b}`);
-                            closeMenu();
-                          }}
-                        />
+                        {canSendReaction && (
+                          <MessageQuickReactions
+                            onReaction={(key, shortcode) => {
+                              onReactionToggle(mEvent.getId()!, key, shortcode);
+                              closeMenu();
+                            }}
+                          />
+                        )}
                         <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                          <MenuItem
-                            size="300"
-                            after={<Icon size="100" src={Icons.SmilePlus} />}
-                            radii="300"
-                            onClick={() => alert('Work in Progress!')}
-                          >
-                            <Text
-                              className={css.MessageMenuItemText}
-                              as="span"
-                              size="T300"
-                              truncate
+                          {canSendReaction && (
+                            <MenuItem
+                              size="300"
+                              after={<Icon size="100" src={Icons.SmilePlus} />}
+                              radii="300"
+                              onClick={() => alert('Work in Progress!')}
                             >
-                              Add Reaction
-                            </Text>
-                          </MenuItem>
+                              <Text
+                                className={css.MessageMenuItemText}
+                                as="span"
+                                size="T300"
+                                truncate
+                              >
+                                Add Reaction
+                              </Text>
+                            </MenuItem>
+                          )}
                           <MenuItem
                             size="300"
                             after={<Icon size="100" src={Icons.ReplyArrow} />}

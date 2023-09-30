@@ -5,7 +5,7 @@ import { MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import * as css from './Reaction.css';
 import { getHexcodeForEmoji, getShortcodeFor } from '../../plugins/emoji';
 import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { eventWithShortcode, getMxIdLocalPart } from '../../utils/matrix';
 
 export const Reaction = as<
   'button',
@@ -49,41 +49,65 @@ type ReactionTooltipMsgProps = {
   events: MatrixEvent[];
 };
 
-const eventWithShortcode = (ev: MatrixEvent) => typeof ev.getContent().shortcode === 'string';
-const factoryToSenderName = (room: Room) => (ev: MatrixEvent) =>
-  getMemberDisplayName(room, ev.getSender() ?? 'Unknown') ??
-  getMxIdLocalPart(ev.getSender() ?? 'Unknown') ??
-  'Unknown';
-
 export function ReactionTooltipMsg({ room, reaction, events }: ReactionTooltipMsgProps) {
   const shortCodeEvt = events.find(eventWithShortcode);
-  const names = events.map(factoryToSenderName(room));
-
-  const joinNameRenderer = (name: string, index: number, slicedNames: string[]) => (
-    <span key={name}>
-      {index > 0 &&
-        index === slicedNames.length - 1 &&
-        (names.length <= slicedNames.length ? ' and ' : ', ')}
-      {index > 0 && index !== slicedNames.length - 1 && ', '}
-      <b>{name}</b>
-      {index === slicedNames.length - 1 &&
-        names.length > slicedNames.length &&
-        ` and ${names.length - slicedNames.length} other${
-          names.length - slicedNames.length === 1 ? '' : 's'
-        }`}
-    </span>
+  const shortcode =
+    shortCodeEvt?.getContent().shortcode ??
+    getShortcodeFor(getHexcodeForEmoji(reaction)) ??
+    reaction;
+  const names = events.map(
+    (ev: MatrixEvent) =>
+      getMemberDisplayName(room, ev.getSender() ?? 'Unknown') ??
+      getMxIdLocalPart(ev.getSender() ?? 'Unknown') ??
+      'Unknown'
   );
 
   return (
     <>
-      {names.slice(0, 4).map(joinNameRenderer)}
-      {' reacted with :'}
-      <b>
-        {shortCodeEvt?.getContent().shortcode ??
-          getShortcodeFor(getHexcodeForEmoji(reaction)) ??
-          reaction}
-      </b>
-      :
+      {names.length === 1 && <b>{names[0]}</b>}
+      {names.length === 2 && (
+        <>
+          <b>{names[0]}</b>
+          <Text as="span" size="Inherit" priority="300">
+            {' and '}
+          </Text>
+          <b>{names[1]}</b>
+        </>
+      )}
+      {names.length === 3 && (
+        <>
+          <b>{names[0]}</b>
+          <Text as="span" size="Inherit" priority="300">
+            {', '}
+          </Text>
+          <b>{names[1]}</b>
+          <Text as="span" size="Inherit" priority="300">
+            {' and '}
+          </Text>
+          <b>{names[2]}</b>
+        </>
+      )}
+      {names.length > 3 && (
+        <>
+          <b>{names[0]}</b>
+          <Text as="span" size="Inherit" priority="300">
+            {', '}
+          </Text>
+          <b>{names[1]}</b>
+          <Text as="span" size="Inherit" priority="300">
+            {', '}
+          </Text>
+          <b>{names[2]}</b>
+          <Text as="span" size="Inherit" priority="300">
+            {' and '}
+          </Text>
+          <b>{names.length - 3} others</b>
+        </>
+      )}
+      <Text as="span" size="Inherit" priority="300">
+        {' reacted with '}
+      </Text>
+      :<b>{shortcode}</b>:
     </>
   );
 }

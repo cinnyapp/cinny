@@ -1,14 +1,12 @@
 import React, { useCallback } from 'react';
 import { Box, Text, Tooltip, TooltipProvider, as, toRem } from 'folds';
 import classNames from 'classnames';
-import { EventTimelineSet, EventType, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
+import { EventTimelineSet, EventType, RelationType, Room } from 'matrix-js-sdk';
 import { type Relations } from 'matrix-js-sdk/lib/models/relations';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { factoryEventSentBy } from '../../../utils/matrix';
 import { Reaction, ReactionTooltipMsg } from '../../../components/message';
-import { getReactionContent } from '../../../utils/room';
 import { useRelations } from '../../../hooks/useRelations';
-import { MessageEvent } from '../../../../types/matrix/room';
 import * as css from './styles.css';
 
 export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string) =>
@@ -20,27 +18,19 @@ export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string
 
 export type ReactionsProps = {
   room: Room;
+  mEventId: string;
+  canSendReaction?: boolean;
   relations: Relations;
+  onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
 };
 export const Reactions = as<'div', ReactionsProps>(
-  ({ className, room, relations, ...props }, ref) => {
+  ({ className, room, relations, mEventId, canSendReaction, onReactionToggle, ...props }, ref) => {
     const mx = useMatrixClient();
     const myUserId = mx.getUserId();
     const reactions = useRelations(
       relations,
       useCallback((rel) => [...(rel.getSortedAnnotationsByKey() ?? [])], [])
     );
-
-    const sendReaction = (key: string, rEvent: MatrixEvent) => {
-      const { shortcode } = rEvent.getContent();
-      const toEventId = rEvent.getRelation()?.event_id;
-      if (typeof toEventId !== 'string') return;
-      mx.sendEvent(
-        room.roomId,
-        MessageEvent.Reaction,
-        getReactionContent(toEventId, key, shortcode)
-      );
-    };
 
     return (
       <Box
@@ -53,7 +43,6 @@ export const Reactions = as<'div', ReactionsProps>(
         {reactions.map(([key, events]) => {
           const rEvents = Array.from(events);
           if (rEvents.length === 0) return null;
-          const reaction = rEvents[0];
           const myREvent = myUserId ? rEvents.find(factoryEventSentBy(myUserId)) : undefined;
           const isPressed = !!myREvent?.getRelation();
 
@@ -77,11 +66,8 @@ export const Reactions = as<'div', ReactionsProps>(
                   mx={mx}
                   reaction={key}
                   count={events.size}
-                  onClick={() =>
-                    myREvent && isPressed
-                      ? mx.redactEvent(room.roomId, myREvent.getId() ?? '')
-                      : sendReaction(key, reaction)
-                  }
+                  onClick={canSendReaction ? () => onReactionToggle(mEventId, key) : undefined}
+                  aria-disabled={!canSendReaction}
                 />
               )}
             </TooltipProvider>
