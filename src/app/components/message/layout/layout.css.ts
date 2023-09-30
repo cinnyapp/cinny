@@ -64,12 +64,19 @@ const HighlightVariant = styleVariants({
   },
 });
 
+const SelectedVariant = styleVariants({
+  true: {
+    backgroundColor: color.Surface.ContainerActive,
+  },
+});
+
 export const MessageBase = recipe({
   base: [
     DefaultReset,
     {
       marginTop: SpacingVar,
       padding: `${config.space.S100} ${config.space.S200} ${config.space.S100} ${config.space.S400}`,
+      borderRadius: `0 ${config.radii.R400} ${config.radii.R400} 0`,
     },
   ],
   variants: {
@@ -81,6 +88,7 @@ export const MessageBase = recipe({
       },
     },
     highlight: HighlightVariant,
+    selected: SelectedVariant,
   },
   defaultVariants: {
     space: '400',
@@ -94,6 +102,7 @@ export const EventBase = recipe({
     DefaultReset,
     {
       padding: `${config.space.S100} ${config.space.S200} ${config.space.S100} ${config.space.S400}`,
+      borderRadius: `0 ${config.radii.R400} ${config.radii.R400} 0`,
       selectors: {
         [`:not(&)+&`]: {
           marginTop: SpacingVar,
@@ -104,6 +113,7 @@ export const EventBase = recipe({
   variants: {
     space: SpacingVariant,
     highlight: HighlightVariant,
+    selected: SelectedVariant,
   },
 });
 export type EventBaseVariants = RecipeVariants<typeof EventBase>;

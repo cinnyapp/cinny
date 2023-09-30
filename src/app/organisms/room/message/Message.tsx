@@ -464,6 +464,7 @@ export const Message = as<'div', MessageProps>(
         space={messageSpacing}
         collapse={collapse}
         highlight={highlight}
+        selected={menu}
         {...props}
         onMouseEnter={showOptions}
         onMouseLeave={hideOptions}
