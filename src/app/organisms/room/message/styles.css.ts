@@ -62,3 +62,11 @@ export const MessageMenuGroup = style({
 export const MessageMenuItemText = style({
   flexGrow: 1,
 });
+
+export const ReactionsContainer = style({
+  selectors: {
+    '&:empty': {
+      display: 'none',
+    },
+  },
+});
