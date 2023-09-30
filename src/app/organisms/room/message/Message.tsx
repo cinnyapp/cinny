@@ -230,7 +230,12 @@ export const MessageDeleteItem = as<
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
     const eventId = mEvent.getId();
-    if (!eventId || deleteState.status === AsyncStatus.Loading) return;
+    if (
+      !eventId ||
+      deleteState.status === AsyncStatus.Loading ||
+      deleteState.status === AsyncStatus.Success
+    )
+      return;
     const target = evt.target as HTMLFormElement | undefined;
     const reasonInput = target?.reasonInput as HTMLInputElement | undefined;
     const reason = reasonInput && reasonInput.value.trim();
@@ -547,7 +552,7 @@ export const Message = as<'div', MessageProps>(
                         <Line size="300" />
 
                         <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                          {canDelete && (
+                          {!mEvent.isRedacted() && canDelete && (
                             <MessageDeleteItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           )}
                           <Button

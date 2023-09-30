@@ -22,6 +22,7 @@ import {
   RelationType,
   Room,
   RoomEvent,
+  RoomEventHandlerMap,
 } from 'matrix-js-sdk';
 import parse, { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
@@ -393,10 +394,16 @@ const useLiveEventArrive = (
       if (eventRoom?.roomId !== roomId || !data.liveEvent) return;
       onArrive(mEvent);
     };
+    const handleRedaction: RoomEventHandlerMap[RoomEvent.Redaction] = (mEvent, eventRoom) => {
+      if (eventRoom?.roomId !== roomId) return;
+      onArrive(mEvent);
+    };
 
     mx.on(RoomEvent.Timeline, handleTimelineEvent);
+    mx.on(RoomEvent.Redaction, handleRedaction);
     return () => {
       mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
+      mx.removeListener(RoomEvent.Redaction, handleRedaction);
     };
   }, [mx, roomId, onArrive]);
 };
@@ -764,8 +771,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         console.warn('Button should have "data-event-id" attribute!');
         return;
       }
-      const evtTimeline = room.getTimelineForEvent(replyId);
-      const replyEvt = evtTimeline?.getEvents().find((ev) => ev.getId() === replyId);
+      const replyEvt = room.findEventById(replyId);
       if (!replyEvt) return;
       const editedReply = getEditedEvent(replyId, replyEvt, room.getUnfilteredTimelineSet());
       const { body, formatted_body: formattedBody }: Record<string, string> =
@@ -778,7 +784,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           body,
           formattedBody,
         });
-        ReactEditor.focus(editor);
+        setTimeout(() => ReactEditor.focus(editor), 100);
       }
     },
     [room, setReplyDraft, editor]
@@ -982,9 +988,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     renderFile: fileRenderer,
     renderUnsupported: (mEventId, mEvent) => {
       if (mEvent.isRedacted()) {
+        const redactedEvt = mEvent.getRedactionEvent();
+        const reason =
+          redactedEvt && 'content' in redactedEvt ? redactedEvt.content.reason : undefined;
+
         return (
           <Text>
-            <MessageDeletedContent />
+            <MessageDeletedContent reason={reason} />
           </Text>
         );
       }
@@ -996,9 +1006,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     },
     renderBrokenFallback: (mEventId, mEvent) => {
       if (mEvent.isRedacted()) {
+        const redactedEvt = mEvent.getRedactionEvent();
+        const reason =
+          redactedEvt && 'content' in redactedEvt ? redactedEvt.content.reason : undefined;
         return (
           <Text>
-            <MessageDeletedContent />
+            <MessageDeletedContent reason={reason} />
           </Text>
         );
       }
@@ -1026,7 +1039,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           messageLayout={messageLayout}
           collapse={collapse}
           highlight={highlighted}
-          canDelete={!mEvent.isRedacted() && (canRedact || mEvent.getSender() === mx.getUserId())}
+          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
@@ -1081,7 +1094,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           messageLayout={messageLayout}
           collapse={collapse}
           highlight={highlighted}
-          canDelete={!mEvent.isRedacted() && (canRedact || mEvent.getSender() === mx.getUserId())}
+          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
