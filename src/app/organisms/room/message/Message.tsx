@@ -33,6 +33,7 @@ import React, {
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
+import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
 import {
   AvatarBase,
@@ -54,6 +55,7 @@ import { EventReaders } from '../../../components/event-readers';
 import { TextViewer } from '../../../components/text-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
+import { ReactionViewer } from '../reaction-viewer';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -96,6 +98,66 @@ export const MessageQuickReactions = as<'div', MessageQuickReactionsProps>(
     );
   }
 );
+
+export const MessageAllReactionItem = as<
+  'button',
+  {
+    room: Room;
+    relations: Relations;
+    onClose?: () => void;
+  }
+>(({ room, relations, onClose, ...props }, ref) => {
+  const [open, setOpen] = useState(false);
+
+  const handleClose = () => {
+    setOpen(false);
+    onClose?.();
+  };
+
+  return (
+    <>
+      <Overlay
+        onContextMenu={(evt: any) => {
+          evt.stopPropagation();
+        }}
+        open={open}
+        backdrop={<OverlayBackdrop />}
+      >
+        <OverlayCenter>
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              returnFocusOnDeactivate: false,
+              onDeactivate: () => handleClose(),
+              clickOutsideDeactivates: true,
+            }}
+          >
+            <Modal variant="Surface" size="300">
+              <ReactionViewer
+                room={room}
+                relations={relations}
+                requestClose={() => setOpen(false)}
+              />
+            </Modal>
+          </FocusTrap>
+        </OverlayCenter>
+      </Overlay>
+      <MenuItem
+        size="300"
+        after={<Icon size="100" src={Icons.Smile} />}
+        radii="300"
+        onClick={() => setOpen(true)}
+        {...props}
+        ref={ref}
+        aria-pressed={open}
+      >
+        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+          View Reactions
+        </Text>
+      </MenuItem>
+    </>
+  );
+});
 
 export const MessageReadReceiptItem = as<
   'button',
@@ -478,6 +540,7 @@ export type MessageProps = {
   canDelete?: boolean;
   canSendReaction?: boolean;
   imagePackRooms?: Room[];
+  relations?: Relations;
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
   onUserClick: MouseEventHandler<HTMLButtonElement>;
@@ -498,6 +561,7 @@ export const Message = as<'div', MessageProps>(
       canDelete,
       canSendReaction,
       imagePackRooms,
+      relations,
       messageLayout,
       messageSpacing,
       onUserClick,
@@ -709,6 +773,13 @@ export const Message = as<'div', MessageProps>(
                                 Add Reaction
                               </Text>
                             </MenuItem>
+                          )}
+                          {relations && (
+                            <MessageAllReactionItem
+                              room={room}
+                              relations={relations}
+                              onClose={closeMenu}
+                            />
                           )}
                           <MenuItem
                             size="300"

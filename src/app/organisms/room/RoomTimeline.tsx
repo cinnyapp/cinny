@@ -1075,7 +1075,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   const renderMatrixEvent = useMatrixEventRenderer<[number, EventTimelineSet, boolean]>({
     renderRoomMessage: (mEventId, mEvent, item, timelineSet, collapse) => {
-      const reactions = getEventReactions(timelineSet, mEventId);
+      const reactionRelations = getEventReactions(timelineSet, mEventId);
+      const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+      const hasReactions = reactions && reactions.length > 0;
       const { replyEventId } = mEvent;
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
 
@@ -1092,6 +1094,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           canSendReaction={canSendReaction}
           imagePackRooms={imagePackRooms}
+          relations={hasReactions ? reactionRelations : undefined}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
@@ -1110,13 +1113,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             )
           }
           reactions={
-            reactions && (
+            reactionRelations && (
               <Reactions
                 style={{
                   margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
                 }}
                 room={room}
-                relations={reactions}
+                relations={reactionRelations}
                 mEventId={mEventId}
                 canSendReaction={canSendReaction}
                 onReactionToggle={handleReactionToggle}
@@ -1129,7 +1132,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       );
     },
     renderSticker: (mEventId, mEvent, item, timelineSet, collapse) => {
-      const reactions = getEventReactions(timelineSet, mEventId);
+      const reactionRelations = getEventReactions(timelineSet, mEventId);
+      const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+      const hasReactions = reactions && reactions.length > 0;
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
 
       const content = mEvent.getContent<IImageContent>();
@@ -1153,18 +1158,19 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           canSendReaction={canSendReaction}
           imagePackRooms={imagePackRooms}
+          relations={hasReactions ? reactionRelations : undefined}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
           onReactionToggle={handleReactionToggle}
           reactions={
-            reactions && (
+            reactionRelations && (
               <Reactions
                 style={{
                   margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
                 }}
                 room={room}
-                relations={reactions}
+                relations={reactionRelations}
                 mEventId={mEventId}
                 canSendReaction={canSendReaction}
                 onReactionToggle={handleReactionToggle}

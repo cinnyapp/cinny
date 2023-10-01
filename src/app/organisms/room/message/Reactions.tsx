@@ -1,9 +1,6 @@
 import React, { MouseEventHandler, useCallback, useState } from 'react';
 import {
   Box,
-  Icon,
-  IconButton,
-  Icons,
   Modal,
   Overlay,
   OverlayBackdrop,
@@ -102,38 +99,33 @@ export const Reactions = as<'div', ReactionsProps>(
           );
         })}
         {reactions.length > 0 && (
-          <>
-            <Overlay
-              onContextMenu={(evt: any) => {
-                evt.stopPropagation();
-              }}
-              open={!!viewer}
-              backdrop={<OverlayBackdrop />}
-            >
-              <OverlayCenter>
-                <FocusTrap
-                  focusTrapOptions={{
-                    initialFocus: false,
-                    returnFocusOnDeactivate: false,
-                    onDeactivate: () => setViewer(false),
-                    clickOutsideDeactivates: true,
-                  }}
-                >
-                  <Modal variant="Surface" size="300">
-                    <ReactionViewer
-                      room={room}
-                      initialKey={typeof viewer === 'string' ? viewer : undefined}
-                      relations={relations}
-                      requestClose={() => setViewer(false)}
-                    />
-                  </Modal>
-                </FocusTrap>
-              </OverlayCenter>
-            </Overlay>
-            <IconButton onClick={() => setViewer(true)} size="300" radii="300">
-              <Icon size="100" src={Icons.HorizontalDots} />
-            </IconButton>
-          </>
+          <Overlay
+            onContextMenu={(evt: any) => {
+              evt.stopPropagation();
+            }}
+            open={!!viewer}
+            backdrop={<OverlayBackdrop />}
+          >
+            <OverlayCenter>
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  returnFocusOnDeactivate: false,
+                  onDeactivate: () => setViewer(false),
+                  clickOutsideDeactivates: true,
+                }}
+              >
+                <Modal variant="Surface" size="300">
+                  <ReactionViewer
+                    room={room}
+                    initialKey={typeof viewer === 'string' ? viewer : undefined}
+                    relations={relations}
+                    requestClose={() => setViewer(false)}
+                  />
+                </Modal>
+              </FocusTrap>
+            </OverlayCenter>
+          </Overlay>
         )}
       </Box>
     );
