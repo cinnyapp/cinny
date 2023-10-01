@@ -1115,9 +1115,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           reactions={
             reactionRelations && (
               <Reactions
-                style={{
-                  margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
-                }}
+                style={{ marginTop: config.space.S200 }}
                 room={room}
                 relations={reactionRelations}
                 mEventId={mEventId}
@@ -1166,9 +1164,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           reactions={
             reactionRelations && (
               <Reactions
-                style={{
-                  margin: `${config.space.S200} 0 ${messageLayout === 2 ? 0 : config.space.S100}`,
-                }}
+                style={{ marginTop: config.space.S200 }}
                 room={room}
                 relations={reactionRelations}
                 mEventId={mEventId}

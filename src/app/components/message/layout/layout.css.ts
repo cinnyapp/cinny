@@ -84,7 +84,6 @@ export const MessageBase = recipe({
     collapse: {
       true: {
         marginTop: 0,
-        paddingTop: 0,
       },
     },
     highlight: HighlightVariant,
