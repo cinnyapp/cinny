@@ -37,7 +37,7 @@ export const Reaction = style([
         backgroundColor: Container,
       },
       '&[aria-selected=true]': {
-        borderColor: color.Success.Main,
+        borderColor: color.Secondary.Main,
         borderWidth: config.borderWidth.B400,
       },
       '&:hover, &:focus-visible': {

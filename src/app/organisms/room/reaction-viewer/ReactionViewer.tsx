@@ -113,7 +113,6 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
 
                   return (
                     <MenuItem
-                      as="div"
                       key={member.userId}
                       style={{ padding: `0 ${config.space.S200}` }}
                       radii="400"
