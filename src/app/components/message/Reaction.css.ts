@@ -36,6 +36,10 @@ export const Reaction = style([
         },
         backgroundColor: Container,
       },
+      '&[aria-selected=true]': {
+        borderColor: color.Success.Main,
+        borderWidth: config.borderWidth.B400,
+      },
       '&:hover, &:focus-visible': {
         backgroundColor: ContainerHover,
       },
@@ -64,5 +68,8 @@ export const ReactionImg = style([
   DefaultReset,
   {
     height: '1em',
+    minWidth: 0,
+    maxWidth: toRem(150),
+    objectFit: 'contain',
   },
 ]);
