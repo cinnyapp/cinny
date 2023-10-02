@@ -70,6 +70,14 @@ const SelectedVariant = styleVariants({
   },
 });
 
+const AutoCollapse = style({
+  selectors: {
+    [`&+&`]: {
+      marginTop: 0,
+    },
+  },
+});
+
 export const MessageBase = recipe({
   base: [
     DefaultReset,
@@ -86,6 +94,9 @@ export const MessageBase = recipe({
         marginTop: 0,
       },
     },
+    autoCollapse: {
+      true: AutoCollapse,
+    },
     highlight: HighlightVariant,
     selected: SelectedVariant,
   },
@@ -95,27 +106,6 @@ export const MessageBase = recipe({
 });
 
 export type MessageBaseVariants = RecipeVariants<typeof MessageBase>;
-
-export const EventBase = recipe({
-  base: [
-    DefaultReset,
-    {
-      padding: `${config.space.S100} ${config.space.S200} ${config.space.S100} ${config.space.S400}`,
-      borderRadius: `0 ${config.radii.R400} ${config.radii.R400} 0`,
-      selectors: {
-        [`:not(&)+&`]: {
-          marginTop: SpacingVar,
-        },
-      },
-    },
-  ],
-  variants: {
-    space: SpacingVariant,
-    highlight: HighlightVariant,
-    selected: SelectedVariant,
-  },
-});
-export type EventBaseVariants = RecipeVariants<typeof EventBase>;
 
 export const CompactHeader = style([
   DefaultReset,

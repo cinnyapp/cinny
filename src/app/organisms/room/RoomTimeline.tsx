@@ -72,7 +72,6 @@ import {
   Attachment,
   AttachmentContent,
   AttachmentHeader,
-  EventBase,
   Time,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
@@ -99,6 +98,7 @@ import {
   Reactions,
   EventContent,
   Message,
+  Event,
 } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
@@ -1204,11 +1204,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
-        <EventBase
+        <Event
           key={mEvent.getId()}
           data-message-item={item}
-          space={messageSpacing}
+          room={room}
+          mEvent={mEvent}
           highlight={highlighted}
+          messageSpacing={messageSpacing}
+          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
         >
           <EventContent
             messageLayout={messageLayout}
@@ -1222,7 +1225,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               </Box>
             }
           />
-        </EventBase>
+        </Event>
       );
     },
     renderRoomName: (mEventId, mEvent, item) => {
@@ -1233,11 +1236,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
-        <EventBase
+        <Event
           key={mEvent.getId()}
           data-message-item={item}
-          space={messageSpacing}
+          room={room}
+          mEvent={mEvent}
           highlight={highlighted}
+          messageSpacing={messageSpacing}
+          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
         >
           <EventContent
             messageLayout={messageLayout}
@@ -1252,7 +1258,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               </Box>
             }
           />
-        </EventBase>
+        </Event>
       );
     },
     renderRoomTopic: (mEventId, mEvent, item) => {
@@ -1263,11 +1269,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
-        <EventBase
+        <Event
           key={mEvent.getId()}
           data-message-item={item}
-          space={messageSpacing}
+          room={room}
+          mEvent={mEvent}
           highlight={highlighted}
+          messageSpacing={messageSpacing}
+          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
         >
           <EventContent
             messageLayout={messageLayout}
@@ -1282,7 +1291,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               </Box>
             }
           />
-        </EventBase>
+        </Event>
       );
     },
     renderRoomAvatar: (mEventId, mEvent, item) => {
@@ -1293,11 +1302,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
-        <EventBase
+        <Event
           key={mEvent.getId()}
           data-message-item={item}
-          space={messageSpacing}
+          room={room}
+          mEvent={mEvent}
           highlight={highlighted}
+          messageSpacing={messageSpacing}
+          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
         >
           <EventContent
             messageLayout={messageLayout}
@@ -1312,7 +1324,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               </Box>
             }
           />
-        </EventBase>
+        </Event>
       );
     },
     renderStateEvent: (mEventId, mEvent, item) => {
@@ -1323,11 +1335,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
-        <EventBase
+        <Event
           key={mEvent.getId()}
           data-message-item={item}
-          space={messageSpacing}
+          room={room}
+          mEvent={mEvent}
           highlight={highlighted}
+          messageSpacing={messageSpacing}
+          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
         >
           <EventContent
             messageLayout={messageLayout}
@@ -1344,7 +1359,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               </Box>
             }
           />
-        </EventBase>
+        </Event>
       );
     },
     renderEvent: (mEventId, mEvent, item) => {
@@ -1359,11 +1374,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
 
       return (
-        <EventBase
+        <Event
           key={mEvent.getId()}
           data-message-item={item}
-          space={messageSpacing}
+          room={room}
+          mEvent={mEvent}
           highlight={highlighted}
+          messageSpacing={messageSpacing}
+          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
         >
           <EventContent
             messageLayout={messageLayout}
@@ -1380,7 +1398,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               </Box>
             }
           />
-        </EventBase>
+        </Event>
       );
     },
   });

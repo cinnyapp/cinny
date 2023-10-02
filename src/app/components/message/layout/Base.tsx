@@ -4,19 +4,12 @@ import classNames from 'classnames';
 import * as css from './layout.css';
 
 export const MessageBase = as<'div', css.MessageBaseVariants>(
-  ({ className, highlight, selected, collapse, space, ...props }, ref) => (
+  ({ className, highlight, selected, collapse, autoCollapse, space, ...props }, ref) => (
     <div
-      className={classNames(css.MessageBase({ highlight, selected, collapse, space }), className)}
-      {...props}
-      ref={ref}
-    />
-  )
-);
-
-export const EventBase = as<'div', css.EventBaseVariants>(
-  ({ className, space, highlight, ...props }, ref) => (
-    <div
-      className={classNames(css.EventBase({ space, highlight }), className)}
+      className={classNames(
+        css.MessageBase({ highlight, selected, collapse, autoCollapse, space }),
+        className
+      )}
       {...props}
       ref={ref}
     />

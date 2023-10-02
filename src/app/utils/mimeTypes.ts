@@ -43,6 +43,7 @@ export const TEXT_MIME_TYPE = [
   'text/tab-separated-values',
   'text/yaml',
   'text/x-java-source,java',
+  'text/markdown',
 ];
 
 export const READABLE_TEXT_MIME_TYPES = [

@@ -871,3 +871,121 @@ export const Message = as<'div', MessageProps>(
     );
   }
 );
+
+export type EventProps = {
+  room: Room;
+  mEvent: MatrixEvent;
+  highlight: boolean;
+  canDelete?: boolean;
+  messageSpacing: MessageSpacing;
+};
+export const Event = as<'div', EventProps>(
+  ({ className, room, mEvent, highlight, canDelete, messageSpacing, children, ...props }, ref) => {
+    const mx = useMatrixClient();
+    const [hover, setHover] = useState(false);
+    const [menu, setMenu] = useState(false);
+    const stateEvent = typeof mEvent.getStateKey() === 'string';
+
+    const showOptions = () => setHover(true);
+    const hideOptions = () => setHover(false);
+
+    const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
+      const tag = (evt.target as any).tagName;
+      if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
+      evt.preventDefault();
+      setMenu(true);
+    };
+
+    const closeMenu = () => {
+      setMenu(false);
+    };
+
+    return (
+      <MessageBase
+        className={classNames(css.MessageBase, className)}
+        tabIndex={0}
+        space={messageSpacing}
+        autoCollapse
+        highlight={highlight}
+        selected={menu}
+        {...props}
+        onMouseEnter={showOptions}
+        onMouseLeave={hideOptions}
+        ref={ref}
+      >
+        {(hover || menu) && (
+          <div className={css.MessageOptionsBase}>
+            <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
+              <Box gap="100">
+                <PopOut
+                  open={menu}
+                  alignOffset={-5}
+                  position="Bottom"
+                  align="End"
+                  content={
+                    <FocusTrap
+                      focusTrapOptions={{
+                        initialFocus: false,
+                        onDeactivate: () => setMenu(false),
+                        clickOutsideDeactivates: true,
+                        isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                        isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                      }}
+                    >
+                      <Menu {...props} ref={ref}>
+                        <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                          <MessageReadReceiptItem
+                            room={room}
+                            eventId={mEvent.getId() ?? ''}
+                            onClose={closeMenu}
+                          />
+                          <MessageSourceCodeItem mEvent={mEvent} onClose={closeMenu} />
+                        </Box>
+                        {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
+                          (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
+                          <>
+                            <Line size="300" />
+                            <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                              {!mEvent.isRedacted() && canDelete && (
+                                <MessageDeleteItem
+                                  room={room}
+                                  mEvent={mEvent}
+                                  onClose={closeMenu}
+                                />
+                              )}
+                              {mEvent.getSender() !== mx.getUserId() && (
+                                <MessageReportItem
+                                  room={room}
+                                  mEvent={mEvent}
+                                  onClose={closeMenu}
+                                />
+                              )}
+                            </Box>
+                          </>
+                        )}
+                      </Menu>
+                    </FocusTrap>
+                  }
+                >
+                  {(targetRef) => (
+                    <IconButton
+                      ref={targetRef}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                      onClick={() => setMenu((v) => !v)}
+                      aria-pressed={menu}
+                    >
+                      <Icon src={Icons.VerticalDots} size="100" />
+                    </IconButton>
+                  )}
+                </PopOut>
+              </Box>
+            </Menu>
+          </div>
+        )}
+        <div onContextMenu={handleContextMenu}>{children}</div>
+      </MessageBase>
+    );
+  }
+);
