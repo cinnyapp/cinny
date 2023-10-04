@@ -8,8 +8,9 @@ import { IImageContent } from '../../../../types/matrix/common';
 
 type StickerContentProps = {
   mEvent: MatrixEvent;
+  autoPlay: boolean;
 };
-export const StickerContent = as<'div', StickerContentProps>(({ mEvent, ...props }, ref) => {
+export const StickerContent = as<'div', StickerContentProps>(({ mEvent, autoPlay, ...props }, ref) => {
   const content = mEvent.getContent<IImageContent>();
   const imgInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
@@ -28,7 +29,7 @@ export const StickerContent = as<'div', StickerContentProps>(({ mEvent, ...props
       ref={ref}
     >
       <ImageContent
-        autoPlay
+        autoPlay={autoPlay}
         body={content.body || 'Image'}
         info={imgInfo}
         mimeType={imgInfo.mimetype}

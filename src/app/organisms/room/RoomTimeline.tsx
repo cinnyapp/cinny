@@ -461,6 +461,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
+  const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
   const { canDoAction, canSendEvent, getPowerLevel } = usePowerLevelsAPI();
@@ -971,6 +972,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               mimeType={imgInfo.mimetype}
               url={mxcUrl}
               encInfo={content.file}
+              autoPlay={mediaAutoLoad}
             />
           </AttachmentBox>
         </Attachment>
@@ -1005,7 +1007,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               mimeType={safeMimeType}
               url={mxcUrl}
               encInfo={content.file}
-              loadThumbnail
+              loadThumbnail={mediaAutoLoad}
             />
           </AttachmentBox>
         </Attachment>
@@ -1219,7 +1221,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           <EncryptedContent mEvent={mEvent}>
             {() => {
               if (mEvent.getType() === MessageEvent.Sticker)
-                return <StickerContent mEvent={mEvent} />;
+                return <StickerContent mEvent={mEvent} autoPlay={mediaAutoLoad} />;
               if (mEvent.getType() === MessageEvent.RoomMessage)
                 return renderRoomMsgContent(mEventId, mEvent, timelineSet);
               if (mEvent.getType() === MessageEvent.RoomMessageEncrypted)
@@ -1275,7 +1277,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             )
           }
         >
-          <StickerContent mEvent={mEvent} />
+          <StickerContent mEvent={mEvent} autoPlay={mediaAutoLoad} />
         </Message>
       );
     },

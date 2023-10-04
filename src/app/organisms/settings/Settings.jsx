@@ -53,6 +53,7 @@ function AppearanceSection() {
   const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
+  const [mediaAutoLoad, setMediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const spacings = ['0', '100', '200', '300', '400', '500']
 
@@ -154,6 +155,16 @@ function AppearanceSection() {
             />
           )}
           content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
+        />
+        <SettingTile
+          title="Disable media auto load"
+          options={(
+            <Toggle
+              isActive={!mediaAutoLoad}
+              onToggle={() => setMediaAutoLoad(!mediaAutoLoad)}
+            />
+          )}
+          content={<Text variant="b3">Prevent images and videos from auto loading to save bandwidth.</Text>}
         />
         <SettingTile
           title="Show hidden events"

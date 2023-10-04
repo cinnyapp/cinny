@@ -14,6 +14,7 @@ export interface Settings {
   messageSpacing: MessageSpacing;
   hideMembershipEvents: boolean;
   hideNickAvatarEvents: boolean;
+  mediaAutoLoad: boolean;
   showHiddenEvents: boolean;
 
   showNotifications: boolean;
@@ -31,6 +32,7 @@ const defaultSettings: Settings = {
   messageSpacing: '400',
   hideMembershipEvents: false,
   hideNickAvatarEvents: true,
+  mediaAutoLoad: true,
   showHiddenEvents: false,
 
   showNotifications: true,
