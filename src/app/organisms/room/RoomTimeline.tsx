@@ -51,6 +51,9 @@ import {
   eventWithShortcode,
   factoryEventSentBy,
   getMxIdLocalPart,
+  isRoomAlias,
+  isRoomId,
+  isUserId,
   matrixEventByRecency,
 } from '../../utils/matrix';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
@@ -84,7 +87,7 @@ import {
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-import { openProfileViewer } from '../../../client/action/navigation';
+import { openJoinAlias, openProfileViewer, selectRoom } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
@@ -503,7 +506,31 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [, forceUpdate] = useForceUpdate();
 
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
-    () => getReactCustomHtmlParser(mx, room),
+    () =>
+      getReactCustomHtmlParser(mx, room, {
+        handleSpoilerClick: (evt) => {
+          const target = evt.currentTarget;
+          if (target.getAttribute('aria-pressed') === 'true') {
+            evt.stopPropagation();
+            target.setAttribute('aria-pressed', 'false');
+            target.style.cursor = 'initial';
+          }
+        },
+        handleMentionClick: (evt) => {
+          const target = evt.currentTarget;
+          const mentionId = target.getAttribute('data-mention-id');
+          if (typeof mentionId !== 'string') return;
+          if (isUserId(mentionId)) {
+            openProfileViewer(mentionId, room.roomId);
+            return;
+          }
+          if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
+            selectRoom(mentionId);
+            return;
+          }
+          openJoinAlias(mentionId);
+        },
+      }),
     [mx, room]
   );
   const parseMemberEvent = useMemberEventParser();

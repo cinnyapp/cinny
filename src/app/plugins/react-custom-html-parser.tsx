@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/alt-text */
-import React, { Suspense, lazy } from 'react';
+import React, { ReactEventHandler, Suspense, lazy } from 'react';
 import {
   Element,
   Text as DOMText,
@@ -29,7 +29,14 @@ export const LINKIFY_OPTS: LinkifyOpts = {
   },
 };
 
-export const getReactCustomHtmlParser = (mx: MatrixClient, room: Room): HTMLReactParserOptions => {
+export const getReactCustomHtmlParser = (
+  mx: MatrixClient,
+  room: Room,
+  params: {
+    handleSpoilerClick?: ReactEventHandler<HTMLElement>;
+    handleMentionClick?: ReactEventHandler<HTMLElement>;
+  }
+): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
     replace: (domNode) => {
       if (domNode instanceof Element && 'name' in domNode) {
@@ -179,11 +186,17 @@ export const getReactCustomHtmlParser = (mx: MatrixClient, room: Room): HTMLReac
                 mentionName && (mentionName.startsWith('#') ? mentionName : `#${mentionName}`);
               return (
                 <span
+                  {...props}
                   className={css.Mention({
                     highlight: room.roomId === (mentionRoom?.roomId ?? mentionId),
                   })}
-                  data-mx-pill={mentionId}
-                  {...props}
+                  data-mention-id={mentionRoom?.roomId ?? mentionId}
+                  data-mention-href={props.href}
+                  role="button"
+                  tabIndex={params.handleMentionClick ? 0 : -1}
+                  onKeyDown={params.handleMentionClick}
+                  onClick={params.handleMentionClick}
+                  style={{ cursor: 'pointer' }}
                 >
                   {mentionDisplayName ?? mentionId}
                 </span>
@@ -192,11 +205,15 @@ export const getReactCustomHtmlParser = (mx: MatrixClient, room: Room): HTMLReac
             if (mentionPrefix === '@')
               return (
                 <span
-                  className={css.Mention({
-                    highlight: mx.getUserId() === mentionId,
-                  })}
-                  data-mx-pill={mentionId}
                   {...props}
+                  className={css.Mention({ highlight: mx.getUserId() === mentionId })}
+                  data-mention-id={mentionId}
+                  data-mention-href={props.href}
+                  role="button"
+                  tabIndex={params.handleMentionClick ? 0 : -1}
+                  onKeyDown={params.handleMentionClick}
+                  onClick={params.handleMentionClick}
+                  style={{ cursor: 'pointer' }}
                 >
                   {`@${getMemberDisplayName(room, mentionId) ?? getMxIdLocalPart(mentionId)}`}
                 </span>
@@ -206,7 +223,16 @@ export const getReactCustomHtmlParser = (mx: MatrixClient, room: Room): HTMLReac
 
         if (name === 'span' && 'data-mx-spoiler' in props) {
           return (
-            <span className={css.Spoiler()} {...props}>
+            <span
+              {...props}
+              role="button"
+              tabIndex={params.handleSpoilerClick ? 0 : -1}
+              onKeyDown={params.handleSpoilerClick}
+              onClick={params.handleSpoilerClick}
+              className={css.Spoiler()}
+              aria-pressed
+              style={{ cursor: 'pointer' }}
+            >
               {domToReact(children, opts)}
             </span>
           );

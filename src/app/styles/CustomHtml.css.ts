@@ -63,6 +63,11 @@ export const Spoiler = recipe({
       padding: `0 ${config.space.S100}`,
       backgroundColor: color.SurfaceVariant.ContainerActive,
       borderRadius: config.radii.R300,
+      selectors: {
+        '&[aria-pressed=true]': {
+          color: 'transparent',
+        },
+      },
     },
   ],
   variants: {

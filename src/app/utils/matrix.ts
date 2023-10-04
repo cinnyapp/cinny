@@ -24,6 +24,10 @@ export const getMxIdLocalPart = (userId: string): string | undefined => matchMxI
 
 export const isUserId = (id: string): boolean => validMxId(id) && id.startsWith('@');
 
+export const isRoomId = (id: string): boolean => validMxId(id) && id.startsWith('!');
+
+export const isRoomAlias = (id: string): boolean => validMxId(id) && id.startsWith('#');
+
 export const getRoomWithCanonicalAlias = (mx: MatrixClient, alias: string): Room | undefined =>
   mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias);
 
