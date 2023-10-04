@@ -9,6 +9,7 @@ export interface Settings {
   isMarkdown: boolean;
   editorToolbar: boolean;
   isPeopleDrawer: boolean;
+  useSystemEmoji: boolean;
 
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
@@ -27,6 +28,7 @@ const defaultSettings: Settings = {
   isMarkdown: true,
   editorToolbar: false,
   isPeopleDrawer: true,
+  useSystemEmoji: false,
 
   messageLayout: 0,
   messageSpacing: '400',

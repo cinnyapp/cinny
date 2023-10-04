@@ -20,6 +20,20 @@ import cons from '../../../client/state/cons';
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
 import { MatrixClientProvider } from '../../hooks/useMatrixClient';
 import { ClientContent } from './ClientContent';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
+
+function SystemEmojiFeature() {
+  const [systemEmoji] = useSetting(settingsAtom, 'useSystemEmoji');
+
+  if (systemEmoji) {
+    document.documentElement.style.setProperty('--font-emoji', 'Twemoji_DISABLED');
+  } else {
+    document.documentElement.style.setProperty('--font-emoji', 'Twemoji');
+  }
+
+  return null;
+}
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
@@ -115,6 +129,7 @@ function Client() {
         <Windows />
         <Dialogs />
         <ReusableContextMenu />
+        <SystemEmojiFeature />
       </div>
     </MatrixClientProvider>
   );

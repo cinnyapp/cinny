@@ -51,6 +51,7 @@ function AppearanceSection() {
 
   const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
+  const [useSystemEmoji, setUseSystemEmoji] = useSetting(settingsAtom, 'useSystemEmoji');
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad, setMediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
@@ -89,6 +90,16 @@ function AppearanceSection() {
               }}
             />
         )}
+        />
+        <SettingTile
+          title="Use System Emoji"
+          options={(
+            <Toggle
+              isActive={useSystemEmoji}
+              onToggle={() => setUseSystemEmoji(!useSystemEmoji)}
+            />
+          )}
+          content={<Text variant="b3">Use system emoji instead of Twitter emojis.</Text>}
         />
       </div>
       <div className="settings-appearance__card">
