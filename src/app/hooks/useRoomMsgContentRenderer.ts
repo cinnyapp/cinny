@@ -59,8 +59,6 @@ export const useRoomMsgContentRenderer =
     else if (msgType === 'm.bad.encrypted' && renderBadEncrypted)
       node = renderBadEncrypted(eventId, mEvent, ...args);
     else if (renderUnsupported) {
-      console.log('====> Unsupported');
-      console.log(msgType, mEvent.getWireType(), mEvent.getContent());
       node = renderUnsupported(eventId, mEvent, ...args);
     }
 
