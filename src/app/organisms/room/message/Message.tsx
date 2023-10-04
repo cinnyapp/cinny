@@ -220,7 +220,7 @@ export const MessageSourceCodeItem = as<
     mEvent.isEncrypted()
       ? {
           [`<== DECRYPTED_EVENT ==>`]: mEvent.getEffectiveEvent(),
-          [`<== ENCRYPTED_EVENT ==>`]: mEvent.event,
+          [`<== ORIGINAL_EVENT ==>`]: mEvent.event,
         }
       : mEvent.event,
     null,

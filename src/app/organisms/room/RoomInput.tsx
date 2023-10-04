@@ -292,12 +292,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        const prevWordRange = getPrevWorldRange(editor);
-        const query = prevWordRange
-          ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
-          : undefined;
-        setAutocompleteQuery(query);
-
         if (isHotkey('enter', evt)) {
           evt.preventDefault();
           submit();
@@ -327,6 +321,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
         sendTypingStatus(!isEmpty);
       }
+
+      const prevWordRange = getPrevWorldRange(editor);
+      const query = prevWordRange
+        ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
+        : undefined;
+      setAutocompleteQuery(query);
     }, [editor, sendTypingStatus]);
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {

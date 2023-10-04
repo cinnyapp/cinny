@@ -16,6 +16,7 @@ export type RoomMsgContentRendererOpts<T extends unknown[]> = {
   renderAudio?: MsgContentRenderer<T>;
   renderFile?: MsgContentRenderer<T>;
   renderLocation?: MsgContentRenderer<T>;
+  renderBadEncrypted?: MsgContentRenderer<T>;
   renderUnsupported?: MsgContentRenderer<T>;
   renderBrokenFallback?: MsgContentRenderer<T>;
 };
@@ -36,6 +37,7 @@ export const useRoomMsgContentRenderer =
     renderAudio,
     renderFile,
     renderLocation,
+    renderBadEncrypted,
     renderUnsupported,
     renderBrokenFallback,
   }: RoomMsgContentRendererOpts<T>): RenderRoomMsgContent<T> =>
@@ -54,6 +56,8 @@ export const useRoomMsgContentRenderer =
     else if (msgType === MsgType.File && renderFile) node = renderFile(eventId, mEvent, ...args);
     else if (msgType === MsgType.Location && renderLocation)
       node = renderLocation(eventId, mEvent, ...args);
+    else if (msgType === 'm.bad.encrypted' && renderBadEncrypted)
+      node = renderBadEncrypted(eventId, mEvent, ...args);
     else if (renderUnsupported) node = renderUnsupported(eventId, mEvent, ...args);
 
     if (!node && renderBrokenFallback) node = renderBrokenFallback(eventId, mEvent, ...args);

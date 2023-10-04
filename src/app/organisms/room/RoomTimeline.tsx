@@ -73,6 +73,7 @@ import {
   AttachmentContent,
   AttachmentHeader,
   Time,
+  MessageBadEncryptedContent,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
@@ -99,6 +100,7 @@ import {
   EventContent,
   Message,
   Event,
+  EncryptedContent,
 } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
@@ -1036,6 +1038,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       );
     },
     renderFile: fileRenderer,
+    renderBadEncrypted: () => (
+      <Text>
+        <MessageBadEncryptedContent />
+      </Text>
+    ),
     renderUnsupported: (mEventId, mEvent) => {
       if (mEvent.isRedacted()) {
         const redactedEvt = mEvent.getRedactionEvent();
@@ -1126,6 +1133,63 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           }
         >
           {renderRoomMsgContent(mEventId, mEvent, timelineSet)}
+        </Message>
+      );
+    },
+    renderRoomEncrypted: (mEventId, mEvent, item, timelineSet, collapse) => {
+      const reactionRelations = getEventReactions(timelineSet, mEventId);
+      const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+      const hasReactions = reactions && reactions.length > 0;
+      const { replyEventId } = mEvent;
+      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+
+      return (
+        <Message
+          key={mEvent.getId()}
+          data-message-item={item}
+          room={room}
+          mEvent={mEvent}
+          messageSpacing={messageSpacing}
+          messageLayout={messageLayout}
+          collapse={collapse}
+          highlight={highlighted}
+          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+          canSendReaction={canSendReaction}
+          imagePackRooms={imagePackRooms}
+          relations={hasReactions ? reactionRelations : undefined}
+          onUserClick={handleUserClick}
+          onUsernameClick={handleUsernameClick}
+          onReplyClick={handleReplyClick}
+          onReactionToggle={handleReactionToggle}
+          reply={
+            replyEventId && (
+              <Reply
+                as="button"
+                mx={mx}
+                room={room}
+                timelineSet={timelineSet}
+                eventId={replyEventId}
+                data-reply-id={replyEventId}
+                onClick={handleOpenReply}
+              />
+            )
+          }
+          reactions={
+            reactionRelations && (
+              <Reactions
+                style={{ marginTop: config.space.S200 }}
+                room={room}
+                relations={reactionRelations}
+                mEventId={mEventId}
+                canSendReaction={canSendReaction}
+                onReactionToggle={handleReactionToggle}
+              />
+            )
+          }
+        >
+          <EncryptedContent mEvent={mEvent}>
+            {() => renderRoomMsgContent(mEventId, mEvent, timelineSet)}
+          </EncryptedContent>
         </Message>
       );
     },

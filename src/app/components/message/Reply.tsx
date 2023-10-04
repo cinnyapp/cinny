@@ -10,7 +10,11 @@ import { getMxIdLocalPart, trimReplyFromBody } from '../../utils/matrix';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
 import * as css from './Reply.css';
-import { MessageDeletedContent, MessageFailedContent } from './MessageContentFallback';
+import {
+  MessageBadEncryptedContent,
+  MessageDeletedContent,
+  MessageFailedContent,
+} from './MessageContentFallback';
 
 type ReplyProps = {
   mx: MatrixClient;
@@ -74,7 +78,11 @@ export const Reply = as<'div', ReplyProps>(
         <Box grow="Yes" className={css.ReplyContent}>
           {replyEvent !== undefined ? (
             <Text size="T300" truncate>
-              {(body && trimReplyFromBody(body)) ?? fallbackBody}
+              {replyEvent?.getContent().msgtype === 'm.bad.encrypted' ? (
+                <MessageBadEncryptedContent />
+              ) : (
+                (body && trimReplyFromBody(body)) ?? fallbackBody
+              )}
             </Text>
           ) : (
             <LinePlaceholder

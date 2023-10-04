@@ -10,6 +10,7 @@ export type EventRenderer<T extends unknown[]> = (
 
 export type EventRendererOpts<T extends unknown[]> = {
   renderRoomMessage?: EventRenderer<T>;
+  renderRoomEncrypted?: EventRenderer<T>;
   renderSticker?: EventRenderer<T>;
   renderRoomMember?: EventRenderer<T>;
   renderRoomName?: EventRenderer<T>;
@@ -28,6 +29,7 @@ export type RenderMatrixEvent<T extends unknown[]> = (
 export const useMatrixEventRenderer =
   <T extends unknown[]>({
     renderRoomMessage,
+    renderRoomEncrypted,
     renderSticker,
     renderRoomMember,
     renderRoomName,
@@ -37,13 +39,14 @@ export const useMatrixEventRenderer =
     renderEvent,
   }: EventRendererOpts<T>): RenderMatrixEvent<T> =>
   (eventId, mEvent, ...args) => {
-    const eventType = mEvent.getType();
+    const eventType = mEvent.getWireType();
 
-    if (
-      (eventType === MessageEvent.RoomMessage || eventType === MessageEvent.RoomMessageEncrypted) &&
-      renderRoomMessage
-    ) {
+    if (eventType === MessageEvent.RoomMessage && renderRoomMessage) {
       return renderRoomMessage(eventId, mEvent, ...args);
+    }
+
+    if (eventType === MessageEvent.RoomMessageEncrypted && renderRoomEncrypted) {
+      return renderRoomEncrypted(eventId, mEvent, ...args);
     }
 
     if (eventType === MessageEvent.Sticker && renderSticker) {
