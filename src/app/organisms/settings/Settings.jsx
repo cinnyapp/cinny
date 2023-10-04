@@ -6,7 +6,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
-  toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
+  toggleSystemTheme, toggleMarkdown,
   toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
 import { usePermission } from '../../hooks/usePermission';
@@ -53,6 +53,7 @@ function AppearanceSection() {
   const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
+  const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const spacings = ['0', '100', '200', '300', '400', '500']
 
   return (
@@ -153,6 +154,16 @@ function AppearanceSection() {
             />
           )}
           content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
+        />
+        <SettingTile
+          title="Show hidden events"
+          options={(
+            <Toggle
+              isActive={showHiddenEvents}
+              onToggle={() => setShowHiddenEvents(!showHiddenEvents)}
+            />
+          )}
+          content={<Text variant="b3">Show hidden state and message events.</Text>}
         />
       </div>
     </div>

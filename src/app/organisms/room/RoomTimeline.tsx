@@ -51,7 +51,6 @@ import {
   eventWithShortcode,
   factoryEventSentBy,
   getMxIdLocalPart,
-  isRoomAlias,
   isRoomId,
   isUserId,
   matrixEventByRecency,
@@ -462,6 +461,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
+  const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
   const { canDoAction, canSendEvent, getPowerLevel } = usePowerLevelsAPI();
   const myPowerLevel = getPowerLevel(mx.getUserId() ?? '');
@@ -1415,6 +1415,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       );
     },
     renderStateEvent: (mEventId, mEvent, item) => {
+      if (!showHiddenEvents) return null;
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
@@ -1450,6 +1451,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       );
     },
     renderEvent: (mEventId, mEvent, item) => {
+      if (!showHiddenEvents) return null;
       if (Object.keys(mEvent.getContent()).length === 0) return null;
       if (mEvent.getRelation()) return null;
       if (mEvent.isRedaction()) return null;
