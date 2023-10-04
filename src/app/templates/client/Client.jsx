@@ -12,7 +12,6 @@ import IconButton from '../../atoms/button/IconButton';
 import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
-import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
@@ -115,7 +114,6 @@ function Client() {
         </div>
         <Windows />
         <Dialogs />
-        <EmojiBoardOpener />
         <ReusableContextMenu />
       </div>
     </MatrixClientProvider>
