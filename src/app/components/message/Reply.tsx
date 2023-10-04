@@ -77,7 +77,7 @@ export const Reply = as<'div', ReplyProps>(
         </Box>
         <Box grow="Yes" className={css.ReplyContent}>
           {replyEvent !== undefined ? (
-            <Text size="T300" truncate>
+            <Text className={css.ReplyContentText} size="T300" truncate>
               {replyEvent?.getContent().msgtype === 'm.bad.encrypted' ? (
                 <MessageBadEncryptedContent />
               ) : (

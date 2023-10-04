@@ -19,3 +19,7 @@ export const ReplyContent = style({
     },
   },
 });
+
+export const ReplyContentText = style({
+  paddingRight: config.space.S100,
+});
