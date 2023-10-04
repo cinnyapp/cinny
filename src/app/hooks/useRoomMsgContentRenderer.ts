@@ -58,7 +58,11 @@ export const useRoomMsgContentRenderer =
       node = renderLocation(eventId, mEvent, ...args);
     else if (msgType === 'm.bad.encrypted' && renderBadEncrypted)
       node = renderBadEncrypted(eventId, mEvent, ...args);
-    else if (renderUnsupported) node = renderUnsupported(eventId, mEvent, ...args);
+    else if (renderUnsupported) {
+      console.log('====> Unsupported');
+      console.log(msgType, mEvent.getWireType(), mEvent.getContent());
+      node = renderUnsupported(eventId, mEvent, ...args);
+    }
 
     if (!node && renderBrokenFallback) node = renderBrokenFallback(eventId, mEvent, ...args);
 

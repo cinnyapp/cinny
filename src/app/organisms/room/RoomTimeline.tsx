@@ -74,6 +74,7 @@ import {
   AttachmentHeader,
   Time,
   MessageBadEncryptedContent,
+  MessageNotDecryptedContent,
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
@@ -101,6 +102,7 @@ import {
   Message,
   Event,
   EncryptedContent,
+  StickerContent,
 } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
@@ -1188,7 +1190,23 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           }
         >
           <EncryptedContent mEvent={mEvent}>
-            {() => renderRoomMsgContent(mEventId, mEvent, timelineSet)}
+            {() => {
+              if (mEvent.getType() === MessageEvent.Sticker)
+                return <StickerContent mEvent={mEvent} />;
+              if (mEvent.getType() === MessageEvent.RoomMessage)
+                return renderRoomMsgContent(mEventId, mEvent, timelineSet);
+              if (mEvent.getType() === MessageEvent.RoomMessageEncrypted)
+                return (
+                  <Text>
+                    <MessageNotDecryptedContent />
+                  </Text>
+                );
+              return (
+                <Text>
+                  <MessageUnsupportedContent />
+                </Text>
+              );
+            }}
           </EncryptedContent>
         </Message>
       );
@@ -1198,14 +1216,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
       const hasReactions = reactions && reactions.length > 0;
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
-
-      const content = mEvent.getContent<IImageContent>();
-      const imgInfo = content?.info;
-      const mxcUrl = content.file?.url ?? content.url;
-      if (!imgInfo || typeof imgInfo.mimetype !== 'string' || typeof mxcUrl !== 'string') {
-        return null;
-      }
-      const height = scaleYDimension(imgInfo.w || 152, 152, imgInfo.h || 152);
 
       return (
         <Message
@@ -1238,21 +1248,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             )
           }
         >
-          <AttachmentBox
-            style={{
-              height: toRem(height < 48 ? 48 : height),
-              width: toRem(152),
-            }}
-          >
-            <ImageContent
-              autoPlay
-              body={content.body || 'Image'}
-              info={imgInfo}
-              mimeType={imgInfo.mimetype}
-              url={mxcUrl}
-              encInfo={content.file}
-            />
-          </AttachmentBox>
+          <StickerContent mEvent={mEvent} />
         </Message>
       );
     },

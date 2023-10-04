@@ -7,3 +7,4 @@ export * from './Reactions';
 export * from './EventContent';
 export * from './Message';
 export * from './EncryptedContent';
+export * from './StickerContent';
