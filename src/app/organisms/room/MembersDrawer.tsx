@@ -181,7 +181,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   });
   const [onTop, setOnTop] = useState(true);
 
-  useAtomValue(
+  const typingMembers = useAtomValue(
     useMemo(() => selectRoomTypingMembersAtom(room.roomId, roomIdToTypingMembersAtom), [room])
   );
 
@@ -524,7 +524,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         </Avatar>
                       }
                       after={
-                        member.typing && (
+                        typingMembers.find((tm) => tm.userId === member.userId) && (
                           <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
                             <TypingIndicator size="300" />
                           </Badge>
