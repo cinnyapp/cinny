@@ -396,11 +396,7 @@ const useTimelinePagination = (
   return handleTimelinePagination;
 };
 
-const useLiveEventArrive = (
-  mx: MatrixClient,
-  roomId: string | undefined,
-  onArrive: (mEvent: MatrixEvent) => void
-) => {
+const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void) => {
   useEffect(() => {
     const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = (
       mEvent,
@@ -409,21 +405,35 @@ const useLiveEventArrive = (
       removed,
       data
     ) => {
-      if (eventRoom?.roomId !== roomId || !data.liveEvent) return;
+      if (eventRoom?.roomId !== room.roomId || !data.liveEvent) return;
       onArrive(mEvent);
     };
     const handleRedaction: RoomEventHandlerMap[RoomEvent.Redaction] = (mEvent, eventRoom) => {
-      if (eventRoom?.roomId !== roomId) return;
+      if (eventRoom?.roomId !== room.roomId) return;
       onArrive(mEvent);
     };
 
-    mx.on(RoomEvent.Timeline, handleTimelineEvent);
-    mx.on(RoomEvent.Redaction, handleRedaction);
+    room.on(RoomEvent.Timeline, handleTimelineEvent);
+    room.on(RoomEvent.Redaction, handleRedaction);
     return () => {
-      mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
-      mx.removeListener(RoomEvent.Redaction, handleRedaction);
+      room.removeListener(RoomEvent.Timeline, handleTimelineEvent);
+      room.removeListener(RoomEvent.Redaction, handleRedaction);
     };
-  }, [mx, roomId, onArrive]);
+  }, [room, onArrive]);
+};
+
+const useLiveTimelineRefresh = (room: Room, onRefresh: () => void) => {
+  useEffect(() => {
+    const handleTimelineRefresh: RoomEventHandlerMap[RoomEvent.TimelineRefresh] = (r) => {
+      if (r.roomId !== room.roomId) return;
+      onRefresh();
+    };
+
+    room.on(RoomEvent.TimelineRefresh, handleTimelineRefresh);
+    return () => {
+      room.removeListener(RoomEvent.TimelineRefresh, handleTimelineRefresh);
+    };
+  }, [room, onRefresh]);
 };
 
 const getInitialTimeline = (room: Room) => {
@@ -603,8 +613,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   );
 
   useLiveEventArrive(
-    mx,
-    liveTimelineLinked && rangeAtEnd ? room.roomId : undefined,
+    room,
     useCallback(
       (mEvt: MatrixEvent) => {
         if (atBottomRef.current && document.hasFocus()) {
@@ -630,6 +639,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       },
       [mx, room, unreadInfo]
     )
+  );
+
+  useLiveTimelineRefresh(
+    room,
+    useCallback(() => {
+      if (liveTimelineLinked) {
+        setTimeline(getInitialTimeline(room));
+      }
+    }, [room, liveTimelineLinked])
   );
 
   // Stay at bottom when room editor resize
@@ -1517,7 +1535,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     const collapsed =
       isPrevRendered &&
       !dayDivider &&
-      !newDivider &&
+      (!newDivider || mEvent.getSender() === mx.getUserId()) &&
       prevEvent !== undefined &&
       prevEvent.getSender() === mEvent.getSender() &&
       prevEvent.getType() === mEvent.getType() &&
