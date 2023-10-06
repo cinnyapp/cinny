@@ -206,28 +206,36 @@ function RoomViewInput({
     if (replyTo !== null) setReplyTo(null);
   };
 
-  const processCommand = (cmdBody) => {
+  /** Return true if a command was executed. */
+  const processCommand = async (cmdBody) => {
     const spaceIndex = cmdBody.indexOf(' ');
     const cmdName = cmdBody.slice(1, spaceIndex > -1 ? spaceIndex : undefined);
     const cmdData = spaceIndex > -1 ? cmdBody.slice(spaceIndex + 1) : '';
     if (!commands[cmdName]) {
-      confirmDialog('Invalid Command', `"${cmdName}" is not a valid command.`, 'Alright');
-      return;
+      const sendAsMessage = await confirmDialog('Invalid Command', `"${cmdName}" is not a valid command. Did you mean to send this as a message?`, 'Send as message');
+      if (sendAsMessage) {
+        sendBody(cmdBody);
+        return true;
+      }
+      return false;
     }
     if (['me', 'shrug', 'plain'].includes(cmdName)) {
       commands[cmdName].exe(roomId, cmdData, sendBody);
-      return;
+      return true;
     }
     commands[cmdName].exe(roomId, cmdData);
+    return true;
   };
 
   const sendMessage = async () => {
     requestAnimationFrame(() => deactivateCmdAndEmit());
     const msgBody = textAreaRef.current.value.trim();
     if (msgBody.startsWith('/')) {
-      processCommand(msgBody.trim());
-      textAreaRef.current.value = '';
-      textAreaRef.current.style.height = 'unset';
+      const executed = await processCommand(msgBody.trim());
+      if (executed) {
+        textAreaRef.current.value = '';
+        textAreaRef.current.style.height = 'unset';
+      }
       return;
     }
     if (msgBody === '' && attachment === null) return;
