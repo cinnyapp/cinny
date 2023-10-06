@@ -1,15 +1,22 @@
 import { atom } from 'jotai';
 
 const STORAGE_KEY = 'settings';
+export type MessageSpacing = '0' | '100' | '200' | '300' | '400' | '500';
+export type MessageLayout = 0 | 1 | 2;
 export interface Settings {
   themeIndex: number;
   useSystemTheme: boolean;
   isMarkdown: boolean;
   editorToolbar: boolean;
   isPeopleDrawer: boolean;
+  useSystemEmoji: boolean;
 
+  messageLayout: MessageLayout;
+  messageSpacing: MessageSpacing;
   hideMembershipEvents: boolean;
   hideNickAvatarEvents: boolean;
+  mediaAutoLoad: boolean;
+  showHiddenEvents: boolean;
 
   showNotifications: boolean;
   isNotificationSounds: boolean;
@@ -21,9 +28,14 @@ const defaultSettings: Settings = {
   isMarkdown: true,
   editorToolbar: false,
   isPeopleDrawer: true,
+  useSystemEmoji: false,
 
+  messageLayout: 0,
+  messageSpacing: '400',
   hideMembershipEvents: false,
   hideNickAvatarEvents: true,
+  mediaAutoLoad: true,
+  showHiddenEvents: false,
 
   showNotifications: true,
   isNotificationSounds: true,
@@ -32,7 +44,10 @@ const defaultSettings: Settings = {
 export const getSettings = () => {
   const settings = localStorage.getItem(STORAGE_KEY);
   if (settings === null) return defaultSettings;
-  return JSON.parse(settings) as Settings;
+  return {
+    ...defaultSettings,
+    ...(JSON.parse(settings) as Settings),
+  };
 };
 
 export const setSettings = (settings: Settings) => {

@@ -1,4 +1,4 @@
-import { CompactEmoji } from 'emojibase';
+import { CompactEmoji, fromUnicodeToHexcode } from 'emojibase';
 import emojisData from 'emojibase-data/en/compact.json';
 import joypixels from 'emojibase-data/en/shortcodes/joypixels.json';
 import emojibase from 'emojibase-data/en/shortcodes/emojibase.json';
@@ -23,6 +23,16 @@ export type IEmojiGroup = {
   order: number;
   emojis: IEmoji[];
 };
+
+export const getShortcodesFor = (hexcode: string): string[] | string | undefined =>
+  joypixels[hexcode] || emojibase[hexcode];
+
+export const getShortcodeFor = (hexcode: string): string | undefined => {
+  const shortcode = joypixels[hexcode] || emojibase[hexcode];
+  return Array.isArray(shortcode) ? shortcode[0] : shortcode;
+};
+
+export const getHexcodeForEmoji = fromUnicodeToHexcode;
 
 export const emojiGroups: IEmojiGroup[] = [
   {
@@ -86,7 +96,7 @@ function getGroupIndex(emoji: IEmoji): number | undefined {
 }
 
 emojisData.forEach((emoji) => {
-  const myShortCodes = joypixels[emoji.hexcode] || emojibase[emoji.hexcode];
+  const myShortCodes = getShortcodesFor(emoji.hexcode);
   if (!myShortCodes) return;
   if (Array.isArray(myShortCodes) && myShortCodes.length === 0) return;
 

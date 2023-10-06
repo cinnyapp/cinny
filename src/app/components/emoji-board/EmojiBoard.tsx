@@ -42,7 +42,7 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../hooks/useRecentEmoji';
 import { ExtendedPackImage, ImagePack, PackUsage } from '../../plugins/custom-emoji';
 import { isUserId } from '../../utils/matrix';
-import { editableActiveElement, inVisibleScrollArea, targetFromEvent } from '../../utils/dom';
+import { editableActiveElement, isIntersectingScrollView, targetFromEvent } from '../../utils/dom';
 import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useThrottle } from '../../hooks/useThrottle';
@@ -675,7 +675,7 @@ export function EmojiBoard({
     const targetEl = contentScrollRef.current;
     if (!targetEl) return;
     const groupEls = [...targetEl.querySelectorAll('div[data-group-id]')] as HTMLElement[];
-    const groupEl = groupEls.find((el) => inVisibleScrollArea(targetEl, el));
+    const groupEl = groupEls.find((el) => isIntersectingScrollView(targetEl, el));
     const groupId = groupEl?.getAttribute('data-group-id') ?? undefined;
     setActiveGroupId(groupId);
   }, [setActiveGroupId]);

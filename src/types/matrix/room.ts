@@ -6,6 +6,14 @@ export enum Membership {
   Ban = 'ban',
 }
 
+export type IMemberContent = {
+  avatar_url?: string;
+  displayname?: string;
+  membership?: Membership;
+  reason?: string;
+  is_direct?: boolean;
+};
+
 export enum StateEvent {
   RoomCanonicalAlias = 'm.room.canonical_alias',
   RoomCreate = 'm.room.create',
@@ -29,6 +37,14 @@ export enum StateEvent {
   PoniesRoomEmotes = 'im.ponies.room_emotes',
 }
 
+export enum MessageEvent {
+  RoomMessage = 'm.room.message',
+  RoomMessageEncrypted = 'm.room.encrypted',
+  Sticker = 'm.sticker',
+  RoomRedaction = 'm.room.redaction',
+  Reaction = 'm.reaction',
+}
+
 export enum RoomType {
   Space = 'm.space',
 }
@@ -39,6 +55,17 @@ export enum NotificationType {
   MentionsAndKeywords = 'mentions_and_keywords',
   Mute = 'mute',
 }
+
+export type IRoomCreateContent = {
+  creator?: string;
+  ['m.federate']?: boolean;
+  room_version: string;
+  type?: string;
+  predecessor?: {
+    event_id: string;
+    room_id: string;
+  };
+};
 
 export type RoomToParents = Map<string, Set<string>>;
 export type RoomToUnread = Map<

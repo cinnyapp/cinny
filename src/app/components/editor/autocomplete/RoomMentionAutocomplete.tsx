@@ -122,8 +122,9 @@ export function RoomMentionAutocomplete({
         return;
       }
       const rId = autoCompleteRoomIds[0];
-      const name = mx.getRoom(rId)?.name ?? rId;
-      handleAutocomplete(rId, name);
+      const r = mx.getRoom(rId);
+      const name = r?.name ?? rId;
+      handleAutocomplete(r?.getCanonicalAlias() ?? rId, name);
     });
   });
 
@@ -147,7 +148,7 @@ export function RoomMentionAutocomplete({
               onKeyDown={(evt: ReactKeyboardEvent<HTMLButtonElement>) =>
                 onTabPress(evt, () => handleAutocomplete(rId, room.name))
               }
-              onClick={() => handleAutocomplete(rId, room.name)}
+              onClick={() => handleAutocomplete(room.getCanonicalAlias() ?? rId, room.name)}
               after={
                 <Text size="T200" priority="300" truncate>
                   {room.getCanonicalAlias() ?? ''}

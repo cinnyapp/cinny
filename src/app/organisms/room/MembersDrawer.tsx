@@ -10,6 +10,7 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
+  Badge,
   Box,
   Chip,
   ContainerColor,
@@ -33,6 +34,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import millify from 'millify';
 import classNames from 'classnames';
+import { useAtomValue } from 'jotai';
 
 import { openInviteUser, openProfileViewer } from '../../../client/action/navigation';
 import * as css from './MembersDrawer.css';
@@ -48,6 +50,10 @@ import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearc
 import { useDebounce } from '../../hooks/useDebounce';
 import colorMXID from '../../../util/colorMXID';
 import { usePowerLevelTags, PowerLevelTag } from '../../hooks/usePowerLevelTags';
+import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../state/typingMembers';
+import { TypingIndicator } from '../../components/typing-indicator';
+import { getMemberDisplayName } from '../../utils/room';
+import { getMxIdLocalPart } from '../../utils/matrix';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -175,6 +181,10 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   });
   const [onTop, setOnTop] = useState(true);
 
+  const typingMembers = useAtomValue(
+    useMemo(() => selectRoomTypingMembersAtom(room.roomId, roomIdToTypingMembersAtom), [room])
+  );
+
   const filteredMembers = useMemo(
     () =>
       members
@@ -234,6 +244,9 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
     ),
     { wait: 200 }
   );
+
+  const getName = (member: RoomMember) =>
+    getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
 
   const handleMemberClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const btn = evt.currentTarget as HTMLButtonElement;
@@ -470,6 +483,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   }
 
                   const member = tagOrMember;
+                  const name = getName(member);
                   const avatarUrl = member.getAvatarUrl(
                     mx.baseUrl,
                     100,
@@ -482,7 +496,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   return (
                     <MenuItem
                       style={{
-                        padding: config.space.S200,
+                        padding: `0 ${config.space.S200}`,
                         transform: `translateY(${vItem.start}px)`,
                       }}
                       data-index={vItem.index}
@@ -504,15 +518,24 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                                 color: 'white',
                               }}
                             >
-                              <Text size="T200">{member.name[0]}</Text>
+                              <Text size="H6">{name[0]}</Text>
                             </AvatarFallback>
                           )}
                         </Avatar>
                       }
+                      after={
+                        typingMembers.find((tm) => tm.userId === member.userId) && (
+                          <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
+                            <TypingIndicator size="300" />
+                          </Badge>
+                        )
+                      }
                     >
-                      <Text size="T400" truncate>
-                        {member.name}
-                      </Text>
+                      <Box grow="Yes">
+                        <Text size="T400" truncate>
+                          {name}
+                        </Text>
+                      </Box>
                     </MenuItem>
                   );
                 })}

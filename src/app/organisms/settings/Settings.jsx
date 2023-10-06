@@ -6,7 +6,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
-  toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
+  toggleSystemTheme, toggleMarkdown,
   toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
 import { usePermission } from '../../hooks/usePermission';
@@ -43,9 +43,20 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 function AppearanceSection() {
   const [, updateState] = useState({});
+
+  const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
+  const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
+  const [useSystemEmoji, setUseSystemEmoji] = useSetting(settingsAtom, 'useSystemEmoji');
+  const [hideMembershipEvents, setHideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
+  const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
+  const [mediaAutoLoad, setMediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
+  const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const spacings = ['0', '100', '200', '300', '400', '500']
 
   return (
     <div className="settings-appearance">
@@ -80,9 +91,52 @@ function AppearanceSection() {
             />
         )}
         />
+        <SettingTile
+          title="Use System Emoji"
+          options={(
+            <Toggle
+              isActive={useSystemEmoji}
+              onToggle={() => setUseSystemEmoji(!useSystemEmoji)}
+            />
+          )}
+          content={<Text variant="b3">Use system emoji instead of Twitter emojis.</Text>}
+        />
       </div>
       <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
+        <SettingTile
+          title="Message Layout"
+          content={
+            <SegmentedControls
+            selected={messageLayout}
+            segments={[
+              { text: 'Modern' },
+              { text: 'Compact' },
+              { text: 'Bubble' },
+            ]}
+            onSelect={(index) => setMessageLayout(index)}
+          />
+          }
+        />
+        <SettingTile
+          title="Message Spacing"
+          content={
+            <SegmentedControls
+            selected={spacings.findIndex((s) => s === messageSpacing)}
+            segments={[
+              { text: 'No' },
+              { text: 'XXS' },
+              { text: 'XS' },
+              { text: 'S' },
+              { text: 'M' },
+              { text: 'L' },
+            ]}
+            onSelect={(index) => {
+              setMessageSpacing(spacings[index])
+            }}
+          />
+          }
+        />
         <SettingTile
           title="Markdown formatting"
           options={(
@@ -97,8 +151,8 @@ function AppearanceSection() {
           title="Hide membership events"
           options={(
             <Toggle
-              isActive={settings.hideMembershipEvents}
-              onToggle={() => { toggleMembershipEvents(); updateState({}); }}
+              isActive={hideMembershipEvents}
+              onToggle={() => setHideMembershipEvents(!hideMembershipEvents)}
             />
           )}
           content={<Text variant="b3">Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and Ban)</Text>}
@@ -107,11 +161,31 @@ function AppearanceSection() {
           title="Hide nick/avatar events"
           options={(
             <Toggle
-              isActive={settings.hideNickAvatarEvents}
-              onToggle={() => { toggleNickAvatarEvents(); updateState({}); }}
+              isActive={hideNickAvatarEvents}
+              onToggle={() => setHideNickAvatarEvents(!hideNickAvatarEvents)}
             />
           )}
           content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
+        />
+        <SettingTile
+          title="Disable media auto load"
+          options={(
+            <Toggle
+              isActive={!mediaAutoLoad}
+              onToggle={() => setMediaAutoLoad(!mediaAutoLoad)}
+            />
+          )}
+          content={<Text variant="b3">Prevent images and videos from auto loading to save bandwidth.</Text>}
+        />
+        <SettingTile
+          title="Show hidden events"
+          options={(
+            <Toggle
+              isActive={showHiddenEvents}
+              onToggle={() => setShowHiddenEvents(!showHiddenEvents)}
+            />
+          )}
+          content={<Text variant="b3">Show hidden state and message events.</Text>}
         />
       </div>
     </div>

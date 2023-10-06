@@ -11,6 +11,19 @@ export const bytesToSize = (bytes: number): string => {
   return `${(bytes / 1000 ** sizeIndex).toFixed(1)} ${sizes[sizeIndex]}`;
 };
 
+export const millisecondsToMinutesAndSeconds = (milliseconds: number): string => {
+  const seconds = Math.floor(milliseconds / 1000);
+  const mm = Math.floor(seconds / 60);
+  const ss = Math.round(seconds % 60);
+  return `${mm}:${ss < 10 ? '0' : ''}${ss}`;
+};
+
+export const secondsToMinutesAndSeconds = (seconds: number): string => {
+  const mm = Math.floor(seconds / 60);
+  const ss = Math.round(seconds % 60);
+  return `${mm}:${ss < 10 ? '0' : ''}${ss}`;
+};
+
 export const getFileTypeIcon = (icons: Record<IconName, IconSrc>, fileType: string): IconSrc => {
   const type = fileType.toLowerCase();
   if (type.startsWith('audio')) {
@@ -30,3 +43,37 @@ export const fulfilledPromiseSettledResult = <T>(prs: PromiseSettledResult<T>[])
     if (pr.status === 'fulfilled') values.push(pr.value);
     return values;
   }, []);
+
+export const binarySearch = <T>(items: T[], match: (item: T) => -1 | 0 | 1): T | undefined => {
+  const search = (start: number, end: number): T | undefined => {
+    if (start > end) return undefined;
+
+    const mid = Math.floor((start + end) / 2);
+
+    const result = match(items[mid]);
+    if (result === 0) return items[mid];
+
+    if (result === 1) return search(start, mid - 1);
+    return search(mid + 1, end);
+  };
+
+  return search(0, items.length - 1);
+};
+
+export const randomNumberBetween = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
+export const scaleYDimension = (x: number, scaledX: number, y: number): number => {
+  const scaleFactor = scaledX / x;
+  return scaleFactor * y;
+};
+
+export const parseGeoUri = (location: string) => {
+  const [, data] = location.split(':');
+  const [cords] = data.split(';');
+  const [latitude, longitude] = cords.split(',');
+  return {
+    latitude,
+    longitude,
+  };
+};

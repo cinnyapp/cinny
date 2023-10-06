@@ -1,5 +1,16 @@
-import { EncryptedAttachmentInfo, encryptAttachment } from 'browser-encrypt-attachment';
-import { MatrixClient, MatrixError, UploadProgress, UploadResponse } from 'matrix-js-sdk';
+import {
+  EncryptedAttachmentInfo,
+  decryptAttachment,
+  encryptAttachment,
+} from 'browser-encrypt-attachment';
+import {
+  MatrixClient,
+  MatrixError,
+  MatrixEvent,
+  Room,
+  UploadProgress,
+  UploadResponse,
+} from 'matrix-js-sdk';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 
 export const matchMxId = (id: string): RegExpMatchArray | null =>
@@ -13,6 +24,13 @@ export const getMxIdLocalPart = (userId: string): string | undefined => matchMxI
 
 export const isUserId = (id: string): boolean => validMxId(id) && id.startsWith('@');
 
+export const isRoomId = (id: string): boolean => validMxId(id) && id.startsWith('!');
+
+export const isRoomAlias = (id: string): boolean => validMxId(id) && id.startsWith('#');
+
+export const getRoomWithCanonicalAlias = (mx: MatrixClient, alias: string): Room | undefined =>
+  mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias);
+
 export const getImageInfo = (img: HTMLImageElement, fileOrBlob: File | Blob): IImageInfo => {
   const info: IImageInfo = {};
   info.w = img.width;
@@ -24,7 +42,7 @@ export const getImageInfo = (img: HTMLImageElement, fileOrBlob: File | Blob): II
 
 export const getVideoInfo = (video: HTMLVideoElement, fileOrBlob: File | Blob): IVideoInfo => {
   const info: IVideoInfo = {};
-  info.duration = Number.isNaN(video.duration) ? undefined : video.duration;
+  info.duration = Number.isNaN(video.duration) ? undefined : Math.floor(video.duration * 1000);
   info.w = video.videoWidth;
   info.h = video.videoHeight;
   info.mimetype = fileOrBlob.type;
@@ -79,6 +97,16 @@ export const encryptFile = async (
   };
 };
 
+export const decryptFile = async (
+  dataBuffer: ArrayBuffer,
+  type: string,
+  encInfo: EncryptedAttachmentInfo
+): Promise<Blob> => {
+  const dataArray = await decryptAttachment(dataBuffer, encInfo);
+  const blob = new Blob([dataArray], { type });
+  return blob;
+};
+
 export type TUploadContent = File | Blob;
 
 export type ContentUploadOptions = {
@@ -115,4 +143,20 @@ export const uploadContent = async (
     const errcode = typeof e?.name === 'string' ? e.message : undefined;
     onError(new MatrixError({ error, errcode }));
   }
+};
+
+export const matrixEventByRecency = (m1: MatrixEvent, m2: MatrixEvent) => m2.getTs() - m1.getTs();
+
+export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
+  ev.getSender() === senderId;
+
+export const eventWithShortcode = (ev: MatrixEvent) =>
+  typeof ev.getContent().shortcode === 'string';
+
+export const trimReplyFromBody = (body: string): string => {
+  if (body.match(/^> <.+>/) === null) return body;
+
+  const trimmedBody = body.slice(body.indexOf('\n\n') + 2);
+
+  return trimmedBody || body;
 };

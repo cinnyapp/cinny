@@ -34,8 +34,6 @@ import to from 'await-to-js';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   CustomEditor,
-  EditorChangeHandler,
-  useEditor,
   Toolbar,
   toMatrixCustomHTML,
   toPlainText,
@@ -102,13 +100,13 @@ import { sanitizeText } from '../../utils/sanitize';
 import { useScreenSize } from '../../hooks/useScreenSize';
 
 interface RoomInputProps {
+  editor: Editor;
   roomViewRef: RefObject<HTMLElement>;
   roomId: string;
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
-  ({ roomViewRef, roomId }, ref) => {
+  ({ editor, roomViewRef, roomId }, ref) => {
     const mx = useMatrixClient();
-    const editor = useEditor();
     const room = mx.getRoom(roomId);
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
@@ -226,7 +224,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const sendPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (fileItem && fileItem.file.type.startsWith('image')) {
-          const [imgError, imgContent] = await to(getImageMsgContent(fileItem, upload.mxc));
+          const [imgError, imgContent] = await to(getImageMsgContent(mx, fileItem, upload.mxc));
           if (imgError) console.warn(imgError);
           if (imgContent) mx.sendMessage(roomId, imgContent);
           return;
@@ -294,7 +292,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        const { selection } = editor;
         if (isHotkey('enter', evt)) {
           evt.preventDefault();
           submit();
@@ -303,7 +300,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           evt.preventDefault();
           setReplyDraft();
         }
-        if (selection && Range.isCollapsed(selection)) {
+
+        if (editor.selection && Range.isCollapsed(editor.selection)) {
           if (isHotkey('arrowleft', evt)) {
             evt.preventDefault();
             Transforms.move(editor, { unit: 'offset', reverse: true });
@@ -317,20 +315,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       [submit, editor, setReplyDraft]
     );
 
-    const handleChange: EditorChangeHandler = (value) => {
+    const handleKeyUp: KeyboardEventHandler = useCallback(() => {
+      const firstChildren = editor.children[0];
+      if (firstChildren && Element.isElement(firstChildren)) {
+        const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
+        sendTypingStatus(!isEmpty);
+      }
+
       const prevWordRange = getPrevWorldRange(editor);
       const query = prevWordRange
         ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
         : undefined;
-
       setAutocompleteQuery(query);
-
-      const descendant = value[0];
-      if (descendant && Element.isElement(descendant)) {
-        const isEmpty = value.length === 1 && Editor.isEmpty(editor, descendant);
-        sendTypingStatus(!isEmpty);
-      }
-    };
+    }, [editor, sendTypingStatus]);
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
@@ -439,7 +436,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           editor={editor}
           placeholder="Send a message..."
           onKeyDown={handleKeyDown}
-          onChange={handleChange}
+          onKeyUp={handleKeyUp}
           onPaste={handlePaste}
           top={
             replyDraft && (

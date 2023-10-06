@@ -2,7 +2,7 @@ import { Scroll, Text } from 'folds';
 import React from 'react';
 import { RenderElementProps, RenderLeafProps, useFocused, useSelected } from 'slate-react';
 
-import * as css from './Elements.css';
+import * as css from '../../styles/CustomHtml.css';
 import { EmoticonElement, LinkElement, MentionElement } from './slate';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 
@@ -145,7 +145,13 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
     case BlockType.CodeBlock:
       return (
         <Text as="pre" className={css.CodeBlock} {...attributes}>
-          <Scroll direction="Horizontal" variant="Warning" size="300" visibility="Hover" hideTrack>
+          <Scroll
+            direction="Horizontal"
+            variant="Secondary"
+            size="300"
+            visibility="Hover"
+            hideTrack
+          >
             <div className={css.CodeBlockInternal}>{children}</div>
           </Scroll>
         </Text>
@@ -242,7 +248,7 @@ export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
     );
   if (leaf.spoiler)
     child = (
-      <span className={css.Spoiler} {...attributes}>
+      <span className={css.Spoiler()} {...attributes}>
         <InlineChromiumBugfix />
         {child}
       </span>

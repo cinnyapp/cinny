@@ -1,6 +1,6 @@
 import { IContent, MatrixClient, MsgType } from 'matrix-js-sdk';
 import to from 'await-to-js';
-import { IThumbnailContent } from '../../../types/matrix/common';
+import { IThumbnailContent, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../types/matrix/common';
 import {
   getImageFileUrl,
   getThumbnail,
@@ -11,7 +11,7 @@ import {
 } from '../../utils/dom';
 import { encryptFile, getImageInfo, getThumbnailContent, getVideoInfo } from '../../utils/matrix';
 import { TUploadItem } from '../../state/roomInputDrafts';
-import { MATRIX_BLUR_HASH_PROPERTY_NAME, encodeBlurHash } from '../../utils/blurHash';
+import { encodeBlurHash } from '../../utils/blurHash';
 
 const generateThumbnailContent = async (
   mx: MatrixClient,
@@ -38,7 +38,11 @@ const generateThumbnailContent = async (
   return thumbnailContent;
 };
 
-export const getImageMsgContent = async (item: TUploadItem, mxc: string): Promise<IContent> => {
+export const getImageMsgContent = async (
+  mx: MatrixClient,
+  item: TUploadItem,
+  mxc: string
+): Promise<IContent> => {
   const { file, originalFile, encInfo } = item;
   const [imgError, imgEl] = await to(loadImageElement(getImageFileUrl(originalFile)));
   if (imgError) console.warn(imgError);
@@ -48,9 +52,24 @@ export const getImageMsgContent = async (item: TUploadItem, mxc: string): Promis
     body: file.name,
   };
   if (imgEl) {
+    const blurHash = encodeBlurHash(imgEl);
+    const [thumbError, thumbContent] = await to(
+      generateThumbnailContent(
+        mx,
+        imgEl,
+        getThumbnailDimensions(imgEl.width, imgEl.height),
+        !!encInfo
+      )
+    );
+
+    if (thumbContent && thumbContent.thumbnail_info) {
+      thumbContent.thumbnail_info[MATRIX_BLUR_HASH_PROPERTY_NAME] = blurHash;
+    }
+    if (thumbError) console.warn(thumbError);
     content.info = {
       ...getImageInfo(imgEl, file),
-      [MATRIX_BLUR_HASH_PROPERTY_NAME]: encodeBlurHash(imgEl),
+      [MATRIX_BLUR_HASH_PROPERTY_NAME]: blurHash,
+      ...thumbContent,
     };
   }
   if (encInfo) {
@@ -87,6 +106,9 @@ export const getVideoMsgContent = async (
         !!encInfo
       )
     );
+    if (thumbContent && thumbContent.thumbnail_info) {
+      thumbContent.thumbnail_info[MATRIX_BLUR_HASH_PROPERTY_NAME] = encodeBlurHash(videoEl);
+    }
     if (thumbError) console.warn(thumbError);
     content.info = {
       ...getVideoInfo(videoEl, file),

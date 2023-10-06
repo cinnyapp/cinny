@@ -59,6 +59,8 @@ class Settings extends EventEmitter {
     this.themes.forEach((themeName, index) => {
       if (themeName !== '') document.body.classList.remove(themeName);
       document.body.classList.remove(this.themeClasses[index]);
+      document.body.classList.remove('prism-light')
+      document.body.classList.remove('prism-dark')
     });
   }
 
@@ -69,6 +71,7 @@ class Settings extends EventEmitter {
     if (this.themes[themeIndex] === undefined) return
     if (this.themes[themeIndex]) document.body.classList.add(this.themes[themeIndex]);
     document.body.classList.add(this.themeClasses[themeIndex]);
+    document.body.classList.add(themeIndex < 2 ? 'prism-light' : 'prism-dark');
   }
 
   setTheme(themeIndex) {

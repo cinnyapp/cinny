@@ -210,14 +210,14 @@
 .dark-theme,
 .butter-theme {
   /* background color | --bg-[background type]: value */
-  --bg-surface: hsl(208, 8%, 20%);
-  --bg-surface-transparent: hsla(208, 8%, 20%, 0);
-  --bg-surface-low: hsl(208, 8%, 16%);
-  --bg-surface-low-transparent: hsla(208, 8%, 16%, 0);
-  --bg-surface-extra-low: hsl(208, 8%, 14%);
-  --bg-surface-extra-low-transparent: hsla(208, 8%, 14%, 0);
-  --bg-surface-hover: rgba(255, 255, 255, 3%);
-  --bg-surface-active: rgba(255, 255, 255, 5%);
+  --bg-surface: #1f2326;
+  --bg-surface-transparent: #1f232600;
+  --bg-surface-low: #15171a;
+  --bg-surface-low-transparent: #15171a00;
+  --bg-surface-extra-low: #15171a;
+  --bg-surface-extra-low-transparent: #15171a00;
+  --bg-surface-hover: #1f2326;
+  --bg-surface-active: #2a2e33;
   --bg-surface-border: rgba(0, 0, 0, 20%);
 
   --bg-primary: rgb(42, 98, 166);
