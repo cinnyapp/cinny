@@ -94,7 +94,7 @@ function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, '
                 clickOutsideDeactivates: true,
               }}
             >
-              <Modal size="500">
+              <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
                 <TextViewer
                   name={body}
                   text={textState.data}
@@ -159,7 +159,7 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
                 clickOutsideDeactivates: true,
               }}
             >
-              <Modal size="500">
+              <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
                 <PdfViewer
                   name={body}
                   src={pdfState.data}
