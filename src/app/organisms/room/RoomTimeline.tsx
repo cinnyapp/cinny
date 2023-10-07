@@ -86,7 +86,12 @@ import {
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-import { openJoinAlias, openProfileViewer, selectRoom } from '../../../client/action/navigation';
+import {
+  openJoinAlias,
+  openProfileViewer,
+  selectRoom,
+  selectSpace,
+} from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
@@ -536,7 +541,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             return;
           }
           if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
-            selectRoom(mentionId);
+            if (mx.getRoom(mentionId)?.isSpaceRoom()) selectSpace(mentionId);
+            else selectRoom(mentionId);
             return;
           }
           openJoinAlias(mentionId);
