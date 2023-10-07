@@ -674,7 +674,7 @@ export const Message = as<'div', MessageProps>(
         selected={menu || emojiBoard}
         {...props}
         onMouseEnter={showOptions}
-        onMouseLeave={hideOptions}
+        onMouseOut={hideOptions}
         ref={ref}
       >
         {(hover || menu || emojiBoard) && (
