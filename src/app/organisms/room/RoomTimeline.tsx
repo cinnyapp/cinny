@@ -167,7 +167,7 @@ export const getFirstLinkedTimeline = (
 
 export const getLinkedTimelines = (timeline: EventTimeline): EventTimeline[] => {
   const firstTimeline = getFirstLinkedTimeline(timeline, Direction.Backward);
-  const timelines = [];
+  const timelines: EventTimeline[] = [];
 
   for (
     let nextTimeline: EventTimeline | null = firstTimeline;
