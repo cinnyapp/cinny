@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { Box, Text, as } from 'folds';
+import { Box, Icon, IconButton, Icons, Text, as } from 'folds';
 import { Room } from 'matrix-js-sdk';
 import classNames from 'classnames';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../state/typingMembers';
 import { TypingIndicator } from '../../components/typing-indicator';
 import { getMemberDisplayName } from '../../utils/room';
@@ -15,6 +15,7 @@ export type RoomViewTypingProps = {
 };
 export const RoomViewTyping = as<'div', RoomViewTypingProps>(
   ({ className, room, ...props }, ref) => {
+    const setTypingMembers = useSetAtom(roomIdToTypingMembersAtom);
     const mx = useMatrixClient();
     const typingMembers = useAtomValue(
       useMemo(() => selectRoomTypingMembersAtom(room.roomId, roomIdToTypingMembersAtom), [room])
@@ -29,6 +30,18 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
       return null;
     }
 
+    const handleDropAll = () => {
+      // some homeserver does not timeout typing status
+      // we have given option so user can drop their typing status
+      typingMembers.forEach((member) =>
+        setTypingMembers({
+          type: 'DELETE',
+          roomId: room.roomId,
+          member,
+        })
+      );
+    };
+
     return (
       <Box
         className={classNames(css.RoomViewTyping, className)}
@@ -38,7 +51,7 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
         ref={ref}
       >
         <TypingIndicator />
-        <Text size="T300" truncate>
+        <Text className={css.TypingText} size="T300" truncate>
           {typingNames.length === 1 && (
             <>
               <b>{typingNames[0]}</b>
@@ -96,6 +109,9 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
             </>
           )}
         </Text>
+        <IconButton title="Drop Typing Status" size="300" radii="Pill" onClick={handleDropAll}>
+          <Icon size="50" src={Icons.Cross} />
+        </IconButton>
       </Box>
     );
   }

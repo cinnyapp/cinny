@@ -22,3 +22,6 @@ export const RoomViewTyping = style([
     animation: `${SlideUpAnime} 100ms ease-in-out`,
   },
 ]);
+export const TypingText = style({
+  flexGrow: 1,
+});

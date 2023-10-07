@@ -99,10 +99,9 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
                   const senderId = mEvent.getSender();
                   if (!senderId) return null;
                   const member = room.getMember(senderId);
-                  if (!member) return null;
-                  const name = getName(member);
+                  const name = (member ? getName(member) : getMxIdLocalPart(senderId)) ?? senderId;
 
-                  const avatarUrl = member.getAvatarUrl(
+                  const avatarUrl = member?.getAvatarUrl(
                     mx.baseUrl,
                     100,
                     100,
@@ -113,12 +112,12 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
 
                   return (
                     <MenuItem
-                      key={member.userId}
+                      key={senderId}
                       style={{ padding: `0 ${config.space.S200}` }}
                       radii="400"
                       onClick={() => {
                         requestClose();
-                        openProfileViewer(member.userId, room.roomId);
+                        openProfileViewer(senderId, room.roomId);
                       }}
                       before={
                         <Avatar size="200">
@@ -127,7 +126,7 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
                           ) : (
                             <AvatarFallback
                               style={{
-                                background: colorMXID(member.userId),
+                                background: colorMXID(senderId),
                                 color: 'white',
                               }}
                             >

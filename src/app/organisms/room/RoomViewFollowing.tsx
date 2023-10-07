@@ -19,7 +19,7 @@ import { getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import * as css from './RoomViewFollowing.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoomLatestEvent } from '../../hooks/useRoomLatestEvent';
+import { useRoomLatestRenderedEvent } from '../../hooks/useRoomLatestRenderedEvent';
 import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
 import { EventReaders } from '../../components/event-readers';
 
@@ -30,7 +30,7 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
   ({ className, room, ...props }, ref) => {
     const mx = useMatrixClient();
     const [open, setOpen] = useState(false);
-    const latestEvent = useRoomLatestEvent(room);
+    const latestEvent = useRoomLatestRenderedEvent(room);
     const latestEventReaders = useRoomEventReaders(room, latestEvent?.getId());
     const followingMembers = latestEventReaders
       .map((readerId) => room.getMember(readerId))

@@ -46,6 +46,7 @@ import { editableActiveElement, isIntersectingScrollView, targetFromEvent } from
 import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useThrottle } from '../../hooks/useThrottle';
+import { addRecentEmoji } from '../../plugins/recent-emoji';
 
 const RECENT_GROUP_ID = 'recent_group';
 const SEARCH_GROUP_ID = 'search_group';
@@ -697,7 +698,10 @@ export function EmojiBoard({
     if (!emojiInfo) return;
     if (emojiInfo.type === EmojiType.Emoji) {
       onEmojiSelect?.(emojiInfo.data, emojiInfo.shortcode);
-      if (!evt.altKey && !evt.shiftKey) requestClose();
+      if (!evt.altKey && !evt.shiftKey) {
+        addRecentEmoji(mx, emojiInfo.data);
+        requestClose();
+      }
     }
     if (emojiInfo.type === EmojiType.CustomEmoji) {
       onCustomEmojiSelect?.(emojiInfo.data, emojiInfo.shortcode);
