@@ -319,7 +319,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
   const intersectionObserver = useIntersectionObserver(
     handlePaginatorElIntersection,
-    useMemo(
+    useCallback(
       () => ({
         root: getScrollElement(),
       }),

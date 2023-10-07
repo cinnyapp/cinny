@@ -90,7 +90,7 @@ import {
   openJoinAlias,
   openProfileViewer,
   selectRoom,
-  selectSpace,
+  selectTab,
 } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
@@ -115,7 +115,6 @@ import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
 import { RoomIntro } from '../../components/room-intro';
 import {
-  OnIntersectionCallback,
   getIntersectionObserverEntry,
   useIntersectionObserver,
 } from '../../hooks/useIntersectionObserver';
@@ -541,7 +540,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             return;
           }
           if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
-            if (mx.getRoom(mentionId)?.isSpaceRoom()) selectSpace(mentionId);
+            if (mx.getRoom(mentionId)?.isSpaceRoom()) selectTab(mentionId);
             else selectRoom(mentionId);
             return;
           }
@@ -674,18 +673,24 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     useCallback(() => roomInputRef.current, [roomInputRef])
   );
 
-  const handleAtBottomIntersection: OnIntersectionCallback = useCallback((entries) => {
-    const target = atBottomAnchorRef.current;
-    if (!target) return;
-    const targetEntry = getIntersectionObserverEntry(target, entries);
-
-    setAtBottom(targetEntry?.isIntersecting === true);
-  }, []);
+  const debounceSetAtBottom = useDebounce(
+    useCallback((entry: IntersectionObserverEntry) => {
+      if (!entry.isIntersecting) setAtBottom(false);
+    }, []),
+    { wait: 1000 }
+  );
   useIntersectionObserver(
-    useDebounce(handleAtBottomIntersection, {
-      wait: 200,
-    }),
-    useMemo(
+    useCallback(
+      (entries) => {
+        const target = atBottomAnchorRef.current;
+        if (!target) return;
+        const targetEntry = getIntersectionObserverEntry(target, entries);
+        if (targetEntry) debounceSetAtBottom(targetEntry);
+        if (targetEntry?.isIntersecting) setAtBottom(true);
+      },
+      [debounceSetAtBottom]
+    ),
+    useCallback(
       () => ({
         root: getScrollElement(),
         rootMargin: '100px',
