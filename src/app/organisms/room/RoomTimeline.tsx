@@ -90,7 +90,7 @@ import {
   openJoinAlias,
   openProfileViewer,
   selectRoom,
-  selectSpace,
+  selectTab,
 } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
@@ -540,7 +540,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             return;
           }
           if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
-            if (mx.getRoom(mentionId)?.isSpaceRoom()) selectSpace(mentionId);
+            if (mx.getRoom(mentionId)?.isSpaceRoom()) selectTab(mentionId);
             else selectRoom(mentionId);
             return;
           }
