@@ -278,6 +278,10 @@ export const getMemberAvatarMxc = (room: Room, userId: string): string | undefin
   return member?.getMxcAvatarUrl();
 };
 
+export const isMembershipChanged = (mEvent: MatrixEvent): boolean =>
+  mEvent.getContent().membership !== mEvent.getPrevContent().membership ||
+  mEvent.getContent().reason !== mEvent.getPrevContent().reason;
+
 export const decryptAllTimelineEvent = async (mx: MatrixClient, timeline: EventTimeline) => {
   const crypto = mx.getCrypto();
   if (!crypto) return;

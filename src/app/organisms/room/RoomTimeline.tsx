@@ -83,6 +83,7 @@ import {
   decryptAllTimelineEvent,
   getMemberDisplayName,
   getReactionContent,
+  isMembershipChanged,
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -1306,8 +1307,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       );
     },
     renderRoomMember: (mEventId, mEvent, item) => {
-      const membershipChanged =
-        mEvent.getContent().membership !== mEvent.getPrevContent().membership;
+      const membershipChanged = isMembershipChanged(mEvent);
       if (membershipChanged && hideMembershipEvents) return null;
       if (!membershipChanged && hideNickAvatarEvents) return null;
 

@@ -3,6 +3,7 @@ import { IconSrc, Icons } from 'folds';
 import { MatrixEvent } from 'matrix-js-sdk';
 import { IMemberContent, Membership } from '../../types/matrix/room';
 import { getMxIdLocalPart } from '../utils/matrix';
+import { isMembershipChanged } from '../utils/room';
 
 export type ParsedResult = {
   icon: IconSrc;
@@ -27,7 +28,7 @@ export const useMemberEventParser = (): MemberEventParser => {
     const senderName = getMxIdLocalPart(senderId);
     const userName = content.displayname || getMxIdLocalPart(userId);
 
-    if (content.membership !== prevContent.membership) {
+    if (isMembershipChanged(mEvent)) {
       if (content.membership === Membership.Invite) {
         if (prevContent.membership === Membership.Knock) {
           return {
