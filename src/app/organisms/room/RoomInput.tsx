@@ -252,7 +252,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       uploadBoardHandlers.current?.handleSend();
 
       const plainText = toPlainText(editor.children).trim();
-      const customHtml = trimCustomHtml(toMatrixCustomHTML(editor.children, isMarkdown));
+      const customHtml = trimCustomHtml(
+        toMatrixCustomHTML(editor.children, {
+          allowTextFormatting: true,
+          allowMarkdown: isMarkdown,
+        })
+      );
 
       if (plainText === '') return;
 
