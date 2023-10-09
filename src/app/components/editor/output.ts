@@ -2,8 +2,9 @@ import { Descendant, Text } from 'slate';
 import { sanitizeText } from '../../utils/sanitize';
 import { BlockType } from './Elements';
 import { CustomElement, FormattedText } from './slate';
+import { parseInlineMD } from '../../utils/markdown';
 
-const textToCustomHtml = (node: FormattedText): string => {
+const textToCustomHtml = (node: FormattedText, allowMarkdown?: boolean): string => {
   let string = sanitizeText(node.text);
   if (node.bold) string = `<strong>${string}</strong>`;
   if (node.italic) string = `<i>${string}</i>`;
@@ -11,6 +12,11 @@ const textToCustomHtml = (node: FormattedText): string => {
   if (node.strikeThrough) string = `<s>${string}</s>`;
   if (node.code) string = `<code>${string}</code>`;
   if (node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
+
+  if (allowMarkdown && string === sanitizeText(node.text)) {
+    string = parseInlineMD(string);
+  }
+
   return string;
 };
 
@@ -47,11 +53,14 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
   }
 };
 
-export const toMatrixCustomHTML = (node: Descendant | Descendant[]): string => {
-  if (Array.isArray(node)) return node.map((n) => toMatrixCustomHTML(n)).join('');
-  if (Text.isText(node)) return textToCustomHtml(node);
+export const toMatrixCustomHTML = (
+  node: Descendant | Descendant[],
+  allowMarkdown?: boolean
+): string => {
+  if (Array.isArray(node)) return node.map((n) => toMatrixCustomHTML(n, allowMarkdown)).join('');
+  if (Text.isText(node)) return textToCustomHtml(node, allowMarkdown);
 
-  const children = node.children.map((n) => toMatrixCustomHTML(n)).join('');
+  const children = node.children.map((n) => toMatrixCustomHTML(n, allowMarkdown)).join('');
   return elementToCustomHtml(node, children);
 };
 
