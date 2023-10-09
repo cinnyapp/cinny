@@ -141,6 +141,10 @@ const runRule: RuleRunner = (parse, text, rule) => {
   return undefined;
 };
 
+/**
+ * Runs multiple rules at the same time to better handle nested rules.
+ * Rules will be run in the order they appear.
+ */
 const runRules: RulesRunner = (parse, text, rules) => {
   const matchResults = rules.map((rule) => rule.match(text));
 
