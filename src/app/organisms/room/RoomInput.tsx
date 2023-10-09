@@ -108,6 +108,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
   ({ editor, roomViewRef, roomId }, ref) => {
     const mx = useMatrixClient();
     const room = mx.getRoom(roomId);
+    const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
@@ -251,7 +252,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       uploadBoardHandlers.current?.handleSend();
 
       const plainText = toPlainText(editor.children).trim();
-      const customHtml = trimCustomHtml(toMatrixCustomHTML(editor.children));
+      const customHtml = trimCustomHtml(
+        toMatrixCustomHTML(editor.children, {
+          allowTextFormatting: true,
+          allowMarkdown: isMarkdown,
+        })
+      );
 
       if (plainText === '') return;
 
@@ -288,7 +294,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       resetEditorHistory(editor);
       setReplyDraft();
       sendTypingStatus(false);
-    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft]);
+    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {

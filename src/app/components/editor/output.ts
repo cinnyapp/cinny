@@ -2,15 +2,28 @@ import { Descendant, Text } from 'slate';
 import { sanitizeText } from '../../utils/sanitize';
 import { BlockType } from './Elements';
 import { CustomElement, FormattedText } from './slate';
+import { parseInlineMD } from '../../utils/markdown';
 
-const textToCustomHtml = (node: FormattedText): string => {
+export type OutputOptions = {
+  allowTextFormatting?: boolean;
+  allowMarkdown?: boolean;
+};
+
+const textToCustomHtml = (node: FormattedText, opts: OutputOptions): string => {
   let string = sanitizeText(node.text);
-  if (node.bold) string = `<strong>${string}</strong>`;
-  if (node.italic) string = `<i>${string}</i>`;
-  if (node.underline) string = `<u>${string}</u>`;
-  if (node.strikeThrough) string = `<s>${string}</s>`;
-  if (node.code) string = `<code>${string}</code>`;
-  if (node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
+  if (opts.allowTextFormatting) {
+    if (node.bold) string = `<strong>${string}</strong>`;
+    if (node.italic) string = `<i>${string}</i>`;
+    if (node.underline) string = `<u>${string}</u>`;
+    if (node.strikeThrough) string = `<s>${string}</s>`;
+    if (node.code) string = `<code>${string}</code>`;
+    if (node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
+  }
+
+  if (opts.allowMarkdown && string === sanitizeText(node.text)) {
+    string = parseInlineMD(string);
+  }
+
   return string;
 };
 
@@ -47,11 +60,19 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
   }
 };
 
-export const toMatrixCustomHTML = (node: Descendant | Descendant[]): string => {
-  if (Array.isArray(node)) return node.map((n) => toMatrixCustomHTML(n)).join('');
-  if (Text.isText(node)) return textToCustomHtml(node);
+export const toMatrixCustomHTML = (
+  node: Descendant | Descendant[],
+  opts: OutputOptions
+): string => {
+  const parseNode = (n: Descendant) => {
+    const isCodeLine = 'type' in n && n.type === BlockType.CodeLine;
+    if (isCodeLine) return toMatrixCustomHTML(n, {});
+    return toMatrixCustomHTML(n, opts);
+  };
+  if (Array.isArray(node)) return node.map(parseNode).join('');
+  if (Text.isText(node)) return textToCustomHtml(node, opts);
 
-  const children = node.children.map((n) => toMatrixCustomHTML(n)).join('');
+  const children = node.children.map(parseNode).join('');
   return elementToCustomHtml(node, children);
 };
 

@@ -6,7 +6,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
-  toggleSystemTheme, toggleMarkdown,
+  toggleSystemTheme,
   toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
 import { usePermission } from '../../hooks/usePermission';
@@ -52,6 +52,7 @@ function AppearanceSection() {
   const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [useSystemEmoji, setUseSystemEmoji] = useSetting(settingsAtom, 'useSystemEmoji');
+  const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad, setMediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
@@ -138,14 +139,14 @@ function AppearanceSection() {
           }
         />
         <SettingTile
-          title="Markdown formatting"
+          title="Inline Markdown formatting"
           options={(
             <Toggle
-              isActive={settings.isMarkdown}
-              onToggle={() => { toggleMarkdown(); updateState({}); }}
+              isActive={isMarkdown}
+              onToggle={() => setIsMarkdown(!isMarkdown) }
             />
           )}
-          content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
+          content={<Text variant="b3">Format messages with inline markdown syntax before sending.</Text>}
         />
         <SettingTile
           title="Hide membership events"
