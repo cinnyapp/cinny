@@ -11,12 +11,14 @@ export type OutputOptions = {
 
 const textToCustomHtml = (node: FormattedText, opts: OutputOptions): string => {
   let string = sanitizeText(node.text);
-  if (opts.allowTextFormatting && node.bold) string = `<strong>${string}</strong>`;
-  if (opts.allowTextFormatting && node.italic) string = `<i>${string}</i>`;
-  if (opts.allowTextFormatting && node.underline) string = `<u>${string}</u>`;
-  if (opts.allowTextFormatting && node.strikeThrough) string = `<s>${string}</s>`;
-  if (opts.allowTextFormatting && node.code) string = `<code>${string}</code>`;
-  if (opts.allowTextFormatting && node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
+  if (opts.allowTextFormatting) {
+    if (node.bold) string = `<strong>${string}</strong>`;
+    if (node.italic) string = `<i>${string}</i>`;
+    if (node.underline) string = `<u>${string}</u>`;
+    if (node.strikeThrough) string = `<s>${string}</s>`;
+    if (node.code) string = `<code>${string}</code>`;
+    if (node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
+  }
 
   if (opts.allowMarkdown && string === sanitizeText(node.text)) {
     string = parseInlineMD(string);
