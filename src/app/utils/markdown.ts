@@ -1,15 +1,15 @@
 const MIN_ANY = '(.+?)';
 
-const BOLD_MD_1 = '**'
+const BOLD_MD_1 = '**';
 const BOLD_PREFIX_1 = '\\*{2}';
 const BOLD_NEG_LA_1 = '(?!\\*)';
 const BOLD_REG_1 = new RegExp(`${BOLD_PREFIX_1}${MIN_ANY}${BOLD_PREFIX_1}${BOLD_NEG_LA_1}`);
 
-const ITALIC_MD_1 = '*'
+const ITALIC_MD_1 = '*';
 const ITALIC_PREFIX_1 = '\\*';
 const ITALIC_NEG_LA_1 = '(?!\\*)';
 const ITALIC_REG_1 = new RegExp(`${ITALIC_PREFIX_1}${MIN_ANY}${ITALIC_PREFIX_1}${ITALIC_NEG_LA_1}`);
-const ITALIC_MD_2 = '_'
+const ITALIC_MD_2 = '_';
 const ITALIC_PREFIX_2 = '_';
 const ITALIC_NEG_LA_2 = '(?!_)';
 const ITALIC_REG_2 = new RegExp(`${ITALIC_PREFIX_2}${MIN_ANY}${ITALIC_PREFIX_2}${ITALIC_NEG_LA_2}`);
@@ -75,7 +75,9 @@ export const parseInlineMD = (text: string): string => {
     const child = parseInlineMD(g1);
     const after = parseInlineMD(afterMatch(text, italicMatch));
 
-    return `${before}<i data-md="${ITALIC_REG_1.test(text) ? ITALIC_MD_1 : ITALIC_MD_2}">${child}</i>${after}`;
+    return `${before}<i data-md="${
+      ITALIC_REG_1.test(text) ? ITALIC_MD_1 : ITALIC_MD_2
+    }">${child}</i>${after}`;
   }
 
   const strikeMatch = text.match(STRIKE_REG_1);
@@ -117,6 +119,6 @@ export const parseInlineMD = (text: string): string => {
 
     return `${before}<a data-md href="${g2}">${child}</a>${after}`;
   }
-  
+
   return text;
 };
