@@ -48,6 +48,16 @@ const afterMatch = (text: string, match: RegExpMatchArray | RegExpExecArray): st
   text.slice((match.index ?? 0) + match[0].length);
 
 export const parseInlineMD = (text: string): string => {
+  const codeMatch = text.match(CODE_REG_1);
+  if (codeMatch) {
+    const [, g1] = codeMatch;
+    const before = parseInlineMD(beforeMatch(text, codeMatch));
+    const child = g1;
+    const after = parseInlineMD(afterMatch(text, codeMatch));
+
+    return `${before}<code data-md="${CODE_MD_1}">${child}</code>${after}`;
+  }
+
   const boldMatch = text.match(BOLD_REG_1);
   if (boldMatch) {
     const [, g1] = boldMatch;
@@ -96,16 +106,6 @@ export const parseInlineMD = (text: string): string => {
     const after = parseInlineMD(afterMatch(text, strikeMatch));
 
     return `${before}<s data-md="${STRIKE_MD_1}">${child}</s>${after}`;
-  }
-
-  const codeMatch = text.match(CODE_REG_1);
-  if (codeMatch) {
-    const [, g1] = codeMatch;
-    const before = parseInlineMD(beforeMatch(text, codeMatch));
-    const child = g1;
-    const after = parseInlineMD(afterMatch(text, codeMatch));
-
-    return `${before}<code data-md="${CODE_MD_1}">${child}</code>${after}`;
   }
 
   const spoilerMatch = text.match(SPOILER_REG_1);
