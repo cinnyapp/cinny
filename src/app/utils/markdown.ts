@@ -58,6 +58,16 @@ export const parseInlineMD = (text: string): string => {
     return `${before}<strong data-md="${BOLD_MD_1}">${child}</strong>${after}`;
   }
 
+  const italicMatch = text.match(ITALIC_REG_1);
+  if (italicMatch) {
+    const [, g1] = italicMatch;
+    const before = parseInlineMD(beforeMatch(text, italicMatch));
+    const child = parseInlineMD(g1);
+    const after = parseInlineMD(afterMatch(text, italicMatch));
+
+    return `${before}<i data-md="${ITALIC_MD_1}">${child}</i>${after}`;
+  }
+
   const underlineMatch = text.match(UNDERLINE_REG_1);
   if (underlineMatch) {
     const [, g1] = underlineMatch;
@@ -68,16 +78,14 @@ export const parseInlineMD = (text: string): string => {
     return `${before}<u data-md="${UNDERLINE_MD_1}">${child}</u>${after}`;
   }
 
-  const italicMatch = text.match(ITALIC_REG_1) ?? text.match(ITALIC_REG_2);
-  if (italicMatch) {
-    const [, g1] = italicMatch;
-    const before = parseInlineMD(beforeMatch(text, italicMatch));
+  const italicMatch2 = text.match(ITALIC_REG_2);
+  if (italicMatch2) {
+    const [, g1] = italicMatch2;
+    const before = parseInlineMD(beforeMatch(text, italicMatch2));
     const child = parseInlineMD(g1);
-    const after = parseInlineMD(afterMatch(text, italicMatch));
+    const after = parseInlineMD(afterMatch(text, italicMatch2));
 
-    return `${before}<i data-md="${
-      ITALIC_REG_1.test(text) ? ITALIC_MD_1 : ITALIC_MD_2
-    }">${child}</i>${after}`;
+    return `${before}<i data-md="${ITALIC_MD_2}">${child}</i>${after}`;
   }
 
   const strikeMatch = text.match(STRIKE_REG_1);
