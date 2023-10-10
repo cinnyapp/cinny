@@ -25,6 +25,7 @@ import { bytesToSize } from '../../../utils/common';
 import { TextViewer } from '../../../components/text-viewer';
 import { READABLE_TEXT_MIME_TYPES } from '../../../utils/mimeTypes';
 import { PdfViewer } from '../../../components/Pdf-viewer';
+import * as css from './styles.css';
 
 export type FileContentProps = {
   body: string;
@@ -94,7 +95,11 @@ function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, '
                 clickOutsideDeactivates: true,
               }}
             >
-              <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
+              <Modal
+                className={css.ModalWide}
+                size="500"
+                onContextMenu={(evt: any) => evt.stopPropagation()}
+              >
                 <TextViewer
                   name={body}
                   text={textState.data}
@@ -159,7 +164,11 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
                 clickOutsideDeactivates: true,
               }}
             >
-              <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
+              <Modal
+                className={css.ModalWide}
+                size="500"
+                onContextMenu={(evt: any) => evt.stopPropagation()}
+              >
                 <PdfViewer
                   name={body}
                   src={pdfState.data}
