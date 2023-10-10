@@ -11,7 +11,7 @@ import {
   as,
   config,
 } from 'folds';
-import { Room, RoomMember } from 'matrix-js-sdk';
+import { Room } from 'matrix-js-sdk';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
 
@@ -32,13 +32,11 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
     const [open, setOpen] = useState(false);
     const latestEvent = useRoomLatestRenderedEvent(room);
     const latestEventReaders = useRoomEventReaders(room, latestEvent?.getId());
-    const followingMembers = latestEventReaders
-      .map((readerId) => room.getMember(readerId))
-      .filter((member) => member && member.userId !== mx.getUserId()) as RoomMember[];
-
-    const names = followingMembers.map(
-      (member) => getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId)
-    );
+    const names = latestEventReaders
+      .filter((readerId) => readerId !== mx.getUserId())
+      .map(
+        (readerId) => getMemberDisplayName(room, readerId) ?? getMxIdLocalPart(readerId) ?? readerId
+      );
 
     const eventId = latestEvent?.getId();
 
