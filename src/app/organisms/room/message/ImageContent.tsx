@@ -81,7 +81,11 @@ export const ImageContent = as<'div', ImageContentProps>(
                   clickOutsideDeactivates: true,
                 }}
               >
-                <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
+                <Modal
+                  className={css.ModalWide}
+                  size="500"
+                  onContextMenu={(evt: any) => evt.stopPropagation()}
+                >
                   <ImageViewer
                     src={srcState.data}
                     alt={body}

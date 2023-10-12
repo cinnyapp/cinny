@@ -15,7 +15,7 @@ import {
   as,
   config,
 } from 'folds';
-import { Room, RoomMember } from 'matrix-js-sdk';
+import { Room } from 'matrix-js-sdk';
 import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
 import { getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
@@ -33,12 +33,9 @@ export const EventReaders = as<'div', EventReadersProps>(
   ({ className, room, eventId, requestClose, ...props }, ref) => {
     const mx = useMatrixClient();
     const latestEventReaders = useRoomEventReaders(room, eventId);
-    const followingMembers = latestEventReaders
-      .map((readerId) => room.getMember(readerId))
-      .filter((member) => member) as RoomMember[];
 
-    const getName = (member: RoomMember) =>
-      getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+    const getName = (userId: string) =>
+      getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
 
     return (
       <Box
@@ -58,25 +55,20 @@ export const EventReaders = as<'div', EventReadersProps>(
         <Box grow="Yes">
           <Scroll visibility="Hover" hideTrack size="300">
             <Box className={css.Content} direction="Column">
-              {followingMembers.map((member) => {
-                const name = getName(member);
-                const avatarUrl = member.getAvatarUrl(
-                  mx.baseUrl,
-                  100,
-                  100,
-                  'crop',
-                  undefined,
-                  false
-                );
+              {latestEventReaders.map((readerId) => {
+                const name = getName(readerId);
+                const avatarUrl = room
+                  .getMember(readerId)
+                  ?.getAvatarUrl(mx.baseUrl, 100, 100, 'crop', undefined, false);
 
                 return (
                   <MenuItem
-                    key={member.userId}
+                    key={readerId}
                     style={{ padding: `0 ${config.space.S200}` }}
                     radii="400"
                     onClick={() => {
                       requestClose();
-                      openProfileViewer(member.userId, room.roomId);
+                      openProfileViewer(readerId, room.roomId);
                     }}
                     before={
                       <Avatar size="200">
@@ -85,7 +77,7 @@ export const EventReaders = as<'div', EventReadersProps>(
                         ) : (
                           <AvatarFallback
                             style={{
-                              background: colorMXID(member.userId),
+                              background: colorMXID(readerId),
                               color: 'white',
                             }}
                           >

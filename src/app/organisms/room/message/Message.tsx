@@ -246,7 +246,7 @@ export const MessageSourceCodeItem = as<
             <Modal variant="Surface" size="500">
               <TextViewer
                 name="Source Code"
-                mimeType="application/json"
+                langName="json"
                 text={text}
                 requestClose={handleClose}
               />

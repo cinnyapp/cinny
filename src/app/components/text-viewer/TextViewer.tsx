@@ -4,7 +4,6 @@ import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Scroll, Text, as } from 'folds';
 import { ErrorBoundary } from 'react-error-boundary';
 import * as css from './TextViewer.css';
-import { mimeTypeToExt } from '../../utils/mimeTypes';
 import { copyToClipboard } from '../../utils/dom';
 
 const ReactPrism = lazy(() => import('../../plugins/react-prism/ReactPrism'));
@@ -12,12 +11,12 @@ const ReactPrism = lazy(() => import('../../plugins/react-prism/ReactPrism'));
 export type TextViewerProps = {
   name: string;
   text: string;
-  mimeType: string;
+  langName: string;
   requestClose: () => void;
 };
 
 export const TextViewer = as<'div', TextViewerProps>(
-  ({ className, name, text, mimeType, requestClose, ...props }, ref) => {
+  ({ className, name, text, langName, requestClose, ...props }, ref) => {
     const handleCopy = () => {
       copyToClipboard(text);
     };
@@ -51,10 +50,7 @@ export const TextViewer = as<'div', TextViewerProps>(
           alignItems="Center"
         >
           <Scroll hideTrack variant="Background" visibility="Hover">
-            <Text
-              as="pre"
-              className={classNames(css.TextViewerPre, `language-${mimeTypeToExt(mimeType)}`)}
-            >
+            <Text as="pre" className={classNames(css.TextViewerPre, `language-${langName}`)}>
               <ErrorBoundary fallback={<code>{text}</code>}>
                 <Suspense fallback={<code>{text}</code>}>
                   <ReactPrism>{(codeRef) => <code ref={codeRef}>{text}</code>}</ReactPrism>

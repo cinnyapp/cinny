@@ -23,8 +23,14 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getFileSrcUrl, getSrcFile } from './util';
 import { bytesToSize } from '../../../utils/common';
 import { TextViewer } from '../../../components/text-viewer';
-import { READABLE_TEXT_MIME_TYPES } from '../../../utils/mimeTypes';
+import {
+  READABLE_EXT_TO_MIME_TYPE,
+  READABLE_TEXT_MIME_TYPES,
+  getFileNameExt,
+  mimeTypeToExt,
+} from '../../../utils/mimeTypes';
 import { PdfViewer } from '../../../components/Pdf-viewer';
+import * as css from './styles.css';
 
 export type FileContentProps = {
   body: string;
@@ -94,11 +100,19 @@ function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, '
                 clickOutsideDeactivates: true,
               }}
             >
-              <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
+              <Modal
+                className={css.ModalWide}
+                size="500"
+                onContextMenu={(evt: any) => evt.stopPropagation()}
+              >
                 <TextViewer
                   name={body}
                   text={textState.data}
-                  mimeType={mimeType}
+                  langName={
+                    READABLE_TEXT_MIME_TYPES.includes(mimeType)
+                      ? mimeTypeToExt(mimeType)
+                      : mimeTypeToExt(READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)] ?? mimeType)
+                  }
                   requestClose={() => setTextViewer(false)}
                 />
               </Modal>
@@ -159,7 +173,11 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
                 clickOutsideDeactivates: true,
               }}
             >
-              <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
+              <Modal
+                className={css.ModalWide}
+                size="500"
+                onContextMenu={(evt: any) => evt.stopPropagation()}
+              >
                 <PdfViewer
                   name={body}
                   src={pdfState.data}
@@ -238,7 +256,8 @@ function DownloadFile({ body, mimeType, url, info, encInfo }: FileContentProps) 
 export const FileContent = as<'div', FileContentProps>(
   ({ body, mimeType, url, info, encInfo, ...props }, ref) => (
     <Box direction="Column" gap="300" {...props} ref={ref}>
-      {READABLE_TEXT_MIME_TYPES.includes(mimeType) && (
+      {(READABLE_TEXT_MIME_TYPES.includes(mimeType) ||
+        READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)]) && (
         <ReadTextFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} />
       )}
       {mimeType === 'application/pdf' && (
