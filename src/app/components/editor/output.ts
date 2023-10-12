@@ -1,7 +1,8 @@
 import { Descendant, Text } from 'slate';
+
 import { sanitizeText } from '../../utils/sanitize';
 import { BlockType } from './Elements';
-import { CustomElement, FormattedText } from './slate';
+import { CustomElement } from './slate';
 import { parseInlineMD } from '../../utils/markdown';
 
 export type OutputOptions = {
@@ -9,7 +10,7 @@ export type OutputOptions = {
   allowMarkdown?: boolean;
 };
 
-const textToCustomHtml = (node: FormattedText, opts: OutputOptions): string => {
+const textToCustomHtml = (node: Text, opts: OutputOptions): string => {
   let string = sanitizeText(node.text);
   if (opts.allowTextFormatting) {
     if (node.bold) string = `<strong>${string}</strong>`;
@@ -47,6 +48,7 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
       return `<ol>${children}</ol>`;
     case BlockType.UnorderedList:
       return `<ul>${children}</ul>`;
+
     case BlockType.Mention:
       return `<a href="https://matrix.to/#/${node.id}">${node.name}</a>`;
     case BlockType.Emoticon:

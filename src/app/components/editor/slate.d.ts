@@ -23,13 +23,9 @@ export type FormattedText = Text & {
 export type LinkElement = {
   type: BlockType.Link;
   href: string;
-  children: FormattedText[];
+  children: Text[];
 };
-export type SpoilerElement = {
-  type: 'spoiler';
-  alert?: string;
-  children: FormattedText[];
-};
+
 export type MentionElement = {
   type: BlockType.Mention;
   id: string;
@@ -44,14 +40,16 @@ export type EmoticonElement = {
   children: Text[];
 };
 
+export type InlineElement = Text | LinkElement | MentionElement | EmoticonElement;
+
 export type ParagraphElement = {
   type: BlockType.Paragraph;
-  children: FormattedText[];
+  children: InlineElement[];
 };
 export type HeadingElement = {
   type: BlockType.Heading;
   level: HeadingLevel;
-  children: FormattedText[];
+  children: InlineElement[];
 };
 export type CodeLineElement = {
   type: BlockType.CodeLine;
@@ -63,7 +61,7 @@ export type CodeBlockElement = {
 };
 export type QuoteLineElement = {
   type: BlockType.QuoteLine;
-  children: FormattedText[];
+  children: InlineElement[];
 };
 export type BlockQuoteElement = {
   type: BlockType.BlockQuote;
@@ -71,7 +69,7 @@ export type BlockQuoteElement = {
 };
 export type ListItemElement = {
   type: BlockType.ListItem;
-  children: FormattedText[];
+  children: InlineElement[];
 };
 export type OrderedListElement = {
   type: BlockType.OrderedList;
@@ -84,7 +82,6 @@ export type UnorderedListElement = {
 
 export type CustomElement =
   | LinkElement
-  // | SpoilerElement
   | MentionElement
   | EmoticonElement
   | ParagraphElement

@@ -28,6 +28,15 @@ export const isRoomId = (id: string): boolean => validMxId(id) && id.startsWith(
 
 export const isRoomAlias = (id: string): boolean => validMxId(id) && id.startsWith('#');
 
+export const parseMatrixToUrl = (url: string): [string | undefined, string | undefined] => {
+  const href = decodeURIComponent(url);
+
+  const match = href.match(/^https?:\/\/matrix.to\/#\/([@!$+#]\S+:[^\\?|^\s|^\\/]+)(\?(via=\S+))?/);
+  if (!match) return [undefined, undefined];
+  const [, g1AsMxId, , g3AsVia] = match;
+  return [g1AsMxId, g3AsVia];
+};
+
 export const getRoomWithCanonicalAlias = (mx: MatrixClient, alias: string): Room | undefined =>
   mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias);
 
