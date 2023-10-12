@@ -36,7 +36,7 @@ const elementToTextMark = (node: Element): MarkType | undefined => {
   const markType = markNodeToType[node.name];
   if (!markType) return undefined;
 
-  if (markType === MarkType.Spoiler && !node.attribs['data-mx-spoiler']) {
+  if (markType === MarkType.Spoiler && node.attribs['data-mx-spoiler'] === undefined) {
     return undefined;
   }
   if (
@@ -61,7 +61,7 @@ const parseNodeText = (node: ChildNode): string => {
 };
 
 const elementToInlineNode = (node: Element): MentionElement | EmoticonElement | undefined => {
-  if (node.name === 'img' && node.attribs['data-mx-emoticon']) {
+  if (node.name === 'img' && node.attribs['data-mx-emoticon'] !== undefined) {
     const { href, alt } = node.attribs;
     if (!href) return undefined;
     return createEmoticonElement(href, alt || 'Unknown Emoji');
@@ -85,7 +85,7 @@ const parseInlineNodes = (node: ChildNode): InlineElement[] => {
     const markType = elementToTextMark(node);
     if (markType) {
       const children = node.children.flatMap(parseInlineNodes);
-      if (node.attribs['data-md']) {
+      if (node.attribs['data-md'] !== undefined) {
         children.unshift({ text: node.attribs['data-md'] });
         children.push({ text: node.attribs['data-md'] });
       } else {
