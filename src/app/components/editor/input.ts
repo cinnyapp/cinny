@@ -299,3 +299,11 @@ export const htmlToEditorInput = (unsafeHtml: string) => {
   const editorNodes = domToEditorInput(domNodes);
   return editorNodes;
 };
+
+export const plainToHtmlInput = (text: string) => {
+  const editorNodes = text.split('\n').map((line) => ({
+    type: BlockType.Paragraph,
+    text: line,
+  }));
+  return editorNodes;
+};
