@@ -50,7 +50,7 @@ const withVoid = (editor: Editor): Editor => {
 };
 
 export const useEditor = (): Editor => {
-  const [editor] = useState(withInline(withVoid(withReact(withHistory(createEditor())))));
+  const [editor] = useState(() => withInline(withVoid(withReact(withHistory(createEditor())))));
   return editor;
 };
 

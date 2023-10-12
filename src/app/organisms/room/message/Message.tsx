@@ -32,7 +32,7 @@ import React, {
   useState,
 } from 'react';
 import FocusTrap from 'focus-trap-react';
-import { MatrixEvent, Room } from 'matrix-js-sdk';
+import { MatrixClient, MatrixEvent, MsgType, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
 import {
@@ -56,8 +56,17 @@ import { TextViewer } from '../../../components/text-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
+import { MessageEditor } from './MessageEditor';
+import { MessageEvent } from '../../../../types/matrix/room';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
+
+export const canEditEvent = (mx: MatrixClient, mEvent: MatrixEvent) =>
+  mEvent.getSender() === mx.getUserId() &&
+  mEvent.getType() === MessageEvent.RoomMessage &&
+  (mEvent.getContent().msgtype === MsgType.Text ||
+    mEvent.getContent().msgtype === MsgType.Emote ||
+    mEvent.getContent().msgtype === MsgType.Notice);
 
 type MessageQuickReactionsProps = {
   onReaction: ReactionHandler;
@@ -579,6 +588,7 @@ export const Message = as<'div', MessageProps>(
     const senderId = mEvent.getSender() ?? '';
     const [hover, setHover] = useState(false);
     const [menu, setMenu] = useState(false);
+    const [edit, setEdit] = useState(false);
     const [emojiBoard, setEmojiBoard] = useState(false);
 
     const senderDisplayName =
@@ -644,7 +654,20 @@ export const Message = as<'div', MessageProps>(
     const msgContentJSX = (
       <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
         {reply}
-        {children}
+        {edit ? (
+          <MessageEditor
+            style={{
+              maxWidth: '100%',
+              width: '100vw',
+            }}
+            roomId={room.roomId}
+            mEvent={mEvent}
+            imagePackRooms={imagePackRooms}
+            onCancel={() => setEdit(false)}
+          />
+        ) : (
+          children
+        )}
         {reactions}
       </Box>
     );
@@ -677,7 +700,7 @@ export const Message = as<'div', MessageProps>(
         onMouseLeave={hideOptions}
         ref={ref}
       >
-        {(hover || menu || emojiBoard) && (
+        {!edit && (hover || menu || emojiBoard) && (
           <div className={css.MessageOptionsBase}>
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
               <Box gap="100">
@@ -728,6 +751,16 @@ export const Message = as<'div', MessageProps>(
                 >
                   <Icon src={Icons.ReplyArrow} size="100" />
                 </IconButton>
+                {canEditEvent(mx, mEvent) && (
+                  <IconButton
+                    onClick={() => setEdit(true)}
+                    variant="SurfaceVariant"
+                    size="300"
+                    radii="300"
+                  >
+                    <Icon src={Icons.Pencil} size="100" />
+                  </IconButton>
+                )}
                 <PopOut
                   open={menu}
                   alignOffset={-5}
@@ -801,6 +834,27 @@ export const Message = as<'div', MessageProps>(
                               Reply
                             </Text>
                           </MenuItem>
+                          {canEditEvent(mx, mEvent) && (
+                            <MenuItem
+                              size="300"
+                              after={<Icon size="100" src={Icons.Pencil} />}
+                              radii="300"
+                              data-event-id={mEvent.getId()}
+                              onClick={() => {
+                                setEdit(true);
+                                closeMenu();
+                              }}
+                            >
+                              <Text
+                                className={css.MessageMenuItemText}
+                                as="span"
+                                size="T300"
+                                truncate
+                              >
+                                Edit Message
+                              </Text>
+                            </MenuItem>
+                          )}
                           <MessageReadReceiptItem
                             room={room}
                             eventId={mEvent.getId() ?? ''}
