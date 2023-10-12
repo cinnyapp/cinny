@@ -55,7 +55,7 @@ const parseNodeText = (node: ChildNode): string => {
     return node.data;
   }
   if (isTag(node)) {
-    node.children.map((child) => parseNodeText(child)).join('');
+    return node.children.map((child) => parseNodeText(child)).join('');
   }
   return '';
 };
@@ -85,11 +85,16 @@ const parseInlineNodes = (node: ChildNode): InlineElement[] => {
     const markType = elementToTextMark(node);
     if (markType) {
       const children = node.children.flatMap(parseInlineNodes);
-      children.forEach((child) => {
-        if (Text.isText(child)) {
-          child[markType] = true;
-        }
-      });
+      if (node.attribs['data-md']) {
+        children.unshift({ text: node.attribs['data-md'] });
+        children.push({ text: node.attribs['data-md'] });
+      } else {
+        children.forEach((child) => {
+          if (Text.isText(child)) {
+            child[markType] = true;
+          }
+        });
+      }
       return children;
     }
 
@@ -97,7 +102,9 @@ const parseInlineNodes = (node: ChildNode): InlineElement[] => {
     if (inlineNode) return [inlineNode];
 
     if (node.name === 'a') {
-      return node.childNodes.flatMap(parseInlineNodes);
+      const children = node.childNodes.flatMap(parseInlineNodes);
+      children.unshift({ text: '[' });
+      children.push({ text: `](${node.attribs.href})` });
     }
 
     return node.childNodes.flatMap(parseInlineNodes);
@@ -153,7 +160,7 @@ const parseBlockquoteNode = (node: Element): BlockQuoteElement => {
 const parseCodeBlockNode = (node: Element): CodeBlockElement => {
   const children: CodeLineElement[] = [];
 
-  const code = parseNodeText(node);
+  const code = parseNodeText(node).trim();
   code.split('\n').forEach((lineTxt) =>
     children.push({
       type: BlockType.CodeLine,
