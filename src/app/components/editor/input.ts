@@ -62,9 +62,9 @@ const parseNodeText = (node: ChildNode): string => {
 
 const elementToInlineNode = (node: Element): MentionElement | EmoticonElement | undefined => {
   if (node.name === 'img' && node.attribs['data-mx-emoticon'] !== undefined) {
-    const { href, alt } = node.attribs;
-    if (!href) return undefined;
-    return createEmoticonElement(href, alt || 'Unknown Emoji');
+    const { src, alt } = node.attribs;
+    if (!src) return undefined;
+    return createEmoticonElement(src, alt || 'Unknown Emoji');
   }
   if (node.name === 'a') {
     const { href } = node.attribs;
