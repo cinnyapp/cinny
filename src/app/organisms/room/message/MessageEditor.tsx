@@ -18,7 +18,7 @@ import {
   getPrevWorldRange,
   htmlToEditorInput,
   moveCursor,
-  plainToHtmlInput,
+  plainToEditorInput,
   useEditor,
 } from '../../../components/editor';
 import { useSetting } from '../../../state/hooks/settings';
@@ -70,7 +70,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
       const initialValue =
         typeof customHtml === 'string'
           ? htmlToEditorInput(customHtml)
-          : plainToHtmlInput(typeof body === 'string' ? body : '');
+          : plainToEditorInput(typeof body === 'string' ? body : '');
 
       Transforms.select(editor, {
         anchor: Editor.start(editor, []),

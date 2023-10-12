@@ -16,6 +16,7 @@ import {
   ListItemElement,
   MentionElement,
   OrderedListElement,
+  ParagraphElement,
   QuoteLineElement,
   UnorderedListElement,
 } from './slate';
@@ -300,7 +301,7 @@ export const domToEditorInput = (domNodes: ChildNode[]): Descendant[] => {
   return children;
 };
 
-export const htmlToEditorInput = (unsafeHtml: string) => {
+export const htmlToEditorInput = (unsafeHtml: string): Descendant[] => {
   const sanitizedHtml = sanitizeCustomHtml(unsafeHtml);
 
   const domNodes = parse(sanitizedHtml);
@@ -308,10 +309,17 @@ export const htmlToEditorInput = (unsafeHtml: string) => {
   return editorNodes;
 };
 
-export const plainToHtmlInput = (text: string) => {
-  const editorNodes = text.split('\n').map((line) => ({
-    type: BlockType.Paragraph,
-    text: line,
-  }));
+export const plainToEditorInput = (text: string): Descendant[] => {
+  const editorNodes: Descendant[] = text.split('\n').map((lineText) => {
+    const paragraphNode: ParagraphElement = {
+      type: BlockType.Paragraph,
+      children: [
+        {
+          text: lineText,
+        },
+      ],
+    };
+    return paragraphNode;
+  });
   return editorNodes;
 };
