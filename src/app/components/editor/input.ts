@@ -105,6 +105,7 @@ const parseInlineNodes = (node: ChildNode): InlineElement[] => {
       const children = node.childNodes.flatMap(parseInlineNodes);
       children.unshift({ text: '[' });
       children.push({ text: `](${node.attribs.href})` });
+      return children;
     }
 
     return node.childNodes.flatMap(parseInlineNodes);
