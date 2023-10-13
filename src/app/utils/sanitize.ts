@@ -65,8 +65,10 @@ const permittedTagToAttributes = {
   code: ['class', 'data-md'],
   strong: ['data-md'],
   i: ['data-md'],
+  em: ['data-md'],
   u: ['data-md'],
   s: ['data-md'],
+  del: ['data-md'],
 };
 
 const transformFontTag: Transformer = (tagName, attribs) => ({
