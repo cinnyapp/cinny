@@ -2,12 +2,15 @@ import { IconName, IconSrc } from 'folds';
 
 import {
   EventTimeline,
+  EventTimelineSet,
+  EventType,
   IPushRule,
   IPushRules,
   JoinRule,
   MatrixClient,
   MatrixEvent,
   NotificationCountType,
+  RelationType,
   Room,
 } from 'matrix-js-sdk';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
@@ -301,3 +304,31 @@ export const getReactionContent = (eventId: string, key: string, shortcode?: str
   },
   shortcode,
 });
+
+export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string) =>
+  timelineSet.relations.getChildEventsForEvent(
+    eventId,
+    RelationType.Annotation,
+    EventType.Reaction
+  );
+
+export const getEventEdits = (timelineSet: EventTimelineSet, eventId: string, eventType: string) =>
+  timelineSet.relations.getChildEventsForEvent(eventId, RelationType.Replace, eventType);
+
+export const getLatestEdit = (
+  targetEvent: MatrixEvent,
+  editEvents: MatrixEvent[]
+): MatrixEvent | undefined => {
+  const eventByTargetSender = (rEvent: MatrixEvent) =>
+    rEvent.getSender() === targetEvent.getSender();
+  return editEvents.sort((m1, m2) => m2.getTs() - m1.getTs()).find(eventByTargetSender);
+};
+
+export const getEditedEvent = (
+  mEventId: string,
+  mEvent: MatrixEvent,
+  timelineSet: EventTimelineSet
+): MatrixEvent | undefined => {
+  const edits = getEventEdits(timelineSet, mEventId, mEvent.getType());
+  return edits && getLatestEdit(mEvent, edits.getRelations());
+};

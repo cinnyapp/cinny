@@ -15,11 +15,9 @@ import {
   EventTimeline,
   EventTimelineSet,
   EventTimelineSetHandlerMap,
-  EventType,
   IEncryptedFile,
   MatrixClient,
   MatrixEvent,
-  RelationType,
   Room,
   RoomEvent,
   RoomEventHandlerMap,
@@ -53,7 +51,6 @@ import {
   getMxIdLocalPart,
   isRoomId,
   isUserId,
-  matrixEventByRecency,
 } from '../../utils/matrix';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -81,6 +78,8 @@ import {
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
   decryptAllTimelineEvent,
+  getEditedEvent,
+  getEventReactions,
   getMemberDisplayName,
   getReactionContent,
   isMembershipChanged,
@@ -224,34 +223,6 @@ export const getEventIdAbsoluteIndex = (
     .slice(0, timelineIndex)
     .reduce((accValue, timeline) => timeline.getEvents().length + accValue, 0);
   return baseIndex + eventIndex;
-};
-
-export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string) =>
-  timelineSet.relations.getChildEventsForEvent(
-    eventId,
-    RelationType.Annotation,
-    EventType.Reaction
-  );
-
-export const getEventEdits = (timelineSet: EventTimelineSet, eventId: string, eventType: string) =>
-  timelineSet.relations.getChildEventsForEvent(eventId, RelationType.Replace, eventType);
-
-export const getLatestEdit = (
-  targetEvent: MatrixEvent,
-  editEvents: MatrixEvent[]
-): MatrixEvent | undefined => {
-  const eventByTargetSender = (rEvent: MatrixEvent) =>
-    rEvent.getSender() === targetEvent.getSender();
-  return editEvents.sort(matrixEventByRecency).find(eventByTargetSender);
-};
-
-export const getEditedEvent = (
-  mEventId: string,
-  mEvent: MatrixEvent,
-  timelineSet: EventTimelineSet
-): MatrixEvent | undefined => {
-  const edits = getEventEdits(timelineSet, mEventId, mEvent.getType());
-  return edits && getLatestEdit(mEvent, edits.getRelations());
 };
 
 export const factoryGetFileSrcUrl =
@@ -483,6 +454,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const myPowerLevel = getPowerLevel(mx.getUserId() ?? '');
   const canRedact = canDoAction('redact', myPowerLevel);
   const canSendReaction = canSendEvent(MessageEvent.Reaction, myPowerLevel);
+  const [editId, setEditId] = useState<string>();
 
   const imagePackRooms: Room[] = useMemo(() => {
     const allParentSpaces = [
@@ -1159,6 +1131,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           messageLayout={messageLayout}
           collapse={collapse}
           highlight={highlighted}
+          edit={editId === mEventId}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           canSendReaction={canSendReaction}
           imagePackRooms={imagePackRooms}
@@ -1167,6 +1140,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
           onReactionToggle={handleReactionToggle}
+          onEditId={setEditId}
           reply={
             replyEventId && (
               <Reply
@@ -1214,6 +1188,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           messageLayout={messageLayout}
           collapse={collapse}
           highlight={highlighted}
+          edit={editId === mEventId}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           canSendReaction={canSendReaction}
           imagePackRooms={imagePackRooms}
@@ -1222,6 +1197,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
           onReactionToggle={handleReactionToggle}
+          onEditId={setEditId}
           reply={
             replyEventId && (
               <Reply

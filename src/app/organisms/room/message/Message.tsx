@@ -546,6 +546,7 @@ export type MessageProps = {
   mEvent: MatrixEvent;
   collapse: boolean;
   highlight: boolean;
+  edit?: boolean;
   canDelete?: boolean;
   canSendReaction?: boolean;
   imagePackRooms?: Room[];
@@ -555,6 +556,7 @@ export type MessageProps = {
   onUserClick: MouseEventHandler<HTMLButtonElement>;
   onUsernameClick: MouseEventHandler<HTMLButtonElement>;
   onReplyClick: MouseEventHandler<HTMLButtonElement>;
+  onEditId?: (eventId?: string) => void;
   onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
   reply?: ReactNode;
   reactions?: ReactNode;
@@ -567,6 +569,7 @@ export const Message = as<'div', MessageProps>(
       mEvent,
       collapse,
       highlight,
+      edit,
       canDelete,
       canSendReaction,
       imagePackRooms,
@@ -577,6 +580,7 @@ export const Message = as<'div', MessageProps>(
       onUsernameClick,
       onReplyClick,
       onReactionToggle,
+      onEditId,
       reply,
       reactions,
       children,
@@ -588,7 +592,6 @@ export const Message = as<'div', MessageProps>(
     const senderId = mEvent.getSender() ?? '';
     const [hover, setHover] = useState(false);
     const [menu, setMenu] = useState(false);
-    const [edit, setEdit] = useState(false);
     const [emojiBoard, setEmojiBoard] = useState(false);
 
     const senderDisplayName =
@@ -654,16 +657,17 @@ export const Message = as<'div', MessageProps>(
     const msgContentJSX = (
       <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
         {reply}
-        {edit ? (
+        {edit && onEditId ? (
           <MessageEditor
             style={{
               maxWidth: '100%',
               width: '100vw',
             }}
             roomId={room.roomId}
+            room={room}
             mEvent={mEvent}
             imagePackRooms={imagePackRooms}
-            onCancel={() => setEdit(false)}
+            onCancel={() => onEditId()}
           />
         ) : (
           children
@@ -751,9 +755,9 @@ export const Message = as<'div', MessageProps>(
                 >
                   <Icon src={Icons.ReplyArrow} size="100" />
                 </IconButton>
-                {canEditEvent(mx, mEvent) && (
+                {canEditEvent(mx, mEvent) && onEditId && (
                   <IconButton
-                    onClick={() => setEdit(true)}
+                    onClick={() => onEditId(mEvent.getId())}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
@@ -834,14 +838,14 @@ export const Message = as<'div', MessageProps>(
                               Reply
                             </Text>
                           </MenuItem>
-                          {canEditEvent(mx, mEvent) && (
+                          {canEditEvent(mx, mEvent) && onEditId && (
                             <MenuItem
                               size="300"
                               after={<Icon size="100" src={Icons.Pencil} />}
                               radii="300"
                               data-event-id={mEvent.getId()}
                               onClick={() => {
-                                setEdit(true);
+                                onEditId(mEvent.getId());
                                 closeMenu();
                               }}
                             >

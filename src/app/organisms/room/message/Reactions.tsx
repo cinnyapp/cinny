@@ -12,7 +12,7 @@ import {
   toRem,
 } from 'folds';
 import classNames from 'classnames';
-import { EventTimelineSet, EventType, RelationType, Room } from 'matrix-js-sdk';
+import { Room } from 'matrix-js-sdk';
 import { type Relations } from 'matrix-js-sdk/lib/models/relations';
 import FocusTrap from 'focus-trap-react';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -21,13 +21,6 @@ import { Reaction, ReactionTooltipMsg } from '../../../components/message';
 import { useRelations } from '../../../hooks/useRelations';
 import * as css from './styles.css';
 import { ReactionViewer } from '../reaction-viewer';
-
-export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string) =>
-  timelineSet.relations.getChildEventsForEvent(
-    eventId,
-    RelationType.Annotation,
-    EventType.Reaction
-  );
 
 export type ReactionsProps = {
   room: Room;

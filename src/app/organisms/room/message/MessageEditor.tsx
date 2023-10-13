@@ -1,8 +1,8 @@
 import React, { KeyboardEventHandler, useCallback, useEffect, useState } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Line, PopOut, Text, as, config } from 'folds';
+import { Box, Chip, Icon, IconButton, Icons, Line, PopOut, Spinner, Text, as, config } from 'folds';
 import { Editor, Transforms } from 'slate';
 import { ReactEditor } from 'slate-react';
-import { IContent, MatrixEvent, Room } from 'matrix-js-sdk';
+import { IContent, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
 import isHotkey from 'is-hotkey';
 import {
   AUTOCOMPLETE_PREFIXES,
@@ -14,41 +14,91 @@ import {
   Toolbar,
   UserMentionAutocomplete,
   createEmoticonElement,
+  customHtmlEqualsPlainText,
   getAutocompleteQuery,
   getPrevWorldRange,
   htmlToEditorInput,
   moveCursor,
   plainToEditorInput,
+  toMatrixCustomHTML,
+  toPlainText,
+  trimCustomHtml,
   useEditor,
 } from '../../../components/editor';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { EmojiBoard } from '../../../components/emoji-board';
+import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { getEditedEvent } from '../../../utils/room';
 
 type MessageEditorProps = {
   roomId: string;
+  room: Room;
   mEvent: MatrixEvent;
   imagePackRooms?: Room[];
   onCancel: () => void;
 };
 export const MessageEditor = as<'div', MessageEditorProps>(
-  ({ roomId, mEvent, imagePackRooms, onCancel, ...props }, ref) => {
+  ({ room, roomId, mEvent, imagePackRooms, onCancel, ...props }, ref) => {
+    const mx = useMatrixClient();
     const editor = useEditor();
     const [globalToolbar] = useSetting(settingsAtom, 'editorToolbar');
+    const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const [toolbar, setToolbar] = useState(globalToolbar);
 
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
 
+    const [saveState, save] = useAsyncCallback(
+      useCallback(async () => {
+        const plainText = toPlainText(editor.children).trim();
+        const customHtml = trimCustomHtml(
+          toMatrixCustomHTML(editor.children, {
+            allowTextFormatting: true,
+            allowMarkdown: isMarkdown,
+          })
+        );
+
+        if (plainText === '') return undefined;
+
+        const newContent: IContent = {
+          msgtype: mEvent.getContent().msgtype,
+          body: plainText,
+        };
+
+        if (!customHtmlEqualsPlainText(customHtml, plainText)) {
+          newContent.format = 'org.matrix.custom.html';
+          newContent.formatted_body = customHtml;
+        }
+
+        const content: IContent = {
+          ...newContent,
+          body: `* ${plainText}`,
+          'm.new_content': newContent,
+          'm.relates_to': {
+            event_id: mEvent.getId(),
+            rel_type: RelationType.Replace,
+          },
+        };
+
+        return mx.sendMessage(roomId, content);
+      }, [mx, editor, roomId, mEvent, isMarkdown])
+    );
+
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
+        if (isHotkey('enter', evt)) {
+          evt.preventDefault();
+          save();
+        }
         if (isHotkey('escape', evt)) {
           evt.preventDefault();
           onCancel();
         }
       },
-      [onCancel]
+      [onCancel, save]
     );
 
     const handleKeyUp: KeyboardEventHandler = useCallback(() => {
@@ -65,8 +115,14 @@ export const MessageEditor = as<'div', MessageEditorProps>(
     };
 
     useEffect(() => {
-      // FIXME: take latest message if edited
-      const { body, formatted_body: customHtml } = mEvent.getContent<IContent>();
+      const evtId = mEvent.getId()!;
+      const evtTimeline = room.getTimelineForEvent(evtId);
+      const editedEvent =
+        evtTimeline && getEditedEvent(evtId, mEvent, evtTimeline.getTimelineSet());
+
+      const { body, formatted_body: customHtml }: Record<string, unknown> =
+        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+
       const initialValue =
         typeof customHtml === 'string'
           ? htmlToEditorInput(customHtml)
@@ -79,7 +135,13 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
       editor.insertFragment(initialValue);
       ReactEditor.focus(editor);
-    }, [editor, mEvent]);
+    }, [editor, room, mEvent]);
+
+    useEffect(() => {
+      if (saveState.status === AsyncStatus.Success) {
+        onCancel();
+      }
+    }, [saveState, onCancel]);
 
     return (
       <div {...props} ref={ref}>
@@ -116,12 +178,23 @@ export const MessageEditor = as<'div', MessageEditorProps>(
             <>
               <Box
                 style={{ padding: config.space.S200, paddingTop: 0 }}
-                alignItems="Center"
+                alignItems="End"
                 justifyContent="SpaceBetween"
                 gap="100"
               >
-                <Box gap="200">
-                  <Chip variant="Primary" radii="Pill" outlined>
+                <Box gap="Inherit">
+                  <Chip
+                    onClick={save}
+                    variant="Primary"
+                    radii="Pill"
+                    disabled={saveState.status === AsyncStatus.Loading}
+                    outlined
+                    before={
+                      saveState.status === AsyncStatus.Loading ? (
+                        <Spinner variant="Primary" fill="Soft" size="100" />
+                      ) : undefined
+                    }
+                  >
                     <Text size="B300">Save</Text>
                   </Chip>
                   <Chip onClick={onCancel} variant="SurfaceVariant" radii="Pill">
@@ -135,7 +208,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                     radii="300"
                     onClick={() => setToolbar(!toolbar)}
                   >
-                    <Icon size="100" src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
+                    <Icon size="400" src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
                   </IconButton>
                   <UseStateProvider initial={false}>
                     {(emojiBoard: boolean, setEmojiBoard) => (
@@ -166,7 +239,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                             size="300"
                             radii="300"
                           >
-                            <Icon size="100" src={Icons.Smile} filled={emojiBoard} />
+                            <Icon size="400" src={Icons.Smile} filled={emojiBoard} />
                           </IconButton>
                         )}
                       </PopOut>
