@@ -27,8 +27,10 @@ const markNodeToType: Record<string, MarkType> = {
   b: MarkType.Bold,
   strong: MarkType.Bold,
   i: MarkType.Italic,
+  em: MarkType.Italic,
   u: MarkType.Underline,
   s: MarkType.StrikeThrough,
+  del: MarkType.StrikeThrough,
   code: MarkType.Code,
   span: MarkType.Spoiler,
 };

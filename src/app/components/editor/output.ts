@@ -16,7 +16,7 @@ const textToCustomHtml = (node: Text, opts: OutputOptions): string => {
     if (node.bold) string = `<strong>${string}</strong>`;
     if (node.italic) string = `<i>${string}</i>`;
     if (node.underline) string = `<u>${string}</u>`;
-    if (node.strikeThrough) string = `<s>${string}</s>`;
+    if (node.strikeThrough) string = `<del>${string}</del>`;
     if (node.code) string = `<code>${string}</code>`;
     if (node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
   }

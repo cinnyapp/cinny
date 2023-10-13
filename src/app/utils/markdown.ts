@@ -83,7 +83,7 @@ const StrikeRule: MDRule = {
   match: (text) => text.match(STRIKE_REG_1),
   html: (parse, match) => {
     const [, g1] = match;
-    return `<s data-md="${STRIKE_MD_1}">${parse(g1)}</s>`;
+    return `<del data-md="${STRIKE_MD_1}">${parse(g1)}</del>`;
   },
 };
 
