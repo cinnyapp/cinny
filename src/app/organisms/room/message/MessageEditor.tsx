@@ -101,13 +101,23 @@ export const MessageEditor = as<'div', MessageEditorProps>(
       [onCancel, save]
     );
 
-    const handleKeyUp: KeyboardEventHandler = useCallback(() => {
-      const prevWordRange = getPrevWorldRange(editor);
-      const query = prevWordRange
-        ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
-        : undefined;
-      setAutocompleteQuery(query);
-    }, [editor]);
+    const handleKeyUp: KeyboardEventHandler = useCallback(
+      (evt) => {
+        if (isHotkey('escape', evt)) {
+          evt.preventDefault();
+          return;
+        }
+
+        const prevWordRange = getPrevWorldRange(editor);
+        const query = prevWordRange
+          ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
+          : undefined;
+        setAutocompleteQuery(query);
+      },
+      [editor]
+    );
+
+    const handleCloseAutocomplete = useCallback(() => setAutocompleteQuery(undefined), []);
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
@@ -150,7 +160,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
             roomId={roomId}
             editor={editor}
             query={autocompleteQuery}
-            requestClose={() => setAutocompleteQuery(undefined)}
+            requestClose={handleCloseAutocomplete}
           />
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
@@ -158,7 +168,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
             roomId={roomId}
             editor={editor}
             query={autocompleteQuery}
-            requestClose={() => setAutocompleteQuery(undefined)}
+            requestClose={handleCloseAutocomplete}
           />
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.Emoticon && (
@@ -166,7 +176,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
             imagePackRooms={imagePackRooms || []}
             editor={editor}
             query={autocompleteQuery}
-            requestClose={() => setAutocompleteQuery(undefined)}
+            requestClose={handleCloseAutocomplete}
           />
         )}
         <CustomEditor

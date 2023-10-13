@@ -321,19 +321,29 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       [submit, editor, setReplyDraft]
     );
 
-    const handleKeyUp: KeyboardEventHandler = useCallback(() => {
-      const firstChildren = editor.children[0];
-      if (firstChildren && Element.isElement(firstChildren)) {
-        const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
-        sendTypingStatus(!isEmpty);
-      }
+    const handleKeyUp: KeyboardEventHandler = useCallback(
+      (evt) => {
+        if (isHotkey('escape', evt)) {
+          evt.preventDefault();
+          return;
+        }
 
-      const prevWordRange = getPrevWorldRange(editor);
-      const query = prevWordRange
-        ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
-        : undefined;
-      setAutocompleteQuery(query);
-    }, [editor, sendTypingStatus]);
+        const firstChildren = editor.children[0];
+        if (firstChildren && Element.isElement(firstChildren)) {
+          const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
+          sendTypingStatus(!isEmpty);
+        }
+
+        const prevWordRange = getPrevWorldRange(editor);
+        const query = prevWordRange
+          ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
+          : undefined;
+        setAutocompleteQuery(query);
+      },
+      [editor, sendTypingStatus]
+    );
+
+    const handleCloseAutocomplete = useCallback(() => setAutocompleteQuery(undefined), []);
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
@@ -419,7 +429,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             roomId={roomId}
             editor={editor}
             query={autocompleteQuery}
-            requestClose={() => setAutocompleteQuery(undefined)}
+            requestClose={handleCloseAutocomplete}
           />
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
@@ -427,7 +437,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             roomId={roomId}
             editor={editor}
             query={autocompleteQuery}
-            requestClose={() => setAutocompleteQuery(undefined)}
+            requestClose={handleCloseAutocomplete}
           />
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.Emoticon && (
@@ -435,7 +445,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             imagePackRooms={imagePackRooms}
             editor={editor}
             query={autocompleteQuery}
-            requestClose={() => setAutocompleteQuery(undefined)}
+            requestClose={handleCloseAutocomplete}
           />
         )}
         <CustomEditor
