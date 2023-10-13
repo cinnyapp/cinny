@@ -43,6 +43,7 @@ import {
   config,
   toRem,
 } from 'folds';
+import isHotkey from 'is-hotkey';
 import Linkify from 'linkify-react';
 import {
   decryptFile,
@@ -56,7 +57,7 @@ import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
-import { scrollToBottom } from '../../utils/dom';
+import { editableActiveElement, scrollToBottom } from '../../utils/dom';
 import {
   DefaultPlaceholder,
   CompactPlaceholder,
@@ -77,9 +78,11 @@ import {
 } from '../../components/message';
 import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
+  canEditEvent,
   decryptAllTimelineEvent,
   getEditedEvent,
   getEventReactions,
+  getLatestEditableEvt,
   getMemberDisplayName,
   getReactionContent,
   isMembershipChanged,
@@ -123,11 +126,12 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import * as css from './RoomTimeline.css';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
-import { createMentionElement, moveCursor } from '../../components/editor';
+import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
 import { roomIdToReplyDraftAtomFamily } from '../../state/roomInputDrafts';
 import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { MessageEvent } from '../../../types/matrix/room';
 import initMatrix from '../../../client/initMatrix';
+import { useKeyDown } from '../../hooks/useKeyDown';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -672,6 +676,36 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       [getScrollElement]
     ),
     useCallback(() => atBottomAnchorRef.current, [])
+  );
+
+  // Handle up arrow edit
+  useKeyDown(
+    window,
+    useCallback(
+      (evt) => {
+        if (
+          isHotkey('arrowup', evt) &&
+          editableActiveElement() &&
+          document.activeElement?.getAttribute('data-editable-name') === 'RoomInput' &&
+          isEmptyEditor(editor)
+        ) {
+          const editableEvt = getLatestEditableEvt(room.getLiveTimeline(), (mEvt) =>
+            canEditEvent(mx, mEvt)
+          );
+          const editableEvtId = editableEvt?.getId();
+          if (!editableEvtId) return;
+
+          const editMsgElement = scrollRef.current?.querySelector(
+            `[data-message-id="${editableEvtId}"]`
+          ) as HTMLElement | null;
+
+          if (editMsgElement) {
+            setEditId(editableEvtId);
+          }
+        }
+      },
+      [mx, room, editor]
+    )
   );
 
   useEffect(() => {

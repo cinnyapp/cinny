@@ -12,7 +12,7 @@ import { useAtom } from 'jotai';
 import isHotkey from 'is-hotkey';
 import { EventType, IContent, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
-import { Transforms, Range, Editor, Element } from 'slate';
+import { Transforms, Range, Editor } from 'slate';
 import {
   Box,
   Dialog,
@@ -51,6 +51,7 @@ import {
   resetEditorHistory,
   customHtmlEqualsPlainText,
   trimCustomHtml,
+  isEmptyEditor,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -328,11 +329,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           return;
         }
 
-        const firstChildren = editor.children[0];
-        if (firstChildren && Element.isElement(firstChildren)) {
-          const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
-          sendTypingStatus(!isEmpty);
-        }
+        sendTypingStatus(!isEmptyEditor(editor));
 
         const prevWordRange = getPrevWorldRange(editor);
         const query = prevWordRange
@@ -449,6 +446,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           />
         )}
         <CustomEditor
+          editableName="RoomInput"
           editor={editor}
           placeholder="Send a message..."
           onKeyDown={handleKeyDown}

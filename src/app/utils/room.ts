@@ -9,6 +9,7 @@ import {
   JoinRule,
   MatrixClient,
   MatrixEvent,
+  MsgType,
   NotificationCountType,
   RelationType,
   Room,
@@ -16,6 +17,7 @@ import {
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import {
+  MessageEvent,
   NotificationType,
   RoomToParents,
   RoomType,
@@ -331,4 +333,24 @@ export const getEditedEvent = (
 ): MatrixEvent | undefined => {
   const edits = getEventEdits(timelineSet, mEventId, mEvent.getType());
   return edits && getLatestEdit(mEvent, edits.getRelations());
+};
+
+export const canEditEvent = (mx: MatrixClient, mEvent: MatrixEvent) =>
+  mEvent.getSender() === mx.getUserId() &&
+  mEvent.getType() === MessageEvent.RoomMessage &&
+  (mEvent.getContent().msgtype === MsgType.Text ||
+    mEvent.getContent().msgtype === MsgType.Emote ||
+    mEvent.getContent().msgtype === MsgType.Notice);
+
+export const getLatestEditableEvt = (
+  timeline: EventTimeline,
+  canEdit: (mEvent: MatrixEvent) => boolean
+): MatrixEvent | undefined => {
+  const events = timeline.getEvents();
+
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const evt = events[i];
+    if (canEdit(evt)) return evt;
+  }
+  return undefined;
 };

@@ -56,6 +56,7 @@ export const useEditor = (): Editor => {
 
 export type EditorChangeHandler = (value: Descendant[]) => void;
 type CustomEditorProps = {
+  editableName?: string;
   top?: ReactNode;
   bottom?: ReactNode;
   before?: ReactNode;
@@ -71,6 +72,7 @@ type CustomEditorProps = {
 export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
   (
     {
+      editableName,
       top,
       bottom,
       before,
@@ -137,6 +139,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
               hideTrack
             >
               <Editable
+                data-editable-name={editableName}
                 className={css.EditorTextarea}
                 placeholder={placeholder}
                 renderPlaceholder={renderPlaceholder}

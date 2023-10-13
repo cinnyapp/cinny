@@ -221,3 +221,12 @@ export const getPrevWorldRange = (editor: Editor): BaseRange | undefined => {
   });
   return worldStartPoint && Editor.range(editor, worldStartPoint, cursorPoint);
 };
+
+export const isEmptyEditor = (editor: Editor): boolean => {
+  const firstChildren = editor.children[0];
+  if (firstChildren && Element.isElement(firstChildren)) {
+    const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
+    return isEmpty;
+  }
+  return false;
+};

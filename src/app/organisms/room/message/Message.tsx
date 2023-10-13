@@ -32,7 +32,7 @@ import React, {
   useState,
 } from 'react';
 import FocusTrap from 'focus-trap-react';
-import { MatrixClient, MatrixEvent, MsgType, Room } from 'matrix-js-sdk';
+import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
 import {
@@ -45,7 +45,12 @@ import {
   Username,
 } from '../../../components/message';
 import colorMXID from '../../../../util/colorMXID';
-import { getEventEdits, getMemberAvatarMxc, getMemberDisplayName } from '../../../utils/room';
+import {
+  canEditEvent,
+  getEventEdits,
+  getMemberAvatarMxc,
+  getMemberDisplayName,
+} from '../../../utils/room';
 import { getMxIdLocalPart } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -57,16 +62,8 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
-import { MessageEvent } from '../../../../types/matrix/room';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
-
-export const canEditEvent = (mx: MatrixClient, mEvent: MatrixEvent) =>
-  mEvent.getSender() === mx.getUserId() &&
-  mEvent.getType() === MessageEvent.RoomMessage &&
-  (mEvent.getContent().msgtype === MsgType.Text ||
-    mEvent.getContent().msgtype === MsgType.Emote ||
-    mEvent.getContent().msgtype === MsgType.Notice);
 
 type MessageQuickReactionsProps = {
   onReaction: ReactionHandler;
