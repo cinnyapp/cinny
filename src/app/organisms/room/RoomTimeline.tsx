@@ -678,27 +678,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     useCallback(() => atBottomAnchorRef.current, [])
   );
 
-  const handleEdit = useCallback(
-    (editEvtId?: string) => {
-      if (editEvtId) {
-        const editMsgElement =
-          (scrollRef.current?.querySelector(`[data-message-id="${editEvtId}"]`) as HTMLElement) ??
-          undefined;
-        if (editMsgElement) {
-          scrollToElement(editMsgElement, {
-            align: 'center',
-            behavior: 'smooth',
-            stopInView: true,
-          });
-        }
-        setEditId(editEvtId);
-        return;
-      }
-      setEditId(undefined);
-      ReactEditor.focus(editor);
-    },
-    [editor, scrollToElement]
-  );
   // Handle up arrow edit
   useKeyDown(
     window,
@@ -721,11 +700,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           ) as HTMLElement | null;
 
           if (editMsgElement) {
-            handleEdit(editableEvtId);
+            setEditId(editableEvtId);
           }
         }
       },
-      [mx, room, editor, handleEdit]
+      [mx, room, editor]
     )
   );
 
@@ -798,6 +777,22 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       }
     }
   }, [room, unreadInfo, liveTimelineLinked, rangeAtEnd, atBottom]);
+
+  // scroll out of view msg editor in view.
+  useEffect(() => {
+    if (editId) {
+      const editMsgElement =
+        (scrollRef.current?.querySelector(`[data-message-id="${editId}"]`) as HTMLElement) ??
+        undefined;
+      if (editMsgElement) {
+        scrollToElement(editMsgElement, {
+          align: 'center',
+          behavior: 'smooth',
+          stopInView: true,
+        });
+      }
+    }
+  }, [scrollToElement, editId]);
 
   const handleJumpToLatest = () => {
     setTimeline(getInitialTimeline(room));
@@ -928,6 +923,17 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       );
     },
     [mx, room]
+  );
+  const handleEdit = useCallback(
+    (editEvtId?: string) => {
+      if (editEvtId) {
+        setEditId(editEvtId);
+        return;
+      }
+      setEditId(undefined);
+      ReactEditor.focus(editor);
+    },
+    [editor]
   );
 
   const renderBody = (body: string, customBody?: string) => {
