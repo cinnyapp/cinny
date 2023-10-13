@@ -873,6 +873,17 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     },
     [mx, room]
   );
+  const handleEdit = useCallback(
+    (editEvtId?: string) => {
+      if (editEvtId) {
+        setEditId(editEvtId);
+        return;
+      }
+      setEditId(undefined);
+      ReactEditor.focus(editor);
+    },
+    [editor]
+  );
 
   const renderBody = (body: string, customBody?: string) => {
     if (body === '') <MessageEmptyContent />;
@@ -1140,7 +1151,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
           onReactionToggle={handleReactionToggle}
-          onEditId={setEditId}
+          onEditId={handleEdit}
           reply={
             replyEventId && (
               <Reply
@@ -1197,7 +1208,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onUsernameClick={handleUsernameClick}
           onReplyClick={handleReplyClick}
           onReactionToggle={handleReactionToggle}
-          onEditId={setEditId}
+          onEditId={handleEdit}
           reply={
             replyEventId && (
               <Reply
