@@ -140,7 +140,15 @@ export const sanitizeCustomHtml = (customHtml: string): string =>
     nestingLimit: MAX_TAG_NESTING,
   });
 
-export const sanitizeText = (body: string) => {
+export const sanitizeText = (contentbody: string) => {
+
+  //split out nested replies
+  let splitcontentbody = contentbody.split("</mx-reply>")
+
+  //grab only the new content from the message you are quoting, not the nested replies
+  let body = splitcontentbody[splitcontentbody.length - 1]
+
+  //tags to regex out (???)
   const tagsToReplace: Record<string, string> = {
     '&': '&amp;',
     '<': '&lt;',
@@ -148,5 +156,7 @@ export const sanitizeText = (body: string) => {
     '"': '&quot;',
     "'": '&#39;',
   };
+
+  //regex out tags  
   return body.replace(/[&<>'"]/g, (tag) => tagsToReplace[tag] || tag);
 };
