@@ -337,6 +337,7 @@ export const getEditedEvent = (
 
 export const canEditEvent = (mx: MatrixClient, mEvent: MatrixEvent) =>
   mEvent.getSender() === mx.getUserId() &&
+  !mEvent.isRelation() &&
   mEvent.getType() === MessageEvent.RoomMessage &&
   (mEvent.getContent().msgtype === MsgType.Text ||
     mEvent.getContent().msgtype === MsgType.Emote ||
