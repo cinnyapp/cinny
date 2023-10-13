@@ -45,7 +45,7 @@ import {
   Username,
 } from '../../../components/message';
 import colorMXID from '../../../../util/colorMXID';
-import { getMemberAvatarMxc, getMemberDisplayName } from '../../../utils/room';
+import { getEventEdits, getMemberAvatarMxc, getMemberDisplayName } from '../../../utils/room';
 import { getMxIdLocalPart } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -220,21 +220,40 @@ export const MessageReadReceiptItem = as<
 export const MessageSourceCodeItem = as<
   'button',
   {
+    room: Room;
     mEvent: MatrixEvent;
     onClose?: () => void;
   }
->(({ mEvent, onClose, ...props }, ref) => {
+>(({ room, mEvent, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
-  const text = JSON.stringify(
-    mEvent.isEncrypted()
+
+  const getContent = (evt: MatrixEvent) =>
+    evt.isEncrypted()
       ? {
-          [`<== DECRYPTED_EVENT ==>`]: mEvent.getEffectiveEvent(),
-          [`<== ORIGINAL_EVENT ==>`]: mEvent.event,
+          [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
+          [`<== ORIGINAL_EVENT ==>`]: evt.event,
         }
-      : mEvent.event,
-    null,
-    2
-  );
+      : evt.event;
+
+  const getText = (): string => {
+    const evtId = mEvent.getId()!;
+    const evtTimeline = room.getTimelineForEvent(evtId);
+    const edits =
+      evtTimeline &&
+      getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
+
+    if (!edits) return JSON.stringify(getContent(mEvent), null, 2);
+
+    const content: Record<string, unknown> = {
+      '<== MAIN_EVENT ==>': getContent(mEvent),
+    };
+
+    edits.forEach((editEvt, index) => {
+      content[`<== REPLACEMENT_EVENT_${index + 1} ==>`] = getContent(editEvt);
+    });
+
+    return JSON.stringify(content, null, 2);
+  };
 
   const handleClose = () => {
     setOpen(false);
@@ -256,7 +275,7 @@ export const MessageSourceCodeItem = as<
               <TextViewer
                 name="Source Code"
                 langName="json"
-                text={text}
+                text={getText()}
                 requestClose={handleClose}
               />
             </Modal>
@@ -864,7 +883,7 @@ export const Message = as<'div', MessageProps>(
                             eventId={mEvent.getId() ?? ''}
                             onClose={closeMenu}
                           />
-                          <MessageSourceCodeItem mEvent={mEvent} onClose={closeMenu} />
+                          <MessageSourceCodeItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         </Box>
                         {((!mEvent.isRedacted() && canDelete) ||
                           mEvent.getSender() !== mx.getUserId()) && (
@@ -999,7 +1018,7 @@ export const Event = as<'div', EventProps>(
                             eventId={mEvent.getId() ?? ''}
                             onClose={closeMenu}
                           />
-                          <MessageSourceCodeItem mEvent={mEvent} onClose={closeMenu} />
+                          <MessageSourceCodeItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         </Box>
                         {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
                           (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
