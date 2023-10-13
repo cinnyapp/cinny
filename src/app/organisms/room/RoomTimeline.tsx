@@ -544,20 +544,21 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
-  const { getItems, scrollToItem, observeBackAnchor, observeFrontAnchor } = useVirtualPaginator({
-    count: eventsLength,
-    limit: PAGINATION_LIMIT,
-    range: timeline.range,
-    onRangeChange: useCallback((r) => setTimeline((cs) => ({ ...cs, range: r })), []),
-    getScrollElement,
-    getItemElement: useCallback(
-      (index: number) =>
-        (scrollRef.current?.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
-        undefined,
-      []
-    ),
-    onEnd: handleTimelinePagination,
-  });
+  const { getItems, scrollToItem, scrollToElement, observeBackAnchor, observeFrontAnchor } =
+    useVirtualPaginator({
+      count: eventsLength,
+      limit: PAGINATION_LIMIT,
+      range: timeline.range,
+      onRangeChange: useCallback((r) => setTimeline((cs) => ({ ...cs, range: r })), []),
+      getScrollElement,
+      getItemElement: useCallback(
+        (index: number) =>
+          (scrollRef.current?.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
+          undefined,
+        []
+      ),
+      onEnd: handleTimelinePagination,
+    });
 
   const loadEventTimeline = useEventTimelineLoader(
     mx,
@@ -742,6 +743,22 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       }
     }
   }, [room, unreadInfo, liveTimelineLinked, rangeAtEnd, atBottom]);
+
+  // scroll out of view msg editor in view.
+  useEffect(() => {
+    if (editId) {
+      const editMsgElement =
+        (scrollRef.current?.querySelector(`[data-message-id="${editId}"]`) as HTMLElement) ??
+        undefined;
+      if (editMsgElement) {
+        scrollToElement(editMsgElement, {
+          align: 'center',
+          behavior: 'smooth',
+          stopInView: true,
+        });
+      }
+    }
+  }, [scrollToElement, editId]);
 
   const handleJumpToLatest = () => {
     setTimeline(getInitialTimeline(room));
@@ -1136,6 +1153,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <Message
           key={mEvent.getId()}
           data-message-item={item}
+          data-message-id={mEventId}
           room={room}
           mEvent={mEvent}
           messageSpacing={messageSpacing}
@@ -1193,6 +1211,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <Message
           key={mEvent.getId()}
           data-message-item={item}
+          data-message-id={mEventId}
           room={room}
           mEvent={mEvent}
           messageSpacing={messageSpacing}
@@ -1267,6 +1286,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <Message
           key={mEvent.getId()}
           data-message-item={item}
+          data-message-id={mEventId}
           room={room}
           mEvent={mEvent}
           messageSpacing={messageSpacing}
@@ -1312,6 +1332,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <Event
           key={mEvent.getId()}
           data-message-item={item}
+          data-message-id={mEventId}
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
@@ -1344,6 +1365,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <Event
           key={mEvent.getId()}
           data-message-item={item}
+          data-message-id={mEventId}
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
@@ -1377,6 +1399,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <Event
           key={mEvent.getId()}
           data-message-item={item}
+          data-message-id={mEventId}
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
@@ -1410,6 +1433,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <Event
           key={mEvent.getId()}
           data-message-item={item}
+          data-message-id={mEventId}
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
@@ -1444,6 +1468,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <Event
           key={mEvent.getId()}
           data-message-item={item}
+          data-message-id={mEventId}
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
@@ -1484,6 +1509,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <Event
           key={mEvent.getId()}
           data-message-item={item}
+          data-message-id={mEventId}
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
