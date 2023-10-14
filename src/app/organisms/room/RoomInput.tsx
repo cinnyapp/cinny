@@ -96,7 +96,12 @@ import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
 import { MessageReply } from '../../molecules/message/Message';
 import colorMXID from '../../../util/colorMXID';
-import { parseReplyBody, parseReplyFormattedBody } from '../../utils/room';
+import {
+  parseReplyBody,
+  parseReplyFormattedBody,
+  trimReplyFromBody,
+  trimReplyFromFormattedBody,
+} from '../../utils/room';
 import { sanitizeText } from '../../utils/sanitize';
 import { useScreenSize } from '../../hooks/useScreenSize';
 
@@ -265,13 +270,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       let body = plainText;
       let formattedBody = customHtml;
       if (replyDraft) {
-        body = parseReplyBody(replyDraft.userId, replyDraft.userId) + body;
+        body = parseReplyBody(replyDraft.userId, trimReplyFromBody(replyDraft.body)) + body;
         formattedBody =
           parseReplyFormattedBody(
             roomId,
             replyDraft.userId,
             replyDraft.eventId,
-            replyDraft.formattedBody ?? sanitizeText(replyDraft.body)
+            replyDraft.formattedBody
+              ? trimReplyFromFormattedBody(replyDraft.formattedBody)
+              : sanitizeText(replyDraft.body)
           ) + formattedBody;
       }
 
