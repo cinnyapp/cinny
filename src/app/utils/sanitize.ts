@@ -56,12 +56,19 @@ const permittedTagToAttributes = {
     'data-mx-maths',
     'data-mx-pill',
     'data-mx-ping',
+    'data-md',
   ],
   div: ['data-mx-maths'],
-  a: ['name', 'target', 'href', 'rel'],
+  a: ['name', 'target', 'href', 'rel', 'data-md'],
   img: ['width', 'height', 'alt', 'title', 'src', 'data-mx-emoticon'],
   ol: ['start'],
-  code: ['class'],
+  code: ['class', 'data-md'],
+  strong: ['data-md'],
+  i: ['data-md'],
+  em: ['data-md'],
+  u: ['data-md'],
+  s: ['data-md'],
+  del: ['data-md'],
 };
 
 const transformFontTag: Transformer = (tagName, attribs) => ({

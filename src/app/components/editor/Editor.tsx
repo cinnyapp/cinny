@@ -50,12 +50,13 @@ const withVoid = (editor: Editor): Editor => {
 };
 
 export const useEditor = (): Editor => {
-  const [editor] = useState(withInline(withVoid(withReact(withHistory(createEditor())))));
+  const [editor] = useState(() => withInline(withVoid(withReact(withHistory(createEditor())))));
   return editor;
 };
 
 export type EditorChangeHandler = (value: Descendant[]) => void;
 type CustomEditorProps = {
+  editableName?: string;
   top?: ReactNode;
   bottom?: ReactNode;
   before?: ReactNode;
@@ -71,6 +72,7 @@ type CustomEditorProps = {
 export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
   (
     {
+      editableName,
       top,
       bottom,
       before,
@@ -137,6 +139,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
               hideTrack
             >
               <Editable
+                data-editable-name={editableName}
                 className={css.EditorTextarea}
                 placeholder={placeholder}
                 renderPlaceholder={renderPlaceholder}

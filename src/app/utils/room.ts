@@ -2,17 +2,22 @@ import { IconName, IconSrc } from 'folds';
 
 import {
   EventTimeline,
+  EventTimelineSet,
+  EventType,
   IPushRule,
   IPushRules,
   JoinRule,
   MatrixClient,
   MatrixEvent,
+  MsgType,
   NotificationCountType,
+  RelationType,
   Room,
 } from 'matrix-js-sdk';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import {
+  MessageEvent,
   NotificationType,
   RoomToParents,
   RoomType,
@@ -249,6 +254,21 @@ export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefin
   return room.getAvatarUrl(mx.baseUrl, 32, 32, 'crop') ?? undefined;
 };
 
+export const trimReplyFromBody = (body: string): string => {
+  const match = body.match(/^>\s<.+?>\s.+\n\n/);
+  if (!match) return body;
+  return body.slice(match[0].length);
+};
+
+export const trimReplyFromFormattedBody = (formattedBody: string): string => {
+  const suffix = '</mx-reply>';
+  const i = formattedBody.lastIndexOf(suffix);
+  if (i < 0) {
+    return formattedBody;
+  }
+  return formattedBody.slice(i + suffix.length);
+};
+
 export const parseReplyBody = (userId: string, body: string) =>
   `> <${userId}> ${body.replace(/\n/g, '\n> ')}\n\n`;
 
@@ -301,3 +321,52 @@ export const getReactionContent = (eventId: string, key: string, shortcode?: str
   },
   shortcode,
 });
+
+export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string) =>
+  timelineSet.relations.getChildEventsForEvent(
+    eventId,
+    RelationType.Annotation,
+    EventType.Reaction
+  );
+
+export const getEventEdits = (timelineSet: EventTimelineSet, eventId: string, eventType: string) =>
+  timelineSet.relations.getChildEventsForEvent(eventId, RelationType.Replace, eventType);
+
+export const getLatestEdit = (
+  targetEvent: MatrixEvent,
+  editEvents: MatrixEvent[]
+): MatrixEvent | undefined => {
+  const eventByTargetSender = (rEvent: MatrixEvent) =>
+    rEvent.getSender() === targetEvent.getSender();
+  return editEvents.sort((m1, m2) => m2.getTs() - m1.getTs()).find(eventByTargetSender);
+};
+
+export const getEditedEvent = (
+  mEventId: string,
+  mEvent: MatrixEvent,
+  timelineSet: EventTimelineSet
+): MatrixEvent | undefined => {
+  const edits = getEventEdits(timelineSet, mEventId, mEvent.getType());
+  return edits && getLatestEdit(mEvent, edits.getRelations());
+};
+
+export const canEditEvent = (mx: MatrixClient, mEvent: MatrixEvent) =>
+  mEvent.getSender() === mx.getUserId() &&
+  !mEvent.isRelation() &&
+  mEvent.getType() === MessageEvent.RoomMessage &&
+  (mEvent.getContent().msgtype === MsgType.Text ||
+    mEvent.getContent().msgtype === MsgType.Emote ||
+    mEvent.getContent().msgtype === MsgType.Notice);
+
+export const getLatestEditableEvt = (
+  timeline: EventTimeline,
+  canEdit: (mEvent: MatrixEvent) => boolean
+): MatrixEvent | undefined => {
+  const events = timeline.getEvents();
+
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const evt = events[i];
+    if (canEdit(evt)) return evt;
+  }
+  return undefined;
+};

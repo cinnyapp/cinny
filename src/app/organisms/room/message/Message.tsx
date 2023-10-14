@@ -45,7 +45,12 @@ import {
   Username,
 } from '../../../components/message';
 import colorMXID from '../../../../util/colorMXID';
-import { getMemberAvatarMxc, getMemberDisplayName } from '../../../utils/room';
+import {
+  canEditEvent,
+  getEventEdits,
+  getMemberAvatarMxc,
+  getMemberDisplayName,
+} from '../../../utils/room';
 import { getMxIdLocalPart } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -56,6 +61,7 @@ import { TextViewer } from '../../../components/text-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
+import { MessageEditor } from './MessageEditor';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -211,21 +217,40 @@ export const MessageReadReceiptItem = as<
 export const MessageSourceCodeItem = as<
   'button',
   {
+    room: Room;
     mEvent: MatrixEvent;
     onClose?: () => void;
   }
->(({ mEvent, onClose, ...props }, ref) => {
+>(({ room, mEvent, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
-  const text = JSON.stringify(
-    mEvent.isEncrypted()
+
+  const getContent = (evt: MatrixEvent) =>
+    evt.isEncrypted()
       ? {
-          [`<== DECRYPTED_EVENT ==>`]: mEvent.getEffectiveEvent(),
-          [`<== ORIGINAL_EVENT ==>`]: mEvent.event,
+          [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
+          [`<== ORIGINAL_EVENT ==>`]: evt.event,
         }
-      : mEvent.event,
-    null,
-    2
-  );
+      : evt.event;
+
+  const getText = (): string => {
+    const evtId = mEvent.getId()!;
+    const evtTimeline = room.getTimelineForEvent(evtId);
+    const edits =
+      evtTimeline &&
+      getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
+
+    if (!edits) return JSON.stringify(getContent(mEvent), null, 2);
+
+    const content: Record<string, unknown> = {
+      '<== MAIN_EVENT ==>': getContent(mEvent),
+    };
+
+    edits.forEach((editEvt, index) => {
+      content[`<== REPLACEMENT_EVENT_${index + 1} ==>`] = getContent(editEvt);
+    });
+
+    return JSON.stringify(content, null, 2);
+  };
 
   const handleClose = () => {
     setOpen(false);
@@ -247,7 +272,7 @@ export const MessageSourceCodeItem = as<
               <TextViewer
                 name="Source Code"
                 langName="json"
-                text={text}
+                text={getText()}
                 requestClose={handleClose}
               />
             </Modal>
@@ -537,6 +562,7 @@ export type MessageProps = {
   mEvent: MatrixEvent;
   collapse: boolean;
   highlight: boolean;
+  edit?: boolean;
   canDelete?: boolean;
   canSendReaction?: boolean;
   imagePackRooms?: Room[];
@@ -546,6 +572,7 @@ export type MessageProps = {
   onUserClick: MouseEventHandler<HTMLButtonElement>;
   onUsernameClick: MouseEventHandler<HTMLButtonElement>;
   onReplyClick: MouseEventHandler<HTMLButtonElement>;
+  onEditId?: (eventId?: string) => void;
   onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
   reply?: ReactNode;
   reactions?: ReactNode;
@@ -558,6 +585,7 @@ export const Message = as<'div', MessageProps>(
       mEvent,
       collapse,
       highlight,
+      edit,
       canDelete,
       canSendReaction,
       imagePackRooms,
@@ -568,6 +596,7 @@ export const Message = as<'div', MessageProps>(
       onUsernameClick,
       onReplyClick,
       onReactionToggle,
+      onEditId,
       reply,
       reactions,
       children,
@@ -644,7 +673,21 @@ export const Message = as<'div', MessageProps>(
     const msgContentJSX = (
       <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
         {reply}
-        {children}
+        {edit && onEditId ? (
+          <MessageEditor
+            style={{
+              maxWidth: '100%',
+              width: '100vw',
+            }}
+            roomId={room.roomId}
+            room={room}
+            mEvent={mEvent}
+            imagePackRooms={imagePackRooms}
+            onCancel={() => onEditId()}
+          />
+        ) : (
+          children
+        )}
         {reactions}
       </Box>
     );
@@ -677,7 +720,7 @@ export const Message = as<'div', MessageProps>(
         onMouseLeave={hideOptions}
         ref={ref}
       >
-        {(hover || menu || emojiBoard) && (
+        {!edit && (hover || menu || emojiBoard) && (
           <div className={css.MessageOptionsBase}>
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
               <Box gap="100">
@@ -728,6 +771,16 @@ export const Message = as<'div', MessageProps>(
                 >
                   <Icon src={Icons.ReplyArrow} size="100" />
                 </IconButton>
+                {canEditEvent(mx, mEvent) && onEditId && (
+                  <IconButton
+                    onClick={() => onEditId(mEvent.getId())}
+                    variant="SurfaceVariant"
+                    size="300"
+                    radii="300"
+                  >
+                    <Icon src={Icons.Pencil} size="100" />
+                  </IconButton>
+                )}
                 <PopOut
                   open={menu}
                   alignOffset={-5}
@@ -801,12 +854,33 @@ export const Message = as<'div', MessageProps>(
                               Reply
                             </Text>
                           </MenuItem>
+                          {canEditEvent(mx, mEvent) && onEditId && (
+                            <MenuItem
+                              size="300"
+                              after={<Icon size="100" src={Icons.Pencil} />}
+                              radii="300"
+                              data-event-id={mEvent.getId()}
+                              onClick={() => {
+                                onEditId(mEvent.getId());
+                                closeMenu();
+                              }}
+                            >
+                              <Text
+                                className={css.MessageMenuItemText}
+                                as="span"
+                                size="T300"
+                                truncate
+                              >
+                                Edit Message
+                              </Text>
+                            </MenuItem>
+                          )}
                           <MessageReadReceiptItem
                             room={room}
                             eventId={mEvent.getId() ?? ''}
                             onClose={closeMenu}
                           />
-                          <MessageSourceCodeItem mEvent={mEvent} onClose={closeMenu} />
+                          <MessageSourceCodeItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         </Box>
                         {((!mEvent.isRedacted() && canDelete) ||
                           mEvent.getSender() !== mx.getUserId()) && (
@@ -941,7 +1015,7 @@ export const Event = as<'div', EventProps>(
                             eventId={mEvent.getId() ?? ''}
                             onClose={closeMenu}
                           />
-                          <MessageSourceCodeItem mEvent={mEvent} onClose={closeMenu} />
+                          <MessageSourceCodeItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         </Box>
                         {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
                           (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
