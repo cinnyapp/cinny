@@ -694,14 +694,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           );
           const editableEvtId = editableEvt?.getId();
           if (!editableEvtId) return;
-
-          const editMsgElement = scrollRef.current?.querySelector(
-            `[data-message-id="${editableEvtId}"]`
-          ) as HTMLElement | null;
-
-          if (editMsgElement) {
-            setEditId(editableEvtId);
-          }
+          setEditId(editableEvtId);
         }
       },
       [mx, room, editor]
