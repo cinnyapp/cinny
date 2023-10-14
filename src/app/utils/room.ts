@@ -254,6 +254,21 @@ export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefin
   return room.getAvatarUrl(mx.baseUrl, 32, 32, 'crop') ?? undefined;
 };
 
+export const trimReplyFromBody = (body: string): string => {
+  const match = body.match(/^>\s<.+?>\s.+\n\n/);
+  if (!match) return body;
+  return body.slice(match[0].length);
+};
+
+export const trimReplyFromFormattedBody = (formattedBody: string): string => {
+  const suffix = '</mx-reply>';
+  const i = formattedBody.lastIndexOf(suffix);
+  if (i < 0) {
+    return formattedBody;
+  }
+  return formattedBody.slice(i + suffix.length);
+};
+
 export const parseReplyBody = (userId: string, body: string) =>
   `> <${userId}> ${body.replace(/\n/g, '\n> ')}\n\n`;
 

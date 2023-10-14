@@ -31,7 +31,7 @@ import { UseStateProvider } from '../../../components/UseStateProvider';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getEditedEvent } from '../../../utils/room';
+import { getEditedEvent, trimReplyFromFormattedBody } from '../../../utils/room';
 
 type MessageEditorProps = {
   roomId: string;
@@ -51,6 +51,18 @@ export const MessageEditor = as<'div', MessageEditorProps>(
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
 
+    const getPrevBodyAndFormattedBody = useCallback(() => {
+      const evtId = mEvent.getId()!;
+      const evtTimeline = room.getTimelineForEvent(evtId);
+      const editedEvent =
+        evtTimeline && getEditedEvent(evtId, mEvent, evtTimeline.getTimelineSet());
+
+      const { body, formatted_body: customHtml }: Record<string, unknown> =
+        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+
+      return [body, customHtml];
+    }, [room, mEvent]);
+
     const [saveState, save] = useAsyncCallback(
       useCallback(async () => {
         const plainText = toPlainText(editor.children).trim();
@@ -61,7 +73,18 @@ export const MessageEditor = as<'div', MessageEditorProps>(
           })
         );
 
+        const [prevBody, prevCustomHtml] = getPrevBodyAndFormattedBody();
+
         if (plainText === '') return undefined;
+        if (
+          typeof prevCustomHtml === 'string' &&
+          trimReplyFromFormattedBody(prevCustomHtml) === customHtml
+        ) {
+          return undefined;
+        }
+        if (!prevCustomHtml && typeof prevBody === 'string' && prevBody === plainText) {
+          return undefined;
+        }
 
         const newContent: IContent = {
           msgtype: mEvent.getContent().msgtype,
@@ -84,21 +107,27 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         };
 
         return mx.sendMessage(roomId, content);
-      }, [mx, editor, roomId, mEvent, isMarkdown])
+      }, [mx, editor, roomId, mEvent, isMarkdown, getPrevBodyAndFormattedBody])
     );
+
+    const handleSave = useCallback(() => {
+      if (saveState.status !== AsyncStatus.Loading) {
+        save();
+      }
+    }, [saveState, save]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
         if (isHotkey('enter', evt)) {
           evt.preventDefault();
-          save();
+          handleSave();
         }
         if (isHotkey('escape', evt)) {
           evt.preventDefault();
           onCancel();
         }
       },
-      [onCancel, save]
+      [onCancel, handleSave]
     );
 
     const handleKeyUp: KeyboardEventHandler = useCallback(
@@ -125,13 +154,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
     };
 
     useEffect(() => {
-      const evtId = mEvent.getId()!;
-      const evtTimeline = room.getTimelineForEvent(evtId);
-      const editedEvent =
-        evtTimeline && getEditedEvent(evtId, mEvent, evtTimeline.getTimelineSet());
-
-      const { body, formatted_body: customHtml }: Record<string, unknown> =
-        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+      const [body, customHtml] = getPrevBodyAndFormattedBody();
 
       const initialValue =
         typeof customHtml === 'string'
@@ -145,7 +168,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
       editor.insertFragment(initialValue);
       ReactEditor.focus(editor);
-    }, [editor, room, mEvent]);
+    }, [editor, getPrevBodyAndFormattedBody]);
 
     useEffect(() => {
       if (saveState.status === AsyncStatus.Success) {
@@ -194,7 +217,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
               >
                 <Box gap="Inherit">
                   <Chip
-                    onClick={save}
+                    onClick={handleSave}
                     variant="Primary"
                     radii="Pill"
                     disabled={saveState.status === AsyncStatus.Loading}
