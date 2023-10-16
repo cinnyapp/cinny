@@ -1,6 +1,13 @@
-import { BasePoint, BaseRange, Editor, Element, Point, Range, Transforms } from 'slate';
+import { BasePoint, BaseRange, Editor, Element, Point, Range, Text, Transforms } from 'slate';
 import { BlockType, MarkType } from './Elements';
-import { EmoticonElement, FormattedText, HeadingLevel, LinkElement, MentionElement } from './slate';
+import {
+  CommandElement,
+  EmoticonElement,
+  FormattedText,
+  HeadingLevel,
+  LinkElement,
+  MentionElement,
+} from './slate';
 
 const ALL_MARK_TYPE: MarkType[] = [
   MarkType.Bold,
@@ -163,6 +170,12 @@ export const createLinkElement = (
   children: typeof children === 'string' ? [{ text: children }] : children,
 });
 
+export const createCommandElement = (command: string): CommandElement => ({
+  type: BlockType.Command,
+  command,
+  children: [{ text: '' }],
+});
+
 export const replaceWithElement = (editor: Editor, selectRange: BaseRange, element: Element) => {
   Transforms.select(editor, selectRange);
   Transforms.insertNodes(editor, element);
@@ -229,4 +242,17 @@ export const isEmptyEditor = (editor: Editor): boolean => {
     return isEmpty;
   }
   return false;
+};
+
+export const getBeginCommand = (editor: Editor): string | undefined => {
+  const lineBlock = editor.children[0];
+  if (!Element.isElement(lineBlock)) return undefined;
+  if (lineBlock.type !== BlockType.Paragraph) return undefined;
+
+  const [firstInline, secondInline] = lineBlock.children;
+  const isEmptyText = Text.isText(firstInline) && firstInline.text.trim() === '';
+  if (!isEmptyText) return undefined;
+  if (Element.isElement(secondInline) && secondInline.type === BlockType.Command)
+    return secondInline.command;
+  return undefined;
 };

@@ -39,8 +39,13 @@ export type EmoticonElement = {
   shortcode: string;
   children: Text[];
 };
+export type CommandElement = {
+  type: BlockType.Command;
+  command: string;
+  children: Text[];
+};
 
-export type InlineElement = Text | LinkElement | MentionElement | EmoticonElement;
+export type InlineElement = Text | LinkElement | MentionElement | EmoticonElement | CommandElement;
 
 export type ParagraphElement = {
   type: BlockType.Paragraph;
@@ -84,6 +89,7 @@ export type CustomElement =
   | LinkElement
   | MentionElement
   | EmoticonElement
+  | CommandElement
   | ParagraphElement
   | HeadingElement
   | CodeLineElement

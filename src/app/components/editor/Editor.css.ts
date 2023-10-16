@@ -26,7 +26,7 @@ export const EditorTextarea = style([
   {
     flexGrow: 1,
     height: '100%',
-    padding: `${toRem(13)} 0`,
+    padding: `${toRem(13)} ${toRem(1)}`,
     selectors: {
       [`${EditorTextareaScroll}:first-child &`]: {
         paddingLeft: toRem(13),

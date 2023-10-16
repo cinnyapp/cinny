@@ -1,10 +1,17 @@
 import { Scroll, Text } from 'folds';
 import React from 'react';
-import { RenderElementProps, RenderLeafProps, useFocused, useSelected } from 'slate-react';
+import {
+  RenderElementProps,
+  RenderLeafProps,
+  useFocused,
+  useSelected,
+  useSlate,
+} from 'slate-react';
 
 import * as css from '../../styles/CustomHtml.css';
-import { EmoticonElement, LinkElement, MentionElement } from './slate';
+import { CommandElement, EmoticonElement, LinkElement, MentionElement } from './slate';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { getBeginCommand } from './common';
 
 export enum MarkType {
   Bold = 'bold',
@@ -28,6 +35,7 @@ export enum BlockType {
   Mention = 'mention',
   Emoticon = 'emoticon',
   Link = 'link',
+  Command = 'command',
 }
 
 // Put this at the start and end of an inline component to work around this Chromium bug:
@@ -58,6 +66,29 @@ function RenderMentionElement({
       contentEditable={false}
     >
       {element.name}
+      {children}
+    </span>
+  );
+}
+function RenderCommandElement({
+  attributes,
+  element,
+  children,
+}: { element: CommandElement } & RenderElementProps) {
+  const selected = useSelected();
+  const focused = useFocused();
+  const editor = useSlate();
+
+  return (
+    <span
+      {...attributes}
+      className={css.Command({
+        focus: selected && focused,
+        active: getBeginCommand(editor) === element.command,
+      })}
+      contentEditable={false}
+    >
+      {`/${element.command}`}
       {children}
     </span>
   );
@@ -199,6 +230,12 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
         <RenderLinkElement attributes={attributes} element={element}>
           {children}
         </RenderLinkElement>
+      );
+    case BlockType.Command:
+      return (
+        <RenderCommandElement attributes={attributes} element={element}>
+          {children}
+        </RenderCommandElement>
       );
     default:
       return (
