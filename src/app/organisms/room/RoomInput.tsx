@@ -52,6 +52,8 @@ import {
   customHtmlEqualsPlainText,
   trimCustomHtml,
   isEmptyEditor,
+  getBeginCommand,
+  trimCommand,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -104,17 +106,20 @@ import {
 } from '../../utils/room';
 import { sanitizeText } from '../../utils/sanitize';
 import { useScreenSize } from '../../hooks/useScreenSize';
+import { CommandAutocomplete } from './CommandAutocomplete';
+import { Command, SHRUG, useCommands } from '../../hooks/useCommands';
 
 interface RoomInputProps {
   editor: Editor;
   roomViewRef: RefObject<HTMLElement>;
   roomId: string;
+  room: Room;
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
-  ({ editor, roomViewRef, roomId }, ref) => {
+  ({ editor, roomViewRef, roomId, room }, ref) => {
     const mx = useMatrixClient();
-    const room = mx.getRoom(roomId);
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
+    const commands = useCommands(mx, room);
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
@@ -257,13 +262,38 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const submit = useCallback(() => {
       uploadBoardHandlers.current?.handleSend();
 
-      const plainText = toPlainText(editor.children).trim();
-      const customHtml = trimCustomHtml(
+      const commandName = getBeginCommand(editor);
+
+      let plainText = toPlainText(editor.children).trim();
+      let customHtml = trimCustomHtml(
         toMatrixCustomHTML(editor.children, {
           allowTextFormatting: true,
           allowMarkdown: isMarkdown,
         })
       );
+      let msgType = MsgType.Text;
+
+      if (commandName) {
+        plainText = trimCommand(commandName, plainText);
+        customHtml = trimCommand(commandName, customHtml);
+      }
+      if (commandName === Command.Me) {
+        msgType = MsgType.Emote;
+      } else if (commandName === Command.Notice) {
+        msgType = MsgType.Notice;
+      } else if (commandName === Command.Shrug) {
+        plainText = `${SHRUG} ${plainText}`;
+        customHtml = `${SHRUG} ${customHtml}`;
+      } else if (commandName) {
+        const commandContent = commands[commandName as Command];
+        if (commandContent) {
+          commandContent.exe(plainText);
+        }
+        resetEditor(editor);
+        resetEditorHistory(editor);
+        sendTypingStatus(false);
+        return;
+      }
 
       if (plainText === '') return;
 
@@ -283,7 +313,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       }
 
       const content: IContent = {
-        msgtype: MsgType.Text,
+        msgtype: msgType,
         body,
       };
       if (replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
@@ -302,7 +332,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       resetEditorHistory(editor);
       setReplyDraft();
       sendTypingStatus(false);
-    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown]);
+    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -447,6 +477,14 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         {autocompleteQuery?.prefix === AutocompletePrefix.Emoticon && (
           <EmoticonAutocomplete
             imagePackRooms={imagePackRooms}
+            editor={editor}
+            query={autocompleteQuery}
+            requestClose={handleCloseAutocomplete}
+          />
+        )}
+        {autocompleteQuery?.prefix === AutocompletePrefix.Command && (
+          <CommandAutocomplete
+            room={room}
             editor={editor}
             query={autocompleteQuery}
             requestClose={handleCloseAutocomplete}

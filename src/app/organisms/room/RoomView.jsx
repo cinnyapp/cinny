@@ -81,6 +81,7 @@ function RoomView({ room, eventId }) {
               <>
                 {canMessage && (
                   <RoomInput
+                    room={room}
                     editor={editor}
                     roomId={roomId}
                     roomViewRef={roomViewRef}
