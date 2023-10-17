@@ -18,7 +18,8 @@ import {
   RenderPlaceholderProps,
 } from 'slate-react';
 import { withHistory } from 'slate-history';
-import { BlockType, RenderElement, RenderLeaf } from './Elements';
+import { BlockType } from './types';
+import { RenderElement, RenderLeaf } from './Elements';
 import { CustomElement } from './slate';
 import * as css from './Editor.css';
 import { toggleKeyboardShortcut } from './keyboard';

@@ -1,5 +1,5 @@
 import { BasePoint, BaseRange, Editor, Element, Point, Range, Text, Transforms } from 'slate';
-import { BlockType, MarkType } from './Elements';
+import { BlockType, MarkType } from './types';
 import {
   CommandElement,
   EmoticonElement,

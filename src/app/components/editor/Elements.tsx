@@ -11,32 +11,8 @@ import {
 import * as css from '../../styles/CustomHtml.css';
 import { CommandElement, EmoticonElement, LinkElement, MentionElement } from './slate';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getBeginCommand } from './common';
-
-export enum MarkType {
-  Bold = 'bold',
-  Italic = 'italic',
-  Underline = 'underline',
-  StrikeThrough = 'strikeThrough',
-  Code = 'code',
-  Spoiler = 'spoiler',
-}
-
-export enum BlockType {
-  Paragraph = 'paragraph',
-  Heading = 'heading',
-  CodeLine = 'code-line',
-  CodeBlock = 'code-block',
-  QuoteLine = 'quote-line',
-  BlockQuote = 'block-quote',
-  ListItem = 'list-item',
-  OrderedList = 'ordered-list',
-  UnorderedList = 'unordered-list',
-  Mention = 'mention',
-  Emoticon = 'emoticon',
-  Link = 'link',
-  Command = 'command',
-}
+import { getBeginCommand } from './utils';
+import { BlockType } from './types';
 
 // Put this at the start and end of an inline component to work around this Chromium bug:
 // https://bugs.chromium.org/p/chromium/issues/detail?id=1249405

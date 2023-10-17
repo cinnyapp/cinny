@@ -25,9 +25,9 @@ import {
   removeAllMark,
   toggleBlock,
   toggleMark,
-} from './common';
+} from './utils';
 import * as css from './Editor.css';
-import { BlockType, MarkType } from './Elements';
+import { BlockType, MarkType } from './types';
 import { HeadingLevel } from './slate';
 import { isMacOS } from '../../utils/user-agent';
 import { KeySymbol } from '../../utils/key-symbol';

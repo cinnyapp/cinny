@@ -1,7 +1,7 @@
 import { BaseEditor } from 'slate';
 import { ReactEditor } from 'slate-react';
 import { HistoryEditor } from 'slate-history';
-import { BlockType } from './Elements';
+import { BlockType } from './types';
 
 export type HeadingLevel = 1 | 2 | 3;
 

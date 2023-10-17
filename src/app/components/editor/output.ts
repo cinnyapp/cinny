@@ -1,7 +1,7 @@
 import { Descendant, Text } from 'slate';
 
 import { sanitizeText } from '../../utils/sanitize';
-import { BlockType } from './Elements';
+import { BlockType } from './types';
 import { CustomElement } from './slate';
 import { parseInlineMD } from '../../utils/markdown';
 

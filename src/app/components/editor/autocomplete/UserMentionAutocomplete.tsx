@@ -13,7 +13,7 @@ import {
   useAsyncSearch,
 } from '../../../hooks/useAsyncSearch';
 import { onTabPress } from '../../../utils/keyboard';
-import { createMentionElement, moveCursor, replaceWithElement } from '../common';
+import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 import { getMxIdLocalPart, getMxIdServer, validMxId } from '../../../utils/matrix';
 

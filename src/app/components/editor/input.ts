@@ -4,7 +4,7 @@ import parse from 'html-dom-parser';
 import { ChildNode, Element, isText, isTag } from 'domhandler';
 
 import { sanitizeCustomHtml } from '../../utils/sanitize';
-import { BlockType, MarkType } from './Elements';
+import { BlockType, MarkType } from './types';
 import {
   BlockQuoteElement,
   CodeBlockElement,
@@ -21,7 +21,7 @@ import {
   UnorderedListElement,
 } from './slate';
 import { parseMatrixToUrl } from '../../utils/matrix';
-import { createEmoticonElement, createMentionElement } from './common';
+import { createEmoticonElement, createMentionElement } from './utils';
 
 const markNodeToType: Record<string, MarkType> = {
   b: MarkType.Bold,

@@ -1,8 +1,8 @@
 import { isHotkey } from 'is-hotkey';
 import { KeyboardEvent } from 'react';
 import { Editor } from 'slate';
-import { isAnyMarkActive, isBlockActive, removeAllMark, toggleBlock, toggleMark } from './common';
-import { BlockType, MarkType } from './Elements';
+import { isAnyMarkActive, isBlockActive, removeAllMark, toggleBlock, toggleMark } from './utils';
+import { BlockType, MarkType } from './types';
 
 export const INLINE_HOTKEYS: Record<string, MarkType> = {
   'mod+b': MarkType.Bold,
