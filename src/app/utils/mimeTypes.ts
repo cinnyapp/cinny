@@ -92,6 +92,7 @@ export const READABLE_EXT_TO_MIME_TYPE: Record<string, string> = {
   me: 'text/me',
   cvs: 'text/cvs',
   tvs: 'text/tvs',
+  sql: 'text/sql',
 };
 
 export const ALLOWED_BLOB_MIME_TYPES = [
