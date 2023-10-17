@@ -147,7 +147,10 @@ export const MessageEditor = as<'div', MessageEditorProps>(
       [editor]
     );
 
-    const handleCloseAutocomplete = useCallback(() => setAutocompleteQuery(undefined), []);
+    const handleCloseAutocomplete = useCallback(() => {
+      ReactEditor.focus(editor);
+      setAutocompleteQuery(undefined);
+    }, [editor]);
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));

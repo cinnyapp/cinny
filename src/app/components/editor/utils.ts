@@ -185,11 +185,8 @@ export const replaceWithElement = (editor: Editor, selectRange: BaseRange, eleme
 };
 
 export const moveCursor = (editor: Editor, withSpace?: boolean) => {
-  // without timeout move cursor doesn't works properly.
-  setTimeout(() => {
-    Transforms.move(editor);
-    if (withSpace) editor.insertText(' ');
-  }, 100);
+  Transforms.move(editor);
+  if (withSpace) editor.insertText(' ');
 };
 
 interface PointUntilCharOptions {

@@ -355,7 +355,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       [editor, sendTypingStatus]
     );
 
-    const handleCloseAutocomplete = useCallback(() => setAutocompleteQuery(undefined), []);
+    const handleCloseAutocomplete = useCallback(() => {
+      setAutocompleteQuery(undefined);
+      ReactEditor.focus(editor);
+    }, [editor]);
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
