@@ -106,7 +106,7 @@ import { sanitizeText } from '../../utils/sanitize';
 import { useScreenSize } from '../../hooks/useScreenSize';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { Command, SHRUG, useCommands } from '../../hooks/useCommands';
-import { isAndroidOrIOS } from '../../utils/user-agent';
+import { mobileOrTablet } from '../../utils/user-agent';
 
 interface RoomInputProps {
   editor: Editor;
@@ -180,7 +180,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     }, [editor, msgDraft]);
 
     useEffect(() => {
-      if (!isAndroidOrIOS()) ReactEditor.focus(editor);
+      if (!mobileOrTablet()) ReactEditor.focus(editor);
       return () => {
         const parsedDraft = JSON.parse(JSON.stringify(editor.children));
         setMsgDraft(parsedDraft);
@@ -531,7 +531,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         onStickerSelect={handleStickerSelect}
                         requestClose={() => {
                           setEmojiBoardTab(undefined);
-                          if (!isAndroidOrIOS()) ReactEditor.focus(editor);
+                          if (!mobileOrTablet()) ReactEditor.focus(editor);
                         }}
                       />
                     }
