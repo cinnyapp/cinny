@@ -34,6 +34,9 @@ export const EditorTextarea = style([
       [`${EditorTextareaScroll}:last-child &`]: {
         paddingRight: toRem(13),
       },
+      '&:focus': {
+        outline: 'none',
+      },
     },
   },
 ]);
