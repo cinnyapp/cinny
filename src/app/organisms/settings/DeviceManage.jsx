@@ -217,7 +217,7 @@ function DeviceManage() {
     <div className="device-manage">
       <div>
         <MenuHeader>Unverified sessions</MenuHeader>
-        {!isMeVerified && (
+        {!isMeVerified && isCSEnabled && (
           <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
             <InfoCard
               rounded
