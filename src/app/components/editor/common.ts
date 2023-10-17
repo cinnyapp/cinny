@@ -61,6 +61,9 @@ const NESTED_BLOCK = [
 ];
 
 export const toggleBlock = (editor: Editor, format: BlockType, option?: BlockOption) => {
+  Transforms.collapse(editor, {
+    edge: 'end',
+  });
   const isActive = isBlockActive(editor, format);
 
   Transforms.unwrapNodes(editor, {
