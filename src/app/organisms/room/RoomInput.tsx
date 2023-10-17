@@ -12,7 +12,7 @@ import { useAtom } from 'jotai';
 import isHotkey from 'is-hotkey';
 import { EventType, IContent, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
-import { Transforms, Range, Editor } from 'slate';
+import { Transforms, Editor } from 'slate';
 import {
   Box,
   Dialog,
@@ -322,19 +322,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           evt.preventDefault();
           setReplyDraft();
         }
-
-        if (editor.selection && Range.isCollapsed(editor.selection)) {
-          if (isHotkey('arrowleft', evt)) {
-            evt.preventDefault();
-            Transforms.move(editor, { unit: 'offset', reverse: true });
-          }
-          if (isHotkey('arrowright', evt)) {
-            evt.preventDefault();
-            Transforms.move(editor, { unit: 'offset' });
-          }
-        }
       },
-      [submit, editor, setReplyDraft]
+      [submit, setReplyDraft]
     );
 
     const handleKeyUp: KeyboardEventHandler = useCallback(
