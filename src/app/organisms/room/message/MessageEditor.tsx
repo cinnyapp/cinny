@@ -45,6 +45,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
   ({ room, roomId, mEvent, imagePackRooms, onCancel, ...props }, ref) => {
     const mx = useMatrixClient();
     const editor = useEditor();
+    const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [globalToolbar] = useSetting(settingsAtom, 'editorToolbar');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const [toolbar, setToolbar] = useState(globalToolbar);
@@ -119,7 +120,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (isHotkey('enter', evt)) {
+        if (enterForNewline ? isHotkey('shift+enter', evt) : isHotkey('enter', evt)) {
           evt.preventDefault();
           handleSave();
         }
@@ -128,7 +129,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
           onCancel();
         }
       },
-      [onCancel, handleSave]
+      [onCancel, handleSave, enterForNewline]
     );
 
     const handleKeyUp: KeyboardEventHandler = useCallback(

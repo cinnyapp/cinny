@@ -11,6 +11,7 @@ export interface Settings {
   isPeopleDrawer: boolean;
   useSystemEmoji: boolean;
 
+  enterForNewline: boolean;
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
   hideMembershipEvents: boolean;
@@ -30,6 +31,7 @@ const defaultSettings: Settings = {
   isPeopleDrawer: true,
   useSystemEmoji: false,
 
+  enterForNewline: false,
   messageLayout: 0,
   messageSpacing: '400',
   hideMembershipEvents: false,

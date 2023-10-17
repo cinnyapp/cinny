@@ -120,6 +120,7 @@ interface RoomInputProps {
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
   ({ editor, roomViewRef, roomId, room }, ref) => {
     const mx = useMatrixClient();
+    const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const commands = useCommands(mx, room);
 
@@ -323,7 +324,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (isHotkey('enter', evt)) {
+        if (enterForNewline ? isHotkey('shift+enter', evt) : isHotkey('enter', evt)) {
           evt.preventDefault();
           submit();
         }
@@ -332,7 +333,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           setReplyDraft();
         }
       },
-      [submit, setReplyDraft]
+      [submit, setReplyDraft, enterForNewline]
     );
 
     const handleKeyUp: KeyboardEventHandler = useCallback(
