@@ -182,6 +182,9 @@ export const createCommandElement = (command: string): CommandElement => ({
 export const replaceWithElement = (editor: Editor, selectRange: BaseRange, element: Element) => {
   Transforms.select(editor, selectRange);
   Transforms.insertNodes(editor, element);
+  Transforms.collapse(editor, {
+    edge: 'end',
+  });
 };
 
 export const moveCursor = (editor: Editor, withSpace?: boolean) => {
