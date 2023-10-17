@@ -54,9 +54,6 @@ import {
   isEmptyEditor,
   getBeginCommand,
   trimCommand,
-  removeAllMark,
-  toggleBlock,
-  BlockType,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -186,14 +183,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     useEffect(() => {
       if (!mobileOrTablet()) ReactEditor.focus(editor);
       return () => {
-        if (isEmptyEditor(editor)) {
-          // prevent empty editor formatting from
-          // saving in draft
-          removeAllMark(editor);
-          toggleBlock(editor, BlockType.Paragraph);
+        if (!isEmptyEditor(editor)) {
+          const parsedDraft = JSON.parse(JSON.stringify(editor.children));
+          setMsgDraft(parsedDraft);
+        } else {
+          roomIdToMsgDraftAtomFamily.remove(roomId);
         }
-        const parsedDraft = JSON.parse(JSON.stringify(editor.children));
-        setMsgDraft(parsedDraft);
         resetEditor(editor);
         resetEditorHistory(editor);
       };
