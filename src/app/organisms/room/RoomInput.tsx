@@ -94,8 +94,6 @@ import {
   getImageMsgContent,
   getVideoMsgContent,
 } from './msgContent';
-import navigation from '../../../client/state/navigation';
-import cons from '../../../client/state/cons';
 import { MessageReply } from '../../molecules/message/Message';
 import colorMXID from '../../../util/colorMXID';
 import {
@@ -189,27 +187,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         resetEditorHistory(editor);
       };
     }, [roomId, editor, setMsgDraft]);
-
-    useEffect(() => {
-      const handleReplyTo = (
-        userId: string,
-        eventId: string,
-        body: string,
-        formattedBody: string
-      ) => {
-        setReplyDraft({
-          userId,
-          eventId,
-          body,
-          formattedBody,
-        });
-        ReactEditor.focus(editor);
-      };
-      navigation.on(cons.events.navigation.REPLY_TO_CLICKED, handleReplyTo);
-      return () => {
-        navigation.removeListener(cons.events.navigation.REPLY_TO_CLICKED, handleReplyTo);
-      };
-    }, [setReplyDraft, editor]);
 
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
