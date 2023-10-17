@@ -47,6 +47,7 @@ import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearc
 import { useDebounce } from '../../hooks/useDebounce';
 import { useThrottle } from '../../hooks/useThrottle';
 import { addRecentEmoji } from '../../plugins/recent-emoji';
+import { isAndroidOrIOS } from '../../utils/user-agent';
 
 const RECENT_GROUP_ID = 'recent_group';
 const SEARCH_GROUP_ID = 'search_group';
@@ -782,7 +783,7 @@ export function EmojiBoard({
                 maxLength={50}
                 after={<Icon src={Icons.Search} size="50" />}
                 onChange={handleOnChange}
-                autoFocus
+                autoFocus={!isAndroidOrIOS()}
               />
             </Box>
           </Header>

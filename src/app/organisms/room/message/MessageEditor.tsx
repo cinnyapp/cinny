@@ -32,6 +32,7 @@ import { EmojiBoard } from '../../../components/emoji-board';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getEditedEvent, trimReplyFromFormattedBody } from '../../../utils/room';
+import { isAndroidOrIOS } from '../../../utils/user-agent';
 
 type MessageEditorProps = {
   roomId: string;
@@ -167,7 +168,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
       });
 
       editor.insertFragment(initialValue);
-      ReactEditor.focus(editor);
+      if (!isAndroidOrIOS()) ReactEditor.focus(editor);
     }, [editor, getPrevBodyAndFormattedBody]);
 
     useEffect(() => {
@@ -258,7 +259,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                             onCustomEmojiSelect={handleEmoticonSelect}
                             requestClose={() => {
                               setEmojiBoard(false);
-                              ReactEditor.focus(editor);
+                              if (!isAndroidOrIOS()) ReactEditor.focus(editor);
                             }}
                           />
                         }
