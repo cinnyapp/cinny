@@ -13,7 +13,7 @@ export const Image = style([
 export const Video = style([
   DefaultReset,
   {
-    objectFit: 'cover',
+    objectFit: 'contain',
     width: '100%',
     height: '100%',
   },
