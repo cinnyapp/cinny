@@ -132,6 +132,7 @@ import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { MessageEvent } from '../../../types/matrix/room';
 import initMatrix from '../../../client/initMatrix';
 import { useKeyDown } from '../../hooks/useKeyDown';
+import cons from '../../../client/state/cons';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -600,7 +601,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     useCallback(
       (mEvt: MatrixEvent) => {
         if (atBottomRef.current && document.hasFocus()) {
-          if (!unreadInfo && mEvt.getSender() !== mx.getUserId()) {
+          if (!unreadInfo) {
             markAsRead(mEvt.getRoomId());
           }
 
@@ -620,7 +621,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           setUnreadInfo(getRoomUnreadInfo(room));
         }
       },
-      [mx, room, unreadInfo]
+      [room, unreadInfo]
     )
   );
 
@@ -766,10 +767,21 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
       if (latestTimeline === room.getLiveTimeline()) {
         markAsRead();
-        setUnreadInfo(undefined);
       }
     }
   }, [room, unreadInfo, liveTimelineLinked, rangeAtEnd, atBottom]);
+
+  // Remove unreadInfo on mark as read
+  useEffect(() => {
+    const handleFullRead = (rId: string) => {
+      if (rId !== room.roomId) return;
+      setUnreadInfo(undefined);
+    };
+    initMatrix.notifications?.on(cons.events.notifications.FULL_READ, handleFullRead);
+    return () => {
+      initMatrix.notifications?.removeListener(cons.events.notifications.FULL_READ, handleFullRead);
+    };
+  }, [room]);
 
   // scroll out of view msg editor in view.
   useEffect(() => {
@@ -802,7 +814,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   const handleMarkAsRead = () => {
     markAsRead(room.roomId);
-    setUnreadInfo(undefined);
   };
 
   const handleOpenReply: MouseEventHandler<HTMLButtonElement> = useCallback(
