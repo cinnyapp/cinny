@@ -1,34 +1,18 @@
 import { Scroll, Text } from 'folds';
 import React from 'react';
-import { RenderElementProps, RenderLeafProps, useFocused, useSelected } from 'slate-react';
+import {
+  RenderElementProps,
+  RenderLeafProps,
+  useFocused,
+  useSelected,
+  useSlate,
+} from 'slate-react';
 
 import * as css from '../../styles/CustomHtml.css';
-import { EmoticonElement, LinkElement, MentionElement } from './slate';
+import { CommandElement, EmoticonElement, LinkElement, MentionElement } from './slate';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-
-export enum MarkType {
-  Bold = 'bold',
-  Italic = 'italic',
-  Underline = 'underline',
-  StrikeThrough = 'strikeThrough',
-  Code = 'code',
-  Spoiler = 'spoiler',
-}
-
-export enum BlockType {
-  Paragraph = 'paragraph',
-  Heading = 'heading',
-  CodeLine = 'code-line',
-  CodeBlock = 'code-block',
-  QuoteLine = 'quote-line',
-  BlockQuote = 'block-quote',
-  ListItem = 'list-item',
-  OrderedList = 'ordered-list',
-  UnorderedList = 'unordered-list',
-  Mention = 'mention',
-  Emoticon = 'emoticon',
-  Link = 'link',
-}
+import { getBeginCommand } from './utils';
+import { BlockType } from './types';
 
 // Put this at the start and end of an inline component to work around this Chromium bug:
 // https://bugs.chromium.org/p/chromium/issues/detail?id=1249405
@@ -58,6 +42,29 @@ function RenderMentionElement({
       contentEditable={false}
     >
       {element.name}
+      {children}
+    </span>
+  );
+}
+function RenderCommandElement({
+  attributes,
+  element,
+  children,
+}: { element: CommandElement } & RenderElementProps) {
+  const selected = useSelected();
+  const focused = useFocused();
+  const editor = useSlate();
+
+  return (
+    <span
+      {...attributes}
+      className={css.Command({
+        focus: selected && focused,
+        active: getBeginCommand(editor) === element.command,
+      })}
+      contentEditable={false}
+    >
+      {`/${element.command}`}
       {children}
     </span>
   );
@@ -199,6 +206,12 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
         <RenderLinkElement attributes={attributes} element={element}>
           {children}
         </RenderLinkElement>
+      );
+    case BlockType.Command:
+      return (
+        <RenderCommandElement attributes={attributes} element={element}>
+          {children}
+        </RenderCommandElement>
       );
     default:
       return (

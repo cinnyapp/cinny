@@ -49,6 +49,7 @@ import { settingsAtom } from '../../state/settings';
 function AppearanceSection() {
   const [, updateState] = useState({});
 
+  const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
   const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [useSystemEmoji, setUseSystemEmoji] = useSetting(settingsAtom, 'useSystemEmoji');
@@ -137,6 +138,16 @@ function AppearanceSection() {
             }}
           />
           }
+        />
+        <SettingTile
+          title="Use ENTER for Newline"
+          options={(
+            <Toggle
+              isActive={enterForNewline}
+              onToggle={() => setEnterForNewline(!enterForNewline) }
+            />
+          )}
+          content={<Text variant="b3">Use SHIFT + ENTER to send message and ENTER for newline.</Text>}
         />
         <SettingTile
           title="Inline Markdown formatting"

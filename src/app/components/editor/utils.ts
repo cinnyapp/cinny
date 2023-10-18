@@ -1,6 +1,13 @@
-import { BasePoint, BaseRange, Editor, Element, Point, Range, Transforms } from 'slate';
-import { BlockType, MarkType } from './Elements';
-import { EmoticonElement, FormattedText, HeadingLevel, LinkElement, MentionElement } from './slate';
+import { BasePoint, BaseRange, Editor, Element, Point, Range, Text, Transforms } from 'slate';
+import { BlockType, MarkType } from './types';
+import {
+  CommandElement,
+  EmoticonElement,
+  FormattedText,
+  HeadingLevel,
+  LinkElement,
+  MentionElement,
+} from './slate';
 
 const ALL_MARK_TYPE: MarkType[] = [
   MarkType.Bold,
@@ -54,6 +61,9 @@ const NESTED_BLOCK = [
 ];
 
 export const toggleBlock = (editor: Editor, format: BlockType, option?: BlockOption) => {
+  Transforms.collapse(editor, {
+    edge: 'end',
+  });
   const isActive = isBlockActive(editor, format);
 
   Transforms.unwrapNodes(editor, {
@@ -163,17 +173,23 @@ export const createLinkElement = (
   children: typeof children === 'string' ? [{ text: children }] : children,
 });
 
+export const createCommandElement = (command: string): CommandElement => ({
+  type: BlockType.Command,
+  command,
+  children: [{ text: '' }],
+});
+
 export const replaceWithElement = (editor: Editor, selectRange: BaseRange, element: Element) => {
   Transforms.select(editor, selectRange);
   Transforms.insertNodes(editor, element);
+  Transforms.collapse(editor, {
+    edge: 'end',
+  });
 };
 
 export const moveCursor = (editor: Editor, withSpace?: boolean) => {
-  // without timeout move cursor doesn't works properly.
-  setTimeout(() => {
-    Transforms.move(editor);
-    if (withSpace) editor.insertText(' ');
-  }, 100);
+  Transforms.move(editor);
+  if (withSpace) editor.insertText(' ');
 };
 
 interface PointUntilCharOptions {
@@ -229,4 +245,17 @@ export const isEmptyEditor = (editor: Editor): boolean => {
     return isEmpty;
   }
   return false;
+};
+
+export const getBeginCommand = (editor: Editor): string | undefined => {
+  const lineBlock = editor.children[0];
+  if (!Element.isElement(lineBlock)) return undefined;
+  if (lineBlock.type !== BlockType.Paragraph) return undefined;
+
+  const [firstInline, secondInline] = lineBlock.children;
+  const isEmptyText = Text.isText(firstInline) && firstInline.text.trim() === '';
+  if (!isEmptyText) return undefined;
+  if (Element.isElement(secondInline) && secondInline.type === BlockType.Command)
+    return secondInline.command;
+  return undefined;
 };

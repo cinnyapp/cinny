@@ -162,10 +162,10 @@ export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
 export const eventWithShortcode = (ev: MatrixEvent) =>
   typeof ev.getContent().shortcode === 'string';
 
-export const trimReplyFromBody = (body: string): string => {
-  if (body.match(/^> <.+>/) === null) return body;
+export function hasDMWith(mx: MatrixClient, userId: string) {
+  const dmLikeRooms = mx
+    .getRooms()
+    .filter((room) => mx.isRoomEncrypted(room.roomId) && room.getMembers().length <= 2);
 
-  const trimmedBody = body.slice(body.indexOf('\n\n') + 2);
-
-  return trimmedBody || body;
-};
+  return dmLikeRooms.find((room) => room.getMember(userId));
+}

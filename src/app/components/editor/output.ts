@@ -1,7 +1,7 @@
 import { Descendant, Text } from 'slate';
 
 import { sanitizeText } from '../../utils/sanitize';
-import { BlockType } from './Elements';
+import { BlockType } from './types';
 import { CustomElement } from './slate';
 import { parseInlineMD } from '../../utils/markdown';
 
@@ -57,6 +57,8 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
         : node.key;
     case BlockType.Link:
       return `<a href="${node.href}">${node.children}</a>`;
+    case BlockType.Command:
+      return `/${node.command}`;
     default:
       return children;
   }
@@ -104,6 +106,8 @@ const elementToPlainText = (node: CustomElement, children: string): string => {
       return node.key.startsWith('mxc://') ? `:${node.shortcode}:` : node.key;
     case BlockType.Link:
       return `[${node.children}](${node.href})`;
+    case BlockType.Command:
+      return `/${node.command}`;
     default:
       return children;
   }
@@ -129,4 +133,12 @@ export const toPlainText = (node: Descendant | Descendant[]): string => {
 export const customHtmlEqualsPlainText = (customHtml: string, plain: string): boolean =>
   customHtml.replace(/<br\/>/g, '\n') === sanitizeText(plain);
 
-export const trimCustomHtml = (customHtml: string) => customHtml.replace(/<br\/>$/g, '');
+export const trimCustomHtml = (customHtml: string) => customHtml.replace(/<br\/>$/g, '').trim();
+
+export const trimCommand = (cmdName: string, str: string) => {
+  const cmdRegX = new RegExp(`^(\\s+)?(\\/${cmdName})([^\\S\n]+)?`);
+
+  const match = str.match(cmdRegX);
+  if (!match) return str;
+  return str.slice(match[0].length);
+};

@@ -142,6 +142,31 @@ export const Mention = recipe({
   },
 });
 
+export const Command = recipe({
+  base: [
+    DefaultReset,
+    {
+      padding: `0 ${toRem(2)}`,
+      borderRadius: config.radii.R300,
+      fontWeight: config.fontWeight.W500,
+    },
+  ],
+  variants: {
+    focus: {
+      true: {
+        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Warning.OnContainer}`,
+      },
+    },
+    active: {
+      true: {
+        backgroundColor: color.Warning.Container,
+        color: color.Warning.OnContainer,
+        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Warning.ContainerLine}`,
+      },
+    },
+  },
+});
+
 export const EmoticonBase = style([
   DefaultReset,
   {
@@ -166,7 +191,7 @@ export const Emoticon = recipe({
       lineHeight: '1em',
       verticalAlign: 'middle',
       position: 'relative',
-      top: '-0.25em',
+      top: '-0.32em',
       borderRadius: config.radii.R300,
     },
   ],

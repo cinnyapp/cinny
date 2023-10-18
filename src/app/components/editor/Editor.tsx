@@ -18,7 +18,8 @@ import {
   RenderPlaceholderProps,
 } from 'slate-react';
 import { withHistory } from 'slate-history';
-import { BlockType, RenderElement, RenderLeaf } from './Elements';
+import { BlockType } from './types';
+import { RenderElement, RenderLeaf } from './Elements';
 import { CustomElement } from './slate';
 import * as css from './Editor.css';
 import { toggleKeyboardShortcut } from './keyboard';
@@ -34,8 +35,9 @@ const withInline = (editor: Editor): Editor => {
   const { isInline } = editor;
 
   editor.isInline = (element) =>
-    [BlockType.Mention, BlockType.Emoticon, BlockType.Link].includes(element.type) ||
-    isInline(element);
+    [BlockType.Mention, BlockType.Emoticon, BlockType.Link, BlockType.Command].includes(
+      element.type
+    ) || isInline(element);
 
   return editor;
 };
@@ -44,7 +46,8 @@ const withVoid = (editor: Editor): Editor => {
   const { isVoid } = editor;
 
   editor.isVoid = (element) =>
-    [BlockType.Mention, BlockType.Emoticon].includes(element.type) || isVoid(element);
+    [BlockType.Mention, BlockType.Emoticon, BlockType.Command].includes(element.type) ||
+    isVoid(element);
 
   return editor;
 };
@@ -122,7 +125,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
 
     return (
       <div className={css.Editor} ref={ref}>
-        <Slate editor={editor} value={initialValue} onChange={onChange}>
+        <Slate editor={editor} initialValue={initialValue} onChange={onChange}>
           {top}
           <Box alignItems="Start">
             {before && (

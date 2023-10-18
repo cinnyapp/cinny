@@ -696,7 +696,7 @@ export const Message = as<'div', MessageProps>(
     const hideOptions = () => setHover(false);
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
-      if (evt.altKey) return;
+      if (evt.altKey || !window.getSelection()?.isCollapsed) return;
       const tag = (evt.target as any).tagName;
       if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
       evt.preventDefault();
@@ -965,7 +965,7 @@ export const Event = as<'div', EventProps>(
     const hideOptions = () => setHover(false);
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
-      if (evt.altKey) return;
+      if (evt.altKey || !window.getSelection()?.isCollapsed) return;
       const tag = (evt.target as any).tagName;
       if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
       evt.preventDefault();

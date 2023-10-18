@@ -32,6 +32,7 @@ import { EmojiBoard } from '../../../components/emoji-board';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getEditedEvent, trimReplyFromFormattedBody } from '../../../utils/room';
+import { mobileOrTablet } from '../../../utils/user-agent';
 
 type MessageEditorProps = {
   roomId: string;
@@ -44,6 +45,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
   ({ room, roomId, mEvent, imagePackRooms, onCancel, ...props }, ref) => {
     const mx = useMatrixClient();
     const editor = useEditor();
+    const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [globalToolbar] = useSetting(settingsAtom, 'editorToolbar');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const [toolbar, setToolbar] = useState(globalToolbar);
@@ -118,7 +120,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (isHotkey('enter', evt)) {
+        if (enterForNewline ? isHotkey('shift+enter', evt) : isHotkey('enter', evt)) {
           evt.preventDefault();
           handleSave();
         }
@@ -127,7 +129,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
           onCancel();
         }
       },
-      [onCancel, handleSave]
+      [onCancel, handleSave, enterForNewline]
     );
 
     const handleKeyUp: KeyboardEventHandler = useCallback(
@@ -146,7 +148,10 @@ export const MessageEditor = as<'div', MessageEditorProps>(
       [editor]
     );
 
-    const handleCloseAutocomplete = useCallback(() => setAutocompleteQuery(undefined), []);
+    const handleCloseAutocomplete = useCallback(() => {
+      ReactEditor.focus(editor);
+      setAutocompleteQuery(undefined);
+    }, [editor]);
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
@@ -167,7 +172,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
       });
 
       editor.insertFragment(initialValue);
-      ReactEditor.focus(editor);
+      if (!mobileOrTablet()) ReactEditor.focus(editor);
     }, [editor, getPrevBodyAndFormattedBody]);
 
     useEffect(() => {
@@ -258,7 +263,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                             onCustomEmojiSelect={handleEmoticonSelect}
                             requestClose={() => {
                               setEmojiBoard(false);
-                              ReactEditor.focus(editor);
+                              if (!mobileOrTablet()) ReactEditor.focus(editor);
                             }}
                           />
                         }
