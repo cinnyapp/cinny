@@ -766,7 +766,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const evtTimeline = getEventTimeline(room, unreadInfo.readUptoEventId);
       const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
       if (latestTimeline === room.getLiveTimeline()) {
-        markAsRead();
+        markAsRead(room.roomId);
       }
     }
   }, [room, unreadInfo, liveTimelineLinked, rangeAtEnd, atBottom]);
