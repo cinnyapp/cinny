@@ -480,7 +480,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   }
 
   const atBottomAnchorRef = useRef<HTMLElement>(null);
-  const [atBottom, setAtBottom] = useState<boolean>();
+  const [atBottom, setAtBottom] = useState<boolean>(true);
   const atBottomRef = useRef(atBottom);
   atBottomRef.current = atBottom;
 
@@ -539,6 +539,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     typeof timeline.linkedTimelines[0]?.getPaginationToken(Direction.Backward) === 'string';
   const rangeAtStart = timeline.range.start === 0;
   const rangeAtEnd = timeline.range.end === eventsLength;
+  const atLiveEndRef = useRef(liveTimelineLinked && rangeAtEnd);
+  atLiveEndRef.current = liveTimelineLinked && rangeAtEnd;
 
   const handleTimelinePagination = useTimelinePagination(
     mx,
@@ -600,6 +602,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     room,
     useCallback(
       (mEvt: MatrixEvent) => {
+        // if user is at bottom of timeline
+        // keep paginating timeline and conditionally mark as read
+        // otherwise we update timeline without paginating
+        // so timeline can be updated with evt like: edits, reactions etc
         if (atBottomRef.current && document.hasFocus()) {
           if (!unreadInfo) {
             markAsRead(mEvt.getRoomId());
@@ -636,8 +642,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   // Stay at bottom when room editor resize
   useResizeObserver(
-    useCallback(
-      (entries) => {
+    useMemo(() => {
+      let mounted = false;
+      return (entries) => {
+        if (!mounted) {
+          // skip initial mounting call
+          mounted = true;
+          return;
+        }
         if (!roomInputRef.current) return;
         const editorBaseEntry = getResizeObserverEntry(roomInputRef.current, entries);
         const scrollElement = getScrollElement();
@@ -646,11 +658,22 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         if (atBottomRef.current) {
           scrollToBottom(scrollElement);
         }
-      },
-      [getScrollElement, roomInputRef]
-    ),
+      };
+    }, [getScrollElement, roomInputRef]),
     useCallback(() => roomInputRef.current, [roomInputRef])
   );
+
+  const tryAutoMarkAsRead = useCallback(() => {
+    if (!unreadInfo) {
+      markAsRead(room.roomId);
+      return;
+    }
+    const evtTimeline = getEventTimeline(room, unreadInfo.readUptoEventId);
+    const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
+    if (latestTimeline === room.getLiveTimeline()) {
+      markAsRead(room.roomId);
+    }
+  }, [room, unreadInfo]);
 
   const debounceSetAtBottom = useDebounce(
     useCallback((entry: IntersectionObserverEntry) => {
@@ -665,9 +688,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         if (!target) return;
         const targetEntry = getIntersectionObserverEntry(target, entries);
         if (targetEntry) debounceSetAtBottom(targetEntry);
-        if (targetEntry?.isIntersecting) setAtBottom(true);
+        if (targetEntry?.isIntersecting && atLiveEndRef.current) {
+          setAtBottom(true);
+          tryAutoMarkAsRead();
+        }
       },
-      [debounceSetAtBottom]
+      [debounceSetAtBottom, tryAutoMarkAsRead]
     ),
     useCallback(
       () => ({
@@ -712,10 +738,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   // Scroll to bottom on initial timeline load
   useLayoutEffect(() => {
     const scrollEl = scrollRef.current;
-    if (scrollEl) scrollToBottom(scrollEl);
+    if (scrollEl) {
+      scrollToBottom(scrollEl);
+    }
   }, []);
 
-  // Scroll to last read message if it is linked to live timeline
+  // if live timeline is linked and unreadInfo change
+  // Scroll to last read message
   useLayoutEffect(() => {
     const { readUptoEventId, inLiveTimeline, scrollTo } = unreadInfo ?? {};
     if (readUptoEventId && inLiveTimeline && scrollTo) {
@@ -723,12 +752,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const evtTimeline = getEventTimeline(room, readUptoEventId);
       const absoluteIndex =
         evtTimeline && getEventIdAbsoluteIndex(linkedTimelines, evtTimeline, readUptoEventId);
-      if (absoluteIndex)
+      if (absoluteIndex) {
         scrollToItem(absoluteIndex, {
           behavior: 'instant',
           align: 'start',
           stopInView: true,
         });
+      }
     }
   }, [room, unreadInfo, scrollToItem]);
 
@@ -755,21 +785,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         scrollToBottom(scrollEl, scrollToBottomRef.current.smooth ? 'smooth' : 'instant');
     }
   }, [scrollToBottomCount]);
-
-  // send readReceipts when reach bottom
-  useEffect(() => {
-    if (liveTimelineLinked && rangeAtEnd && atBottom && document.hasFocus()) {
-      if (!unreadInfo) {
-        markAsRead(room.roomId);
-        return;
-      }
-      const evtTimeline = getEventTimeline(room, unreadInfo.readUptoEventId);
-      const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
-      if (latestTimeline === room.getLiveTimeline()) {
-        markAsRead(room.roomId);
-      }
-    }
-  }, [room, unreadInfo, liveTimelineLinked, rangeAtEnd, atBottom]);
 
   // Remove unreadInfo on mark as read
   useEffect(() => {
@@ -1733,7 +1748,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           <span ref={atBottomAnchorRef} />
         </Box>
       </Scroll>
-      {(atBottom === false || !liveTimelineLinked || !rangeAtEnd) && (
+      {!atBottom && (
         <TimelineFloat position="Bottom">
           <Chip
             variant="SurfaceVariant"
