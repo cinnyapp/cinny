@@ -91,7 +91,7 @@ function DeviceManage() {
       <div className="device-manage">
         <div className="device-manage__loading">
           <Spinner size="small" />
-          <Text>Loading devices...</Text>
+          <Text>Loading sessions...</Text>
         </div>
       </div>
     );
