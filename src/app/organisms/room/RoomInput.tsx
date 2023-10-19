@@ -187,7 +187,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           const parsedDraft = JSON.parse(JSON.stringify(editor.children));
           setMsgDraft(parsedDraft);
         } else {
-          roomIdToMsgDraftAtomFamily.remove(roomId);
+          setMsgDraft([]);
         }
         resetEditor(editor);
         resetEditorHistory(editor);
