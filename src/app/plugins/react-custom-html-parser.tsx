@@ -180,10 +180,7 @@ export const getReactCustomHtmlParser = (
                 mentionPrefix === '#'
                   ? getRoomWithCanonicalAlias(mx, mentionId)
                   : mx.getRoom(mentionId);
-              const mentionName = mentionRoom?.name;
 
-              const mentionDisplayName =
-                mentionName && (mentionName.startsWith('#') ? mentionName : `#${mentionName}`);
               return (
                 <span
                   {...props}
@@ -198,7 +195,7 @@ export const getReactCustomHtmlParser = (
                   onClick={params.handleMentionClick}
                   style={{ cursor: 'pointer' }}
                 >
-                  {mentionDisplayName ?? mentionId}
+                  {domToReact(children, opts)}
                 </span>
               );
             }

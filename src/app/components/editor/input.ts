@@ -74,7 +74,7 @@ const elementToInlineNode = (node: Element): MentionElement | EmoticonElement | 
     if (typeof href !== 'string') return undefined;
     const [mxId] = parseMatrixToUrl(href);
     if (mxId) {
-      return createMentionElement(mxId, mxId, false);
+      return createMentionElement(mxId, parseNodeText(node) || mxId, false);
     }
   }
   return undefined;
