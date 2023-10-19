@@ -46,13 +46,17 @@ import {
 } from '../../hooks/useIntersectionObserver';
 import { Membership } from '../../../types/matrix/room';
 import { UseStateProvider } from '../../components/UseStateProvider';
-import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearch';
+import {
+  SearchItemStrGetter,
+  UseAsyncSearchOptions,
+  useAsyncSearch,
+} from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
 import colorMXID from '../../../util/colorMXID';
 import { usePowerLevelTags, PowerLevelTag } from '../../hooks/usePowerLevelTags';
 import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../state/typingMembers';
 import { TypingIndicator } from '../../components/typing-indicator';
-import { getMemberDisplayName } from '../../utils/room';
+import { getMemberDisplayName, getMemberSearchStr } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -161,7 +165,10 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
     contain: true,
   },
 };
-const getMemberItemStr = (m: RoomMember) => [m.name, m.userId];
+
+const mxIdToName = (mxId: string) => getMxIdLocalPart(mxId) ?? mxId;
+const getRoomMemberStr: SearchItemStrGetter<RoomMember> = (m, query) =>
+  getMemberSearchStr(m, query, mxIdToName);
 
 type MembersDrawerProps = {
   room: Room;
@@ -200,7 +207,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
 
   const [result, search, resetSearch] = useAsyncSearch(
     filteredMembers,
-    getMemberItemStr,
+    getRoomMemberStr,
     SEARCH_OPTIONS
   );
   if (!result && searchInputRef.current?.value) search(searchInputRef.current.value);

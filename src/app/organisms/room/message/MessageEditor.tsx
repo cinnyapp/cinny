@@ -193,7 +193,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
           <UserMentionAutocomplete
-            roomId={roomId}
+            room={room}
             editor={editor}
             query={autocompleteQuery}
             requestClose={handleCloseAutocomplete}
