@@ -734,6 +734,7 @@ export const Message = as<'div', MessageProps>(
                       <EmojiBoard
                         imagePackRooms={imagePackRooms ?? []}
                         returnFocusOnDeactivate={false}
+                        allowTextCustomEmoji
                         onEmojiSelect={(key) => {
                           onReactionToggle(mEvent.getId()!, key);
                           setEmojiBoard(false);
