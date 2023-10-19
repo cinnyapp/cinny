@@ -37,7 +37,7 @@ export function RoomBaseView({ room, eventId }: RoomBaseViewProps) {
         {screenSize === ScreenSize.Desktop && isDrawer && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
-            <MembersDrawer room={room} />
+            <MembersDrawer key={room.roomId} room={room} />
           </>
         )}
       </div>
