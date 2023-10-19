@@ -13,6 +13,7 @@ import React, {
 import {
   Badge,
   Box,
+  Chip,
   Icon,
   IconButton,
   Icons,
@@ -623,6 +624,7 @@ export function EmojiBoard({
   onEmojiSelect,
   onCustomEmojiSelect,
   onStickerSelect,
+  allowTextCustomEmoji,
 }: {
   tab?: EmojiBoardTab;
   onTabChange?: (tab: EmojiBoardTab) => void;
@@ -632,6 +634,7 @@ export function EmojiBoard({
   onEmojiSelect?: (unicode: string, shortcode: string) => void;
   onCustomEmojiSelect?: (mxc: string, shortcode: string) => void;
   onStickerSelect?: (mxc: string, shortcode: string) => void;
+  allowTextCustomEmoji?: boolean;
 }) {
   const emojiTab = tab === EmojiBoardTab.Emoji;
   const stickerTab = tab === EmojiBoardTab.Sticker;
@@ -777,11 +780,33 @@ export function EmojiBoard({
             <Box direction="Column" gap="200">
               {onTabChange && <EmojiBoardTabs tab={tab} onTabChange={onTabChange} />}
               <Input
+                data-emoji-board-search
                 variant="SurfaceVariant"
                 size="400"
                 placeholder="Search"
                 maxLength={50}
-                after={<Icon src={Icons.Search} size="50" />}
+                after={
+                  allowTextCustomEmoji && result?.query ? (
+                    <Chip
+                      variant="Primary"
+                      radii="Pill"
+                      after={<Icon src={Icons.ArrowRight} size="50" />}
+                      onClick={() => {
+                        const searchInput = document.querySelector<HTMLInputElement>(
+                          '[data-emoji-board-search="true"]'
+                        );
+                        const textReaction = searchInput?.value.trim();
+                        if (!textReaction) return;
+                        onCustomEmojiSelect?.(textReaction, textReaction);
+                        requestClose();
+                      }}
+                    >
+                      <Text size="L400">React</Text>
+                    </Chip>
+                  ) : (
+                    <Icon src={Icons.Search} size="50" />
+                  )
+                }
                 onChange={handleOnChange}
                 autoFocus={!mobileOrTablet()}
               />
