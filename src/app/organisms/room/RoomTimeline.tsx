@@ -1008,13 +1008,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const content = mEvent.getContent<IImageContent>();
       const imgInfo = content?.info;
       const mxcUrl = content.file?.url ?? content.url;
-      if (!imgInfo || typeof imgInfo.mimetype !== 'string' || typeof mxcUrl !== 'string') {
-        if (mxcUrl) {
-          return fileRenderer(mEventId, mEvent);
-        }
+      if (typeof mxcUrl !== 'string') {
         return null;
       }
-      const height = scaleYDimension(imgInfo.w || 400, 400, imgInfo.h || 400);
+      const height = scaleYDimension(imgInfo?.w || 400, 400, imgInfo?.h || 400);
 
       return (
         <Attachment>
@@ -1026,7 +1023,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             <ImageContent
               body={content.body || 'Image'}
               info={imgInfo}
-              mimeType={imgInfo.mimetype}
+              mimeType={imgInfo?.mimetype}
               url={mxcUrl}
               encInfo={content.file}
               autoPlay={mediaAutoLoad}

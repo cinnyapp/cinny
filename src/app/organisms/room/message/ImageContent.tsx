@@ -27,19 +27,20 @@ import { Image } from '../../../components/media';
 import * as css from './styles.css';
 import { bytesToSize } from '../../../utils/common';
 import { ImageViewer } from '../../../components/image-viewer';
+import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
 
 export type ImageContentProps = {
   body: string;
-  mimeType: string;
+  mimeType?: string;
   url: string;
-  info: IImageInfo;
+  info?: IImageInfo;
   encInfo?: EncryptedAttachmentInfo;
   autoPlay?: boolean;
 };
 export const ImageContent = as<'div', ImageContentProps>(
   ({ className, body, mimeType, url, info, encInfo, autoPlay, ...props }, ref) => {
     const mx = useMatrixClient();
-    const blurHash = info[MATRIX_BLUR_HASH_PROPERTY_NAME];
+    const blurHash = info?.[MATRIX_BLUR_HASH_PROPERTY_NAME];
 
     const [load, setLoad] = useState(false);
     const [error, setError] = useState(false);
@@ -47,7 +48,7 @@ export const ImageContent = as<'div', ImageContentProps>(
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(
-        () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
+        () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType || FALLBACK_MIMETYPE, encInfo),
         [mx, url, mimeType, encInfo]
       )
     );
@@ -161,7 +162,7 @@ export const ImageContent = as<'div', ImageContentProps>(
             </TooltipProvider>
           </Box>
         )}
-        {!load && typeof info.size === 'number' && (
+        {!load && typeof info?.size === 'number' && (
           <Box className={css.AbsoluteFooter} justifyContent="End" alignContent="Center" gap="200">
             <Badge variant="Secondary" fill="Soft">
               <Text size="L400">{bytesToSize(info.size)}</Text>
