@@ -7,11 +7,12 @@ type EncryptedContentProps = {
 };
 
 export function EncryptedContent({ mEvent, children }: EncryptedContentProps) {
-  const [, setDecrypted] = useState(mEvent.isBeingDecrypted());
+  const [, toggleDecrypted] = useState(!mEvent.isBeingDecrypted());
 
   useEffect(() => {
-    const handleDecrypted: MatrixEventHandlerMap[MatrixEventEvent.Decrypted] = () =>
-      setDecrypted(true);
+    const handleDecrypted: MatrixEventHandlerMap[MatrixEventEvent.Decrypted] = () => {
+      toggleDecrypted((s) => !s);
+    };
     mEvent.on(MatrixEventEvent.Decrypted, handleDecrypted);
     return () => {
       mEvent.removeListener(MatrixEventEvent.Decrypted, handleDecrypted);

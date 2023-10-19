@@ -1280,6 +1280,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         >
           <EncryptedContent mEvent={mEvent}>
             {() => {
+              if (mEvent.isRedacted()) return <MessageDeletedContent />;
               if (mEvent.getType() === MessageEvent.Sticker)
                 return <StickerContent mEvent={mEvent} autoPlay={mediaAutoLoad} />;
               if (mEvent.getType() === MessageEvent.RoomMessage)
