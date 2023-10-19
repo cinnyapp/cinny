@@ -56,6 +56,7 @@
     "prismjs": "1.29.0",
     "prop-types": "15.8.1",
     "react": "17.0.2",
+    "react-aria": "3.29.1",
     "react-autosize-textarea": "7.1.0",
     "react-blurhash": "0.2.0",
     "react-dnd": "15.1.2",

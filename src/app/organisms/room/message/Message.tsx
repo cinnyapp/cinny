@@ -32,6 +32,7 @@ import React, {
   useState,
 } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { useHover, useFocusWithin } from 'react-aria';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
@@ -607,6 +608,8 @@ export const Message = as<'div', MessageProps>(
     const mx = useMatrixClient();
     const senderId = mEvent.getSender() ?? '';
     const [hover, setHover] = useState(false);
+    const { hoverProps } = useHover({ onHoverChange: setHover });
+    const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
     const [menu, setMenu] = useState(false);
     const [emojiBoard, setEmojiBoard] = useState(false);
 
@@ -692,9 +695,6 @@ export const Message = as<'div', MessageProps>(
       </Box>
     );
 
-    const showOptions = () => setHover(true);
-    const hideOptions = () => setHover(false);
-
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (evt.altKey || !window.getSelection()?.isCollapsed) return;
       const tag = (evt.target as any).tagName;
@@ -716,8 +716,8 @@ export const Message = as<'div', MessageProps>(
         highlight={highlight}
         selected={menu || emojiBoard}
         {...props}
-        onMouseEnter={showOptions}
-        onMouseLeave={hideOptions}
+        {...hoverProps}
+        {...focusWithinProps}
         ref={ref}
       >
         {!edit && (hover || menu || emojiBoard) && (
@@ -958,11 +958,10 @@ export const Event = as<'div', EventProps>(
   ({ className, room, mEvent, highlight, canDelete, messageSpacing, children, ...props }, ref) => {
     const mx = useMatrixClient();
     const [hover, setHover] = useState(false);
+    const { hoverProps } = useHover({ onHoverChange: setHover });
+    const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
     const [menu, setMenu] = useState(false);
     const stateEvent = typeof mEvent.getStateKey() === 'string';
-
-    const showOptions = () => setHover(true);
-    const hideOptions = () => setHover(false);
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (evt.altKey || !window.getSelection()?.isCollapsed) return;
@@ -985,8 +984,8 @@ export const Event = as<'div', EventProps>(
         highlight={highlight}
         selected={menu}
         {...props}
-        onMouseEnter={showOptions}
-        onMouseLeave={hideOptions}
+        {...hoverProps}
+        {...focusWithinProps}
         ref={ref}
       >
         {(hover || menu) && (
