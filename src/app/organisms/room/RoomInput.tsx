@@ -443,7 +443,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
           <UserMentionAutocomplete
-            roomId={roomId}
+            room={room}
             editor={editor}
             query={autocompleteQuery}
             requestClose={handleCloseAutocomplete}

@@ -46,14 +46,20 @@ import {
 } from '../../hooks/useIntersectionObserver';
 import { Membership } from '../../../types/matrix/room';
 import { UseStateProvider } from '../../components/UseStateProvider';
-import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearch';
+import {
+  SearchItemStrGetter,
+  UseAsyncSearchOptions,
+  useAsyncSearch,
+} from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
 import colorMXID from '../../../util/colorMXID';
 import { usePowerLevelTags, PowerLevelTag } from '../../hooks/usePowerLevelTags';
 import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../state/typingMembers';
 import { TypingIndicator } from '../../components/typing-indicator';
-import { getMemberDisplayName } from '../../utils/room';
+import { getMemberDisplayName, getMemberSearchStr } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -159,7 +165,10 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
     contain: true,
   },
 };
-const getMemberItemStr = (m: RoomMember) => [m.name, m.userId];
+
+const mxIdToName = (mxId: string) => getMxIdLocalPart(mxId) ?? mxId;
+const getRoomMemberStr: SearchItemStrGetter<RoomMember> = (m, query) =>
+  getMemberSearchStr(m, query, mxIdToName);
 
 type MembersDrawerProps = {
   room: Room;
@@ -175,10 +184,12 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
 
   const membershipFilterMenu = useMembershipFilterMenu();
   const sortFilterMenu = useSortFilterMenu();
-  const [filter, setFilter] = useState<MembersFilterOptions>({
-    membershipFilter: membershipFilterMenu[0],
-    sortFilter: sortFilterMenu[0],
-  });
+  const [sortFilterIndex, setSortFilterIndex] = useSetting(settingsAtom, 'memberSortFilterIndex');
+  const [membershipFilterIndex, setMembershipFilterIndex] = useState(0);
+
+  const membershipFilter = membershipFilterMenu[membershipFilterIndex] ?? membershipFilterMenu[0];
+  const sortFilter = sortFilterMenu[sortFilterIndex] ?? sortFilterMenu[0];
+
   const [onTop, setOnTop] = useState(true);
 
   const typingMembers = useAtomValue(
@@ -188,15 +199,15 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   const filteredMembers = useMemo(
     () =>
       members
-        .filter(filter.membershipFilter.filterFn)
-        .sort(filter.sortFilter.filterFn)
+        .filter(membershipFilter.filterFn)
+        .sort(sortFilter.filterFn)
         .sort((a, b) => b.powerLevel - a.powerLevel),
-    [members, filter]
+    [members, membershipFilter, sortFilter]
   );
 
   const [result, search, resetSearch] = useAsyncSearch(
     filteredMembers,
-    getMemberItemStr,
+    getRoomMemberStr,
     SEARCH_OPTIONS
   );
   if (!result && searchInputRef.current?.value) search(searchInputRef.current.value);
@@ -310,18 +321,18 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           }}
                         >
                           <Menu style={{ padding: config.space.S100 }}>
-                            {membershipFilterMenu.map((menuItem) => (
+                            {membershipFilterMenu.map((menuItem, index) => (
                               <MenuItem
                                 key={menuItem.name}
                                 variant={
-                                  menuItem.name === filter.membershipFilter.name
+                                  menuItem.name === membershipFilter.name
                                     ? menuItem.color
                                     : 'Surface'
                                 }
-                                aria-pressed={menuItem.name === filter.membershipFilter.name}
+                                aria-pressed={menuItem.name === membershipFilter.name}
                                 radii="300"
                                 onClick={() => {
-                                  setFilter((f) => ({ ...f, membershipFilter: menuItem }));
+                                  setMembershipFilterIndex(index);
                                   setOpen(false);
                                 }}
                               >
@@ -336,12 +347,12 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         <Chip
                           ref={anchorRef}
                           onClick={() => setOpen(!open)}
-                          variant={filter.membershipFilter.color}
+                          variant={membershipFilter.color}
                           size="400"
                           radii="300"
                           before={<Icon src={Icons.Filter} size="50" />}
                         >
-                          <Text size="T200">{filter.membershipFilter.name}</Text>
+                          <Text size="T200">{membershipFilter.name}</Text>
                         </Chip>
                       )}
                     </PopOut>
@@ -365,14 +376,14 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           }}
                         >
                           <Menu style={{ padding: config.space.S100 }}>
-                            {sortFilterMenu.map((menuItem) => (
+                            {sortFilterMenu.map((menuItem, index) => (
                               <MenuItem
                                 key={menuItem.name}
                                 variant="Surface"
-                                aria-pressed={menuItem.name === filter.sortFilter.name}
+                                aria-pressed={menuItem.name === sortFilter.name}
                                 radii="300"
                                 onClick={() => {
-                                  setFilter((f) => ({ ...f, sortFilter: menuItem }));
+                                  setSortFilterIndex(index);
                                   setOpen(false);
                                 }}
                               >
@@ -392,7 +403,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           radii="300"
                           after={<Icon src={Icons.Sort} size="50" />}
                         >
-                          <Text size="T200">{filter.sortFilter.name}</Text>
+                          <Text size="T200">{sortFilter.name}</Text>
                         </Chip>
                       )}
                     </PopOut>
@@ -452,7 +463,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
 
             {!fetchingMembers && !result && processMembers.length === 0 && (
               <Text style={{ padding: config.space.S300 }} align="Center">
-                {`No "${filter.membershipFilter.name}" Members`}
+                {`No "${membershipFilter.name}" Members`}
               </Text>
             )}
 

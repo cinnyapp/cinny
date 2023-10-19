@@ -13,6 +13,7 @@ import {
   NotificationCountType,
   RelationType,
   Room,
+  RoomMember,
 } from 'matrix-js-sdk';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import { AccountDataEvent } from '../../types/matrix/accountData';
@@ -292,6 +293,15 @@ export const getMemberDisplayName = (room: Room, userId: string): string | undef
   if (name === userId) return undefined;
   return name;
 };
+
+export const getMemberSearchStr = (
+  member: RoomMember,
+  query: string,
+  mxIdToName: (mxId: string) => string
+): string[] => [
+  member.rawDisplayName === member.userId ? mxIdToName(member.userId) : member.rawDisplayName,
+  query.startsWith('@') || query.indexOf(':') > -1 ? member.userId : mxIdToName(member.userId),
+];
 
 export const getMemberAvatarMxc = (room: Room, userId: string): string | undefined => {
   const member = room.getMember(userId);
