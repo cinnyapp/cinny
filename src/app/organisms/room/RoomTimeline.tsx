@@ -1743,7 +1743,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 <DefaultPlaceholder />
               </>
             ))}
-          <span ref={atBottomAnchorRef} />
+          <span style={{ height: 1 }} ref={atBottomAnchorRef} />
         </Box>
       </Scroll>
       {!atBottom && (
