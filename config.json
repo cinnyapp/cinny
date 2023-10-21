@@ -1,11 +1,13 @@
 {
   "defaultHomeserver": 3,
   "homeserverList": [
+    "0wnz.at",
     "converser.eu",
     "envs.net",
-    "halogen.city",
     "matrix.org",
-    "mozilla.org"
+    "monero.social",
+    "mozilla.org",
+    "xmr.se"
   ],
   "allowCustomHomeservers": true
 }
