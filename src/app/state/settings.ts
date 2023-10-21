@@ -28,7 +28,7 @@ export interface Settings {
 const defaultSettings: Settings = {
   themeIndex: 0,
   useSystemTheme: true,
-  isMarkdown: true,
+  isMarkdown: false,
   editorToolbar: false,
   useSystemEmoji: false,
 

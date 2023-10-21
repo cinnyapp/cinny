@@ -43,7 +43,7 @@ import {
   config,
   toRem,
 } from 'folds';
-import isHotkey from 'is-hotkey';
+import { isKeyHotkey } from 'is-hotkey';
 import Linkify from 'linkify-react';
 import {
   decryptFile,
@@ -725,7 +725,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     useCallback(
       (evt) => {
         if (
-          isHotkey('arrowup', evt) &&
+          isKeyHotkey('arrowup', evt) &&
           editableActiveElement() &&
           document.activeElement?.getAttribute('data-editable-name') === 'RoomInput' &&
           isEmptyEditor(editor)

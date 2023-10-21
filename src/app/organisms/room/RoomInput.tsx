@@ -9,7 +9,7 @@ import React, {
   useState,
 } from 'react';
 import { useAtom } from 'jotai';
-import isHotkey from 'is-hotkey';
+import { isKeyHotkey } from 'is-hotkey';
 import { EventType, IContent, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
@@ -319,11 +319,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (enterForNewline ? isHotkey('shift+enter', evt) : isHotkey('enter', evt)) {
+        if (enterForNewline ? isKeyHotkey('shift+enter', evt) : isKeyHotkey('enter', evt)) {
           evt.preventDefault();
           submit();
         }
-        if (isHotkey('escape', evt)) {
+        if (isKeyHotkey('escape', evt)) {
           evt.preventDefault();
           setReplyDraft();
         }
@@ -333,7 +333,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyUp: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (isHotkey('escape', evt)) {
+        if (isKeyHotkey('escape', evt)) {
           evt.preventDefault();
           return;
         }

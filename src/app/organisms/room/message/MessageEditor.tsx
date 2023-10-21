@@ -3,7 +3,7 @@ import { Box, Chip, Icon, IconButton, Icons, Line, PopOut, Spinner, Text, as, co
 import { Editor, Transforms } from 'slate';
 import { ReactEditor } from 'slate-react';
 import { IContent, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
-import isHotkey from 'is-hotkey';
+import { isKeyHotkey } from 'is-hotkey';
 import {
   AUTOCOMPLETE_PREFIXES,
   AutocompletePrefix,
@@ -120,11 +120,11 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (enterForNewline ? isHotkey('shift+enter', evt) : isHotkey('enter', evt)) {
+        if (enterForNewline ? isKeyHotkey('shift+enter', evt) : isKeyHotkey('enter', evt)) {
           evt.preventDefault();
           handleSave();
         }
-        if (isHotkey('escape', evt)) {
+        if (isKeyHotkey('escape', evt)) {
           evt.preventDefault();
           onCancel();
         }
@@ -134,7 +134,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
     const handleKeyUp: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (isHotkey('escape', evt)) {
+        if (isKeyHotkey('escape', evt)) {
           evt.preventDefault();
           return;
         }
