@@ -1,6 +1,6 @@
 import { isKeyHotkey } from 'is-hotkey';
 import { KeyboardEvent } from 'react';
-import { Editor } from 'slate';
+import { Editor, Range } from 'slate';
 import { isAnyMarkActive, isBlockActive, removeAllMark, toggleBlock, toggleMark } from './utils';
 import { BlockType, MarkType } from './types';
 
@@ -26,6 +26,35 @@ const BLOCK_KEYS = Object.keys(BLOCK_HOTKEYS);
  * @return boolean true if shortcut is toggled.
  */
 export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Element>): boolean => {
+  if (isKeyHotkey('backspace', event) && editor.selection && Range.isCollapsed(editor.selection)) {
+    const startPoint = Range.start(editor.selection);
+    if (startPoint.offset !== 0) return false;
+
+    const [parentNode, parentPath] = Editor.parent(editor, startPoint);
+
+    if (Editor.isEditor(parentNode)) return false;
+
+    if (parentNode.type === BlockType.Heading) {
+      toggleBlock(editor, BlockType.Paragraph);
+      return true;
+    }
+    if (
+      parentNode.type === BlockType.CodeLine ||
+      parentNode.type === BlockType.QuoteLine ||
+      parentNode.type === BlockType.ListItem
+    ) {
+      // exit formatting only when line block
+      // is first of last of it's parent
+      const parentLocation = { at: parentPath };
+      const [previousNode] = Editor.previous(editor, parentLocation) ?? [];
+      const [nextNode] = Editor.next(editor, parentLocation) ?? [];
+      if (!previousNode || !nextNode) {
+        toggleBlock(editor, BlockType.Paragraph);
+        return true;
+      }
+    }
+  }
+
   if (isKeyHotkey('mod+e', event)) {
     if (isAnyMarkActive(editor)) {
       removeAllMark(editor);
