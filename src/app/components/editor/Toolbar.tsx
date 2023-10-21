@@ -261,33 +261,22 @@ export function Toolbar() {
             <BlockButton
               format={BlockType.BlockQuote}
               icon={Icons.BlockQuote}
-              tooltip={
-                <BtnTooltip text="Block Quote" shortCode={`${modKey} + ${KeySymbol.Shift} + '`} />
-              }
+              tooltip={<BtnTooltip text="Block Quote" shortCode={`${modKey} + '`} />}
             />
             <BlockButton
               format={BlockType.CodeBlock}
               icon={Icons.BlockCode}
-              tooltip={
-                <BtnTooltip text="Block Code" shortCode={`${modKey} + ${KeySymbol.Shift} + ;`} />
-              }
+              tooltip={<BtnTooltip text="Block Code" shortCode={`${modKey} + ;`} />}
             />
             <BlockButton
               format={BlockType.OrderedList}
               icon={Icons.OrderList}
-              tooltip={
-                <BtnTooltip text="Ordered List" shortCode={`${modKey} + ${KeySymbol.Shift} + 7`} />
-              }
+              tooltip={<BtnTooltip text="Ordered List" shortCode={`${modKey} + 7`} />}
             />
             <BlockButton
               format={BlockType.UnorderedList}
               icon={Icons.UnorderList}
-              tooltip={
-                <BtnTooltip
-                  text="Unordered List"
-                  shortCode={`${modKey} + ${KeySymbol.Shift} + 8`}
-                />
-              }
+              tooltip={<BtnTooltip text="Unordered List" shortCode={`${modKey} + 8`} />}
             />
             <HeadingBlockButton />
           </Box>

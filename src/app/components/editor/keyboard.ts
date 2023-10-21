@@ -15,10 +15,10 @@ export const INLINE_HOTKEYS: Record<string, MarkType> = {
 const INLINE_KEYS = Object.keys(INLINE_HOTKEYS);
 
 export const BLOCK_HOTKEYS: Record<string, BlockType> = {
-  'mod+shift+7': BlockType.OrderedList,
-  'mod+shift+8': BlockType.UnorderedList,
-  "mod+shift+'": BlockType.BlockQuote,
-  'mod+shift+;': BlockType.CodeBlock,
+  'mod+7': BlockType.OrderedList,
+  'mod+8': BlockType.UnorderedList,
+  "mod+'": BlockType.BlockQuote,
+  'mod+;': BlockType.CodeBlock,
 };
 const BLOCK_KEYS = Object.keys(BLOCK_HOTKEYS);
 
