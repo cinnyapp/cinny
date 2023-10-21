@@ -1,6 +1,6 @@
 import { isKeyHotkey } from 'is-hotkey';
 import { KeyboardEvent } from 'react';
-import { Editor, Range } from 'slate';
+import { Editor, Element as SlateElement, Range, Transforms } from 'slate';
 import { isAnyMarkActive, isBlockActive, removeAllMark, toggleBlock, toggleMark } from './utils';
 import { BlockType, MarkType } from './types';
 
@@ -31,6 +31,9 @@ export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Elem
     if (startPoint.offset !== 0) return false;
 
     const [parentNode, parentPath] = Editor.parent(editor, startPoint);
+    const parentLocation = { at: parentPath };
+    const [previousNode] = Editor.previous(editor, parentLocation) ?? [];
+    const [nextNode] = Editor.next(editor, parentLocation) ?? [];
 
     if (Editor.isEditor(parentNode)) return false;
 
@@ -45,14 +48,20 @@ export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Elem
     ) {
       // exit formatting only when line block
       // is first of last of it's parent
-      const parentLocation = { at: parentPath };
-      const [previousNode] = Editor.previous(editor, parentLocation) ?? [];
-      const [nextNode] = Editor.next(editor, parentLocation) ?? [];
       if (!previousNode || !nextNode) {
         toggleBlock(editor, BlockType.Paragraph);
         return true;
       }
     }
+    // Unwrap paragraph children to put them
+    // in previous none paragraph element
+    if (SlateElement.isElement(previousNode) && previousNode.type !== BlockType.Paragraph) {
+      Transforms.unwrapNodes(editor, {
+        at: startPoint,
+      });
+    }
+    Editor.deleteBackward(editor);
+    return true;
   }
 
   if (isKeyHotkey('mod+e', event) || isKeyHotkey('escape', event)) {
