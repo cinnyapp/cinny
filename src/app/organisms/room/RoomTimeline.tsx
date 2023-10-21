@@ -133,6 +133,7 @@ import { MessageEvent } from '../../../types/matrix/room';
 import initMatrix from '../../../client/initMatrix';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import cons from '../../../client/state/cons';
+import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -606,13 +607,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         // keep paginating timeline and conditionally mark as read
         // otherwise we update timeline without paginating
         // so timeline can be updated with evt like: edits, reactions etc
-        if (atBottomRef.current && document.hasFocus()) {
-          if (!unreadInfo) {
-            markAsRead(mEvt.getRoomId());
+        if (atBottomRef.current) {
+          if (document.hasFocus() && (!unreadInfo || mEvt.getSender() === mx.getUserId())) {
+            requestAnimationFrame(() => markAsRead(mEvt.getRoomId()));
           }
 
-          scrollToBottomRef.current.count += 1;
-          scrollToBottomRef.current.smooth = true;
+          if (document.hasFocus()) {
+            scrollToBottomRef.current.count += 1;
+            scrollToBottomRef.current.smooth = true;
+          }
           setTimeline((ct) => ({
             ...ct,
             range: {
@@ -627,7 +630,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           setUnreadInfo(getRoomUnreadInfo(room));
         }
       },
-      [room, unreadInfo]
+      [mx, room, unreadInfo]
     )
   );
 
@@ -665,13 +668,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   const tryAutoMarkAsRead = useCallback(() => {
     if (!unreadInfo) {
-      markAsRead(room.roomId);
+      requestAnimationFrame(() => markAsRead(room.roomId));
       return;
     }
     const evtTimeline = getEventTimeline(room, unreadInfo.readUptoEventId);
     const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
     if (latestTimeline === room.getLiveTimeline()) {
-      markAsRead(room.roomId);
+      requestAnimationFrame(() => markAsRead(room.roomId));
     }
   }, [room, unreadInfo]);
 
@@ -703,6 +706,17 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       [getScrollElement]
     ),
     useCallback(() => atBottomAnchorRef.current, [])
+  );
+
+  useDocumentFocusChange(
+    useCallback(
+      (inFocus) => {
+        if (inFocus && atBottomRef.current) {
+          tryAutoMarkAsRead();
+        }
+      },
+      [tryAutoMarkAsRead]
+    )
   );
 
   // Handle up arrow edit
