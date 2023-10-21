@@ -1,10 +1,14 @@
 {
-  "defaultHomeserver": 2,
+  "defaultHomeserver": 4,
   "homeserverList": [
+    "0wnz.at",
     "converser.eu",
     "envs.net",
+    "exarius.org",
     "matrix.org",
-    "mozilla.org"
+    "monero.social",
+    "mozilla.org",
+    "xmr.se"
   ],
   "allowCustomHomeservers": true
 }
