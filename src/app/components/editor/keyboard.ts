@@ -1,4 +1,4 @@
-import { isHotkey } from 'is-hotkey';
+import { isKeyHotkey } from 'is-hotkey';
 import { KeyboardEvent } from 'react';
 import { Editor } from 'slate';
 import { isAnyMarkActive, isBlockActive, removeAllMark, toggleBlock, toggleMark } from './utils';
@@ -26,7 +26,7 @@ const BLOCK_KEYS = Object.keys(BLOCK_HOTKEYS);
  * @return boolean true if shortcut is toggled.
  */
 export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Element>): boolean => {
-  if (isHotkey('mod+e', event)) {
+  if (isKeyHotkey('mod+e', event)) {
     if (isAnyMarkActive(editor)) {
       removeAllMark(editor);
       return true;
@@ -40,7 +40,7 @@ export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Elem
   }
 
   const blockToggled = BLOCK_KEYS.find((hotkey) => {
-    if (isHotkey(hotkey, event)) {
+    if (isKeyHotkey(hotkey, event)) {
       event.preventDefault();
       toggleBlock(editor, BLOCK_HOTKEYS[hotkey]);
       return true;
@@ -52,7 +52,7 @@ export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Elem
   const inlineToggled = isBlockActive(editor, BlockType.CodeBlock)
     ? false
     : INLINE_KEYS.find((hotkey) => {
-        if (isHotkey(hotkey, event)) {
+        if (isKeyHotkey(hotkey, event)) {
           event.preventDefault();
           toggleMark(editor, INLINE_HOTKEYS[hotkey]);
           return true;

@@ -28,7 +28,7 @@ import {
   toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import isHotkey from 'is-hotkey';
+import { isKeyHotkey } from 'is-hotkey';
 import classNames from 'classnames';
 import { MatrixClient, Room } from 'matrix-js-sdk';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
@@ -769,9 +769,9 @@ export function EmojiBoard({
         clickOutsideDeactivates: true,
         allowOutsideClick: true,
         isKeyForward: (evt: KeyboardEvent) =>
-          !editableActiveElement() && isHotkey(['arrowdown', 'arrowright'], evt),
+          !editableActiveElement() && isKeyHotkey(['arrowdown', 'arrowright'], evt),
         isKeyBackward: (evt: KeyboardEvent) =>
-          !editableActiveElement() && isHotkey(['arrowup', 'arrowleft'], evt),
+          !editableActiveElement() && isKeyHotkey(['arrowup', 'arrowleft'], evt),
       }}
     >
       <EmojiBoardLayout
