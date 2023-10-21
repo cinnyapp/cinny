@@ -285,7 +285,9 @@ export function Toolbar() {
               <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />
               <Box shrink="No" gap="100">
                 <ExitFormatting
-                  tooltip={<BtnTooltip text="Exit Formatting" shortCode={`${modKey} + E`} />}
+                  tooltip={
+                    <BtnTooltip text="Exit Formatting" shortCode={`Escape, ${modKey} + E`} />
+                  }
                 />
               </Box>
             </>

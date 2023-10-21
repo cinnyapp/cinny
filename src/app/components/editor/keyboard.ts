@@ -55,7 +55,7 @@ export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Elem
     }
   }
 
-  if (isKeyHotkey('mod+e', event)) {
+  if (isKeyHotkey('mod+e', event) || isKeyHotkey('escape', event)) {
     if (isAnyMarkActive(editor)) {
       removeAllMark(editor);
       return true;
