@@ -53,16 +53,22 @@ export const MessageEditor = as<'div', MessageEditorProps>(
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
 
-    const getPrevBodyAndFormattedBody = useCallback(() => {
+    const getPrevBodyAndFormattedBody = useCallback((): [
+      string | undefined,
+      string | undefined
+    ] => {
       const evtId = mEvent.getId()!;
       const evtTimeline = room.getTimelineForEvent(evtId);
       const editedEvent =
         evtTimeline && getEditedEvent(evtId, mEvent, evtTimeline.getTimelineSet());
 
       const { body, formatted_body: customHtml }: Record<string, unknown> =
-        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+        editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
-      return [body, customHtml];
+      return [
+        typeof body === 'string' ? body : undefined,
+        typeof customHtml === 'string' ? customHtml : undefined,
+      ];
     }, [room, mEvent]);
 
     const [saveState, save] = useAsyncCallback(
@@ -78,14 +84,17 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         const [prevBody, prevCustomHtml] = getPrevBodyAndFormattedBody();
 
         if (plainText === '') return undefined;
-        if (
-          typeof prevCustomHtml === 'string' &&
-          trimReplyFromFormattedBody(prevCustomHtml) === customHtml
-        ) {
-          return undefined;
-        }
-        if (!prevCustomHtml && typeof prevBody === 'string' && prevBody === plainText) {
-          return undefined;
+        if (prevBody) {
+          if (prevCustomHtml && trimReplyFromFormattedBody(prevCustomHtml) === customHtml) {
+            return undefined;
+          }
+          if (
+            !prevCustomHtml &&
+            prevBody === plainText &&
+            customHtmlEqualsPlainText(customHtml, plainText)
+          ) {
+            return undefined;
+          }
         }
 
         const newContent: IContent = {

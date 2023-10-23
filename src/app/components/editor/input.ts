@@ -138,6 +138,7 @@ const parseBlockquoteNode = (node: Element): BlockQuoteElement => {
     }
     if (isTag(child)) {
       if (child.name === 'br') {
+        lineHolder.push({ text: '' });
         appendLine();
         return;
       }
@@ -202,6 +203,7 @@ const parseListNode = (node: Element): OrderedListElement | UnorderedListElement
     }
     if (isTag(child)) {
       if (child.name === 'br') {
+        lineHolder.push({ text: '' });
         appendLine();
         return;
       }
@@ -260,6 +262,7 @@ export const domToEditorInput = (domNodes: ChildNode[]): Descendant[] => {
     }
     if (isTag(node)) {
       if (node.name === 'br') {
+        lineHolder.push({ text: '' });
         appendLine();
         return;
       }
