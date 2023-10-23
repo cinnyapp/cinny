@@ -77,7 +77,7 @@
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "0.2.3",
     "@rollup/plugin-inject": "5.0.3",
-    "@rollup/plugin-wasm": "6.1.1",
+    "@rollup/plugin-wasm": "6.2.2",
     "@types/file-saver": "2.0.5",
     "@types/node": "18.11.18",
     "@types/prismjs": "1.26.0",
