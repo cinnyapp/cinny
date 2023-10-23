@@ -380,3 +380,7 @@ export const getLatestEditableEvt = (
   }
   return undefined;
 };
+
+export const reactionOrEditEvent = (mEvent: MatrixEvent) =>
+  mEvent.getRelation()?.rel_type === RelationType.Annotation ||
+  mEvent.getRelation()?.rel_type === RelationType.Replace;
