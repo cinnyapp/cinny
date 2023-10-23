@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { settingsAtom } from '../state/settings';
 import { useSetting } from '../state/hooks/settings';
 import { MessageEvent, StateEvent } from '../../types/matrix/room';
-import { isMembershipChanged } from '../utils/room';
+import { isMembershipChanged, reactionOrEditEvent } from '../utils/room';
 
 export const useRoomLatestRenderedEvent = (room: Room) => {
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
@@ -19,7 +19,7 @@ export const useRoomLatestRenderedEvent = (room: Room) => {
         const evt = liveEvents[i];
 
         if (!evt) continue;
-        if (evt.isRelation()) continue;
+        if (reactionOrEditEvent(evt)) continue;
         if (evt.getType() === StateEvent.RoomMember) {
           const membershipChanged = isMembershipChanged(evt);
           if (membershipChanged && hideMembershipEvents) continue;
