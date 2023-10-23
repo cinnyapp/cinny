@@ -615,6 +615,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           if (document.hasFocus()) {
             scrollToBottomRef.current.count += 1;
             scrollToBottomRef.current.smooth = true;
+          } else if (!unreadInfo) {
+            setUnreadInfo(getRoomUnreadInfo(room));
           }
           setTimeline((ct) => ({
             ...ct,
@@ -919,7 +921,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       if (!replyEvt) return;
       const editedReply = getEditedEvent(replyId, replyEvt, room.getUnfilteredTimelineSet());
       const { body, formatted_body: formattedBody }: Record<string, string> =
-        editedReply?.getContent()['m.new.content'] ?? replyEvt.getContent();
+        editedReply?.getContent()['m.new_content'] ?? replyEvt.getContent();
       const senderId = replyEvt.getSender();
       if (senderId && typeof body === 'string') {
         setReplyDraft({
@@ -982,7 +984,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     renderText: (mEventId, mEvent, timelineSet) => {
       const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
       const { body, formatted_body: customBody }: Record<string, unknown> =
-        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+        editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
       if (typeof body !== 'string') return null;
       return (
@@ -1002,7 +1004,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     renderEmote: (mEventId, mEvent, timelineSet) => {
       const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
       const { body, formatted_body: customBody } =
-        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+        editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
       const senderId = mEvent.getSender() ?? '';
 
       const senderDisplayName =
@@ -1027,7 +1029,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     renderNotice: (mEventId, mEvent, timelineSet) => {
       const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
       const { body, formatted_body: customBody }: Record<string, unknown> =
-        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+        editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
       if (typeof body !== 'string') return null;
       return (

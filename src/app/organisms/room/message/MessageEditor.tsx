@@ -63,7 +63,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         evtTimeline && getEditedEvent(evtId, mEvent, evtTimeline.getTimelineSet());
 
       const { body, formatted_body: customHtml }: Record<string, unknown> =
-        editedEvent?.getContent()['m.new.content'] ?? mEvent.getContent();
+        editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
       return [
         typeof body === 'string' ? body : undefined,
