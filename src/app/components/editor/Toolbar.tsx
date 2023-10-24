@@ -2,6 +2,7 @@ import FocusTrap from 'focus-trap-react';
 import {
   Badge,
   Box,
+  color,
   config,
   Icon,
   IconButton,
@@ -31,6 +32,8 @@ import { BlockType, MarkType } from './types';
 import { HeadingLevel } from './slate';
 import { isMacOS } from '../../utils/user-agent';
 import { KeySymbol } from '../../utils/key-symbol';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 function BtnTooltip({ text, shortCode }: { text: string; shortCode?: string }) {
   return (
@@ -210,8 +213,10 @@ export function ExitFormatting({ tooltip }: ExitFormattingProps) {
 export function Toolbar() {
   const editor = useSlate();
   const modKey = isMacOS() ? KeySymbol.Command : 'Ctrl';
+  const disableInline = isBlockActive(editor, BlockType.CodeBlock);
 
   const canEscape = isAnyMarkActive(editor) || !isBlockActive(editor, BlockType.Paragraph);
+  const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
 
   return (
     <Box className={css.EditorToolbarBase}>
@@ -292,6 +297,31 @@ export function Toolbar() {
               </Box>
             </>
           )}
+          <Box shrink="No" grow="Yes" justifyContent="End">
+            <TooltipProvider
+              align="End"
+              tooltip={<BtnTooltip text="Inline Markdown" />}
+              delay={500}
+            >
+              {(triggerRef) => (
+                <IconButton
+                  ref={triggerRef}
+                  variant="SurfaceVariant"
+                  onClick={() => setIsMarkdown(!isMarkdown)}
+                  size="400"
+                  radii="300"
+                  disabled={disableInline || !!isAnyMarkActive(editor)}
+                >
+                  <Icon
+                    style={{ color: isMarkdown ? color.Success.Main : undefined }}
+                    size="200"
+                    src={Icons.Markdown}
+                    filled={isMarkdown}
+                  />
+                </IconButton>
+              )}
+            </TooltipProvider>
+          </Box>
         </Box>
       </Scroll>
     </Box>
