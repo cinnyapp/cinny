@@ -29,7 +29,6 @@ import {
   config,
   toRem,
 } from 'folds';
-import to from 'await-to-js';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
@@ -216,30 +215,24 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
-      const sendPromises = uploads.map(async (upload) => {
+      const contentsPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
-        if (fileItem && fileItem.file.type.startsWith('image')) {
-          const [imgError, imgContent] = await to(getImageMsgContent(mx, fileItem, upload.mxc));
-          if (imgError) console.warn(imgError);
-          if (imgContent) mx.sendMessage(roomId, imgContent);
-          return;
+        if (!fileItem) throw new Error('Broken upload');
+
+        if (fileItem.file.type.startsWith('image')) {
+          return getImageMsgContent(mx, fileItem, upload.mxc);
         }
-        if (fileItem && fileItem.file.type.startsWith('video')) {
-          const [videoError, videoContent] = await to(getVideoMsgContent(mx, fileItem, upload.mxc));
-          if (videoError) console.warn(videoError);
-          if (videoContent) mx.sendMessage(roomId, videoContent);
-          return;
+        if (fileItem.file.type.startsWith('video')) {
+          return getVideoMsgContent(mx, fileItem, upload.mxc);
         }
-        if (fileItem && fileItem.file.type.startsWith('audio')) {
-          mx.sendMessage(roomId, getAudioMsgContent(fileItem, upload.mxc));
-          return;
+        if (fileItem.file.type.startsWith('audio')) {
+          return getAudioMsgContent(fileItem, upload.mxc);
         }
-        if (fileItem) {
-          mx.sendMessage(roomId, getFileMsgContent(fileItem, upload.mxc));
-        }
+        return getFileMsgContent(fileItem, upload.mxc);
       });
       handleCancelUpload(uploads);
-      await Promise.allSettled(sendPromises);
+      const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
+      contents.forEach((content) => mx.sendMessage(roomId, content));
     };
 
     const submit = useCallback(() => {
