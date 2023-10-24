@@ -20,6 +20,7 @@ import {
 import React, { ReactNode, useState } from 'react';
 import { ReactEditor, useSlate } from 'slate-react';
 import {
+  headingLevel,
   isAnyMarkActive,
   isBlockActive,
   isMarkActive,
@@ -118,13 +119,12 @@ export function BlockButton({ format, icon, tooltip }: BlockButtonProps) {
 
 export function HeadingBlockButton() {
   const editor = useSlate();
-  const [level, setLevel] = useState<HeadingLevel>(1);
+  const level = headingLevel(editor);
   const [open, setOpen] = useState(false);
   const isActive = isBlockActive(editor, BlockType.Heading);
 
   const handleMenuSelect = (selectedLevel: HeadingLevel) => {
     setOpen(false);
-    setLevel(selectedLevel);
     toggleBlock(editor, BlockType.Heading, { level: selectedLevel });
     ReactEditor.focus(editor);
   };
@@ -172,7 +172,7 @@ export function HeadingBlockButton() {
           size="400"
           radii="300"
         >
-          <Icon size="200" src={Icons[`Heading${level}`]} />
+          <Icon size="200" src={level ? Icons[`Heading${level}`] : Icons.Heading1} />
           <Icon size="200" src={isActive ? Icons.Cross : Icons.ChevronBottom} />
         </IconButton>
       )}
