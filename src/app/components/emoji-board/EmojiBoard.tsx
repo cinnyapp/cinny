@@ -786,7 +786,7 @@ export function EmojiBoard({
                 data-emoji-board-search
                 variant="SurfaceVariant"
                 size="400"
-                placeholder="Search"
+                placeholder={allowTextCustomEmoji ? 'Search or Text Reaction ' : 'Search'}
                 maxLength={50}
                 after={
                   allowTextCustomEmoji && result?.query ? (
@@ -794,6 +794,7 @@ export function EmojiBoard({
                       variant="Primary"
                       radii="Pill"
                       after={<Icon src={Icons.ArrowRight} size="50" />}
+                      outlined
                       onClick={() => {
                         const searchInput = document.querySelector<HTMLInputElement>(
                           '[data-emoji-board-search="true"]'
