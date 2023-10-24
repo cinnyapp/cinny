@@ -68,6 +68,7 @@ export type EmojiItemInfo = {
   type: EmojiType;
   data: string;
   shortcode: string;
+  label: string;
 };
 
 const getDOMGroupId = (id: string): string => `EmojiBoardGroup-${id}`;
@@ -75,13 +76,15 @@ const getDOMGroupId = (id: string): string => `EmojiBoardGroup-${id}`;
 const getEmojiItemInfo = (element: Element): EmojiItemInfo | undefined => {
   const type = element.getAttribute('data-emoji-type') as EmojiType | undefined;
   const data = element.getAttribute('data-emoji-data');
+  const label = element.getAttribute('title');
   const shortcode = element.getAttribute('data-emoji-shortcode');
 
-  if (type && data && shortcode)
+  if (type && data && shortcode && label)
     return {
       type,
       data,
       shortcode,
+      label,
     };
   return undefined;
 };
@@ -633,7 +636,7 @@ export function EmojiBoard({
   returnFocusOnDeactivate?: boolean;
   onEmojiSelect?: (unicode: string, shortcode: string) => void;
   onCustomEmojiSelect?: (mxc: string, shortcode: string) => void;
-  onStickerSelect?: (mxc: string, shortcode: string) => void;
+  onStickerSelect?: (mxc: string, shortcode: string, label: string) => void;
   allowTextCustomEmoji?: boolean;
 }) {
   const emojiTab = tab === EmojiBoardTab.Emoji;
@@ -712,7 +715,7 @@ export function EmojiBoard({
       if (!evt.altKey && !evt.shiftKey) requestClose();
     }
     if (emojiInfo.type === EmojiType.Sticker) {
-      onStickerSelect?.(emojiInfo.data, emojiInfo.shortcode);
+      onStickerSelect?.(emojiInfo.data, emojiInfo.shortcode, emojiInfo.label);
       if (!evt.altKey && !evt.shiftKey) requestClose();
     }
   };

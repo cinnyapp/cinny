@@ -359,7 +359,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       moveCursor(editor);
     };
 
-    const handleStickerSelect = async (mxc: string, shortcode: string) => {
+    const handleStickerSelect = async (mxc: string, shortcode: string, label: string) => {
       const stickerUrl = mx.mxcUrlToHttp(mxc);
       if (!stickerUrl) return;
 
@@ -369,7 +369,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       );
 
       mx.sendEvent(roomId, EventType.Sticker, {
-        body: shortcode,
+        body: label,
         url: mxc,
         info,
       });
