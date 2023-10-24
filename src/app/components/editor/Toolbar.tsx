@@ -122,6 +122,7 @@ export function HeadingBlockButton() {
   const level = headingLevel(editor);
   const [open, setOpen] = useState(false);
   const isActive = isBlockActive(editor, BlockType.Heading);
+  const modKey = isMacOS() ? KeySymbol.Command : 'Ctrl';
 
   const handleMenuSelect = (selectedLevel: HeadingLevel) => {
     setOpen(false);
@@ -133,7 +134,6 @@ export function HeadingBlockButton() {
     <PopOut
       open={open}
       offset={5}
-      align="Start"
       position="Top"
       content={
         <FocusTrap
@@ -148,15 +148,51 @@ export function HeadingBlockButton() {
         >
           <Menu style={{ padding: config.space.S100 }}>
             <Box gap="100">
-              <IconButton onClick={() => handleMenuSelect(1)} size="400" radii="300">
-                <Icon size="200" src={Icons.Heading1} />
-              </IconButton>
-              <IconButton onClick={() => handleMenuSelect(2)} size="400" radii="300">
-                <Icon size="200" src={Icons.Heading2} />
-              </IconButton>
-              <IconButton onClick={() => handleMenuSelect(3)} size="400" radii="300">
-                <Icon size="200" src={Icons.Heading3} />
-              </IconButton>
+              <TooltipProvider
+                tooltip={<BtnTooltip text="Heading 1" shortCode={`${modKey} + 1`} />}
+                delay={500}
+              >
+                {(triggerRef) => (
+                  <IconButton
+                    ref={triggerRef}
+                    onClick={() => handleMenuSelect(1)}
+                    size="400"
+                    radii="300"
+                  >
+                    <Icon size="200" src={Icons.Heading1} />
+                  </IconButton>
+                )}
+              </TooltipProvider>
+              <TooltipProvider
+                tooltip={<BtnTooltip text="Heading 2" shortCode={`${modKey} + 2`} />}
+                delay={500}
+              >
+                {(triggerRef) => (
+                  <IconButton
+                    ref={triggerRef}
+                    onClick={() => handleMenuSelect(2)}
+                    size="400"
+                    radii="300"
+                  >
+                    <Icon size="200" src={Icons.Heading2} />
+                  </IconButton>
+                )}
+              </TooltipProvider>
+              <TooltipProvider
+                tooltip={<BtnTooltip text="Heading 3" shortCode={`${modKey} + 3`} />}
+                delay={500}
+              >
+                {(triggerRef) => (
+                  <IconButton
+                    ref={triggerRef}
+                    onClick={() => handleMenuSelect(3)}
+                    size="400"
+                    radii="300"
+                  >
+                    <Icon size="200" src={Icons.Heading3} />
+                  </IconButton>
+                )}
+              </TooltipProvider>
             </Box>
           </Menu>
         </FocusTrap>

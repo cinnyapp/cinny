@@ -21,6 +21,9 @@ export const BLOCK_HOTKEYS: Record<string, BlockType> = {
   'mod+;': BlockType.CodeBlock,
 };
 const BLOCK_KEYS = Object.keys(BLOCK_HOTKEYS);
+const isHeading1 = isKeyHotkey('mod+1');
+const isHeading2 = isKeyHotkey('mod+2');
+const isHeading3 = isKeyHotkey('mod+3');
 
 /**
  * @return boolean true if shortcut is toggled.
@@ -86,6 +89,18 @@ export const toggleKeyboardShortcut = (editor: Editor, event: KeyboardEvent<Elem
     return false;
   });
   if (blockToggled) return true;
+  if (isHeading1(event)) {
+    toggleBlock(editor, BlockType.Heading, { level: 1 });
+    return true;
+  }
+  if (isHeading2(event)) {
+    toggleBlock(editor, BlockType.Heading, { level: 2 });
+    return true;
+  }
+  if (isHeading3(event)) {
+    toggleBlock(editor, BlockType.Heading, { level: 3 });
+    return true;
+  }
 
   const inlineToggled = isBlockActive(editor, BlockType.CodeBlock)
     ? false
