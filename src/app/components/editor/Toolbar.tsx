@@ -2,7 +2,6 @@ import FocusTrap from 'focus-trap-react';
 import {
   Badge,
   Box,
-  color,
   config,
   Icon,
   IconButton,
@@ -333,7 +332,7 @@ export function Toolbar() {
               </Box>
             </>
           )}
-          <Box shrink="No" grow="Yes" justifyContent="End">
+          <Box className={css.MarkdownBtnBox} shrink="No" grow="Yes" justifyContent="End">
             <TooltipProvider
               align="End"
               tooltip={<BtnTooltip text="Inline Markdown" />}
@@ -344,19 +343,16 @@ export function Toolbar() {
                   ref={triggerRef}
                   variant="SurfaceVariant"
                   onClick={() => setIsMarkdown(!isMarkdown)}
-                  size="400"
+                  aria-pressed={isMarkdown}
+                  size="300"
                   radii="300"
                   disabled={disableInline || !!isAnyMarkActive(editor)}
                 >
-                  <Icon
-                    style={{ color: isMarkdown ? color.Success.Main : undefined }}
-                    size="200"
-                    src={Icons.Markdown}
-                    filled={isMarkdown}
-                  />
+                  <Icon size="200" src={Icons.Markdown} filled={isMarkdown} />
                 </IconButton>
               )}
             </TooltipProvider>
+            <span />
           </Box>
         </Box>
       </Scroll>
