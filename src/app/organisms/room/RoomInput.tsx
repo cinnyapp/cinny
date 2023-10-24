@@ -312,7 +312,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (enterForNewline ? isKeyHotkey('shift+enter', evt) : isKeyHotkey('enter', evt)) {
+        if (isKeyHotkey('mod+enter', evt) || (!enterForNewline && isKeyHotkey('enter', evt))) {
           evt.preventDefault();
           submit();
         }
