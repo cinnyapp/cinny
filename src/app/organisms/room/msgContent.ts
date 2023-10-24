@@ -54,23 +54,10 @@ export const getImageMsgContent = async (
   };
   if (imgEl) {
     const blurHash = encodeBlurHash(imgEl, 512, scaleYDimension(imgEl.width, 512, imgEl.height));
-    const [thumbError, thumbContent] = await to(
-      generateThumbnailContent(
-        mx,
-        imgEl,
-        getThumbnailDimensions(imgEl.width, imgEl.height),
-        !!encInfo
-      )
-    );
 
-    if (thumbContent && thumbContent.thumbnail_info) {
-      thumbContent.thumbnail_info[MATRIX_BLUR_HASH_PROPERTY_NAME] = blurHash;
-    }
-    if (thumbError) console.warn(thumbError);
     content.info = {
       ...getImageInfo(imgEl, file),
       [MATRIX_BLUR_HASH_PROPERTY_NAME]: blurHash,
-      ...thumbContent,
     };
   }
   if (encInfo) {
