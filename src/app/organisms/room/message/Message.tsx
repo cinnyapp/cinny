@@ -654,7 +654,13 @@ export const Message = as<'div', MessageProps>(
 
     const avatarJSX = !collapse && messageLayout !== 1 && (
       <AvatarBase>
-        <Avatar as="button" size="300" data-user-id={senderId} onClick={onUserClick}>
+        <Avatar
+          className={css.MessageAvatar}
+          as="button"
+          size="300"
+          data-user-id={senderId}
+          onClick={onUserClick}
+        >
           {senderAvatarMxc ? (
             <AvatarImage
               src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}

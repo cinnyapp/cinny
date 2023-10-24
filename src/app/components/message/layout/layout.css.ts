@@ -118,8 +118,8 @@ export const CompactHeader = style([
 
 export const AvatarBase = style({
   paddingTop: toRem(4),
-  cursor: 'pointer',
   transition: 'transform 200ms cubic-bezier(0, 0.8, 0.67, 0.97)',
+  alignSelf: 'start',
 
   selectors: {
     '&:hover': {

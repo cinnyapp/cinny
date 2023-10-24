@@ -56,6 +56,10 @@ export const MessageOptionsBar = style([
   },
 ]);
 
+export const MessageAvatar = style({
+  cursor: 'pointer',
+});
+
 export const MessageQuickReaction = style({
   minWidth: toRem(32),
 });

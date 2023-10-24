@@ -67,7 +67,11 @@ export const Reply = as<'div', ReplyProps>(
         {...props}
         ref={ref}
       >
-        <Box style={{ color: colorMXID(sender ?? eventId) }} alignItems="Center" shrink="No">
+        <Box
+          style={{ color: colorMXID(sender ?? eventId), maxWidth: '50%' }}
+          alignItems="Center"
+          shrink="No"
+        >
           <Icon src={Icons.ReplyArrow} size="50" />
           {sender && (
             <Text size="T300" truncate>
