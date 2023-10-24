@@ -696,7 +696,7 @@ export const Message = as<'div', MessageProps>(
     );
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
-      if (evt.altKey || !window.getSelection()?.isCollapsed) return;
+      if (evt.altKey || !window.getSelection()?.isCollapsed || edit) return;
       const tag = (evt.target as any).tagName;
       if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
       evt.preventDefault();
