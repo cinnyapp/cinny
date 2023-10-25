@@ -392,7 +392,7 @@ export const MessageDeleteItem = as<
                   variant="Critical"
                   before={
                     deleteState.status === AsyncStatus.Loading ? (
-                      <Spinner fill="Soft" variant="Critical" size="200" />
+                      <Spinner fill="Solid" variant="Critical" size="200" />
                     ) : undefined
                   }
                   aria-disabled={deleteState.status === AsyncStatus.Loading}
@@ -522,7 +522,7 @@ export const MessageReportItem = as<
                   variant="Critical"
                   before={
                     reportState.status === AsyncStatus.Loading ? (
-                      <Spinner fill="Soft" variant="Critical" size="200" />
+                      <Spinner fill="Solid" variant="Critical" size="200" />
                     ) : undefined
                   }
                   aria-disabled={
@@ -702,7 +702,7 @@ export const Message = as<'div', MessageProps>(
     );
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
-      if (evt.altKey || !window.getSelection()?.isCollapsed) return;
+      if (evt.altKey || !window.getSelection()?.isCollapsed || edit) return;
       const tag = (evt.target as any).tagName;
       if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
       evt.preventDefault();

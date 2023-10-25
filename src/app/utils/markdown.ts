@@ -23,24 +23,28 @@ export type RulesRunner = (
 ) => string | undefined;
 
 const MIN_ANY = '(.+?)';
+const URL_NEG_LB = '(?<!(https?|ftp|mailto|magnet):\\/\\/\\S*)';
 
 const BOLD_MD_1 = '**';
 const BOLD_PREFIX_1 = '\\*{2}';
 const BOLD_NEG_LA_1 = '(?!\\*)';
-const BOLD_REG_1 = new RegExp(`${BOLD_PREFIX_1}${MIN_ANY}${BOLD_PREFIX_1}${BOLD_NEG_LA_1}`);
+const BOLD_REG_1 = new RegExp(
+  `${URL_NEG_LB}${BOLD_PREFIX_1}${MIN_ANY}${BOLD_PREFIX_1}${BOLD_NEG_LA_1}`
+);
 const BoldRule: MDRule = {
   match: (text) => text.match(BOLD_REG_1),
   html: (parse, match) => {
     const [, g1] = match;
-    const child = parse(g1);
-    return `<strong data-md="${BOLD_MD_1}">${child}</strong>`;
+    return `<strong data-md="${BOLD_MD_1}">${parse(g1)}</strong>`;
   },
 };
 
 const ITALIC_MD_1 = '*';
 const ITALIC_PREFIX_1 = '\\*';
 const ITALIC_NEG_LA_1 = '(?!\\*)';
-const ITALIC_REG_1 = new RegExp(`${ITALIC_PREFIX_1}${MIN_ANY}${ITALIC_PREFIX_1}${ITALIC_NEG_LA_1}`);
+const ITALIC_REG_1 = new RegExp(
+  `${URL_NEG_LB}${ITALIC_PREFIX_1}${MIN_ANY}${ITALIC_PREFIX_1}${ITALIC_NEG_LA_1}`
+);
 const ItalicRule1: MDRule = {
   match: (text) => text.match(ITALIC_REG_1),
   html: (parse, match) => {
@@ -52,7 +56,9 @@ const ItalicRule1: MDRule = {
 const ITALIC_MD_2 = '_';
 const ITALIC_PREFIX_2 = '_';
 const ITALIC_NEG_LA_2 = '(?!_)';
-const ITALIC_REG_2 = new RegExp(`${ITALIC_PREFIX_2}${MIN_ANY}${ITALIC_PREFIX_2}${ITALIC_NEG_LA_2}`);
+const ITALIC_REG_2 = new RegExp(
+  `${URL_NEG_LB}${ITALIC_PREFIX_2}${MIN_ANY}${ITALIC_PREFIX_2}${ITALIC_NEG_LA_2}`
+);
 const ItalicRule2: MDRule = {
   match: (text) => text.match(ITALIC_REG_2),
   html: (parse, match) => {
@@ -65,7 +71,7 @@ const UNDERLINE_MD_1 = '__';
 const UNDERLINE_PREFIX_1 = '_{2}';
 const UNDERLINE_NEG_LA_1 = '(?!_)';
 const UNDERLINE_REG_1 = new RegExp(
-  `${UNDERLINE_PREFIX_1}${MIN_ANY}${UNDERLINE_PREFIX_1}${UNDERLINE_NEG_LA_1}`
+  `${URL_NEG_LB}${UNDERLINE_PREFIX_1}${MIN_ANY}${UNDERLINE_PREFIX_1}${UNDERLINE_NEG_LA_1}`
 );
 const UnderlineRule: MDRule = {
   match: (text) => text.match(UNDERLINE_REG_1),
@@ -78,7 +84,9 @@ const UnderlineRule: MDRule = {
 const STRIKE_MD_1 = '~~';
 const STRIKE_PREFIX_1 = '~{2}';
 const STRIKE_NEG_LA_1 = '(?!~)';
-const STRIKE_REG_1 = new RegExp(`${STRIKE_PREFIX_1}${MIN_ANY}${STRIKE_PREFIX_1}${STRIKE_NEG_LA_1}`);
+const STRIKE_REG_1 = new RegExp(
+  `${URL_NEG_LB}${STRIKE_PREFIX_1}${MIN_ANY}${STRIKE_PREFIX_1}${STRIKE_NEG_LA_1}`
+);
 const StrikeRule: MDRule = {
   match: (text) => text.match(STRIKE_REG_1),
   html: (parse, match) => {
@@ -90,7 +98,9 @@ const StrikeRule: MDRule = {
 const CODE_MD_1 = '`';
 const CODE_PREFIX_1 = '`';
 const CODE_NEG_LA_1 = '(?!`)';
-const CODE_REG_1 = new RegExp(`${CODE_PREFIX_1}${MIN_ANY}${CODE_PREFIX_1}${CODE_NEG_LA_1}`);
+const CODE_REG_1 = new RegExp(
+  `${URL_NEG_LB}${CODE_PREFIX_1}${MIN_ANY}${CODE_PREFIX_1}${CODE_NEG_LA_1}`
+);
 const CodeRule: MDRule = {
   match: (text) => text.match(CODE_REG_1),
   html: (parse, match) => {
@@ -103,7 +113,7 @@ const SPOILER_MD_1 = '||';
 const SPOILER_PREFIX_1 = '\\|{2}';
 const SPOILER_NEG_LA_1 = '(?!\\|)';
 const SPOILER_REG_1 = new RegExp(
-  `${SPOILER_PREFIX_1}${MIN_ANY}${SPOILER_PREFIX_1}${SPOILER_NEG_LA_1}`
+  `${URL_NEG_LB}${SPOILER_PREFIX_1}${MIN_ANY}${SPOILER_PREFIX_1}${SPOILER_NEG_LA_1}`
 );
 const SpoilerRule: MDRule = {
   match: (text) => text.match(SPOILER_REG_1),

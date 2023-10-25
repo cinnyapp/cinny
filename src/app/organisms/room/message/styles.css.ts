@@ -79,3 +79,7 @@ export const ReactionsContainer = style({
     },
   },
 });
+
+export const ReactionsTooltipText = style({
+  wordBreak: 'break-all',
+});

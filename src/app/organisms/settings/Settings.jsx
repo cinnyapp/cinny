@@ -45,6 +45,8 @@ import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
+import { isMacOS } from '../../utils/user-agent';
+import { KeySymbol } from '../../utils/key-symbol';
 
 function AppearanceSection() {
   const [, updateState] = useState({});
@@ -147,7 +149,7 @@ function AppearanceSection() {
               onToggle={() => setEnterForNewline(!enterForNewline) }
             />
           )}
-          content={<Text variant="b3">Use SHIFT + ENTER to send message and ENTER for newline.</Text>}
+          content={<Text variant="b3">{`Use ${isMacOS() ? KeySymbol.Command : 'Ctrl'} + ENTER to send message and ENTER for newline.`}</Text>}
         />
         <SettingTile
           title="Inline Markdown formatting"

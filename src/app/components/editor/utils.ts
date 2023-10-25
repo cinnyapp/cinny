@@ -52,6 +52,16 @@ export const isBlockActive = (editor: Editor, format: BlockType) => {
   return !!match;
 };
 
+export const headingLevel = (editor: Editor): HeadingLevel | undefined => {
+  const [nodeEntry] = Editor.nodes(editor, {
+    match: (node) => Element.isElement(node) && node.type === BlockType.Heading,
+  });
+  const [node] = nodeEntry ?? [];
+  if (!node) return undefined;
+  if ('level' in node) return node.level;
+  return undefined;
+};
+
 type BlockOption = { level: HeadingLevel };
 const NESTED_BLOCK = [
   BlockType.OrderedList,
