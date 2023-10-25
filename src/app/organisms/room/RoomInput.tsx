@@ -106,6 +106,7 @@ import { useScreenSize } from '../../hooks/useScreenSize';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { Command, SHRUG, useCommands } from '../../hooks/useCommands';
 import { mobileOrTablet } from '../../utils/user-agent';
+import { textToHtmlRainbow } from '../../../util/colour';
 
 interface RoomInputProps {
   editor: Editor;
@@ -260,6 +261,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       } else if (commandName === Command.Shrug) {
         plainText = `${SHRUG} ${plainText}`;
         customHtml = `${SHRUG} ${customHtml}`;
+      } else if (commandName === Command.Rainbow) {
+        plainText = textToHtmlRainbow(plainText);
+        customHtml = textToHtmlRainbow(customHtml);
+      } else if (commandName === Command.RainbowMe) {
+        plainText = textToHtmlRainbow(plainText);
+        customHtml = textToHtmlRainbow(customHtml);
+        msgType = MsgType.Emote;
       } else if (commandName) {
         const commandContent = commands[commandName as Command];
         if (commandContent) {

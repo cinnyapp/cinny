@@ -48,6 +48,8 @@ export enum Command {
   MyRoomAvatar = 'myroomavatar',
   ConvertToDm = 'converttodm',
   ConvertToRoom = 'converttoroom',
+  Rainbow = 'rainbow',
+  RainbowMe = 'rainbowme',
 }
 
 export type CommandContent = {
@@ -210,6 +212,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         exe: async () => {
           roomActions.convertToRoom(room.roomId);
         },
+      },
+      [Command.Rainbow]: {
+        name: Command.Rainbow,
+        description: 'Send rainbow message',
+        exe: async () => undefined,
+      },
+      [Command.RainbowMe]: {
+        name: Command.RainbowMe,
+        description: 'Send rainbow action message',
+        exe: async () => undefined,
       },
     }),
     [mx, room]
