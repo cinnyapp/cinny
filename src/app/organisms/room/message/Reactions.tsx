@@ -68,7 +68,7 @@ export const Reactions = as<'div', ReactionsProps>(
               position="Top"
               tooltip={
                 <Tooltip style={{ maxWidth: toRem(200) }}>
-                  <Text size="T300">
+                  <Text className={css.ReactionsTooltipText} size="T300">
                     <ReactionTooltipMsg room={room} reaction={key} events={rEvents} />
                   </Text>
                 </Tooltip>
