@@ -44,7 +44,8 @@ export const AudioContent = as<'div', AudioContentProps>(
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const [currentTime, setCurrentTime] = useState(0);
-    const [duration, setDuration] = useState(info.duration ?? 0);
+    // duration in seconds. (NOTE: info.duration is in milliseconds)
+    const [duration, setDuration] = useState((info.duration ?? 0) / 1000);
 
     const getAudioRef = useCallback(() => audioRef.current, []);
     const { loading } = useMediaLoading(getAudioRef);

@@ -44,7 +44,6 @@ import {
   toRem,
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
-import Linkify from 'linkify-react';
 import {
   decryptFile,
   eventWithShortcode,
@@ -76,7 +75,10 @@ import {
   MessageBadEncryptedContent,
   MessageNotDecryptedContent,
 } from '../../components/message';
-import { LINKIFY_OPTS, getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
+import {
+  emojifyAndLinkify,
+  getReactCustomHtmlParser,
+} from '../../plugins/react-custom-html-parser';
 import {
   canEditEvent,
   decryptAllTimelineEvent,
@@ -978,7 +980,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       if (customBody === '') <MessageEmptyContent />;
       return parse(sanitizeCustomHtml(customBody), htmlReactParserOptions);
     }
-    return <Linkify options={LINKIFY_OPTS}>{body}</Linkify>;
+    return emojifyAndLinkify(body, true);
   };
 
   const renderRoomMsgContent = useRoomMsgContentRenderer<[EventTimelineSet]>({

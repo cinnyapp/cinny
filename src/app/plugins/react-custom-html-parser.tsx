@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/alt-text */
 import React, { ReactEventHandler, Suspense, lazy } from 'react';
-import {
+import parse, {
   Element,
   Text as DOMText,
   HTMLReactParserOptions,
@@ -16,8 +16,13 @@ import { ErrorBoundary } from 'react-error-boundary';
 import * as css from '../styles/CustomHtml.css';
 import { getMxIdLocalPart, getRoomWithCanonicalAlias } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
+import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
+import { sanitizeText } from '../utils/sanitize';
+import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
+
+const EMOJI_REG = new RegExp(`${URL_NEG_LB}(${EMOJI_PATTERN})`, 'g');
 
 export const LINKIFY_OPTS: LinkifyOpts = {
   attributes: {
@@ -27,6 +32,28 @@ export const LINKIFY_OPTS: LinkifyOpts = {
   validate: {
     url: (value) => /^(https|http|ftp|mailto|magnet)?:/.test(value),
   },
+  ignoreTags: ['span'],
+};
+
+const emojifyParserOptions: HTMLReactParserOptions = {
+  replace: (domNode) => {
+    if (domNode instanceof DOMText) {
+      return <Linkify options={LINKIFY_OPTS}>{domNode.data}</Linkify>;
+    }
+    return undefined;
+  },
+};
+
+export const emojifyAndLinkify = (unsafeText: string, linkify?: boolean) => {
+  const emojifyHtml = sanitizeText(unsafeText).replace(
+    EMOJI_REG,
+    (emoji) =>
+      `<span class="${css.EmoticonBase}"><span class="${css.Emoticon()}" title="${getShortcodeFor(
+        getHexcodeForEmoji(emoji)
+      )}">${emoji}</span></span>`
+  );
+
+  return <>{parse(emojifyHtml, linkify ? emojifyParserOptions : undefined)}</>;
 };
 
 export const getReactCustomHtmlParser = (
@@ -45,7 +72,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'h1') {
           return (
-            <Text className={css.Heading} size="H2" {...props}>
+            <Text {...props} className={css.Heading} size="H2">
               {domToReact(children, opts)}
             </Text>
           );
@@ -53,7 +80,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'h2') {
           return (
-            <Text className={css.Heading} size="H3" {...props}>
+            <Text {...props} className={css.Heading} size="H3">
               {domToReact(children, opts)}
             </Text>
           );
@@ -61,7 +88,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'h3') {
           return (
-            <Text className={css.Heading} size="H4" {...props}>
+            <Text {...props} className={css.Heading} size="H4">
               {domToReact(children, opts)}
             </Text>
           );
@@ -69,7 +96,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'h4') {
           return (
-            <Text className={css.Heading} size="H4" {...props}>
+            <Text {...props} className={css.Heading} size="H4">
               {domToReact(children, opts)}
             </Text>
           );
@@ -77,7 +104,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'h5') {
           return (
-            <Text className={css.Heading} size="H5" {...props}>
+            <Text {...props} className={css.Heading} size="H5">
               {domToReact(children, opts)}
             </Text>
           );
@@ -85,7 +112,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'h6') {
           return (
-            <Text className={css.Heading} size="H6" {...props}>
+            <Text {...props} className={css.Heading} size="H6">
               {domToReact(children, opts)}
             </Text>
           );
@@ -93,7 +120,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'p') {
           return (
-            <Text className={classNames(css.Paragraph, css.MarginSpaced)} size="Inherit" {...props}>
+            <Text {...props} className={classNames(css.Paragraph, css.MarginSpaced)} size="Inherit">
               {domToReact(children, opts)}
             </Text>
           );
@@ -101,7 +128,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'pre') {
           return (
-            <Text as="pre" className={css.CodeBlock} {...props}>
+            <Text {...props} as="pre" className={css.CodeBlock}>
               <Scroll
                 direction="Horizontal"
                 variant="Secondary"
@@ -117,7 +144,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'blockquote') {
           return (
-            <Text size="Inherit" as="blockquote" className={css.BlockQuote} {...props}>
+            <Text {...props} size="Inherit" as="blockquote" className={css.BlockQuote}>
               {domToReact(children, opts)}
             </Text>
           );
@@ -125,14 +152,14 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'ul') {
           return (
-            <ul className={css.List} {...props}>
+            <ul {...props} className={css.List}>
               {domToReact(children, opts)}
             </ul>
           );
         }
         if (name === 'ol') {
           return (
-            <ol className={css.List} {...props}>
+            <ol {...props} className={css.List}>
               {domToReact(children, opts)}
             </ol>
           );
@@ -240,29 +267,28 @@ export const getReactCustomHtmlParser = (
           if (htmlSrc && props.src.startsWith('mxc://') === false) {
             return (
               <a href={htmlSrc} target="_blank" rel="noreferrer noopener">
-                {props.alt && htmlSrc}
+                {props.alt || props.title || htmlSrc}
               </a>
             );
           }
           if (htmlSrc && 'data-mx-emoticon' in props) {
             return (
               <span className={css.EmoticonBase}>
-                <span className={css.Emoticon()} contentEditable={false}>
-                  <img className={css.EmoticonImg} src={htmlSrc} data-mx-emoticon />
+                <span className={css.Emoticon()}>
+                  <img {...props} className={css.EmoticonImg} src={htmlSrc} />
                 </span>
               </span>
             );
           }
-          if (htmlSrc) return <img className={css.Img} {...props} src={htmlSrc} />;
+          if (htmlSrc) return <img {...props} className={css.Img} src={htmlSrc} />;
         }
       }
 
-      if (
-        domNode instanceof DOMText &&
-        !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'code') &&
-        !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'a')
-      ) {
-        return <Linkify options={LINKIFY_OPTS}>{domNode.data}</Linkify>;
+      if (domNode instanceof DOMText) {
+        const linkify =
+          !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'code') &&
+          !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'a');
+        return emojifyAndLinkify(domNode.data, linkify);
       }
       return undefined;
     },
