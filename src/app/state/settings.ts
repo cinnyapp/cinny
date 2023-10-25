@@ -9,7 +9,7 @@ export interface Settings {
   useSystemTheme: boolean;
   isMarkdown: boolean;
   editorToolbar: boolean;
-  useSystemEmoji: boolean;
+  twitterEmoji: boolean;
 
   isPeopleDrawer: boolean;
   memberSortFilterIndex: number;
@@ -30,7 +30,7 @@ const defaultSettings: Settings = {
   useSystemTheme: true,
   isMarkdown: false,
   editorToolbar: false,
-  useSystemEmoji: false,
+  twitterEmoji: false,
 
   isPeopleDrawer: true,
   memberSortFilterIndex: 0,
