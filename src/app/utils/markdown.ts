@@ -119,13 +119,12 @@ const StrikeRule: InlineMDRule = {
 const CODE_MD_1 = '`';
 const CODE_PREFIX_1 = '`';
 const CODE_NEG_LA_1 = '(?!`)';
-const CODE_REG_1 = new RegExp(
-  `${URL_NEG_LB}${CODE_PREFIX_1}${MIN_ANY}${CODE_PREFIX_1}${CODE_NEG_LA_1}`
-);
+const CODE_REG_1 = new RegExp(`${URL_NEG_LB}${CODE_PREFIX_1}(.+?)${CODE_PREFIX_1}${CODE_NEG_LA_1}`);
 const CodeRule: InlineMDRule = {
   match: (text) => text.match(CODE_REG_1),
   html: (parse, match) => {
-    const [, , g2] = match;
+    const [txt, , g2] = match;
+    if (txt === '```') return txt;
     return `<code data-md="${CODE_MD_1}">${g2}</code>`;
   },
 };
@@ -246,7 +245,7 @@ const HeadingRule: BlockMDRule = {
 };
 
 const CODEBLOCK_MD_1 = '```';
-const CODEBLOCK_REG_1 = /^`{3}(\S*)\n((.+\n)+)`{3}(?!.)/m;
+const CODEBLOCK_REG_1 = /^`{3}(\S*)\n((.+\n)+)`{3}(?!.)\n?/m;
 const CodeBlockRule: BlockMDRule = {
   match: (text) => text.match(CODEBLOCK_REG_1),
   html: (match) => {
