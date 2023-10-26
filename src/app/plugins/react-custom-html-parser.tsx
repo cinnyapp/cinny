@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/alt-text */
 import React, { ReactEventHandler, Suspense, lazy } from 'react';
-import parse, {
+import {
   Element,
   Text as DOMText,
   HTMLReactParserOptions,
@@ -19,10 +19,11 @@ import { getMemberDisplayName } from '../utils/room';
 import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
 import { sanitizeText } from '../utils/sanitize';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
+import { replaceMatch } from '../utils/markdown';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
-const EMOJI_REG = new RegExp(`${URL_NEG_LB}(${EMOJI_PATTERN})`, 'g');
+const EMOJI_REG = new RegExp(`${URL_NEG_LB}(${EMOJI_PATTERN})`);
 
 export const LINKIFY_OPTS: LinkifyOpts = {
   attributes: {
@@ -35,25 +36,31 @@ export const LINKIFY_OPTS: LinkifyOpts = {
   ignoreTags: ['span'],
 };
 
-const emojifyParserOptions: HTMLReactParserOptions = {
-  replace: (domNode) => {
-    if (domNode instanceof DOMText) {
-      return <Linkify options={LINKIFY_OPTS}>{domNode.data}</Linkify>;
-    }
-    return undefined;
-  },
+const stringToEmojifyJSX = (text: string): (string | JSX.Element)[] => {
+  const match = text.match(EMOJI_REG);
+  if (!match) return [text];
+
+  const [emoji] = match;
+
+  return replaceMatch(
+    stringToEmojifyJSX,
+    text,
+    match,
+    <span className={css.EmoticonBase}>
+      <span className={css.Emoticon()} title={getShortcodeFor(getHexcodeForEmoji(emoji))}>
+        {emoji}
+      </span>
+    </span>
+  );
 };
 
 export const emojifyAndLinkify = (unsafeText: string, linkify?: boolean) => {
-  const emojifyHtml = sanitizeText(unsafeText).replace(
-    EMOJI_REG,
-    (emoji) =>
-      `<span class="${css.EmoticonBase}"><span class="${css.Emoticon()}" title="${getShortcodeFor(
-        getHexcodeForEmoji(emoji)
-      )}">${emoji}</span></span>`
-  );
+  const emojifyJSX = stringToEmojifyJSX(sanitizeText(unsafeText));
 
-  return <>{parse(emojifyHtml, linkify ? emojifyParserOptions : undefined)}</>;
+  if (linkify) {
+    return <Linkify options={LINKIFY_OPTS}>{emojifyJSX}</Linkify>;
+  }
+  return emojifyJSX;
 };
 
 export const getReactCustomHtmlParser = (
