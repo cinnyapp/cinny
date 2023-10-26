@@ -34,8 +34,8 @@ const BOLD_REG_1 = new RegExp(
 const BoldRule: MDRule = {
   match: (text) => text.match(BOLD_REG_1),
   html: (parse, match) => {
-    const [, g1] = match;
-    return `<strong data-md="${BOLD_MD_1}">${parse(g1)}</strong>`;
+    const [, , g2] = match;
+    return `<strong data-md="${BOLD_MD_1}">${parse(g2)}</strong>`;
   },
 };
 
@@ -48,8 +48,8 @@ const ITALIC_REG_1 = new RegExp(
 const ItalicRule1: MDRule = {
   match: (text) => text.match(ITALIC_REG_1),
   html: (parse, match) => {
-    const [, g1] = match;
-    return `<i data-md="${ITALIC_MD_1}">${parse(g1)}</i>`;
+    const [, , g2] = match;
+    return `<i data-md="${ITALIC_MD_1}">${parse(g2)}</i>`;
   },
 };
 
@@ -62,8 +62,8 @@ const ITALIC_REG_2 = new RegExp(
 const ItalicRule2: MDRule = {
   match: (text) => text.match(ITALIC_REG_2),
   html: (parse, match) => {
-    const [, g1] = match;
-    return `<i data-md="${ITALIC_MD_2}">${parse(g1)}</i>`;
+    const [, , g2] = match;
+    return `<i data-md="${ITALIC_MD_2}">${parse(g2)}</i>`;
   },
 };
 
@@ -76,8 +76,8 @@ const UNDERLINE_REG_1 = new RegExp(
 const UnderlineRule: MDRule = {
   match: (text) => text.match(UNDERLINE_REG_1),
   html: (parse, match) => {
-    const [, g1] = match;
-    return `<u data-md="${UNDERLINE_MD_1}">${parse(g1)}</u>`;
+    const [, , g2] = match;
+    return `<u data-md="${UNDERLINE_MD_1}">${parse(g2)}</u>`;
   },
 };
 
@@ -90,8 +90,8 @@ const STRIKE_REG_1 = new RegExp(
 const StrikeRule: MDRule = {
   match: (text) => text.match(STRIKE_REG_1),
   html: (parse, match) => {
-    const [, g1] = match;
-    return `<del data-md="${STRIKE_MD_1}">${parse(g1)}</del>`;
+    const [, , g2] = match;
+    return `<del data-md="${STRIKE_MD_1}">${parse(g2)}</del>`;
   },
 };
 
@@ -104,8 +104,8 @@ const CODE_REG_1 = new RegExp(
 const CodeRule: MDRule = {
   match: (text) => text.match(CODE_REG_1),
   html: (parse, match) => {
-    const [, g1] = match;
-    return `<code data-md="${CODE_MD_1}">${g1}</code>`;
+    const [, , g2] = match;
+    return `<code data-md="${CODE_MD_1}">${g2}</code>`;
   },
 };
 
@@ -118,8 +118,8 @@ const SPOILER_REG_1 = new RegExp(
 const SpoilerRule: MDRule = {
   match: (text) => text.match(SPOILER_REG_1),
   html: (parse, match) => {
-    const [, g1] = match;
-    return `<span data-md="${SPOILER_MD_1}" data-mx-spoiler>${parse(g1)}</span>`;
+    const [, , g2] = match;
+    return `<span data-md="${SPOILER_MD_1}" data-mx-spoiler>${parse(g2)}</span>`;
   },
 };
 
