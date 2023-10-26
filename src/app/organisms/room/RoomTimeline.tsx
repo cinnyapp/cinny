@@ -137,6 +137,13 @@ import initMatrix from '../../../client/initMatrix';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import cons from '../../../client/state/cons';
 import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
+import { EMOJI_PATTERN, VARIATION_SELECTOR_PATTERN } from '../../utils/regex';
+
+// Thumbs up emoji found to have Variation Selector 16 at the end
+// so included variation selector pattern in regex
+const JUMBO_EMOJI_REG = new RegExp(
+  `^(((${EMOJI_PATTERN})|(:.+?:))(${VARIATION_SELECTOR_PATTERN}|\\s)*){1,10}$`
+);
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -992,12 +999,16 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
       if (typeof body !== 'string') return null;
+      const jumboEmoji = JUMBO_EMOJI_REG.test(body);
+
       return (
         <Text
           as="div"
           style={{
             whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
             wordBreak: 'break-word',
+            fontSize: jumboEmoji ? '1.504em' : undefined,
+            lineHeight: jumboEmoji ? '1.4962em' : undefined,
           }}
           priority="400"
         >
