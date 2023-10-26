@@ -1,25 +1,46 @@
-export type PlainMDParser = (text: string) => string;
 export type MatchResult = RegExpMatchArray | RegExpExecArray;
 export type RuleMatch = (text: string) => MatchResult | null;
-export type MatchConverter = (parse: PlainMDParser, match: MatchResult) => string;
 
-export type MDRule = {
-  match: RuleMatch;
-  html: MatchConverter;
-};
+export const beforeMatch = (text: string, match: RegExpMatchArray | RegExpExecArray): string =>
+  text.slice(0, match.index);
+export const afterMatch = (text: string, match: RegExpMatchArray | RegExpExecArray): string =>
+  text.slice((match.index ?? 0) + match[0].length);
 
-export type MatchReplacer = (
-  parse: PlainMDParser,
+export const replaceMatch = <C>(
+  convertPart: (txt: string) => Array<string | C>,
   text: string,
   match: MatchResult,
-  content: string
-) => string;
+  content: C
+): Array<string | C> => [
+  ...convertPart(beforeMatch(text, match)),
+  content,
+  ...convertPart(afterMatch(text, match)),
+];
 
-export type RuleRunner = (parse: PlainMDParser, text: string, rule: MDRule) => string | undefined;
-export type RulesRunner = (
-  parse: PlainMDParser,
+/*
+ *****************
+ * INLINE PARSER *
+ *****************
+ */
+
+export type InlineMDParser = (text: string) => string;
+
+export type InlineMatchConverter = (parse: InlineMDParser, match: MatchResult) => string;
+
+export type InlineMDRule = {
+  match: RuleMatch;
+  html: InlineMatchConverter;
+};
+
+export type InlineRuleRunner = (
+  parse: InlineMDParser,
   text: string,
-  rules: MDRule[]
+  rule: InlineMDRule
+) => string | undefined;
+export type InlineRulesRunner = (
+  parse: InlineMDParser,
+  text: string,
+  rules: InlineMDRule[]
 ) => string | undefined;
 
 const MIN_ANY = '(.+?)';
@@ -31,7 +52,7 @@ const BOLD_NEG_LA_1 = '(?!\\*)';
 const BOLD_REG_1 = new RegExp(
   `${URL_NEG_LB}${BOLD_PREFIX_1}${MIN_ANY}${BOLD_PREFIX_1}${BOLD_NEG_LA_1}`
 );
-const BoldRule: MDRule = {
+const BoldRule: InlineMDRule = {
   match: (text) => text.match(BOLD_REG_1),
   html: (parse, match) => {
     const [, , g2] = match;
@@ -45,7 +66,7 @@ const ITALIC_NEG_LA_1 = '(?!\\*)';
 const ITALIC_REG_1 = new RegExp(
   `${URL_NEG_LB}${ITALIC_PREFIX_1}${MIN_ANY}${ITALIC_PREFIX_1}${ITALIC_NEG_LA_1}`
 );
-const ItalicRule1: MDRule = {
+const ItalicRule1: InlineMDRule = {
   match: (text) => text.match(ITALIC_REG_1),
   html: (parse, match) => {
     const [, , g2] = match;
@@ -59,7 +80,7 @@ const ITALIC_NEG_LA_2 = '(?!_)';
 const ITALIC_REG_2 = new RegExp(
   `${URL_NEG_LB}${ITALIC_PREFIX_2}${MIN_ANY}${ITALIC_PREFIX_2}${ITALIC_NEG_LA_2}`
 );
-const ItalicRule2: MDRule = {
+const ItalicRule2: InlineMDRule = {
   match: (text) => text.match(ITALIC_REG_2),
   html: (parse, match) => {
     const [, , g2] = match;
@@ -73,7 +94,7 @@ const UNDERLINE_NEG_LA_1 = '(?!_)';
 const UNDERLINE_REG_1 = new RegExp(
   `${URL_NEG_LB}${UNDERLINE_PREFIX_1}${MIN_ANY}${UNDERLINE_PREFIX_1}${UNDERLINE_NEG_LA_1}`
 );
-const UnderlineRule: MDRule = {
+const UnderlineRule: InlineMDRule = {
   match: (text) => text.match(UNDERLINE_REG_1),
   html: (parse, match) => {
     const [, , g2] = match;
@@ -87,7 +108,7 @@ const STRIKE_NEG_LA_1 = '(?!~)';
 const STRIKE_REG_1 = new RegExp(
   `${URL_NEG_LB}${STRIKE_PREFIX_1}${MIN_ANY}${STRIKE_PREFIX_1}${STRIKE_NEG_LA_1}`
 );
-const StrikeRule: MDRule = {
+const StrikeRule: InlineMDRule = {
   match: (text) => text.match(STRIKE_REG_1),
   html: (parse, match) => {
     const [, , g2] = match;
@@ -101,7 +122,7 @@ const CODE_NEG_LA_1 = '(?!`)';
 const CODE_REG_1 = new RegExp(
   `${URL_NEG_LB}${CODE_PREFIX_1}${MIN_ANY}${CODE_PREFIX_1}${CODE_NEG_LA_1}`
 );
-const CodeRule: MDRule = {
+const CodeRule: InlineMDRule = {
   match: (text) => text.match(CODE_REG_1),
   html: (parse, match) => {
     const [, , g2] = match;
@@ -115,7 +136,7 @@ const SPOILER_NEG_LA_1 = '(?!\\|)';
 const SPOILER_REG_1 = new RegExp(
   `${URL_NEG_LB}${SPOILER_PREFIX_1}${MIN_ANY}${SPOILER_PREFIX_1}${SPOILER_NEG_LA_1}`
 );
-const SpoilerRule: MDRule = {
+const SpoilerRule: InlineMDRule = {
   match: (text) => text.match(SPOILER_REG_1),
   html: (parse, match) => {
     const [, , g2] = match;
@@ -126,7 +147,7 @@ const SpoilerRule: MDRule = {
 const LINK_ALT = `\\[${MIN_ANY}\\]`;
 const LINK_URL = `\\((https?:\\/\\/.+?)\\)`;
 const LINK_REG_1 = new RegExp(`${LINK_ALT}${LINK_URL}`);
-const LinkRule: MDRule = {
+const LinkRule: InlineMDRule = {
   match: (text) => text.match(LINK_REG_1),
   html: (parse, match) => {
     const [, g1, g2] = match;
@@ -134,19 +155,11 @@ const LinkRule: MDRule = {
   },
 };
 
-const beforeMatch = (text: string, match: RegExpMatchArray | RegExpExecArray): string =>
-  text.slice(0, match.index);
-const afterMatch = (text: string, match: RegExpMatchArray | RegExpExecArray): string =>
-  text.slice((match.index ?? 0) + match[0].length);
-
-const replaceMatch: MatchReplacer = (parse, text, match, content) =>
-  `${parse(beforeMatch(text, match))}${content}${parse(afterMatch(text, match))}`;
-
-const runRule: RuleRunner = (parse, text, rule) => {
+const runInlineRule: InlineRuleRunner = (parse, text, rule) => {
   const matchResult = rule.match(text);
   if (matchResult) {
     const content = rule.html(parse, matchResult);
-    return replaceMatch(parse, text, matchResult, content);
+    return replaceMatch((txt) => [parse(txt)], text, matchResult, content).join('');
   }
   return undefined;
 };
@@ -155,10 +168,10 @@ const runRule: RuleRunner = (parse, text, rule) => {
  * Runs multiple rules at the same time to better handle nested rules.
  * Rules will be run in the order they appear.
  */
-const runRules: RulesRunner = (parse, text, rules) => {
+const runInlineRules: InlineRulesRunner = (parse, text, rules) => {
   const matchResults = rules.map((rule) => rule.match(text));
 
-  let targetRule: MDRule | undefined;
+  let targetRule: InlineMDRule | undefined;
   let targetResult: MatchResult | undefined;
 
   for (let i = 0; i < matchResults.length; i += 1) {
@@ -176,7 +189,7 @@ const runRules: RulesRunner = (parse, text, rules) => {
 
   if (targetRule && targetResult) {
     const content = targetRule.html(parse, targetResult);
-    return replaceMatch(parse, text, targetResult, content);
+    return replaceMatch((txt) => [parse(txt)], text, targetResult, content).join('');
   }
   return undefined;
 };
@@ -191,11 +204,97 @@ const LeveledRules = [
   LinkRule,
 ];
 
-export const parseInlineMD = (text: string): string => {
+export const parseInlineMD: InlineMDParser = (text: string): string => {
+  if (text === '') return text;
   let result: string | undefined;
-  if (!result) result = runRule(parseInlineMD, text, CodeRule);
+  if (!result) result = runInlineRule(parseInlineMD, text, CodeRule);
 
-  if (!result) result = runRules(parseInlineMD, text, LeveledRules);
+  if (!result) result = runInlineRules(parseInlineMD, text, LeveledRules);
+
+  return result ?? text;
+};
+
+/*
+ ****************
+ * BLOCK PARSER *
+ ****************
+ */
+
+export type BlockMDParser = (test: string) => string;
+
+export type BlockMatchConverter = (match: MatchResult) => string;
+
+export type BlockMDRule = {
+  match: RuleMatch;
+  html: BlockMatchConverter;
+};
+
+export type BlockRuleRunner = (
+  parse: BlockMDParser,
+  text: string,
+  rule: BlockMDRule
+) => string | undefined;
+
+const HEADING_REG_1 = /^(#{1,6}) +(.+)\n?/m;
+const HeadingRule: BlockMDRule = {
+  match: (text) => text.match(HEADING_REG_1),
+  html: (match) => {
+    const [, g1, g2] = match;
+    const level = g1.length;
+    return `<h${level} data-md="${g1}">${g2}</h${level}>`;
+  },
+};
+
+const CODEBLOCK_MD_1 = '```';
+const CODEBLOCK_REG_1 = /^`{3}(\S*)\n((.+\n)+)`{3}(?!.)/m;
+const CodeBlockRule: BlockMDRule = {
+  match: (text) => text.match(CODEBLOCK_REG_1),
+  html: (match) => {
+    const [, g1, g2] = match;
+    return `<pre><code data-md="${CODEBLOCK_MD_1}"${
+      g1 ? ` class="language-${g1}"` : ''
+    }>${g2}</code></pre>`;
+  },
+};
+
+const BLOCKQUOTE_MD_1 = '>';
+const QUOTE_LINE_PREFIX = /^> */;
+const BLOCKQUOTE_SUFFIX = /\n$/;
+const BLOCKQUOTE_REG_1 = /(^>.*\n?)+/m;
+const mapBlockQuoteLine = (lineText: string): string =>
+  `${lineText.replace(QUOTE_LINE_PREFIX, '')}<br/>`;
+const BlockQuoteRule: BlockMDRule = {
+  match: (text) => text.match(BLOCKQUOTE_REG_1),
+  html: (match) => {
+    const [blockquoteText] = match;
+    const lines = blockquoteText
+      .replace(BLOCKQUOTE_SUFFIX, '')
+      .split('\n')
+      .map(mapBlockQuoteLine)
+      .join('');
+    return `<blockquote data-md="${BLOCKQUOTE_MD_1}">${lines}</blockquote>`;
+  },
+};
+
+const runBlockRule: BlockRuleRunner = (parse, text, rule) => {
+  const matchResult = rule.match(text);
+  if (matchResult) {
+    const content = rule.html(matchResult);
+    return replaceMatch((txt) => [parse(txt)], text, matchResult, content).join('');
+  }
+  return undefined;
+};
+
+export const parseBlockMD = (text: string): string => {
+  if (text === '') return text;
+  let result: string | undefined;
+
+  if (!result) result = runBlockRule(parseBlockMD, text, CodeBlockRule);
+  if (!result) result = runBlockRule(parseBlockMD, text, BlockQuoteRule);
+  if (!result) result = runBlockRule(parseBlockMD, text, HeadingRule);
+
+  // replace \n with <br/> because want to preserve empty lines
+  if (!result) result = text.replace(/\n/g, '<br/>');
 
   return result ?? text;
 };
