@@ -582,7 +582,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         focusItem.current = {
           index: evtAbsIndex,
           scrollTo: true,
-          highlight: evtId !== unreadInfo?.readUptoEventId,
+          highlight: evtId !== readUptoEventIdRef.current,
         };
         setTimeline({
           linkedTimelines: lTimelines,
@@ -592,7 +592,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           },
         });
       },
-      [unreadInfo, alive]
+      [alive]
     ),
     useCallback(() => {
       if (!alive()) return;
