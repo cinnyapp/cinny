@@ -17,7 +17,6 @@ import * as css from '../styles/CustomHtml.css';
 import { getMxIdLocalPart, getRoomWithCanonicalAlias } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
 import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
-import { sanitizeText } from '../utils/sanitize';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
 import { replaceMatch } from '../utils/markdown';
 
@@ -54,8 +53,8 @@ const stringToEmojifyJSX = (text: string): (string | JSX.Element)[] => {
   );
 };
 
-export const emojifyAndLinkify = (unsafeText: string, linkify?: boolean) => {
-  const emojifyJSX = stringToEmojifyJSX(sanitizeText(unsafeText));
+export const emojifyAndLinkify = (text: string, linkify?: boolean) => {
+  const emojifyJSX = stringToEmojifyJSX(text);
 
   if (linkify) {
     return <Linkify options={LINKIFY_OPTS}>{emojifyJSX}</Linkify>;
