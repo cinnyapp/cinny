@@ -256,7 +256,7 @@ export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefin
 };
 
 export const trimReplyFromBody = (body: string): string => {
-  const match = body.match(/^>\s<.+?>\s.+\n\n/);
+  const match = body.match(/^> <.+?> .+\n(>.*\n)*?\n/m);
   if (!match) return body;
   return body.slice(match[0].length);
 };
