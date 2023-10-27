@@ -66,7 +66,7 @@ const permittedTagToAttributes = {
   h4: ['data-md'],
   h5: ['data-md'],
   h6: ['data-md'],
-  pre: ['data-md'],
+  pre: ['data-md', 'class'],
   ol: ['start', 'type', 'data-md'],
   ul: ['data-md'],
   a: ['name', 'target', 'href', 'rel', 'data-md'],

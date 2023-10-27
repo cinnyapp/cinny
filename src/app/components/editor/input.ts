@@ -13,11 +13,9 @@ import {
   HeadingElement,
   HeadingLevel,
   InlineElement,
-  ListItemElement,
   MentionElement,
   OrderedListElement,
   ParagraphElement,
-  QuoteLineElement,
   UnorderedListElement,
 } from './slate';
 import { parseMatrixToUrl } from '../../utils/matrix';
@@ -117,17 +115,14 @@ const parseInlineNodes = (node: ChildNode): InlineElement[] => {
   return [];
 };
 
-const parseBlockquoteNode = (node: Element): BlockQuoteElement => {
-  const children: QuoteLineElement[] = [];
+const parseBlockquoteNode = (node: Element): BlockQuoteElement[] | ParagraphElement[] => {
+  const quoteLines: Array<InlineElement[]> = [];
   let lineHolder: InlineElement[] = [];
 
   const appendLine = () => {
     if (lineHolder.length === 0) return;
 
-    children.push({
-      type: BlockType.QuoteLine,
-      children: lineHolder,
-    });
+    quoteLines.push(lineHolder);
     lineHolder = [];
   };
 
@@ -145,10 +140,7 @@ const parseBlockquoteNode = (node: Element): BlockQuoteElement => {
 
       if (child.name === 'p') {
         appendLine();
-        children.push({
-          type: BlockType.QuoteLine,
-          children: child.children.flatMap((c) => parseInlineNodes(c)),
-        });
+        quoteLines.push(child.children.flatMap((c) => parseInlineNodes(c)));
         return;
       }
 
@@ -157,42 +149,71 @@ const parseBlockquoteNode = (node: Element): BlockQuoteElement => {
   });
   appendLine();
 
-  return {
-    type: BlockType.BlockQuote,
-    children,
-  };
-};
-const parseCodeBlockNode = (node: Element): CodeBlockElement => {
-  const children: CodeLineElement[] = [];
+  if (node.attribs['data-md'] !== undefined) {
+    return quoteLines.map((lineChildren) => ({
+      type: BlockType.Paragraph,
+      children: [{ text: `${node.attribs['data-md']} ` }, ...lineChildren],
+    }));
+  }
 
-  const code = parseNodeText(node).trim();
-  code.split('\n').forEach((lineTxt) =>
-    children.push({
-      type: BlockType.CodeLine,
+  return [
+    {
+      type: BlockType.BlockQuote,
+      children: quoteLines.map((lineChildren) => ({
+        type: BlockType.QuoteLine,
+        children: lineChildren,
+      })),
+    },
+  ];
+};
+const parseCodeBlockNode = (node: Element): CodeBlockElement[] | ParagraphElement[] => {
+  const codeLines = parseNodeText(node).trim().split('\n');
+
+  if (node.attribs['data-md'] !== undefined) {
+    const pLines = codeLines.map<ParagraphElement>((lineText) => ({
+      type: BlockType.Paragraph,
       children: [
         {
-          text: lineTxt,
+          text: lineText,
         },
       ],
-    })
-  );
+    }));
+    const childCode = node.children[0];
+    const className =
+      isTag(childCode) && childCode.tagName === 'code' ? childCode.attribs.class ?? '' : '';
+    const prefix = { text: `${node.attribs['data-md']}${className.replace('language-', '')}` };
+    const suffix = { text: node.attribs['data-md'] };
+    return [
+      { type: BlockType.Paragraph, children: [prefix] },
+      ...pLines,
+      { type: BlockType.Paragraph, children: [suffix] },
+    ];
+  }
 
-  return {
-    type: BlockType.CodeBlock,
-    children,
-  };
+  return [
+    {
+      type: BlockType.CodeBlock,
+      children: codeLines.map<CodeLineElement>((lineTxt) => ({
+        type: BlockType.CodeLine,
+        children: [
+          {
+            text: lineTxt,
+          },
+        ],
+      })),
+    },
+  ];
 };
-const parseListNode = (node: Element): OrderedListElement | UnorderedListElement => {
-  const children: ListItemElement[] = [];
+const parseListNode = (
+  node: Element
+): OrderedListElement[] | UnorderedListElement[] | ParagraphElement[] => {
+  const listLines: Array<InlineElement[]> = [];
   let lineHolder: InlineElement[] = [];
 
   const appendLine = () => {
     if (lineHolder.length === 0) return;
 
-    children.push({
-      type: BlockType.ListItem,
-      children: lineHolder,
-    });
+    listLines.push(lineHolder);
     lineHolder = [];
   };
 
@@ -210,10 +231,7 @@ const parseListNode = (node: Element): OrderedListElement | UnorderedListElement
 
       if (child.name === 'li') {
         appendLine();
-        children.push({
-          type: BlockType.ListItem,
-          children: child.children.flatMap((c) => parseInlineNodes(c)),
-        });
+        listLines.push(child.children.flatMap((c) => parseInlineNodes(c)));
         return;
       }
 
@@ -222,17 +240,54 @@ const parseListNode = (node: Element): OrderedListElement | UnorderedListElement
   });
   appendLine();
 
-  return {
-    type: node.name === 'ol' ? BlockType.OrderedList : BlockType.UnorderedList,
-    children,
-  };
+  if (node.attribs['data-md'] !== undefined) {
+    const prefix = node.attribs['data-md'] || '-';
+    const [starOrHyphen] = prefix.match(/^\*|-$/) ?? [];
+    return listLines.map((lineChildren) => ({
+      type: BlockType.Paragraph,
+      children: [
+        { text: `${starOrHyphen ? `${starOrHyphen} ` : `${prefix}. `} ` },
+        ...lineChildren,
+      ],
+    }));
+  }
+
+  if (node.name === 'ol') {
+    return [
+      {
+        type: BlockType.OrderedList,
+        children: listLines.map((lineChildren) => ({
+          type: BlockType.ListItem,
+          children: lineChildren,
+        })),
+      },
+    ];
+  }
+
+  return [
+    {
+      type: BlockType.UnorderedList,
+      children: listLines.map((lineChildren) => ({
+        type: BlockType.ListItem,
+        children: lineChildren,
+      })),
+    },
+  ];
 };
-const parseHeadingNode = (node: Element): HeadingElement => {
+const parseHeadingNode = (node: Element): HeadingElement | ParagraphElement => {
   const children = node.children.flatMap((child) => parseInlineNodes(child));
 
   const headingMatch = node.name.match(/^h([123456])$/);
   const [, g1AsLevel] = headingMatch ?? ['h3', '3'];
   const level = parseInt(g1AsLevel, 10);
+
+  if (node.attribs['data-md'] !== undefined) {
+    return {
+      type: BlockType.Paragraph,
+      children: [{ text: `${node.attribs['data-md']} ` }, ...children],
+    };
+  }
+
   return {
     type: BlockType.Heading,
     level: (level <= 3 ? level : 3) as HeadingLevel,
@@ -278,17 +333,17 @@ export const domToEditorInput = (domNodes: ChildNode[]): Descendant[] => {
 
       if (node.name === 'blockquote') {
         appendLine();
-        children.push(parseBlockquoteNode(node));
+        children.push(...parseBlockquoteNode(node));
         return;
       }
       if (node.name === 'pre') {
         appendLine();
-        children.push(parseCodeBlockNode(node));
+        children.push(...parseCodeBlockNode(node));
         return;
       }
       if (node.name === 'ol' || node.name === 'ul') {
         appendLine();
-        children.push(parseListNode(node));
+        children.push(...parseListNode(node));
         return;
       }
 

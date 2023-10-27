@@ -253,9 +253,8 @@ const CodeBlockRule: BlockMDRule = {
   match: (text) => text.match(CODEBLOCK_REG_1),
   html: (match) => {
     const [, g1, g2] = match;
-    return `<pre data-md="${CODEBLOCK_MD_1}"><code${
-      g1 ? ` class="language-${g1}"` : ''
-    }>${g2}</code$></pre>`;
+    const classNameAtt = g1 ? ` class="language-${g1}"` : '';
+    return `<pre data-md="${CODEBLOCK_MD_1}"><code${classNameAtt}>${g2}</code$></pre>`;
   },
 };
 
@@ -304,7 +303,7 @@ const OrderedListRule: BlockMDRule = {
       })
       .join('');
 
-    const dataMdAtt = `data-md="${listStart || listType || ORDERED_LIST_MD_1}"`;
+    const dataMdAtt = `data-md="${listType || listStart || ORDERED_LIST_MD_1}"`;
     const startAtt = listStart ? ` start="${listStart}"` : '';
     const typeAtt = listType ? ` type="${listType}"` : '';
     return `<ol ${dataMdAtt}${startAtt}${typeAtt}>${lines}</ol>`;
