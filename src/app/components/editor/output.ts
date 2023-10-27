@@ -3,11 +3,12 @@ import { Descendant, Text } from 'slate';
 import { sanitizeText } from '../../utils/sanitize';
 import { BlockType } from './types';
 import { CustomElement } from './slate';
-import { parseInlineMD } from '../../utils/markdown';
+import { parseBlockMD, parseInlineMD, replaceMatch } from '../../utils/markdown';
 
 export type OutputOptions = {
   allowTextFormatting?: boolean;
-  allowMarkdown?: boolean;
+  allowInlineMarkdown?: boolean;
+  allowBlockMarkdown?: boolean;
 };
 
 const textToCustomHtml = (node: Text, opts: OutputOptions): string => {
@@ -21,7 +22,7 @@ const textToCustomHtml = (node: Text, opts: OutputOptions): string => {
     if (node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
   }
 
-  if (opts.allowMarkdown && string === sanitizeText(node.text)) {
+  if (opts.allowInlineMarkdown && string === sanitizeText(node.text)) {
     string = parseInlineMD(string);
   }
 
@@ -64,14 +65,42 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
   }
 };
 
+const HTML_TAG_REG = /<([a-z]+)(?![^>]*\/>)[^<]*<\/\1>/;
+const ignoreHTMLParseInlineMD = (text: string): string => {
+  if (text === '') return text;
+  const match = text.match(HTML_TAG_REG);
+  if (!match) return parseInlineMD(text);
+  const [matchedTxt] = match;
+  return replaceMatch((txt) => [ignoreHTMLParseInlineMD(txt)], text, match, matchedTxt).join('');
+};
+
 export const toMatrixCustomHTML = (
   node: Descendant | Descendant[],
   opts: OutputOptions
 ): string => {
-  const parseNode = (n: Descendant) => {
+  let markdownLines = '';
+  const parseNode = (n: Descendant, index: number, targetNodes: Descendant[]) => {
+    if (opts.allowBlockMarkdown && 'type' in n && n.type === BlockType.Paragraph) {
+      const line = toMatrixCustomHTML(n, {
+        ...opts,
+        allowInlineMarkdown: false,
+        allowBlockMarkdown: false,
+      })
+        .replace(/<br\/>$/, '\n')
+        .replace(/^&gt;/, '>');
+      markdownLines += line;
+      if (index === targetNodes.length - 1) {
+        return parseBlockMD(markdownLines, ignoreHTMLParseInlineMD);
+      }
+      return '';
+    }
+
+    const parsedMarkdown = parseBlockMD(markdownLines, ignoreHTMLParseInlineMD);
+    markdownLines = '';
     const isCodeLine = 'type' in n && n.type === BlockType.CodeLine;
-    if (isCodeLine) return toMatrixCustomHTML(n, {});
-    return toMatrixCustomHTML(n, opts);
+    if (isCodeLine) return `${parsedMarkdown}${toMatrixCustomHTML(n, {})}`;
+
+    return `${parsedMarkdown}${toMatrixCustomHTML(n, { ...opts, allowBlockMarkdown: false })}`;
   };
   if (Array.isArray(node)) return node.map(parseNode).join('');
   if (Text.isText(node)) return textToCustomHtml(node, opts);

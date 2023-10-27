@@ -59,6 +59,9 @@ export const Reply = as<'div', ReplyProps>(
       };
     }, [replyEvent, mx, room, eventId]);
 
+    const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
+    const bodyJSX = body ? trimReplyFromBody(body) : fallbackBody;
+
     return (
       <Box
         className={classNames(css.Reply, className)}
@@ -82,11 +85,7 @@ export const Reply = as<'div', ReplyProps>(
         <Box grow="Yes" className={css.ReplyContent}>
           {replyEvent !== undefined ? (
             <Text className={css.ReplyContentText} size="T300" truncate>
-              {replyEvent?.getContent().msgtype === 'm.bad.encrypted' ? (
-                <MessageBadEncryptedContent />
-              ) : (
-                (body && trimReplyFromBody(body)) ?? fallbackBody
-              )}
+              {badEncryption ? <MessageBadEncryptedContent /> : bodyJSX}
             </Text>
           ) : (
             <LinePlaceholder

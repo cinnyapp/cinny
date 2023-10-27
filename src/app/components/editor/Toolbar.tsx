@@ -148,7 +148,7 @@ export function HeadingBlockButton() {
           <Menu style={{ padding: config.space.S100 }}>
             <Box gap="100">
               <TooltipProvider
-                tooltip={<BtnTooltip text="Heading 1" shortCode={`${modKey} + Shift + 1`} />}
+                tooltip={<BtnTooltip text="Heading 1" shortCode={`${modKey} + 1`} />}
                 delay={500}
               >
                 {(triggerRef) => (
@@ -163,7 +163,7 @@ export function HeadingBlockButton() {
                 )}
               </TooltipProvider>
               <TooltipProvider
-                tooltip={<BtnTooltip text="Heading 2" shortCode={`${modKey} + Shift + 2`} />}
+                tooltip={<BtnTooltip text="Heading 2" shortCode={`${modKey} + 2`} />}
                 delay={500}
               >
                 {(triggerRef) => (
@@ -178,7 +178,7 @@ export function HeadingBlockButton() {
                 )}
               </TooltipProvider>
               <TooltipProvider
-                tooltip={<BtnTooltip text="Heading 3" shortCode={`${modKey} + Shift + 3`} />}
+                tooltip={<BtnTooltip text="Heading 3" shortCode={`${modKey} + 3`} />}
                 delay={500}
               >
                 {(triggerRef) => (
@@ -277,12 +277,7 @@ export function Toolbar() {
               <MarkButton
                 format={MarkType.StrikeThrough}
                 icon={Icons.Strike}
-                tooltip={
-                  <BtnTooltip
-                    text="Strike Through"
-                    shortCode={`${modKey} + ${KeySymbol.Shift} + U`}
-                  />
-                }
+                tooltip={<BtnTooltip text="Strike Through" shortCode={`${modKey} + S`} />}
               />
               <MarkButton
                 format={MarkType.Code}
@@ -311,12 +306,12 @@ export function Toolbar() {
             <BlockButton
               format={BlockType.OrderedList}
               icon={Icons.OrderList}
-              tooltip={<BtnTooltip text="Ordered List" shortCode={`${modKey} + Shift + 7`} />}
+              tooltip={<BtnTooltip text="Ordered List" shortCode={`${modKey} + 7`} />}
             />
             <BlockButton
               format={BlockType.UnorderedList}
               icon={Icons.UnorderList}
-              tooltip={<BtnTooltip text="Unordered List" shortCode={`${modKey} + Shift + 8`} />}
+              tooltip={<BtnTooltip text="Unordered List" shortCode={`${modKey} + 8`} />}
             />
             <HeadingBlockButton />
           </Box>
@@ -335,7 +330,7 @@ export function Toolbar() {
           <Box className={css.MarkdownBtnBox} shrink="No" grow="Yes" justifyContent="End">
             <TooltipProvider
               align="End"
-              tooltip={<BtnTooltip text="Inline Markdown" />}
+              tooltip={<BtnTooltip text="Toggle Markdown" />}
               delay={500}
             >
               {(triggerRef) => (
