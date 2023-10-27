@@ -248,7 +248,7 @@ const HeadingRule: BlockMDRule = {
 };
 
 const CODEBLOCK_MD_1 = '```';
-const CODEBLOCK_REG_1 = /^`{3}(\S*)\n((.+\n)+)`{3}(?!.)\n?/m;
+const CODEBLOCK_REG_1 = /^`{3}(\S*)\n((.+\n)+)`{3} *(?!.)\n?/m;
 const CodeBlockRule: BlockMDRule = {
   match: (text) => text.match(CODEBLOCK_REG_1),
   html: (match) => {
