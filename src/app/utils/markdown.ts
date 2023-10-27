@@ -123,8 +123,7 @@ const CODE_REG_1 = new RegExp(`${URL_NEG_LB}${CODE_PREFIX_1}(.+?)${CODE_PREFIX_1
 const CodeRule: InlineMDRule = {
   match: (text) => text.match(CODE_REG_1),
   html: (parse, match) => {
-    const [txt, , g2] = match;
-    if (txt === '```') return txt;
+    const [, , g2] = match;
     return `<code data-md="${CODE_MD_1}">${g2}</code>`;
   },
 };
@@ -219,9 +218,12 @@ export const parseInlineMD: InlineMDParser = (text: string): string => {
  ****************
  */
 
-export type BlockMDParser = (test: string) => string;
+export type BlockMDParser = (test: string, parseInline?: (txt: string) => string) => string;
 
-export type BlockMatchConverter = (match: MatchResult) => string;
+export type BlockMatchConverter = (
+  match: MatchResult,
+  parseInline?: (txt: string) => string
+) => string;
 
 export type BlockMDRule = {
   match: RuleMatch;
@@ -231,16 +233,17 @@ export type BlockMDRule = {
 export type BlockRuleRunner = (
   parse: BlockMDParser,
   text: string,
-  rule: BlockMDRule
+  rule: BlockMDRule,
+  parseInline?: (txt: string) => string
 ) => string | undefined;
 
 const HEADING_REG_1 = /^(#{1,6}) +(.+)\n?/m;
 const HeadingRule: BlockMDRule = {
   match: (text) => text.match(HEADING_REG_1),
-  html: (match) => {
+  html: (match, parseInline) => {
     const [, g1, g2] = match;
     const level = g1.length;
-    return `<h${level} data-md="${g1}">${g2}</h${level}>`;
+    return `<h${level} data-md="${g1}">${parseInline ? parseInline(g2) : g2}</h${level}>`;
   },
 };
 
@@ -258,42 +261,54 @@ const CodeBlockRule: BlockMDRule = {
 
 const BLOCKQUOTE_MD_1 = '>';
 const QUOTE_LINE_PREFIX = /^> */;
-const BLOCKQUOTE_SUFFIX = /\n$/;
+const BLOCKQUOTE_TRAILING_NEWLINE = /\n$/;
 const BLOCKQUOTE_REG_1 = /(^>.*\n?)+/m;
-const mapBlockQuoteLine = (lineText: string): string =>
-  `${lineText.replace(QUOTE_LINE_PREFIX, '')}<br/>`;
 const BlockQuoteRule: BlockMDRule = {
   match: (text) => text.match(BLOCKQUOTE_REG_1),
-  html: (match) => {
+  html: (match, parseInline) => {
     const [blockquoteText] = match;
+
     const lines = blockquoteText
-      .replace(BLOCKQUOTE_SUFFIX, '')
+      .replace(BLOCKQUOTE_TRAILING_NEWLINE, '')
       .split('\n')
-      .map(mapBlockQuoteLine)
+      .map((lineText) => {
+        const line = lineText.replace(QUOTE_LINE_PREFIX, '');
+        if (parseInline) return `${parseInline(line)}<br/>`;
+        return `${line}<br/>`;
+      })
       .join('');
     return `<blockquote data-md="${BLOCKQUOTE_MD_1}">${lines}</blockquote>`;
   },
 };
 
-const runBlockRule: BlockRuleRunner = (parse, text, rule) => {
+const runBlockRule: BlockRuleRunner = (parse, text, rule, parseInline) => {
   const matchResult = rule.match(text);
   if (matchResult) {
-    const content = rule.html(matchResult);
-    return replaceMatch((txt) => [parse(txt)], text, matchResult, content).join('');
+    const content = rule.html(matchResult, parseInline);
+    return replaceMatch((txt) => [parse(txt, parseInline)], text, matchResult, content).join('');
   }
   return undefined;
 };
 
-export const parseBlockMD = (text: string): string => {
+export const parseBlockMD: BlockMDParser = (text: string, parseInline): string => {
   if (text === '') return text;
   let result: string | undefined;
 
-  if (!result) result = runBlockRule(parseBlockMD, text, CodeBlockRule);
-  if (!result) result = runBlockRule(parseBlockMD, text, BlockQuoteRule);
-  if (!result) result = runBlockRule(parseBlockMD, text, HeadingRule);
+  if (!result) result = runBlockRule(parseBlockMD, text, CodeBlockRule, parseInline);
+  if (!result) result = runBlockRule(parseBlockMD, text, BlockQuoteRule, parseInline);
+  if (!result) result = runBlockRule(parseBlockMD, text, HeadingRule, parseInline);
 
   // replace \n with <br/> because want to preserve empty lines
-  if (!result) result = text.replace(/\n/g, '<br/>');
+  if (!result) {
+    if (parseInline) {
+      result = text
+        .split('\n')
+        .map((lineText) => parseInline(lineText))
+        .join('<br/>');
+    } else {
+      result = text.replace(/\n/g, '<br/>');
+    }
+  }
 
   return result ?? text;
 };

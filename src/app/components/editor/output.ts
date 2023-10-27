@@ -74,18 +74,19 @@ export const toMatrixCustomHTML = (
     if (opts.allowBlockMarkdown && 'type' in n && n.type === BlockType.Paragraph) {
       const line = toMatrixCustomHTML(n, {
         ...opts,
+        allowInlineMarkdown: false,
         allowBlockMarkdown: false,
       })
         .replace(/<br\/>$/, '\n')
         .replace(/^&gt;/, '>');
       markdownLines += line;
       if (index === targetNodes.length - 1) {
-        return parseBlockMD(markdownLines);
+        return parseBlockMD(markdownLines, parseInlineMD);
       }
       return '';
     }
 
-    const parsedMarkdown = parseBlockMD(markdownLines);
+    const parsedMarkdown = parseBlockMD(markdownLines, parseInlineMD);
     markdownLines = '';
     const isCodeLine = 'type' in n && n.type === BlockType.CodeLine;
     if (isCodeLine) return `${parsedMarkdown}${toMatrixCustomHTML(n, {})}`;
