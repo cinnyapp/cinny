@@ -89,6 +89,7 @@ import {
   getReactionContent,
   isMembershipChanged,
   reactionOrEditEvent,
+  trimReplyFromBody,
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -999,7 +1000,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
       if (typeof body !== 'string') return null;
-      const jumboEmoji = JUMBO_EMOJI_REG.test(body);
+      const jumboEmoji = JUMBO_EMOJI_REG.test(trimReplyFromBody(body));
 
       return (
         <Text
