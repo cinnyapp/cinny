@@ -330,7 +330,7 @@ export function Toolbar() {
           <Box className={css.MarkdownBtnBox} shrink="No" grow="Yes" justifyContent="End">
             <TooltipProvider
               align="End"
-              tooltip={<BtnTooltip text="Inline Markdown" />}
+              tooltip={<BtnTooltip text="Toggle Markdown" />}
               delay={500}
             >
               {(triggerRef) => (

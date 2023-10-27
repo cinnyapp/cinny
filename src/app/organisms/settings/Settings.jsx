@@ -152,14 +152,14 @@ function AppearanceSection() {
           content={<Text variant="b3">{`Use ${isMacOS() ? KeySymbol.Command : 'Ctrl'} + ENTER to send message and ENTER for newline.`}</Text>}
         />
         <SettingTile
-          title="Inline Markdown formatting"
+          title="Markdown formatting"
           options={(
             <Toggle
               isActive={isMarkdown}
               onToggle={() => setIsMarkdown(!isMarkdown) }
             />
           )}
-          content={<Text variant="b3">Format messages with inline markdown syntax before sending.</Text>}
+          content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
         />
         <SettingTile
           title="Hide membership events"
