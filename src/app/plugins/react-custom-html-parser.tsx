@@ -177,6 +177,8 @@ export const getReactCustomHtmlParser = (
             if (typeof codeReact === 'string') {
               let lang = props.className;
               if (lang === 'language-rs') lang = 'language-rust';
+              else if (lang === 'language-js') lang = 'language-javascript';
+              else if (lang === 'language-ts') lang = 'language-typescript';
               return (
                 <ErrorBoundary fallback={<code {...props}>{codeReact}</code>}>
                   <Suspense fallback={<code {...props}>{codeReact}</code>}>

@@ -202,7 +202,7 @@ const LeveledRules = [
   LinkRule,
 ];
 
-export const parseInlineMD: InlineMDParser = (text: string): string => {
+export const parseInlineMD: InlineMDParser = (text) => {
   if (text === '') return text;
   let result: string | undefined;
   if (!result) result = runInlineRule(parseInlineMD, text, CodeRule);
@@ -253,9 +253,9 @@ const CodeBlockRule: BlockMDRule = {
   match: (text) => text.match(CODEBLOCK_REG_1),
   html: (match) => {
     const [, g1, g2] = match;
-    return `<pre><code data-md="${CODEBLOCK_MD_1}"${
+    return `<pre data-md="${CODEBLOCK_MD_1}"><code${
       g1 ? ` class="language-${g1}"` : ''
-    }>${g2}</code></pre>`;
+    }>${g2}</code$></pre>`;
   },
 };
 
@@ -281,6 +281,59 @@ const BlockQuoteRule: BlockMDRule = {
   },
 };
 
+const ORDERED_LIST_MD_1 = '-';
+const O_LIST_ITEM_PREFIX = /^(-|[\da-zA-Z]\.) */;
+const O_LIST_START = /^([\d])\./;
+const O_LIST_TYPE = /^([aAiI])\./;
+const O_LIST_TRAILING_NEWLINE = /\n$/;
+const ORDERED_LIST_REG_1 = /(^(-|[\da-zA-Z]\.) +\S+\n?)+/m;
+const OrderedListRule: BlockMDRule = {
+  match: (text) => text.match(ORDERED_LIST_REG_1),
+  html: (match, parseInline) => {
+    const [listText] = match;
+    const [, listStart] = listText.match(O_LIST_START) ?? [];
+    const [, listType] = listText.match(O_LIST_TYPE) ?? [];
+
+    const lines = listText
+      .replace(O_LIST_TRAILING_NEWLINE, '')
+      .split('\n')
+      .map((lineText) => {
+        const line = lineText.replace(O_LIST_ITEM_PREFIX, '');
+        const txt = parseInline ? parseInline(line) : line;
+        return `<li><p>${txt}</p></li>`;
+      })
+      .join('');
+
+    const dataMdAtt = `data-md="${listStart || listType || ORDERED_LIST_MD_1}"`;
+    const startAtt = listStart ? ` start="${listStart}"` : '';
+    const typeAtt = listType ? ` type="${listType}"` : '';
+    return `<ol ${dataMdAtt}${startAtt}${typeAtt}>${lines}</ol>`;
+  },
+};
+
+const UNORDERED_LIST_MD_1 = '*';
+const U_LIST_ITEM_PREFIX = /^\* */;
+const U_LIST_TRAILING_NEWLINE = /\n$/;
+const UNORDERED_LIST_REG_1 = /(^\* +\S+\n?)+/m;
+const UnorderedListRule: BlockMDRule = {
+  match: (text) => text.match(UNORDERED_LIST_REG_1),
+  html: (match, parseInline) => {
+    const [listText] = match;
+
+    const lines = listText
+      .replace(U_LIST_TRAILING_NEWLINE, '')
+      .split('\n')
+      .map((lineText) => {
+        const line = lineText.replace(U_LIST_ITEM_PREFIX, '');
+        const txt = parseInline ? parseInline(line) : line;
+        return `<li><p>${txt}</p></li>`;
+      })
+      .join('');
+
+    return `<ul data-md="${UNORDERED_LIST_MD_1}">${lines}</ul>`;
+  },
+};
+
 const runBlockRule: BlockRuleRunner = (parse, text, rule, parseInline) => {
   const matchResult = rule.match(text);
   if (matchResult) {
@@ -290,12 +343,14 @@ const runBlockRule: BlockRuleRunner = (parse, text, rule, parseInline) => {
   return undefined;
 };
 
-export const parseBlockMD: BlockMDParser = (text: string, parseInline): string => {
+export const parseBlockMD: BlockMDParser = (text, parseInline) => {
   if (text === '') return text;
   let result: string | undefined;
 
   if (!result) result = runBlockRule(parseBlockMD, text, CodeBlockRule, parseInline);
   if (!result) result = runBlockRule(parseBlockMD, text, BlockQuoteRule, parseInline);
+  if (!result) result = runBlockRule(parseBlockMD, text, OrderedListRule, parseInline);
+  if (!result) result = runBlockRule(parseBlockMD, text, UnorderedListRule, parseInline);
   if (!result) result = runBlockRule(parseBlockMD, text, HeadingRule, parseInline);
 
   // replace \n with <br/> because want to preserve empty lines
