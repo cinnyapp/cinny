@@ -1,4 +1,5 @@
-export const HTTP_URL_PATTERN = `https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)`;
+// Note: last char with [.?()] will not be pick
+export const HTTP_URL_PATTERN = `https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)(?:[-a-zA-Z0-9@:%_\\+~#&\\/=])`;
 
 export const URL_NEG_LB = '(?<!(https?|ftp|mailto|magnet):\\/\\/\\S*)';
 

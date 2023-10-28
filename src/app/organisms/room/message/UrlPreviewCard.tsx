@@ -13,8 +13,6 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
     if (previewStatus.status === AsyncStatus.Idle) loadPreview();
     if (previewStatus.status === AsyncStatus.Error) return null;
 
-    console.log(previewStatus.data);
-
     return (
       <Box
         style={{
