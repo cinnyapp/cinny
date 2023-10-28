@@ -1,3 +1,5 @@
+export const HTTP_URL_PATTERN = `https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)`;
+
 export const URL_NEG_LB = '(?<!(https?|ftp|mailto|magnet):\\/\\/\\S*)';
 
 // https://en.wikipedia.org/wiki/Variation_Selectors_(Unicode_block)

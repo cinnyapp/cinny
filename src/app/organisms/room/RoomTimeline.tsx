@@ -138,13 +138,15 @@ import initMatrix from '../../../client/initMatrix';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import cons from '../../../client/state/cons';
 import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
-import { EMOJI_PATTERN, VARIATION_SELECTOR_PATTERN } from '../../utils/regex';
+import { EMOJI_PATTERN, HTTP_URL_PATTERN, VARIATION_SELECTOR_PATTERN } from '../../utils/regex';
+import { UrlPreviewCard } from './message/UrlPreviewCard';
 
 // Thumbs up emoji found to have Variation Selector 16 at the end
 // so included variation selector pattern in regex
 const JUMBO_EMOJI_REG = new RegExp(
   `^(((${EMOJI_PATTERN})|(:.+?:))(${VARIATION_SELECTOR_PATTERN}|\\s)*){1,10}$`
 );
+const URL_REG = new RegExp(HTTP_URL_PATTERN, 'g');
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -1000,22 +1002,38 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
       if (typeof body !== 'string') return null;
-      const jumboEmoji = JUMBO_EMOJI_REG.test(trimReplyFromBody(body));
+      const trimmedBody = trimReplyFromBody(body);
+      const jumboEmoji = JUMBO_EMOJI_REG.test(trimmedBody);
+      const urlsMatch = trimmedBody.match(URL_REG);
+      const urls = urlsMatch ? [...new Set(urlsMatch)] : [];
 
       return (
-        <Text
-          as="div"
-          style={{
-            whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
-            wordBreak: 'break-word',
-            fontSize: jumboEmoji ? '1.504em' : undefined,
-            lineHeight: jumboEmoji ? '1.4962em' : undefined,
-          }}
-          priority="400"
-        >
-          {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
-          {!!editedEvent && <MessageEditedContent />}
-        </Text>
+        <>
+          <Text
+            as="div"
+            style={{
+              whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
+              wordBreak: 'break-word',
+              fontSize: jumboEmoji ? '1.504em' : undefined,
+              lineHeight: jumboEmoji ? '1.4962em' : undefined,
+            }}
+            priority="400"
+          >
+            {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
+            {!!editedEvent && <MessageEditedContent />}
+          </Text>
+          {urls.length > 0 && (
+            <Box style={{ marginTop: config.space.S200 }}>
+              <Scroll direction="Horizontal" size="0" visibility="Hover" hideTrack>
+                <Box shrink="No" direction="Row" gap="200">
+                  {urls.map((url) => (
+                    <UrlPreviewCard url={url} ts={mEvent.getTs()} />
+                  ))}
+                </Box>
+              </Scroll>
+            </Box>
+          )}
+        </>
       );
     },
     renderEmote: (mEventId, mEvent, timelineSet) => {
