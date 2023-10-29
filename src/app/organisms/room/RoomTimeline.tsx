@@ -465,6 +465,7 @@ const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
 
 export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimelineProps) {
   const mx = useMatrixClient();
+  const encryptedRoom = mx.isRoomEncrypted(room.roomId);
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
@@ -1005,7 +1006,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = urlPreview && trimmedBody.match(URL_REG);
+      const urlsMatch = urlPreview && !encryptedRoom ? trimmedBody.match(URL_REG) : undefined;
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
@@ -1038,7 +1039,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = urlPreview && trimmedBody.match(URL_REG);
+      const urlsMatch = urlPreview && !encryptedRoom ? trimmedBody.match(URL_REG) : undefined;
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
@@ -1069,7 +1070,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = urlPreview && trimmedBody.match(URL_REG);
+      const urlsMatch = urlPreview && !encryptedRoom ? trimmedBody.match(URL_REG) : undefined;
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
