@@ -28,7 +28,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
     if (previewStatus.status === AsyncStatus.Error) return null;
 
     const renderContent = (prev: IPreviewUrlResponse) => {
-      const imgUrl = mx.mxcUrlToHttp(prev['og:image'] || '', 96, 96, 'scale', false);
+      const imgUrl = mx.mxcUrlToHttp(prev['og:image'] || '', 256, 256, 'scale', false);
 
       return (
         <>
