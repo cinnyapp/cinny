@@ -69,7 +69,7 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
   }
 };
 
-const HTML_TAG_REG = /<([\w-]+)(?:[^/>]*)(?:(?:\/>)|(?:>.*?<\/\1>))/;
+const HTML_TAG_REG = /<([\w-]+)(?: [^>]*)?(?:(?:\/>)|(?:>.*?<\/\1>))/;
 const ignoreHTMLParseInlineMD = (text: string): string => {
   if (text === '') return text;
   const match = text.match(HTML_TAG_REG);
