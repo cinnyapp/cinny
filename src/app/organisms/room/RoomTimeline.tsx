@@ -470,6 +470,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
+  const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
   const { canDoAction, canSendEvent, getPowerLevel } = usePowerLevelsAPI();
@@ -1004,7 +1005,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = trimmedBody.match(URL_REG);
+      const urlsMatch = urlPreview && trimmedBody.match(URL_REG);
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
@@ -1037,7 +1038,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = trimmedBody.match(URL_REG);
+      const urlsMatch = urlPreview && trimmedBody.match(URL_REG);
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
@@ -1068,7 +1069,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = trimmedBody.match(URL_REG);
+      const urlsMatch = urlPreview && trimmedBody.match(URL_REG);
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
