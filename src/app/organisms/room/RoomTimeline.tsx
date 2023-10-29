@@ -1005,7 +1005,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const trimmedBody = trimReplyFromBody(body);
       const jumboEmoji = JUMBO_EMOJI_REG.test(trimmedBody);
       const urlsMatch = trimmedBody.match(URL_REG);
-      const urls = urlsMatch ? [...new Set(urlsMatch)] : [];
+      const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
         <>
@@ -1022,12 +1022,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
             {!!editedEvent && <MessageEditedContent />}
           </Text>
-          {urls.length > 0 && (
-            <Box style={{ marginTop: config.space.S200 }}>
+          {urls && urls.length > 0 && (
+            <Box direction="Column" style={{ marginTop: config.space.S200 }}>
               <Scroll direction="Horizontal" size="0" visibility="Hover" hideTrack>
-                <Box shrink="No" direction="Row" gap="200">
+                <Box shrink="No" gap="200">
                   {urls.map((url) => (
-                    <UrlPreviewCard url={url} ts={mEvent.getTs()} />
+                    <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
                   ))}
                 </Box>
               </Scroll>
