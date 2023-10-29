@@ -139,7 +139,7 @@ import { useKeyDown } from '../../hooks/useKeyDown';
 import cons from '../../../client/state/cons';
 import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
 import { EMOJI_PATTERN, HTTP_URL_PATTERN, VARIATION_SELECTOR_PATTERN } from '../../utils/regex';
-import { UrlPreviewCard } from './message/UrlPreviewCard';
+import { UrlPreviewCard, UrlPreviewHolder } from './message/UrlPreviewCard';
 
 // Thumbs up emoji found to have Variation Selector 16 at the end
 // so included variation selector pattern in regex
@@ -1019,19 +1019,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             }}
             priority="400"
           >
-            {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
+            {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
             {!!editedEvent && <MessageEditedContent />}
           </Text>
           {urls && urls.length > 0 && (
-            <Box direction="Column" style={{ marginTop: config.space.S200 }}>
-              <Scroll direction="Horizontal" size="0" visibility="Hover" hideTrack>
-                <Box shrink="No" gap="200">
-                  {urls.map((url) => (
-                    <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
-                  ))}
-                </Box>
-              </Scroll>
-            </Box>
+            <UrlPreviewHolder>
+              {urls.map((url) => (
+                <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
+              ))}
+            </UrlPreviewHolder>
           )}
         </>
       );
@@ -1067,18 +1063,31 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
       if (typeof body !== 'string') return null;
+      const trimmedBody = trimReplyFromBody(body);
+
+      const urlsMatch = trimmedBody.match(URL_REG);
+      const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
       return (
-        <Text
-          as="div"
-          style={{
-            whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
-            wordBreak: 'break-word',
-          }}
-          priority="300"
-        >
-          {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
-          {!!editedEvent && <MessageEditedContent />}
-        </Text>
+        <>
+          <Text
+            as="div"
+            style={{
+              whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+            priority="300"
+          >
+            {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
+            {!!editedEvent && <MessageEditedContent />}
+          </Text>
+          {urls && urls.length > 0 && (
+            <UrlPreviewHolder>
+              {urls.map((url) => (
+                <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
+              ))}
+            </UrlPreviewHolder>
+          )}
+        </>
       );
     },
     renderImage: (mEventId, mEvent) => {
