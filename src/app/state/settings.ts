@@ -19,6 +19,8 @@ export interface Settings {
   hideMembershipEvents: boolean;
   hideNickAvatarEvents: boolean;
   mediaAutoLoad: boolean;
+  urlPreview: boolean;
+  encUrlPreview: boolean;
   showHiddenEvents: boolean;
 
   showNotifications: boolean;
@@ -40,6 +42,8 @@ const defaultSettings: Settings = {
   hideMembershipEvents: false,
   hideNickAvatarEvents: true,
   mediaAutoLoad: true,
+  urlPreview: true,
+  encUrlPreview: false,
   showHiddenEvents: false,
 
   showNotifications: true,
