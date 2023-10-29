@@ -7,7 +7,7 @@
     <a href="https://fosstodon.org/@cinnyapp">
         <img alt="Follow on Mastodon" src="https://img.shields.io/mastodon/follow/106845779685925461?domain=https%3A%2F%2Ffosstodon.org&logo=mastodon&style=social"></a>
     <a href="https://twitter.com/intent/follow?screen_name=cinnyapp">
-        <img alt="Follow on Twitter" src="https://img.shields.io/twitter/follow/cinnyapp?logo=twitter&style=social"></a>
+        <img alt="Follow on Twitter" src="https://img.shields.io/twitter/follow/cinnyapp?logo=x&style=social"></a>
     <a href="https://cinny.in/#sponsor">
         <img alt="Sponsor Cinny" src="https://img.shields.io/opencollective/all/cinny?logo=opencollective&style=social"></a>
 </p>
