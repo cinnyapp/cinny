@@ -1,4 +1,4 @@
-export const HTTP_URL_PATTERN = `https?:\\/\\/(?:www\\.)?(?:\\S*)(?<![.,!?()[\\]\\s]+)`;
+export const HTTP_URL_PATTERN = `https?:\\/\\/(?:www\\.)?(?:[^\\s)]*)(?<![.,:;!/?()[\\]\\s]+)`;
 
 export const URL_NEG_LB = '(?<!(https?|ftp|mailto|magnet):\\/\\/\\S*)';
 
