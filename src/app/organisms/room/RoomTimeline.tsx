@@ -74,6 +74,7 @@ import {
   Time,
   MessageBadEncryptedContent,
   MessageNotDecryptedContent,
+  MessageTextBody,
 } from '../../components/message';
 import {
   emojifyAndLinkify,
@@ -1003,25 +1004,18 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const jumboEmoji = JUMBO_EMOJI_REG.test(trimmedBody);
       const urlsMatch = trimmedBody.match(URL_REG);
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
         <>
-          <Text
-            as="div"
-            style={{
-              whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
-              wordBreak: 'break-word',
-              fontSize: jumboEmoji ? '1.504em' : undefined,
-              lineHeight: jumboEmoji ? '1.4962em' : undefined,
-            }}
-            priority="400"
+          <MessageTextBody
+            preWrap={typeof customBody !== 'string'}
+            jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
           >
             {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
             {!!editedEvent && <MessageEditedContent />}
-          </Text>
+          </MessageTextBody>
           {urls && urls.length > 0 && (
             <UrlPreviewHolder>
               {urls.map((url) => (
@@ -1040,21 +1034,31 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       const senderDisplayName =
         getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+
+      if (typeof body !== 'string') return null;
+      const trimmedBody = trimReplyFromBody(body);
+      const urlsMatch = trimmedBody.match(URL_REG);
+      const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+
       return (
-        <Text
-          as="div"
-          style={{
-            color: color.Success.Main,
-            fontStyle: 'italic',
-            whiteSpace: customBody ? 'initial' : 'pre-wrap',
-            wordBreak: 'break-word',
-          }}
-          priority="400"
-        >
-          <b>{`${senderDisplayName} `}</b>
-          {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
-          {!!editedEvent && <MessageEditedContent />}
-        </Text>
+        <>
+          <MessageTextBody
+            emote
+            preWrap={typeof customBody !== 'string'}
+            jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+          >
+            <b>{`${senderDisplayName} `}</b>
+            {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
+            {!!editedEvent && <MessageEditedContent />}
+          </MessageTextBody>
+          {urls && urls.length > 0 && (
+            <UrlPreviewHolder>
+              {urls.map((url) => (
+                <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
+              ))}
+            </UrlPreviewHolder>
+          )}
+        </>
       );
     },
     renderNotice: (mEventId, mEvent, timelineSet) => {
@@ -1064,22 +1068,19 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-
       const urlsMatch = trimmedBody.match(URL_REG);
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+
       return (
         <>
-          <Text
-            as="div"
-            style={{
-              whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-            priority="300"
+          <MessageTextBody
+            notice
+            preWrap={typeof customBody !== 'string'}
+            jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
           >
             {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
             {!!editedEvent && <MessageEditedContent />}
-          </Text>
+          </MessageTextBody>
           {urls && urls.length > 0 && (
             <UrlPreviewHolder>
               {urls.map((url) => (
