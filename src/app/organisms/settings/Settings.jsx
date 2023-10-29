@@ -60,6 +60,7 @@ function AppearanceSection() {
   const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad, setMediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
+  const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const spacings = ['0', '100', '200', '300', '400', '500']
 
@@ -200,7 +201,17 @@ function AppearanceSection() {
               onToggle={() => setUrlPreview(!urlPreview)}
             />
           )}
-          content={<Text variant="b3">Show url previews for links in message.</Text>}
+          content={<Text variant="b3">Show url preview for link in messages.</Text>}
+        />
+        <SettingTile
+          title="Url Preview in Encrypted Room"
+          options={(
+            <Toggle
+              isActive={encUrlPreview}
+              onToggle={() => setEncUrlPreview(!encUrlPreview)}
+            />
+          )}
+          content={<Text variant="b3">Show url preview for link in encrypted messages.</Text>}
         />
         <SettingTile
           title="Show hidden events"

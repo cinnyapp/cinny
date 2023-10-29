@@ -472,6 +472,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
+  const [encUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
+  const showUrlPreview = encryptedRoom ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
   const { canDoAction, canSendEvent, getPowerLevel } = usePowerLevelsAPI();
@@ -1006,7 +1008,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = urlPreview && !encryptedRoom ? trimmedBody.match(URL_REG) : undefined;
+      const urlsMatch = showUrlPreview && trimmedBody.match(URL_REG);
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
@@ -1039,7 +1041,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = urlPreview && !encryptedRoom ? trimmedBody.match(URL_REG) : undefined;
+      const urlsMatch = showUrlPreview && trimmedBody.match(URL_REG);
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
@@ -1070,7 +1072,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       if (typeof body !== 'string') return null;
       const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = urlPreview && !encryptedRoom ? trimmedBody.match(URL_REG) : undefined;
+      const urlsMatch = showUrlPreview && trimmedBody.match(URL_REG);
       const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
