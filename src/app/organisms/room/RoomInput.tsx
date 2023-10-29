@@ -245,7 +245,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       let customHtml = trimCustomHtml(
         toMatrixCustomHTML(editor.children, {
           allowTextFormatting: true,
-          allowMarkdown: isMarkdown,
+          allowBlockMarkdown: isMarkdown,
+          allowInlineMarkdown: isMarkdown,
         })
       );
       let msgType = MsgType.Text;

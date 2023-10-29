@@ -77,7 +77,8 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         const customHtml = trimCustomHtml(
           toMatrixCustomHTML(editor.children, {
             allowTextFormatting: true,
-            allowMarkdown: isMarkdown,
+            allowBlockMarkdown: isMarkdown,
+            allowInlineMarkdown: isMarkdown,
           })
         );
 

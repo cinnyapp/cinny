@@ -24,12 +24,12 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 
 function SystemEmojiFeature() {
-  const [systemEmoji] = useSetting(settingsAtom, 'useSystemEmoji');
+  const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
 
-  if (systemEmoji) {
-    document.documentElement.style.setProperty('--font-emoji', 'Twemoji_DISABLED');
-  } else {
+  if (twitterEmoji) {
     document.documentElement.style.setProperty('--font-emoji', 'Twemoji');
+  } else {
+    document.documentElement.style.setProperty('--font-emoji', 'Twemoji_DISABLED');
   }
 
   return null;

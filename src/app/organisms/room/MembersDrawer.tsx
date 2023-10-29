@@ -271,7 +271,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
         <Box grow="Yes" alignItems="Center" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H5" truncate>
-              {`${millify(room.getJoinedMemberCount(), { precision: 1 })} Members`}
+              {`${millify(room.getJoinedMemberCount(), { precision: 1, locales: [] })} Members`}
             </Text>
           </Box>
           <Box shrink="No" alignItems="Center">
