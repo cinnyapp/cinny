@@ -90,13 +90,13 @@ export const useMemberEventParser = (): MemberEventParser => {
               senderId === userId ? (
                 <>
                   <b>{userName}</b>
-                  {' reject the invitation '}
+                  {' rejected the invitation '}
                   {content.reason}
                 </>
               ) : (
                 <>
                   <b>{senderName}</b>
-                  {' reject '}
+                  {' rejected '}
                   <b>{userName}</b>
                   {`'s join request `}
                   {content.reason}
