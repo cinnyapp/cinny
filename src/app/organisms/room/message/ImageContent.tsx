@@ -98,7 +98,13 @@ export const ImageContent = as<'div', ImageContentProps>(
           </Overlay>
         )}
         {typeof blurHash === 'string' && !load && (
-          <BlurhashCanvas style={{ width: '100%', height: '100%' }} hash={blurHash} punch={1} />
+          <BlurhashCanvas
+            style={{ width: '100%', height: '100%' }}
+            width={32}
+            height={32}
+            hash={blurHash}
+            punch={1}
+          />
         )}
         {!autoPlay && srcState.status === AsyncStatus.Idle && (
           <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">

@@ -18,11 +18,11 @@ import { getMxIdLocalPart, getRoomWithCanonicalAlias } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
 import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
-import { replaceMatch } from '../utils/markdown';
+import { findAndReplace } from '../utils/findAndReplace';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
-const EMOJI_REG = new RegExp(`${URL_NEG_LB}(${EMOJI_PATTERN})`);
+const EMOJI_REG_G = new RegExp(`${URL_NEG_LB}(${EMOJI_PATTERN})`, 'g');
 
 export const LINKIFY_OPTS: LinkifyOpts = {
   attributes: {
@@ -35,26 +35,22 @@ export const LINKIFY_OPTS: LinkifyOpts = {
   ignoreTags: ['span'],
 };
 
-const stringToEmojifyJSX = (text: string): (string | JSX.Element)[] => {
-  const match = text.match(EMOJI_REG);
-  if (!match) return [text];
-
-  const [emoji] = match;
-
-  return replaceMatch(
-    stringToEmojifyJSX,
+const textToEmojifyJSX = (text: string): (string | JSX.Element)[] =>
+  findAndReplace(
     text,
-    match,
-    <span className={css.EmoticonBase}>
-      <span className={css.Emoticon()} title={getShortcodeFor(getHexcodeForEmoji(emoji))}>
-        {emoji}
+    EMOJI_REG_G,
+    (match, pushIndex) => (
+      <span key={pushIndex} className={css.EmoticonBase}>
+        <span className={css.Emoticon()} title={getShortcodeFor(getHexcodeForEmoji(match[0]))}>
+          {match[0]}
+        </span>
       </span>
-    </span>
+    ),
+    (txt) => txt
   );
-};
 
 export const emojifyAndLinkify = (text: string, linkify?: boolean) => {
-  const emojifyJSX = stringToEmojifyJSX(text);
+  const emojifyJSX = textToEmojifyJSX(text);
 
   if (linkify) {
     return <Linkify options={LINKIFY_OPTS}>{emojifyJSX}</Linkify>;

@@ -88,7 +88,13 @@ export const VideoContent = as<'div', VideoContentProps>(
     return (
       <Box className={classNames(css.RelativeBase, className)} {...props} ref={ref}>
         {typeof blurHash === 'string' && !load && (
-          <BlurhashCanvas style={{ width: '100%', height: '100%' }} hash={blurHash} punch={1} />
+          <BlurhashCanvas
+            style={{ width: '100%', height: '100%' }}
+            width={32}
+            height={32}
+            hash={blurHash}
+            punch={1}
+          />
         )}
         {thumbSrcState.status === AsyncStatus.Success && !load && (
           <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
