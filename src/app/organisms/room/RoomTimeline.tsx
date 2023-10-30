@@ -74,6 +74,7 @@ import {
   Time,
   MessageBadEncryptedContent,
   MessageNotDecryptedContent,
+  MessageTextBody,
 } from '../../components/message';
 import {
   emojifyAndLinkify,
@@ -138,13 +139,15 @@ import initMatrix from '../../../client/initMatrix';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import cons from '../../../client/state/cons';
 import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
-import { EMOJI_PATTERN, VARIATION_SELECTOR_PATTERN } from '../../utils/regex';
+import { EMOJI_PATTERN, HTTP_URL_PATTERN, VARIATION_SELECTOR_PATTERN } from '../../utils/regex';
+import { UrlPreviewCard, UrlPreviewHolder } from './message/UrlPreviewCard';
 
 // Thumbs up emoji found to have Variation Selector 16 at the end
 // so included variation selector pattern in regex
 const JUMBO_EMOJI_REG = new RegExp(
   `^(((${EMOJI_PATTERN})|(:.+?:))(${VARIATION_SELECTOR_PATTERN}|\\s)*){1,10}$`
 );
+const URL_REG = new RegExp(HTTP_URL_PATTERN, 'g');
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -342,7 +345,6 @@ const useTimelinePagination = (
 
     return async (backwards: boolean) => {
       if (fetching) return;
-      const targetTimeline = timelineRef.current;
       const { linkedTimelines: lTimelines } = timelineRef.current;
       const timelinesEventsCount = lTimelines.map(timelineToEventsCount);
 
@@ -382,7 +384,6 @@ const useTimelinePagination = (
       }
 
       fetching = false;
-      if (targetTimeline !== timelineRef.current) return;
       if (alive()) {
         recalibratePagination(lTimelines, timelinesEventsCount, backwards);
       }
@@ -462,11 +463,15 @@ const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
 
 export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimelineProps) {
   const mx = useMatrixClient();
+  const encryptedRoom = mx.isRoomEncrypted(room.roomId);
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
+  const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
+  const [encUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
+  const showUrlPreview = encryptedRoom ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
   const { canDoAction, canSendEvent, getPowerLevel } = usePowerLevelsAPI();
@@ -1000,22 +1005,27 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
       if (typeof body !== 'string') return null;
-      const jumboEmoji = JUMBO_EMOJI_REG.test(trimReplyFromBody(body));
+      const trimmedBody = trimReplyFromBody(body);
+      const urlsMatch = showUrlPreview && trimmedBody.match(URL_REG);
+      const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
       return (
-        <Text
-          as="div"
-          style={{
-            whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
-            wordBreak: 'break-word',
-            fontSize: jumboEmoji ? '1.504em' : undefined,
-            lineHeight: jumboEmoji ? '1.4962em' : undefined,
-          }}
-          priority="400"
-        >
-          {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
-          {!!editedEvent && <MessageEditedContent />}
-        </Text>
+        <>
+          <MessageTextBody
+            preWrap={typeof customBody !== 'string'}
+            jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+          >
+            {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
+            {!!editedEvent && <MessageEditedContent />}
+          </MessageTextBody>
+          {urls && urls.length > 0 && (
+            <UrlPreviewHolder>
+              {urls.map((url) => (
+                <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
+              ))}
+            </UrlPreviewHolder>
+          )}
+        </>
       );
     },
     renderEmote: (mEventId, mEvent, timelineSet) => {
@@ -1026,21 +1036,31 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       const senderDisplayName =
         getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+
+      if (typeof body !== 'string') return null;
+      const trimmedBody = trimReplyFromBody(body);
+      const urlsMatch = showUrlPreview && trimmedBody.match(URL_REG);
+      const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+
       return (
-        <Text
-          as="div"
-          style={{
-            color: color.Success.Main,
-            fontStyle: 'italic',
-            whiteSpace: customBody ? 'initial' : 'pre-wrap',
-            wordBreak: 'break-word',
-          }}
-          priority="400"
-        >
-          <b>{`${senderDisplayName} `}</b>
-          {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
-          {!!editedEvent && <MessageEditedContent />}
-        </Text>
+        <>
+          <MessageTextBody
+            emote
+            preWrap={typeof customBody !== 'string'}
+            jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+          >
+            <b>{`${senderDisplayName} `}</b>
+            {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
+            {!!editedEvent && <MessageEditedContent />}
+          </MessageTextBody>
+          {urls && urls.length > 0 && (
+            <UrlPreviewHolder>
+              {urls.map((url) => (
+                <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
+              ))}
+            </UrlPreviewHolder>
+          )}
+        </>
       );
     },
     renderNotice: (mEventId, mEvent, timelineSet) => {
@@ -1049,18 +1069,28 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
 
       if (typeof body !== 'string') return null;
+      const trimmedBody = trimReplyFromBody(body);
+      const urlsMatch = showUrlPreview && trimmedBody.match(URL_REG);
+      const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+
       return (
-        <Text
-          as="div"
-          style={{
-            whiteSpace: typeof customBody === 'string' ? 'initial' : 'pre-wrap',
-            wordBreak: 'break-word',
-          }}
-          priority="300"
-        >
-          {renderBody(body, typeof customBody === 'string' ? customBody : undefined)}
-          {!!editedEvent && <MessageEditedContent />}
-        </Text>
+        <>
+          <MessageTextBody
+            notice
+            preWrap={typeof customBody !== 'string'}
+            jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+          >
+            {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
+            {!!editedEvent && <MessageEditedContent />}
+          </MessageTextBody>
+          {urls && urls.length > 0 && (
+            <UrlPreviewHolder>
+              {urls.map((url) => (
+                <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
+              ))}
+            </UrlPreviewHolder>
+          )}
+        </>
       );
     },
     renderImage: (mEventId, mEvent) => {

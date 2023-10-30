@@ -153,3 +153,30 @@ export const Username = style({
     },
   },
 });
+
+export const MessageTextBody = recipe({
+  base: {
+    wordBreak: 'break-word',
+  },
+  variants: {
+    preWrap: {
+      true: {
+        whiteSpace: 'pre-wrap',
+      },
+    },
+    jumboEmoji: {
+      true: {
+        fontSize: '1.504em',
+        lineHeight: '1.4962em',
+      },
+    },
+    emote: {
+      true: {
+        color: color.Success.Main,
+        fontStyle: 'italic',
+      },
+    },
+  },
+});
+
+export type MessageTextBodyVariants = RecipeVariants<typeof MessageTextBody>;
