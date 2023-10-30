@@ -248,7 +248,7 @@ const HeadingRule: BlockMDRule = {
 };
 
 const CODEBLOCK_MD_1 = '```';
-const CODEBLOCK_REG_1 = /^`{3}(\S*)\n((.+\n)+)`{3} *(?!.)\n?/m;
+const CODEBLOCK_REG_1 = /^`{3}(\S*)\n((?:.*\n)+?)`{3} *(?!.)\n?/m;
 const CodeBlockRule: BlockMDRule = {
   match: (text) => text.match(CODEBLOCK_REG_1),
   html: (match) => {
@@ -285,7 +285,7 @@ const O_LIST_ITEM_PREFIX = /^(-|[\da-zA-Z]\.) */;
 const O_LIST_START = /^([\d])\./;
 const O_LIST_TYPE = /^([aAiI])\./;
 const O_LIST_TRAILING_NEWLINE = /\n$/;
-const ORDERED_LIST_REG_1 = /(^(-|[\da-zA-Z]\.) +.+\n?)+/m;
+const ORDERED_LIST_REG_1 = /(^(?:-|[\da-zA-Z]\.) +.+\n?)+/m;
 const OrderedListRule: BlockMDRule = {
   match: (text) => text.match(ORDERED_LIST_REG_1),
   html: (match, parseInline) => {
