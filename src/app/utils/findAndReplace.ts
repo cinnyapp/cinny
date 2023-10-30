@@ -1,28 +1,25 @@
-export const findAndReplace = <P, Q>(
+export type ReplaceCallback<R> = (match: RegExpExecArray, pushIndex: number) => R;
+export type ConvertPartCallback<R> = (text: string, pushIndex: number) => R;
+
+export const findAndReplace = <ReplaceReturnType, ConvertReturnType>(
   text: string,
   regex: RegExp,
-  replace: (match: RegExpExecArray, pushIndex: number) => P | P[],
-  convertPart: (txt: string, pushIndex: number) => Q | Q[]
-): Array<P | Q> => {
-  const result: Array<P | Q> = [];
+  replace: ReplaceCallback<ReplaceReturnType>,
+  convertPart: ConvertPartCallback<ConvertReturnType>
+): Array<ReplaceReturnType | ConvertReturnType> => {
+  const result: Array<ReplaceReturnType | ConvertReturnType> = [];
   let lastEnd = 0;
 
   let match: RegExpExecArray | null = regex.exec(text);
   while (match !== null) {
-    const prevResult = convertPart(text.slice(lastEnd, match.index), result.length);
-    if (Array.isArray(prevResult)) result.push(...prevResult);
-    else result.push(prevResult);
-    const replaceResult = replace(match, result.length);
-    if (Array.isArray(replaceResult)) result.push(...replaceResult);
-    else result.push(replaceResult);
+    result.push(convertPart(text.slice(lastEnd, match.index), result.length));
+    result.push(replace(match, result.length));
 
     lastEnd = regex.lastIndex;
     match = regex.exec(text);
   }
 
-  const remainingResult = convertPart(text.slice(lastEnd), result.length);
-  if (Array.isArray(remainingResult)) result.push(...remainingResult);
-  else result.push(remainingResult);
+  result.push(convertPart(text.slice(lastEnd), result.length));
 
   return result;
 };
