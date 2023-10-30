@@ -3,7 +3,7 @@ import { Descendant, Text } from 'slate';
 import { sanitizeText } from '../../utils/sanitize';
 import { BlockType } from './types';
 import { CustomElement } from './slate';
-import { parseBlockMD, parseInlineMD } from '../../utils/markdown';
+import { parseBlockMD, parseInlineMD } from '../../plugins/markdown';
 import { findAndReplace } from '../../utils/findAndReplace';
 
 export type OutputOptions = {
