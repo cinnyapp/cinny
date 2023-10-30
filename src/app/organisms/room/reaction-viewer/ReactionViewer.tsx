@@ -41,7 +41,12 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
       relations,
       useCallback((rel) => [...(rel.getSortedAnnotationsByKey() ?? [])], [])
     );
-    const [selectedKey, setSelectedKey] = useState<string>(initialKey ?? reactions[0][0]);
+
+    const [selectedKey, setSelectedKey] = useState<string>(() => {
+      if (initialKey) return initialKey;
+      const defaultReaction = reactions.find((reaction) => typeof reaction[0] === 'string');
+      return defaultReaction ? defaultReaction[0] : '';
+    });
 
     const getName = (member: RoomMember) =>
       getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
@@ -68,16 +73,19 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
         <Box shrink="No" className={css.Sidebar}>
           <Scroll visibility="Hover" hideTrack size="300">
             <Box className={css.SidebarContent} direction="Column" gap="200">
-              {reactions.map(([key, evts]) => (
-                <Reaction
-                  key={key}
-                  mx={mx}
-                  reaction={key}
-                  count={evts.size}
-                  aria-selected={key === selectedKey}
-                  onClick={() => setSelectedKey(key)}
-                />
-              ))}
+              {reactions.map(([key, evts]) => {
+                if (typeof key !== 'string') return null;
+                return (
+                  <Reaction
+                    key={key}
+                    mx={mx}
+                    reaction={key}
+                    count={evts.size}
+                    aria-selected={key === selectedKey}
+                    onClick={() => setSelectedKey(key)}
+                  />
+                );
+              })}
             </Box>
           </Scroll>
         </Box>

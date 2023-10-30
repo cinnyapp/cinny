@@ -43,7 +43,6 @@ export const Reactions = as<'div', ReactionsProps>(
       evt.stopPropagation();
       evt.preventDefault();
       const key = evt.currentTarget.getAttribute('data-reaction-key');
-      console.log(key);
       if (!key) setViewer(true);
       else setViewer(key);
     };
@@ -58,7 +57,7 @@ export const Reactions = as<'div', ReactionsProps>(
       >
         {reactions.map(([key, events]) => {
           const rEvents = Array.from(events);
-          if (rEvents.length === 0) return null;
+          if (rEvents.length === 0 || typeof key !== 'string') return null;
           const myREvent = myUserId ? rEvents.find(factoryEventSentBy(myUserId)) : undefined;
           const isPressed = !!myREvent?.getRelation();
 
