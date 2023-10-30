@@ -18,7 +18,7 @@ import { getMxIdLocalPart, getRoomWithCanonicalAlias } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
 import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
-import { findAndReplace } from '../utils/markdown';
+import { findAndReplace } from '../utils/findAndReplace';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 

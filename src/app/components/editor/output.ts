@@ -3,7 +3,8 @@ import { Descendant, Text } from 'slate';
 import { sanitizeText } from '../../utils/sanitize';
 import { BlockType } from './types';
 import { CustomElement } from './slate';
-import { parseBlockMD, parseInlineMD, replaceMatch } from '../../utils/markdown';
+import { parseBlockMD, parseInlineMD } from '../../utils/markdown';
+import { findAndReplace } from '../../utils/findAndReplace';
 
 export type OutputOptions = {
   allowTextFormatting?: boolean;
@@ -69,14 +70,14 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
   }
 };
 
-const HTML_TAG_REG = /<([\w-]+)(?: [^>]*)?(?:(?:\/>)|(?:>.*?<\/\1>))/;
-const ignoreHTMLParseInlineMD = (text: string): string => {
-  if (text === '') return text;
-  const match = text.match(HTML_TAG_REG);
-  if (!match) return parseInlineMD(text);
-  const [matchedTxt] = match;
-  return replaceMatch((txt) => [ignoreHTMLParseInlineMD(txt)], text, match, matchedTxt).join('');
-};
+const HTML_TAG_REG_G = /<([\w-]+)(?: [^>]*)?(?:(?:\/>)|(?:>.*?<\/\1>))/g;
+const ignoreHTMLParseInlineMD = (text: string): string =>
+  findAndReplace(
+    text,
+    HTML_TAG_REG_G,
+    (match) => match[0],
+    (txt) => parseInlineMD(txt)
+  ).join('');
 
 export const toMatrixCustomHTML = (
   node: Descendant | Descendant[],
