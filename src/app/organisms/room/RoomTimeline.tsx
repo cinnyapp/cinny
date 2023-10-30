@@ -345,7 +345,6 @@ const useTimelinePagination = (
 
     return async (backwards: boolean) => {
       if (fetching) return;
-      const targetTimeline = timelineRef.current;
       const { linkedTimelines: lTimelines } = timelineRef.current;
       const timelinesEventsCount = lTimelines.map(timelineToEventsCount);
 
@@ -385,7 +384,6 @@ const useTimelinePagination = (
       }
 
       fetching = false;
-      if (targetTimeline !== timelineRef.current) return;
       if (alive()) {
         recalibratePagination(lTimelines, timelinesEventsCount, backwards);
       }
