@@ -254,7 +254,7 @@ const CodeBlockRule: BlockMDRule = {
   html: (match) => {
     const [, g1, g2] = match;
     const classNameAtt = g1 ? ` class="language-${g1}"` : '';
-    return `<pre data-md="${CODEBLOCK_MD_1}"><code${classNameAtt}>${g2}</code$></pre>`;
+    return `<pre data-md="${CODEBLOCK_MD_1}"><code${classNameAtt}>${g2}</code></pre>`;
   },
 };
 
