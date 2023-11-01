@@ -62,7 +62,7 @@ function JoinAliasContent({ term, requestClose }) {
     let via;
     if (alias.startsWith('#')) {
       try {
-        const aliasData = await mx.resolveRoomAlias(alias);
+        const aliasData = await mx.getRoomIdForAlias(alias);
         via = aliasData?.servers.slice(0, 3) || [];
         if (mountStore.getItem()) {
           setProcess(`Joining ${alias}...`);
