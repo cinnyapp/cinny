@@ -20,7 +20,7 @@
   "license": "AGPL-3.0-only",
   "dependencies": {
     "@fontsource/inter": "4.5.14",
-    "@khanacademy/simple-markdown": "0.8.6",
+    "@khanacademy/simple-markdown": "0.10.4",
     "@matrix-org/olm": "3.2.14",
     "@tanstack/react-virtual": "3.0.0-beta.54",
     "@tippyjs/react": "4.2.6",
