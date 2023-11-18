@@ -35,6 +35,7 @@ export const ImageViewerImg = style([
     width: '100%',
     height: '100%',
     backgroundColor: color.Surface.Container,
-    transition: 'transform 100ms linear',
+    // Disabled due to lagging when moving and shaking when zooming
+    // transition: 'transform 100ms linear',
   },
 ]);
