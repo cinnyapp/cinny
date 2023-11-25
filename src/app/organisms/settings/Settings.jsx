@@ -6,7 +6,7 @@ import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
-  toggleSystemTheme, toggleMarkdown, toggleMembershipEvents, toggleNickAvatarEvents,
+  toggleSystemTheme,
   toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
 import { usePermission } from '../../hooks/usePermission';
@@ -43,9 +43,26 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
+import { isMacOS } from '../../utils/user-agent';
+import { KeySymbol } from '../../utils/key-symbol';
 
 function AppearanceSection() {
   const [, updateState] = useState({});
+
+  const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
+  const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
+  const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
+  const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+  const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
+  const [hideMembershipEvents, setHideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
+  const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
+  const [mediaAutoLoad, setMediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
+  const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
+  const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
+  const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const spacings = ['0', '100', '200', '300', '400', '500']
 
   return (
     <div className="settings-appearance">
@@ -80,15 +97,68 @@ function AppearanceSection() {
             />
         )}
         />
+        <SettingTile
+          title="Use Twitter Emoji"
+          options={(
+            <Toggle
+              isActive={twitterEmoji}
+              onToggle={() => setTwitterEmoji(!twitterEmoji)}
+            />
+          )}
+          content={<Text variant="b3">Use Twitter emoji instead of system emoji.</Text>}
+        />
       </div>
       <div className="settings-appearance__card">
         <MenuHeader>Room messages</MenuHeader>
         <SettingTile
+          title="Message Layout"
+          content={
+            <SegmentedControls
+            selected={messageLayout}
+            segments={[
+              { text: 'Modern' },
+              { text: 'Compact' },
+              { text: 'Bubble' },
+            ]}
+            onSelect={(index) => setMessageLayout(index)}
+          />
+          }
+        />
+        <SettingTile
+          title="Message Spacing"
+          content={
+            <SegmentedControls
+            selected={spacings.findIndex((s) => s === messageSpacing)}
+            segments={[
+              { text: 'No' },
+              { text: 'XXS' },
+              { text: 'XS' },
+              { text: 'S' },
+              { text: 'M' },
+              { text: 'L' },
+            ]}
+            onSelect={(index) => {
+              setMessageSpacing(spacings[index])
+            }}
+          />
+          }
+        />
+        <SettingTile
+          title="Use ENTER for Newline"
+          options={(
+            <Toggle
+              isActive={enterForNewline}
+              onToggle={() => setEnterForNewline(!enterForNewline) }
+            />
+          )}
+          content={<Text variant="b3">{`Use ${isMacOS() ? KeySymbol.Command : 'Ctrl'} + ENTER to send message and ENTER for newline.`}</Text>}
+        />
+        <SettingTile
           title="Markdown formatting"
           options={(
             <Toggle
-              isActive={settings.isMarkdown}
-              onToggle={() => { toggleMarkdown(); updateState({}); }}
+              isActive={isMarkdown}
+              onToggle={() => setIsMarkdown(!isMarkdown) }
             />
           )}
           content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
@@ -97,8 +167,8 @@ function AppearanceSection() {
           title="Hide membership events"
           options={(
             <Toggle
-              isActive={settings.hideMembershipEvents}
-              onToggle={() => { toggleMembershipEvents(); updateState({}); }}
+              isActive={hideMembershipEvents}
+              onToggle={() => setHideMembershipEvents(!hideMembershipEvents)}
             />
           )}
           content={<Text variant="b3">Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and Ban)</Text>}
@@ -107,11 +177,51 @@ function AppearanceSection() {
           title="Hide nick/avatar events"
           options={(
             <Toggle
-              isActive={settings.hideNickAvatarEvents}
-              onToggle={() => { toggleNickAvatarEvents(); updateState({}); }}
+              isActive={hideNickAvatarEvents}
+              onToggle={() => setHideNickAvatarEvents(!hideNickAvatarEvents)}
             />
           )}
           content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
+        />
+        <SettingTile
+          title="Disable media auto load"
+          options={(
+            <Toggle
+              isActive={!mediaAutoLoad}
+              onToggle={() => setMediaAutoLoad(!mediaAutoLoad)}
+            />
+          )}
+          content={<Text variant="b3">Prevent images and videos from auto loading to save bandwidth.</Text>}
+        />
+        <SettingTile
+          title="Url Preview"
+          options={(
+            <Toggle
+              isActive={urlPreview}
+              onToggle={() => setUrlPreview(!urlPreview)}
+            />
+          )}
+          content={<Text variant="b3">Show url preview for link in messages.</Text>}
+        />
+        <SettingTile
+          title="Url Preview in Encrypted Room"
+          options={(
+            <Toggle
+              isActive={encUrlPreview}
+              onToggle={() => setEncUrlPreview(!encUrlPreview)}
+            />
+          )}
+          content={<Text variant="b3">Show url preview for link in encrypted messages.</Text>}
+        />
+        <SettingTile
+          title="Show hidden events"
+          options={(
+            <Toggle
+              isActive={showHiddenEvents}
+              onToggle={() => setShowHiddenEvents(!showHiddenEvents)}
+            />
+          )}
+          content={<Text variant="b3">Show hidden state and message events.</Text>}
         />
       </div>
     </div>
@@ -250,6 +360,10 @@ function AboutSection() {
             <li>
               {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
               <Text>The <a href="https://github.com/matrix-org/matrix-js-sdk" rel="noreferrer noopener" target="_blank">matrix-js-sdk</a> is © <a href="https://matrix.org/foundation" rel="noreferrer noopener" target="_blank">The Matrix.org Foundation C.I.C</a> used under the terms of <a href="http://www.apache.org/licenses/LICENSE-2.0" rel="noreferrer noopener" target="_blank">Apache 2.0</a>.</Text>
+            </li>
+            <li>
+              {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
+              <Text>The <a href="https://github.com/mozilla/twemoji-colr" target="_blank" rel="noreferrer noopener">twemoji-colr</a> font is © <a href="https://mozilla.org/" target="_blank" rel="noreferrer noopener">Mozilla Foundation</a> used under the terms of <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noreferrer noopener">Apache 2.0</a>.</Text>
             </li>
             <li>
               {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }

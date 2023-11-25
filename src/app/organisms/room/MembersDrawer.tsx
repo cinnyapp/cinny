@@ -10,6 +10,7 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
+  Badge,
   Box,
   Chip,
   ContainerColor,
@@ -33,6 +34,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import millify from 'millify';
 import classNames from 'classnames';
+import { useAtomValue } from 'jotai';
 
 import { openInviteUser, openProfileViewer } from '../../../client/action/navigation';
 import * as css from './MembersDrawer.css';
@@ -44,10 +46,20 @@ import {
 } from '../../hooks/useIntersectionObserver';
 import { Membership } from '../../../types/matrix/room';
 import { UseStateProvider } from '../../components/UseStateProvider';
-import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearch';
+import {
+  SearchItemStrGetter,
+  UseAsyncSearchOptions,
+  useAsyncSearch,
+} from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
 import colorMXID from '../../../util/colorMXID';
 import { usePowerLevelTags, PowerLevelTag } from '../../hooks/usePowerLevelTags';
+import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../state/typingMembers';
+import { TypingIndicator } from '../../components/typing-indicator';
+import { getMemberDisplayName, getMemberSearchStr } from '../../utils/room';
+import { getMxIdLocalPart } from '../../utils/matrix';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -153,7 +165,10 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
     contain: true,
   },
 };
-const getMemberItemStr = (m: RoomMember) => [m.name, m.userId];
+
+const mxIdToName = (mxId: string) => getMxIdLocalPart(mxId) ?? mxId;
+const getRoomMemberStr: SearchItemStrGetter<RoomMember> = (m, query) =>
+  getMemberSearchStr(m, query, mxIdToName);
 
 type MembersDrawerProps = {
   room: Room;
@@ -169,24 +184,30 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
 
   const membershipFilterMenu = useMembershipFilterMenu();
   const sortFilterMenu = useSortFilterMenu();
-  const [filter, setFilter] = useState<MembersFilterOptions>({
-    membershipFilter: membershipFilterMenu[0],
-    sortFilter: sortFilterMenu[0],
-  });
+  const [sortFilterIndex, setSortFilterIndex] = useSetting(settingsAtom, 'memberSortFilterIndex');
+  const [membershipFilterIndex, setMembershipFilterIndex] = useState(0);
+
+  const membershipFilter = membershipFilterMenu[membershipFilterIndex] ?? membershipFilterMenu[0];
+  const sortFilter = sortFilterMenu[sortFilterIndex] ?? sortFilterMenu[0];
+
   const [onTop, setOnTop] = useState(true);
+
+  const typingMembers = useAtomValue(
+    useMemo(() => selectRoomTypingMembersAtom(room.roomId, roomIdToTypingMembersAtom), [room])
+  );
 
   const filteredMembers = useMemo(
     () =>
       members
-        .filter(filter.membershipFilter.filterFn)
-        .sort(filter.sortFilter.filterFn)
+        .filter(membershipFilter.filterFn)
+        .sort(sortFilter.filterFn)
         .sort((a, b) => b.powerLevel - a.powerLevel),
-    [members, filter]
+    [members, membershipFilter, sortFilter]
   );
 
   const [result, search, resetSearch] = useAsyncSearch(
     filteredMembers,
-    getMemberItemStr,
+    getRoomMemberStr,
     SEARCH_OPTIONS
   );
   if (!result && searchInputRef.current?.value) search(searchInputRef.current.value);
@@ -235,6 +256,9 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
     { wait: 200 }
   );
 
+  const getName = (member: RoomMember) =>
+    getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+
   const handleMemberClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const btn = evt.currentTarget as HTMLButtonElement;
     const userId = btn.getAttribute('data-user-id');
@@ -247,7 +271,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
         <Box grow="Yes" alignItems="Center" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H5" truncate>
-              {`${millify(room.getJoinedMemberCount(), { precision: 1 })} Members`}
+              {`${millify(room.getJoinedMemberCount(), { precision: 1, locales: [] })} Members`}
             </Text>
           </Box>
           <Box shrink="No" alignItems="Center">
@@ -297,18 +321,18 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           }}
                         >
                           <Menu style={{ padding: config.space.S100 }}>
-                            {membershipFilterMenu.map((menuItem) => (
+                            {membershipFilterMenu.map((menuItem, index) => (
                               <MenuItem
                                 key={menuItem.name}
                                 variant={
-                                  menuItem.name === filter.membershipFilter.name
+                                  menuItem.name === membershipFilter.name
                                     ? menuItem.color
                                     : 'Surface'
                                 }
-                                aria-pressed={menuItem.name === filter.membershipFilter.name}
+                                aria-pressed={menuItem.name === membershipFilter.name}
                                 radii="300"
                                 onClick={() => {
-                                  setFilter((f) => ({ ...f, membershipFilter: menuItem }));
+                                  setMembershipFilterIndex(index);
                                   setOpen(false);
                                 }}
                               >
@@ -323,12 +347,12 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         <Chip
                           ref={anchorRef}
                           onClick={() => setOpen(!open)}
-                          variant={filter.membershipFilter.color}
+                          variant={membershipFilter.color}
                           size="400"
                           radii="300"
                           before={<Icon src={Icons.Filter} size="50" />}
                         >
-                          <Text size="T200">{filter.membershipFilter.name}</Text>
+                          <Text size="T200">{membershipFilter.name}</Text>
                         </Chip>
                       )}
                     </PopOut>
@@ -352,14 +376,14 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           }}
                         >
                           <Menu style={{ padding: config.space.S100 }}>
-                            {sortFilterMenu.map((menuItem) => (
+                            {sortFilterMenu.map((menuItem, index) => (
                               <MenuItem
                                 key={menuItem.name}
                                 variant="Surface"
-                                aria-pressed={menuItem.name === filter.sortFilter.name}
+                                aria-pressed={menuItem.name === sortFilter.name}
                                 radii="300"
                                 onClick={() => {
-                                  setFilter((f) => ({ ...f, sortFilter: menuItem }));
+                                  setSortFilterIndex(index);
                                   setOpen(false);
                                 }}
                               >
@@ -379,7 +403,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           radii="300"
                           after={<Icon src={Icons.Sort} size="50" />}
                         >
-                          <Text size="T200">{filter.sortFilter.name}</Text>
+                          <Text size="T200">{sortFilter.name}</Text>
                         </Chip>
                       )}
                     </PopOut>
@@ -439,7 +463,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
 
             {!fetchingMembers && !result && processMembers.length === 0 && (
               <Text style={{ padding: config.space.S300 }} align="Center">
-                {`No "${filter.membershipFilter.name}" Members`}
+                {`No "${membershipFilter.name}" Members`}
               </Text>
             )}
 
@@ -470,6 +494,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   }
 
                   const member = tagOrMember;
+                  const name = getName(member);
                   const avatarUrl = member.getAvatarUrl(
                     mx.baseUrl,
                     100,
@@ -482,7 +507,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                   return (
                     <MenuItem
                       style={{
-                        padding: config.space.S200,
+                        padding: `0 ${config.space.S200}`,
                         transform: `translateY(${vItem.start}px)`,
                       }}
                       data-index={vItem.index}
@@ -504,15 +529,24 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                                 color: 'white',
                               }}
                             >
-                              <Text size="T200">{member.name[0]}</Text>
+                              <Text size="H6">{name[0]}</Text>
                             </AvatarFallback>
                           )}
                         </Avatar>
                       }
+                      after={
+                        typingMembers.find((tm) => tm.userId === member.userId) && (
+                          <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
+                            <TypingIndicator size="300" />
+                          </Badge>
+                        )
+                      }
                     >
-                      <Text size="T400" truncate>
-                        {member.name}
-                      </Text>
+                      <Box grow="Yes">
+                        <Text size="T400" truncate>
+                          {name}
+                        </Text>
+                      </Box>
                     </MenuItem>
                   );
                 })}

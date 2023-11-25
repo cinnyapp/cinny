@@ -1,34 +1,18 @@
 import { Scroll, Text } from 'folds';
 import React from 'react';
-import { RenderElementProps, RenderLeafProps, useFocused, useSelected } from 'slate-react';
+import {
+  RenderElementProps,
+  RenderLeafProps,
+  useFocused,
+  useSelected,
+  useSlate,
+} from 'slate-react';
 
-import * as css from './Elements.css';
-import { EmoticonElement, LinkElement, MentionElement } from './slate';
+import * as css from '../../styles/CustomHtml.css';
+import { CommandElement, EmoticonElement, LinkElement, MentionElement } from './slate';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-
-export enum MarkType {
-  Bold = 'bold',
-  Italic = 'italic',
-  Underline = 'underline',
-  StrikeThrough = 'strikeThrough',
-  Code = 'code',
-  Spoiler = 'spoiler',
-}
-
-export enum BlockType {
-  Paragraph = 'paragraph',
-  Heading = 'heading',
-  CodeLine = 'code-line',
-  CodeBlock = 'code-block',
-  QuoteLine = 'quote-line',
-  BlockQuote = 'block-quote',
-  ListItem = 'list-item',
-  OrderedList = 'ordered-list',
-  UnorderedList = 'unordered-list',
-  Mention = 'mention',
-  Emoticon = 'emoticon',
-  Link = 'link',
-}
+import { getBeginCommand } from './utils';
+import { BlockType } from './types';
 
 // Put this at the start and end of an inline component to work around this Chromium bug:
 // https://bugs.chromium.org/p/chromium/issues/detail?id=1249405
@@ -58,6 +42,29 @@ function RenderMentionElement({
       contentEditable={false}
     >
       {element.name}
+      {children}
+    </span>
+  );
+}
+function RenderCommandElement({
+  attributes,
+  element,
+  children,
+}: { element: CommandElement } & RenderElementProps) {
+  const selected = useSelected();
+  const focused = useFocused();
+  const editor = useSlate();
+
+  return (
+    <span
+      {...attributes}
+      className={css.Command({
+        focus: selected && focused,
+        active: getBeginCommand(editor) === element.command,
+      })}
+      contentEditable={false}
+    >
+      {`/${element.command}`}
       {children}
     </span>
   );
@@ -145,7 +152,13 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
     case BlockType.CodeBlock:
       return (
         <Text as="pre" className={css.CodeBlock} {...attributes}>
-          <Scroll direction="Horizontal" variant="Warning" size="300" visibility="Hover" hideTrack>
+          <Scroll
+            direction="Horizontal"
+            variant="Secondary"
+            size="300"
+            visibility="Hover"
+            hideTrack
+          >
             <div className={css.CodeBlockInternal}>{children}</div>
           </Scroll>
         </Text>
@@ -193,6 +206,12 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
         <RenderLinkElement attributes={attributes} element={element}>
           {children}
         </RenderLinkElement>
+      );
+    case BlockType.Command:
+      return (
+        <RenderCommandElement attributes={attributes} element={element}>
+          {children}
+        </RenderCommandElement>
       );
     default:
       return (
@@ -242,7 +261,7 @@ export function RenderLeaf({ attributes, leaf, children }: RenderLeafProps) {
     );
   if (leaf.spoiler)
     child = (
-      <span className={css.Spoiler} {...attributes}>
+      <span className={css.Spoiler()} {...attributes}>
         <InlineChromiumBugfix />
         {child}
       </span>

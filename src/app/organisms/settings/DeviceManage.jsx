@@ -91,7 +91,7 @@ function DeviceManage() {
       <div className="device-manage">
         <div className="device-manage__loading">
           <Spinner size="small" />
-          <Text>Loading devices...</Text>
+          <Text>Loading sessions...</Text>
         </div>
       </div>
     );
@@ -217,7 +217,7 @@ function DeviceManage() {
     <div className="device-manage">
       <div>
         <MenuHeader>Unverified sessions</MenuHeader>
-        {!isMeVerified && (
+        {!isMeVerified && isCSEnabled && (
           <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
             <InfoCard
               rounded

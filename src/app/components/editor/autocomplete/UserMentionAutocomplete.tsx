@@ -1,7 +1,7 @@
 import React, { useEffect, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Editor } from 'slate';
 import { Avatar, AvatarFallback, AvatarImage, MenuItem, Text, color } from 'folds';
-import { MatrixClient, RoomMember } from 'matrix-js-sdk';
+import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
 
 import { AutocompleteQuery } from './autocompleteQuery';
 import { AutocompleteMenu } from './AutocompleteMenu';
@@ -13,9 +13,10 @@ import {
   useAsyncSearch,
 } from '../../../hooks/useAsyncSearch';
 import { onTabPress } from '../../../utils/keyboard';
-import { createMentionElement, moveCursor, replaceWithElement } from '../common';
+import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 import { getMxIdLocalPart, getMxIdServer, validMxId } from '../../../utils/matrix';
+import { getMemberDisplayName, getMemberSearchStr } from '../../../utils/room';
 
 type MentionAutoCompleteHandler = (userId: string, name: string) => void;
 
@@ -64,7 +65,7 @@ function UnknownMentionItem({
 }
 
 type UserMentionAutocompleteProps = {
-  roomId: string;
+  room: Room;
   editor: Editor;
   query: AutocompleteQuery<string>;
   requestClose: () => void;
@@ -77,21 +78,19 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   },
 };
 
-const getRoomMemberStr: SearchItemStrGetter<RoomMember> = (roomMember) => [
-  roomMember.name,
-  getMxIdLocalPart(roomMember.userId) ?? roomMember.userId,
-  roomMember.userId,
-];
+const mxIdToName = (mxId: string) => getMxIdLocalPart(mxId) ?? mxId;
+const getRoomMemberStr: SearchItemStrGetter<RoomMember> = (m, query) =>
+  getMemberSearchStr(m, query, mxIdToName);
 
 export function UserMentionAutocomplete({
-  roomId,
+  room,
   editor,
   query,
   requestClose,
 }: UserMentionAutocompleteProps) {
   const mx = useMatrixClient();
-  const room = mx.getRoom(roomId);
-  const roomAliasOrId = room?.getCanonicalAlias() || roomId;
+  const roomId: string = room.roomId!;
+  const roomAliasOrId = room.getCanonicalAlias() || roomId;
   const members = useRoomMembers(mx, roomId);
 
   const [result, search, resetSearch] = useAsyncSearch(members, getRoomMemberStr, SEARCH_OPTIONS);
@@ -129,6 +128,9 @@ export function UserMentionAutocomplete({
     });
   });
 
+  const getName = (member: RoomMember) =>
+    getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+
   return (
     <AutocompleteMenu headerContent={<Text size="L400">Mentions</Text>} requestClose={requestClose}>
       {query.text === 'room' && (
@@ -155,9 +157,9 @@ export function UserMentionAutocomplete({
               as="button"
               radii="300"
               onKeyDown={(evt: ReactKeyboardEvent<HTMLButtonElement>) =>
-                onTabPress(evt, () => handleAutocomplete(roomMember.userId, roomMember.name))
+                onTabPress(evt, () => handleAutocomplete(roomMember.userId, getName(roomMember)))
               }
-              onClick={() => handleAutocomplete(roomMember.userId, roomMember.name)}
+              onClick={() => handleAutocomplete(roomMember.userId, getName(roomMember))}
               after={
                 <Text size="T200" priority="300" truncate>
                   {roomMember.userId}
@@ -166,7 +168,7 @@ export function UserMentionAutocomplete({
               before={
                 <Avatar size="200">
                   {avatarUrl ? (
-                    <AvatarImage src={avatarUrl} alt={roomMember.userId} />
+                    <AvatarImage src={avatarUrl} alt={getName(roomMember)} />
                   ) : (
                     <AvatarFallback
                       style={{
@@ -174,14 +176,14 @@ export function UserMentionAutocomplete({
                         color: color.Secondary.OnContainer,
                       }}
                     >
-                      <Text size="H6">{roomMember.name[0] || roomMember.userId[1]}</Text>
+                      <Text size="H6">{getName(roomMember)[0]}</Text>
                     </AvatarFallback>
                   )}
                 </Avatar>
               }
             >
               <Text style={{ flexGrow: 1 }} size="B400" truncate>
-                {roomMember.name}
+                {getName(roomMember)}
               </Text>
             </MenuItem>
           );

@@ -1,16 +1,32 @@
 import { Descendant, Text } from 'slate';
-import { sanitizeText } from '../../utils/sanitize';
-import { BlockType } from './Elements';
-import { CustomElement, FormattedText } from './slate';
 
-const textToCustomHtml = (node: FormattedText): string => {
+import { sanitizeText } from '../../utils/sanitize';
+import { BlockType } from './types';
+import { CustomElement } from './slate';
+import { parseBlockMD, parseInlineMD } from '../../plugins/markdown';
+import { findAndReplace } from '../../utils/findAndReplace';
+
+export type OutputOptions = {
+  allowTextFormatting?: boolean;
+  allowInlineMarkdown?: boolean;
+  allowBlockMarkdown?: boolean;
+};
+
+const textToCustomHtml = (node: Text, opts: OutputOptions): string => {
   let string = sanitizeText(node.text);
-  if (node.bold) string = `<strong>${string}</strong>`;
-  if (node.italic) string = `<i>${string}</i>`;
-  if (node.underline) string = `<u>${string}</u>`;
-  if (node.strikeThrough) string = `<s>${string}</s>`;
-  if (node.code) string = `<code>${string}</code>`;
-  if (node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
+  if (opts.allowTextFormatting) {
+    if (node.bold) string = `<strong>${string}</strong>`;
+    if (node.italic) string = `<i>${string}</i>`;
+    if (node.underline) string = `<u>${string}</u>`;
+    if (node.strikeThrough) string = `<del>${string}</del>`;
+    if (node.code) string = `<code>${string}</code>`;
+    if (node.spoiler) string = `<span data-mx-spoiler>${string}</span>`;
+  }
+
+  if (opts.allowInlineMarkdown && string === sanitizeText(node.text)) {
+    string = parseInlineMD(string);
+  }
+
   return string;
 };
 
@@ -34,24 +50,67 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
       return `<ol>${children}</ol>`;
     case BlockType.UnorderedList:
       return `<ul>${children}</ul>`;
+
     case BlockType.Mention:
-      return `<a href="https://matrix.to/#/${node.id}">${node.name}</a>`;
+      return `<a href="https://matrix.to/#/${encodeURIComponent(node.id)}">${sanitizeText(
+        node.name
+      )}</a>`;
     case BlockType.Emoticon:
       return node.key.startsWith('mxc://')
-        ? `<img data-mx-emoticon src="${node.key}" alt="${node.shortcode}" title="${node.shortcode}" height="32">`
-        : node.key;
+        ? `<img data-mx-emoticon src="${node.key}" alt="${sanitizeText(
+            node.shortcode
+          )}" title="${sanitizeText(node.shortcode)}" height="32" />`
+        : sanitizeText(node.key);
     case BlockType.Link:
-      return `<a href="${node.href}">${node.children}</a>`;
+      return `<a href="${encodeURIComponent(node.href)}">${node.children}</a>`;
+    case BlockType.Command:
+      return `/${sanitizeText(node.command)}`;
     default:
       return children;
   }
 };
 
-export const toMatrixCustomHTML = (node: Descendant | Descendant[]): string => {
-  if (Array.isArray(node)) return node.map((n) => toMatrixCustomHTML(n)).join('');
-  if (Text.isText(node)) return textToCustomHtml(node);
+const HTML_TAG_REG_G = /<([\w-]+)(?: [^>]*)?(?:(?:\/>)|(?:>.*?<\/\1>))/g;
+const ignoreHTMLParseInlineMD = (text: string): string =>
+  findAndReplace(
+    text,
+    HTML_TAG_REG_G,
+    (match) => match[0],
+    (txt) => parseInlineMD(txt)
+  ).join('');
 
-  const children = node.children.map((n) => toMatrixCustomHTML(n)).join('');
+export const toMatrixCustomHTML = (
+  node: Descendant | Descendant[],
+  opts: OutputOptions
+): string => {
+  let markdownLines = '';
+  const parseNode = (n: Descendant, index: number, targetNodes: Descendant[]) => {
+    if (opts.allowBlockMarkdown && 'type' in n && n.type === BlockType.Paragraph) {
+      const line = toMatrixCustomHTML(n, {
+        ...opts,
+        allowInlineMarkdown: false,
+        allowBlockMarkdown: false,
+      })
+        .replace(/<br\/>$/, '\n')
+        .replace(/^&gt;/, '>');
+      markdownLines += line;
+      if (index === targetNodes.length - 1) {
+        return parseBlockMD(markdownLines, ignoreHTMLParseInlineMD);
+      }
+      return '';
+    }
+
+    const parsedMarkdown = parseBlockMD(markdownLines, ignoreHTMLParseInlineMD);
+    markdownLines = '';
+    const isCodeLine = 'type' in n && n.type === BlockType.CodeLine;
+    if (isCodeLine) return `${parsedMarkdown}${toMatrixCustomHTML(n, {})}`;
+
+    return `${parsedMarkdown}${toMatrixCustomHTML(n, { ...opts, allowBlockMarkdown: false })}`;
+  };
+  if (Array.isArray(node)) return node.map(parseNode).join('');
+  if (Text.isText(node)) return textToCustomHtml(node, opts);
+
+  const children = node.children.map(parseNode).join('');
   return elementToCustomHtml(node, children);
 };
 
@@ -81,6 +140,8 @@ const elementToPlainText = (node: CustomElement, children: string): string => {
       return node.key.startsWith('mxc://') ? `:${node.shortcode}:` : node.key;
     case BlockType.Link:
       return `[${node.children}](${node.href})`;
+    case BlockType.Command:
+      return `/${node.command}`;
     default:
       return children;
   }
@@ -106,4 +167,12 @@ export const toPlainText = (node: Descendant | Descendant[]): string => {
 export const customHtmlEqualsPlainText = (customHtml: string, plain: string): boolean =>
   customHtml.replace(/<br\/>/g, '\n') === sanitizeText(plain);
 
-export const trimCustomHtml = (customHtml: string) => customHtml.replace(/<br\/>$/g, '');
+export const trimCustomHtml = (customHtml: string) => customHtml.replace(/<br\/>$/g, '').trim();
+
+export const trimCommand = (cmdName: string, str: string) => {
+  const cmdRegX = new RegExp(`^(\\s+)?(\\/${cmdName})([^\\S\n]+)?`);
+
+  const match = str.match(cmdRegX);
+  if (!match) return str;
+  return str.slice(match[0].length);
+};

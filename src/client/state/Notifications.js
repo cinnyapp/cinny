@@ -234,7 +234,7 @@ class Notifications extends EventEmitter {
     const actions = this.matrixClient.getPushActionsForEvent(mEvent);
     if (!actions?.notify) return;
 
-    if (navigation.selectedRoomId === room.roomId && document.visibilityState === 'visible') return;
+    if (navigation.selectedRoomId === room.roomId && document.hasFocus()) return;
 
     if (mEvent.isEncrypted()) {
       await mEvent.attemptDecryption(this.matrixClient.crypto);

@@ -3,7 +3,7 @@ import { Editor } from 'slate';
 import { Avatar, AvatarFallback, AvatarImage, Icon, Icons, MenuItem, Text, color } from 'folds';
 import { MatrixClient } from 'matrix-js-sdk';
 
-import { createMentionElement, moveCursor, replaceWithElement } from '../common';
+import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
 import { getRoomAvatarUrl, joinRuleToIconSrc } from '../../../utils/room';
 import { roomIdByActivity } from '../../../../util/sort';
 import initMatrix from '../../../../client/initMatrix';
@@ -32,14 +32,14 @@ function UnknownRoomMentionItem({
   const mx = useMatrixClient();
   const roomAlias: string = roomAliasFromQueryText(mx, query.text);
 
+  const handleSelect = () => handleAutocomplete(roomAlias, roomAlias);
+
   return (
     <MenuItem
       as="button"
       radii="300"
-      onKeyDown={(evt: ReactKeyboardEvent<HTMLButtonElement>) =>
-        onTabPress(evt, () => handleAutocomplete(roomAlias, roomAlias))
-      }
-      onClick={() => handleAutocomplete(roomAlias, roomAlias)}
+      onKeyDown={(evt: ReactKeyboardEvent<HTMLButtonElement>) => onTabPress(evt, handleSelect)}
+      onClick={handleSelect}
       before={
         <Avatar size="200">
           <Icon src={Icons.Hash} size="100" />
@@ -122,8 +122,9 @@ export function RoomMentionAutocomplete({
         return;
       }
       const rId = autoCompleteRoomIds[0];
-      const name = mx.getRoom(rId)?.name ?? rId;
-      handleAutocomplete(rId, name);
+      const r = mx.getRoom(rId);
+      const name = r?.name ?? rId;
+      handleAutocomplete(r?.getCanonicalAlias() ?? rId, name);
     });
   });
 
@@ -139,15 +140,17 @@ export function RoomMentionAutocomplete({
           const avatarUrl = getRoomAvatarUrl(mx, room);
           const iconSrc = !dm && joinRuleToIconSrc(Icons, room.getJoinRule(), room.isSpaceRoom());
 
+          const handleSelect = () => handleAutocomplete(room.getCanonicalAlias() ?? rId, room.name);
+
           return (
             <MenuItem
               key={rId}
               as="button"
               radii="300"
               onKeyDown={(evt: ReactKeyboardEvent<HTMLButtonElement>) =>
-                onTabPress(evt, () => handleAutocomplete(rId, room.name))
+                onTabPress(evt, handleSelect)
               }
-              onClick={() => handleAutocomplete(rId, room.name)}
+              onClick={handleSelect}
               after={
                 <Text size="T200" priority="300" truncate>
                   {room.getCanonicalAlias() ?? ''}

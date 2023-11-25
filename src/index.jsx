@@ -8,7 +8,6 @@ import { configClass, varsClass } from 'folds';
 
 enableMapSet();
 
-import './font';
 import './index.scss';
 
 import settings from './client/state/settings';

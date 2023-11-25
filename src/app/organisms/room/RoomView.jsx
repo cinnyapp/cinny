@@ -4,34 +4,33 @@ import './RoomView.scss';
 import { Text, config } from 'folds';
 import { EventType } from 'matrix-js-sdk';
 
-import EventEmitter from 'events';
-
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 
 import RoomViewHeader from './RoomViewHeader';
-import RoomViewContent from './RoomViewContent';
-import RoomViewFloating from './RoomViewFloating';
-import RoomViewCmdBar from './RoomViewCmdBar';
 import { RoomInput } from './RoomInput';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { StateEvent } from '../../../types/matrix/room';
 import { RoomTombstone } from './RoomTombstone';
-import { usePowerLevels } from '../../hooks/usePowerLevels';
+import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
+import { RoomTimeline } from './RoomTimeline';
+import { RoomViewTyping } from './RoomViewTyping';
+import { RoomViewFollowing } from './RoomViewFollowing';
+import { useEditor } from '../../components/editor';
 
-const viewEvent = new EventEmitter();
-
-function RoomView({ room, roomTimeline, eventId }) {
+function RoomView({ room, eventId }) {
   const roomInputRef = useRef(null);
   const roomViewRef = useRef(null);
+
   // eslint-disable-next-line react/prop-types
-  const { roomId } = roomTimeline;
+  const { roomId } = room;
+  const editor = useEditor();
 
   const mx = useMatrixClient();
   const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
-  const { getPowerLevel, canSendEvent } = usePowerLevels(room);
+  const { getPowerLevel, canSendEvent } = usePowerLevelsAPI();
   const myUserId = mx.getUserId();
   const canMessage = myUserId
     ? canSendEvent(EventType.RoomMessage, getPowerLevel(myUserId))
@@ -61,12 +60,14 @@ function RoomView({ room, roomTimeline, eventId }) {
       <RoomViewHeader roomId={roomId} />
       <div className="room-view__content-wrapper">
         <div className="room-view__scrollable">
-          <RoomViewContent
+          <RoomTimeline
+            key={roomId}
+            room={room}
             eventId={eventId}
-            roomTimeline={roomTimeline}
             roomInputRef={roomInputRef}
+            editor={editor}
           />
-          <RoomViewFloating roomId={roomId} roomTimeline={roomTimeline} />
+          <RoomViewTyping room={room} />
         </div>
         <div className="room-view__sticky">
           <div className="room-view__editor">
@@ -79,7 +80,13 @@ function RoomView({ room, roomTimeline, eventId }) {
             ) : (
               <>
                 {canMessage && (
-                  <RoomInput roomId={roomId} roomViewRef={roomViewRef} ref={roomInputRef} />
+                  <RoomInput
+                    room={room}
+                    editor={editor}
+                    roomId={roomId}
+                    roomViewRef={roomViewRef}
+                    ref={roomInputRef}
+                  />
                 )}
                 {!canMessage && (
                   <RoomInputPlaceholder
@@ -93,7 +100,7 @@ function RoomView({ room, roomTimeline, eventId }) {
               </>
             )}
           </div>
-          <RoomViewCmdBar roomId={roomId} roomTimeline={roomTimeline} viewEvent={viewEvent} />
+          <RoomViewFollowing room={room} />
         </div>
       </div>
     </div>
@@ -105,7 +112,6 @@ RoomView.defaultProps = {
 };
 RoomView.propTypes = {
   room: PropTypes.shape({}).isRequired,
-  roomTimeline: PropTypes.shape({}).isRequired,
   eventId: PropTypes.string,
 };
 

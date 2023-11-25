@@ -4,6 +4,7 @@ import appDispatcher from '../dispatcher';
 
 import cons from './cons';
 import { darkTheme, butterTheme, silverTheme } from '../../colors.css';
+import { onLightFontWeight, onDarkFontWeight } from '../../config.css';
 
 function getSettings() {
   const settings = localStorage.getItem('settings');
@@ -23,6 +24,7 @@ class Settings extends EventEmitter {
     super();
 
     this.themeClasses = [lightTheme, silverTheme, darkTheme, butterTheme];
+    this.fontWeightClasses = [onLightFontWeight, onLightFontWeight, onDarkFontWeight, onDarkFontWeight]
     this.themes = ['', 'silver-theme', 'dark-theme', 'butter-theme'];
     this.themeIndex = this.getThemeIndex();
 
@@ -59,6 +61,9 @@ class Settings extends EventEmitter {
     this.themes.forEach((themeName, index) => {
       if (themeName !== '') document.body.classList.remove(themeName);
       document.body.classList.remove(this.themeClasses[index]);
+      document.body.classList.remove(this.fontWeightClasses[index]);
+      document.body.classList.remove('prism-light')
+      document.body.classList.remove('prism-dark')
     });
   }
 
@@ -69,6 +74,8 @@ class Settings extends EventEmitter {
     if (this.themes[themeIndex] === undefined) return
     if (this.themes[themeIndex]) document.body.classList.add(this.themes[themeIndex]);
     document.body.classList.add(this.themeClasses[themeIndex]);
+    document.body.classList.add(this.fontWeightClasses[themeIndex]);
+    document.body.classList.add(themeIndex < 2 ? 'prism-light' : 'prism-dark');
   }
 
   setTheme(themeIndex) {

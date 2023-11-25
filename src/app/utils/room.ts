@@ -1,16 +1,24 @@
 import { IconName, IconSrc } from 'folds';
 
 import {
+  EventTimeline,
+  EventTimelineSet,
+  EventType,
   IPushRule,
   IPushRules,
   JoinRule,
   MatrixClient,
   MatrixEvent,
+  MsgType,
   NotificationCountType,
+  RelationType,
   Room,
+  RoomMember,
 } from 'matrix-js-sdk';
+import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import {
+  MessageEvent,
   NotificationType,
   RoomToParents,
   RoomType,
@@ -247,6 +255,21 @@ export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefin
   return room.getAvatarUrl(mx.baseUrl, 32, 32, 'crop') ?? undefined;
 };
 
+export const trimReplyFromBody = (body: string): string => {
+  const match = body.match(/^> <.+?> .+\n(>.*\n)*?\n/m);
+  if (!match) return body;
+  return body.slice(match[0].length);
+};
+
+export const trimReplyFromFormattedBody = (formattedBody: string): string => {
+  const suffix = '</mx-reply>';
+  const i = formattedBody.lastIndexOf(suffix);
+  if (i < 0) {
+    return formattedBody;
+  }
+  return formattedBody.slice(i + suffix.length);
+};
+
 export const parseReplyBody = (userId: string, body: string) =>
   `> <${userId}> ${body.replace(/\n/g, '\n> ')}\n\n`;
 
@@ -263,3 +286,101 @@ export const parseReplyFormattedBody = (
 
   return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${formattedBody}</blockquote></mx-reply>`;
 };
+
+export const getMemberDisplayName = (room: Room, userId: string): string | undefined => {
+  const member = room.getMember(userId);
+  const name = member?.rawDisplayName;
+  if (name === userId) return undefined;
+  return name;
+};
+
+export const getMemberSearchStr = (
+  member: RoomMember,
+  query: string,
+  mxIdToName: (mxId: string) => string
+): string[] => [
+  member.rawDisplayName === member.userId ? mxIdToName(member.userId) : member.rawDisplayName,
+  query.startsWith('@') || query.indexOf(':') > -1 ? member.userId : mxIdToName(member.userId),
+];
+
+export const getMemberAvatarMxc = (room: Room, userId: string): string | undefined => {
+  const member = room.getMember(userId);
+  return member?.getMxcAvatarUrl();
+};
+
+export const isMembershipChanged = (mEvent: MatrixEvent): boolean =>
+  mEvent.getContent().membership !== mEvent.getPrevContent().membership ||
+  mEvent.getContent().reason !== mEvent.getPrevContent().reason;
+
+export const decryptAllTimelineEvent = async (mx: MatrixClient, timeline: EventTimeline) => {
+  const crypto = mx.getCrypto();
+  if (!crypto) return;
+  const decryptionPromises = timeline
+    .getEvents()
+    .filter((event) => event.isEncrypted())
+    .reverse()
+    .map((event) => event.attemptDecryption(crypto as CryptoBackend, { isRetry: true }));
+  await Promise.allSettled(decryptionPromises);
+};
+
+export const getReactionContent = (eventId: string, key: string, shortcode?: string) => ({
+  'm.relates_to': {
+    event_id: eventId,
+    key,
+    rel_type: 'm.annotation',
+  },
+  shortcode,
+});
+
+export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string) =>
+  timelineSet.relations.getChildEventsForEvent(
+    eventId,
+    RelationType.Annotation,
+    EventType.Reaction
+  );
+
+export const getEventEdits = (timelineSet: EventTimelineSet, eventId: string, eventType: string) =>
+  timelineSet.relations.getChildEventsForEvent(eventId, RelationType.Replace, eventType);
+
+export const getLatestEdit = (
+  targetEvent: MatrixEvent,
+  editEvents: MatrixEvent[]
+): MatrixEvent | undefined => {
+  const eventByTargetSender = (rEvent: MatrixEvent) =>
+    rEvent.getSender() === targetEvent.getSender();
+  return editEvents.sort((m1, m2) => m2.getTs() - m1.getTs()).find(eventByTargetSender);
+};
+
+export const getEditedEvent = (
+  mEventId: string,
+  mEvent: MatrixEvent,
+  timelineSet: EventTimelineSet
+): MatrixEvent | undefined => {
+  const edits = getEventEdits(timelineSet, mEventId, mEvent.getType());
+  return edits && getLatestEdit(mEvent, edits.getRelations());
+};
+
+export const canEditEvent = (mx: MatrixClient, mEvent: MatrixEvent) =>
+  mEvent.getSender() === mx.getUserId() &&
+  !mEvent.isRelation() &&
+  mEvent.getType() === MessageEvent.RoomMessage &&
+  (mEvent.getContent().msgtype === MsgType.Text ||
+    mEvent.getContent().msgtype === MsgType.Emote ||
+    mEvent.getContent().msgtype === MsgType.Notice);
+
+export const getLatestEditableEvt = (
+  timeline: EventTimeline,
+  canEdit: (mEvent: MatrixEvent) => boolean
+): MatrixEvent | undefined => {
+  const events = timeline.getEvents();
+
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const evt = events[i];
+    if (canEdit(evt)) return evt;
+  }
+  return undefined;
+};
+
+export const reactionOrEditEvent = (mEvent: MatrixEvent) =>
+  mEvent.getRelation()?.rel_type === RelationType.Annotation ||
+  mEvent.getRelation()?.rel_type === RelationType.Replace;

@@ -13,6 +13,8 @@ export const useResizeObserver = (
 ): ResizeObserver => {
   const resizeObserver = useMemo(() => new ResizeObserver(onResizeCallback), [onResizeCallback]);
 
+  useEffect(() => () => resizeObserver?.disconnect(), [resizeObserver]);
+
   useEffect(() => {
     const element = typeof observeElement === 'function' ? observeElement() : observeElement;
     if (element) resizeObserver.observe(element);

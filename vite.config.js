@@ -14,6 +14,10 @@ const copyFiles = {
       dest: '',
     },
     {
+      src: 'node_modules/pdfjs-dist/build/pdf.worker.min.js',
+      dest: '',
+    },
+    {
       src: '_redirects',
       dest: '',
     },
