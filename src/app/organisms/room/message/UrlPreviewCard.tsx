@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { IPreviewUrlResponse } from 'matrix-js-sdk';
-import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
+import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config, toRem } from 'folds';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import {
@@ -14,11 +14,18 @@ import {
   useIntersectionObserver,
 } from '../../../hooks/useIntersectionObserver';
 import * as css from './styles.css';
+import { ImageContent } from './ImageContent';
+import { useSetting } from '../../../state/hooks/settings';
+import { settingsAtom } from '../../../state/settings';
+import { scaleDimension } from '../../../utils/common';
+import { IImageInfo } from '../../../../types/matrix/common';
+import { AttachmentBox } from '../../../components/message';
 
 const linkStyles = { color: color.Success.Main };
 
 export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
   ({ url, ts, ...props }, ref) => {
+    const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
     const mx = useMatrixClient();
     const [previewStatus, loadPreview] = useAsyncCallback(
       useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
@@ -27,7 +34,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
 
     if (previewStatus.status === AsyncStatus.Error) return null;
 
-    const renderContent = (prev: IPreviewUrlResponse) => {
+    const renderRichContent = (prev: IPreviewUrlResponse) => {
       const imgUrl = mx.mxcUrlToHttp(prev['og:image'] || '', 256, 256, 'scale', false);
 
       return (
@@ -56,6 +63,50 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
           </UrlPreviewContent>
         </>
       );
+    };
+
+    const renderImageContent = (prev: IPreviewUrlResponse) => {
+      const imgInfo: IImageInfo = {
+        w: prev['og:image:width'],
+        h: prev['og:image:height'],
+        mimetype: prev['og:image:type'],
+        size: prev['matrix:image:size']
+      };
+
+      const imgUrl = prev['og:image'];
+      const dim = scaleDimension(imgInfo?.w || 400, imgInfo?.h || 400, 400, 24, 600, 24);
+
+      return (
+        <>
+          <AttachmentBox
+            style={{
+              width: toRem(dim.w),
+              height: toRem(dim.h),
+              margin: "auto"
+            }}
+          >
+            {imgUrl && <ImageContent
+              body={prev['og:url'] || 'Image'}
+              info={imgInfo}
+              mimeType={imgInfo.mimetype}
+              url={imgUrl}
+              autoPlay={mediaAutoLoad}
+            />}
+          </AttachmentBox>
+        </>
+      );
+    };
+
+    const renderContent = (prev: IPreviewUrlResponse) => {
+      const type = prev['og:type'];
+      if (type != "object") {
+        if (!prev['og:description']
+          && !prev['og:title']
+          && prev['og:image:type']) {
+          return renderImageContent(prev);
+        }
+      }
+      return renderRichContent(prev);
     };
 
     return (
