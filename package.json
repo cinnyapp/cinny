@@ -67,7 +67,7 @@
     "react-modal": "3.16.1",
     "react-range": "1.8.14",
     "sanitize-html": "2.8.0",
-    "slate": "0.94.1",
+    "slate": "0.101.1",
     "slate-history": "0.93.0",
     "slate-react": "0.98.4",
     "tippy.js": "6.3.7",
