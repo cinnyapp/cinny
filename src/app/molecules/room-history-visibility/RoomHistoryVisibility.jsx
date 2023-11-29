@@ -49,7 +49,9 @@ function useVisibility(roomId) {
   const room = mx.getRoom(roomId);
 
   const [activeType, setActiveType] = useState(room.getHistoryVisibility());
-  useEffect(() => setActiveType(room.getHistoryVisibility()), [roomId]);
+  useEffect(() => {
+    setActiveType(room.getHistoryVisibility());
+  }, [roomId]);
 
   const setVisibility = useCallback((item) => {
     if (item.type === activeType.type) return;
