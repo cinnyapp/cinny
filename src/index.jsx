@@ -1,6 +1,6 @@
 /* eslint-disable import/first */
 import React from 'react';
-import ReactDom from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { enableMapSet } from 'immer';
 import '@fontsource/inter/variable.css';
 import 'folds/dist/style.css';
@@ -18,4 +18,6 @@ document.body.classList.add(configClass, varsClass);
 
 settings.applyTheme();
 
-ReactDom.render(<App />, document.getElementById('root'));
+const rootContainer = document.getElementById('root');
+const root = createRoot(rootContainer);
+root.render(<App />);
