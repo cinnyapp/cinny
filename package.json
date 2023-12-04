@@ -42,7 +42,7 @@
     "folds": "1.5.0",
     "formik": "2.2.9",
     "html-dom-parser": "4.0.0",
-    "html-react-parser": "4.2.0",
+    "html-react-parser": "5.0.7",
     "immer": "9.0.16",
     "is-hotkey": "0.2.0",
     "jotai": "1.12.0",
