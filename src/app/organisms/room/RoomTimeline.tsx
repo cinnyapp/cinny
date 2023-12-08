@@ -44,6 +44,7 @@ import {
   toRem,
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
+import { useTranslation } from 'react-i18next';
 import {
   decryptFile,
   eventWithShortcode,
@@ -1254,6 +1255,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     },
   });
 
+  const { t } = useTranslation();
+
   const renderMatrixEvent = useMatrixEventRenderer<[number, EventTimelineSet, boolean]>({
     renderRoomMessage: (mEventId, mEvent, item, timelineSet, collapse) => {
       const reactionRelations = getEventReactions(timelineSet, mEventId);
@@ -1494,7 +1497,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               <Box grow="Yes" direction="Column">
                 <Text size="T300" priority="300">
                   <b>{senderName}</b>
-                  {' changed room name'}
+                  {t('Organisms.RoomCommon.changed_room_name')}
                 </Text>
               </Box>
             }
