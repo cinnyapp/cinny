@@ -35,6 +35,10 @@ const copyFiles = {
       src: 'public/res/android',
       dest: 'public/',
     },
+    {
+      src: 'public/locales',
+      dest: 'public/',
+    },
   ],
 };
 
