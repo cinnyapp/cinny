@@ -1,0 +1,12 @@
+{
+  "Organisms": {
+    "Settings": {
+      "theme": {
+        "follow_system": {
+          "title": "System-Theme verwenden",
+          "description": "Verwende den hellen oder dunklen Modus basierend auf den Systemeinstellungen."
+        }
+      }
+    }
+  }
+}

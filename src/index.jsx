@@ -14,6 +14,9 @@ import settings from './client/state/settings';
 
 import App from './app/pages/App';
 
+// import i18n (needs to be bundled ;))
+import './app/i18n';
+
 document.body.classList.add(configClass, varsClass);
 
 settings.applyTheme();

@@ -1,0 +1,12 @@
+{
+  "Organisms": {
+    "Settings": {
+      "theme": {
+        "follow_system": {
+          "title": "Follow system theme",
+          "description": "Use light or dark mode based on the system settings."
+        }
+      }
+    }
+  }
+}
