@@ -33,7 +33,7 @@
   }
 }
 .room-header__members-btn {
-  @include screen.biggerThan(tabletBreakpoint) {
+  @include screen.biggerEqualsThan(tabletBreakpoint) {
     display: none;
   }
 }
@@ -41,7 +41,7 @@
 .room-header__back-btn {
   @include dir.side(margin, 0, var(--sp-tight));
 
-  @include screen.biggerThan(mobileBreakpoint) {
+  @include screen.biggerEqualsThan(mobileBreakpoint) {
     display: none;
   }
 }
