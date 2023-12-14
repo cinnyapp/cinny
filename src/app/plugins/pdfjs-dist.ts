@@ -7,7 +7,7 @@ export const usePdfJSLoader = () =>
   useAsyncCallback(
     useCallback(async () => {
       const pdf = await import('pdfjs-dist');
-      pdf.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+      pdf.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
       return pdf;
     }, [])
   );
