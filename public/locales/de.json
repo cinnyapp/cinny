@@ -3,6 +3,48 @@
     "options": "Optionen"
   },
   "Organisms": {
+    "Welcome": {
+      "heading": "Willkommen in Cinny!",
+      "subheading": "Noch ein weiterer Matrix Client"
+    },
+    "SpaceSettings": {
+      "categorize_subspaces": "Unter-Spaces kategorisieren",
+      "uncategorize_subspaces": "Unter-Spaces nicht kategorisieren",
+      "pin_sidebar": "An Seitenleiste anheften",
+      "unpin_sidebar": "Von Seitenleiste lösen"
+    },
+    "Settings": {
+      "theme": {
+        "follow_system": {
+          "title": "System-Theme verwenden",
+          "description": "Verwende den hellen oder dunklen Modus basierend auf den Systemeinstellungen."
+        },
+        "title": "Theme",
+        "theme_light": "Hell",
+        "theme_silver": "Silber",
+        "theme_dark": "Dunkel",
+        "theme_butter": "Butter"
+      },
+      "markdown": {
+        "title": "Markdown-Formatierung",
+        "description": "Nachrichten vor dem Senden mit Markdown formatieren"
+      },
+      "hide_membership_events": {
+        "title": "Mitgliedschaftsereignisse ausblenden",
+        "description": "Nachrichten zu Änderungen von Mitgliedschaften in der Zeitleiste ausblenden (Beitreten, Verlassen, Einladen, Entfernen und Bannen)"
+      },
+      "hide_nickname_avatar_events": {
+        "title": "Spitzname/Avatar Ereignisse ausblenden",
+        "description": "Nachrichten zu Änderungen von Spitznamen und Avataren in der Zeitleiste ausblenden."
+      },
+      "tabs": {
+        "appearance": "Auftretten",
+        "notifications": "Benachrichtungen",
+        "emoji": "Emoji",
+        "security": "Sicherheit",
+        "about": "Über"
+      }
+    },
     "RoomCommon": {
       "changed_room_name": " hat den Raum Name geändert"
     },
@@ -36,6 +78,27 @@
   "Molecules": {
     "ConfirmDialog": {
       "cancel": "Abbrechen"
+    },
+    "RoomOptions": {
+      "title": "Optionen für {{room_name}}",
+      "leave": {
+        "title": "Raum verlassen",
+        "subtitle": "Bist du sicher, dass du den Raum {{room_name}} verlassen möchtest?",
+        "button_text": "Verlassen"
+      },
+      "mark_as_read": "Als gelesen markieren",
+      "notifications_heading": "Benachrichtigungen",
+      "invite": "Einladen"
+    },
+    "SpaceOptions": {
+      "leave_space": "Space verlassen",
+      "leave_space_confirmation": "Bist du sicher, dass du den Space {{space}} verlassen möchtest?",
+      "leave_space_confirm": "Verlassen",
+      "mark_as_read": "Als gelesen markieren",
+      "invite": "Einladen",
+      "manage_rooms": "Räume verwalten",
+      "settings": "Einstellungen",
+      "leave": "Verlassen"
     }
   }
 }
