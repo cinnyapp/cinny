@@ -1,7 +1,41 @@
 {
+  "common": {
+    "options": "Options"
+  },
   "Organisms": {
     "RoomCommon": {
       "changed_room_name": " changed room name"
+    },
+    "DrawerBreadcrumb": {
+      "home": "Home"
+    },
+    "DrawerHeader": {
+      "add_rooms_or_spaces": "Add rooms or spaces",
+      "create_new_space": "Create new space",
+      "create_new_room": "Create new room",
+      "explore_public_room": "Explore public room",
+      "join_with_address": "Join with address",
+      "add_existing": "Add existing",
+      "manage_rooms": "Manage rooms",
+      "home": "Home",
+      "direct_messages": "Direct messages",
+      "start_dm_tooltip": "Start DM",
+      "add_rooms_spaces_tooltip": "Add rooms/spaces"
+    },
+    "SideBar": {
+      "settings_tooltip": "Settings",
+      "unverified_sessions_one": "{{count}} unverified session",
+      "unverified_sessions_other": "{{count}} unverified sessions",
+      "home_tooltip": "Home",
+      "direct_messages_tooltip": "People",
+      "pin_spaces_tooltip": "Pin spaces",
+      "search_tooltip": "Search",
+      "invites_tooltip": "Invites"
+    }
+  },
+  "Molecules": {
+    "ConfirmDialog": {
+      "cancel": "Cancel"
     }
   }
 }

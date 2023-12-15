@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './DrawerBreadcrumb.scss';
+import { useTranslation } from 'react-i18next';
 
 import { twemojify } from '../../../util/twemojify';
 
@@ -66,6 +67,8 @@ function DrawerBreadcrumb({ spaceId }) {
     return noti;
   }
 
+  const { t } = useTranslation();
+
   function getNotiExcept(roomId, childId) {
     if (!notifications.hasNoti(roomId)) return null;
 
@@ -112,7 +115,7 @@ function DrawerBreadcrumb({ spaceId }) {
                       else selectSpace(id);
                     }}
                   >
-                    <Text variant="b2">{id === cons.tabs.HOME ? 'Home' : twemojify(mx.getRoom(id).name)}</Text>
+                    <Text variant="b2">{id === cons.tabs.HOME ? t('Organisms.DrawerBreadcrumb.home') : twemojify(mx.getRoom(id).name)}</Text>
                     { noti !== null && (
                       <NotificationBadge
                         alert={noti.highlight !== 0}

@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -29,6 +30,8 @@ function Selector({
   if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
 
   const isMuted = noti.getNotiType(roomId) === cons.notifs.MUTE;
+
+  const { t } = useTranslation();
 
   const [, forceUpdate] = useForceUpdate();
 
@@ -69,7 +72,7 @@ function Selector({
       options={(
         <IconButton
           size="extra-small"
-          tooltip="Options"
+          tooltip={t('common.options')}
           tooltipPlacement="right"
           src={VerticalMenuIC}
           onClick={openOptions}
