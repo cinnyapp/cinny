@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import './Tabs.scss';
+import { useTranslation } from 'react-i18next';
 
 import Button from '../button/Button';
 import ScrollView from '../scroll/ScrollView';
@@ -41,6 +42,8 @@ TabItem.propTypes = {
 function Tabs({ items, defaultSelected, onSelect }) {
   const [selectedItem, setSelectedItem] = useState(items[defaultSelected]);
 
+  const { t } = useTranslation();
+
   const handleTabSelection = (item, index, target) => {
     if (selectedItem === item) return;
     target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -60,7 +63,7 @@ function Tabs({ items, defaultSelected, onSelect }) {
               disabled={item.disabled}
               onClick={(e) => handleTabSelection(item, index, e.currentTarget)}
             >
-              {item.text}
+              {t(item.text)}
             </TabItem>
           ))}
         </div>

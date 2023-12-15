@@ -109,15 +109,15 @@ function AppearanceSection() {
           content={<Text variant="b3">Use light or dark mode based on the system settings.</Text>}
         />
         <SettingTile
-          title="Theme"
+          title={t('Organisms.Settings.theme.title')}
           content={
             <SegmentedControls
               selected={settings.useSystemTheme ? -1 : settings.getThemeIndex()}
               segments={[
-                { text: 'Light' },
-                { text: 'Silver' },
-                { text: 'Dark' },
-                { text: 'Butter' },
+                { text: t('Organisms.Settings.theme.theme_light') },
+                { text: t('Organisms.Settings.theme.theme_silver') },
+                { text: t('Organisms.Settings.theme.theme_dark') },
+                { text: t('Organisms.Settings.theme.theme_butter') },
               ]}
               onSelect={(index) => {
                 if (settings.useSystemTheme) toggleSystemTheme();
@@ -204,36 +204,34 @@ function AppearanceSection() {
           }
         />
         <SettingTile
-          title="Markdown formatting"
-          options={<Toggle isActive={isMarkdown} onToggle={() => setIsMarkdown(!isMarkdown)} />}
-          content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
+          title={t('Organisms.Settings.markdown.title')}
+          options={(
+            <Toggle
+              isActive={isMarkdown}
+              onToggle={() => setIsMarkdown(!isMarkdown) }
+            />
+          )}
+          content={<Text variant="b3">{t('Organisms.Settings.markdown.description')}</Text>}
         />
         <SettingTile
-          title="Hide membership events"
-          options={
+          title={t('Organisms.Settings.hide_membership_events.title')}
+          options={(
             <Toggle
               isActive={hideMembershipEvents}
               onToggle={() => setHideMembershipEvents(!hideMembershipEvents)}
             />
-          }
-          content={
-            <Text variant="b3">
-              Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and
-              Ban)
-            </Text>
-          }
+          )}
+          content={<Text variant="b3">{t('Organisms.Settings.hide_membership_events.description')}</Text>}
         />
         <SettingTile
-          title="Hide nick/avatar events"
-          options={
+          title={t('Organisms.Settings.hide_nickname_avatar_events.title')}
+          options={(
             <Toggle
               isActive={hideNickAvatarEvents}
               onToggle={() => setHideNickAvatarEvents(!hideNickAvatarEvents)}
             />
-          }
-          content={
-            <Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>
-          }
+          )}
+          content={<Text variant="b3">{t('Organisms.Settings.hide_nickname_avatar_events.description')}</Text>}
         />
         <SettingTile
           title="Disable media auto load"
@@ -545,11 +543,11 @@ function AboutSection() {
 }
 
 export const tabText = {
-  APPEARANCE: 'Appearance',
-  NOTIFICATIONS: 'Notifications',
-  EMOJI: 'Emoji',
-  SECURITY: 'Security',
-  ABOUT: 'About',
+  APPEARANCE: 'Organisms.Settings.tabs.appearance',
+  NOTIFICATIONS: 'Organisms.Settings.tabs.notifications',
+  EMOJI: 'Organisms.Settings.tabs.emoji',
+  SECURITY: 'Organisms.Settings.tabs.security',
+  ABOUT: 'Organisms.Settings.tabs.about',
 };
 const tabItems = [
   {

@@ -1,7 +1,47 @@
 {
+  "common": {
+    "options": "Options"
+  },
   "Organisms": {
+    "Settings": {
+      "theme": {
+        "follow_system": {
+          "title": "Follow system theme",
+          "description": "Use light or dark mode based on the system settings."
+        },
+        "title": "Theme",
+        "theme_light": "Light",
+        "theme_silver": "Silver",
+        "theme_dark": "Dark",
+        "theme_butter": "Butter"
+      },
+      "markdown": {
+        "title": "Markdown formatting",
+        "description": "Format messages with markdown before sending"
+      },
+      "hide_membership_events": {
+        "title": "Hide membership events",
+        "description": "Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and Ban)"
+      },
+      "hide_nickname_avatar_events": {
+        "title": "Hide nick/avatar events",
+        "description": "Hide nickname and avatar change messages from the room timeline."
+      },
+      "tabs": {
+        "appearance": "Appearance",
+        "notifications": "Notifications",
+        "emoji": "Emoji",
+        "security": "Security",
+        "about": "About"
+      }
+    },
     "RoomCommon": {
       "changed_room_name": " changed room name"
+    }
+  },
+  "Molecules": {
+    "ConfirmDialog": {
+      "cancel": "Cancel"
     }
   }
 }
