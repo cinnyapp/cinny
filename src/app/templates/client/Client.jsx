@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Client.scss';
+import { useTranslation } from 'react-i18next';
 
 import { initHotkeys } from '../../../client/event/hotkeys';
 import { initRoomListListener } from '../../../client/event/roomList';
@@ -37,8 +38,10 @@ function SystemEmojiFeature() {
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
-  const [loadingMsg, setLoadingMsg] = useState('Heating up');
+  const [loadingMsg, setLoadingMsg] = useState('Templates.Client.loading_messages.default');
   const classNameHidden = 'client__item-hidden';
+
+  const { t } = useTranslation();
 
   const navWrapperRef = useRef(null);
   const roomWrapperRef = useRef(null);
@@ -66,7 +69,7 @@ function Client() {
     changeLoading(true);
     let counter = 0;
     const iId = setInterval(() => {
-      const msgList = ['Almost there...', 'Looks like you have a lot of stuff to heat up!'];
+      const msgList = ['Templates.Client.loading_messages.message_one', 'Templates.Client.loading_messages.message_two'];
       if (counter === msgList.length - 1) {
         setLoadingMsg(msgList[msgList.length - 1]);
         clearInterval(iId);
@@ -93,9 +96,9 @@ function Client() {
             content={
               <>
                 <MenuItem onClick={() => initMatrix.clearCacheAndReload()}>
-                  Clear cache & reload
+                  {t('Templates.Client.clear_cache')}
                 </MenuItem>
-                <MenuItem onClick={() => initMatrix.logout()}>Logout</MenuItem>
+                <MenuItem onClick={() => initMatrix.logout()}>{t('Templates.Client.logout_prompt')}</MenuItem>
               </>
             }
             render={(toggle) => (
@@ -105,7 +108,7 @@ function Client() {
         </div>
         <Spinner />
         <Text className="loading__message" variant="b2">
-          {loadingMsg}
+          {t(loadingMsg)}
         </Text>
 
         <div className="loading__appname">

@@ -1,6 +1,17 @@
 {
   "common": {
-    "options": "Options"
+    "options": "Options",
+    "or": "Or"
+  },
+  "Components": {
+    "Files": {
+      "download": "Download",
+      "failure_pdf": "Failed to load PDF",
+      "retry": "Retry",
+      "previous": "Previous",
+      "jump_to_page": "Jump To Page",
+      "next": "Next"
+    }
   },
   "Organisms": {
     "Welcome": {
@@ -79,6 +90,19 @@
     "ConfirmDialog": {
       "cancel": "Cancel"
     },
+    "Message": {
+      "add_reaction": "Add reaction",
+      "reply": "Reply",
+      "edit": "Edit",
+      "read_receipts": "Read receipts",
+      "view_source": "View source"
+    },
+    "RoomNotification": {
+      "default": "Global",
+      "all_messages": "All messages",
+      "mentions_and_keywords": "Mentions & Keywords",
+      "mute": "Mute"
+    },
     "RoomOptions": {
       "title": "Options for {{room_name}}",
       "leave": {
@@ -99,6 +123,79 @@
       "manage_rooms": "Manage rooms",
       "settings": "Settings",
       "leave": "Leave"
+    }
+  },
+  "Templates": {
+    "Auth": {
+      "loading_homeserver_list": "Loading homeserver list...",
+      "looking_for_homeserver": "Looking for homeserver...",
+      "connecting_to_homeserver": "Connecting to {{homeserver}}...",
+      "unable_to_connect": "Unable to connect. Please check your input",
+      "username_taken": "Username is already taken",
+      "registration_in_progress": "Registration in progress...",
+      "link_about": "About",
+      "link_twitter": "Twitter",
+      "link_matrix": "Powered by Matrix",
+      "dont_have_an_account": "Dont have an account?",
+      "already_have_an_account": "Already have an account?",
+      "register_link": "Register",
+      "login_link": "Login",
+      "redirecting": "Redirecting...",
+      "login_in_progress": "Login in progress...",
+      "bad_localpart_error": "Username can only contain characters a-z, 0-9, or '=_-./'",
+      "user_id_too_long_error": "Your user ID, including the hostname, can't be more than 255 characters long.",
+      "bad_password_error": "Password must contain at least 1 lowercase, 1 uppercase, 1 number, 1 non-alphanumeric character, 8-127 characters with no space.",
+      "confirm_password_error": "Passwords don't match.",
+      "bad_email_error": "Invalid email address",
+      "invalid_password": "Invalid password",
+      "check_credentials": "Please check your credentials",
+      "login_types": {
+        "username": "Username",
+        "email": "Email"
+      },
+      "homeserver_form": {
+        "title": "Homeserver",
+        "header": "Homeserver list"
+      },
+      "login_form": {
+        "title": "Login",
+        "prompt_email": "Email",
+        "prompt_username": "Username",
+        "prompt_password": "Password",
+        "login_button": "Login"
+      },
+      "register_form": {
+        "title": "Register",
+        "prompt_email_required": "Email (Required)",
+        "prompt_email_optional": "Email",
+        "prompt_username": "Username",
+        "prompt_password": "Password",
+        "prompt_confirm_password": "Confirm password",
+        "register_button": "Register"
+      },
+      "terms_and_conditions": {
+        "title": "Agree with terms",
+        "description": "In order to complete registration, you need to agree to the terms and conditions.",
+        "accept": "I accept <a>Terms and Conditions</a>",
+        "submit_button": "Submit"
+      },
+      "validate_email": {
+        "title": "Verify email",
+        "continue_button": "Continue",
+        "message": "Please check your email <bold>{{email_address}}</bold> and validate before continuing further"
+      },
+      "captcha": {
+        "message": "Pleace check the box below to proceed"
+      }
+    },
+    "Client": {
+      "loading_messages": {
+        "default": "Heating up",
+        "message_one": "Almost there...",
+        "message_two": "Looks like you have a lot of stuff to heat up!"
+      },
+      "logout_prompt": "Logout",
+      "clear_cache": "Clear cache & reload"
     }
   }
 }

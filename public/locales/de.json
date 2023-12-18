@@ -1,6 +1,17 @@
 {
   "common": {
-    "options": "Optionen"
+    "options": "Optionen",
+    "or": "oder"
+  },
+  "Components": {
+    "Files": {
+      "download": "Herunterladen",
+      "failure_pdf": "Fehler beim Laden der PDF",
+      "retry": "Erneut Versuchen",
+      "previous": "Vorherige",
+      "jump_to_page": "Spring zu Seite",
+      "next": "Nächste"
+    }
   },
   "Organisms": {
     "Welcome": {
@@ -79,6 +90,19 @@
     "ConfirmDialog": {
       "cancel": "Abbrechen"
     },
+    "Message": {
+      "add_reaction": "Reaktion hinzufügen",
+      "reply": "Antworten",
+      "edit": "Bearbeiten",
+      "read_receipts": "Lesebestätigungen",
+      "view_source": "Quelle ansehen"
+    },
+    "RoomNotification": {
+      "default": "Global",
+      "all_messages": "Alle Nachrichten",
+      "mentions_and_keywords": "Erwähnungen & Schlüsselwörter",
+      "mute": "Stummschalten"
+    },
     "RoomOptions": {
       "title": "Optionen für {{room_name}}",
       "leave": {
@@ -99,6 +123,79 @@
       "manage_rooms": "Räume verwalten",
       "settings": "Einstellungen",
       "leave": "Verlassen"
+    }
+  },
+  "Templates": {
+    "Auth": {
+      "loading_homeserver_list": "Lade Liste der Homeserver...",
+      "looking_for_homeserver": "Suche nach Homeserver...",
+      "connecting_to_homeserver": "Verbinde mit {{homeserver}}...",
+      "unable_to_connect": "Keine Verbindung möglich. Bitte prüfe deine Eingabe",
+      "username_taken": "Benutzername ist bereits vergeben",
+      "registration_in_progress": "Registrierung in Bearbeitung...",
+      "link_about": "Über",
+      "link_twitter": "Twitter",
+      "link_matrix": "Powered by Matrix",
+      "dont_have_an_account": "Du hast noch keinen Account?",
+      "already_have_an_account": "Du hast bereits einen Account?",
+      "register_link": "Registrieren",
+      "login_link": "Anmelden",
+      "redirecting": "Leite weiter...",
+      "login_in_progress": "Anmeldung in Bearbeitung...",
+      "bad_localpart_error": "Der Benutzername darf nur die Zeichen a-z, 0-9 oder '=_-./' enthalten",
+      "user_id_too_long_error": "Deine Benutzer-ID, einschließlich des Hostnamens, darf nicht mehr als 255 Zeichen lang sein.",
+      "bad_password_error": "Das Kennwort muss mindestens 1 Kleinbuchstaben, 1 Großbuchstaben, 1 Ziffer, 1 Sonderzeichen und 8-127 Zeichen (keine Leerzeichen) enthalten.",
+      "confirm_password_error": "Die Kennwörter stimmen nicht überein",
+      "bad_email_error": "Ungültige E-Mail-Adresse",
+      "invalid_password": "Ungültiges Kennwort",
+      "check_credentials": "Bitte prüfe deine Zugangsdaten",
+      "login_types": {
+        "username": "Benutzername",
+        "email": "E-Mail"
+      },
+      "homeserver_form": {
+        "title": "Homeserver",
+        "header": "Liste der Homeserver"
+      },
+      "login_form": {
+        "title": "Anmeldung",
+        "prompt_email": "E-Mail",
+        "prompt_username": "Benutzername",
+        "prompt_password": "Kennwort",
+        "login_button": "Anmelden"
+      },
+      "register_form": {
+        "title": "Registrierung",
+        "prompt_email_required": "E-Mail (erforderlich)",
+        "prompt_email_optional": "E-Mail",
+        "prompt_username": "Benutzername",
+        "prompt_password": "Kennwort",
+        "prompt_confirm_password": "Kennwort bestätigen",
+        "register_button": "Registrieren"
+      },
+      "terms_and_conditions": {
+        "title": "Den Bedingungen zustimmen",
+        "description": "Um die Registrierung abzuschließen, musst du den Nutzungsbedingungen zustimmen.",
+        "accept": "Ich stimme den <a>Nutzungsbedingungen</a> zu",
+        "submit_button": "Absenden"
+      },
+      "validate_email": {
+        "title": "E-Mail verifizieren",
+        "continue_button": "Fortfahren",
+        "message": "Bitte prüfe dein E-Mail-Postfach <bold>{{email_address}}</bold> und validiere deine E-Mail-Adresse bevor du fortfährst"
+      },
+      "captcha": {
+        "message": "Bitte markiere das folgende Feld um fortzufahren"
+      }
+    },
+    "Client": {
+      "loading_messages": {
+        "default": "Aufwärmen",
+        "message_one": "Beinahe am Ziel...",
+        "message_two": "Sieht aus, als hättest du eine Menge Zeug aufzuwärmen!"
+      },
+      "logout_prompt": "Abmeldung",
+      "clear_cache": "Zwischenspeicher löschen & neuladen"
     }
   }
 }

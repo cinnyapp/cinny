@@ -31,6 +31,7 @@ import React, {
   useCallback,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
@@ -180,6 +181,7 @@ export const MessageReadReceiptItem = as<
     setOpen(false);
     onClose?.();
   };
+  const { t } = useTranslation();
 
   return (
     <>
@@ -208,7 +210,7 @@ export const MessageReadReceiptItem = as<
         aria-pressed={open}
       >
         <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          Read Receipts
+          {t('Molecules.Message.read_receipts')}
         </Text>
       </MenuItem>
     </>
@@ -257,6 +259,7 @@ export const MessageSourceCodeItem = as<
     setOpen(false);
     onClose?.();
   };
+  const { t } = useTranslation();
 
   return (
     <>
@@ -290,7 +293,7 @@ export const MessageSourceCodeItem = as<
         aria-pressed={open}
       >
         <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          View Source
+        {t('Molecules.Message.view_source')}
         </Text>
       </MenuItem>
     </>
@@ -712,6 +715,7 @@ export const Message = as<'div', MessageProps>(
     const closeMenu = () => {
       setMenu(false);
     };
+    const { t } = useTranslation();
 
     return (
       <MessageBase
@@ -831,7 +835,7 @@ export const Message = as<'div', MessageProps>(
                                 size="T300"
                                 truncate
                               >
-                                Add Reaction
+                                {t('Molecules.Message.add_reaction')}
                               </Text>
                             </MenuItem>
                           )}
@@ -858,7 +862,7 @@ export const Message = as<'div', MessageProps>(
                               size="T300"
                               truncate
                             >
-                              Reply
+                              {t('Molecules.Message.reply')}
                             </Text>
                           </MenuItem>
                           {canEditEvent(mx, mEvent) && onEditId && (
@@ -878,7 +882,7 @@ export const Message = as<'div', MessageProps>(
                                 size="T300"
                                 truncate
                               >
-                                Edit Message
+                                {t('Molecules.Message.edit')}
                               </Text>
                             </MenuItem>
                           )}

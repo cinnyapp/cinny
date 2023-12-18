@@ -19,6 +19,7 @@ import {
   as,
   config,
 } from 'folds';
+import { useTranslation } from 'react-i18next';
 import FocusTrap from 'focus-trap-react';
 import FileSaver from 'file-saver';
 import * as css from './PdfViewer.css';
@@ -97,6 +98,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
       if (docState.status !== AsyncStatus.Success) return;
       setPageNo((n) => Math.min(n + 1, docState.data.numPages));
     };
+    const { t } = useTranslation();
 
     return (
       <Box className={classNames(css.PdfViewer, className)} direction="Column" {...props} ref={ref}>
@@ -139,7 +141,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               radii="300"
               before={<Icon size="50" src={Icons.Download} />}
             >
-              <Text size="B300">Download</Text>
+              <Text size="B300">{t('Components.Files.download')}</Text>
             </Chip>
           </Box>
         </Header>
@@ -147,7 +149,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
           {isLoading && <Spinner variant="Secondary" size="600" />}
           {isError && (
             <>
-              <Text>Failed to load PDF</Text>
+              <Text>{t('Components.Files.failure_pdf')}</Text>
               <Button
                 variant="Critical"
                 fill="Soft"
@@ -156,7 +158,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
                 before={<Icon src={Icons.Warning} size="50" />}
                 onClick={loadPdfJS}
               >
-                <Text size="B300">Retry</Text>
+                <Text size="B300">{t('Components.Files.retry')}</Text>
               </Button>
             </>
           )}
@@ -183,7 +185,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               onClick={handlePrevPage}
               aria-disabled={pageNo <= 1}
             >
-              <Text size="B300">Previous</Text>
+              <Text size="B300">{t('Components.Files.previous')}</Text>
             </Chip>
             <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
               <PopOut
@@ -220,7 +222,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
                           aria-label="Page Number"
                         />
                         <Button type="submit" size="300" variant="Primary" radii="300">
-                          <Text size="B300">Jump To Page</Text>
+                          <Text size="B300">{t('Components.Files.jump_to_page')}</Text>
                         </Button>
                       </Box>
                     </Menu>
@@ -247,7 +249,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               onClick={handleNextPage}
               aria-disabled={pageNo >= docState.data.numPages}
             >
-              <Text size="B300">Next</Text>
+              <Text size="B300">{t('Components.Files.next')}</Text>
             </Chip>
           </Header>
         )}
