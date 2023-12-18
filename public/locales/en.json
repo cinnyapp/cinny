@@ -1,7 +1,14 @@
 {
   "common": {
+    "close": "Close",
     "options": "Options",
-    "or": "Or"
+    "or": "Or",
+    "search": "Search",
+    "invite": "Invite",
+    "message_prompt": "Message"
+  },
+  "errors": {
+    "generic": "Something went wrong!"
   },
   "Components": {
     "Files": {
@@ -11,6 +18,24 @@
       "previous": "Previous",
       "jump_to_page": "Jump To Page",
       "next": "Next"
+    },
+    "UploadBoard": {
+      "files": "Files",
+      "send": "Send",
+      "upload_failed": "Upload Failed"
+    },
+    "MemberEvent": {
+      "invited": " invited <user_invited />",
+      "reject_invite": " rejected the invitation ",
+      "requested_join": " request to join room ",
+      "joined": " joined the room"
+    },
+    "RoomIntro": {
+      "created_by_on": "Created by <user /> on {{time}}",
+      "beginning": "This is the beginning of conversation.",
+      "invite_member": "Invite Member",
+      "open_old_room": "Open Old Room",
+      "join_old_room": "Join Old Room"
     }
   },
   "Organisms": {
@@ -23,6 +48,25 @@
       "uncategorize_subspaces": "Uncategorize subspaces",
       "pin_sidebar": "Pin to sidebar",
       "unpin_sidebar": "Unpin from sidebar"
+    },
+    "MembersDrawer": {
+      "members": "Members",
+      "invite_member": "Invite Member",
+      "type_name": "Type name...",
+      "Filter": {
+        "no_members": "No \"{{membershipFilter}}\" Members",
+        "joined": "Joined",
+        "invited": "Invited",
+        "left": "Left",
+        "kicked": "Kicked",
+        "banned": "Banned"
+      },
+      "Sort": {
+        "aToZ": "A to Z",
+        "tToA": "Z to A",
+        "newest": "Newest",
+        "oldest": "Oldest"
+      }
     },
     "Settings": {
       "theme": {
@@ -57,6 +101,23 @@
       }
     },
     "RoomCommon": {
+      "user_joined": "<bold><user/></bold> joined the room",
+      "user_left": "<bold><user/></bold> left the room",
+      "user_left_reason": "<bold><user/></bold> left the room: <reason/>",
+      "user_invited": "<bold><inviter/></bold> invited <bold><user/></bold>",
+      "invite_cancelled": "<bold><inviter/></bold> cancelled <bold><user/>'s</bold> invite",
+      "invite_rejected": "<bold><user/></bold> rejected the invitation",
+      "user_kicked": "<bold><actor/></bold> kicked <bold><user/></bold>",
+      "user_kicked_reason": "<bold><actor/></bold> kicked <bold><user/></bold>: <reason/>",
+      "user_banned": "<bold><actor/></bold> banned <bold><user/></bold>",
+      "user_banned_reason": "<bold><actor/></bold> banned <bold><user/></bold>: <reason/>",
+      "user_unbanned": "<bold><actor/> unbanned <bold><user/></bold>",
+      "avatar_set": "<bold><user/></bold> set an avatar",
+      "avatar_changed": "<bold><user/></bold> changed their avatar",
+      "avatar_removed": "<bold><user/></bold> removed their avatar",
+      "name_set": "<bold><user/></bold> set their display name to <bold><new_name/></bold>",
+      "name_changed": "<bold><user/></bold> changed their display name to <bold><new_name/></bold>",
+      "name_removed": "<bold><user/></bold> removed their display name <bold><last_name/></bold>",
       "changed_room_name": " changed room name"
     },
     "DrawerBreadcrumb": {
@@ -84,6 +145,21 @@
       "pin_spaces_tooltip": "Pin spaces",
       "search_tooltip": "Search",
       "invites_tooltip": "Invites"
+    },
+    "InviteUser": {
+      "user_not_found": "{{user_name}} not found!",
+      "no_matches_found": "No matches found for {{user_name}}",
+      "invite_result": {
+        "invited": "Invited",
+        "already_joined": "Already joined",
+        "already_invited": "Already invited",
+        "banned": "Banned"
+      },
+      "search_label": "Name or User ID",
+      "search_result_title": "Search result for user {{user_name}}",
+      "searching_for_user": "Searching for user {{user_name}}...",
+      "invite_to_room": "Invite to {{room}}",
+      "invite_to_dm": "Direct Message"
     }
   },
   "Molecules": {

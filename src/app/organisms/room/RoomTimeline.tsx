@@ -1477,7 +1477,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
       const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
-
+    
       return (
         <Event
           key={mEvent.getId()}

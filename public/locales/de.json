@@ -1,7 +1,14 @@
 {
   "common": {
+    "close": "Schließen",
     "options": "Optionen",
-    "or": "oder"
+    "or": "oder",
+    "search": "Suche",
+    "invite": "Einladen",
+    "message_prompt": "Nachricht"
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgegangen!"
   },
   "Components": {
     "Files": {
@@ -11,6 +18,24 @@
       "previous": "Vorherige",
       "jump_to_page": "Spring zu Seite",
       "next": "Nächste"
+    },
+    "UploadBoard": {
+      "files": "Dateien",
+      "send": "Senden",
+      "upload_failed": "Hochladen fehlgeschlagen"
+    },
+    "MemberEvent": {
+      "invited": " hat <user_invited /> eingeladen",
+      "reject_invite": " hat die Einladung abgelehnt ",
+      "requested_join": " hat angefragt dem Raum bei zu tretten ",
+      "joined": " ist dem Raum beigetreten"
+    },
+    "RoomIntro": {
+      "created_by_on": "Erstellt von <user /> am {{time}}",
+      "beginning": "Das ist der Start der Unterhaltung.",
+      "invite_member": "Nutzer einladen",
+      "open_old_room": "Alten Raum öffnen",
+      "join_old_room": "Altem Raum beitreten"
     }
   },
   "Organisms": {
@@ -23,6 +48,25 @@
       "uncategorize_subspaces": "Unter-Spaces nicht kategorisieren",
       "pin_sidebar": "An Seitenleiste anheften",
       "unpin_sidebar": "Von Seitenleiste lösen"
+    },
+    "MembersDrawer": {
+      "members": "Nutzer",
+      "invite_member": "Nutzer einladen",
+      "type_name": "Schreibe Name...",
+      "Filter": {
+        "no_members": "Keine \"{{membershipFilter}}\" Nutzer",
+        "joined": "Beigetreten",
+        "invited": "Eingeladen",
+        "left": "Verlassen",
+        "kicked": "Entfernt",
+        "banned": "Verbant"
+      },
+      "Sort": {
+        "aToZ": "A bis Z",
+        "tToA": "Z bis A",
+        "newest": "Neueste",
+        "oldest": "Älteste"
+      }
     },
     "Settings": {
       "theme": {
@@ -57,6 +101,23 @@
       }
     },
     "RoomCommon": {
+      "user_joined": "<bold><user/></bold> ist dem Raum beigetreten",
+      "user_left": "<bold><user/></bold> hat den Raum verlassen",
+      "user_left_reason": "<bold><user/></bold> hat den Raum verlassen: <reason/>",
+      "user_invited": "<bold><inviter/></bold> hat <bold><user/></bold> eingeladen",
+      "invite_cancelled": "<bold><inviter_name/></bold> hat <bold><user_name/>'s</bold> Einladung widerrufen",
+      "invite_rejected": "<bold><user_name/></bold> hat die Einladung abgelehnt",
+      "user_kicked": "<bold><actor/></bold> hat <bold><user_name/></bold> entfernt",
+      "user_kicked_reason": "<bold><actor/></bold> hat <bold><user/></bold> entfernt: <reason/>",
+      "user_banned": "<bold><actor/></bold> hat <bold><user_name/></bold> gebannt",
+      "user_banned_reason": "<bold><actor/></bold> banned <bold><user/></bold>: <reason/>",
+      "user_unbanned": "<bold><actor/> hat <bold><user_name/></bold> entbannt",
+      "avatar_set": "<bold><user_name/></bold> hat einen Avatar festgelegt",
+      "avatar_changed": "<bold><user_name/></bold> hat den Avatar geändert",
+      "avatar_removed": "<bold><user_name/></bold> hat den Avatar entfernt",
+      "name_set": "<bold><user_name/></bold> hat den Anzeigenamen <bold><new_name/></bold> gewählt",
+      "name_changed": "<bold><user_name/></bold> hat den Anzeigenamen in <bold><new_name/></bold> geändert",
+      "name_removed": "<bold><user_name/></bold> hat den Anzeigenamen <bold><new_name/></bold> entfernt",
       "changed_room_name": " hat den Raum Name geändert"
     },
     "DrawerBreadcrumb": {
@@ -84,6 +145,21 @@
       "pin_spaces_tooltip": "Spaces anheften",
       "search_tooltip": "Suche",
       "invites_tooltip": "Einladungen"
+    },
+    "InviteUser": {
+      "user_not_found": "{{user_name}} nicht gefunden!",
+      "no_matches_found": "Keine Treffer für {{user_name}} gefunden",
+      "invite_result": {
+        "invited": "Eingeladen",
+        "already_joined": "Bereits beigetreten",
+        "already_invited": "Bereits eingeladen",
+        "banned": "Gebannt"
+      },
+      "search_label": "Name oder Benutzer-ID",
+      "search_result_title": "Suchergebnis für Benutzer {{user_name}}",
+      "searching_for_user": "Suche nach Benutzer {{user_name}}...",
+      "invite_to_room": "In {{room}} einladen",
+      "invite_to_dm": "Direktnachricht"
     }
   },
   "Molecules": {

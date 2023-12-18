@@ -1,6 +1,8 @@
 /* eslint-disable import/prefer-default-export */
+import React from 'react';
 import linkifyHtml from 'linkify-html';
 import parse from 'html-react-parser';
+import PropTypes from 'prop-types';
 import { sanitizeText } from './sanitize';
 
 export const TWEMOJI_BASE_URL = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/';
@@ -29,3 +31,19 @@ export function twemojify(text, opts, linkify = false, sanitize = true) {
   }
   return parse(content);
 }
+
+export function Twemojify({ text }) {
+  return (
+    <>
+      {twemojify(text)}
+    </>
+  );
+}
+
+Twemojify.defaultProps = {
+  text: null,
+};
+
+Twemojify.propTypes = {
+  text: PropTypes.string,
+};
