@@ -2,7 +2,15 @@
   "common": {
     "close": "Close",
     "options": "Options",
+    "delete": "Delete",
+    "continue": "Continue",
+    "view_more": "View more",
+    "view_less": "View less",
+    "copy": "Copy",
+    "download": "Download",
     "or": "Or",
+    "reset": "Reset",
+    "setup": "Setup",
     "search": "Search",
     "invite": "Invite",
     "message_prompt": "Message"
@@ -100,6 +108,75 @@
         "about": "About"
       }
     },
+    "SecretStorageAccess": {
+      "incorrect_security_key": "Incorrect security key",
+      "incorrect_security_phrase": "Incorrect security phrase",
+      "security_phrase": "Security Phrase",
+      "security_key": "Security Key",
+      "use_security_key": "Use Security Key",
+      "use_security_phrase": "Use Security Phrase"
+    },
+    "KeyBackup": {
+      "create_backup_title": "Create key backup",
+      "create_backup_tooltip": "Create backup",
+      "creating_backup": "Creating Backup...",
+      "backup_created": "Successfully created backup",
+      "backup_failed": "Failed to create backup",
+      "restoring": "Restoring backup keys...",
+      "restoring_progress": "Restoring backup keys... ({{progress}}/{{total}}",
+      "restore_backup_title": "Restore Key Backup",
+      "restore_backup_tooltip": "Restore Key Backup",
+      "restore_complete": "Successfully restored backup keys ({{progress}}/{{total}})",
+      "restore_failed_bad_key": "Failed to restore backup. Key is invalid!",
+      "restore_failed_unknown": "Failed to restore backup.",
+      "delete_key_backup_title": "Delete key backup",
+      "delete_key_backup_tooltip": "Delete backup",
+      "delete_key_backup_subtitle": "Deleting key backup is permanent.",
+      "delete_key_backup_message": "All encrypted message keys stored on the server will be permanently deleted.",
+      "encrypted_messages_backup_description": "Online backup your encrypted messages keys with your account data in case you lose access to your sessions. Your keys will be secured with a unique Security Key.",
+      "encrypted_messages_backup_title": "Encrypted messages backup",
+      "encrypted_messages_backup_cross_signing_disabled": "Setup cross signing to backup your encrypted messages."
+    },
+    "DeviceManage": {
+      "edit_session_name_title": "Edit session name",
+      "edit_session_name_subtitle": "Session name",
+      "edit_session_name_tooltip": "Edit session name",
+      "current_device_label": "Current",
+      "verify_session_button": "Verify",
+      "unverified_sessions_title": "Unverified sessions",
+      "unverified_sessions_none": "No unverified sessions",
+      "unencrypted_sessions_title": "Sessions without encryption support",
+      "verified_sessions_title": "Verified sessions",
+      "verified_sessions_none": "No verified sessions",
+      "setup_cross_signing_message": "Setup cross signing in case you lose all your sessions",
+      "loading_devices": "Loading devices...",
+      "logout_device_title": "Logout {{device}}",
+      "logout_device_message": "You are about to log out the session for {{device}}",
+      "last_activity": "Last activity",
+      "verify_this_session": "Verify this session either with your Security Key/Phrase here or by initiating emoji verification from a verified session.",
+      "verify_other_session": "Verify other sessions by emoji verification or remove unfamiliar ones.",
+      "logout_device_confirm": "Logout",
+      "logout_device_tooltip": "Remove session",
+      "session_verification_title": "Session Verification",
+      "session_name_privacy_message": "Session names are visible to everyone, so do not put any private info here."
+    },
+    "CrossSigning": {
+      "title": "Cross Signing",
+      "setup_failed": "Failed to setup cross signing. Please try again",
+      "setup": "Setup cross signing",
+      "save_security_key_message": "Please save this security key somewhere safe",
+      "security_key_dialog_title": "Security Key",
+      "security_key_generation_message": "We will generate a Security Key, which you can use to manage message backups and session verification.",
+      "security_key_generation_button": "Generate Key",
+      "security_phrase_message": "Alternatively you can set a 'Security Phrase' so you don't have to remember the long Security Key, and optionally save the key as a backup",
+      "security_phrase_label": "Security Phrase",
+      "security_phrase_confirm_label": "Confirm Security Phrase",
+      "security_phrase_set_button": "Set Phrase & Generate Key",
+      "setup_dialog_title": "Setup cross signing",
+      "setup_message": "Setup to verify and keep track of all your sessions. Also required to backup encrypted message.",
+      "reset_keys_subtitle": "Resetting cross-signing keys is permanent.",
+      "reset_keys_message": "Anyone you have verified with will see security alerts and your message backup will lost. You almost certainly do not want to do this, unless you have lost Security Key or Phrase and every session you can cross-sign from."
+    },
     "RoomCommon": {
       "user_joined": "<bold><user/></bold> joined the room",
       "user_left": "<bold><user/></bold> left the room",
@@ -189,6 +266,100 @@
       "mark_as_read": "Mark as read",
       "notifications_heading": "Notifications",
       "invite": "Invite"
+    },
+    "RoomPermissions": {
+      "default_role": {
+        "name": "Default role",
+        "description": "Set default role for all members"
+      },
+      "send_messages": {
+        "name": "Send messages",
+        "description": "Set minimum power level to send messages in a room"
+      },
+      "reactions": {
+        "name": "Send reactions",
+        "description": "Set minimum power level to send reactions in a room"
+      },
+      "delete": {
+        "name": "Delete messages sent by others",
+        "description": "Set minumum power level to delete messages in a room"
+      },
+      "notifications": {
+        "name": "Ping room",
+        "description": "Set minimum power level to ping room"
+      },
+      "manage_rooms": {
+        "name": "Manage rooms in space",
+        "description": "Set minimum power level to manage rooms in space"
+      },
+      "invite": {
+        "name": "Invite",
+        "description": "Set minimum power level to invite members"
+      },
+      "kick": {
+        "name": "Kick",
+        "description": "Set minimum power level to kick members"
+      },
+      "ban": {
+        "name": "Ban",
+        "description": "Set minimum power level to ban members"
+      },
+      "change_avatar": {
+        "name": "Change avatar",
+        "description": "Set minimum power level to change room/space avatar"
+      },
+      "change_name": {
+        "name": "Change name",
+        "description": "Set minimum power evel to change room/space name"
+      },
+      "change_topic": {
+        "name": "Change topic",
+        "description": "Set minimum power level to change room/space topic"
+      },
+      "change_settings": {
+        "name": "Change settings",
+        "description": "Set minimum power level to change settings"
+      },
+      "change_published_address": {
+        "name": "Change published address",
+        "description": "Set minimum power level to publish and set main address"
+      },
+      "change_permissions": {
+        "name": "Change permissions",
+        "description": "Set minimum power level to change permissions"
+      },
+      "enable_room_encryption": {
+        "name": "Enable room encryption",
+        "description": "Set minimum power level to enable room encryption"
+      },
+      "change_history_visibility": {
+        "name": "Change history visibility",
+        "description": "Set minimum power level to change room message history visibility"
+      },
+      "upgrade_room": {
+        "name": "Upgrade room",
+        "description": "Set minimum power level to upgrade room"
+      },
+      "pin_messages": {
+        "name": "Pin messages",
+        "description": "Set minimum power level to pin messages in a room"
+      },
+      "change_acls": {
+        "name": "Change server ACLs",
+        "description": "Set minimum power level to change server ACLs"
+      },
+      "modify_widgets": {
+        "name": "Modify widgets",
+        "description": "Set minimum power level to modify room widgets"
+      },
+      "groups": {
+        "general": "General permissions",
+        "manage_members": "Manage members permissions",
+        "room": "Room profile permissions",
+        "space": "Space profile permissions",
+        "other": "Other permissions",
+        "settings": "Settings permissions"
+      }
     },
     "SpaceOptions": {
       "leave_space": "Leave Space",

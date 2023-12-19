@@ -2,7 +2,15 @@
   "common": {
     "close": "Schließen",
     "options": "Optionen",
+    "delete": "Löschen",
+    "continue": "Weiter",
+    "view_more": "Mehr ansehen",
+    "view_less": "Weniger ansehen",
+    "copy": "Kopieren",
+    "download": "Herunterladen",
     "or": "oder",
+    "reset": "Zurücksetzen",
+    "setup": "Einrichtung",
     "search": "Suche",
     "invite": "Einladen",
     "message_prompt": "Nachricht"
@@ -100,6 +108,75 @@
         "about": "Über"
       }
     },
+    "SecretStorageAccess": {
+      "incorrect_security_key": "Falscher Sicherheitsschlüssel",
+      "incorrect_security_phrase": "Falsche Sicherheitsphrase",
+      "security_phrase": "Sicherheitsphrase",
+      "security_key": "Sicherheitsschlüssel",
+      "use_security_key": "Verwende Sicherheitsschlüssel",
+      "use_security_phrase": "Verwende Sicherheitsphrase"
+    },
+    "KeyBackup": {
+      "create_backup_title": "Schlüsselsicherung erstellen",
+      "create_backup_tooltip": "Sicherung erstellen",
+      "creating_backup": "Erstelle Sicherung...",
+      "backup_created": "Sicherung erfolgreich erstellt",
+      "backup_failed": "Erstellen der Sicherung fehlgeschlagen",
+      "restoring": "Stelle Schlüsselsicherung wieder her...",
+      "restoring_progress": "Schlüsselsicherung wiederherstellen... ({{progress}}/{{total}}",
+      "restore_backup_title": "Schlüsselsicherung wiederherstellen",
+      "restore_backup_tooltip": "Schlüsselsicherung wiederherstellen",
+      "restore_complete": "Schlüsselsicherung erfolgreich wiederhergestellt ({{progress}}/{{total}})",
+      "restore_failed_bad_key": "Wiederherstellung der Sicherung fehlgeschlagen. Ungültiger Schlüssel!",
+      "restore_failed_unknown": "Wiederherstellung der Sicherung fehlgeschlagen.",
+      "delete_key_backup_title": "Schlüsselsicherung löschen",
+      "delete_key_backup_tooltip": "Sicherung löschen",
+      "delete_key_backup_subtitle": "Das Löschen von Schlüsselsicherungen ist nicht umkehrbar.",
+      "delete_key_backup_message": "Alle auf dem Server gespeicherten verschlüsselten Nachrichten werden dauerhaft gelöscht.",
+      "encrypted_messages_backup_description": "Sichere die Schlüssel für deine verschlüsselten Nachrichten online in deinem Account, falls du den Zugriff auf deine Sitzungen verlierst. Deine Schlüssel werden mit einem eindeutigen Sicherheitsschlüssel gesichert.",
+      "encrypted_messages_backup_title": "Verschlüsselte Nachrichten sichern",
+      "encrypted_messages_backup_cross_signing_disabled": "Richte Quersignaturen ein, um deine verschlüsselten Nachrichten zu sichern."
+    },
+    "DeviceManage": {
+      "edit_session_name_title": "Sitzungsnamen bearbeiten",
+      "edit_session_name_subtitle": "Sitzungsname",
+      "edit_session_name_tooltip": "Sitzungsnamen bearbeiten",
+      "current_device_label": "Aktuell",
+      "verify_session_button": "Verifizieren",
+      "unverified_sessions_title": "Unverifizierte Sitzungen",
+      "unverified_sessions_none": "Keine unverifizierten Sitzungen",
+      "unencrypted_sessions_title": "Sitzungen ohne Unterstützung für Verschlüsselung",
+      "verified_sessions_title": "Verifizierte Sitzungen",
+      "verified_sessions_none": "Keine verifizierten Sitzungen",
+      "setup_cross_signing_message": "Richte Quersignaturen ein, falls du deine verschlüsselten Sitzungen verlierst",
+      "loading_devices": "Lade Geräte...",
+      "logout_device_title": "{{device}} abmelden",
+      "logout_device_message": "Du bist dabei dich von der Sitzung für {{device}} abzumelden",
+      "last_activity": "Letzte Aktivität",
+      "verify_this_session": "Verifizieren Sie diese Sitzung entweder mit Ihrem Sicherheitsschlüssel/-phrase hier oder indem Sie die Emoji-Verifizierung aus einer verifizierten Sitzung heraus starten.",
+      "verify_other_session": "Überprüfen Sie andere Sitzungen durch Emoji-Verifizierung oder entfernen Sie unbekannte.",
+      "logout_device_confirm": "Abmeldung",
+      "logout_device_tooltip": "Sitzung entfernen",
+      "session_verification_title": "Sitzungsverifizierung",
+      "session_name_privacy_message": "Sitzungsnamen sind für jeden sichtbar, also gib hier keine privaten Informationen ein."
+    },
+    "CrossSigning": {
+      "title": "Quersignaturen",
+      "setup_failed": "Die Einrichtung von Quersignaturen ist fehlgeschlagen. Bitte versuche es erneut",
+      "setup": "Quersignaturen einrichten",
+      "save_security_key_message": "Bitte speichere diesen Sicherheitsschlüssel an einem sicheren Ort",
+      "security_key_dialog_title": "Sicherheitsschlüssel",
+      "security_key_generation_message": "Wir werden einen Sicherheitsschlüssel generieren, den du verwenden kannst um Nachrichtensicherungen und Sitzungsverifizierungen zu verwalten.",
+      "security_key_generation_button": "Schlüssel erzeugen",
+      "security_phrase_message": "Alternativ kannst du eine 'Sicherheitsphrase' festlegen, so dass du dir den langen Sicherheitsschlüssel nicht merken musst, und optional den Schlüssel als Sicherung speichern.",
+      "security_phrase_label": "Sicherheitsphrase",
+      "security_phrase_confirm_label": "Sicherheitsphrase bestätigen",
+      "security_phrase_set_button": "Lege Phrase fest & erzeuge Schlüssel",
+      "setup_dialog_title": "Quersignaturen einrichten",
+      "setup_message": "Richte Quersignaturen ein, um deine Sitzungen zu verifizieren und den Überblick zu behalten. Wird auch benötigt, um verschlüsselte Nachrichten zu sichern.",
+      "reset_keys_subtitle": "Das Zurücksetzen der Quersignatur-Schlüssel ist nicht umkehrbar.",
+      "reset_keys_message": "Jeder, bei dem du dich verifiziert hast, wird Sicherheitswarnungen erhalten und deine Nachrichtensicherung geht verloren. Dies ist mit hoher Wahrscheinlichkeit nicht das was du tun möchtest, es sei denn du hast den Sicherheitsschlüssel oder die Sicherheitsphrase und jede Sitzung von der aus du quersignieren könntest verloren."
+    },
     "RoomCommon": {
       "user_joined": "<bold><user/></bold> ist dem Raum beigetreten",
       "user_left": "<bold><user/></bold> hat den Raum verlassen",
@@ -189,6 +266,100 @@
       "mark_as_read": "Als gelesen markieren",
       "notifications_heading": "Benachrichtigungen",
       "invite": "Einladen"
+    },
+    "RoomPermissions": {
+      "default_role": {
+        "name": "Standardrolle",
+        "description": "Standardrolle für alle Mitglieder festlegen"
+      },
+      "send_messages": {
+        "name": "Nachrichten senden",
+        "description": "Mindestberechtigungsstufe festlegen, um Nachrichten in einem Raum senden zu können"
+      },
+      "reactions": {
+        "name": "Reaktionen senden",
+        "description": "Mindestberechtigungsstufe festlegen, um Reaktionen in einem Raum senden zu können"
+      },
+      "delete": {
+        "name": "Nachrichten von anderen löschen",
+        "description": "Mindestberechtigungsstufe festlegen, um Nachrichten anderer Benutzer in einem Raum löschen zu können"
+      },
+      "notifications": {
+        "name": "Raum anpingen",
+        "description": "Mindestberechtigungsstufe festlegen, um einen Raum anpingen zu können"
+      },
+      "manage_rooms": {
+        "name": "Räume in Spaces verwalten",
+        "description": "Mindestberechtigungsstufe festlegen, um Räume in Spaces verwalten zu können"
+      },
+      "invite": {
+        "name": "Einladen",
+        "description": "Mindestberechtigungsstufe festlegen, um neue Mitglieder in einen Raum einladen zu können"
+      },
+      "kick": {
+        "name": "Entfernen",
+        "description": "Mindestberechtigungsstufe festlegen, um Mitglieder aus einem Raum entfernen zu können"
+      },
+      "ban": {
+        "name": "Bannen",
+        "description": "Mindestberechtigungsstufe festlegen, um Mitglieder eines Raums bannen zu können"
+      },
+      "change_avatar": {
+        "name": "Avatar ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um den Avatar eines Raums/Spaces ändern zu können"
+      },
+      "change_name": {
+        "name": "Namen ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um den Namen eines Raums/Spaces ändern zu können"
+      },
+      "change_topic": {
+        "name": "Thema ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um das Thema eines Raums/Spaces ändern zu können"
+      },
+      "change_settings": {
+        "name": "Einstellungen ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um die Einstellungen eines Raums/Spaces ändern zu können"
+      },
+      "change_published_address": {
+        "name": "Veröffentlichte Adressen ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um eine Hauptadresse festlegen und freigeben zu können"
+      },
+      "change_permissions": {
+        "name": "Berechtigungen ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um Berechtigungen ändern zu können"
+      },
+      "enable_room_encryption": {
+        "name": "Verschlüsselung aktivieren",
+        "description": "Mindestberechtigungsstufe festlegen, um die Verschlüsselung eines Raums aktivieren zu können"
+      },
+      "change_history_visibility": {
+        "name": "Sichtbarkeit des Verlaufs ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um die Sichtbarkeit des Nachrichtenverlaufs eines Raums ändern zu können"
+      },
+      "upgrade_room": {
+        "name": "Raum aktualisieren",
+        "description": "Mindestberechtigungsstufe festlegen, um einen Raum aktualisieren zu können"
+      },
+      "pin_messages": {
+        "name": "Nachrichten anheften",
+        "description": "Mindestberechtigungsstufe festlegen, um Nachrichten in einem Raum anheften zu können"
+      },
+      "change_acls": {
+        "name": "Server ACLs ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um Server ACLs ändern zu können"
+      },
+      "modify_widgets": {
+        "name": "Widgets modifizieren",
+        "description": "Mindestberechtigungsstufe festlegen, um in einem Raum Widgets modifizieren zu können"
+      },
+      "groups": {
+        "general": "Allgemeine Berechtigungen",
+        "manage_members": "Berechtigungen von Mitgliedern verwalten",
+        "room": "Berechtigungen für Raum-Profil",
+        "space": "Berechtigungen für Space-Profil",
+        "other": "Andere Berechtigungen",
+        "settings": "Berechtigungen für Einstellungen"
+      }
     },
     "SpaceOptions": {
       "leave_space": "Space verlassen",
