@@ -1693,7 +1693,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         <MessageBase space={messageSpacing}>
           <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
             <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
-              <Text size="L400">New Messages</Text>
+              <Text size="L400">{t('Organisms.RoomCommon.new_messages')}</Text>
             </Badge>
           </TimelineDivider>
         </MessageBase>
@@ -1706,8 +1706,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
               <Text size="L400">
                 {(() => {
-                  if (today(mEvent.getTs())) return 'Today';
-                  if (yesterday(mEvent.getTs())) return 'Yesterday';
+                  if (today(mEvent.getTs())) return t('Time.today');
+                  if (yesterday(mEvent.getTs())) return t('Time.yesterday');
                   return timeDayMonthYear(mEvent.getTs());
                 })()}
               </Text>

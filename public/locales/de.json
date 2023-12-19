@@ -2,6 +2,8 @@
   "common": {
     "close": "Schließen",
     "options": "Optionen",
+    "source_code": "Quellcode",
+    "sponsor": "Unterstützen",
     "delete": "Löschen",
     "continue": "Weiter",
     "view_more": "Mehr ansehen",
@@ -36,7 +38,8 @@
       "invited": " hat <user_invited /> eingeladen",
       "reject_invite": " hat die Einladung abgelehnt ",
       "requested_join": " hat angefragt dem Raum bei zu tretten ",
-      "joined": " ist dem Raum beigetreten"
+      "joined": " ist dem Raum beigetreten",
+      "left_room": " hat den Raum verlassen "
     },
     "RoomIntro": {
       "created_by_on": "Erstellt von <user /> am {{time}}",
@@ -44,6 +47,15 @@
       "invite_member": "Nutzer einladen",
       "open_old_room": "Alten Raum öffnen",
       "join_old_room": "Altem Raum beitreten"
+    },
+    "MessageContentFallback": {
+      "message_deleted": "Diese Nachricht wurde gelöscht",
+      "unsupported_message": "Nicht unterstützte Nachricht",
+      "failed_to_load_message": "Meldung konnte nicht geladen werden",
+      "unable_to_decrypt": "Nachricht kann nicht entschlüsselt werden",
+      "not_decrypted_yet": "Diese Nachricht ist noch nicht entschlüsselt",
+      "broken_message": "Kaputte Nachricht",
+      "empty_message": "Leere Nachricht"
     }
   },
   "Organisms": {
@@ -106,6 +118,45 @@
         "emoji": "Emoji",
         "security": "Sicherheit",
         "about": "Über"
+      },
+      "notifications_and_sound": {
+        "title": "Benachrichtungen & Töne",
+        "desktop": {
+          "title": "Desktop-Benachrichtigungen",
+          "description": "Bei Eintreffen neuer Nachrichten Desktop-Benachrichtigung anzeigen."
+        },
+        "sound": {
+          "title": "Benachrichtigungstöne",
+          "description": "Bei Eintreffen neuer Nachrichten Ton abspielen."
+        }
+      },
+      "security": {
+        "cross_signing": {
+          "title": "Quersignaturen und Sicherung"
+        },
+        "export_import_encryption_keys": {
+          "title": "Schlüssel exportieren/importieren"
+        },
+        "export_encryption_keys": {
+          "title": "Raumschlüssel exportieren",
+          "description": "Raumschlüssel für die Entschlüsselung alter Nachrichten einer anderen Sitzung exportieren. Um Raumschlüssel zu verschlüsseln muss ein Kennwort vergeben werden, das während des Importierens verwendet wird."
+        },
+        "import_encryption_keys": {
+          "title": "Raumschlüssel importieren",
+          "description": "Raumschlüssel für die Entschlüsselung alter Nachrichten einer anderen Sitzung importieren. Um Raumschlüssel zu entschlüsseln muss das Kennwort eingegeben werden, das während des Exportierens verwendet wurde."
+        }
+      },
+      "logout": {
+        "title": "Abmelden",
+        "dialog": {
+          "title": "Abmelden",
+          "description": "Bist du sicher, dass du dich von dieser Sitzung abmelden möchtest?",
+          "confirm": "Abmelden"
+        }
+      },
+      "about": {
+        "application": "Anwendung",
+        "credits": "Credits"
       }
     },
     "SecretStorageAccess": {
@@ -195,7 +246,8 @@
       "name_set": "<bold><user_name/></bold> hat den Anzeigenamen <bold><new_name/></bold> gewählt",
       "name_changed": "<bold><user_name/></bold> hat den Anzeigenamen in <bold><new_name/></bold> geändert",
       "name_removed": "<bold><user_name/></bold> hat den Anzeigenamen <bold><new_name/></bold> entfernt",
-      "changed_room_name": " hat den Raum Name geändert"
+      "changed_room_name": " hat den Raum Name geändert",
+      "new_messages": "Neue Nachrichten"
     },
     "DrawerBreadcrumb": {
       "home": "Home"
@@ -444,5 +496,10 @@
       "logout_prompt": "Abmeldung",
       "clear_cache": "Zwischenspeicher löschen & neuladen"
     }
+  },
+  "Time": {
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "timeHourMinute": "HH:mm"
   }
 }

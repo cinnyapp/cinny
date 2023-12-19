@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage, Box, Button, Spinner, Text, as, color } from 'folds';
 import { Room } from 'matrix-js-sdk';
 import { useTranslation, Trans } from 'react-i18next';
+import dayjs from 'dayjs';
 import { openInviteUser, selectRoom } from '../../../client/action/navigation';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { IRoomCreateContent, Membership, StateEvent } from '../../../types/matrix/room';
@@ -9,7 +10,7 @@ import { getMemberDisplayName, getStateEvent } from '../../utils/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
+import { timeDayMonthYear } from '../../utils/time';
 
 export type RoomIntroProps = {
   room: Room;
@@ -69,7 +70,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
               <Trans
                 i18nKey="Components.RoomIntro.created_by_on"
                 components={{ user: <b>@{creatorName}</b> }}
-                values={{ time: `${timeDayMonthYear(ts)} ${timeHourMinute(ts)}` }}
+                values={{ time: `${timeDayMonthYear(ts)} ${dayjs(ts).format(t('Time.timeHourMinute'))}` }}
               />
             </Text>
           )}
