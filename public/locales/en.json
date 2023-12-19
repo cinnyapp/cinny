@@ -2,6 +2,8 @@
   "common": {
     "close": "Close",
     "options": "Options",
+    "source_code": "Source code",
+    "sponsor": "Support",
     "delete": "Delete",
     "continue": "Continue",
     "view_more": "View more",
@@ -36,7 +38,8 @@
       "invited": " invited <user_invited />",
       "reject_invite": " rejected the invitation ",
       "requested_join": " request to join room ",
-      "joined": " joined the room"
+      "joined": " joined the room",
+      "left_room": " left the room "
     },
     "RoomIntro": {
       "created_by_on": "Created by <user /> on {{time}}",
@@ -44,6 +47,15 @@
       "invite_member": "Invite Member",
       "open_old_room": "Open Old Room",
       "join_old_room": "Join Old Room"
+    },
+    "MessageContentFallback": {
+      "message_deleted": "This message has been deleted",
+      "unsupported_message": "Unsupported message",
+      "failed_to_load_message": "Failed to load message",
+      "unable_to_decrypt": "Unable to decrypt message",
+      "not_decrypted_yet": "This message is not decrypted yet",
+      "broken_message": "Broken message",
+      "empty_message": "Empty message"
     }
   },
   "Organisms": {
@@ -106,6 +118,45 @@
         "emoji": "Emoji",
         "security": "Security",
         "about": "About"
+      },
+      "notifications_and_sound": {
+        "title": "Notifications & Sound",
+        "desktop": {
+          "title": "Desktop notifications",
+          "description": "Show desktop notifications when new messages arrive."
+        },
+        "sound": {
+          "title": "Notification sound",
+          "description": "Play a sound when new messages arrive."
+        }
+      },
+      "security": {
+        "cross_signing": {
+          "title": "Cross signing and backup"
+        },
+        "export_import_encryption_keys": {
+          "title": "Export / Import encryption keys"
+        },
+        "export_encryption_keys": {
+          "title": "Export E2E room keys",
+          "description": "Export end-to-end encryption room keys to decrypt old messages in other session. In order to encrypt keys you need to set a password, which will be used while importing."
+        },
+        "import_encryption_keys": {
+          "title": "Import E2E room keys",
+          "description": "To decrypt older messages, Export E2EE room keys from Element (Settings > Security & Privacy > Encryption > Cryptography) and import them here. Imported keys are encrypted so you\\'ll have to enter the password you set in order to decrypt it."
+        }
+      },
+      "logout": {
+        "title": "Logout",
+        "dialog": {
+          "title": "Logout",
+          "description": "Are you sure that you want to logout your session?",
+          "confirm": "Logout"
+        }
+      },
+      "about": {
+        "application": "Application",
+        "credits": "Credits"
       }
     },
     "SecretStorageAccess": {
@@ -195,7 +246,8 @@
       "name_set": "<bold><user/></bold> set their display name to <bold><new_name/></bold>",
       "name_changed": "<bold><user/></bold> changed their display name to <bold><new_name/></bold>",
       "name_removed": "<bold><user/></bold> removed their display name <bold><last_name/></bold>",
-      "changed_room_name": " changed room name"
+      "changed_room_name": " changed room name",
+      "new_messages": "New Messages"
     },
     "DrawerBreadcrumb": {
       "home": "Home"
@@ -444,5 +496,10 @@
       "logout_prompt": "Logout",
       "clear_cache": "Clear cache & reload"
     }
+  },
+  "Time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "timeHourMinute": "hh:mm A"
   }
 }

@@ -1,15 +1,19 @@
 import dayjs from 'dayjs';
+import 'dayjs/locale/de';
 import isToday from 'dayjs/plugin/isToday';
 import isYesterday from 'dayjs/plugin/isYesterday';
+import i18next from 'i18next';
 
 dayjs.extend(isToday);
 dayjs.extend(isYesterday);
 
+i18next.on('languageChanged', (lng) => {
+  dayjs.locale(lng);
+});
+
 export const today = (ts: number): boolean => dayjs(ts).isToday();
 
 export const yesterday = (ts: number): boolean => dayjs(ts).isYesterday();
-
-export const timeHourMinute = (ts: number): string => dayjs(ts).format('hh:mm A');
 
 export const timeDayMonYear = (ts: number): string => dayjs(ts).format('D MMM YYYY');
 

@@ -152,7 +152,7 @@ export const useMemberEventParser = (): MemberEventParser => {
             senderId === userId ? (
               <>
                 <b>{userName}</b>
-                {' left the room '}
+                {t('Components.MemberEvent.left_room')}
                 {content.reason}
               </>
             ) : (
