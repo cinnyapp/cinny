@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './DeviceManage.scss';
 import dateFormat from 'dateformat';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import { isCrossVerified } from '../../../util/matrixUtil';
 import { openReusableDialog, openEmojiVerification } from '../../../client/action/navigation';
@@ -30,6 +31,8 @@ import { accessSecretStorage } from './SecretStorageAccess';
 const promptDeviceName = async (deviceName) => new Promise((resolve) => {
   let isCompleted = false;
 
+  const { t } = useTranslation();
+
   const renderContent = (onComplete) => {
     const handleSubmit = (e) => {
       e.preventDefault();
@@ -39,17 +42,17 @@ const promptDeviceName = async (deviceName) => new Promise((resolve) => {
     };
     return (
       <form className="device-manage__rename" onSubmit={handleSubmit}>
-        <Input value={deviceName} label="Session name" name="session" />
+        <Input value={deviceName} label={t('Organisms.DeviceManage.edit_session_name_subtitle')} name="session" />
         <div className="device-manage__rename-btn">
-          <Button variant="primary" type="submit">Save</Button>
-          <Button onClick={() => onComplete(null)}>Cancel</Button>
+          <Button variant="primary" type="submit">{t('common.save')}</Button>
+          <Button onClick={() => onComplete(null)}>{t('common.cancel')}</Button>
         </div>
       </form>
     );
   };
 
   openReusableDialog(
-    <Text variant="s1" weight="medium">Edit session name</Text>,
+    <Text variant="s1" weight="medium">{t('Organisms.DeviceManage.edit_session_name_title')}</Text>,
     (requestClose) => renderContent((name) => {
       isCompleted = true;
       resolve(name);
@@ -76,6 +79,8 @@ function DeviceManage() {
     setProcessing([]);
   }, [deviceList]);
 
+  const { t } = useTranslation();
+
   const addToProcessing = (device) => {
     const old = [...processing];
     old.push(device.device_id);
@@ -91,7 +96,7 @@ function DeviceManage() {
       <div className="device-manage">
         <div className="device-manage__loading">
           <Spinner size="small" />
-          <Text>Loading sessions...</Text>
+          <Text>{t('Organisms.DeviceManage.loading_devices')}</Text>
         </div>
       </div>
     );
@@ -114,14 +119,14 @@ function DeviceManage() {
 
   const handleRemove = async (device) => {
     const isConfirmed = await confirmDialog(
-      `Logout ${device.display_name}`,
-      `You are about to logout "${device.display_name}" session.`,
-      'Logout',
+      t('Organisms.DeviceManage.logout_device_title', { device: device.display_name }),
+      t('Organisms.DeviceManage.logout_device_message', { device: device.display_name }),
+      t('Organisms.DeviceManage.logout_device_confirm'),
       'danger',
     );
     if (!isConfirmed) return;
     addToProcessing(device);
-    await authRequest(`Logout "${device.display_name}"`, async (auth) => {
+    await authRequest(t('Organisms.DeviceManage.logout_device_title', { device: device.display_name }), async (auth) => {
       await mx.deleteDevice(device.device_id, auth);
     });
 
@@ -130,7 +135,7 @@ function DeviceManage() {
   };
 
   const verifyWithKey = async (device) => {
-    const keyData = await accessSecretStorage('Session verification');
+    const keyData = await accessSecretStorage(t('Organisms.DeviceManage.session_verification_title'));
     if (!keyData) return;
     addToProcessing(device);
     await mx.checkOwnCrossSigningTrust();
@@ -164,7 +169,7 @@ function DeviceManage() {
           <Text style={{ color: isVerified !== false ? '' : 'var(--tc-danger-high)' }}>
             {displayName}
             <Text variant="b3" span>{`${displayName ? ' — ' : ''}${deviceId}`}</Text>
-            {isCurrentDevice && <Text span className="device-manage__current-label" variant="b3">Current</Text>}
+            {isCurrentDevice && <Text span className="device-manage__current-label" variant="b3">{t('Organisms.DeviceManage.current_device_label')}</Text>}
           </Text>
         )}
         options={
@@ -172,9 +177,9 @@ function DeviceManage() {
             ? <Spinner size="small" />
             : (
               <>
-                {(isCSEnabled && canVerify) && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">Verify</Button>}
-                <IconButton size="small" onClick={() => handleRename(device)} src={PencilIC} tooltip="Rename" />
-                <IconButton size="small" onClick={() => handleRemove(device)} src={BinIC} tooltip="Remove session" />
+                {(isCSEnabled && canVerify) && <Button onClick={() => verify(deviceId, isCurrentDevice)} variant="positive">{t('Organisms.DeviceManage.verify_session_button')}</Button>}
+                <IconButton size="small" onClick={() => handleRename(device)} src={PencilIC} tooltip={t('Organisms.DeviceManage.edit_session_name_tooltip')} />
+                <IconButton size="small" onClick={() => handleRemove(device)} src={BinIC} tooltip={t('Organisms.DeviceManage.logout_device_tooltip')} />
               </>
             )
         }
@@ -182,7 +187,7 @@ function DeviceManage() {
           <>
             {lastTS && (
               <Text variant="b3">
-                Last activity
+                {t('Organisms.DeviceManage.last_activity')}
                 <span style={{ color: 'var(--tc-surface-normal)' }}>
                   {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
                 </span>
@@ -216,14 +221,14 @@ function DeviceManage() {
   return (
     <div className="device-manage">
       <div>
-        <MenuHeader>Unverified sessions</MenuHeader>
+        <MenuHeader>{t('Organisms.DeviceManage.unverified_sessions_title')}</MenuHeader>
         {!isMeVerified && isCSEnabled && (
           <div style={{ padding: 'var(--sp-extra-tight) var(--sp-normal)' }}>
             <InfoCard
               rounded
               variant="primary"
               iconSrc={InfoIC}
-              title="Verify this session either with your Security Key/Phrase here or by initiating emoji verification from a verified session."
+              title={t('Organisms.DeviceManage.verify_this_session')}
             />
           </div>
         )}
@@ -233,7 +238,7 @@ function DeviceManage() {
               rounded
               variant="surface"
               iconSrc={InfoIC}
-              title="Verify other sessions by emoji verification or remove unfamiliar ones."
+              title={t('Organisms.DeviceManage.verify_other_session')}
             />
           </div>
         )}
@@ -243,39 +248,39 @@ function DeviceManage() {
               rounded
               variant="caution"
               iconSrc={InfoIC}
-              title="Setup cross signing in case you lose all your sessions."
+              title={t('Organisms.DeviceManage.setup_cross_signing_message')}
             />
           </div>
         )}
         {
           unverified.length > 0
             ? unverified.map((device) => renderDevice(device, false))
-            : <Text className="device-manage__info">No unverified sessions</Text>
+            : <Text className="device-manage__info">{t('Organisms.DeviceManage.unverified_sessions_none')}</Text>
         }
       </div>
       {noEncryption.length > 0 && (
       <div>
-        <MenuHeader>Sessions without encryption support</MenuHeader>
+        <MenuHeader>{t('Organisms.DeviceManage.unencrypted_sessions_title')}</MenuHeader>
         {noEncryption.map((device) => renderDevice(device, null))}
       </div>
       )}
       <div>
-        <MenuHeader>Verified sessions</MenuHeader>
+        <MenuHeader>{t('Organisms.DeviceManage.verified_sessions_title')}</MenuHeader>
         {
           verified.length > 0
             ? verified.map((device, index) => {
               if (truncated && index >= TRUNCATED_COUNT) return null;
               return renderDevice(device, true);
             })
-            : <Text className="device-manage__info">No verified sessions</Text>
+            : <Text className="device-manage__info">{t('Organisms.DeviceManage.verified_sessions_none')}</Text>
         }
         { verified.length > TRUNCATED_COUNT && (
           <Button className="device-manage__info" onClick={() => setTruncated(!truncated)}>
-            {truncated ? `View ${verified.length - 4} more` : 'View less'}
+            {t(truncated ? 'common.view_more' : 'common.view_less')}
           </Button>
         )}
         { deviceList.length > 0 && (
-          <Text className="device-manage__info" variant="b3">Session names are visible to everyone, so do not put any private info here.</Text>
+          <Text className="device-manage__info" variant="b3">{t('Organisms.DeviceManage.session_name_privacy_message')}</Text>
         )}
       </div>
     </div>

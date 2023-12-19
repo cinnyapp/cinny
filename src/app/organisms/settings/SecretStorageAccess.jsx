@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import './SecretStorageAccess.scss';
 import { deriveKey } from 'matrix-js-sdk/lib/crypto/key_passphrase';
 
+import { useTranslation } from 'react-i18next';
 import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { getDefaultSSKey, getSSKeyInfo } from '../../../util/matrixUtil';
@@ -24,6 +25,7 @@ function SecretStorageAccess({ onComplete }) {
   const [process, setProcess] = useState(false);
   const [error, setError] = useState(null);
   const mountStore = useStore();
+  const { t } = useTranslation();
 
   const toggleWithPhrase = () => setWithPhrase(!withPhrase);
 
@@ -39,7 +41,7 @@ function SecretStorageAccess({ onComplete }) {
 
       if (!mountStore.getItem()) return;
       if (!isCorrect) {
-        setError(`Incorrect Security ${key ? 'Key' : 'Phrase'}`);
+        setError(t(key ? 'Organisms.SecretStorageAccess.incorrect_security_key' : 'Organisms.SecretStorageAccess.incorrect_security_phrase'));
         setProcess(false);
         return;
       }
@@ -51,7 +53,7 @@ function SecretStorageAccess({ onComplete }) {
       });
     } catch (e) {
       if (!mountStore.getItem()) return;
-      setError(`Incorrect Security ${key ? 'Key' : 'Phrase'}`);
+      setError(t(key ? 'Organisms.SecretStorageAccess.incorrect_security_key' : 'Organisms.SecretStorageAccess.incorrect_security_phrase'));
       setProcess(false);
     }
   };
@@ -76,7 +78,7 @@ function SecretStorageAccess({ onComplete }) {
       <form onSubmit={handleForm}>
         <Input
           name="password"
-          label={`Security ${withPhrase ? 'Phrase' : 'Key'}`}
+          label={withPhrase ? t('Organisms.SecretStorageAccess.security_phrase') : t('Organisms.SecretStorageAccess.security_key')}
           type="password"
           onChange={handleChange}
           required
@@ -84,8 +86,8 @@ function SecretStorageAccess({ onComplete }) {
         {error && <Text variant="b3">{error}</Text>}
         {!process && (
           <div className="secret-storage-access__btn">
-            <Button variant="primary" type="submit">Continue</Button>
-            {isPassphrase && <Button onClick={toggleWithPhrase}>{`Use Security ${withPhrase ? 'Key' : 'Phrase'}`}</Button>}
+            <Button variant="primary" type="submit">{t('common.continue')}</Button>
+            {isPassphrase && <Button onClick={toggleWithPhrase}>{t(withPhrase ? 'Organisms.SecretStorageAccess.use_security_key' : 'Organisms.SecretStorageAccess.use_security_phrase')}</Button>}
           </div>
         )}
       </form>
