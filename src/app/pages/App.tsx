@@ -56,6 +56,7 @@ const createRouter = (clientConfig: ClientConfig) => {
 // TODO: app crash boundary
 function App() {
   return (
+    // TODO: initial loading screen
     <ClientConfigLoader fallback={() => <p>loading</p>}>
       {(clientConfig) => (
         <ClientConfigProvider value={clientConfig}>

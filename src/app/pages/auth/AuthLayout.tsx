@@ -76,16 +76,8 @@ export function AuthLayout() {
 
   const { homeserverList, defaultHomeserver, allowCustomHomeservers } = useClientConfig();
 
-  const defaultServer = homeserverList?.[defaultHomeserver ?? 0] ?? '';
+  const defaultServer = homeserverList?.[defaultHomeserver ?? 0] ?? 'matrix.org';
   let server = urlEncodedServer ? decodeURIComponent(urlEncodedServer) : defaultServer;
-  if (!urlEncodedServer) {
-    navigate(
-      generatePath(currentAuthPath(location.pathname), {
-        server: encodeURIComponent(defaultServer),
-      }),
-      { replace: true }
-    );
-  }
   if (!allowCustomHomeservers && !homeserverList?.includes(server)) {
     server = defaultServer;
   }
@@ -97,6 +89,18 @@ export function AuthLayout() {
   useEffect(() => {
     if (server) discoverServer(server);
   }, [discoverServer, server]);
+
+  // if server is mismatches with path server, update path
+  useEffect(() => {
+    if (!urlEncodedServer || decodeURIComponent(urlEncodedServer) !== server) {
+      navigate(
+        generatePath(currentAuthPath(location.pathname), {
+          server: encodeURIComponent(server),
+        }),
+        { replace: true }
+      );
+    }
+  }, [urlEncodedServer, navigate, location, server]);
 
   const selectServer = useCallback(
     (newServer: string) => {
