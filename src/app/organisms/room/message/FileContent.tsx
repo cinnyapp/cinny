@@ -17,6 +17,7 @@ import {
 import FileSaver from 'file-saver';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import { IFileInfo } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -88,6 +89,8 @@ function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, '
     }, [loadSrc])
   );
 
+  const { t } = useTranslation();
+
   return (
     <>
       {textState.status === AsyncStatus.Success && (
@@ -141,7 +144,7 @@ function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, '
           }
         >
           <Text size="B400" truncate>
-            Open File
+            {t('Components.Files.open_file')}
           </Text>
         </Button>
       )}
@@ -160,6 +163,8 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
       return httpUrl;
     }, [mx, url, mimeType, encInfo])
   );
+
+  const { t } = useTranslation();
 
   return (
     <>
@@ -189,7 +194,7 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
         </Overlay>
       )}
       {pdfState.status === AsyncStatus.Error ? (
-        renderErrorButton(loadPdf, 'Open PDF')
+        renderErrorButton(loadPdf, t('Components.Files.open_pdf'))
       ) : (
         <Button
           variant="Secondary"
@@ -207,7 +212,7 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
           }
         >
           <Text size="B400" truncate>
-            Open PDF
+            {t('Components.Files.open_pdf')}
           </Text>
         </Button>
       )}
@@ -226,8 +231,13 @@ function DownloadFile({ body, mimeType, url, info, encInfo }: FileContentProps) 
     }, [mx, url, mimeType, encInfo, body])
   );
 
+  const { t } = useTranslation();
+
   return downloadState.status === AsyncStatus.Error ? (
-    renderErrorButton(download, `Retry Download (${bytesToSize(info.size ?? 0)})`)
+    renderErrorButton(
+      download,
+      `${t('Components.Files.retry_download')} (${bytesToSize(info.size ?? 0)})`
+    )
   ) : (
     <Button
       variant="Secondary"
@@ -248,7 +258,9 @@ function DownloadFile({ body, mimeType, url, info, encInfo }: FileContentProps) 
         )
       }
     >
-      <Text size="B400" truncate>{`Download (${bytesToSize(info.size ?? 0)})`}</Text>
+      <Text size="B400" truncate>{`${t('Components.Files.download')} (${bytesToSize(
+        info.size ?? 0
+      )})`}</Text>
     </Button>
   );
 }

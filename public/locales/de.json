@@ -6,6 +6,8 @@
     "sponsor": "Unterstützen",
     "delete": "Löschen",
     "continue": "Weiter",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
     "view_more": "Mehr ansehen",
     "view_less": "Weniger ansehen",
     "copy": "Kopieren",
@@ -15,7 +17,9 @@
     "setup": "Einrichtung",
     "search": "Suche",
     "invite": "Einladen",
-    "message_prompt": "Nachricht"
+    "message_prompt": "Nachricht",
+    "and": " und ",
+    "edit": "Bearbeiten"
   },
   "errors": {
     "generic": "Etwas ist schiefgegangen!"
@@ -27,7 +31,10 @@
       "retry": "Erneut Versuchen",
       "previous": "Vorherige",
       "jump_to_page": "Spring zu Seite",
-      "next": "Nächste"
+      "next": "Nächste",
+      "open_pdf": "PDF öffnen",
+      "retry_download": "Herunterladen neu versuchen",
+      "open_file": "Datei öffnen"
     },
     "UploadBoard": {
       "files": "Dateien",
@@ -56,6 +63,9 @@
       "not_decrypted_yet": "Diese Nachricht ist noch nicht entschlüsselt",
       "broken_message": "Kaputte Nachricht",
       "empty_message": "Leere Nachricht"
+    },
+    "EventReaders": {
+      "seen_by": "Gesehen von"
     }
   },
   "Organisms": {
@@ -228,6 +238,26 @@
       "reset_keys_subtitle": "Das Zurücksetzen der Quersignatur-Schlüssel ist nicht umkehrbar.",
       "reset_keys_message": "Jeder, bei dem du dich verifiziert hast, wird Sicherheitswarnungen erhalten und deine Nachrichtensicherung geht verloren. Dies ist mit hoher Wahrscheinlichkeit nicht das was du tun möchtest, es sei denn du hast den Sicherheitsschlüssel oder die Sicherheitsphrase und jede Sitzung von der aus du quersignieren könntest verloren."
     },
+    "RoomSettings": {
+      "General": "Allgemein",
+      "Search": "Suche",
+      "Members": "Mitglieder",
+      "Emojis": "Emojis",
+      "Permissions": "Berechtigungen",
+      "Security": "Sicherheit",
+      "options": "Optionen",
+      "invite": "Einladen",
+      "leave": "Verlassen",
+      "leave_room": "Raum verlassen",
+      "leave_room_confirm_message": "Bist du sicher, dass du {{room_name}} verlassen möchtest?",
+      "leave_room_confirm_button": "Verlassen",
+      "notification_header": "Benachrichtigungen (Änderung betrifft nur dich)",
+      "visibility_header": "Sichtbarkeit des Raums (wer beitreten kann)",
+      "address_header": "Adressen des Raums",
+      "encryption_header": "Verschlüsselung",
+      "message_history_header": "Sichtbarkeit des Nachrichtenverlaufs",
+      "room_settings_subtitle": "Einstellungen des Raums"
+    },
     "RoomCommon": {
       "user_joined": "<bold><user/></bold> ist dem Raum beigetreten",
       "user_left": "<bold><user/></bold> hat den Raum verlassen",
@@ -247,7 +277,15 @@
       "name_changed": "<bold><user_name/></bold> hat den Anzeigenamen in <bold><new_name/></bold> geändert",
       "name_removed": "<bold><user_name/></bold> hat den Anzeigenamen <bold><new_name/></bold> entfernt",
       "changed_room_name": " hat den Raum Name geändert",
-      "new_messages": "Neue Nachrichten"
+      "new_messages": "Neue Nachrichten",
+      "drop_files": "Dateien fallenlassen in",
+      "room": "Raum",
+      "drag_and_drop": "Dateien hierher ziehen und ablegen oder anklicken für Auswahldialog",
+      "jump_to_latest": "Zur neusten Nachricht springen",
+      "jump_to_unread": "Zu Ungelesen springen",
+      "mark_as_read": "Als gelesen markieren",
+      "is_following": " verfolgt das Gespräch.",
+      "are_following": " verfolgen das Gespräch."
     },
     "DrawerBreadcrumb": {
       "home": "Home"
@@ -412,6 +450,27 @@
         "other": "Andere Berechtigungen",
         "settings": "Berechtigungen für Einstellungen"
       }
+    },
+    "RoomProfile": {
+      "saving_room_name": "Speichere Namen des Raums...",
+      "saving_room_topic": "Speichere Thema des Raums...",
+      "save_success": "Erfolgreich gespeichert",
+      "save_failed": "Speichern fehlgeschlagen",
+      "remove_avatar_title": "Avatar entfernen",
+      "remove_avatar_subtitle": "Bist du sicher, dass du den Avatar des Raums entfernen möchtest?",
+      "remove_avatar_button": "Entfernen",
+      "permission_change_room_name": "Du hast nur die Berechtigung, den Namen des Raums zu ändern",
+      "permission_change_room_topic": "Du hast nur die Berechtigung, das Thema des Raums zu ändern",
+      "permission_change_space_name": "Du hast nur die Berechtigung, den Namen des Spaces zu ändern",
+      "permission_change_space_topic": "Du hast nur die Berechtigung, das Thema des Spaces zu ändern",
+      "name_label": "Name",
+      "topic_label": "Thema"
+    },
+    "RoomVisibility": {
+      "private": "Privat (nur mit Einladung)",
+      "restricted": "Eingeschränkt (Mitglieder des Spaces können beitreten)",
+      "restricted_unsupported": "Eingeschränkt (Nicht unterstützt: Aktualisierung des Raums erforderlich)",
+      "public": "Öffentlich (jeder kann beitreten)"
     },
     "SpaceOptions": {
       "leave_space": "Space verlassen",

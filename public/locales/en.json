@@ -6,6 +6,8 @@
     "sponsor": "Support",
     "delete": "Delete",
     "continue": "Continue",
+    "cancel": "Cancel",
+    "save": "Save",
     "view_more": "View more",
     "view_less": "View less",
     "copy": "Copy",
@@ -15,7 +17,9 @@
     "setup": "Setup",
     "search": "Search",
     "invite": "Invite",
-    "message_prompt": "Message"
+    "message_prompt": "Message",
+    "and": " and ",
+    "edit": "Edit"
   },
   "errors": {
     "generic": "Something went wrong!"
@@ -27,7 +31,10 @@
       "retry": "Retry",
       "previous": "Previous",
       "jump_to_page": "Jump To Page",
-      "next": "Next"
+      "next": "Next",
+      "open_pdf": "Open PDF",
+      "retry_download": "Retry Download",
+      "open_file": "Open File"
     },
     "UploadBoard": {
       "files": "Files",
@@ -56,6 +63,9 @@
       "not_decrypted_yet": "This message is not decrypted yet",
       "broken_message": "Broken message",
       "empty_message": "Empty message"
+    },
+    "EventReaders": {
+      "seen_by": "Seen by"
     }
   },
   "Organisms": {
@@ -228,6 +238,26 @@
       "reset_keys_subtitle": "Resetting cross-signing keys is permanent.",
       "reset_keys_message": "Anyone you have verified with will see security alerts and your message backup will lost. You almost certainly do not want to do this, unless you have lost Security Key or Phrase and every session you can cross-sign from."
     },
+    "RoomSettings": {
+      "General": "General",
+      "Search": "Search",
+      "Members": "Members",
+      "Emojis": "Emojis",
+      "Permissions": "Permissions",
+      "Security": "Security",
+      "options": "Options",
+      "invite": "Invite",
+      "leave": "Leave",
+      "leave_room": "Leave room",
+      "leave_room_confirm_message": "Are you sure you want to leave {{room_name}}?",
+      "leave_room_confirm_button": "Leave",
+      "notification_header": "Notifications (Changing this will only affect you)",
+      "visibility_header": "Room visibility (Who can join)",
+      "address_header": "Room addresses",
+      "encryption_header": "Encryption",
+      "message_history_header": "Message history visibility",
+      "room_settings_subtitle": "room settings"
+    },
     "RoomCommon": {
       "user_joined": "<bold><user/></bold> joined the room",
       "user_left": "<bold><user/></bold> left the room",
@@ -247,7 +277,15 @@
       "name_changed": "<bold><user/></bold> changed their display name to <bold><new_name/></bold>",
       "name_removed": "<bold><user/></bold> removed their display name <bold><last_name/></bold>",
       "changed_room_name": " changed room name",
-      "new_messages": "New Messages"
+      "new_messages": "New Messages",
+      "drop_files": "Drop Files in",
+      "room": "Room",
+      "drag_and_drop": "Drag and drop files here or click for selection dialog",
+      "jump_to_latest": "Jump to Latest",
+      "jump_to_unread": "Jump to Unread",
+      "mark_as_read": "Mark as Read",
+      "is_following": " is following the conversation.",
+      "are_following": " are following the conversation."
     },
     "DrawerBreadcrumb": {
       "home": "Home"
@@ -412,6 +450,27 @@
         "other": "Other permissions",
         "settings": "Settings permissions"
       }
+    },
+    "RoomProfile": {
+      "saving_room_name": "Saving room name...",
+      "saving_room_topic": "Saving room topic...",
+      "save_success": "Saved successfully",
+      "save_failed": "Unable to save",
+      "remove_avatar_title": "Remove avatar",
+      "remove_avatar_subtitle": "Are you sure that you want to remove room avatar?",
+      "remove_avatar_button": "Remove",
+      "permission_change_room_name": "You have permission to change room name only",
+      "permission_change_room_topic": "You have permission to change room topic only",
+      "permission_change_space_name": "You have permission to change space name only",
+      "permission_change_space_topic": "You have permission to change space topic only",
+      "name_label": "Name",
+      "topic_label": "Topic"
+    },
+    "RoomVisibility": {
+      "private": "Private (invite only)",
+      "restricted": "Restricted (space members can join)",
+      "restricted_unsupported": "Restricted (Unsupported: room required upgrade)",
+      "public": "Public (anyone can join)"
     },
     "SpaceOptions": {
       "leave_space": "Leave Space",
