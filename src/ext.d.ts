@@ -26,3 +26,8 @@ declare module 'browser-encrypt-attachment' {
     info: EncryptedAttachmentInfo
   ): Promise<ArrayBuffer>;
 }
+
+declare module '*.svg' {
+  const content: string;
+  export default content;
+}
