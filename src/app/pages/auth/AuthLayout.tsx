@@ -27,6 +27,7 @@ import { SpecVersionsProvider } from '../../hooks/useSpecVersions';
 import { AutoDiscoveryInfoProvider } from '../../hooks/useAutoDiscoveryInfo';
 import { AuthFlowsLoader } from '../../components/AuthFlowsLoader';
 import { AuthFlowsProvider } from '../../hooks/useAuthFlows';
+import { AuthServerProvider } from '../../hooks/useAuthServer';
 
 export const authLayoutLoader: LoaderFunction = () => {
   // TODO: remove false case
@@ -76,8 +77,8 @@ export function AuthLayout() {
 
   const { homeserverList, defaultHomeserver, allowCustomHomeservers } = useClientConfig();
 
-  const defaultServer = homeserverList?.[defaultHomeserver ?? 0] ?? 'matrix.org';
-  let server = urlEncodedServer ? decodeURIComponent(urlEncodedServer) : defaultServer;
+  const defaultServer: string = homeserverList?.[defaultHomeserver ?? 0] ?? 'matrix.org';
+  let server: string = urlEncodedServer ? decodeURIComponent(urlEncodedServer) : defaultServer;
   if (!allowCustomHomeservers && !homeserverList?.includes(server)) {
     server = defaultServer;
   }
@@ -172,37 +173,39 @@ export function AuthLayout() {
               <AuthLayoutError message="Failed to connect. Homeserver configuration base_url appears invalid." />
             )}
             {usableAutoDiscoveryInfo && (
-              <AutoDiscoveryInfoProvider value={usableAutoDiscoveryInfo}>
-                <SpecVersionsLoader
-                  fallback={() => (
-                    <AuthLayoutLoading
-                      message={`Connecting to ${usableAutoDiscoveryInfo?.['m.homeserver'].base_url}`}
-                    />
-                  )}
-                  error={() => (
-                    <AuthLayoutError message="Failed to connect. Homeserver URL does not appear to be a valid Matrix homeserver." />
-                  )}
-                >
-                  {(specVersions) => (
-                    <SpecVersionsProvider value={specVersions}>
-                      <AuthFlowsLoader
-                        fallback={() => (
-                          <AuthLayoutLoading message="Loading authentication flow..." />
-                        )}
-                        error={() => (
-                          <AuthLayoutError message="Failed to get authentication flow information." />
-                        )}
-                      >
-                        {(authFlows) => (
-                          <AuthFlowsProvider value={authFlows}>
-                            <Outlet />
-                          </AuthFlowsProvider>
-                        )}
-                      </AuthFlowsLoader>
-                    </SpecVersionsProvider>
-                  )}
-                </SpecVersionsLoader>
-              </AutoDiscoveryInfoProvider>
+              <AuthServerProvider value={server}>
+                <AutoDiscoveryInfoProvider value={usableAutoDiscoveryInfo}>
+                  <SpecVersionsLoader
+                    fallback={() => (
+                      <AuthLayoutLoading
+                        message={`Connecting to ${usableAutoDiscoveryInfo?.['m.homeserver'].base_url}`}
+                      />
+                    )}
+                    error={() => (
+                      <AuthLayoutError message="Failed to connect. Homeserver URL does not appear to be a valid Matrix homeserver." />
+                    )}
+                  >
+                    {(specVersions) => (
+                      <SpecVersionsProvider value={specVersions}>
+                        <AuthFlowsLoader
+                          fallback={() => (
+                            <AuthLayoutLoading message="Loading authentication flow..." />
+                          )}
+                          error={() => (
+                            <AuthLayoutError message="Failed to get authentication flow information." />
+                          )}
+                        >
+                          {(authFlows) => (
+                            <AuthFlowsProvider value={authFlows}>
+                              <Outlet />
+                            </AuthFlowsProvider>
+                          )}
+                        </AuthFlowsLoader>
+                      </SpecVersionsProvider>
+                    )}
+                  </SpecVersionsLoader>
+                </AutoDiscoveryInfoProvider>
+              </AuthServerProvider>
             )}
           </Box>
         </Box>
