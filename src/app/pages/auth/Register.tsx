@@ -1,10 +1,11 @@
 import React from 'react';
 import { Box, Button, Icon, IconButton, Icons, Input, Text, config } from 'folds';
-import { Link, generatePath, useParams } from 'react-router-dom';
+import { Link, generatePath } from 'react-router-dom';
 import { LOGIN_PATH } from '../paths';
+import { useAuthServer } from '../../hooks/useAuthServer';
 
 export function Register() {
-  const { server } = useParams();
+  const server = useAuthServer();
 
   return (
     <Box direction="Column" gap="500">
@@ -67,8 +68,7 @@ export function Register() {
       </Box>
       <span />
       <Text align="Center">
-        Already have an account?{' '}
-        <Link to={generatePath(LOGIN_PATH, { server: server ?? '' })}>Login</Link>
+        Already have an account? <Link to={generatePath(LOGIN_PATH, { server })}>Login</Link>
       </Text>
     </Box>
   );

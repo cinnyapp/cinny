@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Box, Scroll, Spinner, Text, color } from 'folds';
 import {
   LoaderFunction,
@@ -21,7 +21,12 @@ import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { LOGIN_PATH, REGISTER_PATH } from '../paths';
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { ServerPicker } from './ServerPicker';
-import { AutoDiscoveryAction, autoDiscovery } from '../../cs-api';
+import {
+  AutoDiscoveryAction,
+  AutoDiscoveryError,
+  AutoDiscoveryInfo,
+  autoDiscovery,
+} from '../../cs-api';
 import { SpecVersionsLoader } from '../../components/SpecVersionsLoader';
 import { SpecVersionsProvider } from '../../hooks/useSpecVersions';
 import { AutoDiscoveryInfoProvider } from '../../hooks/useAutoDiscoveryInfo';
@@ -70,6 +75,36 @@ function AuthLayoutError({ message }: { message: string }) {
   );
 }
 
+const createDiscoveryInfo = (
+  serverName: string,
+  autoDiscoveryError?: AutoDiscoveryError,
+  autoDiscoveryInfo?: AutoDiscoveryInfo
+):
+  | undefined
+  | {
+      serverName: string;
+      info: AutoDiscoveryInfo;
+    } => {
+  if (autoDiscoveryInfo) {
+    return {
+      serverName,
+      info: autoDiscoveryInfo,
+    };
+  }
+  if (autoDiscoveryError?.action === AutoDiscoveryAction.IGNORE) {
+    const tempAutoDiscoveryInfo = {
+      'm.homeserver': {
+        base_url: autoDiscoveryError?.host,
+      },
+    };
+    return {
+      serverName,
+      info: tempAutoDiscoveryInfo,
+    };
+  }
+  return undefined;
+};
+
 export function AuthLayout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -84,7 +119,13 @@ export function AuthLayout() {
   }
 
   const [discoveryState, discoverServer] = useAsyncCallback(
-    useCallback((serverDomain: string) => autoDiscovery(fetch, serverDomain), [])
+    useCallback(async (serverName: string) => {
+      const response = await autoDiscovery(fetch, serverName);
+      return {
+        serverName,
+        response,
+      };
+    }, [])
   );
 
   useEffect(() => {
@@ -113,16 +154,16 @@ export function AuthLayout() {
   );
 
   const [autoDiscoveryError, autoDiscoveryInfo] =
-    discoveryState.status === AsyncStatus.Success ? discoveryState.data : [];
+    discoveryState.status === AsyncStatus.Success ? discoveryState.data.response : [];
 
-  let usableAutoDiscoveryInfo = autoDiscoveryInfo;
-  if (autoDiscoveryError?.action === AutoDiscoveryAction.IGNORE) {
-    usableAutoDiscoveryInfo = {
-      'm.homeserver': {
-        base_url: autoDiscoveryError.host,
-      },
-    };
-  }
+  const serverDiscovery = useMemo(() => {
+    if (discoveryState.status !== AsyncStatus.Success) return undefined;
+    return createDiscoveryInfo(
+      discoveryState.data.serverName,
+      autoDiscoveryError,
+      autoDiscoveryInfo
+    );
+  }, [discoveryState, autoDiscoveryError, autoDiscoveryInfo]);
 
   return (
     <Scroll variant="Background" visibility="Hover" size="300" hideTrack>
@@ -172,13 +213,13 @@ export function AuthLayout() {
             {autoDiscoveryError?.action === AutoDiscoveryAction.FAIL_ERROR && (
               <AuthLayoutError message="Failed to connect. Homeserver configuration base_url appears invalid." />
             )}
-            {usableAutoDiscoveryInfo && (
-              <AuthServerProvider value={server}>
-                <AutoDiscoveryInfoProvider value={usableAutoDiscoveryInfo}>
+            {serverDiscovery && (
+              <AuthServerProvider value={serverDiscovery.serverName}>
+                <AutoDiscoveryInfoProvider value={serverDiscovery.info}>
                   <SpecVersionsLoader
                     fallback={() => (
                       <AuthLayoutLoading
-                        message={`Connecting to ${usableAutoDiscoveryInfo?.['m.homeserver'].base_url}`}
+                        message={`Connecting to ${serverDiscovery.info['m.homeserver'].base_url}`}
                       />
                     )}
                     error={() => (

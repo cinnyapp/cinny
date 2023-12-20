@@ -1,13 +1,14 @@
 import React from 'react';
 import { Box, Button, Icon, IconButton, Icons, Input, Text, config } from 'folds';
-import { Link, generatePath, useParams } from 'react-router-dom';
+import { Link, generatePath } from 'react-router-dom';
 import { REGISTER_PATH } from '../paths';
 import { useAuthFlows } from '../../hooks/useAuthFlows';
+import { useAuthServer } from '../../hooks/useAuthServer';
 
 export function Login() {
-  const { server } = useParams();
+  const server = useAuthServer();
   const { loginFlows } = useAuthFlows();
-  console.log(loginFlows);
+  console.log(server, loginFlows);
 
   return (
     <Box direction="Column" gap="500">
@@ -47,8 +48,7 @@ export function Login() {
       </Box>
       <span />
       <Text align="Center">
-        Do not have an account?{' '}
-        <Link to={generatePath(REGISTER_PATH, { server: server ?? '' })}>Register</Link>
+        Do not have an account? <Link to={generatePath(REGISTER_PATH, { server })}>Register</Link>
       </Text>
     </Box>
   );
