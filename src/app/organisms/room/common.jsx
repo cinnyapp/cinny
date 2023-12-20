@@ -216,7 +216,6 @@ function parseTimelineChange(mEvent) {
 }
 
 export {
-  getTimelineJSXMessages,
   getUsersActionJsx,
   parseTimelineChange,
 };
