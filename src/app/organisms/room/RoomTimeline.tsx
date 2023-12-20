@@ -1743,7 +1743,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             before={<Icon size="50" src={Icons.MessageUnread} />}
             onClick={handleJumpToUnread}
           >
-            <Text size="L400">Jump to Unread</Text>
+            <Text size="L400">{t('Organisms.RoomCommon.jump_to_unread')}</Text>
           </Chip>
 
           <Chip
@@ -1753,7 +1753,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             before={<Icon size="50" src={Icons.CheckTwice} />}
             onClick={handleMarkAsRead}
           >
-            <Text size="L400">Mark as Read</Text>
+            <Text size="L400">{t('Organisms.RoomCommon.mark_as_read')}</Text>
           </Chip>
         </TimelineFloat>
       )}
@@ -1821,7 +1821,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             before={<Icon size="50" src={Icons.ArrowBottom} />}
             onClick={handleJumpToLatest}
           >
-            <Text size="L400">Jump to Latest</Text>
+            <Text size="L400">{t('Organisms.RoomCommon.jump_to_latest')}</Text>
           </Chip>
         </TimelineFloat>
       )}

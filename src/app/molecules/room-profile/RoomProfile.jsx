@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomProfile.scss';
 
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -29,6 +30,8 @@ function RoomProfile({ roomId }) {
     msg: null,
     type: cons.status.PRE_FLIGHT,
   });
+
+  const { t } = useTranslation();
 
   const mx = initMatrix.matrixClient;
   const isDM = initMatrix.roomList.directs.has(roomId);
@@ -76,7 +79,7 @@ function RoomProfile({ roomId }) {
         const newName = roomNameInput.value;
         if (newName !== roomName && roomName.trim() !== '') {
           setStatus({
-            msg: 'Saving room name...',
+            msg: t('Molecules.RoomProfile.saving_room_name'),
             type: cons.status.IN_FLIGHT,
           });
           await mx.setRoomName(roomId, newName);
@@ -87,7 +90,7 @@ function RoomProfile({ roomId }) {
         if (newTopic !== roomTopic) {
           if (isMountStore.getItem()) {
             setStatus({
-              msg: 'Saving room topic...',
+              msg: t('Molecules.RoomProfile.saving_room_topic'),
               type: cons.status.IN_FLIGHT,
             });
           }
@@ -96,13 +99,13 @@ function RoomProfile({ roomId }) {
       }
       if (!isMountStore.getItem()) return;
       setStatus({
-        msg: 'Saved successfully',
+        msg: t('Molecules.RoomProfile.save_success'),
         type: cons.status.SUCCESS,
       });
     } catch (err) {
       if (!isMountStore.getItem()) return;
       setStatus({
-        msg: err.message || 'Unable to save.',
+        msg: err.message || t('Molecules.RoomProfile.save_failed'),
         type: cons.status.ERROR,
       });
     }
@@ -119,9 +122,9 @@ function RoomProfile({ roomId }) {
   const handleAvatarUpload = async (url) => {
     if (url === null) {
       const isConfirmed = await confirmDialog(
-        'Remove avatar',
-        'Are you sure that you want to remove room avatar?',
-        'Remove',
+        t('Molecules.RoomProfile.remove_avatar_title'),
+        t('Molecules.RoomProfile.remove_avatar_subtitle'),
+        t('Molecules.RoomProfile.remove_avatar_button'),
         'caution',
       );
       if (isConfirmed) {
@@ -132,16 +135,25 @@ function RoomProfile({ roomId }) {
 
   const renderEditNameAndTopic = () => (
     <form className="room-profile__edit-form" onSubmit={handleOnSubmit}>
-      {canChangeName && <Input value={roomName} name="room-name" disabled={status.type === cons.status.IN_FLIGHT} label="Name" />}
-      {canChangeTopic && <Input value={roomTopic} name="room-topic" disabled={status.type === cons.status.IN_FLIGHT} minHeight={100} resizable label="Topic" />}
-      {(!canChangeName || !canChangeTopic) && <Text variant="b3">{`You have permission to change ${room.isSpaceRoom() ? 'space' : 'room'} ${canChangeName ? 'name' : 'topic'} only.`}</Text>}
+      {canChangeName && <Input value={roomName} name="room-name" disabled={status.type === cons.status.IN_FLIGHT} label={t('Molecules.RoomProfile.name_label')} />}
+      {canChangeTopic && <Input value={roomTopic} name="room-topic" disabled={status.type === cons.status.IN_FLIGHT} minHeight={100} resizable label={t('Molecules.RoomProfile.topic_label')} />}
+      {(!canChangeName || !canChangeTopic) && (
+      <Text variant="b3">
+        {
+        // eslint-disable-next-line no-nested-ternary
+        room.isSpaceRoom()
+          ? canChangeName ? 'Molecules.RoomProfile.permission_change_space_name' : 'Molecules.RoomProfile.permission_change_space_topic'
+          : canChangeName ? 'Molecules.RoomProfile.permission_change_room_name' : 'Molecules.RoomProfile.permission_change_room_topic'
+      }
+      </Text>
+      )}
       { status.type === cons.status.IN_FLIGHT && <Text variant="b2">{status.msg}</Text>}
       { status.type === cons.status.SUCCESS && <Text style={{ color: 'var(--tc-positive-high)' }} variant="b2">{status.msg}</Text>}
       { status.type === cons.status.ERROR && <Text style={{ color: 'var(--tc-danger-high)' }} variant="b2">{status.msg}</Text>}
       { status.type !== cons.status.IN_FLIGHT && (
         <div>
-          <Button type="submit" variant="primary">Save</Button>
-          <Button onClick={handleCancelEditing}>Cancel</Button>
+          <Button type="submit" variant="primary">{t('common.save')}</Button>
+          <Button onClick={handleCancelEditing}>{t('common.cancel')}</Button>
         </div>
       )}
     </form>
@@ -155,7 +167,7 @@ function RoomProfile({ roomId }) {
           <IconButton
             src={PencilIC}
             size="extra-small"
-            tooltip="Edit"
+            tooltip={t('common.edit')}
             onClick={() => setIsEditing(true)}
           />
         )}

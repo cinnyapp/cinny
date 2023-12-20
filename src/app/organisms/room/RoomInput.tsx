@@ -29,6 +29,7 @@ import {
   config,
   toRem,
 } from 'folds';
+import { useTranslation } from 'react-i18next';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
@@ -369,6 +370,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       });
     };
 
+    const { t } = useTranslation();
+
     return (
       <div ref={ref}>
         {selectedFiles.length > 0 && (
@@ -420,9 +423,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               >
                 <Icon size="600" src={Icons.File} />
                 <Text size="H4" align="Center">
-                  {`Drop Files in "${room?.name || 'Room'}"`}
+                  {`${t('Organisms.RoomCommon.drop_files')} "${room?.name || t('Organisms.RoomCommon.room')}"`}
                 </Text>
-                <Text align="Center">Drag and drop files here or click for selection dialog</Text>
+                <Text align="Center">{t('Organisms.RoomCommon.drag_and_drop')}</Text>
               </Box>
             </Dialog>
           </OverlayCenter>
