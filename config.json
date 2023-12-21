@@ -3,7 +3,6 @@
   "basename": "/",
   "defaultHomeserver": 3,
   "homeserverList": [
-    "0wnz.at",
     "converser.eu",
     "envs.net",
     "matrix.org",

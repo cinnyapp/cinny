@@ -32,8 +32,10 @@ export const ImageViewerImg = style([
   DefaultReset,
   {
     objectFit: 'contain',
-    width: '100%',
-    height: '100%',
+    width: 'auto',
+    height: 'auto',
+    maxWidth: '100%',
+    maxHeight: '100%',
     backgroundColor: color.Surface.Container,
     transition: 'transform 100ms linear',
   },
