@@ -1,7 +1,7 @@
 {
   "appVersion": "3.2.0",
   "basename": "/",
-  "defaultHomeserver": 3,
+  "defaultHomeserver": 2,
   "homeserverList": [
     "converser.eu",
     "envs.net",

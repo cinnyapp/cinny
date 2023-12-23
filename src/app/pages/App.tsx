@@ -14,6 +14,7 @@ import { ClientConfig, ClientConfigProvider } from '../hooks/useClientConfig';
 import { AuthLayout, Login, Register, authLayoutLoader } from './auth';
 import { LOGIN_PATH, REGISTER_PATH } from './paths';
 import { isAuthenticated } from '../../client/state/auth';
+import Client from '../templates/client/Client';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { basename } = clientConfig;
@@ -33,14 +34,8 @@ const createRouter = (clientConfig: ClientConfig) => {
           <Route path={REGISTER_PATH} element={<Register />} />
         </Route>
 
-        <Route
-          element={
-            <div style={{ border: '1px solid red' }}>
-              <Outlet />
-            </div>
-          }
-        >
-          <Route path="/home" element={<p>home</p>} />
+        <Route>
+          <Route path="/home" element={<Client />} />
           <Route path="/direct" element={<p>direct</p>} />
           <Route path="/:spaceIdOrAlias" element={<p>:spaceIdOrAlias</p>} />
           <Route path="/explore" element={<p>explore</p>} />
