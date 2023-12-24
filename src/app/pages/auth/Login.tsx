@@ -144,6 +144,8 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
     if (discoveryInfo) {
       mxIdBaseUrl = discoveryInfo['m.homeserver'].base_url;
     }
+    // TODO: add displayAlertDialog func
+    // which will create another react root with portal
     if (!mxIdBaseUrl) {
       alert(
         'Failed to find MXID homeserver! Please enter server in Homeserver input for more details.'
