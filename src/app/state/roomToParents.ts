@@ -1,5 +1,5 @@
 import produce from 'immer';
-import { atom, useSetAtom, WritableAtom } from 'jotai';
+import { atom, useSetAtom } from 'jotai';
 import {
   ClientEvent,
   MatrixClient,
@@ -34,7 +34,7 @@ export type RoomToParentsAction =
     };
 
 const baseRoomToParents = atom<RoomToParents>(new Map());
-export const roomToParentsAtom = atom<RoomToParents, RoomToParentsAction>(
+export const roomToParentsAtom = atom<RoomToParents, [RoomToParentsAction], undefined>(
   (get) => get(baseRoomToParents),
   (get, set, action) => {
     if (action.type === 'INITIALIZE') {
@@ -69,7 +69,7 @@ export const roomToParentsAtom = atom<RoomToParents, RoomToParentsAction>(
 
 export const useBindRoomToParentsAtom = (
   mx: MatrixClient,
-  roomToParents: WritableAtom<RoomToParents, RoomToParentsAction>
+  roomToParents: typeof roomToParentsAtom
 ) => {
   const setRoomToParents = useSetAtom(roomToParents);
 

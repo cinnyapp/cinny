@@ -1,4 +1,4 @@
-import { atom, WritableAtom, useSetAtom } from 'jotai';
+import { atom, useSetAtom } from 'jotai';
 import { ClientEvent, IPushRule, IPushRules, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import { useEffect } from 'react';
 import { MuteChanges } from '../../types/matrix/room';
@@ -21,7 +21,7 @@ export const muteChangesAtom = atom<MuteChanges>({
 });
 
 const baseMutedRoomsAtom = atom(new Set<string>());
-export const mutedRoomsAtom = atom<Set<string>, MutedRoomsUpdate>(
+export const mutedRoomsAtom = atom<Set<string>, [MutedRoomsUpdate], undefined>(
   (get) => get(baseMutedRoomsAtom),
   (get, set, action) => {
     const mutedRooms = new Set([...get(mutedRoomsAtom)]);
@@ -45,10 +45,7 @@ export const mutedRoomsAtom = atom<Set<string>, MutedRoomsUpdate>(
   }
 );
 
-export const useBindMutedRoomsAtom = (
-  mx: MatrixClient,
-  mutedAtom: WritableAtom<Set<string>, MutedRoomsUpdate>
-) => {
+export const useBindMutedRoomsAtom = (mx: MatrixClient, mutedAtom: typeof mutedRoomsAtom) => {
   const setMuted = useSetAtom(mutedAtom);
 
   useEffect(() => {

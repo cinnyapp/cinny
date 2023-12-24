@@ -233,7 +233,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
               style={{ paddingRight: config.space.S200 }}
               name="passwordInput"
               type={visible ? 'text' : 'password'}
-              variant="Background"
+              variant={visible ? 'Warning' : 'Background'}
               size="500"
               outlined
               required
@@ -241,7 +241,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
                 <IconButton
                   onClick={() => setVisible(!visible)}
                   type="button"
-                  variant="Background"
+                  variant={visible ? 'Warning' : 'Background'}
                   size="400"
                   radii="300"
                 >

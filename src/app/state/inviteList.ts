@@ -5,7 +5,7 @@ import { Membership } from '../../types/matrix/room';
 import { RoomsAction, useBindRoomsWithMembershipsAtom } from './utils';
 
 const baseRoomsAtom = atom<string[]>([]);
-export const allInvitesAtom = atom<string[], RoomsAction>(
+export const allInvitesAtom = atom<string[], [RoomsAction], undefined>(
   (get) => get(baseRoomsAtom),
   (get, set, action) => {
     if (action.type === 'INITIALIZE') {
@@ -22,7 +22,7 @@ export const allInvitesAtom = atom<string[], RoomsAction>(
 
 export const useBindAllInvitesAtom = (
   mx: MatrixClient,
-  allRooms: WritableAtom<string[], RoomsAction>
+  allRooms: WritableAtom<string[], [RoomsAction], undefined>
 ) => {
   useBindRoomsWithMembershipsAtom(
     mx,

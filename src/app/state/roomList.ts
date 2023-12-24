@@ -1,11 +1,11 @@
-import { atom, WritableAtom } from 'jotai';
+import { atom } from 'jotai';
 import { MatrixClient } from 'matrix-js-sdk';
 import { useMemo } from 'react';
 import { Membership } from '../../types/matrix/room';
 import { RoomsAction, useBindRoomsWithMembershipsAtom } from './utils';
 
 const baseRoomsAtom = atom<string[]>([]);
-export const allRoomsAtom = atom<string[], RoomsAction>(
+export const allRoomsAtom = atom<string[], [RoomsAction], undefined>(
   (get) => get(baseRoomsAtom),
   (get, set, action) => {
     if (action.type === 'INITIALIZE') {
@@ -19,10 +19,7 @@ export const allRoomsAtom = atom<string[], RoomsAction>(
     });
   }
 );
-export const useBindAllRoomsAtom = (
-  mx: MatrixClient,
-  allRooms: WritableAtom<string[], RoomsAction>
-) => {
+export const useBindAllRoomsAtom = (mx: MatrixClient, allRooms: typeof allRoomsAtom) => {
   useBindRoomsWithMembershipsAtom(
     mx,
     allRooms,
