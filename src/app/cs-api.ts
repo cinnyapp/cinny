@@ -1,4 +1,5 @@
 import to from 'await-to-js';
+import { trimTrailingSlash } from './utils/common';
 
 export enum AutoDiscoveryAction {
   PROMPT = 'PROMPT',
@@ -25,18 +26,21 @@ export const autoDiscovery = async (
   request: typeof fetch,
   server: string
 ): Promise<[AutoDiscoveryError, undefined] | [undefined, AutoDiscoveryInfo]> => {
-  const host = /^https?:\/\//.test(server) ? server : `https://${server}`;
+  const host = /^https?:\/\//.test(server) ? trimTrailingSlash(server) : `https://${server}`;
   const autoDiscoveryUrl = `${host}/.well-known/matrix/client`;
 
   const [err, response] = await to(request(autoDiscoveryUrl, { method: 'GET' }));
 
   if (err || response.status === 404) {
+    // AutoDiscoveryAction.IGNORE
+    // We will use default value for IGNORE action
     return [
-      {
-        host,
-        action: AutoDiscoveryAction.IGNORE,
-      },
       undefined,
+      {
+        'm.homeserver': {
+          base_url: host,
+        },
+      },
     ];
   }
   if (response.status !== 200) {
@@ -80,6 +84,13 @@ export const autoDiscovery = async (
       },
       undefined,
     ];
+  }
+
+  content['m.homeserver'].base_url = trimTrailingSlash(baseUrl);
+  if (content['m.identity_server']) {
+    content['m.identity_server'].base_url = trimTrailingSlash(
+      content['m.identity_server'].base_url
+    );
   }
 
   return [undefined, content];

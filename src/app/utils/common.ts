@@ -88,3 +88,10 @@ export const parseGeoUri = (location: string) => {
     longitude,
   };
 };
+
+export const trimTrailingSlash = (str: string) => {
+  if (str.endsWith('/')) {
+    return str.slice(0, str.length - 1);
+  }
+  return str;
+};

@@ -15,7 +15,7 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { Link, generatePath, useSearchParams } from 'react-router-dom';
-import { createClient } from 'matrix-js-sdk';
+import { LoginRequest, createClient } from 'matrix-js-sdk';
 import to from 'await-to-js';
 import { REGISTER_PATH } from '../paths';
 import { useAuthFlows } from '../../hooks/useAuthFlows';
@@ -26,7 +26,7 @@ import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
 import { EMAIL_REGEX } from '../../utils/regex';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { AutoDiscoveryAction, autoDiscovery, specVersions } from '../../cs-api';
+import { autoDiscovery, specVersions } from '../../cs-api';
 
 function UsernameHint({ server }: { server: string }) {
   const [open, setOpen] = useState(false);
@@ -104,18 +104,10 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
   const baseUrl = serverDiscovery['m.homeserver'].base_url;
 
   const [loginState, startLogin] = useAsyncCallback(
-    useCallback(async (serverBaseUrl: string, data: object) => {
+    useCallback(async (serverBaseUrl: string, data: Omit<LoginRequest, 'type'>) => {
       const mx = createClient({ baseUrl: serverBaseUrl });
-      // const [err, res] = await to<{
-      //   access_token: string,
-      //   device_id: string,
-      //   user_id: string,
-      //   expires_in_ms?: number,
-      //   refresh_token: string,
-      // }>(mx.login('m.login.password', data));
-      // console.log(res?.status);
-      // console.log(err, res);
-      return undefined;
+      // const [err, res] = await to(mx.login('m.login.password', data));
+      // return res;
     }, [])
   );
 
@@ -137,10 +129,8 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
     const [, discovery] = await to(autoDiscovery(fetch, mxIdServer));
 
     let mxIdBaseUrl: string | undefined;
-    const [discoverError, discoveryInfo] = discovery ?? [];
-    if (discoverError?.action === AutoDiscoveryAction.IGNORE) {
-      mxIdBaseUrl = discoverError.host;
-    }
+    const [, discoveryInfo] = discovery ?? [];
+
     if (discoveryInfo) {
       mxIdBaseUrl = discoveryInfo['m.homeserver'].base_url;
     }
