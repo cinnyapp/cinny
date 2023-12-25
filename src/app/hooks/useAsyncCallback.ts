@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useAlive } from './useAlive';
 
 export enum AsyncStatus {
@@ -38,14 +38,25 @@ export const useAsyncCallback = <TData, TError, TArgs extends unknown[]>(
   });
   const alive = useAlive();
 
+  // Tracks the request number.
+  // If two or more requests are made subsequently
+  // we will throw all old request's response after they resolved.
+  const reqNumberRef = useRef(0);
+
   const callback: AsyncCallback<TArgs, TData> = useCallback(
     async (...args) => {
       setState({
         status: AsyncStatus.Loading,
       });
 
+      reqNumberRef.current += 1;
+
+      const currentReqNumber = reqNumberRef.current;
       try {
         const data = await asyncCallback(...args);
+        if (currentReqNumber !== reqNumberRef.current) {
+          throw new Error('AsyncCallbackHook: Request replaced!');
+        }
         if (alive()) {
           setState({
             status: AsyncStatus.Success,
@@ -54,6 +65,9 @@ export const useAsyncCallback = <TData, TError, TArgs extends unknown[]>(
         }
         return data;
       } catch (e) {
+        if (currentReqNumber !== reqNumberRef.current) {
+          throw new Error('AsyncCallbackHook: Request replaced!');
+        }
         if (alive()) {
           setState({
             status: AsyncStatus.Error,
