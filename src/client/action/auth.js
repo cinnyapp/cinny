@@ -98,7 +98,7 @@ async function completeRegisterStage(
 }
 
 export {
-  createTemporaryClient, login, verifyEmail,
+  updateLocalStore, createTemporaryClient, login, verifyEmail,
   loginWithToken, startSsoLogin,
   completeRegisterStage,
 };

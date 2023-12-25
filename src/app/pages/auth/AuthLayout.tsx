@@ -30,9 +30,7 @@ import { AuthFlowsProvider } from '../../hooks/useAuthFlows';
 import { AuthServerProvider } from '../../hooks/useAuthServer';
 
 export const authLayoutLoader: LoaderFunction = () => {
-  // TODO: remove false case
-  const isAuth = false && isAuthenticated();
-  if (isAuth) {
+  if (isAuthenticated()) {
     return redirect('/');
   }
 

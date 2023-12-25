@@ -8,14 +8,18 @@ import {
   Icons,
   Input,
   Menu,
+  Overlay,
+  OverlayBackdrop,
+  OverlayCenter,
   PopOut,
+  Spinner,
   Text,
   color,
   config,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import to from 'await-to-js';
-import { Link, generatePath } from 'react-router-dom';
+import { Link, generatePath, useNavigate } from 'react-router-dom';
 import { LoginRequest, LoginResponse, MatrixError, createClient } from 'matrix-js-sdk';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
@@ -23,8 +27,9 @@ import { EMAIL_REGEX } from '../../utils/regex';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { autoDiscovery, specVersions } from '../../cs-api';
-import { REGISTER_PATH } from '../paths';
+import { REGISTER_PATH, ROOT_PATH } from '../paths';
 import { useAuthServer } from '../../hooks/useAuthServer';
+import { updateLocalStore } from '../../../client/action/auth';
 
 function UsernameHint({ server }: { server: string }) {
   const [open, setOpen] = useState(false);
@@ -136,10 +141,14 @@ enum LoginError {
   Unknown = 'Unknown',
 }
 
+type PasswordLoginResponse = {
+  baseUrl: string;
+  response: LoginResponse;
+};
 const passwordLogin = async (
   serverBaseUrl: string | (() => Promise<string>),
   data: Omit<LoginRequest, 'type'>
-) => {
+): Promise<PasswordLoginResponse> => {
   const [urlError, url] =
     typeof serverBaseUrl === 'function' ? await to(serverBaseUrl()) : [undefined, serverBaseUrl];
   if (urlError) {
@@ -178,7 +187,10 @@ const passwordLogin = async (
       errcode: LoginError.Unknown,
     });
   }
-  return res;
+  return {
+    baseUrl: url,
+    response: res,
+  };
 };
 
 type PasswordLoginFormProps = {
@@ -186,23 +198,25 @@ type PasswordLoginFormProps = {
   defaultEmail?: string;
 };
 export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLoginFormProps) {
+  const navigate = useNavigate();
   const server = useAuthServer();
 
   const serverDiscovery = useAutoDiscoveryInfo();
   const baseUrl = serverDiscovery['m.homeserver'].base_url;
 
   const [loginState, startLogin] = useAsyncCallback<
-    LoginResponse,
+    PasswordLoginResponse,
     MatrixError,
     Parameters<typeof passwordLogin>
   >(useCallback(passwordLogin, []));
 
   useEffect(() => {
     if (loginState.status === AsyncStatus.Success) {
-      // TODO: save response
-      // redirect to home
+      const { response: loginRes, baseUrl: loginBaseUrl } = loginState.data;
+      updateLocalStore(loginRes.access_token, loginRes.device_id, loginRes.user_id, loginBaseUrl);
+      navigate(ROOT_PATH, { replace: true });
     }
-  }, [loginState]);
+  }, [loginState, navigate]);
 
   const handleUsernameLogin = (username: string, password: string) => {
     startLogin(baseUrl, {
@@ -329,7 +343,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
           {loginState.status === AsyncStatus.Error && (
             <>
               {loginState.error.errcode === LoginError.Forbidden && (
-                <LoginFieldError message="Username or Password is wrong." />
+                <LoginFieldError message="Invalid Username or Password." />
               )}
               {loginState.error.errcode === LoginError.UserDeactivated && (
                 <LoginFieldError message="This account has been deactivated." />
@@ -359,6 +373,17 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
           Login
         </Text>
       </Button>
+
+      <Overlay
+        open={
+          loginState.status === AsyncStatus.Loading || loginState.status === AsyncStatus.Success
+        }
+        backdrop={<OverlayBackdrop />}
+      >
+        <OverlayCenter>
+          <Spinner variant="Secondary" size="600" />
+        </OverlayCenter>
+      </Overlay>
     </Box>
   );
 }

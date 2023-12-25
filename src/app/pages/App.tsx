@@ -20,7 +20,7 @@ const createRouter = (clientConfig: ClientConfig) => {
   const { basename } = clientConfig;
   const router = createBrowserRouter(
     createRoutesFromElements(
-      <Route element={<Outlet />}>
+      <Route>
         <Route
           path="/"
           loader={() => {
@@ -28,13 +28,17 @@ const createRouter = (clientConfig: ClientConfig) => {
             return redirect('/login');
           }}
         />
-
         <Route loader={authLayoutLoader} element={<AuthLayout />}>
           <Route path={LOGIN_PATH} element={<Login />} />
           <Route path={REGISTER_PATH} element={<Register />} />
         </Route>
 
-        <Route>
+        <Route
+          loader={() => {
+            if (!isAuthenticated()) return redirect('/login');
+            return null;
+          }}
+        >
           <Route path="/home" element={<Client />} />
           <Route path="/direct" element={<p>direct</p>} />
           <Route path="/:spaceIdOrAlias" element={<p>:spaceIdOrAlias</p>} />
