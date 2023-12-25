@@ -16,24 +16,24 @@ export type AsyncLoading = {
   status: AsyncStatus.Loading;
 };
 
-export type AsyncSuccess<T> = {
+export type AsyncSuccess<D> = {
   status: AsyncStatus.Success;
-  data: T;
+  data: D;
 };
 
-export type AsyncError = {
+export type AsyncError<E = unknown> = {
   status: AsyncStatus.Error;
-  error: unknown;
+  error: E;
 };
 
-export type AsyncState<T> = AsyncIdle | AsyncLoading | AsyncSuccess<T> | AsyncError;
+export type AsyncState<D, E = unknown> = AsyncIdle | AsyncLoading | AsyncSuccess<D> | AsyncError<E>;
 
 export type AsyncCallback<TArgs extends unknown[], TData> = (...args: TArgs) => Promise<TData>;
 
-export const useAsyncCallback = <TArgs extends unknown[], TData>(
+export const useAsyncCallback = <TData, TError, TArgs extends unknown[]>(
   asyncCallback: AsyncCallback<TArgs, TData>
-): [AsyncState<TData>, AsyncCallback<TArgs, TData>] => {
-  const [state, setState] = useState<AsyncState<TData>>({
+): [AsyncState<TData, TError>, AsyncCallback<TArgs, TData>] => {
+  const [state, setState] = useState<AsyncState<TData, TError>>({
     status: AsyncStatus.Idle,
   });
   const alive = useAlive();
@@ -57,7 +57,7 @@ export const useAsyncCallback = <TArgs extends unknown[], TData>(
         if (alive()) {
           setState({
             status: AsyncStatus.Error,
-            error: e,
+            error: e as TError,
           });
         }
         throw e;
