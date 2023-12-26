@@ -1,4 +1,4 @@
-import React, { FormEventHandler, useCallback, useEffect, useState } from 'react';
+import React, { FormEventHandler, useCallback, useState } from 'react';
 import {
   Box,
   Button,
@@ -18,19 +18,23 @@ import {
   config,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import to from 'await-to-js';
-import { Link, generatePath, useNavigate } from 'react-router-dom';
-import { LoginRequest, LoginResponse, MatrixError, createClient } from 'matrix-js-sdk';
+import { Link, generatePath } from 'react-router-dom';
+import { MatrixError } from 'matrix-js-sdk';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
 import { EMAIL_REGEX } from '../../utils/regex';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { autoDiscovery, specVersions } from '../../cs-api';
-import { REGISTER_PATH, ROOT_PATH } from '../paths';
+import { REGISTER_PATH } from '../paths';
 import { useAuthServer } from '../../hooks/useAuthServer';
-import { updateLocalStore } from '../../../client/action/auth';
-import { ClientConfig, clientAllowedServer, useClientConfig } from '../../hooks/useClientConfig';
+import { useClientConfig } from '../../hooks/useClientConfig';
+import {
+  CustomLoginResponse,
+  LoginError,
+  factoryGetBaseUrl,
+  login,
+  useLoginComplete,
+} from './loginUtil';
 
 function UsernameHint({ server }: { server: string }) {
   const [open, setOpen] = useState(false);
@@ -108,108 +112,11 @@ function LoginFieldError({ message }: { message: string }) {
   );
 }
 
-enum GetBaseUrlError {
-  NotAllow = 'NotAllow',
-  NotFound = 'NotFound',
-}
-const factoryGetBaseUrl = (clientConfig: ClientConfig, server: string) => {
-  const getBaseUrl = async (): Promise<string> => {
-    if (!clientAllowedServer(clientConfig, server)) {
-      throw new Error(GetBaseUrlError.NotAllow);
-    }
-
-    const [, discovery] = await to(autoDiscovery(fetch, server));
-
-    let mxIdBaseUrl: string | undefined;
-    const [, discoveryInfo] = discovery ?? [];
-
-    if (discoveryInfo) {
-      mxIdBaseUrl = discoveryInfo['m.homeserver'].base_url;
-    }
-
-    if (!mxIdBaseUrl) {
-      throw new Error(GetBaseUrlError.NotFound);
-    }
-    const [, versions] = await to(specVersions(fetch, mxIdBaseUrl));
-    if (!versions) {
-      throw new Error(GetBaseUrlError.NotFound);
-    }
-    return mxIdBaseUrl;
-  };
-  return getBaseUrl;
-};
-
-enum LoginError {
-  ServerNotAllowed = 'ServerNotAllowed',
-  InvalidServer = 'InvalidServer',
-  Forbidden = 'Forbidden',
-  UserDeactivated = 'UserDeactivated',
-  InvalidRequest = 'InvalidRequest',
-  RateLimited = 'RateLimited',
-  Unknown = 'Unknown',
-}
-
-type PasswordLoginResponse = {
-  baseUrl: string;
-  response: LoginResponse;
-};
-const passwordLogin = async (
-  serverBaseUrl: string | (() => Promise<string>),
-  data: Omit<LoginRequest, 'type'>
-): Promise<PasswordLoginResponse> => {
-  const [urlError, url] =
-    typeof serverBaseUrl === 'function' ? await to(serverBaseUrl()) : [undefined, serverBaseUrl];
-  if (urlError) {
-    throw new MatrixError({
-      errcode:
-        urlError.message === GetBaseUrlError.NotAllow
-          ? LoginError.ServerNotAllowed
-          : LoginError.InvalidServer,
-    });
-  }
-
-  const mx = createClient({ baseUrl: url });
-  const [err, res] = await to<LoginResponse, MatrixError>(mx.login('m.login.password', data));
-
-  if (err) {
-    if (err.httpStatus === 400) {
-      throw new MatrixError({
-        errcode: LoginError.InvalidRequest,
-      });
-    }
-    if (err.httpStatus === 429) {
-      throw new MatrixError({
-        errcode: LoginError.RateLimited,
-      });
-    }
-    if (err.errcode === 'M_USER_DEACTIVATED') {
-      throw new MatrixError({
-        errcode: LoginError.UserDeactivated,
-      });
-    }
-
-    if (err.httpStatus === 403) {
-      throw new MatrixError({
-        errcode: LoginError.Forbidden,
-      });
-    }
-
-    throw new MatrixError({
-      errcode: LoginError.Unknown,
-    });
-  }
-  return {
-    baseUrl: url,
-    response: res,
-  };
-};
-
 type PasswordLoginFormProps = {
   defaultUsername?: string;
   defaultEmail?: string;
 };
 export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLoginFormProps) {
-  const navigate = useNavigate();
   const server = useAuthServer();
   const clientConfig = useClientConfig();
 
@@ -217,18 +124,12 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
   const baseUrl = serverDiscovery['m.homeserver'].base_url;
 
   const [loginState, startLogin] = useAsyncCallback<
-    PasswordLoginResponse,
+    CustomLoginResponse,
     MatrixError,
-    Parameters<typeof passwordLogin>
-  >(useCallback(passwordLogin, []));
+    Parameters<typeof login>
+  >(useCallback(login, []));
 
-  useEffect(() => {
-    if (loginState.status === AsyncStatus.Success) {
-      const { response: loginRes, baseUrl: loginBaseUrl } = loginState.data;
-      updateLocalStore(loginRes.access_token, loginRes.device_id, loginRes.user_id, loginBaseUrl);
-      navigate(ROOT_PATH, { replace: true });
-    }
-  }, [loginState, navigate]);
+  useLoginComplete(loginState.status === AsyncStatus.Success ? loginState.data : undefined);
 
   const handleUsernameLogin = (username: string, password: string) => {
     startLogin(baseUrl, {

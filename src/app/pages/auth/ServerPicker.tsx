@@ -66,6 +66,8 @@ export function ServerPicker({
     setServerMenu(false);
   };
 
+  // TODO: input not update on url changes
+
   return (
     <Input
       ref={serverInputRef}

@@ -7,6 +7,7 @@ import { useAuthServer } from '../../hooks/useAuthServer';
 import { useParsedLoginFlows } from '../../hooks/useParsedLoginFlows';
 import { PasswordLoginForm } from './PasswordLoginForm';
 import { SSOLogin } from './SSOLogin';
+import { TokenLogin } from './TokenLogin';
 
 export type LoginSearchParams = {
   username?: string;
@@ -22,20 +23,20 @@ const getLoginSearchParams = (searchParams: URLSearchParams): LoginSearchParams 
 
 export function Login() {
   const server = useAuthServer();
-  const { loginFlows, registerFlows } = useAuthFlows();
+  const { loginFlows } = useAuthFlows();
   const [searchParams] = useSearchParams();
   const loginSearchParams = getLoginSearchParams(searchParams);
 
   const parsedFlows = useParsedLoginFlows(loginFlows.flows);
-  console.log(parsedFlows);
-  console.log(server, loginFlows, registerFlows);
 
   return (
     <Box direction="Column" gap="500">
       <Text size="H2" priority="400">
         Login
       </Text>
-      {parsedFlows.token && false && <p>Token login</p>}
+      {parsedFlows.token && loginSearchParams.loginToken && (
+        <TokenLogin token={loginSearchParams.loginToken} />
+      )}
       {parsedFlows.password && (
         <>
           <PasswordLoginForm
