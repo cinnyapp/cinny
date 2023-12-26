@@ -12,7 +12,7 @@ export const AuthLayout = style({
 });
 
 export const AuthCard = style({
-  marginTop: '10vh',
+  marginTop: '6vh',
   maxWidth: config.size.ModalWidth300,
   width: '100%',
   backgroundColor: color.Surface.Container,

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Box, Text, color } from 'folds';
+import { Box, Line, Text, color } from 'folds';
 import { Link, generatePath, useSearchParams } from 'react-router-dom';
 import { REGISTER_PATH } from '../paths';
 import { useAuthFlows } from '../../hooks/useAuthFlows';
 import { useAuthServer } from '../../hooks/useAuthServer';
 import { useParsedLoginFlows } from '../../hooks/useParsedLoginFlows';
 import { PasswordLoginForm } from './PasswordLoginForm';
+import { SSOLogin } from './SSOLogin';
 
 export type LoginSearchParams = {
   username?: string;
@@ -42,11 +43,21 @@ export function Login() {
             defaultEmail={loginSearchParams.email}
           />
           <span data-spacing-node />
+          {parsedFlows.sso && (
+            <Box gap="400" alignItems="Center">
+              <Line style={{ flexGrow: 1 }} direction="Horizontal" size="300" variant="Surface" />
+              <Text>Or</Text>
+              <Line style={{ flexGrow: 1 }} direction="Horizontal" size="300" variant="Surface" />
+            </Box>
+          )}
         </>
       )}
       {parsedFlows.sso && (
         <>
-          <Text align="Center">SSO login supported</Text>
+          <SSOLogin
+            providers={parsedFlows.sso.identity_providers}
+            canPasswordLogin={!!parsedFlows.password}
+          />
           <span data-spacing-node />
         </>
       )}
