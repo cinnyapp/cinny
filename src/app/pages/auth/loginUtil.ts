@@ -54,7 +54,7 @@ export type CustomLoginResponse = {
 };
 export const login = async (
   serverBaseUrl: string | (() => Promise<string>),
-  data: Omit<LoginRequest, 'type'>
+  data: LoginRequest
 ): Promise<CustomLoginResponse> => {
   const [urlError, url] =
     typeof serverBaseUrl === 'function' ? await to(serverBaseUrl()) : [undefined, serverBaseUrl];
@@ -68,7 +68,7 @@ export const login = async (
   }
 
   const mx = createClient({ baseUrl: url });
-  const [err, res] = await to<LoginResponse, MatrixError>(mx.login('m.login.password', data));
+  const [err, res] = await to<LoginResponse, MatrixError>(mx.login(data.type, data));
 
   if (err) {
     if (err.httpStatus === 400) {

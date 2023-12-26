@@ -133,6 +133,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
 
   const handleUsernameLogin = (username: string, password: string) => {
     startLogin(baseUrl, {
+      type: 'm.login.password',
       identifier: {
         type: 'm.id.user',
         user: username,
@@ -150,6 +151,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
     const getBaseUrl = factoryGetBaseUrl(clientConfig, mxIdServer);
 
     startLogin(getBaseUrl, {
+      type: 'm.login.password',
       identifier: {
         type: 'm.id.user',
         user: mxIdUsername,
@@ -160,6 +162,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
   };
   const handleEmailLogin = (email: string, password: string) => {
     startLogin(baseUrl, {
+      type: 'm.login.password',
       identifier: {
         type: 'm.id.thirdparty',
         medium: 'email',

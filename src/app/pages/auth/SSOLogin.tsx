@@ -13,7 +13,8 @@ export function SSOLogin({ providers, canPasswordLogin }: SSOLoginProps) {
   const mx = useMemo(() => createClient({ baseUrl }), [baseUrl]);
 
   const getSSOIdUrl = (ssoId: string): string => {
-    const redirectUrl = window.location.href;
+    // remove query params and use current url as redirect
+    const [redirectUrl] = window.location.href.split('?');
     return mx.getSsoLoginUrl(redirectUrl, 'sso', ssoId);
   };
 

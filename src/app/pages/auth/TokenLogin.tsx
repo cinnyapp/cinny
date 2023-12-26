@@ -25,7 +25,7 @@ function LoginTokenError({ message }: { message: string }) {
         padding: config.space.S300,
         borderRadius: config.radii.R400,
       }}
-      justifyContent="Center"
+      justifyContent="Start"
       alignItems="Start"
       gap="300"
     >
@@ -68,7 +68,7 @@ export function TokenLogin({ token }: TokenLoginProps) {
       {loginState.status === AsyncStatus.Error && (
         <>
           {loginState.error.errcode === LoginError.Forbidden && (
-            <LoginTokenError message="Failed to login. Authentication data is incorrect." />
+            <LoginTokenError message="Invalid login token." />
           )}
           {loginState.error.errcode === LoginError.UserDeactivated && (
             <LoginTokenError message="This account has been deactivated." />
