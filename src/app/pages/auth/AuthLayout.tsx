@@ -152,7 +152,7 @@ export function AuthLayout() {
                 Homeserver
               </Text>
               <ServerPicker
-                defaultServer={server}
+                server={server}
                 serverList={clientConfig.homeserverList ?? []}
                 allowCustomServer={clientConfig.allowCustomHomeservers}
                 onServerChange={selectServer}

@@ -23,18 +23,22 @@ import FocusTrap from 'focus-trap-react';
 import { useDebounce } from '../../hooks/useDebounce';
 
 export function ServerPicker({
-  defaultServer,
+  server,
   serverList,
   allowCustomServer,
   onServerChange,
 }: {
-  defaultServer: string;
+  server: string;
   serverList: string[];
   allowCustomServer?: boolean;
   onServerChange: (server: string) => void;
 }) {
   const [serverMenu, setServerMenu] = useState(false);
   const serverInputRef = useRef<HTMLInputElement>(null);
+
+  if (serverInputRef.current && serverInputRef.current.value !== server) {
+    serverInputRef.current.value = server;
+  }
 
   const handleServerChange: ChangeEventHandler<HTMLInputElement> = useDebounce(
     useCallback(
@@ -57,16 +61,10 @@ export function ServerPicker({
   const handleServerSelect: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const selectedServer = evt.currentTarget.getAttribute('data-server');
     if (selectedServer) {
-      const serverInput = serverInputRef.current;
-      if (serverInput) {
-        serverInput.value = selectedServer;
-      }
       onServerChange(selectedServer);
     }
     setServerMenu(false);
   };
-
-  // TODO: input not update on url changes
 
   return (
     <Input
@@ -74,7 +72,7 @@ export function ServerPicker({
       style={{ paddingRight: config.space.S200 }}
       variant={allowCustomServer ? 'Background' : 'Surface'}
       outlined
-      defaultValue={defaultServer}
+      defaultValue={server}
       onChange={handleServerChange}
       onKeyDown={handleKeyDown}
       size="500"
@@ -102,15 +100,15 @@ export function ServerPicker({
                     <Text size="L400">Homeserver List</Text>
                   </Header>
                   <div style={{ padding: config.space.S100, paddingTop: 0 }}>
-                    {serverList?.map((server) => (
+                    {serverList?.map((serverName) => (
                       <MenuItem
-                        key={server}
+                        key={serverName}
                         radii="300"
-                        aria-pressed={server === serverInputRef.current?.value}
-                        data-server={server}
+                        aria-pressed={serverName === server}
+                        data-server={serverName}
                         onClick={handleServerSelect}
                       >
-                        <Text>{server}</Text>
+                        <Text>{serverName}</Text>
                       </MenuItem>
                     ))}
                   </div>

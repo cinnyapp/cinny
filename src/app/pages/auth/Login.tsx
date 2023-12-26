@@ -47,7 +47,7 @@ export function Login() {
           {parsedFlows.sso && (
             <Box gap="400" alignItems="Center">
               <Line style={{ flexGrow: 1 }} direction="Horizontal" size="300" variant="Surface" />
-              <Text>Or</Text>
+              <Text>OR</Text>
               <Line style={{ flexGrow: 1 }} direction="Horizontal" size="300" variant="Surface" />
             </Box>
           )}
