@@ -30,6 +30,7 @@ import { autoDiscovery, specVersions } from '../../cs-api';
 import { REGISTER_PATH, ROOT_PATH } from '../paths';
 import { useAuthServer } from '../../hooks/useAuthServer';
 import { updateLocalStore } from '../../../client/action/auth';
+import { ClientConfig, clientAllowedServer, useClientConfig } from '../../hooks/useClientConfig';
 
 function UsernameHint({ server }: { server: string }) {
   const [open, setOpen] = useState(false);
@@ -107,8 +108,16 @@ function LoginFieldError({ message }: { message: string }) {
   );
 }
 
-const factoryFetchBaseUrl = (server: string) => {
-  const fetchBaseUrl = async (): Promise<string> => {
+enum GetBaseUrlError {
+  NotAllow = 'NotAllow',
+  NotFound = 'NotFound',
+}
+const factoryGetBaseUrl = (clientConfig: ClientConfig, server: string) => {
+  const getBaseUrl = async (): Promise<string> => {
+    if (!clientAllowedServer(clientConfig, server)) {
+      throw new Error(GetBaseUrlError.NotAllow);
+    }
+
     const [, discovery] = await to(autoDiscovery(fetch, server));
 
     let mxIdBaseUrl: string | undefined;
@@ -119,20 +128,19 @@ const factoryFetchBaseUrl = (server: string) => {
     }
 
     if (!mxIdBaseUrl) {
-      throw new Error(
-        'Failed to find MXID homeserver! Please enter server in Homeserver input for more details.'
-      );
+      throw new Error(GetBaseUrlError.NotFound);
     }
     const [, versions] = await to(specVersions(fetch, mxIdBaseUrl));
     if (!versions) {
-      throw new Error('Homeserver URL does not appear to be a valid Matrix homeserver.');
+      throw new Error(GetBaseUrlError.NotFound);
     }
     return mxIdBaseUrl;
   };
-  return fetchBaseUrl;
+  return getBaseUrl;
 };
 
 enum LoginError {
+  ServerNotAllowed = 'ServerNotAllowed',
   InvalidServer = 'InvalidServer',
   Forbidden = 'Forbidden',
   UserDeactivated = 'UserDeactivated',
@@ -153,7 +161,10 @@ const passwordLogin = async (
     typeof serverBaseUrl === 'function' ? await to(serverBaseUrl()) : [undefined, serverBaseUrl];
   if (urlError) {
     throw new MatrixError({
-      errcode: LoginError.InvalidServer,
+      errcode:
+        urlError.message === GetBaseUrlError.NotAllow
+          ? LoginError.ServerNotAllowed
+          : LoginError.InvalidServer,
     });
   }
 
@@ -200,6 +211,7 @@ type PasswordLoginFormProps = {
 export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLoginFormProps) {
   const navigate = useNavigate();
   const server = useAuthServer();
+  const clientConfig = useClientConfig();
 
   const serverDiscovery = useAutoDiscoveryInfo();
   const baseUrl = serverDiscovery['m.homeserver'].base_url;
@@ -234,9 +246,9 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
     const mxIdUsername = getMxIdLocalPart(mxId);
     if (!mxIdServer || !mxIdUsername) return;
 
-    const fetchBaseUrl = factoryFetchBaseUrl(mxIdServer);
+    const getBaseUrl = factoryGetBaseUrl(clientConfig, mxIdServer);
 
-    startLogin(fetchBaseUrl, {
+    startLogin(getBaseUrl, {
       identifier: {
         type: 'm.id.user',
         user: mxIdUsername,
@@ -302,10 +314,16 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
           outlined
           after={<UsernameHint server={server} />}
         />
-        {loginState.status === AsyncStatus.Error &&
-          loginState.error.errcode === LoginError.InvalidServer && (
-            <LoginFieldError message="Failed to find your Matrix ID server." />
-          )}
+        {loginState.status === AsyncStatus.Error && (
+          <>
+            {loginState.error.errcode === LoginError.ServerNotAllowed && (
+              <LoginFieldError message="Login with custom server not allowed by your client instance." />
+            )}
+            {loginState.error.errcode === LoginError.InvalidServer && (
+              <LoginFieldError message="Failed to find your Matrix ID server." />
+            )}
+          </>
+        )}
       </Box>
       <Box direction="Column" gap="100">
         <Text as="label" size="L400" priority="300">

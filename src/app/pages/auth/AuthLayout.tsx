@@ -16,7 +16,11 @@ import { AuthFooter } from './AuthFooter';
 import * as css from './styles.css';
 import * as PatternsCss from '../../styles/Patterns.css';
 import { isAuthenticated } from '../../../client/state/auth';
-import { useClientConfig } from '../../hooks/useClientConfig';
+import {
+  clientAllowedServer,
+  clientDefaultServer,
+  useClientConfig,
+} from '../../hooks/useClientConfig';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { LOGIN_PATH, REGISTER_PATH } from '../paths';
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
@@ -73,11 +77,12 @@ export function AuthLayout() {
   const location = useLocation();
   const { server: urlEncodedServer } = useParams();
 
-  const { homeserverList, defaultHomeserver, allowCustomHomeservers } = useClientConfig();
+  const clientConfig = useClientConfig();
 
-  const defaultServer: string = homeserverList?.[defaultHomeserver ?? 0] ?? 'matrix.org';
+  const defaultServer = clientDefaultServer(clientConfig);
   let server: string = urlEncodedServer ? decodeURIComponent(urlEncodedServer) : defaultServer;
-  if (!allowCustomHomeservers && !homeserverList?.includes(server)) {
+
+  if (!clientAllowedServer(clientConfig, server)) {
     server = defaultServer;
   }
 
@@ -148,8 +153,8 @@ export function AuthLayout() {
               </Text>
               <ServerPicker
                 defaultServer={server}
-                serverList={homeserverList ?? []}
-                allowCustomServer={allowCustomHomeservers}
+                serverList={clientConfig.homeserverList ?? []}
+                allowCustomServer={clientConfig.allowCustomHomeservers}
                 onServerChange={selectServer}
               />
             </Box>
