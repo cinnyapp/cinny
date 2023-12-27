@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Line, Text, color } from 'folds';
+import { Box, Text, color } from 'folds';
 import { Link, generatePath, useSearchParams } from 'react-router-dom';
 import { REGISTER_PATH } from '../paths';
 import { useAuthFlows } from '../../hooks/useAuthFlows';
@@ -8,6 +8,7 @@ import { useParsedLoginFlows } from '../../hooks/useParsedLoginFlows';
 import { PasswordLoginForm } from './PasswordLoginForm';
 import { SSOLogin } from './SSOLogin';
 import { TokenLogin } from './TokenLogin';
+import { OrDivider } from './OrDivider';
 
 export type LoginSearchParams = {
   username?: string;
@@ -44,20 +45,14 @@ export function Login() {
             defaultEmail={loginSearchParams.email}
           />
           <span data-spacing-node />
-          {parsedFlows.sso && (
-            <Box gap="400" alignItems="Center">
-              <Line style={{ flexGrow: 1 }} direction="Horizontal" size="300" variant="Surface" />
-              <Text>OR</Text>
-              <Line style={{ flexGrow: 1 }} direction="Horizontal" size="300" variant="Surface" />
-            </Box>
-          )}
+          {parsedFlows.sso && <OrDivider />}
         </>
       )}
       {parsedFlows.sso && (
         <>
           <SSOLogin
             providers={parsedFlows.sso.identity_providers}
-            canPasswordLogin={!!parsedFlows.password}
+            asIcons={!!parsedFlows.password}
           />
           <span data-spacing-node />
         </>

@@ -5,9 +5,9 @@ import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 
 type SSOLoginProps = {
   providers: IIdentityProvider[];
-  canPasswordLogin?: boolean;
+  asIcons?: boolean;
 };
-export function SSOLogin({ providers, canPasswordLogin }: SSOLoginProps) {
+export function SSOLogin({ providers, asIcons }: SSOLoginProps) {
   const discovery = useAutoDiscoveryInfo();
   const baseUrl = discovery['m.homeserver'].base_url;
   const mx = useMemo(() => createClient({ baseUrl }), [baseUrl]);
@@ -24,11 +24,11 @@ export function SSOLogin({ providers, canPasswordLogin }: SSOLoginProps) {
         const { id, name, icon } = provider;
         const iconUrl = icon && mx.mxcUrlToHttp(icon, 96, 96, 'crop', false);
 
-        const buttonTitle = `Login with ${name}`;
+        const buttonTitle = `Continue with ${name}`;
 
         // Only show SSO buttons as icons if we have
-        // password login UI and high number of SSO buttons
-        if (iconUrl && canPasswordLogin && providers.length > 2) {
+        // high number of SSO buttons to display
+        if (iconUrl && asIcons && providers.length > 2) {
           return (
             <Avatar
               style={{ cursor: 'pointer' }}
