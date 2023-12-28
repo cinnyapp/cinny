@@ -1,0 +1,198 @@
+{
+  "common": {
+    "options": "Optionen",
+    "or": "oder"
+  },
+  "Components": {
+    "Files": {
+      "download": "Herunterladen",
+      "failure_pdf": "Fehler beim Laden der PDF",
+      "retry": "Erneut Versuchen",
+      "previous": "Vorherige",
+      "jump_to_page": "Spring zu Seite",
+      "next": "Nächste"
+    }
+  },
+  "Organisms": {
+    "Welcome": {
+      "heading": "Willkommen in Cinny!",
+      "subheading": "Noch ein weiterer Matrix Client"
+    },
+    "SpaceSettings": {
+      "categorize_subspaces": "Unter-Spaces kategorisieren",
+      "uncategorize_subspaces": "Unter-Spaces nicht kategorisieren",
+      "pin_sidebar": "An Seitenleiste anheften",
+      "unpin_sidebar": "Von Seitenleiste lösen"
+    },
+    "Settings": {
+      "theme": {
+        "follow_system": {
+          "title": "System-Theme verwenden",
+          "description": "Verwende den hellen oder dunklen Modus basierend auf den Systemeinstellungen."
+        },
+        "title": "Theme",
+        "theme_light": "Hell",
+        "theme_silver": "Silber",
+        "theme_dark": "Dunkel",
+        "theme_butter": "Butter"
+      },
+      "markdown": {
+        "title": "Markdown-Formatierung",
+        "description": "Nachrichten vor dem Senden mit Markdown formatieren"
+      },
+      "hide_membership_events": {
+        "title": "Mitgliedschaftsereignisse ausblenden",
+        "description": "Nachrichten zu Änderungen von Mitgliedschaften in der Zeitleiste ausblenden (Beitreten, Verlassen, Einladen, Entfernen und Bannen)"
+      },
+      "hide_nickname_avatar_events": {
+        "title": "Spitzname/Avatar Ereignisse ausblenden",
+        "description": "Nachrichten zu Änderungen von Spitznamen und Avataren in der Zeitleiste ausblenden."
+      },
+      "tabs": {
+        "appearance": "Auftretten",
+        "notifications": "Benachrichtungen",
+        "emoji": "Emoji",
+        "security": "Sicherheit",
+        "about": "Über"
+      }
+    },
+    "DrawerBreadcrumb": {
+      "home": "Home"
+    },
+    "DrawerHeader": {
+      "add_rooms_or_spaces": "Raum oder Space hinzufügen",
+      "create_new_space": "Neuen Space erstellen",
+      "create_new_room": "Neuen Raum erstellen",
+      "explore_public_room": "Öffentliche Räume erkunden",
+      "join_with_address": "Mit Adresse beitreten",
+      "add_existing": "Bestehendem beitreten",
+      "manage_rooms": "Manage rooms",
+      "home": "Home",
+      "direct_messages": "Direktnachrichten",
+      "start_dm_tooltip": "Direktnachricht schreiben",
+      "add_rooms_spaces_tooltip": "Räume/Spaces hinzufügen"
+    },
+    "SideBar": {
+      "settings_tooltip": "Einstellungen",
+      "unverified_sessions_one": "{{count}} nicht verifizierte Sitzung",
+      "unverified_sessions_other": "{{count}} nicht verifizierte Sitzungen",
+      "home_tooltip": "Home",
+      "direct_messages_tooltip": "Personen",
+      "pin_spaces_tooltip": "Spaces anheften",
+      "search_tooltip": "Suche",
+      "invites_tooltip": "Einladungen"
+    }
+  },
+  "Molecules": {
+    "ConfirmDialog": {
+      "cancel": "Abbrechen"
+    },
+    "Message": {
+      "add_reaction": "Reaktion hinzufügen",
+      "reply": "Antworten",
+      "edit": "Bearbeiten",
+      "read_receipts": "Lesebestätigungen",
+      "view_source": "Quelle ansehen"
+    },
+    "RoomNotification": {
+      "default": "Global",
+      "all_messages": "Alle Nachrichten",
+      "mentions_and_keywords": "Erwähnungen & Schlüsselwörter",
+      "mute": "Stummschalten"
+    },
+    "RoomOptions": {
+      "title": "Optionen für {{room_name}}",
+      "leave": {
+        "title": "Raum verlassen",
+        "subtitle": "Bist du sicher, dass du den Raum {{room_name}} verlassen möchtest?",
+        "button_text": "Verlassen"
+      },
+      "mark_as_read": "Als gelesen markieren",
+      "notifications_heading": "Benachrichtigungen",
+      "invite": "Einladen"
+    },
+    "SpaceOptions": {
+      "leave_space": "Space verlassen",
+      "leave_space_confirmation": "Bist du sicher, dass du den Space {{space}} verlassen möchtest?",
+      "leave_space_confirm": "Verlassen",
+      "mark_as_read": "Als gelesen markieren",
+      "invite": "Einladen",
+      "manage_rooms": "Räume verwalten",
+      "settings": "Einstellungen",
+      "leave": "Verlassen"
+    }
+  },
+  "Templates": {
+    "Auth": {
+      "loading_homeserver_list": "Lade Liste der Homeserver...",
+      "looking_for_homeserver": "Suche nach Homeserver...",
+      "connecting_to_homeserver": "Verbinde mit {{homeserver}}...",
+      "unable_to_connect": "Keine Verbindung möglich. Bitte prüfe deine Eingabe",
+      "username_taken": "Benutzername ist bereits vergeben",
+      "registration_in_progress": "Registrierung in Bearbeitung...",
+      "link_about": "Über",
+      "link_twitter": "Twitter",
+      "link_matrix": "Powered by Matrix",
+      "dont_have_an_account": "Du hast noch keinen Account?",
+      "already_have_an_account": "Du hast bereits einen Account?",
+      "register_link": "Registrieren",
+      "login_link": "Anmelden",
+      "redirecting": "Leite weiter...",
+      "login_in_progress": "Anmeldung in Bearbeitung...",
+      "bad_localpart_error": "Der Benutzername darf nur die Zeichen a-z, 0-9 oder '=_-./' enthalten",
+      "user_id_too_long_error": "Deine Benutzer-ID, einschließlich des Hostnamens, darf nicht mehr als 255 Zeichen lang sein.",
+      "bad_password_error": "Das Kennwort muss mindestens 1 Kleinbuchstaben, 1 Großbuchstaben, 1 Ziffer, 1 Sonderzeichen und 8-127 Zeichen (keine Leerzeichen) enthalten.",
+      "confirm_password_error": "Die Kennwörter stimmen nicht überein",
+      "bad_email_error": "Ungültige E-Mail-Adresse",
+      "invalid_password": "Ungültiges Kennwort",
+      "check_credentials": "Bitte prüfe deine Zugangsdaten",
+      "login_types": {
+        "username": "Benutzername",
+        "email": "E-Mail"
+      },
+      "homeserver_form": {
+        "title": "Homeserver",
+        "header": "Liste der Homeserver"
+      },
+      "login_form": {
+        "title": "Anmeldung",
+        "prompt_email": "E-Mail",
+        "prompt_username": "Benutzername",
+        "prompt_password": "Kennwort",
+        "login_button": "Anmelden"
+      },
+      "register_form": {
+        "title": "Registrierung",
+        "prompt_email_required": "E-Mail (erforderlich)",
+        "prompt_email_optional": "E-Mail",
+        "prompt_username": "Benutzername",
+        "prompt_password": "Kennwort",
+        "prompt_confirm_password": "Kennwort bestätigen",
+        "register_button": "Registrieren"
+      },
+      "terms_and_conditions": {
+        "title": "Den Bedingungen zustimmen",
+        "description": "Um die Registrierung abzuschließen, musst du den Nutzungsbedingungen zustimmen.",
+        "accept": "Ich stimme den <a>Nutzungsbedingungen</a> zu",
+        "submit_button": "Absenden"
+      },
+      "validate_email": {
+        "title": "E-Mail verifizieren",
+        "continue_button": "Fortfahren",
+        "message": "Bitte prüfe dein E-Mail-Postfach <bold>{{email_address}}</bold> und validiere deine E-Mail-Adresse bevor du fortfährst"
+      },
+      "captcha": {
+        "message": "Bitte markiere das folgende Feld um fortzufahren"
+      }
+    },
+    "Client": {
+      "loading_messages": {
+        "default": "Aufwärmen",
+        "message_one": "Beinahe am Ziel...",
+        "message_two": "Sieht aus, als hättest du eine Menge Zeug aufzuwärmen!"
+      },
+      "logout_prompt": "Abmeldung",
+      "clear_cache": "Zwischenspeicher löschen & neuladen"
+    }
+  }
+}

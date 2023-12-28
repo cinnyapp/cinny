@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import './ConfirmDialog.scss';
+import { useTranslation } from 'react-i18next';
 
 import { openReusableDialog } from '../../../client/action/navigation';
 
@@ -10,12 +11,13 @@ import Button from '../../atoms/button/Button';
 function ConfirmDialog({
   desc, actionTitle, actionType, onComplete,
 }) {
+  const { t } = useTranslation();
   return (
     <div className="confirm-dialog">
       <Text>{desc}</Text>
       <div className="confirm-dialog__btn">
         <Button variant={actionType} onClick={() => onComplete(true)}>{actionTitle}</Button>
-        <Button onClick={() => onComplete(false)}>Cancel</Button>
+        <Button onClick={() => onComplete(false)}>{t('Molecules.ConfirmDialog.cancel')}</Button>
       </div>
     </div>
   );
