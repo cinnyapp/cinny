@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage, Box, Button, Spinner, Text, as, color } from 'folds';
 import { Room } from 'matrix-js-sdk';
+import { useTranslation, Trans } from 'react-i18next';
+import dayjs from 'dayjs';
 import { openInviteUser, selectRoom } from '../../../client/action/navigation';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { IRoomCreateContent, Membership, StateEvent } from '../../../types/matrix/room';
@@ -8,7 +10,7 @@ import { getMemberDisplayName, getStateEvent } from '../../utils/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
+import { timeDayMonthYear } from '../../utils/time';
 
 export type RoomIntroProps = {
   room: Room;
@@ -35,6 +37,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const [prevRoomState, joinPrevRoom] = useAsyncCallback(
     useCallback(async (roomId: string) => mx.joinRoom(roomId), [mx])
   );
+  const { t } = useTranslation();
 
   return (
     <Box direction="Column" grow="Yes" gap="500" {...props} ref={ref}>
@@ -60,13 +63,15 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             {name}
           </Text>
           <Text size="T400" priority="400">
-            {typeof topic === 'string' ? topic : 'This is the beginning of conversation.'}
+            {typeof topic === 'string' ? topic : t('Components.RoomIntro.beginning')}
           </Text>
           {creatorName && ts && (
             <Text size="T200" priority="300">
-              {'Created by '}
-              <b>@{creatorName}</b>
-              {` on ${timeDayMonthYear(ts)} ${timeHourMinute(ts)}`}
+              <Trans
+                i18nKey="Components.RoomIntro.created_by_on"
+                components={{ user: <b>@{creatorName}</b> }}
+                values={{ time: `${timeDayMonthYear(ts)} ${dayjs(ts).format(t('Time.timeHourMinute'))}` }}
+              />
             </Text>
           )}
         </Box>
@@ -77,7 +82,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             size="300"
             radii="300"
           >
-            <Text size="B300">Invite Member</Text>
+            <Text size="B300">{t('Components.RoomIntro.invite_member')}</Text>
           </Button>
           {typeof prevRoomId === 'string' &&
             (mx.getRoom(prevRoomId)?.getMyMembership() === Membership.Join ? (
@@ -88,7 +93,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
                 fill="Soft"
                 radii="300"
               >
-                <Text size="B300">Open Old Room</Text>
+                <Text size="B300">{t('Components.RoomIntro.open_old_room')}</Text>
               </Button>
             ) : (
               <Button
@@ -104,7 +109,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
                   ) : undefined
                 }
               >
-                <Text size="B300">Join Old Room</Text>
+                <Text size="B300">{t('Components.RoomIntro.join_old_room')}</Text>
               </Button>
             ))}
         </Box>

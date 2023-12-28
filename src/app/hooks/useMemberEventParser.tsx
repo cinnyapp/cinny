@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { IconSrc, Icons } from 'folds';
 import { MatrixEvent } from 'matrix-js-sdk';
+import { useTranslation, Trans } from 'react-i18next';
 import { IMemberContent, Membership } from '../../types/matrix/room';
 import { getMxIdLocalPart } from '../utils/matrix';
 import { isMembershipChanged } from '../utils/room';
@@ -13,6 +14,8 @@ export type ParsedResult = {
 export type MemberEventParser = (mEvent: MatrixEvent) => ParsedResult;
 
 export const useMemberEventParser = (): MemberEventParser => {
+  const { t } = useTranslation();
+
   const parseMemberEvent: MemberEventParser = (mEvent) => {
     const content = mEvent.getContent<IMemberContent>();
     const prevContent = mEvent.getPrevContent() as IMemberContent;
@@ -50,8 +53,11 @@ export const useMemberEventParser = (): MemberEventParser => {
           body: (
             <>
               <b>{senderName}</b>
-              {' invited '}
-              <b>{userName}</b> {content.reason}
+              <Trans
+                i18nKey="Components.MemberEvent.invited"
+                components={{ user_invited: <b>{userName}</b> }}
+              />
+              {content.reason}
             </>
           ),
         };
@@ -63,7 +69,7 @@ export const useMemberEventParser = (): MemberEventParser => {
           body: (
             <>
               <b>{userName}</b>
-              {' request to join room '}
+              {t('Components.MemberEvent.requested_join')}
               {content.reason}
             </>
           ),
@@ -76,7 +82,7 @@ export const useMemberEventParser = (): MemberEventParser => {
           body: (
             <>
               <b>{userName}</b>
-              {' joined the room'}
+              {t('Components.MemberEvent.joined')}
             </>
           ),
         };
@@ -90,7 +96,7 @@ export const useMemberEventParser = (): MemberEventParser => {
               senderId === userId ? (
                 <>
                   <b>{userName}</b>
-                  {' rejected the invitation '}
+                  {t('Components.MemberEvent.reject_invite')}
                   {content.reason}
                 </>
               ) : (
@@ -146,7 +152,7 @@ export const useMemberEventParser = (): MemberEventParser => {
             senderId === userId ? (
               <>
                 <b>{userName}</b>
-                {' left the room '}
+                {t('Components.MemberEvent.left_room')}
                 {content.reason}
               </>
             ) : (

@@ -1,0 +1,564 @@
+{
+  "common": {
+    "close": "Schließen",
+    "options": "Optionen",
+    "source_code": "Quellcode",
+    "sponsor": "Unterstützen",
+    "delete": "Löschen",
+    "continue": "Weiter",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "view_more": "Mehr ansehen",
+    "view_less": "Weniger ansehen",
+    "copy": "Kopieren",
+    "download": "Herunterladen",
+    "or": "oder",
+    "reset": "Zurücksetzen",
+    "setup": "Einrichtung",
+    "search": "Suche",
+    "invite": "Einladen",
+    "message_prompt": "Nachricht",
+    "and": " und ",
+    "edit": "Bearbeiten"
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgegangen!"
+  },
+  "Components": {
+    "Files": {
+      "download": "Herunterladen",
+      "failure_pdf": "Fehler beim Laden der PDF",
+      "retry": "Erneut Versuchen",
+      "previous": "Vorherige",
+      "jump_to_page": "Spring zu Seite",
+      "next": "Nächste",
+      "open_pdf": "PDF öffnen",
+      "retry_download": "Herunterladen neu versuchen",
+      "open_file": "Datei öffnen"
+    },
+    "UploadBoard": {
+      "files": "Dateien",
+      "send": "Senden",
+      "upload_failed": "Hochladen fehlgeschlagen"
+    },
+    "MemberEvent": {
+      "invited": " hat <user_invited /> eingeladen",
+      "reject_invite": " hat die Einladung abgelehnt ",
+      "requested_join": " hat angefragt dem Raum bei zu tretten ",
+      "joined": " ist dem Raum beigetreten",
+      "left_room": " hat den Raum verlassen "
+    },
+    "RoomIntro": {
+      "created_by_on": "Erstellt von <user /> am {{time}}",
+      "beginning": "Das ist der Start der Unterhaltung.",
+      "invite_member": "Nutzer einladen",
+      "open_old_room": "Alten Raum öffnen",
+      "join_old_room": "Altem Raum beitreten"
+    },
+    "MessageContentFallback": {
+      "message_deleted": "Diese Nachricht wurde gelöscht",
+      "unsupported_message": "Nicht unterstützte Nachricht",
+      "failed_to_load_message": "Meldung konnte nicht geladen werden",
+      "unable_to_decrypt": "Nachricht kann nicht entschlüsselt werden",
+      "not_decrypted_yet": "Diese Nachricht ist noch nicht entschlüsselt",
+      "broken_message": "Kaputte Nachricht",
+      "empty_message": "Leere Nachricht"
+    },
+    "EventReaders": {
+      "seen_by": "Gesehen von"
+    }
+  },
+  "Organisms": {
+    "Welcome": {
+      "heading": "Willkommen in Cinny!",
+      "subheading": "Noch ein weiterer Matrix Client"
+    },
+    "SpaceSettings": {
+      "categorize_subspaces": "Unter-Spaces kategorisieren",
+      "uncategorize_subspaces": "Unter-Spaces nicht kategorisieren",
+      "pin_sidebar": "An Seitenleiste anheften",
+      "unpin_sidebar": "Von Seitenleiste lösen"
+    },
+    "MembersDrawer": {
+      "members": "Nutzer",
+      "invite_member": "Nutzer einladen",
+      "type_name": "Schreibe Name...",
+      "Filter": {
+        "no_members": "Keine \"{{membershipFilter}}\" Nutzer",
+        "joined": "Beigetreten",
+        "invited": "Eingeladen",
+        "left": "Verlassen",
+        "kicked": "Entfernt",
+        "banned": "Verbant"
+      },
+      "Sort": {
+        "aToZ": "A bis Z",
+        "tToA": "Z bis A",
+        "newest": "Neueste",
+        "oldest": "Älteste"
+      }
+    },
+    "Settings": {
+      "theme": {
+        "follow_system": {
+          "title": "System-Theme verwenden",
+          "description": "Verwende den hellen oder dunklen Modus basierend auf den Systemeinstellungen."
+        },
+        "title": "Theme",
+        "theme_light": "Hell",
+        "theme_silver": "Silber",
+        "theme_dark": "Dunkel",
+        "theme_butter": "Butter"
+      },
+      "markdown": {
+        "title": "Markdown-Formatierung",
+        "description": "Nachrichten vor dem Senden mit Markdown formatieren"
+      },
+      "hide_membership_events": {
+        "title": "Mitgliedschaftsereignisse ausblenden",
+        "description": "Nachrichten zu Änderungen von Mitgliedschaften in der Zeitleiste ausblenden (Beitreten, Verlassen, Einladen, Entfernen und Bannen)"
+      },
+      "hide_nickname_avatar_events": {
+        "title": "Spitzname/Avatar Ereignisse ausblenden",
+        "description": "Nachrichten zu Änderungen von Spitznamen und Avataren in der Zeitleiste ausblenden."
+      },
+      "tabs": {
+        "appearance": "Auftretten",
+        "notifications": "Benachrichtungen",
+        "emoji": "Emoji",
+        "security": "Sicherheit",
+        "about": "Über"
+      },
+      "notifications_and_sound": {
+        "title": "Benachrichtungen & Töne",
+        "desktop": {
+          "title": "Desktop-Benachrichtigungen",
+          "description": "Bei Eintreffen neuer Nachrichten Desktop-Benachrichtigung anzeigen."
+        },
+        "sound": {
+          "title": "Benachrichtigungstöne",
+          "description": "Bei Eintreffen neuer Nachrichten Ton abspielen."
+        }
+      },
+      "security": {
+        "cross_signing": {
+          "title": "Quersignaturen und Sicherung"
+        },
+        "export_import_encryption_keys": {
+          "title": "Schlüssel exportieren/importieren"
+        },
+        "export_encryption_keys": {
+          "title": "Raumschlüssel exportieren",
+          "description": "Raumschlüssel für die Entschlüsselung alter Nachrichten einer anderen Sitzung exportieren. Um Raumschlüssel zu verschlüsseln muss ein Kennwort vergeben werden, das während des Importierens verwendet wird."
+        },
+        "import_encryption_keys": {
+          "title": "Raumschlüssel importieren",
+          "description": "Raumschlüssel für die Entschlüsselung alter Nachrichten einer anderen Sitzung importieren. Um Raumschlüssel zu entschlüsseln muss das Kennwort eingegeben werden, das während des Exportierens verwendet wurde."
+        }
+      },
+      "logout": {
+        "title": "Abmelden",
+        "dialog": {
+          "title": "Abmelden",
+          "description": "Bist du sicher, dass du dich von dieser Sitzung abmelden möchtest?",
+          "confirm": "Abmelden"
+        }
+      },
+      "about": {
+        "application": "Anwendung",
+        "credits": "Credits"
+      }
+    },
+    "SecretStorageAccess": {
+      "incorrect_security_key": "Falscher Sicherheitsschlüssel",
+      "incorrect_security_phrase": "Falsche Sicherheitsphrase",
+      "security_phrase": "Sicherheitsphrase",
+      "security_key": "Sicherheitsschlüssel",
+      "use_security_key": "Verwende Sicherheitsschlüssel",
+      "use_security_phrase": "Verwende Sicherheitsphrase"
+    },
+    "KeyBackup": {
+      "create_backup_title": "Schlüsselsicherung erstellen",
+      "create_backup_tooltip": "Sicherung erstellen",
+      "creating_backup": "Erstelle Sicherung...",
+      "backup_created": "Sicherung erfolgreich erstellt",
+      "backup_failed": "Erstellen der Sicherung fehlgeschlagen",
+      "restoring": "Stelle Schlüsselsicherung wieder her...",
+      "restoring_progress": "Schlüsselsicherung wiederherstellen... ({{progress}}/{{total}}",
+      "restore_backup_title": "Schlüsselsicherung wiederherstellen",
+      "restore_backup_tooltip": "Schlüsselsicherung wiederherstellen",
+      "restore_complete": "Schlüsselsicherung erfolgreich wiederhergestellt ({{progress}}/{{total}})",
+      "restore_failed_bad_key": "Wiederherstellung der Sicherung fehlgeschlagen. Ungültiger Schlüssel!",
+      "restore_failed_unknown": "Wiederherstellung der Sicherung fehlgeschlagen.",
+      "delete_key_backup_title": "Schlüsselsicherung löschen",
+      "delete_key_backup_tooltip": "Sicherung löschen",
+      "delete_key_backup_subtitle": "Das Löschen von Schlüsselsicherungen ist nicht umkehrbar.",
+      "delete_key_backup_message": "Alle auf dem Server gespeicherten verschlüsselten Nachrichten werden dauerhaft gelöscht.",
+      "encrypted_messages_backup_description": "Sichere die Schlüssel für deine verschlüsselten Nachrichten online in deinem Account, falls du den Zugriff auf deine Sitzungen verlierst. Deine Schlüssel werden mit einem eindeutigen Sicherheitsschlüssel gesichert.",
+      "encrypted_messages_backup_title": "Verschlüsselte Nachrichten sichern",
+      "encrypted_messages_backup_cross_signing_disabled": "Richte Quersignaturen ein, um deine verschlüsselten Nachrichten zu sichern."
+    },
+    "DeviceManage": {
+      "edit_session_name_title": "Sitzungsnamen bearbeiten",
+      "edit_session_name_subtitle": "Sitzungsname",
+      "edit_session_name_tooltip": "Sitzungsnamen bearbeiten",
+      "current_device_label": "Aktuell",
+      "verify_session_button": "Verifizieren",
+      "unverified_sessions_title": "Unverifizierte Sitzungen",
+      "unverified_sessions_none": "Keine unverifizierten Sitzungen",
+      "unencrypted_sessions_title": "Sitzungen ohne Unterstützung für Verschlüsselung",
+      "verified_sessions_title": "Verifizierte Sitzungen",
+      "verified_sessions_none": "Keine verifizierten Sitzungen",
+      "setup_cross_signing_message": "Richte Quersignaturen ein, falls du deine verschlüsselten Sitzungen verlierst",
+      "loading_devices": "Lade Geräte...",
+      "logout_device_title": "{{device}} abmelden",
+      "logout_device_message": "Du bist dabei dich von der Sitzung für {{device}} abzumelden",
+      "last_activity": "Letzte Aktivität",
+      "verify_this_session": "Verifizieren Sie diese Sitzung entweder mit Ihrem Sicherheitsschlüssel/-phrase hier oder indem Sie die Emoji-Verifizierung aus einer verifizierten Sitzung heraus starten.",
+      "verify_other_session": "Überprüfen Sie andere Sitzungen durch Emoji-Verifizierung oder entfernen Sie unbekannte.",
+      "logout_device_confirm": "Abmeldung",
+      "logout_device_tooltip": "Sitzung entfernen",
+      "session_verification_title": "Sitzungsverifizierung",
+      "session_name_privacy_message": "Sitzungsnamen sind für jeden sichtbar, also gib hier keine privaten Informationen ein."
+    },
+    "CrossSigning": {
+      "title": "Quersignaturen",
+      "setup_failed": "Die Einrichtung von Quersignaturen ist fehlgeschlagen. Bitte versuche es erneut",
+      "setup": "Quersignaturen einrichten",
+      "save_security_key_message": "Bitte speichere diesen Sicherheitsschlüssel an einem sicheren Ort",
+      "security_key_dialog_title": "Sicherheitsschlüssel",
+      "security_key_generation_message": "Wir werden einen Sicherheitsschlüssel generieren, den du verwenden kannst um Nachrichtensicherungen und Sitzungsverifizierungen zu verwalten.",
+      "security_key_generation_button": "Schlüssel erzeugen",
+      "security_phrase_message": "Alternativ kannst du eine 'Sicherheitsphrase' festlegen, so dass du dir den langen Sicherheitsschlüssel nicht merken musst, und optional den Schlüssel als Sicherung speichern.",
+      "security_phrase_label": "Sicherheitsphrase",
+      "security_phrase_confirm_label": "Sicherheitsphrase bestätigen",
+      "security_phrase_set_button": "Lege Phrase fest & erzeuge Schlüssel",
+      "setup_dialog_title": "Quersignaturen einrichten",
+      "setup_message": "Richte Quersignaturen ein, um deine Sitzungen zu verifizieren und den Überblick zu behalten. Wird auch benötigt, um verschlüsselte Nachrichten zu sichern.",
+      "reset_keys_subtitle": "Das Zurücksetzen der Quersignatur-Schlüssel ist nicht umkehrbar.",
+      "reset_keys_message": "Jeder, bei dem du dich verifiziert hast, wird Sicherheitswarnungen erhalten und deine Nachrichtensicherung geht verloren. Dies ist mit hoher Wahrscheinlichkeit nicht das was du tun möchtest, es sei denn du hast den Sicherheitsschlüssel oder die Sicherheitsphrase und jede Sitzung von der aus du quersignieren könntest verloren."
+    },
+    "RoomSettings": {
+      "General": "Allgemein",
+      "Search": "Suche",
+      "Members": "Mitglieder",
+      "Emojis": "Emojis",
+      "Permissions": "Berechtigungen",
+      "Security": "Sicherheit",
+      "options": "Optionen",
+      "invite": "Einladen",
+      "leave": "Verlassen",
+      "leave_room": "Raum verlassen",
+      "leave_room_confirm_message": "Bist du sicher, dass du {{room_name}} verlassen möchtest?",
+      "leave_room_confirm_button": "Verlassen",
+      "notification_header": "Benachrichtigungen (Änderung betrifft nur dich)",
+      "visibility_header": "Sichtbarkeit des Raums (wer beitreten kann)",
+      "address_header": "Adressen des Raums",
+      "encryption_header": "Verschlüsselung",
+      "message_history_header": "Sichtbarkeit des Nachrichtenverlaufs",
+      "room_settings_subtitle": "Einstellungen des Raums"
+    },
+    "RoomCommon": {
+      "user_joined": "<bold><user/></bold> ist dem Raum beigetreten",
+      "user_left": "<bold><user/></bold> hat den Raum verlassen",
+      "user_left_reason": "<bold><user/></bold> hat den Raum verlassen: <reason/>",
+      "user_invited": "<bold><inviter/></bold> hat <bold><user/></bold> eingeladen",
+      "invite_cancelled": "<bold><inviter_name/></bold> hat <bold><user_name/>'s</bold> Einladung widerrufen",
+      "invite_rejected": "<bold><user_name/></bold> hat die Einladung abgelehnt",
+      "user_kicked": "<bold><actor/></bold> hat <bold><user_name/></bold> entfernt",
+      "user_kicked_reason": "<bold><actor/></bold> hat <bold><user/></bold> entfernt: <reason/>",
+      "user_banned": "<bold><actor/></bold> hat <bold><user_name/></bold> gebannt",
+      "user_banned_reason": "<bold><actor/></bold> banned <bold><user/></bold>: <reason/>",
+      "user_unbanned": "<bold><actor/> hat <bold><user_name/></bold> entbannt",
+      "avatar_set": "<bold><user_name/></bold> hat einen Avatar festgelegt",
+      "avatar_changed": "<bold><user_name/></bold> hat den Avatar geändert",
+      "avatar_removed": "<bold><user_name/></bold> hat den Avatar entfernt",
+      "name_set": "<bold><user_name/></bold> hat den Anzeigenamen <bold><new_name/></bold> gewählt",
+      "name_changed": "<bold><user_name/></bold> hat den Anzeigenamen in <bold><new_name/></bold> geändert",
+      "name_removed": "<bold><user_name/></bold> hat den Anzeigenamen <bold><new_name/></bold> entfernt",
+      "changed_room_name": " hat den Raum Name geändert",
+      "new_messages": "Neue Nachrichten",
+      "drop_files": "Dateien fallenlassen in",
+      "room": "Raum",
+      "drag_and_drop": "Dateien hierher ziehen und ablegen oder anklicken für Auswahldialog",
+      "jump_to_latest": "Zur neusten Nachricht springen",
+      "jump_to_unread": "Zu Ungelesen springen",
+      "mark_as_read": "Als gelesen markieren",
+      "is_following": " verfolgt das Gespräch.",
+      "are_following": " verfolgen das Gespräch."
+    },
+    "DrawerBreadcrumb": {
+      "home": "Home"
+    },
+    "DrawerHeader": {
+      "add_rooms_or_spaces": "Raum oder Space hinzufügen",
+      "create_new_space": "Neuen Space erstellen",
+      "create_new_room": "Neuen Raum erstellen",
+      "explore_public_room": "Öffentliche Räume erkunden",
+      "join_with_address": "Mit Adresse beitreten",
+      "add_existing": "Bestehendem beitreten",
+      "manage_rooms": "Manage rooms",
+      "home": "Home",
+      "direct_messages": "Direktnachrichten",
+      "start_dm_tooltip": "Direktnachricht schreiben",
+      "add_rooms_spaces_tooltip": "Räume/Spaces hinzufügen"
+    },
+    "SideBar": {
+      "settings_tooltip": "Einstellungen",
+      "unverified_sessions_one": "{{count}} nicht verifizierte Sitzung",
+      "unverified_sessions_other": "{{count}} nicht verifizierte Sitzungen",
+      "home_tooltip": "Home",
+      "direct_messages_tooltip": "Personen",
+      "pin_spaces_tooltip": "Spaces anheften",
+      "search_tooltip": "Suche",
+      "invites_tooltip": "Einladungen"
+    },
+    "InviteUser": {
+      "user_not_found": "{{user_name}} nicht gefunden!",
+      "no_matches_found": "Keine Treffer für {{user_name}} gefunden",
+      "invite_result": {
+        "invited": "Eingeladen",
+        "already_joined": "Bereits beigetreten",
+        "already_invited": "Bereits eingeladen",
+        "banned": "Gebannt"
+      },
+      "search_label": "Name oder Benutzer-ID",
+      "search_result_title": "Suchergebnis für Benutzer {{user_name}}",
+      "searching_for_user": "Suche nach Benutzer {{user_name}}...",
+      "invite_to_room": "In {{room}} einladen",
+      "invite_to_dm": "Direktnachricht"
+    }
+  },
+  "Molecules": {
+    "ConfirmDialog": {
+      "cancel": "Abbrechen"
+    },
+    "Message": {
+      "add_reaction": "Reaktion hinzufügen",
+      "reply": "Antworten",
+      "edit": "Bearbeiten",
+      "read_receipts": "Lesebestätigungen",
+      "view_source": "Quelle ansehen"
+    },
+    "RoomNotification": {
+      "default": "Global",
+      "all_messages": "Alle Nachrichten",
+      "mentions_and_keywords": "Erwähnungen & Schlüsselwörter",
+      "mute": "Stummschalten"
+    },
+    "RoomOptions": {
+      "title": "Optionen für {{room_name}}",
+      "leave": {
+        "title": "Raum verlassen",
+        "subtitle": "Bist du sicher, dass du den Raum {{room_name}} verlassen möchtest?",
+        "button_text": "Verlassen"
+      },
+      "mark_as_read": "Als gelesen markieren",
+      "notifications_heading": "Benachrichtigungen",
+      "invite": "Einladen"
+    },
+    "RoomPermissions": {
+      "default_role": {
+        "name": "Standardrolle",
+        "description": "Standardrolle für alle Mitglieder festlegen"
+      },
+      "send_messages": {
+        "name": "Nachrichten senden",
+        "description": "Mindestberechtigungsstufe festlegen, um Nachrichten in einem Raum senden zu können"
+      },
+      "reactions": {
+        "name": "Reaktionen senden",
+        "description": "Mindestberechtigungsstufe festlegen, um Reaktionen in einem Raum senden zu können"
+      },
+      "delete": {
+        "name": "Nachrichten von anderen löschen",
+        "description": "Mindestberechtigungsstufe festlegen, um Nachrichten anderer Benutzer in einem Raum löschen zu können"
+      },
+      "notifications": {
+        "name": "Raum anpingen",
+        "description": "Mindestberechtigungsstufe festlegen, um einen Raum anpingen zu können"
+      },
+      "manage_rooms": {
+        "name": "Räume in Spaces verwalten",
+        "description": "Mindestberechtigungsstufe festlegen, um Räume in Spaces verwalten zu können"
+      },
+      "invite": {
+        "name": "Einladen",
+        "description": "Mindestberechtigungsstufe festlegen, um neue Mitglieder in einen Raum einladen zu können"
+      },
+      "kick": {
+        "name": "Entfernen",
+        "description": "Mindestberechtigungsstufe festlegen, um Mitglieder aus einem Raum entfernen zu können"
+      },
+      "ban": {
+        "name": "Bannen",
+        "description": "Mindestberechtigungsstufe festlegen, um Mitglieder eines Raums bannen zu können"
+      },
+      "change_avatar": {
+        "name": "Avatar ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um den Avatar eines Raums/Spaces ändern zu können"
+      },
+      "change_name": {
+        "name": "Namen ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um den Namen eines Raums/Spaces ändern zu können"
+      },
+      "change_topic": {
+        "name": "Thema ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um das Thema eines Raums/Spaces ändern zu können"
+      },
+      "change_settings": {
+        "name": "Einstellungen ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um die Einstellungen eines Raums/Spaces ändern zu können"
+      },
+      "change_published_address": {
+        "name": "Veröffentlichte Adressen ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um eine Hauptadresse festlegen und freigeben zu können"
+      },
+      "change_permissions": {
+        "name": "Berechtigungen ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um Berechtigungen ändern zu können"
+      },
+      "enable_room_encryption": {
+        "name": "Verschlüsselung aktivieren",
+        "description": "Mindestberechtigungsstufe festlegen, um die Verschlüsselung eines Raums aktivieren zu können"
+      },
+      "change_history_visibility": {
+        "name": "Sichtbarkeit des Verlaufs ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um die Sichtbarkeit des Nachrichtenverlaufs eines Raums ändern zu können"
+      },
+      "upgrade_room": {
+        "name": "Raum aktualisieren",
+        "description": "Mindestberechtigungsstufe festlegen, um einen Raum aktualisieren zu können"
+      },
+      "pin_messages": {
+        "name": "Nachrichten anheften",
+        "description": "Mindestberechtigungsstufe festlegen, um Nachrichten in einem Raum anheften zu können"
+      },
+      "change_acls": {
+        "name": "Server ACLs ändern",
+        "description": "Mindestberechtigungsstufe festlegen, um Server ACLs ändern zu können"
+      },
+      "modify_widgets": {
+        "name": "Widgets modifizieren",
+        "description": "Mindestberechtigungsstufe festlegen, um in einem Raum Widgets modifizieren zu können"
+      },
+      "groups": {
+        "general": "Allgemeine Berechtigungen",
+        "manage_members": "Berechtigungen von Mitgliedern verwalten",
+        "room": "Berechtigungen für Raum-Profil",
+        "space": "Berechtigungen für Space-Profil",
+        "other": "Andere Berechtigungen",
+        "settings": "Berechtigungen für Einstellungen"
+      }
+    },
+    "RoomProfile": {
+      "saving_room_name": "Speichere Namen des Raums...",
+      "saving_room_topic": "Speichere Thema des Raums...",
+      "save_success": "Erfolgreich gespeichert",
+      "save_failed": "Speichern fehlgeschlagen",
+      "remove_avatar_title": "Avatar entfernen",
+      "remove_avatar_subtitle": "Bist du sicher, dass du den Avatar des Raums entfernen möchtest?",
+      "remove_avatar_button": "Entfernen",
+      "permission_change_room_name": "Du hast nur die Berechtigung, den Namen des Raums zu ändern",
+      "permission_change_room_topic": "Du hast nur die Berechtigung, das Thema des Raums zu ändern",
+      "permission_change_space_name": "Du hast nur die Berechtigung, den Namen des Spaces zu ändern",
+      "permission_change_space_topic": "Du hast nur die Berechtigung, das Thema des Spaces zu ändern",
+      "name_label": "Name",
+      "topic_label": "Thema"
+    },
+    "RoomVisibility": {
+      "private": "Privat (nur mit Einladung)",
+      "restricted": "Eingeschränkt (Mitglieder des Spaces können beitreten)",
+      "restricted_unsupported": "Eingeschränkt (Nicht unterstützt: Aktualisierung des Raums erforderlich)",
+      "public": "Öffentlich (jeder kann beitreten)"
+    },
+    "SpaceOptions": {
+      "leave_space": "Space verlassen",
+      "leave_space_confirmation": "Bist du sicher, dass du den Space {{space}} verlassen möchtest?",
+      "leave_space_confirm": "Verlassen",
+      "mark_as_read": "Als gelesen markieren",
+      "invite": "Einladen",
+      "manage_rooms": "Räume verwalten",
+      "settings": "Einstellungen",
+      "leave": "Verlassen"
+    }
+  },
+  "Templates": {
+    "Auth": {
+      "loading_homeserver_list": "Lade Liste der Homeserver...",
+      "looking_for_homeserver": "Suche nach Homeserver...",
+      "connecting_to_homeserver": "Verbinde mit {{homeserver}}...",
+      "unable_to_connect": "Keine Verbindung möglich. Bitte prüfe deine Eingabe",
+      "username_taken": "Benutzername ist bereits vergeben",
+      "registration_in_progress": "Registrierung in Bearbeitung...",
+      "link_about": "Über",
+      "link_twitter": "Twitter",
+      "link_matrix": "Powered by Matrix",
+      "dont_have_an_account": "Du hast noch keinen Account?",
+      "already_have_an_account": "Du hast bereits einen Account?",
+      "register_link": "Registrieren",
+      "login_link": "Anmelden",
+      "redirecting": "Leite weiter...",
+      "login_in_progress": "Anmeldung in Bearbeitung...",
+      "bad_localpart_error": "Der Benutzername darf nur die Zeichen a-z, 0-9 oder '=_-./' enthalten",
+      "user_id_too_long_error": "Deine Benutzer-ID, einschließlich des Hostnamens, darf nicht mehr als 255 Zeichen lang sein.",
+      "bad_password_error": "Das Kennwort muss mindestens 1 Kleinbuchstaben, 1 Großbuchstaben, 1 Ziffer, 1 Sonderzeichen und 8-127 Zeichen (keine Leerzeichen) enthalten.",
+      "confirm_password_error": "Die Kennwörter stimmen nicht überein",
+      "bad_email_error": "Ungültige E-Mail-Adresse",
+      "invalid_password": "Ungültiges Kennwort",
+      "check_credentials": "Bitte prüfe deine Zugangsdaten",
+      "login_types": {
+        "username": "Benutzername",
+        "email": "E-Mail"
+      },
+      "homeserver_form": {
+        "title": "Homeserver",
+        "header": "Liste der Homeserver"
+      },
+      "login_form": {
+        "title": "Anmeldung",
+        "prompt_email": "E-Mail",
+        "prompt_username": "Benutzername",
+        "prompt_password": "Kennwort",
+        "login_button": "Anmelden"
+      },
+      "register_form": {
+        "title": "Registrierung",
+        "prompt_email_required": "E-Mail (erforderlich)",
+        "prompt_email_optional": "E-Mail",
+        "prompt_username": "Benutzername",
+        "prompt_password": "Kennwort",
+        "prompt_confirm_password": "Kennwort bestätigen",
+        "register_button": "Registrieren"
+      },
+      "terms_and_conditions": {
+        "title": "Den Bedingungen zustimmen",
+        "description": "Um die Registrierung abzuschließen, musst du den Nutzungsbedingungen zustimmen.",
+        "accept": "Ich stimme den <a>Nutzungsbedingungen</a> zu",
+        "submit_button": "Absenden"
+      },
+      "validate_email": {
+        "title": "E-Mail verifizieren",
+        "continue_button": "Fortfahren",
+        "message": "Bitte prüfe dein E-Mail-Postfach <bold>{{email_address}}</bold> und validiere deine E-Mail-Adresse bevor du fortfährst"
+      },
+      "captcha": {
+        "message": "Bitte markiere das folgende Feld um fortzufahren"
+      }
+    },
+    "Client": {
+      "loading_messages": {
+        "default": "Aufwärmen",
+        "message_one": "Beinahe am Ziel...",
+        "message_two": "Sieht aus, als hättest du eine Menge Zeug aufzuwärmen!"
+      },
+      "logout_prompt": "Abmeldung",
+      "clear_cache": "Zwischenspeicher löschen & neuladen"
+    }
+  },
+  "Time": {
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "timeHourMinute": "HH:mm"
+  }
+}

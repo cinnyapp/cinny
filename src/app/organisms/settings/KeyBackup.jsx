@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './KeyBackup.scss';
+import { useTranslation } from 'react-i18next';
 import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
@@ -28,6 +29,8 @@ function CreateKeyBackupDialog({ keyData }) {
   const [done, setDone] = useState(false);
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
+
+  const { t } = useTranslation();
 
   const doBackup = async () => {
     setDone(false);
@@ -60,19 +63,19 @@ function CreateKeyBackupDialog({ keyData }) {
       {done === false && (
         <div>
           <Spinner size="small" />
-          <Text>Creating backup...</Text>
+          <Text>{t('Organisms.KeyBackup.creating_backup')}</Text>
         </div>
       )}
       {done === true && (
         <>
           <Text variant="h1">{twemojify('✅')}</Text>
-          <Text>Successfully created backup</Text>
+          <Text>{t('Organisms.KeyBackup.backup_created')}</Text>
         </>
       )}
       {done === null && (
         <>
-          <Text>Failed to create backup</Text>
-          <Button onClick={doBackup}>Retry</Button>
+          <Text>{t('Organisms.KeyBackup.backup_failed')}</Text>
+          <Button onClick={doBackup}>{t('common.retry')}</Button>
         </>
       )}
     </div>
@@ -83,6 +86,8 @@ CreateKeyBackupDialog.propTypes = {
 };
 
 function RestoreKeyBackupDialog({ keyData }) {
+  const { t } = useTranslation();
+
   const [status, setStatus] = useState(false);
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
@@ -99,7 +104,7 @@ function RestoreKeyBackupDialog({ keyData }) {
         meBreath = true;
       }, 200);
 
-      setStatus({ message: `Restoring backup keys... (${progress.successes}/${progress.total})` });
+      setStatus({ message: t('Organisms.KeyBackup.restoring_progress', { progress: progress.successes, total: progress.total }) });
     };
 
     try {
@@ -111,14 +116,14 @@ function RestoreKeyBackupDialog({ keyData }) {
         { progressCallback },
       );
       if (!mountStore.getItem()) return;
-      setStatus({ done: `Successfully restored backup keys (${info.imported}/${info.total}).` });
+      setStatus({ done: t('Organisms.KeyBackup.restore_complete', { progress: info.imported, total: info.total }) });
     } catch (e) {
       if (!mountStore.getItem()) return;
       if (e.errcode === 'RESTORE_BACKUP_ERROR_BAD_KEY') {
         deletePrivateKey(keyData.keyId);
-        setStatus({ error: 'Failed to restore backup. Key is invalid!', errorCode: 'BAD_KEY' });
+        setStatus({ error: t('Organisms.KeyBackup.restore_failed_bad_key'), errorCode: 'BAD_KEY' });
       } else {
-        setStatus({ error: 'Failed to restore backup.', errCode: 'UNKNOWN' });
+        setStatus({ error: t('Organisms.KeyBackup.restore_failed_unknown'), errCode: 'UNKNOWN' });
       }
     }
   };
@@ -133,7 +138,7 @@ function RestoreKeyBackupDialog({ keyData }) {
       {(status === false || status.message) && (
         <div>
           <Spinner size="small" />
-          <Text>{status.message ?? 'Restoring backup keys...'}</Text>
+          <Text>{status.message ?? t('Organisms.KeyBackup.restoring')}</Text>
         </div>
       )}
       {status.done && (
@@ -145,7 +150,7 @@ function RestoreKeyBackupDialog({ keyData }) {
       {status.error && (
         <>
           <Text>{status.error}</Text>
-          <Button onClick={restoreBackup}>Retry</Button>
+          <Button onClick={restoreBackup}>{t('common.retry')}</Button>
         </>
       )}
     </div>
@@ -159,6 +164,7 @@ function DeleteKeyBackupDialog({ requestClose }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const mx = initMatrix.matrixClient;
   const mountStore = useStore();
+  const { t } = useTranslation();
 
   const deleteBackup = async () => {
     mountStore.setItem(true);
@@ -177,12 +183,12 @@ function DeleteKeyBackupDialog({ requestClose }) {
   return (
     <div className="key-backup__delete">
       <Text variant="h1">{twemojify('🗑')}</Text>
-      <Text weight="medium">Deleting key backup is permanent.</Text>
-      <Text>All encrypted messages keys stored on server will be deleted.</Text>
+      <Text weight="medium">{t('Organisms.KeyBackup.delete_key_backup_subtitle')}</Text>
+      <Text>{t('Organisms.KeyBackup.delete_key_backup_message')}</Text>
       {
         isDeleting
           ? <Spinner size="small" />
-          : <Button variant="danger" onClick={deleteBackup}>Delete</Button>
+          : <Button variant="danger" onClick={deleteBackup}>{t('common.delete')}</Button>
       }
     </div>
   );
@@ -196,6 +202,7 @@ function KeyBackup() {
   const isCSEnabled = useCrossSigningStatus();
   const [keyBackup, setKeyBackup] = useState(undefined);
   const mountStore = useStore();
+  const { t } = useTranslation();
 
   const fetchKeyBackupVersion = async () => {
     const info = await mx.getKeyBackupVersion();
@@ -220,28 +227,28 @@ function KeyBackup() {
   }, [isCSEnabled]);
 
   const openCreateKeyBackup = async () => {
-    const keyData = await accessSecretStorage('Create Key Backup');
+    const keyData = await accessSecretStorage(t('Organisms.KeyBackup.create_backup_title'));
     if (keyData === null) return;
 
     openReusableDialog(
-      <Text variant="s1" weight="medium">Create Key Backup</Text>,
+      <Text variant="s1" weight="medium">{t('Organisms.KeyBackup.create_backup_title')}</Text>,
       () => <CreateKeyBackupDialog keyData={keyData} />,
       () => fetchKeyBackupVersion(),
     );
   };
 
   const openRestoreKeyBackup = async () => {
-    const keyData = await accessSecretStorage('Restore Key Backup');
+    const keyData = await accessSecretStorage(t('Organisms.KeyBackup.restore_backup_title'));
     if (keyData === null) return;
 
     openReusableDialog(
-      <Text variant="s1" weight="medium">Restore Key Backup</Text>,
+      <Text variant="s1" weight="medium">{t('Organisms.KeyBackup.restore_backup_title')}</Text>,
       () => <RestoreKeyBackupDialog keyData={keyData} />,
     );
   };
 
   const openDeleteKeyBackup = () => openReusableDialog(
-    <Text variant="s1" weight="medium">Delete Key Backup</Text>,
+    <Text variant="s1" weight="medium">{t('Organisms.KeyBackup.delete_key_backup_title')}</Text>,
     (requestClose) => (
       <DeleteKeyBackupDialog
         requestClose={(isDone) => {
@@ -254,28 +261,28 @@ function KeyBackup() {
 
   const renderOptions = () => {
     if (keyBackup === undefined) return <Spinner size="small" />;
-    if (keyBackup === null) return <Button variant="primary" onClick={openCreateKeyBackup}>Create Backup</Button>;
+    if (keyBackup === null) return <Button variant="primary" onClick={openCreateKeyBackup}>{t('Organisms.KeyBackup.create_backup_tooltip')}</Button>;
     return (
       <>
-        <IconButton src={DownloadIC} variant="positive" onClick={openRestoreKeyBackup} tooltip="Restore backup" />
-        <IconButton src={BinIC} onClick={openDeleteKeyBackup} tooltip="Delete backup" />
+        <IconButton src={DownloadIC} variant="positive" onClick={openRestoreKeyBackup} tooltip={t('Organisms.KeyBackup.restore_backup_tooltip')} />
+        <IconButton src={BinIC} onClick={openDeleteKeyBackup} tooltip={t('Organisms.KeyBackup.delete_key_backup_tooltip')} />
       </>
     );
   };
 
   return (
     <SettingTile
-      title="Encrypted messages backup"
+      title={t('Organisms.KeyBackup.encrypted_messages_backup_title')}
       content={(
         <>
-          <Text variant="b3">Online backup your encrypted messages keys with your account data in case you lose access to your sessions. Your keys will be secured with a unique Security Key.</Text>
+          <Text variant="b3">{t('Organisms.KeyBackup.encrypted_messages_backup_description')}</Text>
           {!isCSEnabled && (
             <InfoCard
               style={{ marginTop: 'var(--sp-ultra-tight)' }}
               rounded
               variant="caution"
               iconSrc={InfoIC}
-              title="Setup cross signing to backup your encrypted messages."
+              title={t('Organisms.KeyBackup.encrypted_messages_backup_cross_signing_disabled')}
             />
           )}
         </>
