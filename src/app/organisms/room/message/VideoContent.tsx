@@ -92,7 +92,7 @@ export const VideoContent = as<'div', VideoContentProps>(
             style={{
               width: '100%',
               height: '100%',
-              filter: 'contrast(80%) invert(100%) brightness(0.75) invert(100%)'
+              filter: 'var(--blurhash-filter)'
             }}
             width={32}
             height={32}
