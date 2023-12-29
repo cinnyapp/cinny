@@ -1,7 +1,6 @@
 {
-  "defaultHomeserver": 3,
+  "defaultHomeserver": 2,
   "homeserverList": [
-    "0wnz.at",
     "converser.eu",
     "envs.net",
     "matrix.org",
