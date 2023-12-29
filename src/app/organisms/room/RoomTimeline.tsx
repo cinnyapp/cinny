@@ -1141,7 +1141,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const dim = scaleDimension(videoInfo.w || 400, videoInfo.h || 400, 48, 48, 400, 600);
 
       return (
-        <Attachment>
+        <Attachment style={{
+          width: toRem(dim.w)
+        }}>
           <AttachmentBox
             style={{
               width: toRem(dim.w),
