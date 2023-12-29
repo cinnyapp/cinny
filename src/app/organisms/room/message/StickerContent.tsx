@@ -23,7 +23,7 @@ export const StickerContent = as<'div', StickerContentProps>(
     if (typeof mxcUrl !== 'string') {
       return <MessageBrokenContent />;
     }
-    const scaled = scaleDimension(imgInfo?.w || 152, imgInfo?.h || 152, 152, 16, 152, 16);
+    const scaled = scaleDimension(imgInfo?.w || 152, imgInfo?.h || 152, 16, 16, 152, 152);
 
     return (
       <AttachmentBox

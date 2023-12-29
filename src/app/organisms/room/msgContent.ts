@@ -53,7 +53,7 @@ export const getImageMsgContent = async (
     body: file.name,
   };
   if (imgEl) {
-    const dim = scaleDimension(imgEl.width, imgEl.height, 512, 32, 512, 32);
+    const dim = scaleDimension(imgEl.width, imgEl.height, 32, 32, 512, 512);
     const blurHash = encodeBlurHash(imgEl, dim.w, dim.h);
 
     content.info = {
@@ -96,7 +96,7 @@ export const getVideoMsgContent = async (
       )
     );
     if (thumbContent && thumbContent.thumbnail_info) {
-      const dim = scaleDimension(videoEl.width, videoEl.height, 512, 32, 512, 32);
+      const dim = scaleDimension(videoEl.width, videoEl.height, 32, 32, 512, 512);
       thumbContent.thumbnail_info[MATRIX_BLUR_HASH_PROPERTY_NAME] = encodeBlurHash(
         videoEl,
         dim.w,

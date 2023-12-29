@@ -63,7 +63,7 @@ export const binarySearch = <T>(items: T[], match: (item: T) => -1 | 0 | 1): T |
 export const randomNumberBetween = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
-export const scaleDimension = (x: number, y: number, maxX: number, minX: number = maxX, maxY: number = Infinity, minY: number = 0): {w: number, h: number} => {
+export const scaleDimension = (x: number, y: number, minX: number, minY: number, maxX: number, maxY: number): {w: number, h: number} => {
   let w = Math.max(minX, Math.min(maxX, x));
   const scaleFactor = w / x;
   let h = Math.max(minY, scaleFactor * y);

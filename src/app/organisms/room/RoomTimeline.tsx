@@ -1100,7 +1100,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       if (typeof mxcUrl !== 'string') {
         return null;
       }
-      const dim = scaleDimension(imgInfo?.w || 400, imgInfo?.h || 400, 400, 32, 600, 32);
+      const dim = scaleDimension(imgInfo?.w || 400, imgInfo?.h || 400, 32, 32, 400, 600);
 
       return (
         <Attachment style={{
@@ -1138,7 +1138,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         return null;
       }
 
-      const dim = scaleDimension(videoInfo.w || 400, videoInfo.h || 400, 400, 48, 600, 48);
+      const dim = scaleDimension(videoInfo.w || 400, videoInfo.h || 400, 48, 48, 400, 600);
 
       return (
         <Attachment>
