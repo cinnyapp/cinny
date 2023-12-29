@@ -10,6 +10,7 @@ import {
   Tooltip,
   TooltipProvider,
   as,
+  toRem,
 } from 'folds';
 import classNames from 'classnames';
 import { BlurhashCanvas } from 'react-blurhash';
@@ -35,6 +36,8 @@ export type VideoContentProps = {
   encInfo?: EncryptedAttachmentInfo;
   autoPlay?: boolean;
   loadThumbnail?: boolean;
+  videoWidth?: number;
+  videoHeight?: number;
 };
 export const VideoContent = as<'div', VideoContentProps>(
   ({ className, body, mimeType, url, info, encInfo, autoPlay, loadThumbnail, ...props }, ref) => {
@@ -85,6 +88,9 @@ export const VideoContent = as<'div', VideoContentProps>(
       if (loadThumbnail) loadThumbSrc();
     }, [loadThumbnail, loadThumbSrc]);
 
+    // if true: smaller watch button & shows video size to the right of the box
+    const isNarrowVideo = props.videoWidth && props.videoWidth <= 64;
+
     return (
       <Box className={classNames(css.RelativeBase, className)} {...props} ref={ref}>
         {typeof blurHash === 'string' && !load && (
@@ -104,14 +110,22 @@ export const VideoContent = as<'div', VideoContentProps>(
         {!autoPlay && srcState.status === AsyncStatus.Idle && (
           <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
             <Button
+              style={{
+                maxHeight: toRem(props.videoHeight || 32),
+                // paddingLeft/Right must be inline style to be able to override the library style
+                paddingLeft: (isNarrowVideo ? "0" : undefined),
+                paddingRight: (isNarrowVideo ? "0" : undefined),
+                width: (isNarrowVideo ? "100%" : undefined),
+                color: "white"
+              }}
               variant="Secondary"
-              fill="Solid"
+              fill={isNarrowVideo ? "None" : "Solid"}
               radii="300"
               size="300"
               onClick={loadSrc}
               before={<Icon size="Inherit" src={Icons.Play} filled />}
             >
-              <Text size="B300">Watch</Text>
+              {!isNarrowVideo && <Text size="B300">Watch</Text>}
             </Button>
           </Box>
         )}
@@ -163,7 +177,7 @@ export const VideoContent = as<'div', VideoContentProps>(
         )}
         {!load && typeof info.size === 'number' && (
           <Box
-            className={css.AbsoluteFooter}
+            className={isNarrowVideo ? css.NarrowContentBadges : css.AbsoluteFooter}
             justifyContent="SpaceBetween"
             alignContent="Center"
             gap="200"

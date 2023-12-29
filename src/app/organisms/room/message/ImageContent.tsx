@@ -14,6 +14,7 @@ import {
   Tooltip,
   TooltipProvider,
   as,
+  toRem,
 } from 'folds';
 import classNames from 'classnames';
 import { BlurhashCanvas } from 'react-blurhash';
@@ -36,6 +37,8 @@ export type ImageContentProps = {
   info?: IImageInfo;
   encInfo?: EncryptedAttachmentInfo;
   autoPlay?: boolean;
+  imageWidth?: number;
+  imageHeight?: number;
 };
 export const ImageContent = as<'div', ImageContentProps>(
   ({ className, body, mimeType, url, info, encInfo, autoPlay, ...props }, ref) => {
@@ -69,6 +72,9 @@ export const ImageContent = as<'div', ImageContentProps>(
     useEffect(() => {
       if (autoPlay) loadSrc();
     }, [autoPlay, loadSrc]);
+
+    // if true: smaller view button & shows image size to the right of the box
+    const isNarrowImage = props.imageWidth && props.imageWidth <= 64;
 
     return (
       <Box className={classNames(css.RelativeBase, className)} {...props} ref={ref}>
@@ -109,14 +115,21 @@ export const ImageContent = as<'div', ImageContentProps>(
         {!autoPlay && srcState.status === AsyncStatus.Idle && (
           <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
             <Button
+              style={{
+                maxHeight: toRem(props.imageHeight || 32),
+                // paddingLeft/Right must be inline style to be able to override the library style
+                paddingLeft: (isNarrowImage ? "0" : undefined),
+                paddingRight: (isNarrowImage ? "0" : undefined),
+                width: (isNarrowImage ? "100%" : undefined),
+              }}
               variant="Secondary"
-              fill="Solid"
+              fill={isNarrowImage ? "None" : "Solid"}
               radii="300"
               size="300"
               onClick={loadSrc}
               before={<Icon size="Inherit" src={Icons.Photo} filled />}
             >
-              <Text size="B300">View</Text>
+              {!isNarrowImage && <Text size="B300">View</Text>}
             </Button>
           </Box>
         )}
@@ -169,7 +182,12 @@ export const ImageContent = as<'div', ImageContentProps>(
           </Box>
         )}
         {!load && typeof info?.size === 'number' && (
-          <Box className={css.AbsoluteFooter} justifyContent="End" alignContent="Center" gap="200">
+          <Box
+            className={isNarrowImage ? css.NarrowContentBadges : css.AbsoluteFooter}
+            justifyContent="End"
+            alignContent="Center"
+            gap="200"
+          >
             <Badge variant="Secondary" fill="Soft">
               <Text size="L400">{bytesToSize(info.size)}</Text>
             </Badge>

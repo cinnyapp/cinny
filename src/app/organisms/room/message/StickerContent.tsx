@@ -41,6 +41,8 @@ export const StickerContent = as<'div', StickerContentProps>(
           mimeType={imgInfo?.mimetype}
           url={mxcUrl}
           encInfo={content.file}
+          imageWidth={scaled.w}
+          imageHeight={scaled.h}
         />
       </AttachmentBox>
     );

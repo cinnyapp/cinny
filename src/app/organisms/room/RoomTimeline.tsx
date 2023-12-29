@@ -1119,6 +1119,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               url={mxcUrl}
               encInfo={content.file}
               autoPlay={mediaAutoLoad}
+              imageWidth={dim.w}
+              imageHeight={dim.h}
             />
           </AttachmentBox>
         </Attachment>
@@ -1157,6 +1159,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               url={mxcUrl}
               encInfo={content.file}
               loadThumbnail={mediaAutoLoad}
+              videoWidth={dim.w}
+              videoHeight={dim.h}
             />
           </AttachmentBox>
         </Attachment>
