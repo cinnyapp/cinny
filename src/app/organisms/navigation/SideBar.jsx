@@ -4,6 +4,7 @@ import './SideBar.scss';
 
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useTranslation } from 'react-i18next';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -50,6 +51,8 @@ function useNotificationUpdate() {
 }
 
 function ProfileAvatarMenu() {
+  const { t } = useTranslation();
+
   const mx = initMatrix.matrixClient;
   const [profile, setProfile] = useState({
     avatarUrl: null,
@@ -77,7 +80,7 @@ function ProfileAvatarMenu() {
   return (
     <SidebarAvatar
       onClick={openSettings}
-      tooltip="Settings"
+      tooltip={t('Organisms.SideBar.settings_tooltip')}
       avatar={(
         <Avatar
           text={profile.displayName}
@@ -91,6 +94,8 @@ function ProfileAvatarMenu() {
 }
 
 function CrossSigninAlert() {
+  const { t } = useTranslation();
+
   const deviceList = useDeviceList();
   const unverified = deviceList?.filter((device) => isCrossVerified(device.device_id) === false);
 
@@ -99,7 +104,7 @@ function CrossSigninAlert() {
   return (
     <SidebarAvatar
       className="sidebar__cross-signin-alert"
-      tooltip={`${unverified.length} unverified sessions`}
+      tooltip={t('Organisms.SideBar.unverified_sessions', { count: unverified.length })}
       onClick={() => openSettings(settingTabText.SECURITY)}
       avatar={<Avatar iconSrc={ShieldUserIC} iconColor="var(--ic-danger-normal)" size="normal" />}
     />
@@ -109,6 +114,7 @@ function CrossSigninAlert() {
 function FeaturedTab() {
   const { roomList, accountData, notifications } = initMatrix;
   const [selectedTab] = useSelectedTab();
+  const { t } = useTranslation();
   useNotificationUpdate();
 
   function getHomeNoti() {
@@ -147,7 +153,7 @@ function FeaturedTab() {
   return (
     <>
       <SidebarAvatar
-        tooltip="Home"
+        tooltip={t('Organisms.SideBar.home_tooltip')}
         active={selectedTab === cons.tabs.HOME}
         onClick={() => selectTab(cons.tabs.HOME)}
         avatar={<Avatar iconSrc={HomeIC} size="normal" />}
@@ -159,7 +165,7 @@ function FeaturedTab() {
         ) : null}
       />
       <SidebarAvatar
-        tooltip="People"
+        tooltip={t('Organisms.SideBar.direct_messages_tooltip')}
         active={selectedTab === cons.tabs.DIRECTS}
         onClick={() => selectTab(cons.tabs.DIRECTS)}
         avatar={<Avatar iconSrc={UserIC} size="normal" />}
@@ -342,6 +348,7 @@ function useTotalInvites() {
 
 function SideBar() {
   const [totalInvites] = useTotalInvites();
+  const { t } = useTranslation();
 
   return (
     <div className="sidebar">
@@ -355,7 +362,7 @@ function SideBar() {
             <div className="space-container">
               <SpaceShortcut />
               <SidebarAvatar
-                tooltip="Pin spaces"
+                tooltip={t('Organisms.SideBar.pin_spaces_tooltip')}
                 onClick={() => openShortcutSpaces()}
                 avatar={<Avatar iconSrc={AddPinIC} size="normal" />}
               />
@@ -367,13 +374,13 @@ function SideBar() {
         <div className="sidebar-divider" />
         <div className="sticky-container">
           <SidebarAvatar
-            tooltip="Search"
+            tooltip={t('Organisms.SideBar.search_tooltip')}
             onClick={() => openSearch()}
             avatar={<Avatar iconSrc={SearchIC} size="normal" />}
           />
           { totalInvites !== 0 && (
             <SidebarAvatar
-              tooltip="Invites"
+              tooltip={t('Organisms.SideBar.invites_tooltip')}
               onClick={() => openInviteList()}
               avatar={<Avatar iconSrc={InviteIC} size="normal" />}
               notificationBadge={<NotificationBadge alert content={totalInvites} />}
