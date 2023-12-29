@@ -99,7 +99,11 @@ export const ImageContent = as<'div', ImageContentProps>(
         )}
         {typeof blurHash === 'string' && !load && (
           <BlurhashCanvas
-            style={{ width: '100%', height: '100%' }}
+            style={{
+              width: '100%',
+              height: '100%',
+              filter: 'contrast(80%) invert(100%) brightness(0.75) invert(100%)'
+            }}
             width={32}
             height={32}
             hash={blurHash}
