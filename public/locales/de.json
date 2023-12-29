@@ -1,0 +1,97 @@
+{
+  "common": {
+    "options": "Optionen"
+  },
+  "Organisms": {
+    "SpaceSettings": {
+      "categorize_subspaces": "Unter-Spaces kategorisieren",
+      "uncategorize_subspaces": "Unter-Spaces nicht kategorisieren",
+      "pin_sidebar": "An Seitenleiste anheften",
+      "unpin_sidebar": "Von Seitenleiste lösen"
+    },
+    "Settings": {
+      "theme": {
+        "follow_system": {
+          "title": "System-Theme verwenden",
+          "description": "Verwende den hellen oder dunklen Modus basierend auf den Systemeinstellungen."
+        },
+        "title": "Theme",
+        "theme_light": "Hell",
+        "theme_silver": "Silber",
+        "theme_dark": "Dunkel",
+        "theme_butter": "Butter"
+      },
+      "markdown": {
+        "title": "Markdown-Formatierung",
+        "description": "Nachrichten vor dem Senden mit Markdown formatieren"
+      },
+      "hide_membership_events": {
+        "title": "Mitgliedschaftsereignisse ausblenden",
+        "description": "Nachrichten zu Änderungen von Mitgliedschaften in der Zeitleiste ausblenden (Beitreten, Verlassen, Einladen, Entfernen und Bannen)"
+      },
+      "hide_nickname_avatar_events": {
+        "title": "Spitzname/Avatar Ereignisse ausblenden",
+        "description": "Nachrichten zu Änderungen von Spitznamen und Avataren in der Zeitleiste ausblenden."
+      },
+      "tabs": {
+        "appearance": "Auftretten",
+        "notifications": "Benachrichtungen",
+        "emoji": "Emoji",
+        "security": "Sicherheit",
+        "about": "Über"
+      }
+    },
+    "DrawerBreadcrumb": {
+      "home": "Home"
+    },
+    "DrawerHeader": {
+      "add_rooms_or_spaces": "Raum oder Space hinzufügen",
+      "create_new_space": "Neuen Space erstellen",
+      "create_new_room": "Neuen Raum erstellen",
+      "explore_public_room": "Öffentliche Räume erkunden",
+      "join_with_address": "Mit Adresse beitreten",
+      "add_existing": "Bestehendem beitreten",
+      "manage_rooms": "Manage rooms",
+      "home": "Home",
+      "direct_messages": "Direktnachrichten",
+      "start_dm_tooltip": "Direktnachricht schreiben",
+      "add_rooms_spaces_tooltip": "Räume/Spaces hinzufügen"
+    },
+    "SideBar": {
+      "settings_tooltip": "Einstellungen",
+      "unverified_sessions_one": "{{count}} nicht verifizierte Sitzung",
+      "unverified_sessions_other": "{{count}} nicht verifizierte Sitzungen",
+      "home_tooltip": "Home",
+      "direct_messages_tooltip": "Personen",
+      "pin_spaces_tooltip": "Spaces anheften",
+      "search_tooltip": "Suche",
+      "invites_tooltip": "Einladungen"
+    }
+  },
+  "Molecules": {
+    "ConfirmDialog": {
+      "cancel": "Abbrechen"
+    },
+    "RoomOptions": {
+      "title": "Optionen für {{room_name}}",
+      "leave": {
+        "title": "Raum verlassen",
+        "subtitle": "Bist du sicher, dass du den Raum {{room_name}} verlassen möchtest?",
+        "button_text": "Verlassen"
+      },
+      "mark_as_read": "Als gelesen markieren",
+      "notifications_heading": "Benachrichtigungen",
+      "invite": "Einladen"
+    },
+    "SpaceOptions": {
+      "leave_space": "Space verlassen",
+      "leave_space_confirmation": "Bist du sicher, dass du den Space {{space}} verlassen möchtest?",
+      "leave_space_confirm": "Verlassen",
+      "mark_as_read": "Als gelesen markieren",
+      "invite": "Einladen",
+      "manage_rooms": "Räume verwalten",
+      "settings": "Einstellungen",
+      "leave": "Verlassen"
+    }
+  }
+}
