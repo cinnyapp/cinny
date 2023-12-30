@@ -1,4 +1,4 @@
-import { ReactNode, useCallback } from 'react';
+import { ReactNode, useCallback, useEffect } from 'react';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { SpecVersions, specVersions } from '../cs-api';
 import { useAutoDiscoveryInfo } from '../hooks/useAutoDiscoveryInfo';
@@ -16,7 +16,9 @@ export function SpecVersionsLoader({ fallback, error, children }: SpecVersionsLo
     useCallback(() => specVersions(fetch, baseUrl), [baseUrl])
   );
 
-  if (state.status === AsyncStatus.Idle) load();
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (state.status === AsyncStatus.Idle || state.status === AsyncStatus.Loading) {
     return fallback?.();

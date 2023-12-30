@@ -23,7 +23,10 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
     const [previewStatus, loadPreview] = useAsyncCallback(
       useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
     );
-    if (previewStatus.status === AsyncStatus.Idle) loadPreview();
+
+    useEffect(() => {
+      loadPreview();
+    }, [loadPreview]);
 
     if (previewStatus.status === AsyncStatus.Error) return null;
 

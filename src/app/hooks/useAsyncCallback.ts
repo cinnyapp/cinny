@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useAlive } from './useAlive';
 
 export enum AsyncStatus {
@@ -45,8 +46,12 @@ export const useAsyncCallback = <TData, TError, TArgs extends unknown[]>(
 
   const callback: AsyncCallback<TArgs, TData> = useCallback(
     async (...args) => {
-      setState({
-        status: AsyncStatus.Loading,
+      flushSync(() => {
+        // flushSync because
+        // https://github.com/facebook/react/issues/26713#issuecomment-1872085134
+        setState({
+          status: AsyncStatus.Loading,
+        });
       });
 
       reqNumberRef.current += 1;

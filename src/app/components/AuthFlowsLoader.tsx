@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useMemo } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { IAuthData, MatrixError, createClient } from 'matrix-js-sdk';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { useAutoDiscoveryInfo } from '../hooks/useAutoDiscoveryInfo';
@@ -8,7 +8,7 @@ import { AuthFlows, RegisterFlowStatus, RegisterFlowsResponse } from '../hooks/u
 type AuthFlowsLoaderProps = {
   fallback?: () => ReactNode;
   error?: (err: unknown) => ReactNode;
-  children: (versions: AuthFlows) => ReactNode;
+  children: (authFlows: AuthFlows) => ReactNode;
 };
 export function AuthFlowsLoader({ fallback, error, children }: AuthFlowsLoaderProps) {
   const autoDiscoveryInfo = useAutoDiscoveryInfo();
@@ -66,7 +66,9 @@ export function AuthFlowsLoader({ fallback, error, children }: AuthFlowsLoaderPr
     }, [mx])
   );
 
-  if (state.status === AsyncStatus.Idle) load();
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (state.status === AsyncStatus.Idle || state.status === AsyncStatus.Loading) {
     return fallback?.();

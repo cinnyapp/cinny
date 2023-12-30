@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { ClientConfig } from '../hooks/useClientConfig';
 
@@ -14,7 +14,9 @@ type ClientConfigLoaderProps = {
 export function ClientConfigLoader({ fallback, children }: ClientConfigLoaderProps) {
   const [state, load] = useAsyncCallback(getClientConfig);
 
-  if (state.status === AsyncStatus.Idle) load();
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (state.status === AsyncStatus.Idle || state.status === AsyncStatus.Loading) {
     return fallback?.();
