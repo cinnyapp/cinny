@@ -19,7 +19,7 @@
     }
   }
   
-  &--selected {
+  &--selected.room-selector {
     background-color: var(--bg-surface);
     border-color: var(--bg-surface-border);
 
@@ -28,7 +28,15 @@
     }
   }
 
+  & .room-selector__options {
+    display: flex;
+  }
+
   @media (hover: hover) {
+    & .room-selector__options {
+      display: none;
+    }
+
     &:hover {
       background-color: var(--bg-surface-hover);
       & .room-selector__options {
