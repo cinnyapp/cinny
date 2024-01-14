@@ -2,7 +2,6 @@ import React, {
   ChangeEventHandler,
   KeyboardEventHandler,
   MouseEventHandler,
-  useCallback,
   useRef,
   useState,
 } from 'react';
@@ -40,21 +39,22 @@ export function ServerPicker({
     serverInputRef.current.value = server;
   }
 
-  const handleServerChange: ChangeEventHandler<HTMLInputElement> = useDebounce(
-    useCallback(
-      (evt) => {
-        const inputServer = evt.target.value.trim();
-        if (inputServer) onServerChange(inputServer);
-      },
-      [onServerChange]
-    ),
-    { wait: 700 }
-  );
+  const debounceServerSelect = useDebounce(onServerChange, { wait: 700 });
+
+  const handleServerChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
+    const inputServer = evt.target.value.trim();
+    if (inputServer) debounceServerSelect(inputServer);
+  };
 
   const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = (evt) => {
     if (evt.key === 'ArrowDown') {
       evt.preventDefault();
       setServerMenu(true);
+    }
+    if (evt.key === 'Enter') {
+      evt.preventDefault();
+      const inputServer = evt.currentTarget.value.trim();
+      if (inputServer) debounceServerSelect(inputServer);
     }
   };
 

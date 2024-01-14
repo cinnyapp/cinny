@@ -114,11 +114,16 @@ export function AuthLayout() {
 
   const selectServer = useCallback(
     (newServer: string) => {
+      if (newServer === server) {
+        if (discoveryState.status === AsyncStatus.Loading) return;
+        discoverServer(server);
+        return;
+      }
       navigate(
         generatePath(currentAuthPath(location.pathname), { server: encodeURIComponent(newServer) })
       );
     },
-    [navigate, location]
+    [navigate, location, discoveryState, server, discoverServer]
   );
 
   const [autoDiscoveryError, autoDiscoveryInfo] =
@@ -131,7 +136,7 @@ export function AuthLayout() {
         direction="Column"
         alignItems="Center"
         justifyContent="SpaceBetween"
-        gap="700"
+        gap="400"
       >
         <Box direction="Column" className={css.AuthCard}>
           <Box justifyContent="Center">
@@ -182,7 +187,7 @@ export function AuthLayout() {
                       />
                     )}
                     error={() => (
-                      <AuthLayoutError message="Failed to connect. Homeserver URL does not appear to be a valid Matrix homeserver." />
+                      <AuthLayoutError message="Failed to connect. Either homeserver is unavailable at this moment or does not exist." />
                     )}
                   >
                     {(specVersions) => (

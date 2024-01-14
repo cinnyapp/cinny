@@ -1,72 +1,97 @@
 import React from 'react';
-import { Box, Button, Icon, IconButton, Icons, Input, Text, config } from 'folds';
-import { Link, generatePath } from 'react-router-dom';
+import { Box, Text, color } from 'folds';
+import { Link, generatePath, useSearchParams } from 'react-router-dom';
 import { LOGIN_PATH } from '../paths';
 import { useAuthServer } from '../../hooks/useAuthServer';
+import { RegisterFlowStatus, useAuthFlows } from '../../hooks/useAuthFlows';
+import { useParsedLoginFlows } from '../../hooks/useParsedLoginFlows';
+import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from './PasswordRegisterForm';
+import { OrDivider } from './OrDivider';
+import { SSOLogin } from './SSOLogin';
+import { SupportedUIAFlowsLoader } from '../../components/SupportedUIAFlowsLoader';
+
+export type RegisterSearchParams = {
+  username?: string;
+  email?: string;
+  registerToken?: string;
+};
+
+const getRegisterSearchParams = (searchParams: URLSearchParams): RegisterSearchParams => ({
+  username: searchParams.get('username') ?? undefined,
+  email: searchParams.get('email') ?? undefined,
+  registerToken: searchParams.get('registerToken') ?? undefined,
+});
 
 export function Register() {
   const server = useAuthServer();
+  const { loginFlows, registerFlows } = useAuthFlows();
+  const [searchParams] = useSearchParams();
+  const registerSearchParams = getRegisterSearchParams(searchParams);
+  const { sso } = useParsedLoginFlows(loginFlows.flows);
+
+  // redirect to /login because only that path handle m.login.token
+  const [ssoRedirectUrl] = window.location.href.split('?');
+  ssoRedirectUrl.replace('/register/', '/login/');
 
   return (
     <Box direction="Column" gap="500">
       <Text size="H2" priority="400">
         Register
       </Text>
-      <Box direction="Inherit" gap="400">
-        <Box direction="Column" gap="100">
-          <Text as="label" size="L400" priority="300">
-            Username
-          </Text>
-          <Input variant="Background" size="500" outlined />
-        </Box>
-        <Box direction="Column" gap="100">
-          <Text as="label" size="L400" priority="300">
-            Password
-          </Text>
-          <Input
-            style={{ paddingRight: config.space.S200 }}
-            type="password"
-            variant="Background"
-            size="500"
-            outlined
-            after={
-              <IconButton variant="Background" size="400" radii="300">
-                <Icon size="100" src={Icons.EyeBlind} />
-              </IconButton>
+      {registerFlows.status === RegisterFlowStatus.RegistrationDisabled && !sso && (
+        <Text style={{ color: color.Critical.Main }} size="T300">
+          Registration has been disabled on this homeserver.
+        </Text>
+      )}
+      {registerFlows.status === RegisterFlowStatus.RateLimited && !sso && (
+        <Text style={{ color: color.Critical.Main }} size="T300">
+          You have been rate-limited! Please try after some time.
+        </Text>
+      )}
+      {registerFlows.status === RegisterFlowStatus.InvalidRequest && !sso && (
+        <Text style={{ color: color.Critical.Main }} size="T300">
+          Invalid Request!
+        </Text>
+      )}
+      {registerFlows.status === RegisterFlowStatus.FlowRequired && (
+        <>
+          <SupportedUIAFlowsLoader
+            flows={registerFlows.data.flows ?? []}
+            supportedStages={SUPPORTED_REGISTER_STAGES}
+          >
+            {(supportedFlows) =>
+              supportedFlows.length === 0 ? (
+                <Text style={{ color: color.Critical.Main }} size="T300">
+                  This application does not support registration on this homeserver.
+                </Text>
+              ) : (
+                <PasswordRegisterForm
+                  authData={registerFlows.data}
+                  uiaFlows={supportedFlows}
+                  defaultUsername={registerSearchParams.username}
+                  defaultEmail={registerSearchParams.email}
+                  defaultRegisterToken={registerSearchParams.registerToken}
+                />
+              )
+            }
+          </SupportedUIAFlowsLoader>
+          <span data-spacing-node />
+          {sso && <OrDivider />}
+        </>
+      )}
+      {sso && (
+        <>
+          <SSOLogin
+            providers={sso.identity_providers}
+            redirectUrl={ssoRedirectUrl}
+            asIcons={
+              registerFlows.status === RegisterFlowStatus.FlowRequired &&
+              sso.identity_providers.length > 2
             }
           />
-        </Box>
-        <Box direction="Column" gap="100">
-          <Text as="label" size="L400" priority="300">
-            Confirm Password
-          </Text>
-          <Input
-            style={{ paddingRight: config.space.S200 }}
-            type="password"
-            variant="Background"
-            size="500"
-            outlined
-            after={
-              <IconButton variant="Background" size="400" radii="300">
-                <Icon size="100" src={Icons.EyeBlind} />
-              </IconButton>
-            }
-          />
-        </Box>
-        <Box direction="Column" gap="100">
-          <Text as="label" size="L400" priority="300">
-            Email
-          </Text>
-          <Input variant="Background" type="email" size="500" outlined />
-        </Box>
-        <span />
-        <Button variant="Primary" size="500">
-          <Text as="span" size="B500">
-            Register
-          </Text>
-        </Button>
-      </Box>
-      <span />
+          <span data-spacing-node />
+        </>
+      )}
       <Text align="Center">
         Already have an account? <Link to={generatePath(LOGIN_PATH, { server })}>Login</Link>
       </Text>

@@ -27,6 +27,7 @@ export function Login() {
   const { loginFlows } = useAuthFlows();
   const [searchParams] = useSearchParams();
   const loginSearchParams = getLoginSearchParams(searchParams);
+  const [ssoRedirectUrl] = window.location.href.split('?');
 
   const parsedFlows = useParsedLoginFlows(loginFlows.flows);
 
@@ -52,7 +53,10 @@ export function Login() {
         <>
           <SSOLogin
             providers={parsedFlows.sso.identity_providers}
-            asIcons={!!parsedFlows.password}
+            redirectUrl={ssoRedirectUrl}
+            asIcons={
+              parsedFlows.password !== undefined && parsedFlows.sso.identity_providers.length > 2
+            }
           />
           <span data-spacing-node />
         </>

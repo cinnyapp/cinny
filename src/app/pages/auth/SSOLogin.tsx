@@ -6,17 +6,14 @@ import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 type SSOLoginProps = {
   providers: IIdentityProvider[];
   asIcons?: boolean;
+  redirectUrl: string;
 };
-export function SSOLogin({ providers, asIcons }: SSOLoginProps) {
+export function SSOLogin({ providers, redirectUrl, asIcons }: SSOLoginProps) {
   const discovery = useAutoDiscoveryInfo();
   const baseUrl = discovery['m.homeserver'].base_url;
   const mx = useMemo(() => createClient({ baseUrl }), [baseUrl]);
 
-  const getSSOIdUrl = (ssoId: string): string => {
-    // remove query params and use current url as redirect
-    const [redirectUrl] = window.location.href.split('?');
-    return mx.getSsoLoginUrl(redirectUrl, 'sso', ssoId);
-  };
+  const getSSOIdUrl = (ssoId: string): string => mx.getSsoLoginUrl(redirectUrl, 'sso', ssoId);
 
   return (
     <Box justifyContent="Center" gap="600" wrap="Wrap">
@@ -26,9 +23,7 @@ export function SSOLogin({ providers, asIcons }: SSOLoginProps) {
 
         const buttonTitle = `Continue with ${name}`;
 
-        // Only show SSO buttons as icons if we have
-        // high number of SSO buttons to display
-        if (iconUrl && asIcons && providers.length > 2) {
+        if (iconUrl && asIcons) {
           return (
             <Avatar
               style={{ cursor: 'pointer' }}

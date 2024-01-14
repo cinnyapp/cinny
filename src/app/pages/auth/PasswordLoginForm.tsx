@@ -20,7 +20,6 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { Link, generatePath } from 'react-router-dom';
 import { MatrixError } from 'matrix-js-sdk';
-import { UseStateProvider } from '../../components/UseStateProvider';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
 import { EMAIL_REGEX } from '../../utils/regex';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
@@ -35,6 +34,7 @@ import {
   login,
   useLoginComplete,
 } from './loginUtil';
+import { PasswordInput } from '../../components/password-input/PasswordInput';
 
 function UsernameHint({ server }: { server: string }) {
   const [open, setOpen] = useState(false);
@@ -233,34 +233,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         <Text as="label" size="L400" priority="300">
           Password
         </Text>
-        <UseStateProvider initial={false}>
-          {(visible, setVisible) => (
-            <Input
-              style={{ paddingRight: config.space.S200 }}
-              name="passwordInput"
-              type={visible ? 'text' : 'password'}
-              variant={visible ? 'Warning' : 'Background'}
-              size="500"
-              outlined
-              required
-              after={
-                <IconButton
-                  onClick={() => setVisible(!visible)}
-                  type="button"
-                  variant={visible ? 'Warning' : 'Background'}
-                  size="400"
-                  radii="300"
-                >
-                  <Icon
-                    style={{ opacity: config.opacity.P300 }}
-                    size="100"
-                    src={visible ? Icons.Eye : Icons.EyeBlind}
-                  />
-                </IconButton>
-              }
-            />
-          )}
-        </UseStateProvider>
+        <PasswordInput name="passwordInput" variant="Background" size="500" outlined required />
         <Box alignItems="Start" justifyContent="SpaceBetween" gap="200">
           {loginState.status === AsyncStatus.Error && (
             <>
@@ -289,7 +262,6 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
           </Box>
         </Box>
       </Box>
-      <span />
       <Button type="submit" variant="Primary" size="500">
         <Text as="span" size="B500">
           Login
