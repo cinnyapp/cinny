@@ -14,10 +14,12 @@ import {
   AuthType,
   IAuthData,
   MatrixError,
+  RegisterRequest,
   RegisterResponse,
   UIAFlow,
   createClient,
 } from 'matrix-js-sdk';
+import to from 'await-to-js';
 import { PasswordInput } from '../../components/password-input/PasswordInput';
 import {
   getLoginTermUrl,
@@ -28,8 +30,7 @@ import {
 import { useUIAFlow, useUIAParams } from '../../hooks/useUIAFlows';
 import { useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
-import to from 'await-to-js';
-import { parseRegisterErrResp } from '../../hooks/useAuthFlows';
+import { RegisterFlowStatus, parseRegisterErrResp } from '../../hooks/useAuthFlows';
 
 export const SUPPORTED_REGISTER_STAGES = [
   AuthType.RegistrationToken,
@@ -38,13 +39,40 @@ export const SUPPORTED_REGISTER_STAGES = [
   AuthType.Email,
   AuthType.Dummy,
 ];
+type RegisterFormInputs = {
+  usernameInput: HTMLInputElement;
+  passwordInput: HTMLInputElement;
+  confirmPasswordInput: HTMLInputElement;
+  tokenInput?: HTMLInputElement;
+  emailInput?: HTMLInputElement;
+  termsInput?: HTMLInputElement;
+};
+
+type FormData = {
+  username: string;
+  password: string;
+  token?: string;
+  email?: string;
+  terms?: boolean;
+};
+
+const pickStages = (uiaFlows: UIAFlow[], formData: FormData): string[] => {
+  const pickedStages: string[] = [];
+  if (formData.token) pickedStages.push(AuthType.RegistrationToken);
+  if (formData.email) pickedStages.push(AuthType.Email);
+  if (formData.terms) pickedStages.push(AuthType.Terms);
+  if (hasStageInFlows(uiaFlows, AuthType.Recaptcha)) {
+    pickedStages.push(AuthType.Recaptcha);
+  }
+
+  return pickedStages;
+};
 
 type RegisterUIAFlowProps = {
   flow: UIAFlow;
   authData: IAuthData;
-  onAuthDataChange: (authData: IAuthData) => void;
 };
-function RegisterUIAFlow({ flow, authData, onAuthDataChange }: RegisterUIAFlowProps) {
+function RegisterUIAFlow({ flow, authData }: RegisterUIAFlowProps) {
   const { getStageToComplete } = useUIAFlow(authData, flow);
 
   const stageToComplete = getStageToComplete();
@@ -68,15 +96,6 @@ function RegisterUIAFlow({ flow, authData, onAuthDataChange }: RegisterUIAFlowPr
   );
 }
 
-type RegisterFormInputs = {
-  usernameInput: HTMLInputElement;
-  passwordInput: HTMLInputElement;
-  confirmPasswordInput: HTMLInputElement;
-  tokenInput?: HTMLInputElement;
-  emailInput?: HTMLInputElement;
-  termsInput?: HTMLInputElement;
-};
-
 type PasswordRegisterFormProps = {
   authData: IAuthData;
   uiaFlows: UIAFlow[];
@@ -96,34 +115,33 @@ export function PasswordRegisterForm({
   const mx = useMemo(() => createClient({ baseUrl }), [baseUrl]);
   const params = useUIAParams(authData);
   const termUrl = getLoginTermUrl(params);
+  const [formData, setFormData] = useState<FormData>();
 
-  const [flowData, setFlowData] = useState<
-    | {
-        flow: UIAFlow;
-        authData: IAuthData;
-      }
-    | undefined
-  >();
+  const [flowData, setFlowData] = useState<{ flow: UIAFlow; authData: IAuthData } | undefined>();
 
   const [registerState, register] = useAsyncCallback(
-    useCallback(async () => {
-      const [err, res] = await to<RegisterResponse, MatrixError>(mx.register());
-      if (err) {
-        const errRes = parseRegisterErrResp(err);
-      }
-      // TODO: registered => Redirect maybe?
-    }, [mx])
-  );
+    useCallback(
+      async (registerReqData: RegisterRequest) => {
+        const [err, res] = await to<RegisterResponse, MatrixError>(
+          mx.registerRequest(registerReqData)
+        );
+        if (err) {
+          const errRes = parseRegisterErrResp(err);
+          if (errRes.status === RegisterFlowStatus.FlowRequired) {
+            setFlowData((d) => d && { ...d, authData: errRes.data });
+          }
 
-  const handleAuthDataChange = (authD: IAuthData) => {
-    setFlowData(
-      (d) =>
-        d && {
-          flow: d.flow,
-          authData: authD,
+          return;
         }
-    );
-  };
+        const userId = res.user_id;
+        const accessToken = res.access_token;
+        const deviceId = res.device_id;
+        console.log(userId, accessToken, deviceId);
+        // TODO: registered => Redirect maybe?
+      },
+      [mx]
+    )
+  );
 
   const handleSubmit: ChangeEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
@@ -143,35 +161,21 @@ export function PasswordRegisterForm({
     // TODO: display password doesn't match error
     if (password !== confirmPassword) return;
     const email = emailInput?.value.trim();
+    // TODO: verify email
     const terms = termsInput?.value === 'on';
 
     if (!username) {
       usernameInput.focus();
       return;
     }
-    // TODO: match password here or in async callback
 
-    const pickedStages: string[] = [];
-    if (token) pickedStages.push(AuthType.RegistrationToken);
-    if (email) pickedStages.push(AuthType.Email);
-    if (terms) pickedStages.push(AuthType.Terms);
-    if (hasStageInFlows(uiaFlows, AuthType.Recaptcha)) {
-      pickedStages.push(AuthType.Recaptcha);
-    }
-
-    const targetFlow = getUIAFlowForStages(uiaFlows, pickedStages);
-
-    // TODO: send register request
-    // receive response
-    // check if done
-    // update auth data
-    // render uiaFlow component
-    // component will complete stages
-    // update the authData
-    // if completed it will log you in
-
-    console.log(username, password, confirmPassword, email, token, terms);
-    console.log(targetFlow);
+    setFormData({
+      username,
+      password,
+      token,
+      email,
+      terms,
+    });
   };
 
   return (
@@ -259,13 +263,7 @@ export function PasswordRegisterForm({
           Register
         </Text>
       </Button>
-      {flowData && (
-        <RegisterUIAFlow
-          flow={flowData.flow}
-          authData={flowData.authData}
-          onAuthDataChange={handleAuthDataChange}
-        />
-      )}
+      {flowData && <RegisterUIAFlow flow={flowData.flow} authData={flowData.authData} />}
     </Box>
   );
 }
