@@ -20,17 +20,17 @@ import {
   createClient,
 } from 'matrix-js-sdk';
 import to from 'await-to-js';
-import { PasswordInput } from '../../components/password-input/PasswordInput';
+import { PasswordInput } from '../../../components/password-input/PasswordInput';
 import {
   getLoginTermUrl,
   getUIAFlowForStages,
   hasStageInFlows,
   requiredStageInFlows,
-} from '../../utils/matrix-uia';
-import { useUIAFlow, useUIAParams } from '../../hooks/useUIAFlows';
-import { useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
-import { RegisterFlowStatus, parseRegisterErrResp } from '../../hooks/useAuthFlows';
+} from '../../../utils/matrix-uia';
+import { useUIAFlow, useUIAParams } from '../../../hooks/useUIAFlows';
+import { useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
+import { RegisterFlowStatus, parseRegisterErrResp } from '../../../hooks/useAuthFlows';
 
 export const SUPPORTED_REGISTER_STAGES = [
   AuthType.RegistrationToken,

@@ -1,14 +1,14 @@
 import React from 'react';
 import { Box, Text, color } from 'folds';
 import { Link, generatePath, useSearchParams } from 'react-router-dom';
-import { LOGIN_PATH } from '../paths';
-import { useAuthServer } from '../../hooks/useAuthServer';
-import { RegisterFlowStatus, useAuthFlows } from '../../hooks/useAuthFlows';
-import { useParsedLoginFlows } from '../../hooks/useParsedLoginFlows';
-import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from './PasswordRegisterForm';
-import { OrDivider } from './OrDivider';
-import { SSOLogin } from './SSOLogin';
-import { SupportedUIAFlowsLoader } from '../../components/SupportedUIAFlowsLoader';
+import { LOGIN_PATH } from '../../paths';
+import { useAuthServer } from '../../../hooks/useAuthServer';
+import { RegisterFlowStatus, useAuthFlows } from '../../../hooks/useAuthFlows';
+import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
+import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from '../register/PasswordRegisterForm';
+import { OrDivider } from '../OrDivider';
+import { SSOLogin } from '../SSOLogin';
+import { SupportedUIAFlowsLoader } from '../../../components/SupportedUIAFlowsLoader';
 
 export type RegisterSearchParams = {
   username?: string;

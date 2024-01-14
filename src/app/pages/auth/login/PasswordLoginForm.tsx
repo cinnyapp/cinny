@@ -20,13 +20,13 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { Link, generatePath } from 'react-router-dom';
 import { MatrixError } from 'matrix-js-sdk';
-import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
-import { EMAIL_REGEX } from '../../utils/regex';
-import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { REGISTER_PATH } from '../paths';
-import { useAuthServer } from '../../hooks/useAuthServer';
-import { useClientConfig } from '../../hooks/useClientConfig';
+import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../../utils/matrix';
+import { EMAIL_REGEX } from '../../../utils/regex';
+import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
+import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { REGISTER_PATH } from '../../paths';
+import { useAuthServer } from '../../../hooks/useAuthServer';
+import { useClientConfig } from '../../../hooks/useClientConfig';
 import {
   CustomLoginResponse,
   LoginError,
@@ -34,7 +34,7 @@ import {
   login,
   useLoginComplete,
 } from './loginUtil';
-import { PasswordInput } from '../../components/password-input/PasswordInput';
+import { PasswordInput } from '../../../components/password-input/PasswordInput';
 
 function UsernameHint({ server }: { server: string }) {
   const [open, setOpen] = useState(false);
