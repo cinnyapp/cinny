@@ -50,7 +50,7 @@ export function Register() {
       )}
       {registerFlows.status === RegisterFlowStatus.InvalidRequest && !sso && (
         <Text style={{ color: color.Critical.Main }} size="T300">
-          Invalid Request!
+          Invalid Request! Failed to get any registration options.
         </Text>
       )}
       {registerFlows.status === RegisterFlowStatus.FlowRequired && (

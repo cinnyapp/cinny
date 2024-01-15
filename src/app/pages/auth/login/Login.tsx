@@ -30,6 +30,7 @@ export function Login() {
   const [ssoRedirectUrl] = window.location.href.split('?');
 
   const parsedFlows = useParsedLoginFlows(loginFlows.flows);
+  console.log(parsedFlows);
 
   return (
     <Box direction="Column" gap="500">
@@ -61,10 +62,10 @@ export function Login() {
           <span data-spacing-node />
         </>
       )}
-      {Object.entries(parsedFlows).every(([, flow]) => flow === undefined) && (
+      {!parsedFlows.password && !parsedFlows.sso && (
         <>
           <Text style={{ color: color.Critical.Main }}>
-            {`This client does not support any login method return by "${server}" homeserver.`}
+            {`This client does not support login on "${server}" homeserver. Password and SSO based login method not found.`}
           </Text>
           <span data-spacing-node />
         </>
