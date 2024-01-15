@@ -15,11 +15,9 @@ import {
   IAuthData,
   MatrixError,
   RegisterRequest,
-  RegisterResponse,
   UIAFlow,
   createClient,
 } from 'matrix-js-sdk';
-import to from 'await-to-js';
 import { PasswordInput } from '../../../components/password-input/PasswordInput';
 import {
   getLoginTermUrl,
@@ -28,9 +26,10 @@ import {
   requiredStageInFlows,
 } from '../../../utils/matrix-uia';
 import { useUIAFlow, useUIAParams } from '../../../hooks/useUIAFlows';
-import { useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
-import { RegisterFlowStatus, parseRegisterErrResp } from '../../../hooks/useAuthFlows';
+import { RegisterError, RegisterResult, register, useRegisterComplete } from './registerUtil';
+import { FieldError } from '../FiledError';
 
 export const SUPPORTED_REGISTER_STAGES = [
   AuthType.RegistrationToken,
@@ -69,10 +68,12 @@ const pickStages = (uiaFlows: UIAFlow[], formData: FormData): string[] => {
 };
 
 type RegisterUIAFlowProps = {
+  formData: FormData;
   flow: UIAFlow;
   authData: IAuthData;
+  onRegister: (registerReqData: RegisterRequest) => void;
 };
-function RegisterUIAFlow({ flow, authData }: RegisterUIAFlowProps) {
+function RegisterUIAFlow({ formData, flow, authData, onRegister }: RegisterUIAFlowProps) {
   const { getStageToComplete } = useUIAFlow(authData, flow);
 
   const stageToComplete = getStageToComplete();
@@ -117,31 +118,19 @@ export function PasswordRegisterForm({
   const termUrl = getLoginTermUrl(params);
   const [formData, setFormData] = useState<FormData>();
 
-  const [flowData, setFlowData] = useState<{ flow: UIAFlow; authData: IAuthData } | undefined>();
+  const [ongoingFlow, setOngoingFlow] = useState<UIAFlow>();
 
-  const [registerState, register] = useAsyncCallback(
-    useCallback(
-      async (registerReqData: RegisterRequest) => {
-        const [err, res] = await to<RegisterResponse, MatrixError>(
-          mx.registerRequest(registerReqData)
-        );
-        if (err) {
-          const errRes = parseRegisterErrResp(err);
-          if (errRes.status === RegisterFlowStatus.FlowRequired) {
-            setFlowData((d) => d && { ...d, authData: errRes.data });
-          }
+  const [registerState, handleRegister] = useAsyncCallback<
+    RegisterResult,
+    MatrixError,
+    [RegisterRequest]
+  >(useCallback(async (registerReqData) => register(mx, registerReqData), [mx]));
+  const [ongoingAuthData, customRegisterResp] =
+    registerState.status === AsyncStatus.Success ? registerState.data : [];
+  const registerError =
+    registerState.status === AsyncStatus.Error ? registerState.error : undefined;
 
-          return;
-        }
-        const userId = res.user_id;
-        const accessToken = res.access_token;
-        const deviceId = res.device_id;
-        console.log(userId, accessToken, deviceId);
-        // TODO: registered => Redirect maybe?
-      },
-      [mx]
-    )
-  );
+  useRegisterComplete(customRegisterResp);
 
   const handleSubmit: ChangeEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
@@ -169,101 +158,142 @@ export function PasswordRegisterForm({
       return;
     }
 
-    setFormData({
+    const fData: FormData = {
       username,
       password,
       token,
       email,
       terms,
+    };
+    const pickedStages = pickStages(uiaFlows, fData);
+    const pickedFlow = getUIAFlowForStages(uiaFlows, pickedStages);
+    setOngoingFlow(pickedFlow);
+    setFormData(fData);
+    handleRegister({
+      username,
+      password,
+      auth: {
+        session: authData.session,
+      },
+      initial_device_display_name: 'Cinny Web',
     });
   };
 
   return (
-    <Box as="form" onSubmit={handleSubmit} direction="Inherit" gap="400">
-      <Box direction="Column" gap="100">
-        <Text as="label" size="L400" priority="300">
-          Username
-        </Text>
-        <Input
-          variant="Background"
-          defaultValue={defaultUsername}
-          name="usernameInput"
-          size="500"
-          outlined
-          required
-        />
-      </Box>
-      <Box direction="Column" gap="100">
-        <Text as="label" size="L400" priority="300">
-          Password
-        </Text>
-        <PasswordInput name="passwordInput" variant="Background" size="500" outlined required />
-      </Box>
-      <Box direction="Column" gap="100">
-        <Text as="label" size="L400" priority="300">
-          Confirm Password
-        </Text>
-        <PasswordInput
-          name="confirmPasswordInput"
-          variant="Background"
-          size="500"
-          outlined
-          required
-        />
-      </Box>
-      {hasStageInFlows(uiaFlows, AuthType.RegistrationToken) && (
+    <>
+      <Box as="form" onSubmit={handleSubmit} direction="Inherit" gap="400">
         <Box direction="Column" gap="100">
           <Text as="label" size="L400" priority="300">
-            {requiredStageInFlows(uiaFlows, AuthType.RegistrationToken)
-              ? 'Registration Token'
-              : 'Registration Token (Optional)'}
+            Username
           </Text>
           <Input
             variant="Background"
-            defaultValue={defaultRegisterToken}
-            name="tokenInput"
+            defaultValue={defaultUsername}
+            name="usernameInput"
             size="500"
-            required={requiredStageInFlows(uiaFlows, AuthType.RegistrationToken)}
             outlined
+            required
           />
+          {registerError?.errcode === RegisterError.UserTaken && (
+            <FieldError message="This username is already taken." />
+          )}
+          {registerError?.errcode === RegisterError.UserInvalid && (
+            <FieldError message="This username contains invalid characters." />
+          )}
+          {registerError?.errcode === RegisterError.UserExclusive && (
+            <FieldError message="This username is reserved." />
+          )}
         </Box>
-      )}
-      {hasStageInFlows(uiaFlows, AuthType.Email) && (
         <Box direction="Column" gap="100">
           <Text as="label" size="L400" priority="300">
-            {requiredStageInFlows(uiaFlows, AuthType.Email) ? 'Email' : 'Email (Optional)'}
+            Password
           </Text>
-          <Input
+          <PasswordInput name="passwordInput" variant="Background" size="500" outlined required />
+          {registerError?.errcode === RegisterError.PasswordWeak && (
+            <FieldError message="Weak Password. Given Password is rejected by server please try choosing more strong Password." />
+          )}
+        </Box>
+        <Box direction="Column" gap="100">
+          <Text as="label" size="L400" priority="300">
+            Confirm Password
+          </Text>
+          <PasswordInput
+            name="confirmPasswordInput"
             variant="Background"
-            defaultValue={defaultEmail}
-            name="emailInput"
-            type="email"
             size="500"
-            required={requiredStageInFlows(uiaFlows, AuthType.Email)}
             outlined
+            required
           />
         </Box>
-      )}
+        {hasStageInFlows(uiaFlows, AuthType.RegistrationToken) && (
+          <Box direction="Column" gap="100">
+            <Text as="label" size="L400" priority="300">
+              {requiredStageInFlows(uiaFlows, AuthType.RegistrationToken)
+                ? 'Registration Token'
+                : 'Registration Token (Optional)'}
+            </Text>
+            <Input
+              variant="Background"
+              defaultValue={defaultRegisterToken}
+              name="tokenInput"
+              size="500"
+              required={requiredStageInFlows(uiaFlows, AuthType.RegistrationToken)}
+              outlined
+            />
+          </Box>
+        )}
+        {hasStageInFlows(uiaFlows, AuthType.Email) && (
+          <Box direction="Column" gap="100">
+            <Text as="label" size="L400" priority="300">
+              {requiredStageInFlows(uiaFlows, AuthType.Email) ? 'Email' : 'Email (Optional)'}
+            </Text>
+            <Input
+              variant="Background"
+              defaultValue={defaultEmail}
+              name="emailInput"
+              type="email"
+              size="500"
+              required={requiredStageInFlows(uiaFlows, AuthType.Email)}
+              outlined
+            />
+          </Box>
+        )}
 
-      {hasStageInFlows(uiaFlows, AuthType.Terms) && termUrl && (
-        <Box alignItems="Center" gap="200">
-          <Checkbox name="termsInput" size="300" variant="Primary" required />
-          <Text size="T300">
-            I accept server{' '}
-            <a href={termUrl} target="_blank" rel="noreferrer">
-              Terms and Conditions
-            </a>
-            .
+        {hasStageInFlows(uiaFlows, AuthType.Terms) && termUrl && (
+          <Box alignItems="Center" gap="200">
+            <Checkbox name="termsInput" size="300" variant="Primary" required />
+            <Text size="T300">
+              I accept server{' '}
+              <a href={termUrl} target="_blank" rel="noreferrer">
+                Terms and Conditions
+              </a>
+              .
+            </Text>
+          </Box>
+        )}
+        <span data-spacing-node />
+        <Button variant="Primary" size="500" type="submit">
+          <Text as="span" size="B500">
+            Register
           </Text>
-        </Box>
+        </Button>
+      </Box>
+      {registerState.status === AsyncStatus.Success &&
+        formData &&
+        ongoingFlow &&
+        ongoingAuthData && (
+          <RegisterUIAFlow
+            formData={formData}
+            flow={ongoingFlow}
+            authData={ongoingAuthData}
+            onRegister={handleRegister}
+          />
+        )}
+      {registerState.status === AsyncStatus.Loading && (
+        <Overlay open backdrop={<OverlayBackdrop />}>
+          <OverlayCenter />
+        </Overlay>
       )}
-      <span data-spacing-node />
-      <Button variant="Primary" size="500" type="submit">
-        <Text as="span" size="B500">
-          Register
-        </Text>
-      </Button>
-      {flowData && <RegisterUIAFlow flow={flowData.flow} authData={flowData.authData} />}
-    </Box>
+    </>
   );
 }
