@@ -6,6 +6,7 @@ import { ClientConfig, clientAllowedServer } from '../../../hooks/useClientConfi
 import { autoDiscovery, specVersions } from '../../../cs-api';
 import { updateLocalStore } from '../../../../client/action/auth';
 import { ROOT_PATH } from '../../paths';
+import { ErrorCode } from '../../../cs-errorcode';
 
 export enum GetBaseUrlError {
   NotAllow = 'NotAllow',
@@ -81,7 +82,7 @@ export const login = async (
         errcode: LoginError.RateLimited,
       });
     }
-    if (err.errcode === 'M_USER_DEACTIVATED') {
+    if (err.errcode === ErrorCode.M_USER_DEACTIVATED) {
       throw new MatrixError({
         errcode: LoginError.UserDeactivated,
       });
