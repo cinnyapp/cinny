@@ -14,7 +14,6 @@ import {
   PopOut,
   Spinner,
   Text,
-  color,
   config,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
@@ -35,6 +34,7 @@ import {
   useLoginComplete,
 } from './loginUtil';
 import { PasswordInput } from '../../../components/password-input/PasswordInput';
+import { FieldError } from '../FiledError';
 
 function UsernameHint({ server }: { server: string }) {
   const [open, setOpen] = useState(false);
@@ -98,17 +98,6 @@ function UsernameHint({ server }: { server: string }) {
         </IconButton>
       )}
     </PopOut>
-  );
-}
-
-function LoginFieldError({ message }: { message: string }) {
-  return (
-    <Box style={{ color: color.Critical.Main }} alignItems="Center" gap="100">
-      <Icon size="50" filled src={Icons.Warning} />
-      <Text size="T200">
-        <b>{message}</b>
-      </Text>
-    </Box>
   );
 }
 
@@ -221,10 +210,10 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         {loginState.status === AsyncStatus.Error && (
           <>
             {loginState.error.errcode === LoginError.ServerNotAllowed && (
-              <LoginFieldError message="Login with custom server not allowed by your client instance." />
+              <FieldError message="Login with custom server not allowed by your client instance." />
             )}
             {loginState.error.errcode === LoginError.InvalidServer && (
-              <LoginFieldError message="Failed to find your Matrix ID server." />
+              <FieldError message="Failed to find your Matrix ID server." />
             )}
           </>
         )}
@@ -238,19 +227,19 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
           {loginState.status === AsyncStatus.Error && (
             <>
               {loginState.error.errcode === LoginError.Forbidden && (
-                <LoginFieldError message="Invalid Username or Password." />
+                <FieldError message="Invalid Username or Password." />
               )}
               {loginState.error.errcode === LoginError.UserDeactivated && (
-                <LoginFieldError message="This account has been deactivated." />
+                <FieldError message="This account has been deactivated." />
               )}
               {loginState.error.errcode === LoginError.InvalidRequest && (
-                <LoginFieldError message="Failed to login. Part of your request data is invalid." />
+                <FieldError message="Failed to login. Part of your request data is invalid." />
               )}
               {loginState.error.errcode === LoginError.RateLimited && (
-                <LoginFieldError message="Failed to login. Your login request has been rate-limited by server, Please try after some time." />
+                <FieldError message="Failed to login. Your login request has been rate-limited by server, Please try after some time." />
               )}
               {loginState.error.errcode === LoginError.Unknown && (
-                <LoginFieldError message="Failed to login. Unknown reason." />
+                <FieldError message="Failed to login. Unknown reason." />
               )}
             </>
           )}
