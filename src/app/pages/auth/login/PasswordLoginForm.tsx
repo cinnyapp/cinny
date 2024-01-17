@@ -91,8 +91,9 @@ function UsernameHint({ server }: { server: string }) {
           ref={targetRef}
           type="button"
           variant="Background"
-          size="400"
+          size="300"
           radii="300"
+          aria-pressed={open}
         >
           <Icon style={{ opacity: config.opacity.P300 }} size="100" src={Icons.Info} />
         </IconButton>
@@ -199,7 +200,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         </Text>
         <Input
           defaultValue={defaultUsername ?? defaultEmail}
-          style={{ paddingRight: config.space.S200 }}
+          style={{ paddingRight: config.space.S300 }}
           name="usernameInput"
           variant="Background"
           size="500"

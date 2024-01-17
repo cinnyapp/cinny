@@ -30,7 +30,6 @@ export function Login() {
   const [ssoRedirectUrl] = window.location.href.split('?');
 
   const parsedFlows = useParsedLoginFlows(loginFlows.flows);
-  console.log(parsedFlows);
 
   return (
     <Box direction="Column" gap="500">

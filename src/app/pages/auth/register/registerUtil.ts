@@ -17,6 +17,7 @@ export enum RegisterError {
   UserInvalid = 'UserInvalid',
   UserExclusive = 'UserExclusive',
   PasswordWeak = 'PasswordWeak',
+  PasswordShort = 'PasswordShort',
   InvalidRequest = 'InvalidRequest',
   Forbidden = 'Forbidden',
   RateLimited = 'RateLimited',
@@ -58,6 +59,11 @@ export const register = async (
     if (err.errcode === ErrorCode.M_WEAK_PASSWORD) {
       throw new MatrixError({
         errcode: RegisterError.PasswordWeak,
+      });
+    }
+    if (err.errcode === ErrorCode.M_PASSWORD_TOO_SHORT) {
+      throw new MatrixError({
+        errcode: RegisterError.PasswordShort,
       });
     }
 
