@@ -31,6 +31,13 @@ export const getUIAErrorCode = (authData: IAuthData): string | undefined => {
   return errorCode;
 };
 
+export const getUIAError = (authData: IAuthData): string | undefined => {
+  const errorCode =
+    'error' in authData && typeof authData.error === 'string' ? authData.error : undefined;
+
+  return errorCode;
+};
+
 export const getUIAFlowForStages = (uiaFlows: UIAFlow[], stages: string[]): UIAFlow | undefined => {
   const matchedFlows = uiaFlows
     .filter((flow) => {

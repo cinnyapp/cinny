@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import {
   getSupportedUIAFlows,
   getUIACompleted,
+  getUIAError,
   getUIAErrorCode,
   getUIAParams,
   getUIASession,
@@ -32,12 +33,16 @@ export const useUIASession = (authData: IAuthData) =>
 export const useUIAErrorCode = (authData: IAuthData) =>
   useMemo(() => getUIAErrorCode(authData), [authData]);
 
+export const useUIAError = (authData: IAuthData) =>
+  useMemo(() => getUIAError(authData), [authData]);
+
 export type StageInfo = Record<string, unknown>;
 export type AuthStageData = {
   type: string;
   info?: StageInfo;
   session?: string;
   errorCode?: string;
+  error?: string;
 };
 export type AuthStageDataGetter = () => AuthStageData | undefined;
 
@@ -51,19 +56,11 @@ export const useUIAFlow = (authData: IAuthData, uiaFlow: UIAFlow): UIAFlowInterf
   const params = useUIAParams(authData);
   const session = useUIASession(authData);
   const errorCode = useUIAErrorCode(authData);
-
-  const getPrevCompletedStage = useCallback(() => {
-    const prevCompletedI = completed.length - 1;
-    const prevCompletedStage = prevCompletedI !== -1 ? completed[prevCompletedI] : undefined;
-    return prevCompletedStage;
-  }, [completed]);
+  const error = useUIAError(authData);
 
   const getStageToComplete: AuthStageDataGetter = useCallback(() => {
     const { stages } = uiaFlow;
-    const prevCompletedStage = getPrevCompletedStage();
-
-    const nextStageIndex = stages.findIndex((stage) => stage === prevCompletedStage) + 1;
-    const nextStage = nextStageIndex < stages.length ? stages[nextStageIndex] : undefined;
+    const nextStage = stages.find((stage) => !completed.includes(stage));
     if (!nextStage) return undefined;
 
     const info = params[nextStage];
@@ -73,8 +70,9 @@ export const useUIAFlow = (authData: IAuthData, uiaFlow: UIAFlow): UIAFlowInterf
       info,
       session,
       errorCode,
+      error,
     };
-  }, [uiaFlow, getPrevCompletedStage, params, errorCode, session]);
+  }, [uiaFlow, completed, params, errorCode, error, session]);
 
   const hasStage = useCallback(
     (stageType: string): boolean => uiaFlow.stages.includes(stageType),
