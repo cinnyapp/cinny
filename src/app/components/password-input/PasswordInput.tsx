@@ -7,7 +7,7 @@ type PasswordInputProps = Omit<ComponentProps<typeof Input>, 'type' | 'size'> & 
 };
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ variant, size, style, after, ...props }, ref) => {
-    const btnSize: ComponentProps<typeof IconButton>['size'] = size === '500' ? '400' : '300';
+    const paddingRight: string = size === '500' ? config.space.S300 : config.space.S200;
 
     return (
       <UseStateProvider initial={false}>
@@ -15,10 +15,10 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           <Input
             {...props}
             ref={ref}
-            style={{ paddingRight: config.space.S200, ...style }}
+            style={{ paddingRight, ...style }}
             type={visible ? 'text' : 'password'}
             size={size}
-            variant={visible ? 'Warning' : variant}
+            variant={variant}
             after={
               <>
                 {after}
@@ -26,7 +26,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
                   onClick={() => setVisible(!visible)}
                   type="button"
                   variant={visible ? 'Warning' : variant}
-                  size={btnSize}
+                  size="300"
                   radii="300"
                 >
                   <Icon
