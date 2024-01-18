@@ -9,6 +9,7 @@ import { SSOLogin } from '../SSOLogin';
 import { TokenLogin } from './TokenLogin';
 import { OrDivider } from '../OrDivider';
 import { getLoginPath, getRegisterPath } from '../../pathUtils';
+import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
 
 export type LoginSearchParams = {
   username?: string;
@@ -27,7 +28,7 @@ export function Login() {
   const { loginFlows } = useAuthFlows();
   const [searchParams] = useSearchParams();
   const loginSearchParams = getLoginSearchParams(searchParams);
-  const ssoRedirectUrl = getLoginPath(server);
+  const ssoRedirectUrl = usePathWithOrigin(getLoginPath(server));
 
   const parsedFlows = useParsedLoginFlows(loginFlows.flows);
 
