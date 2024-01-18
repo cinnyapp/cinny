@@ -336,10 +336,20 @@ export function PasswordRegisterForm({
                   required
                 />
                 {registerError?.errcode === RegisterError.PasswordWeak && (
-                  <FieldError message="Weak Password. Given Password is rejected by server please try choosing more strong Password." />
+                  <FieldError
+                    message={
+                      registerError.data.error ??
+                      'Weak Password. Password rejected by server please choosing more strong Password.'
+                    }
+                  />
                 )}
                 {registerError?.errcode === RegisterError.PasswordShort && (
-                  <FieldError message="Short Password. Given Password is rejected by server please try choosing more long Password." />
+                  <FieldError
+                    message={
+                      registerError.data.error ??
+                      'Short Password. Password rejected by server please choosing more long Password.'
+                    }
+                  />
                 )}
               </Box>
               <Box direction="Column" gap="100">
@@ -416,7 +426,7 @@ export function PasswordRegisterForm({
           <FieldError message="Failed to register. Invalid request." />
         )}
         {registerError?.errcode === RegisterError.Unknown && (
-          <FieldError message="Failed to register. Unknown Reason." />
+          <FieldError message={registerError.data.error ?? 'Failed to register. Unknown Reason.'} />
         )}
         <span data-spacing-node />
         <Button variant="Primary" size="500" type="submit">

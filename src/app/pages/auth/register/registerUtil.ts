@@ -59,11 +59,13 @@ export const register = async (
     if (err.errcode === ErrorCode.M_WEAK_PASSWORD) {
       throw new MatrixError({
         errcode: RegisterError.PasswordWeak,
+        error: err.data.error,
       });
     }
     if (err.errcode === ErrorCode.M_PASSWORD_TOO_SHORT) {
       throw new MatrixError({
         errcode: RegisterError.PasswordShort,
+        error: err.data.error,
       });
     }
 
@@ -87,6 +89,7 @@ export const register = async (
 
     throw new MatrixError({
       errcode: RegisterError.Unknown,
+      error: err.data.error,
     });
   }
   return [
