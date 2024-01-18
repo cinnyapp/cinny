@@ -14,13 +14,13 @@ import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
 export type RegisterSearchParams = {
   username?: string;
   email?: string;
-  registerToken?: string;
+  token?: string;
 };
 
 const getRegisterSearchParams = (searchParams: URLSearchParams): RegisterSearchParams => ({
   username: searchParams.get('username') ?? undefined,
   email: searchParams.get('email') ?? undefined,
-  registerToken: searchParams.get('registerToken') ?? undefined,
+  token: searchParams.get('token') ?? undefined,
 });
 
 export function Register() {
@@ -70,7 +70,7 @@ export function Register() {
                   uiaFlows={supportedFlows}
                   defaultUsername={registerSearchParams.username}
                   defaultEmail={registerSearchParams.email}
-                  defaultRegisterToken={registerSearchParams.registerToken}
+                  defaultRegisterToken={registerSearchParams.token}
                 />
               )
             }
