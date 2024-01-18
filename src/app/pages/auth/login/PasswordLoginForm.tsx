@@ -17,13 +17,12 @@ import {
   config,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { Link, generatePath } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { MatrixError } from 'matrix-js-sdk';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../../utils/matrix';
 import { EMAIL_REGEX } from '../../../utils/regex';
 import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { REGISTER_PATH } from '../../paths';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { useClientConfig } from '../../../hooks/useClientConfig';
 import {
@@ -35,6 +34,7 @@ import {
 } from './loginUtil';
 import { PasswordInput } from '../../../components/password-input/PasswordInput';
 import { FieldError } from '../FiledError';
+import { getResetPasswordPath } from '../../pathUtils';
 
 function UsernameHint({ server }: { server: string }) {
   const [open, setOpen] = useState(false);
@@ -245,9 +245,8 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
             </>
           )}
           <Box grow="Yes" shrink="No" justifyContent="End">
-            <Text as="span" size="T200" priority="300" align="Right">
-              {/* TODO: make reset password path */}
-              <Link to={generatePath(REGISTER_PATH, { server })}>Forget Password?</Link>
+            <Text as="span" size="T200" priority="400" align="Right">
+              <Link to={getResetPasswordPath(server)}>Forget Password?</Link>
             </Text>
           </Box>
         </Box>

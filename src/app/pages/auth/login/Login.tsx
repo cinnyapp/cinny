@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Text, color } from 'folds';
-import { Link, generatePath, useSearchParams } from 'react-router-dom';
-import { REGISTER_PATH } from '../../paths';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuthFlows } from '../../../hooks/useAuthFlows';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
@@ -9,6 +8,7 @@ import { PasswordLoginForm } from './PasswordLoginForm';
 import { SSOLogin } from '../SSOLogin';
 import { TokenLogin } from './TokenLogin';
 import { OrDivider } from '../OrDivider';
+import { getLoginPath, getRegisterPath } from '../../pathUtils';
 
 export type LoginSearchParams = {
   username?: string;
@@ -27,7 +27,7 @@ export function Login() {
   const { loginFlows } = useAuthFlows();
   const [searchParams] = useSearchParams();
   const loginSearchParams = getLoginSearchParams(searchParams);
-  const [ssoRedirectUrl] = window.location.href.split('?');
+  const ssoRedirectUrl = getLoginPath(server);
 
   const parsedFlows = useParsedLoginFlows(loginFlows.flows);
 
@@ -70,7 +70,7 @@ export function Login() {
         </>
       )}
       <Text align="Center">
-        Do not have an account? <Link to={generatePath(REGISTER_PATH, { server })}>Register</Link>
+        Do not have an account? <Link to={getRegisterPath(server)}>Register</Link>
       </Text>
     </Box>
   );

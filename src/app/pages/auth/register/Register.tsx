@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Text, color } from 'folds';
-import { Link, generatePath, useSearchParams } from 'react-router-dom';
-import { LOGIN_PATH } from '../../paths';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { RegisterFlowStatus, useAuthFlows } from '../../../hooks/useAuthFlows';
 import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
@@ -9,6 +8,7 @@ import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from '../register/Pas
 import { OrDivider } from '../OrDivider';
 import { SSOLogin } from '../SSOLogin';
 import { SupportedUIAFlowsLoader } from '../../../components/SupportedUIAFlowsLoader';
+import { getLoginPath } from '../../pathUtils';
 
 export type RegisterSearchParams = {
   username?: string;
@@ -30,8 +30,7 @@ export function Register() {
   const { sso } = useParsedLoginFlows(loginFlows.flows);
 
   // redirect to /login because only that path handle m.login.token
-  const [ssoRedirectUrl] = window.location.href.split('?');
-  ssoRedirectUrl.replace('/register/', '/login/');
+  const ssoRedirectUrl = getLoginPath(server);
 
   return (
     <Box direction="Column" gap="500">
@@ -93,7 +92,7 @@ export function Register() {
         </>
       )}
       <Text align="Center">
-        Already have an account? <Link to={generatePath(LOGIN_PATH, { server })}>Login</Link>
+        Already have an account? <Link to={getLoginPath(server)}>Login</Link>
       </Text>
     </Box>
   );
