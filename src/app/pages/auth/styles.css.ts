@@ -12,7 +12,7 @@ export const AuthLayout = style({
 });
 
 export const AuthCard = style({
-  marginTop: '6vh',
+  marginTop: '1vh',
   maxWidth: config.size.ModalWidth300,
   width: '100%',
   backgroundColor: color.Surface.Container,
@@ -26,23 +26,21 @@ export const AuthCard = style({
 export const AuthLogo = style([
   DefaultReset,
   {
-    position: 'absolute',
-    transform: 'translateY(-50%)',
-    border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
-    borderRadius: '50%',
+    width: toRem(26),
+    height: toRem(26),
 
-    width: toRem(64),
-    height: toRem(64),
+    borderRadius: '50%',
   },
 ]);
 
 export const AuthHeader = style({
   padding: `0 ${config.space.S400}`,
-  paddingTop: toRem(40),
+  borderBottomWidth: config.borderWidth.B300,
 });
 
 export const AuthCardContent = style({
   padding: toRem(44),
+  paddingTop: config.space.S700,
   gap: toRem(44),
 });
 

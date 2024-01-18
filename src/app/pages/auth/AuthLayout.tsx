@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Box, Scroll, Spinner, Text, color } from 'folds';
+import { Box, Header, Scroll, Spinner, Text, color } from 'folds';
 import {
   LoaderFunction,
   Outlet,
@@ -139,18 +139,12 @@ export function AuthLayout() {
         gap="400"
       >
         <Box direction="Column" className={css.AuthCard}>
-          <Box justifyContent="Center">
-            <img className={css.AuthLogo} src={CinnySVG} alt="Cinny Logo" />
-          </Box>
-          <Box
-            className={css.AuthHeader}
-            direction="Column"
-            gap="100"
-            alignItems="Center"
-            justifyContent="Center"
-          >
-            <Text size="H3">Cinny</Text>
-          </Box>
+          <Header className={css.AuthHeader} size="600" variant="Surface">
+            <Box grow="Yes" direction="Row" gap="300" alignItems="Center">
+              <img className={css.AuthLogo} src={CinnySVG} alt="Cinny Logo" />
+              <Text size="H3">Cinny</Text>
+            </Box>
+          </Header>
           <Box className={css.AuthCardContent} direction="Column">
             <Box direction="Column" gap="100">
               <Text as="label" size="L400" priority="300">
