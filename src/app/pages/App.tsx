@@ -10,7 +10,7 @@ import {
 
 import { ClientConfigLoader } from '../components/ClientConfigLoader';
 import { ClientConfig, ClientConfigProvider } from '../hooks/useClientConfig';
-import { AuthLayout, Login, Register, authLayoutLoader } from './auth';
+import { AuthLayout, Login, Register, ResetPassword, authLayoutLoader } from './auth';
 import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH, ROOT_PATH } from './paths';
 import { isAuthenticated } from '../../client/state/auth';
 import Client from '../templates/client/Client';
@@ -31,7 +31,7 @@ const createRouter = (clientConfig: ClientConfig) => {
         <Route loader={authLayoutLoader} element={<AuthLayout />}>
           <Route path={LOGIN_PATH} element={<Login />} />
           <Route path={REGISTER_PATH} element={<Register />} />
-          <Route path={RESET_PASSWORD_PATH} element={<span>Reset Password</span>} />
+          <Route path={RESET_PASSWORD_PATH} element={<ResetPassword />} />
         </Route>
 
         <Route
