@@ -10,14 +10,9 @@ import { TokenLogin } from './TokenLogin';
 import { OrDivider } from '../OrDivider';
 import { getLoginPath, getRegisterPath } from '../../pathUtils';
 import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
+import { LoginPathSearchParams } from '../../paths';
 
-export type LoginSearchParams = {
-  username?: string;
-  email?: string;
-  loginToken?: string;
-};
-
-const getLoginSearchParams = (searchParams: URLSearchParams): LoginSearchParams => ({
+const getLoginSearchParams = (searchParams: URLSearchParams): LoginPathSearchParams => ({
   username: searchParams.get('username') ?? undefined,
   email: searchParams.get('email') ?? undefined,
   loginToken: searchParams.get('loginToken') ?? undefined,

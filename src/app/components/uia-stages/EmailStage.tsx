@@ -3,7 +3,7 @@ import { Dialog, Text, Box, Button, config, Input, color, Spinner } from 'folds'
 import { AuthType, MatrixError } from 'matrix-js-sdk';
 import { StageComponentProps } from './types';
 import { AsyncState, AsyncStatus } from '../../hooks/useAsyncCallback';
-import { RegisterEmailCallback, RegisteredEmailResponse } from '../../hooks/useRegisterEmail';
+import { RequestEmailTokenCallback, RequestEmailTokenResponse } from '../../hooks/types';
 
 function EmailErrorDialog({
   title,
@@ -70,15 +70,15 @@ export function EmailStageDialog({
   email,
   clientSecret,
   stageData,
-  registerEmailState,
-  registerEmail,
+  emailTokenState,
+  requestEmailToken,
   submitAuthDict,
   onCancel,
 }: StageComponentProps & {
   email?: string;
   clientSecret: string;
-  registerEmailState: AsyncState<RegisteredEmailResponse, MatrixError>;
-  registerEmail: RegisterEmailCallback;
+  emailTokenState: AsyncState<RequestEmailTokenResponse, MatrixError>;
+  requestEmailToken: RequestEmailTokenCallback;
 }) {
   const { errorCode, error, session } = stageData;
 
@@ -100,18 +100,18 @@ export function EmailStageDialog({
 
   const handleEmailSubmit = useCallback(
     (userEmail: string) => {
-      registerEmail(userEmail, clientSecret);
+      requestEmailToken(userEmail, clientSecret);
     },
-    [clientSecret, registerEmail]
+    [clientSecret, requestEmailToken]
   );
 
   useEffect(() => {
-    if (email && !errorCode && registerEmailState.status === AsyncStatus.Idle) {
-      registerEmail(email, clientSecret);
+    if (email && !errorCode && emailTokenState.status === AsyncStatus.Idle) {
+      requestEmailToken(email, clientSecret);
     }
-  }, [email, errorCode, clientSecret, registerEmailState, registerEmail]);
+  }, [email, errorCode, clientSecret, emailTokenState, requestEmailToken]);
 
-  if (registerEmailState.status === AsyncStatus.Loading) {
+  if (emailTokenState.status === AsyncStatus.Loading) {
     return (
       <Box direction="Column" alignItems="Center" gap="400">
         <Spinner variant="Secondary" size="600" />
@@ -120,14 +120,14 @@ export function EmailStageDialog({
     );
   }
 
-  if (registerEmailState.status === AsyncStatus.Error) {
+  if (emailTokenState.status === AsyncStatus.Error) {
     return (
       <EmailErrorDialog
-        title={registerEmailState.error.errcode ?? 'Verify Email'}
+        title={emailTokenState.error.errcode ?? 'Verify Email'}
         message={
-          registerEmailState.error?.data?.error ??
-          registerEmailState.error.message ??
-          'Failed to send Email verification request.'
+          emailTokenState.error?.data?.error ??
+          emailTokenState.error.message ??
+          'Failed to send verification Email request.'
         }
         onRetry={handleEmailSubmit}
         onCancel={onCancel}
@@ -135,22 +135,19 @@ export function EmailStageDialog({
     );
   }
 
-  if (registerEmailState.status === AsyncStatus.Success) {
+  if (emailTokenState.status === AsyncStatus.Success) {
     return (
       <Dialog>
         <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
           <Box direction="Column" gap="100">
             <Text size="H4">Verification Request Sent</Text>
-            <Text>{`Please check your email "${registerEmailState.data.email}" and validate before continuing further.`}</Text>
+            <Text>{`Please check your email "${emailTokenState.data.email}" and validate before continuing further.`}</Text>
 
             {errorCode && (
               <Text style={{ color: color.Critical.Main }}>{`${errorCode}: ${error}`}</Text>
             )}
           </Box>
-          <Button
-            variant="Primary"
-            onClick={() => handleSubmit(registerEmailState.data.result.sid)}
-          >
+          <Button variant="Primary" onClick={() => handleSubmit(emailTokenState.data.result.sid)}>
             <Text as="span" size="B400">
               Continue
             </Text>

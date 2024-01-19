@@ -10,14 +10,9 @@ import { SSOLogin } from '../SSOLogin';
 import { SupportedUIAFlowsLoader } from '../../../components/SupportedUIAFlowsLoader';
 import { getLoginPath } from '../../pathUtils';
 import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
+import { RegisterPathSearchParams } from '../../paths';
 
-export type RegisterSearchParams = {
-  username?: string;
-  email?: string;
-  token?: string;
-};
-
-const getRegisterSearchParams = (searchParams: URLSearchParams): RegisterSearchParams => ({
+const getRegisterSearchParams = (searchParams: URLSearchParams): RegisterPathSearchParams => ({
   username: searchParams.get('username') ?? undefined,
   email: searchParams.get('email') ?? undefined,
   token: searchParams.get('token') ?? undefined,

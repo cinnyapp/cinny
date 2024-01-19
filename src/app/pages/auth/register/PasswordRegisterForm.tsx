@@ -2,30 +2,15 @@ import {
   Box,
   Button,
   Checkbox,
-  Chip,
-  Icon,
-  IconButton,
-  Icons,
   Input,
   Overlay,
   OverlayBackdrop,
   OverlayCenter,
   Spinner,
   Text,
-  Tooltip,
-  TooltipProvider,
   color,
-  config,
 } from 'folds';
-import React, {
-  ChangeEventHandler,
-  ReactNode,
-  RefObject,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { ChangeEventHandler, useCallback, useMemo, useState } from 'react';
 import {
   AuthDict,
   AuthType,
@@ -35,7 +20,6 @@ import {
   UIAFlow,
   createClient,
 } from 'matrix-js-sdk';
-import FocusTrap from 'focus-trap-react';
 import { PasswordInput } from '../../../components/password-input/PasswordInput';
 import {
   getLoginTermUrl,
@@ -48,7 +32,6 @@ import { AsyncState, AsyncStatus, useAsyncCallback } from '../../../hooks/useAsy
 import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
 import { RegisterError, RegisterResult, register, useRegisterComplete } from './registerUtil';
 import { FieldError } from '../FiledError';
-import { useDebounce } from '../../../hooks/useDebounce';
 import {
   AutoDummyStageDialog,
   AutoTermsStageDialog,
@@ -56,11 +39,10 @@ import {
   ReCaptchaStageDialog,
   RegistrationTokenStageDialog,
 } from '../../../components/uia-stages';
-import {
-  RegisterEmailCallback,
-  RegisteredEmailResponse,
-  useRegisterEmail,
-} from '../../../hooks/useRegisterEmail';
+import { useRegisterEmail } from '../../../hooks/useRegisterEmail';
+import { ConfirmPasswordMatch } from '../../../components/ConfirmPasswordMatch';
+import { UIAFlowOverlay } from '../../../components/UIAFlowOverlay';
+import { RequestEmailTokenCallback, RequestEmailTokenResponse } from '../../../hooks/types';
 
 export const SUPPORTED_REGISTER_STAGES = [
   AuthType.RegistrationToken,
@@ -99,45 +81,12 @@ const pickStages = (uiaFlows: UIAFlow[], formData: FormData): string[] => {
   return pickedStages;
 };
 
-type ConfirmPasswordMatchProps = {
-  initialValue: boolean;
-  children: (
-    match: boolean,
-    doMatch: () => void,
-    passRef: RefObject<HTMLInputElement>,
-    confPassRef: RefObject<HTMLInputElement>
-  ) => ReactNode;
-};
-function ConfirmPasswordMatch({ initialValue, children }: ConfirmPasswordMatchProps) {
-  const [match, setMatch] = useState(initialValue);
-  const passRef = useRef<HTMLInputElement>(null);
-  const confPassRef = useRef<HTMLInputElement>(null);
-
-  const doMatch = useDebounce(
-    useCallback(() => {
-      const pass = passRef.current?.value;
-      const confPass = confPassRef.current?.value;
-      if (!confPass) {
-        setMatch(initialValue);
-        return;
-      }
-      setMatch(pass === confPass);
-    }, [initialValue]),
-    {
-      wait: 500,
-      immediate: false,
-    }
-  );
-
-  return children(match, doMatch, passRef, confPassRef);
-}
-
 type RegisterUIAFlowProps = {
   formData: FormData;
   flow: UIAFlow;
   authData: IAuthData;
-  registerEmailState: AsyncState<RegisteredEmailResponse, MatrixError>;
-  registerEmail: RegisterEmailCallback;
+  registerEmailState: AsyncState<RequestEmailTokenResponse, MatrixError>;
+  registerEmail: RequestEmailTokenCallback;
   onRegister: (registerReqData: RegisterRequest) => void;
 };
 function RegisterUIAFlow({
@@ -172,88 +121,52 @@ function RegisterUIAFlow({
 
   if (!stageToComplete) return null;
   return (
-    <Overlay open backdrop={<OverlayBackdrop />}>
-      <FocusTrap focusTrapOptions={{ initialFocus: false }}>
-        <Box style={{ height: '100%' }} direction="Column" grow="Yes" gap="400">
-          <Box grow="Yes" direction="Column" alignItems="Center" justifyContent="Center">
-            {stageToComplete.type === AuthType.RegistrationToken && (
-              <RegistrationTokenStageDialog
-                token={formData.token}
-                stageData={stageToComplete}
-                submitAuthDict={handleAuthDict}
-                onCancel={handleCancel}
-              />
-            )}
-            {stageToComplete.type === AuthType.Terms && (
-              <AutoTermsStageDialog
-                stageData={stageToComplete}
-                submitAuthDict={handleAuthDict}
-                onCancel={handleCancel}
-              />
-            )}
-            {stageToComplete.type === AuthType.Recaptcha && (
-              <ReCaptchaStageDialog
-                stageData={stageToComplete}
-                submitAuthDict={handleAuthDict}
-                onCancel={handleCancel}
-              />
-            )}
-            {stageToComplete.type === AuthType.Email && (
-              <EmailStageDialog
-                email={formData.email}
-                clientSecret={formData.clientSecret}
-                stageData={stageToComplete}
-                registerEmail={registerEmail}
-                registerEmailState={registerEmailState}
-                submitAuthDict={handleAuthDict}
-                onCancel={handleCancel}
-              />
-            )}
-            {stageToComplete.type === AuthType.Dummy && (
-              <AutoDummyStageDialog
-                stageData={stageToComplete}
-                submitAuthDict={handleAuthDict}
-                onCancel={handleCancel}
-              />
-            )}
-          </Box>
-          <Box
-            style={{ padding: config.space.S200 }}
-            shrink="No"
-            justifyContent="Center"
-            alignItems="Center"
-            gap="200"
-          >
-            <Chip as="div" radii="Pill" outlined>
-              <Text as="span" size="T300">{`Step ${completed.length + 1}/${
-                flow.stages.length
-              }`}</Text>
-            </Chip>
-            <TooltipProvider
-              tooltip={
-                <Tooltip variant="Critical">
-                  <Text>Exit</Text>
-                </Tooltip>
-              }
-              position="Top"
-            >
-              {(anchorRef) => (
-                <IconButton
-                  ref={anchorRef}
-                  variant="Critical"
-                  size="300"
-                  onClick={handleCancel}
-                  radii="Pill"
-                  outlined
-                >
-                  <Icon size="50" src={Icons.Cross} />
-                </IconButton>
-              )}
-            </TooltipProvider>
-          </Box>
-        </Box>
-      </FocusTrap>
-    </Overlay>
+    <UIAFlowOverlay
+      currentStep={completed.length + 1}
+      stepCount={flow.stages.length}
+      onCancel={handleCancel}
+    >
+      {stageToComplete.type === AuthType.RegistrationToken && (
+        <RegistrationTokenStageDialog
+          token={formData.token}
+          stageData={stageToComplete}
+          submitAuthDict={handleAuthDict}
+          onCancel={handleCancel}
+        />
+      )}
+      {stageToComplete.type === AuthType.Terms && (
+        <AutoTermsStageDialog
+          stageData={stageToComplete}
+          submitAuthDict={handleAuthDict}
+          onCancel={handleCancel}
+        />
+      )}
+      {stageToComplete.type === AuthType.Recaptcha && (
+        <ReCaptchaStageDialog
+          stageData={stageToComplete}
+          submitAuthDict={handleAuthDict}
+          onCancel={handleCancel}
+        />
+      )}
+      {stageToComplete.type === AuthType.Email && (
+        <EmailStageDialog
+          email={formData.email}
+          clientSecret={formData.clientSecret}
+          stageData={stageToComplete}
+          requestEmailToken={registerEmail}
+          emailTokenState={registerEmailState}
+          submitAuthDict={handleAuthDict}
+          onCancel={handleCancel}
+        />
+      )}
+      {stageToComplete.type === AuthType.Dummy && (
+        <AutoDummyStageDialog
+          stageData={stageToComplete}
+          submitAuthDict={handleAuthDict}
+          onCancel={handleCancel}
+        />
+      )}
+    </UIAFlowOverlay>
   );
 }
 
