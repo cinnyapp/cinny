@@ -6,6 +6,7 @@ import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import inject from '@rollup/plugin-inject';
 import { svgLoader } from './viteSvgLoader';
+import config from './config.json'
 
 const copyFiles = {
   targets: [
@@ -39,7 +40,7 @@ const copyFiles = {
 export default defineConfig({
   appType: 'spa',
   publicDir: false,
-  base: "",
+  base: config.basename ?? "/",
   server: {
     port: 8080,
     host: true,
