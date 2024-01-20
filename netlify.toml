@@ -20,12 +20,12 @@
 
 [[redirects]]
   from = "/public/*"
-  to = "/public/"
+  to = "/public/:splat"
   status = 200
 
 [[redirects]]
   from = "/assets/*"
-  to = "/assets/"
+  to = "/assets/:splat"
   status = 200
 
 [[redirects]]
