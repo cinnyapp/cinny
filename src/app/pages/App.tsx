@@ -16,6 +16,7 @@ import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH, ROOT_PATH } from './pat
 import { isAuthenticated } from '../../client/state/auth';
 import Client from '../templates/client/Client';
 import { getLoginPath } from './pathUtils';
+import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -61,8 +62,12 @@ const createRouter = (clientConfig: ClientConfig) => {
 // TODO: app crash boundary
 function App() {
   return (
-    // TODO: initial loading screen
-    <ClientConfigLoader fallback={() => <p>loading</p>}>
+    <ClientConfigLoader
+      fallback={() => <ConfigConfigLoading />}
+      error={(err, retry, ignore) => (
+        <ConfigConfigError error={err} retry={retry} ignore={ignore} />
+      )}
+    >
       {(clientConfig) => (
         <ClientConfigProvider value={clientConfig}>
           <JotaiProvider>
