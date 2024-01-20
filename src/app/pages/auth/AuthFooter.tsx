@@ -1,11 +1,8 @@
 import React from 'react';
 import { Box, Text } from 'folds';
 import * as css from './styles.css';
-import { useClientConfig } from '../../hooks/useClientConfig';
 
 export function AuthFooter() {
-  const { appVersion } = useClientConfig();
-
   return (
     <Box className={css.AuthFooter} justifyContent="Center" gap="400" wrap="Wrap">
       <Text as="a" size="T300" href="https://cinny.in" target="_blank" rel="noreferrer">
@@ -18,7 +15,7 @@ export function AuthFooter() {
         target="_blank"
         rel="noreferrer"
       >
-        {`v${appVersion ?? '0.0.0'}`}
+        v3.2.0
       </Text>
       <Text as="a" size="T300" href="https://twitter.com/cinnyapp" target="_blank" rel="noreferrer">
         Twitter

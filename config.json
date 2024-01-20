@@ -1,6 +1,4 @@
 {
-  "appVersion": "3.2.0",
-  "basename": "/",
   "defaultHomeserver": 2,
   "homeserverList": [
     "converser.eu",
@@ -10,5 +8,10 @@
     "mozilla.org",
     "xmr.se"
   ],
-  "allowCustomHomeservers": true
+  "allowCustomHomeservers": true,
+
+  "hashRouter": {
+    "enabled": false,
+    "basename": "/"
+  }
 }

@@ -4,6 +4,7 @@ import {
   Route,
   RouterProvider,
   createBrowserRouter,
+  createHashRouter,
   createRoutesFromElements,
   redirect,
 } from 'react-router-dom';
@@ -17,40 +18,44 @@ import Client from '../templates/client/Client';
 import { getLoginPath } from './pathUtils';
 
 const createRouter = (clientConfig: ClientConfig) => {
-  const { basename } = clientConfig;
-  const router = createBrowserRouter(
-    createRoutesFromElements(
-      <Route>
-        <Route
-          path={ROOT_PATH}
-          loader={() => {
-            if (isAuthenticated()) return redirect('/home');
-            return redirect(getLoginPath());
-          }}
-        />
-        <Route loader={authLayoutLoader} element={<AuthLayout />}>
-          <Route path={LOGIN_PATH} element={<Login />} />
-          <Route path={REGISTER_PATH} element={<Register />} />
-          <Route path={RESET_PASSWORD_PATH} element={<ResetPassword />} />
-        </Route>
+  const { hashRouter } = clientConfig;
 
-        <Route
-          loader={() => {
-            if (!isAuthenticated()) return redirect(getLoginPath());
-            return null;
-          }}
-        >
-          <Route path="/home" element={<Client />} />
-          <Route path="/direct" element={<p>direct</p>} />
-          <Route path="/:spaceIdOrAlias" element={<p>:spaceIdOrAlias</p>} />
-          <Route path="/explore" element={<p>explore</p>} />
-        </Route>
-        <Route path="/*" element={<p>Page not found</p>} />
+  const routes = createRoutesFromElements(
+    <Route>
+      <Route
+        path={ROOT_PATH}
+        loader={() => {
+          if (isAuthenticated()) return redirect('/home');
+          return redirect(getLoginPath());
+        }}
+      />
+      <Route loader={authLayoutLoader} element={<AuthLayout />}>
+        <Route path={LOGIN_PATH} element={<Login />} />
+        <Route path={REGISTER_PATH} element={<Register />} />
+        <Route path={RESET_PASSWORD_PATH} element={<ResetPassword />} />
       </Route>
-    ),
-    { basename }
+
+      <Route
+        loader={() => {
+          if (!isAuthenticated()) return redirect(getLoginPath());
+          return null;
+        }}
+      >
+        <Route path="/home" element={<Client />} />
+        <Route path="/direct" element={<p>direct</p>} />
+        <Route path="/:spaceIdOrAlias" element={<p>:spaceIdOrAlias</p>} />
+        <Route path="/explore" element={<p>explore</p>} />
+      </Route>
+      <Route path="/*" element={<p>Page not found</p>} />
+    </Route>
   );
-  return router;
+
+  if (hashRouter?.enabled) {
+    return createHashRouter(routes, { basename: hashRouter.basename });
+  }
+  return createBrowserRouter(routes, {
+    basename: import.meta.env.BASE_URL,
+  });
 };
 
 // TODO: app crash boundary

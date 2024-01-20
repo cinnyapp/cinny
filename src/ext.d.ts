@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 declare module 'browser-encrypt-attachment' {
   export interface EncryptedAttachmentInfo {
     v: string;

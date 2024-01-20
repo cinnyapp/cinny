@@ -1,11 +1,14 @@
 import { createContext, useContext } from 'react';
 
 export type ClientConfig = {
-  appVersion?: string;
-  basename?: string;
   defaultHomeserver?: number;
   homeserverList?: string[];
   allowCustomHomeservers?: boolean;
+
+  hashRouter?: {
+    enabled?: boolean;
+    basename?: string;
+  };
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

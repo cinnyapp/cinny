@@ -1,9 +1,11 @@
 import { ReactNode, useEffect } from 'react';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { ClientConfig } from '../hooks/useClientConfig';
+import { trimTrailingSlash } from '../utils/common';
 
 const getClientConfig = async (): Promise<ClientConfig> => {
-  const config = await fetch('/config.json', { method: 'GET' });
+  const url = `${trimTrailingSlash(import.meta.env.BASE_URL)}/config.json`;
+  const config = await fetch(url, { method: 'GET' });
   return config.json();
 };
 
