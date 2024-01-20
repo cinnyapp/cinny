@@ -18,7 +18,7 @@ const copyFiles = {
       dest: '',
     },
     {
-      src: '_redirects',
+      src: 'netlify.toml',
       dest: '',
     },
     {
