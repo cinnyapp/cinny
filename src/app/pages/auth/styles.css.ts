@@ -13,7 +13,7 @@ export const AuthLayout = style({
 
 export const AuthCard = style({
   marginTop: '1vh',
-  maxWidth: config.size.ModalWidth300,
+  maxWidth: toRem(460),
   width: '100%',
   backgroundColor: color.Surface.Container,
   color: color.Surface.OnContainer,
@@ -39,8 +39,12 @@ export const AuthHeader = style({
 });
 
 export const AuthCardContent = style({
-  padding: toRem(44),
+  maxWidth: toRem(402),
+  width: '100%',
+  margin: 'auto',
+  padding: config.space.S400,
   paddingTop: config.space.S700,
+  paddingBottom: toRem(44),
   gap: toRem(44),
 });
 
