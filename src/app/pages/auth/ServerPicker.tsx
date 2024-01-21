@@ -2,6 +2,7 @@ import React, {
   ChangeEventHandler,
   KeyboardEventHandler,
   MouseEventHandler,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -35,9 +36,12 @@ export function ServerPicker({
   const [serverMenu, setServerMenu] = useState(false);
   const serverInputRef = useRef<HTMLInputElement>(null);
 
-  if (serverInputRef.current && serverInputRef.current.value !== server) {
-    serverInputRef.current.value = server;
-  }
+  useEffect(() => {
+    // sync input with it outside server changes
+    if (serverInputRef.current && serverInputRef.current.value !== server) {
+      serverInputRef.current.value = server;
+    }
+  }, [server]);
 
   const debounceServerSelect = useDebounce(onServerChange, { wait: 700 });
 
@@ -54,7 +58,7 @@ export function ServerPicker({
     if (evt.key === 'Enter') {
       evt.preventDefault();
       const inputServer = evt.currentTarget.value.trim();
-      if (inputServer) debounceServerSelect(inputServer);
+      if (inputServer) onServerChange(inputServer);
     }
   };
 
