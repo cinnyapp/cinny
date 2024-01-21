@@ -175,6 +175,7 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
         </Text>
         <Input
           defaultValue={defaultEmail}
+          type="email"
           name="emailInput"
           variant="Background"
           size="500"
