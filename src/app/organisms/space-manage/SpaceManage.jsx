@@ -302,7 +302,9 @@ function SpaceManageContent({ roomId, requestClose }) {
     };
   }, [roomId]);
 
-  useEffect(() => setSelected([]), [spacePath]);
+  useEffect(() => {
+    setSelected([]);
+  }, [spacePath]);
 
   const handleSelected = (selectedRoomId) => {
     const newSelected = [...selected];

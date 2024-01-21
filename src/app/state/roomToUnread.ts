@@ -1,5 +1,5 @@
 import produce from 'immer';
-import { atom, useSetAtom, PrimitiveAtom, WritableAtom, useAtomValue } from 'jotai';
+import { atom, useSetAtom, PrimitiveAtom, useAtomValue } from 'jotai';
 import { IRoomTimelineData, MatrixClient, MatrixEvent, Room, RoomEvent } from 'matrix-js-sdk';
 import { ReceiptContent, ReceiptType } from 'matrix-js-sdk/lib/@types/read_receipts';
 import { useEffect } from 'react';
@@ -82,7 +82,7 @@ const deleteUnreadInfo = (roomToUnread: RoomToUnread, allParents: Set<string>, r
 };
 
 const baseRoomToUnread = atom<RoomToUnread>(new Map());
-export const roomToUnreadAtom = atom<RoomToUnread, RoomToUnreadAction>(
+export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefined>(
   (get) => get(baseRoomToUnread),
   (get, set, action) => {
     if (action.type === 'RESET') {
@@ -127,7 +127,7 @@ export const roomToUnreadAtom = atom<RoomToUnread, RoomToUnreadAction>(
 
 export const useBindRoomToUnreadAtom = (
   mx: MatrixClient,
-  unreadAtom: WritableAtom<RoomToUnread, RoomToUnreadAction>,
+  unreadAtom: typeof roomToUnreadAtom,
   muteChangesAtom: PrimitiveAtom<MuteChanges>
 ) => {
   const setUnreadAtom = useSetAtom(unreadAtom);

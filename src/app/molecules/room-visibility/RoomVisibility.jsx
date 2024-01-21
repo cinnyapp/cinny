@@ -50,7 +50,9 @@ function useVisibility(roomId) {
   const room = mx.getRoom(roomId);
 
   const [activeType, setActiveType] = useState(room.getJoinRule());
-  useEffect(() => setActiveType(room.getJoinRule()), [roomId]);
+  useEffect(() => {
+    setActiveType(room.getJoinRule());
+  }, [roomId]);
 
   const setNotification = useCallback((item) => {
     if (item.type === activeType.type) return;

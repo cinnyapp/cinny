@@ -103,7 +103,9 @@ function setRoomNotifType(roomId, newType) {
 function useNotifications(roomId) {
   const { notifications } = initMatrix;
   const [activeType, setActiveType] = useState(notifications.getNotiType(roomId));
-  useEffect(() => setActiveType(notifications.getNotiType(roomId)), [roomId]);
+  useEffect(() => {
+    setActiveType(notifications.getNotiType(roomId));
+  }, [roomId]);
 
   const setNotification = useCallback((item) => {
     if (item.type === activeType.type) return;

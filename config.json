@@ -8,5 +8,10 @@
     "mozilla.org",
     "xmr.se"
   ],
-  "allowCustomHomeservers": true
+  "allowCustomHomeservers": true,
+
+  "hashRouter": {
+    "enabled": false,
+    "basename": "/"
+  }
 }

@@ -80,7 +80,7 @@ function EmojiVerificationContent({ data, requestClose }) {
       }
     };
 
-    if (request === null) return null;
+    if (request === null) return undefined;
     const req = request;
     req.on('change', handleChange);
     return () => {

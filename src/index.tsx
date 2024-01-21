@@ -1,6 +1,6 @@
 /* eslint-disable import/first */
 import React from 'react';
-import ReactDom from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { enableMapSet } from 'immer';
 import '@fontsource/inter/variable.css';
 import 'folds/dist/style.css';
@@ -15,7 +15,18 @@ import settings from './client/state/settings';
 import App from './app/pages/App';
 
 document.body.classList.add(configClass, varsClass);
-
 settings.applyTheme();
 
-ReactDom.render(<App />, document.getElementById('root'));
+const mountApp = () => {
+  const rootContainer = document.getElementById('root');
+
+  if (rootContainer === null) {
+    console.error('Root container element not found!');
+    return;
+  }
+
+  const root = createRoot(rootContainer);
+  root.render(<App />);
+};
+
+mountApp();

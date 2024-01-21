@@ -23,7 +23,11 @@ export type IRoomIdToTypingMembersAction =
     };
 
 const baseRoomIdToTypingMembersAtom = atom<IRoomIdToTypingMembers>(new Map());
-export const roomIdToTypingMembersAtom = atom<IRoomIdToTypingMembers, IRoomIdToTypingMembersAction>(
+export const roomIdToTypingMembersAtom = atom<
+  IRoomIdToTypingMembers,
+  [IRoomIdToTypingMembersAction],
+  undefined
+>(
   (get) => get(baseRoomIdToTypingMembersAtom),
   (get, set, action) => {
     const roomIdToTypingMembers = get(baseRoomIdToTypingMembersAtom);

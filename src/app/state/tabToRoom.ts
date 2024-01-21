@@ -14,7 +14,7 @@ type TabToRoomAction = {
 };
 
 const baseTabToRoom = atom<TabToRoom>(new Map());
-export const tabToRoomAtom = atom<TabToRoom, TabToRoomAction>(
+export const tabToRoomAtom = atom<TabToRoom, [TabToRoomAction], undefined>(
   (get) => get(baseTabToRoom),
   (get, set, action) => {
     if (action.type === 'PUT') {

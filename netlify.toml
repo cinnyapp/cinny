@@ -1,0 +1,34 @@
+[[redirects]]
+  from = "/config.json"
+  to = "/config.json"
+  status = 200
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/manifest.json"
+  status = 200
+  
+[[redirects]]
+  from = "/olm.wasm"
+  to = "/olm.wasm"
+  status = 200
+  
+[[redirects]]
+  from = "/pdf.worker.min.js"
+  to = "/pdf.worker.min.js"
+  status = 200
+
+[[redirects]]
+  from = "/public/*"
+  to = "/public/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -29,7 +29,9 @@ function useRoomSearch(roomId) {
   const mountStore = useStore(roomId);
   const mx = initMatrix.matrixClient;
 
-  useEffect(() => mountStore.setItem(true), [roomId]);
+  useEffect(() => {
+    mountStore.setItem(true)
+  }, [roomId]);
 
   useEffect(() => {
     if (searchData?.results?.length > 0) {

@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 declare module 'browser-encrypt-attachment' {
   export interface EncryptedAttachmentInfo {
     v: string;
@@ -25,4 +27,9 @@ declare module 'browser-encrypt-attachment' {
     dataBuffer: ArrayBuffer,
     info: EncryptedAttachmentInfo
   ): Promise<ArrayBuffer>;
+}
+
+declare module '*.svg' {
+  const content: string;
+  export default content;
 }
