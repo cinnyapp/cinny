@@ -68,7 +68,7 @@
     "react-range": "1.8.14",
     "react-router-dom": "6.20.0",
     "sanitize-html": "2.8.0",
-    "slate": "0.94.1",
+    "slate": "0.101.5",
     "slate-history": "0.93.0",
     "slate-react": "0.98.4",
     "tippy.js": "6.3.7",
