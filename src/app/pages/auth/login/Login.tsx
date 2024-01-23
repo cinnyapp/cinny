@@ -8,9 +8,20 @@ import { PasswordLoginForm } from './PasswordLoginForm';
 import { SSOLogin } from '../SSOLogin';
 import { TokenLogin } from './TokenLogin';
 import { OrDivider } from '../OrDivider';
-import { getLoginPath, getRegisterPath } from '../../pathUtils';
+import { getLoginPath, getRegisterPath, withSearchParam } from '../../pathUtils';
 import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
 import { LoginPathSearchParams } from '../../paths';
+import { useClientConfig } from '../../../hooks/useClientConfig';
+
+const getLoginTokenSearchParam = () => {
+  // when using hasRouter query params in existing route
+  // gets ignored by react-router, so we need to read it ourself
+  // we only need to read loginToken as it's the only param that
+  // is provided by external entity. example: SSO login
+  const parmas = new URLSearchParams(window.location.search);
+  const loginToken = parmas.get('loginToken');
+  return loginToken ?? undefined;
+};
 
 const getLoginSearchParams = (searchParams: URLSearchParams): LoginPathSearchParams => ({
   username: searchParams.get('username') ?? undefined,
@@ -20,10 +31,21 @@ const getLoginSearchParams = (searchParams: URLSearchParams): LoginPathSearchPar
 
 export function Login() {
   const server = useAuthServer();
+  const { hashRouter } = useClientConfig();
   const { loginFlows } = useAuthFlows();
   const [searchParams] = useSearchParams();
   const loginSearchParams = getLoginSearchParams(searchParams);
   const ssoRedirectUrl = usePathWithOrigin(getLoginPath(server));
+  const loginTokenForHashRouter = getLoginTokenSearchParam();
+  const absoluteLoginPath = usePathWithOrigin(getLoginPath(server));
+
+  if (hashRouter?.enabled && loginTokenForHashRouter) {
+    window.location.replace(
+      withSearchParam(absoluteLoginPath, {
+        loginToken: loginTokenForHashRouter,
+      })
+    );
+  }
 
   const parsedFlows = useParsedLoginFlows(loginFlows.flows);
 
