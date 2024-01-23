@@ -17,6 +17,7 @@ import { isAuthenticated } from '../../client/state/auth';
 import Client from '../templates/client/Client';
 import { getLoginPath } from './pathUtils';
 import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
+import { FeatureCheck } from './FeatureCheck';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -62,20 +63,22 @@ const createRouter = (clientConfig: ClientConfig) => {
 // TODO: app crash boundary
 function App() {
   return (
-    <ClientConfigLoader
-      fallback={() => <ConfigConfigLoading />}
-      error={(err, retry, ignore) => (
-        <ConfigConfigError error={err} retry={retry} ignore={ignore} />
-      )}
-    >
-      {(clientConfig) => (
-        <ClientConfigProvider value={clientConfig}>
-          <JotaiProvider>
-            <RouterProvider router={createRouter(clientConfig)} />
-          </JotaiProvider>
-        </ClientConfigProvider>
-      )}
-    </ClientConfigLoader>
+    <FeatureCheck>
+      <ClientConfigLoader
+        fallback={() => <ConfigConfigLoading />}
+        error={(err, retry, ignore) => (
+          <ConfigConfigError error={err} retry={retry} ignore={ignore} />
+        )}
+      >
+        {(clientConfig) => (
+          <ClientConfigProvider value={clientConfig}>
+            <JotaiProvider>
+              <RouterProvider router={createRouter(clientConfig)} />
+            </JotaiProvider>
+          </ClientConfigProvider>
+        )}
+      </ClientConfigLoader>
+    </FeatureCheck>
   );
 }
 
