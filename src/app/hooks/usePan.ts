@@ -1,11 +1,11 @@
-import { MouseEventHandler, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 export type Pan = {
   translateX: number;
   translateY: number;
 };
 
-const INITIAL_PAN = {
+const INITIAL_PAN: Pan = {
   translateX: 0,
   translateY: 0,
 };
@@ -15,12 +15,13 @@ export const usePan = (active: boolean) => {
   const [cursor, setCursor] = useState<'grab' | 'grabbing' | 'initial'>(
     active ? 'grab' : 'initial'
   );
+  const [status, setStatus] = useState<'idle' | 'moving'>('idle');
 
   useEffect(() => {
     setCursor(active ? 'grab' : 'initial');
   }, [active]);
 
-  const handleMouseMove = (evt: MouseEvent) => {
+  const handleMouseMove = useCallback((evt: MouseEvent) => {
     evt.preventDefault();
     evt.stopPropagation();
 
@@ -31,24 +32,32 @@ export const usePan = (active: boolean) => {
 
       return { translateX: mX, translateY: mY };
     });
-  };
+  }, []);
 
-  const handleMouseUp = (evt: MouseEvent) => {
-    evt.preventDefault();
-    setCursor('grab');
+  const handleMouseUp = useCallback(
+    (evt: MouseEvent) => {
+      evt.preventDefault();
+      setCursor('grab');
+      setStatus('idle');
 
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    },
+    [handleMouseMove]
+  );
 
-  const handleMouseDown: MouseEventHandler<HTMLElement> = (evt) => {
-    if (!active) return;
-    evt.preventDefault();
-    setCursor('grabbing');
+  const handleMouseDown = useCallback(
+    (evt: React.MouseEvent<HTMLElement>) => {
+      if (!active) return;
+      evt.preventDefault();
+      setCursor('grabbing');
+      setStatus('moving');
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [active, handleMouseMove, handleMouseUp]
+  );
 
   useEffect(() => {
     if (!active) setPan(INITIAL_PAN);
@@ -56,7 +65,9 @@ export const usePan = (active: boolean) => {
 
   return {
     pan,
+    setPan,
     cursor,
+    status,
     onMouseDown: handleMouseDown,
   };
 };
