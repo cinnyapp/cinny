@@ -74,10 +74,17 @@ export const binarySearch = <T>(items: T[], match: (item: T) => -1 | 0 | 1): T |
 export const randomNumberBetween = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
-export const scaleYDimension = (x: number, scaledX: number, y: number): number => {
-  const scaleFactor = scaledX / x;
-  return scaleFactor * y;
-};
+export const scaleDimension = (inW: number, inH: number, minW: number, minH: number, maxW: number, maxH: number): {w: number, h: number} => {
+  let w = Math.max(minW, Math.min(maxW, inW));
+  const scaleFactor = w / inW;
+  let h = Math.max(minH, scaleFactor * inH);
+  if (h > maxH) {
+    w = w / h * maxH;
+    h = maxH;
+  }
+  w = Math.max(minW, Math.min(maxW, w));
+  return { w, h };
+}
 
 export const parseGeoUri = (location: string) => {
   const [, data] = location.split(':');
