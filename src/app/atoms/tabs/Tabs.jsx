@@ -41,8 +41,9 @@ TabItem.propTypes = {
 function Tabs({ items, defaultSelected, onSelect }) {
   const [selectedItem, setSelectedItem] = useState(items[defaultSelected]);
 
-  const handleTabSelection = (item, index) => {
+  const handleTabSelection = (item, index, target) => {
     if (selectedItem === item) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     setSelectedItem(item);
     onSelect(item, index);
   };
@@ -57,7 +58,7 @@ function Tabs({ items, defaultSelected, onSelect }) {
               selected={selectedItem.text === item.text}
               iconSrc={item.iconSrc}
               disabled={item.disabled}
-              onClick={() => handleTabSelection(item, index)}
+              onClick={(e) => handleTabSelection(item, index, e.currentTarget)}
             >
               {item.text}
             </TabItem>
