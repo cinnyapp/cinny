@@ -25,8 +25,9 @@ function Selector({
   const noti = initMatrix.notifications;
   const room = mx.getRoom(roomId);
 
-  let imageSrc = room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
-  if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
+  let imageSrc = (isDM
+      ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop')
+      : room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop')) || null;
 
   const isMuted = noti.getNotiType(roomId) === cons.notifs.MUTE;
 
@@ -57,8 +58,8 @@ function Selector({
       key={roomId}
       name={room.name}
       roomId={roomId}
-      imageSrc={isDM ? imageSrc : null}
-      iconSrc={isDM ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())}
+      imageSrc={imageSrc}
+      iconSrc={imageSrc ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())}
       isSelected={navigation.selectedRoomId === roomId}
       isMuted={isMuted}
       isUnread={!isMuted && noti.hasNoti(roomId)}
