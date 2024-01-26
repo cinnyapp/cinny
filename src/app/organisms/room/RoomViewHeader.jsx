@@ -40,10 +40,8 @@ function RoomViewHeader({ roomId }) {
   const isDM = initMatrix.roomList.directs.has(roomId);
   const room = mx.getRoom(roomId);
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
-  let avatarSrc = room.getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
-  avatarSrc = isDM
-    ? room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 36, 36, 'crop')
-    : avatarSrc;
+  let avatarSrc = room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
+  if (avatarSrc === null) avatarSrc = room.getAvatarUrl(mx.baseUrl, 36, 36, 'crop') || null;
   const roomName = room.name;
 
   const roomHeaderBtnRef = useRef(null);
