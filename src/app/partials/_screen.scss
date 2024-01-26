@@ -15,13 +15,13 @@ $breakpoint-mobile: 750px;
   }
 }
 
-@mixin biggerThan($deviceBreakpoint) {
+@mixin biggerEqualsThan($deviceBreakpoint) {
   @if $deviceBreakpoint==mobileBreakpoint {
-    @media screen and (min-width: $breakpoint-mobile) {
+    @media screen and (min-width: ($breakpoint-mobile + 1)) {
       @content;
     }
   } @else if $deviceBreakpoint==tabletBreakpoint {
-    @media screen and (min-width: $breakpoint-tablet) {
+    @media screen and (min-width: ($breakpoint-tablet + 1)) {
       @content;
     }
   }

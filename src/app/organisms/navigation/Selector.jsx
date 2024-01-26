@@ -44,7 +44,7 @@ function Selector({
   const openOptions = (e) => {
     e.preventDefault();
     openReusableContextMenu(
-      'right',
+      window.innerWidth <= 750 ? 'bottom' : 'right',
       getEventCords(e, '.room-selector'),
       room.isSpaceRoom()
         ? (closeMenu) => <SpaceOptions roomId={roomId} afterOptionSelect={closeMenu} />
