@@ -89,7 +89,11 @@ export const VideoContent = as<'div', VideoContentProps>(
       <Box className={classNames(css.RelativeBase, className)} {...props} ref={ref}>
         {typeof blurHash === 'string' && !load && (
           <BlurhashCanvas
-            style={{ width: '100%', height: '100%' }}
+            style={{
+              width: '100%',
+              height: '100%',
+              filter: 'var(--blurhash-filter)'
+            }}
             width={32}
             height={32}
             hash={blurHash}
