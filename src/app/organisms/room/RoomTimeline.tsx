@@ -101,7 +101,7 @@ import {
   selectTab,
 } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
-import { parseGeoUri, scaleYDimension } from '../../utils/common';
+import { parseGeoUri, scaleDimension } from '../../utils/common';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer';
 import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
@@ -1100,13 +1100,16 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       if (typeof mxcUrl !== 'string') {
         return null;
       }
-      const height = scaleYDimension(imgInfo?.w || 400, 400, imgInfo?.h || 400);
+      const dim = scaleDimension(imgInfo?.w || 400, imgInfo?.h || 400, 32, 32, 400, 600);
 
       return (
-        <Attachment>
+        <Attachment style={{
+          width: toRem(dim.w)
+        }}>
           <AttachmentBox
             style={{
-              height: toRem(height < 48 ? 48 : height),
+              width: toRem(dim.w),
+              height: toRem(dim.h),
             }}
           >
             <ImageContent
@@ -1116,6 +1119,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               url={mxcUrl}
               encInfo={content.file}
               autoPlay={mediaAutoLoad}
+              imageWidth={dim.w}
+              imageHeight={dim.h}
             />
           </AttachmentBox>
         </Attachment>
@@ -1135,13 +1140,16 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         return null;
       }
 
-      const height = scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400);
+      const dim = scaleDimension(videoInfo.w || 400, videoInfo.h || 400, 48, 48, 400, 600);
 
       return (
-        <Attachment>
+        <Attachment style={{
+          width: toRem(dim.w)
+        }}>
           <AttachmentBox
             style={{
-              height: toRem(height < 48 ? 48 : height),
+              width: toRem(dim.w),
+              height: toRem(dim.h),
             }}
           >
             <VideoContent
@@ -1151,6 +1159,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               url={mxcUrl}
               encInfo={content.file}
               loadThumbnail={mediaAutoLoad}
+              videoWidth={dim.w}
+              videoHeight={dim.h}
             />
           </AttachmentBox>
         </Attachment>

@@ -32,6 +32,20 @@ export const AbsoluteFooter = style([
   },
 ]);
 
+export const NarrowContentBadges = style([
+  DefaultReset,
+  {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    height: '100%',
+    alignItems: 'center',
+    left: '100%',
+    marginLeft: config.space.S200,
+    justifyContent: "start"
+  },
+]);
+
 export const ModalWide = style({
   minWidth: '85vw',
   minHeight: '90vh',
