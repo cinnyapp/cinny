@@ -1,17 +1,19 @@
 import { ReactNode, useCallback, useEffect } from 'react';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { SpecVersions, specVersions } from '../cs-api';
-import { useAutoDiscoveryInfo } from '../hooks/useAutoDiscoveryInfo';
 
 type SpecVersionsLoaderProps = {
+  baseUrl: string;
   fallback?: () => ReactNode;
   error?: (err: unknown) => ReactNode;
   children: (versions: SpecVersions) => ReactNode;
 };
-export function SpecVersionsLoader({ fallback, error, children }: SpecVersionsLoaderProps) {
-  const autoDiscoveryInfo = useAutoDiscoveryInfo();
-  const baseUrl = autoDiscoveryInfo['m.homeserver'].base_url;
-
+export function SpecVersionsLoader({
+  baseUrl,
+  fallback,
+  error,
+  children,
+}: SpecVersionsLoaderProps) {
   const [state, load] = useAsyncCallback(
     useCallback(() => specVersions(fetch, baseUrl), [baseUrl])
   );
