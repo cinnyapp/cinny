@@ -15,3 +15,14 @@ export type RegisterPathSearchParams = {
 export const REGISTER_PATH = '/register/:server?/';
 
 export const RESET_PASSWORD_PATH = '/reset-password/:server?/';
+
+export const HOME_PATH = '/home/';
+export const DIRECT_PATH = '/direct/';
+export const NOTIFICATIONS_PATH = '/notifications/';
+export const SPACE_PATH = '/:spaceIdOrAlias/';
+export const EXPLORE_PATH = '/explore/';
+
+export const _CREATE_PATH = './create/';
+export const _LOBBY_PATH = './lobby/';
+export const _SEARCH_PATH = './search/';
+export const _ROOM_PATH = './:roomIdOrAlias/:eventId?/';

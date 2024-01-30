@@ -23,14 +23,20 @@ class InitMatrix extends EventEmitter {
   }
 
   async init() {
-    if (this.matrixClient) {
+    if (this.matrixClient || this.initializing) {
       console.warn('Client is already initialized!')
       return;
     }
+    this.initializing = true;
 
-    await this.startClient();
-    this.setupSync();
-    this.listenEvents();
+    try {
+      await this.startClient();
+      this.setupSync();
+      this.listenEvents();
+      this.initializing = false;
+    } catch {
+      this.initializing = false;
+    }
   }
 
   async startClient() {
