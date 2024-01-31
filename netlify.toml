@@ -9,7 +9,7 @@
   status = 200
   
 [[redirects]]
-  from = "/olm.wasm"
+  from = "*/olm.wasm"
   to = "/olm.wasm"
   status = 200
   
