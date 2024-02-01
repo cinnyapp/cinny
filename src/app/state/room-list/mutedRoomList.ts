@@ -1,8 +1,8 @@
 import { atom, useSetAtom } from 'jotai';
 import { ClientEvent, IPushRule, IPushRules, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import { useEffect } from 'react';
-import { MuteChanges } from '../../types/matrix/room';
-import { findMutedRule, isMutedRule } from '../utils/room';
+import { MuteChanges } from '../../../types/matrix/room';
+import { findMutedRule, isMutedRule } from '../../utils/room';
 
 export type MutedRoomsUpdate =
   | {

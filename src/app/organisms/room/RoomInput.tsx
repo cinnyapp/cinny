@@ -68,7 +68,7 @@ import {
   roomIdToReplyDraftAtomFamily,
   roomIdToUploadItemsAtomFamily,
   roomUploadAtomFamily,
-} from '../../state/roomInputDrafts';
+} from '../../state/room/roomInputDrafts';
 import { UploadCardRenderer } from '../../components/upload-card';
 import {
   UploadBoard,
@@ -307,7 +307,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       mx.sendMessage(roomId, content);
       resetEditor(editor);
       resetEditorHistory(editor);
-      setReplyDraft();
+      setReplyDraft(undefined);
       sendTypingStatus(false);
     }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
 
@@ -319,7 +319,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
         if (isKeyHotkey('escape', evt)) {
           evt.preventDefault();
-          setReplyDraft();
+          setReplyDraft(undefined);
         }
       },
       [submit, setReplyDraft, enterForNewline]
@@ -475,7 +475,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
                 >
                   <IconButton
-                    onClick={() => setReplyDraft()}
+                    onClick={() => setReplyDraft(undefined)}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"

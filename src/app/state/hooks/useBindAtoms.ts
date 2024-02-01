@@ -1,10 +1,10 @@
 import { MatrixClient } from 'matrix-js-sdk';
-import { allInvitesAtom, useBindAllInvitesAtom } from '../inviteList';
-import { allRoomsAtom, useBindAllRoomsAtom } from '../roomList';
+import { allInvitesAtom, useBindAllInvitesAtom } from '../room-list/inviteList';
+import { allRoomsAtom, useBindAllRoomsAtom } from '../room-list/roomList';
 import { mDirectAtom, useBindMDirectAtom } from '../mDirectList';
-import { muteChangesAtom, mutedRoomsAtom, useBindMutedRoomsAtom } from '../mutedRoomList';
-import { roomToUnreadAtom, useBindRoomToUnreadAtom } from '../roomToUnread';
-import { roomToParentsAtom, useBindRoomToParentsAtom } from '../roomToParents';
+import { muteChangesAtom, mutedRoomsAtom, useBindMutedRoomsAtom } from '../room-list/mutedRoomList';
+import { roomToUnreadAtom, useBindRoomToUnreadAtom } from '../room/roomToUnread';
+import { roomToParentsAtom, useBindRoomToParentsAtom } from '../room/roomToParents';
 
 export const useBindAtoms = (mx: MatrixClient) => {
   useBindMDirectAtom(mx, mDirectAtom);

@@ -9,14 +9,14 @@ import {
   RoomStateEvent,
 } from 'matrix-js-sdk';
 import { useEffect } from 'react';
-import { Membership, RoomToParents, StateEvent } from '../../types/matrix/room';
+import { Membership, RoomToParents, StateEvent } from '../../../types/matrix/room';
 import {
   getRoomToParents,
   getSpaceChildren,
   isSpace,
   isValidChild,
   mapParentWithChildren,
-} from '../utils/room';
+} from '../../utils/room';
 
 export type RoomToParentsAction =
   | {

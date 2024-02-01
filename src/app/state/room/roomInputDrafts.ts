@@ -2,9 +2,9 @@ import { atom } from 'jotai';
 import { atomFamily } from 'jotai/utils';
 import { Descendant } from 'slate';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
-import { TListAtom, createListAtom } from './list';
-import { createUploadAtomFamily } from './upload';
-import { TUploadContent } from '../utils/matrix';
+import { TListAtom, createListAtom } from '../list';
+import { createUploadAtomFamily } from '../upload';
+import { TUploadContent } from '../../utils/matrix';
 
 export const roomUploadAtomFamily = createUploadAtomFamily();
 

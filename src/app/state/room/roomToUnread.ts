@@ -9,7 +9,7 @@ import {
   NotificationType,
   RoomToUnread,
   UnreadInfo,
-} from '../../types/matrix/room';
+} from '../../../types/matrix/room';
 import {
   getAllParents,
   getNotificationType,
@@ -17,7 +17,7 @@ import {
   getUnreadInfos,
   isNotificationEvent,
   roomHaveUnread,
-} from '../utils/room';
+} from '../../utils/room';
 import { roomToParentsAtom } from './roomToParents';
 
 export type RoomToUnreadAction =

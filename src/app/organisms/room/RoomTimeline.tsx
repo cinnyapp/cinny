@@ -132,7 +132,7 @@ import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResize
 import * as css from './RoomTimeline.css';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
-import { roomIdToReplyDraftAtomFamily } from '../../state/roomInputDrafts';
+import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
 import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { MessageEvent } from '../../../types/matrix/room';
 import initMatrix from '../../../client/initMatrix';

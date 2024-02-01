@@ -3,9 +3,9 @@ import { selectAtom } from 'jotai/utils';
 import { MatrixClient } from 'matrix-js-sdk';
 import { useCallback } from 'react';
 import { isRoom, isSpace, isUnsupportedRoom } from '../../utils/room';
-import { compareRoomsEqual } from '../utils';
+import { compareRoomsEqual } from '../room-list/utils';
 import { mDirectAtom } from '../mDirectList';
-import { allRoomsAtom } from '../roomList';
+import { allRoomsAtom } from '../room-list/roomList';
 
 export const useSpaces = (mx: MatrixClient, roomsAtom: typeof allRoomsAtom) => {
   const selector = useCallback(

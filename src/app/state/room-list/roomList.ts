@@ -1,7 +1,7 @@
 import { atom } from 'jotai';
 import { MatrixClient } from 'matrix-js-sdk';
 import { useMemo } from 'react';
-import { Membership } from '../../types/matrix/room';
+import { Membership } from '../../../types/matrix/room';
 import { RoomsAction, useBindRoomsWithMembershipsAtom } from './utils';
 
 const baseRoomsAtom = atom<string[]>([]);
