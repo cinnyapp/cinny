@@ -8,6 +8,8 @@ import * as roomActions from '../../../client/action/room';
 import { selectRoom } from '../../../client/action/navigation';
 import { hasDMWith, hasDevices } from '../../../util/matrixUtil';
 
+import Toggle from '../../atoms/button/Toggle';
+import SettingTile from '../../molecules/setting-tile/SettingTile';
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
 import IconButton from '../../atoms/button/IconButton';
@@ -19,9 +21,7 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 
-function InviteUser({
-  isOpen, roomId, searchTerm, onRequestClose,
-}) {
+function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
   const [isSearching, updateIsSearching] = useState(false);
   const [searchQuery, updateSearchQuery] = useState({});
   const [users, updateUsers] = useState([]);
@@ -33,6 +33,10 @@ function InviteUser({
   const [roomIdToUserId, updateRoomIdToUserId] = useState(new Map());
 
   const [invitedUserIds, updateInvitedUserIds] = useState(new Set());
+
+  const [isShowDirectMembers, setIsShowDirectMembers] = useState(false);
+
+  const { roomList } = initMatrix;
 
   const usernameRef = useRef(null);
 
@@ -76,11 +80,13 @@ function InviteUser({
     if (isInputUserId) {
       try {
         const result = await mx.getProfileInfo(inputUsername);
-        updateUsers([{
-          user_id: inputUsername,
-          display_name: result.displayname,
-          avatar_url: result.avatar_url,
-        }]);
+        updateUsers([
+          {
+            user_id: inputUsername,
+            display_name: result.displayname,
+            avatar_url: result.avatar_url,
+          },
+        ]);
       } catch (e) {
         updateSearchQuery({ error: `${inputUsername} not found!` });
       }
@@ -150,7 +156,13 @@ function InviteUser({
 
   function renderUserList() {
     const renderOptions = (userId) => {
-      const messageJSX = (message, isPositive) => <Text variant="b2"><span style={{ color: isPositive ? 'var(--bg-positive)' : 'var(--bg-negative)' }}>{message}</span></Text>;
+      const messageJSX = (message, isPositive) => (
+        <Text variant="b2">
+          <span style={{ color: isPositive ? 'var(--bg-positive)' : 'var(--bg-negative)' }}>
+            {message}
+          </span>
+        </Text>
+      );
 
       if (mx.getUserId() === userId) return null;
       if (procUsers.has(userId)) {
@@ -158,7 +170,16 @@ function InviteUser({
       }
       if (createdDM.has(userId)) {
         // eslint-disable-next-line max-len
-        return <Button onClick={() => { selectRoom(createdDM.get(userId)); onRequestClose(); }}>Open</Button>;
+        return (
+          <Button
+            onClick={() => {
+              selectRoom(createdDM.get(userId));
+              onRequestClose();
+            }}
+          >
+            Open
+          </Button>
+        );
       }
       if (invitedUserIds.has(userId)) {
         return messageJSX('Invited', true);
@@ -178,22 +199,54 @@ function InviteUser({
           }
         }
       }
-      return (typeof roomId === 'string')
-        ? <Button onClick={() => inviteToRoom(userId)} variant="primary">Invite</Button>
-        : <Button onClick={() => createDM(userId)} variant="primary">Message</Button>;
+      return typeof roomId === 'string' ? (
+        <Button onClick={() => inviteToRoom(userId)} variant="primary">
+          Invite
+        </Button>
+      ) : (
+        <Button onClick={() => createDM(userId)} variant="primary">
+          Message
+        </Button>
+      );
     };
     const renderError = (userId) => {
       if (!procUserError.has(userId)) return null;
-      return <Text variant="b2"><span style={{ color: 'var(--bg-danger)' }}>{procUserError.get(userId)}</span></Text>;
+      return (
+        <Text variant="b2">
+          <span style={{ color: 'var(--bg-danger)' }}>{procUserError.get(userId)}</span>
+        </Text>
+      );
     };
 
+    if (isShowDirectMembers) {
+      const directMembers = [{}];
+      roomList.directs.forEach((id) => {
+        const room = mx.getRoom(id);
+        directMembers.push({ name: room.name, id: room.summaryHeroes[0] });
+      });
+      directMembers.shift();
+
+      return directMembers.map((item) => (
+        <RoomTile
+          key={item.id}
+          name={item.name}
+          id={item.id}
+          options={renderOptions(item.id)}
+          desc={renderError(item.id)}
+        />
+      ));
+    }
     return users.map((user) => {
       const userId = user.user_id;
       const name = typeof user.display_name === 'string' ? user.display_name : userId;
       return (
         <RoomTile
           key={userId}
-          avatarSrc={typeof user.avatar_url === 'string' ? mx.mxcUrlToHttp(user.avatar_url, 42, 42, 'crop') : null}
+          avatarSrc={
+            typeof user.avatar_url === 'string'
+              ? mx.mxcUrlToHttp(user.avatar_url, 42, 42, 'crop')
+              : null
+          }
           name={name}
           id={userId}
           options={renderOptions(userId)}
@@ -227,37 +280,52 @@ function InviteUser({
   return (
     <PopupWindow
       isOpen={isOpen}
-      title={(typeof roomId === 'string' ? `Invite to ${mx.getRoom(roomId).name}` : 'Direct message')}
+      title={typeof roomId === 'string' ? `Invite to ${mx.getRoom(roomId).name}` : 'Direct message'}
       contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip="Close" />}
       onRequestClose={onRequestClose}
     >
       <div className="invite-user">
-        <form className="invite-user__form" onSubmit={(e) => { e.preventDefault(); searchUser(usernameRef.current.value); }}>
+        {typeof roomId === 'string' && (
+          <SettingTile
+            title="Get my direct members"
+            options={
+              <Toggle
+                isActive={isShowDirectMembers}
+                onToggle={() => setIsShowDirectMembers(!isShowDirectMembers)}
+              />
+            }
+          />
+        )}
+        <form
+          className="invite-user__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            searchUser(usernameRef.current.value);
+          }}
+        >
           <Input value={searchTerm} forwardRef={usernameRef} label="Name or userId" />
-          <Button disabled={isSearching} iconSrc={UserIC} variant="primary" type="submit">Search</Button>
+          <Button disabled={isSearching} iconSrc={UserIC} variant="primary" type="submit">
+            Search
+          </Button>
         </form>
         <div className="invite-user__search-status">
-          {
-            typeof searchQuery.username !== 'undefined' && isSearching && (
-              <div className="flex--center">
-                <Spinner size="small" />
-                <Text variant="b2">{`Searching for user "${searchQuery.username}"...`}</Text>
-              </div>
-            )
-          }
-          {
-            typeof searchQuery.username !== 'undefined' && !isSearching && (
-              <Text variant="b2">{`Search result for user "${searchQuery.username}"`}</Text>
-            )
-          }
-          {
-            searchQuery.error && <Text className="invite-user__search-error" variant="b2">{searchQuery.error}</Text>
-          }
+          {typeof searchQuery.username !== 'undefined' && isSearching && (
+            <div className="flex--center">
+              <Spinner size="small" />
+              <Text variant="b2">{`Searching for user "${searchQuery.username}"...`}</Text>
+            </div>
+          )}
+          {typeof searchQuery.username !== 'undefined' && !isSearching && (
+            <Text variant="b2">{`Search result for user "${searchQuery.username}"`}</Text>
+          )}
+          {searchQuery.error && (
+            <Text className="invite-user__search-error" variant="b2">
+              {searchQuery.error}
+            </Text>
+          )}
         </div>
-        { users.length !== 0 && (
-          <div className="invite-user__content">
-            {renderUserList()}
-          </div>
+        {(users.length !== 0 && isShowDirectMembers && !isShowDirectMembers) || (
+          <div className="invite-user__content">{renderUserList()}</div>
         )}
       </div>
     </PopupWindow>
