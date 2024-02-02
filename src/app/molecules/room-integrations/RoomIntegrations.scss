@@ -1,0 +1,28 @@
+.bridge {
+  width: 100%;
+  padding: var(--sp-extra-tight) var(--sp-normal);
+  display: flex;
+  align-items: center;
+
+  &__container {
+    display: flex;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--bg-surface-hover);
+      text-decoration: none;
+    }
+  }
+  &:focus {
+    outline: none;
+    background-color: var(--bg-surface-hover);
+  }
+  &:active {
+    background-color: var(--bg-surface-active);
+  }
+
+  &__text {
+    margin-left: var(--sp-tight);
+  }
+}

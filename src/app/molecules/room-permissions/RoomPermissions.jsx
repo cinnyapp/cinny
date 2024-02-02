@@ -15,7 +15,7 @@ import SettingTile from '../setting-tile/SettingTile';
 
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 
-import { useForceUpdate } from '../../hooks/useForceUpdate';
+import { useRoomStateUpdate } from '../../hooks/useRoomStateUpdate';
 
 const permissionsInfo = {
   users_default: {
@@ -154,23 +154,6 @@ const spacePermsGroups = {
   'Space profile permissions': ['m.room.avatar', 'm.room.name', 'm.room.topic'],
   'Settings permissions': ['state_default', 'm.room.canonical_alias', 'm.room.power_levels'],
 };
-
-function useRoomStateUpdate(roomId) {
-  const [, forceUpdate] = useForceUpdate();
-  const mx = initMatrix.matrixClient;
-
-  useEffect(() => {
-    const handleStateEvent = (event) => {
-      if (event.getRoomId() !== roomId) return;
-      forceUpdate();
-    };
-
-    mx.on('RoomState.events', handleStateEvent);
-    return () => {
-      mx.removeListener('RoomState.events', handleStateEvent);
-    };
-  }, [roomId]);
-}
 
 function RoomPermissions({ roomId }) {
   useRoomStateUpdate(roomId);
