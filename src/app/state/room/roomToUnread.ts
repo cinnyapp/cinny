@@ -9,6 +9,7 @@ import {
   NotificationType,
   RoomToUnread,
   UnreadInfo,
+  Unread,
 } from '../../../types/matrix/room';
 import {
   getAllParents,
@@ -34,17 +35,19 @@ export type RoomToUnreadAction =
       roomId: string;
     };
 
+const unreadInfoToUnread = (unreadInfo: UnreadInfo): Unread => ({
+  highlight: unreadInfo.highlight,
+  total: unreadInfo.total,
+  from: null,
+});
+
 const putUnreadInfo = (
   roomToUnread: RoomToUnread,
   allParents: Set<string>,
   unreadInfo: UnreadInfo
 ) => {
   const oldUnread = roomToUnread.get(unreadInfo.roomId) ?? { highlight: 0, total: 0, from: null };
-  roomToUnread.set(unreadInfo.roomId, {
-    highlight: unreadInfo.highlight,
-    total: unreadInfo.total,
-    from: null,
-  });
+  roomToUnread.set(unreadInfo.roomId, unreadInfoToUnread(unreadInfo));
 
   const newH = unreadInfo.highlight - oldUnread.highlight;
   const newT = unreadInfo.total - oldUnread.total;
@@ -81,6 +84,23 @@ const deleteUnreadInfo = (roomToUnread: RoomToUnread, allParents: Set<string>, r
   });
 };
 
+const unreadEqual = (u1: Unread, u2: Unread): boolean => {
+  const countEqual = u1.highlight === u2.highlight && u1.total === u2.total;
+
+  if (u1.from === null && u2.from === null && countEqual) return true;
+
+  let fromEqual = u1.from?.size === u2.from?.size;
+  if (!fromEqual) return true;
+
+  u1.from?.forEach((item) => {
+    if (u2.from?.has(item) !== true) {
+      fromEqual = false;
+    }
+  });
+
+  return fromEqual;
+};
+
 const baseRoomToUnread = atom<RoomToUnread>(new Map());
 export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefined>(
   (get) => get(baseRoomToUnread),
@@ -98,13 +118,20 @@ export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefin
       return;
     }
     if (action.type === 'PUT') {
+      const { unreadInfo } = action;
+      const currentUnread = get(baseRoomToUnread).get(unreadInfo.roomId);
+      if (currentUnread && unreadEqual(currentUnread, unreadInfoToUnread(unreadInfo))) {
+        // Do not update if unread data has not changes
+        // like total & highlight
+        return;
+      }
       set(
         baseRoomToUnread,
         produce(get(baseRoomToUnread), (draftRoomToUnread) =>
           putUnreadInfo(
             draftRoomToUnread,
-            getAllParents(get(roomToParentsAtom), action.unreadInfo.roomId),
-            action.unreadInfo
+            getAllParents(get(roomToParentsAtom), unreadInfo.roomId),
+            unreadInfo
           )
         )
       );

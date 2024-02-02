@@ -68,14 +68,12 @@ export type IRoomCreateContent = {
 };
 
 export type RoomToParents = Map<string, Set<string>>;
-export type RoomToUnread = Map<
-  string,
-  {
-    total: number;
-    highlight: number;
-    from: Set<string> | null;
-  }
->;
+export type Unread = {
+  total: number;
+  highlight: number;
+  from: Set<string> | null;
+};
+export type RoomToUnread = Map<string, Unread>;
 export type UnreadInfo = {
   roomId: string;
   total: number;
