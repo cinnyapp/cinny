@@ -29,11 +29,11 @@ import {
   _SEARCH_PATH,
 } from './paths';
 import { isAuthenticated } from '../../client/state/auth';
-import { getLoginPath } from './pathUtils';
+import { getHomePath, getLoginPath } from './pathUtils';
 import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 import { FeatureCheck } from './FeatureCheck';
 import Client from '../templates/client/Client';
-import { ClientLayout } from './client';
+import { ClientLayout, ClientRoot } from './client';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -43,7 +43,7 @@ const createRouter = (clientConfig: ClientConfig) => {
       <Route
         path={ROOT_PATH}
         loader={() => {
-          if (isAuthenticated()) return redirect(HOME_PATH);
+          if (isAuthenticated()) return redirect(getHomePath());
           return redirect(getLoginPath());
         }}
       />
@@ -60,24 +60,26 @@ const createRouter = (clientConfig: ClientConfig) => {
         }}
         element={<ClientLayout />}
       >
-        <Route path={HOME_PATH} element={<Outlet />}>
-          <Route index element={<Client />} />
-          <Route path={_SEARCH_PATH} element={<p>search</p>} />
-          <Route path={_ROOM_PATH} element={<p>room</p>} />
+        <Route element={<ClientRoot />}>
+          <Route path={HOME_PATH} element={<Outlet />}>
+            <Route index element={<Client />} />
+            <Route path={_SEARCH_PATH} element={<p>search</p>} />
+            <Route path={_ROOM_PATH} element={<p>room</p>} />
+          </Route>
+          <Route path={DIRECT_PATH} element={<Outlet />}>
+            <Route index element={<Client />} />
+            <Route path={_CREATE_PATH} element={<p>create</p>} />
+            <Route path={_ROOM_PATH} element={<p>room</p>} />
+          </Route>
+          <Route path={NOTIFICATIONS_PATH} element={<p>notifications</p>} />
+          <Route path={SPACE_PATH} element={<Outlet />}>
+            <Route index element={<Client />} />
+            <Route path={_LOBBY_PATH} element={<p>lobby</p>} />
+            <Route path={_SEARCH_PATH} element={<p>search</p>} />
+            <Route path={_ROOM_PATH} element={<p>room</p>} />
+          </Route>
+          <Route path={EXPLORE_PATH} element={<p>explore</p>} />
         </Route>
-        <Route path={DIRECT_PATH} element={<Outlet />}>
-          <Route index element={<p>index</p>} />
-          <Route path={_CREATE_PATH} element={<p>create</p>} />
-          <Route path={_ROOM_PATH} element={<p>room</p>} />
-        </Route>
-        <Route path={NOTIFICATIONS_PATH} element={<p>notifications</p>} />
-        <Route path={SPACE_PATH} element={<Outlet />}>
-          <Route index element={<p>index</p>} />
-          <Route path={_LOBBY_PATH} element={<p>lobby</p>} />
-          <Route path={_SEARCH_PATH} element={<p>search</p>} />
-          <Route path={_ROOM_PATH} element={<p>room</p>} />
-        </Route>
-        <Route path={EXPLORE_PATH} element={<p>explore</p>} />
       </Route>
       <Route path="/*" element={<p>Page not found</p>} />
     </Route>

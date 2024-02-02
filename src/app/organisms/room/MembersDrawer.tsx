@@ -32,7 +32,6 @@ import {
 import { Room, RoomMember } from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
-import millify from 'millify';
 import classNames from 'classnames';
 import { useAtomValue } from 'jotai';
 
@@ -60,6 +59,7 @@ import { getMemberDisplayName, getMemberSearchStr } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
+import { millify } from '../../plugins/millify';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -271,7 +271,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
         <Box grow="Yes" alignItems="Center" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H5" truncate>
-              {`${millify(room.getJoinedMemberCount(), { precision: 1, locales: [] })} Members`}
+              {`${millify(room.getJoinedMemberCount())} Members`}
             </Text>
           </Box>
           <Box shrink="No" alignItems="Center">
