@@ -43,7 +43,7 @@ export const SidebarAvatar = forwardRef<
   ) => (
     <SidebarAvatarBox active={active} ref={ref}>
       <TooltipProvider
-        delay={0}
+        delay={400}
         position="Right"
         tooltip={
           <Tooltip>

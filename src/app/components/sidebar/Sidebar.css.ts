@@ -91,11 +91,11 @@ export const SidebarBadgeBox = recipe({
     hasCount: {
       true: {
         top: toRem(-6),
-        right: toRem(-6),
+        left: toRem(-6),
       },
       false: {
         top: toRem(-2),
-        right: toRem(-2),
+        left: toRem(-2),
       },
     },
   },
