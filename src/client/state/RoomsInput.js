@@ -190,6 +190,7 @@ class RoomsInput extends EventEmitter {
   getContent(roomId, options, message, reply, edit) {
     const msgType = options?.msgType || 'm.text';
     const autoMarkdown = options?.autoMarkdown ?? true;
+    const htmlFormat = options?.htmlFormat ?? false;
 
     const room = this.matrixClient.getRoom(roomId);
 
@@ -209,6 +210,11 @@ class RoomsInput extends EventEmitter {
     if (!body.onlyPlain || reply) {
       content.format = 'org.matrix.custom.html';
       content.formatted_body = body.html;
+    }
+
+    if (htmlFormat) {
+      content.format = 'org.matrix.custom.html';
+      content.formatted_body = body.plain;
     }
 
     if (edit) {
