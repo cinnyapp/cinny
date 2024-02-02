@@ -7,7 +7,6 @@ import {
   MatrixClient,
   MatrixError,
   MatrixEvent,
-  Room,
   UploadProgress,
   UploadResponse,
 } from 'matrix-js-sdk';
@@ -37,8 +36,8 @@ export const parseMatrixToUrl = (url: string): [string | undefined, string | und
   return [g1AsMxId, g3AsVia];
 };
 
-export const getRoomWithCanonicalAlias = (mx: MatrixClient, alias: string): Room | undefined =>
-  mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias);
+export const getCanonicalAliasRoomId = (mx: MatrixClient, alias: string): string | undefined =>
+  mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias)?.roomId;
 
 export const getImageInfo = (img: HTMLImageElement, fileOrBlob: File | Blob): IImageInfo => {
   const info: IImageInfo = {};

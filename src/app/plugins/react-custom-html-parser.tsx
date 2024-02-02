@@ -14,7 +14,7 @@ import { Opts as LinkifyOpts } from 'linkifyjs';
 import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import * as css from '../styles/CustomHtml.css';
-import { getMxIdLocalPart, getRoomWithCanonicalAlias } from '../utils/matrix';
+import { getMxIdLocalPart, getCanonicalAliasRoomId } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
 import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
@@ -207,10 +207,9 @@ export const getReactCustomHtmlParser = (
             const mentionId = mention[1];
             const mentionPrefix = mention[2];
             if (mentionPrefix === '#' || mentionPrefix === '!') {
-              const mentionRoom =
-                mentionPrefix === '#'
-                  ? getRoomWithCanonicalAlias(mx, mentionId)
-                  : mx.getRoom(mentionId);
+              const mentionRoom = mx.getRoom(
+                mentionPrefix === '#' ? getCanonicalAliasRoomId(mx, mentionId) : mentionId
+              );
 
               return (
                 <span
