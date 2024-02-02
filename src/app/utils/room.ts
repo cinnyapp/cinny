@@ -183,6 +183,13 @@ export const isNotificationEvent = (mEvent: MatrixEvent) => {
   return true;
 };
 
+export const roomHaveNotification = (room: Room): boolean => {
+  const total = room.getUnreadNotificationCount(NotificationCountType.Total);
+  const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
+
+  return total > 0 || highlight > 0;
+};
+
 export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   const userId = mx.getUserId();
   if (!userId) return false;
@@ -218,7 +225,7 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
     if (room.getMyMembership() !== 'join') return unread;
     if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
 
-    if (roomHaveUnread(mx, room)) {
+    if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
       unread.push(getUnreadInfo(room));
     }
 
