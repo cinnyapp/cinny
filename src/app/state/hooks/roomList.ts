@@ -6,11 +6,27 @@ import { isRoom, isSpace, isUnsupportedRoom } from '../../utils/room';
 import { compareRoomsEqual } from '../room-list/utils';
 import { mDirectAtom } from '../mDirectList';
 import { allRoomsAtom } from '../room-list/roomList';
+import { roomToParentsAtom } from '../room/roomToParents';
 
 export const useSpaces = (mx: MatrixClient, roomsAtom: typeof allRoomsAtom) => {
   const selector = useCallback(
     (rooms: string[]) => rooms.filter((roomId) => isSpace(mx.getRoom(roomId))),
     [mx]
+  );
+  return useAtomValue(selectAtom(roomsAtom, selector, compareRoomsEqual));
+};
+
+export const useOrphanSpaces = (
+  mx: MatrixClient,
+  roomsAtom: typeof allRoomsAtom,
+  roomToPAtom: typeof roomToParentsAtom
+) => {
+  const roomToParents = useAtomValue(roomToPAtom);
+
+  const selector = useCallback(
+    (rooms: string[]) =>
+      rooms.filter((roomId) => isSpace(mx.getRoom(roomId)) && !roomToParents.has(roomId)),
+    [mx, roomToParents]
   );
   return useAtomValue(selectAtom(roomsAtom, selector, compareRoomsEqual));
 };
