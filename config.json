@@ -1,12 +1,9 @@
 {
-  "defaultHomeserver": 2,
+  "defaultHomeserver": 1,
   "homeserverList": [
-    "converser.eu",
-    "envs.net",
-    "matrix.org",
-    "monero.social",
-    "mozilla.org",
-    "xmr.se"
+    "chat.majan.dev",
+    "http://localhost:8008",
+    "matrix.org"
   ],
   "allowCustomHomeservers": true,
 
