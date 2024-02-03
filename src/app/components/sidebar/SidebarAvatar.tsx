@@ -18,7 +18,7 @@ type SidebarAvatarProps = {
   outlined?: boolean;
   avatarChildren: ReactNode;
   tooltip: ReactNode | string;
-  notificationBadge?: (badgeClassName: string) => ReactNode;
+  notificationBadge?: () => ReactNode;
   onClick?: MouseEventHandler<HTMLButtonElement>;
   onContextMenu?: MouseEventHandler<HTMLButtonElement>;
 };
@@ -70,9 +70,7 @@ export const SidebarAvatar = forwardRef<
         )}
       </TooltipProvider>
       {notificationBadge && (
-        <Box className={css.SidebarBadgeBox({ hasCount })}>
-          {notificationBadge(css.SidebarBadgeOutline)}
-        </Box>
+        <Box className={css.SidebarBadgeBox({ hasCount })}>{notificationBadge()}</Box>
       )}
     </SidebarAvatarBox>
   )

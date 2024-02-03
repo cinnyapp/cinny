@@ -105,7 +105,3 @@ export const SidebarBadgeBox = recipe({
 });
 
 export type SidebarBadgeBoxVariants = RecipeVariants<typeof SidebarBadgeBox>;
-
-export const SidebarBadgeOutline = style({
-  boxShadow: `0 0 0 ${config.borderWidth.B500} ${color.Background.Container}`,
-});
