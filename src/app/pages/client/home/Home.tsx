@@ -1,8 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { JoinRule } from 'matrix-js-sdk';
-import { Avatar, Box, Icon, Icons, Text } from 'folds';
+import { Avatar, Box, Text } from 'folds';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
@@ -13,10 +12,10 @@ import { mDirectAtom } from '../../../state/mDirectList';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { joinRuleToIconSrc } from '../../../utils/room';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import { NavItem, NavItemContent } from '../../../components/nav-item';
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
+import { RoomIcon } from '../../../components/room-avatar';
 
 export function Home() {
   const mx = useMatrixClient();
@@ -51,16 +50,7 @@ export function Home() {
                     <NavItemContent>
                       <Box as="span" grow="Yes" alignItems="Center" gap="200">
                         <Avatar size="200" radii="400">
-                          <Icon
-                            size="100"
-                            src={
-                              joinRuleToIconSrc(
-                                Icons,
-                                room.getJoinRule() ?? JoinRule.Public,
-                                false
-                              ) ?? Icons.Hash
-                            }
-                          />
+                          <RoomIcon size="100" joinRule={room.getJoinRule()} />
                         </Avatar>
                         <Box as="span" grow="Yes">
                           <Text as="span" size="Inherit" truncate>
