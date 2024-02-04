@@ -39,6 +39,9 @@ export const parseMatrixToUrl = (url: string): [string | undefined, string | und
 export const getCanonicalAliasRoomId = (mx: MatrixClient, alias: string): string | undefined =>
   mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias)?.roomId;
 
+export const getCanonicalAliasOrRoomId = (mx: MatrixClient, roomId: string): string =>
+  mx.getRoom(roomId)?.getCanonicalAlias() || roomId;
+
 export const getImageInfo = (img: HTMLImageElement, fileOrBlob: File | Blob): IImageInfo => {
   const info: IImageInfo = {};
   info.w = img.width;
