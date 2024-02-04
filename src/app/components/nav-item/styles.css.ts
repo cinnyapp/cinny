@@ -2,6 +2,19 @@ import { ComplexStyleRule, createVar, style } from '@vanilla-extract/css';
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes';
 import { ContainerColor, DefaultReset, Disabled, RadiiVariant, color, config, toRem } from 'folds';
 
+export const NavLink = style({
+  color: 'inherit',
+  minWidth: 0,
+  display: 'flex',
+  flexGrow: 1,
+  ':hover': {
+    textDecoration: 'unset',
+  },
+  ':focus': {
+    outline: 'none',
+  },
+});
+
 const Container = createVar();
 const ContainerHover = createVar();
 const ContainerActive = createVar();
@@ -30,14 +43,26 @@ const NavItemBase = style({
   gap: config.space.S200,
 
   selectors: {
-    '&[aria-pressed=true]': {
-      backgroundColor: ContainerActive,
-    },
     '&:hover, &:focus-visible': {
       backgroundColor: ContainerHover,
     },
     '&:active': {
       backgroundColor: ContainerActive,
+    },
+    '&[aria-selected=true]': {
+      backgroundColor: ContainerActive,
+    },
+    [`&:has(.${NavLink}:focus-visible)`]: {
+      outline: `${config.borderWidth.B600} solid ${ContainerLine}`,
+      outlineOffset: `calc(-1 * ${config.borderWidth.B600})`,
+    },
+  },
+  '@supports': {
+    [`not selector(:has(.${NavLink}:focus-visible)`]: {
+      ':focus-within': {
+        outline: `${config.borderWidth.B600} solid ${ContainerLine}`,
+        outlineOffset: `calc(-1 * ${config.borderWidth.B600})`,
+      },
     },
   },
 });
@@ -64,7 +89,8 @@ export const NavItem = recipe({
 
 export type RoomSelectorVariants = RecipeVariants<typeof NavItem>;
 export const NavItemContent = style({
-  padding: `0 ${config.space.S200}`,
+  paddingLeft: config.space.S200,
+  paddingRight: config.space.S300,
   height: 'inherit',
   minWidth: 0,
   flexGrow: 1,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useParams } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { Avatar, Box, Text } from 'folds';
 import { ClientContentLayout } from '../ClientContentLayout';
@@ -13,15 +13,26 @@ import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
-import { NavItem, NavItemContent } from '../../../components/nav-item';
+import { NavItem, NavItemContent, NavLink } from '../../../components/nav-item';
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
 import { RoomIcon } from '../../../components/room-avatar';
+import { getHomeRoomPath } from '../../pathUtils';
+import {
+  getCanonicalAliasOrRoomId,
+  getCanonicalAliasRoomId,
+  isRoomAlias,
+} from '../../../utils/matrix';
 
 export function Home() {
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
   const roomToParents = useAtomValue(roomToParentsAtom);
   const rooms = useOrphanRooms(mx, allRoomsAtom, mDirects, roomToParents);
+  const { roomIdOrAlias } = useParams();
+  const selectedRoomId =
+    roomIdOrAlias && isRoomAlias(roomIdOrAlias)
+      ? getCanonicalAliasRoomId(mx, roomIdOrAlias)
+      : roomIdOrAlias;
 
   const roomToUnread = useAtomValue(roomToUnreadAtom);
 
@@ -44,26 +55,34 @@ export function Home() {
                 const room = mx.getRoom(roomId);
                 if (!room) return null;
                 const unread = roomToUnread.get(roomId);
+                const selected = selectedRoomId === roomId;
 
                 return (
-                  <NavItem variant="Background" radii="400" highlight={!!unread}>
-                    <NavItemContent>
-                      <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                        <Avatar size="200" radii="400">
-                          <RoomIcon size="100" joinRule={room.getJoinRule()} />
-                        </Avatar>
-                        <Box as="span" grow="Yes">
-                          <Text as="span" size="Inherit" truncate>
-                            {room.name}
-                          </Text>
+                  <NavItem
+                    variant="Background"
+                    radii="400"
+                    highlight={!!unread || selected}
+                    aria-selected={selected}
+                  >
+                    <NavLink to={getHomeRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}>
+                      <NavItemContent size="T300">
+                        <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                          <Avatar size="200" radii="400">
+                            <RoomIcon filled={selected} size="100" joinRule={room.getJoinRule()} />
+                          </Avatar>
+                          <Box as="span" grow="Yes">
+                            <Text as="span" size="Inherit" truncate>
+                              {room.name}
+                            </Text>
+                          </Box>
+                          {unread && (
+                            <UnreadBadgeCenter>
+                              <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
+                            </UnreadBadgeCenter>
+                          )}
                         </Box>
-                        {unread && (
-                          <UnreadBadgeCenter>
-                            <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
-                          </UnreadBadgeCenter>
-                        )}
-                      </Box>
-                    </NavItemContent>
+                      </NavItemContent>
+                    </NavLink>
                   </NavItem>
                 );
               })}

@@ -17,4 +17,5 @@ export const ClientDrawerHeaderLayout = style({
 export const ClientDrawerContentLayout = style({
   padding: config.space.S200,
   paddingRight: 0,
+  paddingBottom: config.space.S700,
 });
