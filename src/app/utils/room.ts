@@ -254,12 +254,17 @@ export const joinRuleToIconSrc = (
   return undefined;
 };
 
-export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefined => {
+export const getRoomAvatarUrl = (
+  mx: MatrixClient,
+  room: Room,
+  size: 32 | 96 = 32
+): string | undefined => {
   const url =
-    room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 32, 32, 'crop', undefined, false) ??
-    undefined;
+    room
+      .getAvatarFallbackMember()
+      ?.getAvatarUrl(mx.baseUrl, size, size, 'crop', undefined, false) ?? undefined;
   if (url) return url;
-  return room.getAvatarUrl(mx.baseUrl, 32, 32, 'crop') ?? undefined;
+  return room.getAvatarUrl(mx.baseUrl, size, size, 'crop') ?? undefined;
 };
 
 export const trimReplyFromBody = (body: string): string => {
