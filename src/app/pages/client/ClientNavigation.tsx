@@ -6,7 +6,6 @@ import {
   AvatarFallback,
   Text,
   AvatarImage,
-  Badge,
   PopOut,
   Menu,
   Box,
@@ -44,22 +43,17 @@ import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { mDirectAtom } from '../../state/mDirectList';
 import { useRoomsUnread } from '../../state/hooks/unread';
 import { RoomToUnread, Unread } from '../../../types/matrix/room';
-import { millify } from '../../plugins/millify';
-import { factoryRoomIdByActivity } from '../../utils/sort';
+import { factoryRoomIdByActivity, factoryRoomIdByUnreadCount } from '../../utils/sort';
 import { joinRuleToIconSrc } from '../../utils/room';
+import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 
-const renderBadge = (unread: Unread) => (
-  <Badge
-    size={unread.total > 0 ? '400' : '300'}
-    variant={unread.highlight > 0 ? 'Success' : 'Secondary'}
-    fill="Solid"
-    radii="Pill"
-  >
-    {unread.total > 0 && <Text size="L400">{millify(unread.total)}</Text>}
-  </Badge>
-);
-
-function UnreadBadge({ unread, roomToUnread }: { unread: Unread; roomToUnread: RoomToUnread }) {
+function NotificationBadge({
+  unread,
+  roomToUnread,
+}: {
+  unread: Unread;
+  roomToUnread: RoomToUnread;
+}) {
   const [open, setOpen] = useState(false);
   const mx = useMatrixClient();
 
@@ -92,39 +86,49 @@ function UnreadBadge({ unread, roomToUnread }: { unread: Unread; roomToUnread: R
                   style={{ padding: config.space.S200, paddingRight: 0 }}
                   gap="100"
                 >
-                  {[...(unread.from ?? [])].sort(factoryRoomIdByActivity(mx)).map((roomId) => {
-                    const room = mx.getRoom(roomId);
-                    const roomUnread = roomToUnread.get(roomId);
+                  {[...(unread.from ?? [])]
+                    .sort(factoryRoomIdByActivity(mx))
+                    .sort(factoryRoomIdByUnreadCount((rId) => roomToUnread.get(rId)?.total ?? 0))
+                    .map((roomId) => {
+                      const room = mx.getRoom(roomId);
+                      const roomUnread = roomToUnread.get(roomId);
 
-                    if (!room || !roomUnread) return null;
-                    return (
-                      <MenuItem
-                        key={roomId}
-                        type="button"
-                        size="300"
-                        radii="300"
-                        before={
-                          <Icon
-                            size="50"
-                            src={
-                              joinRuleToIconSrc(
-                                Icons,
-                                room.getJoinRule() ?? JoinRule.Public,
-                                false
-                              ) ?? Icons.Hash
-                            }
-                          />
-                        }
-                        after={roomUnread.total > 0 && renderBadge(roomUnread)}
-                      >
-                        <Box grow="Yes" as="span">
-                          <Text as="span" truncate priority="400">
-                            {room.name ?? 'Unknown'}
-                          </Text>
-                        </Box>
-                      </MenuItem>
-                    );
-                  })}
+                      if (!room || !roomUnread) return null;
+                      return (
+                        <MenuItem
+                          key={roomId}
+                          type="button"
+                          size="300"
+                          radii="300"
+                          before={
+                            <Icon
+                              size="50"
+                              src={
+                                joinRuleToIconSrc(
+                                  Icons,
+                                  room.getJoinRule() ?? JoinRule.Public,
+                                  false
+                                ) ?? Icons.Hash
+                              }
+                            />
+                          }
+                          after={
+                            <UnreadBadgeCenter>
+                              <UnreadBadge
+                                highlight={roomUnread.highlight > 0}
+                                count={roomUnread.total}
+                              />
+                            </UnreadBadgeCenter>
+                          }
+                        >
+                          <Box grow="Yes" as="span">
+                            <Text as="span" truncate priority="400">
+                              {room.name ?? 'Unknown'}
+                            </Text>
+                          </Box>
+                        </MenuItem>
+                      );
+                    })}
                 </Box>
               </Scroll>
             </Box>
@@ -144,14 +148,14 @@ function UnreadBadge({ unread, roomToUnread }: { unread: Unread; roomToUnread: R
           type="button"
           onClick={() => setOpen(!open)}
         >
-          {renderBadge(unread)}
+          <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
         </Box>
       )}
     </PopOut>
   );
 }
 
-export function SidebarNav() {
+export function ClientNavigation() {
   const mx = useMatrixClient();
 
   const mDirects = useAtomValue(mDirectAtom);
@@ -206,7 +210,9 @@ export function SidebarNav() {
                 tooltip="Home"
                 hasCount={homeUnread && homeUnread.total > 0}
                 notificationBadge={() =>
-                  homeUnread && <UnreadBadge roomToUnread={roomToUnread} unread={homeUnread} />
+                  homeUnread && (
+                    <NotificationBadge roomToUnread={roomToUnread} unread={homeUnread} />
+                  )
                 }
                 avatarChildren={<Icon src={Icons.Home} filled={!!homeMatch} />}
                 onClick={handleHomeClick}
@@ -217,7 +223,9 @@ export function SidebarNav() {
                 tooltip="Direct Messages"
                 hasCount={directUnread && directUnread.total > 0}
                 notificationBadge={() =>
-                  directUnread && <UnreadBadge roomToUnread={roomToUnread} unread={directUnread} />
+                  directUnread && (
+                    <NotificationBadge roomToUnread={roomToUnread} unread={directUnread} />
+                  )
                 }
                 avatarChildren={<Icon src={Icons.User} filled={!!directMatch} />}
                 onClick={handleDirectClick}
@@ -241,7 +249,7 @@ export function SidebarNav() {
                     hasCount={unread && unread.total > 0}
                     tooltip={space.name}
                     notificationBadge={() =>
-                      unread && <UnreadBadge roomToUnread={roomToUnread} unread={unread} />
+                      unread && <NotificationBadge roomToUnread={roomToUnread} unread={unread} />
                     }
                     avatarChildren={
                       avatarUrl ? (

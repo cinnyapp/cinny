@@ -52,9 +52,9 @@ function Client() {
 
   return (
     <div className="client-container">
-      <div className="navigation__wrapper" ref={navWrapperRef}>
+      {/* <div className="navigation__wrapper" ref={navWrapperRef}>
         <Navigation />
-      </div>
+      </div> */}
       <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
         <ClientContent />
       </div>

@@ -34,6 +34,7 @@ import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 import { FeatureCheck } from './FeatureCheck';
 import Client from '../templates/client/Client';
 import { ClientLayout, ClientRoot } from './client';
+import { Home } from './client/home';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -58,10 +59,10 @@ const createRouter = (clientConfig: ClientConfig) => {
           if (!isAuthenticated()) return redirect(getLoginPath());
           return null;
         }}
-        element={<ClientLayout />}
+        element={<ClientRoot />}
       >
-        <Route element={<ClientRoot />}>
-          <Route path={HOME_PATH} element={<Outlet />}>
+        <Route element={<ClientLayout />}>
+          <Route path={HOME_PATH} element={<Home />}>
             <Route index element={<Client />} />
             <Route path={_SEARCH_PATH} element={<p>search</p>} />
             <Route path={_ROOM_PATH} element={<p>room</p>} />
