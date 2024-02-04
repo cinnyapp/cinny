@@ -95,3 +95,8 @@ export const trimLeadingSlash = (str: string): string => str.replace(START_SLASH
 export const trimTrailingSlash = (str: string): string => str.replace(END_SLASHES_REG, '');
 
 export const trimSlash = (str: string): string => trimLeadingSlash(trimTrailingSlash(str));
+
+export const nameInitials = (str: string | undefined | null, len = 1): string => {
+  if (!str) return '�';
+  return [...str].slice(0, len).join('') || '�';
+};
