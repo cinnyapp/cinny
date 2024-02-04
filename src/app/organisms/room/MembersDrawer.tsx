@@ -299,7 +299,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
         </Box>
       </Header>
       <Box className={css.MemberDrawerContentBase} grow="Yes">
-        <Scroll ref={scrollRef} variant="Background" size="300" visibility="Hover">
+        <Scroll ref={scrollRef} variant="Background" size="300" visibility="Hover" hideTrack>
           <Box className={css.MemberDrawerContent} direction="Column" gap="200">
             <Box ref={scrollTopAnchorRef} className={css.DrawerGroup} direction="Column" gap="200">
               <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
