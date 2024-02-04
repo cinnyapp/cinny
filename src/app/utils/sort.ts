@@ -30,3 +30,11 @@ export const factoryRoomIdByAtoZ =
     }
     return 0;
   };
+
+export const factoryRoomIdByUnreadCount =
+  (getUnreadCount: (roomId: string) => number): SortFunc<string> =>
+  (a, b) => {
+    const aT = getUnreadCount(a) ?? 0;
+    const bT = getUnreadCount(b) ?? 0;
+    return bT - aT;
+  };
