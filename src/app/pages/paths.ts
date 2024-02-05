@@ -29,6 +29,7 @@ export const HOME_SEARCH_PATH = `/home/${_SEARCH_PATH}`;
 export const HOME_ROOM_PATH = `/home/${_ROOM_PATH}`;
 
 export const DIRECT_PATH = '/direct/';
+export const DIRECT_ROOM_PATH = `/direct/${_ROOM_PATH}`;
 
 export const NOTIFICATIONS_PATH = '/notifications/';
 

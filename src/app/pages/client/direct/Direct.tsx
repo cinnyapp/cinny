@@ -5,26 +5,26 @@ import { Avatar, Box, Text } from 'folds';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import { useOrphanRooms } from '../../../state/hooks/roomList';
+import { useDirects } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { mDirectAtom } from '../../../state/mDirectList';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import { NavItem, NavItemContent, NavLink } from '../../../components/nav-item';
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
-import { RoomIcon } from '../../../components/room-avatar';
-import { getHomeRoomPath } from '../../pathUtils';
+import { RoomAvatar } from '../../../components/room-avatar';
+import { getDirectRoomPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
+import { getRoomAvatarUrl } from '../../../utils/room';
+import { nameInitials } from '../../../utils/common';
 import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
 
-export function Home() {
+export function Direct() {
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
-  const roomToParents = useAtomValue(roomToParentsAtom);
-  const rooms = useOrphanRooms(mx, allRoomsAtom, mDirects, roomToParents);
+  const directs = useDirects(mx, allRoomsAtom, mDirects);
   const selectedRoomId = useSelectedRoom();
 
   return (
@@ -35,17 +35,18 @@ export function Home() {
             <Box grow="Yes" gap="300">
               <Box grow="Yes">
                 <Text size="H4" truncate>
-                  Home
+                  Direct Messages
                 </Text>
               </Box>
             </Box>
           </ClientDrawerHeaderLayout>
           <ClientDrawerContentLayout>
             <Box direction="Column">
-              {rooms.sort(factoryRoomIdByAtoZ(mx)).map((roomId) => {
+              {directs.sort(factoryRoomIdByAtoZ(mx)).map((roomId) => {
                 const room = mx.getRoom(roomId);
                 if (!room) return null;
                 const selected = selectedRoomId === roomId;
+                const avatarSrc = getRoomAvatarUrl(mx, room);
 
                 return (
                   <RoomUnreadProvider key={roomId} roomId={roomId}>
@@ -57,14 +58,18 @@ export function Home() {
                         highlight={!!unread || selected}
                         aria-selected={selected}
                       >
-                        <NavLink to={getHomeRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}>
+                        <NavLink to={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}>
                           <NavItemContent size="T300">
                             <Box as="span" grow="Yes" alignItems="Center" gap="200">
                               <Avatar size="200" radii="400">
-                                <RoomIcon
-                                  filled={selected}
-                                  size="100"
-                                  joinRule={room.getJoinRule()}
+                                <RoomAvatar
+                                  src={avatarSrc}
+                                  alt={room.name}
+                                  renderInitials={() => (
+                                    <Text as="span" size="H6">
+                                      {nameInitials(room.name)}
+                                    </Text>
+                                  )}
                                 />
                               </Avatar>
                               <Box as="span" grow="Yes">

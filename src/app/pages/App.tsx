@@ -35,6 +35,7 @@ import { FeatureCheck } from './FeatureCheck';
 import { ClientLayout, ClientRoot } from './client';
 import { Home } from './client/home';
 import { RoomViewer } from '../organisms/room/Room';
+import { Direct } from './client/direct';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -67,7 +68,7 @@ const createRouter = (clientConfig: ClientConfig) => {
             <Route path={_SEARCH_PATH} element={<p>search</p>} />
             <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
-          <Route path={DIRECT_PATH} element={<Outlet />}>
+          <Route path={DIRECT_PATH} element={<Direct />}>
             <Route index element={<p>welcome</p>} />
             <Route path={_CREATE_PATH} element={<p>create</p>} />
             <Route path={_ROOM_PATH} element={<RoomViewer />} />
