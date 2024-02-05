@@ -11,7 +11,7 @@ const styles: CSSProperties = {
 };
 export function UnreadBadgeCenter({ children }: { children: ReactNode }) {
   return (
-    <Box style={styles} shrink="No" alignItems="Center" justifyContent="Center">
+    <Box as="span" style={styles} shrink="No" alignItems="Center" justifyContent="Center">
       {children}
     </Box>
   );
@@ -26,7 +26,11 @@ export function UnreadBadge({ highlight, count }: UnreadBadgeProps) {
       radii="Pill"
       outlined
     >
-      {count > 0 && <Text size="L400">{millify(count)}</Text>}
+      {count > 0 && (
+        <Text as="span" size="L400">
+          {millify(count)}
+        </Text>
+      )}
     </Badge>
   );
 }

@@ -55,7 +55,7 @@ export function Home() {
                 const selected = selectedRoomId === roomId;
 
                 return (
-                  <RoomUnreadProvider roomId={roomId}>
+                  <RoomUnreadProvider key={roomId} roomId={roomId}>
                     {(unread) => (
                       <NavItem
                         key={roomId}
