@@ -32,9 +32,9 @@ import { isAuthenticated } from '../../client/state/auth';
 import { getHomePath, getLoginPath } from './pathUtils';
 import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 import { FeatureCheck } from './FeatureCheck';
-import Client from '../templates/client/Client';
 import { ClientLayout, ClientRoot } from './client';
 import { Home } from './client/home';
+import { RoomViewer } from '../organisms/room/Room';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -63,21 +63,21 @@ const createRouter = (clientConfig: ClientConfig) => {
       >
         <Route element={<ClientLayout />}>
           <Route path={HOME_PATH} element={<Home />}>
-            <Route index element={<Client />} />
+            <Route index element={<p>welcome</p>} />
             <Route path={_SEARCH_PATH} element={<p>search</p>} />
-            <Route path={_ROOM_PATH} element={<p>room</p>} />
+            <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
           <Route path={DIRECT_PATH} element={<Outlet />}>
-            <Route index element={<Client />} />
+            <Route index element={<p>welcome</p>} />
             <Route path={_CREATE_PATH} element={<p>create</p>} />
-            <Route path={_ROOM_PATH} element={<p>room</p>} />
+            <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
           <Route path={NOTIFICATIONS_PATH} element={<p>notifications</p>} />
           <Route path={SPACE_PATH} element={<Outlet />}>
-            <Route index element={<Client />} />
+            <Route index element={<p>welcome</p>} />
             <Route path={_LOBBY_PATH} element={<p>lobby</p>} />
             <Route path={_SEARCH_PATH} element={<p>search</p>} />
-            <Route path={_ROOM_PATH} element={<p>room</p>} />
+            <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
           <Route path={EXPLORE_PATH} element={<p>explore</p>} />
         </Route>
