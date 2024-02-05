@@ -84,7 +84,7 @@ const deleteUnreadInfo = (roomToUnread: RoomToUnread, allParents: Set<string>, r
   });
 };
 
-const unreadEqual = (u1: Unread, u2: Unread): boolean => {
+export const unreadEqual = (u1: Unread, u2: Unread): boolean => {
   const countEqual = u1.highlight === u2.highlight && u1.total === u2.total;
 
   if (u1.from === null && u2.from === null && countEqual) return true;

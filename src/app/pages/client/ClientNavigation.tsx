@@ -42,20 +42,16 @@ import { getCanonicalAliasRoomId, isRoomAlias } from '../../utils/matrix';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { mDirectAtom } from '../../state/mDirectList';
 import { useRoomsUnread } from '../../state/hooks/unread';
-import { RoomToUnread, Unread } from '../../../types/matrix/room';
+import { Unread } from '../../../types/matrix/room';
 import { factoryRoomIdByActivity, factoryRoomIdByUnreadCount } from '../../utils/sort';
 import { joinRuleToIconSrc } from '../../utils/room';
 import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
+import { RoomUnreadProvider } from '../../components/RoomUnreadProvider';
 
-function NotificationBadge({
-  unread,
-  roomToUnread,
-}: {
-  unread: Unread;
-  roomToUnread: RoomToUnread;
-}) {
+function NotificationBadge({ unread }: { unread: Unread }) {
   const [open, setOpen] = useState(false);
   const mx = useMatrixClient();
+  const roomToUnread = useAtomValue(roomToUnreadAtom);
 
   return (
     <PopOut
@@ -159,14 +155,14 @@ export function ClientNavigation() {
   const mx = useMatrixClient();
 
   const mDirects = useAtomValue(mDirectAtom);
-  const roomToUnread = useAtomValue(roomToUnreadAtom);
   const roomToParents = useAtomValue(roomToParentsAtom);
   const orphanRooms = useOrphanRooms(mx, allRoomsAtom, mDirects, roomToParents);
   const directs = useDirects(mx, allRoomsAtom, mDirects);
   const orphanSpaces = useOrphanSpaces(mx, allRoomsAtom, roomToParents);
 
-  const homeUnread = useRoomsUnread(orphanRooms, roomToUnread);
-  const directUnread = useRoomsUnread(directs, roomToUnread);
+  const homeUnread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
+  const directUnread = useRoomsUnread(directs, roomToUnreadAtom);
+  console.log('====RE-RENDER=====');
 
   const { spaceIdOrAlias } = useParams();
   const spaceId =
@@ -209,11 +205,7 @@ export function ClientNavigation() {
                 outlined
                 tooltip="Home"
                 hasCount={homeUnread && homeUnread.total > 0}
-                notificationBadge={() =>
-                  homeUnread && (
-                    <NotificationBadge roomToUnread={roomToUnread} unread={homeUnread} />
-                  )
-                }
+                notificationBadge={() => homeUnread && <NotificationBadge unread={homeUnread} />}
                 avatarChildren={<Icon src={Icons.Home} filled={!!homeMatch} />}
                 onClick={handleHomeClick}
               />
@@ -223,9 +215,7 @@ export function ClientNavigation() {
                 tooltip="Direct Messages"
                 hasCount={directUnread && directUnread.total > 0}
                 notificationBadge={() =>
-                  directUnread && (
-                    <NotificationBadge roomToUnread={roomToUnread} unread={directUnread} />
-                  )
+                  directUnread && <NotificationBadge unread={directUnread} />
                 }
                 avatarChildren={<Icon src={Icons.User} filled={!!directMatch} />}
                 onClick={handleDirectClick}
@@ -236,36 +226,37 @@ export function ClientNavigation() {
               {orphanSpaces.map((orphanSpaceId) => {
                 const space = mx.getRoom(orphanSpaceId);
                 if (!space) return null;
-                const unread = roomToUnread.get(orphanSpaceId);
 
                 const avatarUrl = space.getAvatarUrl(mx.baseUrl, 96, 96, 'crop');
 
                 return (
-                  <SidebarAvatar
-                    dataId={orphanSpaceId}
-                    onClick={handleSpaceClick}
-                    key={orphanSpaceId}
-                    active={spaceId === orphanSpaceId}
-                    hasCount={unread && unread.total > 0}
-                    tooltip={space.name}
-                    notificationBadge={() =>
-                      unread && <NotificationBadge roomToUnread={roomToUnread} unread={unread} />
-                    }
-                    avatarChildren={
-                      avatarUrl ? (
-                        <AvatarImage src={avatarUrl} alt={space.name} />
-                      ) : (
-                        <AvatarFallback
-                          style={{
-                            backgroundColor: colorMXID(orphanSpaceId),
-                            color: 'white',
-                          }}
-                        >
-                          <Text size="T500">{space.name[0]}</Text>
-                        </AvatarFallback>
-                      )
-                    }
-                  />
+                  <RoomUnreadProvider roomId={orphanSpaceId}>
+                    {(unread) => (
+                      <SidebarAvatar
+                        dataId={orphanSpaceId}
+                        onClick={handleSpaceClick}
+                        key={orphanSpaceId}
+                        active={spaceId === orphanSpaceId}
+                        hasCount={unread && unread.total > 0}
+                        tooltip={space.name}
+                        notificationBadge={() => unread && <NotificationBadge unread={unread} />}
+                        avatarChildren={
+                          avatarUrl ? (
+                            <AvatarImage src={avatarUrl} alt={space.name} />
+                          ) : (
+                            <AvatarFallback
+                              style={{
+                                backgroundColor: colorMXID(orphanSpaceId),
+                                color: 'white',
+                              }}
+                            >
+                              <Text size="T500">{space.name[0]}</Text>
+                            </AvatarFallback>
+                          )
+                        }
+                      />
+                    )}
+                  </RoomUnreadProvider>
                 );
               })}
             </SidebarStack>
