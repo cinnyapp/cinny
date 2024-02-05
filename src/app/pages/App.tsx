@@ -36,6 +36,7 @@ import { ClientLayout, ClientRoot } from './client';
 import { Home } from './client/home';
 import { RoomViewer } from '../organisms/room/Room';
 import { Direct } from './client/direct';
+import { SpaceViewer } from './client/space';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -74,7 +75,7 @@ const createRouter = (clientConfig: ClientConfig) => {
             <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
           <Route path={NOTIFICATIONS_PATH} element={<p>notifications</p>} />
-          <Route path={SPACE_PATH} element={<Outlet />}>
+          <Route path={SPACE_PATH} element={<SpaceViewer />}>
             <Route index element={<p>welcome</p>} />
             <Route path={_LOBBY_PATH} element={<p>lobby</p>} />
             <Route path={_SEARCH_PATH} element={<p>search</p>} />

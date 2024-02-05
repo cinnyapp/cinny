@@ -2,7 +2,7 @@ import { useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';
 import { MatrixClient } from 'matrix-js-sdk';
 import { useCallback } from 'react';
-import { isRoom, isSpace, isUnsupportedRoom } from '../../utils/room';
+import { getAllParents, isRoom, isSpace, isUnsupportedRoom } from '../../utils/room';
 import { compareRoomsEqual } from '../room-list/utils';
 import { allRoomsAtom } from '../room-list/roomList';
 import { RoomToParents } from '../../../types/matrix/room';
@@ -37,6 +37,86 @@ export const useOrphanSpaces = (
     (rooms: string[]) =>
       rooms.filter((roomId) => isSpace(mx.getRoom(roomId)) && !roomToParents.has(roomId)),
     [mx, roomToParents]
+  );
+  return useAtomValue(selectAtom(roomsAtom, selector, compareRoomsEqual));
+};
+
+/**
+ * select list of all room ids from all rooms for which spaceId is in all parents
+ * @param mx to check room type
+ * @param spaceId as root parent
+ * @param roomsAtom to pick rooms
+ * @param roomToParents: to include child room
+ * @returns list of space ids
+ */
+export const useSpaceRecursiveChildSpaces = (
+  mx: MatrixClient,
+  spaceId: string,
+  roomsAtom: typeof allRoomsAtom,
+  roomToParents: RoomToParents
+) => {
+  const selector = useCallback(
+    (rooms: string[]) =>
+      rooms.filter(
+        (roomId) =>
+          isSpace(mx.getRoom(roomId)) &&
+          roomToParents.has(roomId) &&
+          getAllParents(roomToParents, roomId).has(spaceId)
+      ),
+    [mx, spaceId, roomToParents]
+  );
+  return useAtomValue(selectAtom(roomsAtom, selector, compareRoomsEqual));
+};
+
+/**
+ * select list of all room ids from all rooms for which spaceId is in parents
+ * @param mx to check room type
+ * @param spaceId as root parent
+ * @param roomsAtom to pick rooms
+ * @param roomToParents: to include child room
+ * @returns list of space ids
+ */
+export const useSpaceChildRooms = (
+  mx: MatrixClient,
+  spaceId: string,
+  roomsAtom: typeof allRoomsAtom,
+  roomToParents: RoomToParents
+) => {
+  const selector = useCallback(
+    (rooms: string[]) =>
+      rooms.filter(
+        (roomId) => isRoom(mx.getRoom(roomId)) && roomToParents.get(roomId)?.has(spaceId)
+      ),
+    [mx, spaceId, roomToParents]
+  );
+  return useAtomValue(selectAtom(roomsAtom, selector, compareRoomsEqual));
+};
+
+/**
+ * select list of all room ids from all rooms for which spaceId is in parents and is in mDirects
+ * @param mx to check room type
+ * @param spaceId as root parent
+ * @param roomsAtom to pick rooms
+ * @param mDirects to include only direct rooms
+ * @param roomToParents: to include child rooms
+ * @returns list of space ids
+ */
+export const useSpaceChildDirects = (
+  mx: MatrixClient,
+  spaceId: string,
+  roomsAtom: typeof allRoomsAtom,
+  mDirects: Set<string>,
+  roomToParents: RoomToParents
+) => {
+  const selector = useCallback(
+    (rooms: string[]) =>
+      rooms.filter(
+        (roomId) =>
+          isRoom(mx.getRoom(roomId)) &&
+          mDirects.has(roomId) &&
+          roomToParents.get(roomId)?.has(spaceId)
+      ),
+    [mx, spaceId, mDirects, roomToParents]
   );
   return useAtomValue(selectAtom(roomsAtom, selector, compareRoomsEqual));
 };

@@ -13,6 +13,7 @@ import {
   RESET_PASSWORD_PATH,
   ROOT_PATH,
   SPACE_PATH,
+  SPACE_ROOM_PATH,
 } from './paths';
 
 export const withSearchParam = <T extends Record<string, string>>(
@@ -81,7 +82,7 @@ export const getSpaceRoomPath = (
     eventId: eventId ? encodeURIComponent(eventId) : null,
   };
 
-  return generatePath(SPACE_PATH, params);
+  return generatePath(SPACE_ROOM_PATH, params);
 };
 
 export const getNotificationsPath = (): string => NOTIFICATIONS_PATH;
