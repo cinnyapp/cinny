@@ -1,16 +1,12 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { Avatar, Box, Text } from 'folds';
+import { Avatar, Box, Header, Text, config } from 'folds';
 import { Room } from 'matrix-js-sdk';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import {
-  useSpaceChildDirects,
-  useSpaceChildRooms,
-  useSpaceRecursiveChildSpaces,
-} from '../../../state/hooks/roomList';
+import { useSpaceChildDirects, useSpaceRecursiveChildSpaces } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { mDirectAtom } from '../../../state/mDirectList';
@@ -25,15 +21,16 @@ import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
 import { useSelectedSpace } from '../../../hooks/useSelectedSpace';
+import { SpaceChildRoomsProvider } from '../../../components/SpaceChildRoomsProvider';
 
 export function Space({ space }: { space: Room }) {
   const mx = useMatrixClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const mDirects = useAtomValue(mDirectAtom);
   const roomToParents = useAtomValue(roomToParentsAtom);
 
   const childSpaces = useSpaceRecursiveChildSpaces(mx, space.roomId, allRoomsAtom, roomToParents);
-  const childRooms = useSpaceChildRooms(mx, space.roomId, allRoomsAtom, roomToParents);
   const childDirects = useSpaceChildDirects(
     mx,
     space.roomId,
@@ -43,6 +40,52 @@ export function Space({ space }: { space: Room }) {
   );
 
   const selectedRoomId = useSelectedRoom();
+
+  const getToLink = (roomId: string) =>
+    getSpaceRoomPath(
+      getCanonicalAliasOrRoomId(mx, space.roomId),
+      getCanonicalAliasOrRoomId(mx, roomId)
+    );
+
+  const renderRoomSelector = (roomId: string) => {
+    const room = mx.getRoom(roomId);
+    if (!room) return null;
+    const selected = selectedRoomId === roomId;
+
+    return (
+      <RoomUnreadProvider key={roomId} roomId={roomId}>
+        {(unread) => (
+          <NavItem
+            key={roomId}
+            variant="Background"
+            radii="400"
+            highlight={!!unread || selected}
+            aria-selected={selected}
+          >
+            <NavLink to={getToLink(roomId)}>
+              <NavItemContent size="T300">
+                <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                  <Avatar size="200" radii="400">
+                    <RoomIcon filled={selected} size="100" joinRule={room.getJoinRule()} />
+                  </Avatar>
+                  <Box as="span" grow="Yes">
+                    <Text as="span" size="Inherit" truncate>
+                      {room.name}
+                    </Text>
+                  </Box>
+                  {unread && (
+                    <UnreadBadgeCenter>
+                      <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
+                    </UnreadBadgeCenter>
+                  )}
+                </Box>
+              </NavItemContent>
+            </NavLink>
+          </NavItem>
+        )}
+      </RoomUnreadProvider>
+    );
+  };
 
   return (
     <ClientContentLayout
@@ -57,59 +100,47 @@ export function Space({ space }: { space: Room }) {
               </Box>
             </Box>
           </ClientDrawerHeaderLayout>
-          <ClientDrawerContentLayout>
+          <ClientDrawerContentLayout scrollRef={scrollRef}>
             <Box direction="Column">
-              {childRooms.sort(factoryRoomIdByAtoZ(mx)).map((roomId) => {
-                const room = mx.getRoom(roomId);
-                if (!room) return null;
-                const selected = selectedRoomId === roomId;
-
-                return (
-                  <RoomUnreadProvider key={roomId} roomId={roomId}>
-                    {(unread) => (
-                      <NavItem
-                        key={roomId}
-                        variant="Background"
-                        radii="400"
-                        highlight={!!unread || selected}
-                        aria-selected={selected}
-                      >
-                        <NavLink
-                          to={getSpaceRoomPath(
-                            getCanonicalAliasOrRoomId(mx, space.roomId),
-                            getCanonicalAliasOrRoomId(mx, roomId)
-                          )}
-                        >
-                          <NavItemContent size="T300">
-                            <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                              <Avatar size="200" radii="400">
-                                <RoomIcon
-                                  filled={selected}
-                                  size="100"
-                                  joinRule={room.getJoinRule()}
-                                />
-                              </Avatar>
-                              <Box as="span" grow="Yes">
-                                <Text as="span" size="Inherit" truncate>
-                                  {room.name}
-                                </Text>
-                              </Box>
-                              {unread && (
-                                <UnreadBadgeCenter>
-                                  <UnreadBadge
-                                    highlight={unread.highlight > 0}
-                                    count={unread.total}
-                                  />
-                                </UnreadBadgeCenter>
-                              )}
-                            </Box>
-                          </NavItemContent>
-                        </NavLink>
-                      </NavItem>
-                    )}
-                  </RoomUnreadProvider>
-                );
-              })}
+              <Header
+                style={{
+                  paddingLeft: config.space.S200,
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 1,
+                }}
+                variant="Background"
+                size="300"
+              >
+                <Text size="O400">Rooms</Text>
+              </Header>
+              <SpaceChildRoomsProvider spaceId={space.roomId} roomToParents={roomToParents}>
+                {(childRooms) =>
+                  Array.from(childRooms).sort(factoryRoomIdByAtoZ(mx)).map(renderRoomSelector)
+                }
+              </SpaceChildRoomsProvider>
+              {childSpaces.sort(factoryRoomIdByAtoZ(mx)).map((childSpaceId) => (
+                <Box direction="Column" key={childSpaceId}>
+                  <Header
+                    style={{
+                      paddingLeft: config.space.S200,
+                      marginTop: config.space.S400,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 1,
+                    }}
+                    variant="Background"
+                    size="300"
+                  >
+                    <Text size="O400">{mx.getRoom(childSpaceId)?.name}</Text>
+                  </Header>
+                  <SpaceChildRoomsProvider spaceId={childSpaceId} roomToParents={roomToParents}>
+                    {(childRooms) =>
+                      Array.from(childRooms).sort(factoryRoomIdByAtoZ(mx)).map(renderRoomSelector)
+                    }
+                  </SpaceChildRoomsProvider>
+                </Box>
+              ))}
             </Box>
           </ClientDrawerContentLayout>
         </ClientDrawerLayout>

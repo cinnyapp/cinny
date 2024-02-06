@@ -102,6 +102,9 @@ export const NavItemContent = style({
       textDecoration: 'unset',
     },
     [`.${NavItemBase}[data-highlight=true] &`]: {
+      fontWeight: config.fontWeight.W500,
+    },
+    [`.${NavItemBase}[aria-selected=true] &`]: {
       fontWeight: config.fontWeight.W600,
     },
   },

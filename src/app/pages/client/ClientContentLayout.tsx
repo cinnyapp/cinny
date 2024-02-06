@@ -10,7 +10,7 @@ export function ClientContentLayout({ navigation, children }: ClientContentLayou
   return (
     <Box grow="Yes">
       {navigation}
-      <Line variant="Surface" size="300" direction="Vertical" />
+      <Line variant="Background" size="300" direction="Vertical" />
       {children}
     </Box>
   );
