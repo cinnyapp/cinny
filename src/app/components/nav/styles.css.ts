@@ -2,6 +2,22 @@ import { ComplexStyleRule, createVar, style } from '@vanilla-extract/css';
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes';
 import { ContainerColor, DefaultReset, Disabled, RadiiVariant, color, config, toRem } from 'folds';
 
+export const NavCategory = style([
+  DefaultReset,
+  {
+    position: 'relative',
+  },
+]);
+
+export const NavCategoryHeader = style({
+  paddingLeft: config.space.S200,
+  position: 'sticky',
+  top: 0,
+  zIndex: 1,
+
+  gap: config.space.S100,
+});
+
 export const NavLink = style({
   color: 'inherit',
   minWidth: 0,
