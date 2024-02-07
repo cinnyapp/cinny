@@ -1,19 +1,28 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { Avatar, Box, Header, Text, config } from 'folds';
+import { Avatar, Box, Text } from 'folds';
 import { Room } from 'matrix-js-sdk';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import { useSpaceChildDirects, useSpaceRecursiveChildSpaces } from '../../../state/hooks/roomList';
+import {
+  useSpaceRecursiveChildDirects,
+  useSpaceRecursiveChildSpaces,
+} from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
-import { NavItem, NavItemContent, NavLink } from '../../../components/nav-item';
+import {
+  NavCategory,
+  NavCategoryHeader,
+  NavItem,
+  NavItemContent,
+  NavLink,
+} from '../../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
 import { RoomIcon } from '../../../components/room-avatar';
 import { getSpaceRoomPath } from '../../pathUtils';
@@ -31,7 +40,7 @@ export function Space({ space }: { space: Room }) {
   const roomToParents = useAtomValue(roomToParentsAtom);
 
   const childSpaces = useSpaceRecursiveChildSpaces(mx, space.roomId, allRoomsAtom, roomToParents);
-  const childDirects = useSpaceChildDirects(
+  const childDirects = useSpaceRecursiveChildDirects(
     mx,
     space.roomId,
     allRoomsAtom,
@@ -101,46 +110,43 @@ export function Space({ space }: { space: Room }) {
             </Box>
           </ClientDrawerHeaderLayout>
           <ClientDrawerContentLayout scrollRef={scrollRef}>
-            <Box direction="Column">
-              <Header
-                style={{
-                  paddingLeft: config.space.S200,
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 1,
-                }}
-                variant="Background"
-                size="300"
-              >
-                <Text size="O400">Rooms</Text>
-              </Header>
+            <Box direction="Column" gap="400">
               <SpaceChildRoomsProvider spaceId={space.roomId} roomToParents={roomToParents}>
                 {(childRooms) =>
-                  Array.from(childRooms).sort(factoryRoomIdByAtoZ(mx)).map(renderRoomSelector)
+                  childRooms.length > 0 && (
+                    <NavCategory>
+                      <NavCategoryHeader>
+                        <Text size="O400">Rooms</Text>
+                      </NavCategoryHeader>
+                      {Array.from(childRooms).sort(factoryRoomIdByAtoZ(mx)).map(renderRoomSelector)}
+                    </NavCategory>
+                  )
                 }
               </SpaceChildRoomsProvider>
               {childSpaces.sort(factoryRoomIdByAtoZ(mx)).map((childSpaceId) => (
-                <Box direction="Column" key={childSpaceId}>
-                  <Header
-                    style={{
-                      paddingLeft: config.space.S200,
-                      marginTop: config.space.S400,
-                      position: 'sticky',
-                      top: 0,
-                      zIndex: 1,
-                    }}
-                    variant="Background"
-                    size="300"
-                  >
-                    <Text size="O400">{mx.getRoom(childSpaceId)?.name}</Text>
-                  </Header>
-                  <SpaceChildRoomsProvider spaceId={childSpaceId} roomToParents={roomToParents}>
-                    {(childRooms) =>
-                      Array.from(childRooms).sort(factoryRoomIdByAtoZ(mx)).map(renderRoomSelector)
-                    }
-                  </SpaceChildRoomsProvider>
-                </Box>
+                <SpaceChildRoomsProvider spaceId={childSpaceId} roomToParents={roomToParents}>
+                  {(childRooms) =>
+                    childRooms.length > 0 && (
+                      <NavCategory key={childSpaceId}>
+                        <NavCategoryHeader>
+                          <Text size="O400">{mx.getRoom(childSpaceId)?.name}</Text>
+                        </NavCategoryHeader>
+                        {Array.from(childRooms)
+                          .sort(factoryRoomIdByAtoZ(mx))
+                          .map(renderRoomSelector)}
+                      </NavCategory>
+                    )
+                  }
+                </SpaceChildRoomsProvider>
               ))}
+              {childDirects.length > 0 && (
+                <NavCategory>
+                  <NavCategoryHeader>
+                    <Text size="O400">People</Text>
+                  </NavCategoryHeader>
+                  {Array.from(childDirects).sort(factoryRoomIdByAtoZ(mx)).map(renderRoomSelector)}
+                </NavCategory>
+              )}
             </Box>
           </ClientDrawerContentLayout>
         </ClientDrawerLayout>

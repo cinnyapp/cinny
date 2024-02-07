@@ -11,7 +11,13 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
-import { NavItem, NavItemContent, NavLink } from '../../../components/nav-item';
+import {
+  NavCategory,
+  NavCategoryHeader,
+  NavItem,
+  NavItemContent,
+  NavLink,
+} from '../../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
 import { RoomAvatar } from '../../../components/room-avatar';
 import { getDirectRoomPath } from '../../pathUtils';
@@ -41,58 +47,65 @@ export function Direct() {
             </Box>
           </ClientDrawerHeaderLayout>
           <ClientDrawerContentLayout>
-            <Box direction="Column">
-              {directs.sort(factoryRoomIdByAtoZ(mx)).map((roomId) => {
-                const room = mx.getRoom(roomId);
-                if (!room) return null;
-                const selected = selectedRoomId === roomId;
-                const avatarSrc = getRoomAvatarUrl(mx, room);
+            <Box direction="Column" gap="400">
+              <NavCategory>
+                <NavCategoryHeader>
+                  <Text size="O400">People</Text>
+                </NavCategoryHeader>
+                {Array.from(directs)
+                  .sort(factoryRoomIdByAtoZ(mx))
+                  .map((roomId) => {
+                    const room = mx.getRoom(roomId);
+                    if (!room) return null;
+                    const selected = selectedRoomId === roomId;
+                    const avatarSrc = getRoomAvatarUrl(mx, room);
 
-                return (
-                  <RoomUnreadProvider key={roomId} roomId={roomId}>
-                    {(unread) => (
-                      <NavItem
-                        key={roomId}
-                        variant="Background"
-                        radii="400"
-                        highlight={!!unread || selected}
-                        aria-selected={selected}
-                      >
-                        <NavLink to={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}>
-                          <NavItemContent size="T300">
-                            <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                              <Avatar size="200" radii="400">
-                                <RoomAvatar
-                                  src={avatarSrc}
-                                  alt={room.name}
-                                  renderInitials={() => (
-                                    <Text as="span" size="H6">
-                                      {nameInitials(room.name)}
+                    return (
+                      <RoomUnreadProvider key={roomId} roomId={roomId}>
+                        {(unread) => (
+                          <NavItem
+                            key={roomId}
+                            variant="Background"
+                            radii="400"
+                            highlight={!!unread || selected}
+                            aria-selected={selected}
+                          >
+                            <NavLink to={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}>
+                              <NavItemContent size="T300">
+                                <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                                  <Avatar size="200" radii="400">
+                                    <RoomAvatar
+                                      src={avatarSrc}
+                                      alt={room.name}
+                                      renderInitials={() => (
+                                        <Text as="span" size="H6">
+                                          {nameInitials(room.name)}
+                                        </Text>
+                                      )}
+                                    />
+                                  </Avatar>
+                                  <Box as="span" grow="Yes">
+                                    <Text as="span" size="Inherit" truncate>
+                                      {room.name}
                                     </Text>
+                                  </Box>
+                                  {unread && (
+                                    <UnreadBadgeCenter>
+                                      <UnreadBadge
+                                        highlight={unread.highlight > 0}
+                                        count={unread.total}
+                                      />
+                                    </UnreadBadgeCenter>
                                   )}
-                                />
-                              </Avatar>
-                              <Box as="span" grow="Yes">
-                                <Text as="span" size="Inherit" truncate>
-                                  {room.name}
-                                </Text>
-                              </Box>
-                              {unread && (
-                                <UnreadBadgeCenter>
-                                  <UnreadBadge
-                                    highlight={unread.highlight > 0}
-                                    count={unread.total}
-                                  />
-                                </UnreadBadgeCenter>
-                              )}
-                            </Box>
-                          </NavItemContent>
-                        </NavLink>
-                      </NavItem>
-                    )}
-                  </RoomUnreadProvider>
-                );
-              })}
+                                </Box>
+                              </NavItemContent>
+                            </NavLink>
+                          </NavItem>
+                        )}
+                      </RoomUnreadProvider>
+                    );
+                  })}
+              </NavCategory>
             </Box>
           </ClientDrawerContentLayout>
         </ClientDrawerLayout>

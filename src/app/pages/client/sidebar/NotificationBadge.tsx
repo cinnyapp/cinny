@@ -12,7 +12,7 @@ import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge
 import { mDirectAtom } from '../../../state/mDirectList';
 import { getRoomAvatarUrl } from '../../../utils/room';
 import { nameInitials } from '../../../utils/common';
-import { NavItem, NavItemContent, NavLink } from '../../../components/nav-item';
+import { NavItem, NavItemContent, NavLink } from '../../../components/nav';
 import { getHomeRoomPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
