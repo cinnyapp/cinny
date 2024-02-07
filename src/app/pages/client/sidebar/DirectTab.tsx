@@ -7,11 +7,12 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { getDirectPath } from '../../pathUtils';
+import { getDirectPath, getDirectRoomPath } from '../../pathUtils';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { SidebarAvatar } from '../../../components/sidebar';
-import { NotificationBadge } from './NotificationBadge';
+import { NotificationBadge, UnreadMenu } from './NotificationBadge';
 import { useDirectSelected } from '../../../hooks/useDirectSelected';
+import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 
 export function DirectTab() {
   const navigate = useNavigate();
@@ -23,6 +24,9 @@ export function DirectTab() {
 
   const directSelected = useDirectSelected();
 
+  const getRoomToLink = (roomId: string) =>
+    getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId));
+
   const handleDirectClick = () => {
     navigate(getDirectPath());
   };
@@ -33,7 +37,20 @@ export function DirectTab() {
       outlined
       tooltip="Direct Messages"
       hasCount={directUnread && directUnread.total > 0}
-      notificationBadge={() => directUnread && <NotificationBadge unread={directUnread} />}
+      notificationBadge={() =>
+        directUnread && (
+          <NotificationBadge
+            unread={directUnread}
+            renderUnreadMenu={(requestClose) => (
+              <UnreadMenu
+                rooms={[...(directUnread.from ?? [])]}
+                getToLink={getRoomToLink}
+                requestClose={requestClose}
+              />
+            )}
+          />
+        )
+      }
       avatarChildren={<Icon src={Icons.User} filled={directSelected} />}
       onClick={handleDirectClick}
     />
