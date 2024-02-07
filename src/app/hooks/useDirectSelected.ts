@@ -1,5 +1,5 @@
 import { useMatch } from 'react-router-dom';
-import { getDirectPath } from '../pages/pathUtils';
+import { getDirectCreatePath, getDirectPath } from '../pages/pathUtils';
 
 export const useDirectSelected = (): boolean => {
   const directMatch = useMatch({
@@ -9,4 +9,14 @@ export const useDirectSelected = (): boolean => {
   });
 
   return !!directMatch;
+};
+
+export const useDirectCreateSelected = (): boolean => {
+  const match = useMatch({
+    path: getDirectCreatePath(),
+    caseSensitive: true,
+    end: false,
+  });
+
+  return !!match;
 };

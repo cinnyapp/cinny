@@ -22,12 +22,13 @@ import {
 } from '../../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
 import { RoomAvatar } from '../../../components/room-avatar';
-import { getDirectRoomPath } from '../../pathUtils';
+import { getDirectCreatePath, getDirectRoomPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { getRoomAvatarUrl } from '../../../utils/room';
 import { nameInitials } from '../../../utils/common';
 import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
+import { useDirectCreateSelected } from '../../../hooks/useDirectSelected';
 
 function DirectEmpty() {
   return (
@@ -61,6 +62,7 @@ export function Direct() {
   const mDirects = useAtomValue(mDirectAtom);
   const directs = useDirects(mx, allRoomsAtom, mDirects);
   const selectedRoomId = useSelectedRoom();
+  const createSelected = useDirectCreateSelected();
   const noRoomToDisplay = directs.length === 0;
 
   return (
@@ -82,12 +84,12 @@ export function Direct() {
             <ClientDrawerContentLayout>
               <Box direction="Column" gap="300">
                 <NavCategory>
-                  <NavItem variant="Background" radii="400">
-                    <NavLink to="TODO:">
+                  <NavItem variant="Background" radii="400" aria-selected={createSelected}>
+                    <NavLink to={getDirectCreatePath()}>
                       <NavItemContent size="T300">
                         <Box as="span" grow="Yes" alignItems="Center" gap="200">
                           <Avatar size="200" radii="400">
-                            <Icon src={Icons.Plus} size="100" />
+                            <Icon src={Icons.Plus} size="100" filled={createSelected} />
                           </Avatar>
                           <Box as="span" grow="Yes">
                             <Text as="span" size="Inherit" truncate>

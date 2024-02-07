@@ -1,7 +1,6 @@
 import React from 'react';
 import { Provider as JotaiProvider } from 'jotai';
 import {
-  Outlet,
   Route,
   RouterProvider,
   createBrowserRouter,
@@ -24,6 +23,7 @@ import {
   ROOT_PATH,
   SPACE_PATH,
   _CREATE_PATH,
+  _JOIN_PATH,
   _LOBBY_PATH,
   _ROOM_PATH,
   _SEARCH_PATH,
@@ -66,6 +66,8 @@ const createRouter = (clientConfig: ClientConfig) => {
         <Route element={<ClientLayout />}>
           <Route path={HOME_PATH} element={<Home />}>
             <Route index element={<p>welcome</p>} />
+            <Route path={_CREATE_PATH} element={<p>create</p>} />
+            <Route path={_JOIN_PATH} element={<p>join</p>} />
             <Route path={_SEARCH_PATH} element={<p>search</p>} />
             <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>

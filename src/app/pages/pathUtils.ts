@@ -1,9 +1,11 @@
 import { generatePath } from 'react-router-dom';
 import {
+  DIRECT_CREATE_PATH,
   DIRECT_PATH,
   DIRECT_ROOM_PATH,
   EXPLORE_PATH,
   HOME_CREATE_PATH,
+  HOME_JOIN_PATH,
   HOME_PATH,
   HOME_ROOM_PATH,
   HOME_SEARCH_PATH,
@@ -12,8 +14,10 @@ import {
   REGISTER_PATH,
   RESET_PASSWORD_PATH,
   ROOT_PATH,
+  SPACE_LOBBY_PATH,
   SPACE_PATH,
   SPACE_ROOM_PATH,
+  SPACE_SEARCH_PATH,
 } from './paths';
 
 export const withSearchParam = <T extends Record<string, string>>(
@@ -44,6 +48,7 @@ export const getResetPasswordPath = (server?: string): string => {
 
 export const getHomePath = (): string => HOME_PATH;
 export const getHomeCreatePath = (): string => HOME_CREATE_PATH;
+export const getHomeJoinPath = (): string => HOME_JOIN_PATH;
 export const getHomeSearchPath = (): string => HOME_SEARCH_PATH;
 export const getHomeRoomPath = (roomIdOrAlias: string, eventId?: string): string => {
   const params = {
@@ -55,6 +60,7 @@ export const getHomeRoomPath = (roomIdOrAlias: string, eventId?: string): string
 };
 
 export const getDirectPath = (): string => DIRECT_PATH;
+export const getDirectCreatePath = (): string => DIRECT_CREATE_PATH;
 export const getDirectRoomPath = (roomIdOrAlias: string, eventId?: string): string => {
   const params = {
     roomIdOrAlias: encodeURIComponent(roomIdOrAlias),
@@ -70,6 +76,18 @@ export const getSpacePath = (spaceIdOrAlias: string): string => {
   };
 
   return generatePath(SPACE_PATH, params);
+};
+export const getSpaceLobbyPath = (spaceIdOrAlias: string): string => {
+  const params = {
+    spaceIdOrAlias: encodeURIComponent(spaceIdOrAlias),
+  };
+  return generatePath(SPACE_LOBBY_PATH, params);
+};
+export const getSpaceSearchPath = (spaceIdOrAlias: string): string => {
+  const params = {
+    spaceIdOrAlias: encodeURIComponent(spaceIdOrAlias),
+  };
+  return generatePath(SPACE_SEARCH_PATH, params);
 };
 export const getSpaceRoomPath = (
   spaceIdOrAlias: string,

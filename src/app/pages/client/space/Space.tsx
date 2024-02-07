@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useParams } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import { Room } from 'matrix-js-sdk';
@@ -25,14 +25,18 @@ import {
 } from '../../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
 import { RoomIcon } from '../../../components/room-avatar';
-import { getSpaceRoomPath } from '../../pathUtils';
+import { getSpaceLobbyPath, getSpaceRoomPath, getSpaceSearchPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
-import { useSelectedSpace } from '../../../hooks/useSelectedSpace';
+import {
+  useSelectedSpace,
+  useSpaceLobbySelected,
+  useSpaceSearchSelected,
+} from '../../../hooks/useSelectedSpace';
 import { SpaceChildRoomsProvider } from '../../../components/SpaceChildRoomsProvider';
 
-export function Space({ space }: { space: Room }) {
+export function Space({ spaceIdOrAlias, space }: { spaceIdOrAlias: string; space: Room }) {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +53,8 @@ export function Space({ space }: { space: Room }) {
   );
 
   const selectedRoomId = useSelectedRoom();
+  const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
+  const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
   const getToLink = (roomId: string) =>
     getSpaceRoomPath(
@@ -112,12 +118,12 @@ export function Space({ space }: { space: Room }) {
           <ClientDrawerContentLayout scrollRef={scrollRef}>
             <Box direction="Column" gap="300">
               <NavCategory>
-                <NavItem variant="Background" radii="400">
-                  <NavLink to="TODO:">
+                <NavItem variant="Background" radii="400" aria-selected={lobbySelected}>
+                  <NavLink to={getSpaceLobbyPath(space.roomId)}>
                     <NavItemContent size="T300">
                       <Box as="span" grow="Yes" alignItems="Center" gap="200">
                         <Avatar size="200" radii="400">
-                          <Icon src={Icons.Flag} size="100" />
+                          <Icon src={Icons.Flag} size="100" filled={lobbySelected} />
                         </Avatar>
                         <Box as="span" grow="Yes">
                           <Text as="span" size="Inherit" truncate>
@@ -128,12 +134,12 @@ export function Space({ space }: { space: Room }) {
                     </NavItemContent>
                   </NavLink>
                 </NavItem>
-                <NavItem variant="Background" radii="400">
-                  <NavLink to="TODO:">
+                <NavItem variant="Background" radii="400" aria-selected={searchSelected}>
+                  <NavLink to={getSpaceSearchPath(space.roomId)}>
                     <NavItemContent size="T300">
                       <Box as="span" grow="Yes" alignItems="Center" gap="200">
                         <Avatar size="200" radii="400">
-                          <Icon src={Icons.Search} size="100" />
+                          <Icon src={Icons.Search} size="100" filled={searchSelected} />
                         </Avatar>
                         <Box as="span" grow="Yes">
                           <Text as="span" size="Inherit" truncate>
@@ -198,12 +204,13 @@ export function Space({ space }: { space: Room }) {
 export function SpaceViewer() {
   const mx = useMatrixClient();
 
+  const { spaceIdOrAlias } = useParams();
   const selectedSpaceId = useSelectedSpace();
   const space = mx.getRoom(selectedSpaceId);
 
-  if (!space) {
+  if (!space || !spaceIdOrAlias) {
     return <p>TODO: join space screen</p>;
   }
 
-  return <Space space={space} />;
+  return <Space spaceIdOrAlias={spaceIdOrAlias} space={space} />;
 }

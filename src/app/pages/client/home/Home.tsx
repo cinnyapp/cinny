@@ -23,10 +23,20 @@ import {
 } from '../../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
 import { RoomIcon } from '../../../components/room-avatar';
-import { getHomeRoomPath } from '../../pathUtils';
+import {
+  getHomeCreatePath,
+  getHomeJoinPath,
+  getHomeRoomPath,
+  getHomeSearchPath,
+} from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
+import {
+  useHomeCreateSelected,
+  useHomeJoinSelected,
+  useHomeSearchSelected,
+} from '../../../hooks/useHomeSelected';
 
 function HomeEmpty() {
   return (
@@ -68,6 +78,9 @@ export function Home() {
   const roomToParents = useAtomValue(roomToParentsAtom);
   const rooms = useOrphanRooms(mx, allRoomsAtom, mDirects, roomToParents);
   const selectedRoomId = useSelectedRoom();
+  const createSelected = useHomeCreateSelected();
+  const joinSelected = useHomeJoinSelected();
+  const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
 
   return (
@@ -89,12 +102,12 @@ export function Home() {
             <ClientDrawerContentLayout>
               <Box direction="Column" gap="300">
                 <NavCategory>
-                  <NavItem variant="Background" radii="400">
-                    <NavLink to="TODO:">
+                  <NavItem variant="Background" radii="400" aria-selected={createSelected}>
+                    <NavLink to={getHomeCreatePath()}>
                       <NavItemContent size="T300">
                         <Box as="span" grow="Yes" alignItems="Center" gap="200">
                           <Avatar size="200" radii="400">
-                            <Icon src={Icons.Plus} size="100" />
+                            <Icon src={Icons.Plus} size="100" filled={createSelected} />
                           </Avatar>
                           <Box as="span" grow="Yes">
                             <Text as="span" size="Inherit" truncate>
@@ -105,12 +118,12 @@ export function Home() {
                       </NavItemContent>
                     </NavLink>
                   </NavItem>
-                  <NavItem variant="Background" radii="400">
-                    <NavLink to="TODO:">
+                  <NavItem variant="Background" radii="400" aria-selected={joinSelected}>
+                    <NavLink to={getHomeJoinPath()}>
                       <NavItemContent size="T300">
                         <Box as="span" grow="Yes" alignItems="Center" gap="200">
                           <Avatar size="200" radii="400">
-                            <Icon src={Icons.Link} size="100" />
+                            <Icon src={Icons.Link} size="100" filled={joinSelected} />
                           </Avatar>
                           <Box as="span" grow="Yes">
                             <Text as="span" size="Inherit" truncate>
@@ -121,12 +134,12 @@ export function Home() {
                       </NavItemContent>
                     </NavLink>
                   </NavItem>
-                  <NavItem variant="Background" radii="400">
-                    <NavLink to="TODO:">
+                  <NavItem variant="Background" radii="400" aria-selected={searchSelected}>
+                    <NavLink to={getHomeSearchPath()}>
                       <NavItemContent size="T300">
                         <Box as="span" grow="Yes" alignItems="Center" gap="200">
                           <Avatar size="200" radii="400">
-                            <Icon src={Icons.Search} size="100" />
+                            <Icon src={Icons.Search} size="100" filled={searchSelected} />
                           </Avatar>
                           <Box as="span" grow="Yes">
                             <Text as="span" size="Inherit" truncate>

@@ -26,18 +26,22 @@ export const _INVITES_PATH = 'invites/';
 
 export const HOME_PATH = '/home/';
 export const HOME_CREATE_PATH = `/home/${_CREATE_PATH}`;
+export const HOME_JOIN_PATH = `/home/${_JOIN_PATH}`;
 export const HOME_SEARCH_PATH = `/home/${_SEARCH_PATH}`;
 export const HOME_ROOM_PATH = `/home/${_ROOM_PATH}`;
 
 export const DIRECT_PATH = '/direct/';
+export const DIRECT_CREATE_PATH = `/direct/${_CREATE_PATH}`;
 export const DIRECT_ROOM_PATH = `/direct/${_ROOM_PATH}`;
 
-export const NOTIFICATIONS_PATH = '/notifications/';
-
 export const SPACE_PATH = '/:spaceIdOrAlias/';
+export const SPACE_LOBBY_PATH = `/:spaceIdOrAlias/${_LOBBY_PATH}`;
+export const SPACE_SEARCH_PATH = `/:spaceIdOrAlias/${_SEARCH_PATH}`;
 export const SPACE_ROOM_PATH = `/:spaceIdOrAlias/${_ROOM_PATH}`;
 
 export const EXPLORE_PATH = '/explore/';
+
+export const NOTIFICATIONS_PATH = '/notifications/';
 
 export const USER_SETTINGS_PATH = '/user-settings/';
 
