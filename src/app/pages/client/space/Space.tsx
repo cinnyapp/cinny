@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { Avatar, Box, Text } from 'folds';
+import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import { Room } from 'matrix-js-sdk';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
@@ -110,7 +110,41 @@ export function Space({ space }: { space: Room }) {
             </Box>
           </ClientDrawerHeaderLayout>
           <ClientDrawerContentLayout scrollRef={scrollRef}>
-            <Box direction="Column" gap="400">
+            <Box direction="Column" gap="300">
+              <NavCategory>
+                <NavItem variant="Background" radii="400">
+                  <NavLink to="TODO:">
+                    <NavItemContent size="T300">
+                      <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                        <Avatar size="200" radii="400">
+                          <Icon src={Icons.Flag} size="100" />
+                        </Avatar>
+                        <Box as="span" grow="Yes">
+                          <Text as="span" size="Inherit" truncate>
+                            Lobby
+                          </Text>
+                        </Box>
+                      </Box>
+                    </NavItemContent>
+                  </NavLink>
+                </NavItem>
+                <NavItem variant="Background" radii="400">
+                  <NavLink to="TODO:">
+                    <NavItemContent size="T300">
+                      <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                        <Avatar size="200" radii="400">
+                          <Icon src={Icons.Search} size="100" />
+                        </Avatar>
+                        <Box as="span" grow="Yes">
+                          <Text as="span" size="Inherit" truncate>
+                            Message Search
+                          </Text>
+                        </Box>
+                      </Box>
+                    </NavItemContent>
+                  </NavLink>
+                </NavItem>
+              </NavCategory>
               <SpaceChildRoomsProvider spaceId={space.roomId} roomToParents={roomToParents}>
                 {(childRooms) =>
                   childRooms.length > 0 && (
@@ -124,10 +158,14 @@ export function Space({ space }: { space: Room }) {
                 }
               </SpaceChildRoomsProvider>
               {childSpaces.sort(factoryRoomIdByAtoZ(mx)).map((childSpaceId) => (
-                <SpaceChildRoomsProvider spaceId={childSpaceId} roomToParents={roomToParents}>
+                <SpaceChildRoomsProvider
+                  key={childSpaceId}
+                  spaceId={childSpaceId}
+                  roomToParents={roomToParents}
+                >
                   {(childRooms) =>
                     childRooms.length > 0 && (
-                      <NavCategory key={childSpaceId}>
+                      <NavCategory>
                         <NavCategoryHeader>
                           <Text size="O400">{mx.getRoom(childSpaceId)?.name}</Text>
                         </NavCategoryHeader>

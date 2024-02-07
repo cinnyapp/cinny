@@ -87,7 +87,57 @@ export function Home() {
             <HomeEmpty />
           ) : (
             <ClientDrawerContentLayout>
-              <Box direction="Column" gap="400">
+              <Box direction="Column" gap="300">
+                <NavCategory>
+                  <NavItem variant="Background" radii="400">
+                    <NavLink to="TODO:">
+                      <NavItemContent size="T300">
+                        <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                          <Avatar size="200" radii="400">
+                            <Icon src={Icons.Plus} size="100" />
+                          </Avatar>
+                          <Box as="span" grow="Yes">
+                            <Text as="span" size="Inherit" truncate>
+                              Create Room
+                            </Text>
+                          </Box>
+                        </Box>
+                      </NavItemContent>
+                    </NavLink>
+                  </NavItem>
+                  <NavItem variant="Background" radii="400">
+                    <NavLink to="TODO:">
+                      <NavItemContent size="T300">
+                        <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                          <Avatar size="200" radii="400">
+                            <Icon src={Icons.Link} size="100" />
+                          </Avatar>
+                          <Box as="span" grow="Yes">
+                            <Text as="span" size="Inherit" truncate>
+                              Join with Address
+                            </Text>
+                          </Box>
+                        </Box>
+                      </NavItemContent>
+                    </NavLink>
+                  </NavItem>
+                  <NavItem variant="Background" radii="400">
+                    <NavLink to="TODO:">
+                      <NavItemContent size="T300">
+                        <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                          <Avatar size="200" radii="400">
+                            <Icon src={Icons.Search} size="100" />
+                          </Avatar>
+                          <Box as="span" grow="Yes">
+                            <Text as="span" size="Inherit" truncate>
+                              Message Search
+                            </Text>
+                          </Box>
+                        </Box>
+                      </NavItemContent>
+                    </NavLink>
+                  </NavItem>
+                </NavCategory>
                 <NavCategory>
                   <NavCategoryHeader>
                     <Text size="O400">Rooms</Text>

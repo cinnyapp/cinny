@@ -17,6 +17,7 @@ export const REGISTER_PATH = '/register/:server?/';
 export const RESET_PASSWORD_PATH = '/reset-password/:server?/';
 
 export const _CREATE_PATH = 'create/';
+export const _JOIN_PATH = 'join/';
 export const _LOBBY_PATH = 'lobby/';
 export const _SEARCH_PATH = 'search/';
 export const _ROOM_PATH = ':roomIdOrAlias/:eventId?/';
