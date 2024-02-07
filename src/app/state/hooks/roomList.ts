@@ -93,6 +93,36 @@ export const useSpaceChildRooms = (
 };
 
 /**
+ * select list of all room ids from all rooms for which spaceId is in all parents
+ * @param mx to check room type
+ * @param spaceId as root parent
+ * @param roomsAtom to pick rooms
+ * @param mDirects to include only direct rooms
+ * @param roomToParents: to include child room
+ * @returns list of direct room ids
+ */
+export const useSpaceRecursiveChildDirects = (
+  mx: MatrixClient,
+  spaceId: string,
+  roomsAtom: typeof allRoomsAtom,
+  mDirects: Set<string>,
+  roomToParents: RoomToParents
+) => {
+  const selector = useCallback(
+    (rooms: string[]) =>
+      rooms.filter(
+        (roomId) =>
+          isRoom(mx.getRoom(roomId)) &&
+          mDirects.has(roomId) &&
+          roomToParents.has(roomId) &&
+          getAllParents(roomToParents, roomId).has(spaceId)
+      ),
+    [mx, spaceId, mDirects, roomToParents]
+  );
+  return useAtomValue(selectAtom(roomsAtom, selector, compareRoomsEqual));
+};
+
+/**
  * select list of all room ids from all rooms for which spaceId is in parents and is in mDirects
  * @param mx to check room type
  * @param spaceId as root parent
