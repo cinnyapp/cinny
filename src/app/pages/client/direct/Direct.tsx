@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { Avatar, Box, Text } from 'folds';
+import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
@@ -14,6 +14,8 @@ import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
   NavCategory,
   NavCategoryHeader,
+  NavEmptyCenter,
+  NavEmptyLayout,
   NavItem,
   NavItemContent,
   NavLink,
@@ -27,11 +29,39 @@ import { getRoomAvatarUrl } from '../../../utils/room';
 import { nameInitials } from '../../../utils/common';
 import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
 
+function DirectEmpty() {
+  return (
+    <NavEmptyCenter>
+      <NavEmptyLayout
+        icon={<Icon size="600" src={Icons.Mention} />}
+        title={
+          <Text size="H5" align="Center">
+            No Direct Messages
+          </Text>
+        }
+        content={
+          <Text size="T300" align="Center">
+            You do not have any direct messages yet.
+          </Text>
+        }
+        options={
+          <Button variant="Secondary" size="300">
+            <Text size="B300" truncate>
+              Direct Message
+            </Text>
+          </Button>
+        }
+      />
+    </NavEmptyCenter>
+  );
+}
+
 export function Direct() {
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
   const directs = useDirects(mx, allRoomsAtom, mDirects);
   const selectedRoomId = useSelectedRoom();
+  const noRoomToDisplay = directs.length === 0;
 
   return (
     <ClientContentLayout
@@ -46,68 +76,74 @@ export function Direct() {
               </Box>
             </Box>
           </ClientDrawerHeaderLayout>
-          <ClientDrawerContentLayout>
-            <Box direction="Column" gap="400">
-              <NavCategory>
-                <NavCategoryHeader>
-                  <Text size="O400">People</Text>
-                </NavCategoryHeader>
-                {Array.from(directs)
-                  .sort(factoryRoomIdByAtoZ(mx))
-                  .map((roomId) => {
-                    const room = mx.getRoom(roomId);
-                    if (!room) return null;
-                    const selected = selectedRoomId === roomId;
-                    const avatarSrc = getRoomAvatarUrl(mx, room);
+          {noRoomToDisplay ? (
+            <DirectEmpty />
+          ) : (
+            <ClientDrawerContentLayout>
+              <Box direction="Column" gap="400">
+                <NavCategory>
+                  <NavCategoryHeader>
+                    <Text size="O400">People</Text>
+                  </NavCategoryHeader>
+                  {Array.from(directs)
+                    .sort(factoryRoomIdByAtoZ(mx))
+                    .map((roomId) => {
+                      const room = mx.getRoom(roomId);
+                      if (!room) return null;
+                      const selected = selectedRoomId === roomId;
+                      const avatarSrc = getRoomAvatarUrl(mx, room);
 
-                    return (
-                      <RoomUnreadProvider key={roomId} roomId={roomId}>
-                        {(unread) => (
-                          <NavItem
-                            key={roomId}
-                            variant="Background"
-                            radii="400"
-                            highlight={!!unread || selected}
-                            aria-selected={selected}
-                          >
-                            <NavLink to={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}>
-                              <NavItemContent size="T300">
-                                <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                                  <Avatar size="200" radii="400">
-                                    <RoomAvatar
-                                      src={avatarSrc}
-                                      alt={room.name}
-                                      renderInitials={() => (
-                                        <Text as="span" size="H6">
-                                          {nameInitials(room.name)}
-                                        </Text>
-                                      )}
-                                    />
-                                  </Avatar>
-                                  <Box as="span" grow="Yes">
-                                    <Text as="span" size="Inherit" truncate>
-                                      {room.name}
-                                    </Text>
-                                  </Box>
-                                  {unread && (
-                                    <UnreadBadgeCenter>
-                                      <UnreadBadge
-                                        highlight={unread.highlight > 0}
-                                        count={unread.total}
+                      return (
+                        <RoomUnreadProvider key={roomId} roomId={roomId}>
+                          {(unread) => (
+                            <NavItem
+                              key={roomId}
+                              variant="Background"
+                              radii="400"
+                              highlight={!!unread || selected}
+                              aria-selected={selected}
+                            >
+                              <NavLink
+                                to={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                              >
+                                <NavItemContent size="T300">
+                                  <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                                    <Avatar size="200" radii="400">
+                                      <RoomAvatar
+                                        src={avatarSrc}
+                                        alt={room.name}
+                                        renderInitials={() => (
+                                          <Text as="span" size="H6">
+                                            {nameInitials(room.name)}
+                                          </Text>
+                                        )}
                                       />
-                                    </UnreadBadgeCenter>
-                                  )}
-                                </Box>
-                              </NavItemContent>
-                            </NavLink>
-                          </NavItem>
-                        )}
-                      </RoomUnreadProvider>
-                    );
-                  })}
-              </NavCategory>
-            </Box>
-          </ClientDrawerContentLayout>
+                                    </Avatar>
+                                    <Box as="span" grow="Yes">
+                                      <Text as="span" size="Inherit" truncate>
+                                        {room.name}
+                                      </Text>
+                                    </Box>
+                                    {unread && (
+                                      <UnreadBadgeCenter>
+                                        <UnreadBadge
+                                          highlight={unread.highlight > 0}
+                                          count={unread.total}
+                                        />
+                                      </UnreadBadgeCenter>
+                                    )}
+                                  </Box>
+                                </NavItemContent>
+                              </NavLink>
+                            </NavItem>
+                          )}
+                        </RoomUnreadProvider>
+                      );
+                    })}
+                </NavCategory>
+              </Box>
+            </ClientDrawerContentLayout>
+          )}
         </ClientDrawerLayout>
       }
     >
