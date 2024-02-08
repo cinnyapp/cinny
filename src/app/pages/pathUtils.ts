@@ -3,7 +3,9 @@ import {
   DIRECT_CREATE_PATH,
   DIRECT_PATH,
   DIRECT_ROOM_PATH,
+  EXPLORE_FEATURED_PATH,
   EXPLORE_PATH,
+  EXPLORE_SERVER_PATH,
   HOME_CREATE_PATH,
   HOME_JOIN_PATH,
   HOME_PATH,
@@ -103,5 +105,13 @@ export const getSpaceRoomPath = (
   return generatePath(SPACE_ROOM_PATH, params);
 };
 
-export const getNotificationsPath = (): string => NOTIFICATIONS_PATH;
 export const getExplorePath = (): string => EXPLORE_PATH;
+export const getExploreFeaturedPath = (): string => EXPLORE_FEATURED_PATH;
+export const getExploreServerPath = (server: string): string => {
+  const params = {
+    server,
+  };
+  return generatePath(EXPLORE_SERVER_PATH, params);
+};
+
+export const getNotificationsPath = (): string => NOTIFICATIONS_PATH;

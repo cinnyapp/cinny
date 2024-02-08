@@ -23,10 +23,12 @@ import {
   ROOT_PATH,
   SPACE_PATH,
   _CREATE_PATH,
+  _FEATURED_PATH,
   _JOIN_PATH,
   _LOBBY_PATH,
   _ROOM_PATH,
   _SEARCH_PATH,
+  _SERVER_PATH,
 } from './paths';
 import { isAuthenticated } from '../../client/state/auth';
 import { getHomePath, getLoginPath } from './pathUtils';
@@ -37,6 +39,7 @@ import { Home } from './client/home';
 import { RoomViewer } from '../organisms/room/Room';
 import { Direct } from './client/direct';
 import { SpaceViewer } from './client/space';
+import { Explore } from './client/explore';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -83,7 +86,11 @@ const createRouter = (clientConfig: ClientConfig) => {
             <Route path={_SEARCH_PATH} element={<p>search</p>} />
             <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
-          <Route path={EXPLORE_PATH} element={<p>explore</p>} />
+          <Route path={EXPLORE_PATH} element={<Explore />}>
+            <Route index element={<p>welcome</p>} />
+            <Route path={_FEATURED_PATH} element={<p>featured</p>} />
+            <Route path={_SERVER_PATH} element={<p>server</p>} />
+          </Route>
         </Route>
       </Route>
       <Route path="/*" element={<p>Page not found</p>} />

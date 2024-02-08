@@ -21,8 +21,6 @@ export const _JOIN_PATH = 'join/';
 export const _LOBBY_PATH = 'lobby/';
 export const _SEARCH_PATH = 'search/';
 export const _ROOM_PATH = ':roomIdOrAlias/:eventId?/';
-export const _MESSAGES_PATH = 'messages/';
-export const _INVITES_PATH = 'invites/';
 
 export const HOME_PATH = '/home/';
 export const HOME_CREATE_PATH = `/home/${_CREATE_PATH}`;
@@ -39,8 +37,14 @@ export const SPACE_LOBBY_PATH = `/:spaceIdOrAlias/${_LOBBY_PATH}`;
 export const SPACE_SEARCH_PATH = `/:spaceIdOrAlias/${_SEARCH_PATH}`;
 export const SPACE_ROOM_PATH = `/:spaceIdOrAlias/${_ROOM_PATH}`;
 
+export const _FEATURED_PATH = 'featured/';
+export const _SERVER_PATH = ':server/';
 export const EXPLORE_PATH = '/explore/';
+export const EXPLORE_FEATURED_PATH = `/explore/${_FEATURED_PATH}`;
+export const EXPLORE_SERVER_PATH = `/explore/${_SERVER_PATH}`;
 
+export const _MESSAGES_PATH = 'messages/';
+export const _INVITES_PATH = 'invites/';
 export const NOTIFICATIONS_PATH = '/notifications/';
 
 export const USER_SETTINGS_PATH = '/user-settings/';

@@ -11,12 +11,13 @@ import {
 } from '../../components/sidebar';
 import { getExplorePath, getNotificationsPath } from '../pathUtils';
 import { DirectTab, HomeTab, SpaceTabs } from './sidebar';
+import { useExploreSelected } from '../../hooks/useExplore';
 
 export function ClientNavigation() {
   const navigate = useNavigate();
 
   const notificationMatch = useMatch(getNotificationsPath());
-  const exploreMatch = useMatch(getExplorePath());
+  const exploreSelected = useExploreSelected();
 
   return (
     <Sidebar>
@@ -34,10 +35,10 @@ export function ClientNavigation() {
             <SidebarStackSeparator />
             <SidebarStack>
               <SidebarAvatar
-                active={!!exploreMatch}
+                active={exploreSelected}
                 outlined
                 tooltip="Explore Community"
-                avatarChildren={<Icon src={Icons.Explore} filled={!!exploreMatch} />}
+                avatarChildren={<Icon src={Icons.Explore} filled={exploreSelected} />}
                 onClick={() => navigate(getExplorePath())}
               />
               <SidebarAvatar
