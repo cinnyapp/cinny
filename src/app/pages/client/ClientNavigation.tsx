@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMatch, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Icon, Icons, AvatarFallback, Text } from 'folds';
 
 import {
@@ -12,11 +12,12 @@ import {
 import { getExplorePath, getNotificationsPath } from '../pathUtils';
 import { DirectTab, HomeTab, SpaceTabs } from './sidebar';
 import { useExploreSelected } from '../../hooks/useExplore';
+import { useNotificationsSelected } from '../../hooks/useNotifications';
 
 export function ClientNavigation() {
   const navigate = useNavigate();
 
-  const notificationMatch = useMatch(getNotificationsPath());
+  const notificationsSelected = useNotificationsSelected();
   const exploreSelected = useExploreSelected();
 
   return (
@@ -59,10 +60,10 @@ export function ClientNavigation() {
                 avatarChildren={<Icon src={Icons.Search} />}
               />
               <SidebarAvatar
-                active={!!notificationMatch}
+                active={notificationsSelected}
                 outlined
                 tooltip="Notifications"
-                avatarChildren={<Icon src={Icons.Bell} filled={!!notificationMatch} />}
+                avatarChildren={<Icon src={Icons.Bell} filled={notificationsSelected} />}
                 onClick={() => navigate(getNotificationsPath())}
               />
               <SidebarAvatar

@@ -24,8 +24,10 @@ import {
   SPACE_PATH,
   _CREATE_PATH,
   _FEATURED_PATH,
+  _INVITES_PATH,
   _JOIN_PATH,
   _LOBBY_PATH,
+  _MESSAGES_PATH,
   _ROOM_PATH,
   _SEARCH_PATH,
   _SERVER_PATH,
@@ -40,6 +42,7 @@ import { RoomViewer } from '../organisms/room/Room';
 import { Direct } from './client/direct';
 import { SpaceViewer } from './client/space';
 import { Explore } from './client/explore';
+import { Notifications } from './client/notifications';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -79,7 +82,11 @@ const createRouter = (clientConfig: ClientConfig) => {
             <Route path={_CREATE_PATH} element={<p>create</p>} />
             <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
-          <Route path={NOTIFICATIONS_PATH} element={<p>notifications</p>} />
+          <Route path={NOTIFICATIONS_PATH} element={<Notifications />}>
+            <Route index element={<p>welcome</p>} />
+            <Route path={_MESSAGES_PATH} element={<p>messages</p>} />
+            <Route path={_INVITES_PATH} element={<p>invites</p>} />
+          </Route>
           <Route path={SPACE_PATH} element={<SpaceViewer />}>
             <Route index element={<p>welcome</p>} />
             <Route path={_LOBBY_PATH} element={<p>lobby</p>} />
