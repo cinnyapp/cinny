@@ -119,7 +119,7 @@ export function Space({ spaceIdOrAlias, space }: { spaceIdOrAlias: string; space
             <Box direction="Column" gap="300">
               <NavCategory>
                 <NavItem variant="Background" radii="400" aria-selected={lobbySelected}>
-                  <NavLink to={getSpaceLobbyPath(space.roomId)}>
+                  <NavLink to={getSpaceLobbyPath(getCanonicalAliasOrRoomId(mx, space.roomId))}>
                     <NavItemContent size="T300">
                       <Box as="span" grow="Yes" alignItems="Center" gap="200">
                         <Avatar size="200" radii="400">
@@ -135,7 +135,7 @@ export function Space({ spaceIdOrAlias, space }: { spaceIdOrAlias: string; space
                   </NavLink>
                 </NavItem>
                 <NavItem variant="Background" radii="400" aria-selected={searchSelected}>
-                  <NavLink to={getSpaceSearchPath(space.roomId)}>
+                  <NavLink to={getSpaceSearchPath(getCanonicalAliasOrRoomId(mx, space.roomId))}>
                     <NavItemContent size="T300">
                       <Box as="span" grow="Yes" alignItems="Center" gap="200">
                         <Avatar size="200" radii="400">
