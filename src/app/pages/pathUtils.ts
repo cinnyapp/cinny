@@ -23,6 +23,7 @@ import {
   SPACE_ROOM_PATH,
   SPACE_SEARCH_PATH,
 } from './paths';
+import { trimTrailingSlash } from '../utils/common';
 
 export const withSearchParam = <T extends Record<string, string>>(
   path: string,
@@ -31,6 +32,13 @@ export const withSearchParam = <T extends Record<string, string>>(
   const params = new URLSearchParams(searchParam);
 
   return `${path}?${params}`;
+};
+
+export const getAbsolutePathFromHref = (href: string): string | undefined => {
+  const baseUrl = `${trimTrailingSlash(window.location.origin)}${import.meta.env.BASE_URL}`;
+  const [, path] = href.split(trimTrailingSlash(baseUrl));
+
+  return path;
 };
 
 export const getRootPath = (): string => ROOT_PATH;

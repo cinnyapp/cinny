@@ -33,7 +33,7 @@ import {
   _SERVER_PATH,
 } from './paths';
 import { isAuthenticated } from '../../client/state/auth';
-import { getHomePath, getLoginPath } from './pathUtils';
+import { getAbsolutePathFromHref, getHomePath, getLoginPath } from './pathUtils';
 import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 import { FeatureCheck } from './FeatureCheck';
 import { ClientLayout, ClientRoot } from './client';
@@ -43,6 +43,7 @@ import { Direct } from './client/direct';
 import { SpaceViewer } from './client/space';
 import { Explore } from './client/explore';
 import { Notifications } from './client/notifications';
+import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 
 const createRouter = (clientConfig: ClientConfig) => {
   const { hashRouter } = clientConfig;
@@ -53,6 +54,9 @@ const createRouter = (clientConfig: ClientConfig) => {
         path={ROOT_PATH}
         loader={() => {
           if (isAuthenticated()) return redirect(getHomePath());
+
+          const afterLoginPath = getAbsolutePathFromHref(window.location.href);
+          if (afterLoginPath) setAfterLoginRedirectPath(afterLoginPath);
           return redirect(getLoginPath());
         }}
       />
@@ -64,7 +68,11 @@ const createRouter = (clientConfig: ClientConfig) => {
 
       <Route
         loader={() => {
-          if (!isAuthenticated()) return redirect(getLoginPath());
+          if (!isAuthenticated()) {
+            const afterLoginPath = getAbsolutePathFromHref(window.location.href);
+            if (afterLoginPath) setAfterLoginRedirectPath(afterLoginPath);
+            return redirect(getLoginPath());
+          }
           return null;
         }}
         element={<ClientRoot />}
