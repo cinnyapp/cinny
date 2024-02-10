@@ -12,7 +12,7 @@ import { getHomePath, getHomeRoomPath } from '../../pathUtils';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { SidebarAvatar } from '../../../components/sidebar';
 import { NotificationBadge, UnreadMenu } from './NotificationBadge';
-import { useHomeSelected } from '../../../hooks/useHomeSelected';
+import { useHomeSelected } from '../../../hooks/router/useHomeSelected';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 
 export function HomeTab() {

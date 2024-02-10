@@ -3,7 +3,7 @@ import {
   getNotificationsInvitesPath,
   getNotificationsMessagesPath,
   getNotificationsPath,
-} from '../pages/pathUtils';
+} from '../../pages/pathUtils';
 
 export const useNotificationsSelected = (): boolean => {
   const match = useMatch({

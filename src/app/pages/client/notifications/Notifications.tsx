@@ -10,7 +10,7 @@ import { getNotificationsInvitesPath, getNotificationsMessagesPath } from '../..
 import {
   useNotificationsInvitesSelected,
   useNotificationsMessagesSelected,
-} from '../../../hooks/useNotifications';
+} from '../../../hooks/router/useNotifications';
 
 export function Notifications() {
   const messagesSelected = useNotificationsMessagesSelected();

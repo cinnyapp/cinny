@@ -16,7 +16,7 @@ import {
   useBindRoomIdToTypingMembersAtom,
 } from '../../state/typingMembers';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useSelectedRoom } from '../../hooks/useSelectedRoom';
+import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 
 export type RoomBaseViewProps = {
   room: Room;

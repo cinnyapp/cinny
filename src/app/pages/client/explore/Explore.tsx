@@ -14,7 +14,7 @@ import {
 } from '../../../components/nav';
 import { getExploreFeaturedPath, getExploreServerPath } from '../../pathUtils';
 import { clientDefaultServer, useClientConfig } from '../../../hooks/useClientConfig';
-import { useExploreFeaturedSelected, useExploreServer } from '../../../hooks/useExplore';
+import { useExploreFeaturedSelected, useExploreServer } from '../../../hooks/router/useExplore';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getMxIdServer } from '../../../utils/matrix';
 

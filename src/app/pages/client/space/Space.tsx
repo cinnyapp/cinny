@@ -28,12 +28,12 @@ import { RoomIcon } from '../../../components/room-avatar';
 import { getSpaceLobbyPath, getSpaceRoomPath, getSpaceSearchPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
-import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
+import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import {
   useSelectedSpace,
   useSpaceLobbySelected,
   useSpaceSearchSelected,
-} from '../../../hooks/useSelectedSpace';
+} from '../../../hooks/router/useSelectedSpace';
 import { SpaceChildRoomsProvider } from '../../../components/SpaceChildRoomsProvider';
 
 export function Space({ spaceIdOrAlias, space }: { spaceIdOrAlias: string; space: Room }) {

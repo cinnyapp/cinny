@@ -11,7 +11,7 @@ import { getDirectPath, getDirectRoomPath } from '../../pathUtils';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { SidebarAvatar } from '../../../components/sidebar';
 import { NotificationBadge, UnreadMenu } from './NotificationBadge';
-import { useDirectSelected } from '../../../hooks/useDirectSelected';
+import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 
 export function DirectTab() {

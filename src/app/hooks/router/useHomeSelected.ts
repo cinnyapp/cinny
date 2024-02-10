@@ -4,7 +4,7 @@ import {
   getHomeJoinPath,
   getHomePath,
   getHomeSearchPath,
-} from '../pages/pathUtils';
+} from '../../pages/pathUtils';
 
 export const useHomeSelected = (): boolean => {
   const homeMatch = useMatch({

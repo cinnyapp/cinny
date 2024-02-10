@@ -31,12 +31,12 @@ import {
 } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
-import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
+import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import {
   useHomeCreateSelected,
   useHomeJoinSelected,
   useHomeSearchSelected,
-} from '../../../hooks/useHomeSelected';
+} from '../../../hooks/router/useHomeSelected';
 
 function HomeEmpty() {
   return (

@@ -27,8 +27,8 @@ import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { getRoomAvatarUrl } from '../../../utils/room';
 import { nameInitials } from '../../../utils/common';
-import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
-import { useDirectCreateSelected } from '../../../hooks/useDirectSelected';
+import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
+import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
 
 function DirectEmpty() {
   return (

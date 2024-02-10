@@ -11,7 +11,7 @@ import { SidebarAvatar } from '../../../components/sidebar';
 import { NotificationBadge, UnreadMenu } from './NotificationBadge';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import colorMXID from '../../../../util/colorMXID';
-import { useSelectedSpace } from '../../../hooks/useSelectedSpace';
+import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 
 export function SpaceTabs() {

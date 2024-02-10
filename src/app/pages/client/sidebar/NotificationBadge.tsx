@@ -13,7 +13,7 @@ import { mDirectAtom } from '../../../state/mDirectList';
 import { getRoomAvatarUrl } from '../../../utils/room';
 import { nameInitials } from '../../../utils/common';
 import { NavItem, NavItemContent, NavLink } from '../../../components/nav';
-import { useSelectedRoom } from '../../../hooks/useSelectedRoom';
+import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 
 export const UnreadMenu = forwardRef<
   HTMLDivElement,
