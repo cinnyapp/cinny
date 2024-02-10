@@ -76,8 +76,8 @@ export const isSpace = (room: Room | null): boolean => {
 export const isRoom = (room: Room | null): boolean => {
   if (!room) return false;
   const event = getStateEvent(room, StateEvent.RoomCreate);
-  if (!event) return false;
-  return event.getContent().type === undefined;
+  if (!event) return true;
+  return event.getContent().type !== RoomType.Space;
 };
 
 export const isUnsupportedRoom = (room: Room | null): boolean => {
