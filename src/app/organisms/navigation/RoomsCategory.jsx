@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import './RoomsCategory.scss';
 
 import initMatrix from '../../../client/initMatrix';
-import { selectSpace, selectRoom, openReusableContextMenu } from '../../../client/action/navigation';
+import {
+  selectSpace,
+  selectRoom,
+  openReusableContextMenu,
+} from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
@@ -18,11 +22,41 @@ import HorizontalMenuIC from '../../../../public/res/ic/outlined/horizontal-menu
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import ChevronRightIC from '../../../../public/res/ic/outlined/chevron-right.svg';
 
-function RoomsCategory({
-  spaceId, name, hideHeader, roomIds, drawerPostie,
-}) {
+const RoomsCategory = forwardRef(({ spaceId, name, hideHeader, roomIds, drawerPostie }, ref) => {
   const { spaces, directs } = initMatrix.roomList;
   const [isOpen, setIsOpen] = useState(true);
+
+  const selectorsRefs = useRef([]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      hasSelected() {
+        return selectorsRefs.current.some((s) => s && s.hasSelected());
+      },
+      navigate(amount) {
+        const refs = selectorsRefs.current.filter((c) => c);
+        let current = refs.findIndex((s) => s.hasSelected());
+        const len = refs.length;
+        if (current == -1) {
+          if (amount < 0) {
+            // start navigation coming from below
+            current = len;
+          } else if (amount > 0) {
+            // start navigation coming from above
+            current = -1;
+          } else {
+            // invalid call
+            return 0;
+          }
+        }
+        if (current + amount < 0) return current + amount;
+        else if (current + amount >= len) return current + amount - len + 1;
+        refs[current + amount].select();
+        return 0;
+      },
+    }),
+    [selectorsRefs]
+  );
 
   const openSpaceOptions = (e) => {
     e.preventDefault();
@@ -42,13 +76,14 @@ function RoomsCategory({
     );
   };
 
-  const renderSelector = (roomId) => {
+  const renderSelector = (roomId, i) => {
     const isSpace = spaces.has(roomId);
     const isDM = directs.has(roomId);
 
     return (
       <Selector
         key={roomId}
+        ref={(e) => (selectorsRefs.current[i] = e)}
         roomId={roomId}
         isDM={isDM}
         drawerPostie={drawerPostie}
@@ -70,13 +105,11 @@ function RoomsCategory({
         </div>
       )}
       {(isOpen || hideHeader) && (
-        <div className="room-category__content">
-          {roomIds.map(renderSelector)}
-        </div>
+        <div className="room-category__content">{roomIds.map(renderSelector)}</div>
       )}
     </div>
   );
-}
+});
 RoomsCategory.defaultProps = {
   spaceId: null,
   hideHeader: false,

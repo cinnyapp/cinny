@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useEffect } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
@@ -18,12 +18,30 @@ import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 
-function Selector({
-  roomId, isDM, drawerPostie, onClick,
-}) {
+const Selector = forwardRef(({ roomId, isDM, drawerPostie, onClick }, ref) => {
   const mx = initMatrix.matrixClient;
   const noti = initMatrix.notifications;
   const room = mx.getRoom(roomId);
+  const buttonRef = useRef(null);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      hasSelected() {
+        return navigation.selectedRoomId == roomId;
+      },
+      select() {
+        onClick();
+        let btn = buttonRef.current;
+        requestAnimationFrame(() => {
+          btn.scrollIntoView({
+            block: 'center',
+          });
+        });
+      },
+    }),
+    [roomId, onClick, buttonRef]
+  );
 
   let imageSrc = room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
   if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
@@ -66,18 +84,19 @@ function Selector({
       isAlert={noti.getHighlightNoti(roomId) !== 0}
       onClick={onClick}
       onContextMenu={openOptions}
-      options={(
+      options={
         <IconButton
+          ref={buttonRef}
           size="extra-small"
           tooltip="Options"
           tooltipPlacement="right"
           src={VerticalMenuIC}
           onClick={openOptions}
         />
-      )}
+      }
     />
   );
-}
+});
 
 Selector.defaultProps = {
   isDM: true,

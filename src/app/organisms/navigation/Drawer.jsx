@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Drawer.scss';
 
 import initMatrix from '../../../client/initMatrix';
@@ -16,6 +16,8 @@ import Directs from './Directs';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { useSelectedTab } from '../../hooks/useSelectedTab';
 import { useSelectedSpace } from '../../hooks/useSelectedSpace';
+import { useKeyDown } from '../../hooks/useKeyDown';
+import { isKeyHotkey } from 'is-hotkey';
 
 function useSystemState() {
   const [systemState, setSystemState] = useState(null);
@@ -42,6 +44,9 @@ function Drawer() {
   const [spaceId] = useSelectedSpace();
   const [, forceUpdate] = useForceUpdate();
   const scrollRef = useRef(null);
+  const directsRef = useRef(null);
+  const homeRef = useRef(null);
+  const breadcrumbRef = useRef(null);
   const { roomList } = initMatrix;
 
   useEffect(() => {
@@ -62,26 +67,55 @@ function Drawer() {
     });
   }, [selectedTab]);
 
+  const navigateList = useCallback(
+    (amount) => {
+      if (selectedTab !== cons.tabs.DIRECTS) homeRef.current.navigate(amount);
+      else directsRef.current.navigate(amount);
+    },
+    [selectedTab, homeRef, directsRef]
+  );
+
+  useKeyDown(
+    window,
+    useCallback(
+      (evt) => {
+        if (isKeyHotkey('alt+arrowup', evt)) {
+          navigateList(-1);
+          evt.preventDefault();
+        } else if (isKeyHotkey('alt+arrowdown', evt)) {
+          navigateList(1);
+          evt.preventDefault();
+        } else if (isKeyHotkey('alt+arrowleft', evt)) {
+          if (breadcrumbRef.current) {
+            breadcrumbRef.current.goUp();
+            evt.preventDefault();
+          }
+        }
+      },
+      [navigateList]
+    )
+  );
+
   return (
     <div className="drawer">
       <DrawerHeader selectedTab={selectedTab} spaceId={spaceId} />
       <div className="drawer__content-wrapper">
         {navigation.selectedSpacePath.length > 1 && selectedTab !== cons.tabs.DIRECTS && (
-          <DrawerBreadcrumb spaceId={spaceId} />
+          <DrawerBreadcrumb ref={breadcrumbRef} spaceId={spaceId} />
         )}
         <div className="rooms__wrapper">
           <ScrollView ref={scrollRef} autoHide>
             <div className="rooms-container">
-              {
-                selectedTab !== cons.tabs.DIRECTS
-                  ? <Home spaceId={spaceId} />
-                  : <Directs size={roomList.directs.size} />
-              }
+              {selectedTab !== cons.tabs.DIRECTS ? (
+                <Home ref={homeRef} spaceId={spaceId} />
+              ) : (
+                <Directs ref={directsRef} size={roomList.directs.size} />
+              )}
             </div>
           </ScrollView>
         </div>
       </div>
-      { systemState !== null && (
+      {systemState !== null && (
         <div className="drawer__state">
           <Text>{systemState.status}</Text>
         </div>
