@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import './SideBar.scss';
 
@@ -9,8 +16,12 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import colorMXID from '../../../util/colorMXID';
 import {
-  selectTab, openShortcutSpaces, openInviteList,
-  openSearch, openSettings, openReusableContextMenu,
+  selectTab,
+  openShortcutSpaces,
+  openInviteList,
+  openSearch,
+  openSettings,
+  openReusableContextMenu,
 } from '../../../client/action/navigation';
 import { moveSpaceShortcut } from '../../../client/action/accountData';
 import { abbreviateNumber, getEventCords } from '../../../util/common';
@@ -33,6 +44,8 @@ import { useSelectedTab } from '../../hooks/useSelectedTab';
 import { useDeviceList } from '../../hooks/useDeviceList';
 
 import { tabText as settingTabText } from '../settings/Settings';
+import { useKeyDown } from '../../hooks/useKeyDown';
+import { isKeyHotkey } from 'is-hotkey';
 
 function useNotificationUpdate() {
   const { notifications } = initMatrix;
@@ -106,10 +119,35 @@ function CrossSigninAlert() {
   );
 }
 
-function FeaturedTab() {
+const FeaturedTab = forwardRef((_, ref) => {
   const { roomList, accountData, notifications } = initMatrix;
   const [selectedTab] = useSelectedTab();
   useNotificationUpdate();
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      hasSelected() {
+        return selectedTab === cons.tabs.HOME || selectedTab === cons.tabs.DIRECTS;
+      },
+      navigate(amount) {
+        if (amount < 0) {
+          if (selectedTab === cons.tabs.DIRECTS || selectedTab === cons.tabs.HOME)
+            selectTab(cons.tabs.HOME);
+          else selectTab(cons.tabs.DIRECTS);
+          return 0;
+        } else if (amount > 0) {
+          if (selectedTab !== cons.tabs.DIRECTS) {
+            selectTab(cons.tabs.DIRECTS);
+            return 0;
+          } else {
+            return amount;
+          }
+        }
+      },
+    }),
+    [selectedTab]
+  );
 
   function getHomeNoti() {
     const orphans = roomList.getOrphans();
@@ -172,7 +210,7 @@ function FeaturedTab() {
       />
     </>
   );
-}
+});
 
 function DraggableSpaceShortcut({
   isActive, spaceId, index, moveShortcut, onDrop,
@@ -275,11 +313,41 @@ DraggableSpaceShortcut.propTypes = {
   onDrop: PropTypes.func.isRequired,
 };
 
-function SpaceShortcut() {
+const SpaceShortcut = forwardRef((_, ref) => {
   const { accountData } = initMatrix;
   const [selectedTab] = useSelectedTab();
   useNotificationUpdate();
   const [spaceShortcut, setSpaceShortcut] = useState([...accountData.spaceShortcut]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      hasSelected() {
+        return spaceShortcut.includes(selectedTab);
+      },
+      navigate(amount) {
+        if (!spaceShortcut.length) return 0;
+
+        let idx = spaceShortcut.indexOf(selectedTab);
+        if (idx === -1) {
+          if (amount < 0) {
+            // start from below
+            selectTab(spaceShortcut[spaceShortcut.length - 1]);
+          } else if (amount > 0) {
+            // start from above
+            selectTab(spaceShortcut[0]);
+          }
+          return 0;
+        }
+        idx += amount;
+        if (idx < 0) return idx;
+        else if (idx >= spaceShortcut.length) idx = spaceShortcut.length - 1;
+        selectTab(spaceShortcut[idx]);
+        return 0;
+      },
+    }),
+    [selectedTab, spaceShortcut]
+  );
 
   useEffect(() => {
     const handleShortcut = () => setSpaceShortcut([...accountData.spaceShortcut]);
@@ -304,8 +372,7 @@ function SpaceShortcut() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      {
-        spaceShortcut.map((shortcut, index) => (
+      {spaceShortcut.map((shortcut, index) => (
           <DraggableSpaceShortcut
             key={shortcut}
             index={index}
@@ -314,11 +381,10 @@ function SpaceShortcut() {
             moveShortcut={moveShortcut}
             onDrop={handleDrop}
           />
-        ))
-      }
+      ))}
     </DndProvider>
   );
-}
+});
 
 function useTotalInvites() {
   const { roomList } = initMatrix;
@@ -343,17 +409,57 @@ function useTotalInvites() {
 function SideBar() {
   const [totalInvites] = useTotalInvites();
 
+  const featuredRef = useRef(null);
+  const spacesRef = useRef(null);
+
+  const navigateList = useCallback(
+    (amount) => {
+      let lists = [featuredRef, spacesRef];
+      let current = lists.findIndex((l) => l.current.hasSelected());
+      if (current == -1) return;
+
+      let remaining = amount;
+      while (current >= 0 && current < lists.length) {
+        remaining = lists[current].current.navigate(remaining);
+        if (remaining > 0) {
+          current++;
+        } else if (remaining < 0) {
+          current--;
+        } else {
+          break;
+        }
+      }
+    },
+    [featuredRef, spacesRef]
+  );
+
+  useKeyDown(
+    window,
+    useCallback(
+      (evt) => {
+        if (isKeyHotkey('ctrl+alt+arrowup', evt)) {
+          navigateList(-1);
+          evt.preventDefault();
+        } else if (isKeyHotkey('ctrl+alt+arrowdown', evt)) {
+          navigateList(1);
+          evt.preventDefault();
+        }
+      },
+      [navigateList]
+    )
+  );
+
   return (
     <div className="sidebar">
       <div className="sidebar__scrollable">
         <ScrollView invisible>
           <div className="scrollable-content">
             <div className="featured-container">
-              <FeaturedTab />
+              <FeaturedTab ref={featuredRef} />
             </div>
             <div className="sidebar-divider" />
             <div className="space-container">
-              <SpaceShortcut />
+              <SpaceShortcut ref={spacesRef} />
               <SidebarAvatar
                 tooltip="Pin spaces"
                 onClick={() => openShortcutSpaces()}
@@ -371,7 +477,7 @@ function SideBar() {
             onClick={() => openSearch()}
             avatar={<Avatar iconSrc={SearchIC} size="normal" />}
           />
-          { totalInvites !== 0 && (
+          {totalInvites !== 0 && (
             <SidebarAvatar
               tooltip="Invites"
               onClick={() => openInviteList()}

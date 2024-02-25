@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 import initMatrix from '../../../client/initMatrix';
@@ -12,12 +12,38 @@ import RoomsCategory from './RoomsCategory';
 import { useCategorizedSpaces } from '../../hooks/useCategorizedSpaces';
 
 const drawerPostie = new Postie();
-function Home({ spaceId }) {
+const Home = forwardRef(({ spaceId }, ref) => {
   const mx = initMatrix.matrixClient;
   const { roomList, notifications, accountData } = initMatrix;
   const { spaces, rooms, directs } = roomList;
   useCategorizedSpaces();
   const isCategorized = accountData.categorizedSpaces.has(spaceId);
+  const listsRefs = useRef([]);
+  let listRefIdx = 0;
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      navigate(amount) {
+        let refs = listsRefs.current.filter((c) => c);
+        let current = refs.findIndex((c) => c.hasSelected());
+        if (current == -1) return;
+
+        let remaining = amount;
+        while (current >= 0 && current < refs.length) {
+          remaining = refs[current].navigate(remaining);
+          if (remaining > 0) {
+            current++;
+          } else if (remaining < 0) {
+            current--;
+          } else {
+            break;
+          }
+        }
+      },
+    }),
+    [listsRefs]
+  );
 
   let categories = null;
   let spaceIds = [];
@@ -68,19 +94,35 @@ function Home({ spaceId }) {
 
   return (
     <>
-      { !isCategorized && spaceIds.length !== 0 && (
-        <RoomsCategory name="Spaces" roomIds={spaceIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
+      {!isCategorized && spaceIds.length !== 0 && (
+        <RoomsCategory
+          ref={(e) => (listsRefs.current[listRefIdx++] = e)}
+          name="Spaces"
+          roomIds={spaceIds.sort(roomIdByAtoZ)}
+          drawerPostie={drawerPostie}
+        />
       )}
 
-      { roomIds.length !== 0 && (
-        <RoomsCategory name="Rooms" roomIds={roomIds.sort(roomIdByAtoZ)} drawerPostie={drawerPostie} />
+      {roomIds.length !== 0 && (
+        <RoomsCategory
+          ref={(e) => (listsRefs.current[listRefIdx++] = e)}
+          name="Rooms"
+          roomIds={roomIds.sort(roomIdByAtoZ)}
+          drawerPostie={drawerPostie}
+        />
       )}
 
-      { directIds.length !== 0 && (
-        <RoomsCategory name="People" roomIds={directIds.sort(roomIdByActivity)} drawerPostie={drawerPostie} />
+      {directIds.length !== 0 && (
+        <RoomsCategory
+          ref={(e) => (listsRefs.current[listRefIdx++] = e)}
+          name="People"
+          roomIds={directIds.sort(roomIdByActivity)}
+          drawerPostie={drawerPostie}
+        />
       )}
 
-      { isCategorized && [...categories.keys()].sort(roomIdByAtoZ).map((catId) => {
+      {isCategorized &&
+        [...categories.keys()].sort(roomIdByAtoZ).map((catId) => {
         const rms = [];
         const dms = [];
         categories.get(catId).forEach((id) => {
@@ -91,6 +133,7 @@ function Home({ spaceId }) {
         dms.sort(roomIdByActivity);
         return (
           <RoomsCategory
+              ref={(e) => (listsRefs.current[listRefIdx++] = e)}
             key={catId}
             spaceId={catId}
             name={mx.getRoom(catId).name}
@@ -101,7 +144,7 @@ function Home({ spaceId }) {
       })}
     </>
   );
-}
+});
 Home.defaultProps = {
   spaceId: null,
 };
