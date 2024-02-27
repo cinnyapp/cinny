@@ -11,7 +11,7 @@ import {
 } from '../../components/sidebar';
 import { getExplorePath, getNotificationsPath } from '../pathUtils';
 import { DirectTab, HomeTab, SpaceTabs } from './sidebar';
-import { useExploreSelected } from '../../hooks/router/useExplore';
+import { useExploreSelected } from '../../hooks/router/useExploreSelected';
 import { useNotificationsSelected } from '../../hooks/router/useNotifications';
 
 export function ClientNavigation() {

@@ -10,6 +10,17 @@
   ],
   "allowCustomHomeservers": true,
 
+  "featuredCommunities": {
+    "spaces": ["#cinny-space:matrix.org", "#community:matrix.org"],
+    "rooms": [
+      "#cinny:matrix.org",
+      "#foundation-office:matrix.org",
+      "#thisweekinmatrix:matrix.org",
+      "#matrix-dev:matrix.org",
+      "#matrix:matrix.org"
+    ]
+  },
+
   "hashRouter": {
     "enabled": false,
     "basename": "/"
