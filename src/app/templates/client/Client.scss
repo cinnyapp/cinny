@@ -3,13 +3,26 @@
 .client-container {
   display: flex;
   height: 100%;
+
+  @include screen.biggerThan(mobileBreakpoint) {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: calc(100% - var(--navigation-width));
+  }
 }
 
 .navigation__wrapper {
   width: var(--navigation-width);
   
   @include screen.smallerThan(mobileBreakpoint) {
+    position: fixed;
+    left: 0;
+    top: 0;
     width: 100%;
+    height: 100%;
+    transition: all .25s ease;
+    z-index: 1000;
   }
 }
 
@@ -21,6 +34,15 @@
 @include screen.smallerThan(mobileBreakpoint) {
   .client__item-hidden {
     display: none;
+  }
+
+  .client__item-background {
+    filter: brightness(50%);
+  }
+
+  .client__item-sided {
+    transition: all .25s ease;
+    transform: translateX(-100%);
   }
 }
 

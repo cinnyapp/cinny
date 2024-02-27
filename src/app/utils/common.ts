@@ -95,3 +95,9 @@ export const trimLeadingSlash = (str: string): string => str.replace(START_SLASH
 export const trimTrailingSlash = (str: string): string => str.replace(END_SLASHES_REG, '');
 
 export const trimSlash = (str: string): string => trimLeadingSlash(trimTrailingSlash(str));
+
+export const clamp = (val: number, min: number, max: number) => {
+  if (val <= min) return min;
+  if (val >= max) return max;
+  return val;
+}
