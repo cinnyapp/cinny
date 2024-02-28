@@ -2,7 +2,7 @@ import { style } from '@vanilla-extract/css';
 import { DefaultReset, config } from 'folds';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 
-export const RoomCard = style([
+export const RoomCardBase = style([
   DefaultReset,
   ContainerColor({ variant: 'SurfaceVariant' }),
   {
