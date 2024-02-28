@@ -26,7 +26,6 @@ export const RoomCardTopic = as<'p'>(({ className, ...props }, ref) => (
   <Text
     as="p"
     size="T200"
-    truncate
     className={classNames(css.RoomCardTopic, className)}
     {...props}
     ref={ref}

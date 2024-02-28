@@ -69,7 +69,7 @@ export function FeaturedRooms() {
               <Text size="H4">Featured Spaces</Text>
               <Box className={css.CardGrid} gap="400" wrap="Wrap">
                 {spaces?.map((roomIdOrAlias) => (
-                  <RoomSummaryLoader roomIdOrAlias={roomIdOrAlias}>
+                  <RoomSummaryLoader key={roomIdOrAlias} roomIdOrAlias={roomIdOrAlias}>
                     {(roomSummary) => (
                       <RoomCard
                         roomIdOrAlias={roomIdOrAlias}
@@ -89,7 +89,7 @@ export function FeaturedRooms() {
               <Text size="H4">Featured Rooms</Text>
               <Box className={css.CardGrid} gap="400" wrap="Wrap">
                 {rooms?.map((roomIdOrAlias) => (
-                  <RoomSummaryLoader roomIdOrAlias={roomIdOrAlias}>
+                  <RoomSummaryLoader key={roomIdOrAlias} roomIdOrAlias={roomIdOrAlias}>
                     {(roomSummary) => (
                       <RoomCard
                         roomIdOrAlias={roomIdOrAlias}
