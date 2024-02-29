@@ -50,26 +50,32 @@ function Client() {
   const roomWrapperRef = useRef(null);
 
   function onRoomSelected() {
-    navWrapperRef.current?.classList.add(classNameSided);
     roomWrapperRef.current?.classList.remove(classNameHidden);
+    navWrapperRef.current?.classList.add(classNameSided);
   }
   function onNavigationSelected() {
     navWrapperRef.current?.classList.remove(classNameSided);
-    roomWrapperRef.current?.classList.add(classNameHidden);
+    setTimeout(() => roomWrapperRef.current?.classList.add(classNameHidden), 250);
   }
-  // Touch variables. Don't use states as we don't want any re-render.
+  let lastTouch = 0, sideVelocity = 0;
   function onTouchStart(event) {
     if (!navWrapperRef.current?.classList.contains(classNameSided)) return;
     if (event.touches.length != 1) return setTouchingSide(false);
-    if (event.touches[0].clientX < window.innerWidth * 0.1) setTouchingSide(true);
+    if (event.touches[0].clientX < window.innerWidth * 0.1) {
+      setTouchingSide(true);
+      lastTouch = Date.now();
+    }
   }
   function onTouchEnd(event) {
     if (!navWrapperRef.current?.classList.contains(classNameSided)) return;
     setTouchingSide(isTouchingSide => {
       if (isTouchingSide) {
-        event.preventDefault();
         setSideMoved(sideMoved => {
-          if (sideMoved > 0.5) openNavigation();
+          if (sideMoved) {
+            event.preventDefault();
+            if (sideMoved > window.innerWidth * 0.5 || sideVelocity >= (window.innerWidth * 0.1 / 250)) openNavigation();
+          }
+          sideVelocity = lastTouch = 0;
           return 0;
         });
       }
@@ -82,7 +88,12 @@ function Client() {
       if (isTouchingSide) {
         event.preventDefault();
         if (event.changedTouches.length != 1) return setSideMoved(0);
-        setSideMoved(event.changedTouches[0].clientX / window.innerWidth);
+        setSideMoved(sideMoved => {
+          const newSideMoved = event.changedTouches[0].clientX;
+          sideVelocity = (newSideMoved - sideMoved) / (Date.now() - lastTouch);
+          lastTouch = Date.now();
+          return newSideMoved;
+        });
       }
       return isTouchingSide;
     });
@@ -163,7 +174,7 @@ function Client() {
 
   return (
     <MatrixClientProvider value={initMatrix.matrixClient}>
-      <div className="navigation__wrapper" style={isTouchingSide ? { transform: `translateX(${-clamp((1 - sideMoved) * 100, 0, 100)}%)`, transition: "none" } : {}} ref={navWrapperRef}>
+      <div className="navigation__wrapper" style={isTouchingSide ? { transform: `translateX(${-clamp(window.innerWidth - sideMoved, 0, window.innerWidth)}px)`, transition: "none" } : {}} ref={navWrapperRef}>
         <Navigation />
       </div>
       <div className="client-container">
