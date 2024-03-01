@@ -991,7 +991,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     [editor]
   );
 
-  // States used for swipe-left-reply. Mostly used for animations.
+  // States used for swipe-left-reply. Used for animations and determining whether we should reply or not.
   const [isTouchingSide, setTouchingSide] = useState(false);
   const [sideMoved, setSideMoved] = useState(0);
   const [sideMovedInit, setSideMovedInit] = useState(0);
@@ -1001,13 +1001,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   let lastTouch = 0, sideVelocity = 0;
   function onTouchStart(event: TouchEvent, replyId: string | undefined) {
     if (event.touches.length != 1) return setTouchingSide(false);
-    if (event.touches[0].clientX > window.innerWidth * 0.1) {
+    if (
+      event.touches[0].clientX > window.innerWidth * 0.1 &&
+      !Array.from(document.elementsFromPoint(event.touches[0].clientX, event.touches[0].clientY)[0].classList).some(c => c.startsWith("ImageViewer")) // Disable gesture if ImageViewer is up. There's probably a better way I don't know
+    ) {
       setTouchingSide(true);
       setSideMoved(event.touches[0].clientX);
       setSideMovedInit(event.touches[0].clientX);
       setSwipingId(replyId || "");
       lastTouch = Date.now();
-      console.log(replyId);
     }
   }
   function onTouchEnd(event: TouchEvent) {
@@ -1018,7 +1020,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             setSideMovedInit(sideMovedInit => {
               if ((sideMoved - sideMovedInit) < -(window.innerWidth * 0.2) || sideVelocity <= -(window.innerWidth * 0.05 / 250)) setSwipingId(swipingId => {
                 event.preventDefault();
-                handleReplyId(swipingId);
+                setTimeout(() => handleReplyId(swipingId), 100);
                 return "";
               });
               return 0;
@@ -1037,7 +1039,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       if (isTouchingSide) {
         setSwipingId(swipingId => {
           if (swipingId == replyId) {
-            console.log(replyId);
             event.preventDefault();
             if (event.changedTouches.length != 1) setSideMoved(0);
             else setSideMoved(sideMoved => {

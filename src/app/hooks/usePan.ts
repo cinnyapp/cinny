@@ -88,8 +88,8 @@ export const usePan = (active: boolean) => {
     evt.stopImmediatePropagation();
     setCursor('grab');
 
-    window.removeEventListener('touchmove', handleTouchMove);
-    window.removeEventListener('touchend', handleTouchEnd);
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
   }
 
   const handleTouchStart: TouchEventHandler<HTMLElement> = (evt) => {
@@ -107,8 +107,8 @@ export const usePan = (active: boolean) => {
       initY: y
     });
 
-    window.addEventListener('touchmove', handleTouchMove);
-    window.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
   }
 
   useEffect(() => {
