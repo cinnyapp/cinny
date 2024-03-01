@@ -31,55 +31,61 @@ export function FeaturedRooms() {
 
   return (
     <Content>
-      <ContentHeroSection>
-        <ContentHero
-          icon={<Icon size="600" src={Icons.Bulb} />}
-          title="Featured by Client"
-          subTitle="Find and explore public rooms and spaces featured by client provider."
-        />
-      </ContentHeroSection>
-      <ContentBody>
-        <Box direction="Column" gap="700">
-          <Box direction="Column" gap="400">
-            <Text size="H4">Featured Spaces</Text>
-            <Box className={css.CardGrid} gap="400" wrap="Wrap">
-              {spaces?.map((roomIdOrAlias) => (
-                <RoomSummaryLoader key={roomIdOrAlias} roomIdOrAlias={roomIdOrAlias}>
-                  {(roomSummary) => (
-                    <RoomCard
-                      roomIdOrAlias={roomIdOrAlias}
-                      joined={joinedRoom(roomIdOrAlias)}
-                      avatarUrl={roomSummary?.avatar_url}
-                      name={roomSummary?.name}
-                      topic={roomSummary?.topic}
-                      memberCount={roomSummary?.num_joined_members}
-                    />
-                  )}
-                </RoomSummaryLoader>
-              ))}
-            </Box>
+      <Box direction="Column" gap="200">
+        <ContentHeroSection>
+          <ContentHero
+            icon={<Icon size="600" src={Icons.Bulb} />}
+            title="Featured by Client"
+            subTitle="Find and explore public rooms and spaces featured by client provider."
+          />
+        </ContentHeroSection>
+        <ContentBody>
+          <Box direction="Column" gap="700">
+            {spaces && spaces.length > 0 && (
+              <Box direction="Column" gap="400">
+                <Text size="H4">Featured Spaces</Text>
+                <Box className={css.CardGrid} gap="400" wrap="Wrap">
+                  {spaces.map((roomIdOrAlias) => (
+                    <RoomSummaryLoader key={roomIdOrAlias} roomIdOrAlias={roomIdOrAlias}>
+                      {(roomSummary) => (
+                        <RoomCard
+                          roomIdOrAlias={roomIdOrAlias}
+                          joined={joinedRoom(roomIdOrAlias)}
+                          avatarUrl={roomSummary?.avatar_url}
+                          name={roomSummary?.name}
+                          topic={roomSummary?.topic}
+                          memberCount={roomSummary?.num_joined_members}
+                        />
+                      )}
+                    </RoomSummaryLoader>
+                  ))}
+                </Box>
+              </Box>
+            )}
+            {rooms && rooms.length > 0 && (
+              <Box direction="Column" gap="400">
+                <Text size="H4">Featured Rooms</Text>
+                <Box className={css.CardGrid} gap="400" wrap="Wrap">
+                  {rooms.map((roomIdOrAlias) => (
+                    <RoomSummaryLoader key={roomIdOrAlias} roomIdOrAlias={roomIdOrAlias}>
+                      {(roomSummary) => (
+                        <RoomCard
+                          roomIdOrAlias={roomIdOrAlias}
+                          joined={joinedRoom(roomIdOrAlias)}
+                          avatarUrl={roomSummary?.avatar_url}
+                          name={roomSummary?.name}
+                          topic={roomSummary?.topic}
+                          memberCount={roomSummary?.num_joined_members}
+                        />
+                      )}
+                    </RoomSummaryLoader>
+                  ))}
+                </Box>
+              </Box>
+            )}
           </Box>
-          <Box direction="Column" gap="400">
-            <Text size="H4">Featured Rooms</Text>
-            <Box className={css.CardGrid} gap="400" wrap="Wrap">
-              {rooms?.map((roomIdOrAlias) => (
-                <RoomSummaryLoader key={roomIdOrAlias} roomIdOrAlias={roomIdOrAlias}>
-                  {(roomSummary) => (
-                    <RoomCard
-                      roomIdOrAlias={roomIdOrAlias}
-                      joined={joinedRoom(roomIdOrAlias)}
-                      avatarUrl={roomSummary?.avatar_url}
-                      name={roomSummary?.name}
-                      topic={roomSummary?.topic}
-                      memberCount={roomSummary?.num_joined_members}
-                    />
-                  )}
-                </RoomSummaryLoader>
-              ))}
-            </Box>
-          </Box>
-        </Box>
-      </ContentBody>
+        </ContentBody>
+      </Box>
     </Content>
   );
 }

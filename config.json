@@ -11,7 +11,7 @@
   "allowCustomHomeservers": true,
 
   "featuredCommunities": {
-    "spaces": ["#cinny-space:matrix.org", "#community:matrix.org"],
+    "spaces": ["#cinny-space:matrix.org", "#community:matrix.org", "#space:envs.net"],
     "rooms": [
       "#cinny:matrix.org",
       "#foundation-office:matrix.org",

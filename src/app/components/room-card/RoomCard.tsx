@@ -61,7 +61,7 @@ export const RoomCard = as<'div', RoomCardProps>(
             src={avatar ?? undefined}
             alt={roomIdOrAlias}
             renderInitials={() => (
-              <Text as="span" size="H4">
+              <Text as="span" size="H3">
                 {nameInitials(name || fallbackName)}
               </Text>
             )}

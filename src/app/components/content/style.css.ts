@@ -24,6 +24,7 @@ export const ContentBody = style([
   DefaultReset,
   {
     maxWidth: toRem(848),
+    width: '100%',
     margin: 'auto',
   },
 ]);
