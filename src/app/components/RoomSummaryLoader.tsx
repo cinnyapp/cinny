@@ -1,6 +1,6 @@
-import { ReactNode, useCallback, useEffect } from 'react';
+import { ReactNode, useCallback } from 'react';
 import { MatrixClient } from 'matrix-js-sdk';
-import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
+import { useQuery } from '@tanstack/react-query';
 import { useMatrixClient } from '../hooks/useMatrixClient';
 
 export type IRoomSummary = Awaited<ReturnType<MatrixClient['getRoomSummary']>>;
@@ -13,15 +13,12 @@ type RoomSummaryLoaderProps = {
 export function RoomSummaryLoader({ roomIdOrAlias, children }: RoomSummaryLoaderProps) {
   const mx = useMatrixClient();
 
-  const [summaryState, load] = useAsyncCallback(
-    useCallback(() => mx.getRoomSummary(roomIdOrAlias), [mx, roomIdOrAlias])
-  );
+  const fetchSummary = useCallback(() => mx.getRoomSummary(roomIdOrAlias), [mx, roomIdOrAlias]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data } = useQuery({
+    queryKey: [`${roomIdOrAlias}/summary`],
+    queryFn: fetchSummary,
+  });
 
-  const roomSummary = summaryState.status === AsyncStatus.Success ? summaryState.data : undefined;
-
-  return children(roomSummary);
+  return children(data);
 }
