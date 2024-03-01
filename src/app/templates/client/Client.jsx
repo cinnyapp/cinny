@@ -43,7 +43,6 @@ function Client() {
   const [isTouchingSide, setTouchingSide] = useState(false);
   const [sideMoved, setSideMoved] = useState(0);
   const classNameHidden = 'client__item-hidden';
-  const classNameBackground = 'client__item-background';
   const classNameSided = 'client__item-sided';
 
   const navWrapperRef = useRef(null);
