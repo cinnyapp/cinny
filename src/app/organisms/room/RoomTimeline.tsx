@@ -1404,7 +1404,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           relations={hasReactions ? reactionRelations : undefined}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
-          onReplyClick={handleReplyClick}
+          onReplyClick={(evt: MouseEvent) => handleReplyId(evt.currentTarget.getAttribute('data-event-id'))}
           onReactionToggle={handleReactionToggle}
           onEditId={handleEdit}
           reply={
@@ -1479,7 +1479,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           relations={hasReactions ? reactionRelations : undefined}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
-          onReplyClick={handleReplyClick}
+          onReplyClick={(evt: MouseEvent) => handleReplyId(evt.currentTarget.getAttribute('data-event-id'))}
           onReactionToggle={handleReactionToggle}
           reactions={
             reactionRelations && (
