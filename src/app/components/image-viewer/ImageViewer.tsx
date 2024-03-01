@@ -16,7 +16,7 @@ export type ImageViewerProps = {
 export const ImageViewer = as<'div', ImageViewerProps>(
   ({ className, alt, src, requestClose, ...props }, ref) => {
     const { zoom, zoomIn, zoomOut, setZoom } = useZoom(0.2);
-    const { pan, cursor, onMouseDown } = usePan(zoom !== 1);
+    const { pan, cursor, onMouseDown, onTouchStart } = usePan(zoom > 1);
 
     const handleDownload = () => {
       FileSaver.saveAs(src, alt);
@@ -87,6 +87,7 @@ export const ImageViewer = as<'div', ImageViewerProps>(
             src={src}
             alt={alt}
             onMouseDown={onMouseDown}
+            onTouchStart={onTouchStart}
           />
         </Box>
       </Box>
