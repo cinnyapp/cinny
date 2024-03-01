@@ -3,6 +3,7 @@ import React, {
   MouseEventHandler,
   RefObject,
   SetStateAction,
+  TouchEvent,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -989,6 +990,53 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     [editor]
   );
 
+  const [isTouchingSide, setTouchingSide] = useState(false);
+  const [sideMoved, setSideMoved] = useState(0);
+  const [swipingId, setSwipingId] = useState("");
+
+  let lastTouch = 0, sideVelocity = 0;
+  function onTouchStart(event: TouchEvent) {
+    if (event.touches.length != 1) return setTouchingSide(false);
+    if (event.touches[0].clientX > window.innerWidth * 0.1) {
+      setTouchingSide(true);
+      lastTouch = Date.now();
+    }
+  }
+  function onTouchEnd(event: TouchEvent) {
+    setTouchingSide(isTouchingSide => {
+      if (isTouchingSide) {
+        setSideMoved(sideMoved => {
+          if (sideMoved) {
+            event.preventDefault();
+            if (sideMoved > window.innerWidth * 0.5 || sideVelocity <= -(window.innerWidth * 0.1 / 250)) setSwipingId(swipingId => {
+              handleOpenReply(swipingId);
+            });
+          }
+          sideVelocity = lastTouch = 0;
+          return 0;
+        });
+      }
+      return false;
+    });
+  }
+  function onTouchMove(event: TouchEvent, replyId: string | undefined) {
+    if (!replyId || event.touches.length != 1) return;
+    setSwipingId(replyId);
+    setTouchingSide(isTouchingSide => {
+      if (isTouchingSide) {
+        event.preventDefault();
+        if (event.changedTouches.length != 1) setSideMoved(0);
+        else setSideMoved(sideMoved => {
+          const newSideMoved = event.changedTouches[0].clientX;
+          sideVelocity = (newSideMoved - sideMoved) / (Date.now() - lastTouch);
+          lastTouch = Date.now();
+          return newSideMoved;
+        });
+      }
+      return isTouchingSide;
+    });
+  }
+
   const renderBody = (body: string, customBody?: string) => {
     if (body === '') <MessageEmptyContent />;
     if (customBody) {
@@ -1283,6 +1331,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onReplyClick={handleReplyClick}
           onReactionToggle={handleReactionToggle}
           onEditId={handleEdit}
+          onTouchStart={(evt: TouchEvent) => onTouchStart(evt)}
+          onTouchMove={(evt: TouchEvent) => onTouchMove(evt)}
+          onTouchEnd={(evt: TouchEvent) => onTouchEnd(evt)}
           reply={
             replyEventId && (
               <Reply
