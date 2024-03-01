@@ -56,6 +56,7 @@ function Client() {
     navWrapperRef.current?.classList.remove(classNameSided);
     setTimeout(() => roomWrapperRef.current?.classList.add(classNameHidden), 250);
   }
+  // Touch handlers for window object. If the touch starts at 10% of the left of the screen, it will trigger the swipe-right-menu.
   let lastTouch = 0, sideVelocity = 0;
   function onTouchStart(event) {
     if (!navWrapperRef.current?.classList.contains(classNameSided)) return;

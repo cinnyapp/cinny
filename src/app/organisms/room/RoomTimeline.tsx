@@ -930,6 +930,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     [mx, room, editor]
   );
 
+  // Replaces handleReplyClick. This takes an event id instead of the event to allow swipe-left-reply to directly cause a reply.
   const handleReplyId = useCallback(
     (replyId: string | null) => {
       if (!replyId) {
@@ -990,11 +991,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     [editor]
   );
 
+  // States used for swipe-left-reply. Mostly used for animations.
   const [isTouchingSide, setTouchingSide] = useState(false);
   const [sideMoved, setSideMoved] = useState(0);
   const [sideMovedInit, setSideMovedInit] = useState(0);
   const [swipingId, setSwipingId] = useState("");
 
+  // Touch handlers for the Message components. If touch starts at 90% of the right, it will trigger the swipe-left-reply.
   let lastTouch = 0, sideVelocity = 0;
   function onTouchStart(event: TouchEvent, replyId: string | undefined) {
     if (event.touches.length != 1) return setTouchingSide(false);
@@ -1407,6 +1410,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onReplyClick={(evt: MouseEvent) => handleReplyId(evt.currentTarget.getAttribute('data-event-id'))}
           onReactionToggle={handleReactionToggle}
           onEditId={handleEdit}
+          onTouchStart={(evt: TouchEvent) => onTouchStart(evt, mEvent.getId())}
+          onTouchMove={(evt: TouchEvent) => onTouchMove(evt, mEvent.getId())}
+          onTouchEnd={onTouchEnd}
+          style={isTouchingSide && mEvent.getId() == swipingId ? { transform: `translateX(${clamp(sideMoved - sideMovedInit, -window.innerWidth, 0)}px)` } : { transition: "all .25s ease" }}
           reply={
             replyEventId && (
               <Reply
@@ -1481,6 +1488,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onUsernameClick={handleUsernameClick}
           onReplyClick={(evt: MouseEvent) => handleReplyId(evt.currentTarget.getAttribute('data-event-id'))}
           onReactionToggle={handleReactionToggle}
+          onTouchStart={(evt: TouchEvent) => onTouchStart(evt, mEvent.getId())}
+          onTouchMove={(evt: TouchEvent) => onTouchMove(evt, mEvent.getId())}
+          onTouchEnd={onTouchEnd}
+          style={isTouchingSide && mEvent.getId() == swipingId ? { transform: `translateX(${clamp(sideMoved - sideMovedInit, -window.innerWidth, 0)}px)` } : { transition: "all .25s ease" }}
           reactions={
             reactionRelations && (
               <Reactions

@@ -29,7 +29,7 @@ export const usePan = (active: boolean) => {
   const [cursor, setCursor] = useState<'grab' | 'grabbing' | 'initial'>(
     active ? 'grab' : 'initial'
   );
-  const [touchPos, setTouchPos] = useState<TouchPos>(INITIAL_TOUCH_POS);
+  const [_touchPos, setTouchPos] = useState<TouchPos>(INITIAL_TOUCH_POS);
 
   useEffect(() => {
     setCursor(active ? 'grab' : 'initial');
@@ -65,6 +65,7 @@ export const usePan = (active: boolean) => {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Touch handlers for usePan. Intentionally not handling 2 touches (may do in the future). 
   const handleTouchMove = (evt: TouchEvent) => {
     evt.preventDefault();
     evt.stopPropagation();
