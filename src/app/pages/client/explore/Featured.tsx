@@ -3,8 +3,6 @@ import { Box, Icon, Icons, Scroll, Text, config, toRem } from 'folds';
 import { useAtomValue } from 'jotai';
 import { ContainerColor } from '../../../styles/ContainerColor.css';
 import { useClientConfig } from '../../../hooks/useClientConfig';
-import { useCapabilities } from '../../../hooks/useCapabilities';
-import { useSpecVersions } from '../../../hooks/useSpecVersions';
 import { RoomCard } from '../../../components/room-card';
 import { getCanonicalAliasRoomId, isRoomAlias } from '../../../utils/matrix';
 import * as css from './style.css';
@@ -14,9 +12,6 @@ import { RoomSummaryLoader } from '../../../components/RoomSummaryLoader';
 
 export function FeaturedRooms() {
   const mx = useMatrixClient();
-  const caps = useCapabilities();
-  const ver = useSpecVersions();
-  console.log(caps, ver);
   const { featuredCommunities } = useClientConfig();
   const { rooms, spaces } = featuredCommunities ?? {};
   const allRooms = useAtomValue(allRoomsAtom);

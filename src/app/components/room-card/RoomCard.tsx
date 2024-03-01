@@ -1,5 +1,5 @@
-import React from 'react';
-import { Avatar, Box, Button, Icon, Icons, Text, as } from 'folds';
+import React, { useCallback } from 'react';
+import { Avatar, Box, Button, Icon, Icons, Spinner, Text, as } from 'folds';
 import classNames from 'classnames';
 import * as css from './style.css';
 import { RoomAvatar } from '../room-avatar';
@@ -7,6 +7,7 @@ import { getMxIdLocalPart } from '../../utils/matrix';
 import { nameInitials } from '../../utils/common';
 import { millify } from '../../plugins/millify';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 
 export const RoomCardBase = as<'div'>(({ className, ...props }, ref) => (
   <Box
@@ -47,6 +48,12 @@ export const RoomCard = as<'div', RoomCardProps>(
     const fallbackName = getMxIdLocalPart(roomIdOrAlias) ?? roomIdOrAlias;
     const fallbackTopic = roomIdOrAlias;
 
+    const [joinState, join] = useAsyncCallback(
+      useCallback(() => mx.joinRoom(roomIdOrAlias), [mx, roomIdOrAlias])
+    );
+    const joining =
+      joinState.status === AsyncStatus.Loading || joinState.status === AsyncStatus.Success;
+
     return (
       <RoomCardBase {...props} ref={ref}>
         <Avatar size="500">
@@ -72,13 +79,20 @@ export const RoomCard = as<'div', RoomCardProps>(
             <Text size="T200">Members</Text>
           )}
         </Box>
-        {joined ? (
+        {joined && (
           <Button variant="Secondary" fill="Soft" size="300">
             <Text size="B300">View</Text>
           </Button>
-        ) : (
-          <Button variant="Secondary" size="300">
-            <Text size="B300">Join</Text>
+        )}
+        {!joined && (
+          <Button
+            onClick={join}
+            variant="Secondary"
+            size="300"
+            disabled={joining}
+            before={joining && <Spinner size="50" variant="Secondary" fill="Soft" />}
+          >
+            <Text size="B300">{joining ? 'Joining' : 'Join'}</Text>
           </Button>
         )}
       </RoomCardBase>
