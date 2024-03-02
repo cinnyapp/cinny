@@ -9,7 +9,7 @@ export function ClientDrawerLayout({ children }: ClientDrawerLayoutProps) {
   // TODO: make it mobile friendly
 
   return (
-    <Box className={css.ClientDrawerLayout}>
+    <Box className={css.ClientDrawerLayout} shrink="No">
       <Box grow="Yes" direction="Column">
         {children}
       </Box>
