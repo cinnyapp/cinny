@@ -24,3 +24,8 @@ export const RoomCardTopic = style({
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
 });
+
+export const ActionButton = style({
+  flex: '1 1 0',
+  minWidth: 1,
+});

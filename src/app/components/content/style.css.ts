@@ -23,7 +23,7 @@ export const ContentHeroSection = style([
 export const ContentBody = style([
   DefaultReset,
   {
-    maxWidth: toRem(848),
+    maxWidth: toRem(964),
     width: '100%',
     margin: 'auto',
   },

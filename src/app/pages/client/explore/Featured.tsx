@@ -15,15 +15,14 @@ export function FeaturedRooms() {
   const { rooms, spaces } = featuredCommunities ?? {};
   const allRooms = useAtomValue(allRoomsAtom);
 
-  const joinedRoom = useCallback(
-    (roomIdOrAlias: string): boolean => {
+  const joinedRoomId = useCallback(
+    (roomIdOrAlias: string): string | undefined => {
       const roomId = isRoomAlias(roomIdOrAlias)
         ? getCanonicalAliasRoomId(mx, roomIdOrAlias)
         : roomIdOrAlias;
 
-      if (!roomId) return false;
-
-      return allRooms.includes(roomId);
+      if (roomId && allRooms.includes(roomId)) return roomId;
+      return undefined;
     },
     [mx, allRooms]
   );
@@ -49,7 +48,7 @@ export function FeaturedRooms() {
                       {(roomSummary) => (
                         <RoomCard
                           roomIdOrAlias={roomIdOrAlias}
-                          joined={joinedRoom(roomIdOrAlias)}
+                          joinedRoomId={joinedRoomId(roomIdOrAlias)}
                           avatarUrl={roomSummary?.avatar_url}
                           name={roomSummary?.name}
                           topic={roomSummary?.topic}
@@ -70,7 +69,7 @@ export function FeaturedRooms() {
                       {(roomSummary) => (
                         <RoomCard
                           roomIdOrAlias={roomIdOrAlias}
-                          joined={joinedRoom(roomIdOrAlias)}
+                          joinedRoomId={joinedRoomId(roomIdOrAlias)}
                           avatarUrl={roomSummary?.avatar_url}
                           name={roomSummary?.name}
                           topic={roomSummary?.topic}

@@ -77,14 +77,14 @@ export const RoomCardTopic = as<'p'>(({ className, ...props }, ref) => (
 
 type RoomCardProps = {
   roomIdOrAlias: string;
-  joined: boolean;
+  joinedRoomId?: string;
   avatarUrl?: string;
   name?: string;
   topic?: string;
   memberCount?: number;
 };
 export const RoomCard = as<'div', RoomCardProps>(
-  ({ roomIdOrAlias, joined, avatarUrl, name, topic, memberCount, ...props }, ref) => {
+  ({ roomIdOrAlias, joinedRoomId, avatarUrl, name, topic, memberCount, ...props }, ref) => {
     const mx = useMatrixClient();
     const avatar = avatarUrl && mx.mxcUrlToHttp(avatarUrl, 96, 96, 'crop');
     const fallbackName = getMxIdLocalPart(roomIdOrAlias) ?? roomIdOrAlias;
@@ -109,24 +109,24 @@ export const RoomCard = as<'div', RoomCardProps>(
             )}
           />
         </Avatar>
-        <Box direction="Column" gap="100">
+        <Box grow="Yes" direction="Column" gap="100">
           <RoomCardName>{name || fallbackName}</RoomCardName>
           <RoomCardTopic>{topic || fallbackTopic}</RoomCardTopic>
         </Box>
-        <Box gap="100">
-          <Icon size="50" src={Icons.User} />
-          {typeof memberCount === 'number' ? (
+        {typeof memberCount === 'number' && (
+          <Box gap="100">
+            <Icon size="50" src={Icons.User} />
             <Text size="T200">{`${millify(memberCount)} Members`}</Text>
-          ) : (
-            <Text size="T200">Members</Text>
-          )}
-        </Box>
-        {joined && (
+          </Box>
+        )}
+        {typeof joinedRoomId === 'string' && (
           <Button variant="Secondary" fill="Soft" size="300">
-            <Text size="B300">View</Text>
+            <Text size="B300" truncate>
+              View
+            </Text>
           </Button>
         )}
-        {!joined && (
+        {typeof joinedRoomId !== 'string' && joinState.status !== AsyncStatus.Error && (
           <Button
             onClick={join}
             variant="Secondary"
@@ -134,8 +134,30 @@ export const RoomCard = as<'div', RoomCardProps>(
             disabled={joining}
             before={joining && <Spinner size="50" variant="Secondary" fill="Soft" />}
           >
-            <Text size="B300">{joining ? 'Joining' : 'Join'}</Text>
+            <Text size="B300" truncate>
+              {joining ? 'Joining' : 'Join'}
+            </Text>
           </Button>
+        )}
+        {typeof joinedRoomId !== 'string' && joinState.status === AsyncStatus.Error && (
+          <Box gap="200">
+            <Button
+              onClick={join}
+              className={css.ActionButton}
+              variant="Critical"
+              fill="Solid"
+              size="300"
+            >
+              <Text size="B300" truncate>
+                Retry
+              </Text>
+            </Button>
+            <Button className={css.ActionButton} variant="Critical" fill="Soft" outlined size="300">
+              <Text size="B300" truncate>
+                View Error
+              </Text>
+            </Button>
+          </Box>
         )}
       </RoomCardBase>
     );
