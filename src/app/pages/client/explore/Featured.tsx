@@ -2,9 +2,8 @@ import React, { useCallback } from 'react';
 import { Box, Icon, Icons, Text } from 'folds';
 import { useAtomValue } from 'jotai';
 import { useClientConfig } from '../../../hooks/useClientConfig';
-import { RoomCard } from '../../../components/room-card';
+import { RoomCard, RoomCardGrid } from '../../../components/room-card';
 import { getCanonicalAliasRoomId, isRoomAlias } from '../../../utils/matrix';
-import * as css from './style.css';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { RoomSummaryLoader } from '../../../components/RoomSummaryLoader';
@@ -44,7 +43,7 @@ export function FeaturedRooms() {
             {spaces && spaces.length > 0 && (
               <Box direction="Column" gap="400">
                 <Text size="H4">Featured Spaces</Text>
-                <Box className={css.CardGrid} gap="400" wrap="Wrap">
+                <RoomCardGrid>
                   {spaces.map((roomIdOrAlias) => (
                     <RoomSummaryLoader key={roomIdOrAlias} roomIdOrAlias={roomIdOrAlias}>
                       {(roomSummary) => (
@@ -59,13 +58,13 @@ export function FeaturedRooms() {
                       )}
                     </RoomSummaryLoader>
                   ))}
-                </Box>
+                </RoomCardGrid>
               </Box>
             )}
             {rooms && rooms.length > 0 && (
               <Box direction="Column" gap="400">
                 <Text size="H4">Featured Rooms</Text>
-                <Box className={css.CardGrid} gap="400" wrap="Wrap">
+                <RoomCardGrid>
                   {rooms.map((roomIdOrAlias) => (
                     <RoomSummaryLoader key={roomIdOrAlias} roomIdOrAlias={roomIdOrAlias}>
                       {(roomSummary) => (
@@ -80,7 +79,7 @@ export function FeaturedRooms() {
                       )}
                     </RoomSummaryLoader>
                   ))}
-                </Box>
+                </RoomCardGrid>
               </Box>
             )}
           </Box>

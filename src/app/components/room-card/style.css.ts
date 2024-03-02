@@ -2,6 +2,12 @@ import { style } from '@vanilla-extract/css';
 import { DefaultReset, config } from 'folds';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 
+export const CardGrid = style({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, 1fr)',
+  gap: config.space.S400,
+});
+
 export const RoomCardBase = style([
   DefaultReset,
   ContainerColor({ variant: 'SurfaceVariant' }),
