@@ -155,7 +155,7 @@ export const RoomCard = as<'div', RoomCardProps>(
                   onDeactivate: closeTopic,
                 }}
               >
-                {renderTopicViewer(name || fallbackName, topic || fallbackTopic, () => closeTopic)}
+                {renderTopicViewer(name || fallbackName, topic || fallbackTopic, closeTopic)}
               </FocusTrap>
             </OverlayCenter>
           </Overlay>
