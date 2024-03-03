@@ -8,6 +8,7 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { RoomSummaryLoader } from '../../../components/RoomSummaryLoader';
 import { Content, ContentBody, ContentHero, ContentHeroSection } from '../../../components/content';
+import { RoomTopicViewer } from '../../../components/room-topic-viewer';
 
 export function FeaturedRooms() {
   const mx = useMatrixClient();
@@ -53,6 +54,13 @@ export function FeaturedRooms() {
                           name={roomSummary?.name}
                           topic={roomSummary?.topic}
                           memberCount={roomSummary?.num_joined_members}
+                          renderTopicViewer={(name, topic, requestClose) => (
+                            <RoomTopicViewer
+                              name={name}
+                              topic={topic}
+                              requestClose={requestClose}
+                            />
+                          )}
                         />
                       )}
                     </RoomSummaryLoader>
@@ -74,6 +82,13 @@ export function FeaturedRooms() {
                           name={roomSummary?.name}
                           topic={roomSummary?.topic}
                           memberCount={roomSummary?.num_joined_members}
+                          renderTopicViewer={(name, topic, requestClose) => (
+                            <RoomTopicViewer
+                              name={name}
+                              topic={topic}
+                              requestClose={requestClose}
+                            />
+                          )}
                         />
                       )}
                     </RoomSummaryLoader>

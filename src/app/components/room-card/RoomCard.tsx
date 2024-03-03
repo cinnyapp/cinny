@@ -1,6 +1,19 @@
-import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
-import { Avatar, Box, Button, Icon, Icons, Spinner, Text, as } from 'folds';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Avatar,
+  Box,
+  Button,
+  Icon,
+  Icons,
+  Overlay,
+  OverlayBackdrop,
+  OverlayCenter,
+  Spinner,
+  Text,
+  as,
+} from 'folds';
 import classNames from 'classnames';
+import FocusTrap from 'focus-trap-react';
 import * as css from './style.css';
 import { RoomAvatar } from '../room-avatar';
 import { getMxIdLocalPart } from '../../utils/matrix';
@@ -9,6 +22,7 @@ import { millify } from '../../plugins/millify';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
+import { onEnterOrSpace } from '../../utils/keyboard';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {
@@ -82,9 +96,22 @@ type RoomCardProps = {
   name?: string;
   topic?: string;
   memberCount?: number;
+  renderTopicViewer: (name: string, topic: string, requestClose: () => void) => ReactNode;
 };
 export const RoomCard = as<'div', RoomCardProps>(
-  ({ roomIdOrAlias, joinedRoomId, avatarUrl, name, topic, memberCount, ...props }, ref) => {
+  (
+    {
+      roomIdOrAlias,
+      joinedRoomId,
+      avatarUrl,
+      name,
+      topic,
+      memberCount,
+      renderTopicViewer,
+      ...props
+    },
+    ref
+  ) => {
     const mx = useMatrixClient();
     const avatar = avatarUrl && mx.mxcUrlToHttp(avatarUrl, 96, 96, 'crop');
     const fallbackName = getMxIdLocalPart(roomIdOrAlias) ?? roomIdOrAlias;
@@ -95,6 +122,10 @@ export const RoomCard = as<'div', RoomCardProps>(
     );
     const joining =
       joinState.status === AsyncStatus.Loading || joinState.status === AsyncStatus.Success;
+
+    const [viewTopic, setViewTopic] = useState(false);
+    const closeTopic = () => setViewTopic(false);
+    const openTopic = () => setViewTopic(true);
 
     return (
       <RoomCardBase {...props} ref={ref}>
@@ -111,7 +142,23 @@ export const RoomCard = as<'div', RoomCardProps>(
         </Avatar>
         <Box grow="Yes" direction="Column" gap="100">
           <RoomCardName>{name || fallbackName}</RoomCardName>
-          <RoomCardTopic>{topic || fallbackTopic}</RoomCardTopic>
+          <RoomCardTopic onClick={openTopic} onKeyDown={onEnterOrSpace(openTopic)} tabIndex={0}>
+            {topic || fallbackTopic}
+          </RoomCardTopic>
+
+          <Overlay open={viewTopic} backdrop={<OverlayBackdrop />}>
+            <OverlayCenter>
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  clickOutsideDeactivates: true,
+                  onDeactivate: closeTopic,
+                }}
+              >
+                {renderTopicViewer(name || fallbackName, topic || fallbackTopic, () => closeTopic)}
+              </FocusTrap>
+            </OverlayCenter>
+          </Overlay>
         </Box>
         {typeof memberCount === 'number' && (
           <Box gap="100">
