@@ -1,8 +1,10 @@
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { MatrixError, Room } from 'matrix-js-sdk';
 import {
   Avatar,
   Box,
   Button,
+  Dialog,
   Icon,
   Icons,
   Overlay,
@@ -11,6 +13,8 @@ import {
   Spinner,
   Text,
   as,
+  color,
+  config,
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
@@ -89,6 +93,51 @@ export const RoomCardTopic = as<'p'>(({ className, ...props }, ref) => (
   />
 ));
 
+function ErrorDialog({
+  title,
+  message,
+  children,
+}: {
+  title: string;
+  message: string;
+  children: (openError: () => void) => ReactNode;
+}) {
+  const [viewError, setViewError] = useState(false);
+  const closeError = () => setViewError(false);
+  const openError = () => setViewError(true);
+
+  return (
+    <>
+      {children(openError)}
+      <Overlay open={viewError} backdrop={<OverlayBackdrop />}>
+        <OverlayCenter>
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              clickOutsideDeactivates: true,
+              onDeactivate: closeError,
+            }}
+          >
+            <Dialog variant="Surface">
+              <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
+                <Box direction="Column" gap="100">
+                  <Text>{title}</Text>
+                  <Text style={{ color: color.Critical.Main }} size="T300" priority="400">
+                    {message}
+                  </Text>
+                </Box>
+                <Button size="400" variant="Secondary" fill="Soft" onClick={closeError}>
+                  <Text size="B400">Cancel</Text>
+                </Button>
+              </Box>
+            </Dialog>
+          </FocusTrap>
+        </OverlayCenter>
+      </Overlay>
+    </>
+  );
+}
+
 type RoomCardProps = {
   roomIdOrAlias: string;
   joinedRoomId?: string;
@@ -96,8 +145,10 @@ type RoomCardProps = {
   name?: string;
   topic?: string;
   memberCount?: number;
+  onView?: (roomId: string) => void;
   renderTopicViewer: (name: string, topic: string, requestClose: () => void) => ReactNode;
 };
+
 export const RoomCard = as<'div', RoomCardProps>(
   (
     {
@@ -107,6 +158,7 @@ export const RoomCard = as<'div', RoomCardProps>(
       name,
       topic,
       memberCount,
+      onView,
       renderTopicViewer,
       ...props
     },
@@ -117,7 +169,7 @@ export const RoomCard = as<'div', RoomCardProps>(
     const fallbackName = getMxIdLocalPart(roomIdOrAlias) ?? roomIdOrAlias;
     const fallbackTopic = roomIdOrAlias;
 
-    const [joinState, join] = useAsyncCallback(
+    const [joinState, join] = useAsyncCallback<Room, MatrixError, []>(
       useCallback(() => mx.joinRoom(roomIdOrAlias), [mx, roomIdOrAlias])
     );
     const joining =
@@ -167,7 +219,12 @@ export const RoomCard = as<'div', RoomCardProps>(
           </Box>
         )}
         {typeof joinedRoomId === 'string' && (
-          <Button variant="Secondary" fill="Soft" size="300">
+          <Button
+            onClick={onView ? () => onView(joinedRoomId) : undefined}
+            variant="Secondary"
+            fill="Soft"
+            size="300"
+          >
             <Text size="B300" truncate>
               View
             </Text>
@@ -199,11 +256,25 @@ export const RoomCard = as<'div', RoomCardProps>(
                 Retry
               </Text>
             </Button>
-            <Button className={css.ActionButton} variant="Critical" fill="Soft" outlined size="300">
-              <Text size="B300" truncate>
-                View Error
-              </Text>
-            </Button>
+            <ErrorDialog
+              title="Join Error"
+              message={joinState.error.message || 'Failed to join. Unknown Error.'}
+            >
+              {(openError) => (
+                <Button
+                  onClick={openError}
+                  className={css.ActionButton}
+                  variant="Critical"
+                  fill="Soft"
+                  outlined
+                  size="300"
+                >
+                  <Text size="B300" truncate>
+                    View Error
+                  </Text>
+                </Button>
+              )}
+            </ErrorDialog>
           </Box>
         )}
       </RoomCardBase>
