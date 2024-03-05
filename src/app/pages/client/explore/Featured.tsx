@@ -15,7 +15,7 @@ import { RoomSummaryLoader } from '../../../components/RoomSummaryLoader';
 import { Content, ContentBody, ContentHero, ContentHeroSection } from '../../../components/content';
 import { RoomTopicViewer } from '../../../components/room-topic-viewer';
 import { getHomeRoomPath, getSpacePath, getSpaceRoomPath } from '../../pathUtils';
-import { getOrphanParent } from '../../../utils/room';
+import { getOrphanParents } from '../../../utils/room';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 
 export function FeaturedRooms() {
@@ -50,9 +50,9 @@ export function FeaturedRooms() {
     (roomId: string) => {
       const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, roomId);
 
-      const parentSpaceId = getOrphanParent(roomToParents, roomId);
-      if (parentSpaceId) {
-        const pSpaceIdOrAlias = getCanonicalAliasOrRoomId(mx, parentSpaceId);
+      const orphanParents = getOrphanParents(roomToParents, roomId);
+      if (orphanParents.length > 0) {
+        const pSpaceIdOrAlias = getCanonicalAliasOrRoomId(mx, orphanParents[0]);
         navigate(getSpaceRoomPath(pSpaceIdOrAlias, roomIdOrAlias));
         return;
       }

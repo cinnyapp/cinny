@@ -141,18 +141,13 @@ export const getRoomToParents = (mx: MatrixClient): RoomToParents => {
   return map;
 };
 
-export const getOrphanParent = (
-  roomToParents: RoomToParents,
-  roomId: string
-): string | undefined => {
+export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): string[] => {
   const parents = getAllParents(roomToParents, roomId);
   const orphanParents = Array.from(parents).filter(
     (parentRoomId) => !roomToParents.has(parentRoomId)
   );
 
-  if (orphanParents.length === 0) return undefined;
-
-  return orphanParents[0];
+  return orphanParents;
 };
 
 export const isMutedRule = (rule: IPushRule) =>
