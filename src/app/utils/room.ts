@@ -141,6 +141,20 @@ export const getRoomToParents = (mx: MatrixClient): RoomToParents => {
   return map;
 };
 
+export const getOrphanParent = (
+  roomToParents: RoomToParents,
+  roomId: string
+): string | undefined => {
+  const parents = getAllParents(roomToParents, roomId);
+  const orphanParents = Array.from(parents).filter(
+    (parentRoomId) => !roomToParents.has(parentRoomId)
+  );
+
+  if (orphanParents.length === 0) return undefined;
+
+  return orphanParents[0];
+};
+
 export const isMutedRule = (rule: IPushRule) =>
   rule.actions[0] === 'dont_notify' && rule.conditions?.[0]?.kind === 'event_match';
 
