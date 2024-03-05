@@ -1,20 +1,30 @@
 import React, { useCallback } from 'react';
 import { Box, Icon, Icons, Text } from 'folds';
+import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { useClientConfig } from '../../../hooks/useClientConfig';
 import { RoomCard, RoomCardGrid } from '../../../components/room-card';
-import { getCanonicalAliasRoomId, isRoomAlias } from '../../../utils/matrix';
+import {
+  getCanonicalAliasOrRoomId,
+  getCanonicalAliasRoomId,
+  isRoomAlias,
+} from '../../../utils/matrix';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { RoomSummaryLoader } from '../../../components/RoomSummaryLoader';
 import { Content, ContentBody, ContentHero, ContentHeroSection } from '../../../components/content';
 import { RoomTopicViewer } from '../../../components/room-topic-viewer';
+import { getHomeRoomPath, getSpacePath, getSpaceRoomPath } from '../../pathUtils';
+import { getOrphanParent } from '../../../utils/room';
+import { roomToParentsAtom } from '../../../state/room/roomToParents';
 
 export function FeaturedRooms() {
   const mx = useMatrixClient();
   const { featuredCommunities } = useClientConfig();
   const { rooms, spaces } = featuredCommunities ?? {};
   const allRooms = useAtomValue(allRoomsAtom);
+  const navigate = useNavigate();
+  const roomToParents = useAtomValue(roomToParentsAtom);
 
   const joinedRoomId = useCallback(
     (roomIdOrAlias: string): string | undefined => {
@@ -26,6 +36,30 @@ export function FeaturedRooms() {
       return undefined;
     },
     [mx, allRooms]
+  );
+
+  const navigateSpace = useCallback(
+    (roomId: string) => {
+      const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, roomId);
+      navigate(getSpacePath(roomIdOrAlias));
+    },
+    [mx, navigate]
+  );
+
+  const navigateRoom = useCallback(
+    (roomId: string) => {
+      const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, roomId);
+
+      const parentSpaceId = getOrphanParent(roomToParents, roomId);
+      if (parentSpaceId) {
+        const pSpaceIdOrAlias = getCanonicalAliasOrRoomId(mx, parentSpaceId);
+        navigate(getSpaceRoomPath(pSpaceIdOrAlias, roomIdOrAlias));
+        return;
+      }
+
+      navigate(getHomeRoomPath(roomIdOrAlias));
+    },
+    [mx, navigate, roomToParents]
   );
 
   return (
@@ -54,6 +88,7 @@ export function FeaturedRooms() {
                           name={roomSummary?.name}
                           topic={roomSummary?.topic}
                           memberCount={roomSummary?.num_joined_members}
+                          onView={navigateSpace}
                           renderTopicViewer={(name, topic, requestClose) => (
                             <RoomTopicViewer
                               name={name}
@@ -82,6 +117,7 @@ export function FeaturedRooms() {
                           name={roomSummary?.name}
                           topic={roomSummary?.topic}
                           memberCount={roomSummary?.num_joined_members}
+                          onView={navigateRoom}
                           renderTopicViewer={(name, topic, requestClose) => (
                             <RoomTopicViewer
                               name={name}
