@@ -14,6 +14,9 @@ export type RegisterPathSearchParams = {
 };
 export const REGISTER_PATH = '/register/:server?/';
 
+export type ResetPasswordPathSearchParams = {
+  email?: string;
+};
 export const RESET_PASSWORD_PATH = '/reset-password/:server?/';
 
 export const _CREATE_PATH = 'create/';
@@ -41,6 +44,13 @@ export const _FEATURED_PATH = 'featured/';
 export const _SERVER_PATH = ':server/';
 export const EXPLORE_PATH = '/explore/';
 export const EXPLORE_FEATURED_PATH = `/explore/${_FEATURED_PATH}`;
+
+export type ExploreServerPathSearchParams = {
+  limit?: string;
+  since?: string;
+  term?: string;
+  type?: string;
+};
 export const EXPLORE_SERVER_PATH = `/explore/${_SERVER_PATH}`;
 
 export const _MESSAGES_PATH = 'messages/';

@@ -4,14 +4,11 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { getLoginPath } from '../../pathUtils';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { PasswordResetForm } from './PasswordResetForm';
-
-export type ResetPasswordSearchParams = {
-  email?: string;
-};
+import { ResetPasswordPathSearchParams } from '../../paths';
 
 const getResetPasswordSearchParams = (
   searchParams: URLSearchParams
-): ResetPasswordSearchParams => ({
+): ResetPasswordPathSearchParams => ({
   email: searchParams.get('email') ?? undefined,
 });
 

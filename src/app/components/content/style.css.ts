@@ -6,7 +6,7 @@ export const Content = style([
   {
     paddingLeft: config.space.S500,
     paddingRight: config.space.S100,
-    paddingBottom: config.space.S700,
+    paddingBottom: toRem(100),
   },
 ]);
 

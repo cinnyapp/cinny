@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ComponentProps, ReactNode } from 'react';
 import { Box, Scroll, Text, as } from 'folds';
 import classNames from 'classnames';
 import { ContainerColor } from '../../styles/ContainerColor.css';
@@ -14,9 +14,16 @@ export function Content({ children }: { children: ReactNode }) {
   );
 }
 
-export const ContentHeroSection = as<'div'>(({ className, ...props }, ref) => (
-  <div className={classNames(css.ContentHeroSection, className)} {...props} ref={ref} />
-));
+export const ContentHeroSection = as<'div', ComponentProps<typeof Box>>(
+  ({ className, ...props }, ref) => (
+    <Box
+      direction="Column"
+      className={classNames(css.ContentHeroSection, className)}
+      {...props}
+      ref={ref}
+    />
+  )
+);
 
 export function ContentHero({
   icon,

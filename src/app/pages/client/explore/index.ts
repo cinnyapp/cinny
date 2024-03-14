@@ -1,3 +1,3 @@
 export * from './Explore';
-export * from './PublicRooms';
+export * from './Server';
 export * from './Featured';
