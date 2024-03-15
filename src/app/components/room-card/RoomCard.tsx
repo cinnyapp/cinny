@@ -2,6 +2,7 @@ import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'reac
 import { MatrixError, Room } from 'matrix-js-sdk';
 import {
   Avatar,
+  Badge,
   Box,
   Button,
   Dialog,
@@ -27,6 +28,7 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import { onEnterOrSpace } from '../../utils/keyboard';
+import { RoomType } from '../../../types/matrix/room';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {
@@ -145,6 +147,7 @@ type RoomCardProps = {
   name?: string;
   topic?: string;
   memberCount?: number;
+  roomType?: string;
   onView?: (roomId: string) => void;
   renderTopicViewer: (name: string, topic: string, requestClose: () => void) => ReactNode;
 };
@@ -158,6 +161,7 @@ export const RoomCard = as<'div', RoomCardProps>(
       name,
       topic,
       memberCount,
+      roomType,
       onView,
       renderTopicViewer,
       ...props
@@ -181,17 +185,24 @@ export const RoomCard = as<'div', RoomCardProps>(
 
     return (
       <RoomCardBase {...props} ref={ref}>
-        <Avatar size="500">
-          <RoomAvatar
-            src={avatar ?? undefined}
-            alt={roomIdOrAlias}
-            renderInitials={() => (
-              <Text as="span" size="H3">
-                {nameInitials(name || fallbackName)}
-              </Text>
-            )}
-          />
-        </Avatar>
+        <Box gap="200" justifyContent="SpaceBetween">
+          <Avatar size="500">
+            <RoomAvatar
+              src={avatar ?? undefined}
+              alt={roomIdOrAlias}
+              renderInitials={() => (
+                <Text as="span" size="H3">
+                  {nameInitials(name || fallbackName)}
+                </Text>
+              )}
+            />
+          </Avatar>
+          {roomType === RoomType.Space && (
+            <Badge variant="Secondary" fill="Soft" outlined>
+              <Text size="L400">Space</Text>
+            </Badge>
+          )}
+        </Box>
         <Box grow="Yes" direction="Column" gap="100">
           <RoomCardName>{name || fallbackName}</RoomCardName>
           <RoomCardTopic onClick={openTopic} onKeyDown={onEnterOrSpace(openTopic)} tabIndex={0}>
