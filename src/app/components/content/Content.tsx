@@ -4,15 +4,18 @@ import classNames from 'classnames';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import * as css from './style.css';
 
-export function Content({ children }: { children: ReactNode }) {
-  return (
-    <Box grow="Yes" className={ContainerColor({ variant: 'Surface' })}>
-      <Scroll hideTrack>
-        <div className={css.Content}>{children}</div>
-      </Scroll>
-    </Box>
-  );
-}
+export const Content = as<'div'>(({ className, children, ...props }, ref) => (
+  <Box
+    grow="Yes"
+    className={classNames(ContainerColor({ variant: 'Surface' }), className)}
+    {...props}
+    ref={ref}
+  >
+    <Scroll hideTrack>
+      <div className={css.Content}>{children}</div>
+    </Scroll>
+  </Box>
+));
 
 export const ContentHeroSection = as<'div', ComponentProps<typeof Box>>(
   ({ className, ...props }, ref) => (

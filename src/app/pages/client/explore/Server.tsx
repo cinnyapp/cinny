@@ -2,6 +2,7 @@ import React, {
   FormEventHandler,
   MouseEventHandler,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -56,10 +57,18 @@ export function PublicRooms() {
   const [searchParams] = useSearchParams();
   const serverSearchParams = getServerSearchParams(searchParams);
   const isSearch = serverSearchParams.term;
+  const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const roomTypeFilters = useRoomTypeFilters();
   const [openLimit, setOpenLimit] = useState(false);
+
+  const resetScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const scroll = container.children[0];
+    if (scroll) scroll.scrollTop = 0;
+  }, []);
 
   const fetchPublicRooms = useCallback(() => {
     const limit =
@@ -97,6 +106,9 @@ export function PublicRooms() {
     ],
     queryFn: fetchPublicRooms,
   });
+  useEffect(() => {
+    resetScroll();
+  }, [data, resetScroll]);
 
   const explore = (newSearchParams: ExploreServerPathSearchParams) => {
     if (!server) return;
@@ -163,7 +175,7 @@ export function PublicRooms() {
   };
 
   return (
-    <Content>
+    <Content ref={containerRef}>
       <Box direction="Column" gap="200">
         <ContentHeroSection direction="Column" gap="400">
           <ContentHero
