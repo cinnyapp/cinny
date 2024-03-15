@@ -1,6 +1,14 @@
-import React, { FormEventHandler, MouseEventHandler, useCallback, useMemo, useRef } from 'react';
-import { Box, Button, Chip, Icon, Icons, Input, Spinner, Text } from 'folds';
+import React, {
+  FormEventHandler,
+  MouseEventHandler,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Box, Button, Chip, Icon, Icons, Input, Menu, PopOut, Spinner, Text, config } from 'folds';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import FocusTrap from 'focus-trap-react';
 import { useQuery } from '@tanstack/react-query';
 import { MatrixClient, Method, RoomType } from 'matrix-js-sdk';
 import { Content, ContentHeroSection, ContentHero, ContentBody } from '../../../components/content';
@@ -51,6 +59,7 @@ export function PublicRooms() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const roomTypeFilters = useRoomTypeFilters();
+  const [openLimit, setOpenLimit] = useState(false);
 
   const fetchPublicRooms = useCallback(() => {
     const limit =
@@ -142,6 +151,15 @@ export function PublicRooms() {
       type: filter ?? undefined,
       since: undefined,
     });
+  };
+
+  const handleLimitSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
+    evt.preventDefault();
+    const limitInput = evt.currentTarget.limitInput as HTMLInputElement;
+    if (!limitInput) return;
+    const limit = limitInput.value.trim();
+    if (!limit) return;
+    explore({ limit });
   };
 
   return (
@@ -237,9 +255,61 @@ export function PublicRooms() {
                 <>
                   <span data-spacing-node />
                   <Box justifyContent="Center" gap="200">
-                    <Chip radii="Pill" size="500" variant="SurfaceVariant">
-                      <Text size="B300" truncate>{`Page Limit: ${data.chunk.length}`}</Text>
-                    </Chip>
+                    <PopOut
+                      open={openLimit}
+                      align="Center"
+                      position="Top"
+                      content={
+                        <FocusTrap
+                          focusTrapOptions={{
+                            initialFocus: false,
+                            onDeactivate: () => setOpenLimit(false),
+                            clickOutsideDeactivates: true,
+                          }}
+                        >
+                          <Menu variant="Surface">
+                            <Box
+                              as="form"
+                              onSubmit={handleLimitSubmit}
+                              style={{ padding: config.space.S200 }}
+                              direction="Column"
+                              gap="200"
+                            >
+                              <Input
+                                name="limitInput"
+                                size="300"
+                                variant="Background"
+                                defaultValue={serverSearchParams.limit ?? FALLBACK_ROOMS_LIMIT}
+                                min={1}
+                                step={1}
+                                outlined
+                                type="number"
+                                radii="300"
+                                aria-label="Per Page Item Limit"
+                              />
+                              <Button type="submit" size="300" variant="Primary" radii="300">
+                                <Text size="B300">Change Limit</Text>
+                              </Button>
+                            </Box>
+                          </Menu>
+                        </FocusTrap>
+                      }
+                    >
+                      {(anchorRef) => (
+                        <Chip
+                          ref={anchorRef}
+                          onClick={() => setOpenLimit(!openLimit)}
+                          aria-pressed={openLimit}
+                          radii="Pill"
+                          size="500"
+                          variant="SurfaceVariant"
+                          after={<Icon size="200" src={Icons.ChevronBottom} />}
+                        >
+                          <Text size="B300" truncate>{`Page Limit: ${data.chunk.length}`}</Text>
+                        </Chip>
+                      )}
+                    </PopOut>
+
                     <Box data-spacing-node grow="Yes" />
                     <Button
                       onClick={paginateBack}
