@@ -1,5 +1,5 @@
-import React, { FormEventHandler, useCallback } from 'react';
-import { Box, Button, Chip, Icon, Icons, Input, Text } from 'folds';
+import React, { FormEventHandler, MouseEventHandler, useCallback, useMemo, useRef } from 'react';
+import { Box, Button, Chip, Icon, Icons, Input, Spinner, Text } from 'folds';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MatrixClient, Method, RoomType } from 'matrix-js-sdk';
@@ -17,6 +17,29 @@ const getServerSearchParams = (searchParams: URLSearchParams): ExploreServerPath
   type: searchParams.get('type') ?? undefined,
 });
 
+type RoomTypeFilter = {
+  title: string;
+  value: string | undefined;
+};
+const useRoomTypeFilters = (): RoomTypeFilter[] =>
+  useMemo(
+    () => [
+      {
+        title: 'All',
+        value: undefined,
+      },
+      {
+        title: 'Spaces',
+        value: RoomType.Space,
+      },
+      {
+        title: 'Rooms',
+        value: 'null',
+      },
+    ],
+    []
+  );
+
 const FALLBACK_ROOMS_LIMIT = 24;
 
 export function PublicRooms() {
@@ -24,14 +47,18 @@ export function PublicRooms() {
   const mx = useMatrixClient();
   const [searchParams] = useSearchParams();
   const serverSearchParams = getServerSearchParams(searchParams);
+  const isSearch = serverSearchParams.term;
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const roomTypeFilters = useRoomTypeFilters();
 
   const fetchPublicRooms = useCallback(() => {
     const limit =
       typeof serverSearchParams.limit === 'string'
         ? parseInt(serverSearchParams.limit, 10)
         : FALLBACK_ROOMS_LIMIT;
-    const roomType = serverSearchParams.type as RoomType | undefined;
+    const roomType: string | null | undefined =
+      serverSearchParams.type === 'null' ? null : serverSearchParams.type;
 
     return mx.http.authedRequest<Awaited<ReturnType<MatrixClient['publicRooms']>>>(
       Method.Post,
@@ -44,7 +71,7 @@ export function PublicRooms() {
         since: serverSearchParams.since,
         filter: {
           generic_search_term: serverSearchParams.term,
-          room_types: roomType ? [roomType] : undefined,
+          room_types: roomType !== undefined ? [roomType] : undefined,
         },
       }
     );
@@ -99,9 +126,23 @@ export function PublicRooms() {
     });
   };
 
-  // const filterRoomType: MouseEvent<HTMLButtonElement> = (evt) => {
-  //   evt
-  // }
+  const handleSearchClear = () => {
+    if (searchInputRef.current) {
+      searchInputRef.current.value = '';
+    }
+    explore({
+      term: undefined,
+      since: undefined,
+    });
+  };
+
+  const handleRoomFilterClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const filter = evt.currentTarget.getAttribute('data-room-filter');
+    explore({
+      type: filter ?? undefined,
+      since: undefined,
+    });
+  };
 
   return (
     <Content>
@@ -112,36 +153,65 @@ export function PublicRooms() {
             title={server}
             subTitle={`Find and explore public rooms and spaces on ${server} server.`}
           />
-          <form onSubmit={handleSearchSubmit}>
-            <Input
-              name="searchInput"
-              size="500"
-              variant="Background"
-              placeholder="Search"
-              after={<Icon size="200" src={Icons.Search} />}
-            />
-          </form>
         </ContentHeroSection>
         <ContentBody>
           <Box direction="Column" gap="700">
             <Box direction="Column" gap="400">
               <Box direction="Column" gap="300">
-                <Text size="H4">Public Community</Text>
+                {isSearch ? (
+                  <Text size="H4">{`Public Communities for "${serverSearchParams.term}"`}</Text>
+                ) : (
+                  <Text size="H4">Public Community</Text>
+                )}
+                <form onSubmit={handleSearchSubmit}>
+                  <Input
+                    ref={searchInputRef}
+                    name="searchInput"
+                    size="500"
+                    variant="Background"
+                    placeholder="Search"
+                    before={
+                      isSearch && isLoading ? (
+                        <Spinner variant="Secondary" size="200" />
+                      ) : (
+                        <Icon size="200" src={Icons.Search} />
+                      )
+                    }
+                    after={
+                      isSearch && (
+                        <Chip
+                          type="button"
+                          variant="Secondary"
+                          size="400"
+                          radii="Pill"
+                          aria-pressed
+                          after={<Icon size="50" src={Icons.Cross} />}
+                          onClick={handleSearchClear}
+                        >
+                          <Text size="B300">Clear</Text>
+                        </Chip>
+                      )
+                    }
+                  />
+                </form>
                 <Box gap="200">
-                  <Chip
-                    variant="Success"
-                    aria-pressed
-                    before={<Icon size="100" src={Icons.Check} />}
-                    outlined
-                  >
-                    <Text size="T200">All</Text>
-                  </Chip>
-                  <Chip variant="Surface" outlined>
-                    <Text size="T200">Spaces</Text>
-                  </Chip>
-                  <Chip variant="Surface" outlined>
-                    <Text size="T200">Rooms</Text>
-                  </Chip>
+                  {roomTypeFilters.map((filter) => (
+                    <Chip
+                      key={filter.title}
+                      onClick={handleRoomFilterClick}
+                      data-room-filter={filter.value}
+                      variant={filter.value === serverSearchParams.type ? 'Success' : 'Surface'}
+                      aria-pressed={filter.value === serverSearchParams.type}
+                      before={
+                        filter.value === serverSearchParams.type && (
+                          <Icon size="100" src={Icons.Check} />
+                        )
+                      }
+                      outlined
+                    >
+                      <Text size="T200">{filter.title}</Text>
+                    </Chip>
+                  ))}
                 </Box>
               </Box>
               {isLoading && !error && <Text>loading...</Text>}
@@ -156,6 +226,7 @@ export function PublicRooms() {
                     name={chunkRoom.name}
                     topic={chunkRoom.topic}
                     memberCount={chunkRoom.num_joined_members}
+                    roomType={chunkRoom.room_type}
                     renderTopicViewer={(name, topic, requestClose) => (
                       <RoomTopicViewer name={name} topic={topic} requestClose={requestClose} />
                     )}
