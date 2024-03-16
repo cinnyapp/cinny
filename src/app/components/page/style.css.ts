@@ -1,16 +1,23 @@
 import { style } from '@vanilla-extract/css';
 import { DefaultReset, config, toRem } from 'folds';
 
-export const Content = style([
+export const PageHeader = style({
+  paddingLeft: config.space.S400,
+  paddingRight: config.space.S200,
+  borderBottomWidth: config.borderWidth.B300,
+});
+
+export const PageContent = style([
   DefaultReset,
   {
-    paddingLeft: config.space.S500,
-    paddingRight: config.space.S100,
+    paddingTop: config.space.S400,
+    paddingLeft: config.space.S400,
+    paddingRight: 0,
     paddingBottom: toRem(100),
   },
 ]);
 
-export const ContentHeroSection = style([
+export const PageHeroSection = style([
   DefaultReset,
   {
     padding: '40px 0',
@@ -20,7 +27,7 @@ export const ContentHeroSection = style([
   },
 ]);
 
-export const ContentBody = style([
+export const PageContentCenter = style([
   DefaultReset,
   {
     maxWidth: toRem(964),

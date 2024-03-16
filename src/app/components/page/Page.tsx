@@ -1,34 +1,45 @@
 import React, { ComponentProps, ReactNode } from 'react';
-import { Box, Scroll, Text, as } from 'folds';
+import { Box, Header, Text, as } from 'folds';
 import classNames from 'classnames';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import * as css from './style.css';
 
-export const Content = as<'div'>(({ className, children, ...props }, ref) => (
+export const Page = as<'div'>(({ className, ...props }, ref) => (
   <Box
     grow="Yes"
+    direction="Column"
     className={classNames(ContainerColor({ variant: 'Surface' }), className)}
     {...props}
     ref={ref}
-  >
-    <Scroll hideTrack>
-      <div className={css.Content}>{children}</div>
-    </Scroll>
-  </Box>
+  />
 ));
 
-export const ContentHeroSection = as<'div', ComponentProps<typeof Box>>(
+export const PageHeader = as<'div'>(({ className, ...props }, ref) => (
+  <Header
+    as="header"
+    size="600"
+    className={classNames(css.PageHeader, className)}
+    {...props}
+    ref={ref}
+  />
+));
+
+export const PageContent = as<'div'>(({ className, ...props }, ref) => (
+  <div className={classNames(css.PageContent, className)} {...props} ref={ref} />
+));
+
+export const PageHeroSection = as<'div', ComponentProps<typeof Box>>(
   ({ className, ...props }, ref) => (
     <Box
       direction="Column"
-      className={classNames(css.ContentHeroSection, className)}
+      className={classNames(css.PageHeroSection, className)}
       {...props}
       ref={ref}
     />
   )
 );
 
-export function ContentHero({
+export function PageHero({
   icon,
   title,
   subTitle,
@@ -54,6 +65,6 @@ export function ContentHero({
   );
 }
 
-export const ContentBody = as<'div'>(({ className, ...props }, ref) => (
-  <div className={classNames(css.ContentBody, className)} {...props} ref={ref} />
+export const PageContentCenter = as<'div'>(({ className, ...props }, ref) => (
+  <div className={classNames(css.PageContentCenter, className)} {...props} ref={ref} />
 ));
