@@ -91,6 +91,7 @@ export const RoomCardTopic = as<'p'>(({ className, ...props }, ref) => (
     size="T200"
     className={classNames(css.RoomCardTopic, className)}
     {...props}
+    priority="400"
     ref={ref}
   />
 ));
