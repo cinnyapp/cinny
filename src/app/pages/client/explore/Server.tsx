@@ -377,6 +377,7 @@ export function PublicRooms() {
             <PageContentCenter>
               <Box direction="Column" gap="600">
                 <Search
+                  key={server}
                   active={isSearch}
                   loading={isLoading}
                   searchInputRef={searchInputRef}
@@ -449,30 +450,32 @@ export function PublicRooms() {
                             />
                           ))}
                         </RoomCardGrid>
-                        <span data-spacing-node />
-                        <Box justifyContent="Center" gap="200">
-                          <Button
-                            onClick={paginateBack}
-                            size="300"
-                            fill="Soft"
-                            disabled={!data.prev_batch}
-                          >
-                            <Text size="B300" truncate>
-                              Previous Page
-                            </Text>
-                          </Button>
-                          <Box data-spacing-node grow="Yes" />
-                          <Button
-                            onClick={paginateFront}
-                            size="300"
-                            fill="Solid"
-                            disabled={!data.next_batch}
-                          >
-                            <Text size="B300" truncate>
-                              Next Page
-                            </Text>
-                          </Button>
-                        </Box>
+
+                        {(data.prev_batch || data.next_batch) && (
+                          <Box justifyContent="Center" gap="200">
+                            <Button
+                              onClick={paginateBack}
+                              size="300"
+                              fill="Soft"
+                              disabled={!data.prev_batch}
+                            >
+                              <Text size="B300" truncate>
+                                Previous Page
+                              </Text>
+                            </Button>
+                            <Box data-spacing-node grow="Yes" />
+                            <Button
+                              onClick={paginateFront}
+                              size="300"
+                              fill="Solid"
+                              disabled={!data.next_batch}
+                            >
+                              <Text size="B300" truncate>
+                                Next Page
+                              </Text>
+                            </Button>
+                          </Box>
+                        )}
                       </>
                     ) : (
                       <Box
