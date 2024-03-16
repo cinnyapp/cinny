@@ -389,7 +389,7 @@ export function PublicRooms() {
                     {isSearch ? (
                       <Text size="H4">{`Results for "${serverSearchParams.term}"`}</Text>
                     ) : (
-                      <Text size="H4">Public Communities</Text>
+                      <Text size="H4">Popular Communities</Text>
                     )}
                     <Box gap="200">
                       {roomTypeFilters.map((filter) => (
