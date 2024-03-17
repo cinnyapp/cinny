@@ -26,7 +26,8 @@ export function Explore() {
   const userId = mx.getUserId();
   const clientConfig = useClientConfig();
   const userServer = userId ? getMxIdServer(userId) : undefined;
-  const servers = clientConfig.homeserverList ?? [clientDefaultServer(clientConfig)];
+  const clientServers = clientConfig.homeserverList ?? [clientDefaultServer(clientConfig)];
+  const servers = clientServers.filter((server) => server !== userServer);
 
   const featuredSelected = useExploreFeaturedSelected();
   const selectedServer = useExploreServer();
@@ -48,6 +49,20 @@ export function Explore() {
           <ClientDrawerContentLayout>
             <Box direction="Column" gap="300">
               <NavCategory>
+                {/* <NavItem variant="Background" radii="400">
+                  <NavItemContent size="T300">
+                    <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                      <Avatar size="200" radii="400">
+                        <Icon src={Icons.Plus} size="100" />
+                      </Avatar>
+                      <Box as="span" grow="Yes">
+                        <Text as="span" size="Inherit" truncate>
+                          Custom Server
+                        </Text>
+                      </Box>
+                    </Box>
+                  </NavItemContent>
+                </NavItem> */}
                 <NavItem variant="Background" radii="400" aria-selected={featuredSelected}>
                   <NavLink to={getExploreFeaturedPath()}>
                     <NavItemContent size="T300">
@@ -64,12 +79,7 @@ export function Explore() {
                     </NavItemContent>
                   </NavLink>
                 </NavItem>
-              </NavCategory>
-              <NavCategory>
-                <NavCategoryHeader>
-                  <Text size="O400">Servers</Text>
-                </NavCategoryHeader>
-                {userServer && !servers.includes(userServer) && (
+                {userServer && (
                   <NavItem
                     variant="Background"
                     radii="400"
@@ -95,34 +105,41 @@ export function Explore() {
                     </NavLink>
                   </NavItem>
                 )}
-                {servers.map((server) => (
-                  <NavItem
-                    key={server}
-                    variant="Background"
-                    radii="400"
-                    aria-selected={server === selectedServer}
-                  >
-                    <NavLink to={getExploreServerPath(server)}>
-                      <NavItemContent size="T300">
-                        <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                          <Avatar size="200" radii="400">
-                            <Icon
-                              src={Icons.Category}
-                              size="100"
-                              filled={server === selectedServer}
-                            />
-                          </Avatar>
-                          <Box as="span" grow="Yes">
-                            <Text as="span" size="Inherit" truncate>
-                              {server}
-                            </Text>
-                          </Box>
-                        </Box>
-                      </NavItemContent>
-                    </NavLink>
-                  </NavItem>
-                ))}
               </NavCategory>
+              {servers.length > 0 && (
+                <NavCategory>
+                  <NavCategoryHeader>
+                    <Text size="O400">Servers</Text>
+                  </NavCategoryHeader>
+                  {servers.map((server) => (
+                    <NavItem
+                      key={server}
+                      variant="Background"
+                      radii="400"
+                      aria-selected={server === selectedServer}
+                    >
+                      <NavLink to={getExploreServerPath(server)}>
+                        <NavItemContent size="T300">
+                          <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                            <Avatar size="200" radii="400">
+                              <Icon
+                                src={Icons.Category}
+                                size="100"
+                                filled={server === selectedServer}
+                              />
+                            </Avatar>
+                            <Box as="span" grow="Yes">
+                              <Text as="span" size="Inherit" truncate>
+                                {server}
+                              </Text>
+                            </Box>
+                          </Box>
+                        </NavItemContent>
+                      </NavLink>
+                    </NavItem>
+                  ))}
+                </NavCategory>
+              )}
             </Box>
           </ClientDrawerContentLayout>
         </ClientDrawerLayout>
