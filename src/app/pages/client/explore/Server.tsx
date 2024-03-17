@@ -15,7 +15,9 @@ import {
   Icon,
   Icons,
   Input,
+  Line,
   Menu,
+  MenuItem,
   PopOut,
   Scroll,
   Spinner,
@@ -37,12 +39,14 @@ import { getExploreServerPath, withSearchParam } from '../../pathUtils';
 import * as css from './style.css';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { useRoomNavigate } from './hooks';
+import { getMxIdServer } from '../../../utils/matrix';
 
 const getServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams => ({
   limit: searchParams.get('limit') ?? undefined,
   since: searchParams.get('since') ?? undefined,
   term: searchParams.get('term') ?? undefined,
   type: searchParams.get('type') ?? undefined,
+  instance: searchParams.get('instance') ?? undefined,
 });
 
 type RoomTypeFilter = {
@@ -129,6 +133,106 @@ function Search({ active, loading, searchInputRef, onSearch, onReset }: SearchPr
         }
       />
     </Box>
+  );
+}
+
+const DEFAULT_INSTANCE_NAME = 'Matrix';
+function ThirdPartyProtocolsSelector({
+  instanceId,
+  onChange,
+}: {
+  instanceId?: string;
+  onChange: (instanceId?: string) => void;
+}) {
+  const mx = useMatrixClient();
+  const [menu, setMenu] = useState(false);
+
+  const { data } = useQuery({
+    queryKey: ['thirdparty', 'protocols'],
+    queryFn: () => mx.getThirdpartyProtocols(),
+  });
+
+  const handleInstanceSelect: MouseEventHandler<HTMLButtonElement> = (evt): void => {
+    const insId = evt.currentTarget.getAttribute('data-instance-id') ?? undefined;
+    onChange(insId);
+    setMenu(false);
+  };
+
+  const instances = data && Object.keys(data).flatMap((protocol) => data[protocol].instances);
+  if (!instances || instances.length === 0) return null;
+  const selectedInstance = instances.find((instance) => instanceId === instance.instance_id);
+
+  return (
+    <PopOut
+      open={menu}
+      align="End"
+      position="Bottom"
+      content={
+        <FocusTrap
+          focusTrapOptions={{
+            initialFocus: false,
+            onDeactivate: () => setMenu(false),
+            clickOutsideDeactivates: true,
+          }}
+        >
+          <Menu variant="Surface">
+            <Box
+              direction="Column"
+              gap="100"
+              style={{ padding: config.space.S100, minWidth: toRem(100) }}
+            >
+              <Text style={{ padding: config.space.S100 }} size="L400" truncate>
+                Protocols
+              </Text>
+              <Box direction="Column">
+                <MenuItem
+                  size="300"
+                  variant="Surface"
+                  aria-pressed={instanceId === undefined}
+                  radii="300"
+                  onClick={handleInstanceSelect}
+                >
+                  <Text size="T200" truncate>
+                    {DEFAULT_INSTANCE_NAME}
+                  </Text>
+                </MenuItem>
+                {instances.map((instance) => (
+                  <MenuItem
+                    size="300"
+                    key={instance.instance_id}
+                    data-instance-id={instance.instance_id}
+                    aria-pressed={instanceId === instance.instance_id}
+                    variant="Surface"
+                    radii="300"
+                    onClick={handleInstanceSelect}
+                  >
+                    <Text size="T200" truncate>
+                      {instance.desc}
+                    </Text>
+                  </MenuItem>
+                ))}
+              </Box>
+            </Box>
+          </Menu>
+        </FocusTrap>
+      }
+    >
+      {(anchorRef) => (
+        <Chip
+          ref={anchorRef}
+          onClick={() => setMenu(!menu)}
+          aria-pressed={menu}
+          radii="Pill"
+          size="400"
+          variant={instanceId ? 'Success' : 'SurfaceVariant'}
+          after={<Icon size="100" src={Icons.ChevronBottom} />}
+        >
+          <Text size="T200" truncate>
+            {selectedInstance?.desc ?? DEFAULT_INSTANCE_NAME}
+          </Text>
+        </Chip>
+      )}
+    </PopOut>
   );
 }
 
@@ -227,6 +331,8 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
 export function PublicRooms() {
   const { server } = useParams();
   const mx = useMatrixClient();
+  const userId = mx.getUserId();
+  const userServer = userId && getMxIdServer(userId);
   const allRooms = useAtomValue(allRoomsAtom);
   const { navigateSpace, navigateRoom } = useRoomNavigate();
 
@@ -270,6 +376,7 @@ export function PublicRooms() {
           generic_search_term: serverSearchParams.term,
           room_types: roomType !== undefined ? [roomType] : undefined,
         },
+        third_party_instance_id: serverSearchParams.instance,
       }
     );
   }, [mx, server, serverSearchParams]);
@@ -282,6 +389,7 @@ export function PublicRooms() {
       serverSearchParams.since,
       serverSearchParams.term,
       serverSearchParams.type,
+      serverSearchParams.instance,
     ],
     queryFn: fetchPublicRooms,
   });
@@ -341,6 +449,10 @@ export function PublicRooms() {
 
   const handleLimitChange = (limit: string) => {
     explore({ limit });
+  };
+
+  const handleInstanceIdChange = (instanceId?: string) => {
+    explore({ instance: instanceId });
   };
 
   return (
@@ -415,6 +527,20 @@ export function PublicRooms() {
                           <Text size="T200">{filter.title}</Text>
                         </Chip>
                       ))}
+                      {userServer === server && (
+                        <>
+                          <Line
+                            style={{ margin: `${config.space.S100} 0` }}
+                            direction="Vertical"
+                            variant="Surface"
+                            size="300"
+                          />
+                          <ThirdPartyProtocolsSelector
+                            instanceId={serverSearchParams.instance}
+                            onChange={handleInstanceIdChange}
+                          />
+                        </>
+                      )}
                       <Box grow="Yes" data-spacing-node />
                       <LimitButton limit={currentLimit} onLimitChange={handleLimitChange} />
                     </Box>

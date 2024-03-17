@@ -50,6 +50,7 @@ export type ExploreServerPathSearchParams = {
   since?: string;
   term?: string;
   type?: string;
+  instance?: string;
 };
 export const EXPLORE_SERVER_PATH = `/explore/${_SERVER_PATH}`;
 
