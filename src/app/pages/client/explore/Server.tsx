@@ -479,14 +479,16 @@ export function PublicRooms() {
                       </>
                     ) : (
                       <Box
-                        className={css.PublicRoomsInfo}
+                        className={css.RoomsInfoCard}
                         direction="Column"
                         justifyContent="Center"
                         alignItems="Center"
                         gap="200"
                       >
                         <Icon size="400" src={Icons.Info} />
-                        <Text size="T300">No communities found!</Text>
+                        <Text size="T300" align="Center">
+                          No communities found!
+                        </Text>
                       </Box>
                     ))}
                 </Box>

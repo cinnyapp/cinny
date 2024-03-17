@@ -23,6 +23,7 @@ import { RoomTopicViewer } from '../../../components/room-topic-viewer';
 import { getHomeRoomPath, getSpacePath, getSpaceRoomPath } from '../../pathUtils';
 import { getOrphanParents } from '../../../utils/room';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
+import * as css from './style.css';
 
 export function FeaturedRooms() {
   const mx = useMatrixClient();
@@ -139,6 +140,21 @@ export function FeaturedRooms() {
                           </RoomSummaryLoader>
                         ))}
                       </RoomCardGrid>
+                    </Box>
+                  )}
+                  {((spaces && spaces.length === 0 && rooms && rooms.length === 0) ||
+                    (!spaces && !rooms)) && (
+                    <Box
+                      className={css.RoomsInfoCard}
+                      direction="Column"
+                      justifyContent="Center"
+                      alignItems="Center"
+                      gap="200"
+                    >
+                      <Icon size="400" src={Icons.Info} />
+                      <Text size="T300" align="Center">
+                        No rooms or spaces featured by client provider.
+                      </Text>
                     </Box>
                   )}
                 </Box>

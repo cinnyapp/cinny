@@ -2,7 +2,7 @@ import { style } from '@vanilla-extract/css';
 import { config } from 'folds';
 import { ContainerColor } from '../../../styles/ContainerColor.css';
 
-export const PublicRoomsInfo = style([
+export const RoomsInfoCard = style([
   ContainerColor({ variant: 'SurfaceVariant' }),
   {
     padding: `${config.space.S700} ${config.space.S300}`,
