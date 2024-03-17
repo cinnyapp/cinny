@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { ClientContentLayout } from '../ClientContentLayout';
@@ -24,6 +24,7 @@ import {
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
 import { RoomIcon } from '../../../components/room-avatar';
 import {
+  getExplorePath,
   getHomeCreatePath,
   getHomeJoinPath,
   getHomeRoomPath,
@@ -39,6 +40,8 @@ import {
 } from '../../../hooks/router/useHomeSelected';
 
 function HomeEmpty() {
+  const navigate = useNavigate();
+
   return (
     <NavEmptyCenter>
       <NavEmptyLayout
@@ -55,12 +58,17 @@ function HomeEmpty() {
         }
         options={
           <>
-            <Button variant="Secondary" size="300">
+            <Button onClick={() => navigate(getHomeCreatePath())} variant="Secondary" size="300">
               <Text size="B300" truncate>
                 Create Room
               </Text>
             </Button>
-            <Button variant="Secondary" fill="Soft" size="300">
+            <Button
+              onClick={() => navigate(getExplorePath())}
+              variant="Secondary"
+              fill="Soft"
+              size="300"
+            >
               <Text size="B300" truncate>
                 Explore Community Rooms
               </Text>
