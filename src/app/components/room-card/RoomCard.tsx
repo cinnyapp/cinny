@@ -29,6 +29,7 @@ import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import { onEnterOrSpace } from '../../utils/keyboard';
 import { RoomType } from '../../../types/matrix/room';
+import { useJoinedRoomId } from '../../hooks/useJoinedRoomId';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {
@@ -143,7 +144,7 @@ function ErrorDialog({
 
 type RoomCardProps = {
   roomIdOrAlias: string;
-  joinedRoomId?: string;
+  allRooms: string[];
   avatarUrl?: string;
   name?: string;
   topic?: string;
@@ -157,7 +158,7 @@ export const RoomCard = as<'div', RoomCardProps>(
   (
     {
       roomIdOrAlias,
-      joinedRoomId,
+      allRooms,
       avatarUrl,
       name,
       topic,
@@ -173,6 +174,7 @@ export const RoomCard = as<'div', RoomCardProps>(
     const avatar = avatarUrl && mx.mxcUrlToHttp(avatarUrl, 96, 96, 'crop');
     const fallbackName = getMxIdLocalPart(roomIdOrAlias) ?? roomIdOrAlias;
     const fallbackTopic = roomIdOrAlias;
+    const joinedRoomId = useJoinedRoomId(allRooms, roomIdOrAlias);
 
     const [joinState, join] = useAsyncCallback<Room, MatrixError, []>(
       useCallback(() => mx.joinRoom(roomIdOrAlias), [mx, roomIdOrAlias])

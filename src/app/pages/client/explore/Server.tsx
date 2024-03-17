@@ -25,6 +25,7 @@ import {
 } from 'folds';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
+import { useAtomValue } from 'jotai';
 import { useQuery } from '@tanstack/react-query';
 import { MatrixClient, Method, RoomType } from 'matrix-js-sdk';
 import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
@@ -34,6 +35,8 @@ import { RoomCard, RoomCardBase, RoomCardGrid } from '../../../components/room-c
 import { ExploreServerPathSearchParams } from '../../paths';
 import { getExploreServerPath, withSearchParam } from '../../pathUtils';
 import * as css from './style.css';
+import { allRoomsAtom } from '../../../state/room-list/roomList';
+import { useRoomNavigate } from './hooks';
 
 const getServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams => ({
   limit: searchParams.get('limit') ?? undefined,
@@ -224,6 +227,9 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
 export function PublicRooms() {
   const { server } = useParams();
   const mx = useMatrixClient();
+  const allRooms = useAtomValue(allRoomsAtom);
+  const { navigateSpace, navigateRoom } = useRoomNavigate();
+
   const [searchParams] = useSearchParams();
   const serverSearchParams = getServerSearchParams(searchParams);
   const isSearch = !!serverSearchParams.term;
@@ -434,12 +440,17 @@ export function PublicRooms() {
                             <RoomCard
                               key={chunkRoom.room_id}
                               roomIdOrAlias={chunkRoom.canonical_alias ?? chunkRoom.room_id}
-                              joinedRoomId={mx.getRoom(chunkRoom.room_id)?.roomId}
+                              allRooms={allRooms}
                               avatarUrl={chunkRoom.avatar_url}
                               name={chunkRoom.name}
                               topic={chunkRoom.topic}
                               memberCount={chunkRoom.num_joined_members}
                               roomType={chunkRoom.room_type}
+                              onView={
+                                chunkRoom.room_type === RoomType.Space
+                                  ? navigateSpace
+                                  : navigateRoom
+                              }
                               renderTopicViewer={(name, topic, requestClose) => (
                                 <RoomTopicViewer
                                   name={name}
