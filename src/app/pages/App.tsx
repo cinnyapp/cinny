@@ -43,7 +43,7 @@ import { Home } from './client/home';
 import { RoomViewer } from '../organisms/room/Room';
 import { Direct } from './client/direct';
 import { SpaceViewer } from './client/space';
-import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
+import { Explore, ExploreRedirect, FeaturedRooms, PublicRooms } from './client/explore';
 import { Notifications } from './client/notifications';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 
@@ -106,7 +106,7 @@ const createRouter = (clientConfig: ClientConfig) => {
             <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
           <Route path={EXPLORE_PATH} element={<Explore />}>
-            <Route index element={<p>welcome</p>} />
+            <Route index element={<ExploreRedirect />} />
             <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
             <Route path={_SERVER_PATH} element={<PublicRooms />} />
           </Route>

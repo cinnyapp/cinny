@@ -1,5 +1,5 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
@@ -148,4 +148,18 @@ export function Explore() {
       <Outlet />
     </ClientContentLayout>
   );
+}
+
+export function ExploreRedirect() {
+  const navigate = useNavigate();
+
+  const mx = useMatrixClient();
+
+  useEffect(() => {
+    const userId = mx.getUserId();
+    const userServer = userId ? getMxIdServer(userId) : undefined;
+    if (userServer) navigate(getExploreServerPath(userServer), { replace: true });
+  }, [navigate, mx]);
+
+  return null;
 }
