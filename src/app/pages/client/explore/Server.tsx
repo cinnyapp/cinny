@@ -452,7 +452,7 @@ export function PublicRooms() {
   };
 
   const handleInstanceIdChange = (instanceId?: string) => {
-    explore({ instance: instanceId });
+    explore({ instance: instanceId, since: undefined });
   };
 
   return (
