@@ -57,6 +57,9 @@ export const EXPLORE_SERVER_PATH = `/explore/${_SERVER_PATH}`;
 export const _NOTIFICATIONS_PATH = 'notifications/';
 export const _INVITES_PATH = 'invites/';
 export const INBOX_PATH = '/inbox/';
+export type InboxNotificationsPathSearchParams = {
+  only?: string;
+};
 export const INBOX_NOTIFICATIONS_PATH = `/inbox/${_NOTIFICATIONS_PATH}`;
 export const INBOX_INVITES_PATH = `/inbox/${_INVITES_PATH}`;
 
