@@ -54,11 +54,11 @@ export type ExploreServerPathSearchParams = {
 };
 export const EXPLORE_SERVER_PATH = `/explore/${_SERVER_PATH}`;
 
-export const _MESSAGES_PATH = 'messages/';
+export const _NOTIFICATIONS_PATH = 'notifications/';
 export const _INVITES_PATH = 'invites/';
-export const NOTIFICATIONS_PATH = '/notifications/';
-export const NOTIFICATIONS_MESSAGES_PATH = `/notifications/${_MESSAGES_PATH}`;
-export const NOTIFICATIONS_INVITES_PATH = `/notifications/${_INVITES_PATH}`;
+export const INBOX_PATH = '/inbox/';
+export const INBOX_NOTIFICATIONS_PATH = `/inbox/${_NOTIFICATIONS_PATH}`;
+export const INBOX_INVITES_PATH = `/inbox/${_INVITES_PATH}`;
 
 export const USER_SETTINGS_PATH = '/user-settings/';
 

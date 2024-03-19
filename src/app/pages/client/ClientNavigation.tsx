@@ -9,15 +9,15 @@ import {
   SidebarStack,
   SidebarAvatar,
 } from '../../components/sidebar';
-import { getExplorePath, getNotificationsPath } from '../pathUtils';
+import { getExplorePath, getInboxPath } from '../pathUtils';
 import { DirectTab, HomeTab, SpaceTabs } from './sidebar';
 import { useExploreSelected } from '../../hooks/router/useExploreSelected';
-import { useNotificationsSelected } from '../../hooks/router/useNotifications';
+import { useInboxSelected } from '../../hooks/router/useInbox';
 
 export function ClientNavigation() {
   const navigate = useNavigate();
 
-  const notificationsSelected = useNotificationsSelected();
+  const inboxSelected = useInboxSelected();
   const exploreSelected = useExploreSelected();
 
   return (
@@ -60,11 +60,11 @@ export function ClientNavigation() {
                 avatarChildren={<Icon src={Icons.Search} />}
               />
               <SidebarAvatar
-                active={notificationsSelected}
+                active={inboxSelected}
                 outlined
-                tooltip="Notifications"
-                avatarChildren={<Icon src={Icons.Bell} filled={notificationsSelected} />}
-                onClick={() => navigate(getNotificationsPath())}
+                tooltip="Inbox"
+                avatarChildren={<Icon src={Icons.Bell} filled={inboxSelected} />}
+                onClick={() => navigate(getInboxPath())}
               />
               <SidebarAvatar
                 tooltip="User Settings"

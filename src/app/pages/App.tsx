@@ -19,7 +19,7 @@ import {
   EXPLORE_PATH,
   HOME_PATH,
   LOGIN_PATH,
-  NOTIFICATIONS_PATH,
+  INBOX_PATH,
   REGISTER_PATH,
   RESET_PASSWORD_PATH,
   ROOT_PATH,
@@ -29,7 +29,7 @@ import {
   _INVITES_PATH,
   _JOIN_PATH,
   _LOBBY_PATH,
-  _MESSAGES_PATH,
+  _NOTIFICATIONS_PATH,
   _ROOM_PATH,
   _SEARCH_PATH,
   _SERVER_PATH,
@@ -44,7 +44,7 @@ import { RoomViewer } from '../organisms/room/Room';
 import { Direct } from './client/direct';
 import { SpaceViewer } from './client/space';
 import { Explore, ExploreRedirect, FeaturedRooms, PublicRooms } from './client/explore';
-import { Notifications } from './client/notifications';
+import { Notifications, Inbox, InboxRedirect } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 
 const queryClient = new QueryClient();
@@ -94,11 +94,6 @@ const createRouter = (clientConfig: ClientConfig) => {
             <Route path={_CREATE_PATH} element={<p>create</p>} />
             <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
-          <Route path={NOTIFICATIONS_PATH} element={<Notifications />}>
-            <Route index element={<p>welcome</p>} />
-            <Route path={_MESSAGES_PATH} element={<p>messages</p>} />
-            <Route path={_INVITES_PATH} element={<p>invites</p>} />
-          </Route>
           <Route path={SPACE_PATH} element={<SpaceViewer />}>
             <Route index element={<p>welcome</p>} />
             <Route path={_LOBBY_PATH} element={<p>lobby</p>} />
@@ -109,6 +104,11 @@ const createRouter = (clientConfig: ClientConfig) => {
             <Route index element={<ExploreRedirect />} />
             <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
             <Route path={_SERVER_PATH} element={<PublicRooms />} />
+          </Route>
+          <Route path={INBOX_PATH} element={<Inbox />}>
+            <Route index element={<InboxRedirect />} />
+            <Route path={_NOTIFICATIONS_PATH} element={<Notifications />} />
+            <Route path={_INVITES_PATH} element={<p>invites</p>} />
           </Route>
         </Route>
       </Route>

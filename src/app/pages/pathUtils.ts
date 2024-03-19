@@ -12,9 +12,9 @@ import {
   HOME_ROOM_PATH,
   HOME_SEARCH_PATH,
   LOGIN_PATH,
-  NOTIFICATIONS_INVITES_PATH,
-  NOTIFICATIONS_MESSAGES_PATH,
-  NOTIFICATIONS_PATH,
+  INBOX_INVITES_PATH,
+  INBOX_NOTIFICATIONS_PATH,
+  INBOX_PATH,
   REGISTER_PATH,
   RESET_PASSWORD_PATH,
   ROOT_PATH,
@@ -124,6 +124,6 @@ export const getExploreServerPath = (server: string): string => {
   return generatePath(EXPLORE_SERVER_PATH, params);
 };
 
-export const getNotificationsPath = (): string => NOTIFICATIONS_PATH;
-export const getNotificationsMessagesPath = (): string => NOTIFICATIONS_MESSAGES_PATH;
-export const getNotificationsInvitesPath = (): string => NOTIFICATIONS_INVITES_PATH;
+export const getInboxPath = (): string => INBOX_PATH;
+export const getInboxNotificationsPath = (): string => INBOX_NOTIFICATIONS_PATH;
+export const getInboxInvitesPath = (): string => INBOX_INVITES_PATH;
