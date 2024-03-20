@@ -25,6 +25,7 @@ import { RoomAvatar } from '../../../components/room-avatar';
 import { nameInitials } from '../../../utils/common';
 import { getRoomAvatarUrl } from '../../../utils/room';
 import { ScrollTopContainer } from '../../../components/scroll-top-container';
+import { useInterval } from '../../../hooks/useInterval';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -35,6 +36,7 @@ type NotificationTimeline = {
   groups: RoomNotificationsGroup[];
 };
 type LoadTimeline = (from?: string) => Promise<void>;
+type SilentReloadTimeline = () => Promise<void>;
 
 const groupNotifications = (notifications: INotification[]): RoomNotificationsGroup[] => {
   const groups: RoomNotificationsGroup[] = [];
@@ -56,7 +58,7 @@ const groupNotifications = (notifications: INotification[]): RoomNotificationsGr
 const useNotificationTimeline = (
   paginationLimit: number,
   onlyHighlight?: boolean
-): [NotificationTimeline, LoadTimeline] => {
+): [NotificationTimeline, LoadTimeline, SilentReloadTimeline] => {
   const mx = useMatrixClient();
   const [notificationTimeline, setNotificationTimeline] = useState<NotificationTimeline>({
     groups: [],
@@ -86,15 +88,38 @@ const useNotificationTimeline = (
       );
       const groups = groupNotifications(data.notifications);
 
-      setNotificationTimeline((currentTimeline) => ({
-        nextToken: data.next_token,
-        groups: from ? currentTimeline.groups.concat(groups) : groups,
-      }));
+      setNotificationTimeline((currentTimeline) => {
+        if (currentTimeline.nextToken === from) {
+          return {
+            nextToken: data.next_token,
+            groups: from ? currentTimeline.groups.concat(groups) : groups,
+          };
+        }
+        return currentTimeline;
+      });
     },
     [paginationLimit, onlyHighlight, fetchNotifications]
   );
 
-  return [notificationTimeline, loadTimeline];
+  /**
+   * Reload timeline silently i.e without setting to default
+   * before fetching notifications from start
+   */
+  const silentReloadTimeline: SilentReloadTimeline = useCallback(async () => {
+    const data = await fetchNotifications(
+      undefined,
+      paginationLimit,
+      onlyHighlight ? 'highlight' : undefined
+    );
+    const groups = groupNotifications(data.notifications);
+
+    setNotificationTimeline({
+      nextToken: data.next_token,
+      groups,
+    });
+  }, [paginationLimit, onlyHighlight, fetchNotifications]);
+
+  return [notificationTimeline, loadTimeline, silentReloadTimeline];
 };
 
 const getNotificationsSearchParams = (
@@ -102,12 +127,16 @@ const getNotificationsSearchParams = (
 ): InboxNotificationsPathSearchParams => ({
   only: searchParams.get('only') ?? undefined,
 });
+
+const DEFAULT_REFRESH_MS = 10000;
+
 export function Notifications() {
   const mx = useMatrixClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const notificationsSearchParams = getNotificationsSearchParams(searchParams);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
+  const [refreshIntervalTime, setRefreshIntervalTime] = useState(DEFAULT_REFRESH_MS);
 
   const onlyHighlight = notificationsSearchParams.only === 'highlight';
   const setOnlyHighlighted = (highlight: boolean) => {
@@ -122,7 +151,10 @@ export function Notifications() {
     setSearchParams();
   };
 
-  const [notificationTimeline, _loadTimeline] = useNotificationTimeline(24, onlyHighlight);
+  const [notificationTimeline, _loadTimeline, silentReloadTimeline] = useNotificationTimeline(
+    24,
+    onlyHighlight
+  );
   const [timelineState, loadTimeline] = useAsyncCallback(_loadTimeline);
 
   const virtualizer = useVirtualizer({
@@ -132,6 +164,20 @@ export function Notifications() {
     overscan: 4,
   });
   const vItems = virtualizer.getVirtualItems();
+
+  useInterval(
+    useCallback(() => {
+      if (document.hasFocus()) {
+        silentReloadTimeline();
+      }
+    }, [silentReloadTimeline]),
+    refreshIntervalTime
+  );
+
+  const handleScrollTopVisibility = useCallback(
+    (onTop: boolean) => setRefreshIntervalTime(onTop ? DEFAULT_REFRESH_MS : -1),
+    []
+  );
 
   useEffect(() => {
     loadTimeline();
@@ -187,24 +233,16 @@ export function Notifications() {
                     >
                       <Text size="T200">Highlighted</Text>
                     </Chip>
-                    <Box grow="Yes" data-spacing-node />
-                    <Chip
-                      onClick={() => loadTimeline()}
-                      radii="Pill"
-                      size="400"
-                      variant="SurfaceVariant"
-                      after={<Icon size="50" src={Icons.ArrowBottom} />}
-                    >
-                      <Text size="T200" truncate>
-                        Refresh
-                      </Text>
-                    </Chip>
                   </Box>
                 </Box>
-                <ScrollTopContainer scrollRef={scrollRef} anchorRef={scrollTopAnchorRef}>
+                <ScrollTopContainer
+                  scrollRef={scrollRef}
+                  anchorRef={scrollTopAnchorRef}
+                  onVisibilityChange={handleScrollTopVisibility}
+                >
                   <IconButton
                     onClick={() => virtualizer.scrollToOffset(0)}
-                    variant="Surface"
+                    variant="Secondary"
                     radii="Pill"
                     outlined
                     size="300"
@@ -224,8 +262,6 @@ export function Notifications() {
                     if (!group) return null;
                     const groupRoom = mx.getRoom(group.roomId);
                     if (!groupRoom) return null;
-                    // TODO: instead of null return empty div to measure element
-                    // extract scroll to top floating btn component from MemberDrawer component
 
                     return (
                       <Box
@@ -257,10 +293,12 @@ export function Notifications() {
                                 )}
                               />
                             </Avatar>
-                            <Text size="H4">{groupRoom.name}</Text>
+                            <Text size="H4" truncate>
+                              {groupRoom.name}
+                            </Text>
                           </Box>
                         </Header>
-                        <Box direction="Column" gap="100">
+                        <Box direction="Column" style={{ gap: toRem(2) }}>
                           {group.notifications.map((notification) => (
                             <SequenceCard
                               key={notification.event.event_id}
@@ -282,7 +320,7 @@ export function Notifications() {
                 </div>
 
                 {timelineState.status === AsyncStatus.Loading && (
-                  <Box direction="Column" gap="100">
+                  <Box direction="Column" style={{ gap: toRem(2) }}>
                     {[...Array(8).keys()].map((key) => (
                       <SequenceCard key={key} style={{ minHeight: toRem(80) }} />
                     ))}
