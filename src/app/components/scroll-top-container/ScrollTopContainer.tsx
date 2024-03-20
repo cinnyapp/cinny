@@ -12,8 +12,9 @@ export const ScrollTopContainer = as<
   {
     scrollRef?: RefObject<HTMLElement>;
     anchorRef: RefObject<HTMLElement>;
+    onVisibilityChange?: (onTop: boolean) => void;
   }
->(({ className, scrollRef, anchorRef, ...props }, ref) => {
+>(({ className, scrollRef, anchorRef, onVisibilityChange, ...props }, ref) => {
   const [onTop, setOnTop] = useState(true);
 
   useIntersectionObserver(
@@ -21,9 +22,12 @@ export const ScrollTopContainer = as<
       (intersectionEntries) => {
         if (!anchorRef.current) return;
         const entry = getIntersectionObserverEntry(anchorRef.current, intersectionEntries);
-        if (entry) setOnTop(entry.isIntersecting);
+        if (entry) {
+          setOnTop(entry.isIntersecting);
+          onVisibilityChange?.(entry.isIntersecting);
+        }
       },
-      [anchorRef]
+      [anchorRef, onVisibilityChange]
     ),
     useCallback(() => ({ root: scrollRef?.current }), [scrollRef]),
     useCallback(() => anchorRef.current, [anchorRef])
