@@ -39,10 +39,6 @@ import { openInviteUser, openProfileViewer } from '../../../client/action/naviga
 import * as css from './MembersDrawer.css';
 import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import {
-  getIntersectionObserverEntry,
-  useIntersectionObserver,
-} from '../../hooks/useIntersectionObserver';
 import { Membership } from '../../../types/matrix/room';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import {
@@ -60,6 +56,7 @@ import { getMxIdLocalPart } from '../../utils/matrix';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { millify } from '../../plugins/millify';
+import { ScrollTopContainer } from '../../components/scroll-top-container';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -190,8 +187,6 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   const membershipFilter = membershipFilterMenu[membershipFilterIndex] ?? membershipFilterMenu[0];
   const sortFilter = sortFilterMenu[sortFilterIndex] ?? sortFilterMenu[0];
 
-  const [onTop, setOnTop] = useState(true);
-
   const typingMembers = useAtomValue(
     useMemo(() => selectRoomTypingMembersAtom(room.roomId, roomIdToTypingMembersAtom), [room])
   );
@@ -234,16 +229,6 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
     estimateSize: () => 40,
     overscan: 10,
   });
-
-  useIntersectionObserver(
-    useCallback((intersectionEntries) => {
-      if (!scrollTopAnchorRef.current) return;
-      const entry = getIntersectionObserverEntry(scrollTopAnchorRef.current, intersectionEntries);
-      if (entry) setOnTop(entry.isIntersecting);
-    }, []),
-    useCallback(() => ({ root: scrollRef.current }), []),
-    useCallback(() => scrollTopAnchorRef.current, [])
-  );
 
   const handleSearchChange: ChangeEventHandler<HTMLInputElement> = useDebounce(
     useCallback(
@@ -446,20 +431,18 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
               </Box>
             </Box>
 
-            {!onTop && (
-              <Box className={css.DrawerScrollTop}>
-                <IconButton
-                  onClick={() => virtualizer.scrollToOffset(0)}
-                  variant="Surface"
-                  radii="Pill"
-                  outlined
-                  size="300"
-                  aria-label="Scroll to Top"
-                >
-                  <Icon src={Icons.ChevronTop} size="300" />
-                </IconButton>
-              </Box>
-            )}
+            <ScrollTopContainer scrollRef={scrollRef} anchorRef={scrollTopAnchorRef}>
+              <IconButton
+                onClick={() => virtualizer.scrollToOffset(0)}
+                variant="Surface"
+                radii="Pill"
+                outlined
+                size="300"
+                aria-label="Scroll to Top"
+              >
+                <Icon src={Icons.ChevronTop} size="300" />
+              </IconButton>
+            </ScrollTopContainer>
 
             {!fetchingMembers && !result && processMembers.length === 0 && (
               <Text style={{ padding: config.space.S300 }} align="Center">

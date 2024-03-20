@@ -1,5 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Avatar, Box, Chip, Header, Icon, Icons, Scroll, Text, config, toRem } from 'folds';
+import {
+  Avatar,
+  Box,
+  Chip,
+  Header,
+  Icon,
+  IconButton,
+  Icons,
+  Scroll,
+  Text,
+  config,
+  toRem,
+} from 'folds';
 import { useSearchParams } from 'react-router-dom';
 import { INotification, INotificationsResponse, Method } from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -12,6 +24,7 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { RoomAvatar } from '../../../components/room-avatar';
 import { nameInitials } from '../../../utils/common';
 import { getRoomAvatarUrl } from '../../../utils/room';
+import { ScrollTopContainer } from '../../../components/scroll-top-container';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -94,6 +107,7 @@ export function Notifications() {
   const [searchParams, setSearchParams] = useSearchParams();
   const notificationsSearchParams = getNotificationsSearchParams(searchParams);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
 
   const onlyHighlight = notificationsSearchParams.only === 'highlight';
   const setOnlyHighlighted = (highlight: boolean) => {
@@ -146,12 +160,12 @@ export function Notifications() {
         </Box>
       </PageHeader>
 
-      <Box grow="Yes">
+      <Box style={{ position: 'relative' }} grow="Yes">
         <Scroll ref={scrollRef} hideTrack visibility="Hover">
           <PageContent>
             <PageContentCenter>
               <Box direction="Column" gap="200">
-                <Box direction="Column" gap="100">
+                <Box ref={scrollTopAnchorRef} direction="Column" gap="100">
                   <span data-spacing-node />
                   <Text size="L400">Filter</Text>
                   <Box gap="200">
@@ -187,6 +201,18 @@ export function Notifications() {
                     </Chip>
                   </Box>
                 </Box>
+                <ScrollTopContainer scrollRef={scrollRef} anchorRef={scrollTopAnchorRef}>
+                  <IconButton
+                    onClick={() => virtualizer.scrollToOffset(0)}
+                    variant="Surface"
+                    radii="Pill"
+                    outlined
+                    size="300"
+                    aria-label="Scroll to Top"
+                  >
+                    <Icon src={Icons.ChevronTop} size="300" />
+                  </IconButton>
+                </ScrollTopContainer>
                 <div
                   style={{
                     position: 'relative',
@@ -198,6 +224,8 @@ export function Notifications() {
                     if (!group) return null;
                     const groupRoom = mx.getRoom(group.roomId);
                     if (!groupRoom) return null;
+                    // TODO: instead of null return empty div to measure element
+                    // extract scroll to top floating btn component from MemberDrawer component
 
                     return (
                       <Box
