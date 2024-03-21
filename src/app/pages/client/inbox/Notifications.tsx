@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Avatar,
@@ -51,7 +52,7 @@ import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
 import { Image } from '../../../components/media';
 import { ImageViewer } from '../../../components/image-viewer';
-import { GetContentCallback } from '../../../../types/matrix/room';
+import { GetContentCallback, MessageEvent, StateEvent } from '../../../../types/matrix/room';
 import { useMatrixEventRenderer } from '../../../hooks/useMatrixEventRenderer';
 import * as customHtmlCss from '../../../styles/CustomHtml.css';
 
@@ -192,43 +193,56 @@ function RoomNotificationsGroupComp({
     [mx, room]
   );
 
-  const renderMatrixEvent = useMatrixEventRenderer<[IRoomEvent, string, GetContentCallback]>({
-    renderRoomMessage: (event, displayName, getContent) => {
-      if (event.unsigned?.redacted_because) {
-        return <RedactedContent reason={event.unsigned?.redacted_because.content.reason} />;
-      }
+  const renderMatrixEvent = useMatrixEventRenderer<[IRoomEvent, string, GetContentCallback]>(
+    {
+      [MessageEvent.RoomMessage]: (event, displayName, getContent) => {
+        if (event.unsigned?.redacted_because) {
+          return <RedactedContent reason={event.unsigned?.redacted_because.content.reason} />;
+        }
 
-      return (
-        <RenderMessageContent
-          displayName={displayName}
-          msgType={event.content.msgtype ?? ''}
-          ts={event.origin_server_ts}
-          getContent={getContent}
-          mediaAutoLoad={mediaAutoLoad}
-          urlPreview={urlPreview}
-          htmlReactParserOptions={htmlReactParserOptions}
-        />
-      );
+        return (
+          <RenderMessageContent
+            displayName={displayName}
+            msgType={event.content.msgtype ?? ''}
+            ts={event.origin_server_ts}
+            getContent={getContent}
+            mediaAutoLoad={mediaAutoLoad}
+            urlPreview={urlPreview}
+            htmlReactParserOptions={htmlReactParserOptions}
+          />
+        );
+      },
+      [MessageEvent.Reaction]: (event, displayName, getContent) => {
+        if (event.unsigned?.redacted_because) {
+          return <RedactedContent reason={event.unsigned?.redacted_because.content.reason} />;
+        }
+        return (
+          <MSticker
+            content={getContent()}
+            renderImageContent={(props) => (
+              <ImageContent
+                {...props}
+                autoPlay={mediaAutoLoad}
+                renderImage={(p) => <Image {...p} loading="lazy" />}
+                renderViewer={(p) => <ImageViewer {...p} />}
+              />
+            )}
+          />
+        );
+      },
+      [StateEvent.RoomTombstone]: (event) => {
+        const { content } = event;
+        return (
+          <Box grow="Yes" direction="Column">
+            <Text size="T400" priority="300">
+              Room Tombstone. {content.body}
+            </Text>
+          </Box>
+        );
+      },
     },
-    renderSticker: (event, displayName, getContent) => {
-      if (event.unsigned?.redacted_because) {
-        return <RedactedContent reason={event.unsigned?.redacted_because.content.reason} />;
-      }
-      return (
-        <MSticker
-          content={getContent()}
-          renderImageContent={(props) => (
-            <ImageContent
-              {...props}
-              autoPlay={mediaAutoLoad}
-              renderImage={(p) => <Image {...p} loading="lazy" />}
-              renderViewer={(p) => <ImageViewer {...p} />}
-            />
-          )}
-        />
-      );
-    },
-    renderEvent: (event) => {
+    undefined,
+    (event) => {
       if (event.unsigned?.redacted_because) {
         return <RedactedContent reason={event.unsigned?.redacted_because.content.reason} />;
       }
@@ -240,8 +254,8 @@ function RoomNotificationsGroupComp({
           </Text>
         </Box>
       );
-    },
-  });
+    }
+  );
 
   return (
     <>
