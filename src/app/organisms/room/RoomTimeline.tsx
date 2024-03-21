@@ -107,7 +107,7 @@ import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from 
 import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
 import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
 import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
-import { MessageEvent } from '../../../types/matrix/room';
+import { GetContentCallback, MessageEvent } from '../../../types/matrix/room';
 import initMatrix from '../../../client/initMatrix';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import cons from '../../../client/state/cons';
@@ -956,7 +956,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     [editor]
   );
 
-  const renderMatrixEvent = useMatrixEventRenderer<[number, EventTimelineSet, boolean]>({
+  const renderMatrixEvent = useMatrixEventRenderer<
+    [string, MatrixEvent, number, EventTimelineSet, boolean]
+  >({
     renderRoomMessage: (mEventId, mEvent, item, timelineSet, collapse) => {
       const reactionRelations = getEventReactions(timelineSet, mEventId);
       const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
@@ -965,8 +967,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
 
       const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-      const getContent = () =>
-        editedEvent?.getContent()['m.new_content'] ?? (mEvent.getContent() as any);
+      const getContent = (() =>
+        editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent()) as GetContentCallback;
 
       const senderId = mEvent.getSender() ?? '';
       const senderDisplayName =
@@ -1109,8 +1111,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 );
               if (mEvent.getType() === MessageEvent.RoomMessage) {
                 const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-                const getContent = () =>
-                  editedEvent?.getContent()['m.new_content'] ?? (mEvent.getContent() as any);
+                const getContent = (() =>
+                  editedEvent?.getContent()['m.new_content'] ??
+                  mEvent.getContent()) as GetContentCallback;
 
                 const senderId = mEvent.getSender() ?? '';
                 const senderDisplayName =
@@ -1449,7 +1452,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
     const eventJSX = reactionOrEditEvent(mEvent)
       ? null
-      : renderMatrixEvent(mEventId, mEvent, item, timelineSet, collapsed);
+      : renderMatrixEvent(
+          mEvent.getType(),
+          typeof mEvent.getStateKey() === 'string',
+          mEventId,
+          mEvent,
+          item,
+          timelineSet,
+          collapsed
+        );
     prevEvent = mEvent;
     isPrevRendered = !!eventJSX;
 

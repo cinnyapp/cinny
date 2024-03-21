@@ -1,12 +1,7 @@
 import { ReactNode } from 'react';
-import { MatrixEvent } from 'matrix-js-sdk';
 import { MessageEvent, StateEvent } from '../../types/matrix/room';
 
-export type EventRenderer<T extends unknown[]> = (
-  eventId: string,
-  mEvent: MatrixEvent,
-  ...args: T
-) => ReactNode;
+export type EventRenderer<T extends unknown[]> = (...args: T) => ReactNode;
 
 export type EventRendererOpts<T extends unknown[]> = {
   renderRoomMessage?: EventRenderer<T>;
@@ -21,8 +16,8 @@ export type EventRendererOpts<T extends unknown[]> = {
 };
 
 export type RenderMatrixEvent<T extends unknown[]> = (
-  eventId: string,
-  mEvent: MatrixEvent,
+  eventType: string,
+  isStateEvent: boolean,
   ...args: T
 ) => ReactNode;
 
@@ -38,43 +33,41 @@ export const useMatrixEventRenderer =
     renderStateEvent,
     renderEvent,
   }: EventRendererOpts<T>): RenderMatrixEvent<T> =>
-  (eventId, mEvent, ...args) => {
-    const eventType = mEvent.getWireType();
-
+  (eventType, isStateEvent, ...args) => {
     if (eventType === MessageEvent.RoomMessage && renderRoomMessage) {
-      return renderRoomMessage(eventId, mEvent, ...args);
+      return renderRoomMessage(...args);
     }
 
     if (eventType === MessageEvent.RoomMessageEncrypted && renderRoomEncrypted) {
-      return renderRoomEncrypted(eventId, mEvent, ...args);
+      return renderRoomEncrypted(...args);
     }
 
     if (eventType === MessageEvent.Sticker && renderSticker) {
-      return renderSticker(eventId, mEvent, ...args);
+      return renderSticker(...args);
     }
 
     if (eventType === StateEvent.RoomMember && renderRoomMember) {
-      return renderRoomMember(eventId, mEvent, ...args);
+      return renderRoomMember(...args);
     }
 
     if (eventType === StateEvent.RoomName && renderRoomName) {
-      return renderRoomName(eventId, mEvent, ...args);
+      return renderRoomName(...args);
     }
 
     if (eventType === StateEvent.RoomTopic && renderRoomTopic) {
-      return renderRoomTopic(eventId, mEvent, ...args);
+      return renderRoomTopic(...args);
     }
 
     if (eventType === StateEvent.RoomAvatar && renderRoomAvatar) {
-      return renderRoomAvatar(eventId, mEvent, ...args);
+      return renderRoomAvatar(...args);
     }
 
-    if (typeof mEvent.getStateKey() === 'string' && renderStateEvent) {
-      return renderStateEvent(eventId, mEvent, ...args);
+    if (isStateEvent && renderStateEvent) {
+      return renderStateEvent(...args);
     }
 
-    if (typeof mEvent.getStateKey() !== 'string' && renderEvent) {
-      return renderEvent(eventId, mEvent, ...args);
+    if (!isStateEvent && renderEvent) {
+      return renderEvent(...args);
     }
     return null;
   };
