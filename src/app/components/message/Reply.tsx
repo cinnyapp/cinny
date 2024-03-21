@@ -10,11 +10,7 @@ import { getMxIdLocalPart } from '../../utils/matrix';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
 import * as css from './Reply.css';
-import {
-  MessageBadEncryptedContent,
-  MessageDeletedContent,
-  MessageFailedContent,
-} from './MessageContentFallback';
+import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
 
 type ReplyProps = {
   mx: MatrixClient;

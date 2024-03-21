@@ -1,6 +1,6 @@
 import { Badge, Box, Text, as, toRem } from 'folds';
 import React from 'react';
-import { mimeTypeToExt } from '../../../utils/mimeTypes';
+import { mimeTypeToExt } from '../../utils/mimeTypes';
 
 const badgeStyles = { maxWidth: toRem(100) };
 

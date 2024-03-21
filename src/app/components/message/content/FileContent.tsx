@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { ReactNode, useCallback, useState } from 'react';
 import {
   Box,
   Button,
@@ -22,23 +22,13 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getFileSrcUrl, getSrcFile } from './util';
 import { bytesToSize } from '../../../utils/common';
-import { TextViewer } from '../../../components/text-viewer';
 import {
   READABLE_EXT_TO_MIME_TYPE,
   READABLE_TEXT_MIME_TYPES,
   getFileNameExt,
   mimeTypeToExt,
 } from '../../../utils/mimeTypes';
-import { PdfViewer } from '../../../components/Pdf-viewer';
-import * as css from './styles.css';
-
-export type FileContentProps = {
-  body: string;
-  mimeType: string;
-  url: string;
-  info: IFileInfo;
-  encInfo?: EncryptedAttachmentInfo;
-};
+import * as css from './style.css';
 
 const renderErrorButton = (retry: () => void, text: string) => (
   <TooltipProvider
@@ -69,7 +59,20 @@ const renderErrorButton = (retry: () => void, text: string) => (
   </TooltipProvider>
 );
 
-function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'info'>) {
+type RenderTextViewerProps = {
+  name: string;
+  text: string;
+  langName: string;
+  requestClose: () => void;
+};
+type ReadTextFileProps = {
+  body: string;
+  mimeType: string;
+  url: string;
+  encInfo?: EncryptedAttachmentInfo;
+  renderViewer: (props: RenderTextViewerProps) => ReactNode;
+};
+export function ReadTextFile({ body, mimeType, url, encInfo, renderViewer }: ReadTextFileProps) {
   const mx = useMatrixClient();
   const [textViewer, setTextViewer] = useState(false);
 
@@ -105,16 +108,14 @@ function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, '
                 size="500"
                 onContextMenu={(evt: any) => evt.stopPropagation()}
               >
-                <TextViewer
-                  name={body}
-                  text={textState.data}
-                  langName={
-                    READABLE_TEXT_MIME_TYPES.includes(mimeType)
-                      ? mimeTypeToExt(mimeType)
-                      : mimeTypeToExt(READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)] ?? mimeType)
-                  }
-                  requestClose={() => setTextViewer(false)}
-                />
+                {renderViewer({
+                  name: body,
+                  text: textState.data,
+                  langName: READABLE_TEXT_MIME_TYPES.includes(mimeType)
+                    ? mimeTypeToExt(mimeType)
+                    : mimeTypeToExt(READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)] ?? mimeType),
+                  requestClose: () => setTextViewer(false),
+                })}
               </Modal>
             </FocusTrap>
           </OverlayCenter>
@@ -149,7 +150,19 @@ function ReadTextFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, '
   );
 }
 
-function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'info'>) {
+type RenderPdfViewerProps = {
+  name: string;
+  src: string;
+  requestClose: () => void;
+};
+export type ReadPdfFileProps = {
+  body: string;
+  mimeType: string;
+  url: string;
+  encInfo?: EncryptedAttachmentInfo;
+  renderViewer: (props: RenderPdfViewerProps) => ReactNode;
+};
+export function ReadPdfFile({ body, mimeType, url, encInfo, renderViewer }: ReadPdfFileProps) {
   const mx = useMatrixClient();
   const [pdfViewer, setPdfViewer] = useState(false);
 
@@ -178,11 +191,11 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
                 size="500"
                 onContextMenu={(evt: any) => evt.stopPropagation()}
               >
-                <PdfViewer
-                  name={body}
-                  src={pdfState.data}
-                  requestClose={() => setPdfViewer(false)}
-                />
+                {renderViewer({
+                  name: body,
+                  src: pdfState.data,
+                  requestClose: () => setPdfViewer(false),
+                })}
               </Modal>
             </FocusTrap>
           </OverlayCenter>
@@ -215,7 +228,14 @@ function ReadPdfFile({ body, mimeType, url, encInfo }: Omit<FileContentProps, 'i
   );
 }
 
-function DownloadFile({ body, mimeType, url, info, encInfo }: FileContentProps) {
+export type DownloadFileProps = {
+  body: string;
+  mimeType: string;
+  url: string;
+  info: IFileInfo;
+  encInfo?: EncryptedAttachmentInfo;
+};
+export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFileProps) {
   const mx = useMatrixClient();
 
   const [downloadState, download] = useAsyncCallback(
@@ -253,17 +273,20 @@ function DownloadFile({ body, mimeType, url, info, encInfo }: FileContentProps) 
   );
 }
 
+type FileContentProps = {
+  body: string;
+  mimeType: string;
+  renderAsTextFile: () => ReactNode;
+  renderAsPdfFile: () => ReactNode;
+};
 export const FileContent = as<'div', FileContentProps>(
-  ({ body, mimeType, url, info, encInfo, ...props }, ref) => (
+  ({ body, mimeType, renderAsTextFile, renderAsPdfFile, children, ...props }, ref) => (
     <Box direction="Column" gap="300" {...props} ref={ref}>
       {(READABLE_TEXT_MIME_TYPES.includes(mimeType) ||
-        READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)]) && (
-        <ReadTextFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} />
-      )}
-      {mimeType === 'application/pdf' && (
-        <ReadPdfFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} />
-      )}
-      <DownloadFile body={body} mimeType={mimeType} url={url} info={info} encInfo={encInfo} />
+        READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)]) &&
+        renderAsTextFile()}
+      {mimeType === 'application/pdf' && renderAsPdfFile()}
+      {children}
     </Box>
   )
 );

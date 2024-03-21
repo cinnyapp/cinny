@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import {
   Badge,
   Box,
@@ -23,12 +23,24 @@ import { IImageInfo, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../../types/ma
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getFileSrcUrl } from './util';
-import { Image } from '../../../components/media';
-import * as css from './styles.css';
+import * as css from './style.css';
 import { bytesToSize } from '../../../utils/common';
-import { ImageViewer } from '../../../components/image-viewer';
 import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
 
+type RenderViewerProps = {
+  src: string;
+  alt: string;
+  requestClose: () => void;
+};
+type RenderImageProps = {
+  alt: string;
+  title: string;
+  src: string;
+  onLoad: () => void;
+  onError: () => void;
+  onClick: () => void;
+  tabIndex: number;
+};
 export type ImageContentProps = {
   body: string;
   mimeType?: string;
@@ -36,9 +48,25 @@ export type ImageContentProps = {
   info?: IImageInfo;
   encInfo?: EncryptedAttachmentInfo;
   autoPlay?: boolean;
+  renderViewer: (props: RenderViewerProps) => ReactNode;
+  renderImage: (props: RenderImageProps) => ReactNode;
 };
 export const ImageContent = as<'div', ImageContentProps>(
-  ({ className, body, mimeType, url, info, encInfo, autoPlay, ...props }, ref) => {
+  (
+    {
+      className,
+      body,
+      mimeType,
+      url,
+      info,
+      encInfo,
+      autoPlay,
+      renderViewer,
+      renderImage,
+      ...props
+    },
+    ref
+  ) => {
     const mx = useMatrixClient();
     const blurHash = info?.[MATRIX_BLUR_HASH_PROPERTY_NAME];
 
@@ -87,11 +115,11 @@ export const ImageContent = as<'div', ImageContentProps>(
                   size="500"
                   onContextMenu={(evt: any) => evt.stopPropagation()}
                 >
-                  <ImageViewer
-                    src={srcState.data}
-                    alt={body}
-                    requestClose={() => setViewer(false)}
-                  />
+                  {renderViewer({
+                    src: srcState.data,
+                    alt: body,
+                    requestClose: () => setViewer(false),
+                  })}
                 </Modal>
               </FocusTrap>
             </OverlayCenter>
@@ -122,16 +150,15 @@ export const ImageContent = as<'div', ImageContentProps>(
         )}
         {srcState.status === AsyncStatus.Success && (
           <Box className={css.AbsoluteContainer}>
-            <Image
-              alt={body}
-              title={body}
-              src={srcState.data}
-              loading="lazy"
-              onLoad={handleLoad}
-              onError={handleError}
-              onClick={() => setViewer(true)}
-              tabIndex={0}
-            />
+            {renderImage({
+              alt: body,
+              title: body,
+              src: srcState.data,
+              onLoad: handleLoad,
+              onError: handleError,
+              onClick: () => setViewer(true),
+              tabIndex: 0,
+            })}
           </Box>
         )}
         {(srcState.status === AsyncStatus.Loading || srcState.status === AsyncStatus.Success) &&

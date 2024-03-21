@@ -1,6 +1,6 @@
 import { Box, Icon, IconSrc } from 'folds';
 import React, { ReactNode } from 'react';
-import { CompactLayout, ModernLayout } from '../../../components/message';
+import { CompactLayout, ModernLayout } from '..';
 
 export type EventContentProps = {
   messageLayout: number;

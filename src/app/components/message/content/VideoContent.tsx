@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import {
   Badge,
   Box,
@@ -19,25 +19,47 @@ import {
   IVideoInfo,
   MATRIX_BLUR_HASH_PROPERTY_NAME,
 } from '../../../../types/matrix/common';
-import * as css from './styles.css';
+import * as css from './style.css';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { getFileSrcUrl } from './util';
-import { Image, Video } from '../../../components/media';
 import { bytesToSize } from '../../../../util/common';
 import { millisecondsToMinutesAndSeconds } from '../../../utils/common';
 
-export type VideoContentProps = {
+type RenderVideoProps = {
+  title: string;
+  src: string;
+  onLoadedMetadata: () => void;
+  onError: () => void;
+  autoPlay: boolean;
+  controls: boolean;
+};
+type VideoContentProps = {
   body: string;
   mimeType: string;
   url: string;
   info: IVideoInfo & IThumbnailContent;
   encInfo?: EncryptedAttachmentInfo;
   autoPlay?: boolean;
-  loadThumbnail?: boolean;
+  renderThumbnail?: () => ReactNode;
+  renderVideo: (props: RenderVideoProps) => ReactNode;
 };
 export const VideoContent = as<'div', VideoContentProps>(
-  ({ className, body, mimeType, url, info, encInfo, autoPlay, loadThumbnail, ...props }, ref) => {
+  (
+    {
+      className,
+      body,
+      mimeType,
+      url,
+      info,
+      encInfo,
+      autoPlay,
+      renderThumbnail,
+      renderVideo,
+      ...props
+    },
+    ref
+  ) => {
     const mx = useMatrixClient();
     const blurHash = info.thumbnail_info?.[MATRIX_BLUR_HASH_PROPERTY_NAME];
 
@@ -49,20 +71,6 @@ export const VideoContent = as<'div', VideoContentProps>(
         () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
         [mx, url, mimeType, encInfo]
       )
-    );
-    const [thumbSrcState, loadThumbSrc] = useAsyncCallback(
-      useCallback(() => {
-        const thumbInfo = info.thumbnail_info;
-        const thumbMxcUrl = info.thumbnail_file?.url ?? info.thumbnail_url;
-        if (typeof thumbMxcUrl !== 'string' || typeof thumbInfo?.mimetype !== 'string') {
-          throw new Error('Failed to load thumbnail');
-        }
-        return getFileSrcUrl(
-          mx.mxcUrlToHttp(thumbMxcUrl) ?? '',
-          thumbInfo.mimetype,
-          info.thumbnail_file
-        );
-      }, [mx, info])
     );
 
     const handleLoad = () => {
@@ -81,9 +89,6 @@ export const VideoContent = as<'div', VideoContentProps>(
     useEffect(() => {
       if (autoPlay) loadSrc();
     }, [autoPlay, loadSrc]);
-    useEffect(() => {
-      if (loadThumbnail) loadThumbSrc();
-    }, [loadThumbnail, loadThumbSrc]);
 
     return (
       <Box className={classNames(css.RelativeBase, className)} {...props} ref={ref}>
@@ -96,9 +101,9 @@ export const VideoContent = as<'div', VideoContentProps>(
             punch={1}
           />
         )}
-        {thumbSrcState.status === AsyncStatus.Success && !load && (
+        {renderThumbnail && !load && (
           <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
-            <Image alt={body} title={body} src={thumbSrcState.data} loading="lazy" />
+            {renderThumbnail()}
           </Box>
         )}
         {!autoPlay && srcState.status === AsyncStatus.Idle && (
@@ -117,14 +122,14 @@ export const VideoContent = as<'div', VideoContentProps>(
         )}
         {srcState.status === AsyncStatus.Success && (
           <Box className={css.AbsoluteContainer}>
-            <Video
-              title={body}
-              src={srcState.data}
-              onLoadedMetadata={handleLoad}
-              onError={handleError}
-              autoPlay
-              controls
-            />
+            {renderVideo({
+              title: body,
+              src: srcState.data,
+              onLoadedMetadata: handleLoad,
+              onError: handleError,
+              autoPlay: true,
+              controls: true,
+            })}
           </Box>
         )}
         {(srcState.status === AsyncStatus.Loading || srcState.status === AsyncStatus.Success) &&
