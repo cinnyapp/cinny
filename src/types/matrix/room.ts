@@ -67,6 +67,8 @@ export type IRoomCreateContent = {
   };
 };
 
+export type GetContentCallback = <T>() => T;
+
 export type RoomToParents = Map<string, Set<string>>;
 export type Unread = {
   total: number;

@@ -1,6 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Avatar,
+  AvatarFallback,
+  AvatarImage,
   Box,
   Chip,
   Header,
@@ -13,19 +15,45 @@ import {
   toRem,
 } from 'folds';
 import { useSearchParams } from 'react-router-dom';
-import { INotification, INotificationsResponse, Method } from 'matrix-js-sdk';
+import { INotification, INotificationsResponse, IRoomEvent, Method, Room } from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { HTMLReactParserOptions } from 'html-react-parser';
 import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdLocalPart } from '../../../utils/matrix';
+import { getMxIdLocalPart, isRoomId, isUserId } from '../../../utils/matrix';
 import { InboxNotificationsPathSearchParams } from '../../paths';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { SequenceCard } from '../../../components/sequence-card';
 import { RoomAvatar } from '../../../components/room-avatar';
 import { nameInitials } from '../../../utils/common';
-import { getRoomAvatarUrl } from '../../../utils/room';
+import { getMemberAvatarMxc, getMemberDisplayName, getRoomAvatarUrl } from '../../../utils/room';
 import { ScrollTopContainer } from '../../../components/scroll-top-container';
 import { useInterval } from '../../../hooks/useInterval';
+import {
+  AvatarBase,
+  ImageContent,
+  MSticker,
+  ModernLayout,
+  RedactedContent,
+  Time,
+  Username,
+} from '../../../components/message';
+import colorMXID from '../../../../util/colorMXID';
+import { getReactCustomHtmlParser } from '../../../plugins/react-custom-html-parser';
+import {
+  openJoinAlias,
+  openProfileViewer,
+  selectRoom,
+  selectTab,
+} from '../../../../client/action/navigation';
+import { RenderMessageContent } from '../../../components/RenderMessageContent';
+import { useSetting } from '../../../state/hooks/settings';
+import { settingsAtom } from '../../../state/settings';
+import { Image } from '../../../components/media';
+import { ImageViewer } from '../../../components/image-viewer';
+import { GetContentCallback } from '../../../../types/matrix/room';
+import { useMatrixEventRenderer } from '../../../hooks/useMatrixEventRenderer';
+import * as customHtmlCss from '../../../styles/CustomHtml.css';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -112,7 +140,6 @@ const useNotificationTimeline = (
       onlyHighlight ? 'highlight' : undefined
     );
     const groups = groupNotifications(data.notifications);
-
     setNotificationTimeline({
       nextToken: data.next_token,
       groups,
@@ -121,6 +148,181 @@ const useNotificationTimeline = (
 
   return [notificationTimeline, loadTimeline, silentReloadTimeline];
 };
+
+type RoomNotificationsGroupProps = {
+  room: Room;
+  notifications: INotification[];
+  mediaAutoLoad?: boolean;
+  urlPreview?: boolean;
+};
+function RoomNotificationsGroupComp({
+  room,
+  notifications,
+  mediaAutoLoad,
+  urlPreview,
+}: RoomNotificationsGroupProps) {
+  const mx = useMatrixClient();
+  const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
+    () =>
+      getReactCustomHtmlParser(mx, room, {
+        handleSpoilerClick: (evt) => {
+          const target = evt.currentTarget;
+          if (target.getAttribute('aria-pressed') === 'true') {
+            evt.stopPropagation();
+            target.setAttribute('aria-pressed', 'false');
+            target.style.cursor = 'initial';
+          }
+        },
+        handleMentionClick: (evt) => {
+          const target = evt.currentTarget;
+          const mentionId = target.getAttribute('data-mention-id');
+          if (typeof mentionId !== 'string') return;
+          if (isUserId(mentionId)) {
+            openProfileViewer(mentionId, room.roomId);
+            return;
+          }
+          if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
+            if (mx.getRoom(mentionId)?.isSpaceRoom()) selectTab(mentionId);
+            else selectRoom(mentionId);
+            return;
+          }
+          openJoinAlias(mentionId);
+        },
+      }),
+    [mx, room]
+  );
+
+  const renderMatrixEvent = useMatrixEventRenderer<[IRoomEvent, string, GetContentCallback]>({
+    renderRoomMessage: (event, displayName, getContent) => {
+      if (event.unsigned?.redacted_because) {
+        return <RedactedContent reason={event.unsigned?.redacted_because.content.reason} />;
+      }
+
+      return (
+        <RenderMessageContent
+          displayName={displayName}
+          msgType={event.content.msgtype ?? ''}
+          ts={event.origin_server_ts}
+          getContent={getContent}
+          mediaAutoLoad={mediaAutoLoad}
+          urlPreview={urlPreview}
+          htmlReactParserOptions={htmlReactParserOptions}
+        />
+      );
+    },
+    renderSticker: (event, displayName, getContent) => {
+      if (event.unsigned?.redacted_because) {
+        return <RedactedContent reason={event.unsigned?.redacted_because.content.reason} />;
+      }
+      return (
+        <MSticker
+          content={getContent()}
+          renderImageContent={(props) => (
+            <ImageContent
+              {...props}
+              autoPlay={mediaAutoLoad}
+              renderImage={(p) => <Image {...p} loading="lazy" />}
+              renderViewer={(p) => <ImageViewer {...p} />}
+            />
+          )}
+        />
+      );
+    },
+    renderEvent: (event) => {
+      if (event.unsigned?.redacted_because) {
+        return <RedactedContent reason={event.unsigned?.redacted_because.content.reason} />;
+      }
+      return (
+        <Box grow="Yes" direction="Column">
+          <Text size="T400" priority="300">
+            <code className={customHtmlCss.Code}>{event.type}</code>
+            {' event'}
+          </Text>
+        </Box>
+      );
+    },
+  });
+
+  return (
+    <>
+      <Header size="300">
+        <Box gap="200">
+          <Avatar size="200">
+            <RoomAvatar
+              variant="SurfaceVariant"
+              src={getRoomAvatarUrl(mx, room, 96)}
+              alt={room.name}
+              renderInitials={() => (
+                <Text as="span" size="H6">
+                  {nameInitials(room.name)}
+                </Text>
+              )}
+            />
+          </Avatar>
+          <Text size="H4" truncate>
+            {room.name}
+          </Text>
+        </Box>
+      </Header>
+      <Box direction="Column" gap="100">
+        {notifications.map((notification) => {
+          const { event } = notification;
+
+          const displayName =
+            getMemberDisplayName(room, event.sender) ??
+            getMxIdLocalPart(event.sender) ??
+            event.sender;
+          const senderAvatarMxc = getMemberAvatarMxc(room, event.sender);
+          const getContent = (() => event.content) as GetContentCallback;
+
+          return (
+            <SequenceCard
+              key={notification.event.event_id}
+              style={{ padding: config.space.S400 }}
+              direction="Column"
+              gap="200"
+            >
+              <ModernLayout
+                before={
+                  <AvatarBase>
+                    <Avatar size="300">
+                      {senderAvatarMxc ? (
+                        <AvatarImage
+                          src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
+                        />
+                      ) : (
+                        <AvatarFallback
+                          style={{
+                            background: colorMXID(event.sender),
+                            color: 'white',
+                          }}
+                        >
+                          <Text size="H4">{nameInitials(displayName)}</Text>
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                  </AvatarBase>
+                }
+              >
+                <Box gap="300" justifyContent="SpaceBetween" alignItems="Baseline" grow="Yes">
+                  <Username style={{ color: colorMXID(event.sender) }}>
+                    <Text>
+                      <b>{displayName}</b>
+                    </Text>
+                  </Username>
+                  <Box shrink="No" gap="100">
+                    <Time ts={event.origin_server_ts} />
+                  </Box>
+                </Box>
+                {renderMatrixEvent(event.type, false, event, displayName, getContent)}
+              </ModernLayout>
+            </SequenceCard>
+          );
+        })}
+      </Box>
+    </>
+  );
+}
 
 const getNotificationsSearchParams = (
   searchParams: URLSearchParams
@@ -132,6 +334,8 @@ const DEFAULT_REFRESH_MS = 10000;
 
 export function Notifications() {
   const mx = useMatrixClient();
+  const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
+  const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [searchParams, setSearchParams] = useSearchParams();
   const notificationsSearchParams = getNotificationsSearchParams(searchParams);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -183,17 +387,17 @@ export function Notifications() {
     loadTimeline();
   }, [loadTimeline]);
 
+  const lastVItem = vItems[vItems.length - 1];
+  const lastVItemIndex: number | undefined = lastVItem?.index;
   useEffect(() => {
-    const lastItem = vItems[vItems.length - 1];
     if (
       timelineState.status === AsyncStatus.Success &&
-      lastItem &&
-      notificationTimeline.groups.length - 1 === lastItem.index &&
+      notificationTimeline.groups.length - 1 === lastVItemIndex &&
       notificationTimeline.nextToken
     ) {
       loadTimeline(notificationTimeline.nextToken);
     }
-  }, [timelineState, notificationTimeline, vItems, loadTimeline]);
+  }, [timelineState, notificationTimeline, lastVItemIndex, loadTimeline]);
 
   return (
     <Page>
@@ -271,7 +475,7 @@ export function Notifications() {
                           left: 0,
                           width: '100%',
                           transform: `translateY(${vItem.start}px)`,
-                          paddingTop: config.space.S400,
+                          paddingTop: config.space.S500,
                         }}
                         data-index={vItem.index}
                         ref={virtualizer.measureElement}
@@ -279,53 +483,25 @@ export function Notifications() {
                         direction="Column"
                         gap="200"
                       >
-                        <Header size="300">
-                          <Box gap="200">
-                            <Avatar size="200">
-                              <RoomAvatar
-                                variant="SurfaceVariant"
-                                src={getRoomAvatarUrl(mx, groupRoom, 96)}
-                                alt={groupRoom.name}
-                                renderInitials={() => (
-                                  <Text as="span" size="H6">
-                                    {nameInitials(groupRoom.name)}
-                                  </Text>
-                                )}
-                              />
-                            </Avatar>
-                            <Text size="H4" truncate>
-                              {groupRoom.name}
-                            </Text>
-                          </Box>
-                        </Header>
-                        <Box direction="Column" style={{ gap: toRem(2) }}>
-                          {group.notifications.map((notification) => (
-                            <SequenceCard
-                              key={notification.event.event_id}
-                              style={{ padding: `${config.space.S300} ${config.space.S400}` }}
-                              direction="Column"
-                              gap="200"
-                            >
-                              <Text>
-                                {getMxIdLocalPart(notification.event.sender)}
-                                {notification.read ? undefined : '- UNREAD'}
-                              </Text>
-                              <Text size="T300">{notification.event.content.body}</Text>
-                            </SequenceCard>
-                          ))}
-                        </Box>
+                        <RoomNotificationsGroupComp
+                          room={groupRoom}
+                          notifications={group.notifications}
+                          mediaAutoLoad={mediaAutoLoad}
+                          urlPreview={urlPreview}
+                        />
                       </Box>
                     );
                   })}
                 </div>
 
                 {timelineState.status === AsyncStatus.Loading && (
-                  <Box direction="Column" style={{ gap: toRem(2) }}>
+                  <Box direction="Column" gap="100">
                     {[...Array(8).keys()].map((key) => (
                       <SequenceCard key={key} style={{ minHeight: toRem(80) }} />
                     ))}
                   </Box>
                 )}
+                {/* TODO: show error */}
               </Box>
             </PageContentCenter>
           </PageContent>

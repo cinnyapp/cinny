@@ -84,7 +84,7 @@ export function InboxRedirect() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate(getInboxNotificationsPath());
+    navigate(getInboxNotificationsPath(), { replace: true });
   }, [navigate]);
 
   return null;
