@@ -373,11 +373,12 @@ function RoomNotificationsGroupComp({
                 </Box>
                 {replyEventId && (
                   <Reply
-                    as="p"
+                    as="button"
                     mx={mx}
                     room={room}
                     eventId={replyEventId}
-                    data-reply-id={replyEventId}
+                    data-event-id={replyEventId}
+                    onClick={handleOpenClick}
                   />
                 )}
                 {renderMatrixEvent(event.type, false, event, displayName, getContent)}
