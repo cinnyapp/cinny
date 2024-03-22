@@ -11,6 +11,23 @@ import { CapabilitiesProvider } from '../../hooks/useCapabilities';
 import { MediaConfigProvider } from '../../hooks/useMediaConfig';
 import { MatrixClientProvider } from '../../hooks/useMatrixClient';
 import { SpecVersions } from './SpecVersions';
+import Windows from '../../organisms/pw/Windows';
+import Dialogs from '../../organisms/pw/Dialogs';
+import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
+
+function SystemEmojiFeature() {
+  const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+
+  if (twitterEmoji) {
+    document.documentElement.style.setProperty('--font-emoji', 'Twemoji');
+  } else {
+    document.documentElement.style.setProperty('--font-emoji', 'Twemoji_DISABLED');
+  }
+
+  return null;
+}
 
 export function ClientRoot() {
   const [loading, setLoading] = useState(true);
@@ -45,6 +62,12 @@ export function ClientRoot() {
               <CapabilitiesProvider value={capabilities ?? {}}>
                 <MediaConfigProvider value={mediaConfig ?? {}}>
                   <Outlet />
+
+                  {/* TODO: remove these components after navigation refactor */}
+                  <Windows />
+                  <Dialogs />
+                  <ReusableContextMenu />
+                  <SystemEmojiFeature />
                 </MediaConfigProvider>
               </CapabilitiesProvider>
             )}

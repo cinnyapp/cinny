@@ -13,6 +13,7 @@ import { getExplorePath, getInboxPath } from '../pathUtils';
 import { DirectTab, HomeTab, SpaceTabs } from './sidebar';
 import { useExploreSelected } from '../../hooks/router/useExploreSelected';
 import { useInboxSelected } from '../../hooks/router/useInbox';
+import { openSettings } from '../../../client/action/navigation';
 
 export function ClientNavigation() {
   const navigate = useNavigate();
@@ -68,6 +69,7 @@ export function ClientNavigation() {
               />
               <SidebarAvatar
                 tooltip="User Settings"
+                onClick={() => openSettings()}
                 avatarChildren={
                   <AvatarFallback
                     style={{
