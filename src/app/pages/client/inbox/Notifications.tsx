@@ -56,6 +56,9 @@ import { GetContentCallback, MessageEvent, StateEvent } from '../../../../types/
 import { useMatrixEventRenderer } from '../../../hooks/useMatrixEventRenderer';
 import * as customHtmlCss from '../../../styles/CustomHtml.css';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
+import { useRoomUnread } from '../../../state/hooks/unread';
+import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
+import { markAsRead } from '../../../../client/action/notifications';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -166,6 +169,8 @@ function RoomNotificationsGroupComp({
   onOpen,
 }: RoomNotificationsGroupProps) {
   const mx = useMatrixClient();
+  const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
       getReactCustomHtmlParser(mx, room, {
@@ -265,11 +270,14 @@ function RoomNotificationsGroupComp({
     if (!eventId) return;
     onOpen(room.roomId, eventId);
   };
+  const handleMarkAsRead = () => {
+    markAsRead(room.roomId);
+  };
 
   return (
     <Box direction="Column" gap="200">
       <Header size="300">
-        <Box gap="200">
+        <Box gap="200" grow="Yes">
           <Avatar size="200" radii="300">
             <RoomAvatar
               variant="SurfaceVariant"
@@ -285,6 +293,18 @@ function RoomNotificationsGroupComp({
           <Text size="H4" truncate>
             {room.name}
           </Text>
+        </Box>
+        <Box shrink="No">
+          {unread && (
+            <Chip
+              variant="Primary"
+              radii="Pill"
+              onClick={handleMarkAsRead}
+              before={<Icon size="100" src={Icons.CheckTwice} />}
+            >
+              <Text size="T200">Mark as Read</Text>
+            </Chip>
+          )}
         </Box>
       </Header>
       <Box direction="Column">
@@ -341,7 +361,7 @@ function RoomNotificationsGroupComp({
                       data-event-id={event.event_id}
                       onClick={handleOpenClick}
                       variant="Secondary"
-                      radii="Pill"
+                      radii="400"
                     >
                       <Text size="T200">Open</Text>
                     </Chip>
