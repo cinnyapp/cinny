@@ -15,6 +15,6 @@ export const ScrollTopContainer = style({
   top: config.space.S200,
   left: '50%',
   transform: 'translateX(-50%)',
-  zIndex: 1,
+  zIndex: config.zIndex.Z100,
   animation: `${ScrollContainerAnime} 100ms`,
 });
