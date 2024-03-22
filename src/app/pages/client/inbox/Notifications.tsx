@@ -36,6 +36,7 @@ import {
   MSticker,
   ModernLayout,
   RedactedContent,
+  Reply,
   Time,
   Username,
 } from '../../../components/message';
@@ -319,6 +320,8 @@ function RoomNotificationsGroupComp({
           const senderAvatarMxc = getMemberAvatarMxc(room, event.sender);
           const getContent = (() => event.content) as GetContentCallback;
 
+          const replyEventId = event.content['m.relates_to']?.['m.in_reply_to']?.event_id;
+
           return (
             <SequenceCard
               key={notification.event.event_id}
@@ -368,6 +371,15 @@ function RoomNotificationsGroupComp({
                     </Chip>
                   </Box>
                 </Box>
+                {replyEventId && (
+                  <Reply
+                    as="p"
+                    mx={mx}
+                    room={room}
+                    eventId={replyEventId}
+                    data-reply-id={replyEventId}
+                  />
+                )}
                 {renderMatrixEvent(event.type, false, event, displayName, getContent)}
               </ModernLayout>
             </SequenceCard>
