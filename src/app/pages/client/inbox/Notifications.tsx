@@ -59,6 +59,7 @@ import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { useRoomUnread } from '../../../state/hooks/unread';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { markAsRead } from '../../../../client/action/notifications';
+import { ContainerColor } from '../../../styles/ContainerColor.css';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -556,7 +557,20 @@ export function Notifications() {
                     ))}
                   </Box>
                 )}
-                {/* TODO: show error */}
+                {timelineState.status === AsyncStatus.Error && (
+                  <Box
+                    className={ContainerColor({ variant: 'Critical' })}
+                    style={{
+                      padding: config.space.S300,
+                      borderRadius: config.radii.R400,
+                    }}
+                    direction="Column"
+                    gap="200"
+                  >
+                    <Text size="L400">{(timelineState.error as Error).name}</Text>
+                    <Text size="T300">{(timelineState.error as Error).message}</Text>
+                  </Box>
+                )}
               </Box>
             </PageContentCenter>
           </PageContent>
