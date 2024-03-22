@@ -122,7 +122,7 @@ export const AvatarBase = style({
   alignSelf: 'start',
 
   selectors: {
-    'button&:hover': {
+    '&:hover': {
       transform: `translateY(${toRem(-4)})`,
     },
   },

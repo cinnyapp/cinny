@@ -1035,6 +1035,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 mediaAutoLoad={mediaAutoLoad}
                 urlPreview={showUrlPreview}
                 htmlReactParserOptions={htmlReactParserOptions}
+                outlineAttachment={messageLayout === 2}
               />
             )}
           </Message>
@@ -1130,6 +1131,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                       mediaAutoLoad={mediaAutoLoad}
                       urlPreview={showUrlPreview}
                       htmlReactParserOptions={htmlReactParserOptions}
+                      outlineAttachment={messageLayout === 2}
                     />
                   );
                 }

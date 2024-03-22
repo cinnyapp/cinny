@@ -180,8 +180,9 @@ type RenderImageContentProps = {
 type MImageProps = {
   content: IImageContent;
   renderImageContent: (props: RenderImageContentProps) => ReactNode;
+  outlined?: boolean;
 };
-export function MImage({ content, renderImageContent }: MImageProps) {
+export function MImage({ content, renderImageContent, outlined }: MImageProps) {
   const imgInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
   if (typeof mxcUrl !== 'string') {
@@ -190,7 +191,7 @@ export function MImage({ content, renderImageContent }: MImageProps) {
   const height = scaleYDimension(imgInfo?.w || 400, 400, imgInfo?.h || 400);
 
   return (
-    <Attachment>
+    <Attachment outlined={outlined}>
       <AttachmentBox
         style={{
           height: toRem(height < 48 ? 48 : height),
@@ -219,8 +220,9 @@ type MVideoProps = {
   content: IVideoContent;
   renderAsFile: () => ReactNode;
   renderVideoContent: (props: RenderVideoContentProps) => ReactNode;
+  outlined?: boolean;
 };
-export function MVideo({ content, renderAsFile, renderVideoContent }: MVideoProps) {
+export function MVideo({ content, renderAsFile, renderVideoContent, outlined }: MVideoProps) {
   const videoInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
   const safeMimeType = getBlobSafeMimeType(videoInfo?.mimetype ?? '');
@@ -235,7 +237,7 @@ export function MVideo({ content, renderAsFile, renderVideoContent }: MVideoProp
   const height = scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400);
 
   return (
-    <Attachment>
+    <Attachment outlined={outlined}>
       <AttachmentBox
         style={{
           height: toRem(height < 48 ? 48 : height),
@@ -263,8 +265,9 @@ type MAudioProps = {
   content: IAudioContent;
   renderAsFile: () => ReactNode;
   renderAudioContent: (props: RenderAudioContentProps) => ReactNode;
+  outlined?: boolean;
 };
-export function MAudio({ content, renderAsFile, renderAudioContent }: MAudioProps) {
+export function MAudio({ content, renderAsFile, renderAudioContent, outlined }: MAudioProps) {
   const audioInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
   const safeMimeType = getBlobSafeMimeType(audioInfo?.mimetype ?? '');
@@ -277,7 +280,7 @@ export function MAudio({ content, renderAsFile, renderAudioContent }: MAudioProp
   }
 
   return (
-    <Attachment>
+    <Attachment outlined={outlined}>
       <AttachmentHeader>
         <FileHeader body={content.body ?? 'Audio'} mimeType={safeMimeType} />
       </AttachmentHeader>
@@ -305,8 +308,9 @@ type RenderFileContentProps = {
 type MFileProps = {
   content: IFileContent;
   renderFileContent: (props: RenderFileContentProps) => ReactNode;
+  outlined?: boolean;
 };
-export function MFile({ content, renderFileContent }: MFileProps) {
+export function MFile({ content, renderFileContent, outlined }: MFileProps) {
   const fileInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
 
@@ -315,7 +319,7 @@ export function MFile({ content, renderFileContent }: MFileProps) {
   }
 
   return (
-    <Attachment>
+    <Attachment outlined={outlined}>
       <AttachmentHeader>
         <FileHeader
           body={content.body ?? 'Unnamed File'}

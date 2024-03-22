@@ -219,6 +219,7 @@ function RoomNotificationsGroupComp({
             mediaAutoLoad={mediaAutoLoad}
             urlPreview={urlPreview}
             htmlReactParserOptions={htmlReactParserOptions}
+            outlineAttachment
           />
         );
       },
@@ -309,7 +310,7 @@ function RoomNotificationsGroupComp({
           )}
         </Box>
       </Header>
-      <Box direction="Column">
+      <Box direction="Column" gap="100">
         {notifications.map((notification) => {
           const { event } = notification;
 
@@ -326,7 +327,7 @@ function RoomNotificationsGroupComp({
             <SequenceCard
               key={notification.event.event_id}
               style={{ padding: config.space.S400 }}
-              outlined
+              variant="SurfaceVariant"
               direction="Column"
             >
               <ModernLayout
@@ -564,9 +565,13 @@ export function Notifications() {
                 </div>
 
                 {timelineState.status === AsyncStatus.Loading && (
-                  <Box direction="Column">
+                  <Box direction="Column" gap="100">
                     {[...Array(8).keys()].map((key) => (
-                      <SequenceCard outlined key={key} style={{ minHeight: toRem(80) }} />
+                      <SequenceCard
+                        variant="SurfaceVariant"
+                        key={key}
+                        style={{ minHeight: toRem(80) }}
+                      />
                     ))}
                   </Box>
                 )}

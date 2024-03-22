@@ -37,6 +37,7 @@ type RenderMessageContentProps = {
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
   htmlReactParserOptions: HTMLReactParserOptions;
+  outlineAttachment?: boolean;
 };
 export function RenderMessageContent({
   displayName,
@@ -47,6 +48,7 @@ export function RenderMessageContent({
   mediaAutoLoad,
   urlPreview,
   htmlReactParserOptions,
+  outlineAttachment,
 }: RenderMessageContentProps) {
   const renderFile = () => (
     <MFile
@@ -77,6 +79,7 @@ export function RenderMessageContent({
           <DownloadFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} info={info} />
         </FileContent>
       )}
+      outlined={outlineAttachment}
     />
   );
 
@@ -162,6 +165,7 @@ export function RenderMessageContent({
             renderViewer={(p) => <ImageViewer {...p} />}
           />
         )}
+        outlined={outlineAttachment}
       />
     );
   }
@@ -193,6 +197,7 @@ export function RenderMessageContent({
             renderVideo={(p) => <Video {...p} />}
           />
         )}
+        outlined={outlineAttachment}
       />
     );
   }
@@ -205,6 +210,7 @@ export function RenderMessageContent({
         renderAudioContent={(props) => (
           <AudioContent {...props} renderMediaControl={(p) => <MediaControl {...p} />} />
         )}
+        outlined={outlineAttachment}
       />
     );
   }

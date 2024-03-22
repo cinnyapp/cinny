@@ -1,11 +1,15 @@
 import { createVar } from '@vanilla-extract/css';
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes';
-import { color, config } from 'folds';
+import { config } from 'folds';
 
 const outlinedWidth = createVar('0');
 export const SequenceCard = recipe({
   base: {
-    border: `${outlinedWidth} solid ${color.Surface.ContainerLine}`,
+    vars: {
+      [outlinedWidth]: '0',
+    },
+    borderStyle: 'solid',
+    borderWidth: outlinedWidth,
     borderBottomWidth: 0,
     selectors: {
       '&:first-child': {
