@@ -1,16 +1,23 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
-import { getHomeRoomPath, getSpacePath, getSpaceRoomPath } from '../../pathUtils';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getOrphanParents } from '../../../utils/room';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
+import { getCanonicalAliasOrRoomId } from '../utils/matrix';
+import {
+  getDirectRoomPath,
+  getHomeRoomPath,
+  getSpacePath,
+  getSpaceRoomPath,
+} from '../pages/pathUtils';
+import { useMatrixClient } from './useMatrixClient';
+import { getOrphanParents } from '../utils/room';
+import { roomToParentsAtom } from '../state/room/roomToParents';
+import { mDirectAtom } from '../state/mDirectList';
 
 export const useRoomNavigate = () => {
   const navigate = useNavigate();
   const mx = useMatrixClient();
   const roomToParents = useAtomValue(roomToParentsAtom);
+  const mDirects = useAtomValue(mDirectAtom);
 
   const navigateSpace = useCallback(
     (roomId: string) => {
@@ -21,19 +28,24 @@ export const useRoomNavigate = () => {
   );
 
   const navigateRoom = useCallback(
-    (roomId: string) => {
+    (roomId: string, eventId?: string) => {
       const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, roomId);
 
       const orphanParents = getOrphanParents(roomToParents, roomId);
       if (orphanParents.length > 0) {
         const pSpaceIdOrAlias = getCanonicalAliasOrRoomId(mx, orphanParents[0]);
-        navigate(getSpaceRoomPath(pSpaceIdOrAlias, roomIdOrAlias));
+        navigate(getSpaceRoomPath(pSpaceIdOrAlias, roomIdOrAlias, eventId));
         return;
       }
 
-      navigate(getHomeRoomPath(roomIdOrAlias));
+      if (mDirects.has(roomId)) {
+        navigate(getDirectRoomPath(roomIdOrAlias, eventId));
+        return;
+      }
+
+      navigate(getHomeRoomPath(roomIdOrAlias, eventId));
     },
-    [mx, navigate, roomToParents]
+    [mx, navigate, roomToParents, mDirects]
   );
 
   return {

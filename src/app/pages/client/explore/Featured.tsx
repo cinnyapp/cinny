@@ -14,7 +14,7 @@ import {
 } from '../../../components/page';
 import { RoomTopicViewer } from '../../../components/room-topic-viewer';
 import * as css from './style.css';
-import { useRoomNavigate } from './hooks';
+import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 
 export function FeaturedRooms() {
   const { featuredCommunities } = useClientConfig();

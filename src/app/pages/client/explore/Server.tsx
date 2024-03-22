@@ -38,7 +38,7 @@ import { ExploreServerPathSearchParams } from '../../paths';
 import { getExploreServerPath, withSearchParam } from '../../pathUtils';
 import * as css from './style.css';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { useRoomNavigate } from './hooks';
+import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { getMxIdServer } from '../../../utils/matrix';
 
 const getServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams => ({
