@@ -1,5 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { MouseEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Avatar,
   AvatarFallback,
@@ -55,6 +55,7 @@ import { ImageViewer } from '../../../components/image-viewer';
 import { GetContentCallback, MessageEvent, StateEvent } from '../../../../types/matrix/room';
 import { useMatrixEventRenderer } from '../../../hooks/useMatrixEventRenderer';
 import * as customHtmlCss from '../../../styles/CustomHtml.css';
+import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -155,12 +156,14 @@ type RoomNotificationsGroupProps = {
   notifications: INotification[];
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
+  onOpen: (roomId: string, eventId: string) => void;
 };
 function RoomNotificationsGroupComp({
   room,
   notifications,
   mediaAutoLoad,
   urlPreview,
+  onOpen,
 }: RoomNotificationsGroupProps) {
   const mx = useMatrixClient();
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
@@ -257,11 +260,17 @@ function RoomNotificationsGroupComp({
     }
   );
 
+  const handleOpenClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const eventId = evt.currentTarget.getAttribute('data-event-id');
+    if (!eventId) return;
+    onOpen(room.roomId, eventId);
+  };
+
   return (
-    <>
+    <Box direction="Column" gap="200">
       <Header size="300">
         <Box gap="200">
-          <Avatar size="200">
+          <Avatar size="200" radii="300">
             <RoomAvatar
               variant="SurfaceVariant"
               src={getRoomAvatarUrl(mx, room, 96)}
@@ -278,7 +287,7 @@ function RoomNotificationsGroupComp({
           </Text>
         </Box>
       </Header>
-      <Box direction="Column" gap="100">
+      <Box direction="Column">
         {notifications.map((notification) => {
           const { event } = notification;
 
@@ -293,8 +302,8 @@ function RoomNotificationsGroupComp({
             <SequenceCard
               key={notification.event.event_id}
               style={{ padding: config.space.S400 }}
+              outlined
               direction="Column"
-              gap="200"
             >
               <ModernLayout
                 before={
@@ -318,14 +327,24 @@ function RoomNotificationsGroupComp({
                   </AvatarBase>
                 }
               >
-                <Box gap="300" justifyContent="SpaceBetween" alignItems="Baseline" grow="Yes">
-                  <Username style={{ color: colorMXID(event.sender) }}>
-                    <Text>
-                      <b>{displayName}</b>
-                    </Text>
-                  </Username>
-                  <Box shrink="No" gap="100">
+                <Box gap="300" justifyContent="SpaceBetween" alignItems="Center" grow="Yes">
+                  <Box gap="200" alignItems="Baseline">
+                    <Username style={{ color: colorMXID(event.sender) }}>
+                      <Text as="span" truncate>
+                        <b>{displayName}</b>
+                      </Text>
+                    </Username>
                     <Time ts={event.origin_server_ts} />
+                  </Box>
+                  <Box shrink="No" gap="200" alignItems="Center">
+                    <Chip
+                      data-event-id={event.event_id}
+                      onClick={handleOpenClick}
+                      variant="Secondary"
+                      radii="Pill"
+                    >
+                      <Text size="T200">Open</Text>
+                    </Chip>
                   </Box>
                 </Box>
                 {renderMatrixEvent(event.type, false, event, displayName, getContent)}
@@ -334,7 +353,7 @@ function RoomNotificationsGroupComp({
           );
         })}
       </Box>
-    </>
+    </Box>
   );
 }
 
@@ -350,6 +369,8 @@ export function Notifications() {
   const mx = useMatrixClient();
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
+
+  const { navigateRoom } = useRoomNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const notificationsSearchParams = getNotificationsSearchParams(searchParams);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -460,7 +481,7 @@ export function Notifications() {
                 >
                   <IconButton
                     onClick={() => virtualizer.scrollToOffset(0)}
-                    variant="Secondary"
+                    variant="SurfaceVariant"
                     radii="Pill"
                     outlined
                     size="300"
@@ -485,10 +506,9 @@ export function Notifications() {
                       <Box
                         style={{
                           position: 'absolute',
-                          top: 0,
+                          top: vItem.start,
                           left: 0,
                           width: '100%',
-                          transform: `translateY(${vItem.start}px)`,
                           paddingTop: config.space.S500,
                         }}
                         data-index={vItem.index}
@@ -502,6 +522,7 @@ export function Notifications() {
                           notifications={group.notifications}
                           mediaAutoLoad={mediaAutoLoad}
                           urlPreview={urlPreview}
+                          onOpen={navigateRoom}
                         />
                       </Box>
                     );
@@ -509,9 +530,9 @@ export function Notifications() {
                 </div>
 
                 {timelineState.status === AsyncStatus.Loading && (
-                  <Box direction="Column" gap="100">
+                  <Box direction="Column">
                     {[...Array(8).keys()].map((key) => (
-                      <SequenceCard key={key} style={{ minHeight: toRem(80) }} />
+                      <SequenceCard outlined key={key} style={{ minHeight: toRem(80) }} />
                     ))}
                   </Box>
                 )}

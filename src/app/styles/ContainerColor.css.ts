@@ -1,5 +1,5 @@
 import { ComplexStyleRule } from '@vanilla-extract/css';
-import { recipe } from '@vanilla-extract/recipes';
+import { RecipeVariants, recipe } from '@vanilla-extract/recipes';
 import { ContainerColor as TContainerColor, DefaultReset, color } from 'folds';
 
 const getVariant = (variant: TContainerColor): ComplexStyleRule => ({
@@ -29,3 +29,5 @@ export const ContainerColor = recipe({
     variant: 'Surface',
   },
 });
+
+export type ContainerColorVariants = RecipeVariants<typeof ContainerColor>;
