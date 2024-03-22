@@ -6,6 +6,7 @@ export type ClientConfig = {
   allowCustomHomeservers?: boolean;
 
   featuredCommunities?: {
+    openAsDefault?: boolean;
     spaces?: string[];
     rooms?: string[];
   };

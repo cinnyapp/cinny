@@ -11,6 +11,7 @@
   "allowCustomHomeservers": true,
 
   "featuredCommunities": {
+    "openAsDefault": false,
     "spaces": [
       "#cinny-space:matrix.org",
       "#community:matrix.org",

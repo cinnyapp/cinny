@@ -275,14 +275,19 @@ export function Explore() {
 
 export function ExploreRedirect() {
   const navigate = useNavigate();
+  const clientConfig = useClientConfig();
 
   const mx = useMatrixClient();
 
   useEffect(() => {
-    const userId = mx.getUserId();
-    const userServer = userId ? getMxIdServer(userId) : undefined;
-    if (userServer) navigate(getExploreServerPath(userServer), { replace: true });
-  }, [navigate, mx]);
+    if (clientConfig.featuredCommunities?.openAsDefault) {
+      navigate(getExploreFeaturedPath(), { replace: true });
+    } else {
+      const userId = mx.getUserId();
+      const userServer = userId ? getMxIdServer(userId) : undefined;
+      if (userServer) navigate(getExploreServerPath(userServer), { replace: true });
+    }
+  }, [navigate, mx, clientConfig]);
 
   return null;
 }
