@@ -102,10 +102,10 @@ import {
   trimReplyFromFormattedBody,
 } from '../../utils/room';
 import { sanitizeText } from '../../utils/sanitize';
-import { useScreenSize } from '../../hooks/useScreenSize';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { Command, SHRUG, useCommands } from '../../hooks/useCommands';
 import { mobileOrTablet } from '../../utils/user-agent';
+import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 
 interface RoomInputProps {
   editor: Editor;
@@ -171,9 +171,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const pickFile = useFilePicker(handleFiles, true);
     const handlePaste = useFilePasteHandler(handleFiles);
     const dropZoneVisible = useFileDropZone(roomViewRef, handleFiles);
+    const [hideStickerBtn, setHideStickerBtn] = useState(document.body.clientWidth < 500);
 
-    const [, screenWidth] = useScreenSize();
-    const hideStickerBtn = screenWidth < 500;
+    useElementSizeObserver(
+      useCallback(() => document.body, []),
+      useCallback((width) => setHideStickerBtn(width < 500), [])
+    );
 
     useEffect(() => {
       Transforms.insertFragment(editor, msgDraft);

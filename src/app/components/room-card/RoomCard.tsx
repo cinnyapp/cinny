@@ -46,7 +46,7 @@ export function RoomCardGrid({ children }: { children: ReactNode }) {
   const gridRef = useRef<HTMLDivElement>(null);
 
   useElementSizeObserver(
-    gridRef,
+    useCallback(() => gridRef.current, []),
     useCallback((width, _, target) => setGridColumnCount(target, getGridColumnCount(width)), [])
   );
 
