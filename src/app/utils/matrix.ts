@@ -7,6 +7,7 @@ import {
   MatrixClient,
   MatrixError,
   MatrixEvent,
+  Room,
   UploadProgress,
   UploadResponse,
 } from 'matrix-js-sdk';
@@ -164,10 +165,10 @@ export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
 export const eventWithShortcode = (ev: MatrixEvent) =>
   typeof ev.getContent().shortcode === 'string';
 
-export function hasDMWith(mx: MatrixClient, userId: string) {
+export const getDMRoomFor = (mx: MatrixClient, userId: string): Room | undefined => {
   const dmLikeRooms = mx
     .getRooms()
     .filter((room) => mx.isRoomEncrypted(room.roomId) && room.getMembers().length <= 2);
 
   return dmLikeRooms.find((room) => room.getMember(userId));
-}
+};
