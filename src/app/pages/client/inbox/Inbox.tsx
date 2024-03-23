@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
+import { useAtomValue } from 'jotai';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
@@ -11,10 +12,42 @@ import {
   useInboxInvitesSelected,
   useInboxNotificationsSelected,
 } from '../../../hooks/router/useInbox';
+import { UnreadBadge } from '../../../components/unread-badge';
+import { allInvitesAtom } from '../../../state/room-list/inviteList';
+
+function InvitesNavItem() {
+  const invitesSelected = useInboxInvitesSelected();
+  const allInvites = useAtomValue(allInvitesAtom);
+  const inviteCount = allInvites.length;
+
+  return (
+    <NavItem
+      variant="Background"
+      radii="400"
+      highlight={inviteCount > 0}
+      aria-selected={invitesSelected}
+    >
+      <NavLink to={getInboxInvitesPath()}>
+        <NavItemContent size="T300">
+          <Box as="span" grow="Yes" alignItems="Center" gap="200">
+            <Avatar size="200" radii="400">
+              <Icon src={Icons.Mail} size="100" filled={invitesSelected} />
+            </Avatar>
+            <Box as="span" grow="Yes">
+              <Text as="span" size="Inherit" truncate>
+                Invitations
+              </Text>
+            </Box>
+            {inviteCount > 0 && <UnreadBadge highlight count={inviteCount} />}
+          </Box>
+        </NavItemContent>
+      </NavLink>
+    </NavItem>
+  );
+}
 
 export function Inbox() {
   const notificationsSelected = useInboxNotificationsSelected();
-  const invitesSelected = useInboxInvitesSelected();
 
   return (
     <ClientContentLayout
@@ -53,22 +86,7 @@ export function Inbox() {
                     </NavItemContent>
                   </NavLink>
                 </NavItem>
-                <NavItem variant="Background" radii="400" aria-selected={invitesSelected}>
-                  <NavLink to={getInboxInvitesPath()}>
-                    <NavItemContent size="T300">
-                      <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                        <Avatar size="200" radii="400">
-                          <Icon src={Icons.Mail} size="100" filled={invitesSelected} />
-                        </Avatar>
-                        <Box as="span" grow="Yes">
-                          <Text as="span" size="Inherit" truncate>
-                            Invitations
-                          </Text>
-                        </Box>
-                      </Box>
-                    </NavItemContent>
-                  </NavLink>
-                </NavItem>
+                <InvitesNavItem />
               </NavCategory>
             </Box>
           </ClientDrawerContentLayout>
@@ -82,10 +100,13 @@ export function Inbox() {
 
 export function InboxRedirect() {
   const navigate = useNavigate();
+  const allInvites = useAtomValue(allInvitesAtom);
+  const inviteCount = allInvites.length;
 
   useEffect(() => {
-    navigate(getInboxNotificationsPath(), { replace: true });
-  }, [navigate]);
+    const path = inviteCount > 0 ? getInboxInvitesPath() : getInboxNotificationsPath();
+    navigate(path, { replace: true });
+  }, [navigate, inviteCount]);
 
   return null;
 }

@@ -9,16 +9,14 @@ import {
   SidebarStack,
   SidebarAvatar,
 } from '../../components/sidebar';
-import { getExplorePath, getInboxPath } from '../pathUtils';
-import { DirectTab, HomeTab, SpaceTabs } from './sidebar';
+import { getExplorePath } from '../pathUtils';
+import { DirectTab, HomeTab, SpaceTabs, InboxTab } from './sidebar';
 import { useExploreSelected } from '../../hooks/router/useExploreSelected';
-import { useInboxSelected } from '../../hooks/router/useInbox';
 import { openSettings } from '../../../client/action/navigation';
 
 export function ClientNavigation() {
   const navigate = useNavigate();
 
-  const inboxSelected = useInboxSelected();
   const exploreSelected = useExploreSelected();
 
   return (
@@ -60,13 +58,7 @@ export function ClientNavigation() {
                 tooltip="Search"
                 avatarChildren={<Icon src={Icons.Search} />}
               />
-              <SidebarAvatar
-                active={inboxSelected}
-                outlined
-                tooltip="Inbox"
-                avatarChildren={<Icon src={Icons.Bell} filled={inboxSelected} />}
-                onClick={() => navigate(getInboxPath())}
-              />
+              <InboxTab />
               <SidebarAvatar
                 tooltip="User Settings"
                 onClick={() => openSettings()}
