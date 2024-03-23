@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { getResizeObserverEntry, useResizeObserver } from './useResizeObserver';
+import { useElementSizeObserver } from './useElementSizeObserver';
 
 export const TABLET_BREAKPOINT = 1124;
 export const MOBILE_BREAKPOINT = 750;
@@ -16,20 +16,12 @@ export const getScreenSize = (width: number): ScreenSize => {
   return ScreenSize.Mobile;
 };
 
-export const useScreenSize = (): [ScreenSize, number] => {
-  const [size, setSize] = useState<[ScreenSize, number]>([
-    getScreenSize(document.body.clientWidth),
-    document.body.clientWidth,
-  ]);
-  useResizeObserver(
-    useCallback((entries) => {
-      const bodyEntry = getResizeObserverEntry(document.body, entries);
-      if (bodyEntry) {
-        const bWidth = bodyEntry.contentRect.width;
-        setSize([getScreenSize(bWidth), bWidth]);
-      }
-    }, []),
-    document.body
+export const useScreenSize = (): ScreenSize => {
+  const [size, setSize] = useState<ScreenSize>(getScreenSize(document.body.clientWidth));
+
+  useElementSizeObserver(
+    useCallback(() => document.body, []),
+    useCallback((width) => setSize(getScreenSize(width)), [])
   );
 
   return size;

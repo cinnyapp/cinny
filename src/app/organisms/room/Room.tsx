@@ -27,7 +27,7 @@ export function RoomBaseView({ room, eventId }: RoomBaseViewProps) {
   useBindRoomIdToTypingMembersAtom(mx, roomIdToTypingMembersAtom);
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
-  const [screenSize] = useScreenSize();
+  const screenSize = useScreenSize();
   const powerLevelAPI = usePowerLevels(room);
 
   return (
