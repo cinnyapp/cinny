@@ -268,12 +268,14 @@ export const getRoomAvatarUrl = (
   room: Room,
   size: 32 | 96 = 32
 ): string | undefined => {
-  const url =
+  const url = room.getAvatarUrl(mx.baseUrl, size, size, 'crop') ?? undefined;
+  if (url) return url;
+
+  return (
     room
       .getAvatarFallbackMember()
-      ?.getAvatarUrl(mx.baseUrl, size, size, 'crop', undefined, false) ?? undefined;
-  if (url) return url;
-  return room.getAvatarUrl(mx.baseUrl, size, size, 'crop') ?? undefined;
+      ?.getAvatarUrl(mx.baseUrl, size, size, 'crop', undefined, false) ?? undefined
+  );
 };
 
 export const trimReplyFromBody = (body: string): string => {
