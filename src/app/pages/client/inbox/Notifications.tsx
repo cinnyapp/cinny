@@ -564,6 +564,24 @@ export function Notifications() {
                   })}
                 </div>
 
+                {timelineState.status === AsyncStatus.Success &&
+                  notificationTimeline.groups.length === 0 && (
+                    <Box
+                      className={ContainerColor({ variant: 'SurfaceVariant' })}
+                      style={{
+                        padding: config.space.S300,
+                        borderRadius: config.radii.R400,
+                      }}
+                      direction="Column"
+                      gap="200"
+                    >
+                      <Text>No Notifications</Text>
+                      <Text size="T200">
+                        You don&apos;t have any new notifications to display yet.
+                      </Text>
+                    </Box>
+                  )}
+
                 {timelineState.status === AsyncStatus.Loading && (
                   <Box direction="Column" gap="100">
                     {[...Array(8).keys()].map((key) => (

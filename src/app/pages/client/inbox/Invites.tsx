@@ -221,7 +221,7 @@ export function Invites() {
     <Page>
       <PageHeader>
         <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
-          <Icon size="400" src={Icons.Message} />
+          <Icon size="400" src={Icons.Mail} />
           <Text size="H3" truncate>
             Invitations
           </Text>
@@ -256,6 +256,23 @@ export function Invites() {
                     </Box>
                   </Box>
                 )}
+                {directInvites.length === 0 &&
+                  spaceInvites.length === 0 &&
+                  roomInvites.length === 0 && (
+                    <div>
+                      <SequenceCard
+                        variant="SurfaceVariant"
+                        style={{ padding: config.space.S400 }}
+                        direction="Column"
+                        gap="200"
+                      >
+                        <Text>No Pending Invitations</Text>
+                        <Text size="T200">
+                          You don&apos;t have any new pending invitations to display yet.
+                        </Text>
+                      </SequenceCard>
+                    </div>
+                  )}
               </Box>
             </PageContentCenter>
           </PageContent>
