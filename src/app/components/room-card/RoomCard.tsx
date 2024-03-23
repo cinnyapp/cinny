@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useRef, useState } from 'react';
 import { MatrixError, Room } from 'matrix-js-sdk';
 import {
   Avatar,
@@ -26,10 +26,10 @@ import { nameInitials } from '../../utils/common';
 import { millify } from '../../plugins/millify';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import { onEnterOrSpace } from '../../utils/keyboard';
 import { RoomType } from '../../../types/matrix/room';
 import { useJoinedRoomId } from '../../hooks/useJoinedRoomId';
+import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {
@@ -45,25 +45,10 @@ const setGridColumnCount = (grid: HTMLElement, count: GridColumnCount): void => 
 export function RoomCardGrid({ children }: { children: ReactNode }) {
   const gridRef = useRef<HTMLDivElement>(null);
 
-  useResizeObserver(
-    useCallback((entries) => {
-      const target = gridRef.current;
-      if (!target) return;
-      const targetEntry = getResizeObserverEntry(target, entries);
-      if (targetEntry) {
-        const columnCount = getGridColumnCount(targetEntry.contentRect.width);
-        setGridColumnCount(target, columnCount);
-      }
-    }, []),
-    useCallback(() => gridRef.current, [])
+  useElementSizeObserver(
+    gridRef,
+    useCallback((width, _, target) => setGridColumnCount(target, getGridColumnCount(width)), [])
   );
-
-  useEffect(() => {
-    const target = gridRef.current;
-    if (target) {
-      setGridColumnCount(target, getGridColumnCount(target.clientWidth));
-    }
-  }, []);
 
   return (
     <Box className={css.CardGrid} direction="Row" gap="400" wrap="Wrap" ref={gridRef}>
