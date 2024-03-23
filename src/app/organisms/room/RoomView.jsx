@@ -35,6 +35,7 @@ function RoomView({ room, eventId }) {
   const canMessage = myUserId
     ? canSendEvent(EventType.RoomMessage, getPowerLevel(myUserId))
     : false;
+  // FIXME: decide can message on membership based also
 
   useEffect(() => {
     const settingsToggle = (isVisible) => {

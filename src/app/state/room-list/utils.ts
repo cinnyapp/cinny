@@ -38,7 +38,9 @@ export const useBindRoomsWithMembershipsAtom = (
     };
 
     const handleMembershipChange = (room: Room) => {
-      if (!satisfyMembership(room)) {
+      if (satisfyMembership(room)) {
+        setRoomsAtom({ type: 'PUT', roomId: room.roomId });
+      } else {
         setRoomsAtom({ type: 'DELETE', roomId: room.roomId });
       }
     };

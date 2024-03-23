@@ -8,10 +8,12 @@ import {
   MatrixError,
   MatrixEvent,
   Room,
+  RoomMember,
   UploadProgress,
   UploadResponse,
 } from 'matrix-js-sdk';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
+import { AccountDataEvent } from '../../types/matrix/accountData';
 
 export const matchMxId = (id: string): RegExpMatchArray | null =>
   id.match(/^([@!$+#])(\S+):(\S+)$/);
@@ -171,4 +173,80 @@ export const getDMRoomFor = (mx: MatrixClient, userId: string): Room | undefined
     .filter((room) => mx.isRoomEncrypted(room.roomId) && room.getMembers().length <= 2);
 
   return dmLikeRooms.find((room) => room.getMember(userId));
+};
+
+export const guessDmRoomUserId = (room: Room, myUserId: string): string => {
+  const getOldestMember = (members: RoomMember[]): RoomMember | undefined => {
+    let oldestMemberTs: number | undefined;
+    let oldestMember: RoomMember | undefined;
+
+    const pickOldestMember = (member: RoomMember) => {
+      if (member.userId === myUserId) return;
+
+      if (
+        oldestMemberTs === undefined ||
+        (member.events.member && member.events.member.getTs() < oldestMemberTs)
+      ) {
+        oldestMember = member;
+        oldestMemberTs = member.events.member?.getTs();
+      }
+    };
+
+    members.forEach(pickOldestMember);
+
+    return oldestMember;
+  };
+
+  // Pick the joined user who's been here longest (and isn't us),
+  const member = getOldestMember(room.getJoinedMembers());
+  if (member) return member.userId;
+
+  // if there are no joined members other than us, use the oldest member
+  const member1 = getOldestMember(room.currentState.getMembers());
+  return member1?.userId ?? myUserId;
+};
+
+export const addRoomIdToMDirect = async (
+  mx: MatrixClient,
+  roomId: string,
+  userId: string
+): Promise<void> => {
+  const mDirectsEvent = mx.getAccountData(AccountDataEvent.Direct);
+  const userIdToRoomIds: Record<string, string[]> = mDirectsEvent?.getContent() ?? {};
+
+  // remove it from the lists of any others users
+  // (it can only be a DM room for one person)
+  Object.keys(userIdToRoomIds).forEach((targetUserId) => {
+    const roomIds = userIdToRoomIds[targetUserId];
+
+    if (targetUserId !== userId) {
+      const indexOfRoomId = roomIds.indexOf(roomId);
+      if (indexOfRoomId > -1) {
+        roomIds.splice(indexOfRoomId, 1);
+      }
+    }
+  });
+
+  const roomIds = userIdToRoomIds[userId] || [];
+  if (roomIds.indexOf(roomId) === -1) {
+    roomIds.push(roomId);
+  }
+  userIdToRoomIds[userId] = roomIds;
+
+  await mx.setAccountData(AccountDataEvent.Direct, userIdToRoomIds);
+};
+
+export const removeRoomIdFromMDirect = async (mx: MatrixClient, roomId: string): Promise<void> => {
+  const mDirectsEvent = mx.getAccountData(AccountDataEvent.Direct);
+  const userIdToRoomIds: Record<string, string[]> = mDirectsEvent?.getContent() ?? {};
+
+  Object.keys(userIdToRoomIds).forEach((targetUserId) => {
+    const roomIds = userIdToRoomIds[targetUserId];
+    const indexOfRoomId = roomIds.indexOf(roomId);
+    if (indexOfRoomId > -1) {
+      roomIds.splice(indexOfRoomId, 1);
+    }
+  });
+
+  await mx.setAccountData(AccountDataEvent.Direct, userIdToRoomIds);
 };

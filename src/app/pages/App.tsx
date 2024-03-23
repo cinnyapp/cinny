@@ -44,7 +44,7 @@ import { RoomViewer } from '../organisms/room/Room';
 import { Direct } from './client/direct';
 import { SpaceViewer } from './client/space';
 import { Explore, ExploreRedirect, FeaturedRooms, PublicRooms } from './client/explore';
-import { Notifications, Inbox, InboxRedirect } from './client/inbox';
+import { Notifications, Inbox, InboxRedirect, Invites } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 
 const queryClient = new QueryClient();
@@ -108,7 +108,7 @@ const createRouter = (clientConfig: ClientConfig) => {
           <Route path={INBOX_PATH} element={<Inbox />}>
             <Route index element={<InboxRedirect />} />
             <Route path={_NOTIFICATIONS_PATH} element={<Notifications />} />
-            <Route path={_INVITES_PATH} element={<p>invites</p>} />
+            <Route path={_INVITES_PATH} element={<Invites />} />
           </Route>
         </Route>
       </Route>
