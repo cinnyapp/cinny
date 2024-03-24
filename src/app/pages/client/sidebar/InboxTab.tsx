@@ -21,7 +21,7 @@ export function InboxTab() {
       tooltip="Inbox"
       avatarChildren={<Icon src={Icons.Bell} filled={inboxSelected} />}
       onClick={() => navigate(getInboxPath())}
-      notificationBadge={() => <UnreadBadge highlight count={inviteCount} />}
+      notificationBadge={() => inviteCount > 0 && <UnreadBadge highlight count={inviteCount} />}
     />
   );
 }
