@@ -68,9 +68,11 @@ export const useAsyncCallback = <TData, TError, TArgs extends unknown[]>(
           throw new Error('AsyncCallbackHook: Request replaced!');
         }
         if (alive()) {
-          setState({
-            status: AsyncStatus.Success,
-            data,
+          queueMicrotask(() => {
+            setState({
+              status: AsyncStatus.Success,
+              data,
+            });
           });
         }
         return data;
@@ -78,10 +80,13 @@ export const useAsyncCallback = <TData, TError, TArgs extends unknown[]>(
         if (currentReqNumber !== reqNumberRef.current) {
           throw new Error('AsyncCallbackHook: Request replaced!');
         }
+
         if (alive()) {
-          setState({
-            status: AsyncStatus.Error,
-            error: e as TError,
+          queueMicrotask(() => {
+            setState({
+              status: AsyncStatus.Error,
+              error: e as TError,
+            });
           });
         }
         throw e;

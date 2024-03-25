@@ -5,8 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { ClientConfig, clientAllowedServer } from '../../../hooks/useClientConfig';
 import { autoDiscovery, specVersions } from '../../../cs-api';
 import { updateLocalStore } from '../../../../client/action/auth';
-import { ROOT_PATH } from '../../paths';
 import { ErrorCode } from '../../../cs-errorcode';
+import {
+  deleteAfterLoginRedirectPath,
+  getAfterLoginRedirectPath,
+} from '../../afterLoginRedirectPath';
+import { getHomePath } from '../../pathUtils';
 
 export enum GetBaseUrlError {
   NotAllow = 'NotAllow',
@@ -111,8 +115,9 @@ export const useLoginComplete = (data?: CustomLoginResponse) => {
     if (data) {
       const { response: loginRes, baseUrl: loginBaseUrl } = data;
       updateLocalStore(loginRes.access_token, loginRes.device_id, loginRes.user_id, loginBaseUrl);
-      // TODO: add after login redirect url
-      navigate(ROOT_PATH, { replace: true });
+      const afterLoginRedirectUrl = getAfterLoginRedirectPath();
+      deleteAfterLoginRedirectPath();
+      navigate(afterLoginRedirectUrl ?? getHomePath(), { replace: true });
     }
   }, [data, navigate]);
 };

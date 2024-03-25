@@ -44,6 +44,12 @@ export default defineConfig({
   server: {
     port: 8080,
     host: true,
+    proxy: {
+      "^\\/.*?\\/olm\\.wasm$": {
+        target: 'http://localhost:8080',
+        rewrite: () => '/olm.wasm'
+      }
+    }
   },
   plugins: [
     viteStaticCopy(copyFiles),

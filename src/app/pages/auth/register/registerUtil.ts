@@ -9,8 +9,14 @@ import {
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updateLocalStore } from '../../../../client/action/auth';
-import { ROOT_PATH } from '../../paths';
+import { LoginPathSearchParams } from '../../paths';
 import { ErrorCode } from '../../../cs-errorcode';
+import {
+  deleteAfterLoginRedirectPath,
+  getAfterLoginRedirectPath,
+} from '../../afterLoginRedirectPath';
+import { getHomePath, getLoginPath, withSearchParam } from '../../pathUtils';
+import { getMxIdLocalPart, getMxIdServer } from '../../../utils/matrix';
 
 export enum RegisterError {
   UserTaken = 'UserTaken',
@@ -114,11 +120,18 @@ export const useRegisterComplete = (data?: CustomRegisterResponse) => {
 
       if (accessToken && deviceId) {
         updateLocalStore(accessToken, deviceId, userId, baseUrl);
-        // TODO: add after register redirect url
-        navigate(ROOT_PATH, { replace: true });
+        const afterLoginRedirectPath = getAfterLoginRedirectPath();
+        deleteAfterLoginRedirectPath();
+        navigate(afterLoginRedirectPath ?? getHomePath(), { replace: true });
       } else {
-        // TODO: navigate to login with userId
-        navigate(ROOT_PATH, { replace: true });
+        const username = getMxIdLocalPart(userId);
+        const userServer = getMxIdServer(userId);
+        navigate(
+          withSearchParam<LoginPathSearchParams>(getLoginPath(userServer), {
+            username,
+          }),
+          { replace: true }
+        );
       }
     }
   }, [data, navigate]);

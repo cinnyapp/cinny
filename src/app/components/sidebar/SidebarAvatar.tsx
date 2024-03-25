@@ -13,22 +13,25 @@ const SidebarAvatarBox = as<'div', css.SidebarAvatarBoxVariants>(
   )
 );
 
+type SidebarAvatarProps = {
+  dataId?: string;
+  outlined?: boolean;
+  avatarChildren: ReactNode;
+  tooltip: ReactNode | string;
+  notificationBadge?: () => ReactNode;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
+  onContextMenu?: MouseEventHandler<HTMLButtonElement>;
+};
+
 export const SidebarAvatar = forwardRef<
   HTMLDivElement,
-  css.SidebarAvatarBoxVariants &
-    css.SidebarBadgeBoxVariants & {
-      outlined?: boolean;
-      avatarChildren: ReactNode;
-      tooltip: ReactNode | string;
-      notificationBadge?: (badgeClassName: string) => ReactNode;
-      onClick?: MouseEventHandler<HTMLButtonElement>;
-      onContextMenu?: MouseEventHandler<HTMLButtonElement>;
-    }
+  css.SidebarAvatarBoxVariants & css.SidebarBadgeBoxVariants & SidebarAvatarProps
 >(
   (
     {
       active,
       hasCount,
+      dataId,
       outlined,
       avatarChildren,
       tooltip,
@@ -40,16 +43,17 @@ export const SidebarAvatar = forwardRef<
   ) => (
     <SidebarAvatarBox active={active} ref={ref}>
       <TooltipProvider
-        delay={0}
+        delay={400}
         position="Right"
         tooltip={
           <Tooltip>
-            <Text size="T300">{tooltip}</Text>
+            <Text size="H5">{tooltip}</Text>
           </Tooltip>
         }
       >
         {(avRef) => (
           <Avatar
+            data-id={dataId}
             ref={avRef}
             as="button"
             onClick={onClick}
@@ -66,9 +70,7 @@ export const SidebarAvatar = forwardRef<
         )}
       </TooltipProvider>
       {notificationBadge && (
-        <Box className={css.SidebarBadgeBox({ hasCount })}>
-          {notificationBadge(css.SidebarBadgeOutline)}
-        </Box>
+        <Box className={css.SidebarBadgeBox({ hasCount })}>{notificationBadge()}</Box>
       )}
     </SidebarAvatarBox>
   )

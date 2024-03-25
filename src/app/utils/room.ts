@@ -76,8 +76,8 @@ export const isSpace = (room: Room | null): boolean => {
 export const isRoom = (room: Room | null): boolean => {
   if (!room) return false;
   const event = getStateEvent(room, StateEvent.RoomCreate);
-  if (!event) return false;
-  return event.getContent().type === undefined;
+  if (!event) return true;
+  return event.getContent().type !== RoomType.Space;
 };
 
 export const isUnsupportedRoom = (room: Room | null): boolean => {
@@ -141,6 +141,15 @@ export const getRoomToParents = (mx: MatrixClient): RoomToParents => {
   return map;
 };
 
+export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): string[] => {
+  const parents = getAllParents(roomToParents, roomId);
+  const orphanParents = Array.from(parents).filter(
+    (parentRoomId) => !roomToParents.has(parentRoomId)
+  );
+
+  return orphanParents;
+};
+
 export const isMutedRule = (rule: IPushRule) =>
   rule.actions[0] === 'dont_notify' && rule.conditions?.[0]?.kind === 'event_match';
 
@@ -183,6 +192,13 @@ export const isNotificationEvent = (mEvent: MatrixEvent) => {
   return true;
 };
 
+export const roomHaveNotification = (room: Room): boolean => {
+  const total = room.getUnreadNotificationCount(NotificationCountType.Total);
+  const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
+
+  return total > 0 || highlight > 0;
+};
+
 export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   const userId = mx.getUserId();
   if (!userId) return false;
@@ -218,7 +234,7 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
     if (room.getMyMembership() !== 'join') return unread;
     if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
 
-    if (roomHaveUnread(mx, room)) {
+    if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
       unread.push(getUnreadInfo(room));
     }
 
@@ -247,12 +263,19 @@ export const joinRuleToIconSrc = (
   return undefined;
 };
 
-export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefined => {
-  const url =
-    room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 32, 32, 'crop', undefined, false) ??
-    undefined;
+export const getRoomAvatarUrl = (
+  mx: MatrixClient,
+  room: Room,
+  size: 32 | 96 = 32
+): string | undefined => {
+  const url = room.getAvatarUrl(mx.baseUrl, size, size, 'crop') ?? undefined;
   if (url) return url;
-  return room.getAvatarUrl(mx.baseUrl, 32, 32, 'crop') ?? undefined;
+
+  return (
+    room
+      .getAvatarFallbackMember()
+      ?.getAvatarUrl(mx.baseUrl, size, size, 'crop', undefined, false) ?? undefined
+  );
 };
 
 export const trimReplyFromBody = (body: string): string => {

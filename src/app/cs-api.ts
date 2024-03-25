@@ -104,7 +104,7 @@ export const specVersions = async (
   request: typeof fetch,
   baseUrl: string
 ): Promise<SpecVersions> => {
-  const res = await request(`${baseUrl}/_matrix/client/versions`);
+  const res = await request(`${trimTrailingSlash(baseUrl)}/_matrix/client/versions`);
 
   const data = (await res.json()) as unknown;
 

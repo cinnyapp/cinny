@@ -1,7 +1,7 @@
 import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import to from 'await-to-js';
 import classNames from 'classnames';
 import colorMXID from '../../../util/colorMXID';
@@ -10,24 +10,21 @@ import { getMxIdLocalPart } from '../../utils/matrix';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
 import * as css from './Reply.css';
-import {
-  MessageBadEncryptedContent,
-  MessageDeletedContent,
-  MessageFailedContent,
-} from './MessageContentFallback';
+import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
 
 type ReplyProps = {
   mx: MatrixClient;
   room: Room;
-  timelineSet: EventTimelineSet;
+  timelineSet?: EventTimelineSet;
   eventId: string;
 };
 
 export const Reply = as<'div', ReplyProps>(
   ({ className, mx, room, timelineSet, eventId, ...props }, ref) => {
     const [replyEvent, setReplyEvent] = useState<MatrixEvent | null | undefined>(
-      timelineSet.findEventById(eventId)
+      timelineSet?.findEventById(eventId)
     );
+    const placeholderWidth = useMemo(() => randomNumberBetween(40, 400), []);
 
     const { body } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
@@ -91,7 +88,7 @@ export const Reply = as<'div', ReplyProps>(
             <LinePlaceholder
               style={{
                 backgroundColor: color.SurfaceVariant.ContainerActive,
-                maxWidth: toRem(randomNumberBetween(40, 400)),
+                maxWidth: toRem(placeholderWidth),
                 width: '100%',
               }}
             />

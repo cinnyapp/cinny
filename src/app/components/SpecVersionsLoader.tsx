@@ -1,20 +1,25 @@
-import { ReactNode, useCallback, useEffect } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { SpecVersions, specVersions } from '../cs-api';
-import { useAutoDiscoveryInfo } from '../hooks/useAutoDiscoveryInfo';
 
 type SpecVersionsLoaderProps = {
+  baseUrl: string;
   fallback?: () => ReactNode;
-  error?: (err: unknown) => ReactNode;
+  error?: (err: unknown, retry: () => void, ignore: () => void) => ReactNode;
   children: (versions: SpecVersions) => ReactNode;
 };
-export function SpecVersionsLoader({ fallback, error, children }: SpecVersionsLoaderProps) {
-  const autoDiscoveryInfo = useAutoDiscoveryInfo();
-  const baseUrl = autoDiscoveryInfo['m.homeserver'].base_url;
-
+export function SpecVersionsLoader({
+  baseUrl,
+  fallback,
+  error,
+  children,
+}: SpecVersionsLoaderProps) {
   const [state, load] = useAsyncCallback(
     useCallback(() => specVersions(fetch, baseUrl), [baseUrl])
   );
+  const [ignoreError, setIgnoreError] = useState(false);
+
+  const ignoreCallback = useCallback(() => setIgnoreError(true), []);
 
   useEffect(() => {
     load();
@@ -24,9 +29,15 @@ export function SpecVersionsLoader({ fallback, error, children }: SpecVersionsLo
     return fallback?.();
   }
 
-  if (state.status === AsyncStatus.Error) {
-    return error?.(state.error);
+  if (!ignoreError && state.status === AsyncStatus.Error) {
+    return error?.(state.error, load, ignoreCallback);
   }
 
-  return children(state.data);
+  return children(
+    state.status === AsyncStatus.Success
+      ? state.data
+      : {
+          versions: [],
+        }
+  );
 }

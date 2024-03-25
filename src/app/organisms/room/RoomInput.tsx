@@ -68,7 +68,7 @@ import {
   roomIdToReplyDraftAtomFamily,
   roomIdToUploadItemsAtomFamily,
   roomUploadAtomFamily,
-} from '../../state/roomInputDrafts';
+} from '../../state/room/roomInputDrafts';
 import { UploadCardRenderer } from '../../components/upload-card';
 import {
   UploadBoard,
@@ -102,10 +102,10 @@ import {
   trimReplyFromFormattedBody,
 } from '../../utils/room';
 import { sanitizeText } from '../../utils/sanitize';
-import { useScreenSize } from '../../hooks/useScreenSize';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { Command, SHRUG, useCommands } from '../../hooks/useCommands';
 import { mobileOrTablet } from '../../utils/user-agent';
+import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 
 interface RoomInputProps {
   editor: Editor;
@@ -171,9 +171,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const pickFile = useFilePicker(handleFiles, true);
     const handlePaste = useFilePasteHandler(handleFiles);
     const dropZoneVisible = useFileDropZone(roomViewRef, handleFiles);
+    const [hideStickerBtn, setHideStickerBtn] = useState(document.body.clientWidth < 500);
 
-    const [, screenWidth] = useScreenSize();
-    const hideStickerBtn = screenWidth < 500;
+    useElementSizeObserver(
+      useCallback(() => document.body, []),
+      useCallback((width) => setHideStickerBtn(width < 500), [])
+    );
 
     useEffect(() => {
       Transforms.insertFragment(editor, msgDraft);
@@ -307,7 +310,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       mx.sendMessage(roomId, content);
       resetEditor(editor);
       resetEditorHistory(editor);
-      setReplyDraft();
+      setReplyDraft(undefined);
       sendTypingStatus(false);
     }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
 
@@ -319,7 +322,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
         if (isKeyHotkey('escape', evt)) {
           evt.preventDefault();
-          setReplyDraft();
+          setReplyDraft(undefined);
         }
       },
       [submit, setReplyDraft, enterForNewline]
@@ -475,7 +478,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
                 >
                   <IconButton
-                    onClick={() => setReplyDraft()}
+                    onClick={() => setReplyDraft(undefined)}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"

@@ -91,11 +91,11 @@ export const SidebarBadgeBox = recipe({
     hasCount: {
       true: {
         top: toRem(-6),
-        right: toRem(-6),
+        left: toRem(-6),
       },
       false: {
         top: toRem(-2),
-        right: toRem(-2),
+        left: toRem(-2),
       },
     },
   },
@@ -105,7 +105,3 @@ export const SidebarBadgeBox = recipe({
 });
 
 export type SidebarBadgeBoxVariants = RecipeVariants<typeof SidebarBadgeBox>;
-
-export const SidebarBadgeOutline = style({
-  boxShadow: `0 0 0 ${config.borderWidth.B500} ${color.Background.Container}`,
-});

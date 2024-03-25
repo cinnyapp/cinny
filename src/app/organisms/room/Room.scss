@@ -4,6 +4,7 @@
 .room {
   @extend .cp-fx__row;
   height: 100%;
+  flex-grow: 1;
 
   &__content {
     @extend .cp-fx__item-one;

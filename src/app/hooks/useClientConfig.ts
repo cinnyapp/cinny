@@ -5,6 +5,12 @@ export type ClientConfig = {
   homeserverList?: string[];
   allowCustomHomeservers?: boolean;
 
+  featuredCommunities?: {
+    openAsDefault?: boolean;
+    spaces?: string[];
+    rooms?: string[];
+  };
+
   hashRouter?: {
     enabled?: boolean;
     basename?: string;

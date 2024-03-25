@@ -1,6 +1,6 @@
 import { MatrixClient, Room } from 'matrix-js-sdk';
 import { useMemo } from 'react';
-import { hasDMWith, isRoomAlias, isRoomId, isUserId } from '../utils/matrix';
+import { getDMRoomFor, isRoomAlias, isRoomId, isUserId } from '../utils/matrix';
 import { selectRoom } from '../../client/action/navigation';
 import { hasDevices } from '../../util/matrixUtil';
 import * as roomActions from '../../client/action/room';
@@ -84,7 +84,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userIds = rawIds.filter((id) => isUserId(id) && id !== mx.getUserId());
           if (userIds.length === 0) return;
           if (userIds.length === 1) {
-            const dmRoomId = hasDMWith(mx, userIds[0]);
+            const dmRoomId = getDMRoomFor(mx, userIds[0])?.roomId;
             if (dmRoomId) {
               selectRoom(dmRoomId);
               return;

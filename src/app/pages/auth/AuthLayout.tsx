@@ -175,6 +175,7 @@ export function AuthLayout() {
               <AuthServerProvider value={discoveryState.data.serverName}>
                 <AutoDiscoveryInfoProvider value={autoDiscoveryInfo}>
                   <SpecVersionsLoader
+                    baseUrl={autoDiscoveryInfo['m.homeserver'].base_url}
                     fallback={() => (
                       <AuthLayoutLoading
                         message={`Connecting to ${autoDiscoveryInfo['m.homeserver'].base_url}`}

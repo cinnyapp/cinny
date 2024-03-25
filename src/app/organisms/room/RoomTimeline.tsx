@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 import React, {
   Dispatch,
   MouseEventHandler,
@@ -22,7 +23,7 @@ import {
   RoomEvent,
   RoomEventHandlerMap,
 } from 'matrix-js-sdk';
-import parse, { HTMLReactParserOptions } from 'html-react-parser';
+import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
@@ -52,7 +53,6 @@ import {
   isRoomId,
   isUserId,
 } from '../../utils/matrix';
-import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
@@ -62,24 +62,15 @@ import {
   CompactPlaceholder,
   Reply,
   MessageBase,
-  MessageDeletedContent,
-  MessageBrokenContent,
   MessageUnsupportedContent,
-  MessageEditedContent,
-  MessageEmptyContent,
-  AttachmentBox,
-  Attachment,
-  AttachmentContent,
-  AttachmentHeader,
   Time,
-  MessageBadEncryptedContent,
   MessageNotDecryptedContent,
-  MessageTextBody,
+  RedactedContent,
+  MSticker,
+  ImageContent,
+  EventContent,
 } from '../../components/message';
-import {
-  emojifyAndLinkify,
-  getReactCustomHtmlParser,
-} from '../../plugins/react-custom-html-parser';
+import { getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
 import {
   canEditEvent,
   decryptAllTimelineEvent,
@@ -90,7 +81,6 @@ import {
   getReactionContent,
   isMembershipChanged,
   reactionOrEditEvent,
-  trimReplyFromBody,
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -101,24 +91,8 @@ import {
   selectTab,
 } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
-import { parseGeoUri, scaleYDimension } from '../../utils/common';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
-import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer';
-import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
-import { getBlobSafeMimeType } from '../../utils/mimeTypes';
-import {
-  ImageContent,
-  VideoContent,
-  FileHeader,
-  fileRenderer,
-  AudioContent,
-  Reactions,
-  EventContent,
-  Message,
-  Event,
-  EncryptedContent,
-  StickerContent,
-} from './message';
+import { Reactions, Message, Event, EncryptedContent } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
 import { RoomIntro } from '../../components/room-intro';
@@ -132,22 +106,16 @@ import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResize
 import * as css from './RoomTimeline.css';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
-import { roomIdToReplyDraftAtomFamily } from '../../state/roomInputDrafts';
+import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
 import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
-import { MessageEvent } from '../../../types/matrix/room';
+import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
 import initMatrix from '../../../client/initMatrix';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import cons from '../../../client/state/cons';
 import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
-import { EMOJI_PATTERN, HTTP_URL_PATTERN, VARIATION_SELECTOR_PATTERN } from '../../utils/regex';
-import { UrlPreviewCard, UrlPreviewHolder } from './message/UrlPreviewCard';
-
-// Thumbs up emoji found to have Variation Selector 16 at the end
-// so included variation selector pattern in regex
-const JUMBO_EMOJI_REG = new RegExp(
-  `^(((${EMOJI_PATTERN})|(:.+?:))(${VARIATION_SELECTOR_PATTERN}|\\s)*){1,10}$`
-);
-const URL_REG = new RegExp(HTTP_URL_PATTERN, 'g');
+import { RenderMessageContent } from '../../components/RenderMessageContent';
+import { Image } from '../../components/media';
+import { ImageViewer } from '../../components/image-viewer';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -989,588 +957,396 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     [editor]
   );
 
-  const renderBody = (body: string, customBody?: string) => {
-    if (body === '') <MessageEmptyContent />;
-    if (customBody) {
-      if (customBody === '') <MessageEmptyContent />;
-      return parse(sanitizeCustomHtml(customBody), htmlReactParserOptions);
-    }
-    return emojifyAndLinkify(body, true);
-  };
+  const renderMatrixEvent = useMatrixEventRenderer<
+    [string, MatrixEvent, number, EventTimelineSet, boolean]
+  >(
+    {
+      [MessageEvent.RoomMessage]: (mEventId, mEvent, item, timelineSet, collapse) => {
+        const reactionRelations = getEventReactions(timelineSet, mEventId);
+        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const hasReactions = reactions && reactions.length > 0;
+        const { replyEventId } = mEvent;
+        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
 
-  const renderRoomMsgContent = useRoomMsgContentRenderer<[EventTimelineSet]>({
-    renderText: (mEventId, mEvent, timelineSet) => {
-      const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-      const { body, formatted_body: customBody }: Record<string, unknown> =
-        editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
+        const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
+        const getContent = (() =>
+          editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent()) as GetContentCallback;
 
-      if (typeof body !== 'string') return null;
-      const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = showUrlPreview && trimmedBody.match(URL_REG);
-      const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
-
-      return (
-        <>
-          <MessageTextBody
-            preWrap={typeof customBody !== 'string'}
-            jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
-          >
-            {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
-            {!!editedEvent && <MessageEditedContent />}
-          </MessageTextBody>
-          {urls && urls.length > 0 && (
-            <UrlPreviewHolder>
-              {urls.map((url) => (
-                <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
-              ))}
-            </UrlPreviewHolder>
-          )}
-        </>
-      );
-    },
-    renderEmote: (mEventId, mEvent, timelineSet) => {
-      const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-      const { body, formatted_body: customBody } =
-        editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
-      const senderId = mEvent.getSender() ?? '';
-
-      const senderDisplayName =
-        getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
-
-      if (typeof body !== 'string') return null;
-      const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = showUrlPreview && trimmedBody.match(URL_REG);
-      const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
-
-      return (
-        <>
-          <MessageTextBody
-            emote
-            preWrap={typeof customBody !== 'string'}
-            jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
-          >
-            <b>{`${senderDisplayName} `}</b>
-            {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
-            {!!editedEvent && <MessageEditedContent />}
-          </MessageTextBody>
-          {urls && urls.length > 0 && (
-            <UrlPreviewHolder>
-              {urls.map((url) => (
-                <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
-              ))}
-            </UrlPreviewHolder>
-          )}
-        </>
-      );
-    },
-    renderNotice: (mEventId, mEvent, timelineSet) => {
-      const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-      const { body, formatted_body: customBody }: Record<string, unknown> =
-        editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
-
-      if (typeof body !== 'string') return null;
-      const trimmedBody = trimReplyFromBody(body);
-      const urlsMatch = showUrlPreview && trimmedBody.match(URL_REG);
-      const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
-
-      return (
-        <>
-          <MessageTextBody
-            notice
-            preWrap={typeof customBody !== 'string'}
-            jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
-          >
-            {renderBody(trimmedBody, typeof customBody === 'string' ? customBody : undefined)}
-            {!!editedEvent && <MessageEditedContent />}
-          </MessageTextBody>
-          {urls && urls.length > 0 && (
-            <UrlPreviewHolder>
-              {urls.map((url) => (
-                <UrlPreviewCard key={url} url={url} ts={mEvent.getTs()} />
-              ))}
-            </UrlPreviewHolder>
-          )}
-        </>
-      );
-    },
-    renderImage: (mEventId, mEvent) => {
-      const content = mEvent.getContent<IImageContent>();
-      const imgInfo = content?.info;
-      const mxcUrl = content.file?.url ?? content.url;
-      if (typeof mxcUrl !== 'string') {
-        return null;
-      }
-      const height = scaleYDimension(imgInfo?.w || 400, 400, imgInfo?.h || 400);
-
-      return (
-        <Attachment>
-          <AttachmentBox
-            style={{
-              height: toRem(height < 48 ? 48 : height),
-            }}
-          >
-            <ImageContent
-              body={content.body || 'Image'}
-              info={imgInfo}
-              mimeType={imgInfo?.mimetype}
-              url={mxcUrl}
-              encInfo={content.file}
-              autoPlay={mediaAutoLoad}
-            />
-          </AttachmentBox>
-        </Attachment>
-      );
-    },
-    renderVideo: (mEventId, mEvent) => {
-      const content = mEvent.getContent<IVideoContent>();
-
-      const videoInfo = content?.info;
-      const mxcUrl = content.file?.url ?? content.url;
-      const safeMimeType = getBlobSafeMimeType(videoInfo?.mimetype ?? '');
-
-      if (!videoInfo || !safeMimeType.startsWith('video') || typeof mxcUrl !== 'string') {
-        if (mxcUrl) {
-          return fileRenderer(mEventId, mEvent);
-        }
-        return null;
-      }
-
-      const height = scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400);
-
-      return (
-        <Attachment>
-          <AttachmentBox
-            style={{
-              height: toRem(height < 48 ? 48 : height),
-            }}
-          >
-            <VideoContent
-              body={content.body || 'Video'}
-              info={videoInfo}
-              mimeType={safeMimeType}
-              url={mxcUrl}
-              encInfo={content.file}
-              loadThumbnail={mediaAutoLoad}
-            />
-          </AttachmentBox>
-        </Attachment>
-      );
-    },
-    renderAudio: (mEventId, mEvent) => {
-      const content = mEvent.getContent<IAudioContent>();
-
-      const audioInfo = content?.info;
-      const mxcUrl = content.file?.url ?? content.url;
-      const safeMimeType = getBlobSafeMimeType(audioInfo?.mimetype ?? '');
-
-      if (!audioInfo || !safeMimeType.startsWith('audio') || typeof mxcUrl !== 'string') {
-        if (mxcUrl) {
-          return fileRenderer(mEventId, mEvent);
-        }
-        return null;
-      }
-
-      return (
-        <Attachment>
-          <AttachmentHeader>
-            <FileHeader body={content.body ?? 'Audio'} mimeType={safeMimeType} />
-          </AttachmentHeader>
-          <AttachmentBox>
-            <AttachmentContent>
-              <AudioContent
-                info={audioInfo}
-                mimeType={safeMimeType}
-                url={mxcUrl}
-                encInfo={content.file}
-              />
-            </AttachmentContent>
-          </AttachmentBox>
-        </Attachment>
-      );
-    },
-    renderLocation: (mEventId, mEvent) => {
-      const content = mEvent.getContent();
-      const geoUri = content.geo_uri;
-      if (typeof geoUri !== 'string') return null;
-      const location = parseGeoUri(geoUri);
-      return (
-        <Box direction="Column" alignItems="Start" gap="100">
-          <Text size="T400">{geoUri}</Text>
-          <Chip
-            as="a"
-            size="400"
-            href={`https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=16/${location.latitude}/${location.longitude}`}
-            target="_blank"
-            rel="noreferrer noopener"
-            variant="Primary"
-            radii="Pill"
-            before={<Icon src={Icons.External} size="50" />}
-          >
-            <Text size="B300">Open Location</Text>
-          </Chip>
-        </Box>
-      );
-    },
-    renderFile: fileRenderer,
-    renderBadEncrypted: () => (
-      <Text>
-        <MessageBadEncryptedContent />
-      </Text>
-    ),
-    renderUnsupported: (mEventId, mEvent) => {
-      if (mEvent.isRedacted()) {
-        const redactedEvt = mEvent.getRedactionEvent();
-        const reason =
-          redactedEvt && 'content' in redactedEvt ? redactedEvt.content.reason : undefined;
+        const senderId = mEvent.getSender() ?? '';
+        const senderDisplayName =
+          getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
 
         return (
-          <Text>
-            <MessageDeletedContent reason={reason} />
-          </Text>
+          <Message
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            messageSpacing={messageSpacing}
+            messageLayout={messageLayout}
+            collapse={collapse}
+            highlight={highlighted}
+            edit={editId === mEventId}
+            canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+            canSendReaction={canSendReaction}
+            imagePackRooms={imagePackRooms}
+            relations={hasReactions ? reactionRelations : undefined}
+            onUserClick={handleUserClick}
+            onUsernameClick={handleUsernameClick}
+            onReplyClick={handleReplyClick}
+            onReactionToggle={handleReactionToggle}
+            onEditId={handleEdit}
+            reply={
+              replyEventId && (
+                <Reply
+                  as="button"
+                  mx={mx}
+                  room={room}
+                  timelineSet={timelineSet}
+                  eventId={replyEventId}
+                  data-reply-id={replyEventId}
+                  onClick={handleOpenReply}
+                />
+              )
+            }
+            reactions={
+              reactionRelations && (
+                <Reactions
+                  style={{ marginTop: config.space.S200 }}
+                  room={room}
+                  relations={reactionRelations}
+                  mEventId={mEventId}
+                  canSendReaction={canSendReaction}
+                  onReactionToggle={handleReactionToggle}
+                />
+              )
+            }
+          >
+            {mEvent.isRedacted() ? (
+              <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
+            ) : (
+              <RenderMessageContent
+                displayName={senderDisplayName}
+                msgType={mEvent.getContent().msgtype ?? ''}
+                ts={mEvent.getTs()}
+                edited={!!editedEvent}
+                getContent={getContent}
+                mediaAutoLoad={mediaAutoLoad}
+                urlPreview={showUrlPreview}
+                htmlReactParserOptions={htmlReactParserOptions}
+                outlineAttachment={messageLayout === 2}
+              />
+            )}
+          </Message>
         );
-      }
-      return (
-        <Text>
-          <MessageUnsupportedContent />
-        </Text>
-      );
-    },
-    renderBrokenFallback: (mEventId, mEvent) => {
-      if (mEvent.isRedacted()) {
-        const redactedEvt = mEvent.getRedactionEvent();
-        const reason =
-          redactedEvt && 'content' in redactedEvt ? redactedEvt.content.reason : undefined;
+      },
+      [MessageEvent.RoomMessageEncrypted]: (mEventId, mEvent, item, timelineSet, collapse) => {
+        const reactionRelations = getEventReactions(timelineSet, mEventId);
+        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const hasReactions = reactions && reactions.length > 0;
+        const { replyEventId } = mEvent;
+        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+
         return (
-          <Text>
-            <MessageDeletedContent reason={reason} />
-          </Text>
-        );
-      }
-      return (
-        <Text>
-          <MessageBrokenContent />
-        </Text>
-      );
-    },
-  });
+          <Message
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            messageSpacing={messageSpacing}
+            messageLayout={messageLayout}
+            collapse={collapse}
+            highlight={highlighted}
+            edit={editId === mEventId}
+            canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+            canSendReaction={canSendReaction}
+            imagePackRooms={imagePackRooms}
+            relations={hasReactions ? reactionRelations : undefined}
+            onUserClick={handleUserClick}
+            onUsernameClick={handleUsernameClick}
+            onReplyClick={handleReplyClick}
+            onReactionToggle={handleReactionToggle}
+            onEditId={handleEdit}
+            reply={
+              replyEventId && (
+                <Reply
+                  as="button"
+                  mx={mx}
+                  room={room}
+                  timelineSet={timelineSet}
+                  eventId={replyEventId}
+                  data-reply-id={replyEventId}
+                  onClick={handleOpenReply}
+                />
+              )
+            }
+            reactions={
+              reactionRelations && (
+                <Reactions
+                  style={{ marginTop: config.space.S200 }}
+                  room={room}
+                  relations={reactionRelations}
+                  mEventId={mEventId}
+                  canSendReaction={canSendReaction}
+                  onReactionToggle={handleReactionToggle}
+                />
+              )
+            }
+          >
+            <EncryptedContent mEvent={mEvent}>
+              {() => {
+                if (mEvent.isRedacted()) return <RedactedContent />;
+                if (mEvent.getType() === MessageEvent.Sticker)
+                  return (
+                    <MSticker
+                      content={mEvent.getContent()}
+                      renderImageContent={(props) => (
+                        <ImageContent
+                          {...props}
+                          autoPlay={mediaAutoLoad}
+                          renderImage={(p) => <Image {...p} loading="lazy" />}
+                          renderViewer={(p) => <ImageViewer {...p} />}
+                        />
+                      )}
+                    />
+                  );
+                if (mEvent.getType() === MessageEvent.RoomMessage) {
+                  const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
+                  const getContent = (() =>
+                    editedEvent?.getContent()['m.new_content'] ??
+                    mEvent.getContent()) as GetContentCallback;
 
-  const renderMatrixEvent = useMatrixEventRenderer<[number, EventTimelineSet, boolean]>({
-    renderRoomMessage: (mEventId, mEvent, item, timelineSet, collapse) => {
-      const reactionRelations = getEventReactions(timelineSet, mEventId);
-      const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
-      const hasReactions = reactions && reactions.length > 0;
-      const { replyEventId } = mEvent;
-      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
-
-      return (
-        <Message
-          key={mEvent.getId()}
-          data-message-item={item}
-          data-message-id={mEventId}
-          room={room}
-          mEvent={mEvent}
-          messageSpacing={messageSpacing}
-          messageLayout={messageLayout}
-          collapse={collapse}
-          highlight={highlighted}
-          edit={editId === mEventId}
-          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-          canSendReaction={canSendReaction}
-          imagePackRooms={imagePackRooms}
-          relations={hasReactions ? reactionRelations : undefined}
-          onUserClick={handleUserClick}
-          onUsernameClick={handleUsernameClick}
-          onReplyClick={handleReplyClick}
-          onReactionToggle={handleReactionToggle}
-          onEditId={handleEdit}
-          reply={
-            replyEventId && (
-              <Reply
-                as="button"
-                mx={mx}
-                room={room}
-                timelineSet={timelineSet}
-                eventId={replyEventId}
-                data-reply-id={replyEventId}
-                onClick={handleOpenReply}
-              />
-            )
-          }
-          reactions={
-            reactionRelations && (
-              <Reactions
-                style={{ marginTop: config.space.S200 }}
-                room={room}
-                relations={reactionRelations}
-                mEventId={mEventId}
-                canSendReaction={canSendReaction}
-                onReactionToggle={handleReactionToggle}
-              />
-            )
-          }
-        >
-          {renderRoomMsgContent(mEventId, mEvent, timelineSet)}
-        </Message>
-      );
-    },
-    renderRoomEncrypted: (mEventId, mEvent, item, timelineSet, collapse) => {
-      const reactionRelations = getEventReactions(timelineSet, mEventId);
-      const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
-      const hasReactions = reactions && reactions.length > 0;
-      const { replyEventId } = mEvent;
-      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
-
-      return (
-        <Message
-          key={mEvent.getId()}
-          data-message-item={item}
-          data-message-id={mEventId}
-          room={room}
-          mEvent={mEvent}
-          messageSpacing={messageSpacing}
-          messageLayout={messageLayout}
-          collapse={collapse}
-          highlight={highlighted}
-          edit={editId === mEventId}
-          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-          canSendReaction={canSendReaction}
-          imagePackRooms={imagePackRooms}
-          relations={hasReactions ? reactionRelations : undefined}
-          onUserClick={handleUserClick}
-          onUsernameClick={handleUsernameClick}
-          onReplyClick={handleReplyClick}
-          onReactionToggle={handleReactionToggle}
-          onEditId={handleEdit}
-          reply={
-            replyEventId && (
-              <Reply
-                as="button"
-                mx={mx}
-                room={room}
-                timelineSet={timelineSet}
-                eventId={replyEventId}
-                data-reply-id={replyEventId}
-                onClick={handleOpenReply}
-              />
-            )
-          }
-          reactions={
-            reactionRelations && (
-              <Reactions
-                style={{ marginTop: config.space.S200 }}
-                room={room}
-                relations={reactionRelations}
-                mEventId={mEventId}
-                canSendReaction={canSendReaction}
-                onReactionToggle={handleReactionToggle}
-              />
-            )
-          }
-        >
-          <EncryptedContent mEvent={mEvent}>
-            {() => {
-              if (mEvent.isRedacted()) return <MessageDeletedContent />;
-              if (mEvent.getType() === MessageEvent.Sticker)
-                return <StickerContent mEvent={mEvent} autoPlay={mediaAutoLoad} />;
-              if (mEvent.getType() === MessageEvent.RoomMessage)
-                return renderRoomMsgContent(mEventId, mEvent, timelineSet);
-              if (mEvent.getType() === MessageEvent.RoomMessageEncrypted)
+                  const senderId = mEvent.getSender() ?? '';
+                  const senderDisplayName =
+                    getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+                  return (
+                    <RenderMessageContent
+                      displayName={senderDisplayName}
+                      msgType={mEvent.getContent().msgtype ?? ''}
+                      ts={mEvent.getTs()}
+                      edited={!!editedEvent}
+                      getContent={getContent}
+                      mediaAutoLoad={mediaAutoLoad}
+                      urlPreview={showUrlPreview}
+                      htmlReactParserOptions={htmlReactParserOptions}
+                      outlineAttachment={messageLayout === 2}
+                    />
+                  );
+                }
+                if (mEvent.getType() === MessageEvent.RoomMessageEncrypted)
+                  return (
+                    <Text>
+                      <MessageNotDecryptedContent />
+                    </Text>
+                  );
                 return (
                   <Text>
-                    <MessageNotDecryptedContent />
+                    <MessageUnsupportedContent />
                   </Text>
                 );
-              return (
-                <Text>
-                  <MessageUnsupportedContent />
-                </Text>
-              );
-            }}
-          </EncryptedContent>
-        </Message>
-      );
-    },
-    renderSticker: (mEventId, mEvent, item, timelineSet, collapse) => {
-      const reactionRelations = getEventReactions(timelineSet, mEventId);
-      const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
-      const hasReactions = reactions && reactions.length > 0;
-      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+              }}
+            </EncryptedContent>
+          </Message>
+        );
+      },
+      [MessageEvent.Sticker]: (mEventId, mEvent, item, timelineSet, collapse) => {
+        const reactionRelations = getEventReactions(timelineSet, mEventId);
+        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const hasReactions = reactions && reactions.length > 0;
+        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
 
-      return (
-        <Message
-          key={mEvent.getId()}
-          data-message-item={item}
-          data-message-id={mEventId}
-          room={room}
-          mEvent={mEvent}
-          messageSpacing={messageSpacing}
-          messageLayout={messageLayout}
-          collapse={collapse}
-          highlight={highlighted}
-          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-          canSendReaction={canSendReaction}
-          imagePackRooms={imagePackRooms}
-          relations={hasReactions ? reactionRelations : undefined}
-          onUserClick={handleUserClick}
-          onUsernameClick={handleUsernameClick}
-          onReplyClick={handleReplyClick}
-          onReactionToggle={handleReactionToggle}
-          reactions={
-            reactionRelations && (
-              <Reactions
-                style={{ marginTop: config.space.S200 }}
-                room={room}
-                relations={reactionRelations}
-                mEventId={mEventId}
-                canSendReaction={canSendReaction}
-                onReactionToggle={handleReactionToggle}
+        return (
+          <Message
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            messageSpacing={messageSpacing}
+            messageLayout={messageLayout}
+            collapse={collapse}
+            highlight={highlighted}
+            canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+            canSendReaction={canSendReaction}
+            imagePackRooms={imagePackRooms}
+            relations={hasReactions ? reactionRelations : undefined}
+            onUserClick={handleUserClick}
+            onUsernameClick={handleUsernameClick}
+            onReplyClick={handleReplyClick}
+            onReactionToggle={handleReactionToggle}
+            reactions={
+              reactionRelations && (
+                <Reactions
+                  style={{ marginTop: config.space.S200 }}
+                  room={room}
+                  relations={reactionRelations}
+                  mEventId={mEventId}
+                  canSendReaction={canSendReaction}
+                  onReactionToggle={handleReactionToggle}
+                />
+              )
+            }
+          >
+            {mEvent.isRedacted() ? (
+              <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
+            ) : (
+              <MSticker
+                content={mEvent.getContent()}
+                renderImageContent={(props) => (
+                  <ImageContent
+                    {...props}
+                    autoPlay={mediaAutoLoad}
+                    renderImage={(p) => <Image {...p} loading="lazy" />}
+                    renderViewer={(p) => <ImageViewer {...p} />}
+                  />
+                )}
               />
-            )
-          }
-        >
-          <StickerContent mEvent={mEvent} autoPlay={mediaAutoLoad} />
-        </Message>
-      );
+            )}
+          </Message>
+        );
+      },
+      [StateEvent.RoomMember]: (mEventId, mEvent, item) => {
+        const membershipChanged = isMembershipChanged(mEvent);
+        if (membershipChanged && hideMembershipEvents) return null;
+        if (!membershipChanged && hideNickAvatarEvents) return null;
+
+        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const parsed = parseMemberEvent(mEvent);
+
+        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+
+        return (
+          <Event
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            highlight={highlighted}
+            messageSpacing={messageSpacing}
+            canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+          >
+            <EventContent
+              messageLayout={messageLayout}
+              time={timeJSX}
+              iconSrc={parsed.icon}
+              content={
+                <Box grow="Yes" direction="Column">
+                  <Text size="T300" priority="300">
+                    {parsed.body}
+                  </Text>
+                </Box>
+              }
+            />
+          </Event>
+        );
+      },
+      [StateEvent.RoomName]: (mEventId, mEvent, item) => {
+        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const senderId = mEvent.getSender() ?? '';
+        const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+
+        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+
+        return (
+          <Event
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            highlight={highlighted}
+            messageSpacing={messageSpacing}
+            canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+          >
+            <EventContent
+              messageLayout={messageLayout}
+              time={timeJSX}
+              iconSrc={Icons.Hash}
+              content={
+                <Box grow="Yes" direction="Column">
+                  <Text size="T300" priority="300">
+                    <b>{senderName}</b>
+                    {' changed room name'}
+                  </Text>
+                </Box>
+              }
+            />
+          </Event>
+        );
+      },
+      [StateEvent.RoomTopic]: (mEventId, mEvent, item) => {
+        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const senderId = mEvent.getSender() ?? '';
+        const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+
+        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+
+        return (
+          <Event
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            highlight={highlighted}
+            messageSpacing={messageSpacing}
+            canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+          >
+            <EventContent
+              messageLayout={messageLayout}
+              time={timeJSX}
+              iconSrc={Icons.Hash}
+              content={
+                <Box grow="Yes" direction="Column">
+                  <Text size="T300" priority="300">
+                    <b>{senderName}</b>
+                    {' changed room topic'}
+                  </Text>
+                </Box>
+              }
+            />
+          </Event>
+        );
+      },
+      [StateEvent.RoomAvatar]: (mEventId, mEvent, item) => {
+        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const senderId = mEvent.getSender() ?? '';
+        const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+
+        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+
+        return (
+          <Event
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            highlight={highlighted}
+            messageSpacing={messageSpacing}
+            canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+          >
+            <EventContent
+              messageLayout={messageLayout}
+              time={timeJSX}
+              iconSrc={Icons.Hash}
+              content={
+                <Box grow="Yes" direction="Column">
+                  <Text size="T300" priority="300">
+                    <b>{senderName}</b>
+                    {' changed room avatar'}
+                  </Text>
+                </Box>
+              }
+            />
+          </Event>
+        );
+      },
     },
-    renderRoomMember: (mEventId, mEvent, item) => {
-      const membershipChanged = isMembershipChanged(mEvent);
-      if (membershipChanged && hideMembershipEvents) return null;
-      if (!membershipChanged && hideNickAvatarEvents) return null;
-
-      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
-      const parsed = parseMemberEvent(mEvent);
-
-      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
-
-      return (
-        <Event
-          key={mEvent.getId()}
-          data-message-item={item}
-          data-message-id={mEventId}
-          room={room}
-          mEvent={mEvent}
-          highlight={highlighted}
-          messageSpacing={messageSpacing}
-          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-        >
-          <EventContent
-            messageLayout={messageLayout}
-            time={timeJSX}
-            iconSrc={parsed.icon}
-            content={
-              <Box grow="Yes" direction="Column">
-                <Text size="T300" priority="300">
-                  {parsed.body}
-                </Text>
-              </Box>
-            }
-          />
-        </Event>
-      );
-    },
-    renderRoomName: (mEventId, mEvent, item) => {
-      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
-      const senderId = mEvent.getSender() ?? '';
-      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
-
-      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
-
-      return (
-        <Event
-          key={mEvent.getId()}
-          data-message-item={item}
-          data-message-id={mEventId}
-          room={room}
-          mEvent={mEvent}
-          highlight={highlighted}
-          messageSpacing={messageSpacing}
-          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-        >
-          <EventContent
-            messageLayout={messageLayout}
-            time={timeJSX}
-            iconSrc={Icons.Hash}
-            content={
-              <Box grow="Yes" direction="Column">
-                <Text size="T300" priority="300">
-                  <b>{senderName}</b>
-                  {' changed room name'}
-                </Text>
-              </Box>
-            }
-          />
-        </Event>
-      );
-    },
-    renderRoomTopic: (mEventId, mEvent, item) => {
-      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
-      const senderId = mEvent.getSender() ?? '';
-      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
-
-      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
-
-      return (
-        <Event
-          key={mEvent.getId()}
-          data-message-item={item}
-          data-message-id={mEventId}
-          room={room}
-          mEvent={mEvent}
-          highlight={highlighted}
-          messageSpacing={messageSpacing}
-          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-        >
-          <EventContent
-            messageLayout={messageLayout}
-            time={timeJSX}
-            iconSrc={Icons.Hash}
-            content={
-              <Box grow="Yes" direction="Column">
-                <Text size="T300" priority="300">
-                  <b>{senderName}</b>
-                  {' changed room topic'}
-                </Text>
-              </Box>
-            }
-          />
-        </Event>
-      );
-    },
-    renderRoomAvatar: (mEventId, mEvent, item) => {
-      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
-      const senderId = mEvent.getSender() ?? '';
-      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
-
-      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
-
-      return (
-        <Event
-          key={mEvent.getId()}
-          data-message-item={item}
-          data-message-id={mEventId}
-          room={room}
-          mEvent={mEvent}
-          highlight={highlighted}
-          messageSpacing={messageSpacing}
-          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-        >
-          <EventContent
-            messageLayout={messageLayout}
-            time={timeJSX}
-            iconSrc={Icons.Hash}
-            content={
-              <Box grow="Yes" direction="Column">
-                <Text size="T300" priority="300">
-                  <b>{senderName}</b>
-                  {' changed room avatar'}
-                </Text>
-              </Box>
-            }
-          />
-        </Event>
-      );
-    },
-    renderStateEvent: (mEventId, mEvent, item) => {
+    (mEventId, mEvent, item) => {
       if (!showHiddenEvents) return null;
       const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
       const senderId = mEvent.getSender() ?? '';
@@ -1607,7 +1383,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         </Event>
       );
     },
-    renderEvent: (mEventId, mEvent, item) => {
+    (mEventId, mEvent, item) => {
       if (!showHiddenEvents) return null;
       if (Object.keys(mEvent.getContent()).length === 0) return null;
       if (mEvent.getRelation()) return null;
@@ -1647,8 +1423,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           />
         </Event>
       );
-    },
-  });
+    }
+  );
 
   let prevEvent: MatrixEvent | undefined;
   let isPrevRendered = false;
@@ -1681,7 +1457,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
     const eventJSX = reactionOrEditEvent(mEvent)
       ? null
-      : renderMatrixEvent(mEventId, mEvent, item, timelineSet, collapsed);
+      : renderMatrixEvent(
+          mEvent.getType(),
+          typeof mEvent.getStateKey() === 'string',
+          mEventId,
+          mEvent,
+          item,
+          timelineSet,
+          collapsed
+        );
     prevEvent = mEvent;
     isPrevRendered = !!eventJSX;
 
