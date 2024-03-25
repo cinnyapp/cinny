@@ -19,7 +19,7 @@ export function InboxTab() {
       active={inboxSelected}
       outlined
       tooltip="Inbox"
-      avatarChildren={<Icon src={Icons.Bell} filled={inboxSelected} />}
+      avatarChildren={<Icon src={Icons.Inbox} filled={inboxSelected} />}
       onClick={() => navigate(getInboxPath())}
       notificationBadge={() => inviteCount > 0 && <UnreadBadge highlight count={inviteCount} />}
     />
