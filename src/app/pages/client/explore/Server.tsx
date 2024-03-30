@@ -41,13 +41,17 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { getMxIdServer } from '../../../utils/matrix';
 
-const getServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams => ({
-  limit: searchParams.get('limit') ?? undefined,
-  since: searchParams.get('since') ?? undefined,
-  term: searchParams.get('term') ?? undefined,
-  type: searchParams.get('type') ?? undefined,
-  instance: searchParams.get('instance') ?? undefined,
-});
+const useServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams =>
+  useMemo(
+    () => ({
+      limit: searchParams.get('limit') ?? undefined,
+      since: searchParams.get('since') ?? undefined,
+      term: searchParams.get('term') ?? undefined,
+      type: searchParams.get('type') ?? undefined,
+      instance: searchParams.get('instance') ?? undefined,
+    }),
+    [searchParams]
+  );
 
 type RoomTypeFilter = {
   title: string;
@@ -337,7 +341,7 @@ export function PublicRooms() {
   const { navigateSpace, navigateRoom } = useRoomNavigate();
 
   const [searchParams] = useSearchParams();
-  const serverSearchParams = getServerSearchParams(searchParams);
+  const serverSearchParams = useServerSearchParams(searchParams);
   const isSearch = !!serverSearchParams.term;
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
