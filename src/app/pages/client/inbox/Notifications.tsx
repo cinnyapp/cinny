@@ -392,11 +392,15 @@ function RoomNotificationsGroupComp({
   );
 }
 
-const getNotificationsSearchParams = (
+const useNotificationsSearchParams = (
   searchParams: URLSearchParams
-): InboxNotificationsPathSearchParams => ({
-  only: searchParams.get('only') ?? undefined,
-});
+): InboxNotificationsPathSearchParams =>
+  useMemo(
+    () => ({
+      only: searchParams.get('only') ?? undefined,
+    }),
+    [searchParams]
+  );
 
 const DEFAULT_REFRESH_MS = 10000;
 
@@ -407,7 +411,7 @@ export function Notifications() {
 
   const { navigateRoom } = useRoomNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const notificationsSearchParams = getNotificationsSearchParams(searchParams);
+  const notificationsSearchParams = useNotificationsSearchParams(searchParams);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
   const [refreshIntervalTime, setRefreshIntervalTime] = useState(DEFAULT_REFRESH_MS);

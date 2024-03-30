@@ -39,7 +39,7 @@ import { getAbsolutePathFromHref, getHomePath, getLoginPath } from './pathUtils'
 import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 import { FeatureCheck } from './FeatureCheck';
 import { ClientLayout, ClientRoot } from './client';
-import { Home } from './client/home';
+import { Home, HomeSearch } from './client/home';
 import { RoomViewer } from '../organisms/room/Room';
 import { Direct } from './client/direct';
 import { SpaceViewer } from './client/space';
@@ -86,7 +86,7 @@ const createRouter = (clientConfig: ClientConfig) => {
             <Route index element={<p>welcome</p>} />
             <Route path={_CREATE_PATH} element={<p>create</p>} />
             <Route path={_JOIN_PATH} element={<p>join</p>} />
-            <Route path={_SEARCH_PATH} element={<p>search</p>} />
+            <Route path={_SEARCH_PATH} element={<HomeSearch />} />
             <Route path={_ROOM_PATH} element={<RoomViewer />} />
           </Route>
           <Route path={DIRECT_PATH} element={<Direct />}>

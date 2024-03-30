@@ -1,15 +1,9 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import { useOrphanRooms } from '../../../state/hooks/roomList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { mDirectAtom } from '../../../state/mDirectList';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
@@ -38,6 +32,8 @@ import {
   useHomeJoinSelected,
   useHomeSearchSelected,
 } from '../../../hooks/router/useHomeSelected';
+import { useHomeRooms } from './useHomeRooms';
+import { useMatrixClient } from '../../../hooks/useMatrixClient';
 
 function HomeEmpty() {
   const navigate = useNavigate();
@@ -82,9 +78,7 @@ function HomeEmpty() {
 
 export function Home() {
   const mx = useMatrixClient();
-  const mDirects = useAtomValue(mDirectAtom);
-  const roomToParents = useAtomValue(roomToParentsAtom);
-  const rooms = useOrphanRooms(mx, allRoomsAtom, mDirects, roomToParents);
+  const rooms = useHomeRooms();
   const selectedRoomId = useSelectedRoom();
   const createSelected = useHomeCreateSelected();
   const joinSelected = useHomeJoinSelected();

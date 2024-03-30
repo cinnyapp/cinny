@@ -33,6 +33,8 @@ export const withSearchParam = <T extends Record<string, string>>(
 
   return `${path}?${params}`;
 };
+export const encodeSearchParamValueArray = (ids: string[]): string => ids.join(',');
+export const decodeSearchParamValueArray = (idsParam: string): string[] => idsParam.split(',');
 
 export const getAbsolutePathFromHref = (href: string): string | undefined => {
   const baseUrl = `${trimTrailingSlash(window.location.origin)}${import.meta.env.BASE_URL}`;
