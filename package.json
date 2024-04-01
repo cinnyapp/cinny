@@ -62,7 +62,7 @@
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
     "react-dom": "18.2.0",
-    "react-error-boundary": "4.0.10",
+    "react-error-boundary": "4.0.13",
     "react-google-recaptcha": "2.1.0",
     "react-modal": "3.16.1",
     "react-range": "1.8.14",
