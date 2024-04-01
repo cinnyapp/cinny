@@ -80,7 +80,7 @@
     "@rollup/plugin-inject": "5.0.3",
     "@rollup/plugin-wasm": "6.1.1",
     "@types/file-saver": "2.0.5",
-    "@types/node": "18.11.18",
+    "@types/node": "20.12.2",
     "@types/prismjs": "1.26.0",
     "@types/react": "18.2.39",
     "@types/react-dom": "18.2.17",
