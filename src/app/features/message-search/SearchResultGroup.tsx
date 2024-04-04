@@ -1,6 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { MouseEventHandler, useMemo } from 'react';
-import { IEventWithRoomId, Room } from 'matrix-js-sdk';
+import { IEventWithRoomId, RelationType, Room } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Avatar, AvatarFallback, AvatarImage, Box, Chip, Header, Text, config } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -182,7 +182,14 @@ export function SearchResultGroup({
             getMxIdLocalPart(event.sender) ??
             event.sender;
           const senderAvatarMxc = getMemberAvatarMxc(room, event.sender);
-          const getContent = (() => event.content) as GetContentCallback;
+
+          const mainEventId =
+            event.content['m.relates_to']?.rel_type === RelationType.Replace
+              ? event.content['m.relates_to'].event_id
+              : event.event_id;
+
+          const getContent = (() =>
+            event.content['m.new_content'] ?? event.content) as GetContentCallback;
 
           const replyEventId = event.content['m.relates_to']?.['m.in_reply_to']?.event_id;
 
@@ -226,7 +233,7 @@ export function SearchResultGroup({
                   </Box>
                   <Box shrink="No" gap="200" alignItems="Center">
                     <Chip
-                      data-event-id={event.event_id}
+                      data-event-id={mainEventId}
                       onClick={handleOpenClick}
                       variant="Secondary"
                       radii="400"
