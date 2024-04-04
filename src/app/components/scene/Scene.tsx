@@ -25,7 +25,7 @@ import { useInView } from 'framer-motion'
 
 import styles from './Scene.module.scss'
 
-export const COLORS = {
+const COLORS = {
   black: '#0f0f0f',
   white: '#f1f1f1',
   gray: {
@@ -34,7 +34,7 @@ export const COLORS = {
   blue: '#24bdff',
   orange: '#ff8024',
 }
-export const BREAKPOINTS = {
+const BREAKPOINTS = {
   md: '48rem', // 768px
   lg: '64rem', // 1024px
   xl: '90rem', // 1440px

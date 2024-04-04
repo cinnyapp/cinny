@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { Suspense, useCallback, useEffect } from 'react';
 import { Box, Header, Scroll, Spinner, Text, color } from 'folds';
 import {
   LoaderFunction,
@@ -31,7 +31,8 @@ import { AuthFlowsLoader } from '../../components/AuthFlowsLoader';
 import { AuthFlowsProvider } from '../../hooks/useAuthFlows';
 import { AuthServerProvider } from '../../hooks/useAuthServer';
 import TwypeSVG from '../../../../public/res/svg/twype.svg';
-import { Scene } from '../../components/scene';
+
+const Scene = React.lazy(async () => import('../../components/scene'));
 
 export const authLayoutLoader: LoaderFunction = () => {
   if (isAuthenticated()) {
@@ -211,7 +212,7 @@ export function AuthLayout() {
           </Box>
         </Box>
         <AuthFooter />
-        <Scene />
+        <Suspense fallback={null}><Scene /></Suspense>
       </Box>
     </Scroll>
   );
