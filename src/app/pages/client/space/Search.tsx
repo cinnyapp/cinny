@@ -1,11 +1,29 @@
 import React, { useRef } from 'react';
 import { Box, Icon, Icons, Text, Scroll } from 'folds';
+import { useAtomValue } from 'jotai';
 import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
 import { MessageSearch } from '../../../features/message-search';
+import { useSpace } from '../../../hooks/useSpace';
+import { useSpaceChildRoomsRecursive } from '../../../state/hooks/roomList';
+import { allRoomsAtom } from '../../../state/room-list/roomList';
+import { mDirectAtom } from '../../../state/mDirectList';
+import { roomToParentsAtom } from '../../../state/room/roomToParents';
+import { useMatrixClient } from '../../../hooks/useMatrixClient';
 
 export function SpaceSearch() {
+  const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const rooms = [''];
+  const space = useSpace();
+
+  const mDirects = useAtomValue(mDirectAtom);
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const rooms = useSpaceChildRoomsRecursive(
+    mx,
+    space.roomId,
+    allRoomsAtom,
+    mDirects,
+    roomToParents
+  );
 
   return (
     <Page>
@@ -22,7 +40,7 @@ export function SpaceSearch() {
           <PageContent>
             <PageContentCenter>
               <MessageSearch
-                defaultRoomsFilterName="Space"
+                defaultRoomsFilterName={space.name}
                 allowGlobal
                 rooms={rooms}
                 scrollRef={scrollRef}
