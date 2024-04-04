@@ -11,6 +11,7 @@ import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
 import * as css from './Reply.css';
 import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
+import { scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
 
 type ReplyProps = {
   mx: MatrixClient;
@@ -57,7 +58,7 @@ export const Reply = as<'div', ReplyProps>(
     }, [replyEvent, mx, room, eventId]);
 
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
-    const bodyJSX = body ? trimReplyFromBody(body) : fallbackBody;
+    const bodyJSX = body ? scaleSystemEmoji(trimReplyFromBody(body)) : fallbackBody;
 
     return (
       <Box

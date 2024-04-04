@@ -1,8 +1,9 @@
 import React from 'react';
 import { as, Box, Header, Icon, IconButton, Icons, Modal, Scroll, Text } from 'folds';
 import classNames from 'classnames';
-import { emojifyAndLinkify } from '../../plugins/react-custom-html-parser';
+import Linkify from 'linkify-react';
 import * as css from './style.css';
+import { LINKIFY_OPTS, scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
 
 export const RoomTopicViewer = as<
   'div',
@@ -32,7 +33,7 @@ export const RoomTopicViewer = as<
     <Scroll className={css.ModalScroll} size="300" hideTrack>
       <Box className={css.ModalContent} direction="Column" gap="100">
         <Text size="T300" className={css.ModalTopic} priority="400">
-          {emojifyAndLinkify(topic, true)}
+          <Linkify options={LINKIFY_OPTS}>{scaleSystemEmoji(topic)}</Linkify>
         </Text>
       </Box>
     </Scroll>

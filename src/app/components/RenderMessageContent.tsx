@@ -36,6 +36,7 @@ type RenderMessageContentProps = {
   getContent: <T>() => T;
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
+  highlightRegex?: RegExp;
   htmlReactParserOptions: HTMLReactParserOptions;
   outlineAttachment?: boolean;
 };
@@ -47,6 +48,7 @@ export function RenderMessageContent({
   getContent,
   mediaAutoLoad,
   urlPreview,
+  highlightRegex,
   htmlReactParserOptions,
   outlineAttachment,
 }: RenderMessageContentProps) {
@@ -89,7 +91,11 @@ export function RenderMessageContent({
         edited={edited}
         content={getContent()}
         renderBody={(props) => (
-          <RenderBody {...props} htmlReactParserOptions={htmlReactParserOptions} />
+          <RenderBody
+            {...props}
+            highlightRegex={highlightRegex}
+            htmlReactParserOptions={htmlReactParserOptions}
+          />
         )}
         renderUrlsPreview={
           urlPreview
@@ -113,7 +119,11 @@ export function RenderMessageContent({
         edited={edited}
         content={getContent()}
         renderBody={(props) => (
-          <RenderBody {...props} htmlReactParserOptions={htmlReactParserOptions} />
+          <RenderBody
+            {...props}
+            highlightRegex={highlightRegex}
+            htmlReactParserOptions={htmlReactParserOptions}
+          />
         )}
         renderUrlsPreview={
           urlPreview
@@ -136,7 +146,11 @@ export function RenderMessageContent({
         edited={edited}
         content={getContent()}
         renderBody={(props) => (
-          <RenderBody {...props} htmlReactParserOptions={htmlReactParserOptions} />
+          <RenderBody
+            {...props}
+            highlightRegex={highlightRegex}
+            htmlReactParserOptions={htmlReactParserOptions}
+          />
         )}
         renderUrlsPreview={
           urlPreview

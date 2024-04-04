@@ -4,7 +4,10 @@ import { IEventWithRoomId, RelationType, Room } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Avatar, AvatarFallback, AvatarImage, Box, Chip, Header, Text, config } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
+import {
+  getReactCustomHtmlParser,
+  makeHighlightRegex,
+} from '../../plugins/react-custom-html-parser';
 import { getMxIdLocalPart, isRoomId, isUserId } from '../../utils/matrix';
 import {
   openJoinAlias,
@@ -37,6 +40,7 @@ import { SequenceCard } from '../../components/sequence-card';
 
 type SearchResultGroupProps = {
   room: Room;
+  highlights: string[];
   items: ResultItem[];
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
@@ -44,16 +48,19 @@ type SearchResultGroupProps = {
 };
 export function SearchResultGroup({
   room,
+  highlights,
   items,
   mediaAutoLoad,
   urlPreview,
   onOpen,
 }: SearchResultGroupProps) {
   const mx = useMatrixClient();
+  const highlightRegex = useMemo(() => makeHighlightRegex(highlights), [highlights]);
 
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
       getReactCustomHtmlParser(mx, room, {
+        highlightRegex,
         handleSpoilerClick: (evt) => {
           const target = evt.currentTarget;
           if (target.getAttribute('aria-pressed') === 'true') {
@@ -78,7 +85,7 @@ export function SearchResultGroup({
           openJoinAlias(mentionId);
         },
       }),
-    [mx, room]
+    [mx, room, highlightRegex]
   );
 
   const renderMatrixEvent = useMatrixEventRenderer<[IEventWithRoomId, string, GetContentCallback]>(
@@ -97,6 +104,7 @@ export function SearchResultGroup({
             mediaAutoLoad={mediaAutoLoad}
             urlPreview={urlPreview}
             htmlReactParserOptions={htmlReactParserOptions}
+            highlightRegex={highlightRegex}
             outlineAttachment
           />
         );
