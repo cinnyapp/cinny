@@ -67,7 +67,7 @@ export const useSpaceChildRooms = (
   return useAtomValue(selectAtom(roomsAtom, selector, compareRoomsEqual));
 };
 
-export const useSpaceChildDirectsRecursive = (
+export const useSpaceChildRoomsRecursive = (
   mx: MatrixClient,
   spaceId: string,
   roomsAtom: typeof allRoomsAtom,
@@ -79,7 +79,7 @@ export const useSpaceChildDirectsRecursive = (
       rooms.filter(
         (roomId) =>
           isRoom(mx.getRoom(roomId)) &&
-          mDirects.has(roomId) &&
+          !mDirects.has(roomId) &&
           roomToParents.has(roomId) &&
           getAllParents(roomToParents, roomId).has(spaceId)
       ),
@@ -102,6 +102,27 @@ export const useSpaceChildDirects = (
           isRoom(mx.getRoom(roomId)) &&
           mDirects.has(roomId) &&
           roomToParents.get(roomId)?.has(spaceId)
+      ),
+    [mx, spaceId, mDirects, roomToParents]
+  );
+  return useAtomValue(selectAtom(roomsAtom, selector, compareRoomsEqual));
+};
+
+export const useSpaceChildDirectsRecursive = (
+  mx: MatrixClient,
+  spaceId: string,
+  roomsAtom: typeof allRoomsAtom,
+  mDirects: Set<string>,
+  roomToParents: RoomToParents
+) => {
+  const selector = useCallback(
+    (rooms: string[]) =>
+      rooms.filter(
+        (roomId) =>
+          isRoom(mx.getRoom(roomId)) &&
+          mDirects.has(roomId) &&
+          roomToParents.has(roomId) &&
+          getAllParents(roomToParents, roomId).has(spaceId)
       ),
     [mx, spaceId, mDirects, roomToParents]
   );
