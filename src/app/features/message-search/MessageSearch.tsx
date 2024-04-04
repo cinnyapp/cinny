@@ -241,7 +241,7 @@ export function MessageSearch({
         </Box>
       )}
 
-      {msgSearchParams.term && vItems.length === 0 && status === 'success' && (
+      {msgSearchParams.term && groups.length === 0 && status === 'success' && (
         <Box
           className={ContainerColor({ variant: 'Warning' })}
           style={{ padding: config.space.S300, borderRadius: config.radii.R400 }}
@@ -255,18 +255,12 @@ export function MessageSearch({
         </Box>
       )}
 
-      {error && (
-        <Box
-          className={ContainerColor({ variant: 'Critical' })}
-          style={{
-            padding: config.space.S300,
-            borderRadius: config.radii.R400,
-          }}
-          direction="Column"
-          gap="200"
-        >
-          <Text size="L400">{error.name}</Text>
-          <Text size="T300">{error.message}</Text>
+      {((msgSearchParams.term && status === 'pending') ||
+        (groups.length > 0 && vItems.length === 0)) && (
+        <Box direction="Column" gap="100">
+          {[...Array(8).keys()].map((key) => (
+            <SequenceCard variant="SurfaceVariant" key={key} style={{ minHeight: toRem(80) }} />
+          ))}
         </Box>
       )}
 
@@ -322,11 +316,19 @@ export function MessageSearch({
           )}
         </Box>
       )}
-      {msgSearchParams.term && status === 'pending' && (
-        <Box direction="Column" gap="100">
-          {[...Array(8).keys()].map((key) => (
-            <SequenceCard variant="SurfaceVariant" key={key} style={{ minHeight: toRem(80) }} />
-          ))}
+
+      {error && (
+        <Box
+          className={ContainerColor({ variant: 'Critical' })}
+          style={{
+            padding: config.space.S300,
+            borderRadius: config.radii.R400,
+          }}
+          direction="Column"
+          gap="200"
+        >
+          <Text size="L400">{error.name}</Text>
+          <Text size="T300">{error.message}</Text>
         </Box>
       )}
     </Box>
