@@ -1,20 +1,16 @@
 import React, { useRef } from 'react';
-import { Outlet, useParams } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
-import { Room } from 'matrix-js-sdk';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import {
-  useSpaceRecursiveChildDirects,
-  useSpaceRecursiveChildSpaces,
-} from '../../../state/hooks/roomList';
+import { useSpaceChildSpacesRecursive } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { factoryRoomIdByAtoZ } from '../../../utils/sort';
+import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
   NavCategory,
@@ -24,43 +20,38 @@ import {
   NavLink,
 } from '../../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
-import { RoomIcon } from '../../../components/room-avatar';
+import { RoomAvatar, RoomIcon } from '../../../components/room-avatar';
 import { getSpaceLobbyPath, getSpaceRoomPath, getSpaceSearchPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import {
-  useSelectedSpace,
   useSpaceLobbySelected,
   useSpaceSearchSelected,
 } from '../../../hooks/router/useSelectedSpace';
 import { SpaceChildRoomsProvider } from '../../../components/SpaceChildRoomsProvider';
+import { getRoomAvatarUrl } from '../../../utils/room';
+import { nameInitials } from '../../../utils/common';
+import { SpaceChildDirectsProvider } from '../../../components/SpaceChildDirectsProvider';
+import { useSpace } from '../../../hooks/useSpace';
 
-export function Space({ spaceIdOrAlias, space }: { spaceIdOrAlias: string; space: Room }) {
+export function Space() {
   const mx = useMatrixClient();
+  const space = useSpace();
+  const spaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const mDirects = useAtomValue(mDirectAtom);
   const roomToParents = useAtomValue(roomToParentsAtom);
 
-  const childSpaces = useSpaceRecursiveChildSpaces(mx, space.roomId, allRoomsAtom, roomToParents);
-  const childDirects = useSpaceRecursiveChildDirects(
-    mx,
-    space.roomId,
-    allRoomsAtom,
-    mDirects,
-    roomToParents
-  );
+  const childSpaces = useSpaceChildSpacesRecursive(mx, space.roomId, allRoomsAtom, roomToParents);
 
   const selectedRoomId = useSelectedRoom();
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
   const getToLink = (roomId: string) =>
-    getSpaceRoomPath(
-      getCanonicalAliasOrRoomId(mx, space.roomId),
-      getCanonicalAliasOrRoomId(mx, roomId)
-    );
+    getSpaceRoomPath(spaceIdOrAlias, getCanonicalAliasOrRoomId(mx, roomId));
 
   const renderRoomSelector = (roomId: string) => {
     const room = mx.getRoom(roomId);
@@ -81,7 +72,16 @@ export function Space({ spaceIdOrAlias, space }: { spaceIdOrAlias: string; space
               <NavItemContent size="T300">
                 <Box as="span" grow="Yes" alignItems="Center" gap="200">
                   <Avatar size="200" radii="400">
-                    <RoomIcon filled={selected} size="100" joinRule={room.getJoinRule()} />
+                    {mDirects.has(roomId) ? (
+                      <RoomAvatar
+                        variant="Background"
+                        src={getRoomAvatarUrl(mx, room, 96)}
+                        alt={room.name}
+                        renderInitials={() => <Text size="H6">{nameInitials(room.name)}</Text>}
+                      />
+                    ) : (
+                      <RoomIcon filled={selected} size="100" joinRule={room.getJoinRule()} />
+                    )}
                   </Avatar>
                   <Box as="span" grow="Yes">
                     <Text as="span" size="Inherit" truncate>
@@ -151,7 +151,11 @@ export function Space({ spaceIdOrAlias, space }: { spaceIdOrAlias: string; space
                   </NavLink>
                 </NavItem>
               </NavCategory>
-              <SpaceChildRoomsProvider spaceId={space.roomId} roomToParents={roomToParents}>
+              <SpaceChildRoomsProvider
+                spaceId={space.roomId}
+                mDirects={mDirects}
+                roomToParents={roomToParents}
+              >
                 {(childRooms) =>
                   childRooms.length > 0 && (
                     <NavCategory>
@@ -167,30 +171,52 @@ export function Space({ spaceIdOrAlias, space }: { spaceIdOrAlias: string; space
                 <SpaceChildRoomsProvider
                   key={childSpaceId}
                   spaceId={childSpaceId}
+                  mDirects={mDirects}
                   roomToParents={roomToParents}
                 >
-                  {(childRooms) =>
-                    childRooms.length > 0 && (
-                      <NavCategory>
-                        <NavCategoryHeader>
-                          <Text size="O400">{mx.getRoom(childSpaceId)?.name}</Text>
-                        </NavCategoryHeader>
-                        {Array.from(childRooms)
-                          .sort(factoryRoomIdByAtoZ(mx))
-                          .map(renderRoomSelector)}
-                      </NavCategory>
-                    )
-                  }
+                  {(childRooms) => (
+                    <SpaceChildDirectsProvider
+                      spaceId={childSpaceId}
+                      mDirects={mDirects}
+                      roomToParents={roomToParents}
+                    >
+                      {(childDirects) =>
+                        (childRooms.length > 0 || childDirects.length > 0) && (
+                          <NavCategory>
+                            <NavCategoryHeader>
+                              <Text size="O400">{mx.getRoom(childSpaceId)?.name}</Text>
+                            </NavCategoryHeader>
+                            {Array.from(childRooms)
+                              .sort(factoryRoomIdByAtoZ(mx))
+                              .map(renderRoomSelector)}
+                            {Array.from(childDirects)
+                              .sort(factoryRoomIdByActivity(mx))
+                              .map(renderRoomSelector)}
+                          </NavCategory>
+                        )
+                      }
+                    </SpaceChildDirectsProvider>
+                  )}
                 </SpaceChildRoomsProvider>
               ))}
-              {childDirects.length > 0 && (
-                <NavCategory>
-                  <NavCategoryHeader>
-                    <Text size="O400">People</Text>
-                  </NavCategoryHeader>
-                  {Array.from(childDirects).sort(factoryRoomIdByAtoZ(mx)).map(renderRoomSelector)}
-                </NavCategory>
-              )}
+              <SpaceChildDirectsProvider
+                spaceId={space.roomId}
+                mDirects={mDirects}
+                roomToParents={roomToParents}
+              >
+                {(childDirects) =>
+                  childDirects.length > 0 && (
+                    <NavCategory>
+                      <NavCategoryHeader>
+                        <Text size="O400">People</Text>
+                      </NavCategoryHeader>
+                      {Array.from(childDirects)
+                        .sort(factoryRoomIdByActivity(mx))
+                        .map(renderRoomSelector)}
+                    </NavCategory>
+                  )
+                }
+              </SpaceChildDirectsProvider>
             </Box>
           </ClientDrawerContentLayout>
         </ClientDrawerLayout>
@@ -199,18 +225,4 @@ export function Space({ spaceIdOrAlias, space }: { spaceIdOrAlias: string; space
       <Outlet />
     </ClientContentLayout>
   );
-}
-
-export function SpaceViewer() {
-  const mx = useMatrixClient();
-
-  const { spaceIdOrAlias } = useParams();
-  const selectedSpaceId = useSelectedSpace();
-  const space = mx.getRoom(selectedSpaceId);
-
-  if (!space || !spaceIdOrAlias) {
-    return <p>TODO: join space screen</p>;
-  }
-
-  return <Space spaceIdOrAlias={spaceIdOrAlias} space={space} />;
 }
