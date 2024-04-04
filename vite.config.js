@@ -34,6 +34,30 @@ const copyFiles = {
       src: 'public/res/android',
       dest: 'public/',
     },
+    {
+      src: 'public/adamsbridge-cubemap',
+      dest: 'public/'
+    },
+    {
+      src: 'public/model.glb',
+      dest: 'public/'
+    },
+    {
+      src: 'public/browserconfig.xml',
+      dest: ''
+    },
+    {
+      src: 'public/mstile-150x150.png',
+      dest: ''
+    },
+    {
+      src: "public/android-chrome-192x192.png",
+      dest: ''
+    },
+    {
+      src: "/android-chrome-512x512.png",
+      dest: ''
+    }
   ],
 }
 
