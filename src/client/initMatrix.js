@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import * as sdk from 'matrix-js-sdk';
 import Olm from '@matrix-org/olm';
-// import { logger } from 'matrix-js-sdk/lib/logger';
+import { logger } from 'matrix-js-sdk/lib/logger';
 
 import { getSecret } from './state/auth';
 import RoomList from './state/RoomList';
@@ -13,7 +13,9 @@ import navigation from './state/navigation';
 
 global.Olm = Olm;
 
-// logger.disableAll();
+if (import.meta.env.PROD) {
+  logger.disableAll();
+}
 
 class InitMatrix extends EventEmitter {
   constructor() {
