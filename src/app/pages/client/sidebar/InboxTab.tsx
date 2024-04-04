@@ -5,12 +5,12 @@ import { useAtomValue } from 'jotai';
 import { SidebarAvatar } from '../../../components/sidebar';
 import { allInvitesAtom } from '../../../state/room-list/inviteList';
 import { getInboxPath } from '../../pathUtils';
-import { useInboxInvitesSelected } from '../../../hooks/router/useInbox';
+import { useInboxSelected } from '../../../hooks/router/useInbox';
 import { UnreadBadge } from '../../../components/unread-badge';
 
 export function InboxTab() {
   const navigate = useNavigate();
-  const inboxSelected = useInboxInvitesSelected();
+  const inboxSelected = useInboxSelected();
   const allInvites = useAtomValue(allInvitesAtom);
   const inviteCount = allInvites.length;
 
