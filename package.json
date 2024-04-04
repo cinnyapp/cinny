@@ -1,5 +1,5 @@
 {
-  "name": "cinny",
+  "name": "twype",
   "version": "3.2.0",
   "description": "Yet another matrix client",
   "main": "index.js",
@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
-  "author": "Ajay Bura",
+  "author": "Twype",
   "license": "AGPL-3.0-only",
   "dependencies": {
     "@fontsource/inter": "4.5.14",

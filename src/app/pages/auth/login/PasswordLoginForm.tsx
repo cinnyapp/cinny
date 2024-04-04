@@ -129,7 +129,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         user: username,
       },
       password,
-      initial_device_display_name: 'Cinny Web',
+      initial_device_display_name: 'Twype Web',
     });
   };
 
@@ -147,7 +147,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         user: mxIdUsername,
       },
       password,
-      initial_device_display_name: 'Cinny Web',
+      initial_device_display_name: 'Twype Web',
     });
   };
   const handleEmailLogin = (email: string, password: string) => {
@@ -159,7 +159,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         address: email,
       },
       password,
-      initial_device_display_name: 'Cinny Web',
+      initial_device_display_name: 'Twype Web',
     });
   };
 

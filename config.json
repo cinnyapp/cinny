@@ -1,12 +1,7 @@
 {
   "defaultHomeserver": 2,
   "homeserverList": [
-    "converser.eu",
-    "envs.net",
-    "matrix.org",
-    "monero.social",
-    "mozilla.org",
-    "xmr.se"
+    "server.twype.com"
   ],
   "allowCustomHomeservers": true,
 

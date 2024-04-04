@@ -110,7 +110,7 @@ function Client() {
 
         <div className="loading__appname">
           <Text variant="h2" weight="medium">
-            Cinny
+            Twype
           </Text>
         </div>
       </div>

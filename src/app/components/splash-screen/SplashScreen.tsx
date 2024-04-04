@@ -21,7 +21,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
         justifyContent="Center"
       >
         <Text size="H2" align="Center">
-          Cinny
+          Twype
         </Text>
       </Box>
     </Box>

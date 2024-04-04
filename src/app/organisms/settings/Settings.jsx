@@ -41,7 +41,7 @@ import InfoIC from '../../../../public/res/ic/outlined/info.svg';
 import PowerIC from '../../../../public/res/ic/outlined/power.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
-import CinnySVG from '../../../../public/res/svg/cinny.svg';
+import CinnySVG from '../../../../public/res/svg/twype.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -337,10 +337,10 @@ function AboutSection() {
       <div className="settings-about__card">
         <MenuHeader>Application</MenuHeader>
         <div className="settings-about__branding">
-          <img width="60" height="60" src={CinnySVG} alt="Cinny logo" />
+          <img width="60" height="60" src={CinnySVG} alt="Twype logo" />
           <div>
             <Text variant="h2" weight="medium">
-              Cinny
+              Twype
               <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>{`v${cons.version}`}</span>
             </Text>
             <Text>Yet another matrix client</Text>

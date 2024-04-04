@@ -2,9 +2,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { enableMapSet } from 'immer';
+import { configClass, varsClass } from 'folds';
 import '@fontsource/inter/variable.css';
 import 'folds/dist/style.css';
-import { configClass, varsClass } from 'folds';
 
 enableMapSet();
 

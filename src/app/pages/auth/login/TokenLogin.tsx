@@ -57,7 +57,7 @@ export function TokenLogin({ token }: TokenLoginProps) {
     startLogin(baseUrl, {
       type: 'm.login.token',
       token,
-      initial_device_display_name: 'Cinny Web',
+      initial_device_display_name: 'Twype Web',
     });
   }, [baseUrl, token, startLogin]);
 

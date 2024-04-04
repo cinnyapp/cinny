@@ -124,8 +124,8 @@ const darkThemeData = {
   },
 
   Primary: {
-    Main: '#BDB6EC',
-    MainHover: '#B2AAE9',
+    Main: '#9494FF',
+    MainHover: '#9494ffcf',
     MainActive: '#ADA3E8',
     MainLine: '#A79DE6',
     OnMain: '#2C2843',
