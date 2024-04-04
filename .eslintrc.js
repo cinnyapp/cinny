@@ -59,6 +59,7 @@ module.exports = {
     "react-hooks/exhaustive-deps": "error",
 
     "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/no-shadow": "error"
+    "@typescript-eslint/no-shadow": "error",
+    "react/function-component-definition": "off"
   },
 };

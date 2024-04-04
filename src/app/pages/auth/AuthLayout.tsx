@@ -23,7 +23,6 @@ import {
 } from '../../hooks/useClientConfig';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { LOGIN_PATH, REGISTER_PATH } from '../paths';
-import { ServerPicker } from './ServerPicker';
 import { AutoDiscoveryAction, autoDiscovery } from '../../cs-api';
 import { SpecVersionsLoader } from '../../components/SpecVersionsLoader';
 import { SpecVersionsProvider } from '../../hooks/useSpecVersions';
@@ -32,6 +31,7 @@ import { AuthFlowsLoader } from '../../components/AuthFlowsLoader';
 import { AuthFlowsProvider } from '../../hooks/useAuthFlows';
 import { AuthServerProvider } from '../../hooks/useAuthServer';
 import TwypeSVG from '../../../../public/res/svg/twype.svg';
+import { Scene } from '../../components/scene';
 
 export const authLayoutLoader: LoaderFunction = () => {
   if (isAuthenticated()) {
@@ -130,15 +130,16 @@ export function AuthLayout() {
     discoveryState.status === AsyncStatus.Success ? discoveryState.data.response : [];
 
   return (
-    <Scroll variant="Background" visibility="Hover" size="300" hideTrack>
+    <Scroll variant='Background' visibility="Hover" size="300" hideTrack>
       <Box
-        className={classNames(css.AuthLayout, PatternsCss.BackgroundDotPattern)}
+        className={classNames(css.AuthLayout)}
         direction="Column"
         alignItems="Center"
         justifyContent="SpaceBetween"
         gap="400"
       >
-        <Box direction="Column" className={css.AuthCard}>
+        <Box className={classNames(css.AuthFormLayout)}>
+          <Box direction="Column" className={css.AuthCard}>
           <Header className={css.AuthHeader} size="600" variant="Surface">
             <Box grow="Yes" direction="Row" gap="300" alignItems="Center">
               <img className={css.AuthLogo} src={TwypeSVG} alt="Twype Logo" />
@@ -207,8 +208,10 @@ export function AuthLayout() {
               </AuthServerProvider>
             )}
           </Box>
+          </Box>
         </Box>
         <AuthFooter />
+        <Scene />
       </Box>
     </Scroll>
   );

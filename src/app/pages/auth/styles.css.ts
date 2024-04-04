@@ -21,6 +21,7 @@ export const AuthCard = style({
   boxShadow: config.shadow.E100,
   border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
   overflow: 'hidden',
+  zIndex: 1
 });
 
 export const AuthLogo = style([
@@ -50,4 +51,14 @@ export const AuthCardContent = style({
 
 export const AuthFooter = style({
   padding: config.space.S200,
+  zIndex: 1 
 });
+
+
+export const AuthFormLayout = style({
+  display: 'flex',
+  justifyContent: 'flex-end',
+  alignItems: 'center',
+  width: '80%',
+  height: '80vh',
+})
