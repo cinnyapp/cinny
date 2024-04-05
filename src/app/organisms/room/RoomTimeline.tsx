@@ -90,7 +90,6 @@ import {
   selectRoom,
   selectTab,
 } from '../../../client/action/navigation';
-import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { Reactions, Message, Event, EncryptedContent } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
@@ -477,13 +476,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     smooth: true,
   });
 
-  const focusItem = useRef<{
-    index: number;
-    scrollTo: boolean;
-    highlight: boolean;
-  }>();
+  const [focusItem, setFocusItem] = useState<
+    | {
+        index: number;
+        scrollTo: boolean;
+        highlight: boolean;
+      }
+    | undefined
+  >();
   const alive = useAlive();
-  const [, forceUpdate] = useForceUpdate();
 
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
@@ -562,11 +563,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         if (!alive()) return;
         const evLength = getTimelinesEventsCount(lTimelines);
 
-        focusItem.current = {
+        setFocusItem({
           index: evtAbsIndex,
           scrollTo: true,
           highlight: evtId !== readUptoEventIdRef.current,
-        };
+        });
         setTimeline({
           linkedTimelines: lTimelines,
           range: {
@@ -765,18 +766,23 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   }, [room, unreadInfo, scrollToItem]);
 
   // scroll to focused message
-  const focusItm = focusItem.current;
   useLayoutEffect(() => {
-    if (focusItm && focusItm.scrollTo) {
-      scrollToItem(focusItm.index, {
+    if (focusItem && focusItem.scrollTo) {
+      scrollToItem(focusItem.index, {
         behavior: 'instant',
         align: 'center',
         stopInView: true,
       });
     }
 
-    focusItem.current = undefined;
-  }, [focusItm, scrollToItem]);
+    setTimeout(() => {
+      if (!alive()) return;
+      setFocusItem((currentItem) => {
+        if (currentItem === focusItem) return undefined;
+        return currentItem;
+      });
+    }, 2000);
+  }, [alive, focusItem, scrollToItem]);
 
   // scroll to bottom of timeline
   const scrollToBottomCount = scrollToBottomRef.current.count;
@@ -847,18 +853,17 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           align: 'center',
           stopInView: true,
         });
-        focusItem.current = {
+        setFocusItem({
           index: absoluteIndex,
           scrollTo: false,
           highlight: true,
-        };
-        forceUpdate();
+        });
       } else {
         setTimeline(getEmptyTimeline());
         loadEventTimeline(replyId);
       }
     },
-    [room, timeline, scrollToItem, loadEventTimeline, forceUpdate]
+    [room, timeline, scrollToItem, loadEventTimeline]
   );
 
   const handleUserClick: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -966,7 +971,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId } = mEvent;
-        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const highlighted = focusItem?.index === item && focusItem.highlight;
 
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
         const getContent = (() =>
@@ -1046,7 +1051,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId } = mEvent;
-        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const highlighted = focusItem?.index === item && focusItem.highlight;
 
         return (
           <Message
@@ -1155,7 +1160,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const reactionRelations = getEventReactions(timelineSet, mEventId);
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
-        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const highlighted = focusItem?.index === item && focusItem.highlight;
 
         return (
           <Message
@@ -1212,7 +1217,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         if (membershipChanged && hideMembershipEvents) return null;
         if (!membershipChanged && hideNickAvatarEvents) return null;
 
-        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const highlighted = focusItem?.index === item && focusItem.highlight;
         const parsed = parseMemberEvent(mEvent);
 
         const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
@@ -1244,7 +1249,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         );
       },
       [StateEvent.RoomName]: (mEventId, mEvent, item) => {
-        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
@@ -1278,7 +1283,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         );
       },
       [StateEvent.RoomTopic]: (mEventId, mEvent, item) => {
-        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
@@ -1312,7 +1317,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         );
       },
       [StateEvent.RoomAvatar]: (mEventId, mEvent, item) => {
-        const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+        const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
@@ -1348,7 +1353,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     },
     (mEventId, mEvent, item) => {
       if (!showHiddenEvents) return null;
-      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+      const highlighted = focusItem?.index === item && focusItem.highlight;
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
@@ -1389,7 +1394,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       if (mEvent.getRelation()) return null;
       if (mEvent.isRedaction()) return null;
 
-      const highlighted = focusItem.current?.index === item && focusItem.current.highlight;
+      const highlighted = focusItem?.index === item && focusItem.highlight;
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 

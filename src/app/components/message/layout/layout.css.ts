@@ -61,6 +61,7 @@ const highlightAnime = keyframes({
 const HighlightVariant = styleVariants({
   true: {
     animation: `${highlightAnime} 2000ms ease-in-out`,
+    animationIterationCount: 'infinite',
   },
 });
 
