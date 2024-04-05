@@ -113,8 +113,7 @@ export function Space() {
                 }}
               >
                 {virtualizer.getVirtualItems().map((vItem) => {
-                  const { index } = vItem;
-                  const roomId = hierarchy[index];
+                  const roomId = hierarchy[vItem.index];
                   const room = mx.getRoom(roomId);
                   if (!room) return null;
                   if (room.isSpaceRoom()) {
@@ -127,7 +126,7 @@ export function Space() {
                         ref={virtualizer.measureElement}
                       >
                         <NavCategoryHeader
-                          style={{ paddingTop: index === 0 ? undefined : config.space.S300 }}
+                          style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S300 }}
                         >
                           <Text size="O400" truncate>
                             {roomId === space.roomId ? 'Rooms' : room.name}
@@ -143,24 +142,24 @@ export function Space() {
                   const lastSpace = mx.getRoom(lastSpaceId);
                   const selected = selectedRoomId === roomId;
                   return (
-                    <RoomUnreadProvider key={roomId} roomId={roomId}>
-                      {(unread) => (
-                        <VirtualTile
-                          virtualItem={vItem}
-                          key={vItem.index}
-                          ref={virtualizer.measureElement}
-                        >
-                          {peopleHeader && (
-                            <div style={{ paddingTop: config.space.S300 }}>
-                              <NavCategoryHeader>
-                                <Text size="O400" truncate>
-                                  {lastSpace?.roomId === space.roomId
-                                    ? 'People'
-                                    : `${lastSpace?.name} - People`}
-                                </Text>
-                              </NavCategoryHeader>
-                            </div>
-                          )}
+                    <VirtualTile
+                      virtualItem={vItem}
+                      key={vItem.index}
+                      ref={virtualizer.measureElement}
+                    >
+                      {peopleHeader && (
+                        <div style={{ paddingTop: config.space.S300 }}>
+                          <NavCategoryHeader>
+                            <Text size="O400" truncate>
+                              {lastSpace?.roomId === space.roomId
+                                ? 'People'
+                                : `${lastSpace?.name} - People`}
+                            </Text>
+                          </NavCategoryHeader>
+                        </div>
+                      )}
+                      <RoomUnreadProvider roomId={roomId}>
+                        {(unread) => (
                           <NavItem
                             variant="Background"
                             radii="400"
@@ -205,9 +204,9 @@ export function Space() {
                               </NavItemContent>
                             </NavLink>
                           </NavItem>
-                        </VirtualTile>
-                      )}
-                    </RoomUnreadProvider>
+                        )}
+                      </RoomUnreadProvider>
+                    </VirtualTile>
                   );
                 })}
               </NavCategory>
