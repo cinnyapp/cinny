@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
@@ -9,7 +10,7 @@ import { useDirects } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { mDirectAtom } from '../../../state/mDirectList';
-import { factoryRoomIdByAtoZ } from '../../../utils/sort';
+import { factoryRoomIdByActivity } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
   NavCategory,
@@ -29,6 +30,7 @@ import { getRoomAvatarUrl } from '../../../utils/room';
 import { nameInitials } from '../../../utils/common';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
+import { VirtualTile } from '../../../components/virtualizer';
 
 function DirectEmpty() {
   return (
@@ -59,11 +61,24 @@ function DirectEmpty() {
 
 export function Direct() {
   const mx = useMatrixClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
   const directs = useDirects(mx, allRoomsAtom, mDirects);
   const selectedRoomId = useSelectedRoom();
   const createSelected = useDirectCreateSelected();
   const noRoomToDisplay = directs.length === 0;
+
+  const sortedDirects = useMemo(
+    () => Array.from(directs).sort(factoryRoomIdByActivity(mx)),
+    [mx, directs]
+  );
+
+  const virtualizer = useVirtualizer({
+    count: sortedDirects.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 38,
+    overscan: 10,
+  });
 
   return (
     <ClientContentLayout
@@ -81,7 +96,7 @@ export function Direct() {
           {noRoomToDisplay ? (
             <DirectEmpty />
           ) : (
-            <ClientDrawerContentLayout>
+            <ClientDrawerContentLayout scrollRef={scrollRef}>
               <Box direction="Column" gap="300">
                 <NavCategory>
                   <NavItem variant="Background" radii="400" aria-selected={createSelected}>
@@ -105,61 +120,72 @@ export function Direct() {
                   <NavCategoryHeader>
                     <Text size="O400">People</Text>
                   </NavCategoryHeader>
-                  {Array.from(directs)
-                    .sort(factoryRoomIdByAtoZ(mx))
-                    .map((roomId) => {
+                  <div
+                    style={{
+                      position: 'relative',
+                      height: virtualizer.getTotalSize(),
+                    }}
+                  >
+                    {virtualizer.getVirtualItems().map((vItem) => {
+                      const roomId = sortedDirects[vItem.index];
                       const room = mx.getRoom(roomId);
                       if (!room) return null;
                       const selected = selectedRoomId === roomId;
                       const avatarSrc = getRoomAvatarUrl(mx, room);
 
                       return (
-                        <RoomUnreadProvider key={roomId} roomId={roomId}>
-                          {(unread) => (
-                            <NavItem
-                              key={roomId}
-                              variant="Background"
-                              radii="400"
-                              highlight={!!unread || selected}
-                              aria-selected={selected}
-                            >
-                              <NavLink
-                                to={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                        <VirtualTile
+                          virtualItem={vItem}
+                          key={vItem.index}
+                          ref={virtualizer.measureElement}
+                        >
+                          <RoomUnreadProvider roomId={roomId}>
+                            {(unread) => (
+                              <NavItem
+                                variant="Background"
+                                radii="400"
+                                highlight={!!unread || selected}
+                                aria-selected={selected}
                               >
-                                <NavItemContent size="T300">
-                                  <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                                    <Avatar size="200" radii="400">
-                                      <RoomAvatar
-                                        src={avatarSrc}
-                                        alt={room.name}
-                                        renderInitials={() => (
-                                          <Text as="span" size="H6">
-                                            {nameInitials(room.name)}
-                                          </Text>
-                                        )}
-                                      />
-                                    </Avatar>
-                                    <Box as="span" grow="Yes">
-                                      <Text as="span" size="Inherit" truncate>
-                                        {room.name}
-                                      </Text>
-                                    </Box>
-                                    {unread && (
-                                      <UnreadBadgeCenter>
-                                        <UnreadBadge
-                                          highlight={unread.highlight > 0}
-                                          count={unread.total}
+                                <NavLink
+                                  to={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                                >
+                                  <NavItemContent size="T300">
+                                    <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                                      <Avatar size="200" radii="400">
+                                        <RoomAvatar
+                                          src={avatarSrc}
+                                          alt={room.name}
+                                          renderInitials={() => (
+                                            <Text as="span" size="H6">
+                                              {nameInitials(room.name)}
+                                            </Text>
+                                          )}
                                         />
-                                      </UnreadBadgeCenter>
-                                    )}
-                                  </Box>
-                                </NavItemContent>
-                              </NavLink>
-                            </NavItem>
-                          )}
-                        </RoomUnreadProvider>
+                                      </Avatar>
+                                      <Box as="span" grow="Yes">
+                                        <Text as="span" size="Inherit" truncate>
+                                          {room.name}
+                                        </Text>
+                                      </Box>
+                                      {unread && (
+                                        <UnreadBadgeCenter>
+                                          <UnreadBadge
+                                            highlight={unread.highlight > 0}
+                                            count={unread.total}
+                                          />
+                                        </UnreadBadgeCenter>
+                                      )}
+                                    </Box>
+                                  </NavItemContent>
+                                </NavLink>
+                              </NavItem>
+                            )}
+                          </RoomUnreadProvider>
+                        </VirtualTile>
                       );
                     })}
+                  </div>
                 </NavCategory>
               </Box>
             </ClientDrawerContentLayout>
