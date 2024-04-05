@@ -4,7 +4,7 @@ import { useAtomValue } from 'jotai';
 import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
 import { MessageSearch } from '../../../features/message-search';
 import { useSpace } from '../../../hooks/useSpace';
-import { useSpaceChildRoomsRecursive } from '../../../state/hooks/roomList';
+import { useRecursiveChildRoomScopeFactory, useSpaceChildren } from '../../../state/hooks/roomList';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
@@ -17,12 +17,10 @@ export function SpaceSearch() {
 
   const mDirects = useAtomValue(mDirectAtom);
   const roomToParents = useAtomValue(roomToParentsAtom);
-  const rooms = useSpaceChildRoomsRecursive(
-    mx,
-    space.roomId,
+  const rooms = useSpaceChildren(
     allRoomsAtom,
-    mDirects,
-    roomToParents
+    space.roomId,
+    useRecursiveChildRoomScopeFactory(mx, mDirects, roomToParents)
   );
 
   return (

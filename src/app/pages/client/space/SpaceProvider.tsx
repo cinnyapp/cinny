@@ -18,7 +18,7 @@ export function RouteSpaceProvider() {
   }
 
   return (
-    <SpaceProvider value={space}>
+    <SpaceProvider key={space.roomId} value={space}>
       <Outlet />
     </SpaceProvider>
   );

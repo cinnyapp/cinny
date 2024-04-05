@@ -1,16 +1,13 @@
 import React, { useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { Avatar, Box, Icon, Icons, Text } from 'folds';
+import { Avatar, Box, Icon, Icons, Text, config } from 'folds';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import { useSpaceChildSpacesRecursive } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { mDirectAtom } from '../../../state/mDirectList';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
   NavCategory,
@@ -29,79 +26,37 @@ import {
   useSpaceLobbySelected,
   useSpaceSearchSelected,
 } from '../../../hooks/router/useSelectedSpace';
-import { SpaceChildRoomsProvider } from '../../../components/SpaceChildRoomsProvider';
 import { getRoomAvatarUrl } from '../../../utils/room';
 import { nameInitials } from '../../../utils/common';
-import { SpaceChildDirectsProvider } from '../../../components/SpaceChildDirectsProvider';
 import { useSpace } from '../../../hooks/useSpace';
+import { VirtualTile } from '../../../components/virtualizer';
+import { useSpaceHierarchy } from './useSpaceHierarchy';
 
 export function Space() {
   const mx = useMatrixClient();
   const space = useSpace();
   const spaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const mDirects = useAtomValue(mDirectAtom);
-  const roomToParents = useAtomValue(roomToParentsAtom);
 
-  const childSpaces = useSpaceChildSpacesRecursive(mx, space.roomId, allRoomsAtom, roomToParents);
+  const hierarchy = useSpaceHierarchy(space.roomId);
 
   const selectedRoomId = useSelectedRoom();
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
+  const virtualizer = useVirtualizer({
+    count: hierarchy.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 38,
+    overscan: 10,
+  });
+
   const getToLink = (roomId: string) =>
     getSpaceRoomPath(spaceIdOrAlias, getCanonicalAliasOrRoomId(mx, roomId));
 
-  const renderRoomSelector = (roomId: string) => {
-    const room = mx.getRoom(roomId);
-    if (!room) return null;
-    const selected = selectedRoomId === roomId;
-
-    return (
-      <RoomUnreadProvider key={roomId} roomId={roomId}>
-        {(unread) => (
-          <NavItem
-            key={roomId}
-            variant="Background"
-            radii="400"
-            highlight={!!unread || selected}
-            aria-selected={selected}
-          >
-            <NavLink to={getToLink(roomId)}>
-              <NavItemContent size="T300">
-                <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                  <Avatar size="200" radii="400">
-                    {mDirects.has(roomId) ? (
-                      <RoomAvatar
-                        variant="Background"
-                        src={getRoomAvatarUrl(mx, room, 96)}
-                        alt={room.name}
-                        renderInitials={() => <Text size="H6">{nameInitials(room.name)}</Text>}
-                      />
-                    ) : (
-                      <RoomIcon filled={selected} size="100" joinRule={room.getJoinRule()} />
-                    )}
-                  </Avatar>
-                  <Box as="span" grow="Yes">
-                    <Text as="span" size="Inherit" truncate>
-                      {room.name}
-                    </Text>
-                  </Box>
-                  {unread && (
-                    <UnreadBadgeCenter>
-                      <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
-                    </UnreadBadgeCenter>
-                  )}
-                </Box>
-              </NavItemContent>
-            </NavLink>
-          </NavItem>
-        )}
-      </RoomUnreadProvider>
-    );
-  };
-
+  let isLastDM = false;
+  let lastSpaceId: string | undefined;
   return (
     <ClientContentLayout
       navigation={
@@ -151,72 +106,111 @@ export function Space() {
                   </NavLink>
                 </NavItem>
               </NavCategory>
-              <SpaceChildRoomsProvider
-                spaceId={space.roomId}
-                mDirects={mDirects}
-                roomToParents={roomToParents}
+              <NavCategory
+                style={{
+                  height: virtualizer.getTotalSize(),
+                  position: 'relative',
+                }}
               >
-                {(childRooms) =>
-                  childRooms.length > 0 && (
-                    <NavCategory>
-                      <NavCategoryHeader>
-                        <Text size="O400">Rooms</Text>
-                      </NavCategoryHeader>
-                      {Array.from(childRooms).sort(factoryRoomIdByAtoZ(mx)).map(renderRoomSelector)}
-                    </NavCategory>
-                  )
-                }
-              </SpaceChildRoomsProvider>
-              {childSpaces.sort(factoryRoomIdByAtoZ(mx)).map((childSpaceId) => (
-                <SpaceChildRoomsProvider
-                  key={childSpaceId}
-                  spaceId={childSpaceId}
-                  mDirects={mDirects}
-                  roomToParents={roomToParents}
-                >
-                  {(childRooms) => (
-                    <SpaceChildDirectsProvider
-                      spaceId={childSpaceId}
-                      mDirects={mDirects}
-                      roomToParents={roomToParents}
-                    >
-                      {(childDirects) =>
-                        (childRooms.length > 0 || childDirects.length > 0) && (
-                          <NavCategory>
-                            <NavCategoryHeader>
-                              <Text size="O400">{mx.getRoom(childSpaceId)?.name}</Text>
-                            </NavCategoryHeader>
-                            {Array.from(childRooms)
-                              .sort(factoryRoomIdByAtoZ(mx))
-                              .map(renderRoomSelector)}
-                            {Array.from(childDirects)
-                              .sort(factoryRoomIdByActivity(mx))
-                              .map(renderRoomSelector)}
-                          </NavCategory>
-                        )
-                      }
-                    </SpaceChildDirectsProvider>
-                  )}
-                </SpaceChildRoomsProvider>
-              ))}
-              <SpaceChildDirectsProvider
-                spaceId={space.roomId}
-                mDirects={mDirects}
-                roomToParents={roomToParents}
-              >
-                {(childDirects) =>
-                  childDirects.length > 0 && (
-                    <NavCategory>
-                      <NavCategoryHeader>
-                        <Text size="O400">People</Text>
-                      </NavCategoryHeader>
-                      {Array.from(childDirects)
-                        .sort(factoryRoomIdByActivity(mx))
-                        .map(renderRoomSelector)}
-                    </NavCategory>
-                  )
-                }
-              </SpaceChildDirectsProvider>
+                {virtualizer.getVirtualItems().map((vItem) => {
+                  const { index } = vItem;
+                  const roomId = hierarchy[index];
+                  const room = mx.getRoom(roomId);
+                  if (!room) return null;
+                  if (room.isSpaceRoom()) {
+                    isLastDM = false;
+                    lastSpaceId = roomId;
+                    return (
+                      <VirtualTile
+                        virtualItem={vItem}
+                        key={vItem.index}
+                        ref={virtualizer.measureElement}
+                      >
+                        <NavCategoryHeader
+                          style={{ paddingTop: index === 0 ? undefined : config.space.S300 }}
+                        >
+                          <Text size="O400" truncate>
+                            {roomId === space.roomId ? 'Rooms' : room.name}
+                          </Text>
+                        </NavCategoryHeader>
+                      </VirtualTile>
+                    );
+                  }
+
+                  const direct = mDirects.has(roomId);
+                  const peopleHeader = direct && !isLastDM;
+                  isLastDM = direct;
+                  const lastSpace = mx.getRoom(lastSpaceId);
+                  const selected = selectedRoomId === roomId;
+                  return (
+                    <RoomUnreadProvider key={roomId} roomId={roomId}>
+                      {(unread) => (
+                        <VirtualTile
+                          virtualItem={vItem}
+                          key={vItem.index}
+                          ref={virtualizer.measureElement}
+                        >
+                          {peopleHeader && (
+                            <div style={{ paddingTop: config.space.S300 }}>
+                              <NavCategoryHeader>
+                                <Text size="O400" truncate>
+                                  {lastSpace?.roomId === space.roomId
+                                    ? 'People'
+                                    : `${lastSpace?.name} - People`}
+                                </Text>
+                              </NavCategoryHeader>
+                            </div>
+                          )}
+                          <NavItem
+                            variant="Background"
+                            radii="400"
+                            highlight={!!unread || selected}
+                            aria-selected={selected}
+                          >
+                            <NavLink to={getToLink(roomId)}>
+                              <NavItemContent size="T300">
+                                <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                                  <Avatar size="200" radii="400">
+                                    {direct ? (
+                                      <RoomAvatar
+                                        variant="Background"
+                                        src={getRoomAvatarUrl(mx, room, 96)}
+                                        alt={room.name}
+                                        renderInitials={() => (
+                                          <Text size="H6">{nameInitials(room.name)}</Text>
+                                        )}
+                                      />
+                                    ) : (
+                                      <RoomIcon
+                                        filled={selected}
+                                        size="100"
+                                        joinRule={room.getJoinRule()}
+                                      />
+                                    )}
+                                  </Avatar>
+                                  <Box as="span" grow="Yes">
+                                    <Text as="span" size="Inherit" truncate>
+                                      {room.name}
+                                    </Text>
+                                  </Box>
+                                  {unread && (
+                                    <UnreadBadgeCenter>
+                                      <UnreadBadge
+                                        highlight={unread.highlight > 0}
+                                        count={unread.total}
+                                      />
+                                    </UnreadBadgeCenter>
+                                  )}
+                                </Box>
+                              </NavItemContent>
+                            </NavLink>
+                          </NavItem>
+                        </VirtualTile>
+                      )}
+                    </RoomUnreadProvider>
+                  );
+                })}
+              </NavCategory>
             </Box>
           </ClientDrawerContentLayout>
         </ClientDrawerLayout>
