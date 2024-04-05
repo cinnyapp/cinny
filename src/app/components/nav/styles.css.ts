@@ -11,10 +11,6 @@ export const NavCategory = style([
 
 export const NavCategoryHeader = style({
   paddingLeft: config.space.S200,
-  position: 'sticky',
-  top: 0,
-  zIndex: 1,
-
   gap: config.space.S100,
 });
 
