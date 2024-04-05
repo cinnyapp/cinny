@@ -7,7 +7,8 @@ import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
   toggleSystemTheme,
-  toggleNotifications, toggleNotificationSounds,
+  toggleNotifications,
+  toggleNotificationSounds,
 } from '../../../client/action/settings';
 import { usePermission } from '../../hooks/usePermission';
 
@@ -56,13 +57,19 @@ function AppearanceSection() {
   const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
   const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
-  const [hideMembershipEvents, setHideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
-  const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
+  const [hideMembershipEvents, setHideMembershipEvents] = useSetting(
+    settingsAtom,
+    'hideMembershipEvents'
+  );
+  const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(
+    settingsAtom,
+    'hideNickAvatarEvents'
+  );
   const [mediaAutoLoad, setMediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
-  const spacings = ['0', '100', '200', '300', '400', '500']
+  const spacings = ['0', '100', '200', '300', '400', '500'];
 
   return (
     <div className="settings-appearance">
@@ -70,17 +77,20 @@ function AppearanceSection() {
         <MenuHeader>Theme</MenuHeader>
         <SettingTile
           title="Follow system theme"
-          options={(
+          options={
             <Toggle
               isActive={settings.useSystemTheme}
-              onToggle={() => { toggleSystemTheme(); updateState({}); }}
+              onToggle={() => {
+                toggleSystemTheme();
+                updateState({});
+              }}
             />
-          )}
+          }
           content={<Text variant="b3">Use light or dark mode based on the system settings.</Text>}
         />
         <SettingTile
           title="Theme"
-          content={(
+          content={
             <SegmentedControls
               selected={settings.useSystemTheme ? -1 : settings.getThemeIndex()}
               segments={[
@@ -95,16 +105,13 @@ function AppearanceSection() {
                 updateState({});
               }}
             />
-        )}
+          }
         />
         <SettingTile
           title="Use Twitter Emoji"
-          options={(
-            <Toggle
-              isActive={twitterEmoji}
-              onToggle={() => setTwitterEmoji(!twitterEmoji)}
-            />
-          )}
+          options={
+            <Toggle isActive={twitterEmoji} onToggle={() => setTwitterEmoji(!twitterEmoji)} />
+          }
           content={<Text variant="b3">Use Twitter emoji instead of system emoji.</Text>}
         />
       </div>
@@ -114,113 +121,106 @@ function AppearanceSection() {
           title="Message Layout"
           content={
             <SegmentedControls
-            selected={messageLayout}
-            segments={[
-              { text: 'Modern' },
-              { text: 'Compact' },
-              { text: 'Bubble' },
-            ]}
-            onSelect={(index) => setMessageLayout(index)}
-          />
+              selected={messageLayout}
+              segments={[{ text: 'Modern' }, { text: 'Compact' }, { text: 'Bubble' }]}
+              onSelect={(index) => setMessageLayout(index)}
+            />
           }
         />
         <SettingTile
           title="Message Spacing"
           content={
             <SegmentedControls
-            selected={spacings.findIndex((s) => s === messageSpacing)}
-            segments={[
-              { text: 'No' },
-              { text: 'XXS' },
-              { text: 'XS' },
-              { text: 'S' },
-              { text: 'M' },
-              { text: 'L' },
-            ]}
-            onSelect={(index) => {
-              setMessageSpacing(spacings[index])
-            }}
-          />
+              selected={spacings.findIndex((s) => s === messageSpacing)}
+              segments={[
+                { text: 'No' },
+                { text: 'XXS' },
+                { text: 'XS' },
+                { text: 'S' },
+                { text: 'M' },
+                { text: 'L' },
+              ]}
+              onSelect={(index) => {
+                setMessageSpacing(spacings[index]);
+              }}
+            />
           }
         />
         <SettingTile
           title="Use ENTER for Newline"
-          options={(
+          options={
             <Toggle
               isActive={enterForNewline}
-              onToggle={() => setEnterForNewline(!enterForNewline) }
+              onToggle={() => setEnterForNewline(!enterForNewline)}
             />
-          )}
-          content={<Text variant="b3">{`Use ${isMacOS() ? KeySymbol.Command : 'Ctrl'} + ENTER to send message and ENTER for newline.`}</Text>}
+          }
+          content={
+            <Text variant="b3">{`Use ${
+              isMacOS() ? KeySymbol.Command : 'Ctrl'
+            } + ENTER to send message and ENTER for newline.`}</Text>
+          }
         />
         <SettingTile
           title="Markdown formatting"
-          options={(
-            <Toggle
-              isActive={isMarkdown}
-              onToggle={() => setIsMarkdown(!isMarkdown) }
-            />
-          )}
+          options={<Toggle isActive={isMarkdown} onToggle={() => setIsMarkdown(!isMarkdown)} />}
           content={<Text variant="b3">Format messages with markdown syntax before sending.</Text>}
         />
         <SettingTile
           title="Hide membership events"
-          options={(
+          options={
             <Toggle
               isActive={hideMembershipEvents}
               onToggle={() => setHideMembershipEvents(!hideMembershipEvents)}
             />
-          )}
-          content={<Text variant="b3">Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and Ban)</Text>}
+          }
+          content={
+            <Text variant="b3">
+              Hide membership change messages from room timeline. (Join, Leave, Invite, Kick and
+              Ban)
+            </Text>
+          }
         />
         <SettingTile
           title="Hide nick/avatar events"
-          options={(
+          options={
             <Toggle
               isActive={hideNickAvatarEvents}
               onToggle={() => setHideNickAvatarEvents(!hideNickAvatarEvents)}
             />
-          )}
-          content={<Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>}
+          }
+          content={
+            <Text variant="b3">Hide nick and avatar change messages from room timeline.</Text>
+          }
         />
         <SettingTile
           title="Disable media auto load"
-          options={(
-            <Toggle
-              isActive={!mediaAutoLoad}
-              onToggle={() => setMediaAutoLoad(!mediaAutoLoad)}
-            />
-          )}
-          content={<Text variant="b3">Prevent images and videos from auto loading to save bandwidth.</Text>}
+          options={
+            <Toggle isActive={!mediaAutoLoad} onToggle={() => setMediaAutoLoad(!mediaAutoLoad)} />
+          }
+          content={
+            <Text variant="b3">Prevent images and videos from auto loading to save bandwidth.</Text>
+          }
         />
         <SettingTile
           title="Url Preview"
-          options={(
-            <Toggle
-              isActive={urlPreview}
-              onToggle={() => setUrlPreview(!urlPreview)}
-            />
-          )}
+          options={<Toggle isActive={urlPreview} onToggle={() => setUrlPreview(!urlPreview)} />}
           content={<Text variant="b3">Show url preview for link in messages.</Text>}
         />
         <SettingTile
           title="Url Preview in Encrypted Room"
-          options={(
-            <Toggle
-              isActive={encUrlPreview}
-              onToggle={() => setEncUrlPreview(!encUrlPreview)}
-            />
-          )}
+          options={
+            <Toggle isActive={encUrlPreview} onToggle={() => setEncUrlPreview(!encUrlPreview)} />
+          }
           content={<Text variant="b3">Show url preview for link in encrypted messages.</Text>}
         />
         <SettingTile
           title="Show hidden events"
-          options={(
+          options={
             <Toggle
               isActive={showHiddenEvents}
               onToggle={() => setShowHiddenEvents(!showHiddenEvents)}
             />
-          )}
+          }
           content={<Text variant="b3">Show hidden state and message events.</Text>}
         />
       </div>
@@ -229,13 +229,20 @@ function AppearanceSection() {
 }
 
 function NotificationsSection() {
-  const [permission, setPermission] = usePermission('notifications', window.Notification?.permission);
+  const [permission, setPermission] = usePermission(
+    'notifications',
+    window.Notification?.permission
+  );
 
   const [, updateState] = useState({});
 
   const renderOptions = () => {
     if (window.Notification === undefined) {
-      return <Text className="settings-notifications__not-supported">Not supported in this browser.</Text>;
+      return (
+        <Text className="settings-notifications__not-supported">
+          Not supported in this browser.
+        </Text>
+      );
     }
 
     if (permission === 'granted') {
@@ -272,12 +279,15 @@ function NotificationsSection() {
         />
         <SettingTile
           title="Notification Sound"
-          options={(
+          options={
             <Toggle
               isActive={settings.isNotificationSounds}
-              onToggle={() => { toggleNotificationSounds(); updateState({}); }}
+              onToggle={() => {
+                toggleNotificationSounds();
+                updateState({});
+              }}
             />
-            )}
+          }
           content={<Text variant="b3">Play sound when new messages arrive.</Text>}
         />
       </div>
@@ -291,8 +301,12 @@ function NotificationsSection() {
 function EmojiSection() {
   return (
     <>
-      <div className="settings-emoji__card"><ImagePackUser /></div>
-      <div className="settings-emoji__card"><ImagePackGlobal /></div>
+      <div className="settings-emoji__card">
+        <ImagePackUser />
+      </div>
+      <div className="settings-emoji__card">
+        <ImagePackGlobal />
+      </div>
     </>
   );
 }
@@ -310,21 +324,29 @@ function SecuritySection() {
         <MenuHeader>Export/Import encryption keys</MenuHeader>
         <SettingTile
           title="Export E2E room keys"
-          content={(
+          content={
             <>
-              <Text variant="b3">Export end-to-end encryption room keys to decrypt old messages in other session. In order to encrypt keys you need to set a password, which will be used while importing.</Text>
+              <Text variant="b3">
+                Export end-to-end encryption room keys to decrypt old messages in other session. In
+                order to encrypt keys you need to set a password, which will be used while
+                importing.
+              </Text>
               <ExportE2ERoomKeys />
             </>
-          )}
+          }
         />
         <SettingTile
           title="Import E2E room keys"
-          content={(
+          content={
             <>
-              <Text variant="b3">{'To decrypt older messages, Export E2EE room keys from Element (Settings > Security & Privacy > Encryption > Cryptography) and import them here. Imported keys are encrypted so you\'ll have to enter the password you set in order to decrypt it.'}</Text>
+              <Text variant="b3">
+                {
+                  "To decrypt older messages, Export E2EE room keys from Element (Settings > Security & Privacy > Encryption > Cryptography) and import them here. Imported keys are encrypted so you'll have to enter the password you set in order to decrypt it."
+                }
+              </Text>
               <ImportE2ERoomKeys />
             </>
-          )}
+          }
         />
       </div>
     </div>
@@ -341,14 +363,21 @@ function AboutSection() {
           <div>
             <Text variant="h2" weight="medium">
               Twype
-              <span className="text text-b3" style={{ margin: '0 var(--sp-extra-tight)' }}>{`v${cons.version}`}</span>
+              <span
+                className="text text-b3"
+                style={{ margin: '0 var(--sp-extra-tight)' }}
+              >{`v${cons.version}`}</span>
             </Text>
-            <Text>Yet another matrix client</Text>
+            <Text>web3 native social platform</Text>
 
             <div className="settings-about__btns">
-              <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>Source code</Button>
+              <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>
+                Source code
+              </Button>
               <Button onClick={() => window.open('https://cinny.in/#sponsor')}>Support</Button>
-              <Button onClick={() => initMatrix.clearCacheAndReload()} variant="danger">Clear cache & reload</Button>
+              <Button onClick={() => initMatrix.clearCacheAndReload()} variant="danger">
+                Clear cache & reload
+              </Button>
             </div>
           </div>
         </div>
@@ -358,20 +387,104 @@ function AboutSection() {
         <div className="settings-about__credits">
           <ul>
             <li>
-              {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
-              <Text>The <a href="https://github.com/matrix-org/matrix-js-sdk" rel="noreferrer noopener" target="_blank">matrix-js-sdk</a> is © <a href="https://matrix.org/foundation" rel="noreferrer noopener" target="_blank">The Matrix.org Foundation C.I.C</a> used under the terms of <a href="http://www.apache.org/licenses/LICENSE-2.0" rel="noreferrer noopener" target="_blank">Apache 2.0</a>.</Text>
+              {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
+              <Text>
+                The{' '}
+                <a
+                  href="https://github.com/matrix-org/matrix-js-sdk"
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
+                  matrix-js-sdk
+                </a>{' '}
+                is ©{' '}
+                <a href="https://matrix.org/foundation" rel="noreferrer noopener" target="_blank">
+                  The Matrix.org Foundation C.I.C
+                </a>{' '}
+                used under the terms of{' '}
+                <a
+                  href="http://www.apache.org/licenses/LICENSE-2.0"
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
+                  Apache 2.0
+                </a>
+                .
+              </Text>
             </li>
             <li>
-              {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
-              <Text>The <a href="https://github.com/mozilla/twemoji-colr" target="_blank" rel="noreferrer noopener">twemoji-colr</a> font is © <a href="https://mozilla.org/" target="_blank" rel="noreferrer noopener">Mozilla Foundation</a> used under the terms of <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noreferrer noopener">Apache 2.0</a>.</Text>
+              {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
+              <Text>
+                The{' '}
+                <a
+                  href="https://github.com/mozilla/twemoji-colr"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  twemoji-colr
+                </a>{' '}
+                font is ©{' '}
+                <a href="https://mozilla.org/" target="_blank" rel="noreferrer noopener">
+                  Mozilla Foundation
+                </a>{' '}
+                used under the terms of{' '}
+                <a
+                  href="http://www.apache.org/licenses/LICENSE-2.0"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  Apache 2.0
+                </a>
+                .
+              </Text>
             </li>
             <li>
-              {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
-              <Text>The <a href="https://twemoji.twitter.com" target="_blank" rel="noreferrer noopener">Twemoji</a> emoji art is © <a href="https://twemoji.twitter.com" target="_blank" rel="noreferrer noopener">Twitter, Inc and other contributors</a> used under the terms of <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer noopener">CC-BY 4.0</a>.</Text>
+              {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
+              <Text>
+                The{' '}
+                <a href="https://twemoji.twitter.com" target="_blank" rel="noreferrer noopener">
+                  Twemoji
+                </a>{' '}
+                emoji art is ©{' '}
+                <a href="https://twemoji.twitter.com" target="_blank" rel="noreferrer noopener">
+                  Twitter, Inc and other contributors
+                </a>{' '}
+                used under the terms of{' '}
+                <a
+                  href="https://creativecommons.org/licenses/by/4.0/"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  CC-BY 4.0
+                </a>
+                .
+              </Text>
             </li>
             <li>
-              {/* eslint-disable-next-line react/jsx-one-expression-per-line */ }
-              <Text>The <a href="https://material.io/design/sound/sound-resources.html" target="_blank" rel="noreferrer noopener">Material sound resources</a> are © <a href="https://google.com" target="_blank" rel="noreferrer noopener">Google</a> used under the terms of <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer noopener">CC-BY 4.0</a>.</Text>
+              {/* eslint-disable-next-line react/jsx-one-expression-per-line */}
+              <Text>
+                The{' '}
+                <a
+                  href="https://material.io/design/sound/sound-resources.html"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  Material sound resources
+                </a>{' '}
+                are ©{' '}
+                <a href="https://google.com" target="_blank" rel="noreferrer noopener">
+                  Google
+                </a>{' '}
+                used under the terms of{' '}
+                <a
+                  href="https://creativecommons.org/licenses/by/4.0/"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  CC-BY 4.0
+                </a>
+                .
+              </Text>
             </li>
           </ul>
         </div>
@@ -387,32 +500,38 @@ export const tabText = {
   SECURITY: 'Security',
   ABOUT: 'About',
 };
-const tabItems = [{
-  text: tabText.APPEARANCE,
-  iconSrc: SunIC,
-  disabled: false,
-  render: () => <AppearanceSection />,
-}, {
-  text: tabText.NOTIFICATIONS,
-  iconSrc: BellIC,
-  disabled: false,
-  render: () => <NotificationsSection />,
-}, {
-  text: tabText.EMOJI,
-  iconSrc: EmojiIC,
-  disabled: false,
-  render: () => <EmojiSection />,
-}, {
-  text: tabText.SECURITY,
-  iconSrc: LockIC,
-  disabled: false,
-  render: () => <SecuritySection />,
-}, {
-  text: tabText.ABOUT,
-  iconSrc: InfoIC,
-  disabled: false,
-  render: () => <AboutSection />,
-}];
+const tabItems = [
+  {
+    text: tabText.APPEARANCE,
+    iconSrc: SunIC,
+    disabled: false,
+    render: () => <AppearanceSection />,
+  },
+  {
+    text: tabText.NOTIFICATIONS,
+    iconSrc: BellIC,
+    disabled: false,
+    render: () => <NotificationsSection />,
+  },
+  {
+    text: tabText.EMOJI,
+    iconSrc: EmojiIC,
+    disabled: false,
+    render: () => <EmojiSection />,
+  },
+  {
+    text: tabText.SECURITY,
+    iconSrc: LockIC,
+    disabled: false,
+    render: () => <SecuritySection />,
+  },
+  {
+    text: tabText.ABOUT,
+    iconSrc: InfoIC,
+    disabled: false,
+    render: () => <AboutSection />,
+  },
+];
 
 function useWindowToggle(setSelectedTab) {
   const [isOpen, setIsOpen] = useState(false);
@@ -440,7 +559,14 @@ function Settings() {
 
   const handleTabChange = (tabItem) => setSelectedTab(tabItem);
   const handleLogout = async () => {
-    if (await confirmDialog('Logout', 'Are you sure that you want to logout your session?', 'Logout', 'danger')) {
+    if (
+      await confirmDialog(
+        'Logout',
+        'Are you sure that you want to logout your session?',
+        'Logout',
+        'danger'
+      )
+    ) {
       initMatrix.logout();
     }
   };
@@ -449,15 +575,19 @@ function Settings() {
     <PopupWindow
       isOpen={isOpen}
       className="settings-window"
-      title={<Text variant="s1" weight="medium" primary>Settings</Text>}
-      contentOptions={(
+      title={
+        <Text variant="s1" weight="medium" primary>
+          Settings
+        </Text>
+      }
+      contentOptions={
         <>
           <Button variant="danger" iconSrc={PowerIC} onClick={handleLogout}>
             Logout
           </Button>
           <IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />
         </>
-      )}
+      }
       onRequestClose={requestClose}
     >
       {isOpen && (
@@ -468,9 +598,7 @@ function Settings() {
             defaultSelected={tabItems.findIndex((tab) => tab.text === selectedTab.text)}
             onSelect={handleTabChange}
           />
-          <div className="settings-window__cards-wrapper">
-            { selectedTab.render() }
-          </div>
+          <div className="settings-window__cards-wrapper">{selectedTab.render()}</div>
         </div>
       )}
     </PopupWindow>

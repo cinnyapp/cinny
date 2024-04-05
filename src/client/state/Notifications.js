@@ -7,9 +7,9 @@ import navigation from './navigation';
 import settings from './settings';
 import { setFavicon } from '../../util/common';
 
-import LogoSVG from '../../../public/res/svg/cinny.svg';
-import LogoUnreadSVG from '../../../public/res/svg/cinny-unread.svg';
-import LogoHighlightSVG from '../../../public/res/svg/cinny-highlight.svg';
+import LogoSVG from '../../../public/res/svg/twype.svg';
+import LogoUnreadSVG from '../../../public/res/svg/twype-unread.svg';
+import LogoHighlightSVG from '../../../public/res/svg/twype-highlight.svg';
 import { html, plain } from '../../util/markdown';
 
 function isNotifEvent(mEvent) {
@@ -28,10 +28,7 @@ function isMutedRule(rule) {
 }
 
 function findMutedRule(overrideRules, roomId) {
-  return overrideRules.find((rule) => (
-    rule.rule_id === roomId
-    && isMutedRule(rule)
-  ));
+  return overrideRules.find((rule) => rule.rule_id === roomId && isMutedRule(rule));
 }
 
 class Notifications extends EventEmitter {
@@ -252,7 +249,12 @@ class Notifications extends EventEmitter {
       const icon = await renderAvatar({
         text: mEvent.sender.name,
         bgColor: cssColorMXID(mEvent.getSender()),
-        imageSrc: mEvent.sender?.getAvatarUrl(this.matrixClient.baseUrl, iconSize, iconSize, 'crop'),
+        imageSrc: mEvent.sender?.getAvatarUrl(
+          this.matrixClient.baseUrl,
+          iconSize,
+          iconSize,
+          'crop'
+        ),
         size: iconSize,
         borderRadius: 8,
         scale: 8,
