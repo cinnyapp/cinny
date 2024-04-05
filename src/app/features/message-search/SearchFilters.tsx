@@ -36,6 +36,7 @@ import {
   useAsyncSearch,
 } from '../../hooks/useAsyncSearch';
 import { DebounceOptions, useDebounce } from '../../hooks/useDebounce';
+import { VirtualTile } from '../../components/virtualizer';
 
 type OrderButtonProps = {
   order?: string;
@@ -249,15 +250,9 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
                       const selected = localSelected?.includes(roomId);
 
                       return (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: vItem.start,
-                            left: 0,
-                            width: '100%',
-                            paddingBottom: config.space.S100,
-                          }}
-                          data-index={vItem.index}
+                        <VirtualTile
+                          virtualItem={vItem}
+                          style={{ paddingBottom: config.space.S100 }}
                           ref={virtualizer.measureElement}
                           key={vItem.index}
                         >
@@ -281,7 +276,7 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
                               {room.name}
                             </Text>
                           </MenuItem>
-                        </div>
+                        </VirtualTile>
                       );
                     })}
                   </div>

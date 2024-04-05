@@ -61,6 +61,7 @@ import { useRoomUnread } from '../../../state/hooks/unread';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { markAsRead } from '../../../../client/action/notifications';
 import { ContainerColor } from '../../../styles/ContainerColor.css';
+import { VirtualTile } from '../../../components/virtualizer';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -542,19 +543,11 @@ export function Notifications() {
                     if (!groupRoom) return null;
 
                     return (
-                      <Box
-                        style={{
-                          position: 'absolute',
-                          top: vItem.start,
-                          left: 0,
-                          width: '100%',
-                          paddingTop: config.space.S500,
-                        }}
-                        data-index={vItem.index}
+                      <VirtualTile
+                        virtualItem={vItem}
+                        style={{ paddingTop: config.space.S500 }}
                         ref={virtualizer.measureElement}
                         key={vItem.index}
-                        direction="Column"
-                        gap="200"
                       >
                         <RoomNotificationsGroupComp
                           room={groupRoom}
@@ -563,7 +556,7 @@ export function Notifications() {
                           urlPreview={urlPreview}
                           onOpen={navigateRoom}
                         />
-                      </Box>
+                      </VirtualTile>
                     );
                   })}
                 </div>

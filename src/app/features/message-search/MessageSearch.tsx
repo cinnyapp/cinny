@@ -22,6 +22,7 @@ import { MessageSearchParams, useMessageSearch } from './useMessageSearch';
 import { SearchResultGroup } from './SearchResultGroup';
 import { SearchInput } from './SearchInput';
 import { SearchFilters } from './SearchFilters';
+import { VirtualTile } from '../../components/virtualizer';
 
 const useSearchPathSearchParams = (searchParams: URLSearchParams): _SearchPathSearchParams =>
   useMemo(
@@ -283,19 +284,11 @@ export function MessageSearch({
               if (!groupRoom) return null;
 
               return (
-                <Box
-                  style={{
-                    position: 'absolute',
-                    top: vItem.start,
-                    left: 0,
-                    width: '100%',
-                    paddingBottom: config.space.S500,
-                  }}
-                  data-index={vItem.index}
+                <VirtualTile
+                  virtualItem={vItem}
+                  style={{ paddingBottom: config.space.S500 }}
                   ref={virtualizer.measureElement}
                   key={vItem.index}
-                  direction="Column"
-                  gap="200"
                 >
                   <SearchResultGroup
                     room={groupRoom}
@@ -305,7 +298,7 @@ export function MessageSearch({
                     urlPreview={urlPreview}
                     onOpen={navigateRoom}
                   />
-                </Box>
+                </VirtualTile>
               );
             })}
           </div>
