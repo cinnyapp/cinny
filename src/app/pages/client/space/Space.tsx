@@ -26,7 +26,7 @@ import {
 import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
 import { useSpaceHierarchy } from './useSpaceHierarchy';
-import { RoomNavItem } from '../../../features/room-nav-item/RoomNavItem';
+import { RoomNavItem } from '../../../features/room-nav-item';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 
 export function Space() {
@@ -151,8 +151,8 @@ export function Space() {
                           <NavCategoryHeader>
                             <Text size="O400" truncate>
                               {lastSpace?.roomId === space.roomId
-                                ? 'People'
-                                : `${lastSpace?.name} - People`}
+                                ? 'Direct Messages'
+                                : `Direct Messages - ${lastSpace?.name}`}
                             </Text>
                           </NavCategoryHeader>
                         </div>

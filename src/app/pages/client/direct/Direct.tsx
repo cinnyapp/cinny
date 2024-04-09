@@ -21,16 +21,13 @@ import {
   NavItemContent,
   NavLink,
 } from '../../../components/nav';
-import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
-import { RoomAvatar } from '../../../components/room-avatar';
 import { getDirectCreatePath, getDirectRoomPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
-import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
-import { getRoomAvatarUrl } from '../../../utils/room';
-import { nameInitials } from '../../../utils/common';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
 import { VirtualTile } from '../../../components/virtualizer';
+import { RoomNavItem } from '../../../features/room-nav-item';
+import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 
 function DirectEmpty() {
   return (
@@ -64,6 +61,9 @@ export function Direct() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
   const directs = useDirects(mx, allRoomsAtom, mDirects);
+  const muteChanges = useAtomValue(muteChangesAtom);
+  const mutedRooms = muteChanges.added;
+
   const selectedRoomId = useSelectedRoom();
   const createSelected = useDirectCreateSelected();
   const noRoomToDisplay = directs.length === 0;
@@ -131,7 +131,6 @@ export function Direct() {
                       const room = mx.getRoom(roomId);
                       if (!room) return null;
                       const selected = selectedRoomId === roomId;
-                      const avatarSrc = getRoomAvatarUrl(mx, room);
 
                       return (
                         <VirtualTile
@@ -139,49 +138,13 @@ export function Direct() {
                           key={vItem.index}
                           ref={virtualizer.measureElement}
                         >
-                          <RoomUnreadProvider roomId={roomId}>
-                            {(unread) => (
-                              <NavItem
-                                variant="Background"
-                                radii="400"
-                                highlight={!!unread || selected}
-                                aria-selected={selected}
-                              >
-                                <NavLink
-                                  to={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
-                                >
-                                  <NavItemContent size="T300">
-                                    <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                                      <Avatar size="200" radii="400">
-                                        <RoomAvatar
-                                          src={avatarSrc}
-                                          alt={room.name}
-                                          renderInitials={() => (
-                                            <Text as="span" size="H6">
-                                              {nameInitials(room.name)}
-                                            </Text>
-                                          )}
-                                        />
-                                      </Avatar>
-                                      <Box as="span" grow="Yes">
-                                        <Text as="span" size="Inherit" truncate>
-                                          {room.name}
-                                        </Text>
-                                      </Box>
-                                      {unread && (
-                                        <UnreadBadgeCenter>
-                                          <UnreadBadge
-                                            highlight={unread.highlight > 0}
-                                            count={unread.total}
-                                          />
-                                        </UnreadBadgeCenter>
-                                      )}
-                                    </Box>
-                                  </NavItemContent>
-                                </NavLink>
-                              </NavItem>
-                            )}
-                          </RoomUnreadProvider>
+                          <RoomNavItem
+                            room={room}
+                            selected={selected}
+                            direct
+                            linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                            muted={mutedRooms.includes(roomId)}
+                          />
                         </VirtualTile>
                       );
                     })}

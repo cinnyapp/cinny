@@ -177,7 +177,7 @@ export function RoomNavItem({ room, selected, direct, muted, linkPath }: RoomNav
             <Avatar size="200" radii="400">
               {direct ? (
                 <RoomAvatar
-                  variant="Background"
+                  variant="Secondary"
                   src={getRoomAvatarUrl(mx, room, 96)}
                   alt={room.name}
                   renderInitials={() => <Text size="H6">{nameInitials(room.name)}</Text>}
