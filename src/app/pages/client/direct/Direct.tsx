@@ -26,7 +26,7 @@ import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
 import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavItem } from '../../../features/room-nav-item';
+import { RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 
 function DirectEmpty() {

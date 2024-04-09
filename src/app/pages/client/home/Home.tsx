@@ -34,7 +34,7 @@ import {
 import { useHomeRooms } from './useHomeRooms';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavItem } from '../../../features/room-nav-item';
+import { RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 
 function HomeEmpty() {

@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { MouseEventHandler, useCallback, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { Avatar, Box, Icon, Icons, Text, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientContentLayout } from '../ClientContentLayout';
@@ -26,8 +26,9 @@ import {
 import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
 import { useSpaceHierarchy } from './useSpaceHierarchy';
-import { RoomNavItem } from '../../../features/room-nav-item';
+import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
+import { closedRoomCategories, makeRoomCategoryId } from '../../../state/closedRoomCategories';
 
 export function Space() {
   const mx = useMatrixClient();
@@ -38,7 +39,18 @@ export function Space() {
   const muteChanges = useAtomValue(muteChangesAtom);
   const mutedRooms = muteChanges.added;
 
-  const hierarchy = useSpaceHierarchy(space.roomId);
+  const [closedCategories, setClosedCategory] = useAtom(closedRoomCategories);
+  const hierarchy = useSpaceHierarchy(
+    space.roomId,
+    useCallback(
+      (spaceRoomId, directCategory) => {
+        if (directCategory)
+          return closedCategories.has(makeRoomCategoryId(space.roomId, spaceRoomId, 'direct'));
+        return closedCategories.has(makeRoomCategoryId(space.roomId, spaceRoomId));
+      },
+      [space.roomId, closedCategories]
+    )
+  );
 
   const selectedRoomId = useSelectedRoom();
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
@@ -47,15 +59,24 @@ export function Space() {
   const virtualizer = useVirtualizer({
     count: hierarchy.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 38,
+    estimateSize: () => 0,
     overscan: 10,
   });
+
+  const handleCategoryClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const categoryId = evt.currentTarget.getAttribute('data-category-id');
+    if (!categoryId) return;
+    if (closedCategories.has(categoryId)) {
+      setClosedCategory({ type: 'DELETE', categoryId });
+      return;
+    }
+    setClosedCategory({ type: 'PUT', categoryId });
+  };
 
   const getToLink = (roomId: string) =>
     getSpaceRoomPath(spaceIdOrAlias, getCanonicalAliasOrRoomId(mx, roomId));
 
-  let isLastDM = false;
-  let lastSpaceId: string | undefined;
+  let lastSpaceId = '';
   return (
     <ClientContentLayout
       navigation={
@@ -115,52 +136,59 @@ export function Space() {
                   const roomId = hierarchy[vItem.index];
                   const room = mx.getRoom(roomId);
                   if (!room) return null;
+
                   if (room.isSpaceRoom()) {
-                    isLastDM = false;
+                    const dmCategory = lastSpaceId === roomId;
                     lastSpaceId = roomId;
+                    const categoryId = dmCategory
+                      ? makeRoomCategoryId(space.roomId, roomId, 'direct')
+                      : makeRoomCategoryId(space.roomId, roomId);
+
                     return (
                       <VirtualTile
                         virtualItem={vItem}
                         key={vItem.index}
                         ref={virtualizer.measureElement}
                       >
-                        <NavCategoryHeader
-                          style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S300 }}
+                        <div
+                          style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}
                         >
-                          <Text size="O400" truncate>
-                            {roomId === space.roomId ? 'Rooms' : room.name}
-                          </Text>
-                        </NavCategoryHeader>
+                          {dmCategory ? (
+                            <RoomNavCategoryButton
+                              data-category-id={categoryId}
+                              onClick={handleCategoryClick}
+                              closed={closedCategories.has(categoryId)}
+                            >
+                              {room?.roomId === space.roomId
+                                ? 'Direct Messages'
+                                : `Direct Messages - ${room.name}`}
+                            </RoomNavCategoryButton>
+                          ) : (
+                            <NavCategoryHeader>
+                              <RoomNavCategoryButton
+                                data-category-id={categoryId}
+                                onClick={handleCategoryClick}
+                                closed={closedCategories.has(categoryId)}
+                              >
+                                {roomId === space.roomId ? 'Rooms' : room?.name}
+                              </RoomNavCategoryButton>
+                            </NavCategoryHeader>
+                          )}
+                        </div>
                       </VirtualTile>
                     );
                   }
 
-                  const direct = mDirects.has(roomId);
-                  const peopleHeader = direct && !isLastDM;
-                  isLastDM = direct;
-                  const lastSpace = mx.getRoom(lastSpaceId);
-                  const selected = selectedRoomId === roomId;
                   return (
                     <VirtualTile
                       virtualItem={vItem}
                       key={vItem.index}
                       ref={virtualizer.measureElement}
                     >
-                      {peopleHeader && (
-                        <div style={{ paddingTop: config.space.S300 }}>
-                          <NavCategoryHeader>
-                            <Text size="O400" truncate>
-                              {lastSpace?.roomId === space.roomId
-                                ? 'Direct Messages'
-                                : `Direct Messages - ${lastSpace?.name}`}
-                            </Text>
-                          </NavCategoryHeader>
-                        </div>
-                      )}
                       <RoomNavItem
                         room={room}
-                        selected={selected}
-                        direct={direct}
+                        selected={selectedRoomId === roomId}
+                        direct={mDirects.has(roomId)}
                         linkPath={getToLink(roomId)}
                         muted={mutedRooms.includes(roomId)}
                       />

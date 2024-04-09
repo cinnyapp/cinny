@@ -13,7 +13,10 @@ import { mDirectAtom } from '../../../state/mDirectList';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 
-export const useSpaceHierarchy = (spaceId: string): string[] => {
+export const useSpaceHierarchy = (
+  spaceId: string,
+  closedCategory: (spaceId: string, directCategory: boolean) => boolean
+): string[] => {
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
   const roomToParents = useAtomValue(roomToParentsAtom);
@@ -39,13 +42,25 @@ export const useSpaceHierarchy = (spaceId: string): string[] => {
             factoryChildDirectSelector(parentId)
           );
 
-          return [parentId].concat(
-            get(childRoomsAtom).sort(factoryRoomIdByAtoZ(mx)),
-            get(childDirectsAtom).sort(factoryRoomIdByActivity(mx))
-          );
+          const rooms = get(childRoomsAtom);
+          const directs = get(childDirectsAtom);
+          let items: string[] = [];
+          if (rooms.length > 0) {
+            items = items.concat(
+              [parentId],
+              closedCategory(parentId, false) ? [] : rooms.sort(factoryRoomIdByAtoZ(mx))
+            );
+          }
+          if (directs.length > 0) {
+            items = items.concat(
+              [parentId],
+              closedCategory(parentId, true) ? [] : directs.sort(factoryRoomIdByActivity(mx))
+            );
+          }
+          return items;
         })
       ),
-    [mx, spaceId, childSpaces, factoryChildRoomSelector, factoryChildDirectSelector]
+    [mx, spaceId, childSpaces, factoryChildRoomSelector, factoryChildDirectSelector, closedCategory]
   );
 
   return useAtomValue(hierarchyAtom);
