@@ -16,21 +16,18 @@ import {
   NavItemContent,
   NavLink,
 } from '../../../components/nav';
-import { UnreadBadge, UnreadBadgeCenter } from '../../../components/unread-badge';
-import { RoomAvatar, RoomIcon } from '../../../components/room-avatar';
 import { getSpaceLobbyPath, getSpaceRoomPath, getSpaceSearchPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
-import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import {
   useSpaceLobbySelected,
   useSpaceSearchSelected,
 } from '../../../hooks/router/useSelectedSpace';
-import { getRoomAvatarUrl } from '../../../utils/room';
-import { nameInitials } from '../../../utils/common';
 import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
 import { useSpaceHierarchy } from './useSpaceHierarchy';
+import { RoomNavItem } from '../../../features/room-nav-item/RoomNavItem';
+import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 
 export function Space() {
   const mx = useMatrixClient();
@@ -38,6 +35,8 @@ export function Space() {
   const spaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
+  const muteChanges = useAtomValue(muteChangesAtom);
+  const mutedRooms = muteChanges.added;
 
   const hierarchy = useSpaceHierarchy(space.roomId);
 
@@ -158,54 +157,13 @@ export function Space() {
                           </NavCategoryHeader>
                         </div>
                       )}
-                      <RoomUnreadProvider roomId={roomId}>
-                        {(unread) => (
-                          <NavItem
-                            variant="Background"
-                            radii="400"
-                            highlight={!!unread || selected}
-                            aria-selected={selected}
-                          >
-                            <NavLink to={getToLink(roomId)}>
-                              <NavItemContent size="T300">
-                                <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                                  <Avatar size="200" radii="400">
-                                    {direct ? (
-                                      <RoomAvatar
-                                        variant="Background"
-                                        src={getRoomAvatarUrl(mx, room, 96)}
-                                        alt={room.name}
-                                        renderInitials={() => (
-                                          <Text size="H6">{nameInitials(room.name)}</Text>
-                                        )}
-                                      />
-                                    ) : (
-                                      <RoomIcon
-                                        filled={selected}
-                                        size="100"
-                                        joinRule={room.getJoinRule()}
-                                      />
-                                    )}
-                                  </Avatar>
-                                  <Box as="span" grow="Yes">
-                                    <Text as="span" size="Inherit" truncate>
-                                      {room.name}
-                                    </Text>
-                                  </Box>
-                                  {unread && (
-                                    <UnreadBadgeCenter>
-                                      <UnreadBadge
-                                        highlight={unread.highlight > 0}
-                                        count={unread.total}
-                                      />
-                                    </UnreadBadgeCenter>
-                                  )}
-                                </Box>
-                              </NavItemContent>
-                            </NavLink>
-                          </NavItem>
-                        )}
-                      </RoomUnreadProvider>
+                      <RoomNavItem
+                        room={room}
+                        selected={selected}
+                        direct={direct}
+                        linkPath={getToLink(roomId)}
+                        muted={mutedRooms.includes(roomId)}
+                      />
                     </VirtualTile>
                   );
                 })}

@@ -803,7 +803,7 @@ export const Message = as<'div', MessageProps>(
                         isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
                       }}
                     >
-                      <Menu {...props} ref={ref}>
+                      <Menu>
                         {canSendReaction && (
                           <MessageQuickReactions
                             onReaction={(key, shortcode) => {

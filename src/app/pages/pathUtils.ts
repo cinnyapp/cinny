@@ -36,8 +36,15 @@ export const withSearchParam = <T extends Record<string, string>>(
 export const encodeSearchParamValueArray = (ids: string[]): string => ids.join(',');
 export const decodeSearchParamValueArray = (idsParam: string): string[] => idsParam.split(',');
 
-export const getAbsolutePathFromHref = (href: string): string | undefined => {
+export const getOriginBaseUrl = (): string => {
   const baseUrl = `${trimTrailingSlash(window.location.origin)}${import.meta.env.BASE_URL}`;
+  return baseUrl;
+};
+
+export const withOriginBaseUrl = (baseUrl: string, path: string): string =>
+  `${trimTrailingSlash(baseUrl)}${path}`;
+
+export const getAbsolutePathFromHref = (baseUrl: string, href: string): string | undefined => {
   const [, path] = href.split(trimTrailingSlash(baseUrl));
 
   return path;
@@ -121,7 +128,7 @@ export const getExplorePath = (): string => EXPLORE_PATH;
 export const getExploreFeaturedPath = (): string => EXPLORE_FEATURED_PATH;
 export const getExploreServerPath = (server: string): string => {
   const params = {
-    server,
+    server: encodeURIComponent(server),
   };
   return generatePath(EXPLORE_SERVER_PATH, params);
 };

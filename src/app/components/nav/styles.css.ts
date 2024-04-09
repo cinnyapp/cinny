@@ -52,13 +52,15 @@ const NavItemBase = style({
   color: OnContainer,
   outline: 'none',
   minHeight: toRem(38),
-  gap: config.space.S200,
 
   selectors: {
     '&:hover, &:focus-visible': {
       backgroundColor: ContainerHover,
     },
-    '&:active': {
+    '&[data-hover=true]': {
+      backgroundColor: ContainerHover,
+    },
+    [`&:has(.${NavLink}:active)`]: {
       backgroundColor: ContainerActive,
     },
     '&[aria-selected=true]': {
@@ -120,4 +122,8 @@ export const NavItemContent = style({
       fontWeight: config.fontWeight.W600,
     },
   },
+});
+
+export const NavItemOptions = style({
+  paddingRight: config.space.S200,
 });
