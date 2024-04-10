@@ -6,14 +6,13 @@ import { useOrphanSpaces } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { getSpacePath, getSpaceRoomPath, joinPathComponent } from '../../pathUtils';
+import { getSpacePath, joinPathComponent } from '../../pathUtils';
 import { SidebarAvatar } from '../../../components/sidebar';
-import { NotificationBadge, UnreadMenu } from './NotificationBadge';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import colorMXID from '../../../../util/colorMXID';
 import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
-import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { navToActivePathAtom } from '../../../state/navToActivePath';
+import { UnreadBadge } from '../../../components/unread-badge';
 
 export function SpaceTabs() {
   const navigate = useNavigate();
@@ -23,9 +22,6 @@ export function SpaceTabs() {
   const navToActivePath = useAtomValue(navToActivePathAtom);
 
   const selectedSpaceId = useSelectedSpace();
-
-  const getRoomToLink = (spaceId: string, roomId: string) =>
-    getSpaceRoomPath(getCanonicalAliasOrRoomId(mx, spaceId), getCanonicalAliasOrRoomId(mx, roomId));
 
   const handleSpaceClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const target = evt.currentTarget;
@@ -59,18 +55,7 @@ export function SpaceTabs() {
             hasCount={unread && unread.total > 0}
             tooltip={space.name}
             notificationBadge={() =>
-              unread && (
-                <NotificationBadge
-                  unread={unread}
-                  renderUnreadMenu={(requestClose) => (
-                    <UnreadMenu
-                      rooms={[...(unread.from ?? [])]}
-                      getToLink={(roomId) => getRoomToLink(orphanSpaceId, roomId)}
-                      requestClose={requestClose}
-                    />
-                  )}
-                />
-              )
+              unread && <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
             }
             avatarChildren={
               avatarUrl ? (

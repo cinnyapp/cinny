@@ -83,6 +83,7 @@ export const SidebarBadgeBox = recipe({
   base: [
     DefaultReset,
     {
+      pointerEvents: 'none',
       position: 'absolute',
       zIndex: 1,
     },

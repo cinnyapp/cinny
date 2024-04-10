@@ -7,13 +7,12 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { getDirectPath, getDirectRoomPath, joinPathComponent } from '../../pathUtils';
+import { getDirectPath, joinPathComponent } from '../../pathUtils';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { SidebarAvatar } from '../../../components/sidebar';
-import { NotificationBadge, UnreadMenu } from './NotificationBadge';
 import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
-import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { navToActivePathAtom } from '../../../state/navToActivePath';
+import { UnreadBadge } from '../../../components/unread-badge';
 
 export function DirectTab() {
   const navigate = useNavigate();
@@ -25,9 +24,6 @@ export function DirectTab() {
   const directUnread = useRoomsUnread(directs, roomToUnreadAtom);
 
   const directSelected = useDirectSelected();
-
-  const getRoomToLink = (roomId: string) =>
-    getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId));
 
   const handleDirectClick = () => {
     const activePath = navToActivePath.get('direct');
@@ -47,16 +43,7 @@ export function DirectTab() {
       hasCount={directUnread && directUnread.total > 0}
       notificationBadge={() =>
         directUnread && (
-          <NotificationBadge
-            unread={directUnread}
-            renderUnreadMenu={(requestClose) => (
-              <UnreadMenu
-                rooms={[...(directUnread.from ?? [])]}
-                getToLink={getRoomToLink}
-                requestClose={requestClose}
-              />
-            )}
-          />
+          <UnreadBadge highlight={directUnread.highlight > 0} count={directUnread.total} />
         )
       }
       avatarChildren={<Icon src={Icons.User} filled={directSelected} />}
