@@ -28,13 +28,15 @@ import { VirtualTile } from '../../../components/virtualizer';
 import { useSpaceHierarchy } from './useSpaceHierarchy';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
-import { closedNavCategories, makeNavCategoryId } from '../../../state/closedNavCategories';
+import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
+import { useNavToActivePathMapper } from '../../../hooks/navToActivePathMapper';
 
 export function Space() {
   const mx = useMatrixClient();
   const space = useSpace();
+  useNavToActivePathMapper(space.roomId);
   const spaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
@@ -46,7 +48,7 @@ export function Space() {
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
-  const closedCategories = useAtomValue(closedNavCategories);
+  const closedCategories = useAtomValue(closedNavCategoriesAtom);
   const hierarchy = useSpaceHierarchy(
     space.roomId,
     useCallback(

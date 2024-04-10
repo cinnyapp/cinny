@@ -1,4 +1,4 @@
-import { generatePath } from 'react-router-dom';
+import { generatePath, Path } from 'react-router-dom';
 import {
   DIRECT_CREATE_PATH,
   DIRECT_PATH,
@@ -24,6 +24,8 @@ import {
   SPACE_SEARCH_PATH,
 } from './paths';
 import { trimTrailingSlash } from '../utils/common';
+
+export const joinPathComponent = (path: Path): string => path.pathname + path.search + path.hash;
 
 export const withSearchParam = <T extends Record<string, string>>(
   path: string,

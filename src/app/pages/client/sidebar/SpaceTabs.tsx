@@ -6,19 +6,21 @@ import { useOrphanSpaces } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { getSpacePath, getSpaceRoomPath } from '../../pathUtils';
+import { getSpacePath, getSpaceRoomPath, joinPathComponent } from '../../pathUtils';
 import { SidebarAvatar } from '../../../components/sidebar';
 import { NotificationBadge, UnreadMenu } from './NotificationBadge';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import colorMXID from '../../../../util/colorMXID';
 import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
+import { navToActivePathAtom } from '../../../state/navToActivePath';
 
 export function SpaceTabs() {
   const navigate = useNavigate();
   const mx = useMatrixClient();
   const roomToParents = useAtomValue(roomToParentsAtom);
   const orphanSpaces = useOrphanSpaces(mx, allRoomsAtom, roomToParents);
+  const navToActivePath = useAtomValue(navToActivePathAtom);
 
   const selectedSpaceId = useSelectedSpace();
 
@@ -29,6 +31,12 @@ export function SpaceTabs() {
     const target = evt.currentTarget;
     const targetSpaceId = target.getAttribute('data-id');
     if (!targetSpaceId) return;
+
+    const activePath = navToActivePath.get(targetSpaceId);
+    if (activePath) {
+      navigate(joinPathComponent(activePath));
+      return;
+    }
 
     const targetSpaceAlias = mx.getRoom(targetSpaceId)?.getCanonicalAlias();
     navigate(getSpacePath(targetSpaceAlias ?? targetSpaceId));

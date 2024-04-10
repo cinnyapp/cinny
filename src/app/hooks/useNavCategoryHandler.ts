@@ -1,9 +1,9 @@
 import { useSetAtom } from 'jotai';
 import { MouseEventHandler } from 'react';
-import { closedNavCategories } from '../state/closedNavCategories';
+import { closedNavCategoriesAtom } from '../state/closedNavCategories';
 
 export const useNavCategoryHandler = (closed: (categoryId: string) => boolean) => {
-  const setClosedCategory = useSetAtom(closedNavCategories);
+  const setClosedCategory = useSetAtom(closedNavCategoriesAtom);
 
   const handleCategoryClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const categoryId = evt.currentTarget.getAttribute('data-category-id');

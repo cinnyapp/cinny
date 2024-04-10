@@ -42,7 +42,7 @@ import { ClientLayout, ClientRoot } from './client';
 import { Home, HomeSearch } from './client/home';
 import { RoomViewer } from '../organisms/room/Room';
 import { Direct } from './client/direct';
-import { RouteSpaceProvider, Space, SpaceSearch } from './client/space';
+import { RouteSpaceProvider, Space, SpaceIndexRedirect, SpaceSearch } from './client/space';
 import { Explore, ExploreRedirect, FeaturedRooms, PublicRooms } from './client/explore';
 import { Notifications, Inbox, InboxRedirect, Invites } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
@@ -99,7 +99,7 @@ const createRouter = (clientConfig: ClientConfig) => {
           </Route>
           <Route path={SPACE_PATH} element={<RouteSpaceProvider />}>
             <Route element={<Space />}>
-              <Route index element={<p>welcome</p>} />
+              <Route index element={<SpaceIndexRedirect />} />
               <Route path={_LOBBY_PATH} element={<p>lobby</p>} />
               <Route path={_SEARCH_PATH} element={<SpaceSearch />} />
               <Route path={_ROOM_PATH} element={<RoomViewer />} />

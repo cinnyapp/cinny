@@ -8,7 +8,7 @@ import {
 
 const CLOSED_NAV_CATEGORY = 'closedNavCategories';
 
-const baseClosedNavCategories = atomWithLocalStorage<Set<string>>(
+const baseClosedNavCategoriesAtom = atomWithLocalStorage<Set<string>>(
   CLOSED_NAV_CATEGORY,
   (key) => {
     const arrayValue = getLocalStorageItem<string[]>(key, []);
@@ -30,13 +30,13 @@ type ClosedNavCategoriesAction =
       categoryId: string;
     };
 
-export const closedNavCategories = atom<Set<string>, [ClosedNavCategoriesAction], undefined>(
-  (get) => get(baseClosedNavCategories),
+export const closedNavCategoriesAtom = atom<Set<string>, [ClosedNavCategoriesAction], undefined>(
+  (get) => get(baseClosedNavCategoriesAtom),
   (get, set, action) => {
     if (action.type === 'DELETE') {
       set(
-        baseClosedNavCategories,
-        produce(get(baseClosedNavCategories), (draft) => {
+        baseClosedNavCategoriesAtom,
+        produce(get(baseClosedNavCategoriesAtom), (draft) => {
           draft.delete(action.categoryId);
         })
       );
@@ -44,8 +44,8 @@ export const closedNavCategories = atom<Set<string>, [ClosedNavCategoriesAction]
     }
     if (action.type === 'PUT') {
       set(
-        baseClosedNavCategories,
-        produce(get(baseClosedNavCategories), (draft) => {
+        baseClosedNavCategoriesAtom,
+        produce(get(baseClosedNavCategoriesAtom), (draft) => {
           draft.add(action.categoryId);
         })
       );
