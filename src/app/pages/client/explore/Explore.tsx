@@ -38,6 +38,7 @@ import {
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getMxIdServer } from '../../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { useNavToActivePathMapper } from '../../../hooks/navToActivePathMapper';
 
 export function AddServer() {
   const mx = useMatrixClient();
@@ -157,6 +158,7 @@ export function AddServer() {
 
 export function Explore() {
   const mx = useMatrixClient();
+  useNavToActivePathMapper('explore');
   const userId = mx.getUserId();
   const clientConfig = useClientConfig();
   const userServer = userId ? getMxIdServer(userId) : undefined;

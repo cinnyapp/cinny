@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Icon, Icons, AvatarFallback, Text } from 'folds';
 
 import {
@@ -9,16 +8,10 @@ import {
   SidebarStack,
   SidebarAvatar,
 } from '../../components/sidebar';
-import { getExplorePath } from '../pathUtils';
-import { DirectTab, HomeTab, SpaceTabs, InboxTab } from './sidebar';
-import { useExploreSelected } from '../../hooks/router/useExploreSelected';
+import { DirectTab, HomeTab, SpaceTabs, InboxTab, ExploreTab } from './sidebar';
 import { openSettings } from '../../../client/action/navigation';
 
 export function ClientNavigation() {
-  const navigate = useNavigate();
-
-  const exploreSelected = useExploreSelected();
-
   return (
     <Sidebar>
       <SidebarContent
@@ -34,13 +27,7 @@ export function ClientNavigation() {
             </SidebarStack>
             <SidebarStackSeparator />
             <SidebarStack>
-              <SidebarAvatar
-                active={exploreSelected}
-                outlined
-                tooltip="Explore Community"
-                avatarChildren={<Icon src={Icons.Explore} filled={exploreSelected} />}
-                onClick={() => navigate(getExplorePath())}
-              />
+              <ExploreTab />
               <SidebarAvatar
                 outlined
                 tooltip="Create Space"
