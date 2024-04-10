@@ -229,7 +229,9 @@ export function Explore() {
               {servers.length > 0 && (
                 <NavCategory>
                   <NavCategoryHeader>
-                    <Text size="O400">Servers</Text>
+                    <Text size="O400" style={{ paddingLeft: config.space.S200 }}>
+                      Servers
+                    </Text>
                   </NavCategoryHeader>
                   {servers.map((server) => (
                     <NavItem
