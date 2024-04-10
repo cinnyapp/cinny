@@ -15,7 +15,8 @@ import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sor
 
 export const useSpaceHierarchy = (
   spaceId: string,
-  closedCategory: (spaceId: string, directCategory: boolean) => boolean
+  closedCategory: (spaceId: string, directCategory: boolean) => boolean,
+  showWhenClosed: (roomId: string) => boolean
 ): string[] => {
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
@@ -42,25 +43,33 @@ export const useSpaceHierarchy = (
             factoryChildDirectSelector(parentId)
           );
 
-          const rooms = get(childRoomsAtom);
-          const directs = get(childDirectsAtom);
+          const rooms = get(childRoomsAtom).sort(factoryRoomIdByAtoZ(mx));
+          const directs = get(childDirectsAtom).sort(factoryRoomIdByActivity(mx));
           let items: string[] = [];
           if (rooms.length > 0) {
             items = items.concat(
               [parentId],
-              closedCategory(parentId, false) ? [] : rooms.sort(factoryRoomIdByAtoZ(mx))
+              closedCategory(parentId, false) ? rooms.filter(showWhenClosed) : rooms
             );
           }
           if (directs.length > 0) {
             items = items.concat(
               [parentId],
-              closedCategory(parentId, true) ? [] : directs.sort(factoryRoomIdByActivity(mx))
+              closedCategory(parentId, true) ? directs.filter(showWhenClosed) : directs
             );
           }
           return items;
         })
       ),
-    [mx, spaceId, childSpaces, factoryChildRoomSelector, factoryChildDirectSelector, closedCategory]
+    [
+      mx,
+      spaceId,
+      childSpaces,
+      factoryChildRoomSelector,
+      factoryChildDirectSelector,
+      closedCategory,
+      showWhenClosed,
+    ]
   );
 
   return useAtomValue(hierarchyAtom);

@@ -29,6 +29,7 @@ import { useSpaceHierarchy } from './useSpaceHierarchy';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedRoomCategories, makeRoomCategoryId } from '../../../state/closedRoomCategories';
+import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 
 export function Space() {
   const mx = useMatrixClient();
@@ -36,25 +37,31 @@ export function Space() {
   const spaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
+  const roomToUnread = useAtomValue(roomToUnreadAtom);
   const muteChanges = useAtomValue(muteChangesAtom);
   const mutedRooms = muteChanges.added;
+
+  const selectedRoomId = useSelectedRoom();
+  const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
+  const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
   const [closedCategories, setClosedCategory] = useAtom(closedRoomCategories);
   const hierarchy = useSpaceHierarchy(
     space.roomId,
     useCallback(
       (spaceRoomId, directCategory) => {
-        if (directCategory)
+        if (directCategory) {
           return closedCategories.has(makeRoomCategoryId(space.roomId, spaceRoomId, 'direct'));
+        }
         return closedCategories.has(makeRoomCategoryId(space.roomId, spaceRoomId));
       },
       [space.roomId, closedCategories]
+    ),
+    useCallback(
+      (roomId) => roomToUnread.has(roomId) || roomId === selectedRoomId,
+      [roomToUnread, selectedRoomId]
     )
   );
-
-  const selectedRoomId = useSelectedRoom();
-  const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
-  const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
   const virtualizer = useVirtualizer({
     count: hierarchy.length,
