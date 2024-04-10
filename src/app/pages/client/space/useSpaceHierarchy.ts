@@ -43,19 +43,23 @@ export const useSpaceHierarchy = (
             factoryChildDirectSelector(parentId)
           );
 
-          const rooms = get(childRoomsAtom).sort(factoryRoomIdByAtoZ(mx));
-          const directs = get(childDirectsAtom).sort(factoryRoomIdByActivity(mx));
+          const rooms = get(childRoomsAtom);
+          const directs = get(childDirectsAtom);
           let items: string[] = [];
           if (rooms.length > 0) {
             items = items.concat(
               [parentId],
-              closedCategory(parentId, false) ? rooms.filter(showWhenClosed) : rooms
+              closedCategory(parentId, false)
+                ? rooms.filter(showWhenClosed).sort(factoryRoomIdByActivity(mx))
+                : rooms.sort(factoryRoomIdByAtoZ(mx))
             );
           }
           if (directs.length > 0) {
             items = items.concat(
               [parentId],
-              closedCategory(parentId, true) ? directs.filter(showWhenClosed) : directs
+              closedCategory(parentId, true)
+                ? directs.filter(showWhenClosed).sort(factoryRoomIdByActivity(mx))
+                : directs.sort(factoryRoomIdByActivity(mx))
             );
           }
           return items;
