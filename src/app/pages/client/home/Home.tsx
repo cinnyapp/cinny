@@ -1,8 +1,8 @@
-import React, { useMemo, useRef } from 'react';
+import React, { MouseEventHandler, useMemo, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
@@ -34,8 +34,10 @@ import {
 import { useHomeRooms } from './useHomeRooms';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavItem } from '../../../features/room-nav';
+import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
+import { closedRoomCategories, makeRoomCategoryId } from '../../../state/closedRoomCategories';
+import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 
 function HomeEmpty() {
   const navigate = useNavigate();
@@ -78,20 +80,29 @@ function HomeEmpty() {
   );
 }
 
+const DEFAULT_CATEGORY_ID = makeRoomCategoryId('home', 'room');
 export function Home() {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
   const rooms = useHomeRooms();
   const muteChanges = useAtomValue(muteChangesAtom);
   const mutedRooms = muteChanges.added;
+  const roomToUnread = useAtomValue(roomToUnreadAtom);
 
   const selectedRoomId = useSelectedRoom();
   const createSelected = useHomeCreateSelected();
   const joinSelected = useHomeJoinSelected();
   const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
+  const [closedCategories, setClosedCategory] = useAtom(closedRoomCategories);
 
-  const sortedRooms = useMemo(() => Array.from(rooms).sort(factoryRoomIdByAtoZ(mx)), [mx, rooms]);
+  const sortedRooms = useMemo(() => {
+    const items = Array.from(rooms).sort(factoryRoomIdByAtoZ(mx));
+    if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
+      return items.filter((rId) => roomToUnread.has(rId));
+    }
+    return items;
+  }, [mx, rooms, closedCategories, roomToUnread]);
 
   const virtualizer = useVirtualizer({
     count: sortedRooms.length,
@@ -99,6 +110,16 @@ export function Home() {
     estimateSize: () => 38,
     overscan: 10,
   });
+
+  const handleCategoryClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const categoryId = evt.currentTarget.getAttribute('data-category-id');
+    if (!categoryId) return;
+    if (closedCategories.has(categoryId)) {
+      setClosedCategory({ type: 'DELETE', categoryId });
+      return;
+    }
+    setClosedCategory({ type: 'PUT', categoryId });
+  };
 
   return (
     <ClientContentLayout
@@ -170,7 +191,13 @@ export function Home() {
                 </NavCategory>
                 <NavCategory>
                   <NavCategoryHeader>
-                    <Text size="O400">Rooms</Text>
+                    <RoomNavCategoryButton
+                      closed={closedCategories.has(DEFAULT_CATEGORY_ID)}
+                      data-category-id={DEFAULT_CATEGORY_ID}
+                      onClick={handleCategoryClick}
+                    >
+                      Rooms
+                    </RoomNavCategoryButton>
                   </NavCategoryHeader>
                   <div
                     style={{

@@ -1,6 +1,6 @@
-import React, { useMemo, useRef } from 'react';
+import React, { MouseEventHandler, useMemo, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientContentLayout } from '../ClientContentLayout';
@@ -26,8 +26,10 @@ import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
 import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavItem } from '../../../features/room-nav';
+import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
+import { closedRoomCategories, makeRoomCategoryId } from '../../../state/closedRoomCategories';
+import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 
 function DirectEmpty() {
   return (
@@ -56,6 +58,7 @@ function DirectEmpty() {
   );
 }
 
+const DEFAULT_CATEGORY_ID = makeRoomCategoryId('direct', 'direct');
 export function Direct() {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -63,15 +66,20 @@ export function Direct() {
   const directs = useDirects(mx, allRoomsAtom, mDirects);
   const muteChanges = useAtomValue(muteChangesAtom);
   const mutedRooms = muteChanges.added;
+  const roomToUnread = useAtomValue(roomToUnreadAtom);
 
   const selectedRoomId = useSelectedRoom();
   const createSelected = useDirectCreateSelected();
   const noRoomToDisplay = directs.length === 0;
+  const [closedCategories, setClosedCategory] = useAtom(closedRoomCategories);
 
-  const sortedDirects = useMemo(
-    () => Array.from(directs).sort(factoryRoomIdByActivity(mx)),
-    [mx, directs]
-  );
+  const sortedDirects = useMemo(() => {
+    const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));
+    if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
+      return items.filter((rId) => roomToUnread.has(rId));
+    }
+    return items;
+  }, [mx, directs, closedCategories, roomToUnread]);
 
   const virtualizer = useVirtualizer({
     count: sortedDirects.length,
@@ -79,6 +87,16 @@ export function Direct() {
     estimateSize: () => 38,
     overscan: 10,
   });
+
+  const handleCategoryClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const categoryId = evt.currentTarget.getAttribute('data-category-id');
+    if (!categoryId) return;
+    if (closedCategories.has(categoryId)) {
+      setClosedCategory({ type: 'DELETE', categoryId });
+      return;
+    }
+    setClosedCategory({ type: 'PUT', categoryId });
+  };
 
   return (
     <ClientContentLayout
@@ -118,7 +136,13 @@ export function Direct() {
                 </NavCategory>
                 <NavCategory>
                   <NavCategoryHeader>
-                    <Text size="O400">People</Text>
+                    <RoomNavCategoryButton
+                      closed={closedCategories.has(DEFAULT_CATEGORY_ID)}
+                      data-category-id={DEFAULT_CATEGORY_ID}
+                      onClick={handleCategoryClick}
+                    >
+                      Chats
+                    </RoomNavCategoryButton>
                   </NavCategoryHeader>
                   <div
                     style={{
