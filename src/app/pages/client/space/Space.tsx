@@ -1,6 +1,6 @@
-import React, { MouseEventHandler, useCallback, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtomValue } from 'jotai';
 import { Avatar, Box, Icon, Icons, Text, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientContentLayout } from '../ClientContentLayout';
@@ -30,6 +30,7 @@ import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategories, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
+import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
 
 export function Space() {
   const mx = useMatrixClient();
@@ -45,7 +46,7 @@ export function Space() {
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
-  const [closedCategories, setClosedCategory] = useAtom(closedNavCategories);
+  const closedCategories = useAtomValue(closedNavCategories);
   const hierarchy = useSpaceHierarchy(
     space.roomId,
     useCallback(
@@ -70,15 +71,9 @@ export function Space() {
     overscan: 10,
   });
 
-  const handleCategoryClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    const categoryId = evt.currentTarget.getAttribute('data-category-id');
-    if (!categoryId) return;
-    if (closedCategories.has(categoryId)) {
-      setClosedCategory({ type: 'DELETE', categoryId });
-      return;
-    }
-    setClosedCategory({ type: 'PUT', categoryId });
-  };
+  const handleCategoryClick = useNavCategoryHandler((categoryId) =>
+    closedCategories.has(categoryId)
+  );
 
   const getToLink = (roomId: string) =>
     getSpaceRoomPath(spaceIdOrAlias, getCanonicalAliasOrRoomId(mx, roomId));

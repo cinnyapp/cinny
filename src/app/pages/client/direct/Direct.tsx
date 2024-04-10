@@ -1,6 +1,6 @@
-import React, { MouseEventHandler, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtomValue } from 'jotai';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientContentLayout } from '../ClientContentLayout';
@@ -30,6 +30,7 @@ import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategories, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
+import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
 
 function DirectEmpty() {
   return (
@@ -71,7 +72,7 @@ export function Direct() {
   const selectedRoomId = useSelectedRoom();
   const createSelected = useDirectCreateSelected();
   const noRoomToDisplay = directs.length === 0;
-  const [closedCategories, setClosedCategory] = useAtom(closedNavCategories);
+  const closedCategories = useAtomValue(closedNavCategories);
 
   const sortedDirects = useMemo(() => {
     const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));
@@ -88,15 +89,9 @@ export function Direct() {
     overscan: 10,
   });
 
-  const handleCategoryClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    const categoryId = evt.currentTarget.getAttribute('data-category-id');
-    if (!categoryId) return;
-    if (closedCategories.has(categoryId)) {
-      setClosedCategory({ type: 'DELETE', categoryId });
-      return;
-    }
-    setClosedCategory({ type: 'PUT', categoryId });
-  };
+  const handleCategoryClick = useNavCategoryHandler((categoryId) =>
+    closedCategories.has(categoryId)
+  );
 
   return (
     <ClientContentLayout

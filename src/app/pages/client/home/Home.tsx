@@ -1,8 +1,8 @@
-import React, { MouseEventHandler, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtomValue } from 'jotai';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
@@ -38,6 +38,7 @@ import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategories, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
+import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
 
 function HomeEmpty() {
   const navigate = useNavigate();
@@ -94,7 +95,7 @@ export function Home() {
   const joinSelected = useHomeJoinSelected();
   const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
-  const [closedCategories, setClosedCategory] = useAtom(closedNavCategories);
+  const closedCategories = useAtomValue(closedNavCategories);
 
   const sortedRooms = useMemo(() => {
     const items = Array.from(rooms).sort(factoryRoomIdByAtoZ(mx));
@@ -111,15 +112,9 @@ export function Home() {
     overscan: 10,
   });
 
-  const handleCategoryClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    const categoryId = evt.currentTarget.getAttribute('data-category-id');
-    if (!categoryId) return;
-    if (closedCategories.has(categoryId)) {
-      setClosedCategory({ type: 'DELETE', categoryId });
-      return;
-    }
-    setClosedCategory({ type: 'PUT', categoryId });
-  };
+  const handleCategoryClick = useNavCategoryHandler((categoryId) =>
+    closedCategories.has(categoryId)
+  );
 
   return (
     <ClientContentLayout
