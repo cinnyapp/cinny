@@ -39,6 +39,7 @@ import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
+import { useNavToActivePathMapper } from '../../../hooks/navToActivePathMapper';
 
 function HomeEmpty() {
   const navigate = useNavigate();
@@ -84,6 +85,7 @@ function HomeEmpty() {
 const DEFAULT_CATEGORY_ID = makeNavCategoryId('home', 'room');
 export function Home() {
   const mx = useMatrixClient();
+  useNavToActivePathMapper('home');
   const scrollRef = useRef<HTMLDivElement>(null);
   const rooms = useHomeRooms();
   const muteChanges = useAtomValue(muteChangesAtom);

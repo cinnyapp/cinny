@@ -7,16 +7,18 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { getDirectPath, getDirectRoomPath } from '../../pathUtils';
+import { getDirectPath, getDirectRoomPath, joinPathComponent } from '../../pathUtils';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { SidebarAvatar } from '../../../components/sidebar';
 import { NotificationBadge, UnreadMenu } from './NotificationBadge';
 import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
+import { navToActivePathAtom } from '../../../state/navToActivePath';
 
 export function DirectTab() {
   const navigate = useNavigate();
   const mx = useMatrixClient();
+  const navToActivePath = useAtomValue(navToActivePathAtom);
 
   const mDirects = useAtomValue(mDirectAtom);
   const directs = useDirects(mx, allRoomsAtom, mDirects);
@@ -28,6 +30,12 @@ export function DirectTab() {
     getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId));
 
   const handleDirectClick = () => {
+    const activePath = navToActivePath.get('direct');
+    if (activePath) {
+      navigate(joinPathComponent(activePath));
+      return;
+    }
+
     navigate(getDirectPath());
   };
 

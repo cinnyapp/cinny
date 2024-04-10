@@ -8,16 +8,18 @@ import { mDirectAtom } from '../../../state/mDirectList';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { getHomePath, getHomeRoomPath } from '../../pathUtils';
+import { getHomePath, getHomeRoomPath, joinPathComponent } from '../../pathUtils';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { SidebarAvatar } from '../../../components/sidebar';
 import { NotificationBadge, UnreadMenu } from './NotificationBadge';
 import { useHomeSelected } from '../../../hooks/router/useHomeSelected';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
+import { navToActivePathAtom } from '../../../state/navToActivePath';
 
 export function HomeTab() {
   const navigate = useNavigate();
   const mx = useMatrixClient();
+  const navToActivePath = useAtomValue(navToActivePathAtom);
 
   const mDirects = useAtomValue(mDirectAtom);
   const roomToParents = useAtomValue(roomToParentsAtom);
@@ -28,6 +30,12 @@ export function HomeTab() {
   const getRoomToLink = (roomId: string) => getHomeRoomPath(getCanonicalAliasOrRoomId(mx, roomId));
 
   const handleHomeClick = () => {
+    const activePath = navToActivePath.get('home');
+    if (activePath) {
+      navigate(joinPathComponent(activePath));
+      return;
+    }
+
     navigate(getHomePath());
   };
 
