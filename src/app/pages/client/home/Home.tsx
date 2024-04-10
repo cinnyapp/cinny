@@ -36,7 +36,7 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { VirtualTile } from '../../../components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
-import { closedRoomCategories, makeRoomCategoryId } from '../../../state/closedRoomCategories';
+import { closedNavCategories, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 
 function HomeEmpty() {
@@ -80,7 +80,7 @@ function HomeEmpty() {
   );
 }
 
-const DEFAULT_CATEGORY_ID = makeRoomCategoryId('home', 'room');
+const DEFAULT_CATEGORY_ID = makeNavCategoryId('home', 'room');
 export function Home() {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -94,7 +94,7 @@ export function Home() {
   const joinSelected = useHomeJoinSelected();
   const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
-  const [closedCategories, setClosedCategory] = useAtom(closedRoomCategories);
+  const [closedCategories, setClosedCategory] = useAtom(closedNavCategories);
 
   const sortedRooms = useMemo(() => {
     const items = Array.from(rooms).sort(factoryRoomIdByAtoZ(mx));

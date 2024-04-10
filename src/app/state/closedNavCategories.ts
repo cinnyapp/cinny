@@ -6,10 +6,10 @@ import {
   setLocalStorageItem,
 } from './utils/atomWithLocalStorage';
 
-const CLOSED_ROOM_CATEGORY = 'closedRoomCategories';
+const CLOSED_NAV_CATEGORY = 'closedNavCategories';
 
-const baseClosedRoomCategories = atomWithLocalStorage<Set<string>>(
-  CLOSED_ROOM_CATEGORY,
+const baseClosedNavCategories = atomWithLocalStorage<Set<string>>(
+  CLOSED_NAV_CATEGORY,
   (key) => {
     const arrayValue = getLocalStorageItem<string[]>(key, []);
     return new Set(arrayValue);
@@ -20,7 +20,7 @@ const baseClosedRoomCategories = atomWithLocalStorage<Set<string>>(
   }
 );
 
-type ClosedRoomCategoriesAction =
+type ClosedNavCategoriesAction =
   | {
       type: 'PUT';
       categoryId: string;
@@ -30,13 +30,13 @@ type ClosedRoomCategoriesAction =
       categoryId: string;
     };
 
-export const closedRoomCategories = atom<Set<string>, [ClosedRoomCategoriesAction], undefined>(
-  (get) => get(baseClosedRoomCategories),
+export const closedNavCategories = atom<Set<string>, [ClosedNavCategoriesAction], undefined>(
+  (get) => get(baseClosedNavCategories),
   (get, set, action) => {
     if (action.type === 'DELETE') {
       set(
-        baseClosedRoomCategories,
-        produce(get(baseClosedRoomCategories), (draft) => {
+        baseClosedNavCategories,
+        produce(get(baseClosedNavCategories), (draft) => {
           draft.delete(action.categoryId);
         })
       );
@@ -44,8 +44,8 @@ export const closedRoomCategories = atom<Set<string>, [ClosedRoomCategoriesActio
     }
     if (action.type === 'PUT') {
       set(
-        baseClosedRoomCategories,
-        produce(get(baseClosedRoomCategories), (draft) => {
+        baseClosedNavCategories,
+        produce(get(baseClosedNavCategories), (draft) => {
           draft.add(action.categoryId);
         })
       );
@@ -53,4 +53,4 @@ export const closedRoomCategories = atom<Set<string>, [ClosedRoomCategoriesActio
   }
 );
 
-export const makeRoomCategoryId = (...args: string[]): string => args.join('|');
+export const makeNavCategoryId = (...args: string[]): string => args.join('|');

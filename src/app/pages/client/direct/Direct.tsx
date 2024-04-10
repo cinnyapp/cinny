@@ -28,7 +28,7 @@ import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected
 import { VirtualTile } from '../../../components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
-import { closedRoomCategories, makeRoomCategoryId } from '../../../state/closedRoomCategories';
+import { closedNavCategories, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 
 function DirectEmpty() {
@@ -58,7 +58,7 @@ function DirectEmpty() {
   );
 }
 
-const DEFAULT_CATEGORY_ID = makeRoomCategoryId('direct', 'direct');
+const DEFAULT_CATEGORY_ID = makeNavCategoryId('direct', 'direct');
 export function Direct() {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -71,7 +71,7 @@ export function Direct() {
   const selectedRoomId = useSelectedRoom();
   const createSelected = useDirectCreateSelected();
   const noRoomToDisplay = directs.length === 0;
-  const [closedCategories, setClosedCategory] = useAtom(closedRoomCategories);
+  const [closedCategories, setClosedCategory] = useAtom(closedNavCategories);
 
   const sortedDirects = useMemo(() => {
     const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));

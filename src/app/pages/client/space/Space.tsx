@@ -28,7 +28,7 @@ import { VirtualTile } from '../../../components/virtualizer';
 import { useSpaceHierarchy } from './useSpaceHierarchy';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
-import { closedRoomCategories, makeRoomCategoryId } from '../../../state/closedRoomCategories';
+import { closedNavCategories, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 
 export function Space() {
@@ -45,15 +45,15 @@ export function Space() {
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
-  const [closedCategories, setClosedCategory] = useAtom(closedRoomCategories);
+  const [closedCategories, setClosedCategory] = useAtom(closedNavCategories);
   const hierarchy = useSpaceHierarchy(
     space.roomId,
     useCallback(
       (spaceRoomId, directCategory) => {
         if (directCategory) {
-          return closedCategories.has(makeRoomCategoryId(space.roomId, spaceRoomId, 'direct'));
+          return closedCategories.has(makeNavCategoryId(space.roomId, spaceRoomId, 'direct'));
         }
-        return closedCategories.has(makeRoomCategoryId(space.roomId, spaceRoomId));
+        return closedCategories.has(makeNavCategoryId(space.roomId, spaceRoomId));
       },
       [space.roomId, closedCategories]
     ),
@@ -148,8 +148,8 @@ export function Space() {
                     const dmCategory = lastSpaceId === roomId;
                     lastSpaceId = roomId;
                     const categoryId = dmCategory
-                      ? makeRoomCategoryId(space.roomId, roomId, 'direct')
-                      : makeRoomCategoryId(space.roomId, roomId);
+                      ? makeNavCategoryId(space.roomId, roomId, 'direct')
+                      : makeNavCategoryId(space.roomId, roomId);
 
                     return (
                       <VirtualTile
