@@ -165,7 +165,7 @@ export function Direct() {
                           <RoomNavItem
                             room={room}
                             selected={selected}
-                            direct
+                            showAvatar
                             linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
                             muted={mutedRooms.includes(roomId)}
                           />

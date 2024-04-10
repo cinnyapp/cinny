@@ -195,7 +195,7 @@ export function Space() {
                       <RoomNavItem
                         room={room}
                         selected={selectedRoomId === roomId}
-                        direct={mDirects.has(roomId)}
+                        showAvatar={mDirects.has(roomId)}
                         linkPath={getToLink(roomId)}
                         muted={mutedRooms.includes(roomId)}
                       />

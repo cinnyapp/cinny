@@ -143,9 +143,9 @@ type RoomNavItemProps = {
   selected: boolean;
   linkPath: string;
   muted?: boolean;
-  direct?: boolean;
+  showAvatar?: boolean;
 };
-export function RoomNavItem({ room, selected, direct, muted, linkPath }: RoomNavItemProps) {
+export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: RoomNavItemProps) {
   const mx = useMatrixClient();
   const [hover, setHover] = useState(false);
   const { hoverProps } = useHover({ onHoverChange: setHover });
@@ -175,12 +175,12 @@ export function RoomNavItem({ room, selected, direct, muted, linkPath }: RoomNav
         <NavItemContent size="T300">
           <Box as="span" grow="Yes" alignItems="Center" gap="200">
             <Avatar size="200" radii="400">
-              {direct ? (
+              {showAvatar ? (
                 <RoomAvatar
                   variant="Secondary"
                   src={getRoomAvatarUrl(mx, room, 96)}
                   alt={room.name}
-                  renderInitials={() => <Text size="H6">{nameInitials(room.name)}</Text>}
+                  renderInitials={() => <Text size="L400">{nameInitials(room.name)}</Text>}
                 />
               ) : (
                 <RoomIcon

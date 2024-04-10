@@ -220,7 +220,6 @@ export function Home() {
                           <RoomNavItem
                             room={room}
                             selected={selected}
-                            direct={false}
                             linkPath={getHomeRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
                             muted={mutedRooms.includes(roomId)}
                           />
