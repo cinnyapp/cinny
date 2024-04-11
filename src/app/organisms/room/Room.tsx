@@ -17,6 +17,7 @@ import {
 } from '../../state/typingMembers';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
+import { JoinBeforeNavigate } from '../../features/join-before-navigate';
 
 export type RoomBaseViewProps = {
   room: Room;
@@ -51,11 +52,12 @@ export function RoomBaseView({ room, eventId }: RoomBaseViewProps) {
 
 export function RoomViewer() {
   const mx = useMatrixClient();
+  const { roomIdOrAlias } = useParams();
   const roomId = useSelectedRoom();
   const room = mx.getRoom(roomId);
   const { eventId } = useParams();
 
-  if (!room || !roomId) return <p>try joining this room</p>;
+  if (!room || !roomId) return <JoinBeforeNavigate roomIdOrAlias={roomIdOrAlias!} />;
 
   return <RoomBaseView room={room} eventId={eventId} />;
 }

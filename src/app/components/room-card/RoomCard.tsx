@@ -176,6 +176,7 @@ export const RoomCard = as<'div', RoomCardProps>(
         <Box gap="200" justifyContent="SpaceBetween">
           <Avatar size="500">
             <RoomAvatar
+              variant="Secondary"
               src={avatar ?? undefined}
               alt={roomIdOrAlias}
               renderInitials={() => (
