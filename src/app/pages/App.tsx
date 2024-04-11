@@ -40,7 +40,7 @@ import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 import { FeatureCheck } from './FeatureCheck';
 import { ClientLayout, ClientRoot } from './client';
 import { Home, HomeSearch } from './client/home';
-import { RoomViewer } from '../organisms/room/Room';
+import { RoomViewer } from '../features/room/Room';
 import { Direct } from './client/direct';
 import { RouteSpaceProvider, Space, SpaceIndexRedirect, SpaceSearch } from './client/space';
 import { Explore, ExploreRedirect, FeaturedRooms, PublicRooms } from './client/explore';

@@ -1519,7 +1519,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   };
 
   return (
-    <Box style={{ height: '100%', color: color.Surface.OnContainer }} grow="Yes">
+    <Box grow="Yes" style={{ position: 'relative' }}>
       {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && (
         <TimelineFloat position="Top">
           <Chip

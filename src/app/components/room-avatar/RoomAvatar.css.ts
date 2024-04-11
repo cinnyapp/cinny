@@ -8,6 +8,13 @@ const getVariant = (variant: ContainerColor): ComplexStyleRule => ({
 });
 
 export const RoomAvatar = recipe({
+  base: {
+    selectors: {
+      '&[data-image-loaded="true"]': {
+        backgroundColor: 'transparent',
+      },
+    },
+  },
   variants: {
     variant: {
       Background: getVariant('Background'),

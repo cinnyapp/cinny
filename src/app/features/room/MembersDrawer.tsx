@@ -35,7 +35,7 @@ import FocusTrap from 'focus-trap-react';
 import classNames from 'classnames';
 import { useAtomValue } from 'jotai';
 
-import { openInviteUser, openProfileViewer } from '../../../client/action/navigation';
+import { openProfileViewer } from '../../../client/action/navigation';
 import * as css from './MembersDrawer.css';
 import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -53,7 +53,7 @@ import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../st
 import { TypingIndicator } from '../../components/typing-indicator';
 import { getMemberDisplayName, getMemberSearchStr } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
-import { useSetting } from '../../state/hooks/settings';
+import { useSetSetting, useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { millify } from '../../plugins/millify';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
@@ -178,6 +178,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   const members = useRoomMembers(mx, room.roomId);
   const getPowerLevelTag = usePowerLevelTags();
   const fetchingMembers = members.length < room.getJoinedMemberCount();
+  const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
 
   const membershipFilterMenu = useMembershipFilterMenu();
   const sortFilterMenu = useSortFilterMenu();
@@ -251,11 +252,11 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   };
 
   return (
-    <Box className={css.MembersDrawer} direction="Column">
+    <Box className={css.MembersDrawer} shrink="No" direction="Column">
       <Header className={css.MembersDrawerHeader} variant="Background" size="600">
         <Box grow="Yes" alignItems="Center" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
-            <Text size="H5" truncate>
+            <Text title={`${room.getJoinedMemberCount()} Members`} size="H5" truncate>
               {`${millify(room.getJoinedMemberCount())} Members`}
             </Text>
           </Box>
@@ -266,7 +267,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
               offset={4}
               tooltip={
                 <Tooltip>
-                  <Text>Invite Member</Text>
+                  <Text>Close</Text>
                 </Tooltip>
               }
             >
@@ -274,9 +275,9 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                 <IconButton
                   ref={triggerRef}
                   variant="Background"
-                  onClick={() => openInviteUser(room.roomId)}
+                  onClick={() => setPeopleDrawer(false)}
                 >
-                  <Icon src={Icons.UserPlus} />
+                  <Icon src={Icons.Cross} />
                 </IconButton>
               )}
             </TooltipProvider>

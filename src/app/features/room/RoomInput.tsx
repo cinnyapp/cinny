@@ -109,12 +109,12 @@ import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 
 interface RoomInputProps {
   editor: Editor;
-  roomViewRef: RefObject<HTMLElement>;
+  fileDropContainerRef: RefObject<HTMLElement>;
   roomId: string;
   room: Room;
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
-  ({ editor, roomViewRef, roomId, room }, ref) => {
+  ({ editor, fileDropContainerRef, roomId, room }, ref) => {
     const mx = useMatrixClient();
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
@@ -170,7 +170,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
     const pickFile = useFilePicker(handleFiles, true);
     const handlePaste = useFilePasteHandler(handleFiles);
-    const dropZoneVisible = useFileDropZone(roomViewRef, handleFiles);
+    const dropZoneVisible = useFileDropZone(fileDropContainerRef, handleFiles);
     const [hideStickerBtn, setHideStickerBtn] = useState(document.body.clientWidth < 500);
 
     useElementSizeObserver(

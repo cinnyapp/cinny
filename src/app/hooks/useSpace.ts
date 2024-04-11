@@ -10,3 +10,8 @@ export function useSpace(): Room {
   if (!space) throw new Error('Space not provided!');
   return space;
 }
+
+export function useSpaceOptionally(): Room | null {
+  const space = useContext(SpaceContext);
+  return space;
+}
