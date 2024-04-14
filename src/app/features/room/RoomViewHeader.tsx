@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { MouseEventHandler, forwardRef, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Box,
@@ -12,8 +12,16 @@ import {
   Icons,
   Tooltip,
   TooltipProvider,
+  Menu,
+  MenuItem,
+  toRem,
+  config,
+  Line,
+  PopOut,
+  RectCords,
 } from 'folds';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Room } from 'matrix-js-sdk';
 
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { PageHeader } from '../../components/page';
@@ -28,16 +36,138 @@ import { useRoom } from '../../hooks/useRoom';
 import { useSetSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
-import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '../../pages/pathUtils';
+import {
+  getHomeSearchPath,
+  getOriginBaseUrl,
+  getSpaceSearchPath,
+  joinPathComponent,
+  withOriginBaseUrl,
+  withSearchParam,
+} from '../../pages/pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../utils/matrix';
 import { _SearchPathSearchParams } from '../../pages/paths';
 import * as css from './RoomViewHeader.css';
+import { useRoomUnread } from '../../state/hooks/unread';
+import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
+import { markAsRead } from '../../../client/action/notifications';
+import { roomToUnreadAtom } from '../../state/room/roomToUnread';
+import { openInviteUser } from '../../../client/action/navigation';
+import { copyToClipboard } from '../../utils/dom';
+
+type RoomMenuProps = {
+  room: Room;
+  linkPath: string;
+  requestClose: () => void;
+};
+const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(
+  ({ room, linkPath, requestClose }, ref) => {
+    const mx = useMatrixClient();
+    const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+    const { getPowerLevel, canDoAction } = usePowerLevelsAPI();
+    const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
+
+    const handleMarkAsRead = () => {
+      markAsRead(room.roomId);
+      requestClose();
+    };
+
+    const handleInvite = () => {
+      openInviteUser(room.roomId);
+      requestClose();
+    };
+
+    const handleCopyLink = () => {
+      copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(), linkPath));
+      requestClose();
+    };
+
+    const handleRoomSettings = () => {
+      alert('Work In Progress...');
+      requestClose();
+    };
+
+    const handleLeaveRoom = () => {
+      mx.leave(room.roomId);
+      requestClose();
+    };
+
+    return (
+      <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
+        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <MenuItem
+            onClick={handleMarkAsRead}
+            size="300"
+            after={<Icon size="100" src={Icons.CheckTwice} />}
+            radii="300"
+            disabled={!unread}
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Mark as Read
+            </Text>
+          </MenuItem>
+        </Box>
+        <Line variant="Surface" size="300" />
+        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <MenuItem
+            onClick={handleInvite}
+            variant="Primary"
+            fill="None"
+            size="300"
+            after={<Icon size="100" src={Icons.UserPlus} />}
+            radii="300"
+            disabled={!canInvite}
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Invite
+            </Text>
+          </MenuItem>
+          <MenuItem
+            onClick={handleCopyLink}
+            size="300"
+            after={<Icon size="100" src={Icons.Link} />}
+            radii="300"
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Copy Link
+            </Text>
+          </MenuItem>
+          <MenuItem
+            onClick={handleRoomSettings}
+            size="300"
+            after={<Icon size="100" src={Icons.Setting} />}
+            radii="300"
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Room Settings
+            </Text>
+          </MenuItem>
+        </Box>
+        <Line variant="Surface" size="300" />
+        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <MenuItem
+            onClick={handleLeaveRoom}
+            variant="Critical"
+            fill="None"
+            size="300"
+            after={<Icon size="100" src={Icons.ArrowGoLeft} />}
+            radii="300"
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Leave Room
+            </Text>
+          </MenuItem>
+        </Box>
+      </Menu>
+    );
+  }
+);
 
 export function RoomViewHeader() {
   const navigate = useNavigate();
   const mx = useMatrixClient();
   const room = useRoom();
   const space = useSpaceOptionally();
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const ecryptedRoom = !!encryptionEvent;
@@ -45,6 +175,8 @@ export function RoomViewHeader() {
   const topic = topicEvent?.getContent().topic as string | undefined | null;
 
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
+  const location = useLocation();
+  const currentPath = joinPathComponent(location);
 
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {
@@ -56,108 +188,137 @@ export function RoomViewHeader() {
     navigate(withSearchParam(path, searchParams));
   };
 
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
   return (
     <PageHeader>
-      <Box grow="Yes" alignItems="Center" gap="300">
-        <Avatar size="300">
-          <RoomAvatar
-            variant="Background"
-            src={getRoomAvatarUrl(mx, room, 96)}
-            alt={room.name}
-            renderInitials={() => <Text size="H5">{nameInitials(room.name)}</Text>}
-          />
-        </Avatar>
-        <Box direction="Column">
-          <Text size={topic ? 'H5' : 'H3'} truncate>
-            {room.name}
-          </Text>
-          {topic && (
-            <UseStateProvider initial={false}>
-              {(viewTopic, setViewTopic) => (
-                <>
-                  <Overlay open={viewTopic} backdrop={<OverlayBackdrop />}>
-                    <OverlayCenter>
-                      <FocusTrap
-                        focusTrapOptions={{
-                          initialFocus: false,
-                          clickOutsideDeactivates: true,
-                          onDeactivate: () => setViewTopic(false),
-                        }}
-                      >
-                        <RoomTopicViewer
-                          name={room.name}
-                          topic={topic}
-                          requestClose={() => setViewTopic(false)}
-                        />
-                      </FocusTrap>
-                    </OverlayCenter>
-                  </Overlay>
-                  <Text
-                    as="button"
-                    type="button"
-                    onClick={() => setViewTopic(true)}
-                    className={css.HeaderTopic}
-                    size="T200"
-                    priority="300"
-                    truncate
-                  >
-                    {topic}
-                  </Text>
-                </>
-              )}
-            </UseStateProvider>
-          )}
+      <Box grow="Yes" gap="300">
+        <Box grow="Yes" alignItems="Center" gap="300">
+          <Avatar size="300">
+            <RoomAvatar
+              variant="Background"
+              src={getRoomAvatarUrl(mx, room, 96)}
+              alt={room.name}
+              renderInitials={() => <Text size="H5">{nameInitials(room.name)}</Text>}
+            />
+          </Avatar>
+          <Box direction="Column">
+            <Text size={topic ? 'H5' : 'H3'} truncate>
+              {room.name}
+            </Text>
+            {topic && (
+              <UseStateProvider initial={false}>
+                {(viewTopic, setViewTopic) => (
+                  <>
+                    <Overlay open={viewTopic} backdrop={<OverlayBackdrop />}>
+                      <OverlayCenter>
+                        <FocusTrap
+                          focusTrapOptions={{
+                            initialFocus: false,
+                            clickOutsideDeactivates: true,
+                            onDeactivate: () => setViewTopic(false),
+                          }}
+                        >
+                          <RoomTopicViewer
+                            name={room.name}
+                            topic={topic}
+                            requestClose={() => setViewTopic(false)}
+                          />
+                        </FocusTrap>
+                      </OverlayCenter>
+                    </Overlay>
+                    <Text
+                      as="button"
+                      type="button"
+                      onClick={() => setViewTopic(true)}
+                      className={css.HeaderTopic}
+                      size="T200"
+                      priority="300"
+                      truncate
+                    >
+                      {topic}
+                    </Text>
+                  </>
+                )}
+              </UseStateProvider>
+            )}
+          </Box>
         </Box>
-      </Box>
-      <Box shrink="No">
-        {!ecryptedRoom && (
+        <Box shrink="No">
+          {!ecryptedRoom && (
+            <TooltipProvider
+              position="Bottom"
+              offset={4}
+              tooltip={
+                <Tooltip>
+                  <Text>Search</Text>
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => (
+                <IconButton ref={triggerRef} onClick={handleSearchClick}>
+                  <Icon size="400" src={Icons.Search} />
+                </IconButton>
+              )}
+            </TooltipProvider>
+          )}
           <TooltipProvider
             position="Bottom"
             offset={4}
             tooltip={
               <Tooltip>
-                <Text>Search</Text>
+                <Text>Members</Text>
               </Tooltip>
             }
           >
             {(triggerRef) => (
-              <IconButton ref={triggerRef} onClick={handleSearchClick}>
-                <Icon size="400" src={Icons.Search} />
+              <IconButton ref={triggerRef} onClick={() => setPeopleDrawer((drawer) => !drawer)}>
+                <Icon size="400" src={Icons.User} />
               </IconButton>
             )}
           </TooltipProvider>
-        )}
-        <TooltipProvider
-          position="Bottom"
-          offset={4}
-          tooltip={
-            <Tooltip>
-              <Text>Members</Text>
-            </Tooltip>
-          }
-        >
-          {(triggerRef) => (
-            <IconButton ref={triggerRef} onClick={() => setPeopleDrawer((drawer) => !drawer)}>
-              <Icon size="400" src={Icons.User} />
-            </IconButton>
-          )}
-        </TooltipProvider>
-        <TooltipProvider
-          position="Bottom"
-          align="End"
-          offset={4}
-          tooltip={
-            <Tooltip>
-              <Text>More Options</Text>
-            </Tooltip>
-          }
-        >
-          {(triggerRef) => (
-            <IconButton ref={triggerRef}>
-              <Icon size="400" src={Icons.VerticalDots} />
-            </IconButton>
-          )}
-        </TooltipProvider>
+          <TooltipProvider
+            position="Bottom"
+            align="End"
+            offset={4}
+            tooltip={
+              <Tooltip>
+                <Text>More Options</Text>
+              </Tooltip>
+            }
+          >
+            {(triggerRef) => (
+              <IconButton onClick={handleOpenMenu} ref={triggerRef} aria-pressed={!!menuAnchor}>
+                <Icon size="400" src={Icons.VerticalDots} filled={!!menuAnchor} />
+              </IconButton>
+            )}
+          </TooltipProvider>
+          <PopOut
+            anchor={menuAnchor}
+            position="Bottom"
+            align="End"
+            content={
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  returnFocusOnDeactivate: false,
+                  onDeactivate: () => setMenuAnchor(undefined),
+                  clickOutsideDeactivates: true,
+                  isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                  isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                }}
+              >
+                <RoomMenu
+                  room={room}
+                  linkPath={currentPath}
+                  requestClose={() => setMenuAnchor(undefined)}
+                />
+              </FocusTrap>
+            }
+          />
+        </Box>
       </Box>
     </PageHeader>
   );
