@@ -119,6 +119,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const commands = useCommands(mx, room);
+    const emojiBtnRef = useRef<HTMLButtonElement>(null);
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
@@ -521,7 +522,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     alignOffset={-44}
                     position="Top"
                     align="End"
-                    open={!!emojiBoardTab}
+                    anchor={
+                      emojiBoardTab === undefined
+                        ? undefined
+                        : emojiBtnRef.current?.getBoundingClientRect() ?? undefined
+                    }
                     content={
                       <EmojiBoard
                         tab={emojiBoardTab}
@@ -538,43 +543,37 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       />
                     }
                   >
-                    {(anchorRef) => (
-                      <>
-                        {!hideStickerBtn && (
-                          <IconButton
-                            aria-pressed={emojiBoardTab === EmojiBoardTab.Sticker}
-                            onClick={() => setEmojiBoardTab(EmojiBoardTab.Sticker)}
-                            variant="SurfaceVariant"
-                            size="300"
-                            radii="300"
-                          >
-                            <Icon
-                              src={Icons.Sticker}
-                              filled={emojiBoardTab === EmojiBoardTab.Sticker}
-                            />
-                          </IconButton>
-                        )}
-                        <IconButton
-                          ref={anchorRef}
-                          aria-pressed={
-                            hideStickerBtn ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
-                          }
-                          onClick={() => setEmojiBoardTab(EmojiBoardTab.Emoji)}
-                          variant="SurfaceVariant"
-                          size="300"
-                          radii="300"
-                        >
-                          <Icon
-                            src={Icons.Smile}
-                            filled={
-                              hideStickerBtn
-                                ? !!emojiBoardTab
-                                : emojiBoardTab === EmojiBoardTab.Emoji
-                            }
-                          />
-                        </IconButton>
-                      </>
+                    {!hideStickerBtn && (
+                      <IconButton
+                        aria-pressed={emojiBoardTab === EmojiBoardTab.Sticker}
+                        onClick={() => setEmojiBoardTab(EmojiBoardTab.Sticker)}
+                        variant="SurfaceVariant"
+                        size="300"
+                        radii="300"
+                      >
+                        <Icon
+                          src={Icons.Sticker}
+                          filled={emojiBoardTab === EmojiBoardTab.Sticker}
+                        />
+                      </IconButton>
                     )}
+                    <IconButton
+                      ref={emojiBtnRef}
+                      aria-pressed={
+                        hideStickerBtn ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
+                      }
+                      onClick={() => setEmojiBoardTab(EmojiBoardTab.Emoji)}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                    >
+                      <Icon
+                        src={Icons.Smile}
+                        filled={
+                          hideStickerBtn ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
+                        }
+                      />
+                    </IconButton>
                   </PopOut>
                 )}
               </UseStateProvider>

@@ -1,5 +1,24 @@
-import React, { KeyboardEventHandler, useCallback, useEffect, useState } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Line, PopOut, Spinner, Text, as, config } from 'folds';
+import React, {
+  KeyboardEventHandler,
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
+import {
+  Box,
+  Chip,
+  Icon,
+  IconButton,
+  Icons,
+  Line,
+  PopOut,
+  RectCords,
+  Spinner,
+  Text,
+  as,
+  config,
+} from 'folds';
 import { Editor, Transforms } from 'slate';
 import { ReactEditor } from 'slate-react';
 import { IContent, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
@@ -258,13 +277,13 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                   >
                     <Icon size="400" src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
                   </IconButton>
-                  <UseStateProvider initial={false}>
-                    {(emojiBoard: boolean, setEmojiBoard) => (
+                  <UseStateProvider initial={undefined}>
+                    {(anchor: RectCords | undefined, setAnchor) => (
                       <PopOut
+                        anchor={anchor}
                         alignOffset={-8}
                         position="Top"
                         align="End"
-                        open={!!emojiBoard}
                         content={
                           <EmojiBoard
                             imagePackRooms={imagePackRooms ?? []}
@@ -272,24 +291,26 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                             onEmojiSelect={handleEmoticonSelect}
                             onCustomEmojiSelect={handleEmoticonSelect}
                             requestClose={() => {
-                              setEmojiBoard(false);
+                              setAnchor(undefined);
                               if (!mobileOrTablet()) ReactEditor.focus(editor);
                             }}
                           />
                         }
                       >
-                        {(anchorRef) => (
-                          <IconButton
-                            ref={anchorRef}
-                            aria-pressed={emojiBoard}
-                            onClick={() => setEmojiBoard(true)}
-                            variant="SurfaceVariant"
-                            size="300"
-                            radii="300"
-                          >
-                            <Icon size="400" src={Icons.Smile} filled={emojiBoard} />
-                          </IconButton>
-                        )}
+                        <IconButton
+                          aria-pressed={anchor !== undefined}
+                          onClick={
+                            ((evt) =>
+                              setAnchor(
+                                evt.currentTarget.getBoundingClientRect()
+                              )) as MouseEventHandler<HTMLButtonElement>
+                          }
+                          variant="SurfaceVariant"
+                          size="300"
+                          radii="300"
+                        >
+                          <Icon size="400" src={Icons.Smile} filled={anchor !== undefined} />
+                        </IconButton>
                       </PopOut>
                     )}
                   </UseStateProvider>

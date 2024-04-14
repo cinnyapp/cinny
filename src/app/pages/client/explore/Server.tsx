@@ -19,6 +19,7 @@ import {
   Menu,
   MenuItem,
   PopOut,
+  RectCords,
   Scroll,
   Spinner,
   Text,
@@ -149,7 +150,7 @@ function ThirdPartyProtocolsSelector({
   onChange: (instanceId?: string) => void;
 }) {
   const mx = useMatrixClient();
-  const [menu, setMenu] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const { data } = useQuery({
     queryKey: ['thirdparty', 'protocols'],
@@ -159,7 +160,11 @@ function ThirdPartyProtocolsSelector({
   const handleInstanceSelect: MouseEventHandler<HTMLButtonElement> = (evt): void => {
     const insId = evt.currentTarget.getAttribute('data-instance-id') ?? undefined;
     onChange(insId);
-    setMenu(false);
+    setMenuAnchor(undefined);
+  };
+
+  const handleOpenMenu: MouseEventHandler<HTMLElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
   const instances = data && Object.keys(data).flatMap((protocol) => data[protocol].instances);
@@ -168,14 +173,14 @@ function ThirdPartyProtocolsSelector({
 
   return (
     <PopOut
-      open={menu}
+      anchor={menuAnchor}
       align="End"
       position="Bottom"
       content={
         <FocusTrap
           focusTrapOptions={{
             initialFocus: false,
-            onDeactivate: () => setMenu(false),
+            onDeactivate: () => setMenuAnchor(undefined),
             clickOutsideDeactivates: true,
           }}
         >
@@ -221,21 +226,18 @@ function ThirdPartyProtocolsSelector({
         </FocusTrap>
       }
     >
-      {(anchorRef) => (
-        <Chip
-          ref={anchorRef}
-          onClick={() => setMenu(!menu)}
-          aria-pressed={menu}
-          radii="Pill"
-          size="400"
-          variant={instanceId ? 'Success' : 'SurfaceVariant'}
-          after={<Icon size="100" src={Icons.ChevronBottom} />}
-        >
-          <Text size="T200" truncate>
-            {selectedInstance?.desc ?? DEFAULT_INSTANCE_NAME}
-          </Text>
-        </Chip>
-      )}
+      <Chip
+        onClick={handleOpenMenu}
+        aria-pressed={!!menuAnchor}
+        radii="Pill"
+        size="400"
+        variant={instanceId ? 'Success' : 'SurfaceVariant'}
+        after={<Icon size="100" src={Icons.ChevronBottom} />}
+      >
+        <Text size="T200" truncate>
+          {selectedInstance?.desc ?? DEFAULT_INSTANCE_NAME}
+        </Text>
+      </Chip>
     </PopOut>
   );
 }
@@ -245,7 +247,7 @@ type LimitButtonProps = {
   onLimitChange: (limit: string) => void;
 };
 function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
-  const [openLimit, setOpenLimit] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const handleLimitSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
@@ -257,20 +259,23 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
   };
 
   const setLimit = (l: string) => {
-    setOpenLimit(false);
+    setMenuAnchor(undefined);
     onLimitChange(l);
+  };
+  const handleOpenMenu: MouseEventHandler<HTMLElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
   return (
     <PopOut
-      open={openLimit}
+      anchor={menuAnchor}
       align="End"
       position="Bottom"
       content={
         <FocusTrap
           focusTrapOptions={{
             initialFocus: false,
-            onDeactivate: () => setOpenLimit(false),
+            onDeactivate: () => setMenuAnchor(undefined),
             clickOutsideDeactivates: true,
           }}
         >
@@ -315,19 +320,16 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
         </FocusTrap>
       }
     >
-      {(anchorRef) => (
-        <Chip
-          ref={anchorRef}
-          onClick={() => setOpenLimit(!openLimit)}
-          aria-pressed={openLimit}
-          radii="Pill"
-          size="400"
-          variant="SurfaceVariant"
-          after={<Icon size="100" src={Icons.ChevronBottom} />}
-        >
-          <Text size="T200" truncate>{`Page Limit: ${limit}`}</Text>
-        </Chip>
-      )}
+      <Chip
+        onClick={handleOpenMenu}
+        aria-pressed={!!menuAnchor}
+        radii="Pill"
+        size="400"
+        variant="SurfaceVariant"
+        after={<Icon size="100" src={Icons.ChevronBottom} />}
+      >
+        <Text size="T200" truncate>{`Page Limit: ${limit}`}</Text>
+      </Chip>
     </PopOut>
   );
 }

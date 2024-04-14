@@ -10,13 +10,14 @@ import {
   Line,
   Menu,
   PopOut,
+  RectCords,
   Scroll,
   Text,
   Tooltip,
   TooltipProvider,
   toRem,
 } from 'folds';
-import React, { ReactNode, useState } from 'react';
+import React, { MouseEventHandler, ReactNode, useState } from 'react';
 import { ReactEditor, useSlate } from 'slate-react';
 import {
   headingLevel,
@@ -119,26 +120,33 @@ export function BlockButton({ format, icon, tooltip }: BlockButtonProps) {
 export function HeadingBlockButton() {
   const editor = useSlate();
   const level = headingLevel(editor);
-  const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState<RectCords>();
   const isActive = isBlockActive(editor, BlockType.Heading);
   const modKey = isMacOS() ? KeySymbol.Command : 'Ctrl';
 
   const handleMenuSelect = (selectedLevel: HeadingLevel) => {
-    setOpen(false);
+    setAnchor(undefined);
     toggleBlock(editor, BlockType.Heading, { level: selectedLevel });
     ReactEditor.focus(editor);
   };
 
+  const handleMenuOpen: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    if (isActive) {
+      toggleBlock(editor, BlockType.Heading);
+      return;
+    }
+    setAnchor(evt.currentTarget.getBoundingClientRect());
+  };
   return (
     <PopOut
-      open={open}
+      anchor={anchor}
       offset={5}
       position="Top"
       content={
         <FocusTrap
           focusTrapOptions={{
             initialFocus: false,
-            onDeactivate: () => setOpen(false),
+            onDeactivate: () => setAnchor(undefined),
             clickOutsideDeactivates: true,
             isKeyForward: (evt: KeyboardEvent) =>
               evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
@@ -197,20 +205,17 @@ export function HeadingBlockButton() {
         </FocusTrap>
       }
     >
-      {(ref) => (
-        <IconButton
-          style={{ width: 'unset' }}
-          ref={ref}
-          variant="SurfaceVariant"
-          onClick={() => (isActive ? toggleBlock(editor, BlockType.Heading) : setOpen(!open))}
-          aria-pressed={isActive}
-          size="400"
-          radii="300"
-        >
-          <Icon size="200" src={level ? Icons[`Heading${level}`] : Icons.Heading1} />
-          <Icon size="200" src={isActive ? Icons.Cross : Icons.ChevronBottom} />
-        </IconButton>
-      )}
+      <IconButton
+        style={{ width: 'unset' }}
+        variant="SurfaceVariant"
+        onClick={handleMenuOpen}
+        aria-pressed={isActive}
+        size="400"
+        radii="300"
+      >
+        <Icon size="200" src={level ? Icons[`Heading${level}`] : Icons.Heading1} />
+        <Icon size="200" src={isActive ? Icons.Cross : Icons.ChevronBottom} />
+      </IconButton>
     </PopOut>
   );
 }

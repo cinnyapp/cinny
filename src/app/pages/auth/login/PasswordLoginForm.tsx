@@ -1,4 +1,4 @@
-import React, { FormEventHandler, useCallback, useState } from 'react';
+import React, { FormEventHandler, MouseEventHandler, useCallback, useState } from 'react';
 import {
   Box,
   Button,
@@ -12,6 +12,7 @@ import {
   OverlayBackdrop,
   OverlayCenter,
   PopOut,
+  RectCords,
   Spinner,
   Text,
   config,
@@ -37,17 +38,21 @@ import { FieldError } from '../FiledError';
 import { getResetPasswordPath } from '../../pathUtils';
 
 function UsernameHint({ server }: { server: string }) {
-  const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState<RectCords>();
+
+  const handleOpenMenu: MouseEventHandler<HTMLElement> = (evt) => {
+    setAnchor(evt.currentTarget.getBoundingClientRect());
+  };
   return (
     <PopOut
-      open={open}
+      anchor={anchor}
       position="Top"
       align="End"
       content={
         <FocusTrap
           focusTrapOptions={{
             initialFocus: false,
-            onDeactivate: () => setOpen(false),
+            onDeactivate: () => setAnchor(undefined),
             clickOutsideDeactivates: true,
           }}
         >
@@ -84,20 +89,17 @@ function UsernameHint({ server }: { server: string }) {
         </FocusTrap>
       }
     >
-      {(targetRef) => (
-        <IconButton
-          tabIndex={-1}
-          onClick={() => setOpen(true)}
-          ref={targetRef}
-          type="button"
-          variant="Background"
-          size="300"
-          radii="300"
-          aria-pressed={open}
-        >
-          <Icon style={{ opacity: config.opacity.P300 }} size="100" src={Icons.Info} />
-        </IconButton>
-      )}
+      <IconButton
+        tabIndex={-1}
+        onClick={handleOpenMenu}
+        type="button"
+        variant="Background"
+        size="300"
+        radii="300"
+        aria-pressed={!!anchor}
+      >
+        <Icon style={{ opacity: config.opacity.P300 }} size="100" src={Icons.Info} />
+      </IconButton>
     </PopOut>
   );
 }

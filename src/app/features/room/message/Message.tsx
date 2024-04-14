@@ -18,6 +18,7 @@ import {
   OverlayBackdrop,
   OverlayCenter,
   PopOut,
+  RectCords,
   Spinner,
   Text,
   as,
@@ -610,8 +611,8 @@ export const Message = as<'div', MessageProps>(
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
     const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
-    const [menu, setMenu] = useState(false);
-    const [emojiBoard, setEmojiBoard] = useState(false);
+    const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+    const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
 
     const senderDisplayName =
       getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
@@ -706,11 +707,36 @@ export const Message = as<'div', MessageProps>(
       const tag = (evt.target as any).tagName;
       if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
       evt.preventDefault();
-      setMenu(true);
+      setMenuAnchor({
+        x: evt.clientX,
+        y: evt.clientY,
+        width: 0,
+        height: 0,
+      });
+    };
+
+    const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+      const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
+      setMenuAnchor(target.getBoundingClientRect());
     };
 
     const closeMenu = () => {
-      setMenu(false);
+      setMenuAnchor(undefined);
+    };
+
+    const handleOpenEmojiBoard: MouseEventHandler<HTMLButtonElement> = (evt) => {
+      const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
+      setEmojiBoardAnchor(target.getBoundingClientRect());
+    };
+    const handleAddReactions: MouseEventHandler<HTMLButtonElement> = () => {
+      const rect = menuAnchor;
+      closeMenu();
+      // open it with timeout because closeMenu
+      // FocusTrap will return focus from emojiBoard
+
+      setTimeout(() => {
+        setEmojiBoardAnchor(rect);
+      }, 100);
     };
 
     return (
@@ -720,22 +746,22 @@ export const Message = as<'div', MessageProps>(
         space={messageSpacing}
         collapse={collapse}
         highlight={highlight}
-        selected={menu || emojiBoard}
+        selected={!!menuAnchor || !!emojiBoardAnchor}
         {...props}
         {...hoverProps}
         {...focusWithinProps}
         ref={ref}
       >
-        {!edit && (hover || menu || emojiBoard) && (
+        {!edit && (hover || !!menuAnchor || !!emojiBoardAnchor) && (
           <div className={css.MessageOptionsBase}>
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
               <Box gap="100">
                 {canSendReaction && (
                   <PopOut
-                    alignOffset={-65}
                     position="Bottom"
-                    align="End"
-                    open={emojiBoard}
+                    align={emojiBoardAnchor?.width === 0 ? 'Start' : 'End'}
+                    offset={emojiBoardAnchor?.width === 0 ? 0 : undefined}
+                    anchor={emojiBoardAnchor}
                     content={
                       <EmojiBoard
                         imagePackRooms={imagePackRooms ?? []}
@@ -743,30 +769,27 @@ export const Message = as<'div', MessageProps>(
                         allowTextCustomEmoji
                         onEmojiSelect={(key) => {
                           onReactionToggle(mEvent.getId()!, key);
-                          setEmojiBoard(false);
+                          setEmojiBoardAnchor(undefined);
                         }}
                         onCustomEmojiSelect={(mxc, shortcode) => {
                           onReactionToggle(mEvent.getId()!, mxc, shortcode);
-                          setEmojiBoard(false);
+                          setEmojiBoardAnchor(undefined);
                         }}
                         requestClose={() => {
-                          setEmojiBoard(false);
+                          setEmojiBoardAnchor(undefined);
                         }}
                       />
                     }
                   >
-                    {(anchorRef) => (
-                      <IconButton
-                        ref={anchorRef}
-                        onClick={() => setEmojiBoard(true)}
-                        variant="SurfaceVariant"
-                        size="300"
-                        radii="300"
-                        aria-pressed={emojiBoard}
-                      >
-                        <Icon src={Icons.SmilePlus} size="100" />
-                      </IconButton>
-                    )}
+                    <IconButton
+                      onClick={handleOpenEmojiBoard}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                      aria-pressed={!!emojiBoardAnchor}
+                    >
+                      <Icon src={Icons.SmilePlus} size="100" />
+                    </IconButton>
                   </PopOut>
                 )}
                 <IconButton
@@ -789,15 +812,15 @@ export const Message = as<'div', MessageProps>(
                   </IconButton>
                 )}
                 <PopOut
-                  open={menu}
-                  alignOffset={-5}
+                  anchor={menuAnchor}
                   position="Bottom"
-                  align="End"
+                  align={menuAnchor?.width === 0 ? 'Start' : 'End'}
+                  offset={menuAnchor?.width === 0 ? 0 : undefined}
                   content={
                     <FocusTrap
                       focusTrapOptions={{
                         initialFocus: false,
-                        onDeactivate: () => setMenu(false),
+                        onDeactivate: () => setMenuAnchor(undefined),
                         clickOutsideDeactivates: true,
                         isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                         isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
@@ -818,12 +841,7 @@ export const Message = as<'div', MessageProps>(
                               size="300"
                               after={<Icon size="100" src={Icons.SmilePlus} />}
                               radii="300"
-                              onClick={() => {
-                                closeMenu();
-                                // open it with timeout because closeMenu
-                                // FocusTrap will return focus from emojiBoard
-                                setTimeout(() => setEmojiBoard(true), 100);
-                              }}
+                              onClick={handleAddReactions}
                             >
                               <Text
                                 className={css.MessageMenuItemText}
@@ -915,18 +933,15 @@ export const Message = as<'div', MessageProps>(
                     </FocusTrap>
                   }
                 >
-                  {(targetRef) => (
-                    <IconButton
-                      ref={targetRef}
-                      variant="SurfaceVariant"
-                      size="300"
-                      radii="300"
-                      onClick={() => setMenu((v) => !v)}
-                      aria-pressed={menu}
-                    >
-                      <Icon src={Icons.VerticalDots} size="100" />
-                    </IconButton>
-                  )}
+                  <IconButton
+                    variant="SurfaceVariant"
+                    size="300"
+                    radii="300"
+                    onClick={handleOpenMenu}
+                    aria-pressed={!!menuAnchor}
+                  >
+                    <Icon src={Icons.VerticalDots} size="100" />
+                  </IconButton>
                 </PopOut>
               </Box>
             </Menu>
@@ -967,7 +982,7 @@ export const Event = as<'div', EventProps>(
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
     const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
-    const [menu, setMenu] = useState(false);
+    const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const stateEvent = typeof mEvent.getStateKey() === 'string';
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
@@ -975,11 +990,21 @@ export const Event = as<'div', EventProps>(
       const tag = (evt.target as any).tagName;
       if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
       evt.preventDefault();
-      setMenu(true);
+      setMenuAnchor({
+        x: evt.clientX,
+        y: evt.clientY,
+        width: 0,
+        height: 0,
+      });
+    };
+
+    const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+      const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
+      setMenuAnchor(target.getBoundingClientRect());
     };
 
     const closeMenu = () => {
-      setMenu(false);
+      setMenuAnchor(undefined);
     };
 
     return (
@@ -989,26 +1014,26 @@ export const Event = as<'div', EventProps>(
         space={messageSpacing}
         autoCollapse
         highlight={highlight}
-        selected={menu}
+        selected={!!menuAnchor}
         {...props}
         {...hoverProps}
         {...focusWithinProps}
         ref={ref}
       >
-        {(hover || menu) && (
+        {(hover || !!menuAnchor) && (
           <div className={css.MessageOptionsBase}>
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
               <Box gap="100">
                 <PopOut
-                  open={menu}
-                  alignOffset={-5}
+                  anchor={menuAnchor}
                   position="Bottom"
-                  align="End"
+                  align={menuAnchor?.width === 0 ? 'Start' : 'End'}
+                  offset={menuAnchor?.width === 0 ? 0 : undefined}
                   content={
                     <FocusTrap
                       focusTrapOptions={{
                         initialFocus: false,
-                        onDeactivate: () => setMenu(false),
+                        onDeactivate: () => setMenuAnchor(undefined),
                         clickOutsideDeactivates: true,
                         isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                         isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
@@ -1049,18 +1074,15 @@ export const Event = as<'div', EventProps>(
                     </FocusTrap>
                   }
                 >
-                  {(targetRef) => (
-                    <IconButton
-                      ref={targetRef}
-                      variant="SurfaceVariant"
-                      size="300"
-                      radii="300"
-                      onClick={() => setMenu((v) => !v)}
-                      aria-pressed={menu}
-                    >
-                      <Icon src={Icons.VerticalDots} size="100" />
-                    </IconButton>
-                  )}
+                  <IconButton
+                    variant="SurfaceVariant"
+                    size="300"
+                    radii="300"
+                    onClick={handleOpenMenu}
+                    aria-pressed={!!menuAnchor}
+                  >
+                    <Icon src={Icons.VerticalDots} size="100" />
+                  </IconButton>
                 </PopOut>
               </Box>
             </Menu>

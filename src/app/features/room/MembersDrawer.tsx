@@ -22,6 +22,7 @@ import {
   Menu,
   MenuItem,
   PopOut,
+  RectCords,
   Scroll,
   Spinner,
   Text,
@@ -289,10 +290,10 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
           <Box className={css.MemberDrawerContent} direction="Column" gap="200">
             <Box ref={scrollTopAnchorRef} className={css.DrawerGroup} direction="Column" gap="200">
               <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
-                <UseStateProvider initial={false}>
-                  {(open, setOpen) => (
+                <UseStateProvider initial={undefined}>
+                  {(anchor: RectCords | undefined, setAnchor) => (
                     <PopOut
-                      open={open}
+                      anchor={anchor}
                       position="Bottom"
                       align="Start"
                       offset={4}
@@ -300,7 +301,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         <FocusTrap
                           focusTrapOptions={{
                             initialFocus: false,
-                            onDeactivate: () => setOpen(false),
+                            onDeactivate: () => setAnchor(undefined),
                             clickOutsideDeactivates: true,
                             isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
@@ -319,7 +320,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                                 radii="300"
                                 onClick={() => {
                                   setMembershipFilterIndex(index);
-                                  setOpen(false);
+                                  setAnchor(undefined);
                                 }}
                               >
                                 <Text>{menuItem.name}</Text>
@@ -329,25 +330,27 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         </FocusTrap>
                       }
                     >
-                      {(anchorRef) => (
-                        <Chip
-                          ref={anchorRef}
-                          onClick={() => setOpen(!open)}
-                          variant={membershipFilter.color}
-                          size="400"
-                          radii="300"
-                          before={<Icon src={Icons.Filter} size="50" />}
-                        >
-                          <Text size="T200">{membershipFilter.name}</Text>
-                        </Chip>
-                      )}
+                      <Chip
+                        onClick={
+                          ((evt) =>
+                            setAnchor(
+                              evt.currentTarget.getBoundingClientRect()
+                            )) as MouseEventHandler<HTMLButtonElement>
+                        }
+                        variant={membershipFilter.color}
+                        size="400"
+                        radii="300"
+                        before={<Icon src={Icons.Filter} size="50" />}
+                      >
+                        <Text size="T200">{membershipFilter.name}</Text>
+                      </Chip>
                     </PopOut>
                   )}
                 </UseStateProvider>
-                <UseStateProvider initial={false}>
-                  {(open, setOpen) => (
+                <UseStateProvider initial={undefined}>
+                  {(anchor: RectCords | undefined, setAnchor) => (
                     <PopOut
-                      open={open}
+                      anchor={anchor}
                       position="Bottom"
                       align="End"
                       offset={4}
@@ -355,7 +358,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         <FocusTrap
                           focusTrapOptions={{
                             initialFocus: false,
-                            onDeactivate: () => setOpen(false),
+                            onDeactivate: () => setAnchor(undefined),
                             clickOutsideDeactivates: true,
                             isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
@@ -370,7 +373,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                                 radii="300"
                                 onClick={() => {
                                   setSortFilterIndex(index);
-                                  setOpen(false);
+                                  setAnchor(undefined);
                                 }}
                               >
                                 <Text>{menuItem.name}</Text>
@@ -380,18 +383,20 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         </FocusTrap>
                       }
                     >
-                      {(anchorRef) => (
-                        <Chip
-                          ref={anchorRef}
-                          onClick={() => setOpen(!open)}
-                          variant="Background"
-                          size="400"
-                          radii="300"
-                          after={<Icon src={Icons.Sort} size="50" />}
-                        >
-                          <Text size="T200">{sortFilter.name}</Text>
-                        </Chip>
-                      )}
+                      <Chip
+                        onClick={
+                          ((evt) =>
+                            setAnchor(
+                              evt.currentTarget.getBoundingClientRect()
+                            )) as MouseEventHandler<HTMLButtonElement>
+                        }
+                        variant="Background"
+                        size="400"
+                        radii="300"
+                        after={<Icon src={Icons.Sort} size="50" />}
+                      >
+                        <Text size="T200">{sortFilter.name}</Text>
+                      </Chip>
                     </PopOut>
                   )}
                 </UseStateProvider>

@@ -13,6 +13,7 @@ import {
   PopOut,
   toRem,
   Line,
+  RectCords,
 } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
 import FocusTrap from 'focus-trap-react';
@@ -150,15 +151,24 @@ export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: Roo
   const [hover, setHover] = useState(false);
   const { hoverProps } = useHover({ onHoverChange: setHover });
   const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
-  const [menu, setMenu] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
 
   const handleContextMenu: MouseEventHandler<HTMLElement> = (evt) => {
     evt.preventDefault();
-    setMenu(true);
+    setMenuAnchor({
+      x: evt.clientX,
+      y: evt.clientY,
+      width: 0,
+      height: 0,
+    });
   };
 
-  const optionsVisible = hover || menu;
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const optionsVisible = hover || !!menuAnchor;
 
   return (
     <NavItem
@@ -166,7 +176,7 @@ export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: Roo
       radii="400"
       highlight={unread !== undefined || selected}
       aria-selected={selected}
-      data-hover={menu}
+      data-hover={!!menuAnchor}
       onContextMenu={handleContextMenu}
       {...hoverProps}
       {...focusWithinProps}
@@ -208,16 +218,17 @@ export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: Roo
       {optionsVisible && (
         <NavItemOptions>
           <PopOut
-            open={menu}
-            alignOffset={-5}
+            anchor={menuAnchor}
+            offset={menuAnchor?.width === 0 ? 0 : undefined}
+            alignOffset={menuAnchor?.width === 0 ? 0 : -5}
             position="Bottom"
-            align="End"
+            align={menuAnchor?.width === 0 ? 'Start' : 'End'}
             content={
               <FocusTrap
                 focusTrapOptions={{
                   initialFocus: false,
                   returnFocusOnDeactivate: false,
-                  onDeactivate: () => setMenu(false),
+                  onDeactivate: () => setMenuAnchor(undefined),
                   clickOutsideDeactivates: true,
                   isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                   isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
@@ -226,24 +237,21 @@ export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: Roo
                 <RoomNavItemMenu
                   room={room}
                   linkPath={linkPath}
-                  requestClose={() => setMenu(false)}
+                  requestClose={() => setMenuAnchor(undefined)}
                 />
               </FocusTrap>
             }
           >
-            {(anchorRef) => (
-              <IconButton
-                ref={anchorRef}
-                onClick={() => setMenu(true)}
-                aria-pressed={menu}
-                variant="Background"
-                fill="None"
-                size="300"
-                radii="300"
-              >
-                <Icon size="50" src={Icons.VerticalDots} />
-              </IconButton>
-            )}
+            <IconButton
+              onClick={handleOpenMenu}
+              aria-pressed={!!menuAnchor}
+              variant="Background"
+              fill="None"
+              size="300"
+              radii="300"
+            >
+              <Icon size="50" src={Icons.VerticalDots} />
+            </IconButton>
           </PopOut>
         </NavItemOptions>
       )}

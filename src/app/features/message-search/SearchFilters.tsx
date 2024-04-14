@@ -23,6 +23,7 @@ import {
   Button,
   Input,
   Badge,
+  RectCords,
 } from 'folds';
 import { SearchOrderBy } from 'matrix-js-sdk';
 import FocusTrap from 'focus-trap-react';
@@ -43,24 +44,27 @@ type OrderButtonProps = {
   onChange: (order?: string) => void;
 };
 function OrderButton({ order, onChange }: OrderButtonProps) {
-  const [menu, setMenu] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const rankOrder = order === SearchOrderBy.Rank;
 
   const setOrder = (o?: string) => {
-    setMenu(false);
+    setMenuAnchor(undefined);
     onChange(o);
+  };
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
   return (
     <PopOut
-      open={menu}
+      anchor={menuAnchor}
       align="End"
       position="Bottom"
       content={
         <FocusTrap
           focusTrapOptions={{
             initialFocus: false,
-            onDeactivate: () => setMenu(false),
+            onDeactivate: () => setMenuAnchor(undefined),
             clickOutsideDeactivates: true,
           }}
         >
@@ -93,17 +97,14 @@ function OrderButton({ order, onChange }: OrderButtonProps) {
         </FocusTrap>
       }
     >
-      {(anchorRef) => (
-        <Chip
-          ref={anchorRef}
-          variant="SurfaceVariant"
-          radii="Pill"
-          after={<Icon size="50" src={Icons.Sort} />}
-          onClick={() => setMenu(true)}
-        >
-          {rankOrder ? <Text size="T200">Relevance</Text> : <Text size="T200">Recent</Text>}
-        </Chip>
-      )}
+      <Chip
+        variant="SurfaceVariant"
+        radii="Pill"
+        after={<Icon size="50" src={Icons.Sort} />}
+        onClick={handleOpenMenu}
+      >
+        {rankOrder ? <Text size="T200">Relevance</Text> : <Text size="T200">Recent</Text>}
+      </Chip>
     </PopOut>
   );
 }
@@ -126,7 +127,7 @@ type SelectRoomButtonProps = {
 function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButtonProps) {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [menu, setMenu] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [localSelected, setLocalSelected] = useState(selectedRooms);
 
   const getRoomNameStr: SearchItemStrGetter<string> = useCallback(
@@ -172,30 +173,34 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
   };
 
   const handleSave = () => {
-    setMenu(false);
+    setMenuAnchor(undefined);
     onChange(localSelected);
   };
 
   const handleDeselectAll = () => {
-    setMenu(false);
+    setMenuAnchor(undefined);
     onChange(undefined);
   };
 
   useEffect(() => {
     setLocalSelected(selectedRooms);
     resetSearch();
-  }, [menu, selectedRooms, resetSearch]);
+  }, [menuAnchor, selectedRooms, resetSearch]);
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
 
   return (
     <PopOut
-      open={menu}
+      anchor={menuAnchor}
       align="Center"
       position="Bottom"
       content={
         <FocusTrap
           focusTrapOptions={{
             initialFocus: false,
-            onDeactivate: () => setMenu(false),
+            onDeactivate: () => setMenuAnchor(undefined),
             clickOutsideDeactivates: true,
           }}
         >
@@ -307,17 +312,14 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
         </FocusTrap>
       }
     >
-      {(anchorRef) => (
-        <Chip
-          onClick={() => setMenu(true)}
-          ref={anchorRef}
-          variant="SurfaceVariant"
-          radii="Pill"
-          before={<Icon size="100" src={Icons.PlusCircle} />}
-        >
-          <Text size="T200">Select Rooms</Text>
-        </Chip>
-      )}
+      <Chip
+        onClick={handleOpenMenu}
+        variant="SurfaceVariant"
+        radii="Pill"
+        before={<Icon size="100" src={Icons.PlusCircle} />}
+      >
+        <Text size="T200">Select Rooms</Text>
+      </Chip>
     </PopOut>
   );
 }
