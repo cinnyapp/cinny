@@ -158,15 +158,17 @@ export function Space() {
                           style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}
                         >
                           {dmCategory ? (
-                            <RoomNavCategoryButton
-                              data-category-id={categoryId}
-                              onClick={handleCategoryClick}
-                              closed={closedCategories.has(categoryId)}
-                            >
-                              {room?.roomId === space.roomId
-                                ? 'Direct Messages'
-                                : `Direct Messages - ${room.name}`}
-                            </RoomNavCategoryButton>
+                            <NavCategoryHeader>
+                              <RoomNavCategoryButton
+                                data-category-id={categoryId}
+                                onClick={handleCategoryClick}
+                                closed={closedCategories.has(categoryId)}
+                              >
+                                {room?.roomId === space.roomId
+                                  ? 'Direct Messages'
+                                  : `Direct Messages - ${room.name}`}
+                              </RoomNavCategoryButton>
+                            </NavCategoryHeader>
                           ) : (
                             <NavCategoryHeader>
                               <RoomNavCategoryButton

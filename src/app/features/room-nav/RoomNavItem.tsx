@@ -190,7 +190,11 @@ export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: Roo
                   variant="Secondary"
                   src={getRoomAvatarUrl(mx, room, 96)}
                   alt={room.name}
-                  renderInitials={() => <Text size="L400">{nameInitials(room.name)}</Text>}
+                  renderInitials={() => (
+                    <Text as="span" size="L400">
+                      {nameInitials(room.name)}
+                    </Text>
+                  )}
                 />
               ) : (
                 <RoomIcon

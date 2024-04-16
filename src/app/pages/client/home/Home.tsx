@@ -6,7 +6,7 @@ import { useAtomValue } from 'jotai';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import { factoryRoomIdByAtoZ } from '../../../utils/sort';
+import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
   NavCategory,
@@ -100,7 +100,11 @@ export function Home() {
   const closedCategories = useAtomValue(closedNavCategoriesAtom);
 
   const sortedRooms = useMemo(() => {
-    const items = Array.from(rooms).sort(factoryRoomIdByAtoZ(mx));
+    const items = Array.from(rooms).sort(
+      closedCategories.has(DEFAULT_CATEGORY_ID)
+        ? factoryRoomIdByActivity(mx)
+        : factoryRoomIdByAtoZ(mx)
+    );
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
       return items.filter((rId) => roomToUnread.has(rId));
     }

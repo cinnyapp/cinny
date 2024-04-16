@@ -8,7 +8,10 @@ export const factoryRoomIdByActivity =
     const room1 = mx.getRoom(a);
     const room2 = mx.getRoom(b);
 
-    return (room2?.getLastActiveTimestamp() ?? 0) - (room1?.getLastActiveTimestamp() ?? 0);
+    return (
+      (room2?.getLastActiveTimestamp() ?? Number.MIN_SAFE_INTEGER) -
+      (room1?.getLastActiveTimestamp() ?? Number.MIN_SAFE_INTEGER)
+    );
   };
 
 export const factoryRoomIdByAtoZ =
