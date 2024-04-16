@@ -106,10 +106,10 @@ export function Home() {
         : factoryRoomIdByAtoZ(mx)
     );
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
-      return items.filter((rId) => roomToUnread.has(rId));
+      return items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
     }
     return items;
-  }, [mx, rooms, closedCategories, roomToUnread]);
+  }, [mx, rooms, closedCategories, roomToUnread, selectedRoomId]);
 
   const virtualizer = useVirtualizer({
     count: sortedRooms.length,

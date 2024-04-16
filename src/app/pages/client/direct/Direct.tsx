@@ -79,10 +79,10 @@ export function Direct() {
   const sortedDirects = useMemo(() => {
     const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
-      return items.filter((rId) => roomToUnread.has(rId));
+      return items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
     }
     return items;
-  }, [mx, directs, closedCategories, roomToUnread]);
+  }, [mx, directs, closedCategories, roomToUnread, selectedRoomId]);
 
   const virtualizer = useVirtualizer({
     count: sortedDirects.length,
