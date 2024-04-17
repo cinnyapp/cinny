@@ -1,11 +1,12 @@
 import { Room } from 'matrix-js-sdk';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useStateEventCallback } from './useStateEventCallback';
+import { useForceUpdate } from './useForceUpdate';
 import { getStateEvent } from '../utils/room';
 import { StateEvent } from '../../types/matrix/room';
 
 export const useStateEvent = (room: Room, eventType: StateEvent, stateKey = '') => {
-  const [stateEvent, setStateEvent] = useState(() => getStateEvent(room, eventType, stateKey));
+  const [updateCount, forceUpdate] = useForceUpdate();
 
   useStateEventCallback(
     room.client,
@@ -16,12 +17,16 @@ export const useStateEvent = (room: Room, eventType: StateEvent, stateKey = '') 
           event.getType() === eventType &&
           event.getStateKey() === stateKey
         ) {
-          setStateEvent(getStateEvent(room, eventType, stateKey));
+          forceUpdate();
         }
       },
-      [room, eventType, stateKey]
+      [room, eventType, stateKey, forceUpdate]
     )
   );
 
-  return stateEvent;
+  return useMemo(
+    () => getStateEvent(room, eventType, stateKey),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [room, eventType, stateKey, updateCount]
+  );
 };
