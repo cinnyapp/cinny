@@ -22,5 +22,9 @@ export function SpaceRouteRoomProvider({ children }: { children: ReactNode }) {
     return <JoinBeforeNavigate roomIdOrAlias={roomIdOrAlias!} />;
   }
 
-  return <RoomProvider value={room}>{children}</RoomProvider>;
+  return (
+    <RoomProvider key={room.roomId} value={room}>
+      {children}
+    </RoomProvider>
+  );
 }
