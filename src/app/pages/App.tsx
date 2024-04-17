@@ -39,13 +39,19 @@ import { getAbsolutePathFromHref, getHomePath, getLoginPath, getOriginBaseUrl } 
 import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 import { FeatureCheck } from './FeatureCheck';
 import { ClientLayout, ClientRoot } from './client';
-import { Home, HomeSearch } from './client/home';
-import { RoomViewer } from '../features/room/Room';
-import { Direct } from './client/direct';
-import { RouteSpaceProvider, Space, SpaceIndexRedirect, SpaceSearch } from './client/space';
+import { Home, HomeRouteRoomProvider, HomeSearch } from './client/home';
+import { Direct, DirectRouteRoomProvider } from './client/direct';
+import {
+  RouteSpaceProvider,
+  Space,
+  SpaceIndexRedirect,
+  SpaceRouteRoomProvider,
+  SpaceSearch,
+} from './client/space';
 import { Explore, ExploreRedirect, FeaturedRooms, PublicRooms } from './client/explore';
 import { Notifications, Inbox, InboxRedirect, Invites } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
+import { Room } from '../features/room';
 
 const queryClient = new QueryClient();
 
@@ -90,19 +96,40 @@ const createRouter = (clientConfig: ClientConfig) => {
             <Route path={_CREATE_PATH} element={<p>create</p>} />
             <Route path={_JOIN_PATH} element={<p>join</p>} />
             <Route path={_SEARCH_PATH} element={<HomeSearch />} />
-            <Route path={_ROOM_PATH} element={<RoomViewer />} />
+            <Route
+              path={_ROOM_PATH}
+              element={
+                <HomeRouteRoomProvider>
+                  <Room />
+                </HomeRouteRoomProvider>
+              }
+            />
           </Route>
           <Route path={DIRECT_PATH} element={<Direct />}>
             <Route index element={<p>welcome</p>} />
             <Route path={_CREATE_PATH} element={<p>create</p>} />
-            <Route path={_ROOM_PATH} element={<RoomViewer />} />
+            <Route
+              path={_ROOM_PATH}
+              element={
+                <DirectRouteRoomProvider>
+                  <Room />
+                </DirectRouteRoomProvider>
+              }
+            />
           </Route>
           <Route path={SPACE_PATH} element={<RouteSpaceProvider />}>
             <Route element={<Space />}>
               <Route index element={<SpaceIndexRedirect />} />
               <Route path={_LOBBY_PATH} element={<p>lobby</p>} />
               <Route path={_SEARCH_PATH} element={<SpaceSearch />} />
-              <Route path={_ROOM_PATH} element={<RoomViewer />} />
+              <Route
+                path={_ROOM_PATH}
+                element={
+                  <SpaceRouteRoomProvider>
+                    <Room />
+                  </SpaceRouteRoomProvider>
+                }
+              />
             </Route>
           </Route>
           <Route path={EXPLORE_PATH} element={<Explore />}>

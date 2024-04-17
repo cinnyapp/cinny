@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Line } from 'folds';
 import { useParams } from 'react-router-dom';
-
 import { RoomView } from './RoomView';
 import { MembersDrawer } from './MembersDrawer';
 import { ScreenSize, useScreenSize } from '../../hooks/useScreenSize';
@@ -13,15 +12,11 @@ import {
   useBindRoomIdToTypingMembersAtom,
 } from '../../state/typingMembers';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
-import { JoinBeforeNavigate } from '../join-before-navigate';
-import { RoomProvider, useRoom } from '../../hooks/useRoom';
+import { useRoom } from '../../hooks/useRoom';
 
-export type RoomBaseViewProps = {
-  eventId?: string;
-};
-export function RoomBaseView({ eventId }: RoomBaseViewProps) {
+export function Room() {
   const mx = useMatrixClient();
+  const { eventId } = useParams();
   const room = useRoom();
   useBindRoomIdToTypingMembersAtom(mx, roomIdToTypingMembersAtom);
 
@@ -41,21 +36,5 @@ export function RoomBaseView({ eventId }: RoomBaseViewProps) {
         )}
       </Box>
     </PowerLevelsContextProvider>
-  );
-}
-
-export function RoomViewer() {
-  const mx = useMatrixClient();
-  const { roomIdOrAlias } = useParams();
-  const roomId = useSelectedRoom();
-  const room = mx.getRoom(roomId);
-  const { eventId } = useParams();
-
-  if (!room || !roomId) return <JoinBeforeNavigate roomIdOrAlias={roomIdOrAlias!} />;
-
-  return (
-    <RoomProvider value={room}>
-      <RoomBaseView key={roomId} eventId={eventId} />
-    </RoomProvider>
   );
 }

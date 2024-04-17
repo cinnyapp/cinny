@@ -14,7 +14,7 @@ import {
 } from '../../../hooks/router/useInbox';
 import { UnreadBadge } from '../../../components/unread-badge';
 import { allInvitesAtom } from '../../../state/room-list/inviteList';
-import { useNavToActivePathMapper } from '../../../hooks/navToActivePathMapper';
+import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 
 function InvitesNavItem() {
   const invitesSelected = useInboxInvitesSelected();

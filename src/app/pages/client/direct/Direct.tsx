@@ -6,10 +6,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import { useDirects } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { mDirectAtom } from '../../../state/mDirectList';
 import { factoryRoomIdByActivity } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
@@ -31,7 +28,8 @@ import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
-import { useNavToActivePathMapper } from '../../../hooks/navToActivePathMapper';
+import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
+import { useDirectRooms } from './useDirectRooms';
 
 function DirectEmpty() {
   return (
@@ -65,8 +63,7 @@ export function Direct() {
   const mx = useMatrixClient();
   useNavToActivePathMapper('direct');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const mDirects = useAtomValue(mDirectAtom);
-  const directs = useDirects(mx, allRoomsAtom, mDirects);
+  const directs = useDirectRooms();
   const muteChanges = useAtomValue(muteChangesAtom);
   const mutedRooms = muteChanges.added;
   const roomToUnread = useAtomValue(roomToUnreadAtom);

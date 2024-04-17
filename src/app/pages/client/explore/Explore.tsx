@@ -38,7 +38,7 @@ import {
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getMxIdServer } from '../../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useNavToActivePathMapper } from '../../../hooks/navToActivePathMapper';
+import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 
 export function AddServer() {
   const mx = useMatrixClient();

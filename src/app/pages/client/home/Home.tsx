@@ -39,7 +39,7 @@ import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
-import { useNavToActivePathMapper } from '../../../hooks/navToActivePathMapper';
+import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 
 function HomeEmpty() {
   const navigate = useNavigate();
