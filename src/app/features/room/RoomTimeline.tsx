@@ -84,12 +84,7 @@ import {
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-import {
-  openJoinAlias,
-  openProfileViewer,
-  selectRoom,
-  selectTab,
-} from '../../../client/action/navigation';
+import { openJoinAlias, openProfileViewer } from '../../../client/action/navigation';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { Reactions, Message, Event, EncryptedContent } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
@@ -115,6 +110,7 @@ import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
 import { RenderMessageContent } from '../../components/RenderMessageContent';
 import { Image } from '../../components/media';
 import { ImageViewer } from '../../components/image-viewer';
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -446,6 +442,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const canRedact = canDoAction('redact', myPowerLevel);
   const canSendReaction = canSendEvent(MessageEvent.Reaction, myPowerLevel);
   const [editId, setEditId] = useState<string>();
+  const { navigateRoom, navigateSpace } = useRoomNavigate();
 
   const imagePackRooms: Room[] = useMemo(() => {
     const allParentSpaces = [
@@ -506,14 +503,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             return;
           }
           if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
-            if (mx.getRoom(mentionId)?.isSpaceRoom()) selectTab(mentionId);
-            else selectRoom(mentionId);
+            if (mx.getRoom(mentionId)?.isSpaceRoom()) navigateSpace(mentionId);
+            else navigateRoom(mentionId);
             return;
           }
           openJoinAlias(mentionId);
         },
       }),
-    [mx, room]
+    [mx, room, navigateRoom, navigateSpace]
   );
   const parseMemberEvent = useMemberEventParser();
 

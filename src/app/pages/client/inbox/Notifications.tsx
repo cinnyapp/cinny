@@ -42,12 +42,7 @@ import {
 } from '../../../components/message';
 import colorMXID from '../../../../util/colorMXID';
 import { getReactCustomHtmlParser } from '../../../plugins/react-custom-html-parser';
-import {
-  openJoinAlias,
-  openProfileViewer,
-  selectRoom,
-  selectTab,
-} from '../../../../client/action/navigation';
+import { openJoinAlias, openProfileViewer } from '../../../../client/action/navigation';
 import { RenderMessageContent } from '../../../components/RenderMessageContent';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
@@ -173,6 +168,7 @@ function RoomNotificationsGroupComp({
 }: RoomNotificationsGroupProps) {
   const mx = useMatrixClient();
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  const { navigateRoom, navigateSpace } = useRoomNavigate();
 
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
@@ -194,14 +190,14 @@ function RoomNotificationsGroupComp({
             return;
           }
           if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
-            if (mx.getRoom(mentionId)?.isSpaceRoom()) selectTab(mentionId);
-            else selectRoom(mentionId);
+            if (mx.getRoom(mentionId)?.isSpaceRoom()) navigateSpace(mentionId);
+            else navigateRoom(mentionId);
             return;
           }
           openJoinAlias(mentionId);
         },
       }),
-    [mx, room]
+    [mx, room, navigateRoom, navigateSpace]
   );
 
   const renderMatrixEvent = useMatrixEventRenderer<[IRoomEvent, string, GetContentCallback]>(

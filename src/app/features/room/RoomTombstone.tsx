@@ -1,18 +1,18 @@
 import React, { useCallback } from 'react';
 import { Box, Button, Spinner, Text, color } from 'folds';
 
-import { selectRoom } from '../../../client/action/navigation';
-
 import * as css from './RoomTombstone.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { genRoomVia } from '../../../util/matrixUtil';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { Membership } from '../../../types/matrix/room';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 
 type RoomTombstoneProps = { roomId: string; body?: string; replacementRoomId: string };
 export function RoomTombstone({ roomId, body, replacementRoomId }: RoomTombstoneProps) {
   const mx = useMatrixClient();
+  const { navigateRoom } = useRoomNavigate();
 
   const [joinState, handleJoin] = useAsyncCallback(
     useCallback(() => {
@@ -26,8 +26,8 @@ export function RoomTombstone({ roomId, body, replacementRoomId }: RoomTombstone
   const replacementRoom = mx.getRoom(replacementRoomId);
 
   const handleOpen = () => {
-    if (replacementRoom) selectRoom(replacementRoom.roomId);
-    if (joinState.status === AsyncStatus.Success) selectRoom(joinState.data.roomId);
+    if (replacementRoom) navigateRoom(replacementRoom.roomId);
+    if (joinState.status === AsyncStatus.Success) navigateRoom(joinState.data.roomId);
   };
 
   return (

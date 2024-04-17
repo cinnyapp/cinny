@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage, Box, Button, Spinner, Text, as, color } from 'folds';
 import { Room } from 'matrix-js-sdk';
-import { openInviteUser, selectRoom } from '../../../client/action/navigation';
+import { openInviteUser } from '../../../client/action/navigation';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { IRoomCreateContent, Membership, StateEvent } from '../../../types/matrix/room';
 import { getMemberDisplayName, getStateEvent } from '../../utils/room';
@@ -9,6 +9,7 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 
 export type RoomIntroProps = {
   room: Room;
@@ -21,6 +22,8 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const nameEvent = useStateEvent(room, StateEvent.RoomName);
   const topicEvent = useStateEvent(room, StateEvent.RoomTopic);
   const createContent = createEvent?.getContent<IRoomCreateContent>();
+
+  const { navigateRoom } = useRoomNavigate();
 
   const ts = createEvent?.getTs();
   const creatorId = createEvent?.getSender();
@@ -82,7 +85,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
           {typeof prevRoomId === 'string' &&
             (mx.getRoom(prevRoomId)?.getMyMembership() === Membership.Join ? (
               <Button
-                onClick={() => selectRoom(prevRoomId)}
+                onClick={() => navigateRoom(prevRoomId)}
                 variant="Success"
                 size="300"
                 fill="Soft"

@@ -9,12 +9,7 @@ import {
   makeHighlightRegex,
 } from '../../plugins/react-custom-html-parser';
 import { getMxIdLocalPart, isRoomId, isUserId } from '../../utils/matrix';
-import {
-  openJoinAlias,
-  openProfileViewer,
-  selectRoom,
-  selectTab,
-} from '../../../client/action/navigation';
+import { openJoinAlias, openProfileViewer } from '../../../client/action/navigation';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
 import {
@@ -37,6 +32,7 @@ import { nameInitials } from '../../utils/common';
 import colorMXID from '../../../util/colorMXID';
 import { ResultItem } from './useMessageSearch';
 import { SequenceCard } from '../../components/sequence-card';
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 
 type SearchResultGroupProps = {
   room: Room;
@@ -55,6 +51,7 @@ export function SearchResultGroup({
   onOpen,
 }: SearchResultGroupProps) {
   const mx = useMatrixClient();
+  const { navigateRoom, navigateSpace } = useRoomNavigate();
   const highlightRegex = useMemo(() => makeHighlightRegex(highlights), [highlights]);
 
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
@@ -78,14 +75,14 @@ export function SearchResultGroup({
             return;
           }
           if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
-            if (mx.getRoom(mentionId)?.isSpaceRoom()) selectTab(mentionId);
-            else selectRoom(mentionId);
+            if (mx.getRoom(mentionId)?.isSpaceRoom()) navigateSpace(mentionId);
+            else navigateRoom(mentionId);
             return;
           }
           openJoinAlias(mentionId);
         },
       }),
-    [mx, room, highlightRegex]
+    [mx, room, highlightRegex, navigateRoom, navigateSpace]
   );
 
   const renderMatrixEvent = useMatrixEventRenderer<[IEventWithRoomId, string, GetContentCallback]>(
