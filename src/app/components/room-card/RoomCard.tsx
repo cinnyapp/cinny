@@ -27,9 +27,11 @@ import { millify } from '../../plugins/millify';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { onEnterOrSpace } from '../../utils/keyboard';
-import { RoomType } from '../../../types/matrix/room';
+import { RoomType, StateEvent } from '../../../types/matrix/room';
 import { useJoinedRoomId } from '../../hooks/useJoinedRoomId';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
+import { getRoomAvatarUrl, getStateEvent } from '../../utils/room';
+import { useStateEventCallback } from '../../hooks/useStateEventCallback';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {
@@ -156,10 +158,39 @@ export const RoomCard = as<'div', RoomCardProps>(
     ref
   ) => {
     const mx = useMatrixClient();
-    const avatar = avatarUrl && mx.mxcUrlToHttp(avatarUrl, 96, 96, 'crop');
+    const joinedRoomId = useJoinedRoomId(allRooms, roomIdOrAlias);
+    const joinedRoom = mx.getRoom(joinedRoomId);
+    const [topicEvent, setTopicEvent] = useState(() =>
+      joinedRoom ? getStateEvent(joinedRoom, StateEvent.RoomTopic) : undefined
+    );
+
     const fallbackName = getMxIdLocalPart(roomIdOrAlias) ?? roomIdOrAlias;
     const fallbackTopic = roomIdOrAlias;
-    const joinedRoomId = useJoinedRoomId(allRooms, roomIdOrAlias);
+
+    const avatar = joinedRoom
+      ? getRoomAvatarUrl(mx, joinedRoom, 96)
+      : avatarUrl && mx.mxcUrlToHttp(avatarUrl, 96, 96, 'crop');
+
+    const roomName = joinedRoom?.name || name || fallbackName;
+    const roomTopic =
+      (topicEvent?.getContent().topic as string) || undefined || topic || fallbackTopic;
+    const joinedMemberCount = joinedRoom?.getJoinedMemberCount() ?? memberCount;
+
+    useStateEventCallback(
+      mx,
+      useCallback(
+        (event) => {
+          if (
+            joinedRoom &&
+            event.getRoomId() === joinedRoom.roomId &&
+            event.getType() === StateEvent.RoomTopic
+          ) {
+            setTopicEvent(getStateEvent(joinedRoom, StateEvent.RoomTopic));
+          }
+        },
+        [joinedRoom]
+      )
+    );
 
     const [joinState, join] = useAsyncCallback<Room, MatrixError, []>(
       useCallback(() => mx.joinRoom(roomIdOrAlias), [mx, roomIdOrAlias])
@@ -181,21 +212,21 @@ export const RoomCard = as<'div', RoomCardProps>(
               alt={roomIdOrAlias}
               renderInitials={() => (
                 <Text as="span" size="H3">
-                  {nameInitials(name || fallbackName)}
+                  {nameInitials(roomName)}
                 </Text>
               )}
             />
           </Avatar>
-          {roomType === RoomType.Space && (
+          {(roomType === RoomType.Space || joinedRoom?.isSpaceRoom()) && (
             <Badge variant="Secondary" fill="Soft" outlined>
               <Text size="L400">Space</Text>
             </Badge>
           )}
         </Box>
         <Box grow="Yes" direction="Column" gap="100">
-          <RoomCardName>{name || fallbackName}</RoomCardName>
+          <RoomCardName>{roomName}</RoomCardName>
           <RoomCardTopic onClick={openTopic} onKeyDown={onEnterOrSpace(openTopic)} tabIndex={0}>
-            {topic || fallbackTopic}
+            {roomTopic}
           </RoomCardTopic>
 
           <Overlay open={viewTopic} backdrop={<OverlayBackdrop />}>
@@ -207,15 +238,15 @@ export const RoomCard = as<'div', RoomCardProps>(
                   onDeactivate: closeTopic,
                 }}
               >
-                {renderTopicViewer(name || fallbackName, topic || fallbackTopic, closeTopic)}
+                {renderTopicViewer(roomName, roomTopic, closeTopic)}
               </FocusTrap>
             </OverlayCenter>
           </Overlay>
         </Box>
-        {typeof memberCount === 'number' && (
+        {typeof joinedMemberCount === 'number' && (
           <Box gap="100">
             <Icon size="50" src={Icons.User} />
-            <Text size="T200">{`${millify(memberCount)} Members`}</Text>
+            <Text size="T200">{`${millify(joinedMemberCount)} Members`}</Text>
           </Box>
         )}
         {typeof joinedRoomId === 'string' && (
