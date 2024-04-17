@@ -638,7 +638,7 @@ export const Message = as<'div', MessageProps>(
           </Text>
         </Username>
         <Box shrink="No" gap="100">
-          {messageLayout !== 1 && hover && (
+          {messageLayout === 0 && hover && (
             <>
               <Text as="span" size="T200" priority="300">
                 {senderId}
