@@ -43,10 +43,12 @@ export function PageHero({
   icon,
   title,
   subTitle,
+  children,
 }: {
   icon: ReactNode;
   title: ReactNode;
   subTitle: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <Box direction="Column" gap="400">
@@ -61,6 +63,7 @@ export function PageHero({
           {subTitle}
         </Text>
       </Box>
+      {children}
     </Box>
   );
 }

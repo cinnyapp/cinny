@@ -41,17 +41,12 @@ import { FeatureCheck } from './FeatureCheck';
 import { ClientLayout, ClientRoot } from './client';
 import { Home, HomeRouteRoomProvider, HomeSearch } from './client/home';
 import { Direct, DirectRouteRoomProvider } from './client/direct';
-import {
-  RouteSpaceProvider,
-  Space,
-  SpaceIndexRedirect,
-  SpaceRouteRoomProvider,
-  SpaceSearch,
-} from './client/space';
-import { Explore, ExploreRedirect, FeaturedRooms, PublicRooms } from './client/explore';
-import { Notifications, Inbox, InboxRedirect, Invites } from './client/inbox';
+import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from './client/space';
+import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
+import { Notifications, Inbox, Invites } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
+import { WelcomePage } from './client/WelcomePage';
 
 const queryClient = new QueryClient();
 
@@ -92,7 +87,7 @@ const createRouter = (clientConfig: ClientConfig) => {
       >
         <Route element={<ClientLayout />}>
           <Route path={HOME_PATH} element={<Home />}>
-            <Route index element={<p>welcome</p>} />
+            <Route index element={<WelcomePage />} />
             <Route path={_CREATE_PATH} element={<p>create</p>} />
             <Route path={_JOIN_PATH} element={<p>join</p>} />
             <Route path={_SEARCH_PATH} element={<HomeSearch />} />
@@ -106,7 +101,7 @@ const createRouter = (clientConfig: ClientConfig) => {
             />
           </Route>
           <Route path={DIRECT_PATH} element={<Direct />}>
-            <Route index element={<p>welcome</p>} />
+            <Route index element={<WelcomePage />} />
             <Route path={_CREATE_PATH} element={<p>create</p>} />
             <Route
               path={_ROOM_PATH}
@@ -119,7 +114,7 @@ const createRouter = (clientConfig: ClientConfig) => {
           </Route>
           <Route path={SPACE_PATH} element={<RouteSpaceProvider />}>
             <Route element={<Space />}>
-              <Route index element={<SpaceIndexRedirect />} />
+              <Route index element={<WelcomePage />} />
               <Route path={_LOBBY_PATH} element={<p>lobby</p>} />
               <Route path={_SEARCH_PATH} element={<SpaceSearch />} />
               <Route
@@ -133,12 +128,12 @@ const createRouter = (clientConfig: ClientConfig) => {
             </Route>
           </Route>
           <Route path={EXPLORE_PATH} element={<Explore />}>
-            <Route index element={<ExploreRedirect />} />
+            <Route index element={<WelcomePage />} />
             <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
             <Route path={_SERVER_PATH} element={<PublicRooms />} />
           </Route>
           <Route path={INBOX_PATH} element={<Inbox />}>
-            <Route index element={<InboxRedirect />} />
+            <Route index element={<WelcomePage />} />
             <Route path={_NOTIFICATIONS_PATH} element={<Notifications />} />
             <Route path={_INVITES_PATH} element={<Invites />} />
           </Route>
