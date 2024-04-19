@@ -21,10 +21,7 @@ export function ClientNavigation() {
               <HomeTab />
               <DirectTab />
             </SidebarStack>
-            <SidebarStackSeparator />
-            <SidebarStack>
-              <SpaceTabs />
-            </SidebarStack>
+            <SpaceTabs />
             <SidebarStackSeparator />
             <SidebarStack>
               <ExploreTab />
