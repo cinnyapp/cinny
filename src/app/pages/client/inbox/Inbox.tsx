@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Outlet } from 'react-router-dom';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import { useAtomValue } from 'jotai';
 import { ClientContentLayout } from '../ClientContentLayout';
@@ -98,17 +98,4 @@ export function Inbox() {
       <Outlet />
     </ClientContentLayout>
   );
-}
-
-export function InboxRedirect() {
-  const navigate = useNavigate();
-  const allInvites = useAtomValue(allInvitesAtom);
-  const inviteCount = allInvites.length;
-
-  useEffect(() => {
-    const path = inviteCount > 0 ? getInboxInvitesPath() : getInboxNotificationsPath();
-    navigate(path, { replace: true });
-  }, [navigate, inviteCount]);
-
-  return null;
 }

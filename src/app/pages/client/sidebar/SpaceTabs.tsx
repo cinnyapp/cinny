@@ -6,13 +6,14 @@ import { useOrphanSpaces } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { getSpacePath, joinPathComponent } from '../../pathUtils';
+import { getSpaceLobbyPath, joinPathComponent } from '../../pathUtils';
 import { SidebarAvatar } from '../../../components/sidebar';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
 import colorMXID from '../../../../util/colorMXID';
 import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
 import { navToActivePathAtom } from '../../../state/navToActivePath';
 import { UnreadBadge } from '../../../components/unread-badge';
+import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 
 export function SpaceTabs() {
   const navigate = useNavigate();
@@ -34,8 +35,7 @@ export function SpaceTabs() {
       return;
     }
 
-    const targetSpaceAlias = mx.getRoom(targetSpaceId)?.getCanonicalAlias();
-    navigate(getSpacePath(targetSpaceAlias ?? targetSpaceId));
+    navigate(getSpaceLobbyPath(getCanonicalAliasOrRoomId(mx, targetSpaceId)));
   };
 
   return orphanSpaces.map((orphanSpaceId) => {

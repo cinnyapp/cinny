@@ -1,4 +1,4 @@
-import React, { FormEventHandler, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FormEventHandler, useCallback, useRef, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import {
@@ -275,23 +275,4 @@ export function Explore() {
       <Outlet />
     </ClientContentLayout>
   );
-}
-
-export function ExploreRedirect() {
-  const navigate = useNavigate();
-  const clientConfig = useClientConfig();
-
-  const mx = useMatrixClient();
-
-  useEffect(() => {
-    if (clientConfig.featuredCommunities?.openAsDefault) {
-      navigate(getExploreFeaturedPath(), { replace: true });
-    } else {
-      const userId = mx.getUserId();
-      const userServer = userId ? getMxIdServer(userId) : undefined;
-      if (userServer) navigate(getExploreServerPath(userServer), { replace: true });
-    }
-  }, [navigate, mx, clientConfig]);
-
-  return null;
 }

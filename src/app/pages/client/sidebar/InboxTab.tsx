@@ -4,7 +4,7 @@ import { Icon, Icons } from 'folds';
 import { useAtomValue } from 'jotai';
 import { SidebarAvatar } from '../../../components/sidebar';
 import { allInvitesAtom } from '../../../state/room-list/inviteList';
-import { getInboxPath, joinPathComponent } from '../../pathUtils';
+import { getInboxInvitesPath, getInboxNotificationsPath, joinPathComponent } from '../../pathUtils';
 import { useInboxSelected } from '../../../hooks/router/useInbox';
 import { UnreadBadge } from '../../../components/unread-badge';
 import { navToActivePathAtom } from '../../../state/navToActivePath';
@@ -23,7 +23,8 @@ export function InboxTab() {
       return;
     }
 
-    navigate(getInboxPath());
+    const path = inviteCount > 0 ? getInboxInvitesPath() : getInboxNotificationsPath();
+    navigate(path);
   };
 
   return (
