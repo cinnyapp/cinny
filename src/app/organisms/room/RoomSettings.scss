@@ -2,59 +2,18 @@
 @use '../../partials/flex';
 
 .room-settings {
-  height: 100%;
-  & .scrollbar {
-    position: relative;
-  }
-
-  & .header {
-    padding: 0 var(--sp-extra-tight);
-  }
-
-  &__header-btn {
-    min-width: 0;
-    @extend .cp-fx__row--s-c;
-    @include dir.side(margin, 0, auto);
-    padding: var(--sp-ultra-tight) var(--sp-extra-tight);
-    border-radius: calc(var(--bo-radius) / 2);
-    cursor: pointer;
-    
-    @media (hover:hover) {
-      &:hover {
-        background-color: var(--bg-surface-hover);
-        box-shadow: var(--bs-surface-outline);
-      }
-    }
-    &:focus,
-    &:active {
-      background-color: var(--bg-surface-active);
-      box-shadow: var(--bs-surface-outline);
-      outline: none;
-    }
-  }
-
-  &__content {
-    padding-bottom: calc(2 * var(--sp-extra-loose));
-
-    & .room-profile {
-      margin: var(--sp-extra-loose);
-    }
-  }
-  
-  & .tabs {
-    position: sticky;
-    top: 0;
-    z-index: 999;
-    width: 100%;
+  & .pw {
     background-color: var(--bg-surface-low);
-    box-shadow: 0 -4px 0 var(--bg-surface-low),
-      inset 0 -1px 0 var(--bg-surface-border);
-
-    &__content {
-      padding: 0 var(--sp-normal);
-    }
   }
-  
+
+  & .room-profile {
+    padding: var(--sp-loose) var(--sp-extra-loose);
+  }
+
+  & .tabs__content {
+    padding: 0 var(--sp-normal);
+  }
+
   &__cards-wrapper {
     padding: 0 var(--sp-normal);
     @include dir.side(padding, var(--sp-normal), var(--sp-extra-tight));
@@ -75,7 +34,7 @@
 
 .room-settings .room-permissions__card,
 .room-settings .room-search__form,
-.room-settings .room-search__result-item ,
+.room-settings .room-search__result-item,
 .room-settings .room-members {
   @extend .room-settings__card;
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import './Client.scss';
 
-import Navigation from '../../organisms/navigation/Navigation';
 import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';

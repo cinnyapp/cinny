@@ -51,7 +51,7 @@ import { useRoomUnread } from '../../state/hooks/unread';
 import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { markAsRead } from '../../../client/action/notifications';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
-import { openInviteUser } from '../../../client/action/navigation';
+import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 import { copyToClipboard } from '../../utils/dom';
 
 type RoomMenuProps = {
@@ -82,7 +82,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(
     };
 
     const handleRoomSettings = () => {
-      alert('Work In Progress...');
+      toggleRoomSettings(room.roomId);
       requestClose();
     };
 

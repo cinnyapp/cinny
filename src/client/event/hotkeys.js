@@ -1,4 +1,4 @@
-import { openSearch, toggleRoomSettings } from '../action/navigation';
+import { openSearch } from '../action/navigation';
 import navigation from '../state/navigation';
 import { markAsRead } from '../action/notifications';
 
@@ -53,10 +53,6 @@ function listenKeyboard(event) {
     if (navigation.isRawModalVisible) return;
 
     if (event.key === 'Escape') {
-      if (navigation.isRoomSettings) {
-        toggleRoomSettings();
-        return;
-      }
       if (navigation.selectedRoomId) {
         markAsRead(navigation.selectedRoomId);
         return;

@@ -29,7 +29,7 @@ import { usePowerLevels } from '../../hooks/usePowerLevels';
 import { copyToClipboard } from '../../utils/dom';
 import { getOriginBaseUrl, withOriginBaseUrl } from '../../pages/pathUtils';
 import { markAsRead } from '../../../client/action/notifications';
-import { openInviteUser } from '../../../client/action/navigation';
+import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -59,7 +59,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     };
 
     const handleRoomSettings = () => {
-      alert('Work In Progress...');
+      toggleRoomSettings(room.roomId);
       requestClose();
     };
 
