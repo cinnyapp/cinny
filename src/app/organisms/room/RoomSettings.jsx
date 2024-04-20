@@ -5,7 +5,6 @@ import './RoomSettings.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { openInviteUser } from '../../../client/action/navigation';
 import * as roomActions from '../../../client/action/room';
 
 import Text from '../../atoms/text/Text';
@@ -26,7 +25,6 @@ import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
 import LockIC from '../../../../public/res/ic/outlined/lock.svg';
-import AddUserIC from '../../../../public/res/ic/outlined/add-user.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
@@ -73,15 +71,11 @@ const tabItems = [
 function GeneralSettings({ roomId }) {
   const mx = initMatrix.matrixClient;
   const room = mx.getRoom(roomId);
-  const canInvite = room.canInvite(mx.getUserId());
 
   return (
     <>
       <div className="room-settings__card">
         <MenuHeader>Options</MenuHeader>
-        <MenuItem disabled={!canInvite} onClick={() => openInviteUser(roomId)} iconSrc={AddUserIC}>
-          Invite
-        </MenuItem>
         <MenuItem
           variant="danger"
           onClick={async () => {
