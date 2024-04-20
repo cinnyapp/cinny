@@ -9,7 +9,7 @@ import {
   SidebarAvatar,
 } from '../../components/sidebar';
 import { DirectTab, HomeTab, SpaceTabs, InboxTab, ExploreTab } from './sidebar';
-import { openSettings } from '../../../client/action/navigation';
+import { openSearch, openSettings } from '../../../client/action/navigation';
 
 export function ClientNavigation() {
   return (
@@ -40,6 +40,7 @@ export function ClientNavigation() {
               <SidebarAvatar
                 outlined
                 tooltip="Search"
+                onClick={() => openSearch()}
                 avatarChildren={<Icon src={Icons.Search} />}
               />
               <InboxTab />
