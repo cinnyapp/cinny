@@ -57,7 +57,7 @@ import {
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import initMatrix from '../../../client/initMatrix';
-import { TUploadContent, encryptFile, getImageInfo } from '../../utils/matrix';
+import { TUploadContent, encryptFile, getImageInfo, getMxIdLocalPart } from '../../utils/matrix';
 import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
 import { useFilePicker } from '../../hooks/useFilePicker';
 import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
@@ -93,9 +93,9 @@ import {
   getImageMsgContent,
   getVideoMsgContent,
 } from './msgContent';
-import { MessageReply } from '../../molecules/message/Message';
 import colorMXID from '../../../util/colorMXID';
 import {
+  getMemberDisplayName,
   parseReplyBody,
   parseReplyFormattedBody,
   trimReplyFromBody,
@@ -106,6 +106,7 @@ import { CommandAutocomplete } from './CommandAutocomplete';
 import { Command, SHRUG, useCommands } from '../../hooks/useCommands';
 import { mobileOrTablet } from '../../utils/user-agent';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
+import { ReplyLayout } from '../../components/message';
 
 interface RoomInputProps {
   editor: Editor;
@@ -486,11 +487,22 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   >
                     <Icon src={Icons.Cross} size="50" />
                   </IconButton>
-                  <MessageReply
-                    color={colorMXID(replyDraft.userId)}
-                    name={room?.getMember(replyDraft.userId)?.name ?? replyDraft.userId}
-                    body={replyDraft.body}
-                  />
+                  <ReplyLayout
+                    userColor={colorMXID(replyDraft.userId)}
+                    username={
+                      <Text size="T300" truncate>
+                        <b>
+                          {getMemberDisplayName(room, replyDraft.userId) ??
+                            getMxIdLocalPart(replyDraft.userId) ??
+                            replyDraft.userId}
+                        </b>
+                      </Text>
+                    }
+                  >
+                    <Text size="T300" truncate>
+                      {trimReplyFromBody(replyDraft.body)}
+                    </Text>
+                  </ReplyLayout>
                 </Box>
               </div>
             )
