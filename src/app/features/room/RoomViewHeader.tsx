@@ -210,7 +210,7 @@ export function RoomViewHeader() {
             <RoomAvatar
               src={getRoomAvatarUrl(mx, room, 96)}
               alt={room.name}
-              renderInitials={() => <Text size="H5">{nameInitials(room.name)}</Text>}
+              renderInitials={() => <Text size="H4">{nameInitials(room.name)}</Text>}
             />
           </Avatar>
           <Box direction="Column">

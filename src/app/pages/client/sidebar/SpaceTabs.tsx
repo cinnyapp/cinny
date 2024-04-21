@@ -14,6 +14,7 @@ import { navToActivePathAtom } from '../../../state/navToActivePath';
 import { UnreadBadge } from '../../../components/unread-badge';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomAvatar } from '../../../components/room-avatar';
+import { nameInitials } from '../../../utils/common';
 
 export function SpaceTabs() {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ export function SpaceTabs() {
                     <RoomAvatar
                       src={avatarUrl ?? undefined}
                       alt={space.name}
-                      renderInitials={() => <Text size="T500">{space.name[0]}</Text>}
+                      renderInitials={() => <Text size="H4">{nameInitials(space.name)}</Text>}
                     />
                   }
                 />

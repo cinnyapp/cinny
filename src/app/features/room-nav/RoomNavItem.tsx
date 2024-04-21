@@ -201,7 +201,7 @@ export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: Roo
                   src={getRoomAvatarUrl(mx, room, 96)}
                   alt={room.name}
                   renderInitials={() => (
-                    <Text as="span" size="L400">
+                    <Text as="span" size="H6">
                       {nameInitials(room.name)}
                     </Text>
                   )}
