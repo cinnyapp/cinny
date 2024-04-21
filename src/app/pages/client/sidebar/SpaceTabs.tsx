@@ -1,6 +1,6 @@
 import React, { MouseEventHandler } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AvatarFallback, AvatarImage, Text } from 'folds';
+import { Text } from 'folds';
 import { useAtomValue } from 'jotai';
 import { useOrphanSpaces } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -9,11 +9,11 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { getSpaceLobbyPath, joinPathComponent } from '../../pathUtils';
 import { SidebarAvatar, SidebarStack, SidebarStackSeparator } from '../../../components/sidebar';
 import { RoomUnreadProvider } from '../../../components/RoomUnreadProvider';
-import colorMXID from '../../../../util/colorMXID';
 import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
 import { navToActivePathAtom } from '../../../state/navToActivePath';
 import { UnreadBadge } from '../../../components/unread-badge';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
+import { RoomAvatar } from '../../../components/room-avatar';
 
 export function SpaceTabs() {
   const navigate = useNavigate();
@@ -63,18 +63,11 @@ export function SpaceTabs() {
                     unread && <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
                   }
                   avatarChildren={
-                    avatarUrl ? (
-                      <AvatarImage src={avatarUrl} alt={space.name} />
-                    ) : (
-                      <AvatarFallback
-                        style={{
-                          backgroundColor: colorMXID(orphanSpaceId),
-                          color: 'white',
-                        }}
-                      >
-                        <Text size="T500">{space.name[0]}</Text>
-                      </AvatarFallback>
-                    )
+                    <RoomAvatar
+                      src={avatarUrl ?? undefined}
+                      alt={space.name}
+                      renderInitials={() => <Text size="T500">{space.name[0]}</Text>}
+                    />
                   }
                 />
               )}

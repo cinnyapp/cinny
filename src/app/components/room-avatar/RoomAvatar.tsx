@@ -6,15 +6,10 @@ import { joinRuleToIconSrc } from '../../utils/room';
 
 type RoomAvatarProps = {
   src?: string;
-  alt: string;
+  alt?: string;
   renderInitials: () => ReactNode;
 };
-export function RoomAvatar({
-  variant,
-  src,
-  alt,
-  renderInitials,
-}: RoomAvatarProps & css.RoomAvatarVariants) {
+export function RoomAvatar({ src, alt, renderInitials }: RoomAvatarProps) {
   const [error, setError] = useState(false);
 
   const handleLoad: ReactEventHandler<HTMLImageElement> = (evt) => {
@@ -22,14 +17,12 @@ export function RoomAvatar({
   };
 
   if (!src || error) {
-    return (
-      <AvatarFallback className={css.RoomAvatar({ variant })}>{renderInitials()}</AvatarFallback>
-    );
+    return <AvatarFallback className={css.RoomAvatar}>{renderInitials()}</AvatarFallback>;
   }
 
   return (
     <AvatarImage
-      className={css.RoomAvatar({ variant })}
+      className={css.RoomAvatar}
       src={src}
       alt={alt}
       onError={() => setError(true)}
@@ -42,7 +35,12 @@ export const RoomIcon = forwardRef<
   SVGSVGElement,
   Omit<ComponentProps<typeof Icon>, 'src'> & {
     joinRule: JoinRule;
+    space?: boolean;
   }
->(({ joinRule, ...props }, ref) => (
-  <Icon src={joinRuleToIconSrc(Icons, joinRule, false) ?? Icons.Hash} {...props} ref={ref} />
+>(({ joinRule, space, ...props }, ref) => (
+  <Icon
+    src={joinRuleToIconSrc(Icons, joinRule, space || false) ?? Icons.Hash}
+    {...props}
+    ref={ref}
+  />
 ));

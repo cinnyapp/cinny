@@ -8,8 +8,6 @@ import React, {
 } from 'react';
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Badge,
   Box,
   Chip,
@@ -48,7 +46,6 @@ import {
   useAsyncSearch,
 } from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
-import colorMXID from '../../../util/colorMXID';
 import { usePowerLevelTags, PowerLevelTag } from '../../hooks/usePowerLevelTags';
 import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../state/typingMembers';
 import { TypingIndicator } from '../../components/typing-indicator';
@@ -58,6 +55,8 @@ import { useSetSetting, useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { millify } from '../../plugins/millify';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
+import { UserAvatar } from '../../components/user-avatar';
+import { nameInitials } from '../../utils/common';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -509,18 +508,11 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                       onClick={handleMemberClick}
                       before={
                         <Avatar size="200">
-                          {avatarUrl ? (
-                            <AvatarImage src={avatarUrl} />
-                          ) : (
-                            <AvatarFallback
-                              style={{
-                                background: colorMXID(member.userId),
-                                color: 'white',
-                              }}
-                            >
-                              <Text size="H6">{name[0]}</Text>
-                            </AvatarFallback>
-                          )}
+                          <UserAvatar
+                            src={avatarUrl ?? undefined}
+                            alt={name}
+                            renderInitials={() => <Text size="H6">{nameInitials(name)}</Text>}
+                          />
                         </Avatar>
                       }
                       after={

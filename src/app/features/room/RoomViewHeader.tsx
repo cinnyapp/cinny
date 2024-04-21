@@ -208,7 +208,6 @@ export function RoomViewHeader() {
         <Box grow="Yes" alignItems="Center" gap="300">
           <Avatar size="300">
             <RoomAvatar
-              variant="Background"
               src={getRoomAvatarUrl(mx, room, 96)}
               alt={room.name}
               renderInitials={() => <Text size="H5">{nameInitials(room.name)}</Text>}

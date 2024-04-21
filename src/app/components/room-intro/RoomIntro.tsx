@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Avatar, AvatarFallback, AvatarImage, Box, Button, Spinner, Text, as, color } from 'folds';
+import { Avatar, Box, Button, Spinner, Text, as } from 'folds';
 import { Room } from 'matrix-js-sdk';
 import { openInviteUser } from '../../../client/action/navigation';
 import { useStateEvent } from '../../hooks/useStateEvent';
@@ -10,6 +10,8 @@ import { getMxIdLocalPart } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { RoomAvatar } from '../room-avatar';
+import { nameInitials } from '../../utils/common';
 
 export type RoomIntroProps = {
   room: Room;
@@ -43,18 +45,11 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
     <Box direction="Column" grow="Yes" gap="500" {...props} ref={ref}>
       <Box>
         <Avatar size="500">
-          {avatarHttpUrl ? (
-            <AvatarImage src={avatarHttpUrl} alt={name} />
-          ) : (
-            <AvatarFallback
-              style={{
-                backgroundColor: color.SurfaceVariant.Container,
-                color: color.SurfaceVariant.OnContainer,
-              }}
-            >
-              <Text size="H2">{name[0]}</Text>
-            </AvatarFallback>
-          )}
+          <RoomAvatar
+            src={avatarHttpUrl ?? undefined}
+            alt={name}
+            renderInitials={() => <Text size="H2">{nameInitials(name)}</Text>}
+          />
         </Avatar>
       </Box>
       <Box direction="Column" gap="300">

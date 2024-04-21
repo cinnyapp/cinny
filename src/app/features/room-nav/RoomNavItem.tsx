@@ -198,7 +198,6 @@ export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: Roo
             <Avatar size="200" radii="400">
               {showAvatar ? (
                 <RoomAvatar
-                  variant="Secondary"
                   src={getRoomAvatarUrl(mx, room, 96)}
                   alt={room.name}
                   renderInitials={() => (

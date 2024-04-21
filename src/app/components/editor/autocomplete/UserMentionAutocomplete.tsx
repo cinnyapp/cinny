@@ -1,6 +1,6 @@
 import React, { useEffect, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Editor } from 'slate';
-import { Avatar, AvatarFallback, AvatarImage, MenuItem, Text, color } from 'folds';
+import { Avatar, MenuItem, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
 
 import { AutocompleteQuery } from './autocompleteQuery';
@@ -17,6 +17,8 @@ import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 import { getMxIdLocalPart, getMxIdServer, validMxId } from '../../../utils/matrix';
 import { getMemberDisplayName, getMemberSearchStr } from '../../../utils/room';
+import { UserAvatar } from '../../user-avatar';
+import { nameInitials } from '../../../utils/common';
 
 type MentionAutoCompleteHandler = (userId: string, name: string) => void;
 
@@ -46,14 +48,7 @@ function UnknownMentionItem({
       onClick={() => handleAutocomplete(userId, name)}
       before={
         <Avatar size="200">
-          <AvatarFallback
-            style={{
-              backgroundColor: color.Secondary.Container,
-              color: color.Secondary.OnContainer,
-            }}
-          >
-            <Text size="H6">{query.text[0]}</Text>
-          </AvatarFallback>
+          <UserAvatar renderInitials={() => <Text size="H6">{nameInitials(query.text)}</Text>} />
         </Avatar>
       }
     >
@@ -167,18 +162,13 @@ export function UserMentionAutocomplete({
               }
               before={
                 <Avatar size="200">
-                  {avatarUrl ? (
-                    <AvatarImage src={avatarUrl} alt={getName(roomMember)} />
-                  ) : (
-                    <AvatarFallback
-                      style={{
-                        backgroundColor: color.Secondary.Container,
-                        color: color.Secondary.OnContainer,
-                      }}
-                    >
-                      <Text size="H6">{getName(roomMember)[0]}</Text>
-                    </AvatarFallback>
-                  )}
+                  <UserAvatar
+                    src={avatarUrl ?? undefined}
+                    alt={getName(roomMember)}
+                    renderInitials={() => (
+                      <Text size="H6">{nameInitials(getName(roomMember))}</Text>
+                    )}
+                  />
                 </Avatar>
               }
             >

@@ -1,11 +1,11 @@
 import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect } from 'react';
 import { Editor } from 'slate';
-import { Avatar, AvatarFallback, AvatarImage, Icon, Icons, MenuItem, Text, color } from 'folds';
+import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
 import { MatrixClient } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
 
 import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
-import { getRoomAvatarUrl, joinRuleToIconSrc } from '../../../utils/room';
+import { getRoomAvatarUrl } from '../../../utils/room';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AutocompleteQuery } from './autocompleteQuery';
 import { AutocompleteMenu } from './AutocompleteMenu';
@@ -16,6 +16,8 @@ import { useKeyDown } from '../../../hooks/useKeyDown';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { factoryRoomIdByActivity } from '../../../utils/sort';
+import { RoomAvatar, RoomIcon } from '../../room-avatar';
+import { nameInitials } from '../../../utils/common';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 
@@ -137,7 +139,6 @@ export function RoomMentionAutocomplete({
           if (!room) return null;
           const dm = mDirects.has(room.roomId);
           const avatarUrl = getRoomAvatarUrl(mx, room);
-          const iconSrc = !dm && joinRuleToIconSrc(Icons, room.getJoinRule(), room.isSpaceRoom());
 
           const handleSelect = () => handleAutocomplete(room.getCanonicalAlias() ?? rId, room.name);
 
@@ -157,17 +158,14 @@ export function RoomMentionAutocomplete({
               }
               before={
                 <Avatar size="200">
-                  {iconSrc && <Icon src={iconSrc} size="100" />}
-                  {avatarUrl && !iconSrc && <AvatarImage src={avatarUrl} alt={room.name} />}
-                  {!avatarUrl && !iconSrc && (
-                    <AvatarFallback
-                      style={{
-                        backgroundColor: color.Secondary.Container,
-                        color: color.Secondary.OnContainer,
-                      }}
-                    >
-                      <Text size="H6">{room.name[0]}</Text>
-                    </AvatarFallback>
+                  {dm ? (
+                    <RoomAvatar
+                      src={avatarUrl}
+                      alt={room.name}
+                      renderInitials={() => <Text size="H6">{nameInitials(room.name)}</Text>}
+                    />
+                  ) : (
+                    <RoomIcon size="100" joinRule={room.getJoinRule()} space={room.isSpaceRoom()} />
                   )}
                 </Avatar>
               }

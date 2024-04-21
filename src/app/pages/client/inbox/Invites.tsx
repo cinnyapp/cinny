@@ -102,7 +102,6 @@ function InviteCard({ room, userId, compact, onNavigate }: InviteCardProps) {
       <Box gap="300">
         <Avatar size="300">
           <RoomAvatar
-            variant="Secondary"
             src={getRoomAvatarUrl(mx, room, 96)}
             alt={roomName}
             renderInitials={() => (

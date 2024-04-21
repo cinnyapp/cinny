@@ -2,7 +2,7 @@
 import React, { MouseEventHandler, useMemo } from 'react';
 import { IEventWithRoomId, RelationType, Room } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
-import { Avatar, AvatarFallback, AvatarImage, Box, Chip, Header, Text, config } from 'folds';
+import { Avatar, Box, Chip, Header, Text, config } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   getReactCustomHtmlParser,
@@ -33,6 +33,7 @@ import colorMXID from '../../../util/colorMXID';
 import { ResultItem } from './useMessageSearch';
 import { SequenceCard } from '../../components/sequence-card';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { UserAvatar } from '../../components/user-avatar';
 
 type SearchResultGroupProps = {
   room: Room;
@@ -163,7 +164,6 @@ export function SearchResultGroup({
         <Box gap="200" grow="Yes">
           <Avatar size="200" radii="300">
             <RoomAvatar
-              variant="SurfaceVariant"
               src={getRoomAvatarUrl(mx, room, 96)}
               alt={room.name}
               renderInitials={() => (
@@ -209,20 +209,15 @@ export function SearchResultGroup({
                 before={
                   <AvatarBase>
                     <Avatar size="300">
-                      {senderAvatarMxc ? (
-                        <AvatarImage
-                          src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
-                        />
-                      ) : (
-                        <AvatarFallback
-                          style={{
-                            background: colorMXID(event.sender),
-                            color: 'white',
-                          }}
-                        >
-                          <Text size="H4">{nameInitials(displayName)}</Text>
-                        </AvatarFallback>
-                      )}
+                      <UserAvatar
+                        src={
+                          senderAvatarMxc
+                            ? mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? undefined
+                            : undefined
+                        }
+                        alt={displayName}
+                        renderInitials={() => <Text size="H4">{nameInitials(displayName)}</Text>}
+                      />
                     </Avatar>
                   </AvatarBase>
                 }

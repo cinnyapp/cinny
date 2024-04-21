@@ -2,8 +2,6 @@ import React from 'react';
 import classNames from 'classnames';
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Box,
   Header,
   Icon,
@@ -21,8 +19,9 @@ import { getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import * as css from './EventReaders.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import colorMXID from '../../../util/colorMXID';
 import { openProfileViewer } from '../../../client/action/navigation';
+import { UserAvatar } from '../user-avatar';
+import { nameInitials } from '../../utils/common';
 
 export type EventReadersProps = {
   room: Room;
@@ -72,18 +71,11 @@ export const EventReaders = as<'div', EventReadersProps>(
                     }}
                     before={
                       <Avatar size="200">
-                        {avatarUrl ? (
-                          <AvatarImage src={avatarUrl} />
-                        ) : (
-                          <AvatarFallback
-                            style={{
-                              background: colorMXID(readerId),
-                              color: 'white',
-                            }}
-                          >
-                            <Text size="H6">{name[0]}</Text>
-                          </AvatarFallback>
-                        )}
+                        <UserAvatar
+                          src={avatarUrl ?? undefined}
+                          alt={name}
+                          renderInitials={() => <Text size="H6">{nameInitials(name)}</Text>}
+                        />
                       </Avatar>
                     }
                   >

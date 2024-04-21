@@ -2,8 +2,6 @@
 import React, { MouseEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Box,
   Chip,
   Header,
@@ -57,6 +55,7 @@ import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { markAsRead } from '../../../../client/action/notifications';
 import { ContainerColor } from '../../../styles/ContainerColor.css';
 import { VirtualTile } from '../../../components/virtualizer';
+import { UserAvatar } from '../../../components/user-avatar';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -280,7 +279,6 @@ function RoomNotificationsGroupComp({
         <Box gap="200" grow="Yes">
           <Avatar size="200" radii="300">
             <RoomAvatar
-              variant="SurfaceVariant"
               src={getRoomAvatarUrl(mx, room, 96)}
               alt={room.name}
               renderInitials={() => (
@@ -331,20 +329,15 @@ function RoomNotificationsGroupComp({
                 before={
                   <AvatarBase>
                     <Avatar size="300">
-                      {senderAvatarMxc ? (
-                        <AvatarImage
-                          src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
-                        />
-                      ) : (
-                        <AvatarFallback
-                          style={{
-                            background: colorMXID(event.sender),
-                            color: 'white',
-                          }}
-                        >
-                          <Text size="H4">{nameInitials(displayName)}</Text>
-                        </AvatarFallback>
-                      )}
+                      <UserAvatar
+                        src={
+                          senderAvatarMxc
+                            ? mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? undefined
+                            : undefined
+                        }
+                        alt={displayName}
+                        renderInitials={() => <Text size="H4">{nameInitials(displayName)}</Text>}
+                      />
                     </Avatar>
                   </AvatarBase>
                 }

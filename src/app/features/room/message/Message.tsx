@@ -1,7 +1,5 @@
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
   Box,
   Button,
   Dialog,
@@ -64,6 +62,8 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
+import { nameInitials } from '../../../utils/common';
+import { UserAvatar } from '../../../components/user-avatar';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -662,20 +662,15 @@ export const Message = as<'div', MessageProps>(
           data-user-id={senderId}
           onClick={onUserClick}
         >
-          {senderAvatarMxc ? (
-            <AvatarImage
-              src={mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? senderAvatarMxc}
-            />
-          ) : (
-            <AvatarFallback
-              style={{
-                background: colorMXID(senderId),
-                color: 'white',
-              }}
-            >
-              <Text size="H4">{senderDisplayName[0]}</Text>
-            </AvatarFallback>
-          )}
+          <UserAvatar
+            src={
+              senderAvatarMxc
+                ? mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? undefined
+                : undefined
+            }
+            alt={senderDisplayName}
+            renderInitials={() => <Text size="H4">{nameInitials(senderDisplayName)}</Text>}
+          />
         </Avatar>
       </AvatarBase>
     );
