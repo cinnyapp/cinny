@@ -30,6 +30,8 @@ import { copyToClipboard } from '../../utils/dom';
 import { getOriginBaseUrl, withOriginBaseUrl } from '../../pages/pathUtils';
 import { markAsRead } from '../../../client/action/notifications';
 import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
+import { UseStateProvider } from '../../components/UseStateProvider';
+import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -60,11 +62,6 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
 
     const handleRoomSettings = () => {
       toggleRoomSettings(room.roomId);
-      requestClose();
-    };
-
-    const handleLeaveRoom = () => {
-      mx.leave(room.roomId);
       requestClose();
     };
 
@@ -121,18 +118,32 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
         </Box>
         <Line variant="Surface" size="300" />
         <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-          <MenuItem
-            onClick={handleLeaveRoom}
-            variant="Critical"
-            fill="None"
-            size="300"
-            after={<Icon size="100" src={Icons.ArrowGoLeft} />}
-            radii="300"
-          >
-            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Leave Room
-            </Text>
-          </MenuItem>
+          <UseStateProvider initial={false}>
+            {(promptLeave, setPromptLeave) => (
+              <>
+                <MenuItem
+                  onClick={() => setPromptLeave(true)}
+                  variant="Critical"
+                  fill="None"
+                  size="300"
+                  after={<Icon size="100" src={Icons.ArrowGoLeft} />}
+                  radii="300"
+                  aria-pressed={promptLeave}
+                >
+                  <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                    Leave Room
+                  </Text>
+                </MenuItem>
+                {promptLeave && (
+                  <LeaveRoomPrompt
+                    roomId={room.roomId}
+                    onDone={requestClose}
+                    onCancel={() => setPromptLeave(false)}
+                  />
+                )}
+              </>
+            )}
+          </UseStateProvider>
         </Box>
       </Menu>
     );

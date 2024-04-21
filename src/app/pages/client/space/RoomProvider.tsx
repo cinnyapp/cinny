@@ -8,17 +8,24 @@ import { JoinBeforeNavigate } from '../../../features/join-before-navigate';
 import { useSpace } from '../../../hooks/useSpace';
 import { getAllParents } from '../../../utils/room';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
+import { allRoomsAtom } from '../../../state/room-list/roomList';
 
 export function SpaceRouteRoomProvider({ children }: { children: ReactNode }) {
   const mx = useMatrixClient();
   const space = useSpace();
   const roomToParents = useAtomValue(roomToParentsAtom);
+  const allRooms = useAtomValue(allRoomsAtom);
 
   const { roomIdOrAlias } = useParams();
   const roomId = useSelectedRoom();
   const room = mx.getRoom(roomId);
 
-  if (!room || room.isSpaceRoom() || !getAllParents(roomToParents, room.roomId).has(space.roomId)) {
+  if (
+    !room ||
+    room.isSpaceRoom() ||
+    !allRooms.includes(room.roomId) ||
+    !getAllParents(roomToParents, room.roomId).has(space.roomId)
+  ) {
     return <JoinBeforeNavigate roomIdOrAlias={roomIdOrAlias!} />;
   }
 
