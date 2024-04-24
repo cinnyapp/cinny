@@ -12,7 +12,7 @@ import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { RoomAvatar } from '../room-avatar';
 import { nameInitials } from '../../utils/common';
-import { useRoomTopic } from '../../hooks/useRoomMeta';
+import { useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
 
 export type RoomIntroProps = {
   room: Room;
@@ -22,7 +22,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const mx = useMatrixClient();
   const createEvent = getStateEvent(room, StateEvent.RoomCreate);
   const avatarEvent = useStateEvent(room, StateEvent.RoomAvatar);
-  const nameEvent = useStateEvent(room, StateEvent.RoomName);
+  const name = useRoomName(room);
   const topic = useRoomTopic(room);
   const createContent = createEvent?.getContent<IRoomCreateContent>();
 
@@ -35,7 +35,6 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const prevRoomId = createContent?.predecessor?.room_id;
   const avatarMxc = (avatarEvent?.getContent().url as string) || undefined;
   const avatarHttpUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc) : undefined;
-  const name = (nameEvent?.getContent().name || room.name) as string;
 
   const [prevRoomState, joinPrevRoom] = useAsyncCallback(
     useCallback(async (roomId: string) => mx.joinRoom(roomId), [mx])

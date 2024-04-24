@@ -54,7 +54,7 @@ import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 import { copyToClipboard } from '../../utils/dom';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
-import { useRoomTopic } from '../../hooks/useRoomMeta';
+import { useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
 
 type RoomMenuProps = {
   room: Room;
@@ -182,6 +182,7 @@ export function RoomViewHeader() {
 
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const ecryptedRoom = !!encryptionEvent;
+  const name = useRoomName(room);
   const topic = useRoomTopic(room);
 
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
@@ -209,13 +210,13 @@ export function RoomViewHeader() {
           <Avatar size="300">
             <RoomAvatar
               src={getRoomAvatarUrl(mx, room, 96)}
-              alt={room.name}
-              renderInitials={() => <Text size="H4">{nameInitials(room.name)}</Text>}
+              alt={name}
+              renderInitials={() => <Text size="H4">{nameInitials(name)}</Text>}
             />
           </Avatar>
           <Box direction="Column">
             <Text size={topic ? 'H5' : 'H3'} truncate>
-              {room.name}
+              {name}
             </Text>
             {topic && (
               <UseStateProvider initial={false}>
@@ -231,7 +232,7 @@ export function RoomViewHeader() {
                           }}
                         >
                           <RoomTopicViewer
-                            name={room.name}
+                            name={name}
                             topic={topic}
                             requestClose={() => setViewTopic(false)}
                           />

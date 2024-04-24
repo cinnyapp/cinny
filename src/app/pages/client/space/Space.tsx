@@ -32,6 +32,7 @@ import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/close
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
+import { useRoomName } from '../../../hooks/useRoomMeta';
 
 export function Space() {
   const mx = useMatrixClient();
@@ -43,6 +44,7 @@ export function Space() {
   const roomToUnread = useAtomValue(roomToUnreadAtom);
   const muteChanges = useAtomValue(muteChangesAtom);
   const mutedRooms = muteChanges.added;
+  const spaceName = useRoomName(space);
 
   const selectedRoomId = useSelectedRoom();
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
@@ -89,7 +91,7 @@ export function Space() {
             <Box grow="Yes" gap="300">
               <Box grow="Yes">
                 <Text size="H4" truncate>
-                  {space.name}
+                  {spaceName}
                 </Text>
               </Box>
             </Box>
