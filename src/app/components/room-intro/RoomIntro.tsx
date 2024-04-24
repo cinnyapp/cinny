@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 import { Avatar, Box, Button, Spinner, Text, as } from 'folds';
 import { Room } from 'matrix-js-sdk';
+import { useAtomValue } from 'jotai';
 import { openInviteUser } from '../../../client/action/navigation';
-import { useStateEvent } from '../../hooks/useStateEvent';
 import { IRoomCreateContent, Membership, StateEvent } from '../../../types/matrix/room';
 import { getMemberDisplayName, getStateEvent } from '../../utils/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -12,7 +12,8 @@ import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { RoomAvatar } from '../room-avatar';
 import { nameInitials } from '../../utils/common';
-import { useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
+import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
+import { mDirectAtom } from '../../state/mDirectList';
 
 export type RoomIntroProps = {
   room: Room;
@@ -20,21 +21,21 @@ export type RoomIntroProps = {
 
 export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => {
   const mx = useMatrixClient();
+  const { navigateRoom } = useRoomNavigate();
+  const mDirects = useAtomValue(mDirectAtom);
+
   const createEvent = getStateEvent(room, StateEvent.RoomCreate);
-  const avatarEvent = useStateEvent(room, StateEvent.RoomAvatar);
+  const avatarMxc = useRoomAvatar(room, mDirects.has(room.roomId));
   const name = useRoomName(room);
   const topic = useRoomTopic(room);
+  const avatarHttpUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc) : undefined;
+
   const createContent = createEvent?.getContent<IRoomCreateContent>();
-
-  const { navigateRoom } = useRoomNavigate();
-
   const ts = createEvent?.getTs();
   const creatorId = createEvent?.getSender();
   const creatorName =
     creatorId && (getMemberDisplayName(room, creatorId) ?? getMxIdLocalPart(creatorId));
   const prevRoomId = createContent?.predecessor?.room_id;
-  const avatarMxc = (avatarEvent?.getContent().url as string) || undefined;
-  const avatarHttpUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc) : undefined;
 
   const [prevRoomState, joinPrevRoom] = useAsyncCallback(
     useCallback(async (roomId: string) => mx.joinRoom(roomId), [mx])

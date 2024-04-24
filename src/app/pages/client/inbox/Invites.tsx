@@ -23,7 +23,12 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { allInvitesAtom } from '../../../state/room-list/inviteList';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { SequenceCard } from '../../../components/sequence-card';
-import { getMemberDisplayName, getRoomAvatarUrl, isDirectInvite } from '../../../utils/room';
+import {
+  getDirectRoomAvatarUrl,
+  getMemberDisplayName,
+  getRoomAvatarUrl,
+  isDirectInvite,
+} from '../../../utils/room';
 import { nameInitials } from '../../../utils/common';
 import { RoomAvatar } from '../../../components/room-avatar';
 import { addRoomIdToMDirect, getMxIdLocalPart, guessDmRoomUserId } from '../../../utils/matrix';
@@ -40,10 +45,11 @@ const COMPACT_CARD_WIDTH = 548;
 type InviteCardProps = {
   room: Room;
   userId: string;
+  direct?: boolean;
   compact?: boolean;
   onNavigate: (roomId: string) => void;
 };
-function InviteCard({ room, userId, compact, onNavigate }: InviteCardProps) {
+function InviteCard({ room, userId, direct, compact, onNavigate }: InviteCardProps) {
   const mx = useMatrixClient();
   const roomName = room.name || room.getCanonicalAlias() || room.roomId;
   const member = room.getMember(userId);
@@ -100,7 +106,7 @@ function InviteCard({ room, userId, compact, onNavigate }: InviteCardProps) {
       <Box gap="300">
         <Avatar size="300">
           <RoomAvatar
-            src={getRoomAvatarUrl(mx, room, 96)}
+            src={direct ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)}
             alt={roomName}
             renderInitials={() => (
               <Text as="span" size="H6">
@@ -200,7 +206,7 @@ export function Invites() {
 
   const { navigateRoom, navigateSpace } = useRoomNavigate();
 
-  const renderInvite = (roomId: string, handleNavigate: (rId: string) => void) => {
+  const renderInvite = (roomId: string, direct: boolean, handleNavigate: (rId: string) => void) => {
     const room = mx.getRoom(roomId);
     if (!room) return null;
     return (
@@ -209,6 +215,7 @@ export function Invites() {
         room={room}
         userId={userId}
         compact={compact}
+        direct={direct}
         onNavigate={handleNavigate}
       />
     );
@@ -233,7 +240,7 @@ export function Invites() {
                   <Box direction="Column" gap="200">
                     <Text size="H4">Direct Messages</Text>
                     <Box direction="Column" gap="100">
-                      {directInvites.map((roomId) => renderInvite(roomId, navigateRoom))}
+                      {directInvites.map((roomId) => renderInvite(roomId, true, navigateRoom))}
                     </Box>
                   </Box>
                 )}
@@ -241,7 +248,7 @@ export function Invites() {
                   <Box direction="Column" gap="200">
                     <Text size="H4">Spaces</Text>
                     <Box direction="Column" gap="100">
-                      {spaceInvites.map((roomId) => renderInvite(roomId, navigateSpace))}
+                      {spaceInvites.map((roomId) => renderInvite(roomId, false, navigateSpace))}
                     </Box>
                   </Box>
                 )}
@@ -249,7 +256,7 @@ export function Invites() {
                   <Box direction="Column" gap="200">
                     <Text size="H4">Rooms</Text>
                     <Box direction="Column" gap="100">
-                      {roomInvites.map((roomId) => renderInvite(roomId, navigateRoom))}
+                      {roomInvites.map((roomId) => renderInvite(roomId, false, navigateRoom))}
                     </Box>
                   </Box>
                 )}

@@ -20,7 +20,7 @@ import FocusTrap from 'focus-trap-react';
 import { NavItem, NavItemContent, NavItemOptions, NavLink } from '../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
-import { getRoomAvatarUrl } from '../../utils/room';
+import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
 import { nameInitials } from '../../utils/common';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomUnread } from '../../state/hooks/unread';
@@ -156,8 +156,16 @@ type RoomNavItemProps = {
   linkPath: string;
   muted?: boolean;
   showAvatar?: boolean;
+  direct?: boolean;
 };
-export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: RoomNavItemProps) {
+export function RoomNavItem({
+  room,
+  selected,
+  showAvatar,
+  direct,
+  muted,
+  linkPath,
+}: RoomNavItemProps) {
   const mx = useMatrixClient();
   const [hover, setHover] = useState(false);
   const { hoverProps } = useHover({ onHoverChange: setHover });
@@ -198,7 +206,9 @@ export function RoomNavItem({ room, selected, showAvatar, muted, linkPath }: Roo
             <Avatar size="200" radii="400">
               {showAvatar ? (
                 <RoomAvatar
-                  src={getRoomAvatarUrl(mx, room, 96)}
+                  src={
+                    direct ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)
+                  }
                   alt={room.name}
                   renderInitials={() => (
                     <Text as="span" size="H6">

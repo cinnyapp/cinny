@@ -22,11 +22,11 @@ import {
 } from 'folds';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Room } from 'matrix-js-sdk';
+import { useAtomValue } from 'jotai';
 
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { PageHeader } from '../../components/page';
 import { RoomAvatar } from '../../components/room-avatar';
-import { getRoomAvatarUrl } from '../../utils/room';
 import { nameInitials } from '../../utils/common';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { RoomTopicViewer } from '../../components/room-topic-viewer';
@@ -54,7 +54,8 @@ import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 import { copyToClipboard } from '../../utils/dom';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
-import { useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
+import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
+import { mDirectAtom } from '../../state/mDirectList';
 
 type RoomMenuProps = {
   room: Room;
@@ -179,11 +180,14 @@ export function RoomViewHeader() {
   const room = useRoom();
   const space = useSpaceOptionally();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+  const mDirects = useAtomValue(mDirectAtom);
 
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const ecryptedRoom = !!encryptionEvent;
+  const avatarMxc = useRoomAvatar(room, mDirects.has(room.roomId));
   const name = useRoomName(room);
   const topic = useRoomTopic(room);
+  const avatarUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc, 96, 96, 'crop') ?? undefined : undefined;
 
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
   const location = useLocation();
@@ -209,7 +213,7 @@ export function RoomViewHeader() {
         <Box grow="Yes" alignItems="Center" gap="300">
           <Avatar size="300">
             <RoomAvatar
-              src={getRoomAvatarUrl(mx, room, 96)}
+              src={avatarUrl}
               alt={name}
               renderInitials={() => <Text size="H4">{nameInitials(name)}</Text>}
             />

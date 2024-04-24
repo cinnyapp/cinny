@@ -5,7 +5,7 @@ import { MatrixClient } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
 
 import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
-import { getRoomAvatarUrl } from '../../../utils/room';
+import { getDirectRoomAvatarUrl } from '../../../utils/room';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AutocompleteQuery } from './autocompleteQuery';
 import { AutocompleteMenu } from './AutocompleteMenu';
@@ -138,7 +138,6 @@ export function RoomMentionAutocomplete({
           const room = mx.getRoom(rId);
           if (!room) return null;
           const dm = mDirects.has(room.roomId);
-          const avatarUrl = getRoomAvatarUrl(mx, room);
 
           const handleSelect = () => handleAutocomplete(room.getCanonicalAlias() ?? rId, room.name);
 
@@ -160,7 +159,7 @@ export function RoomMentionAutocomplete({
                 <Avatar size="200">
                   {dm ? (
                     <RoomAvatar
-                      src={avatarUrl}
+                      src={getDirectRoomAvatarUrl(mx, room)}
                       alt={room.name}
                       renderInitials={() => <Text size="H6">{nameInitials(room.name)}</Text>}
                     />

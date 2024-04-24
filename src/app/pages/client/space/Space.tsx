@@ -197,6 +197,7 @@ export function Space() {
                         room={room}
                         selected={selectedRoomId === roomId}
                         showAvatar={mDirects.has(roomId)}
+                        direct={mDirects.has(roomId)}
                         linkPath={getToLink(roomId)}
                         muted={mutedRooms.includes(roomId)}
                       />

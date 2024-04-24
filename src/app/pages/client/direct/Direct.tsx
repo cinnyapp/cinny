@@ -160,6 +160,7 @@ export function Direct() {
                             room={room}
                             selected={selected}
                             showAvatar
+                            direct
                             linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
                             muted={mutedRooms.includes(roomId)}
                           />

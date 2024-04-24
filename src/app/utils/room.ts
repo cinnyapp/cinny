@@ -267,16 +267,15 @@ export const getRoomAvatarUrl = (
   mx: MatrixClient,
   room: Room,
   size: 32 | 96 = 32
-): string | undefined => {
-  const url = room.getAvatarUrl(mx.baseUrl, size, size, 'crop') ?? undefined;
-  if (url) return url;
+): string | undefined => room.getAvatarUrl(mx.baseUrl, size, size, 'crop') ?? undefined;
 
-  return (
-    room
-      .getAvatarFallbackMember()
-      ?.getAvatarUrl(mx.baseUrl, size, size, 'crop', undefined, false) ?? undefined
-  );
-};
+export const getDirectRoomAvatarUrl = (
+  mx: MatrixClient,
+  room: Room,
+  size: 32 | 96 = 32
+): string | undefined =>
+  room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, size, size, 'crop', undefined, false) ??
+  undefined;
 
 export const trimReplyFromBody = (body: string): string => {
   const match = body.match(/^> <.+?> .+\n(>.*\n)*?\n/m);
