@@ -25,7 +25,7 @@ import {
 } from '../../../hooks/router/useSelectedSpace';
 import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
-import { useSpaceHierarchy } from './useSpaceHierarchy';
+import { useSpaceJoinedHierarchy } from './useSpaceJoinedHierarchy';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
@@ -49,7 +49,7 @@ export function Space() {
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
   const closedCategories = useAtomValue(closedNavCategoriesAtom);
-  const hierarchy = useSpaceHierarchy(
+  const hierarchy = useSpaceJoinedHierarchy(
     space.roomId,
     useCallback(
       (spaceRoomId, directCategory) => {

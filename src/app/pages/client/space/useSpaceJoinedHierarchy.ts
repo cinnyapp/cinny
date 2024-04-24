@@ -13,7 +13,7 @@ import { mDirectAtom } from '../../../state/mDirectList';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 
-export const useSpaceHierarchy = (
+export const useSpaceJoinedHierarchy = (
   spaceId: string,
   closedCategory: (spaceId: string, directCategory: boolean) => boolean,
   showWhenClosed: (roomId: string) => boolean
