@@ -54,6 +54,7 @@ import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 import { copyToClipboard } from '../../utils/dom';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
+import { useRoomTopic } from '../../hooks/useRoomMeta';
 
 type RoomMenuProps = {
   room: Room;
@@ -181,8 +182,7 @@ export function RoomViewHeader() {
 
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const ecryptedRoom = !!encryptionEvent;
-  const topicEvent = useStateEvent(room, StateEvent.RoomTopic);
-  const topic = topicEvent?.getContent().topic as string | undefined | null;
+  const topic = useRoomTopic(room);
 
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
   const location = useLocation();

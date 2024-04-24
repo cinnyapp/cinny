@@ -28,13 +28,12 @@ import { nameInitials } from '../../../utils/common';
 import { RoomAvatar } from '../../../components/room-avatar';
 import { addRoomIdToMDirect, getMxIdLocalPart, guessDmRoomUserId } from '../../../utils/matrix';
 import { Time } from '../../../components/message';
-import { StateEvent } from '../../../../types/matrix/room';
-import { useStateEvent } from '../../../hooks/useStateEvent';
 import { useElementSizeObserver } from '../../../hooks/useElementSizeObserver';
 import { onEnterOrSpace } from '../../../utils/keyboard';
 import { RoomTopicViewer } from '../../../components/room-topic-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
+import { useRoomTopic } from '../../../hooks/useRoomMeta';
 
 const COMPACT_CARD_WIDTH = 548;
 
@@ -55,8 +54,7 @@ function InviteCard({ room, userId, compact, onNavigate }: InviteCardProps) {
     ? getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId
     : undefined;
 
-  const topicEvent = useStateEvent(room, StateEvent.RoomTopic);
-  const topic = (topicEvent?.getContent().topic as string) || undefined;
+  const topic = useRoomTopic(room);
 
   const [viewTopic, setViewTopic] = useState(false);
   const closeTopic = () => setViewTopic(false);

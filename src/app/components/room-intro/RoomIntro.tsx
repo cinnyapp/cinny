@@ -12,6 +12,7 @@ import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { RoomAvatar } from '../room-avatar';
 import { nameInitials } from '../../utils/common';
+import { useRoomTopic } from '../../hooks/useRoomMeta';
 
 export type RoomIntroProps = {
   room: Room;
@@ -22,7 +23,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const createEvent = getStateEvent(room, StateEvent.RoomCreate);
   const avatarEvent = useStateEvent(room, StateEvent.RoomAvatar);
   const nameEvent = useStateEvent(room, StateEvent.RoomName);
-  const topicEvent = useStateEvent(room, StateEvent.RoomTopic);
+  const topic = useRoomTopic(room);
   const createContent = createEvent?.getContent<IRoomCreateContent>();
 
   const { navigateRoom } = useRoomNavigate();
@@ -35,7 +36,6 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const avatarMxc = (avatarEvent?.getContent().url as string) || undefined;
   const avatarHttpUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc) : undefined;
   const name = (nameEvent?.getContent().name || room.name) as string;
-  const topic = (topicEvent?.getContent().topic as string) || undefined;
 
   const [prevRoomState, joinPrevRoom] = useAsyncCallback(
     useCallback(async (roomId: string) => mx.joinRoom(roomId), [mx])
