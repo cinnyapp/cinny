@@ -49,6 +49,12 @@ export enum RoomType {
   Space = 'm.space',
 }
 
+export type MSpaceChildContent = {
+  via: string[];
+  suggested?: boolean;
+  order?: string;
+};
+
 export enum NotificationType {
   Default = 'default',
   AllMessages = 'all_messages',

@@ -88,7 +88,10 @@ export const isUnsupportedRoom = (room: Room | null): boolean => {
 };
 
 export function isValidChild(mEvent: MatrixEvent): boolean {
-  return mEvent.getType() === StateEvent.SpaceChild && Object.keys(mEvent.getContent()).length > 0;
+  return (
+    mEvent.getType() === StateEvent.SpaceChild &&
+    Array.isArray(mEvent.getContent<{ via: string[] }>().via)
+  );
 }
 
 export const getAllParents = (roomToParents: RoomToParents, roomId: string): Set<string> => {

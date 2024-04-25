@@ -12,11 +12,11 @@ export const SequenceCard = recipe({
     borderWidth: outlinedWidth,
     borderBottomWidth: 0,
     selectors: {
-      '&:first-child': {
+      '&:first-child, :not(&) + &': {
         borderTopLeftRadius: config.radii.R400,
         borderTopRightRadius: config.radii.R400,
       },
-      '&:last-child': {
+      '&:last-child, &:not(:has(+&))': {
         borderBottomLeftRadius: config.radii.R400,
         borderBottomRightRadius: config.radii.R400,
         borderBottomWidth: outlinedWidth,
