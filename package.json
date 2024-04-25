@@ -48,7 +48,7 @@
     "immer": "9.0.16",
     "is-hotkey": "0.2.0",
     "jotai": "2.6.0",
-    "katex": "0.16.4",
+    "katex": "0.16.10",
     "linkify-html": "4.0.2",
     "linkify-react": "4.1.1",
     "linkifyjs": "4.0.2",
@@ -104,7 +104,7 @@
     "prettier": "2.8.1",
     "sass": "1.56.2",
     "typescript": "4.9.4",
-    "vite": "5.0.8",
+    "vite": "5.0.13",
     "vite-plugin-static-copy": "0.13.0"
   }
 }

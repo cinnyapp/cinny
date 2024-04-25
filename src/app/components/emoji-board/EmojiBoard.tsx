@@ -178,24 +178,24 @@ function EmojiBoardTabs({
         className={css.EmojiBoardTab}
         as="button"
         variant="Secondary"
-        fill={tab === EmojiBoardTab.Emoji ? 'Solid' : 'None'}
-        size="500"
-        onClick={() => onTabChange(EmojiBoardTab.Emoji)}
-      >
-        <Text as="span" size="L400">
-          Emoji
-        </Text>
-      </Badge>
-      <Badge
-        className={css.EmojiBoardTab}
-        as="button"
-        variant="Secondary"
         fill={tab === EmojiBoardTab.Sticker ? 'Solid' : 'None'}
         size="500"
         onClick={() => onTabChange(EmojiBoardTab.Sticker)}
       >
         <Text as="span" size="L400">
           Sticker
+        </Text>
+      </Badge>
+      <Badge
+        className={css.EmojiBoardTab}
+        as="button"
+        variant="Secondary"
+        fill={tab === EmojiBoardTab.Emoji ? 'Solid' : 'None'}
+        size="500"
+        onClick={() => onTabChange(EmojiBoardTab.Emoji)}
+      >
+        <Text as="span" size="L400">
+          Emoji
         </Text>
       </Badge>
     </Box>
