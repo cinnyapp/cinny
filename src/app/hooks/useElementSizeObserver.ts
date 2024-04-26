@@ -12,8 +12,8 @@ export const useElementSizeObserver = <T extends Element>(
         if (!target) return;
         const targetEntry = getResizeObserverEntry(target, entries);
         if (targetEntry) {
-          const { width, height } = targetEntry.contentRect;
-          onResize(width, height, target);
+          const { clientWidth, clientHeight } = targetEntry.target;
+          onResize(clientWidth, clientHeight, target);
         }
       },
       [element, onResize]
