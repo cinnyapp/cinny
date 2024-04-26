@@ -225,9 +225,11 @@ function CallbackOnFoundSpace({
 type HierarchyItemCardProps = {
   item: HierarchyItem;
   onSpaceFound: (roomId: string) => void;
+  firstChild?: boolean;
+  lastChild?: boolean;
 };
 export const HierarchyItemCard = as<'div', HierarchyItemCardProps>(
-  ({ item, onSpaceFound, ...props }, ref) => {
+  ({ item, onSpaceFound, firstChild, lastChild, ...props }, ref) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
     const room = mx.getRoom(roomId);
@@ -237,6 +239,8 @@ export const HierarchyItemCard = as<'div', HierarchyItemCardProps>(
     return (
       <SequenceCard
         className={css.HierarchyItemCard}
+        firstChild={firstChild}
+        lastChild={lastChild}
         variant="SurfaceVariant"
         gap="300"
         alignItems="Center"

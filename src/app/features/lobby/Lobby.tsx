@@ -5,7 +5,7 @@ import { useAtom } from 'jotai';
 import { useSpace } from '../../hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '../../components/page';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useSpaceHierarchy } from '../../hooks/useSpaceHierarchy';
+import { HierarchyItem, useSpaceHierarchy } from '../../hooks/useSpaceHierarchy';
 import {
   HierarchyRoomSummaryLoader,
   LocalRoomSummaryLoader,
@@ -121,6 +121,8 @@ export function Lobby() {
                           </VirtualTile>
                         );
 
+                      const prevItem: HierarchyItem | undefined = flattenHierarchy[vItem.index - 1];
+                      const nextItem: HierarchyItem | undefined = flattenHierarchy[vItem.index + 1];
                       return (
                         <VirtualTile
                           virtualItem={vItem}
@@ -128,7 +130,12 @@ export function Lobby() {
                           ref={virtualizer.measureElement}
                           key={vItem.index}
                         >
-                          <HierarchyItemCard item={item} onSpaceFound={addSpaceRoom} />
+                          <HierarchyItemCard
+                            item={item}
+                            onSpaceFound={addSpaceRoom}
+                            firstChild={!prevItem || prevItem.space === true}
+                            lastChild={!nextItem || nextItem.space === true}
+                          />
                         </VirtualTile>
                       );
                     })}

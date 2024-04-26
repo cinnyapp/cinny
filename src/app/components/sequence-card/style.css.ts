@@ -21,6 +21,22 @@ export const SequenceCard = recipe({
         borderBottomRightRadius: config.radii.R400,
         borderBottomWidth: outlinedWidth,
       },
+      [`&[data-first-child="true"]`]: {
+        borderTopLeftRadius: config.radii.R400,
+        borderTopRightRadius: config.radii.R400,
+      },
+      [`&[data-first-child="false"]`]: {
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+      },
+      [`&[data-last-child="true"]`]: {
+        borderBottomLeftRadius: config.radii.R400,
+        borderBottomRightRadius: config.radii.R400,
+      },
+      [`&[data-last-child="false"]`]: {
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+      },
     },
   },
   variants: {
