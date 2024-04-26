@@ -35,7 +35,13 @@ import {
   _SERVER_PATH,
 } from './paths';
 import { isAuthenticated } from '../../client/state/auth';
-import { getAbsolutePathFromHref, getHomePath, getLoginPath, getOriginBaseUrl } from './pathUtils';
+import {
+  getAbsolutePathFromHref,
+  getHomePath,
+  getLoginPath,
+  getOriginBaseUrl,
+  getSpaceLobbyPath,
+} from './pathUtils';
 import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 import { FeatureCheck } from './FeatureCheck';
 import { ClientLayout, ClientRoot } from './client';
@@ -115,7 +121,17 @@ const createRouter = (clientConfig: ClientConfig) => {
           </Route>
           <Route path={SPACE_PATH} element={<RouteSpaceProvider />}>
             <Route element={<Space />}>
-              <Route index element={<WelcomePage />} />
+              <Route
+                index
+                loader={({ params }) => {
+                  const { spaceIdOrAlias } = params;
+                  if (spaceIdOrAlias) {
+                    return redirect(getSpaceLobbyPath(spaceIdOrAlias));
+                  }
+                  return null;
+                }}
+                element={<WelcomePage />}
+              />
               <Route path={_LOBBY_PATH} element={<Lobby />} />
               <Route path={_SEARCH_PATH} element={<SpaceSearch />} />
               <Route
