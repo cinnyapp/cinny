@@ -4,7 +4,7 @@ import { MatrixClient, RoomStateEvent, RoomStateEventHandlerMap } from 'matrix-j
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { MSpaceChildContent, StateEvent } from '../../../../types/matrix/room';
-import { getAllParents, getStateEvents } from '../../../utils/room';
+import { getAllParents, getStateEvents, isValidChild } from '../../../utils/room';
 import { isRoomId } from '../../../utils/matrix';
 import { factoryRoomIdByAtoZ } from '../../../utils/sort';
 
@@ -35,6 +35,7 @@ const getFlattenSpaceHierarchy = (
     const childEvents = getStateEvents(space, StateEvent.SpaceChild);
 
     childEvents.forEach((childEvent) => {
+      if (!isValidChild(childEvent)) return;
       const childId = childEvent.getStateKey();
       if (!childId || !isRoomId(childId)) return;
 
@@ -70,6 +71,7 @@ const getFlattenSpaceHierarchy = (
     const childEvents = getStateEvents(space, StateEvent.SpaceChild);
     const childItems: HierarchyItem[] = [];
     childEvents.forEach((childEvent) => {
+      if (!isValidChild(childEvent)) return;
       const childId = childEvent.getStateKey();
       if (!childId || !isRoomId(childId)) return;
       if (mx.getRoom(childId)?.isSpaceRoom() || spaceRooms.has(childId)) return;
