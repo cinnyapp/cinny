@@ -41,17 +41,12 @@ import { FeatureCheck } from './FeatureCheck';
 import { ClientLayout, ClientRoot } from './client';
 import { Home, HomeRouteRoomProvider, HomeSearch } from './client/home';
 import { Direct, DirectRouteRoomProvider } from './client/direct';
-import {
-  Lobby,
-  RouteSpaceProvider,
-  Space,
-  SpaceRouteRoomProvider,
-  SpaceSearch,
-} from './client/space';
+import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from './client/space';
 import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
 import { Notifications, Inbox, Invites } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
+import { Lobby } from '../features/lobby';
 import { WelcomePage } from './client/WelcomePage';
 
 const queryClient = new QueryClient();

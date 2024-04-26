@@ -16,26 +16,30 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom } from 'jotai';
 import FocusTrap from 'focus-trap-react';
-import { useSpace } from '../../../hooks/useSpace';
-import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
-import { RoomAvatar } from '../../../components/room-avatar';
-import { SequenceCard } from '../../../components/sequence-card';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useRoomAvatar, useRoomName } from '../../../hooks/useRoomMeta';
-import { nameInitials } from '../../../utils/common';
-import { HierarchyItem, useSpaceHierarchy } from './useSpaceHierarchy';
-import { millify } from '../../../plugins/millify';
+import { useSpace } from '../../hooks/useSpace';
+import { Page, PageContent, PageContentCenter, PageHeader } from '../../components/page';
+import { RoomAvatar } from '../../components/room-avatar';
+import { SequenceCard } from '../../components/sequence-card';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useRoomAvatar, useRoomName } from '../../hooks/useRoomMeta';
+import { nameInitials } from '../../utils/common';
+import { HierarchyItem, useSpaceHierarchy } from '../../pages/client/space/useSpaceHierarchy';
+import { millify } from '../../plugins/millify';
 import {
   HierarchyRoomSummaryLoader,
   LocalRoomSummaryLoader,
-} from '../../../components/RoomSummaryLoader';
-import { UseStateProvider } from '../../../components/UseStateProvider';
-import { RoomTopicViewer } from '../../../components/room-topic-viewer';
-import { onEnterOrSpace } from '../../../utils/keyboard';
-import { VirtualTile } from '../../../components/virtualizer';
-import { spaceRoomsAtom } from '../../../state/spaceRooms';
-import { Membership, RoomType } from '../../../../types/matrix/room';
+} from '../../components/RoomSummaryLoader';
+import { UseStateProvider } from '../../components/UseStateProvider';
+import { RoomTopicViewer } from '../../components/room-topic-viewer';
+import { onEnterOrSpace } from '../../utils/keyboard';
+import { VirtualTile } from '../../components/virtualizer';
+import { spaceRoomsAtom } from '../../state/spaceRooms';
+import { Membership, RoomType } from '../../../types/matrix/room';
 import * as css from './style.css';
+import { MembersDrawer } from '../room/MembersDrawer';
+import { useSetting } from '../../state/hooks/settings';
+import { ScreenSize, useScreenSize } from '../../hooks/useScreenSize';
+import { settingsAtom } from '../../state/settings';
 
 type RoomProfileProps = {
   name: string;
@@ -211,6 +215,8 @@ export function Lobby() {
   const avatarMxc = useRoomAvatar(space);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [spaceRooms, setSpaceRooms] = useAtom(spaceRoomsAtom);
+  const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const screenSize = useScreenSize();
 
   const flattenHierarchy = useSpaceHierarchy(space.roomId, spaceRooms);
 
@@ -225,81 +231,91 @@ export function Lobby() {
   const addSpaceRoom = (roomId: string) => setSpaceRooms({ type: 'PUT', roomId });
 
   return (
-    <Page>
-      <PageHeader>
-        <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
-          <Avatar size="300">
-            <RoomAvatar
-              src={avatarMxc ? mx.mxcUrlToHttp(avatarMxc, 96, 96, 'crop') ?? undefined : undefined}
-              alt={spaceName}
-              renderInitials={() => <Text size="H4">{nameInitials(spaceName)}</Text>}
-            />
-          </Avatar>
-          <Text size="H3" truncate>
-            {spaceName}
-          </Text>
-        </Box>
-      </PageHeader>
-      <Box style={{ position: 'relative' }} grow="Yes">
-        <Scroll ref={scrollRef} hideTrack visibility="Hover">
-          <PageContent>
-            <PageContentCenter>
-              <div
-                style={{
-                  position: 'relative',
-                  height: virtualizer.getTotalSize(),
-                }}
-              >
-                {vItems.map((vItem) => {
-                  const item = flattenHierarchy[vItem.index];
-                  if (!item) return null;
-                  const { roomId } = item;
-                  const room = mx.getRoom(roomId);
+    <Box grow="Yes">
+      <Page>
+        <PageHeader>
+          <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
+            <Avatar size="300">
+              <RoomAvatar
+                src={
+                  avatarMxc ? mx.mxcUrlToHttp(avatarMxc, 96, 96, 'crop') ?? undefined : undefined
+                }
+                alt={spaceName}
+                renderInitials={() => <Text size="H4">{nameInitials(spaceName)}</Text>}
+              />
+            </Avatar>
+            <Text size="H3" truncate>
+              {spaceName}
+            </Text>
+          </Box>
+        </PageHeader>
+        <Box style={{ position: 'relative' }} grow="Yes">
+          <Scroll ref={scrollRef} hideTrack visibility="Hover">
+            <PageContent>
+              <PageContentCenter>
+                <div
+                  style={{
+                    position: 'relative',
+                    height: virtualizer.getTotalSize(),
+                  }}
+                >
+                  {vItems.map((vItem) => {
+                    const item = flattenHierarchy[vItem.index];
+                    if (!item) return null;
+                    const { roomId } = item;
+                    const room = mx.getRoom(roomId);
 
-                  if (item.space)
+                    if (item.space)
+                      return (
+                        <VirtualTile
+                          virtualItem={vItem}
+                          style={{ paddingTop: config.space.S500 }}
+                          ref={virtualizer.measureElement}
+                          key={vItem.index}
+                        >
+                          {room ? (
+                            <LocalRoomSummaryLoader room={room}>
+                              {(summary) => (
+                                <Text size="H4" style={{ color: 'red', paddingTop: 8 }}>
+                                  {summary.name}
+                                </Text>
+                              )}
+                            </LocalRoomSummaryLoader>
+                          ) : (
+                            <HierarchyRoomSummaryLoader roomId={roomId}>
+                              {(summary) => (
+                                <Text size="H4" style={{ color: 'red', paddingTop: 8 }}>
+                                  {summary?.name ?? roomId}
+                                </Text>
+                              )}
+                            </HierarchyRoomSummaryLoader>
+                          )}
+                        </VirtualTile>
+                      );
+
                     return (
                       <VirtualTile
                         virtualItem={vItem}
-                        style={{ paddingTop: config.space.S500 }}
+                        style={{ paddingTop: config.space.S100 }}
                         ref={virtualizer.measureElement}
                         key={vItem.index}
                       >
-                        {room ? (
-                          <LocalRoomSummaryLoader room={room}>
-                            {(summary) => (
-                              <Text size="H4" style={{ color: 'red', paddingTop: 8 }}>
-                                {summary.name}
-                              </Text>
-                            )}
-                          </LocalRoomSummaryLoader>
-                        ) : (
-                          <HierarchyRoomSummaryLoader roomId={roomId}>
-                            {(summary) => (
-                              <Text size="H4" style={{ color: 'red', paddingTop: 8 }}>
-                                {summary?.name ?? roomId}
-                              </Text>
-                            )}
-                          </HierarchyRoomSummaryLoader>
-                        )}
+                        <HierarchyItemCard item={item} onSpaceFound={addSpaceRoom} />
                       </VirtualTile>
                     );
-
-                  return (
-                    <VirtualTile
-                      virtualItem={vItem}
-                      style={{ paddingTop: config.space.S100 }}
-                      ref={virtualizer.measureElement}
-                      key={vItem.index}
-                    >
-                      <HierarchyItemCard item={item} onSpaceFound={addSpaceRoom} />
-                    </VirtualTile>
-                  );
-                })}
-              </div>
-            </PageContentCenter>
-          </PageContent>
-        </Scroll>
-      </Box>
-    </Page>
+                  })}
+                </div>
+              </PageContentCenter>
+            </PageContent>
+          </Scroll>
+        </Box>
+      </Page>
+      {screenSize === ScreenSize.Desktop && isDrawer && (
+        <>
+          <Line variant="Background" direction="Vertical" size="300" />
+          <MembersDrawer room={space} />
+        </>
+      )}
+    </Box>
   );
 }
