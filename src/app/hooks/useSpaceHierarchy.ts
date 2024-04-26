@@ -1,16 +1,17 @@
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useEffect, useState } from 'react';
 import { MatrixClient, RoomStateEvent, RoomStateEventHandlerMap } from 'matrix-js-sdk';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { MSpaceChildContent, StateEvent } from '../../../../types/matrix/room';
-import { getAllParents, getStateEvents, isValidChild } from '../../../utils/room';
-import { isRoomId } from '../../../utils/matrix';
-import { factoryRoomIdByAtoZ } from '../../../utils/sort';
+import { useMatrixClient } from './useMatrixClient';
+import { roomToParentsAtom } from '../state/room/roomToParents';
+import { MSpaceChildContent, StateEvent } from '../../types/matrix/room';
+import { getAllParents, getStateEvents, isValidChild } from '../utils/room';
+import { isRoomId } from '../utils/matrix';
+import { factoryRoomIdByAtoZ } from '../utils/sort';
 
 export type HierarchyItem = {
   roomId: string;
   content: MSpaceChildContent;
+  ts: number;
   space?: boolean;
   parentId?: string;
 };
@@ -22,6 +23,7 @@ const getFlattenSpaceHierarchy = (
   const rootSpaceItem: HierarchyItem = {
     roomId: rootSpaceId,
     content: { via: [] },
+    ts: 0,
     space: true,
   };
   let spaceItems: HierarchyItem[] = [];
@@ -46,6 +48,7 @@ const getFlattenSpaceHierarchy = (
         const childItem: HierarchyItem = {
           roomId: childId,
           content: childEvent.getContent<MSpaceChildContent>(),
+          ts: childEvent.getTs(),
           space: true,
           parentId: spaceItem.roomId,
         };
@@ -79,11 +82,12 @@ const getFlattenSpaceHierarchy = (
       const childItem: HierarchyItem = {
         roomId: childId,
         content: childEvent.getContent<MSpaceChildContent>(),
+        ts: childEvent.getTs(),
         parentId: spaceItem.roomId,
       };
       childItems.push(childItem);
     });
-    return [spaceItem, ...childItems.sort((a, b) => factoryRoomIdByAtoZ(mx)(a.roomId, b.roomId))];
+    return [spaceItem, ...childItems.sort((a, b) => a.ts - b.ts)];
   });
 
   return hierarchy;

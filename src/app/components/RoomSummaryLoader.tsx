@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
 import { useMatrixClient } from '../hooks/useMatrixClient';
 import { LocalRoomSummary, useLocalRoomSummary } from '../hooks/useLocalRoomSummary';
+import { AsyncState, AsyncStatus } from '../hooks/useAsyncCallback';
 
 export type IRoomSummary = Awaited<ReturnType<MatrixClient['getRoomSummary']>>;
 
@@ -42,18 +43,35 @@ export function HierarchyRoomSummaryLoader({
   children,
 }: {
   roomId: string;
-  children: (summary?: IHierarchyRoom) => ReactNode;
+  children: (state: AsyncState<IHierarchyRoom, Error>) => ReactNode;
 }) {
   const mx = useMatrixClient();
 
   const fetchSummary = useCallback(() => mx.getRoomHierarchy(roomId, 1, 1), [mx, roomId]);
 
-  const { data } = useQuery({
+  const { data, error } = useQuery({
     queryKey: [roomId, `hierarchy`],
     queryFn: fetchSummary,
+    retryOnMount: false,
   });
 
-  const summary = data?.rooms[0] ?? undefined;
+  let state: AsyncState<IHierarchyRoom, Error> = {
+    status: AsyncStatus.Loading,
+  };
+  if (error) {
+    state = {
+      status: AsyncStatus.Error,
+      error,
+    };
+  }
 
-  return children(summary);
+  const summary = data?.rooms[0] ?? undefined;
+  if (summary) {
+    state = {
+      status: AsyncStatus.Success,
+      data: summary,
+    };
+  }
+
+  return children(state);
 }

@@ -1,4 +1,4 @@
-import { GuestAccess, HistoryVisibility, Room } from 'matrix-js-sdk';
+import { GuestAccess, HistoryVisibility, JoinRule, Room } from 'matrix-js-sdk';
 import { getStateEvent } from '../utils/room';
 import { StateEvent } from '../../types/matrix/room';
 
@@ -12,7 +12,7 @@ export type LocalRoomSummary = {
   guestCanJoin?: boolean;
   memberCount?: number;
   roomType?: string;
-  joinRule?: string;
+  joinRule?: JoinRule;
 };
 export const useLocalRoomSummary = (room: Room): LocalRoomSummary => {
   const topicEvent = getStateEvent(room, StateEvent.RoomTopic);

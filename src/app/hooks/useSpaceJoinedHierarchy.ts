@@ -6,12 +6,12 @@ import {
   useChildRoomScopeFactory,
   useRecursiveChildSpaceScopeFactory,
   useSpaceChildren,
-} from '../../../state/hooks/roomList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { mDirectAtom } from '../../../state/mDirectList';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
+} from '../state/hooks/roomList';
+import { useMatrixClient } from './useMatrixClient';
+import { allRoomsAtom } from '../state/room-list/roomList';
+import { mDirectAtom } from '../state/mDirectList';
+import { roomToParentsAtom } from '../state/room/roomToParents';
+import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../utils/sort';
 
 export const useSpaceJoinedHierarchy = (
   spaceId: string,

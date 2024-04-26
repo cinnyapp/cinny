@@ -5,7 +5,7 @@ import { useAtom } from 'jotai';
 import { useSpace } from '../../hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '../../components/page';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useSpaceHierarchy } from '../../pages/client/space/useSpaceHierarchy';
+import { useSpaceHierarchy } from '../../hooks/useSpaceHierarchy';
 import {
   HierarchyRoomSummaryLoader,
   LocalRoomSummaryLoader,
@@ -111,9 +111,9 @@ export function Lobby() {
                               </LocalRoomSummaryLoader>
                             ) : (
                               <HierarchyRoomSummaryLoader roomId={roomId}>
-                                {(summary) => (
+                                {(summaryState) => (
                                   <Text size="H4" style={{ color: 'red', paddingTop: 8 }}>
-                                    {summary?.name ?? roomId}
+                                    {summaryState?.data?.name ?? roomId}
                                   </Text>
                                 )}
                               </HierarchyRoomSummaryLoader>
