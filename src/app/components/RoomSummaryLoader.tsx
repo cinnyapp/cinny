@@ -1,4 +1,4 @@
-import { ReactNode, useCallback } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import { MatrixClient, Room } from 'matrix-js-sdk';
 import { useQuery } from '@tanstack/react-query';
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
@@ -48,11 +48,17 @@ export function HierarchyRoomSummaryLoader({
   const mx = useMatrixClient();
 
   const fetchSummary = useCallback(() => mx.getRoomHierarchy(roomId, 1, 1), [mx, roomId]);
+  const [errorMemo, setError] = useState<Error>();
 
   const { data, error } = useQuery({
     queryKey: [roomId, `hierarchy`],
     queryFn: fetchSummary,
     retryOnMount: false,
+    retry: (failureCount, err) => {
+      setError(err);
+      if (failureCount > 3) return false;
+      return true;
+    },
   });
 
   let state: AsyncState<IHierarchyRoom, Error> = {
@@ -62,6 +68,12 @@ export function HierarchyRoomSummaryLoader({
     state = {
       status: AsyncStatus.Error,
       error,
+    };
+  }
+  if (errorMemo) {
+    state = {
+      status: AsyncStatus.Error,
+      error: errorMemo,
     };
   }
 

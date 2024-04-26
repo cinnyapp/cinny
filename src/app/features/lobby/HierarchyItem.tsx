@@ -59,7 +59,7 @@ type RoomProfileErrorProps = {
   suggested?: boolean;
 };
 function RoomProfileError({ roomId, suggested, error }: RoomProfileErrorProps) {
-  const rateLimited = error.name === ErrorCode.M_RESOURCE_LIMIT_EXCEEDED;
+  const privateRoom = error.name === ErrorCode.M_FORBIDDEN;
 
   return (
     <Box grow="Yes" gap="300">
@@ -70,7 +70,7 @@ function RoomProfileError({ roomId, suggested, error }: RoomProfileErrorProps) {
           renderInitials={() => (
             <RoomIcon
               size="300"
-              joinRule={rateLimited ? JoinRule.Restricted : JoinRule.Invite}
+              joinRule={privateRoom ? JoinRule.Invite : JoinRule.Restricted}
               filled
             />
           )}
@@ -90,7 +90,7 @@ function RoomProfileError({ roomId, suggested, error }: RoomProfileErrorProps) {
           )}
         </Box>
         <Box gap="200" alignItems="Center">
-          {!rateLimited && (
+          {privateRoom && (
             <>
               <Badge variant="Secondary" fill="Soft" radii="Pill" outlined>
                 <Text size="L400">Private Room</Text>
