@@ -1,7 +1,7 @@
 import { style } from '@vanilla-extract/css';
 import { DefaultReset, color, config, toRem } from 'folds';
 
-export const HierarchyItemCard = style({
+export const RoomItemCard = style({
   padding: config.space.S400,
   borderRadius: 0,
 });

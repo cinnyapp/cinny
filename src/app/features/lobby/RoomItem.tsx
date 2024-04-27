@@ -26,7 +26,7 @@ import { UseStateProvider } from '../../components/UseStateProvider';
 import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import { onEnterOrSpace } from '../../utils/keyboard';
 import { Membership, RoomType } from '../../../types/matrix/room';
-import * as css from './HierarchyItem.css';
+import * as css from './RoomItem.css';
 import { AsyncStatus } from '../../hooks/useAsyncCallback';
 import { ErrorCode } from '../../cs-errorcode';
 
@@ -222,13 +222,13 @@ function CallbackOnFoundSpace({
   return null;
 }
 
-type HierarchyItemCardProps = {
+type RoomItemCardProps = {
   item: HierarchyItem;
   onSpaceFound: (roomId: string) => void;
   firstChild?: boolean;
   lastChild?: boolean;
 };
-export const HierarchyItemCard = as<'div', HierarchyItemCardProps>(
+export const RoomItemCard = as<'div', RoomItemCardProps>(
   ({ item, onSpaceFound, firstChild, lastChild, ...props }, ref) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
@@ -238,7 +238,7 @@ export const HierarchyItemCard = as<'div', HierarchyItemCardProps>(
 
     return (
       <SequenceCard
-        className={css.HierarchyItemCard}
+        className={css.RoomItemCard}
         firstChild={firstChild}
         lastChild={lastChild}
         variant="SurfaceVariant"

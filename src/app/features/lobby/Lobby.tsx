@@ -21,7 +21,7 @@ import { LobbyHero } from './LobbyHero';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePowerLevels';
-import { HierarchyItemCard } from './HierarchyItem';
+import { RoomItemCard } from './RoomItem';
 
 export function Lobby() {
   const mx = useMatrixClient();
@@ -130,7 +130,7 @@ export function Lobby() {
                           ref={virtualizer.measureElement}
                           key={vItem.index}
                         >
-                          <HierarchyItemCard
+                          <RoomItemCard
                             item={item}
                             onSpaceFound={addSpaceRoom}
                             firstChild={!prevItem || prevItem.space === true}
