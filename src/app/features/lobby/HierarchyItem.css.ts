@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { DefaultReset, color, config } from 'folds';
+import { DefaultReset, color, config, toRem } from 'folds';
 
 export const HierarchyItemCard = style({
   padding: config.space.S400,
@@ -10,6 +10,9 @@ export const RoomProfileTopic = style({
   ':hover': {
     textDecoration: 'underline',
   },
+});
+export const ErrorNameContainer = style({
+  gap: toRem(2),
 });
 export const AvatarPlaceholder = style({
   backgroundColor: color.Secondary.Container,

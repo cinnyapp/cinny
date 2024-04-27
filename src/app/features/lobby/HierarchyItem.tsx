@@ -34,7 +34,7 @@ function RoomProfileLoading() {
   return (
     <Box grow="Yes" gap="300">
       <Avatar className={css.AvatarPlaceholder} />
-      <Box grow="Yes" direction="Column" gap="200">
+      <Box grow="Yes" direction="Column" gap="100">
         <Box gap="200" alignItems="Center">
           <Box className={css.LinePlaceholder} shrink="No" style={{ maxWidth: toRem(80) }} />
         </Box>
@@ -76,7 +76,7 @@ function RoomProfileError({ roomId, suggested, error }: RoomProfileErrorProps) {
           )}
         />
       </Avatar>
-      <Box grow="Yes" direction="Column" gap="100">
+      <Box grow="Yes" direction="Column" className={css.ErrorNameContainer}>
         <Box gap="200" alignItems="Center">
           <Text size="H5" truncate>
             Unknown
