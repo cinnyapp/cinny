@@ -18,7 +18,8 @@ export type HierarchyItem = {
 const getFlattenSpaceHierarchy = (
   mx: MatrixClient,
   rootSpaceId: string,
-  spaceRooms: Set<string>
+  spaceRooms: Set<string>,
+  closedCategory: (spaceId: string) => boolean
 ): HierarchyItem[] => {
   const rootSpaceItem: HierarchyItem = {
     roomId: rootSpaceId,
@@ -68,7 +69,7 @@ const getFlattenSpaceHierarchy = (
 
   const hierarchy: HierarchyItem[] = spaceItems.flatMap((spaceItem) => {
     const space = mx.getRoom(spaceItem.roomId);
-    if (!space) {
+    if (!space || closedCategory(spaceItem.roomId)) {
       return [spaceItem];
     }
     const childEvents = getStateEvents(space, StateEvent.SpaceChild);
@@ -93,16 +94,22 @@ const getFlattenSpaceHierarchy = (
   return hierarchy;
 };
 
-export const useSpaceHierarchy = (spaceId: string, spaceRooms: Set<string>): HierarchyItem[] => {
+export const useSpaceHierarchy = (
+  spaceId: string,
+  spaceRooms: Set<string>,
+  closedCategory: (spaceId: string) => boolean
+): HierarchyItem[] => {
   const mx = useMatrixClient();
   const roomToParents = useAtomValue(roomToParentsAtom);
 
-  const [hierarchyAtom] = useState(() => atom(getFlattenSpaceHierarchy(mx, spaceId, spaceRooms)));
+  const [hierarchyAtom] = useState(() =>
+    atom(getFlattenSpaceHierarchy(mx, spaceId, spaceRooms, closedCategory))
+  );
   const [hierarchy, setHierarchy] = useAtom(hierarchyAtom);
 
   useEffect(() => {
-    setHierarchy(getFlattenSpaceHierarchy(mx, spaceId, spaceRooms));
-  }, [mx, spaceId, spaceRooms, setHierarchy]);
+    setHierarchy(getFlattenSpaceHierarchy(mx, spaceId, spaceRooms, closedCategory));
+  }, [mx, spaceId, spaceRooms, setHierarchy, closedCategory]);
 
   useEffect(() => {
     const handleStateEvent: RoomStateEventHandlerMap[RoomStateEvent.Events] = (mEvent) => {
@@ -112,7 +119,7 @@ export const useSpaceHierarchy = (spaceId: string, spaceRooms: Set<string>): Hie
       const allParents = getAllParents(roomToParents, eventRoomId);
 
       if (allParents.has(spaceId)) {
-        setHierarchy(getFlattenSpaceHierarchy(mx, spaceId, spaceRooms));
+        setHierarchy(getFlattenSpaceHierarchy(mx, spaceId, spaceRooms, closedCategory));
       }
     };
 
@@ -120,7 +127,7 @@ export const useSpaceHierarchy = (spaceId: string, spaceRooms: Set<string>): Hie
     return () => {
       mx.removeListener(RoomStateEvent.Events, handleStateEvent);
     };
-  }, [mx, spaceId, roomToParents, setHierarchy, spaceRooms]);
+  }, [mx, spaceId, roomToParents, setHierarchy, spaceRooms, closedCategory]);
 
   return hierarchy;
 };

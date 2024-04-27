@@ -2,7 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { ClientContentLayout } from '../ClientContentLayout';
 import { ClientDrawerLayout } from '../ClientDrawerLayout';
 import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
@@ -38,7 +38,7 @@ import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
+import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 
 function HomeEmpty() {
@@ -97,7 +97,7 @@ export function Home() {
   const joinSelected = useHomeJoinSelected();
   const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
-  const closedCategories = useAtomValue(closedNavCategoriesAtom);
+  const [closedCategories, setClosedCategories] = useAtom(closedNavCategoriesAtom);
 
   const sortedRooms = useMemo(() => {
     const items = Array.from(rooms).sort(
@@ -118,7 +118,7 @@ export function Home() {
     overscan: 10,
   });
 
-  const handleCategoryClick = useNavCategoryHandler((categoryId) =>
+  const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
     closedCategories.has(categoryId)
   );
 

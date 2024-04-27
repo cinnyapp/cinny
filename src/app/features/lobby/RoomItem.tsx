@@ -27,6 +27,7 @@ import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import { onEnterOrSpace } from '../../utils/keyboard';
 import { Membership, RoomType } from '../../../types/matrix/room';
 import * as css from './RoomItem.css';
+import * as styleCss from './style.css';
 import { AsyncStatus } from '../../hooks/useAsyncCallback';
 import { ErrorCode } from '../../cs-errorcode';
 import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
@@ -34,15 +35,15 @@ import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
 function RoomProfileLoading() {
   return (
     <Box grow="Yes" gap="300">
-      <Avatar className={css.AvatarPlaceholder} />
+      <Avatar className={styleCss.AvatarPlaceholder} />
       <Box grow="Yes" direction="Column" gap="100">
         <Box gap="200" alignItems="Center">
-          <Box className={css.LinePlaceholder} shrink="No" style={{ maxWidth: toRem(80) }} />
+          <Box className={styleCss.LinePlaceholder} shrink="No" style={{ maxWidth: toRem(80) }} />
         </Box>
         <Box gap="200" alignItems="Center">
-          <Box className={css.LinePlaceholder} shrink="No" style={{ maxWidth: toRem(40) }} />
+          <Box className={styleCss.LinePlaceholder} shrink="No" style={{ maxWidth: toRem(40) }} />
           <Box
-            className={css.LinePlaceholder}
+            className={styleCss.LinePlaceholder}
             shrink="No"
             style={{
               maxWidth: toRem(120),
@@ -285,7 +286,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                       />
                     )}
                     <RoomProfile
-                      name={summaryState.data.name ?? roomId}
+                      name={summaryState.data.name || roomId}
                       topic={summaryState.data.topic}
                       avatarUrl={
                         summaryState.data?.avatar_url

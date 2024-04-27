@@ -1,15 +1,10 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Box, Icon, IconButton, Icons, Line, Scroll, Text, config } from 'folds';
+import { Box, Icon, IconButton, Icons, Line, Scroll, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { useSpace } from '../../hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '../../components/page';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { HierarchyItem, useSpaceHierarchy } from '../../hooks/useSpaceHierarchy';
-import {
-  HierarchyRoomSummaryLoader,
-  LocalRoomSummaryLoader,
-} from '../../components/RoomSummaryLoader';
 import { VirtualTile } from '../../components/virtualizer';
 import { spaceRoomsAtom } from '../../state/spaceRooms';
 import { MembersDrawer } from '../room/MembersDrawer';
@@ -23,9 +18,11 @@ import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePowerLevels';
 import { RoomItemCard } from './RoomItem';
 import { mDirectAtom } from '../../state/mDirectList';
+import { SpaceItemCard } from './SpaceItem';
+import { closedLobbyCategoriesAtom, makeLobbyCategoryId } from '../../state/closedLobbyCategory';
+import { useCategoryHandler } from '../../hooks/useCategoryHandler';
 
 export function Lobby() {
-  const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
   const space = useSpace();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -36,13 +33,21 @@ export function Lobby() {
   const screenSize = useScreenSize();
   const [onTop, setOnTop] = useState(true);
   const powerLevelAPI = usePowerLevels(space);
+  const [closedCategories, setClosedCategories] = useAtom(closedLobbyCategoriesAtom);
 
   useElementSizeObserver(
     useCallback(() => heroSectionRef.current, []),
     useCallback((w, height) => setHeroSectionHeight(height), [])
   );
 
-  const flattenHierarchy = useSpaceHierarchy(space.roomId, spaceRooms);
+  const flattenHierarchy = useSpaceHierarchy(
+    space.roomId,
+    spaceRooms,
+    useCallback(
+      (childId) => closedCategories.has(makeLobbyCategoryId(space.roomId, childId)),
+      [closedCategories, space.roomId]
+    )
+  );
 
   const virtualizer = useVirtualizer({
     count: flattenHierarchy.length,
@@ -54,6 +59,10 @@ export function Lobby() {
   const vItems = virtualizer.getVirtualItems();
 
   const addSpaceRoom = (roomId: string) => setSpaceRooms({ type: 'PUT', roomId });
+
+  const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
+    closedCategories.has(categoryId)
+  );
 
   return (
     <PowerLevelsContextProvider value={powerLevelAPI}>
@@ -92,36 +101,28 @@ export function Lobby() {
                     {vItems.map((vItem) => {
                       const item = flattenHierarchy[vItem.index];
                       if (!item) return null;
-                      const { roomId } = item;
-                      const room = mx.getRoom(roomId);
 
-                      if (item.space)
+                      if (item.space) {
+                        const categoryId = makeLobbyCategoryId(space.roomId, item.roomId);
+
                         return (
                           <VirtualTile
                             virtualItem={vItem}
-                            style={{ paddingTop: config.space.S500 }}
+                            style={{
+                              paddingTop: vItem.index === 0 ? 0 : config.space.S500,
+                            }}
                             ref={virtualizer.measureElement}
                             key={vItem.index}
                           >
-                            {room ? (
-                              <LocalRoomSummaryLoader room={room}>
-                                {(summary) => (
-                                  <Text size="H4" style={{ color: 'red', paddingTop: 8 }}>
-                                    {summary.name}
-                                  </Text>
-                                )}
-                              </LocalRoomSummaryLoader>
-                            ) : (
-                              <HierarchyRoomSummaryLoader roomId={roomId}>
-                                {(summaryState) => (
-                                  <Text size="H4" style={{ color: 'red', paddingTop: 8 }}>
-                                    {summaryState?.data?.name ?? roomId}
-                                  </Text>
-                                )}
-                              </HierarchyRoomSummaryLoader>
-                            )}
+                            <SpaceItemCard
+                              item={item}
+                              categoryId={categoryId}
+                              closed={closedCategories.has(categoryId)}
+                              handleClose={handleCategoryClick}
+                            />
                           </VirtualTile>
                         );
+                      }
 
                       const prevItem: HierarchyItem | undefined = flattenHierarchy[vItem.index - 1];
                       const nextItem: HierarchyItem | undefined = flattenHierarchy[vItem.index + 1];

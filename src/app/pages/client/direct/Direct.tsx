@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientContentLayout } from '../ClientContentLayout';
@@ -27,7 +27,7 @@ import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
+import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { useDirectRooms } from './useDirectRooms';
 
@@ -71,7 +71,7 @@ export function Direct() {
   const selectedRoomId = useSelectedRoom();
   const createSelected = useDirectCreateSelected();
   const noRoomToDisplay = directs.length === 0;
-  const closedCategories = useAtomValue(closedNavCategoriesAtom);
+  const [closedCategories, setClosedCategories] = useAtom(closedNavCategoriesAtom);
 
   const sortedDirects = useMemo(() => {
     const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));
@@ -88,7 +88,7 @@ export function Direct() {
     overscan: 10,
   });
 
-  const handleCategoryClick = useNavCategoryHandler((categoryId) =>
+  const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
     closedCategories.has(categoryId)
   );
 

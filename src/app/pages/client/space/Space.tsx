@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { Avatar, Box, Icon, Icons, Text, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientContentLayout } from '../ClientContentLayout';
@@ -30,7 +30,7 @@ import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { useNavCategoryHandler } from '../../../hooks/useNavCategoryHandler';
+import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { useRoomName } from '../../../hooks/useRoomMeta';
 
@@ -50,7 +50,7 @@ export function Space() {
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
-  const closedCategories = useAtomValue(closedNavCategoriesAtom);
+  const [closedCategories, setClosedCategories] = useAtom(closedNavCategoriesAtom);
   const hierarchy = useSpaceJoinedHierarchy(
     space.roomId,
     useCallback(
@@ -75,7 +75,7 @@ export function Space() {
     overscan: 10,
   });
 
-  const handleCategoryClick = useNavCategoryHandler((categoryId) =>
+  const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
     closedCategories.has(categoryId)
   );
 
