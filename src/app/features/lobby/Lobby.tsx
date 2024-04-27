@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Box, Icon, IconButton, Icons, Line, Scroll, Text, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { useSpace } from '../../hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '../../components/page';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -22,9 +22,11 @@ import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePowerLevels';
 import { RoomItemCard } from './RoomItem';
+import { mDirectAtom } from '../../state/mDirectList';
 
 export function Lobby() {
   const mx = useMatrixClient();
+  const mDirects = useAtomValue(mDirectAtom);
   const space = useSpace();
   const scrollRef = useRef<HTMLDivElement>(null);
   const heroSectionRef = useRef<HTMLDivElement>(null);
@@ -133,6 +135,7 @@ export function Lobby() {
                           <RoomItemCard
                             item={item}
                             onSpaceFound={addSpaceRoom}
+                            dm={mDirects.has(item.roomId)}
                             firstChild={!prevItem || prevItem.space === true}
                             lastChild={!nextItem || nextItem.space === true}
                           />

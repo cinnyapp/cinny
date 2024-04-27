@@ -29,6 +29,7 @@ import { Membership, RoomType } from '../../../types/matrix/room';
 import * as css from './RoomItem.css';
 import { AsyncStatus } from '../../hooks/useAsyncCallback';
 import { ErrorCode } from '../../cs-errorcode';
+import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
 
 function RoomProfileLoading() {
   return (
@@ -225,11 +226,12 @@ function CallbackOnFoundSpace({
 type RoomItemCardProps = {
   item: HierarchyItem;
   onSpaceFound: (roomId: string) => void;
+  dm?: boolean;
   firstChild?: boolean;
   lastChild?: boolean;
 };
 export const RoomItemCard = as<'div', RoomItemCardProps>(
-  ({ item, onSpaceFound, firstChild, lastChild, ...props }, ref) => {
+  ({ item, onSpaceFound, dm, firstChild, lastChild, ...props }, ref) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
     const room = mx.getRoom(roomId);
@@ -254,9 +256,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                 name={localSummary.name}
                 topic={localSummary.topic}
                 avatarUrl={
-                  localSummary.avatarUrl
-                    ? mx.mxcUrlToHttp(localSummary.avatarUrl, 96, 96, 'crop') ?? undefined
-                    : undefined
+                  dm ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)
                 }
                 memberCount={localSummary.memberCount}
                 suggested={content.suggested}
