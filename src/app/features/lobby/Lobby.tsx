@@ -21,15 +21,14 @@ import { mDirectAtom } from '../../state/mDirectList';
 import { SpaceItemCard } from './SpaceItem';
 import { closedLobbyCategoriesAtom, makeLobbyCategoryId } from '../../state/closedLobbyCategory';
 import { useCategoryHandler } from '../../hooks/useCategoryHandler';
-import { useSpaces } from '../../state/hooks/roomList';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 
 export function Lobby() {
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
-  const spaces = useSpaces(mx, allRoomsAtom);
-  const joinedSpaces = useMemo(() => new Set(spaces), [spaces]);
+  const allRooms = useAtomValue(allRoomsAtom);
+  const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
 
   const space = useSpace();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -50,6 +49,15 @@ export function Lobby() {
   const flattenHierarchy = useSpaceHierarchy(
     space.roomId,
     spaceRooms,
+    useCallback(
+      (rId) => {
+        if (allJoinedRooms.has(rId)) {
+          return mx.getRoom(rId) ?? undefined;
+        }
+        return undefined;
+      },
+      [mx, allJoinedRooms]
+    ),
     useCallback(
       (childId) => closedCategories.has(makeLobbyCategoryId(space.roomId, childId)),
       [closedCategories, space.roomId]
@@ -123,7 +131,7 @@ export function Lobby() {
                           >
                             <SpaceItemCard
                               item={item}
-                              joined={joinedSpaces.has(item.roomId)}
+                              joined={allJoinedRooms.has(item.roomId)}
                               categoryId={categoryId}
                               closed={closedCategories.has(categoryId)}
                               handleClose={handleCategoryClick}

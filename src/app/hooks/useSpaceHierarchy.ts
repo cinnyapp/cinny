@@ -1,6 +1,6 @@
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useEffect, useState } from 'react';
-import { MatrixClient, RoomStateEvent, RoomStateEventHandlerMap } from 'matrix-js-sdk';
+import { Room, RoomStateEvent, RoomStateEventHandlerMap } from 'matrix-js-sdk';
 import { useMatrixClient } from './useMatrixClient';
 import { roomToParentsAtom } from '../state/room/roomToParents';
 import { MSpaceChildContent, StateEvent } from '../../types/matrix/room';
@@ -15,9 +15,9 @@ export type HierarchyItem = {
   parentId?: string;
 };
 const getFlattenSpaceHierarchy = (
-  mx: MatrixClient,
   rootSpaceId: string,
   spaceRooms: Set<string>,
+  getRoom: (roomId: string) => Room | undefined,
   closedCategory: (spaceId: string) => boolean
 ): HierarchyItem[] => {
   const rootSpaceItem: HierarchyItem = {
@@ -30,7 +30,7 @@ const getFlattenSpaceHierarchy = (
 
   const findAndCollectHierarchySpaces = (spaceItem: HierarchyItem) => {
     if (spaceItems.find((item) => item.roomId === spaceItem.roomId)) return;
-    const space = mx.getRoom(spaceItem.roomId);
+    const space = getRoom(spaceItem.roomId);
     spaceItems.push(spaceItem);
 
     if (!space) return;
@@ -44,7 +44,7 @@ const getFlattenSpaceHierarchy = (
       // because we can not find if a childId is space without joining
       // or requesting room summary, we will look it into spaceRooms local
       // cache which we maintain as we load summary in UI.
-      if (mx.getRoom(childId)?.isSpaceRoom() || spaceRooms.has(childId)) {
+      if (getRoom(childId)?.isSpaceRoom() || spaceRooms.has(childId)) {
         const childItem: HierarchyItem = {
           roomId: childId,
           content: childEvent.getContent<MSpaceChildContent>(),
@@ -65,7 +65,7 @@ const getFlattenSpaceHierarchy = (
   ];
 
   const hierarchy: HierarchyItem[] = spaceItems.flatMap((spaceItem) => {
-    const space = mx.getRoom(spaceItem.roomId);
+    const space = getRoom(spaceItem.roomId);
     if (!space || closedCategory(spaceItem.roomId)) {
       return [spaceItem];
     }
@@ -75,7 +75,7 @@ const getFlattenSpaceHierarchy = (
       if (!isValidChild(childEvent)) return;
       const childId = childEvent.getStateKey();
       if (!childId || !isRoomId(childId)) return;
-      if (mx.getRoom(childId)?.isSpaceRoom() || spaceRooms.has(childId)) return;
+      if (getRoom(childId)?.isSpaceRoom() || spaceRooms.has(childId)) return;
 
       const childItem: HierarchyItem = {
         roomId: childId,
@@ -94,19 +94,20 @@ const getFlattenSpaceHierarchy = (
 export const useSpaceHierarchy = (
   spaceId: string,
   spaceRooms: Set<string>,
+  getRoom: (roomId: string) => Room | undefined,
   closedCategory: (spaceId: string) => boolean
 ): HierarchyItem[] => {
   const mx = useMatrixClient();
   const roomToParents = useAtomValue(roomToParentsAtom);
 
   const [hierarchyAtom] = useState(() =>
-    atom(getFlattenSpaceHierarchy(mx, spaceId, spaceRooms, closedCategory))
+    atom(getFlattenSpaceHierarchy(spaceId, spaceRooms, getRoom, closedCategory))
   );
   const [hierarchy, setHierarchy] = useAtom(hierarchyAtom);
 
   useEffect(() => {
-    setHierarchy(getFlattenSpaceHierarchy(mx, spaceId, spaceRooms, closedCategory));
-  }, [mx, spaceId, spaceRooms, setHierarchy, closedCategory]);
+    setHierarchy(getFlattenSpaceHierarchy(spaceId, spaceRooms, getRoom, closedCategory));
+  }, [mx, spaceId, spaceRooms, setHierarchy, getRoom, closedCategory]);
 
   useEffect(() => {
     const handleStateEvent: RoomStateEventHandlerMap[RoomStateEvent.Events] = (mEvent) => {
@@ -116,7 +117,7 @@ export const useSpaceHierarchy = (
       const allParents = getAllParents(roomToParents, eventRoomId);
 
       if (allParents.has(spaceId)) {
-        setHierarchy(getFlattenSpaceHierarchy(mx, spaceId, spaceRooms, closedCategory));
+        setHierarchy(getFlattenSpaceHierarchy(spaceId, spaceRooms, getRoom, closedCategory));
       }
     };
 
@@ -124,7 +125,7 @@ export const useSpaceHierarchy = (
     return () => {
       mx.removeListener(RoomStateEvent.Events, handleStateEvent);
     };
-  }, [mx, spaceId, roomToParents, setHierarchy, spaceRooms, closedCategory]);
+  }, [mx, spaceId, roomToParents, setHierarchy, spaceRooms, getRoom, closedCategory]);
 
   return hierarchy;
 };
