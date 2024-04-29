@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Box, Icon, IconButton, Icons, Line, Scroll, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
@@ -21,9 +21,16 @@ import { mDirectAtom } from '../../state/mDirectList';
 import { SpaceItemCard } from './SpaceItem';
 import { closedLobbyCategoriesAtom, makeLobbyCategoryId } from '../../state/closedLobbyCategory';
 import { useCategoryHandler } from '../../hooks/useCategoryHandler';
+import { useSpaces } from '../../state/hooks/roomList';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { allRoomsAtom } from '../../state/room-list/roomList';
 
 export function Lobby() {
+  const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
+  const spaces = useSpaces(mx, allRoomsAtom);
+  const joinedSpaces = useMemo(() => new Set(spaces), [spaces]);
+
   const space = useSpace();
   const scrollRef = useRef<HTMLDivElement>(null);
   const heroSectionRef = useRef<HTMLDivElement>(null);
@@ -116,6 +123,7 @@ export function Lobby() {
                           >
                             <SpaceItemCard
                               item={item}
+                              joined={joinedSpaces.has(item.roomId)}
                               categoryId={categoryId}
                               closed={closedCategories.has(categoryId)}
                               handleClose={handleCategoryClick}

@@ -1,7 +1,6 @@
 import { style } from '@vanilla-extract/css';
 import { color, config, toRem } from 'folds';
 import { recipe } from '@vanilla-extract/recipes';
-import { ContainerColor } from '../../styles/ContainerColor.css';
 
 export const SpaceItemCard = recipe({
   base: {
@@ -24,7 +23,6 @@ export const HeaderChip = style({
   },
 });
 export const HeaderChipPlaceholder = style([
-  ContainerColor({ variant: 'SurfaceVariant' }),
   {
     borderRadius: config.radii.R400,
     paddingLeft: config.space.S100,
