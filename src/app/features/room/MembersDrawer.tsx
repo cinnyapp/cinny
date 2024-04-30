@@ -56,7 +56,6 @@ import { settingsAtom } from '../../state/settings';
 import { millify } from '../../plugins/millify';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { UserAvatar } from '../../components/user-avatar';
-import { nameInitials } from '../../utils/common';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -511,7 +510,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           <UserAvatar
                             src={avatarUrl ?? undefined}
                             alt={name}
-                            renderInitials={() => <Text size="H6">{nameInitials(name)}</Text>}
+                            renderInitials={() => <Icon size="50" src={Icons.User} filled />}
                           />
                         </Avatar>
                       }

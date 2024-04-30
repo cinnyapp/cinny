@@ -1,6 +1,6 @@
 import React, { useEffect, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Editor } from 'slate';
-import { Avatar, MenuItem, Text } from 'folds';
+import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
 
 import { AutocompleteQuery } from './autocompleteQuery';
@@ -18,7 +18,6 @@ import { useKeyDown } from '../../../hooks/useKeyDown';
 import { getMxIdLocalPart, getMxIdServer, validMxId } from '../../../utils/matrix';
 import { getMemberDisplayName, getMemberSearchStr } from '../../../utils/room';
 import { UserAvatar } from '../../user-avatar';
-import { nameInitials } from '../../../utils/common';
 
 type MentionAutoCompleteHandler = (userId: string, name: string) => void;
 
@@ -28,12 +27,10 @@ const userIdFromQueryText = (mx: MatrixClient, text: string) =>
     : `@${text}${text.endsWith(':') ? '' : ':'}${getMxIdServer(mx.getUserId() ?? '')}`;
 
 function UnknownMentionItem({
-  query,
   userId,
   name,
   handleAutocomplete,
 }: {
-  query: AutocompleteQuery<string>;
   userId: string;
   name: string;
   handleAutocomplete: MentionAutoCompleteHandler;
@@ -48,7 +45,7 @@ function UnknownMentionItem({
       onClick={() => handleAutocomplete(userId, name)}
       before={
         <Avatar size="200">
-          <UserAvatar renderInitials={() => <Text size="H6">{nameInitials(query.text)}</Text>} />
+          <UserAvatar renderInitials={() => <Icon size="50" src={Icons.User} filled />} />
         </Avatar>
       }
     >
@@ -130,7 +127,6 @@ export function UserMentionAutocomplete({
     <AutocompleteMenu headerContent={<Text size="L400">Mentions</Text>} requestClose={requestClose}>
       {query.text === 'room' && (
         <UnknownMentionItem
-          query={query}
           userId={roomAliasOrId}
           name="@room"
           handleAutocomplete={handleAutocomplete}
@@ -138,7 +134,6 @@ export function UserMentionAutocomplete({
       )}
       {autoCompleteMembers.length === 0 ? (
         <UnknownMentionItem
-          query={query}
           userId={userIdFromQueryText(mx, query.text)}
           name={userIdFromQueryText(mx, query.text)}
           handleAutocomplete={handleAutocomplete}
@@ -165,9 +160,7 @@ export function UserMentionAutocomplete({
                   <UserAvatar
                     src={avatarUrl ?? undefined}
                     alt={getName(roomMember)}
-                    renderInitials={() => (
-                      <Text size="H6">{nameInitials(getName(roomMember))}</Text>
-                    )}
+                    renderInitials={() => <Icon size="50" src={Icons.User} filled />}
                   />
                 </Avatar>
               }

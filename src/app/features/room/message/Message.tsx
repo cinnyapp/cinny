@@ -62,7 +62,6 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
-import { nameInitials } from '../../../utils/common';
 import { UserAvatar } from '../../../components/user-avatar';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
@@ -669,7 +668,7 @@ export const Message = as<'div', MessageProps>(
                 : undefined
             }
             alt={senderDisplayName}
-            renderInitials={() => <Text size="H4">{nameInitials(senderDisplayName)}</Text>}
+            renderInitials={() => <Icon size="200" src={Icons.User} filled />}
           />
         </Avatar>
       </AvatarBase>

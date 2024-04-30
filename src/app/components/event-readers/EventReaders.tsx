@@ -21,7 +21,6 @@ import * as css from './EventReaders.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { UserAvatar } from '../user-avatar';
-import { nameInitials } from '../../utils/common';
 
 export type EventReadersProps = {
   room: Room;
@@ -74,7 +73,7 @@ export const EventReaders = as<'div', EventReadersProps>(
                         <UserAvatar
                           src={avatarUrl ?? undefined}
                           alt={name}
-                          renderInitials={() => <Text size="H6">{nameInitials(name)}</Text>}
+                          renderInitials={() => <Icon size="50" src={Icons.User} filled />}
                         />
                       </Avatar>
                     }

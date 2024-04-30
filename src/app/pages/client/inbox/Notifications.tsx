@@ -336,7 +336,7 @@ function RoomNotificationsGroupComp({
                             : undefined
                         }
                         alt={displayName}
-                        renderInitials={() => <Text size="H4">{nameInitials(displayName)}</Text>}
+                        renderInitials={() => <Icon size="200" src={Icons.User} filled />}
                       />
                     </Avatar>
                   </AvatarBase>

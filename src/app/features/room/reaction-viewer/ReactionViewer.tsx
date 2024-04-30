@@ -25,7 +25,6 @@ import { useRelations } from '../../../hooks/useRelations';
 import { Reaction } from '../../../components/message';
 import { getHexcodeForEmoji, getShortcodeFor } from '../../../plugins/emoji';
 import { UserAvatar } from '../../../components/user-avatar';
-import { nameInitials } from '../../../utils/common';
 
 export type ReactionViewerProps = {
   room: Room;
@@ -131,7 +130,7 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
                           <UserAvatar
                             src={avatarUrl ?? undefined}
                             alt={name}
-                            renderInitials={() => <Text size="H6">{nameInitials(name)}</Text>}
+                            renderInitials={() => <Icon size="50" src={Icons.User} filled />}
                           />
                         </Avatar>
                       }

@@ -2,7 +2,7 @@
 import React, { MouseEventHandler, useMemo } from 'react';
 import { IEventWithRoomId, RelationType, Room } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
-import { Avatar, Box, Chip, Header, Text, config } from 'folds';
+import { Avatar, Box, Chip, Header, Icon, Icons, Text, config } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   getReactCustomHtmlParser,
@@ -216,7 +216,7 @@ export function SearchResultGroup({
                             : undefined
                         }
                         alt={displayName}
-                        renderInitials={() => <Text size="H4">{nameInitials(displayName)}</Text>}
+                        renderInitials={() => <Icon size="200" src={Icons.User} filled />}
                       />
                     </Avatar>
                   </AvatarBase>

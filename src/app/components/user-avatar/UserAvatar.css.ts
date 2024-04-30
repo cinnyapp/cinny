@@ -2,8 +2,8 @@ import { style } from '@vanilla-extract/css';
 import { color } from 'folds';
 
 export const UserAvatar = style({
-  backgroundColor: color.Secondary.Main,
-  color: color.Secondary.OnMain,
+  backgroundColor: color.Secondary.Container,
+  color: color.Secondary.OnContainer,
   textTransform: 'capitalize',
 
   selectors: {
