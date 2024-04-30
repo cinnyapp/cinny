@@ -67,7 +67,7 @@ export function SpaceTabs() {
                     <RoomAvatar
                       src={avatarUrl ?? undefined}
                       alt={space.name}
-                      renderInitials={() => <Text size="H4">{nameInitials(space.name)}</Text>}
+                      renderFallback={() => <Text size="H4">{nameInitials(space.name)}</Text>}
                     />
                   }
                 />

@@ -7,9 +7,9 @@ import { joinRuleToIconSrc } from '../../utils/room';
 type RoomAvatarProps = {
   src?: string;
   alt?: string;
-  renderInitials: () => ReactNode;
+  renderFallback: () => ReactNode;
 };
-export function RoomAvatar({ src, alt, renderInitials }: RoomAvatarProps) {
+export function RoomAvatar({ src, alt, renderFallback }: RoomAvatarProps) {
   const [error, setError] = useState(false);
 
   const handleLoad: ReactEventHandler<HTMLImageElement> = (evt) => {
@@ -17,7 +17,7 @@ export function RoomAvatar({ src, alt, renderInitials }: RoomAvatarProps) {
   };
 
   if (!src || error) {
-    return <AvatarFallback className={css.RoomAvatar}>{renderInitials()}</AvatarFallback>;
+    return <AvatarFallback className={css.RoomAvatar}>{renderFallback()}</AvatarFallback>;
   }
 
   return (

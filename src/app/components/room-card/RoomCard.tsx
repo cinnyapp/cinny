@@ -209,7 +209,7 @@ export const RoomCard = as<'div', RoomCardProps>(
             <RoomAvatar
               src={avatar ?? undefined}
               alt={roomIdOrAlias}
-              renderInitials={() => (
+              renderFallback={() => (
                 <Text as="span" size="H3">
                   {nameInitials(roomName)}
                 </Text>

@@ -108,7 +108,7 @@ function InviteCard({ room, userId, direct, compact, onNavigate }: InviteCardPro
           <RoomAvatar
             src={direct ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)}
             alt={roomName}
-            renderInitials={() => (
+            renderFallback={() => (
               <Text as="span" size="H6">
                 {nameInitials(roomName)}
               </Text>

@@ -287,7 +287,7 @@ function RoomNotificationsGroupComp({
             <RoomAvatar
               src={getRoomAvatarUrl(mx, room, 96)}
               alt={room.name}
-              renderInitials={() => (
+              renderFallback={() => (
                 <RoomIcon size="50" joinRule={room.getJoinRule() ?? JoinRule.Restricted} filled />
               )}
             />
@@ -340,7 +340,7 @@ function RoomNotificationsGroupComp({
                             : undefined
                         }
                         alt={displayName}
-                        renderInitials={() => <Icon size="200" src={Icons.User} filled />}
+                        renderFallback={() => <Icon size="200" src={Icons.User} filled />}
                       />
                     </Avatar>
                   </AvatarBase>

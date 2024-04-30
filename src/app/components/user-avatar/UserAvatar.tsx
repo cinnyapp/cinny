@@ -5,9 +5,9 @@ import * as css from './UserAvatar.css';
 type UserAvatarProps = {
   src?: string;
   alt?: string;
-  renderInitials: () => ReactNode;
+  renderFallback: () => ReactNode;
 };
-export function UserAvatar({ src, alt, renderInitials }: UserAvatarProps) {
+export function UserAvatar({ src, alt, renderFallback }: UserAvatarProps) {
   const [error, setError] = useState(false);
 
   const handleLoad: ReactEventHandler<HTMLImageElement> = (evt) => {
@@ -15,7 +15,7 @@ export function UserAvatar({ src, alt, renderInitials }: UserAvatarProps) {
   };
 
   if (!src || error) {
-    return <AvatarFallback className={css.UserAvatar}>{renderInitials()}</AvatarFallback>;
+    return <AvatarFallback className={css.UserAvatar}>{renderFallback()}</AvatarFallback>;
   }
 
   return (

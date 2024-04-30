@@ -48,7 +48,7 @@ function UnknownPrivateSpaceProfile({
           <RoomAvatar
             src={avatarUrl}
             alt={name}
-            renderInitials={() => (
+            renderFallback={() => (
               <Text as="span" size="H6">
                 {nameInitials(name)}
               </Text>
@@ -108,7 +108,7 @@ function UnknownSpaceProfile({
           <RoomAvatar
             src={avatarUrl}
             alt={name}
-            renderInitials={() => (
+            renderFallback={() => (
               <Text as="span" size="H6">
                 {nameInitials(name)}
               </Text>
@@ -169,7 +169,7 @@ function SpaceProfile({
           <RoomAvatar
             src={avatarUrl}
             alt={name}
-            renderInitials={() => (
+            renderFallback={() => (
               <Text as="span" size="H6">
                 {nameInitials(name)}
               </Text>

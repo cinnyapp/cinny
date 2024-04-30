@@ -510,7 +510,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                           <UserAvatar
                             src={avatarUrl ?? undefined}
                             alt={name}
-                            renderInitials={() => <Icon size="50" src={Icons.User} filled />}
+                            renderFallback={() => <Icon size="50" src={Icons.User} filled />}
                           />
                         </Avatar>
                       }

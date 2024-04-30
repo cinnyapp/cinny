@@ -34,7 +34,7 @@ export function LobbyHeader({ showProfile }: LobbyHeaderProps) {
                 <RoomAvatar
                   src={avatarUrl}
                   alt={name}
-                  renderInitials={() => <Text size="H4">{nameInitials(name)}</Text>}
+                  renderFallback={() => <Text size="H4">{nameInitials(name)}</Text>}
                 />
               </Avatar>
               <Text size="H3" truncate>

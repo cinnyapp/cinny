@@ -668,7 +668,7 @@ export const Message = as<'div', MessageProps>(
                 : undefined
             }
             alt={senderDisplayName}
-            renderInitials={() => <Icon size="200" src={Icons.User} filled />}
+            renderFallback={() => <Icon size="200" src={Icons.User} filled />}
           />
         </Avatar>
       </AvatarBase>

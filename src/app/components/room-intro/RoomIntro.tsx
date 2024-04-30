@@ -48,7 +48,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
           <RoomAvatar
             src={avatarHttpUrl ?? undefined}
             alt={name}
-            renderInitials={() => <Text size="H2">{nameInitials(name)}</Text>}
+            renderFallback={() => <Text size="H2">{nameInitials(name)}</Text>}
           />
         </Avatar>
       </Box>

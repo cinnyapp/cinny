@@ -160,7 +160,7 @@ export function RoomMentionAutocomplete({
                     <RoomAvatar
                       src={getDirectRoomAvatarUrl(mx, room)}
                       alt={room.name}
-                      renderInitials={() => (
+                      renderFallback={() => (
                         <RoomIcon
                           size="50"
                           joinRule={room.getJoinRule() ?? JoinRule.Restricted}

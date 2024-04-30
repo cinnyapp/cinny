@@ -28,7 +28,7 @@ export function LobbyHero() {
           <RoomAvatar
             src={avatarUrl}
             alt={name}
-            renderInitials={() => <Text size="H4">{nameInitials(name)}</Text>}
+            renderFallback={() => <Text size="H4">{nameInitials(name)}</Text>}
           />
         </Avatar>
       }

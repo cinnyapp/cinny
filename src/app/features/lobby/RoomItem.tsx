@@ -69,7 +69,7 @@ function RoomProfileError({ roomId, suggested, error }: RoomProfileErrorProps) {
         <RoomAvatar
           src={undefined}
           alt={roomId}
-          renderInitials={() => (
+          renderFallback={() => (
             <RoomIcon
               size="300"
               joinRule={privateRoom ? JoinRule.Invite : JoinRule.Restricted}
@@ -136,7 +136,7 @@ function RoomProfile({
         <RoomAvatar
           src={avatarUrl}
           alt={name}
-          renderInitials={() => (
+          renderFallback={() => (
             <RoomIcon size="300" joinRule={joinRule ?? JoinRule.Restricted} filled />
           )}
         />

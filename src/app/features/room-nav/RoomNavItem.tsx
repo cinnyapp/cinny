@@ -210,7 +210,7 @@ export function RoomNavItem({
                     direct ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)
                   }
                   alt={room.name}
-                  renderInitials={() => (
+                  renderFallback={() => (
                     <Text as="span" size="H6">
                       {nameInitials(room.name)}
                     </Text>
