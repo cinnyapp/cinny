@@ -1,7 +1,7 @@
 import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect } from 'react';
 import { Editor } from 'slate';
 import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
-import { MatrixClient } from 'matrix-js-sdk';
+import { JoinRule, MatrixClient } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
 
 import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
@@ -17,7 +17,6 @@ import { mDirectAtom } from '../../../state/mDirectList';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { factoryRoomIdByActivity } from '../../../utils/sort';
 import { RoomAvatar, RoomIcon } from '../../room-avatar';
-import { nameInitials } from '../../../utils/common';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 
@@ -161,7 +160,13 @@ export function RoomMentionAutocomplete({
                     <RoomAvatar
                       src={getDirectRoomAvatarUrl(mx, room)}
                       alt={room.name}
-                      renderInitials={() => <Text size="H6">{nameInitials(room.name)}</Text>}
+                      renderInitials={() => (
+                        <RoomIcon
+                          size="50"
+                          joinRule={room.getJoinRule() ?? JoinRule.Restricted}
+                          filled
+                        />
+                      )}
                     />
                   ) : (
                     <RoomIcon size="100" joinRule={room.getJoinRule()} space={room.isSpaceRoom()} />

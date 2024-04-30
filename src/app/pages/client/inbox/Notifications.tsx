@@ -14,7 +14,14 @@ import {
   toRem,
 } from 'folds';
 import { useSearchParams } from 'react-router-dom';
-import { INotification, INotificationsResponse, IRoomEvent, Method, Room } from 'matrix-js-sdk';
+import {
+  INotification,
+  INotificationsResponse,
+  IRoomEvent,
+  JoinRule,
+  Method,
+  Room,
+} from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
@@ -23,8 +30,7 @@ import { getMxIdLocalPart, isRoomId, isUserId } from '../../../utils/matrix';
 import { InboxNotificationsPathSearchParams } from '../../paths';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { SequenceCard } from '../../../components/sequence-card';
-import { RoomAvatar } from '../../../components/room-avatar';
-import { nameInitials } from '../../../utils/common';
+import { RoomAvatar, RoomIcon } from '../../../components/room-avatar';
 import { getMemberAvatarMxc, getMemberDisplayName, getRoomAvatarUrl } from '../../../utils/room';
 import { ScrollTopContainer } from '../../../components/scroll-top-container';
 import { useInterval } from '../../../hooks/useInterval';
@@ -282,9 +288,7 @@ function RoomNotificationsGroupComp({
               src={getRoomAvatarUrl(mx, room, 96)}
               alt={room.name}
               renderInitials={() => (
-                <Text as="span" size="H6">
-                  {nameInitials(room.name)}
-                </Text>
+                <RoomIcon size="50" joinRule={room.getJoinRule() ?? JoinRule.Restricted} filled />
               )}
             />
           </Avatar>

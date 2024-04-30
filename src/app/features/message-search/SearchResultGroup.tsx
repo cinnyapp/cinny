@@ -1,6 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { MouseEventHandler, useMemo } from 'react';
-import { IEventWithRoomId, RelationType, Room } from 'matrix-js-sdk';
+import { IEventWithRoomId, JoinRule, RelationType, Room } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Avatar, Box, Chip, Header, Icon, Icons, Text, config } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -26,9 +26,8 @@ import { RenderMessageContent } from '../../components/RenderMessageContent';
 import { Image } from '../../components/media';
 import { ImageViewer } from '../../components/image-viewer';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
-import { RoomAvatar } from '../../components/room-avatar';
+import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { getMemberAvatarMxc, getMemberDisplayName, getRoomAvatarUrl } from '../../utils/room';
-import { nameInitials } from '../../utils/common';
 import colorMXID from '../../../util/colorMXID';
 import { ResultItem } from './useMessageSearch';
 import { SequenceCard } from '../../components/sequence-card';
@@ -167,9 +166,7 @@ export function SearchResultGroup({
               src={getRoomAvatarUrl(mx, room, 96)}
               alt={room.name}
               renderInitials={() => (
-                <Text as="span" size="H6">
-                  {nameInitials(room.name)}
-                </Text>
+                <RoomIcon size="50" joinRule={room.getJoinRule() ?? JoinRule.Restricted} filled />
               )}
             />
           </Avatar>

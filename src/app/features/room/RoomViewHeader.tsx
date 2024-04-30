@@ -21,13 +21,12 @@ import {
   RectCords,
 } from 'folds';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Room } from 'matrix-js-sdk';
+import { JoinRule, Room } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
 
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { PageHeader } from '../../components/page';
-import { RoomAvatar } from '../../components/room-avatar';
-import { nameInitials } from '../../utils/common';
+import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import { StateEvent } from '../../../types/matrix/room';
@@ -215,7 +214,9 @@ export function RoomViewHeader() {
             <RoomAvatar
               src={avatarUrl}
               alt={name}
-              renderInitials={() => <Text size="H4">{nameInitials(name)}</Text>}
+              renderInitials={() => (
+                <RoomIcon size="200" joinRule={room.getJoinRule() ?? JoinRule.Restricted} filled />
+              )}
             />
           </Avatar>
           <Box direction="Column">
