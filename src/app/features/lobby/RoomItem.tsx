@@ -1,18 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { MouseEventHandler, ReactNode, useCallback, useEffect } from 'react';
 import {
   Avatar,
   Badge,
   Box,
+  Chip,
+  Icon,
+  Icons,
   Line,
   Overlay,
   OverlayBackdrop,
   OverlayCenter,
+  Spinner,
   Text,
+  Tooltip,
+  TooltipProvider,
   as,
+  color,
   toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { JoinRule } from 'matrix-js-sdk';
+import { JoinRule, MatrixError, Room } from 'matrix-js-sdk';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { SequenceCard } from '../../components/sequence-card';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -28,9 +35,67 @@ import { onEnterOrSpace } from '../../utils/keyboard';
 import { Membership, RoomType } from '../../../types/matrix/room';
 import * as css from './RoomItem.css';
 import * as styleCss from './style.css';
-import { AsyncStatus } from '../../hooks/useAsyncCallback';
+import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { ErrorCode } from '../../cs-errorcode';
 import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
+
+type RoomJoinButtonProps = {
+  roomId: string;
+  via?: string[];
+};
+function RoomJoinButton({ roomId, via }: RoomJoinButtonProps) {
+  const mx = useMatrixClient();
+
+  const [joinState, join] = useAsyncCallback<Room, MatrixError, []>(
+    useCallback(() => mx.joinRoom(roomId, { viaServers: via }), [mx, roomId, via])
+  );
+
+  const canJoin = joinState.status === AsyncStatus.Idle || joinState.status === AsyncStatus.Error;
+
+  return (
+    <Box shrink="No" gap="200" alignItems="Center">
+      {joinState.status === AsyncStatus.Error && (
+        <TooltipProvider
+          tooltip={
+            <Tooltip variant="Critical" style={{ maxWidth: toRem(200) }}>
+              <Box direction="Column" gap="100">
+                <Text style={{ wordBreak: 'break-word' }} size="T400">
+                  {joinState.error.data.error}
+                </Text>
+                <Text size="T200">{joinState.error.name}</Text>
+              </Box>
+            </Tooltip>
+          }
+        >
+          {(triggerRef) => (
+            <Icon
+              ref={triggerRef}
+              style={{ color: color.Critical.Main, cursor: 'pointer' }}
+              src={Icons.Warning}
+              size="400"
+              filled
+              tabIndex={0}
+              aria-label={joinState.error.data.error}
+            />
+          )}
+        </TooltipProvider>
+      )}
+      <Chip
+        variant="Secondary"
+        fill="Soft"
+        size="400"
+        radii="Pill"
+        before={
+          canJoin ? <Icon src={Icons.Plus} size="50" /> : <Spinner variant="Secondary" size="100" />
+        }
+        onClick={join}
+        disabled={!canJoin}
+      >
+        <Text size="B300">Join</Text>
+      </Chip>
+    </Box>
+  );
+}
 
 function RoomProfileLoading() {
   return (
@@ -59,8 +124,9 @@ type RoomProfileErrorProps = {
   roomId: string;
   error: Error;
   suggested?: boolean;
+  via?: string[];
 };
-function RoomProfileError({ roomId, suggested, error }: RoomProfileErrorProps) {
+function RoomProfileError({ roomId, suggested, error, via }: RoomProfileErrorProps) {
   const privateRoom = error.name === ErrorCode.M_FORBIDDEN;
 
   return (
@@ -110,6 +176,7 @@ function RoomProfileError({ roomId, suggested, error }: RoomProfileErrorProps) {
           </Text>
         </Box>
       </Box>
+      {!privateRoom && <RoomJoinButton roomId={roomId} via={via} />}
     </Box>
   );
 }
@@ -121,6 +188,7 @@ type RoomProfileProps = {
   suggested?: boolean;
   memberCount?: number;
   joinRule?: JoinRule;
+  options?: ReactNode;
 };
 function RoomProfile({
   name,
@@ -129,6 +197,7 @@ function RoomProfile({
   suggested,
   memberCount,
   joinRule,
+  options,
 }: RoomProfileProps) {
   return (
     <Box grow="Yes" gap="300">
@@ -206,6 +275,7 @@ function RoomProfile({
           )}
         </Box>
       </Box>
+      {options}
     </Box>
   );
 }
@@ -230,9 +300,10 @@ type RoomItemCardProps = {
   dm?: boolean;
   firstChild?: boolean;
   lastChild?: boolean;
+  onOpen: MouseEventHandler<HTMLButtonElement>;
 };
 export const RoomItemCard = as<'div', RoomItemCardProps>(
-  ({ item, onSpaceFound, dm, firstChild, lastChild, ...props }, ref) => {
+  ({ item, onSpaceFound, dm, firstChild, lastChild, onOpen, ...props }, ref) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
     const room = mx.getRoom(roomId);
@@ -262,6 +333,25 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                 memberCount={localSummary.memberCount}
                 suggested={content.suggested}
                 joinRule={localSummary.joinRule}
+                options={
+                  joined ? (
+                    <Box shrink="No" gap="100" alignItems="Center">
+                      <Chip
+                        data-roomId={roomId}
+                        onClick={onOpen}
+                        variant="Secondary"
+                        fill="None"
+                        size="400"
+                        radii="Pill"
+                        aria-label="Open Room"
+                      >
+                        <Icon size="50" src={Icons.ArrowRight} />
+                      </Chip>
+                    </Box>
+                  ) : (
+                    <RoomJoinButton roomId={roomId} via={content.via} />
+                  )
+                }
               />
             )}
           </LocalRoomSummaryLoader>
@@ -275,6 +365,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                     roomId={roomId}
                     error={summaryState.error}
                     suggested={content.suggested}
+                    via={content.via}
                   />
                 )}
                 {summaryState.status === AsyncStatus.Success && (
@@ -297,6 +388,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                       memberCount={summaryState.data.num_joined_members}
                       suggested={content.suggested}
                       joinRule={summaryState.data.join_rule}
+                      options={<RoomJoinButton roomId={roomId} via={content.via} />}
                     />
                   </>
                 )}
@@ -304,9 +396,6 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
             )}
           </HierarchyRoomSummaryLoader>
         )}
-        <Box shrink="No">
-          <Text style={{ color: joined ? 'green' : 'red' }}>{joined ? 'JOINED' : 'NOT'}</Text>
-        </Box>
       </SequenceCard>
     );
   }

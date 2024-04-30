@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { MouseEventHandler, useCallback, useMemo, useRef, useState } from 'react';
 import { Box, Icon, IconButton, Icons, Line, Scroll, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
+import { useNavigate } from 'react-router-dom';
 import { useSpace } from '../../hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '../../components/page';
 import { HierarchyItem, useSpaceHierarchy } from '../../hooks/useSpaceHierarchy';
@@ -23,12 +24,15 @@ import { closedLobbyCategoriesAtom, makeLobbyCategoryId } from '../../state/clos
 import { useCategoryHandler } from '../../hooks/useCategoryHandler';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
+import { getCanonicalAliasOrRoomId } from '../../utils/matrix';
+import { getSpaceRoomPath } from '../../pages/pathUtils';
 
 export function Lobby() {
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
   const allRooms = useAtomValue(allRoomsAtom);
   const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
+  const navigate = useNavigate();
 
   const space = useSpace();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -78,6 +82,13 @@ export function Lobby() {
   const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
     closedCategories.has(categoryId)
   );
+
+  const handleOpenRoom: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const rId = evt.currentTarget.getAttribute('data-roomId');
+    if (!rId) return;
+    const pSpaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
+    navigate(getSpaceRoomPath(pSpaceIdOrAlias, getCanonicalAliasOrRoomId(mx, rId)));
+  };
 
   return (
     <PowerLevelsContextProvider value={powerLevelAPI}>
@@ -155,6 +166,7 @@ export function Lobby() {
                             dm={mDirects.has(item.roomId)}
                             firstChild={!prevItem || prevItem.space === true}
                             lastChild={!nextItem || nextItem.space === true}
+                            onOpen={handleOpenRoom}
                           />
                         </VirtualTile>
                       );
