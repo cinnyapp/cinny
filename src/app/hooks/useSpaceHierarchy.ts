@@ -7,13 +7,21 @@ import { MSpaceChildContent, StateEvent } from '../../types/matrix/room';
 import { getAllParents, getStateEvents, isValidChild } from '../utils/room';
 import { isRoomId } from '../utils/matrix';
 
-export type HierarchyItem = {
-  roomId: string;
-  content: MSpaceChildContent;
-  ts: number;
-  space?: boolean;
-  parentId?: string;
-};
+export type HierarchyItem =
+  | {
+      roomId: string;
+      content: MSpaceChildContent;
+      ts: number;
+      space: true;
+      parentId?: string;
+    }
+  | {
+      roomId: string;
+      content: MSpaceChildContent;
+      ts: number;
+      space?: false;
+      parentId: string;
+    };
 const getFlattenSpaceHierarchy = (
   rootSpaceId: string,
   spaceRooms: Set<string>,
@@ -114,9 +122,8 @@ export const useSpaceHierarchy = (
       if (mEvent.getType() !== StateEvent.SpaceChild) return;
       const eventRoomId = mEvent.getRoomId();
       if (!eventRoomId) return;
-      const allParents = getAllParents(roomToParents, eventRoomId);
 
-      if (allParents.has(spaceId)) {
+      if (spaceId === eventRoomId || getAllParents(roomToParents, eventRoomId).has(spaceId)) {
         setHierarchy(getFlattenSpaceHierarchy(spaceId, spaceRooms, getRoom, closedCategory));
       }
     };
