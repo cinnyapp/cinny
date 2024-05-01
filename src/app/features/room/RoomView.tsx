@@ -4,7 +4,7 @@ import { EventType, Room } from 'matrix-js-sdk';
 
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { StateEvent } from '../../../types/matrix/room';
-import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
+import { usePowerLevelsAPI, usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useEditor } from '../../components/editor';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
@@ -26,7 +26,8 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
   const mx = useMatrixClient();
 
   const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
-  const { getPowerLevel, canSendEvent } = usePowerLevelsAPI();
+  const powerLevels = usePowerLevelsContext();
+  const { getPowerLevel, canSendEvent } = usePowerLevelsAPI(powerLevels);
   const myUserId = mx.getUserId();
   const canMessage = myUserId
     ? canSendEvent(EventType.RoomMessage, getPowerLevel(myUserId))

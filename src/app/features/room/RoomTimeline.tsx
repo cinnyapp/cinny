@@ -101,7 +101,7 @@ import * as css from './RoomTimeline.css';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
 import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
-import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
+import { usePowerLevelsAPI, usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
 import initMatrix from '../../../client/initMatrix';
 import { useKeyDown } from '../../hooks/useKeyDown';
@@ -437,7 +437,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const showUrlPreview = encryptedRoom ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
-  const { canDoAction, canSendEvent, getPowerLevel } = usePowerLevelsAPI();
+  const powerLevels = usePowerLevelsContext();
+  const { canDoAction, canSendEvent, getPowerLevel } = usePowerLevelsAPI(powerLevels);
   const myPowerLevel = getPowerLevel(mx.getUserId() ?? '');
   const canRedact = canDoAction('redact', myPowerLevel);
   const canSendReaction = canSendEvent(MessageEvent.Reaction, myPowerLevel);

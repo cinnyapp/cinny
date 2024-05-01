@@ -47,7 +47,7 @@ import { getCanonicalAliasOrRoomId } from '../../utils/matrix';
 import { _SearchPathSearchParams } from '../../pages/paths';
 import * as css from './RoomViewHeader.css';
 import { useRoomUnread } from '../../state/hooks/unread';
-import { usePowerLevelsAPI } from '../../hooks/usePowerLevels';
+import { usePowerLevelsAPI, usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { markAsRead } from '../../../client/action/notifications';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
@@ -65,7 +65,8 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(
   ({ room, linkPath, requestClose }, ref) => {
     const mx = useMatrixClient();
     const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
-    const { getPowerLevel, canDoAction } = usePowerLevelsAPI();
+    const powerLevels = usePowerLevelsContext();
+    const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
     const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
 
     const handleMarkAsRead = () => {

@@ -22,10 +22,10 @@ export function Room() {
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const screenSize = useScreenSize();
-  const powerLevelAPI = usePowerLevels(room);
+  const powerLevels = usePowerLevels(room);
 
   return (
-    <PowerLevelsContextProvider value={powerLevelAPI}>
+    <PowerLevelsContextProvider value={powerLevels}>
       <Box grow="Yes">
         <RoomView room={room} eventId={eventId} />
         {screenSize === ScreenSize.Desktop && isDrawer && (

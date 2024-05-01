@@ -25,7 +25,7 @@ import { nameInitials } from '../../utils/common';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomUnread } from '../../state/hooks/unread';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
-import { usePowerLevels } from '../../hooks/usePowerLevels';
+import { usePowerLevels, usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { copyToClipboard } from '../../utils/dom';
 import { getOriginBaseUrl, withOriginBaseUrl } from '../../pages/pathUtils';
 import { markAsRead } from '../../../client/action/notifications';
@@ -42,7 +42,8 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
   ({ room, linkPath, requestClose }, ref) => {
     const mx = useMatrixClient();
     const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
-    const { getPowerLevel, canDoAction } = usePowerLevels(room);
+    const powerLevels = usePowerLevels(room);
+    const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
     const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
 
     const handleMarkAsRead = () => {
