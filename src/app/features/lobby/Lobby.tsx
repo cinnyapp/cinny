@@ -3,6 +3,7 @@ import { Box, Icon, IconButton, Icons, Line, Scroll, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
+import { Room } from 'matrix-js-sdk';
 import { useSpace } from '../../hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '../../components/page';
 import { HierarchyItem, useSpaceHierarchy } from '../../hooks/useSpaceHierarchy';
@@ -16,7 +17,13 @@ import { LobbyHeader } from './LobbyHeader';
 import { LobbyHero } from './LobbyHero';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
-import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePowerLevels';
+import {
+  DefaultPowerLevels,
+  PowerLevelsContextProvider,
+  powerLevelAPI,
+  usePowerLevels,
+  useRoomsPowerLevels,
+} from '../../hooks/usePowerLevels';
 import { RoomItemCard } from './RoomItem';
 import { mDirectAtom } from '../../state/mDirectList';
 import { SpaceItemCard } from './SpaceItem';
@@ -26,15 +33,18 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { getCanonicalAliasOrRoomId } from '../../utils/matrix';
 import { getSpaceRoomPath } from '../../pages/pathUtils';
+import { HierarchyItemMenu } from './HierarchyItemMenu';
+import { StateEvent } from '../../../types/matrix/room';
 
 export function Lobby() {
+  const navigate = useNavigate();
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
   const allRooms = useAtomValue(allRoomsAtom);
   const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
-  const navigate = useNavigate();
-
   const space = useSpace();
+  const powerLevels = usePowerLevels(space);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const heroSectionRef = useRef<HTMLDivElement>(null);
   const [heroSectionHeight, setHeroSectionHeight] = useState<number>();
@@ -42,7 +52,6 @@ export function Lobby() {
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const screenSize = useScreenSize();
   const [onTop, setOnTop] = useState(true);
-  const powerLevelAPI = usePowerLevels(space);
   const [closedCategories, setClosedCategories] = useAtom(closedLobbyCategoriesAtom);
 
   useElementSizeObserver(
@@ -77,6 +86,15 @@ export function Lobby() {
   });
   const vItems = virtualizer.getVirtualItems();
 
+  const hierarchySpaces: Room[] = useMemo(
+    () =>
+      flattenHierarchy
+        .filter((i) => i.space && allJoinedRooms.has(i.roomId) && !!mx.getRoom(i.roomId))
+        .map((i) => mx.getRoom(i.parentId ?? i.roomId)) as Room[],
+    [mx, allJoinedRooms, flattenHierarchy]
+  );
+  const roomsPowerLevels = useRoomsPowerLevels(hierarchySpaces);
+
   const addSpaceRoom = (roomId: string) => setSpaceRooms({ type: 'PUT', roomId });
 
   const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
@@ -84,14 +102,14 @@ export function Lobby() {
   );
 
   const handleOpenRoom: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    const rId = evt.currentTarget.getAttribute('data-roomId');
+    const rId = evt.currentTarget.getAttribute('data-room-id');
     if (!rId) return;
     const pSpaceIdOrAlias = getCanonicalAliasOrRoomId(mx, space.roomId);
     navigate(getSpaceRoomPath(pSpaceIdOrAlias, getCanonicalAliasOrRoomId(mx, rId)));
   };
 
   return (
-    <PowerLevelsContextProvider value={powerLevelAPI}>
+    <PowerLevelsContextProvider value={powerLevels}>
       <Box grow="Yes">
         <Page>
           <LobbyHeader showProfile={!onTop} />
@@ -126,8 +144,17 @@ export function Lobby() {
                     </PageHeroSection>
                     {vItems.map((vItem) => {
                       const item = flattenHierarchy[vItem.index];
+                      const { parentId } = item;
                       if (!item) return null;
-
+                      const parentPowerLevel =
+                        parentId && (roomsPowerLevels.get(parentId) ?? DefaultPowerLevels);
+                      const canEditSpaceChild =
+                        parentPowerLevel &&
+                        powerLevelAPI.canSendStateEvent(
+                          parentPowerLevel,
+                          StateEvent.SpaceChild,
+                          powerLevelAPI.getPowerLevel(parentPowerLevel, mx.getUserId() ?? undefined)
+                        );
                       if (item.space) {
                         const categoryId = makeLobbyCategoryId(space.roomId, item.roomId);
 
@@ -146,6 +173,11 @@ export function Lobby() {
                               categoryId={categoryId}
                               closed={closedCategories.has(categoryId)}
                               handleClose={handleCategoryClick}
+                              options={
+                                parentId && canEditSpaceChild ? (
+                                  <HierarchyItemMenu item={{ ...item, parentId }} />
+                                ) : undefined
+                              }
                             />
                           </VirtualTile>
                         );
@@ -167,6 +199,9 @@ export function Lobby() {
                             firstChild={!prevItem || prevItem.space === true}
                             lastChild={!nextItem || nextItem.space === true}
                             onOpen={handleOpenRoom}
+                            options={
+                              canEditSpaceChild ? <HierarchyItemMenu item={item} /> : undefined
+                            }
                           />
                         </VirtualTile>
                       );

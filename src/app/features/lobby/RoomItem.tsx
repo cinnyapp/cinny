@@ -301,9 +301,10 @@ type RoomItemCardProps = {
   firstChild?: boolean;
   lastChild?: boolean;
   onOpen: MouseEventHandler<HTMLButtonElement>;
+  options?: ReactNode;
 };
 export const RoomItemCard = as<'div', RoomItemCardProps>(
-  ({ item, onSpaceFound, dm, firstChild, lastChild, onOpen, ...props }, ref) => {
+  ({ item, onSpaceFound, dm, firstChild, lastChild, onOpen, options, ...props }, ref) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
     const room = mx.getRoom(roomId);
@@ -337,7 +338,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                   joined ? (
                     <Box shrink="No" gap="100" alignItems="Center">
                       <Chip
-                        data-roomId={roomId}
+                        data-room-id={roomId}
                         onClick={onOpen}
                         variant="Secondary"
                         fill="None"
@@ -396,6 +397,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
             )}
           </HierarchyRoomSummaryLoader>
         )}
+        {options}
       </SequenceCard>
     );
   }

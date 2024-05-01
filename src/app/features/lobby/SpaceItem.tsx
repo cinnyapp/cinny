@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useCallback } from 'react';
+import React, { MouseEventHandler, ReactNode, useCallback } from 'react';
 import { Box, Avatar, Text, Chip, Icon, Icons, as, Badge, toRem, Spinner } from 'folds';
 import classNames from 'classnames';
 import { MatrixError, Room } from 'matrix-js-sdk';
@@ -193,15 +193,40 @@ function SpaceProfile({
   );
 }
 
+type RootSpaceProfileProps = {
+  closed: boolean;
+  categoryId: string;
+  handleClose?: MouseEventHandler<HTMLButtonElement>;
+};
+function RootSpaceProfile({ closed, categoryId, handleClose }: RootSpaceProfileProps) {
+  return (
+    <Chip
+      data-category-id={categoryId}
+      onClick={handleClose}
+      className={css.HeaderChip}
+      variant="Surface"
+      size="500"
+      after={<Icon src={closed ? Icons.ChevronRight : Icons.ChevronBottom} size="50" />}
+    >
+      <Box alignItems="Center" gap="200">
+        <Text size="H4" truncate>
+          Rooms
+        </Text>
+      </Box>
+    </Chip>
+  );
+}
+
 type SpaceItemCardProps = {
   item: HierarchyItem;
   joined?: boolean;
   categoryId: string;
   closed: boolean;
   handleClose?: MouseEventHandler<HTMLButtonElement>;
+  options?: ReactNode;
 };
 export const SpaceItemCard = as<'div', SpaceItemCardProps>(
-  ({ className, joined, closed, categoryId, item, handleClose, ...props }, ref) => {
+  ({ className, joined, closed, categoryId, item, handleClose, options, ...props }, ref) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
     const space = mx.getRoom(roomId);
@@ -213,56 +238,63 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
         {...props}
         ref={ref}
       >
-        {space ? (
-          <LocalRoomSummaryLoader room={space}>
-            {(localSummary) => (
-              <SpaceProfile
-                name={localSummary.name}
-                avatarUrl={getRoomAvatarUrl(mx, space, 96)}
-                suggested={content.suggested}
-                closed={closed}
-                categoryId={categoryId}
-                handleClose={handleClose}
-              />
-            )}
-          </LocalRoomSummaryLoader>
-        ) : (
-          <HierarchyRoomSummaryLoader roomId={roomId}>
-            {(summaryState) => (
-              <>
-                {summaryState.status === AsyncStatus.Loading && <SpaceProfileLoading />}
-                {summaryState.status === AsyncStatus.Error &&
-                  (summaryState.error.name === ErrorCode.M_FORBIDDEN ? (
-                    <UnknownPrivateSpaceProfile suggested={content.suggested} />
-                  ) : (
+        <Box grow="Yes">
+          {space ? (
+            <LocalRoomSummaryLoader room={space}>
+              {(localSummary) =>
+                item.parentId ? (
+                  <SpaceProfile
+                    name={localSummary.name}
+                    avatarUrl={getRoomAvatarUrl(mx, space, 96)}
+                    suggested={content.suggested}
+                    closed={closed}
+                    categoryId={categoryId}
+                    handleClose={handleClose}
+                  />
+                ) : (
+                  <RootSpaceProfile
+                    closed={closed}
+                    categoryId={categoryId}
+                    handleClose={handleClose}
+                  />
+                )
+              }
+            </LocalRoomSummaryLoader>
+          ) : (
+            <HierarchyRoomSummaryLoader roomId={roomId}>
+              {(summaryState) => (
+                <>
+                  {summaryState.status === AsyncStatus.Loading && <SpaceProfileLoading />}
+                  {summaryState.status === AsyncStatus.Error &&
+                    (summaryState.error.name === ErrorCode.M_FORBIDDEN ? (
+                      <UnknownPrivateSpaceProfile suggested={content.suggested} />
+                    ) : (
+                      <UnknownSpaceProfile
+                        roomId={roomId}
+                        via={item.content.via}
+                        suggested={content.suggested}
+                      />
+                    ))}
+                  {summaryState.status === AsyncStatus.Success && (
                     <UnknownSpaceProfile
                       roomId={roomId}
                       via={item.content.via}
+                      name={summaryState.data.name || roomId}
+                      avatarUrl={
+                        summaryState.data?.avatar_url
+                          ? mx.mxcUrlToHttp(summaryState.data.avatar_url, 96, 96, 'crop') ??
+                            undefined
+                          : undefined
+                      }
                       suggested={content.suggested}
                     />
-                  ))}
-                {summaryState.status === AsyncStatus.Success && (
-                  <UnknownSpaceProfile
-                    roomId={roomId}
-                    via={item.content.via}
-                    name={summaryState.data.name || roomId}
-                    avatarUrl={
-                      summaryState.data?.avatar_url
-                        ? mx.mxcUrlToHttp(summaryState.data.avatar_url, 96, 96, 'crop') ?? undefined
-                        : undefined
-                    }
-                    suggested={content.suggested}
-                  />
-                )}
-              </>
-            )}
-          </HierarchyRoomSummaryLoader>
-        )}
-        <Box shrink="No">
-          {/* <Chip variant="Primary" radii="Pill" before={<Icon size="100" src={Icons.CheckTwice} />}>
-          <Text size="T200">Some</Text>
-        </Chip> */}
+                  )}
+                </>
+              )}
+            </HierarchyRoomSummaryLoader>
+          )}
         </Box>
+        {options}
       </Box>
     );
   }

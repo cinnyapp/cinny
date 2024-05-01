@@ -16,6 +16,7 @@ export const SpaceItemCard = recipe({
   },
 });
 export const HeaderChip = style({
+  paddingLeft: config.space.S200,
   selectors: {
     [`&[data-ui-before="true"]`]: {
       paddingLeft: config.space.S100,
