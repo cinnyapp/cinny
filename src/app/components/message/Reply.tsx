@@ -1,4 +1,4 @@
-import { Box, Text, as, color, toRem } from 'folds';
+import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
@@ -12,17 +12,6 @@ import { randomNumberBetween } from '../../utils/common';
 import * as css from './Reply.css';
 import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
 import { scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
-
-function ReplyBend() {
-  return (
-    <svg className={css.ReplyBend} width="9" height="16" viewBox="0 0 9 16" fill="none">
-      <path
-        d="M1 10C1 7.79086 2.79086 6 5 6H9V8L5 7.99999C3.89543 7.99999 3 8.89542 3 9.99999V14.0001L1 14V10Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
 
 type ReplyLayoutProps = {
   userColor?: string;
@@ -43,7 +32,7 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
         shrink="No"
         gap="100"
       >
-        <ReplyBend />
+        <Icon size="100" src={Icons.ReplyArrow} />
         {username}
       </Box>
       <Box grow="Yes" className={css.ReplyContent}>
