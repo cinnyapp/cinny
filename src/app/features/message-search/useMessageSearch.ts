@@ -55,9 +55,9 @@ const parseSearchResult = (result: ISearchResponse): SearchResult => {
   const roomEvents = result.search_categories.room_events;
 
   const searchResult: SearchResult = {
-    nextToken: roomEvents.next_batch,
-    highlights: roomEvents.highlights,
-    groups: groupSearchResult(roomEvents.results),
+    nextToken: roomEvents?.next_batch,
+    highlights: roomEvents?.highlights ?? [],
+    groups: groupSearchResult(roomEvents?.results ?? []),
   };
 
   return searchResult;
