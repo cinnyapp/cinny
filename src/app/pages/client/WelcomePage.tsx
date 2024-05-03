@@ -51,7 +51,7 @@ export function WelcomePage() {
                   before={<Icon size="200" src={Icons.Heart} />}
                 >
                   <Text as="span" size="B400" truncate>
-                    Sponsor
+                    Support
                   </Text>
                 </Button>
               </Box>
