@@ -27,6 +27,7 @@ export function RoomAvatar({ src, alt, renderFallback }: RoomAvatarProps) {
       alt={alt}
       onError={() => setError(true)}
       onLoad={handleLoad}
+      draggable={false}
     />
   );
 }

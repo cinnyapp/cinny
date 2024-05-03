@@ -25,6 +25,7 @@ export function UserAvatar({ src, alt, renderFallback }: UserAvatarProps) {
       alt={alt}
       onError={() => setError(true)}
       onLoad={handleLoad}
+      draggable={false}
     />
   );
 }
