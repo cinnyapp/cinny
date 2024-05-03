@@ -54,6 +54,7 @@ export function HierarchyRoomSummaryLoader({
     queryKey: [roomId, `hierarchy`],
     queryFn: fetchSummary,
     retryOnMount: false,
+    refetchOnWindowFocus: false,
     retry: (failureCount, err) => {
       setError(err);
       if (failureCount > 3) return false;
