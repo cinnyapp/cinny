@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, ReactNode, useCallback } from 'react';
+import React, { MouseEventHandler, ReactNode, useCallback, useRef } from 'react';
 import { Box, Avatar, Text, Chip, Icon, Icons, as, Badge, toRem, Spinner } from 'folds';
 import classNames from 'classnames';
 import { MatrixError, Room } from 'matrix-js-sdk';
@@ -15,13 +15,18 @@ import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import * as css from './SpaceItem.css';
 import * as styleCss from './style.css';
 import { ErrorCode } from '../../cs-errorcode';
+import { useDraggableItem } from './DnD';
 
 function SpaceProfileLoading() {
   return (
-    <Box grow="Yes" gap="200" alignItems="Center">
+    <Box gap="200" alignItems="Center">
       <Box grow="Yes" gap="200" alignItems="Center" className={css.HeaderChipPlaceholder}>
         <Avatar className={styleCss.AvatarPlaceholder} size="200" radii="300" />
-        <Box className={styleCss.LinePlaceholder} shrink="No" style={{ maxWidth: toRem(120) }} />
+        <Box
+          className={styleCss.LinePlaceholder}
+          shrink="No"
+          style={{ width: '100vw', maxWidth: toRem(120) }}
+        />
       </Box>
     </Box>
   );
@@ -224,12 +229,34 @@ type SpaceItemCardProps = {
   closed: boolean;
   handleClose?: MouseEventHandler<HTMLButtonElement>;
   options?: ReactNode;
+  before?: ReactNode;
+  after?: ReactNode;
+  canReorder: boolean;
+  onDragging: (item?: HierarchyItem) => void;
 };
 export const SpaceItemCard = as<'div', SpaceItemCardProps>(
-  ({ className, joined, closed, categoryId, item, handleClose, options, ...props }, ref) => {
+  (
+    {
+      className,
+      joined,
+      closed,
+      categoryId,
+      item,
+      handleClose,
+      options,
+      before,
+      after,
+      canReorder,
+      onDragging,
+      ...props
+    },
+    ref
+  ) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
     const space = mx.getRoom(roomId);
+    const targetRef = useRef<HTMLDivElement>(null);
+    useDraggableItem(item, targetRef, onDragging);
 
     return (
       <Box
@@ -238,63 +265,67 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
         {...props}
         ref={ref}
       >
+        {before}
         <Box grow="Yes">
-          {space ? (
-            <LocalRoomSummaryLoader room={space}>
-              {(localSummary) =>
-                item.parentId ? (
-                  <SpaceProfile
-                    name={localSummary.name}
-                    avatarUrl={getRoomAvatarUrl(mx, space, 96)}
-                    suggested={content.suggested}
-                    closed={closed}
-                    categoryId={categoryId}
-                    handleClose={handleClose}
-                  />
-                ) : (
-                  <RootSpaceProfile
-                    closed={closed}
-                    categoryId={categoryId}
-                    handleClose={handleClose}
-                  />
-                )
-              }
-            </LocalRoomSummaryLoader>
-          ) : (
-            <HierarchyRoomSummaryLoader roomId={roomId}>
-              {(summaryState) => (
-                <>
-                  {summaryState.status === AsyncStatus.Loading && <SpaceProfileLoading />}
-                  {summaryState.status === AsyncStatus.Error &&
-                    (summaryState.error.name === ErrorCode.M_FORBIDDEN ? (
-                      <UnknownPrivateSpaceProfile suggested={content.suggested} />
-                    ) : (
+          <Box ref={canReorder ? targetRef : null}>
+            {space ? (
+              <LocalRoomSummaryLoader room={space}>
+                {(localSummary) =>
+                  item.parentId ? (
+                    <SpaceProfile
+                      name={localSummary.name}
+                      avatarUrl={getRoomAvatarUrl(mx, space, 96)}
+                      suggested={content.suggested}
+                      closed={closed}
+                      categoryId={categoryId}
+                      handleClose={handleClose}
+                    />
+                  ) : (
+                    <RootSpaceProfile
+                      closed={closed}
+                      categoryId={categoryId}
+                      handleClose={handleClose}
+                    />
+                  )
+                }
+              </LocalRoomSummaryLoader>
+            ) : (
+              <HierarchyRoomSummaryLoader roomId={roomId}>
+                {(summaryState) => (
+                  <>
+                    {summaryState.status === AsyncStatus.Loading && <SpaceProfileLoading />}
+                    {summaryState.status === AsyncStatus.Error &&
+                      (summaryState.error.name === ErrorCode.M_FORBIDDEN ? (
+                        <UnknownPrivateSpaceProfile suggested={content.suggested} />
+                      ) : (
+                        <UnknownSpaceProfile
+                          roomId={roomId}
+                          via={item.content.via}
+                          suggested={content.suggested}
+                        />
+                      ))}
+                    {summaryState.status === AsyncStatus.Success && (
                       <UnknownSpaceProfile
                         roomId={roomId}
                         via={item.content.via}
+                        name={summaryState.data.name || roomId}
+                        avatarUrl={
+                          summaryState.data?.avatar_url
+                            ? mx.mxcUrlToHttp(summaryState.data.avatar_url, 96, 96, 'crop') ??
+                              undefined
+                            : undefined
+                        }
                         suggested={content.suggested}
                       />
-                    ))}
-                  {summaryState.status === AsyncStatus.Success && (
-                    <UnknownSpaceProfile
-                      roomId={roomId}
-                      via={item.content.via}
-                      name={summaryState.data.name || roomId}
-                      avatarUrl={
-                        summaryState.data?.avatar_url
-                          ? mx.mxcUrlToHttp(summaryState.data.avatar_url, 96, 96, 'crop') ??
-                            undefined
-                          : undefined
-                      }
-                      suggested={content.suggested}
-                    />
-                  )}
-                </>
-              )}
-            </HierarchyRoomSummaryLoader>
-          )}
+                    )}
+                  </>
+                )}
+              </HierarchyRoomSummaryLoader>
+            )}
+          </Box>
         </Box>
         {options}
+        {after}
       </Box>
     );
   }

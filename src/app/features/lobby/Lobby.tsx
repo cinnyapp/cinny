@@ -18,7 +18,7 @@ import { LobbyHero } from './LobbyHero';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 import {
-  DefaultPowerLevels,
+  IPowerLevels,
   PowerLevelsContextProvider,
   powerLevelAPI,
   usePowerLevels,
@@ -35,6 +35,7 @@ import { getCanonicalAliasOrRoomId } from '../../utils/matrix';
 import { getSpaceRoomPath } from '../../pages/pathUtils';
 import { HierarchyItemMenu } from './HierarchyItemMenu';
 import { StateEvent } from '../../../types/matrix/room';
+import { AfterItemDropTarget, CanDropCallback, useDnDMonitor } from './DnD';
 
 export function Lobby() {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export function Lobby() {
   const allRooms = useAtomValue(allRoomsAtom);
   const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
   const space = useSpace();
-  const powerLevels = usePowerLevels(space);
+  const spacePowerLevels = usePowerLevels(space);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const heroSectionRef = useRef<HTMLDivElement>(null);
@@ -59,21 +60,35 @@ export function Lobby() {
     useCallback((w, height) => setHeroSectionHeight(height), [])
   );
 
+  const getRoom = useCallback(
+    (rId: string) => {
+      if (allJoinedRooms.has(rId)) {
+        return mx.getRoom(rId) ?? undefined;
+      }
+      return undefined;
+    },
+    [mx, allJoinedRooms]
+  );
+
+  const canEditSpaceChild = useCallback(
+    (powerLevels: IPowerLevels) =>
+      powerLevelAPI.canSendStateEvent(
+        powerLevels,
+        StateEvent.SpaceChild,
+        powerLevelAPI.getPowerLevel(powerLevels, mx.getUserId() ?? undefined)
+      ),
+    [mx]
+  );
+
+  const [draggingItem, setDraggingItem] = useState<HierarchyItem>();
   const flattenHierarchy = useSpaceHierarchy(
     space.roomId,
     spaceRooms,
+    getRoom,
     useCallback(
-      (rId) => {
-        if (allJoinedRooms.has(rId)) {
-          return mx.getRoom(rId) ?? undefined;
-        }
-        return undefined;
-      },
-      [mx, allJoinedRooms]
-    ),
-    useCallback(
-      (childId) => closedCategories.has(makeLobbyCategoryId(space.roomId, childId)),
-      [closedCategories, space.roomId]
+      (childId) =>
+        closedCategories.has(makeLobbyCategoryId(space.roomId, childId)) || !!draggingItem?.space,
+      [closedCategories, space.roomId, draggingItem]
     )
   );
 
@@ -86,14 +101,51 @@ export function Lobby() {
   });
   const vItems = virtualizer.getVirtualItems();
 
-  const hierarchySpaces: Room[] = useMemo(
-    () =>
-      flattenHierarchy
-        .filter((i) => i.space && allJoinedRooms.has(i.roomId) && !!mx.getRoom(i.roomId))
-        .map((i) => mx.getRoom(i.parentId ?? i.roomId)) as Room[],
-    [mx, allJoinedRooms, flattenHierarchy]
+  const roomsPowerLevels = useRoomsPowerLevels(
+    useMemo(
+      () => flattenHierarchy.map((i) => mx.getRoom(i.roomId)).filter((r) => !!r) as Room[],
+      [mx, flattenHierarchy]
+    )
   );
-  const roomsPowerLevels = useRoomsPowerLevels(hierarchySpaces);
+
+  const canDrop: CanDropCallback = useCallback(
+    (item, container): boolean => {
+      // can not drop space under non-space item
+      if (item.space && !container.item.space) {
+        return false;
+      }
+
+      let containerSpaceId = container.item.space ? container.item.roomId : container.item.parentId;
+      // if a space is dropped under space it will share
+      // container's parent if exist or will be added inside as child
+      if (item.space) {
+        // TODO: or should we always consider root space???????? (pinned spaces to edit etc?)
+        containerSpaceId = container.item.parentId ?? container.item.roomId;
+      }
+
+      if (!canEditSpaceChild(roomsPowerLevels.get(containerSpaceId) ?? {})) {
+        return false;
+      }
+
+      if (container.item.space && getRoom(container.item.roomId) === undefined) {
+        return false;
+      }
+      if (item.roomId === container.item.roomId || item.roomId === container.nextRoomId) {
+        return false;
+      }
+      return true;
+    },
+    [getRoom, roomsPowerLevels, canEditSpaceChild]
+  );
+
+  useDnDMonitor(
+    scrollRef,
+    setDraggingItem,
+    useCallback((item, container) => {
+      console.log(item, container);
+      // TODO: prompt when dragging restricted room of private space to public space and etc.
+    }, [])
+  );
 
   const addSpaceRoom = (roomId: string) => setSpaceRooms({ type: 'PUT', roomId });
 
@@ -109,7 +161,7 @@ export function Lobby() {
   };
 
   return (
-    <PowerLevelsContextProvider value={powerLevels}>
+    <PowerLevelsContextProvider value={spacePowerLevels}>
       <Box grow="Yes">
         <Page>
           <LobbyHeader showProfile={!onTop} />
@@ -144,19 +196,23 @@ export function Lobby() {
                     </PageHeroSection>
                     {vItems.map((vItem) => {
                       const item = flattenHierarchy[vItem.index];
-                      const { parentId } = item;
                       if (!item) return null;
-                      const parentPowerLevel =
-                        parentId && (roomsPowerLevels.get(parentId) ?? DefaultPowerLevels);
-                      const canEditSpaceChild =
-                        parentPowerLevel &&
-                        powerLevelAPI.canSendStateEvent(
-                          parentPowerLevel,
-                          StateEvent.SpaceChild,
-                          powerLevelAPI.getPowerLevel(parentPowerLevel, mx.getUserId() ?? undefined)
-                        );
+
+                      const nextRoomId: string | undefined =
+                        flattenHierarchy[vItem.index + 1]?.roomId;
+
+                      const itemPowerLevels = roomsPowerLevels.get(item.roomId) ?? {};
+
+                      const dragging =
+                        draggingItem?.roomId === item.roomId &&
+                        draggingItem.parentId === item.parentId;
+
                       if (item.space) {
                         const categoryId = makeLobbyCategoryId(space.roomId, item.roomId);
+                        const { parentId } = item;
+                        const parentPowerLevels = parentId
+                          ? roomsPowerLevels.get(parentId) ?? {}
+                          : undefined;
 
                         return (
                           <VirtualTile
@@ -171,18 +227,35 @@ export function Lobby() {
                               item={item}
                               joined={allJoinedRooms.has(item.roomId)}
                               categoryId={categoryId}
-                              closed={closedCategories.has(categoryId)}
+                              closed={closedCategories.has(categoryId) || !!draggingItem?.space}
                               handleClose={handleCategoryClick}
+                              canReorder={
+                                parentPowerLevels ? canEditSpaceChild(parentPowerLevels) : false
+                              }
                               options={
-                                parentId && canEditSpaceChild ? (
+                                parentId &&
+                                parentPowerLevels &&
+                                canEditSpaceChild(parentPowerLevels) ? (
                                   <HierarchyItemMenu item={{ ...item, parentId }} />
                                 ) : undefined
                               }
+                              before={item.parentId ? undefined : undefined}
+                              after={
+                                <AfterItemDropTarget
+                                  item={item}
+                                  nextRoomId={nextRoomId}
+                                  afterSpace
+                                  canDrop={canDrop}
+                                />
+                              }
+                              onDragging={setDraggingItem}
+                              data-dragging={dragging}
                             />
                           </VirtualTile>
                         );
                       }
 
+                      const parentPowerLevels = roomsPowerLevels.get(item.parentId) ?? {};
                       const prevItem: HierarchyItem | undefined = flattenHierarchy[vItem.index - 1];
                       const nextItem: HierarchyItem | undefined = flattenHierarchy[vItem.index + 1];
                       return (
@@ -199,9 +272,21 @@ export function Lobby() {
                             firstChild={!prevItem || prevItem.space === true}
                             lastChild={!nextItem || nextItem.space === true}
                             onOpen={handleOpenRoom}
+                            canReorder={canEditSpaceChild(parentPowerLevels)}
                             options={
-                              canEditSpaceChild ? <HierarchyItemMenu item={item} /> : undefined
+                              canEditSpaceChild(itemPowerLevels) ? (
+                                <HierarchyItemMenu item={item} />
+                              ) : undefined
                             }
+                            after={
+                              <AfterItemDropTarget
+                                item={item}
+                                nextRoomId={nextRoomId}
+                                canDrop={canDrop}
+                              />
+                            }
+                            data-dragging={dragging}
+                            onDragging={setDraggingItem}
                           />
                         </VirtualTile>
                       );

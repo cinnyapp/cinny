@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, ReactNode, useCallback, useEffect } from 'react';
+import React, { MouseEventHandler, ReactNode, useCallback, useEffect, useRef } from 'react';
 import {
   Avatar,
   Badge,
@@ -38,6 +38,7 @@ import * as styleCss from './style.css';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { ErrorCode } from '../../cs-errorcode';
 import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
+import { ItemDraggableTarget, useDraggableItem } from './DnD';
 
 type RoomJoinButtonProps = {
   roomId: string;
@@ -302,12 +303,35 @@ type RoomItemCardProps = {
   lastChild?: boolean;
   onOpen: MouseEventHandler<HTMLButtonElement>;
   options?: ReactNode;
+  before?: ReactNode;
+  after?: ReactNode;
+  onDragging: (item?: HierarchyItem) => void;
+  canReorder: boolean;
 };
 export const RoomItemCard = as<'div', RoomItemCardProps>(
-  ({ item, onSpaceFound, dm, firstChild, lastChild, onOpen, options, ...props }, ref) => {
+  (
+    {
+      item,
+      onSpaceFound,
+      dm,
+      firstChild,
+      lastChild,
+      onOpen,
+      options,
+      before,
+      after,
+      onDragging,
+      canReorder,
+      ...props
+    },
+    ref
+  ) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
     const room = mx.getRoom(roomId);
+    const targetRef = useRef<HTMLDivElement>(null);
+    const targetHandleRef = useRef<HTMLDivElement>(null);
+    useDraggableItem(item, targetRef, onDragging, targetHandleRef);
 
     const joined = room?.getMyMembership() === Membership.Join;
 
@@ -322,82 +346,87 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
         {...props}
         ref={ref}
       >
-        {room ? (
-          <LocalRoomSummaryLoader room={room}>
-            {(localSummary) => (
-              <RoomProfile
-                name={localSummary.name}
-                topic={localSummary.topic}
-                avatarUrl={
-                  dm ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)
-                }
-                memberCount={localSummary.memberCount}
-                suggested={content.suggested}
-                joinRule={localSummary.joinRule}
-                options={
-                  joined ? (
-                    <Box shrink="No" gap="100" alignItems="Center">
-                      <Chip
-                        data-room-id={roomId}
-                        onClick={onOpen}
-                        variant="Secondary"
-                        fill="None"
-                        size="400"
-                        radii="Pill"
-                        aria-label="Open Room"
-                      >
-                        <Icon size="50" src={Icons.ArrowRight} />
-                      </Chip>
-                    </Box>
-                  ) : (
-                    <RoomJoinButton roomId={roomId} via={content.via} />
-                  )
-                }
-              />
-            )}
-          </LocalRoomSummaryLoader>
-        ) : (
-          <HierarchyRoomSummaryLoader roomId={roomId}>
-            {(summaryState) => (
-              <>
-                {summaryState.status === AsyncStatus.Loading && <RoomProfileLoading />}
-                {summaryState.status === AsyncStatus.Error && (
-                  <RoomProfileError
-                    roomId={roomId}
-                    error={summaryState.error}
-                    suggested={content.suggested}
-                    via={content.via}
-                  />
-                )}
-                {summaryState.status === AsyncStatus.Success && (
-                  <>
-                    {summaryState.data.room_type === RoomType.Space && (
-                      <CallbackOnFoundSpace
-                        roomId={summaryState.data.room_id}
-                        onSpaceFound={onSpaceFound}
-                      />
-                    )}
-                    <RoomProfile
-                      name={summaryState.data.name || roomId}
-                      topic={summaryState.data.topic}
-                      avatarUrl={
-                        summaryState.data?.avatar_url
-                          ? mx.mxcUrlToHttp(summaryState.data.avatar_url, 96, 96, 'crop') ??
-                            undefined
-                          : undefined
-                      }
-                      memberCount={summaryState.data.num_joined_members}
+        {before}
+        <Box ref={canReorder ? targetRef : null} grow="Yes">
+          {canReorder && <ItemDraggableTarget ref={targetHandleRef} />}
+          {room ? (
+            <LocalRoomSummaryLoader room={room}>
+              {(localSummary) => (
+                <RoomProfile
+                  name={localSummary.name}
+                  topic={localSummary.topic}
+                  avatarUrl={
+                    dm ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)
+                  }
+                  memberCount={localSummary.memberCount}
+                  suggested={content.suggested}
+                  joinRule={localSummary.joinRule}
+                  options={
+                    joined ? (
+                      <Box shrink="No" gap="100" alignItems="Center">
+                        <Chip
+                          data-room-id={roomId}
+                          onClick={onOpen}
+                          variant="Secondary"
+                          fill="None"
+                          size="400"
+                          radii="Pill"
+                          aria-label="Open Room"
+                        >
+                          <Icon size="50" src={Icons.ArrowRight} />
+                        </Chip>
+                      </Box>
+                    ) : (
+                      <RoomJoinButton roomId={roomId} via={content.via} />
+                    )
+                  }
+                />
+              )}
+            </LocalRoomSummaryLoader>
+          ) : (
+            <HierarchyRoomSummaryLoader roomId={roomId}>
+              {(summaryState) => (
+                <>
+                  {summaryState.status === AsyncStatus.Loading && <RoomProfileLoading />}
+                  {summaryState.status === AsyncStatus.Error && (
+                    <RoomProfileError
+                      roomId={roomId}
+                      error={summaryState.error}
                       suggested={content.suggested}
-                      joinRule={summaryState.data.join_rule}
-                      options={<RoomJoinButton roomId={roomId} via={content.via} />}
+                      via={content.via}
                     />
-                  </>
-                )}
-              </>
-            )}
-          </HierarchyRoomSummaryLoader>
-        )}
+                  )}
+                  {summaryState.status === AsyncStatus.Success && (
+                    <>
+                      {summaryState.data.room_type === RoomType.Space && (
+                        <CallbackOnFoundSpace
+                          roomId={summaryState.data.room_id}
+                          onSpaceFound={onSpaceFound}
+                        />
+                      )}
+                      <RoomProfile
+                        name={summaryState.data.name || roomId}
+                        topic={summaryState.data.topic}
+                        avatarUrl={
+                          summaryState.data?.avatar_url
+                            ? mx.mxcUrlToHttp(summaryState.data.avatar_url, 96, 96, 'crop') ??
+                              undefined
+                            : undefined
+                        }
+                        memberCount={summaryState.data.num_joined_members}
+                        suggested={content.suggested}
+                        joinRule={summaryState.data.join_rule}
+                        options={<RoomJoinButton roomId={roomId} via={content.via} />}
+                      />
+                    </>
+                  )}
+                </>
+              )}
+            </HierarchyRoomSummaryLoader>
+          )}
+        </Box>
         {options}
+        {after}
       </SequenceCard>
     );
   }

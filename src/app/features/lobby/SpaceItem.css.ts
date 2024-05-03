@@ -6,6 +6,12 @@ export const SpaceItemCard = recipe({
   base: {
     paddingBottom: config.space.S100,
     borderBottom: `${config.borderWidth.B300} solid transparent`,
+    position: 'relative',
+    selectors: {
+      '&[data-dragging=true]': {
+        opacity: config.opacity.Disabled,
+      },
+    },
   },
   variants: {
     outlined: {

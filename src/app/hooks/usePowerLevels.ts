@@ -9,7 +9,7 @@ import { getStateEvent } from '../utils/room';
 
 export type PowerLevelActions = 'invite' | 'redact' | 'kick' | 'ban' | 'historical';
 
-export enum DefaultPowerLevels {
+enum DefaultPowerLevels {
   usersDefault = 0,
   stateDefault = 50,
   eventsDefault = 0,
