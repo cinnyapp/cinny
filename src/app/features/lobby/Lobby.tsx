@@ -110,33 +110,38 @@ export function Lobby() {
 
   const canDrop: CanDropCallback = useCallback(
     (item, container): boolean => {
-      // can not drop space under non-space item
-      if (item.space && !container.item.space) {
-        return false;
-      }
-
-      // FIXME: handle space and room diff
-      let containerSpaceId = container.item.space ? container.item.roomId : container.item.parentId;
-      // if a space is dropped under space it will share
-      // container's parent if exist or will be added inside as child
-      if (item.space) {
-        // TODO: or should we always consider root space???????? (pinned spaces to edit etc?)
-        containerSpaceId = container.item.parentId ?? container.item.roomId;
-      }
-
-      if (!canEditSpaceChild(roomsPowerLevels.get(containerSpaceId) ?? {})) {
-        return false;
-      }
-
-      if (container.item.space && getRoom(container.item.roomId) === undefined) {
-        return false;
-      }
       if (item.roomId === container.item.roomId || item.roomId === container.nextRoomId) {
+        // can not drop before or after itself
+        return false;
+      }
+
+      if (item.space) {
+        if (!container.item.space) return false;
+        const containerSpaceId = space.roomId;
+
+        if (
+          getRoom(containerSpaceId) === undefined ||
+          !canEditSpaceChild(roomsPowerLevels.get(containerSpaceId) ?? {})
+        ) {
+          return false;
+        }
+
+        return true;
+      }
+
+      const containerSpaceId = container.item.space
+        ? container.item.roomId
+        : container.item.parentId;
+
+      if (
+        getRoom(containerSpaceId) === undefined ||
+        !canEditSpaceChild(roomsPowerLevels.get(containerSpaceId) ?? {})
+      ) {
         return false;
       }
       return true;
     },
-    [getRoom, roomsPowerLevels, canEditSpaceChild]
+    [getRoom, space.roomId, roomsPowerLevels, canEditSpaceChild]
   );
 
   useDnDMonitor(
