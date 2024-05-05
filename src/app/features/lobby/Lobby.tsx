@@ -115,6 +115,7 @@ export function Lobby() {
         return false;
       }
 
+      // FIXME: handle space and room diff
       let containerSpaceId = container.item.space ? container.item.roomId : container.item.parentId;
       // if a space is dropped under space it will share
       // container's parent if exist or will be added inside as child
@@ -201,8 +202,6 @@ export function Lobby() {
                       const nextRoomId: string | undefined =
                         flattenHierarchy[vItem.index + 1]?.roomId;
 
-                      const itemPowerLevels = roomsPowerLevels.get(item.roomId) ?? {};
-
                       const dragging =
                         draggingItem?.roomId === item.roomId &&
                         draggingItem.parentId === item.parentId;
@@ -274,7 +273,7 @@ export function Lobby() {
                             onOpen={handleOpenRoom}
                             canReorder={canEditSpaceChild(parentPowerLevels)}
                             options={
-                              canEditSpaceChild(itemPowerLevels) ? (
+                              canEditSpaceChild(parentPowerLevels) ? (
                                 <HierarchyItemMenu item={item} />
                               ) : undefined
                             }
