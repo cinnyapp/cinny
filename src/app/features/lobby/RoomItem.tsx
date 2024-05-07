@@ -61,7 +61,7 @@ function RoomJoinButton({ roomId, via }: RoomJoinButtonProps) {
             <Tooltip variant="Critical" style={{ maxWidth: toRem(200) }}>
               <Box direction="Column" gap="100">
                 <Text style={{ wordBreak: 'break-word' }} size="T400">
-                  {joinState.error.data.error}
+                  {joinState.error.data?.error || joinState.error.message}
                 </Text>
                 <Text size="T200">{joinState.error.name}</Text>
               </Box>
@@ -76,7 +76,7 @@ function RoomJoinButton({ roomId, via }: RoomJoinButtonProps) {
               size="400"
               filled
               tabIndex={0}
-              aria-label={joinState.error.data.error}
+              aria-label={joinState.error.data?.error || joinState.error.message}
             />
           )}
         </TooltipProvider>
