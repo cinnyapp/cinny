@@ -26,12 +26,7 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
       {...props}
       ref={ref}
     >
-      <Box
-        style={{ color: userColor, maxWidth: toRem(200) }}
-        alignItems="Center"
-        shrink="No"
-        gap="100"
-      >
+      <Box style={{ color: userColor, maxWidth: toRem(200) }} alignItems="Center" shrink="No">
         <Icon size="100" src={Icons.ReplyArrow} />
         {username}
       </Box>
