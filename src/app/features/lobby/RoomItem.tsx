@@ -307,6 +307,7 @@ type RoomItemCardProps = {
   after?: ReactNode;
   onDragging: (item?: HierarchyItem) => void;
   canReorder: boolean;
+  getRoom: (roomId: string) => Room | undefined;
 };
 export const RoomItemCard = as<'div', RoomItemCardProps>(
   (
@@ -322,13 +323,14 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
       after,
       onDragging,
       canReorder,
+      getRoom,
       ...props
     },
     ref
   ) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
-    const room = mx.getRoom(roomId);
+    const room = getRoom(roomId);
     const targetRef = useRef<HTMLDivElement>(null);
     const targetHandleRef = useRef<HTMLDivElement>(null);
     useDraggableItem(item, targetRef, onDragging, targetHandleRef);

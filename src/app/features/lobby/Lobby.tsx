@@ -233,6 +233,10 @@ export function Lobby() {
                               categoryId={categoryId}
                               closed={closedCategories.has(categoryId) || !!draggingItem?.space}
                               handleClose={handleCategoryClick}
+                              getRoom={getRoom}
+                              canEditChild={canEditSpaceChild(
+                                roomsPowerLevels.get(item.roomId) ?? {}
+                              )}
                               canReorder={
                                 parentPowerLevels ? canEditSpaceChild(parentPowerLevels) : false
                               }
@@ -276,6 +280,7 @@ export function Lobby() {
                             firstChild={!prevItem || prevItem.space === true}
                             lastChild={!nextItem || nextItem.space === true}
                             onOpen={handleOpenRoom}
+                            getRoom={getRoom}
                             canReorder={canEditSpaceChild(parentPowerLevels)}
                             options={
                               canEditSpaceChild(parentPowerLevels) ? (

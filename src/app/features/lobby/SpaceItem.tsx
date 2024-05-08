@@ -1,5 +1,22 @@
-import React, { MouseEventHandler, ReactNode, useCallback, useRef } from 'react';
-import { Box, Avatar, Text, Chip, Icon, Icons, as, Badge, toRem, Spinner } from 'folds';
+import React, { MouseEventHandler, ReactNode, useCallback, useRef, useState } from 'react';
+import {
+  Box,
+  Avatar,
+  Text,
+  Chip,
+  Icon,
+  Icons,
+  as,
+  Badge,
+  toRem,
+  Spinner,
+  PopOut,
+  Menu,
+  MenuItem,
+  RectCords,
+  config,
+} from 'folds';
+import FocusTrap from 'focus-trap-react';
 import classNames from 'classnames';
 import { MatrixError, Room } from 'matrix-js-sdk';
 import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
@@ -16,6 +33,7 @@ import * as css from './SpaceItem.css';
 import * as styleCss from './style.css';
 import { ErrorCode } from '../../cs-errorcode';
 import { useDraggableItem } from './DnD';
+import { openCreateRoom, openSpaceAddExisting } from '../../../client/action/navigation';
 
 function SpaceProfileLoading() {
   return (
@@ -222,6 +240,81 @@ function RootSpaceProfile({ closed, categoryId, handleClose }: RootSpaceProfileP
   );
 }
 
+function AddRoomButton({ item }: { item: HierarchyItem }) {
+  const [cords, setCords] = useState<RectCords>();
+
+  const handleAddRoom: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setCords(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleCreateRoom = () => {
+    openCreateRoom(false, item.roomId as any);
+    setCords(undefined);
+  };
+
+  const handleAddExisting = () => {
+    openSpaceAddExisting(item.roomId);
+    setCords(undefined);
+  };
+
+  return (
+    <PopOut
+      anchor={cords}
+      position="Bottom"
+      align="End"
+      content={
+        <FocusTrap
+          focusTrapOptions={{
+            initialFocus: false,
+            onDeactivate: () => setCords(undefined),
+            clickOutsideDeactivates: true,
+            isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+            isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+          }}
+        >
+          <Menu style={{ padding: config.space.S100 }}>
+            <MenuItem
+              size="300"
+              radii="300"
+              variant="Primary"
+              fill="None"
+              onClick={handleCreateRoom}
+            >
+              <Text size="T300">New Room</Text>
+            </MenuItem>
+            <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
+              <Text size="T300">Existing Room</Text>
+            </MenuItem>
+          </Menu>
+        </FocusTrap>
+      }
+    >
+      <Chip
+        variant="Primary"
+        radii="Pill"
+        before={<Icon src={Icons.Plus} size="50" />}
+        onClick={handleAddRoom}
+        aria-pressed={!!cords}
+      >
+        <Text size="B300">Add Room</Text>
+      </Chip>
+    </PopOut>
+  );
+}
+
+function AddSpaceButton({ item }: { item: HierarchyItem }) {
+  return (
+    <Chip
+      variant="SurfaceVariant"
+      radii="Pill"
+      before={<Icon src={Icons.Plus} size="50" />}
+      onClick={() => openCreateRoom(true, item.roomId as any)}
+    >
+      <Text size="B300">Add Space</Text>
+    </Chip>
+  );
+}
+
 type SpaceItemCardProps = {
   item: HierarchyItem;
   joined?: boolean;
@@ -231,8 +324,10 @@ type SpaceItemCardProps = {
   options?: ReactNode;
   before?: ReactNode;
   after?: ReactNode;
+  canEditChild: boolean;
   canReorder: boolean;
   onDragging: (item?: HierarchyItem) => void;
+  getRoom: (roomId: string) => Room | undefined;
 };
 export const SpaceItemCard = as<'div', SpaceItemCardProps>(
   (
@@ -246,27 +341,31 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
       options,
       before,
       after,
+      canEditChild,
       canReorder,
       onDragging,
+      getRoom,
       ...props
     },
     ref
   ) => {
     const mx = useMatrixClient();
     const { roomId, content } = item;
-    const space = mx.getRoom(roomId);
+    const space = getRoom(roomId);
     const targetRef = useRef<HTMLDivElement>(null);
     useDraggableItem(item, targetRef, onDragging);
 
     return (
       <Box
         shrink="No"
+        alignItems="Center"
+        gap="200"
         className={classNames(css.SpaceItemCard({ outlined: !joined || closed }), className)}
         {...props}
         ref={ref}
       >
         {before}
-        <Box grow="Yes">
+        <Box grow="Yes" gap="100" alignItems="Inherit" justifyContent="SpaceBetween">
           <Box ref={canReorder ? targetRef : null}>
             {space ? (
               <LocalRoomSummaryLoader room={space}>
@@ -323,6 +422,12 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
               </HierarchyRoomSummaryLoader>
             )}
           </Box>
+          {canEditChild && (
+            <Box alignItems="Inherit" gap="200">
+              <AddRoomButton item={item} />
+              {item.parentId === undefined && <AddSpaceButton item={item} />}
+            </Box>
+          )}
         </Box>
         {options}
         {after}

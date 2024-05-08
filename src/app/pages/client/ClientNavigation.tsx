@@ -9,7 +9,7 @@ import {
   SidebarAvatar,
 } from '../../components/sidebar';
 import { DirectTab, HomeTab, SpaceTabs, InboxTab, ExploreTab } from './sidebar';
-import { openSearch, openSettings } from '../../../client/action/navigation';
+import { openCreateRoom, openSearch, openSettings } from '../../../client/action/navigation';
 
 export function ClientNavigation() {
   return (
@@ -29,6 +29,7 @@ export function ClientNavigation() {
                 outlined
                 tooltip="Create Space"
                 avatarChildren={<Icon src={Icons.Plus} />}
+                onClick={() => openCreateRoom(true)}
               />
             </SidebarStack>
           </>
