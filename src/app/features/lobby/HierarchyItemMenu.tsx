@@ -15,6 +15,7 @@ import {
 import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { MSpaceChildContent, StateEvent } from '../../../types/matrix/room';
+import { openSpaceSettings, toggleRoomSettings } from '../../../client/action/navigation';
 
 type HierarchyItemMenuProps = {
   item: HierarchyItem & {
@@ -28,6 +29,14 @@ export function HierarchyItemMenu({ item }: HierarchyItemMenuProps) {
 
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+  const handleSettings = () => {
+    if (item.space) {
+      openSpaceSettings(item.roomId);
+    } else {
+      toggleRoomSettings(item.roomId);
+    }
+    setMenuAnchor(undefined);
   };
   const handleToggleSuggested = () => {
     const newContent: MSpaceChildContent = { ...content, suggested: !content.suggested };
@@ -70,6 +79,11 @@ export function HierarchyItemMenu({ item }: HierarchyItemMenuProps) {
             >
               <Menu>
                 <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                  <MenuItem onClick={handleSettings} size="300" radii="300">
+                    <Text as="span" size="T300" truncate>
+                      Settings
+                    </Text>
+                  </MenuItem>
                   <MenuItem onClick={handleToggleSuggested} size="300" radii="300">
                     <Text as="span" size="T300" truncate>
                       {content.suggested ? 'Unset Suggested' : 'Set Suggested'}
