@@ -187,7 +187,7 @@ export function Explore() {
               <NavCategory>
                 <NavItem variant="Background" radii="400" aria-selected={featuredSelected}>
                   <NavLink to={getExploreFeaturedPath()}>
-                    <NavItemContent size="T300">
+                    <NavItemContent>
                       <Box as="span" grow="Yes" alignItems="Center" gap="200">
                         <Avatar size="200" radii="400">
                           <Icon src={Icons.Bulb} size="100" filled={featuredSelected} />
@@ -208,7 +208,7 @@ export function Explore() {
                     aria-selected={selectedServer === userServer}
                   >
                     <NavLink to={getExploreServerPath(userServer)}>
-                      <NavItemContent size="T300">
+                      <NavItemContent>
                         <Box as="span" grow="Yes" alignItems="Center" gap="200">
                           <Avatar size="200" radii="400">
                             <Icon
@@ -243,7 +243,7 @@ export function Explore() {
                       aria-selected={server === selectedServer}
                     >
                       <NavLink to={getExploreServerPath(server)}>
-                        <NavItemContent size="T300">
+                        <NavItemContent>
                           <Box as="span" grow="Yes" alignItems="Center" gap="200">
                             <Avatar size="200" radii="400">
                               <Icon

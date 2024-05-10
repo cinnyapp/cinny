@@ -29,7 +29,7 @@ function InvitesNavItem() {
       aria-selected={invitesSelected}
     >
       <NavLink to={getInboxInvitesPath()}>
-        <NavItemContent size="T300">
+        <NavItemContent>
           <Box as="span" grow="Yes" alignItems="Center" gap="200">
             <Avatar size="200" radii="400">
               <Icon src={Icons.Mail} size="100" filled={invitesSelected} />
@@ -70,7 +70,7 @@ export function Inbox() {
               <NavCategory>
                 <NavItem variant="Background" radii="400" aria-selected={notificationsSelected}>
                   <NavLink to={getInboxNotificationsPath()}>
-                    <NavItemContent size="T300">
+                    <NavItemContent>
                       <Box as="span" grow="Yes" alignItems="Center" gap="200">
                         <Avatar size="200" radii="400">
                           <Icon

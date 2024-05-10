@@ -113,7 +113,7 @@ export function Direct() {
                 <NavCategory>
                   <NavItem variant="Background" radii="400" aria-selected={createSelected}>
                     <NavLink to={getDirectCreatePath()}>
-                      <NavItemContent size="T300">
+                      <NavItemContent>
                         <Box as="span" grow="Yes" alignItems="Center" gap="200">
                           <Avatar size="200" radii="400">
                             <Icon src={Icons.Plus} size="100" filled={createSelected} />

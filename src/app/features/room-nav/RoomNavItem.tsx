@@ -194,7 +194,7 @@ export function RoomNavItem({
     <NavItem
       variant="Background"
       radii="400"
-      highlight={unread !== undefined || selected}
+      highlight={unread !== undefined}
       aria-selected={selected}
       data-hover={!!menuAnchor}
       onContextMenu={handleContextMenu}
@@ -202,7 +202,7 @@ export function RoomNavItem({
       {...focusWithinProps}
     >
       <NavLink to={linkPath}>
-        <NavItemContent size="T300">
+        <NavItemContent>
           <Box as="span" grow="Yes" alignItems="Center" gap="200">
             <Avatar size="200" radii="400">
               {showAvatar ? (
