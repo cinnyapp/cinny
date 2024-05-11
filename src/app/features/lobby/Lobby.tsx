@@ -36,6 +36,7 @@ import { getSpaceRoomPath } from '../../pages/pathUtils';
 import { HierarchyItemMenu } from './HierarchyItemMenu';
 import { StateEvent } from '../../../types/matrix/room';
 import { AfterItemDropTarget, CanDropCallback, useDnDMonitor } from './DnD';
+import { ASCIILexicalTable, orderKeys } from '../../utils/ASCIILexicalTable';
 
 export function Lobby() {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ export function Lobby() {
   const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
   const space = useSpace();
   const spacePowerLevels = usePowerLevels(space);
+  const lex = useMemo(() => new ASCIILexicalTable(' '.charCodeAt(0), '~'.charCodeAt(0), 6), []);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const heroSectionRef = useRef<HTMLDivElement>(null);
@@ -144,13 +146,118 @@ export function Lobby() {
     [getRoom, space.roomId, roomsPowerLevels, canEditSpaceChild]
   );
 
+  const reorderSpace = useCallback(
+    (item: HierarchyItem, containerItem: HierarchyItem) => {
+      if (!item.parentId) return;
+
+      const childItems = flattenHierarchy
+        .filter((i) => i.parentId && i.space)
+        .filter((i) => i.roomId !== item.roomId);
+
+      const beforeIndex = childItems.findIndex((i) => i.roomId === containerItem.roomId);
+      const insertIndex = beforeIndex + 1;
+
+      childItems.splice(insertIndex, 0, {
+        ...item,
+        content: { ...item.content, order: undefined },
+      });
+
+      const currentOrders = childItems.map((i) => {
+        if (typeof i.content.order === 'string' && lex.has(i.content.order)) {
+          return i.content.order;
+        }
+        return undefined;
+      });
+
+      const newOrders = orderKeys(lex, currentOrders);
+
+      newOrders?.forEach((orderKey, index) => {
+        const itm = childItems[index];
+        if (!itm || !itm.parentId) return;
+        const parentPL = roomsPowerLevels.get(itm.parentId);
+        const canEdit = parentPL && canEditSpaceChild(parentPL);
+        if (canEdit && orderKey !== currentOrders[index]) {
+          mx.sendStateEvent(
+            itm.parentId,
+            StateEvent.SpaceChild,
+            { ...itm.content, order: orderKey },
+            itm.roomId
+          );
+        }
+      });
+    },
+    [mx, flattenHierarchy, lex, roomsPowerLevels, canEditSpaceChild]
+  );
+
+  const reorderRoom = useCallback(
+    (item: HierarchyItem, containerItem: HierarchyItem): void => {
+      if (!item.parentId) {
+        return;
+      }
+      const containerParentId: string = containerItem.space
+        ? containerItem.roomId
+        : containerItem.parentId;
+      const itemContent = item.content;
+
+      if (item.parentId !== containerParentId) {
+        mx.sendStateEvent(item.parentId, StateEvent.SpaceChild, {}, item.roomId);
+      }
+
+      const childItems = flattenHierarchy
+        .filter((i) => i.parentId === containerParentId && !item.space)
+        .filter((i) => i.roomId !== item.roomId);
+
+      const beforeItem: HierarchyItem | undefined = containerItem.space ? undefined : containerItem;
+      const beforeIndex = childItems.findIndex((i) => i.roomId === beforeItem?.roomId);
+      const insertIndex = beforeIndex + 1;
+
+      childItems.splice(insertIndex, 0, {
+        ...item,
+        parentId: containerParentId,
+        content: { ...itemContent, order: undefined },
+      });
+
+      const currentOrders = childItems.map((i) => {
+        if (typeof i.content.order === 'string' && lex.has(i.content.order)) {
+          return i.content.order;
+        }
+        return undefined;
+      });
+
+      const newOrders = orderKeys(lex, currentOrders);
+
+      newOrders?.forEach((orderKey, index) => {
+        const itm = childItems[index];
+        if (itm && orderKey !== currentOrders[index]) {
+          mx.sendStateEvent(
+            containerParentId,
+            StateEvent.SpaceChild,
+            { ...itm.content, order: orderKey },
+            itm.roomId
+          );
+        }
+      });
+    },
+    [mx, flattenHierarchy, lex]
+  );
+
   useDnDMonitor(
     scrollRef,
     setDraggingItem,
-    useCallback((item, container) => {
-      console.log(item, container);
-      // TODO: prompt when dragging restricted room of private space to public space and etc.
-    }, [])
+    useCallback(
+      (item, container) => {
+        if (!canDrop(item, container)) {
+          return;
+        }
+        if (item.space) {
+          reorderSpace(item, container.item);
+        } else {
+          reorderRoom(item, container.item);
+          // TODO: prompt when dragging restricted room of private space to public space and etc.
+        }
+      },
+      [reorderRoom, reorderSpace, canDrop]
+    )
   );
 
   const addSpaceRoom = (roomId: string) => setSpaceRooms({ type: 'PUT', roomId });

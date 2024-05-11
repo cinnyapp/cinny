@@ -185,16 +185,53 @@ export class ASCIILexicalTable {
     return undefined;
   }
 
-  between(i: string, j: string): string | undefined {
-    if (!this.has(i) || !this.has(j)) {
+  between(a: string, b: string): string | undefined {
+    if (!this.has(a) || !this.has(b)) {
       return undefined;
     }
 
-    const centerIndex = Math.floor((this.index(i) + this.index(j)) / 2);
+    const centerIndex = Math.floor((this.index(a) + this.index(b)) / 2);
 
-    const b = this.get(centerIndex);
-    if (b === i || b === j) return undefined;
-    return b;
+    const str = this.get(centerIndex);
+    if (str === a || str === b) return undefined;
+    return str;
+  }
+
+  nBetween(n: number, a: string, b: string): string[] | undefined {
+    if (n <= 0 || !this.has(a) || !this.has(b)) {
+      return undefined;
+    }
+
+    const indexA = this.index(a);
+    const indexB = this.index(b);
+
+    const nBetween = Math.max(indexA, indexB) - Math.min(indexA, indexB);
+    if (nBetween < n) {
+      return undefined;
+    }
+    const segmentSize = Math.floor(nBetween / (n + 1));
+    if (segmentSize === 0) return undefined;
+
+    const items: string[] = [];
+
+    for (
+      let segmentIndex = indexA + segmentSize;
+      segmentIndex < indexB;
+      segmentIndex += segmentSize
+    ) {
+      if (items.length === n) break;
+
+      const str = this.get(segmentIndex);
+
+      if (!str) break;
+      items.push(str);
+    }
+
+    if (items.length < n) {
+      return undefined;
+    }
+
+    return items;
   }
 }
 
@@ -234,10 +271,12 @@ export class ASCIILexicalTable {
 
 // console.log('\n');
 
-// const lex = new ASCIILexicalTable('a'.charCodeAt(0), 'c'.charCodeAt(0), 5);
+// const lex = new ASCIILexicalTable('a'.charCodeAt(0), 'c'.charCodeAt(0), 3);
 // printLex(lex);
-// console.log(lex.between('a', 'aacb'));
-// console.log(lex.get(123) === 'baa');
+// console.log(lex.size());
+// console.log(lex.nBetween(8, ' ', '~~~~~'));
+// console.log(lex.between('a', 'ccc'));
+// console.log(lex.get(11));
 // console.log(lex.get(11) === 'aaac');
 
 // const lex4 = new ASCIILexicalTable(' '.charCodeAt(0), '~'.charCodeAt(0), 5);
@@ -291,3 +330,64 @@ export class ASCIILexicalTable {
 // };
 
 // perf();
+
+const findNextFilledKey = (
+  fromIndex: number,
+  keys: Array<string | undefined>
+): [number, string] | [-1, undefined] => {
+  for (let j = fromIndex; j < keys.length; j += 1) {
+    const key = keys[j];
+    if (typeof key === 'string') {
+      return [j, key];
+    }
+  }
+
+  return [-1, undefined];
+};
+
+export const orderKeys = (
+  lex: ASCIILexicalTable,
+  keys: Array<string | undefined>
+): Array<string> | undefined => {
+  const newKeys: string[] = [];
+
+  for (let i = 0; i < keys.length; ) {
+    const key = keys[i];
+    const collectedKeys: string[] = [];
+    const [nextKeyIndex, nextKey] = findNextFilledKey(i + 1, keys);
+    const isKey = typeof key === 'string';
+
+    if (isKey) {
+      collectedKeys.push(key);
+    }
+
+    const keyToGenerateCount =
+      (nextKeyIndex === -1 ? keys.length : nextKeyIndex) - (key ? i + 1 : i + 0);
+
+    if (keyToGenerateCount > 0) {
+      const generatedKeys = lex.nBetween(
+        keyToGenerateCount,
+        key ?? lex.first(),
+        nextKey ?? lex.last()
+      );
+      if (generatedKeys) {
+        collectedKeys.push(...generatedKeys);
+      } else {
+        return lex.nBetween(keys?.length, lex.first(), lex.last());
+      }
+    }
+
+    newKeys.push(...collectedKeys);
+    i += collectedKeys.length;
+  }
+
+  if (newKeys.length !== keys.length) {
+    return undefined;
+  }
+
+  return newKeys;
+};
+
+// const lex = new ASCIILexicalTable('a'.charCodeAt(0), 'b'.charCodeAt(0), 2);
+// const keys = [undefined, undefined];
+// console.log(orderKeys(lex, keys));

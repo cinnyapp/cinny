@@ -6,6 +6,7 @@ import { roomToParentsAtom } from '../state/room/roomToParents';
 import { MSpaceChildContent, StateEvent } from '../../types/matrix/room';
 import { getAllParents, getStateEvents, isValidChild } from '../utils/room';
 import { isRoomId } from '../utils/matrix';
+import { SortFunc } from '../utils/sort';
 
 export type HierarchyItem =
   | {
@@ -22,6 +23,26 @@ export type HierarchyItem =
       space?: false;
       parentId: string;
     };
+
+const hierarchyItemByOrder: SortFunc<HierarchyItem> = (a, b) => {
+  const aOrder = a.content.order;
+  const bOrder = b.content.order;
+  const aTs = a.ts;
+  const bTs = b.ts;
+
+  if (!aOrder && !bOrder) {
+    return aTs - bTs;
+  }
+
+  if (!bOrder) return -1;
+  if (!aOrder) return 1;
+
+  if (aOrder > bOrder) {
+    return 1;
+  }
+  return 0;
+};
+
 const getFlattenSpaceHierarchy = (
   rootSpaceId: string,
   spaceRooms: Set<string>,
@@ -66,10 +87,9 @@ const getFlattenSpaceHierarchy = (
   };
   findAndCollectHierarchySpaces(rootSpaceItem);
 
-  // TODO: sort by order + added ts
   spaceItems = [
     rootSpaceItem,
-    ...spaceItems.filter((item) => item.roomId !== rootSpaceId).sort((a, b) => a.ts - b.ts),
+    ...spaceItems.filter((item) => item.roomId !== rootSpaceId).sort(hierarchyItemByOrder),
   ];
 
   const hierarchy: HierarchyItem[] = spaceItems.flatMap((spaceItem) => {
@@ -93,7 +113,7 @@ const getFlattenSpaceHierarchy = (
       };
       childItems.push(childItem);
     });
-    return [spaceItem, ...childItems.sort((a, b) => a.ts - b.ts)];
+    return [spaceItem, ...childItems.sort(hierarchyItemByOrder)];
   });
 
   return hierarchy;
