@@ -6,7 +6,6 @@ import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import inject from '@rollup/plugin-inject';
 import topLevelAwait from 'vite-plugin-top-level-await';
-import { svgLoader } from './viteSvgLoader';
 import buildConfig from './build.config';
 
 const copyFiles = {
@@ -55,7 +54,6 @@ export default defineConfig({
     }),
     viteStaticCopy(copyFiles),
     vanillaExtractPlugin(),
-    svgLoader(),
     wasm(),
     react(),
   ],
