@@ -52,7 +52,7 @@
     "linkifyjs": "4.0.2",
     "matrix-js-sdk": "29.1.0",
     "millify": "6.1.0",
-    "pdfjs-dist": "3.10.111",
+    "pdfjs-dist": "4.2.67",
     "prismjs": "1.29.0",
     "prop-types": "15.8.1",
     "react": "18.2.0",
@@ -103,6 +103,7 @@
     "sass": "1.56.2",
     "typescript": "4.9.4",
     "vite": "5.0.13",
-    "vite-plugin-static-copy": "0.13.0"
+    "vite-plugin-static-copy": "0.13.0",
+    "vite-plugin-top-level-await": "1.4.1"
   }
 }
