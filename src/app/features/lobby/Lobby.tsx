@@ -204,7 +204,7 @@ export function Lobby() {
       }
 
       const childItems = flattenHierarchy
-        .filter((i) => i.parentId === containerParentId && !item.space)
+        .filter((i) => i.parentId === containerParentId && !i.space)
         .filter((i) => i.roomId !== item.roomId);
 
       const beforeItem: HierarchyItem | undefined = containerItem.space ? undefined : containerItem;
