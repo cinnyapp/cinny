@@ -41,3 +41,19 @@ export const factoryRoomIdByUnreadCount =
     const bT = getUnreadCount(b) ?? 0;
     return bT - aT;
   };
+
+export const byTsOldToNew: SortFunc<number> = (a, b) => a - b;
+
+export const byOrderKey: SortFunc<string | undefined> = (a, b) => {
+  if (!a && !b) {
+    return 0;
+  }
+
+  if (!b) return -1;
+  if (!a) return 1;
+
+  if (a < b) {
+    return -1;
+  }
+  return 1;
+};
