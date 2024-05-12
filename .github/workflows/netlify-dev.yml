@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.1.3
+        uses: actions/checkout@v4.1.4
       - name: Setup node
-        uses: actions/setup-node@v3.8.1
+        uses: actions/setup-node@v4.0.2
         with:
           node-version: 20.12.2
           cache: 'npm'
@@ -24,7 +24,7 @@ jobs:
           NODE_OPTIONS: '--max_old_space_size=4096'
         run: npm run build
       - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@7a92f00dde8c92a5a9e8385ec2919775f7647352
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
         with:
           publish-dir: dist
           deploy-message: 'Dev deploy ${{ github.sha }}'
