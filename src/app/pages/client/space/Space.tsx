@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAtom, useAtomValue } from 'jotai';
 import { Avatar, Box, Icon, Icons, Text, config } from 'folds';
@@ -25,7 +25,6 @@ import {
 } from '../../../hooks/router/useSelectedSpace';
 import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
-import { useSpaceJoinedHierarchy } from '../../../hooks/useSpaceJoinedHierarchy';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
 import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
@@ -33,6 +32,8 @@ import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { useRoomName } from '../../../hooks/useRoomMeta';
+import { useSpaceJoinedHierarchy } from '../../../hooks/useSpaceHierarchy';
+import { allRoomsAtom } from '../../../state/room-list/roomList';
 
 export function Space() {
   const mx = useMatrixClient();
@@ -42,6 +43,8 @@ export function Space() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
   const roomToUnread = useAtomValue(roomToUnreadAtom);
+  const allRooms = useAtomValue(allRoomsAtom);
+  const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
   const muteChanges = useAtomValue(muteChangesAtom);
   const mutedRooms = muteChanges.added;
   const spaceName = useRoomName(space);
@@ -51,20 +54,34 @@ export function Space() {
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
   const [closedCategories, setClosedCategories] = useAtom(closedNavCategoriesAtom);
+
+  const getRoom = useCallback(
+    (rId: string) => {
+      if (allJoinedRooms.has(rId)) {
+        return mx.getRoom(rId) ?? undefined;
+      }
+      return undefined;
+    },
+    [mx, allJoinedRooms]
+  );
+
   const hierarchy = useSpaceJoinedHierarchy(
     space.roomId,
+    getRoom,
     useCallback(
-      (spaceRoomId, directCategory) => {
-        if (directCategory) {
-          return closedCategories.has(makeNavCategoryId(space.roomId, spaceRoomId, 'direct'));
+      (parentId, roomId) => {
+        if (!closedCategories.has(makeNavCategoryId(space.roomId, parentId))) {
+          return false;
         }
-        return closedCategories.has(makeNavCategoryId(space.roomId, spaceRoomId));
+        const showRoom = roomToUnread.has(roomId) || roomId === selectedRoomId;
+        if (showRoom) return false;
+        return true;
       },
-      [space.roomId, closedCategories]
+      [space.roomId, closedCategories, roomToUnread, selectedRoomId]
     ),
     useCallback(
-      (roomId) => roomToUnread.has(roomId) || roomId === selectedRoomId,
-      [roomToUnread, selectedRoomId]
+      (sId) => closedCategories.has(makeNavCategoryId(space.roomId, sId)),
+      [closedCategories, space.roomId]
     )
   );
 
@@ -82,7 +99,6 @@ export function Space() {
   const getToLink = (roomId: string) =>
     getSpaceRoomPath(spaceIdOrAlias, getCanonicalAliasOrRoomId(mx, roomId));
 
-  let lastSpaceId = '';
   return (
     <ClientContentLayout
       navigation={
@@ -139,16 +155,12 @@ export function Space() {
                 }}
               >
                 {virtualizer.getVirtualItems().map((vItem) => {
-                  const roomId = hierarchy[vItem.index];
+                  const { roomId } = hierarchy[vItem.index] ?? {};
                   const room = mx.getRoom(roomId);
                   if (!room) return null;
 
                   if (room.isSpaceRoom()) {
-                    const dmCategory = lastSpaceId === roomId;
-                    lastSpaceId = roomId;
-                    const categoryId = dmCategory
-                      ? makeNavCategoryId(space.roomId, roomId, 'direct')
-                      : makeNavCategoryId(space.roomId, roomId);
+                    const categoryId = makeNavCategoryId(space.roomId, roomId);
 
                     return (
                       <VirtualTile
@@ -159,29 +171,15 @@ export function Space() {
                         <div
                           style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}
                         >
-                          {dmCategory ? (
-                            <NavCategoryHeader>
-                              <RoomNavCategoryButton
-                                data-category-id={categoryId}
-                                onClick={handleCategoryClick}
-                                closed={closedCategories.has(categoryId)}
-                              >
-                                {room?.roomId === space.roomId
-                                  ? 'Direct Messages'
-                                  : `Direct Messages - ${room.name}`}
-                              </RoomNavCategoryButton>
-                            </NavCategoryHeader>
-                          ) : (
-                            <NavCategoryHeader>
-                              <RoomNavCategoryButton
-                                data-category-id={categoryId}
-                                onClick={handleCategoryClick}
-                                closed={closedCategories.has(categoryId)}
-                              >
-                                {roomId === space.roomId ? 'Rooms' : room?.name}
-                              </RoomNavCategoryButton>
-                            </NavCategoryHeader>
-                          )}
+                          <NavCategoryHeader>
+                            <RoomNavCategoryButton
+                              data-category-id={categoryId}
+                              onClick={handleCategoryClick}
+                              closed={closedCategories.has(categoryId)}
+                            >
+                              {roomId === space.roomId ? 'Rooms' : room?.name}
+                            </RoomNavCategoryButton>
+                          </NavCategoryHeader>
                         </div>
                       </VirtualTile>
                     );
