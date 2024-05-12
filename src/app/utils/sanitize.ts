@@ -107,7 +107,7 @@ const transformATag: Transformer = (tagName, attribs) => ({
 
 const transformImgTag: Transformer = (tagName, attribs) => {
   const { src } = attribs;
-  if (src.startsWith('mxc://') === false) {
+  if (typeof src === 'string' && src.startsWith('mxc://') === false) {
     return {
       tagName: 'a',
       attribs: {
