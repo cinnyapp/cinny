@@ -277,7 +277,10 @@ export function Lobby() {
     <PowerLevelsContextProvider value={spacePowerLevels}>
       <Box grow="Yes">
         <Page>
-          <LobbyHeader showProfile={!onTop} />
+          <LobbyHeader
+            showProfile={!onTop}
+            powerLevels={roomsPowerLevels.get(space.roomId) ?? {}}
+          />
           <Box style={{ position: 'relative' }} grow="Yes">
             <Scroll ref={scrollRef} hideTrack visibility="Hover">
               <PageContent>
@@ -310,6 +313,17 @@ export function Lobby() {
                     {vItems.map((vItem) => {
                       const item = flattenHierarchy[vItem.index];
                       if (!item) return null;
+                      const itemPowerLevel = roomsPowerLevels.get(item.roomId) ?? {};
+                      const userPLInItem = powerLevelAPI.getPowerLevel(
+                        itemPowerLevel,
+                        mx.getUserId() ?? undefined
+                      );
+                      const canInvite = powerLevelAPI.canDoAction(
+                        itemPowerLevel,
+                        'invite',
+                        userPLInItem
+                      );
+                      const isJoined = allJoinedRooms.has(item.roomId);
 
                       const nextRoomId: string | undefined =
                         flattenHierarchy[vItem.index + 1]?.roomId;
@@ -349,10 +363,14 @@ export function Lobby() {
                               }
                               options={
                                 parentId &&
-                                parentPowerLevels &&
-                                canEditSpaceChild(parentPowerLevels) ? (
-                                  <HierarchyItemMenu item={{ ...item, parentId }} />
-                                ) : undefined
+                                parentPowerLevels && (
+                                  <HierarchyItemMenu
+                                    item={{ ...item, parentId }}
+                                    canInvite={canInvite}
+                                    joined={isJoined}
+                                    canEditChild={canEditSpaceChild(parentPowerLevels)}
+                                  />
+                                )
                               }
                               before={item.parentId ? undefined : undefined}
                               after={
@@ -390,9 +408,12 @@ export function Lobby() {
                             getRoom={getRoom}
                             canReorder={canEditSpaceChild(parentPowerLevels)}
                             options={
-                              canEditSpaceChild(parentPowerLevels) ? (
-                                <HierarchyItemMenu item={item} />
-                              ) : undefined
+                              <HierarchyItemMenu
+                                item={item}
+                                canInvite={canInvite}
+                                joined={isJoined}
+                                canEditChild={canEditSpaceChild(parentPowerLevels)}
+                              />
                             }
                             after={
                               <AfterItemDropTarget

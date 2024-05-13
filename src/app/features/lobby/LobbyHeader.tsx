@@ -1,5 +1,21 @@
-import React from 'react';
-import { Avatar, Box, Icon, IconButton, Icons, Text, Tooltip, TooltipProvider } from 'folds';
+import React, { MouseEventHandler, forwardRef, useState } from 'react';
+import {
+  Avatar,
+  Box,
+  Icon,
+  IconButton,
+  Icons,
+  Menu,
+  MenuItem,
+  PopOut,
+  RectCords,
+  Text,
+  Tooltip,
+  TooltipProvider,
+  config,
+  toRem,
+} from 'folds';
+import FocusTrap from 'focus-trap-react';
 import { PageHeader } from '../../components/page';
 import { useSetSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -9,19 +25,79 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { RoomAvatar } from '../../components/room-avatar';
 import { nameInitials } from '../../utils/common';
 import * as css from './LobbyHeader.css';
-import { openSpaceSettings } from '../../../client/action/navigation';
+import { openInviteUser, openSpaceSettings } from '../../../client/action/navigation';
+import { IPowerLevels, usePowerLevelsAPI } from '../../hooks/usePowerLevels';
+
+type LobbyMenuProps = {
+  roomId: string;
+  powerLevels: IPowerLevels;
+  requestClose: () => void;
+};
+const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
+  ({ roomId, powerLevels, requestClose }, ref) => {
+    const mx = useMatrixClient();
+    const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
+    const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
+
+    const handleInvite = () => {
+      openInviteUser(roomId);
+      requestClose();
+    };
+
+    const handleRoomSettings = () => {
+      openSpaceSettings(roomId);
+      requestClose();
+    };
+
+    return (
+      <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
+        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <MenuItem
+            onClick={handleInvite}
+            variant="Primary"
+            fill="None"
+            size="300"
+            after={<Icon size="100" src={Icons.UserPlus} />}
+            radii="300"
+            disabled={!canInvite}
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Invite
+            </Text>
+          </MenuItem>
+          <MenuItem
+            onClick={handleRoomSettings}
+            size="300"
+            after={<Icon size="100" src={Icons.Setting} />}
+            radii="300"
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Space Settings
+            </Text>
+          </MenuItem>
+        </Box>
+      </Menu>
+    );
+  }
+);
 
 type LobbyHeaderProps = {
   showProfile?: boolean;
+  powerLevels: IPowerLevels;
 };
-export function LobbyHeader({ showProfile }: LobbyHeaderProps) {
+export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
   const mx = useMatrixClient();
   const space = useSpace();
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const name = useRoomName(space);
   const avatarMxc = useRoomAvatar(space);
   const avatarUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc, 96, 96, 'crop') ?? undefined : undefined;
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
 
   return (
     <PageHeader className={showProfile ? undefined : css.Header}>
@@ -61,19 +137,43 @@ export function LobbyHeader({ showProfile }: LobbyHeaderProps) {
           </TooltipProvider>
           <TooltipProvider
             position="Bottom"
+            align="End"
             offset={4}
             tooltip={
               <Tooltip>
-                <Text>Settings</Text>
+                <Text>More Options</Text>
               </Tooltip>
             }
           >
             {(triggerRef) => (
-              <IconButton ref={triggerRef} onClick={() => openSpaceSettings(space.roomId)}>
-                <Icon size="400" src={Icons.Setting} />
+              <IconButton onClick={handleOpenMenu} ref={triggerRef} aria-pressed={!!menuAnchor}>
+                <Icon size="400" src={Icons.VerticalDots} filled={!!menuAnchor} />
               </IconButton>
             )}
           </TooltipProvider>
+          <PopOut
+            anchor={menuAnchor}
+            position="Bottom"
+            align="End"
+            content={
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  returnFocusOnDeactivate: false,
+                  onDeactivate: () => setMenuAnchor(undefined),
+                  clickOutsideDeactivates: true,
+                  isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                  isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                }}
+              >
+                <LobbyMenu
+                  roomId={space.roomId}
+                  powerLevels={powerLevels}
+                  requestClose={() => setMenuAnchor(undefined)}
+                />
+              </FocusTrap>
+            }
+          />
         </Box>
       </Box>
     </PageHeader>

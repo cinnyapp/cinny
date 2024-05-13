@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useState } from 'react';
+import React, { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Box,
@@ -11,43 +11,188 @@ import {
   Text,
   RectCords,
   config,
+  Line,
+  Spinner,
+  toRem,
 } from 'folds';
 import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { MSpaceChildContent, StateEvent } from '../../../types/matrix/room';
-import { openSpaceSettings, toggleRoomSettings } from '../../../client/action/navigation';
+import {
+  openInviteUser,
+  openSpaceSettings,
+  toggleRoomSettings,
+} from '../../../client/action/navigation';
+import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 
-type HierarchyItemMenuProps = {
-  item: HierarchyItem & {
-    parentId: string;
-  };
+type HierarchyItemWithParent = HierarchyItem & {
+  parentId: string;
 };
-export function HierarchyItemMenu({ item }: HierarchyItemMenuProps) {
+
+function SuggestMenuItem({
+  item,
+  requestClose,
+}: {
+  item: HierarchyItemWithParent;
+  requestClose: () => void;
+}) {
   const mx = useMatrixClient();
   const { roomId, parentId, content } = item;
-  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
-  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  const [toggleState, handleToggleSuggested] = useAsyncCallback(
+    useCallback(() => {
+      const newContent: MSpaceChildContent = { ...content, suggested: !content.suggested };
+      return mx.sendStateEvent(parentId, StateEvent.SpaceChild, newContent, roomId);
+    }, [mx, parentId, roomId, content])
+  );
+
+  useEffect(() => {
+    if (toggleState.status === AsyncStatus.Success) {
+      requestClose();
+    }
+  }, [requestClose, toggleState]);
+
+  return (
+    <MenuItem
+      onClick={handleToggleSuggested}
+      size="300"
+      radii="300"
+      before={toggleState.status === AsyncStatus.Loading && <Spinner size="100" />}
+      disabled={toggleState.status === AsyncStatus.Loading}
+    >
+      <Text as="span" size="T300" truncate>
+        {content.suggested ? 'Unset Suggested' : 'Set Suggested'}
+      </Text>
+    </MenuItem>
+  );
+}
+
+function RemoveMenuItem({
+  item,
+  requestClose,
+}: {
+  item: HierarchyItemWithParent;
+  requestClose: () => void;
+}) {
+  const mx = useMatrixClient();
+  const { roomId, parentId } = item;
+
+  const [removeState, handleRemove] = useAsyncCallback(
+    useCallback(
+      () => mx.sendStateEvent(parentId, StateEvent.SpaceChild, {}, roomId),
+      [mx, parentId, roomId]
+    )
+  );
+
+  useEffect(() => {
+    if (removeState.status === AsyncStatus.Success) {
+      requestClose();
+    }
+  }, [requestClose, removeState]);
+
+  return (
+    <MenuItem
+      onClick={handleRemove}
+      variant="Critical"
+      fill="None"
+      size="300"
+      radii="300"
+      before={
+        removeState.status === AsyncStatus.Loading && (
+          <Spinner variant="Critical" fill="Soft" size="100" />
+        )
+      }
+      disabled={removeState.status === AsyncStatus.Loading}
+    >
+      <Text as="span" size="T300" truncate>
+        Remove
+      </Text>
+    </MenuItem>
+  );
+}
+
+function InviteMenuItem({
+  item,
+  requestClose,
+  disabled,
+}: {
+  item: HierarchyItemWithParent;
+  requestClose: () => void;
+  disabled?: boolean;
+}) {
+  const handleInvite = () => {
+    openInviteUser(item.roomId);
+    requestClose();
   };
+
+  return (
+    <MenuItem
+      onClick={handleInvite}
+      size="300"
+      radii="300"
+      variant="Primary"
+      fill="None"
+      disabled={disabled}
+    >
+      <Text as="span" size="T300" truncate>
+        Invite
+      </Text>
+    </MenuItem>
+  );
+}
+
+function SettingsMenuItem({
+  item,
+  requestClose,
+  disabled,
+}: {
+  item: HierarchyItemWithParent;
+  requestClose: () => void;
+  disabled?: boolean;
+}) {
   const handleSettings = () => {
     if (item.space) {
       openSpaceSettings(item.roomId);
     } else {
       toggleRoomSettings(item.roomId);
     }
-    setMenuAnchor(undefined);
-  };
-  const handleToggleSuggested = () => {
-    const newContent: MSpaceChildContent = { ...content, suggested: !content.suggested };
-    mx.sendStateEvent(parentId, StateEvent.SpaceChild, newContent, roomId);
-    setMenuAnchor(undefined);
+    requestClose();
   };
 
-  const handleRemove = () => {
-    mx.sendStateEvent(parentId, StateEvent.SpaceChild, {}, roomId);
-    setMenuAnchor(undefined);
+  return (
+    <MenuItem onClick={handleSettings} size="300" radii="300" disabled={disabled}>
+      <Text as="span" size="T300" truncate>
+        Settings
+      </Text>
+    </MenuItem>
+  );
+}
+
+type HierarchyItemMenuProps = {
+  item: HierarchyItem & {
+    parentId: string;
   };
+  joined: boolean;
+  canInvite: boolean;
+  canEditChild: boolean;
+};
+export function HierarchyItemMenu({
+  item,
+  joined,
+  canInvite,
+  canEditChild,
+}: HierarchyItemMenuProps) {
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleRequestClose = useCallback(() => setMenuAnchor(undefined), []);
+
+  if (!joined && !canEditChild) {
+    return null;
+  }
 
   return (
     <Box gap="200" alignItems="Center" shrink="No">
@@ -77,30 +222,26 @@ export function HierarchyItemMenu({ item }: HierarchyItemMenuProps) {
                 isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
               }}
             >
-              <Menu>
-                <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-                  <MenuItem onClick={handleSettings} size="300" radii="300">
-                    <Text as="span" size="T300" truncate>
-                      Settings
-                    </Text>
-                  </MenuItem>
-                  <MenuItem onClick={handleToggleSuggested} size="300" radii="300">
-                    <Text as="span" size="T300" truncate>
-                      {content.suggested ? 'Unset Suggested' : 'Set Suggested'}
-                    </Text>
-                  </MenuItem>
-                  <MenuItem
-                    onClick={handleRemove}
-                    variant="Critical"
-                    fill="None"
-                    size="300"
-                    radii="300"
-                  >
-                    <Text as="span" size="T300" truncate>
-                      Remove
-                    </Text>
-                  </MenuItem>
-                </Box>
+              <Menu style={{ maxWidth: toRem(150), width: '100vw' }}>
+                {joined && (
+                  <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                    <InviteMenuItem
+                      item={item}
+                      requestClose={handleRequestClose}
+                      disabled={!canInvite}
+                    />
+                    <SettingsMenuItem item={item} requestClose={handleRequestClose} />
+                  </Box>
+                )}
+                {(joined || canEditChild) && (
+                  <Line size="300" variant="Surface" direction="Horizontal" />
+                )}
+                {canEditChild && (
+                  <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                    <SuggestMenuItem item={item} requestClose={handleRequestClose} />
+                    <RemoveMenuItem item={item} requestClose={handleRequestClose} />
+                  </Box>
+                )}
               </Menu>
             </FocusTrap>
           }
