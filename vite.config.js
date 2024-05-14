@@ -6,7 +6,6 @@ import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import inject from '@rollup/plugin-inject';
 import topLevelAwait from 'vite-plugin-top-level-await';
-import { svgLoader } from './viteSvgLoader';
 import buildConfig from './build.config';
 
 const copyFiles = {
@@ -16,8 +15,9 @@ const copyFiles = {
       dest: '',
     },
     {
-      src: 'node_modules/pdfjs-dist/build/pdf.worker.min.js',
+      src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
       dest: '',
+      rename: 'pdf.worker.min.js',
     },
     {
       src: 'netlify.toml',
@@ -55,7 +55,6 @@ export default defineConfig({
     }),
     viteStaticCopy(copyFiles),
     vanillaExtractPlugin(),
-    svgLoader(),
     wasm(),
     react(),
   ],
