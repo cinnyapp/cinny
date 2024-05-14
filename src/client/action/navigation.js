@@ -45,10 +45,11 @@ export function openSpaceManage(roomId) {
   });
 }
 
-export function openSpaceAddExisting(roomId) {
+export function openSpaceAddExisting(roomId, spaces = false) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SPACE_ADDEXISTING,
     roomId,
+    spaces,
   });
 }
 

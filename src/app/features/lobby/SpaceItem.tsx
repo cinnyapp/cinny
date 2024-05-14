@@ -303,15 +303,63 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
 }
 
 function AddSpaceButton({ item }: { item: HierarchyItem }) {
+  const [cords, setCords] = useState<RectCords>();
+
+  const handleAddSpace: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setCords(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleCreateSpace = () => {
+    openCreateRoom(true, item.roomId as any);
+    setCords(undefined);
+  };
+
+  const handleAddExisting = () => {
+    openSpaceAddExisting(item.roomId, true);
+    setCords(undefined);
+  };
   return (
-    <Chip
-      variant="SurfaceVariant"
-      radii="Pill"
-      before={<Icon src={Icons.Plus} size="50" />}
-      onClick={() => openCreateRoom(true, item.roomId as any)}
+    <PopOut
+      anchor={cords}
+      position="Bottom"
+      align="End"
+      content={
+        <FocusTrap
+          focusTrapOptions={{
+            initialFocus: false,
+            onDeactivate: () => setCords(undefined),
+            clickOutsideDeactivates: true,
+            isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+            isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+          }}
+        >
+          <Menu style={{ padding: config.space.S100 }}>
+            <MenuItem
+              size="300"
+              radii="300"
+              variant="Primary"
+              fill="None"
+              onClick={handleCreateSpace}
+            >
+              <Text size="T300">New Space</Text>
+            </MenuItem>
+            <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
+              <Text size="T300">Existing Space</Text>
+            </MenuItem>
+          </Menu>
+        </FocusTrap>
+      }
     >
-      <Text size="B300">Add Space</Text>
-    </Chip>
+      <Chip
+        variant="SurfaceVariant"
+        radii="Pill"
+        before={<Icon src={Icons.Plus} size="50" />}
+        onClick={handleAddSpace}
+        aria-pressed={!!cords}
+      >
+        <Text size="B300">Add Space</Text>
+      </Chip>
+    </PopOut>
   );
 }
 

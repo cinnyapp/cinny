@@ -300,7 +300,7 @@ class Navigation extends EventEmitter {
         this.emit(cons.events.navigation.SPACE_MANAGE_OPENED, action.roomId);
       },
       [cons.actions.navigation.OPEN_SPACE_ADDEXISTING]: () => {
-        this.emit(cons.events.navigation.SPACE_ADDEXISTING_OPENED, action.roomId);
+        this.emit(cons.events.navigation.SPACE_ADDEXISTING_OPENED, action.roomId, action.spaces);
       },
       [cons.actions.navigation.TOGGLE_ROOM_SETTINGS]: () => {
         this.emit(
