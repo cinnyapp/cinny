@@ -9,7 +9,8 @@ export const today = (ts: number): boolean => dayjs(ts).isToday();
 
 export const yesterday = (ts: number): boolean => dayjs(ts).isYesterday();
 
-export const timeHourMinute = (ts: number): string => dayjs(ts).format('hh:mm A');
+export const timeHourMinute = (ts: number, international: boolean = false): string =>
+  dayjs(ts).format(international ? 'HH:mm' : 'hh:mm A');
 
 export const timeDayMonYear = (ts: number): string => dayjs(ts).format('D MMM YYYY');
 

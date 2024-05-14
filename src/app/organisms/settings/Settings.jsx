@@ -62,6 +62,11 @@ function AppearanceSection() {
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const [useInternationalTime, setInternationalTime] = useSetting(
+    settingsAtom,
+    'useInternationalTime'
+  );
+  
   const spacings = ['0', '100', '200', '300', '400', '500']
 
   return (
@@ -222,6 +227,16 @@ function AppearanceSection() {
             />
           )}
           content={<Text variant="b3">Show hidden state and message events.</Text>}
+        />
+        <SettingTile
+          title="Use 24-hour time"
+          options={
+            <Toggle
+              isActive={useInternationalTime}
+              onToggle={() => setInternationalTime(!useInternationalTime)}
+            />
+          }
+          content={<Text variant="b3">Use the 24-hour time format for all timestamps.</Text>}
         />
       </div>
     </div>

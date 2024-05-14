@@ -9,6 +9,8 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 export type RoomIntroProps = {
   room: Room;
@@ -35,6 +37,8 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const [prevRoomState, joinPrevRoom] = useAsyncCallback(
     useCallback(async (roomId: string) => mx.joinRoom(roomId), [mx])
   );
+
+  const [useInternationalTime] = useSetting(settingsAtom, 'useInternationalTime');
 
   return (
     <Box direction="Column" grow="Yes" gap="500" {...props} ref={ref}>
@@ -66,7 +70,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             <Text size="T200" priority="300">
               {'Created by '}
               <b>@{creatorName}</b>
-              {` on ${timeDayMonthYear(ts)} ${timeHourMinute(ts)}`}
+              {` on ${timeDayMonthYear(ts)} ${timeHourMinute(ts, useInternationalTime)}`}
             </Text>
           )}
         </Box>
