@@ -10,8 +10,8 @@ export type TimeProps = {
 };
 
 export const Time = as<'span', TimeProps>(({ compact, ts, ...props }, ref) => {
-  const [useInternationalTime] = useSetting(settingsAtom, 'useInternationalTime');
-  const formattedTime = timeHourMinute(ts, useInternationalTime);
+  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+  const formattedTime = timeHourMinute(ts, hour24Clock);
 
   let time = '';
 

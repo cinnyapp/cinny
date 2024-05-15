@@ -62,10 +62,7 @@ function AppearanceSection() {
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
-  const [useInternationalTime, setInternationalTime] = useSetting(
-    settingsAtom,
-    'useInternationalTime'
-  );
+  const [hour24Clock, setHour24Clock] = useSetting(settingsAtom, 'hour24Clock');
   
   const spacings = ['0', '100', '200', '300', '400', '500']
 
@@ -232,8 +229,8 @@ function AppearanceSection() {
           title="Use 24-hour time"
           options={
             <Toggle
-              isActive={useInternationalTime}
-              onToggle={() => setInternationalTime(!useInternationalTime)}
+              isActive={hour24Clock}
+              onToggle={() => setHour24Clock(!hour24Clock)}
             />
           }
           content={<Text variant="b3">Use the 24-hour time format for all timestamps.</Text>}

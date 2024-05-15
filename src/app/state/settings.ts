@@ -26,7 +26,7 @@ export interface Settings {
   showNotifications: boolean;
   isNotificationSounds: boolean;
 
-  useInternationalTime: boolean;
+  hour24Clock: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -51,7 +51,7 @@ const defaultSettings: Settings = {
   showNotifications: true,
   isNotificationSounds: true,
 
-  useInternationalTime: false,
+  hour24Clock: false,
 };
 
 export const getSettings = () => {
