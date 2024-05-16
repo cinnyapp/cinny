@@ -455,7 +455,7 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
                       <UnknownSpaceProfile
                         roomId={roomId}
                         via={item.content.via}
-                        name={summaryState.data.name || roomId}
+                        name={summaryState.data.name || summaryState.data.canonical_alias || roomId}
                         avatarUrl={
                           summaryState.data?.avatar_url
                             ? mx.mxcUrlToHttp(summaryState.data.avatar_url, 96, 96, 'crop') ??

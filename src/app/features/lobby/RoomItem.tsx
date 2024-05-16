@@ -407,7 +407,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                         />
                       )}
                       <RoomProfile
-                        name={summaryState.data.name || roomId}
+                        name={summaryState.data.name || summaryState.data.canonical_alias || roomId}
                         topic={summaryState.data.topic}
                         avatarUrl={
                           summaryState.data?.avatar_url
