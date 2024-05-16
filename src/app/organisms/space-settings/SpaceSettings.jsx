@@ -8,12 +8,6 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { leave } from '../../../client/action/room';
-import {
-  createSpaceShortcut,
-  deleteSpaceShortcut,
-  categorizeSpace,
-  unCategorizeSpace,
-} from '../../../client/action/accountData';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -32,14 +26,9 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import SettingsIC from '../../../../public/res/ic/outlined/settings.svg';
 import ShieldUserIC from '../../../../public/res/ic/outlined/shield-user.svg';
 import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
-import PinIC from '../../../../public/res/ic/outlined/pin.svg';
-import PinFilledIC from '../../../../public/res/ic/filled/pin.svg';
-import CategoryIC from '../../../../public/res/ic/outlined/category.svg';
-import CategoryFilledIC from '../../../../public/res/ic/filled/category.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
-import { useForceUpdate } from '../../hooks/useForceUpdate';
 
 const tabText = {
   GENERAL: 'General',
@@ -48,54 +37,36 @@ const tabText = {
   PERMISSIONS: 'Permissions',
 };
 
-const tabItems = [{
-  iconSrc: SettingsIC,
-  text: tabText.GENERAL,
-  disabled: false,
-}, {
-  iconSrc: UserIC,
-  text: tabText.MEMBERS,
-  disabled: false,
-}, {
-  iconSrc: EmojiIC,
-  text: tabText.EMOJIS,
-  disabled: false,
-}, {
-  iconSrc: ShieldUserIC,
-  text: tabText.PERMISSIONS,
-  disabled: false,
-}];
+const tabItems = [
+  {
+    iconSrc: SettingsIC,
+    text: tabText.GENERAL,
+    disabled: false,
+  },
+  {
+    iconSrc: UserIC,
+    text: tabText.MEMBERS,
+    disabled: false,
+  },
+  {
+    iconSrc: EmojiIC,
+    text: tabText.EMOJIS,
+    disabled: false,
+  },
+  {
+    iconSrc: ShieldUserIC,
+    text: tabText.PERMISSIONS,
+    disabled: false,
+  },
+];
 
 function GeneralSettings({ roomId }) {
-  const isPinned = initMatrix.accountData.spaceShortcut.has(roomId);
-  const isCategorized = initMatrix.accountData.categorizedSpaces.has(roomId);
   const roomName = initMatrix.matrixClient.getRoom(roomId)?.name;
-  const [, forceUpdate] = useForceUpdate();
 
   return (
     <>
       <div className="room-settings__card">
         <MenuHeader>Options</MenuHeader>
-        <MenuItem
-          onClick={() => {
-            if (isCategorized) unCategorizeSpace(roomId);
-            else categorizeSpace(roomId);
-            forceUpdate();
-          }}
-          iconSrc={isCategorized ? CategoryFilledIC : CategoryIC}
-        >
-          {isCategorized ? 'Uncategorize subspaces' : 'Categorize subspaces'}
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (isPinned) deleteSpaceShortcut(roomId);
-            else createSpaceShortcut(roomId);
-            forceUpdate();
-          }}
-          iconSrc={isPinned ? PinFilledIC : PinIC}
-        >
-          {isPinned ? 'Unpin from sidebar' : 'Pin to sidebar'}
-        </MenuItem>
         <MenuItem
           variant="danger"
           onClick={async () => {
@@ -103,7 +74,7 @@ function GeneralSettings({ roomId }) {
               'Leave space',
               `Are you sure that you want to leave "${roomName}" space?`,
               'Leave',
-              'danger',
+              'danger'
             );
             if (isConfirmed) leave(roomId);
           }}
@@ -165,12 +136,12 @@ function SpaceSettings() {
     <PopupWindow
       isOpen={isOpen}
       className="space-settings"
-      title={(
+      title={
         <Text variant="s1" weight="medium" primary>
           {isOpen && twemojify(room.name)}
           <span style={{ color: 'var(--tc-surface-low)' }}> — space settings</span>
         </Text>
-      )}
+      }
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
       onRequestClose={requestClose}
     >
