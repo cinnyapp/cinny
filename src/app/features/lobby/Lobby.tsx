@@ -3,7 +3,7 @@ import { Box, Icon, IconButton, Icons, Line, Scroll, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { Room } from 'matrix-js-sdk';
+import { IJoinRuleEventContent, JoinRule, RestrictedAllowType, Room } from 'matrix-js-sdk';
 import { useSpace } from '../../hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '../../components/page';
 import { HierarchyItem, useSpaceHierarchy } from '../../hooks/useSpaceHierarchy';
@@ -37,6 +37,7 @@ import { HierarchyItemMenu } from './HierarchyItemMenu';
 import { StateEvent } from '../../../types/matrix/room';
 import { AfterItemDropTarget, CanDropCallback, useDnDMonitor } from './DnD';
 import { ASCIILexicalTable, orderKeys } from '../../utils/ASCIILexicalTable';
+import { getStateEvent } from '../../utils/room';
 
 export function Lobby() {
   const navigate = useNavigate();
@@ -112,6 +113,7 @@ export function Lobby() {
 
   const canDrop: CanDropCallback = useCallback(
     (item, container): boolean => {
+      const restrictedItem = mx.getRoom(item.roomId)?.getJoinRule() === JoinRule.Restricted;
       if (item.roomId === container.item.roomId || item.roomId === container.nextRoomId) {
         // can not drop before or after itself
         return false;
@@ -135,6 +137,26 @@ export function Lobby() {
         ? container.item.roomId
         : container.item.parentId;
 
+      const dropOutsideSpace = item.parentId !== containerSpaceId;
+
+      if (dropOutsideSpace && restrictedItem) {
+        // do not allow restricted room to drop outside
+        // current space if can't change join rule allow
+        const itemPowerLevel = roomsPowerLevels.get(item.roomId) ?? {};
+        const userPLInItem = powerLevelAPI.getPowerLevel(
+          itemPowerLevel,
+          mx.getUserId() ?? undefined
+        );
+        const canChangeJoinRuleAllow = powerLevelAPI.canSendStateEvent(
+          itemPowerLevel,
+          StateEvent.RoomJoinRules,
+          userPLInItem
+        );
+        if (!canChangeJoinRuleAllow) {
+          return false;
+        }
+      }
+
       if (
         getRoom(containerSpaceId) === undefined ||
         !canEditSpaceChild(roomsPowerLevels.get(containerSpaceId) ?? {})
@@ -143,7 +165,7 @@ export function Lobby() {
       }
       return true;
     },
-    [getRoom, space.roomId, roomsPowerLevels, canEditSpaceChild]
+    [getRoom, space.roomId, roomsPowerLevels, canEditSpaceChild, mx]
   );
 
   const reorderSpace = useCallback(
@@ -191,6 +213,7 @@ export function Lobby() {
 
   const reorderRoom = useCallback(
     (item: HierarchyItem, containerItem: HierarchyItem): void => {
+      const itemRoom = mx.getRoom(item.roomId);
       if (!item.parentId) {
         return;
       }
@@ -201,6 +224,29 @@ export function Lobby() {
 
       if (item.parentId !== containerParentId) {
         mx.sendStateEvent(item.parentId, StateEvent.SpaceChild, {}, item.roomId);
+      }
+
+      if (
+        itemRoom &&
+        itemRoom.getJoinRule() === JoinRule.Restricted &&
+        item.parentId !== containerParentId
+      ) {
+        // change join rule allow parameter when dragging
+        // restricted room from one space to another
+        const joinRuleContent = getStateEvent(
+          itemRoom,
+          StateEvent.RoomJoinRules
+        )?.getContent<IJoinRuleEventContent>();
+
+        if (joinRuleContent) {
+          const allow =
+            joinRuleContent.allow?.filter((allowRule) => allowRule.room_id !== item.parentId) ?? [];
+          allow.push({ type: RestrictedAllowType.RoomMembership, room_id: containerParentId });
+          mx.sendStateEvent(itemRoom.roomId, StateEvent.RoomJoinRules, {
+            ...joinRuleContent,
+            allow,
+          });
+        }
       }
 
       const childItems = flattenHierarchy
@@ -253,7 +299,6 @@ export function Lobby() {
           reorderSpace(item, container.item);
         } else {
           reorderRoom(item, container.item);
-          // TODO: prompt when dragging restricted room of private space to public space and etc.
         }
       },
       [reorderRoom, reorderSpace, canDrop]
