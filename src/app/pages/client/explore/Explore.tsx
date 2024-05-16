@@ -30,7 +30,7 @@ import {
   NavLink,
 } from '../../../components/nav';
 import { getExploreFeaturedPath, getExploreServerPath } from '../../pathUtils';
-import { clientDefaultServer, useClientConfig } from '../../../hooks/useClientConfig';
+import { useClientConfig } from '../../../hooks/useClientConfig';
 import {
   useExploreFeaturedSelected,
   useExploreServer,
@@ -162,8 +162,8 @@ export function Explore() {
   const userId = mx.getUserId();
   const clientConfig = useClientConfig();
   const userServer = userId ? getMxIdServer(userId) : undefined;
-  const clientServers = clientConfig.homeserverList ?? [clientDefaultServer(clientConfig)];
-  const servers = clientServers.filter((server) => server !== userServer);
+  const servers =
+    clientConfig.featuredCommunities?.servers?.filter((server) => server !== userServer) ?? [];
 
   const featuredSelected = useExploreFeaturedSelected();
   const selectedServer = useExploreServer();

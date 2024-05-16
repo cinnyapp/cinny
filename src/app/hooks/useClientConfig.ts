@@ -9,6 +9,7 @@ export type ClientConfig = {
     openAsDefault?: boolean;
     spaces?: string[];
     rooms?: string[];
+    servers?: string[];
   };
 
   hashRouter?: {

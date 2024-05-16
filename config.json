@@ -26,7 +26,8 @@
       "#thisweekinmatrix:matrix.org",
       "#matrix-dev:matrix.org",
       "#matrix:matrix.org"
-    ]
+    ],
+    "servers": ["envs.net", "matrix.org", "monero.social", "mozilla.org"]
   },
 
   "hashRouter": {
