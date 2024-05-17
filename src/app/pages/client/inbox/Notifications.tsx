@@ -225,7 +225,7 @@ function RoomNotificationsGroupComp({
           />
         );
       },
-      [MessageEvent.Reaction]: (event, displayName, getContent) => {
+      [MessageEvent.Sticker]: (event, displayName, getContent) => {
         if (event.unsigned?.redacted_because) {
           return <RedactedContent reason={event.unsigned?.redacted_because.content.reason} />;
         }

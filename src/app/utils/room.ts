@@ -179,14 +179,18 @@ export const getNotificationType = (mx: MatrixClient, roomId: string): Notificat
   return NotificationType.MentionsAndKeywords;
 };
 
+const NOTIFICATION_EVENT_TYPES = [
+  'm.room.create',
+  'm.room.message',
+  'm.room.encrypted',
+  'm.room.member',
+  'm.sticker',
+];
 export const isNotificationEvent = (mEvent: MatrixEvent) => {
   const eType = mEvent.getType();
-  if (
-    ['m.room.create', 'm.room.message', 'm.room.encrypted', 'm.room.member', 'm.sticker'].find(
-      (type) => type === eType
-    )
-  )
+  if (!NOTIFICATION_EVENT_TYPES.includes(eType)) {
     return false;
+  }
   if (eType === 'm.room.member') return false;
 
   if (mEvent.isRedacted()) return false;
