@@ -13,7 +13,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { ClientConfigLoader } from '../components/ClientConfigLoader';
 import { ClientConfig, ClientConfigProvider } from '../hooks/useClientConfig';
-import { AuthLayout, Login, Register, ResetPassword, authLayoutLoader } from './auth';
+import { AuthLayout, Login, Register, ResetPassword } from './auth';
 import {
   DIRECT_PATH,
   EXPLORE_PATH,
@@ -22,7 +22,6 @@ import {
   INBOX_PATH,
   REGISTER_PATH,
   RESET_PASSWORD_PATH,
-  ROOT_PATH,
   SPACE_PATH,
   _CREATE_PATH,
   _FEATURED_PATH,
@@ -63,16 +62,24 @@ const createRouter = (clientConfig: ClientConfig) => {
   const routes = createRoutesFromElements(
     <Route>
       <Route
-        path={ROOT_PATH}
+        index
         loader={() => {
           if (isAuthenticated()) return redirect(getHomePath());
-
           const afterLoginPath = getAbsolutePathFromHref(getOriginBaseUrl(), window.location.href);
           if (afterLoginPath) setAfterLoginRedirectPath(afterLoginPath);
           return redirect(getLoginPath());
         }}
       />
-      <Route loader={authLayoutLoader} element={<AuthLayout />}>
+      <Route
+        loader={() => {
+          if (isAuthenticated()) {
+            return redirect(getHomePath());
+          }
+
+          return null;
+        }}
+        element={<AuthLayout />}
+      >
         <Route path={LOGIN_PATH} element={<Login />} />
         <Route path={REGISTER_PATH} element={<Register />} />
         <Route path={RESET_PASSWORD_PATH} element={<ResetPassword />} />

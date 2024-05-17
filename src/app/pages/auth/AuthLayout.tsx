@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect } from 'react';
 import { Box, Header, Scroll, Spinner, Text, color } from 'folds';
 import {
-  LoaderFunction,
   Outlet,
   generatePath,
   matchPath,
-  redirect,
   useLocation,
   useNavigate,
   useParams,
@@ -15,7 +13,6 @@ import classNames from 'classnames';
 import { AuthFooter } from './AuthFooter';
 import * as css from './styles.css';
 import * as PatternsCss from '../../styles/Patterns.css';
-import { isAuthenticated } from '../../../client/state/auth';
 import {
   clientAllowedServer,
   clientDefaultServer,
@@ -32,14 +29,6 @@ import { AutoDiscoveryInfoProvider } from '../../hooks/useAutoDiscoveryInfo';
 import { AuthFlowsLoader } from '../../components/AuthFlowsLoader';
 import { AuthFlowsProvider } from '../../hooks/useAuthFlows';
 import { AuthServerProvider } from '../../hooks/useAuthServer';
-
-export const authLayoutLoader: LoaderFunction = () => {
-  if (isAuthenticated()) {
-    return redirect('/');
-  }
-
-  return null;
-};
 
 const currentAuthPath = (pathname: string): string => {
   if (matchPath(LOGIN_PATH, pathname)) {
