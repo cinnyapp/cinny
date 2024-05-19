@@ -23,6 +23,11 @@ export const RoomCardTopic = style({
   WebkitLineClamp: 3,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
+  cursor: 'pointer',
+
+  ':hover': {
+    textDecoration: 'underline',
+  },
 });
 
 export const ActionButton = style({
