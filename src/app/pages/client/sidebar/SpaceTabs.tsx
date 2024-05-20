@@ -563,7 +563,7 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
     });
   };
 
-  if (orphanSpaces.length === 0) return null;
+  if (sidebarItems.length === 0) return null;
   return (
     <>
       <SidebarStackSeparator />

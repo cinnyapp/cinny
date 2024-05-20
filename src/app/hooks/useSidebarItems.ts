@@ -1,9 +1,8 @@
-import { Dispatch, SetStateAction, useCallback, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { MatrixClient } from 'matrix-js-sdk';
 import { AccountDataEvent } from '../../types/matrix/accountData';
-import { useAccountData } from './useAccountData';
 import { useMatrixClient } from './useMatrixClient';
-import { isSpace } from '../utils/room';
+import { getAccountData, isSpace } from '../utils/room';
 import { Membership } from '../../types/matrix/room';
 import { useAccountDataCallback } from './useAccountDataCallback';
 
@@ -61,7 +60,6 @@ export const parseSidebar = (
   });
 
   orphans.forEach((spaceId) => items.push(spaceId));
-
   return items;
 };
 
@@ -69,13 +67,22 @@ export const useSidebarItems = (
   orphanSpaces: string[]
 ): [SidebarItems, Dispatch<SetStateAction<SidebarItems>>] => {
   const mx = useMatrixClient();
-  const inCinnySpacesContent = useAccountData(
-    AccountDataEvent.CinnySpaces
-  )?.getContent<InCinnySpacesContent>();
 
-  const [sidebarItems, setSidebarItems] = useState(() =>
-    parseSidebar(mx, orphanSpaces, inCinnySpacesContent)
-  );
+  const [sidebarItems, setSidebarItems] = useState(() => {
+    const inCinnySpacesContent = getAccountData(
+      mx,
+      AccountDataEvent.CinnySpaces
+    )?.getContent<InCinnySpacesContent>();
+    return parseSidebar(mx, orphanSpaces, inCinnySpacesContent);
+  });
+
+  useEffect(() => {
+    const inCinnySpacesContent = getAccountData(
+      mx,
+      AccountDataEvent.CinnySpaces
+    )?.getContent<InCinnySpacesContent>();
+    setSidebarItems(parseSidebar(mx, orphanSpaces, inCinnySpacesContent));
+  }, [mx, orphanSpaces]);
 
   useAccountDataCallback(
     mx,
