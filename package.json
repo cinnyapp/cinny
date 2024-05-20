@@ -21,6 +21,7 @@
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "1.1.6",
     "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "1.3.0",
+    "@atlaskit/pragmatic-drag-and-drop-hitbox": "1.0.3",
     "@fontsource/inter": "4.5.14",
     "@khanacademy/simple-markdown": "0.8.6",
     "@matrix-org/olm": "3.2.14",

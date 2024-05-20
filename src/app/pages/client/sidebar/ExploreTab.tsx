@@ -2,7 +2,7 @@ import React from 'react';
 import { Icon, Icons } from 'folds';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { SidebarAvatar } from '../../../components/sidebar';
+import { SidebarAvatar, SidebarItem, SidebarItemTooltip } from '../../../components/sidebar';
 import { useExploreSelected } from '../../../hooks/router/useExploreSelected';
 import {
   getExploreFeaturedPath,
@@ -44,12 +44,14 @@ export function ExploreTab() {
   };
 
   return (
-    <SidebarAvatar
-      active={exploreSelected}
-      outlined
-      tooltip="Explore Community"
-      avatarChildren={<Icon src={Icons.Explore} filled={exploreSelected} />}
-      onClick={handleExploreClick}
-    />
+    <SidebarItem active={exploreSelected}>
+      <SidebarItemTooltip tooltip="Explore Community">
+        {(triggerRef) => (
+          <SidebarAvatar as="button" ref={triggerRef} outlined onClick={handleExploreClick}>
+            <Icon src={Icons.Explore} filled={exploreSelected} />
+          </SidebarAvatar>
+        )}
+      </SidebarItemTooltip>
+    </SidebarItem>
   );
 }

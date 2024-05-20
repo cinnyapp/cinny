@@ -2,7 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon, Icons } from 'folds';
 import { useAtomValue } from 'jotai';
-import { SidebarAvatar } from '../../../components/sidebar';
+import {
+  SidebarAvatar,
+  SidebarItem,
+  SidebarItemBadge,
+  SidebarItemTooltip,
+} from '../../../components/sidebar';
 import { allInvitesAtom } from '../../../state/room-list/inviteList';
 import { getInboxInvitesPath, getInboxNotificationsPath, joinPathComponent } from '../../pathUtils';
 import { useInboxSelected } from '../../../hooks/router/useInbox';
@@ -28,13 +33,19 @@ export function InboxTab() {
   };
 
   return (
-    <SidebarAvatar
-      active={inboxSelected}
-      outlined
-      tooltip="Inbox"
-      avatarChildren={<Icon src={Icons.Inbox} filled={inboxSelected} />}
-      onClick={handleInboxClick}
-      notificationBadge={() => inviteCount > 0 && <UnreadBadge highlight count={inviteCount} />}
-    />
+    <SidebarItem active={inboxSelected}>
+      <SidebarItemTooltip tooltip="Inbox">
+        {(triggerRef) => (
+          <SidebarAvatar as="button" ref={triggerRef} outlined onClick={handleInboxClick}>
+            <Icon src={Icons.Inbox} filled={inboxSelected} />
+          </SidebarAvatar>
+        )}
+      </SidebarItemTooltip>
+      {inviteCount > 0 && (
+        <SidebarItemBadge hasCount>
+          <UnreadBadge highlight count={inviteCount} />
+        </SidebarItemBadge>
+      )}
+    </SidebarItem>
   );
 }

@@ -9,7 +9,12 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { getDirectPath, joinPathComponent } from '../../pathUtils';
 import { useRoomsUnread } from '../../../state/hooks/unread';
-import { SidebarAvatar } from '../../../components/sidebar';
+import {
+  SidebarAvatar,
+  SidebarItem,
+  SidebarItemBadge,
+  SidebarItemTooltip,
+} from '../../../components/sidebar';
 import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
 import { navToActivePathAtom } from '../../../state/navToActivePath';
 import { UnreadBadge } from '../../../components/unread-badge';
@@ -36,18 +41,19 @@ export function DirectTab() {
   };
 
   return (
-    <SidebarAvatar
-      active={directSelected}
-      outlined
-      tooltip="Direct Messages"
-      hasCount={directUnread && directUnread.total > 0}
-      notificationBadge={() =>
-        directUnread && (
+    <SidebarItem active={directSelected}>
+      <SidebarItemTooltip tooltip="Direct Messages">
+        {(triggerRef) => (
+          <SidebarAvatar as="button" ref={triggerRef} outlined onClick={handleDirectClick}>
+            <Icon src={Icons.User} filled={directSelected} />
+          </SidebarAvatar>
+        )}
+      </SidebarItemTooltip>
+      {directUnread && (
+        <SidebarItemBadge hasCount={directUnread.total > 0}>
           <UnreadBadge highlight={directUnread.highlight > 0} count={directUnread.total} />
-        )
-      }
-      avatarChildren={<Icon src={Icons.User} filled={directSelected} />}
-      onClick={handleDirectClick}
-    />
+        </SidebarItemBadge>
+      )}
+    </SidebarItem>
   );
 }

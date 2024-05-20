@@ -10,7 +10,12 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { getHomePath, joinPathComponent } from '../../pathUtils';
 import { useRoomsUnread } from '../../../state/hooks/unread';
-import { SidebarAvatar } from '../../../components/sidebar';
+import {
+  SidebarAvatar,
+  SidebarItem,
+  SidebarItemBadge,
+  SidebarItemTooltip,
+} from '../../../components/sidebar';
 import { useHomeSelected } from '../../../hooks/router/useHomeSelected';
 import { navToActivePathAtom } from '../../../state/navToActivePath';
 import { UnreadBadge } from '../../../components/unread-badge';
@@ -37,16 +42,19 @@ export function HomeTab() {
   };
 
   return (
-    <SidebarAvatar
-      active={homeSelected}
-      outlined
-      tooltip="Home"
-      hasCount={homeUnread && homeUnread.total > 0}
-      notificationBadge={() =>
-        homeUnread && <UnreadBadge highlight={homeUnread.highlight > 0} count={homeUnread.total} />
-      }
-      avatarChildren={<Icon src={Icons.Home} filled={homeSelected} />}
-      onClick={handleHomeClick}
-    />
+    <SidebarItem active={homeSelected}>
+      <SidebarItemTooltip tooltip="Home">
+        {(triggerRef) => (
+          <SidebarAvatar as="button" ref={triggerRef} outlined onClick={handleHomeClick}>
+            <Icon src={Icons.Home} filled={homeSelected} />
+          </SidebarAvatar>
+        )}
+      </SidebarItemTooltip>
+      {homeUnread && (
+        <SidebarItemBadge hasCount={homeUnread.total > 0}>
+          <UnreadBadge highlight={homeUnread.highlight > 0} count={homeUnread.total} />
+        </SidebarItemBadge>
+      )}
+    </SidebarItem>
   );
 }
