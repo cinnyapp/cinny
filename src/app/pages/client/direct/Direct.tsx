@@ -10,18 +10,17 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { factoryRoomIdByActivity } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
+  NavButton,
   NavCategory,
   NavCategoryHeader,
   NavEmptyCenter,
   NavEmptyLayout,
   NavItem,
   NavItemContent,
-  NavLink,
 } from '../../../components/nav';
-import { getDirectCreatePath, getDirectRoomPath } from '../../pathUtils';
+import { getDirectRoomPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
-import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
 import { VirtualTile } from '../../../components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
@@ -30,6 +29,7 @@ import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { useDirectRooms } from './useDirectRooms';
+import { openInviteUser } from '../../../../client/action/navigation';
 
 function DirectEmpty() {
   return (
@@ -47,7 +47,7 @@ function DirectEmpty() {
           </Text>
         }
         options={
-          <Button variant="Secondary" size="300">
+          <Button variant="Secondary" size="300" onClick={() => openInviteUser()}>
             <Text size="B300" truncate>
               Direct Message
             </Text>
@@ -69,7 +69,6 @@ export function Direct() {
   const roomToUnread = useAtomValue(roomToUnreadAtom);
 
   const selectedRoomId = useSelectedRoom();
-  const createSelected = useDirectCreateSelected();
   const noRoomToDisplay = directs.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(closedNavCategoriesAtom);
 
@@ -111,12 +110,12 @@ export function Direct() {
             <ClientDrawerContentLayout scrollRef={scrollRef}>
               <Box direction="Column" gap="300">
                 <NavCategory>
-                  <NavItem variant="Background" radii="400" aria-selected={createSelected}>
-                    <NavLink to={getDirectCreatePath()}>
+                  <NavItem variant="Background" radii="400">
+                    <NavButton onClick={() => openInviteUser()}>
                       <NavItemContent>
                         <Box as="span" grow="Yes" alignItems="Center" gap="200">
                           <Avatar size="200" radii="400">
-                            <Icon src={Icons.Plus} size="100" filled={createSelected} />
+                            <Icon src={Icons.Plus} size="100" />
                           </Avatar>
                           <Box as="span" grow="Yes">
                             <Text as="span" size="Inherit" truncate>
@@ -125,7 +124,7 @@ export function Direct() {
                           </Box>
                         </Box>
                       </NavItemContent>
-                    </NavLink>
+                    </NavButton>
                   </NavItem>
                 </NavCategory>
                 <NavCategory>

@@ -9,6 +9,7 @@ import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
 import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
+  NavButton,
   NavCategory,
   NavCategoryHeader,
   NavEmptyCenter,
@@ -17,20 +18,10 @@ import {
   NavItemContent,
   NavLink,
 } from '../../../components/nav';
-import {
-  getExplorePath,
-  getHomeCreatePath,
-  getHomeJoinPath,
-  getHomeRoomPath,
-  getHomeSearchPath,
-} from '../../pathUtils';
+import { getExplorePath, getHomeRoomPath, getHomeSearchPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
-import {
-  useHomeCreateSelected,
-  useHomeJoinSelected,
-  useHomeSearchSelected,
-} from '../../../hooks/router/useHomeSelected';
+import { useHomeSearchSelected } from '../../../hooks/router/useHomeSelected';
 import { useHomeRooms } from './useHomeRooms';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { VirtualTile } from '../../../components/virtualizer';
@@ -40,6 +31,7 @@ import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/close
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
+import { openCreateRoom, openJoinAlias } from '../../../../client/action/navigation';
 
 function HomeEmpty() {
   const navigate = useNavigate();
@@ -60,7 +52,7 @@ function HomeEmpty() {
         }
         options={
           <>
-            <Button onClick={() => navigate(getHomeCreatePath())} variant="Secondary" size="300">
+            <Button onClick={() => openCreateRoom()} variant="Secondary" size="300">
               <Text size="B300" truncate>
                 Create Room
               </Text>
@@ -93,8 +85,6 @@ export function Home() {
   const roomToUnread = useAtomValue(roomToUnreadAtom);
 
   const selectedRoomId = useSelectedRoom();
-  const createSelected = useHomeCreateSelected();
-  const joinSelected = useHomeJoinSelected();
   const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(closedNavCategoriesAtom);
@@ -141,12 +131,12 @@ export function Home() {
             <ClientDrawerContentLayout scrollRef={scrollRef}>
               <Box direction="Column" gap="300">
                 <NavCategory>
-                  <NavItem variant="Background" radii="400" aria-selected={createSelected}>
-                    <NavLink to={getHomeCreatePath()}>
+                  <NavItem variant="Background" radii="400">
+                    <NavButton onClick={() => openCreateRoom()}>
                       <NavItemContent>
                         <Box as="span" grow="Yes" alignItems="Center" gap="200">
                           <Avatar size="200" radii="400">
-                            <Icon src={Icons.Plus} size="100" filled={createSelected} />
+                            <Icon src={Icons.Plus} size="100" />
                           </Avatar>
                           <Box as="span" grow="Yes">
                             <Text as="span" size="Inherit" truncate>
@@ -155,14 +145,14 @@ export function Home() {
                           </Box>
                         </Box>
                       </NavItemContent>
-                    </NavLink>
+                    </NavButton>
                   </NavItem>
-                  <NavItem variant="Background" radii="400" aria-selected={joinSelected}>
-                    <NavLink to={getHomeJoinPath()}>
+                  <NavItem variant="Background" radii="400">
+                    <NavButton onClick={() => openJoinAlias()}>
                       <NavItemContent>
                         <Box as="span" grow="Yes" alignItems="Center" gap="200">
                           <Avatar size="200" radii="400">
-                            <Icon src={Icons.Link} size="100" filled={joinSelected} />
+                            <Icon src={Icons.Link} size="100" />
                           </Avatar>
                           <Box as="span" grow="Yes">
                             <Text as="span" size="Inherit" truncate>
@@ -171,7 +161,7 @@ export function Home() {
                           </Box>
                         </Box>
                       </NavItemContent>
-                    </NavLink>
+                    </NavButton>
                   </NavItem>
                   <NavItem variant="Background" radii="400" aria-selected={searchSelected}>
                     <NavLink to={getHomeSearchPath()}>
