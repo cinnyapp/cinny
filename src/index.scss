@@ -86,14 +86,14 @@
   --ic-danger-normal: rgba(240, 71, 71, 0.7);
 
   /* user mxid colors */
-  --mx-uc-1: hsl(208, 66%, 53%);
-  --mx-uc-2: hsl(302, 49%, 45%);
-  --mx-uc-3: hsl(163, 97%, 36%);
-  --mx-uc-4: hsl(343, 75%, 61%);
-  --mx-uc-5: hsl(24, 100%, 59%);
-  --mx-uc-6: hsl(181, 63%, 47%);
-  --mx-uc-7: hsl(242, 89%, 65%);
-  --mx-uc-8: hsl(94, 65%, 50%);
+  --mx-uc-1: hsl(208, 100%, 45%);
+  --mx-uc-2: hsl(302, 100%, 30%);
+  --mx-uc-3: hsl(163, 100%, 30%);
+  --mx-uc-4: hsl(343, 100%, 45%);
+  --mx-uc-5: hsl(24, 100%, 45%);
+  --mx-uc-6: hsl(181, 100%, 30%);
+  --mx-uc-7: hsl(242, 100%, 45%);
+  --mx-uc-8: hsl(94, 100%, 35%);
 
   /* system icon size | -ic-[size]: value */
   --ic-large: 38px;
@@ -251,17 +251,14 @@
   --ic-surface-low: rgba(255, 255, 255, 64%);
   --ic-primary-normal: #ffffff;
 
-  & .text {
-    /* override user mxid colors for texts */
-    --mx-uc-1: hsl(208, 100%, 58%);
-    --mx-uc-2: hsl(301, 80%, 70%);
-    --mx-uc-3: hsl(163, 93%, 41%);
-    --mx-uc-4: hsl(343, 91%, 66%);
-    --mx-uc-5: hsl(24, 90%, 67%);
-    --mx-uc-6: hsl(181, 90%, 50%);
-    --mx-uc-7: hsl(243, 100%, 74%);
-    --mx-uc-8: hsl(94, 66%, 50%);
-  }
+  --mx-uc-1: hsl(208, 100%, 75%);
+  --mx-uc-2: hsl(301, 100%, 80%);
+  --mx-uc-3: hsl(163, 100%, 70%);
+  --mx-uc-4: hsl(343, 100%, 75%);
+  --mx-uc-5: hsl(24, 100%, 70%);
+  --mx-uc-6: hsl(181, 100%, 60%);
+  --mx-uc-7: hsl(243, 100%, 80%);
+  --mx-uc-8: hsl(94, 100%, 80%);
 
   /* shadow and overlay */
   --bg-overlay: rgba(0, 0, 0, 60%);
