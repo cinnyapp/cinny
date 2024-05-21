@@ -25,3 +25,9 @@ export const NavLink = forwardRef<HTMLAnchorElement, ComponentProps<typeof Link>
     <Link className={classNames(css.NavLink, className)} {...props} ref={ref} />
   )
 );
+
+export const NavButton = as<'button'>(
+  ({ as: AsNavButton = 'button', className, ...props }, ref) => (
+    <AsNavButton className={classNames(css.NavLink, className)} {...props} ref={ref} />
+  )
+);

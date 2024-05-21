@@ -17,6 +17,8 @@ export const NavLink = style({
   color: 'inherit',
   minWidth: 0,
   display: 'flex',
+  alignItems: 'center',
+  cursor: 'pointer',
   flexGrow: 1,
   ':hover': {
     textDecoration: 'unset',
