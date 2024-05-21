@@ -2,7 +2,7 @@ import produce from 'immer';
 import { atom, useSetAtom, PrimitiveAtom, useAtomValue } from 'jotai';
 import { IRoomTimelineData, MatrixClient, MatrixEvent, Room, RoomEvent } from 'matrix-js-sdk';
 import { ReceiptContent, ReceiptType } from 'matrix-js-sdk/lib/@types/read_receipts';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   MuteChanges,
   Membership,
@@ -10,6 +10,7 @@ import {
   RoomToUnread,
   UnreadInfo,
   Unread,
+  StateEvent,
 } from '../../../types/matrix/room';
 import {
   getAllParents,
@@ -20,6 +21,7 @@ import {
   roomHaveUnread,
 } from '../../utils/room';
 import { roomToParentsAtom } from './roomToParents';
+import { useStateEventCallback } from '../../hooks/useStateEventCallback';
 
 export type RoomToUnreadAction =
   | {
@@ -248,4 +250,19 @@ export const useBindRoomToUnreadAtom = (
       mx.removeListener(RoomEvent.MyMembership, handleMembershipChange);
     };
   }, [mx, setUnreadAtom]);
+
+  useStateEventCallback(
+    mx,
+    useCallback(
+      (mEvent) => {
+        if (mEvent.getType() === StateEvent.SpaceChild) {
+          setUnreadAtom({
+            type: 'RESET',
+            unreadInfos: getUnreadInfos(mx),
+          });
+        }
+      },
+      [mx, setUnreadAtom]
+    )
+  );
 };
