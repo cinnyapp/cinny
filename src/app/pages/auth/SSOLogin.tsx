@@ -15,6 +15,10 @@ export function SSOLogin({ providers, redirectUrl, asIcons }: SSOLoginProps) {
 
   const getSSOIdUrl = (ssoId: string): string => mx.getSsoLoginUrl(redirectUrl, 'sso', ssoId);
 
+  const anyAsBtn = providers.find(
+    (provider) => !provider.icon || !mx.mxcUrlToHttp(provider.icon, 96, 96, 'crop', false)
+  );
+
   return (
     <Box justifyContent="Center" gap="600" wrap="Wrap">
       {providers.map((provider) => {
@@ -23,7 +27,7 @@ export function SSOLogin({ providers, redirectUrl, asIcons }: SSOLoginProps) {
 
         const buttonTitle = `Continue with ${name}`;
 
-        if (iconUrl && asIcons) {
+        if (!anyAsBtn && iconUrl && asIcons) {
           return (
             <Avatar
               style={{ cursor: 'pointer' }}
