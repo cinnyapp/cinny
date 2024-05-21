@@ -15,8 +15,9 @@ const copyFiles = {
       dest: '',
     },
     {
-      src: 'node_modules/pdfjs-dist/build/pdf.worker.min.js',
+      src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
       dest: '',
+      rename: 'pdf.worker.min.js',
     },
     {
       src: 'netlify.toml',
