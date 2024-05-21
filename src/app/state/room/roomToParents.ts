@@ -83,6 +83,10 @@ export const useBindRoomToParentsAtom = (
     };
 
     const handleMembershipChange = (room: Room, membership: string) => {
+      if (room.getMyMembership() === Membership.Leave) {
+        setRoomToParents({ type: 'DELETE', roomId: room.roomId });
+        return;
+      }
       if (isSpace(room) && membership === Membership.Join) {
         setRoomToParents({ type: 'PUT', parent: room.roomId, children: getSpaceChildren(room) });
       }
