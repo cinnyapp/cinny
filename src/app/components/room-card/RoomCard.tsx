@@ -207,6 +207,7 @@ export const RoomCard = as<'div', RoomCardProps>(
         <Box gap="200" justifyContent="SpaceBetween">
           <Avatar size="500">
             <RoomAvatar
+              roomId={roomIdOrAlias}
               src={avatar ?? undefined}
               alt={roomIdOrAlias}
               renderFallback={() => (

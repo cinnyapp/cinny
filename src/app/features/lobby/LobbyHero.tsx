@@ -26,6 +26,7 @@ export function LobbyHero() {
       icon={
         <Avatar size="500">
           <RoomAvatar
+            roomId={space.roomId}
             src={avatarUrl}
             alt={name}
             renderFallback={() => <Text size="H4">{nameInitials(name)}</Text>}

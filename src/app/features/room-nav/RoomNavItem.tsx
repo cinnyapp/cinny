@@ -207,6 +207,7 @@ export function RoomNavItem({
             <Avatar size="200" radii="400">
               {showAvatar ? (
                 <RoomAvatar
+                  roomId={room.roomId}
                   src={
                     direct ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)
                   }

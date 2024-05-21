@@ -51,11 +51,13 @@ function SpaceProfileLoading() {
 }
 
 type UnknownPrivateSpaceProfileProps = {
+  roomId: string;
   name?: string;
   avatarUrl?: string;
   suggested?: boolean;
 };
 function UnknownPrivateSpaceProfile({
+  roomId,
   name,
   avatarUrl,
   suggested,
@@ -69,6 +71,7 @@ function UnknownPrivateSpaceProfile({
       before={
         <Avatar size="200" radii="300">
           <RoomAvatar
+            roomId={roomId}
             src={avatarUrl}
             alt={name}
             renderFallback={() => (
@@ -129,6 +132,7 @@ function UnknownSpaceProfile({
       before={
         <Avatar size="200" radii="300">
           <RoomAvatar
+            roomId={roomId}
             src={avatarUrl}
             alt={name}
             renderFallback={() => (
@@ -165,6 +169,7 @@ function UnknownSpaceProfile({
 }
 
 type SpaceProfileProps = {
+  roomId: string;
   name: string;
   avatarUrl?: string;
   suggested?: boolean;
@@ -173,6 +178,7 @@ type SpaceProfileProps = {
   handleClose?: MouseEventHandler<HTMLButtonElement>;
 };
 function SpaceProfile({
+  roomId,
   name,
   avatarUrl,
   suggested,
@@ -190,6 +196,7 @@ function SpaceProfile({
       before={
         <Avatar size="200" radii="300">
           <RoomAvatar
+            roomId={roomId}
             src={avatarUrl}
             alt={name}
             renderFallback={() => (
@@ -420,6 +427,7 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
                 {(localSummary) =>
                   item.parentId ? (
                     <SpaceProfile
+                      roomId={roomId}
                       name={localSummary.name}
                       avatarUrl={getRoomAvatarUrl(mx, space, 96)}
                       suggested={content.suggested}
@@ -443,7 +451,7 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
                     {summaryState.status === AsyncStatus.Loading && <SpaceProfileLoading />}
                     {summaryState.status === AsyncStatus.Error &&
                       (summaryState.error.name === ErrorCode.M_FORBIDDEN ? (
-                        <UnknownPrivateSpaceProfile suggested={content.suggested} />
+                        <UnknownPrivateSpaceProfile roomId={roomId} suggested={content.suggested} />
                       ) : (
                         <UnknownSpaceProfile
                           roomId={roomId}

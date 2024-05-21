@@ -106,6 +106,7 @@ function InviteCard({ room, userId, direct, compact, onNavigate }: InviteCardPro
       <Box gap="300">
         <Avatar size="300">
           <RoomAvatar
+            roomId={room.roomId}
             src={direct ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)}
             alt={roomName}
             renderFallback={() => (

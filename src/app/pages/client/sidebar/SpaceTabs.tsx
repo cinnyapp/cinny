@@ -265,6 +265,7 @@ function SpaceTab({ space, selected, onClick, folder, onDragging, disabled }: Sp
                 onClick={onClick}
               >
                 <RoomAvatar
+                  roomId={space.roomId}
                   src={space.getAvatarUrl(mx.baseUrl, 96, 96, 'crop') ?? undefined}
                   alt={space.name}
                   renderFallback={() => (
@@ -363,6 +364,7 @@ function ClosedSpaceFolder({
                   return (
                     <SidebarAvatar key={sId} size="200" radii="300">
                       <RoomAvatar
+                        roomId={space.roomId}
                         src={space.getAvatarUrl(mx.baseUrl, 96, 96, 'crop') ?? undefined}
                         alt={space.name}
                         renderFallback={() => <Text size="T200">{nameInitials(space.name)}</Text>}

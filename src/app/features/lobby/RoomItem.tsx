@@ -134,6 +134,7 @@ function RoomProfileError({ roomId, suggested, error, via }: RoomProfileErrorPro
     <Box grow="Yes" gap="300">
       <Avatar>
         <RoomAvatar
+          roomId={roomId}
           src={undefined}
           alt={roomId}
           renderFallback={() => (
@@ -183,6 +184,7 @@ function RoomProfileError({ roomId, suggested, error, via }: RoomProfileErrorPro
 }
 
 type RoomProfileProps = {
+  roomId: string;
   name: string;
   topic?: string;
   avatarUrl?: string;
@@ -192,6 +194,7 @@ type RoomProfileProps = {
   options?: ReactNode;
 };
 function RoomProfile({
+  roomId,
   name,
   topic,
   avatarUrl,
@@ -204,6 +207,7 @@ function RoomProfile({
     <Box grow="Yes" gap="300">
       <Avatar>
         <RoomAvatar
+          roomId={roomId}
           src={avatarUrl}
           alt={name}
           renderFallback={() => (
@@ -355,6 +359,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
             <LocalRoomSummaryLoader room={room}>
               {(localSummary) => (
                 <RoomProfile
+                  roomId={roomId}
                   name={localSummary.name}
                   topic={localSummary.topic}
                   avatarUrl={
@@ -407,6 +412,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                         />
                       )}
                       <RoomProfile
+                        roomId={roomId}
                         name={summaryState.data.name || summaryState.data.canonical_alias || roomId}
                         topic={summaryState.data.topic}
                         avatarUrl={

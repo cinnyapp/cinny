@@ -158,6 +158,7 @@ export function RoomMentionAutocomplete({
                 <Avatar size="200">
                   {dm ? (
                     <RoomAvatar
+                      roomId={room.roomId}
                       src={getDirectRoomAvatarUrl(mx, room)}
                       alt={room.name}
                       renderFallback={() => (

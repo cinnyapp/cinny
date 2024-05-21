@@ -213,6 +213,7 @@ export function RoomViewHeader() {
         <Box grow="Yes" alignItems="Center" gap="300">
           <Avatar size="300">
             <RoomAvatar
+              roomId={room.roomId}
               src={avatarUrl}
               alt={name}
               renderFallback={() => (

@@ -108,6 +108,7 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
             <>
               <Avatar size="300">
                 <RoomAvatar
+                  roomId={space.roomId}
                   src={avatarUrl}
                   alt={name}
                   renderFallback={() => <Text size="H4">{nameInitials(name)}</Text>}

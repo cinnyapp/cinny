@@ -163,6 +163,7 @@ export function SearchResultGroup({
         <Box gap="200" grow="Yes">
           <Avatar size="200" radii="300">
             <RoomAvatar
+              roomId={room.roomId}
               src={getRoomAvatarUrl(mx, room, 96)}
               alt={room.name}
               renderFallback={() => (
