@@ -269,7 +269,7 @@ function SpaceTab({ space, selected, onClick, folder, onDragging, disabled }: Sp
                   src={space.getAvatarUrl(mx.baseUrl, 96, 96, 'crop') ?? undefined}
                   alt={space.name}
                   renderFallback={() => (
-                    <Text size={folder ? 'H6' : 'H4'}>{nameInitials(space.name)}</Text>
+                    <Text size={folder ? 'H6' : 'H4'}>{nameInitials(space.name, 2)}</Text>
                   )}
                 />
               </SidebarAvatar>
@@ -367,7 +367,11 @@ function ClosedSpaceFolder({
                         roomId={space.roomId}
                         src={space.getAvatarUrl(mx.baseUrl, 96, 96, 'crop') ?? undefined}
                         alt={space.name}
-                        renderFallback={() => <Text size="T200">{nameInitials(space.name)}</Text>}
+                        renderFallback={() => (
+                          <Text size="Inherit">
+                            <b>{nameInitials(space.name, 2)}</b>
+                          </Text>
+                        )}
                       />
                     </SidebarAvatar>
                   );

@@ -160,6 +160,9 @@ export const SidebarAvatar = recipe({
       '200': {
         width: toRem(16),
         height: toRem(16),
+        fontSize: toRem(10),
+        lineHeight: config.lineHeight.T200,
+        letterSpacing: config.letterSpacing.T200,
       },
       '300': {
         width: toRem(34),
