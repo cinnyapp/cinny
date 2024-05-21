@@ -71,6 +71,7 @@ export const EventReaders = as<'div', EventReadersProps>(
                     before={
                       <Avatar size="200">
                         <UserAvatar
+                          userId={readerId}
                           src={avatarUrl ?? undefined}
                           alt={name}
                           renderFallback={() => <Icon size="50" src={Icons.User} filled />}

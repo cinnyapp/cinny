@@ -207,6 +207,7 @@ export function SearchResultGroup({
                   <AvatarBase>
                     <Avatar size="300">
                       <UserAvatar
+                        userId={event.sender}
                         src={
                           senderAvatarMxc
                             ? mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? undefined

@@ -128,6 +128,7 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
                       before={
                         <Avatar size="200">
                           <UserAvatar
+                            userId={senderId}
                             src={avatarUrl ?? undefined}
                             alt={name}
                             renderFallback={() => <Icon size="50" src={Icons.User} filled />}

@@ -662,6 +662,7 @@ export const Message = as<'div', MessageProps>(
           onClick={onUserClick}
         >
           <UserAvatar
+            userId={senderId}
             src={
               senderAvatarMxc
                 ? mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? undefined
