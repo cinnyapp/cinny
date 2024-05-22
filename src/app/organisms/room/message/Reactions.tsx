@@ -37,7 +37,19 @@ export const Reactions = as<'div', ReactionsProps>(
     const reactions = useRelations(
       relations,
       useCallback((rel) => [...(rel.getSortedAnnotationsByKey() ?? [])], [])
-    );
+    ).map((reaction) => {
+      // Multiple reactions with same user & key may exist
+      // so only show one of them
+      const events = Array.from(reaction[1]);
+      // eslint-disable-next-line no-param-reassign
+      reaction[1] = new Set(
+        events.filter(
+          (event, index) =>
+            events.findIndex((e) => e.sender?.userId === event.sender?.userId) === index
+        )
+      );
+      return reaction;
+    });
 
     const handleViewReaction: MouseEventHandler<HTMLButtonElement> = (evt) => {
       evt.stopPropagation();
