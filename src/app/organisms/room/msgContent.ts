@@ -12,7 +12,7 @@ import {
 import { encryptFile, getImageInfo, getThumbnailContent, getVideoInfo } from '../../utils/matrix';
 import { TUploadItem } from '../../state/roomInputDrafts';
 import { encodeBlurHash } from '../../utils/blurHash';
-import { scaleYDimension } from '../../utils/common';
+import { scaleDimension } from '../../utils/common';
 
 const generateThumbnailContent = async (
   mx: MatrixClient,
@@ -53,7 +53,8 @@ export const getImageMsgContent = async (
     body: file.name,
   };
   if (imgEl) {
-    const blurHash = encodeBlurHash(imgEl, 512, scaleYDimension(imgEl.width, 512, imgEl.height));
+    const dim = scaleDimension(imgEl.width, imgEl.height, 32, 32, 512, 512);
+    const blurHash = encodeBlurHash(imgEl, dim.w, dim.h);
 
     content.info = {
       ...getImageInfo(imgEl, file),
@@ -95,10 +96,11 @@ export const getVideoMsgContent = async (
       )
     );
     if (thumbContent && thumbContent.thumbnail_info) {
+      const dim = scaleDimension(videoEl.width, videoEl.height, 32, 32, 512, 512);
       thumbContent.thumbnail_info[MATRIX_BLUR_HASH_PROPERTY_NAME] = encodeBlurHash(
         videoEl,
-        512,
-        scaleYDimension(videoEl.videoWidth, 512, videoEl.videoHeight)
+        dim.w,
+        dim.h,
       );
     }
     if (thumbError) console.warn(thumbError);
