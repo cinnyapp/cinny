@@ -7,7 +7,7 @@ import {
   MessageDeletedContent,
 } from '../../../components/message';
 import { ImageContent } from './ImageContent';
-import { scaleYDimension } from '../../../utils/common';
+import { scaleDimension } from '../../../utils/common';
 import { IImageContent } from '../../../../types/matrix/common';
 
 type StickerContentProps = {
@@ -23,13 +23,13 @@ export const StickerContent = as<'div', StickerContentProps>(
     if (typeof mxcUrl !== 'string') {
       return <MessageBrokenContent />;
     }
-    const height = scaleYDimension(imgInfo?.w || 152, 152, imgInfo?.h || 152);
+    const scaled = scaleDimension(imgInfo?.w || 152, imgInfo?.h || 152, 16, 16, 152, 152);
 
     return (
       <AttachmentBox
         style={{
-          height: toRem(height < 48 ? 48 : height),
-          width: toRem(152),
+          height: toRem(scaled.h),
+          width: toRem(scaled.w),
         }}
         {...props}
         ref={ref}
@@ -41,6 +41,8 @@ export const StickerContent = as<'div', StickerContentProps>(
           mimeType={imgInfo?.mimetype}
           url={mxcUrl}
           encInfo={content.file}
+          imageWidth={scaled.w}
+          imageHeight={scaled.h}
         />
       </AttachmentBox>
     );
