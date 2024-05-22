@@ -181,6 +181,8 @@
 
   --popup-window-drawer-width: 280px;
 
+  --blurhash-filter: contrast(80%) invert(100%) brightness(0.75) invert(100%);
+
   @include screen.smallerThan(tabletBreakpoint) {
     --navigation-drawer-width: calc(240px + var(--border-width));
     --people-drawer-width: calc(256px - var(--border-width));
@@ -295,6 +297,9 @@
   --fw-bold: 550;
 
   --font-secondary: 'InterVariable', var(--font-emoji), sans-serif;
+
+  /* other */
+  --blurhash-filter: none;
 }
 
 .butter-theme {
