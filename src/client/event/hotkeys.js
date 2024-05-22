@@ -1,3 +1,4 @@
+import { emit } from '@tauri-apps/api/event';
 import { openSearch, toggleRoomSettings } from '../action/navigation';
 import navigation from '../state/navigation';
 import { markAsRead } from '../action/notifications';
@@ -30,6 +31,14 @@ function shouldFocusMessageField(code) {
 function listenKeyboard(event) {
   // Ctrl/Cmd +
   if (event.ctrlKey || event.metaKey) {
+    if (event.key === 'q') {
+      event.preventDefault();
+      if (window.__TAURI__) {
+        emit("quit", {});
+      } else {
+        window.close();
+      }
+    }
     // open search modal
     if (event.key === 'k') {
       event.preventDefault();
