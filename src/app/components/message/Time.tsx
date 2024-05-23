@@ -1,6 +1,8 @@
 import React from 'react';
 import { Text, as } from 'folds';
 import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../utils/time';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 export type TimeProps = {
   compact?: boolean;
@@ -8,15 +10,19 @@ export type TimeProps = {
 };
 
 export const Time = as<'span', TimeProps>(({ compact, ts, ...props }, ref) => {
+  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+  const formattedTime = timeHourMinute(ts, hour24Clock);
+
   let time = '';
+
   if (compact) {
-    time = timeHourMinute(ts);
+    time = formattedTime;
   } else if (today(ts)) {
-    time = timeHourMinute(ts);
+    time = formattedTime;
   } else if (yesterday(ts)) {
-    time = `Yesterday ${timeHourMinute(ts)}`;
+    time = `Yesterday ${formattedTime}`;
   } else {
-    time = `${timeDayMonYear(ts)} ${timeHourMinute(ts)}`;
+    time = `${timeDayMonYear(ts)} ${formattedTime}`;
   }
 
   return (
