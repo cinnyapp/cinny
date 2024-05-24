@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
 import './DrawerBreadcrumb.scss';
 
@@ -18,12 +18,24 @@ import NotificationBadge from '../../atoms/badge/NotificationBadge';
 
 import ChevronRightIC from '../../../../public/res/ic/outlined/chevron-right.svg';
 
-function DrawerBreadcrumb({ spaceId }) {
+const DrawerBreadcrumb = forwardRef(({ spaceId }, ref) => {
   const [, forceUpdate] = useState({});
   const scrollRef = useRef(null);
   const { roomList, notifications, accountData } = initMatrix;
   const mx = initMatrix.matrixClient;
   const spacePath = navigation.selectedSpacePath;
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      goUp() {
+        let id = spacePath[spacePath.length - 2];
+        if (id === cons.tabs.HOME) selectTab(id);
+        else selectSpace(id);
+      },
+    }),
+    [spacePath]
+  );
 
   function onNotiChanged(roomId, total, prevTotal) {
     if (total === prevTotal) return;
@@ -129,7 +141,7 @@ function DrawerBreadcrumb({ spaceId }) {
       </ScrollView>
     </div>
   );
-}
+});
 
 DrawerBreadcrumb.defaultProps = {
   spaceId: null,
