@@ -1,6 +1,23 @@
 import { style } from '@vanilla-extract/css';
 import { DefaultReset, config, toRem } from 'folds';
 
+export const PageNav = style({
+  width: toRem(280),
+});
+
+export const PageNavHeader = style({
+  padding: `0 ${config.space.S300}`,
+  flexShrink: 0,
+  borderBottomWidth: 1,
+});
+
+export const PageNavContent = style({
+  minHeight: '100%',
+  padding: config.space.S200,
+  paddingRight: 0,
+  paddingBottom: config.space.S700,
+});
+
 export const PageHeader = style({
   paddingLeft: config.space.S400,
   paddingRight: config.space.S200,

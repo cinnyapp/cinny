@@ -13,7 +13,7 @@ import {
 import { DirectTab, HomeTab, SpaceTabs, InboxTab, ExploreTab } from './sidebar';
 import { openCreateRoom, openSearch, openSettings } from '../../../client/action/navigation';
 
-export function ClientNavigation() {
+export function SidebarNav() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (

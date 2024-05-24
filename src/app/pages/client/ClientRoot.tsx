@@ -1,6 +1,5 @@
 import { Box, Spinner, Text } from 'folds';
-import React, { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { ReactNode, useEffect, useState } from 'react';
 import initMatrix from '../../../client/initMatrix';
 import { initHotkeys } from '../../../client/event/hotkeys';
 import { initRoomListListener } from '../../../client/event/roomList';
@@ -29,7 +28,10 @@ function SystemEmojiFeature() {
   return null;
 }
 
-export function ClientRoot() {
+type ClientRootProps = {
+  children: ReactNode;
+};
+export function ClientRoot({ children }: ClientRootProps) {
   const [loading, setLoading] = useState(true);
   const { baseUrl } = getSecret();
 
@@ -61,7 +63,7 @@ export function ClientRoot() {
             {(capabilities, mediaConfig) => (
               <CapabilitiesProvider value={capabilities ?? {}}>
                 <MediaConfigProvider value={mediaConfig ?? {}}>
-                  <Outlet />
+                  {children}
 
                   {/* TODO: remove these components after navigation refactor */}
                   <Windows />

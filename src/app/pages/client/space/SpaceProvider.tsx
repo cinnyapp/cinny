@@ -1,5 +1,5 @@
-import React from 'react';
-import { Outlet, useParams } from 'react-router-dom';
+import React, { ReactNode } from 'react';
+import { useParams } from 'react-router-dom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useSpaces } from '../../../state/hooks/roomList';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
@@ -7,7 +7,10 @@ import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
 import { SpaceProvider } from '../../../hooks/useSpace';
 import { JoinBeforeNavigate } from '../../../features/join-before-navigate';
 
-export function RouteSpaceProvider() {
+type RouteSpaceProviderProps = {
+  children: ReactNode;
+};
+export function RouteSpaceProvider({ children }: RouteSpaceProviderProps) {
   const mx = useMatrixClient();
   const joinedSpaces = useSpaces(mx, allRoomsAtom);
   const { spaceIdOrAlias } = useParams();
@@ -21,7 +24,7 @@ export function RouteSpaceProvider() {
 
   return (
     <SpaceProvider key={space.roomId} value={space}>
-      <Outlet />
+      {children}
     </SpaceProvider>
   );
 }

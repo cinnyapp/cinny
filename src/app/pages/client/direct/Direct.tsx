@@ -1,14 +1,9 @@
 import React, { useMemo, useRef } from 'react';
-import { Outlet } from 'react-router-dom';
 import { useAtom, useAtomValue } from 'jotai';
 import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ClientContentLayout } from '../ClientContentLayout';
-import { ClientDrawerLayout } from '../ClientDrawerLayout';
-import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { factoryRoomIdByActivity } from '../../../utils/sort';
-import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
   NavButton,
   NavCategory,
@@ -30,6 +25,7 @@ import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { useDirectRooms } from './useDirectRooms';
 import { openInviteUser } from '../../../../client/action/navigation';
+import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
 
 function DirectEmpty() {
   return (
@@ -92,89 +88,83 @@ export function Direct() {
   );
 
   return (
-    <ClientContentLayout
-      navigation={
-        <ClientDrawerLayout>
-          <ClientDrawerHeaderLayout>
-            <Box grow="Yes" gap="300">
-              <Box grow="Yes">
-                <Text size="H4" truncate>
-                  Direct Messages
-                </Text>
-              </Box>
-            </Box>
-          </ClientDrawerHeaderLayout>
-          {noRoomToDisplay ? (
-            <DirectEmpty />
-          ) : (
-            <ClientDrawerContentLayout scrollRef={scrollRef}>
-              <Box direction="Column" gap="300">
-                <NavCategory>
-                  <NavItem variant="Background" radii="400">
-                    <NavButton onClick={() => openInviteUser()}>
-                      <NavItemContent>
-                        <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                          <Avatar size="200" radii="400">
-                            <Icon src={Icons.Plus} size="100" />
-                          </Avatar>
-                          <Box as="span" grow="Yes">
-                            <Text as="span" size="Inherit" truncate>
-                              Create Chat
-                            </Text>
-                          </Box>
-                        </Box>
-                      </NavItemContent>
-                    </NavButton>
-                  </NavItem>
-                </NavCategory>
-                <NavCategory>
-                  <NavCategoryHeader>
-                    <RoomNavCategoryButton
-                      closed={closedCategories.has(DEFAULT_CATEGORY_ID)}
-                      data-category-id={DEFAULT_CATEGORY_ID}
-                      onClick={handleCategoryClick}
-                    >
-                      Chats
-                    </RoomNavCategoryButton>
-                  </NavCategoryHeader>
-                  <div
-                    style={{
-                      position: 'relative',
-                      height: virtualizer.getTotalSize(),
-                    }}
-                  >
-                    {virtualizer.getVirtualItems().map((vItem) => {
-                      const roomId = sortedDirects[vItem.index];
-                      const room = mx.getRoom(roomId);
-                      if (!room) return null;
-                      const selected = selectedRoomId === roomId;
+    <PageNav>
+      <PageNavHeader>
+        <Box grow="Yes" gap="300">
+          <Box grow="Yes">
+            <Text size="H4" truncate>
+              Direct Messages
+            </Text>
+          </Box>
+        </Box>
+      </PageNavHeader>
+      {noRoomToDisplay ? (
+        <DirectEmpty />
+      ) : (
+        <PageNavContent scrollRef={scrollRef}>
+          <Box direction="Column" gap="300">
+            <NavCategory>
+              <NavItem variant="Background" radii="400">
+                <NavButton onClick={() => openInviteUser()}>
+                  <NavItemContent>
+                    <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                      <Avatar size="200" radii="400">
+                        <Icon src={Icons.Plus} size="100" />
+                      </Avatar>
+                      <Box as="span" grow="Yes">
+                        <Text as="span" size="Inherit" truncate>
+                          Create Chat
+                        </Text>
+                      </Box>
+                    </Box>
+                  </NavItemContent>
+                </NavButton>
+              </NavItem>
+            </NavCategory>
+            <NavCategory>
+              <NavCategoryHeader>
+                <RoomNavCategoryButton
+                  closed={closedCategories.has(DEFAULT_CATEGORY_ID)}
+                  data-category-id={DEFAULT_CATEGORY_ID}
+                  onClick={handleCategoryClick}
+                >
+                  Chats
+                </RoomNavCategoryButton>
+              </NavCategoryHeader>
+              <div
+                style={{
+                  position: 'relative',
+                  height: virtualizer.getTotalSize(),
+                }}
+              >
+                {virtualizer.getVirtualItems().map((vItem) => {
+                  const roomId = sortedDirects[vItem.index];
+                  const room = mx.getRoom(roomId);
+                  if (!room) return null;
+                  const selected = selectedRoomId === roomId;
 
-                      return (
-                        <VirtualTile
-                          virtualItem={vItem}
-                          key={vItem.index}
-                          ref={virtualizer.measureElement}
-                        >
-                          <RoomNavItem
-                            room={room}
-                            selected={selected}
-                            showAvatar
-                            direct
-                            linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
-                            muted={mutedRooms.includes(roomId)}
-                          />
-                        </VirtualTile>
-                      );
-                    })}
-                  </div>
-                </NavCategory>
-              </Box>
-            </ClientDrawerContentLayout>
-          )}
-        </ClientDrawerLayout>
-      }
-    >
-      <Outlet />
-    </ClientContentLayout>
+                  return (
+                    <VirtualTile
+                      virtualItem={vItem}
+                      key={vItem.index}
+                      ref={virtualizer.measureElement}
+                    >
+                      <RoomNavItem
+                        room={room}
+                        selected={selected}
+                        showAvatar
+                        direct
+                        linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                        muted={mutedRooms.includes(roomId)}
+                      />
+                    </VirtualTile>
+                  );
+                })}
+              </div>
+            </NavCategory>
+          </Box>
+        </PageNavContent>
+      )}
+    </PageNav>
   );
 }

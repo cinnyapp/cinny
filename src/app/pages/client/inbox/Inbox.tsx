@@ -1,11 +1,6 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import { useAtomValue } from 'jotai';
-import { ClientContentLayout } from '../ClientContentLayout';
-import { ClientDrawerLayout } from '../ClientDrawerLayout';
-import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import { NavCategory, NavItem, NavItemContent, NavLink } from '../../../components/nav';
 import { getInboxInvitesPath, getInboxNotificationsPath } from '../../pathUtils';
 import {
@@ -15,6 +10,7 @@ import {
 import { UnreadBadge } from '../../../components/unread-badge';
 import { allInvitesAtom } from '../../../state/room-list/inviteList';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
+import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
 
 function InvitesNavItem() {
   const invitesSelected = useInboxInvitesSelected();
@@ -52,50 +48,40 @@ export function Inbox() {
   const notificationsSelected = useInboxNotificationsSelected();
 
   return (
-    <ClientContentLayout
-      navigation={
-        <ClientDrawerLayout>
-          <ClientDrawerHeaderLayout>
-            <Box grow="Yes" gap="300">
-              <Box grow="Yes">
-                <Text size="H4" truncate>
-                  Inbox
-                </Text>
-              </Box>
-            </Box>
-          </ClientDrawerHeaderLayout>
+    <PageNav>
+      <PageNavHeader>
+        <Box grow="Yes" gap="300">
+          <Box grow="Yes">
+            <Text size="H4" truncate>
+              Inbox
+            </Text>
+          </Box>
+        </Box>
+      </PageNavHeader>
 
-          <ClientDrawerContentLayout>
-            <Box direction="Column" gap="300">
-              <NavCategory>
-                <NavItem variant="Background" radii="400" aria-selected={notificationsSelected}>
-                  <NavLink to={getInboxNotificationsPath()}>
-                    <NavItemContent>
-                      <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                        <Avatar size="200" radii="400">
-                          <Icon
-                            src={Icons.MessageUnread}
-                            size="100"
-                            filled={notificationsSelected}
-                          />
-                        </Avatar>
-                        <Box as="span" grow="Yes">
-                          <Text as="span" size="Inherit" truncate>
-                            Notifications
-                          </Text>
-                        </Box>
-                      </Box>
-                    </NavItemContent>
-                  </NavLink>
-                </NavItem>
-                <InvitesNavItem />
-              </NavCategory>
-            </Box>
-          </ClientDrawerContentLayout>
-        </ClientDrawerLayout>
-      }
-    >
-      <Outlet />
-    </ClientContentLayout>
+      <PageNavContent>
+        <Box direction="Column" gap="300">
+          <NavCategory>
+            <NavItem variant="Background" radii="400" aria-selected={notificationsSelected}>
+              <NavLink to={getInboxNotificationsPath()}>
+                <NavItemContent>
+                  <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                    <Avatar size="200" radii="400">
+                      <Icon src={Icons.MessageUnread} size="100" filled={notificationsSelected} />
+                    </Avatar>
+                    <Box as="span" grow="Yes">
+                      <Text as="span" size="Inherit" truncate>
+                        Notifications
+                      </Text>
+                    </Box>
+                  </Box>
+                </NavItemContent>
+              </NavLink>
+            </NavItem>
+            <InvitesNavItem />
+          </NavCategory>
+        </Box>
+      </PageNavContent>
+    </PageNav>
   );
 }

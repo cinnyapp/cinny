@@ -1,5 +1,5 @@
 import React, { FormEventHandler, useCallback, useRef, useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import {
   Avatar,
@@ -18,10 +18,6 @@ import {
   color,
   config,
 } from 'folds';
-import { ClientContentLayout } from '../ClientContentLayout';
-import { ClientDrawerLayout } from '../ClientDrawerLayout';
-import { ClientDrawerHeaderLayout } from '../ClientDrawerHeaderLayout';
-import { ClientDrawerContentLayout } from '../ClientDrawerContentLayout';
 import {
   NavCategory,
   NavCategoryHeader,
@@ -39,6 +35,7 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getMxIdServer } from '../../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
+import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
 
 export function AddServer() {
   const mx = useMatrixClient();
@@ -169,110 +166,104 @@ export function Explore() {
   const selectedServer = useExploreServer();
 
   return (
-    <ClientContentLayout
-      navigation={
-        <ClientDrawerLayout>
-          <ClientDrawerHeaderLayout>
-            <Box grow="Yes" gap="300">
-              <Box grow="Yes">
-                <Text size="H4" truncate>
-                  Explore Community
-                </Text>
-              </Box>
-            </Box>
-          </ClientDrawerHeaderLayout>
+    <PageNav>
+      <PageNavHeader>
+        <Box grow="Yes" gap="300">
+          <Box grow="Yes">
+            <Text size="H4" truncate>
+              Explore Community
+            </Text>
+          </Box>
+        </Box>
+      </PageNavHeader>
 
-          <ClientDrawerContentLayout>
-            <Box direction="Column" gap="300">
-              <NavCategory>
-                <NavItem variant="Background" radii="400" aria-selected={featuredSelected}>
-                  <NavLink to={getExploreFeaturedPath()}>
+      <PageNavContent>
+        <Box direction="Column" gap="300">
+          <NavCategory>
+            <NavItem variant="Background" radii="400" aria-selected={featuredSelected}>
+              <NavLink to={getExploreFeaturedPath()}>
+                <NavItemContent>
+                  <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                    <Avatar size="200" radii="400">
+                      <Icon src={Icons.Bulb} size="100" filled={featuredSelected} />
+                    </Avatar>
+                    <Box as="span" grow="Yes">
+                      <Text as="span" size="Inherit" truncate>
+                        Featured
+                      </Text>
+                    </Box>
+                  </Box>
+                </NavItemContent>
+              </NavLink>
+            </NavItem>
+            {userServer && (
+              <NavItem
+                variant="Background"
+                radii="400"
+                aria-selected={selectedServer === userServer}
+              >
+                <NavLink to={getExploreServerPath(userServer)}>
+                  <NavItemContent>
+                    <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                      <Avatar size="200" radii="400">
+                        <Icon
+                          src={Icons.Category}
+                          size="100"
+                          filled={selectedServer === userServer}
+                        />
+                      </Avatar>
+                      <Box as="span" grow="Yes">
+                        <Text as="span" size="Inherit" truncate>
+                          {userServer}
+                        </Text>
+                      </Box>
+                    </Box>
+                  </NavItemContent>
+                </NavLink>
+              </NavItem>
+            )}
+          </NavCategory>
+          {servers.length > 0 && (
+            <NavCategory>
+              <NavCategoryHeader>
+                <Text size="O400" style={{ paddingLeft: config.space.S200 }}>
+                  Servers
+                </Text>
+              </NavCategoryHeader>
+              {servers.map((server) => (
+                <NavItem
+                  key={server}
+                  variant="Background"
+                  radii="400"
+                  aria-selected={server === selectedServer}
+                >
+                  <NavLink to={getExploreServerPath(server)}>
                     <NavItemContent>
                       <Box as="span" grow="Yes" alignItems="Center" gap="200">
                         <Avatar size="200" radii="400">
-                          <Icon src={Icons.Bulb} size="100" filled={featuredSelected} />
+                          <Icon
+                            src={Icons.Category}
+                            size="100"
+                            filled={server === selectedServer}
+                          />
                         </Avatar>
                         <Box as="span" grow="Yes">
                           <Text as="span" size="Inherit" truncate>
-                            Featured
+                            {server}
                           </Text>
                         </Box>
                       </Box>
                     </NavItemContent>
                   </NavLink>
                 </NavItem>
-                {userServer && (
-                  <NavItem
-                    variant="Background"
-                    radii="400"
-                    aria-selected={selectedServer === userServer}
-                  >
-                    <NavLink to={getExploreServerPath(userServer)}>
-                      <NavItemContent>
-                        <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                          <Avatar size="200" radii="400">
-                            <Icon
-                              src={Icons.Category}
-                              size="100"
-                              filled={selectedServer === userServer}
-                            />
-                          </Avatar>
-                          <Box as="span" grow="Yes">
-                            <Text as="span" size="Inherit" truncate>
-                              {userServer}
-                            </Text>
-                          </Box>
-                        </Box>
-                      </NavItemContent>
-                    </NavLink>
-                  </NavItem>
-                )}
-              </NavCategory>
-              {servers.length > 0 && (
-                <NavCategory>
-                  <NavCategoryHeader>
-                    <Text size="O400" style={{ paddingLeft: config.space.S200 }}>
-                      Servers
-                    </Text>
-                  </NavCategoryHeader>
-                  {servers.map((server) => (
-                    <NavItem
-                      key={server}
-                      variant="Background"
-                      radii="400"
-                      aria-selected={server === selectedServer}
-                    >
-                      <NavLink to={getExploreServerPath(server)}>
-                        <NavItemContent>
-                          <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                            <Avatar size="200" radii="400">
-                              <Icon
-                                src={Icons.Category}
-                                size="100"
-                                filled={server === selectedServer}
-                              />
-                            </Avatar>
-                            <Box as="span" grow="Yes">
-                              <Text as="span" size="Inherit" truncate>
-                                {server}
-                              </Text>
-                            </Box>
-                          </Box>
-                        </NavItemContent>
-                      </NavLink>
-                    </NavItem>
-                  ))}
-                </NavCategory>
-              )}
-              <Box direction="Column">
-                <AddServer />
-              </Box>
-            </Box>
-          </ClientDrawerContentLayout>
-        </ClientDrawerLayout>
-      }
-    >
-      <Outlet />
-    </ClientContentLayout>
+              ))}
+            </NavCategory>
+          )}
+          <Box direction="Column">
+            <AddServer />
+          </Box>
+        </Box>
+      </PageNavContent>
+    </PageNav>
   );
 }
