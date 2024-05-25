@@ -219,7 +219,7 @@ function RoomViewInput({
       }
       return false;
     }
-    if (['me', 'shrug', 'plain'].includes(cmdName)) {
+    if (['me', 'shrug', 'plain', 'html'].includes(cmdName)) {
       commands[cmdName].exe(roomId, cmdData, sendBody);
       return true;
     }
