@@ -3,7 +3,7 @@ import { Box, Header, Line, Scroll, Text, as } from 'folds';
 import classNames from 'classnames';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import * as css from './style.css';
-import { ScreenSize, useScreenSize } from '../../hooks/useScreenSize';
+import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 
 type PageRootProps = {
   nav: ReactNode;
@@ -11,7 +11,7 @@ type PageRootProps = {
 };
 
 export function PageRoot({ nav, children }: PageRootProps) {
-  const screenSize = useScreenSize();
+  const screenSize = useScreenSizeContext();
 
   return (
     <Box grow="Yes" className={ContainerColor({ variant: 'Background' })}>
@@ -28,7 +28,7 @@ type ClientDrawerLayoutProps = {
   children: ReactNode;
 };
 export function PageNav({ children }: ClientDrawerLayoutProps) {
-  const screenSize = useScreenSize();
+  const screenSize = useScreenSizeContext();
   const isMobile = screenSize === ScreenSize.Mobile;
 
   return (

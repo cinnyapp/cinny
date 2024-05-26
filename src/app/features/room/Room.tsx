@@ -3,7 +3,7 @@ import { Box, Line } from 'folds';
 import { useParams } from 'react-router-dom';
 import { RoomView } from './RoomView';
 import { MembersDrawer } from './MembersDrawer';
-import { ScreenSize, useScreenSize } from '../../hooks/useScreenSize';
+import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePowerLevels';
@@ -21,7 +21,7 @@ export function Room() {
   useBindRoomIdToTypingMembersAtom(mx, roomIdToTypingMembersAtom);
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
-  const screenSize = useScreenSize();
+  const screenSize = useScreenSizeContext();
   const powerLevels = usePowerLevels(room);
 
   return (

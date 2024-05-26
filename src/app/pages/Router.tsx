@@ -5,6 +5,7 @@ import {
   createBrowserRouter,
   createHashRouter,
   createRoutesFromElements,
+  matchPath,
   redirect,
 } from 'react-router-dom';
 
@@ -31,7 +32,7 @@ import {
 } from './paths';
 import { isAuthenticated } from '../../client/state/auth';
 import {
-  getAbsolutePathFromHref,
+  getAppPathFromHref,
   getHomePath,
   getLoginPath,
   getOriginBaseUrl,
@@ -49,9 +50,11 @@ import { Lobby } from '../features/lobby';
 import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
 import { PageRoot } from '../components/page';
+import { ScreenSize } from '../hooks/useScreenSize';
 
-export const createRouter = (clientConfig: ClientConfig) => {
+export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
+  const mobile = screenSize === ScreenSize.Mobile;
 
   const routes = createRoutesFromElements(
     <Route>
@@ -59,7 +62,7 @@ export const createRouter = (clientConfig: ClientConfig) => {
         index
         loader={() => {
           if (isAuthenticated()) return redirect(getHomePath());
-          const afterLoginPath = getAbsolutePathFromHref(getOriginBaseUrl(), window.location.href);
+          const afterLoginPath = getAppPathFromHref(getOriginBaseUrl(), window.location.href);
           if (afterLoginPath) setAfterLoginRedirectPath(afterLoginPath);
           return redirect(getLoginPath());
         }}
@@ -82,8 +85,8 @@ export const createRouter = (clientConfig: ClientConfig) => {
       <Route
         loader={() => {
           if (!isAuthenticated()) {
-            const afterLoginPath = getAbsolutePathFromHref(
-              getOriginBaseUrl(),
+            const afterLoginPath = getAppPathFromHref(
+              getOriginBaseUrl(hashRouter),
               window.location.href
             );
             if (afterLoginPath) setAfterLoginRedirectPath(afterLoginPath);
@@ -109,7 +112,7 @@ export const createRouter = (clientConfig: ClientConfig) => {
             </PageRoot>
           }
         >
-          <Route index element={<WelcomePage />} />
+          {mobile ? null : <Route index element={<WelcomePage />} />}
           <Route path={_CREATE_PATH} element={<p>create</p>} />
           <Route path={_JOIN_PATH} element={<p>join</p>} />
           <Route path={_SEARCH_PATH} element={<HomeSearch />} />
@@ -130,7 +133,7 @@ export const createRouter = (clientConfig: ClientConfig) => {
             </PageRoot>
           }
         >
-          <Route index element={<WelcomePage />} />
+          {mobile ? null : <Route index element={<WelcomePage />} />}
           <Route path={_CREATE_PATH} element={<p>create</p>} />
           <Route
             path={_ROOM_PATH}
@@ -151,17 +154,19 @@ export const createRouter = (clientConfig: ClientConfig) => {
             </RouteSpaceProvider>
           }
         >
-          <Route
-            index
-            loader={({ params }) => {
-              const { spaceIdOrAlias } = params;
-              if (spaceIdOrAlias) {
-                return redirect(getSpaceLobbyPath(spaceIdOrAlias));
-              }
-              return null;
-            }}
-            element={<WelcomePage />}
-          />
+          {mobile ? null : (
+            <Route
+              index
+              loader={({ params }) => {
+                const { spaceIdOrAlias } = params;
+                if (spaceIdOrAlias) {
+                  return redirect(getSpaceLobbyPath(spaceIdOrAlias));
+                }
+                return null;
+              }}
+              element={<WelcomePage />}
+            />
+          )}
           <Route path={_LOBBY_PATH} element={<Lobby />} />
           <Route path={_SEARCH_PATH} element={<SpaceSearch />} />
           <Route
@@ -181,7 +186,7 @@ export const createRouter = (clientConfig: ClientConfig) => {
             </PageRoot>
           }
         >
-          <Route index element={<WelcomePage />} />
+          {mobile ? null : <Route index element={<WelcomePage />} />}
           <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
           <Route path={_SERVER_PATH} element={<PublicRooms />} />
         </Route>
@@ -193,7 +198,7 @@ export const createRouter = (clientConfig: ClientConfig) => {
             </PageRoot>
           }
         >
-          <Route index element={<WelcomePage />} />
+          {mobile ? null : <Route index element={<WelcomePage />} />}
           <Route path={_NOTIFICATIONS_PATH} element={<Notifications />} />
           <Route path={_INVITES_PATH} element={<Invites />} />
         </Route>

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 import { useElementSizeObserver } from './useElementSizeObserver';
 
 export const TABLET_BREAKPOINT = 1124;
@@ -25,4 +25,15 @@ export const useScreenSize = (): ScreenSize => {
   );
 
   return size;
+};
+
+const ScreenSizeContext = createContext<ScreenSize | null>(null);
+export const ScreenSizeProvider = ScreenSizeContext.Provider;
+
+export const useScreenSizeContext = (): ScreenSize => {
+  const screenSize = useContext(ScreenSizeContext);
+  if (screenSize === null) {
+    throw new Error('Screen size not provided!');
+  }
+  return screenSize;
 };

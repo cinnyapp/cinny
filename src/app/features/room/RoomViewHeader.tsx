@@ -55,6 +55,7 @@ import { copyToClipboard } from '../../utils/dom';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
 import { mDirectAtom } from '../../state/mDirectList';
+import { useClientConfig } from '../../hooks/useClientConfig';
 
 type RoomMenuProps = {
   room: Room;
@@ -64,6 +65,7 @@ type RoomMenuProps = {
 const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(
   ({ room, linkPath, requestClose }, ref) => {
     const mx = useMatrixClient();
+    const { hashRouter } = useClientConfig();
     const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
     const powerLevels = usePowerLevelsContext();
     const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
@@ -80,7 +82,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(
     };
 
     const handleCopyLink = () => {
-      copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(), linkPath));
+      copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), linkPath));
       requestClose();
     };
 

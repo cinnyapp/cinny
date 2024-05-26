@@ -9,30 +9,35 @@ import { ClientConfigProvider } from '../hooks/useClientConfig';
 import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
 import { FeatureCheck } from './FeatureCheck';
 import { createRouter } from './Router';
+import { ScreenSizeProvider, useScreenSize } from '../hooks/useScreenSize';
 
 const queryClient = new QueryClient();
 
 function App() {
+  const screenSize = useScreenSize();
+
   return (
-    <FeatureCheck>
-      <ClientConfigLoader
-        fallback={() => <ConfigConfigLoading />}
-        error={(err, retry, ignore) => (
-          <ConfigConfigError error={err} retry={retry} ignore={ignore} />
-        )}
-      >
-        {(clientConfig) => (
-          <ClientConfigProvider value={clientConfig}>
-            <QueryClientProvider client={queryClient}>
-              <JotaiProvider>
-                <RouterProvider router={createRouter(clientConfig)} />
-              </JotaiProvider>
-              <ReactQueryDevtools initialIsOpen={false} />
-            </QueryClientProvider>
-          </ClientConfigProvider>
-        )}
-      </ClientConfigLoader>
-    </FeatureCheck>
+    <ScreenSizeProvider value={screenSize}>
+      <FeatureCheck>
+        <ClientConfigLoader
+          fallback={() => <ConfigConfigLoading />}
+          error={(err, retry, ignore) => (
+            <ConfigConfigError error={err} retry={retry} ignore={ignore} />
+          )}
+        >
+          {(clientConfig) => (
+            <ClientConfigProvider value={clientConfig}>
+              <QueryClientProvider client={queryClient}>
+                <JotaiProvider>
+                  <RouterProvider router={createRouter(clientConfig, screenSize)} />
+                </JotaiProvider>
+                <ReactQueryDevtools initialIsOpen={false} />
+              </QueryClientProvider>
+            </ClientConfigProvider>
+          )}
+        </ClientConfigLoader>
+      </FeatureCheck>
+    </ScreenSizeProvider>
   );
 }
 

@@ -32,6 +32,7 @@ import { markAsRead } from '../../../client/action/notifications';
 import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
+import { useClientConfig } from '../../hooks/useClientConfig';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -41,6 +42,7 @@ type RoomNavItemMenuProps = {
 const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
   ({ room, linkPath, requestClose }, ref) => {
     const mx = useMatrixClient();
+    const { hashRouter } = useClientConfig();
     const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
     const powerLevels = usePowerLevels(room);
     const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
@@ -57,7 +59,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     };
 
     const handleCopyLink = () => {
-      copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(), linkPath));
+      copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), linkPath));
       requestClose();
     };
 

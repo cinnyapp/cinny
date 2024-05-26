@@ -23,7 +23,8 @@ import {
   SPACE_ROOM_PATH,
   SPACE_SEARCH_PATH,
 } from './paths';
-import { trimTrailingSlash } from '../utils/common';
+import { trimLeadingSlash, trimTrailingSlash } from '../utils/common';
+import { HashRouterConfig } from '../hooks/useClientConfig';
 
 export const joinPathComponent = (path: Path): string => path.pathname + path.search + path.hash;
 
@@ -38,18 +39,34 @@ export const withSearchParam = <T extends Record<string, string>>(
 export const encodeSearchParamValueArray = (ids: string[]): string => ids.join(',');
 export const decodeSearchParamValueArray = (idsParam: string): string[] => idsParam.split(',');
 
-export const getOriginBaseUrl = (): string => {
+export const getOriginBaseUrl = (hashRouterConfig?: HashRouterConfig): string => {
   const baseUrl = `${trimTrailingSlash(window.location.origin)}${import.meta.env.BASE_URL}`;
+
+  if (hashRouterConfig?.enabled) {
+    return `${trimTrailingSlash(baseUrl)}/#${hashRouterConfig.basename}`;
+  }
+
   return baseUrl;
 };
 
 export const withOriginBaseUrl = (baseUrl: string, path: string): string =>
   `${trimTrailingSlash(baseUrl)}${path}`;
 
-export const getAbsolutePathFromHref = (baseUrl: string, href: string): string | undefined => {
-  const [, path] = href.split(trimTrailingSlash(baseUrl));
+export const getAppPathFromHref = (baseUrl: string, href: string): string => {
+  // if hash is in baseUrl means we are using hashRouter
+  const baseHashIndex = baseUrl.indexOf('#');
+  if (baseHashIndex > -1) {
+    const hrefHashIndex = href.indexOf('#');
+    // href may/not have "/" around "#"
+    // we need to take care of this when extracting app path
+    const trimmedBaseUrl = trimLeadingSlash(baseUrl.slice(baseHashIndex + 1));
+    const trimmedHref = trimLeadingSlash(href.slice(hrefHashIndex + 1));
 
-  return path;
+    const appPath = trimmedHref.slice(trimmedBaseUrl.length);
+    return `/${trimLeadingSlash(appPath)}`;
+  }
+
+  return href.slice(trimTrailingSlash(baseUrl).length);
 };
 
 export const getRootPath = (): string => ROOT_PATH;

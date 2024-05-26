@@ -1,5 +1,10 @@
 import { createContext, useContext } from 'react';
 
+export type HashRouterConfig = {
+  enabled?: boolean;
+  basename?: string;
+};
+
 export type ClientConfig = {
   defaultHomeserver?: number;
   homeserverList?: string[];
@@ -12,10 +17,7 @@ export type ClientConfig = {
     servers?: string[];
   };
 
-  hashRouter?: {
-    enabled?: boolean;
-    basename?: string;
-  };
+  hashRouter?: HashRouterConfig;
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

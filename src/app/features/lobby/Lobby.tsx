@@ -11,7 +11,7 @@ import { VirtualTile } from '../../components/virtualizer';
 import { spaceRoomsAtom } from '../../state/spaceRooms';
 import { MembersDrawer } from '../room/MembersDrawer';
 import { useSetting } from '../../state/hooks/settings';
-import { ScreenSize, useScreenSize } from '../../hooks/useScreenSize';
+import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { settingsAtom } from '../../state/settings';
 import { LobbyHeader } from './LobbyHeader';
 import { LobbyHero } from './LobbyHero';
@@ -54,7 +54,7 @@ export function Lobby() {
   const [heroSectionHeight, setHeroSectionHeight] = useState<number>();
   const [spaceRooms, setSpaceRooms] = useAtom(spaceRoomsAtom);
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
-  const screenSize = useScreenSize();
+  const screenSize = useScreenSizeContext();
   const [onTop, setOnTop] = useState(true);
   const [closedCategories, setClosedCategories] = useAtom(closedLobbyCategoriesAtom);
 
