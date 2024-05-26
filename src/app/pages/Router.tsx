@@ -33,7 +33,9 @@ import {
 import { isAuthenticated } from '../../client/state/auth';
 import {
   getAppPathFromHref,
+  getExploreFeaturedPath,
   getHomePath,
+  getInboxNotificationsPath,
   getLoginPath,
   getOriginBaseUrl,
   getSpaceLobbyPath,
@@ -217,7 +219,13 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             </PageRoot>
           }
         >
-          {mobile ? null : <Route index element={<WelcomePage />} />}
+          {mobile ? null : (
+            <Route
+              index
+              loader={() => redirect(getExploreFeaturedPath())}
+              element={<WelcomePage />}
+            />
+          )}
           <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
           <Route path={_SERVER_PATH} element={<PublicRooms />} />
         </Route>
@@ -235,7 +243,13 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             </PageRoot>
           }
         >
-          {mobile ? null : <Route index element={<WelcomePage />} />}
+          {mobile ? null : (
+            <Route
+              index
+              loader={() => redirect(getInboxNotificationsPath())}
+              element={<WelcomePage />}
+            />
+          )}
           <Route path={_NOTIFICATIONS_PATH} element={<Notifications />} />
           <Route path={_INVITES_PATH} element={<Invites />} />
         </Route>
