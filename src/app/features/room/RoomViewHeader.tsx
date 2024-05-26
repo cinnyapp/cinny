@@ -56,6 +56,7 @@ import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
 import { mDirectAtom } from '../../state/mDirectList';
 import { useClientConfig } from '../../hooks/useClientConfig';
+import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 
 type RoomMenuProps = {
   room: Room;
@@ -179,6 +180,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(
 export function RoomViewHeader() {
   const navigate = useNavigate();
   const mx = useMatrixClient();
+  const screenSize = useScreenSizeContext();
   const room = useRoom();
   const space = useSpaceOptionally();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
@@ -283,21 +285,23 @@ export function RoomViewHeader() {
               )}
             </TooltipProvider>
           )}
-          <TooltipProvider
-            position="Bottom"
-            offset={4}
-            tooltip={
-              <Tooltip>
-                <Text>Members</Text>
-              </Tooltip>
-            }
-          >
-            {(triggerRef) => (
-              <IconButton ref={triggerRef} onClick={() => setPeopleDrawer((drawer) => !drawer)}>
-                <Icon size="400" src={Icons.User} />
-              </IconButton>
-            )}
-          </TooltipProvider>
+          {screenSize === ScreenSize.Desktop && (
+            <TooltipProvider
+              position="Bottom"
+              offset={4}
+              tooltip={
+                <Tooltip>
+                  <Text>Members</Text>
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => (
+                <IconButton ref={triggerRef} onClick={() => setPeopleDrawer((drawer) => !drawer)}>
+                  <Icon size="400" src={Icons.User} />
+                </IconButton>
+              )}
+            </TooltipProvider>
+          )}
           <TooltipProvider
             position="Bottom"
             align="End"
