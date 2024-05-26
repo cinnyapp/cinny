@@ -9,12 +9,19 @@ import {
   SidebarItemTooltip,
 } from '../../../components/sidebar';
 import { allInvitesAtom } from '../../../state/room-list/inviteList';
-import { getInboxInvitesPath, getInboxNotificationsPath, joinPathComponent } from '../../pathUtils';
+import {
+  getInboxInvitesPath,
+  getInboxNotificationsPath,
+  getInboxPath,
+  joinPathComponent,
+} from '../../pathUtils';
 import { useInboxSelected } from '../../../hooks/router/useInbox';
 import { UnreadBadge } from '../../../components/unread-badge';
 import { navToActivePathAtom } from '../../../state/navToActivePath';
+import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 
 export function InboxTab() {
+  const screenSize = useScreenSizeContext();
   const navigate = useNavigate();
   const navToActivePath = useAtomValue(navToActivePathAtom);
   const inboxSelected = useInboxSelected();
@@ -22,6 +29,10 @@ export function InboxTab() {
   const inviteCount = allInvites.length;
 
   const handleInboxClick = () => {
+    if (screenSize === ScreenSize.Mobile) {
+      navigate(getInboxPath());
+      return;
+    }
     const activePath = navToActivePath.get('inbox');
     if (activePath) {
       navigate(joinPathComponent(activePath));

@@ -51,6 +51,7 @@ import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
 import { PageRoot } from '../components/page';
 import { ScreenSize } from '../hooks/useScreenSize';
+import { MobileFriendlyPageNav, MobileFriendlyClientNav } from './MobileFriendly';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -97,7 +98,13 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         element={
           <ClientRoot>
             <ClientBindAtoms>
-              <ClientLayout nav={<SidebarNav />}>
+              <ClientLayout
+                nav={
+                  <MobileFriendlyClientNav>
+                    <SidebarNav />
+                  </MobileFriendlyClientNav>
+                }
+              >
                 <Outlet />
               </ClientLayout>
             </ClientBindAtoms>
@@ -107,7 +114,13 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         <Route
           path={HOME_PATH}
           element={
-            <PageRoot nav={<Home />}>
+            <PageRoot
+              nav={
+                <MobileFriendlyPageNav path={HOME_PATH}>
+                  <Home />
+                </MobileFriendlyPageNav>
+              }
+            >
               <Outlet />
             </PageRoot>
           }
@@ -128,7 +141,13 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         <Route
           path={DIRECT_PATH}
           element={
-            <PageRoot nav={<Direct />}>
+            <PageRoot
+              nav={
+                <MobileFriendlyPageNav path={DIRECT_PATH}>
+                  <Direct />
+                </MobileFriendlyPageNav>
+              }
+            >
               <Outlet />
             </PageRoot>
           }
@@ -148,7 +167,13 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           path={SPACE_PATH}
           element={
             <RouteSpaceProvider>
-              <PageRoot nav={<Space />}>
+              <PageRoot
+                nav={
+                  <MobileFriendlyPageNav path={SPACE_PATH}>
+                    <Space />
+                  </MobileFriendlyPageNav>
+                }
+              >
                 <Outlet />
               </PageRoot>
             </RouteSpaceProvider>
@@ -181,7 +206,13 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         <Route
           path={EXPLORE_PATH}
           element={
-            <PageRoot nav={<Explore />}>
+            <PageRoot
+              nav={
+                <MobileFriendlyPageNav path={EXPLORE_PATH}>
+                  <Explore />
+                </MobileFriendlyPageNav>
+              }
+            >
               <Outlet />
             </PageRoot>
           }
@@ -193,7 +224,13 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         <Route
           path={INBOX_PATH}
           element={
-            <PageRoot nav={<Inbox />}>
+            <PageRoot
+              nav={
+                <MobileFriendlyPageNav path={INBOX_PATH}>
+                  <Inbox />
+                </MobileFriendlyPageNav>
+              }
+            >
               <Outlet />
             </PageRoot>
           }

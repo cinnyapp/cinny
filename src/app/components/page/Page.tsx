@@ -32,7 +32,11 @@ export function PageNav({ children }: ClientDrawerLayoutProps) {
   const isMobile = screenSize === ScreenSize.Mobile;
 
   return (
-    <Box grow={isMobile ? 'Yes' : undefined} className={css.PageNav} shrink="No">
+    <Box
+      grow={isMobile ? 'Yes' : undefined}
+      className={css.PageNav}
+      shrink={isMobile ? 'Yes' : 'No'}
+    >
       <Box grow="Yes" direction="Column">
         {children}
       </Box>

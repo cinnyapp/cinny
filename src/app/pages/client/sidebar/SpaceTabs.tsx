@@ -28,7 +28,7 @@ import { useOrphanSpaces } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { getSpaceLobbyPath, joinPathComponent } from '../../pathUtils';
+import { getSpaceLobbyPath, getSpacePath, joinPathComponent } from '../../pathUtils';
 import {
   SidebarAvatar,
   SidebarItem,
@@ -57,6 +57,7 @@ import {
 import { openedSidebarFolderAtom } from '../../../state/openedSidebarFolder';
 import { AccountDataEvent } from '../../../../types/matrix/accountData';
 import { getAccountData } from '../../../utils/room';
+import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 
 type InstructionType = Instruction['type'];
 type FolderDraggable = {
@@ -396,6 +397,7 @@ type SpaceTabsProps = {
 export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
   const navigate = useNavigate();
   const mx = useMatrixClient();
+  const screenSize = useScreenSizeContext();
   const roomToParents = useAtomValue(roomToParentsAtom);
   const orphanSpaces = useOrphanSpaces(mx, allRoomsAtom, roomToParents);
   const [sidebarItems, localEchoSidebarItem] = useSidebarItems(orphanSpaces);
@@ -548,6 +550,11 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
     const target = evt.currentTarget;
     const targetSpaceId = target.getAttribute('data-id');
     if (!targetSpaceId) return;
+
+    if (screenSize === ScreenSize.Mobile) {
+      navigate(getSpacePath(getCanonicalAliasOrRoomId(mx, targetSpaceId)));
+      return;
+    }
 
     const activePath = navToActivePath.get(targetSpaceId);
     if (activePath) {

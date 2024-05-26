@@ -14,9 +14,11 @@ import { navToActivePathAtom } from '../../../state/navToActivePath';
 import { useClientConfig } from '../../../hooks/useClientConfig';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getMxIdServer } from '../../../utils/matrix';
+import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 
 export function ExploreTab() {
   const mx = useMatrixClient();
+  const screenSize = useScreenSizeContext();
   const clientConfig = useClientConfig();
   const navigate = useNavigate();
   const navToActivePath = useAtomValue(navToActivePathAtom);
@@ -24,6 +26,11 @@ export function ExploreTab() {
   const exploreSelected = useExploreSelected();
 
   const handleExploreClick = () => {
+    if (screenSize === ScreenSize.Mobile) {
+      navigate(getExplorePath());
+      return;
+    }
+
     const activePath = navToActivePath.get('explore');
     if (activePath) {
       navigate(joinPathComponent(activePath));

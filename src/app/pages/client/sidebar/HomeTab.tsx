@@ -19,10 +19,12 @@ import {
 import { useHomeSelected } from '../../../hooks/router/useHomeSelected';
 import { navToActivePathAtom } from '../../../state/navToActivePath';
 import { UnreadBadge } from '../../../components/unread-badge';
+import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 
 export function HomeTab() {
   const navigate = useNavigate();
   const mx = useMatrixClient();
+  const screenSize = useScreenSizeContext();
   const navToActivePath = useAtomValue(navToActivePathAtom);
 
   const mDirects = useAtomValue(mDirectAtom);
@@ -33,7 +35,7 @@ export function HomeTab() {
 
   const handleHomeClick = () => {
     const activePath = navToActivePath.get('home');
-    if (activePath) {
+    if (activePath && screenSize !== ScreenSize.Mobile) {
       navigate(joinPathComponent(activePath));
       return;
     }
