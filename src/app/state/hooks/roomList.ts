@@ -22,6 +22,18 @@ export const useSelectedRooms = (roomsAtom: RoomsAtom, selector: RoomSelector) =
 
 export type SpaceChildSelectorFactory = (parentId: string) => RoomSelector;
 
+export const useRecursiveChildScopeFactory = (
+  mx: MatrixClient,
+  roomToParents: RoomToParents
+): SpaceChildSelectorFactory =>
+  useCallback(
+    (parentId: string) => (roomId) =>
+      isRoom(mx.getRoom(roomId)) &&
+      roomToParents.has(roomId) &&
+      getAllParents(roomToParents, roomId).has(parentId),
+    [mx, roomToParents]
+  );
+
 export const useChildSpaceScopeFactory = (
   mx: MatrixClient,
   roomToParents: RoomToParents

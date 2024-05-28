@@ -1,7 +1,29 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, {
+  MouseEventHandler,
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useAtom, useAtomValue } from 'jotai';
-import { Avatar, Box, Icon, Icons, Text, config } from 'folds';
+import {
+  Avatar,
+  Box,
+  Icon,
+  IconButton,
+  Icons,
+  Line,
+  Menu,
+  MenuItem,
+  PopOut,
+  RectCords,
+  Text,
+  config,
+  toRem,
+} from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { Room } from 'matrix-js-sdk';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { mDirectAtom } from '../../../state/mDirectList';
 import {
@@ -11,7 +33,14 @@ import {
   NavItemContent,
   NavLink,
 } from '../../../components/nav';
-import { getSpaceLobbyPath, getSpaceRoomPath, getSpaceSearchPath } from '../../pathUtils';
+import {
+  getOriginBaseUrl,
+  getSpaceLobbyPath,
+  getSpacePath,
+  getSpaceRoomPath,
+  getSpaceSearchPath,
+  withOriginBaseUrl,
+} from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import {
@@ -30,6 +59,194 @@ import { useRoomName } from '../../../hooks/useRoomMeta';
 import { useSpaceJoinedHierarchy } from '../../../hooks/useSpaceHierarchy';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
+import { usePowerLevels, usePowerLevelsAPI } from '../../../hooks/usePowerLevels';
+import { openInviteUser, openSpaceSettings } from '../../../../client/action/navigation';
+import FocusTrap from 'focus-trap-react';
+import { useRecursiveChildScopeFactory, useSpaceChildren } from '../../../state/hooks/roomList';
+import { roomToParentsAtom } from '../../../state/room/roomToParents';
+import { markAsRead } from '../../../../client/action/notifications';
+import { useRoomsUnread } from '../../../state/hooks/unread';
+import { UseStateProvider } from '../../../components/UseStateProvider';
+import { LeaveSpacePrompt } from '../../../components/leave-space-prompt';
+import { copyToClipboard } from '../../../utils/dom';
+import { useClientConfig } from '../../../hooks/useClientConfig';
+
+type SpaceMenuProps = {
+  room: Room;
+  requestClose: () => void;
+};
+const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClose }, ref) => {
+  const mx = useMatrixClient();
+  const { hashRouter } = useClientConfig();
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const powerLevels = usePowerLevels(room);
+  const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
+  const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
+
+  const allChild = useSpaceChildren(
+    allRoomsAtom,
+    room.roomId,
+    useRecursiveChildScopeFactory(mx, roomToParents)
+  );
+  const unread = useRoomsUnread(allChild, roomToUnreadAtom);
+
+  const handleMarkAsRead = () => {
+    allChild.forEach((childRoomId) => markAsRead(childRoomId));
+    requestClose();
+  };
+
+  const handleCopyLink = () => {
+    const spacePath = getSpacePath(getCanonicalAliasOrRoomId(mx, room.roomId));
+    copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), spacePath));
+    requestClose();
+  };
+
+  const handleInvite = () => {
+    openInviteUser(room.roomId);
+    requestClose();
+  };
+
+  const handleRoomSettings = () => {
+    openSpaceSettings(room.roomId);
+    requestClose();
+  };
+
+  return (
+    <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <MenuItem
+          onClick={handleMarkAsRead}
+          size="300"
+          after={<Icon size="100" src={Icons.CheckTwice} />}
+          radii="300"
+          disabled={!unread}
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Mark as Read
+          </Text>
+        </MenuItem>
+      </Box>
+      <Line variant="Surface" size="300" />
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <MenuItem
+          onClick={handleInvite}
+          variant="Primary"
+          fill="None"
+          size="300"
+          after={<Icon size="100" src={Icons.UserPlus} />}
+          radii="300"
+          disabled={!canInvite}
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Invite
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleCopyLink}
+          size="300"
+          after={<Icon size="100" src={Icons.Link} />}
+          radii="300"
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Copy Link
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleRoomSettings}
+          size="300"
+          after={<Icon size="100" src={Icons.Setting} />}
+          radii="300"
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Space Settings
+          </Text>
+        </MenuItem>
+      </Box>
+      <Line variant="Surface" size="300" />
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <UseStateProvider initial={false}>
+          {(promptLeave, setPromptLeave) => (
+            <>
+              <MenuItem
+                onClick={() => setPromptLeave(true)}
+                variant="Critical"
+                fill="None"
+                size="300"
+                after={<Icon size="100" src={Icons.ArrowGoLeft} />}
+                radii="300"
+                aria-pressed={promptLeave}
+              >
+                <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                  Leave Space
+                </Text>
+              </MenuItem>
+              {promptLeave && (
+                <LeaveSpacePrompt
+                  roomId={room.roomId}
+                  onDone={requestClose}
+                  onCancel={() => setPromptLeave(false)}
+                />
+              )}
+            </>
+          )}
+        </UseStateProvider>
+      </Box>
+    </Menu>
+  );
+});
+
+function SpaceHeader() {
+  const space = useSpace();
+  const spaceName = useRoomName(space);
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const cords = evt.currentTarget.getBoundingClientRect();
+    setMenuAnchor((currentState) => {
+      if (currentState) return undefined;
+      return cords;
+    });
+  };
+
+  return (
+    <>
+      <PageNavHeader>
+        <Box alignItems="Center" grow="Yes" gap="300">
+          <Box grow="Yes">
+            <Text size="H4" truncate>
+              {spaceName}
+            </Text>
+          </Box>
+          <Box>
+            <IconButton aria-pressed={!!menuAnchor} variant="Background" onClick={handleOpenMenu}>
+              <Icon src={Icons.VerticalDots} size="200" />
+            </IconButton>
+          </Box>
+        </Box>
+      </PageNavHeader>
+      <PopOut
+        anchor={menuAnchor}
+        position="Bottom"
+        align="End"
+        offset={6}
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              returnFocusOnDeactivate: false,
+              onDeactivate: () => setMenuAnchor(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+            }}
+          >
+            <SpaceMenu room={space} requestClose={() => setMenuAnchor(undefined)} />
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
 
 export function Space() {
   const mx = useMatrixClient();
@@ -43,7 +260,6 @@ export function Space() {
   const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
   const muteChanges = useAtomValue(muteChangesAtom);
   const mutedRooms = muteChanges.added;
-  const spaceName = useRoomName(space);
 
   const selectedRoomId = useSelectedRoom();
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
@@ -97,15 +313,7 @@ export function Space() {
 
   return (
     <PageNav>
-      <PageNavHeader>
-        <Box grow="Yes" gap="300">
-          <Box grow="Yes">
-            <Text size="H4" truncate>
-              {spaceName}
-            </Text>
-          </Box>
-        </Box>
-      </PageNavHeader>
+      <SpaceHeader />
       <PageNavContent scrollRef={scrollRef}>
         <Box direction="Column" gap="300">
           <NavCategory>

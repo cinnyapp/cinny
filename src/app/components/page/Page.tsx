@@ -44,16 +44,15 @@ export function PageNav({ children }: ClientDrawerLayoutProps) {
   );
 }
 
-type PageNavHeaderProps = {
-  children: ReactNode;
-};
-export function PageNavHeader({ children }: PageNavHeaderProps) {
-  return (
-    <Header className={css.PageNavHeader} variant="Background" size="600">
-      {children}
-    </Header>
-  );
-}
+export const PageNavHeader = as<'header'>(({ className, ...props }, ref) => (
+  <Header
+    className={classNames(css.PageNavHeader, className)}
+    variant="Background"
+    size="600"
+    {...props}
+    ref={ref}
+  />
+));
 
 export function PageNavContent({
   scrollRef,
