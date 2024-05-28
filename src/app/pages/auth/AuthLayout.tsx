@@ -19,7 +19,7 @@ import {
   useClientConfig,
 } from '../../hooks/useClientConfig';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { LOGIN_PATH, REGISTER_PATH } from '../paths';
+import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH } from '../paths';
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { ServerPicker } from './ServerPicker';
 import { AutoDiscoveryAction, autoDiscovery } from '../../cs-api';
@@ -33,6 +33,9 @@ import { AuthServerProvider } from '../../hooks/useAuthServer';
 const currentAuthPath = (pathname: string): string => {
   if (matchPath(LOGIN_PATH, pathname)) {
     return LOGIN_PATH;
+  }
+  if (matchPath(RESET_PASSWORD_PATH, pathname)) {
+    return RESET_PASSWORD_PATH;
   }
   if (matchPath(REGISTER_PATH, pathname)) {
     return REGISTER_PATH;
