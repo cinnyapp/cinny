@@ -1,14 +1,29 @@
 import { style } from '@vanilla-extract/css';
-import { DefaultReset, config, toRem } from 'folds';
+import { DefaultReset, color, config, toRem } from 'folds';
 
 export const PageNav = style({
   width: toRem(280),
 });
 
 export const PageNavHeader = style({
-  padding: `0 ${config.space.S300}`,
+  padding: `0 ${config.space.S200} 0 ${config.space.S300}`,
   flexShrink: 0,
   borderBottomWidth: 1,
+
+  selectors: {
+    'button&': {
+      cursor: 'pointer',
+    },
+    'button&[aria-pressed=true]': {
+      backgroundColor: color.Background.ContainerActive,
+    },
+    'button&:hover, button&:focus-visible': {
+      backgroundColor: color.Background.ContainerHover,
+    },
+    'button&:active': {
+      backgroundColor: color.Background.ContainerActive,
+    },
+  },
 });
 
 export const PageNavContent = style({

@@ -315,13 +315,14 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                                     : 'Surface'
                                 }
                                 aria-pressed={menuItem.name === membershipFilter.name}
+                                size="300"
                                 radii="300"
                                 onClick={() => {
                                   setMembershipFilterIndex(index);
                                   setAnchor(undefined);
                                 }}
                               >
-                                <Text>{menuItem.name}</Text>
+                                <Text size="T300">{menuItem.name}</Text>
                               </MenuItem>
                             ))}
                           </Menu>
@@ -368,13 +369,14 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                                 key={menuItem.name}
                                 variant="Surface"
                                 aria-pressed={menuItem.name === sortFilter.name}
+                                size="300"
                                 radii="300"
                                 onClick={() => {
                                   setSortFilterIndex(index);
                                   setAnchor(undefined);
                                 }}
                               >
-                                <Text>{menuItem.name}</Text>
+                                <Text size="T300">{menuItem.name}</Text>
                               </MenuItem>
                             ))}
                           </Menu>
