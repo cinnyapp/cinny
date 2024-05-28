@@ -51,7 +51,7 @@ import {
   getMemberAvatarMxc,
   getMemberDisplayName,
 } from '../../../utils/room';
-import { getMxIdLocalPart } from '../../../utils/matrix';
+import { getCanonicalAliasOrRoomId, getMxIdLocalPart } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
@@ -63,6 +63,17 @@ import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '../../../components/user-avatar';
+import { useSpaceOptionally } from '../../../hooks/useSpace';
+import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
+import {
+  getDirectRoomPath,
+  getHomeRoomPath,
+  getOriginBaseUrl,
+  getSpaceRoomPath,
+  withOriginBaseUrl,
+} from '../../../pages/pathUtils';
+import { copyToClipboard } from '../../../utils/dom';
+import { useClientConfig } from '../../../hooks/useClientConfig';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -294,6 +305,51 @@ export const MessageSourceCodeItem = as<
         </Text>
       </MenuItem>
     </>
+  );
+});
+
+export const MessageCopyLinkItem = as<
+  'button',
+  {
+    room: Room;
+    mEvent: MatrixEvent;
+    onClose?: () => void;
+  }
+>(({ room, mEvent, onClose, ...props }, ref) => {
+  const mx = useMatrixClient();
+  const { hashRouter } = useClientConfig();
+  const space = useSpaceOptionally();
+  const directSelected = useDirectSelected();
+
+  const handleCopy = () => {
+    const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
+    let eventPath = getHomeRoomPath(roomIdOrAlias, mEvent.getId());
+    if (space) {
+      eventPath = getSpaceRoomPath(
+        getCanonicalAliasOrRoomId(mx, space.roomId),
+        roomIdOrAlias,
+        mEvent.getId()
+      );
+    } else if (directSelected) {
+      eventPath = getDirectRoomPath(roomIdOrAlias, mEvent.getId());
+    }
+    copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), eventPath));
+    onClose?.();
+  };
+
+  return (
+    <MenuItem
+      size="300"
+      after={<Icon size="100" src={Icons.Link} />}
+      radii="300"
+      onClick={handleCopy}
+      {...props}
+      ref={ref}
+    >
+      <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+        Copy Link
+      </Text>
+    </MenuItem>
   );
 });
 
@@ -901,6 +957,7 @@ export const Message = as<'div', MessageProps>(
                             onClose={closeMenu}
                           />
                           <MessageSourceCodeItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                          <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         </Box>
                         {((!mEvent.isRedacted() && canDelete) ||
                           mEvent.getSender() !== mx.getUserId()) && (
@@ -1042,6 +1099,7 @@ export const Event = as<'div', EventProps>(
                             onClose={closeMenu}
                           />
                           <MessageSourceCodeItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                          <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         </Box>
                         {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
                           (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
