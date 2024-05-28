@@ -1,6 +1,20 @@
-import React, { useMemo, useRef } from 'react';
+import React, { MouseEventHandler, forwardRef, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
+import {
+  Avatar,
+  Box,
+  Button,
+  Icon,
+  IconButton,
+  Icons,
+  Menu,
+  MenuItem,
+  PopOut,
+  RectCords,
+  Text,
+  config,
+  toRem,
+} from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
@@ -29,6 +43,91 @@ import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { openCreateRoom, openJoinAlias } from '../../../../client/action/navigation';
 import { PageNav, PageNavHeader, PageNavContent } from '../../../components/page';
+import FocusTrap from 'focus-trap-react';
+import { useRoomsUnread } from '../../../state/hooks/unread';
+import { markAsRead } from '../../../../client/action/notifications';
+
+type HomeMenuProps = {
+  requestClose: () => void;
+};
+const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, ref) => {
+  const orphanRooms = useHomeRooms();
+  const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
+
+  const handleMarkAsRead = () => {
+    orphanRooms.forEach((rId) => markAsRead(rId));
+    requestClose();
+  };
+
+  return (
+    <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <MenuItem
+          onClick={handleMarkAsRead}
+          size="300"
+          after={<Icon size="100" src={Icons.CheckTwice} />}
+          radii="300"
+          disabled={!unread}
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Mark as Read
+          </Text>
+        </MenuItem>
+      </Box>
+    </Menu>
+  );
+});
+
+function HomeHeader() {
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const cords = evt.currentTarget.getBoundingClientRect();
+    setMenuAnchor((currentState) => {
+      if (currentState) return undefined;
+      return cords;
+    });
+  };
+
+  return (
+    <>
+      <PageNavHeader>
+        <Box alignItems="Center" grow="Yes" gap="300">
+          <Box grow="Yes">
+            <Text size="H4" truncate>
+              Home
+            </Text>
+          </Box>
+          <Box>
+            <IconButton aria-pressed={!!menuAnchor} variant="Background" onClick={handleOpenMenu}>
+              <Icon src={Icons.VerticalDots} size="200" />
+            </IconButton>
+          </Box>
+        </Box>
+      </PageNavHeader>
+      <PopOut
+        anchor={menuAnchor}
+        position="Bottom"
+        align="End"
+        offset={6}
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              returnFocusOnDeactivate: false,
+              onDeactivate: () => setMenuAnchor(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+            }}
+          >
+            <HomeMenu requestClose={() => setMenuAnchor(undefined)} />
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
 
 function HomeEmpty() {
   const navigate = useNavigate();
@@ -111,15 +210,7 @@ export function Home() {
 
   return (
     <PageNav>
-      <PageNavHeader>
-        <Box grow="Yes" gap="300">
-          <Box grow="Yes">
-            <Text size="H4" truncate>
-              Home
-            </Text>
-          </Box>
-        </Box>
-      </PageNavHeader>
+      <HomeHeader />
       {noRoomToDisplay ? (
         <HomeEmpty />
       ) : (
