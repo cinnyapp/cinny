@@ -5,6 +5,7 @@ import {
   Icon,
   IconButton,
   Icons,
+  Line,
   Menu,
   MenuItem,
   PopOut,
@@ -27,6 +28,8 @@ import { nameInitials } from '../../utils/common';
 import * as css from './LobbyHeader.css';
 import { openInviteUser, openSpaceSettings } from '../../../client/action/navigation';
 import { IPowerLevels, usePowerLevelsAPI } from '../../hooks/usePowerLevels';
+import { UseStateProvider } from '../../components/UseStateProvider';
+import { LeaveSpacePrompt } from '../../components/leave-space-prompt';
 
 type LobbyMenuProps = {
   roomId: string;
@@ -75,6 +78,35 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
               Space Settings
             </Text>
           </MenuItem>
+        </Box>
+        <Line variant="Surface" size="300" />
+        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <UseStateProvider initial={false}>
+            {(promptLeave, setPromptLeave) => (
+              <>
+                <MenuItem
+                  onClick={() => setPromptLeave(true)}
+                  variant="Critical"
+                  fill="None"
+                  size="300"
+                  after={<Icon size="100" src={Icons.ArrowGoLeft} />}
+                  radii="300"
+                  aria-pressed={promptLeave}
+                >
+                  <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                    Leave Space
+                  </Text>
+                </MenuItem>
+                {promptLeave && (
+                  <LeaveSpacePrompt
+                    roomId={roomId}
+                    onDone={requestClose}
+                    onCancel={() => setPromptLeave(false)}
+                  />
+                )}
+              </>
+            )}
+          </UseStateProvider>
         </Box>
       </Menu>
     );
