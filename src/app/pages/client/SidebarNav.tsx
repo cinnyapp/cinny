@@ -10,7 +10,7 @@ import {
   SidebarItemTooltip,
   SidebarItem,
 } from '../../components/sidebar';
-import { DirectTab, HomeTab, SpaceTabs, InboxTab, ExploreTab } from './sidebar';
+import { DirectTab, HomeTab, SpaceTabs, InboxTab, ExploreTab, UserTab } from './sidebar';
 import { openCreateRoom, openSearch, openSettings } from '../../../client/action/navigation';
 
 export function SidebarNav() {
@@ -66,22 +66,7 @@ export function SidebarNav() {
               </SidebarItem>
 
               <InboxTab />
-              <SidebarItem>
-                <SidebarItemTooltip tooltip="User Settings">
-                  {(triggerRef) => (
-                    <SidebarAvatar as="button" ref={triggerRef} onClick={() => openSettings()}>
-                      <AvatarFallback
-                        style={{
-                          backgroundColor: 'blue',
-                          color: 'white',
-                        }}
-                      >
-                        <Text size="T500">A</Text>
-                      </AvatarFallback>
-                    </SidebarAvatar>
-                  )}
-                </SidebarItemTooltip>
-              </SidebarItem>
+              <UserTab />
             </SidebarStack>
           </>
         }
