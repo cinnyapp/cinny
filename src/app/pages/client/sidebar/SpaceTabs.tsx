@@ -41,7 +41,6 @@ import {
 } from '../../../components/sidebar';
 import { RoomUnreadProvider, RoomsUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
-import { navToActivePathAtom } from '../../../state/navToActivePath';
 import { UnreadBadge } from '../../../components/unread-badge';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { RoomAvatar } from '../../../components/room-avatar';
@@ -58,6 +57,7 @@ import { openedSidebarFolderAtom } from '../../../state/openedSidebarFolder';
 import { AccountDataEvent } from '../../../../types/matrix/accountData';
 import { getAccountData } from '../../../utils/room';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
+import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 
 type InstructionType = Instruction['type'];
 type FolderDraggable = {
@@ -401,7 +401,7 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
   const roomToParents = useAtomValue(roomToParentsAtom);
   const orphanSpaces = useOrphanSpaces(mx, allRoomsAtom, roomToParents);
   const [sidebarItems, localEchoSidebarItem] = useSidebarItems(orphanSpaces);
-  const navToActivePath = useAtomValue(navToActivePathAtom);
+  const navToActivePath = useAtomValue(useNavToActivePathAtom());
   const [openedFolder, setOpenedFolder] = useAtom(openedSidebarFolderAtom);
   const [draggingItem, setDraggingItem] = useState<SidebarDraggable>();
 

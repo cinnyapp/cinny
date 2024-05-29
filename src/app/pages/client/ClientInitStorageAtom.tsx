@@ -4,6 +4,8 @@ import { makeClosedNavCategoriesAtom } from '../../state/closedNavCategories';
 import { ClosedNavCategoriesProvider } from '../../state/hooks/closedNavCategories';
 import { makeClosedLobbyCategoriesAtom } from '../../state/closedLobbyCategories';
 import { ClosedLobbyCategoriesProvider } from '../../state/hooks/closedLobbyCategories';
+import { makeNavToActivePathAtom } from '../../state/navToActivePath';
+import { NavToActivePathProvider } from '../../state/hooks/navToActivePath';
 
 type ClientInitStorageAtomProps = {
   children: ReactNode;
@@ -20,10 +22,14 @@ export function ClientInitStorageAtom({ children }: ClientInitStorageAtomProps) 
     return makeClosedLobbyCategoriesAtom(userId);
   }, [userId]);
 
+  const navToActivePathAtom = useMemo(() => {
+    return makeNavToActivePathAtom(userId);
+  }, [userId]);
+
   return (
     <ClosedNavCategoriesProvider value={closedNavCategoriesAtom}>
       <ClosedLobbyCategoriesProvider value={closedLobbyCategoriesAtom}>
-        {children}
+        <NavToActivePathProvider value={navToActivePathAtom}>{children}</NavToActivePathProvider>
       </ClosedLobbyCategoriesProvider>
     </ClosedNavCategoriesProvider>
   );

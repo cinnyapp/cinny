@@ -17,13 +17,13 @@ import {
 } from '../../pathUtils';
 import { useInboxSelected } from '../../../hooks/router/useInbox';
 import { UnreadBadge } from '../../../components/unread-badge';
-import { navToActivePathAtom } from '../../../state/navToActivePath';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
+import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 
 export function InboxTab() {
   const screenSize = useScreenSizeContext();
   const navigate = useNavigate();
-  const navToActivePath = useAtomValue(navToActivePathAtom);
+  const navToActivePath = useAtomValue(useNavToActivePathAtom());
   const inboxSelected = useInboxSelected();
   const allInvites = useAtomValue(allInvitesAtom);
   const inviteCount = allInvites.length;
