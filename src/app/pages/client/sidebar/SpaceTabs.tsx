@@ -53,11 +53,11 @@ import {
   parseSidebar,
   useSidebarItems,
 } from '../../../hooks/useSidebarItems';
-import { openedSidebarFolderAtom } from '../../../state/openedSidebarFolder';
 import { AccountDataEvent } from '../../../../types/matrix/accountData';
 import { getAccountData } from '../../../utils/room';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
+import { useOpenedSidebarFolderAtom } from '../../../state/hooks/openedSidebarFolder';
 
 type InstructionType = Instruction['type'];
 type FolderDraggable = {
@@ -402,7 +402,7 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
   const orphanSpaces = useOrphanSpaces(mx, allRoomsAtom, roomToParents);
   const [sidebarItems, localEchoSidebarItem] = useSidebarItems(orphanSpaces);
   const navToActivePath = useAtomValue(useNavToActivePathAtom());
-  const [openedFolder, setOpenedFolder] = useAtom(openedSidebarFolderAtom);
+  const [openedFolder, setOpenedFolder] = useAtom(useOpenedSidebarFolderAtom());
   const [draggingItem, setDraggingItem] = useState<SidebarDraggable>();
 
   useDnDMonitor(
