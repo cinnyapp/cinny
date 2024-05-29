@@ -1,6 +1,15 @@
 import produce from 'immer';
 import { atom, useSetAtom, PrimitiveAtom, useAtomValue } from 'jotai';
-import { IRoomTimelineData, MatrixClient, MatrixEvent, Room, RoomEvent } from 'matrix-js-sdk';
+import {
+  ClientEvent,
+  ClientEventHandlerMap,
+  IRoomTimelineData,
+  MatrixClient,
+  MatrixEvent,
+  Room,
+  RoomEvent,
+  SyncState,
+} from 'matrix-js-sdk';
 import { ReceiptContent, ReceiptType } from 'matrix-js-sdk/lib/@types/read_receipts';
 import { useCallback, useEffect } from 'react';
 import {
@@ -22,6 +31,7 @@ import {
 } from '../../utils/room';
 import { roomToParentsAtom } from './roomToParents';
 import { useStateEventCallback } from '../../hooks/useStateEventCallback';
+import { useSyncState } from '../../hooks/useSyncState';
 
 export type RoomToUnreadAction =
   | {
@@ -173,6 +183,21 @@ export const useBindRoomToUnreadAtom = (
       unreadInfos: getUnreadInfos(mx),
     });
   }, [mx, setUnreadAtom]);
+
+  useSyncState(
+    mx,
+    useCallback(
+      (state, prevState) => {
+        if (state === SyncState.Prepared) {
+          setUnreadAtom({
+            type: 'RESET',
+            unreadInfos: getUnreadInfos(mx),
+          });
+        }
+      },
+      [setUnreadAtom]
+    )
+  );
 
   useEffect(() => {
     const handleTimelineEvent = (
