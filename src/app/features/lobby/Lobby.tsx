@@ -27,7 +27,7 @@ import {
 import { RoomItemCard } from './RoomItem';
 import { mDirectAtom } from '../../state/mDirectList';
 import { SpaceItemCard } from './SpaceItem';
-import { closedLobbyCategoriesAtom, makeLobbyCategoryId } from '../../state/closedLobbyCategory';
+import { makeLobbyCategoryId } from '../../state/closedLobbyCategories';
 import { useCategoryHandler } from '../../hooks/useCategoryHandler';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
@@ -38,6 +38,7 @@ import { StateEvent } from '../../../types/matrix/room';
 import { AfterItemDropTarget, CanDropCallback, useDnDMonitor } from './DnD';
 import { ASCIILexicalTable, orderKeys } from '../../utils/ASCIILexicalTable';
 import { getStateEvent } from '../../utils/room';
+import { useClosedLobbyCategoriesAtom } from '../../state/hooks/closedLobbyCategories';
 
 export function Lobby() {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ export function Lobby() {
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const screenSize = useScreenSizeContext();
   const [onTop, setOnTop] = useState(true);
-  const [closedCategories, setClosedCategories] = useAtom(closedLobbyCategoriesAtom);
+  const [closedCategories, setClosedCategories] = useAtom(useClosedLobbyCategoriesAtom());
 
   useElementSizeObserver(
     useCallback(() => heroSectionRef.current, []),
