@@ -19,13 +19,14 @@ import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import { VirtualTile } from '../../../components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
-import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
+import { makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { useDirectRooms } from './useDirectRooms';
 import { openInviteUser } from '../../../../client/action/navigation';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
+import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
 
 function DirectEmpty() {
   return (
@@ -66,7 +67,7 @@ export function Direct() {
 
   const selectedRoomId = useSelectedRoom();
   const noRoomToDisplay = directs.length === 0;
-  const [closedCategories, setClosedCategories] = useAtom(closedNavCategoriesAtom);
+  const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
   const sortedDirects = useMemo(() => {
     const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));

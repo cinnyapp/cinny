@@ -54,6 +54,7 @@ import { SidebarNav } from './client/SidebarNav';
 import { PageRoot } from '../components/page';
 import { ScreenSize } from '../hooks/useScreenSize';
 import { MobileFriendlyPageNav, MobileFriendlyClientNav } from './MobileFriendly';
+import { ClientInitStorageAtom } from './client/ClientInitStorageAtom';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -99,17 +100,19 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         }}
         element={
           <ClientRoot>
-            <ClientBindAtoms>
-              <ClientLayout
-                nav={
-                  <MobileFriendlyClientNav>
-                    <SidebarNav />
-                  </MobileFriendlyClientNav>
-                }
-              >
-                <Outlet />
-              </ClientLayout>
-            </ClientBindAtoms>
+            <ClientInitStorageAtom>
+              <ClientBindAtoms>
+                <ClientLayout
+                  nav={
+                    <MobileFriendlyClientNav>
+                      <SidebarNav />
+                    </MobileFriendlyClientNav>
+                  }
+                >
+                  <Outlet />
+                </ClientLayout>
+              </ClientBindAtoms>
+            </ClientInitStorageAtom>
           </ClientRoot>
         }
       >

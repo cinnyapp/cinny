@@ -51,7 +51,7 @@ import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
-import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
+import { makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
@@ -70,6 +70,7 @@ import { UseStateProvider } from '../../../components/UseStateProvider';
 import { LeaveSpacePrompt } from '../../../components/leave-space-prompt';
 import { copyToClipboard } from '../../../utils/dom';
 import { useClientConfig } from '../../../hooks/useClientConfig';
+import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
 
 type SpaceMenuProps = {
   room: Room;
@@ -265,7 +266,7 @@ export function Space() {
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
 
-  const [closedCategories, setClosedCategories] = useAtom(closedNavCategoriesAtom);
+  const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
   const getRoom = useCallback(
     (rId: string) => {

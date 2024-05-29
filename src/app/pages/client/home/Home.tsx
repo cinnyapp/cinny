@@ -37,7 +37,7 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { VirtualTile } from '../../../components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { muteChangesAtom } from '../../../state/room-list/mutedRoomList';
-import { closedNavCategoriesAtom, makeNavCategoryId } from '../../../state/closedNavCategories';
+import { makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
@@ -46,6 +46,7 @@ import { PageNav, PageNavHeader, PageNavContent } from '../../../components/page
 import FocusTrap from 'focus-trap-react';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { markAsRead } from '../../../../client/action/notifications';
+import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -183,7 +184,7 @@ export function Home() {
   const selectedRoomId = useSelectedRoom();
   const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
-  const [closedCategories, setClosedCategories] = useAtom(closedNavCategoriesAtom);
+  const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
   const sortedRooms = useMemo(() => {
     const items = Array.from(rooms).sort(
