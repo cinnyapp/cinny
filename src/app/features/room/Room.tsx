@@ -7,18 +7,12 @@ import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePowerLevels';
-import {
-  roomIdToTypingMembersAtom,
-  useBindRoomIdToTypingMembersAtom,
-} from '../../state/typingMembers';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoom } from '../../hooks/useRoom';
 
 export function Room() {
-  const mx = useMatrixClient();
   const { eventId } = useParams();
   const room = useRoom();
-  useBindRoomIdToTypingMembersAtom(mx, roomIdToTypingMembersAtom);
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const screenSize = useScreenSizeContext();

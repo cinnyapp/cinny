@@ -518,7 +518,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                         </Avatar>
                       }
                       after={
-                        typingMembers.find((tm) => tm.userId === member.userId) && (
+                        typingMembers.find((receipt) => receipt.userId === member.userId) && (
                           <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
                             <TypingIndicator size="300" />
                           </Badge>

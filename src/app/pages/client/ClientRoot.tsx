@@ -28,6 +28,17 @@ function SystemEmojiFeature() {
   return null;
 }
 
+function ClientRootLoading() {
+  return (
+    <SplashScreen>
+      <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">
+        <Spinner variant="Secondary" size="600" />
+        <Text>Heating up</Text>
+      </Box>
+    </SplashScreen>
+  );
+}
+
 type ClientRootProps = {
   children: ReactNode;
 };
@@ -51,12 +62,7 @@ export function ClientRoot({ children }: ClientRootProps) {
   return (
     <SpecVersions baseUrl={baseUrl!}>
       {loading ? (
-        <SplashScreen>
-          <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">
-            <Spinner variant="Secondary" size="600" />
-            <Text>Heating up</Text>
-          </Box>
-        </SplashScreen>
+        <ClientRootLoading />
       ) : (
         <MatrixClientProvider value={initMatrix.matrixClient!}>
           <CapabilitiesAndMediaConfigLoader>

@@ -1,9 +1,8 @@
 import { MatrixClient } from 'matrix-js-sdk';
 import { useMemo, useRef } from 'react';
+import { TYPING_TIMEOUT_MS } from '../state/typingMembers';
 
 type TypingStatusUpdater = (typing: boolean) => void;
-
-const TYPING_TIMEOUT_MS = 5000; // 5 seconds
 
 export const useTypingStatusUpdater = (mx: MatrixClient, roomId: string): TypingStatusUpdater => {
   const statusSentTsRef = useRef<number>(0);

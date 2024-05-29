@@ -22,8 +22,10 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
     );
 
     const typingNames = typingMembers
-      .filter((member) => member.userId !== mx.getUserId())
-      .map((member) => getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId))
+      .filter((receipt) => receipt.userId !== mx.getUserId())
+      .map(
+        (receipt) => getMemberDisplayName(room, receipt.userId) ?? getMxIdLocalPart(receipt.userId)
+      )
       .reverse();
 
     if (typingNames.length === 0) {
@@ -33,11 +35,11 @@ export const RoomViewTyping = as<'div', RoomViewTypingProps>(
     const handleDropAll = () => {
       // some homeserver does not timeout typing status
       // we have given option so user can drop their typing status
-      typingMembers.forEach((member) =>
+      typingMembers.forEach((receipt) =>
         setTypingMembers({
           type: 'DELETE',
           roomId: room.roomId,
-          member,
+          userId: receipt.userId,
         })
       );
     };
