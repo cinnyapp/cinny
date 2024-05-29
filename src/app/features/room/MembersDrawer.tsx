@@ -32,7 +32,6 @@ import { Room, RoomMember } from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import classNames from 'classnames';
-import { useAtomValue } from 'jotai';
 
 import { openProfileViewer } from '../../../client/action/navigation';
 import * as css from './MembersDrawer.css';
@@ -47,7 +46,6 @@ import {
 } from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePowerLevelTags, PowerLevelTag } from '../../hooks/usePowerLevelTags';
-import { roomIdToTypingMembersAtom, selectRoomTypingMembersAtom } from '../../state/typingMembers';
 import { TypingIndicator } from '../../components/typing-indicator';
 import { getMemberDisplayName, getMemberSearchStr } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
@@ -56,6 +54,7 @@ import { settingsAtom } from '../../state/settings';
 import { millify } from '../../plugins/millify';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { UserAvatar } from '../../components/user-avatar';
+import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -187,9 +186,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
   const membershipFilter = membershipFilterMenu[membershipFilterIndex] ?? membershipFilterMenu[0];
   const sortFilter = sortFilterMenu[sortFilterIndex] ?? sortFilterMenu[0];
 
-  const typingMembers = useAtomValue(
-    useMemo(() => selectRoomTypingMembersAtom(room.roomId, roomIdToTypingMembersAtom), [room])
-  );
+  const typingMembers = useRoomTypingMember(room.roomId);
 
   const filteredMembers = useMemo(
     () =>

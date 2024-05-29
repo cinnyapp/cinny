@@ -14,6 +14,7 @@ import {
   toRem,
   Line,
   RectCords,
+  Badge,
 } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
 import FocusTrap from 'focus-trap-react';
@@ -33,6 +34,8 @@ import { openInviteUser, toggleRoomSettings } from '../../../client/action/navig
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { useClientConfig } from '../../hooks/useClientConfig';
+import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
+import { TypingIndicator } from '../../components/typing-indicator';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -175,6 +178,7 @@ export function RoomNavItem({
   const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  const typingMember = useRoomTypingMember(room.roomId);
 
   const handleContextMenu: MouseEventHandler<HTMLElement> = (evt) => {
     evt.preventDefault();
@@ -234,6 +238,11 @@ export function RoomNavItem({
                 {room.name}
               </Text>
             </Box>
+            {!optionsVisible && !unread && !selected && typingMember.length > 0 && (
+              <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
+                <TypingIndicator size="300" disableAnimation />
+              </Badge>
+            )}
             {!optionsVisible && unread && (
               <UnreadBadgeCenter>
                 <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
