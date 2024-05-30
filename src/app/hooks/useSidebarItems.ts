@@ -99,3 +99,40 @@ export const useSidebarItems = (
 
   return [sidebarItems, setSidebarItems];
 };
+
+export const sidebarItemWithout = (items: SidebarItems, roomId: string) => {
+  const newItems: SidebarItems = items
+    .map((item) => {
+      if (typeof item === 'string') {
+        if (item === roomId) return null;
+        return item;
+      }
+      if (item.content.includes(roomId)) {
+        const newContent = item.content.filter((id) => id !== roomId);
+        if (newContent.length === 0) return null;
+        return {
+          ...item,
+          content: newContent,
+        };
+      }
+      return item;
+    })
+    .filter((item) => item !== null) as SidebarItems;
+
+  return newItems;
+};
+
+export const makeCinnySpacesContent = (
+  mx: MatrixClient,
+  items: SidebarItems
+): InCinnySpacesContent => {
+  const currentInSpaces =
+    getAccountData(mx, AccountDataEvent.CinnySpaces)?.getContent<InCinnySpacesContent>() ?? {};
+
+  const newSpacesContent: InCinnySpacesContent = {
+    ...currentInSpaces,
+    sidebar: items,
+  };
+
+  return newSpacesContent;
+};

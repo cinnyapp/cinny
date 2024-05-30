@@ -178,12 +178,16 @@ type HierarchyItemMenuProps = {
   joined: boolean;
   canInvite: boolean;
   canEditChild: boolean;
+  pinned?: boolean;
+  onTogglePin?: (roomId: string) => void;
 };
 export function HierarchyItemMenu({
   item,
   joined,
   canInvite,
   canEditChild,
+  pinned,
+  onTogglePin,
 }: HierarchyItemMenuProps) {
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
@@ -228,6 +232,20 @@ export function HierarchyItemMenu({
               <Menu style={{ maxWidth: toRem(150), width: '100vw' }}>
                 {joined && (
                   <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                    {onTogglePin && (
+                      <MenuItem
+                        size="300"
+                        radii="300"
+                        onClick={() => {
+                          onTogglePin(item.roomId);
+                          handleRequestClose();
+                        }}
+                      >
+                        <Text as="span" size="T300" truncate>
+                          {pinned ? 'Unpin from Sidebar' : 'Pin to Sidebar'}
+                        </Text>
+                      </MenuItem>
+                    )}
                     <InviteMenuItem
                       item={item}
                       requestClose={handleRequestClose}

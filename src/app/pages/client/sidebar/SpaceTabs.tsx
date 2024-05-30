@@ -72,14 +72,14 @@ import { RoomAvatar } from '../../../components/room-avatar';
 import { nameInitials, randomStr } from '../../../utils/common';
 import {
   ISidebarFolder,
-  InCinnySpacesContent,
   SidebarItems,
   TSidebarItem,
+  makeCinnySpacesContent,
   parseSidebar,
+  sidebarItemWithout,
   useSidebarItems,
 } from '../../../hooks/useSidebarItems';
 import { AccountDataEvent } from '../../../../types/matrix/accountData';
-import { getAccountData } from '../../../utils/room';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useOpenedSidebarFolderAtom } from '../../../state/hooks/openedSidebarFolder';
@@ -94,97 +94,117 @@ import { openInviteUser, openSpaceSettings } from '../../../../client/action/nav
 type SpaceMenuProps = {
   room: Room;
   requestClose: () => void;
+  onUnpin?: (roomId: string) => void;
 };
-const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClose }, ref) => {
-  const mx = useMatrixClient();
-  const { hashRouter } = useClientConfig();
-  const roomToParents = useAtomValue(roomToParentsAtom);
-  const powerLevels = usePowerLevels(room);
-  const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
-  const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
+const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
+  ({ room, requestClose, onUnpin }, ref) => {
+    const mx = useMatrixClient();
+    const { hashRouter } = useClientConfig();
+    const roomToParents = useAtomValue(roomToParentsAtom);
+    const powerLevels = usePowerLevels(room);
+    const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
+    const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
 
-  const allChild = useSpaceChildren(
-    allRoomsAtom,
-    room.roomId,
-    useRecursiveChildScopeFactory(mx, roomToParents)
-  );
-  const unread = useRoomsUnread(allChild, roomToUnreadAtom);
+    const allChild = useSpaceChildren(
+      allRoomsAtom,
+      room.roomId,
+      useRecursiveChildScopeFactory(mx, roomToParents)
+    );
+    const unread = useRoomsUnread(allChild, roomToUnreadAtom);
 
-  const handleMarkAsRead = () => {
-    allChild.forEach((childRoomId) => markAsRead(childRoomId));
-    requestClose();
-  };
+    const handleMarkAsRead = () => {
+      allChild.forEach((childRoomId) => markAsRead(childRoomId));
+      requestClose();
+    };
 
-  const handleCopyLink = () => {
-    const spacePath = getSpacePath(getCanonicalAliasOrRoomId(mx, room.roomId));
-    copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), spacePath));
-    requestClose();
-  };
+    const handleUnpin = () => {
+      onUnpin?.(room.roomId);
+      requestClose();
+    };
 
-  const handleInvite = () => {
-    openInviteUser(room.roomId);
-    requestClose();
-  };
+    const handleCopyLink = () => {
+      const spacePath = getSpacePath(getCanonicalAliasOrRoomId(mx, room.roomId));
+      copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), spacePath));
+      requestClose();
+    };
 
-  const handleRoomSettings = () => {
-    openSpaceSettings(room.roomId);
-    requestClose();
-  };
+    const handleInvite = () => {
+      openInviteUser(room.roomId);
+      requestClose();
+    };
 
-  return (
-    <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
-      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-        <MenuItem
-          onClick={handleMarkAsRead}
-          size="300"
-          after={<Icon size="100" src={Icons.CheckTwice} />}
-          radii="300"
-          disabled={!unread}
-        >
-          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Mark as Read
-          </Text>
-        </MenuItem>
-      </Box>
-      <Line variant="Surface" size="300" />
-      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-        <MenuItem
-          onClick={handleInvite}
-          variant="Primary"
-          fill="None"
-          size="300"
-          after={<Icon size="100" src={Icons.UserPlus} />}
-          radii="300"
-          disabled={!canInvite}
-        >
-          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Invite
-          </Text>
-        </MenuItem>
-        <MenuItem
-          onClick={handleCopyLink}
-          size="300"
-          after={<Icon size="100" src={Icons.Link} />}
-          radii="300"
-        >
-          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Copy Link
-          </Text>
-        </MenuItem>
-        <MenuItem
-          onClick={handleRoomSettings}
-          size="300"
-          after={<Icon size="100" src={Icons.Setting} />}
-          radii="300"
-        >
-          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Space Settings
-          </Text>
-        </MenuItem>
-      </Box>
-    </Menu>
-  );
-});
+    const handleRoomSettings = () => {
+      openSpaceSettings(room.roomId);
+      requestClose();
+    };
+
+    return (
+      <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
+        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <MenuItem
+            onClick={handleMarkAsRead}
+            size="300"
+            after={<Icon size="100" src={Icons.CheckTwice} />}
+            radii="300"
+            disabled={!unread}
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Mark as Read
+            </Text>
+          </MenuItem>
+          {onUnpin && (
+            <MenuItem
+              size="300"
+              radii="300"
+              onClick={handleUnpin}
+              after={<Icon size="100" src={Icons.Pin} />}
+            >
+              <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                Unpin
+              </Text>
+            </MenuItem>
+          )}
+        </Box>
+        <Line variant="Surface" size="300" />
+        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <MenuItem
+            onClick={handleInvite}
+            variant="Primary"
+            fill="None"
+            size="300"
+            after={<Icon size="100" src={Icons.UserPlus} />}
+            radii="300"
+            disabled={!canInvite}
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Invite
+            </Text>
+          </MenuItem>
+          <MenuItem
+            onClick={handleCopyLink}
+            size="300"
+            after={<Icon size="100" src={Icons.Link} />}
+            radii="300"
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Copy Link
+            </Text>
+          </MenuItem>
+          <MenuItem
+            onClick={handleRoomSettings}
+            size="300"
+            after={<Icon size="100" src={Icons.Setting} />}
+            radii="300"
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Space Settings
+            </Text>
+          </MenuItem>
+        </Box>
+      </Menu>
+    );
+  }
+);
 
 type InstructionType = Instruction['type'];
 type FolderDraggable = {
@@ -351,8 +371,17 @@ type SpaceTabProps = {
   folder?: ISidebarFolder;
   onDragging: (dragItem?: SidebarDraggable) => void;
   disabled?: boolean;
+  onUnpin?: (roomId: string) => void;
 };
-function SpaceTab({ space, selected, onClick, folder, onDragging, disabled }: SpaceTabProps) {
+function SpaceTab({
+  space,
+  selected,
+  onClick,
+  folder,
+  onDragging,
+  disabled,
+  onUnpin,
+}: SpaceTabProps) {
   const mx = useMatrixClient();
   const targetRef = useRef<HTMLDivElement>(null);
 
@@ -436,7 +465,11 @@ function SpaceTab({ space, selected, onClick, folder, onDragging, disabled }: Sp
                     isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
                   }}
                 >
-                  <SpaceMenu room={space} requestClose={() => setMenuAnchor(undefined)} />
+                  <SpaceMenu
+                    room={space}
+                    requestClose={() => setMenuAnchor(undefined)}
+                    onUnpin={onUnpin}
+                  />
                 </FocusTrap>
               }
             />
@@ -690,13 +723,7 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
           newItems.push(i);
         });
 
-        const currentInSpaces =
-          getAccountData(mx, AccountDataEvent.CinnySpaces)?.getContent<InCinnySpacesContent>() ??
-          {};
-        const newSpacesContent = {
-          ...currentInSpaces,
-          sidebar: newItems,
-        };
+        const newSpacesContent = makeCinnySpacesContent(mx, newItems);
         localEchoSidebarItem(parseSidebar(mx, orphanSpaces, newSpacesContent));
         mx.setAccountData(AccountDataEvent.CinnySpaces, newSpacesContent);
       },
@@ -736,6 +763,18 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
     });
   };
 
+  const handleUnpin = useCallback(
+    (roomId: string) => {
+      if (orphanSpaces.includes(roomId)) return;
+      const newItems = sidebarItemWithout(sidebarItems, roomId);
+
+      const newSpacesContent = makeCinnySpacesContent(mx, newItems);
+      localEchoSidebarItem(parseSidebar(mx, orphanSpaces, newSpacesContent));
+      mx.setAccountData(AccountDataEvent.CinnySpaces, newSpacesContent);
+    },
+    [mx, sidebarItems, orphanSpaces, localEchoSidebarItem]
+  );
+
   if (sidebarItems.length === 0) return null;
   return (
     <>
@@ -762,6 +801,7 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
                             ? draggingItem.spaceId === space.roomId
                             : false
                         }
+                        onUnpin={orphanSpaces.includes(space.roomId) ? undefined : handleUnpin}
                       />
                     );
                   })}
@@ -794,6 +834,7 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
               onClick={handleSpaceClick}
               onDragging={setDraggingItem}
               disabled={typeof draggingItem === 'string' ? draggingItem === space.roomId : false}
+              onUnpin={orphanSpaces.includes(space.roomId) ? undefined : handleUnpin}
             />
           );
         })}

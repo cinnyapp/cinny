@@ -39,6 +39,14 @@ import { AfterItemDropTarget, CanDropCallback, useDnDMonitor } from './DnD';
 import { ASCIILexicalTable, orderKeys } from '../../utils/ASCIILexicalTable';
 import { getStateEvent } from '../../utils/room';
 import { useClosedLobbyCategoriesAtom } from '../../state/hooks/closedLobbyCategories';
+import {
+  makeCinnySpacesContent,
+  sidebarItemWithout,
+  useSidebarItems,
+} from '../../hooks/useSidebarItems';
+import { useOrphanSpaces } from '../../state/hooks/roomList';
+import { roomToParentsAtom } from '../../state/room/roomToParents';
+import { AccountDataEvent } from '../../../types/matrix/accountData';
 
 export function Lobby() {
   const navigate = useNavigate();
@@ -58,6 +66,17 @@ export function Lobby() {
   const screenSize = useScreenSizeContext();
   const [onTop, setOnTop] = useState(true);
   const [closedCategories, setClosedCategories] = useAtom(useClosedLobbyCategoriesAtom());
+  const [sidebarItems] = useSidebarItems(
+    useOrphanSpaces(mx, allRoomsAtom, useAtomValue(roomToParentsAtom))
+  );
+  const sidebarSpaces = useMemo(() => {
+    const sideSpaces = sidebarItems.flatMap((item) => {
+      if (typeof item === 'string') return item;
+      return item.content;
+    });
+
+    return new Set(sideSpaces);
+  }, [sidebarItems]);
 
   useElementSizeObserver(
     useCallback(() => heroSectionRef.current, []),
@@ -319,6 +338,18 @@ export function Lobby() {
     navigate(getSpaceRoomPath(pSpaceIdOrAlias, getCanonicalAliasOrRoomId(mx, rId)));
   };
 
+  const togglePinToSidebar = useCallback(
+    (rId: string) => {
+      const newItems = sidebarItemWithout(sidebarItems, rId);
+      if (!sidebarSpaces.has(rId)) {
+        newItems.push(rId);
+      }
+      const newSpacesContent = makeCinnySpacesContent(mx, newItems);
+      mx.setAccountData(AccountDataEvent.CinnySpaces, newSpacesContent);
+    },
+    [mx, sidebarItems, sidebarSpaces]
+  );
+
   return (
     <PowerLevelsContextProvider value={spacePowerLevels}>
       <Box grow="Yes">
@@ -415,6 +446,8 @@ export function Lobby() {
                                     canInvite={canInvite}
                                     joined={isJoined}
                                     canEditChild={canEditSpaceChild(parentPowerLevels)}
+                                    pinned={sidebarSpaces.has(item.roomId)}
+                                    onTogglePin={togglePinToSidebar}
                                   />
                                 )
                               }
