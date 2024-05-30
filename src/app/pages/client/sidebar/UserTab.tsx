@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { Text } from 'folds';
+import { UserEvent, UserEventHandlerMap } from 'matrix-js-sdk';
 import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '../../../components/sidebar';
 import { openSettings } from '../../../../client/action/navigation';
 import { UserAvatar } from '../../../components/user-avatar';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { UserEvent, UserEventHandlerMap } from 'matrix-js-sdk';
-import { getUsername } from '../../../../util/matrixUtil';
 import { getMxIdLocalPart } from '../../../utils/matrix';
 import { nameInitials } from '../../../utils/common';
-import { Text } from 'folds';
 
 type UserProfile = {
   avatar_url?: string;
@@ -44,7 +43,7 @@ export function UserTab() {
       user?.removeListener(UserEvent.AvatarUrl, onAvatarChange);
       user?.removeListener(UserEvent.DisplayName, onDisplayNameChange);
     };
-  }, [userId]);
+  }, [mx, userId]);
 
   return (
     <SidebarItem>

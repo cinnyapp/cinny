@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Icon, Icons, AvatarFallback, Text, Scroll } from 'folds';
+import { Icon, Icons, Scroll } from 'folds';
 
 import {
   Sidebar,
@@ -11,7 +11,7 @@ import {
   SidebarItem,
 } from '../../components/sidebar';
 import { DirectTab, HomeTab, SpaceTabs, InboxTab, ExploreTab, UserTab } from './sidebar';
-import { openCreateRoom, openSearch, openSettings } from '../../../client/action/navigation';
+import { openCreateRoom, openSearch } from '../../../client/action/navigation';
 
 export function SidebarNav() {
   const scrollRef = useRef<HTMLDivElement>(null);

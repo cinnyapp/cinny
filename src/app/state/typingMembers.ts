@@ -63,7 +63,7 @@ const timeoutReceipt = (
   userId: string,
   timeout: number
 ): boolean | undefined => {
-  let typingMembers = roomToMembers.get(roomId) ?? [];
+  const typingMembers = roomToMembers.get(roomId) ?? [];
 
   const target = typingMembers.find((receipt) => receipt.userId === userId);
   if (!target) return undefined;

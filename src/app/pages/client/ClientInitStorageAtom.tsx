@@ -16,21 +16,13 @@ export function ClientInitStorageAtom({ children }: ClientInitStorageAtomProps) 
   const mx = useMatrixClient();
   const userId = mx.getUserId()!;
 
-  const closedNavCategoriesAtom = useMemo(() => {
-    return makeClosedNavCategoriesAtom(userId);
-  }, [userId]);
+  const closedNavCategoriesAtom = useMemo(() => makeClosedNavCategoriesAtom(userId), [userId]);
 
-  const closedLobbyCategoriesAtom = useMemo(() => {
-    return makeClosedLobbyCategoriesAtom(userId);
-  }, [userId]);
+  const closedLobbyCategoriesAtom = useMemo(() => makeClosedLobbyCategoriesAtom(userId), [userId]);
 
-  const navToActivePathAtom = useMemo(() => {
-    return makeNavToActivePathAtom(userId);
-  }, [userId]);
+  const navToActivePathAtom = useMemo(() => makeNavToActivePathAtom(userId), [userId]);
 
-  const openedSidebarFolderAtom = useMemo(() => {
-    return makeOpenedSidebarFolderAtom(userId);
-  }, [userId]);
+  const openedSidebarFolderAtom = useMemo(() => makeOpenedSidebarFolderAtom(userId), [userId]);
 
   return (
     <ClosedNavCategoriesProvider value={closedNavCategoriesAtom}>

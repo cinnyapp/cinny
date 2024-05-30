@@ -1,8 +1,6 @@
 import produce from 'immer';
 import { atom, useSetAtom, PrimitiveAtom, useAtomValue } from 'jotai';
 import {
-  ClientEvent,
-  ClientEventHandlerMap,
   IRoomTimelineData,
   MatrixClient,
   MatrixEvent,
@@ -195,7 +193,7 @@ export const useBindRoomToUnreadAtom = (
           });
         }
       },
-      [setUnreadAtom]
+      [mx, setUnreadAtom]
     )
   );
 

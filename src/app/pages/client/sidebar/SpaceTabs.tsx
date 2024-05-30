@@ -38,6 +38,7 @@ import {
 } from '@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item';
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
+import FocusTrap from 'focus-trap-react';
 import {
   useOrphanSpaces,
   useRecursiveChildScopeFactory,
@@ -89,7 +90,6 @@ import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { markAsRead } from '../../../../client/action/notifications';
 import { copyToClipboard } from '../../../utils/dom';
 import { openInviteUser, openSpaceSettings } from '../../../../client/action/navigation';
-import FocusTrap from 'focus-trap-react';
 
 type SpaceMenuProps = {
   room: Room;

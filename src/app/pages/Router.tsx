@@ -5,7 +5,6 @@ import {
   createBrowserRouter,
   createHashRouter,
   createRoutesFromElements,
-  matchPath,
   redirect,
 } from 'react-router-dom';
 
