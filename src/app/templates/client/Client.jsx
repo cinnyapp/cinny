@@ -24,6 +24,7 @@ import { ClientContent } from './ClientContent';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { clamp } from '../../utils/common';
+import { useTouchMenu } from '../../hooks/useTouchMenu';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -40,13 +41,12 @@ function SystemEmojiFeature() {
 function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
-  const [isTouchingSide, setTouchingSide] = useState(false);
-  const [sideMoved, setSideMoved] = useState(0);
   const classNameHidden = 'client__item-hidden';
   const classNameSided = 'client__item-sided';
 
   const navWrapperRef = useRef(null);
   const roomWrapperRef = useRef(null);
+  const { isTouchingSide, sideMoved, onTouchStart, onTouchMove, onTouchEnd } = useTouchMenu(navWrapperRef, classNameSided);
 
   function onRoomSelected() {
     roomWrapperRef.current?.classList.remove(classNameHidden);
@@ -55,48 +55,6 @@ function Client() {
   function onNavigationSelected() {
     navWrapperRef.current?.classList.remove(classNameSided);
     setTimeout(() => roomWrapperRef.current?.classList.add(classNameHidden), 250);
-  }
-  // Touch handlers for window object. If the touch starts at 10% of the left of the screen, it will trigger the swipe-right-menu.
-  let lastTouch = 0, sideVelocity = 0;
-  function onTouchStart(event) {
-    if (!navWrapperRef.current?.classList.contains(classNameSided)) return;
-    if (event.touches.length != 1) return setTouchingSide(false);
-    if (event.touches[0].clientX < window.innerWidth * 0.1) {
-      setTouchingSide(true);
-      lastTouch = Date.now();
-    }
-  }
-  function onTouchEnd(event) {
-    if (!navWrapperRef.current?.classList.contains(classNameSided)) return;
-    setTouchingSide(isTouchingSide => {
-      if (isTouchingSide) {
-        setSideMoved(sideMoved => {
-          if (sideMoved) {
-            event.preventDefault();
-            if (sideMoved > window.innerWidth * 0.5 || sideVelocity >= (window.innerWidth * 0.1 / 250)) openNavigation();
-          }
-          sideVelocity = lastTouch = 0;
-          return 0;
-        });
-      }
-      return false;
-    });
-  }
-  function onTouchMove(event) {
-    if (!navWrapperRef.current?.classList.contains(classNameSided)) return;
-    setTouchingSide(isTouchingSide => {
-      if (isTouchingSide) {
-        event.preventDefault();
-        if (event.changedTouches.length != 1) return setSideMoved(0);
-        setSideMoved(sideMoved => {
-          const newSideMoved = event.changedTouches[0].clientX;
-          sideVelocity = (newSideMoved - sideMoved) / (Date.now() - lastTouch);
-          lastTouch = Date.now();
-          return newSideMoved;
-        });
-      }
-      return isTouchingSide;
-    });
   }
 
   useEffect(() => {
