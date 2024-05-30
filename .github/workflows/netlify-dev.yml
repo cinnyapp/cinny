@@ -3,7 +3,7 @@ name: Deploy to Netlify (dev)
 on:
   push:
     branches:
-       - dev
+      - dev
 
 jobs:
   deploy-to-netlify:
@@ -11,23 +11,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.1.6
       - name: Setup node
-        uses: actions/setup-node@v3.8.1
+        uses: actions/setup-node@v4.0.2
         with:
-          node-version: 18.12.1
-          cache: "npm"
+          node-version: 20.12.2
+          cache: 'npm'
       - name: Install dependencies
         run: npm ci
       - name: Build app
         env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
+          NODE_OPTIONS: '--max_old_space_size=4096'
         run: npm run build
       - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@7a92f00dde8c92a5a9e8385ec2919775f7647352
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
         with:
           publish-dir: dist
-          deploy-message: "Dev deploy ${{ github.sha }}"
+          deploy-message: 'Dev deploy ${{ github.sha }}'
           enable-commit-comment: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
           production-deploy: true

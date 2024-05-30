@@ -3,6 +3,7 @@
   "version": "3.2.0",
   "description": "Yet another matrix client",
   "main": "index.js",
+  "type": "module",
   "engines": {
     "node": ">=16.0.0"
   },
@@ -46,13 +47,13 @@
     "immer": "9.0.16",
     "is-hotkey": "0.2.0",
     "jotai": "2.6.0",
-    "katex": "0.16.4",
+    "katex": "0.16.10",
     "linkify-html": "4.0.2",
     "linkify-react": "4.1.1",
     "linkifyjs": "4.0.2",
     "matrix-js-sdk": "29.1.0",
     "millify": "6.1.0",
-    "pdfjs-dist": "3.10.111",
+    "pdfjs-dist": "4.2.67",
     "prismjs": "1.29.0",
     "prop-types": "15.8.1",
     "react": "18.2.0",
@@ -67,7 +68,7 @@
     "react-modal": "3.16.1",
     "react-range": "1.8.14",
     "react-router-dom": "6.20.0",
-    "sanitize-html": "2.8.0",
+    "sanitize-html": "2.12.1",
     "slate": "0.94.1",
     "slate-history": "0.93.0",
     "slate-react": "0.98.4",
@@ -94,15 +95,15 @@
     "eslint": "8.29.0",
     "eslint-config-airbnb": "19.0.4",
     "eslint-config-prettier": "8.5.0",
-    "eslint-plugin-import": "2.26.0",
+    "eslint-plugin-import": "2.29.1",
     "eslint-plugin-jsx-a11y": "6.6.1",
     "eslint-plugin-react": "7.31.11",
     "eslint-plugin-react-hooks": "4.6.0",
-    "mini-svg-data-uri": "1.4.4",
     "prettier": "2.8.1",
     "sass": "1.56.2",
     "typescript": "4.9.4",
-    "vite": "5.0.8",
-    "vite-plugin-static-copy": "0.13.0"
+    "vite": "5.0.13",
+    "vite-plugin-static-copy": "1.0.4",
+    "vite-plugin-top-level-await": "1.4.1"
   }
 }

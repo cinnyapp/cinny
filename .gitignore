@@ -4,3 +4,4 @@ node_modules
 devAssets
 
 .DS_Store
+.idea
