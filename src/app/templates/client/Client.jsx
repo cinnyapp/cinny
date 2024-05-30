@@ -15,6 +15,7 @@ import Dialogs from '../../organisms/pw/Dialogs';
 
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
+import { openNavigation } from '../../../client/action/navigation';
 import cons from '../../../client/state/cons';
 
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
@@ -22,6 +23,8 @@ import { MatrixClientProvider } from '../../hooks/useMatrixClient';
 import { ClientContent } from './ClientContent';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
+import { clamp } from '../../utils/common';
+import { useTouchMenu } from '../../hooks/useTouchMenu';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -39,26 +42,36 @@ function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const classNameHidden = 'client__item-hidden';
+  const classNameSided = 'client__item-sided';
 
   const navWrapperRef = useRef(null);
   const roomWrapperRef = useRef(null);
+  const { isTouchingSide, sideMoved, onTouchStart, onTouchMove, onTouchEnd } = useTouchMenu(navWrapperRef, classNameSided);
 
   function onRoomSelected() {
-    navWrapperRef.current?.classList.add(classNameHidden);
     roomWrapperRef.current?.classList.remove(classNameHidden);
+    navWrapperRef.current?.classList.add(classNameSided);
   }
   function onNavigationSelected() {
-    navWrapperRef.current?.classList.remove(classNameHidden);
-    roomWrapperRef.current?.classList.add(classNameHidden);
+    navWrapperRef.current?.classList.remove(classNameSided);
+    setTimeout(() => roomWrapperRef.current?.classList.add(classNameHidden), 250);
   }
 
   useEffect(() => {
     navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
     navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
 
+    window.addEventListener("touchstart", onTouchStart);
+    window.addEventListener("touchend", onTouchEnd);
+    window.addEventListener("touchmove", onTouchMove);
+
     return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
       navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
+
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchmove", onTouchMove);
     };
   }, []);
 
@@ -119,10 +132,10 @@ function Client() {
 
   return (
     <MatrixClientProvider value={initMatrix.matrixClient}>
+      <div className="navigation__wrapper" style={isTouchingSide ? { transform: `translateX(${-clamp(window.innerWidth - sideMoved, 0, window.innerWidth)}px)`, transition: "none" } : {}} ref={navWrapperRef}>
+        <Navigation />
+      </div>
       <div className="client-container">
-        <div className="navigation__wrapper" ref={navWrapperRef}>
-          <Navigation />
-        </div>
         <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
           <ClientContent />
         </div>

@@ -1,8 +1,10 @@
 import React, {
   Dispatch,
+  MouseEvent,
   MouseEventHandler,
   RefObject,
   SetStateAction,
+  TouchEvent,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -101,7 +103,7 @@ import {
   selectTab,
 } from '../../../client/action/navigation';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
-import { parseGeoUri, scaleYDimension } from '../../utils/common';
+import { clamp, parseGeoUri, scaleYDimension } from '../../utils/common';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { useRoomMsgContentRenderer } from '../../hooks/useRoomMsgContentRenderer';
 import { IAudioContent, IImageContent, IVideoContent } from '../../../types/matrix/common';
@@ -141,6 +143,7 @@ import cons from '../../../client/state/cons';
 import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
 import { EMOJI_PATTERN, HTTP_URL_PATTERN, VARIATION_SELECTOR_PATTERN } from '../../utils/regex';
 import { UrlPreviewCard, UrlPreviewHolder } from './message/UrlPreviewCard';
+import { useSwipeLeft } from '../../hooks/useSwipeLeft';
 
 // Thumbs up emoji found to have Variation Selector 16 at the end
 // so included variation selector pattern in regex
@@ -928,9 +931,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     [mx, room, editor]
   );
 
-  const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (evt) => {
-      const replyId = evt.currentTarget.getAttribute('data-event-id');
+  // Replaces handleReplyClick. This takes an event id instead of the event to allow swipe-left-reply to directly cause a reply.
+  const handleReplyId = useCallback(
+    (replyId: string | null) => {
       if (!replyId) {
         console.warn('Button should have "data-event-id" attribute!');
         return;
@@ -988,6 +991,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     },
     [editor]
   );
+
+  // swipe left hook
+  const { isTouchingSide, sideMoved, sideMovedInit, swipingId, onTouchStart, onTouchMove, onTouchEnd } = useSwipeLeft(handleReplyId);
 
   const renderBody = (body: string, customBody?: string) => {
     if (body === '') <MessageEmptyContent />;
@@ -1280,9 +1286,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           relations={hasReactions ? reactionRelations : undefined}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
-          onReplyClick={handleReplyClick}
+          onReplyClick={(evt: MouseEvent) => handleReplyId(evt.currentTarget.getAttribute('data-event-id'))}
           onReactionToggle={handleReactionToggle}
           onEditId={handleEdit}
+          onTouchStart={(evt: TouchEvent) => onTouchStart(evt, mEvent.getId())}
+          onTouchMove={(evt: TouchEvent) => onTouchMove(evt, mEvent.getId())}
+          onTouchEnd={onTouchEnd}
+          style={{ transform: `translateX(${isTouchingSide && mEvent.getId() == swipingId ? clamp(sideMoved - sideMovedInit, -window.innerWidth, 0) : 0}px)` }}
           reply={
             replyEventId && (
               <Reply
@@ -1338,9 +1348,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           relations={hasReactions ? reactionRelations : undefined}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
-          onReplyClick={handleReplyClick}
+          onReplyClick={(evt: MouseEvent) => handleReplyId(evt.currentTarget.getAttribute('data-event-id'))}
           onReactionToggle={handleReactionToggle}
           onEditId={handleEdit}
+          onTouchStart={(evt: TouchEvent) => onTouchStart(evt, mEvent.getId())}
+          onTouchMove={(evt: TouchEvent) => onTouchMove(evt, mEvent.getId())}
+          onTouchEnd={onTouchEnd}
+          style={{ transform: `translateX(${isTouchingSide && mEvent.getId() == swipingId ? clamp(sideMoved - sideMovedInit, -window.innerWidth, 0) : 0}px)` }}
           reply={
             replyEventId && (
               <Reply
@@ -1413,8 +1427,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           relations={hasReactions ? reactionRelations : undefined}
           onUserClick={handleUserClick}
           onUsernameClick={handleUsernameClick}
-          onReplyClick={handleReplyClick}
+          onReplyClick={(evt: MouseEvent) => handleReplyId(evt.currentTarget.getAttribute('data-event-id'))}
           onReactionToggle={handleReactionToggle}
+          onTouchStart={(evt: TouchEvent) => onTouchStart(evt, mEvent.getId())}
+          onTouchMove={(evt: TouchEvent) => onTouchMove(evt, mEvent.getId())}
+          onTouchEnd={onTouchEnd}
+          style={{ transform: `translateX(${isTouchingSide && mEvent.getId() == swipingId ? clamp(sideMoved - sideMovedInit, -window.innerWidth, 0) : 0}px)` }}
           reactions={
             reactionRelations && (
               <Reactions

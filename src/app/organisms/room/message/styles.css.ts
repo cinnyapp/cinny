@@ -39,6 +39,7 @@ export const ModalWide = style({
 
 export const MessageBase = style({
   position: 'relative',
+  transition: 'transform .25s ease',
 });
 
 export const MessageOptionsBase = style([
