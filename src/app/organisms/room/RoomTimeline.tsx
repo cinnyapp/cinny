@@ -1292,7 +1292,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onTouchStart={(evt: TouchEvent) => onTouchStart(evt, mEvent.getId())}
           onTouchMove={(evt: TouchEvent) => onTouchMove(evt, mEvent.getId())}
           onTouchEnd={onTouchEnd}
-          style={isTouchingSide && mEvent.getId() == swipingId ? { transform: `translateX(${clamp(sideMoved - sideMovedInit, -window.innerWidth, 0)}px)` } : { transition: "all .25s ease" }}
+          style={{ transform: `translateX(${isTouchingSide && mEvent.getId() == swipingId ? clamp(sideMoved - sideMovedInit, -window.innerWidth, 0) : 0}px)` }}
           reply={
             replyEventId && (
               <Reply
@@ -1354,7 +1354,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onTouchStart={(evt: TouchEvent) => onTouchStart(evt, mEvent.getId())}
           onTouchMove={(evt: TouchEvent) => onTouchMove(evt, mEvent.getId())}
           onTouchEnd={onTouchEnd}
-          style={isTouchingSide && mEvent.getId() == swipingId ? { transform: `translateX(${clamp(sideMoved - sideMovedInit, -window.innerWidth, 0)}px)` } : { transition: "all .25s ease" }}
+          style={{ transform: `translateX(${isTouchingSide && mEvent.getId() == swipingId ? clamp(sideMoved - sideMovedInit, -window.innerWidth, 0) : 0}px)` }}
           reply={
             replyEventId && (
               <Reply
@@ -1432,7 +1432,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           onTouchStart={(evt: TouchEvent) => onTouchStart(evt, mEvent.getId())}
           onTouchMove={(evt: TouchEvent) => onTouchMove(evt, mEvent.getId())}
           onTouchEnd={onTouchEnd}
-          style={isTouchingSide && mEvent.getId() == swipingId ? { transform: `translateX(${clamp(sideMoved - sideMovedInit, -window.innerWidth, 0)}px)` } : { transition: "all .25s ease" }}
+          style={{ transform: `translateX(${isTouchingSide && mEvent.getId() == swipingId ? clamp(sideMoved - sideMovedInit, -window.innerWidth, 0) : 0}px)` }}
           reactions={
             reactionRelations && (
               <Reactions
