@@ -225,26 +225,28 @@ function SpaceHeader() {
           </Box>
         </Box>
       </PageNavHeader>
-      <PopOut
-        anchor={menuAnchor}
-        position="Bottom"
-        align="End"
-        offset={6}
-        content={
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              returnFocusOnDeactivate: false,
-              onDeactivate: () => setMenuAnchor(undefined),
-              clickOutsideDeactivates: true,
-              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-            }}
-          >
-            <SpaceMenu room={space} requestClose={() => setMenuAnchor(undefined)} />
-          </FocusTrap>
-        }
-      />
+      {menuAnchor && (
+        <PopOut
+          anchor={menuAnchor}
+          position="Bottom"
+          align="End"
+          offset={6}
+          content={
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                returnFocusOnDeactivate: false,
+                onDeactivate: () => setMenuAnchor(undefined),
+                clickOutsideDeactivates: true,
+                isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+              }}
+            >
+              <SpaceMenu room={space} requestClose={() => setMenuAnchor(undefined)} />
+            </FocusTrap>
+          }
+        />
+      )}
     </>
   );
 }

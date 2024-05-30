@@ -2,6 +2,7 @@ import React, {
   MouseEventHandler,
   ReactNode,
   RefObject,
+  forwardRef,
   useCallback,
   useEffect,
   useMemo,
@@ -9,7 +10,20 @@ import React, {
   useState,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Icon, IconButton, Icons, Text } from 'folds';
+import {
+  Box,
+  Icon,
+  IconButton,
+  Icons,
+  Line,
+  Menu,
+  MenuItem,
+  PopOut,
+  RectCords,
+  Text,
+  config,
+  toRem,
+} from 'folds';
 import { useAtom, useAtomValue } from 'jotai';
 import { Room } from 'matrix-js-sdk';
 import {
@@ -24,11 +38,21 @@ import {
 } from '@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item';
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
-import { useOrphanSpaces } from '../../../state/hooks/roomList';
+import {
+  useOrphanSpaces,
+  useRecursiveChildScopeFactory,
+  useSpaceChildren,
+} from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { getSpaceLobbyPath, getSpacePath, joinPathComponent } from '../../pathUtils';
+import {
+  getOriginBaseUrl,
+  getSpaceLobbyPath,
+  getSpacePath,
+  joinPathComponent,
+  withOriginBaseUrl,
+} from '../../pathUtils';
 import {
   SidebarAvatar,
   SidebarItem,
@@ -58,6 +82,109 @@ import { getAccountData } from '../../../utils/room';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useOpenedSidebarFolderAtom } from '../../../state/hooks/openedSidebarFolder';
+import { useClientConfig } from '../../../hooks/useClientConfig';
+import { usePowerLevels, usePowerLevelsAPI } from '../../../hooks/usePowerLevels';
+import { useRoomsUnread } from '../../../state/hooks/unread';
+import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
+import { markAsRead } from '../../../../client/action/notifications';
+import { copyToClipboard } from '../../../utils/dom';
+import { openInviteUser, openSpaceSettings } from '../../../../client/action/navigation';
+import FocusTrap from 'focus-trap-react';
+
+type SpaceMenuProps = {
+  room: Room;
+  requestClose: () => void;
+};
+const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClose }, ref) => {
+  const mx = useMatrixClient();
+  const { hashRouter } = useClientConfig();
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const powerLevels = usePowerLevels(room);
+  const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
+  const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
+
+  const allChild = useSpaceChildren(
+    allRoomsAtom,
+    room.roomId,
+    useRecursiveChildScopeFactory(mx, roomToParents)
+  );
+  const unread = useRoomsUnread(allChild, roomToUnreadAtom);
+
+  const handleMarkAsRead = () => {
+    allChild.forEach((childRoomId) => markAsRead(childRoomId));
+    requestClose();
+  };
+
+  const handleCopyLink = () => {
+    const spacePath = getSpacePath(getCanonicalAliasOrRoomId(mx, room.roomId));
+    copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), spacePath));
+    requestClose();
+  };
+
+  const handleInvite = () => {
+    openInviteUser(room.roomId);
+    requestClose();
+  };
+
+  const handleRoomSettings = () => {
+    openSpaceSettings(room.roomId);
+    requestClose();
+  };
+
+  return (
+    <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <MenuItem
+          onClick={handleMarkAsRead}
+          size="300"
+          after={<Icon size="100" src={Icons.CheckTwice} />}
+          radii="300"
+          disabled={!unread}
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Mark as Read
+          </Text>
+        </MenuItem>
+      </Box>
+      <Line variant="Surface" size="300" />
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <MenuItem
+          onClick={handleInvite}
+          variant="Primary"
+          fill="None"
+          size="300"
+          after={<Icon size="100" src={Icons.UserPlus} />}
+          radii="300"
+          disabled={!canInvite}
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Invite
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleCopyLink}
+          size="300"
+          after={<Icon size="100" src={Icons.Link} />}
+          radii="300"
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Copy Link
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleRoomSettings}
+          size="300"
+          after={<Icon size="100" src={Icons.Setting} />}
+          radii="300"
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Space Settings
+          </Text>
+        </MenuItem>
+      </Box>
+    </Menu>
+  );
+});
 
 type InstructionType = Instruction['type'];
 type FolderDraggable = {
@@ -244,6 +371,17 @@ function SpaceTab({ space, selected, onClick, folder, onDragging, disabled }: Sp
   const dropState = useDropTarget(spaceDraggable, targetRef);
   const dropType = dropState?.type;
 
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+
+  const handleContextMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    evt.preventDefault();
+    const cords = evt.currentTarget.getBoundingClientRect();
+    setMenuAnchor((currentState) => {
+      if (currentState) return undefined;
+      return cords;
+    });
+  };
+
   return (
     <RoomUnreadProvider roomId={space.roomId}>
       {(unread) => (
@@ -264,6 +402,7 @@ function SpaceTab({ space, selected, onClick, folder, onDragging, disabled }: Sp
                 ref={triggerRef}
                 size={folder ? '300' : '400'}
                 onClick={onClick}
+                onContextMenu={handleContextMenu}
               >
                 <RoomAvatar
                   roomId={space.roomId}
@@ -280,6 +419,27 @@ function SpaceTab({ space, selected, onClick, folder, onDragging, disabled }: Sp
             <SidebarItemBadge hasCount={unread.total > 0}>
               <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
             </SidebarItemBadge>
+          )}
+          {menuAnchor && (
+            <PopOut
+              anchor={menuAnchor}
+              position="Right"
+              align="Start"
+              content={
+                <FocusTrap
+                  focusTrapOptions={{
+                    initialFocus: false,
+                    returnFocusOnDeactivate: false,
+                    onDeactivate: () => setMenuAnchor(undefined),
+                    clickOutsideDeactivates: true,
+                    isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                    isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  }}
+                >
+                  <SpaceMenu room={space} requestClose={() => setMenuAnchor(undefined)} />
+                </FocusTrap>
+              }
+            />
           )}
         </SidebarItem>
       )}
