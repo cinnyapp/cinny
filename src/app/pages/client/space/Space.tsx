@@ -23,7 +23,7 @@ import {
   toRem,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Room } from 'matrix-js-sdk';
+import { IJoinRuleEventContent, JoinRule, Room } from 'matrix-js-sdk';
 import FocusTrap from 'focus-trap-react';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { mDirectAtom } from '../../../state/mDirectList';
@@ -71,6 +71,8 @@ import { LeaveSpacePrompt } from '../../../components/leave-space-prompt';
 import { copyToClipboard } from '../../../utils/dom';
 import { useClientConfig } from '../../../hooks/useClientConfig';
 import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
+import { useStateEvent } from '../../../hooks/useStateEvent';
+import { StateEvent } from '../../../../types/matrix/room';
 
 type SpaceMenuProps = {
   room: Room;
@@ -201,6 +203,11 @@ function SpaceHeader() {
   const spaceName = useRoomName(space);
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
+  const joinRules = useStateEvent(
+    space,
+    StateEvent.RoomJoinRules
+  )?.getContent<IJoinRuleEventContent>();
+
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const cords = evt.currentTarget.getBoundingClientRect();
     setMenuAnchor((currentState) => {
@@ -213,10 +220,11 @@ function SpaceHeader() {
     <>
       <PageNavHeader>
         <Box alignItems="Center" grow="Yes" gap="300">
-          <Box grow="Yes">
+          <Box grow="Yes" alignItems="Center" gap="100">
             <Text size="H4" truncate>
               {spaceName}
             </Text>
+            {joinRules?.join_rule !== JoinRule.Public && <Icon src={Icons.Lock} size="50" />}
           </Box>
           <Box>
             <IconButton aria-pressed={!!menuAnchor} variant="Background" onClick={handleOpenMenu}>
