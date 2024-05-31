@@ -70,6 +70,7 @@ class InitMatrix extends EventEmitter {
       lazyLoadMembers: true,
     });
     this.matrixClient.setGlobalErrorOnUnknownDevices(false);
+    this.matrixClient.setMaxListeners(50);
   }
 
   setupSync() {
