@@ -1,24 +1,25 @@
 import { Box, Text } from 'folds';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getLoginPath } from '../../pathUtils';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { PasswordResetForm } from './PasswordResetForm';
+import { ResetPasswordPathSearchParams } from '../../paths';
 
-export type ResetPasswordSearchParams = {
-  email?: string;
-};
-
-const getResetPasswordSearchParams = (
+const useResetPasswordSearchParams = (
   searchParams: URLSearchParams
-): ResetPasswordSearchParams => ({
-  email: searchParams.get('email') ?? undefined,
-});
+): ResetPasswordPathSearchParams =>
+  useMemo(
+    () => ({
+      email: searchParams.get('email') ?? undefined,
+    }),
+    [searchParams]
+  );
 
 export function ResetPassword() {
   const server = useAuthServer();
   const [searchParams] = useSearchParams();
-  const resetPasswordSearchParams = getResetPasswordSearchParams(searchParams);
+  const resetPasswordSearchParams = useResetPasswordSearchParams(searchParams);
 
   return (
     <Box direction="Column" gap="500">

@@ -76,8 +76,8 @@ export const isSpace = (room: Room | null): boolean => {
 export const isRoom = (room: Room | null): boolean => {
   if (!room) return false;
   const event = getStateEvent(room, StateEvent.RoomCreate);
-  if (!event) return false;
-  return event.getContent().type === undefined;
+  if (!event) return true;
+  return event.getContent().type !== RoomType.Space;
 };
 
 export const isUnsupportedRoom = (room: Room | null): boolean => {
@@ -88,7 +88,10 @@ export const isUnsupportedRoom = (room: Room | null): boolean => {
 };
 
 export function isValidChild(mEvent: MatrixEvent): boolean {
-  return mEvent.getType() === StateEvent.SpaceChild && Object.keys(mEvent.getContent()).length > 0;
+  return (
+    mEvent.getType() === StateEvent.SpaceChild &&
+    Array.isArray(mEvent.getContent<{ via: string[] }>().via)
+  );
 }
 
 export const getAllParents = (roomToParents: RoomToParents, roomId: string): Set<string> => {
@@ -141,6 +144,15 @@ export const getRoomToParents = (mx: MatrixClient): RoomToParents => {
   return map;
 };
 
+export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): string[] => {
+  const parents = getAllParents(roomToParents, roomId);
+  const orphanParents = Array.from(parents).filter(
+    (parentRoomId) => !roomToParents.has(parentRoomId)
+  );
+
+  return orphanParents;
+};
+
 export const isMutedRule = (rule: IPushRule) =>
   rule.actions[0] === 'dont_notify' && rule.conditions?.[0]?.kind === 'event_match';
 
@@ -167,20 +179,31 @@ export const getNotificationType = (mx: MatrixClient, roomId: string): Notificat
   return NotificationType.MentionsAndKeywords;
 };
 
+const NOTIFICATION_EVENT_TYPES = [
+  'm.room.create',
+  'm.room.message',
+  'm.room.encrypted',
+  'm.room.member',
+  'm.sticker',
+];
 export const isNotificationEvent = (mEvent: MatrixEvent) => {
   const eType = mEvent.getType();
-  if (
-    ['m.room.create', 'm.room.message', 'm.room.encrypted', 'm.room.member', 'm.sticker'].find(
-      (type) => type === eType
-    )
-  )
+  if (!NOTIFICATION_EVENT_TYPES.includes(eType)) {
     return false;
+  }
   if (eType === 'm.room.member') return false;
 
   if (mEvent.isRedacted()) return false;
   if (mEvent.getRelation()?.rel_type === 'm.replace') return false;
 
   return true;
+};
+
+export const roomHaveNotification = (room: Room): boolean => {
+  const total = room.getUnreadNotificationCount(NotificationCountType.Total);
+  const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
+
+  return total > 0 || highlight > 0;
 };
 
 export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
@@ -218,7 +241,7 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
     if (room.getMyMembership() !== 'join') return unread;
     if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
 
-    if (roomHaveUnread(mx, room)) {
+    if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
       unread.push(getUnreadInfo(room));
     }
 
@@ -247,13 +270,19 @@ export const joinRuleToIconSrc = (
   return undefined;
 };
 
-export const getRoomAvatarUrl = (mx: MatrixClient, room: Room): string | undefined => {
-  const url =
-    room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 32, 32, 'crop', undefined, false) ??
-    undefined;
-  if (url) return url;
-  return room.getAvatarUrl(mx.baseUrl, 32, 32, 'crop') ?? undefined;
-};
+export const getRoomAvatarUrl = (
+  mx: MatrixClient,
+  room: Room,
+  size: 32 | 96 = 32
+): string | undefined => room.getAvatarUrl(mx.baseUrl, size, size, 'crop') ?? undefined;
+
+export const getDirectRoomAvatarUrl = (
+  mx: MatrixClient,
+  room: Room,
+  size: 32 | 96 = 32
+): string | undefined =>
+  room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, size, size, 'crop', undefined, false) ??
+  undefined;
 
 export const trimReplyFromBody = (body: string): string => {
   const match = body.match(/^> <.+?> .+\n(>.*\n)*?\n/m);

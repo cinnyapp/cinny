@@ -17,10 +17,14 @@ export const TypingDot = recipe({
       backgroundColor: 'currentColor',
       borderRadius: '50%',
       transform: 'translateY(15%)',
-      animation: `${TypingDotAnime} 0.6s infinite alternate`,
     },
   ],
   variants: {
+    animated: {
+      true: {
+        animation: `${TypingDotAnime} 0.6s infinite alternate`,
+      },
+    },
     size: {
       '300': {
         width: toRem(4),
@@ -45,5 +49,6 @@ export const TypingDot = recipe({
   },
   defaultVariants: {
     size: '400',
+    animated: true,
   },
 });

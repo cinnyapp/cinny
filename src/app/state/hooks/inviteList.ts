@@ -3,9 +3,8 @@ import { selectAtom } from 'jotai/utils';
 import { MatrixClient } from 'matrix-js-sdk';
 import { useCallback } from 'react';
 import { isDirectInvite, isRoom, isSpace, isUnsupportedRoom } from '../../utils/room';
-import { compareRoomsEqual } from '../utils';
-import { mDirectAtom } from '../mDirectList';
-import { allInvitesAtom } from '../inviteList';
+import { compareRoomsEqual } from '../room-list/utils';
+import { allInvitesAtom } from '../room-list/inviteList';
 
 export const useSpaceInvites = (mx: MatrixClient, invitesAtom: typeof allInvitesAtom) => {
   const selector = useCallback(
@@ -18,9 +17,8 @@ export const useSpaceInvites = (mx: MatrixClient, invitesAtom: typeof allInvites
 export const useRoomInvites = (
   mx: MatrixClient,
   invitesAtom: typeof allInvitesAtom,
-  directAtom: typeof mDirectAtom
+  mDirects: Set<string>
 ) => {
-  const mDirects = useAtomValue(directAtom);
   const selector = useCallback(
     (rooms: string[]) =>
       rooms.filter(
@@ -36,9 +34,8 @@ export const useRoomInvites = (
 export const useDirectInvites = (
   mx: MatrixClient,
   invitesAtom: typeof allInvitesAtom,
-  directAtom: typeof mDirectAtom
+  mDirects: Set<string>
 ) => {
-  const mDirects = useAtomValue(directAtom);
   const selector = useCallback(
     (rooms: string[]) =>
       rooms.filter(

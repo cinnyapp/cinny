@@ -211,3 +211,11 @@ export const EmoticonImg = style([
     cursor: 'default',
   },
 ]);
+
+export const highlightText = style([
+  DefaultReset,
+  {
+    backgroundColor: 'yellow',
+    color: 'black',
+  },
+]);

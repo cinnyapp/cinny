@@ -45,17 +45,19 @@ export function openSpaceManage(roomId) {
   });
 }
 
-export function openSpaceAddExisting(roomId) {
+export function openSpaceAddExisting(roomId, spaces = false) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.OPEN_SPACE_ADDEXISTING,
     roomId,
+    spaces,
   });
 }
 
-export function toggleRoomSettings(tabText) {
+export function toggleRoomSettings(roomId, tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.TOGGLE_ROOM_SETTINGS,
-    tabText,
+    roomId,
+    tabText
   });
 }
 

@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect } from 'react';
 import { Box, Header, Scroll, Spinner, Text, color } from 'folds';
 import {
-  LoaderFunction,
   Outlet,
   generatePath,
   matchPath,
-  redirect,
   useLocation,
   useNavigate,
   useParams,
@@ -15,14 +13,13 @@ import classNames from 'classnames';
 import { AuthFooter } from './AuthFooter';
 import * as css from './styles.css';
 import * as PatternsCss from '../../styles/Patterns.css';
-import { isAuthenticated } from '../../../client/state/auth';
 import {
   clientAllowedServer,
   clientDefaultServer,
   useClientConfig,
 } from '../../hooks/useClientConfig';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { LOGIN_PATH, REGISTER_PATH } from '../paths';
+import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH } from '../paths';
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 import { ServerPicker } from './ServerPicker';
 import { AutoDiscoveryAction, autoDiscovery } from '../../cs-api';
@@ -33,17 +30,12 @@ import { AuthFlowsLoader } from '../../components/AuthFlowsLoader';
 import { AuthFlowsProvider } from '../../hooks/useAuthFlows';
 import { AuthServerProvider } from '../../hooks/useAuthServer';
 
-export const authLayoutLoader: LoaderFunction = () => {
-  if (isAuthenticated()) {
-    return redirect('/');
-  }
-
-  return null;
-};
-
 const currentAuthPath = (pathname: string): string => {
   if (matchPath(LOGIN_PATH, pathname)) {
     return LOGIN_PATH;
+  }
+  if (matchPath(RESET_PASSWORD_PATH, pathname)) {
+    return RESET_PASSWORD_PATH;
   }
   if (matchPath(REGISTER_PATH, pathname)) {
     return REGISTER_PATH;
@@ -175,6 +167,7 @@ export function AuthLayout() {
               <AuthServerProvider value={discoveryState.data.serverName}>
                 <AutoDiscoveryInfoProvider value={autoDiscoveryInfo}>
                   <SpecVersionsLoader
+                    baseUrl={autoDiscoveryInfo['m.homeserver'].base_url}
                     fallback={() => (
                       <AuthLayoutLoading
                         message={`Connecting to ${autoDiscoveryInfo['m.homeserver'].base_url}`}

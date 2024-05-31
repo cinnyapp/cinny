@@ -1,14 +1,19 @@
 import React, { useCallback } from 'react';
-import { Avatar, AvatarFallback, AvatarImage, Box, Button, Spinner, Text, as, color } from 'folds';
+import { Avatar, Box, Button, Spinner, Text, as } from 'folds';
 import { Room } from 'matrix-js-sdk';
-import { openInviteUser, selectRoom } from '../../../client/action/navigation';
-import { useStateEvent } from '../../hooks/useStateEvent';
+import { useAtomValue } from 'jotai';
+import { openInviteUser } from '../../../client/action/navigation';
 import { IRoomCreateContent, Membership, StateEvent } from '../../../types/matrix/room';
 import { getMemberDisplayName, getStateEvent } from '../../utils/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { RoomAvatar } from '../room-avatar';
+import { nameInitials } from '../../utils/common';
+import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
+import { mDirectAtom } from '../../state/mDirectList';
 
 export type RoomIntroProps = {
   room: Room;
@@ -16,21 +21,21 @@ export type RoomIntroProps = {
 
 export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => {
   const mx = useMatrixClient();
-  const createEvent = getStateEvent(room, StateEvent.RoomCreate);
-  const avatarEvent = useStateEvent(room, StateEvent.RoomAvatar);
-  const nameEvent = useStateEvent(room, StateEvent.RoomName);
-  const topicEvent = useStateEvent(room, StateEvent.RoomTopic);
-  const createContent = createEvent?.getContent<IRoomCreateContent>();
+  const { navigateRoom } = useRoomNavigate();
+  const mDirects = useAtomValue(mDirectAtom);
 
+  const createEvent = getStateEvent(room, StateEvent.RoomCreate);
+  const avatarMxc = useRoomAvatar(room, mDirects.has(room.roomId));
+  const name = useRoomName(room);
+  const topic = useRoomTopic(room);
+  const avatarHttpUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc) : undefined;
+
+  const createContent = createEvent?.getContent<IRoomCreateContent>();
   const ts = createEvent?.getTs();
   const creatorId = createEvent?.getSender();
   const creatorName =
     creatorId && (getMemberDisplayName(room, creatorId) ?? getMxIdLocalPart(creatorId));
   const prevRoomId = createContent?.predecessor?.room_id;
-  const avatarMxc = (avatarEvent?.getContent().url as string) || undefined;
-  const avatarHttpUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc) : undefined;
-  const name = (nameEvent?.getContent().name || room.name) as string;
-  const topic = (topicEvent?.getContent().topic as string) || undefined;
 
   const [prevRoomState, joinPrevRoom] = useAsyncCallback(
     useCallback(async (roomId: string) => mx.joinRoom(roomId), [mx])
@@ -40,18 +45,12 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
     <Box direction="Column" grow="Yes" gap="500" {...props} ref={ref}>
       <Box>
         <Avatar size="500">
-          {avatarHttpUrl ? (
-            <AvatarImage src={avatarHttpUrl} alt={name} />
-          ) : (
-            <AvatarFallback
-              style={{
-                backgroundColor: color.SurfaceVariant.Container,
-                color: color.SurfaceVariant.OnContainer,
-              }}
-            >
-              <Text size="H2">{name[0]}</Text>
-            </AvatarFallback>
-          )}
+          <RoomAvatar
+            roomId={room.roomId}
+            src={avatarHttpUrl ?? undefined}
+            alt={name}
+            renderFallback={() => <Text size="H2">{nameInitials(name)}</Text>}
+          />
         </Avatar>
       </Box>
       <Box direction="Column" gap="300">
@@ -82,7 +81,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
           {typeof prevRoomId === 'string' &&
             (mx.getRoom(prevRoomId)?.getMyMembership() === Membership.Join ? (
               <Button
-                onClick={() => selectRoom(prevRoomId)}
+                onClick={() => navigateRoom(prevRoomId)}
                 variant="Success"
                 size="300"
                 fill="Soft"

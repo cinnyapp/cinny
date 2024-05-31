@@ -61,6 +61,7 @@ const highlightAnime = keyframes({
 const HighlightVariant = styleVariants({
   true: {
     animation: `${highlightAnime} 2000ms ease-in-out`,
+    animationIterationCount: 'infinite',
   },
 });
 
@@ -143,12 +144,14 @@ export const BubbleContent = style({
 });
 
 export const Username = style({
-  cursor: 'pointer',
   overflow: 'hidden',
   whiteSpace: 'nowrap',
   textOverflow: 'ellipsis',
   selectors: {
-    '&:hover, &:focus-visible': {
+    'button&': {
+      cursor: 'pointer',
+    },
+    'button&:hover, button&:focus-visible': {
       textDecoration: 'underline',
     },
   },

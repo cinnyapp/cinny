@@ -9,9 +9,10 @@
   status = 200
   
 [[redirects]]
-  from = "/olm.wasm"
+  from = "*/olm.wasm"
   to = "/olm.wasm"
   status = 200
+  force = true
   
 [[redirects]]
   from = "/pdf.worker.min.js"
@@ -32,3 +33,4 @@
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true

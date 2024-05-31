@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-import React, { FormEventHandler, useEffect, useRef, useState } from 'react';
+import React, { FormEventHandler, MouseEventHandler, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import {
   Box,
@@ -13,6 +13,7 @@ import {
   Input,
   Menu,
   PopOut,
+  RectCords,
   Scroll,
   Spinner,
   Text,
@@ -48,7 +49,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
     const isError =
       pdfJSState.status === AsyncStatus.Error || docState.status === AsyncStatus.Error;
     const [pageNo, setPageNo] = useState(1);
-    const [openJump, setOpenJump] = useState(false);
+    const [jumpAnchor, setJumpAnchor] = useState<RectCords>();
 
     useEffect(() => {
       loadPdfJS();
@@ -86,7 +87,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
       if (!jumpInput) return;
       const jumpTo = parseInt(jumpInput.value, 10);
       setPageNo(Math.max(1, Math.min(docState.data.numPages, jumpTo)));
-      setOpenJump(false);
+      setJumpAnchor(undefined);
     };
 
     const handlePrevPage = () => {
@@ -96,6 +97,10 @@ export const PdfViewer = as<'div', PdfViewerProps>(
     const handleNextPage = () => {
       if (docState.status !== AsyncStatus.Success) return;
       setPageNo((n) => Math.min(n + 1, docState.data.numPages));
+    };
+
+    const handleOpenJump: MouseEventHandler<HTMLButtonElement> = (evt) => {
+      setJumpAnchor(evt.currentTarget.getBoundingClientRect());
     };
 
     return (
@@ -187,14 +192,14 @@ export const PdfViewer = as<'div', PdfViewerProps>(
             </Chip>
             <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
               <PopOut
-                open={openJump}
+                anchor={jumpAnchor}
                 align="Center"
                 position="Top"
                 content={
                   <FocusTrap
                     focusTrapOptions={{
                       initialFocus: false,
-                      onDeactivate: () => setOpenJump(false),
+                      onDeactivate: () => setJumpAnchor(undefined),
                       clickOutsideDeactivates: true,
                     }}
                   >
@@ -227,17 +232,14 @@ export const PdfViewer = as<'div', PdfViewerProps>(
                   </FocusTrap>
                 }
               >
-                {(anchorRef) => (
-                  <Chip
-                    onClick={() => setOpenJump(!openJump)}
-                    ref={anchorRef}
-                    variant="SurfaceVariant"
-                    radii="300"
-                    aria-pressed={openJump}
-                  >
-                    <Text size="B300">{`${pageNo}/${docState.data.numPages}`}</Text>
-                  </Chip>
-                )}
+                <Chip
+                  onClick={handleOpenJump}
+                  variant="SurfaceVariant"
+                  radii="300"
+                  aria-pressed={jumpAnchor !== undefined}
+                >
+                  <Text size="B300">{`${pageNo}/${docState.data.numPages}`}</Text>
+                </Chip>
               </PopOut>
             </Box>
             <Chip

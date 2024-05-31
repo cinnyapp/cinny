@@ -9,14 +9,18 @@ import InviteUser from '../invite-user/InviteUser';
 import Settings from '../settings/Settings';
 import SpaceSettings from '../space-settings/SpaceSettings';
 import SpaceManage from '../space-manage/SpaceManage';
+import RoomSettings from '../room/RoomSettings';
 
 function Windows() {
   const [isInviteList, changeInviteList] = useState(false);
   const [publicRooms, changePublicRooms] = useState({
-    isOpen: false, searchTerm: undefined,
+    isOpen: false,
+    searchTerm: undefined,
   });
   const [inviteUser, changeInviteUser] = useState({
-    isOpen: false, roomId: undefined, term: undefined,
+    isOpen: false,
+    roomId: undefined,
+    term: undefined,
   });
 
   function openInviteList() {
@@ -49,10 +53,7 @@ function Windows() {
 
   return (
     <>
-      <InviteList
-        isOpen={isInviteList}
-        onRequestClose={() => changeInviteList(false)}
-      />
+      <InviteList isOpen={isInviteList} onRequestClose={() => changeInviteList(false)} />
       <PublicRooms
         isOpen={publicRooms.isOpen}
         searchTerm={publicRooms.searchTerm}
@@ -66,6 +67,7 @@ function Windows() {
       />
       <Settings />
       <SpaceSettings />
+      <RoomSettings />
       <SpaceManage />
     </>
   );

@@ -1,6 +1,6 @@
 import React, { useEffect, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Editor } from 'slate';
-import { Avatar, AvatarFallback, AvatarImage, MenuItem, Text, color } from 'folds';
+import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
 
 import { AutocompleteQuery } from './autocompleteQuery';
@@ -17,6 +17,7 @@ import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 import { getMxIdLocalPart, getMxIdServer, validMxId } from '../../../utils/matrix';
 import { getMemberDisplayName, getMemberSearchStr } from '../../../utils/room';
+import { UserAvatar } from '../../user-avatar';
 
 type MentionAutoCompleteHandler = (userId: string, name: string) => void;
 
@@ -26,12 +27,10 @@ const userIdFromQueryText = (mx: MatrixClient, text: string) =>
     : `@${text}${text.endsWith(':') ? '' : ':'}${getMxIdServer(mx.getUserId() ?? '')}`;
 
 function UnknownMentionItem({
-  query,
   userId,
   name,
   handleAutocomplete,
 }: {
-  query: AutocompleteQuery<string>;
   userId: string;
   name: string;
   handleAutocomplete: MentionAutoCompleteHandler;
@@ -46,14 +45,10 @@ function UnknownMentionItem({
       onClick={() => handleAutocomplete(userId, name)}
       before={
         <Avatar size="200">
-          <AvatarFallback
-            style={{
-              backgroundColor: color.Secondary.Container,
-              color: color.Secondary.OnContainer,
-            }}
-          >
-            <Text size="H6">{query.text[0]}</Text>
-          </AvatarFallback>
+          <UserAvatar
+            userId={userId}
+            renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+          />
         </Avatar>
       }
     >
@@ -135,7 +130,6 @@ export function UserMentionAutocomplete({
     <AutocompleteMenu headerContent={<Text size="L400">Mentions</Text>} requestClose={requestClose}>
       {query.text === 'room' && (
         <UnknownMentionItem
-          query={query}
           userId={roomAliasOrId}
           name="@room"
           handleAutocomplete={handleAutocomplete}
@@ -143,7 +137,6 @@ export function UserMentionAutocomplete({
       )}
       {autoCompleteMembers.length === 0 ? (
         <UnknownMentionItem
-          query={query}
           userId={userIdFromQueryText(mx, query.text)}
           name={userIdFromQueryText(mx, query.text)}
           handleAutocomplete={handleAutocomplete}
@@ -167,18 +160,12 @@ export function UserMentionAutocomplete({
               }
               before={
                 <Avatar size="200">
-                  {avatarUrl ? (
-                    <AvatarImage src={avatarUrl} alt={getName(roomMember)} />
-                  ) : (
-                    <AvatarFallback
-                      style={{
-                        backgroundColor: color.Secondary.Container,
-                        color: color.Secondary.OnContainer,
-                      }}
-                    >
-                      <Text size="H6">{getName(roomMember)[0]}</Text>
-                    </AvatarFallback>
-                  )}
+                  <UserAvatar
+                    userId={roomMember.userId}
+                    src={avatarUrl ?? undefined}
+                    alt={getName(roomMember)}
+                    renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                  />
                 </Avatar>
               }
             >

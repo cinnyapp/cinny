@@ -6,7 +6,7 @@ import navigation from '../../../client/state/navigation';
 import { openNavigation } from '../../../client/action/navigation';
 
 import Welcome from '../../organisms/welcome/Welcome';
-import { RoomBaseView } from '../../organisms/room/Room';
+import { RoomBaseView } from '../../features/room/Room';
 
 export function ClientContent() {
   const [roomInfo, setRoomInfo] = useState({

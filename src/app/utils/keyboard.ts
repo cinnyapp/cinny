@@ -23,3 +23,10 @@ export const preventScrollWithArrowKey: KeyboardEventHandler = (evt) => {
     evt.preventDefault();
   }
 };
+
+export const onEnterOrSpace = (callback: () => void) => (evt: KeyboardEventLike) => {
+  if (isKeyHotkey('enter', evt) || isKeyHotkey('space', evt)) {
+    evt.preventDefault();
+    callback();
+  }
+};

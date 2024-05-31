@@ -14,7 +14,7 @@ import { Opts as LinkifyOpts } from 'linkifyjs';
 import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import * as css from '../styles/CustomHtml.css';
-import { getMxIdLocalPart, getRoomWithCanonicalAlias } from '../utils/matrix';
+import { getMxIdLocalPart, getCanonicalAliasRoomId } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
 import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
@@ -35,12 +35,12 @@ export const LINKIFY_OPTS: LinkifyOpts = {
   ignoreTags: ['span'],
 };
 
-const textToEmojifyJSX = (text: string): (string | JSX.Element)[] =>
+export const scaleSystemEmoji = (text: string): (string | JSX.Element)[] =>
   findAndReplace(
     text,
     EMOJI_REG_G,
     (match, pushIndex) => (
-      <span key={pushIndex} className={css.EmoticonBase}>
+      <span key={`scaleSystemEmoji-${pushIndex}`} className={css.EmoticonBase}>
         <span className={css.Emoticon()} title={getShortcodeFor(getHexcodeForEmoji(match[0]))}>
           {match[0]}
         </span>
@@ -49,19 +49,36 @@ const textToEmojifyJSX = (text: string): (string | JSX.Element)[] =>
     (txt) => txt
   );
 
-export const emojifyAndLinkify = (text: string, linkify?: boolean) => {
-  const emojifyJSX = textToEmojifyJSX(text);
-
-  if (linkify) {
-    return <Linkify options={LINKIFY_OPTS}>{emojifyJSX}</Linkify>;
-  }
-  return emojifyJSX;
+export const makeHighlightRegex = (highlights: string[]): RegExp | undefined => {
+  const pattern = highlights.join('|');
+  if (!pattern) return undefined;
+  return new RegExp(pattern, 'gi');
 };
+
+export const highlightText = (
+  regex: RegExp,
+  data: (string | JSX.Element)[]
+): (string | JSX.Element)[] =>
+  data.flatMap((text) => {
+    if (typeof text !== 'string') return text;
+
+    return findAndReplace(
+      text,
+      regex,
+      (match, pushIndex) => (
+        <span key={`highlight-${pushIndex}`} className={css.highlightText}>
+          {match[0]}
+        </span>
+      ),
+      (txt) => txt
+    );
+  });
 
 export const getReactCustomHtmlParser = (
   mx: MatrixClient,
   room: Room,
   params: {
+    highlightRegex?: RegExp;
     handleSpoilerClick?: ReactEventHandler<HTMLElement>;
     handleMentionClick?: ReactEventHandler<HTMLElement>;
   }
@@ -207,10 +224,9 @@ export const getReactCustomHtmlParser = (
             const mentionId = mention[1];
             const mentionPrefix = mention[2];
             if (mentionPrefix === '#' || mentionPrefix === '!') {
-              const mentionRoom =
-                mentionPrefix === '#'
-                  ? getRoomWithCanonicalAlias(mx, mentionId)
-                  : mx.getRoom(mentionId);
+              const mentionRoom = mx.getRoom(
+                mentionPrefix === '#' ? getCanonicalAliasRoomId(mx, mentionId) : mentionId
+              );
 
               return (
                 <span
@@ -292,7 +308,17 @@ export const getReactCustomHtmlParser = (
         const linkify =
           !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'code') &&
           !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'a');
-        return emojifyAndLinkify(domNode.data, linkify);
+
+        let jsx = scaleSystemEmoji(domNode.data);
+
+        if (params.highlightRegex) {
+          jsx = highlightText(params.highlightRegex, jsx);
+        }
+
+        if (linkify) {
+          return <Linkify options={LINKIFY_OPTS}>{jsx}</Linkify>;
+        }
+        return jsx;
       }
       return undefined;
     },

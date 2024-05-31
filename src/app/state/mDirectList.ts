@@ -30,10 +30,12 @@ export const useBindMDirectAtom = (mx: MatrixClient, mDirect: typeof mDirectAtom
     }
 
     const handleAccountData = (event: MatrixEvent) => {
-      setMDirect({
-        type: 'UPDATE',
-        rooms: getMDirects(event),
-      });
+      if (event.getType() === AccountDataEvent.Direct) {
+        setMDirect({
+          type: 'UPDATE',
+          rooms: getMDirects(event),
+        });
+      }
     };
 
     mx.on(ClientEvent.AccountData, handleAccountData);

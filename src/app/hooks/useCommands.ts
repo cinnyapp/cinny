@@ -1,9 +1,9 @@
 import { MatrixClient, Room } from 'matrix-js-sdk';
 import { useMemo } from 'react';
-import { hasDMWith, isRoomAlias, isRoomId, isUserId } from '../utils/matrix';
-import { selectRoom } from '../../client/action/navigation';
+import { getDMRoomFor, isRoomAlias, isRoomId, isUserId } from '../utils/matrix';
 import { hasDevices } from '../../util/matrixUtil';
 import * as roomActions from '../../client/action/room';
+import { useRoomNavigate } from './useRoomNavigate';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
 
@@ -59,6 +59,8 @@ export type CommandContent = {
 export type CommandRecord = Record<Command, CommandContent>;
 
 export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
+  const { navigateRoom } = useRoomNavigate();
+
   const commands: CommandRecord = useMemo(
     () => ({
       [Command.Me]: {
@@ -84,16 +86,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userIds = rawIds.filter((id) => isUserId(id) && id !== mx.getUserId());
           if (userIds.length === 0) return;
           if (userIds.length === 1) {
-            const dmRoomId = hasDMWith(mx, userIds[0]);
+            const dmRoomId = getDMRoomFor(mx, userIds[0])?.roomId;
             if (dmRoomId) {
-              selectRoom(dmRoomId);
+              navigateRoom(dmRoomId);
               return;
             }
           }
           const devices = await Promise.all(userIds.map(hasDevices));
           const isEncrypt = devices.every((hasDevice) => hasDevice);
           const result = await roomActions.createDM(userIds, isEncrypt);
-          selectRoom(result.room_id);
+          navigateRoom(result.room_id);
         },
       },
       [Command.Join]: {
@@ -212,7 +214,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         },
       },
     }),
-    [mx, room]
+    [mx, room, navigateRoom]
   );
 
   return commands;

@@ -5,7 +5,6 @@ import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import AsyncSearch from '../../../util/AsyncSearch';
-import { selectRoom, selectTab } from '../../../client/action/navigation';
 import { joinRuleToIconSrc } from '../../../util/matrixUtil';
 import { roomIdByActivity } from '../../../util/sort';
 
@@ -19,6 +18,7 @@ import RoomSelector from '../../molecules/room-selector/RoomSelector';
 
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 
 function useVisiblityToggle(setResult) {
   const [isOpen, setIsOpen] = useState(false);
@@ -64,13 +64,13 @@ function mapRoomIds(roomIds) {
     if (room.isSpaceRoom()) type = 'space';
     else if (directs.has(roomId)) type = 'direct';
 
-    return ({
+    return {
       type,
       name: room.name,
       parents,
       roomId,
       room,
-    });
+    };
   });
 }
 
@@ -80,6 +80,7 @@ function Search() {
   const [isOpen, requestClose] = useVisiblityToggle(setResult);
   const searchRef = useRef(null);
   const mx = initMatrix.matrixClient;
+  const { navigateRoom, navigateSpace } = useRoomNavigate();
 
   const handleSearchResults = (chunk, term) => {
     setResult({
@@ -155,8 +156,8 @@ function Search() {
   };
 
   const openItem = (roomId, type) => {
-    if (type === 'space') selectTab(roomId);
-    else selectRoom(roomId);
+    if (type === 'space') navigateSpace(roomId);
+    else navigateRoom(roomId);
     requestClose();
   };
 
@@ -173,7 +174,8 @@ function Search() {
     let imageSrc = null;
     let iconSrc = null;
     if (item.type === 'direct') {
-      imageSrc = item.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
+      imageSrc =
+        item.room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
     } else {
       iconSrc = joinRuleToIconSrc(item.room.getJoinRule(), item.type === 'space');
     }
@@ -204,19 +206,21 @@ function Search() {
       size="small"
     >
       <div className="search-dialog">
-        <form className="search-dialog__input" onSubmit={(e) => { e.preventDefault(); openFirstResult(); }}>
+        <form
+          className="search-dialog__input"
+          onSubmit={(e) => {
+            e.preventDefault();
+            openFirstResult();
+          }}
+        >
           <RawIcon src={SearchIC} size="small" />
-          <Input
-            onChange={handleOnChange}
-            forwardRef={searchRef}
-            placeholder="Search"
-          />
+          <Input onChange={handleOnChange} forwardRef={searchRef} placeholder="Search" />
           <IconButton size="small" src={CrossIC} type="reset" onClick={handleCross} tabIndex={-1} />
         </form>
         <div className="search-dialog__content-wrapper">
           <ScrollView autoHide>
             <div className="search-dialog__content">
-              { Array.isArray(result?.chunk) && result.chunk.map(renderRoomSelector) }
+              {Array.isArray(result?.chunk) && result.chunk.map(renderRoomSelector)}
             </div>
           </ScrollView>
         </div>

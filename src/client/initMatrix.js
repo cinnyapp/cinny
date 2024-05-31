@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import * as sdk from 'matrix-js-sdk';
 import Olm from '@matrix-org/olm';
-// import { logger } from 'matrix-js-sdk/lib/logger';
+import { logger } from 'matrix-js-sdk/lib/logger';
 
 import { getSecret } from './state/auth';
 import RoomList from './state/RoomList';
@@ -13,7 +13,9 @@ import navigation from './state/navigation';
 
 global.Olm = Olm;
 
-// logger.disableAll();
+if (import.meta.env.PROD) {
+  logger.disableAll();
+}
 
 class InitMatrix extends EventEmitter {
   constructor() {
@@ -23,14 +25,20 @@ class InitMatrix extends EventEmitter {
   }
 
   async init() {
-    if (this.matrixClient) {
+    if (this.matrixClient || this.initializing) {
       console.warn('Client is already initialized!')
       return;
     }
+    this.initializing = true;
 
-    await this.startClient();
-    this.setupSync();
-    this.listenEvents();
+    try {
+      await this.startClient();
+      this.setupSync();
+      this.listenEvents();
+      this.initializing = false;
+    } catch {
+      this.initializing = false;
+    }
   }
 
   async startClient() {
@@ -62,6 +70,7 @@ class InitMatrix extends EventEmitter {
       lazyLoadMembers: true,
     });
     this.matrixClient.setGlobalErrorOnUnknownDevices(false);
+    this.matrixClient.setMaxListeners(50);
   }
 
   setupSync() {
