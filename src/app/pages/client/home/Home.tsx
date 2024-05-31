@@ -56,6 +56,7 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, re
   const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
 
   const handleMarkAsRead = () => {
+    if (!unread) return;
     orphanRooms.forEach((rId) => markAsRead(rId));
     requestClose();
   };
@@ -68,7 +69,7 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, re
           size="300"
           after={<Icon size="100" src={Icons.CheckTwice} />}
           radii="300"
-          disabled={!unread}
+          aria-disabled={!unread}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Mark as Read

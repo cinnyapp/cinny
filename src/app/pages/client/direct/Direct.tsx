@@ -1,7 +1,22 @@
-import React, { useMemo, useRef } from 'react';
+import React, { MouseEventHandler, forwardRef, useMemo, useRef, useState } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
-import { Avatar, Box, Button, Icon, Icons, Text } from 'folds';
+import {
+  Avatar,
+  Box,
+  Button,
+  Icon,
+  IconButton,
+  Icons,
+  Menu,
+  MenuItem,
+  PopOut,
+  RectCords,
+  Text,
+  config,
+  toRem,
+} from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import FocusTrap from 'focus-trap-react';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { factoryRoomIdByActivity } from '../../../utils/sort';
 import {
@@ -27,6 +42,91 @@ import { useDirectRooms } from './useDirectRooms';
 import { openInviteUser } from '../../../../client/action/navigation';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
 import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
+import { useRoomsUnread } from '../../../state/hooks/unread';
+import { markAsRead } from '../../../../client/action/notifications';
+
+type DirectMenuProps = {
+  requestClose: () => void;
+};
+const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }, ref) => {
+  const orphanRooms = useDirectRooms();
+  const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
+
+  const handleMarkAsRead = () => {
+    if (!unread) return;
+    orphanRooms.forEach((rId) => markAsRead(rId));
+    requestClose();
+  };
+
+  return (
+    <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <MenuItem
+          onClick={handleMarkAsRead}
+          size="300"
+          after={<Icon size="100" src={Icons.CheckTwice} />}
+          radii="300"
+          aria-disabled={!unread}
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Mark as Read
+          </Text>
+        </MenuItem>
+      </Box>
+    </Menu>
+  );
+});
+
+function DirectHeader() {
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const cords = evt.currentTarget.getBoundingClientRect();
+    setMenuAnchor((currentState) => {
+      if (currentState) return undefined;
+      return cords;
+    });
+  };
+
+  return (
+    <>
+      <PageNavHeader>
+        <Box alignItems="Center" grow="Yes" gap="300">
+          <Box grow="Yes">
+            <Text size="H4" truncate>
+              Direct Messages
+            </Text>
+          </Box>
+          <Box>
+            <IconButton aria-pressed={!!menuAnchor} variant="Background" onClick={handleOpenMenu}>
+              <Icon src={Icons.VerticalDots} size="200" />
+            </IconButton>
+          </Box>
+        </Box>
+      </PageNavHeader>
+      <PopOut
+        anchor={menuAnchor}
+        position="Bottom"
+        align="End"
+        offset={6}
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              returnFocusOnDeactivate: false,
+              onDeactivate: () => setMenuAnchor(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+            }}
+          >
+            <DirectMenu requestClose={() => setMenuAnchor(undefined)} />
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
 
 function DirectEmpty() {
   return (
@@ -90,15 +190,7 @@ export function Direct() {
 
   return (
     <PageNav>
-      <PageNavHeader>
-        <Box grow="Yes" gap="300">
-          <Box grow="Yes">
-            <Text size="H4" truncate>
-              Direct Messages
-            </Text>
-          </Box>
-        </Box>
-      </PageNavHeader>
+      <DirectHeader />
       {noRoomToDisplay ? (
         <DirectEmpty />
       ) : (
