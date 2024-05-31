@@ -325,7 +325,10 @@ export function Lobby() {
     )
   );
 
-  const addSpaceRoom = (roomId: string) => setSpaceRooms({ type: 'PUT', roomId });
+  const addSpaceRoom = useCallback(
+    (roomId: string) => setSpaceRooms({ type: 'PUT', roomId }),
+    [setSpaceRooms]
+  );
 
   const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
     closedCategories.has(categoryId)
