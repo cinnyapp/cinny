@@ -1,6 +1,5 @@
 import produce from 'immer';
 import { atom, useSetAtom } from 'jotai';
-import { selectAtom } from 'jotai/utils';
 import { MatrixClient, RoomMemberEvent, RoomMemberEventHandlerMap } from 'matrix-js-sdk';
 import { useEffect } from 'react';
 
@@ -148,8 +147,3 @@ export const useBindRoomIdToTypingMembersAtom = (
     };
   }, [mx, setTypingMembers]);
 };
-
-export const selectRoomTypingMembersAtom = (
-  roomId: string,
-  typingMembersAtom: typeof roomIdToTypingMembersAtom
-) => selectAtom(typingMembersAtom, (atoms) => atoms.get(roomId) ?? []);
