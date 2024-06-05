@@ -114,12 +114,12 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         description: 'Leave current room.',
         exe: async (payload) => {
           if (payload.trim() === '') {
-            roomActions.leave(room.roomId);
+            mx.leave(room.roomId);
             return;
           }
           const rawIds = payload.split(' ');
           const roomIds = rawIds.filter((id) => isRoomId(id));
-          roomIds.map((id) => roomActions.leave(id));
+          roomIds.map((id) => mx.leave(id));
         },
       },
       [Command.Invite]: {

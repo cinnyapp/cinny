@@ -7,7 +7,6 @@ import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { leave } from '../../../client/action/room';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -29,6 +28,7 @@ import LeaveArrowIC from '../../../../public/res/ic/outlined/leave-arrow.svg';
 import EmojiIC from '../../../../public/res/ic/outlined/emoji.svg';
 
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const tabText = {
   GENERAL: 'General',
@@ -62,6 +62,7 @@ const tabItems = [
 
 function GeneralSettings({ roomId }) {
   const roomName = initMatrix.matrixClient.getRoom(roomId)?.name;
+  const mx = useMatrixClient();
 
   return (
     <>
@@ -76,7 +77,7 @@ function GeneralSettings({ roomId }) {
               'Leave',
               'danger'
             );
-            if (isConfirmed) leave(roomId);
+            if (isConfirmed) mx.leave(roomId);
           }}
           iconSrc={LeaveArrowIC}
         >

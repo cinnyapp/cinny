@@ -1,7 +1,6 @@
 import EventEmitter from 'events';
 import renderAvatar from '../../app/atoms/avatar/render';
 import { cssColorMXID } from '../../util/colorMXID';
-import { selectRoom } from '../action/navigation';
 import cons from './cons';
 import navigation from './navigation';
 import settings from './settings';
@@ -277,7 +276,7 @@ class Notifications extends EventEmitter {
       if (settings.isNotificationSounds) {
         noti.onshow = () => this._playNotiSound();
       }
-      noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
+      // noti.onclick = () => selectRoom(room.roomId, mEvent.getId());
 
       this.eventIdToPopupNoti.set(mEvent.getId(), noti);
       if (this.roomIdToPopupNotis.has(room.roomId)) {
