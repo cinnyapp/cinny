@@ -14,7 +14,6 @@ import {
   getUsername,
   getUsernameOfRoomMember,
   getPowerLabel,
-  hasDMWith,
   hasDevices,
 } from '../../../util/matrixUtil';
 import { getEventCords } from '../../../util/common';
@@ -38,6 +37,7 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { getDMRoomFor } from '../../utils/matrix';
 
 function ModerationTools({ roomId, userId }) {
   const mx = initMatrix.matrixClient;
@@ -191,7 +191,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
 
   const openDM = async () => {
     // Check and open if user already have a DM with userId.
-    const dmRoomId = hasDMWith(userId);
+    const dmRoomId = getDMRoomFor(mx, userId)?.roomId;
     if (dmRoomId) {
       navigateRoom(dmRoomId);
       onRequestClose();

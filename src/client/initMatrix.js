@@ -4,7 +4,6 @@ import Olm from '@matrix-org/olm';
 import { logger } from 'matrix-js-sdk/lib/logger';
 
 import { getSecret } from './state/auth';
-import Notifications from './state/Notifications';
 import { cryptoCallbacks } from './state/secretStorageKeys';
 
 global.Olm = Olm;
@@ -76,11 +75,7 @@ class InitMatrix extends EventEmitter {
         console.log('Previous state: ', prevState);
         global.initMatrix = this;
         if (prevState === null) {
-          this.notifications = new Notifications(this.roomList);
           this.emit('init_loading_finished');
-          this.notifications._initNoti();
-        } else {
-          this.notifications?._initNoti();
         }
       },
       RECONNECTING: () => {

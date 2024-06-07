@@ -2,7 +2,6 @@ import { Box, Spinner, Text } from 'folds';
 import React, { ReactNode, useEffect, useState } from 'react';
 import initMatrix from '../../../client/initMatrix';
 import { initHotkeys } from '../../../client/event/hotkeys';
-import { initRoomListListener } from '../../../client/event/roomList';
 import { getSecret } from '../../../client/state/auth';
 import { SplashScreen } from '../../components/splash-screen';
 import { CapabilitiesAndMediaConfigLoader } from '../../components/CapabilitiesAndMediaConfigLoader';
@@ -49,7 +48,6 @@ export function ClientRoot({ children }: ClientRootProps) {
   useEffect(() => {
     const handleStart = () => {
       initHotkeys();
-      initRoomListListener(initMatrix.roomList);
       setLoading(false);
     };
     initMatrix.once('init_loading_finished', handleStart);

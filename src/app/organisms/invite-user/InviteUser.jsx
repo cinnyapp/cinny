@@ -4,7 +4,7 @@ import './InviteUser.scss';
 
 import initMatrix from '../../../client/initMatrix';
 import * as roomActions from '../../../client/action/room';
-import { hasDMWith, hasDevices } from '../../../util/matrixUtil';
+import { hasDevices } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -17,6 +17,7 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { getDMRoomFor } from '../../utils/matrix';
 
 function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
   const [isSearching, updateIsSearching] = useState(false);
@@ -105,7 +106,7 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
 
   async function createDM(userId) {
     if (mx.getUserId() === userId) return;
-    const dmRoomId = hasDMWith(userId);
+    const dmRoomId = getDMRoomFor(mx, userId)?.roomId;
     if (dmRoomId) {
       navigateRoom(dmRoomId);
       onRequestClose();
