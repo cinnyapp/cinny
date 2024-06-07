@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import { useAtomValue } from 'jotai';
 import './SpaceAddExisting.scss';
 
-import { twemojify } from '../../../util/twemojify';
-
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
@@ -224,7 +222,7 @@ function SpaceAddExisting() {
       className="space-add-existing"
       title={
         <Text variant="s1" weight="medium" primary>
-          {room && twemojify(room.name)}
+          {room && room.name}
           <span style={{ color: 'var(--tc-surface-low)' }}>
             {' '}
             — add existing {data?.spaces ? 'spaces' : 'rooms'}

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useAtomValue } from 'jotai';
+import Linkify from 'linkify-react';
 import './RoomProfile.scss';
-
-import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -22,6 +21,7 @@ import { useStore } from '../../hooks/useStore';
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { mDirectAtom } from '../../state/mDirectList';
+import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
 
 function RoomProfile({ roomId }) {
   const isMountStore = useStore();
@@ -188,7 +188,7 @@ function RoomProfile({ roomId }) {
     >
       <div>
         <Text variant="h2" weight="medium" primary>
-          {twemojify(roomName)}
+          {roomName}
         </Text>
         {(canChangeName || canChangeTopic) && (
           <IconButton
@@ -200,7 +200,11 @@ function RoomProfile({ roomId }) {
         )}
       </div>
       <Text variant="b3">{room.getCanonicalAlias() || room.roomId}</Text>
-      {roomTopic && <Text variant="b2">{twemojify(roomTopic, undefined, true)}</Text>}
+      {roomTopic && (
+        <Text variant="b2">
+          <Linkify options={LINKIFY_OPTS}>{roomTopic}</Linkify>
+        </Text>
+      )}
     </div>
   );
 

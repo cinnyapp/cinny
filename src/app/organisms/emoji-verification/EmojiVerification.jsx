@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './EmojiVerification.scss';
-import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -30,8 +29,9 @@ function EmojiVerificationContent({ data, requestClose }) {
 
   const beginVerification = async () => {
     if (
-      isCrossVerified(mx.deviceId)
-      && (mx.getCrossSigningId() === null || await mx.crypto.crossSigningInfo.isStoredInKeyCache('self_signing') === false)
+      isCrossVerified(mx.deviceId) &&
+      (mx.getCrossSigningId() === null ||
+        (await mx.crypto.crossSigningInfo.isStoredInKeyCache('self_signing')) === false)
     ) {
       if (!hasPrivateKey(getDefaultSSKey())) {
         const keyData = await accessSecretStorage('Emoji verification');
@@ -106,16 +106,20 @@ function EmojiVerificationContent({ data, requestClose }) {
           {sas.sas.emoji.map((emoji, i) => (
             // eslint-disable-next-line react/no-array-index-key
             <div className="emoji-verification__emoji-block" key={`${emoji[1]}-${i}`}>
-              <Text variant="h1">{twemojify(emoji[0])}</Text>
+              <Text variant="h1">{emoji[0]}</Text>
               <Text>{emoji[1]}</Text>
             </div>
           ))}
         </div>
         <div className="emoji-verification__buttons">
-          {process ? renderWait() : (
+          {process ? (
+            renderWait()
+          ) : (
             <>
-              <Button variant="primary" onClick={sasConfirm}>They match</Button>
-              <Button onClick={sasMismatch}>{'They don\'t match'}</Button>
+              <Button variant="primary" onClick={sasConfirm}>
+                They match
+              </Button>
+              <Button onClick={sasMismatch}>No match</Button>
             </>
           )}
         </div>
@@ -127,9 +131,7 @@ function EmojiVerificationContent({ data, requestClose }) {
     return (
       <div className="emoji-verification__content">
         <Text>Please accept the request from other device.</Text>
-        <div className="emoji-verification__buttons">
-          {renderWait()}
-        </div>
+        <div className="emoji-verification__buttons">{renderWait()}</div>
       </div>
     );
   }
@@ -138,11 +140,13 @@ function EmojiVerificationContent({ data, requestClose }) {
     <div className="emoji-verification__content">
       <Text>Click accept to start the verification process.</Text>
       <div className="emoji-verification__buttons">
-        {
-          process
-            ? renderWait()
-            : <Button variant="primary" onClick={beginVerification}>Accept</Button>
-        }
+        {process ? (
+          renderWait()
+        ) : (
+          <Button variant="primary" onClick={beginVerification}>
+            Accept
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -180,19 +184,19 @@ function EmojiVerification() {
     <Dialog
       isOpen={data !== null}
       className="emoji-verification"
-      title={(
+      title={
         <Text variant="s1" weight="medium" primary>
           Emoji verification
         </Text>
-      )}
+      }
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
       onRequestClose={requestClose}
     >
-      {
-        data !== null
-          ? <EmojiVerificationContent data={data} requestClose={requestClose} />
-          : <div />
-      }
+      {data !== null ? (
+        <EmojiVerificationContent data={data} requestClose={requestClose} />
+      ) : (
+        <div />
+      )}
     </Dialog>
   );
 }

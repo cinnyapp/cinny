@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './CreateRoom.scss';
 
-import { twemojify } from '../../../util/twemojify';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
@@ -287,7 +286,7 @@ function CreateRoom() {
       isOpen={create !== null}
       title={
         <Text variant="s1" weight="medium" primary>
-          {parentId ? twemojify(room.name) : 'Home'}
+          {parentId ? room.name : 'Home'}
           <span style={{ color: 'var(--tc-surface-low)' }}>
             {` — create ${isSpace ? 'space' : 'room'}`}
           </span>

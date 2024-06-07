@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './SpaceSettings.scss';
 
-import { twemojify } from '../../../util/twemojify';
-
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
@@ -139,7 +137,7 @@ function SpaceSettings() {
       className="space-settings"
       title={
         <Text variant="s1" weight="medium" primary>
-          {isOpen && twemojify(room.name)}
+          {isOpen && room.name}
           <span style={{ color: 'var(--tc-surface-low)' }}> — space settings</span>
         </Text>
       }
