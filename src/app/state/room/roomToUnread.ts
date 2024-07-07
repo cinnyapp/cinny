@@ -45,7 +45,7 @@ export type RoomToUnreadAction =
       roomId: string;
     };
 
-const unreadInfoToUnread = (unreadInfo: UnreadInfo): Unread => ({
+export const unreadInfoToUnread = (unreadInfo: UnreadInfo): Unread => ({
   highlight: unreadInfo.highlight,
   total: unreadInfo.total,
   from: null,
