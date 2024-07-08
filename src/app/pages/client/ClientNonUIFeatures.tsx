@@ -46,6 +46,7 @@ function InviteNotifications() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const invites = useAtomValue(allInvitesAtom);
   const perviousInviteLen = usePreviousValue(invites.length, 0);
+  const mx = useMatrixClient();
 
   const navigate = useNavigate();
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
@@ -73,7 +74,7 @@ function InviteNotifications() {
   }, []);
 
   useEffect(() => {
-    if (invites.length > perviousInviteLen) {
+    if (invites.length > perviousInviteLen && mx.getSyncState() === 'SYNCING') {
       if (Notification.permission === 'granted') {
         notify(invites.length - perviousInviteLen);
       }
@@ -82,7 +83,7 @@ function InviteNotifications() {
         playSound();
       }
     }
-  }, [invites, perviousInviteLen, notificationSound, notify, playSound]);
+  }, [mx, invites, perviousInviteLen, notificationSound, notify, playSound]);
 
   return (
     // eslint-disable-next-line jsx-a11y/media-has-caption
@@ -116,10 +117,6 @@ function MessageNotifications() {
       roomId: string;
       eventId: string;
     }) => {
-      if (notifRef.current) {
-        notifRef.current.close();
-      }
-
       const noti = new window.Notification(roomName, {
         icon: roomAvatar,
         badge: roomAvatar,
@@ -130,7 +127,10 @@ function MessageNotifications() {
       noti.onclick = () => {
         if (!window.closed) navigate(getInboxNotificationsPath());
         noti.close();
+        notifRef.current = undefined;
       };
+
+      notifRef.current?.close();
       notifRef.current = noti;
     },
     [navigate]
@@ -149,11 +149,17 @@ function MessageNotifications() {
       removed,
       data
     ) => {
-      if (selectedRoomId === room?.roomId || notificationSelected) return;
-      if (!room || !data.liveEvent || room.isSpaceRoom() || !isNotificationEvent(mEvent)) return;
-      if (getNotificationType(mx, room.roomId) === NotificationType.Mute) {
+      if (
+        mx.getSyncState() !== 'SYNCING' ||
+        selectedRoomId === room?.roomId ||
+        notificationSelected ||
+        !room ||
+        !data.liveEvent ||
+        room.isSpaceRoom() ||
+        !isNotificationEvent(mEvent) ||
+        getNotificationType(mx, room.roomId) === NotificationType.Mute
+      )
         return;
-      }
 
       const sender = mEvent.getSender();
       const eventId = mEvent.getId();
