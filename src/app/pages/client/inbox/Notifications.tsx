@@ -31,13 +31,20 @@ import { InboxNotificationsPathSearchParams } from '../../paths';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { SequenceCard } from '../../../components/sequence-card';
 import { RoomAvatar, RoomIcon } from '../../../components/room-avatar';
-import { getMemberAvatarMxc, getMemberDisplayName, getRoomAvatarUrl } from '../../../utils/room';
+import {
+  getEditedEvent,
+  getMemberAvatarMxc,
+  getMemberDisplayName,
+  getRoomAvatarUrl,
+} from '../../../utils/room';
 import { ScrollTopContainer } from '../../../components/scroll-top-container';
 import { useInterval } from '../../../hooks/useInterval';
 import {
   AvatarBase,
   ImageContent,
   MSticker,
+  MessageNotDecryptedContent,
+  MessageUnsupportedContent,
   ModernLayout,
   RedactedContent,
   Reply,
@@ -62,6 +69,7 @@ import { markAsRead } from '../../../../client/action/notifications';
 import { ContainerColor } from '../../../styles/ContainerColor.css';
 import { VirtualTile } from '../../../components/virtualizer';
 import { UserAvatar } from '../../../components/user-avatar';
+import { EncryptedContent } from '../../../features/room/message';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -223,6 +231,78 @@ function RoomNotificationsGroupComp({
             htmlReactParserOptions={htmlReactParserOptions}
             outlineAttachment
           />
+        );
+      },
+      [MessageEvent.RoomMessageEncrypted]: (evt, displayName) => {
+        const evtTimeline = room.getTimelineForEvent(evt.event_id);
+
+        const mEvent = evtTimeline?.getEvents().find((e) => e.getId() === evt.event_id);
+
+        if (!mEvent || !evtTimeline) {
+          return (
+            <Box grow="Yes" direction="Column">
+              <Text size="T400" priority="300">
+                <code className={customHtmlCss.Code}>{evt.type}</code>
+                {' event'}
+              </Text>
+            </Box>
+          );
+        }
+
+        return (
+          <EncryptedContent mEvent={mEvent}>
+            {() => {
+              if (mEvent.isRedacted()) return <RedactedContent />;
+              if (mEvent.getType() === MessageEvent.Sticker)
+                return (
+                  <MSticker
+                    content={mEvent.getContent()}
+                    renderImageContent={(props) => (
+                      <ImageContent
+                        {...props}
+                        autoPlay={mediaAutoLoad}
+                        renderImage={(p) => <Image {...p} loading="lazy" />}
+                        renderViewer={(p) => <ImageViewer {...p} />}
+                      />
+                    )}
+                  />
+                );
+              if (mEvent.getType() === MessageEvent.RoomMessage) {
+                const editedEvent = getEditedEvent(
+                  evt.event_id,
+                  mEvent,
+                  evtTimeline.getTimelineSet()
+                );
+                const getContent = (() =>
+                  editedEvent?.getContent()['m.new_content'] ??
+                  mEvent.getContent()) as GetContentCallback;
+
+                return (
+                  <RenderMessageContent
+                    displayName={displayName}
+                    msgType={mEvent.getContent().msgtype ?? ''}
+                    ts={mEvent.getTs()}
+                    edited={!!editedEvent}
+                    getContent={getContent}
+                    mediaAutoLoad={mediaAutoLoad}
+                    urlPreview={urlPreview}
+                    htmlReactParserOptions={htmlReactParserOptions}
+                  />
+                );
+              }
+              if (mEvent.getType() === MessageEvent.RoomMessageEncrypted)
+                return (
+                  <Text>
+                    <MessageNotDecryptedContent />
+                  </Text>
+                );
+              return (
+                <Text>
+                  <MessageUnsupportedContent />
+                </Text>
+              );
+            }}
+          </EncryptedContent>
         );
       },
       [MessageEvent.Sticker]: (event, displayName, getContent) => {
@@ -398,7 +478,7 @@ const useNotificationsSearchParams = (
     [searchParams]
   );
 
-const DEFAULT_REFRESH_MS = 10000;
+const DEFAULT_REFRESH_MS = 7000;
 
 export function Notifications() {
   const mx = useMatrixClient();
@@ -441,9 +521,7 @@ export function Notifications() {
 
   useInterval(
     useCallback(() => {
-      if (document.hasFocus()) {
-        silentReloadTimeline();
-      }
+      silentReloadTimeline();
     }, [silentReloadTimeline]),
     refreshIntervalTime
   );

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useAtomValue } from 'jotai';
 import './SpaceAddExisting.scss';
-
-import { twemojify } from '../../../util/twemojify';
 
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
@@ -24,6 +23,9 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 
 import { useStore } from '../../hooks/useStore';
+import { roomToParentsAtom } from '../../state/room/roomToParents';
+import { useDirects, useRooms, useSpaces } from '../../state/hooks/roomList';
+import { allRoomsAtom } from '../../state/room-list/roomList';
 
 function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
   const mountStore = useStore(roomId);
@@ -33,7 +35,10 @@ function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
   const [selected, setSelected] = useState([]);
   const [searchIds, setSearchIds] = useState(null);
   const mx = initMatrix.matrixClient;
-  const { spaces, rooms, directs, roomIdToParents } = initMatrix.roomList;
+  const roomIdToParents = useAtomValue(roomToParentsAtom);
+  const spaces = useSpaces(mx, allRoomsAtom);
+  const rooms = useRooms(mx, allRoomsAtom);
+  const directs = useDirects(mx, allRoomsAtom);
 
   useEffect(() => {
     const roomIds = onlySpaces ? [...spaces] : [...rooms, ...directs];
@@ -217,7 +222,7 @@ function SpaceAddExisting() {
       className="space-add-existing"
       title={
         <Text variant="s1" weight="medium" primary>
-          {room && twemojify(room.name)}
+          {room && room.name}
           <span style={{ color: 'var(--tc-surface-low)' }}>
             {' '}
             — add existing {data?.spaces ? 'spaces' : 'rooms'}

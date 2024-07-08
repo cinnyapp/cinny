@@ -3,10 +3,8 @@ import PropTypes from 'prop-types';
 import './InviteUser.scss';
 
 import initMatrix from '../../../client/initMatrix';
-import cons from '../../../client/state/cons';
 import * as roomActions from '../../../client/action/room';
-import { selectRoom } from '../../../client/action/navigation';
-import { hasDMWith, hasDevices } from '../../../util/matrixUtil';
+import { hasDevices } from '../../../util/matrixUtil';
 
 import Text from '../../atoms/text/Text';
 import Button from '../../atoms/button/Button';
@@ -18,10 +16,10 @@ import RoomTile from '../../molecules/room-tile/RoomTile';
 
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { getDMRoomFor } from '../../utils/matrix';
 
-function InviteUser({
-  isOpen, roomId, searchTerm, onRequestClose,
-}) {
+function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
   const [isSearching, updateIsSearching] = useState(false);
   const [searchQuery, updateSearchQuery] = useState({});
   const [users, updateUsers] = useState([]);
@@ -37,6 +35,7 @@ function InviteUser({
   const usernameRef = useRef(null);
 
   const mx = initMatrix.matrixClient;
+  const { navigateRoom } = useRoomNavigate();
 
   function getMapCopy(myMap) {
     const newMap = new Map();
@@ -76,11 +75,13 @@ function InviteUser({
     if (isInputUserId) {
       try {
         const result = await mx.getProfileInfo(inputUsername);
-        updateUsers([{
-          user_id: inputUsername,
-          display_name: result.displayname,
-          avatar_url: result.avatar_url,
-        }]);
+        updateUsers([
+          {
+            user_id: inputUsername,
+            display_name: result.displayname,
+            avatar_url: result.avatar_url,
+          },
+        ]);
       } catch (e) {
         updateSearchQuery({ error: `${inputUsername} not found!` });
       }
@@ -105,9 +106,9 @@ function InviteUser({
 
   async function createDM(userId) {
     if (mx.getUserId() === userId) return;
-    const dmRoomId = hasDMWith(userId);
+    const dmRoomId = getDMRoomFor(mx, userId)?.roomId;
     if (dmRoomId) {
-      selectRoom(dmRoomId);
+      navigateRoom(dmRoomId);
       onRequestClose();
       return;
     }
@@ -120,6 +121,7 @@ function InviteUser({
       const result = await roomActions.createDM(userId, await hasDevices(userId));
       roomIdToUserId.set(result.room_id, userId);
       updateRoomIdToUserId(getMapCopy(roomIdToUserId));
+      onDMCreated(result.room_id);
     } catch (e) {
       deleteUserFromProc(userId);
       if (typeof e.message === 'string') procUserError.set(userId, e.message);
@@ -150,7 +152,13 @@ function InviteUser({
 
   function renderUserList() {
     const renderOptions = (userId) => {
-      const messageJSX = (message, isPositive) => <Text variant="b2"><span style={{ color: isPositive ? 'var(--bg-positive)' : 'var(--bg-negative)' }}>{message}</span></Text>;
+      const messageJSX = (message, isPositive) => (
+        <Text variant="b2">
+          <span style={{ color: isPositive ? 'var(--bg-positive)' : 'var(--bg-negative)' }}>
+            {message}
+          </span>
+        </Text>
+      );
 
       if (mx.getUserId() === userId) return null;
       if (procUsers.has(userId)) {
@@ -158,7 +166,16 @@ function InviteUser({
       }
       if (createdDM.has(userId)) {
         // eslint-disable-next-line max-len
-        return <Button onClick={() => { selectRoom(createdDM.get(userId)); onRequestClose(); }}>Open</Button>;
+        return (
+          <Button
+            onClick={() => {
+              navigateRoom(createdDM.get(userId));
+              onRequestClose();
+            }}
+          >
+            Open
+          </Button>
+        );
       }
       if (invitedUserIds.has(userId)) {
         return messageJSX('Invited', true);
@@ -178,13 +195,23 @@ function InviteUser({
           }
         }
       }
-      return (typeof roomId === 'string')
-        ? <Button onClick={() => inviteToRoom(userId)} variant="primary">Invite</Button>
-        : <Button onClick={() => createDM(userId)} variant="primary">Message</Button>;
+      return typeof roomId === 'string' ? (
+        <Button onClick={() => inviteToRoom(userId)} variant="primary">
+          Invite
+        </Button>
+      ) : (
+        <Button onClick={() => createDM(userId)} variant="primary">
+          Message
+        </Button>
+      );
     };
     const renderError = (userId) => {
       if (!procUserError.has(userId)) return null;
-      return <Text variant="b2"><span style={{ color: 'var(--bg-danger)' }}>{procUserError.get(userId)}</span></Text>;
+      return (
+        <Text variant="b2">
+          <span style={{ color: 'var(--bg-danger)' }}>{procUserError.get(userId)}</span>
+        </Text>
+      );
     };
 
     return users.map((user) => {
@@ -193,7 +220,11 @@ function InviteUser({
       return (
         <RoomTile
           key={userId}
-          avatarSrc={typeof user.avatar_url === 'string' ? mx.mxcUrlToHttp(user.avatar_url, 42, 42, 'crop') : null}
+          avatarSrc={
+            typeof user.avatar_url === 'string'
+              ? mx.mxcUrlToHttp(user.avatar_url, 42, 42, 'crop')
+              : null
+          }
           name={name}
           id={userId}
           options={renderOptions(userId)}
@@ -217,48 +248,43 @@ function InviteUser({
     };
   }, [isOpen, searchTerm]);
 
-  useEffect(() => {
-    initMatrix.roomList.on(cons.events.roomList.ROOM_CREATED, onDMCreated);
-    return () => {
-      initMatrix.roomList.removeListener(cons.events.roomList.ROOM_CREATED, onDMCreated);
-    };
-  }, [isOpen, procUsers, createdDM, roomIdToUserId]);
-
   return (
     <PopupWindow
       isOpen={isOpen}
-      title={(typeof roomId === 'string' ? `Invite to ${mx.getRoom(roomId).name}` : 'Direct message')}
+      title={typeof roomId === 'string' ? `Invite to ${mx.getRoom(roomId).name}` : 'Direct message'}
       contentOptions={<IconButton src={CrossIC} onClick={onRequestClose} tooltip="Close" />}
       onRequestClose={onRequestClose}
     >
       <div className="invite-user">
-        <form className="invite-user__form" onSubmit={(e) => { e.preventDefault(); searchUser(usernameRef.current.value); }}>
+        <form
+          className="invite-user__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            searchUser(usernameRef.current.value);
+          }}
+        >
           <Input value={searchTerm} forwardRef={usernameRef} label="Name or userId" />
-          <Button disabled={isSearching} iconSrc={UserIC} variant="primary" type="submit">Search</Button>
+          <Button disabled={isSearching} iconSrc={UserIC} variant="primary" type="submit">
+            Search
+          </Button>
         </form>
         <div className="invite-user__search-status">
-          {
-            typeof searchQuery.username !== 'undefined' && isSearching && (
-              <div className="flex--center">
-                <Spinner size="small" />
-                <Text variant="b2">{`Searching for user "${searchQuery.username}"...`}</Text>
-              </div>
-            )
-          }
-          {
-            typeof searchQuery.username !== 'undefined' && !isSearching && (
-              <Text variant="b2">{`Search result for user "${searchQuery.username}"`}</Text>
-            )
-          }
-          {
-            searchQuery.error && <Text className="invite-user__search-error" variant="b2">{searchQuery.error}</Text>
-          }
+          {typeof searchQuery.username !== 'undefined' && isSearching && (
+            <div className="flex--center">
+              <Spinner size="small" />
+              <Text variant="b2">{`Searching for user "${searchQuery.username}"...`}</Text>
+            </div>
+          )}
+          {typeof searchQuery.username !== 'undefined' && !isSearching && (
+            <Text variant="b2">{`Search result for user "${searchQuery.username}"`}</Text>
+          )}
+          {searchQuery.error && (
+            <Text className="invite-user__search-error" variant="b2">
+              {searchQuery.error}
+            </Text>
+          )}
         </div>
-        { users.length !== 0 && (
-          <div className="invite-user__content">
-            {renderUserList()}
-          </div>
-        )}
+        {users.length !== 0 && <div className="invite-user__content">{renderUserList()}</div>}
       </div>
     </PopupWindow>
   );

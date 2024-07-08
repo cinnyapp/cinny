@@ -8,7 +8,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
 import { EventType, IContent, MsgType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
@@ -56,7 +56,6 @@ import {
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
-import initMatrix from '../../../client/initMatrix';
 import { TUploadContent, encryptFile, getImageInfo, getMxIdLocalPart } from '../../utils/matrix';
 import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
 import { useFilePicker } from '../../hooks/useFilePicker';
@@ -95,6 +94,7 @@ import {
 } from './msgContent';
 import colorMXID from '../../../util/colorMXID';
 import {
+  getAllParents,
   getMemberDisplayName,
   parseReplyBody,
   parseReplyFormattedBody,
@@ -107,6 +107,7 @@ import { Command, SHRUG, useCommands } from '../../hooks/useCommands';
 import { mobileOrTablet } from '../../utils/user-agent';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 import { ReplyLayout } from '../../components/message';
+import { roomToParentsAtom } from '../../state/room/roomToParents';
 
 interface RoomInputProps {
   editor: Editor;
@@ -121,6 +122,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const commands = useCommands(mx, room);
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
+    const roomToParents = useAtomValue(roomToParentsAtom);
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
@@ -133,13 +135,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const uploadBoardHandlers = useRef<UploadBoardImperativeHandlers>();
 
     const imagePackRooms: Room[] = useMemo(() => {
-      const allParentSpaces = [roomId, ...(initMatrix.roomList?.getAllParentSpaces(roomId) ?? [])];
+      const allParentSpaces = [roomId].concat(Array.from(getAllParents(roomToParents, roomId)));
       return allParentSpaces.reduce<Room[]>((list, rId) => {
         const r = mx.getRoom(rId);
         if (r) list.push(r);
         return list;
       }, []);
-    }, [mx, roomId]);
+    }, [mx, roomId, roomToParents]);
 
     const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
     const [autocompleteQuery, setAutocompleteQuery] =

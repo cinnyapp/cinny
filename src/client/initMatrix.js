@@ -4,12 +4,7 @@ import Olm from '@matrix-org/olm';
 import { logger } from 'matrix-js-sdk/lib/logger';
 
 import { getSecret } from './state/auth';
-import RoomList from './state/RoomList';
-import AccountData from './state/AccountData';
-import RoomsInput from './state/RoomsInput';
-import Notifications from './state/Notifications';
 import { cryptoCallbacks } from './state/secretStorageKeys';
-import navigation from './state/navigation';
 
 global.Olm = Olm;
 
@@ -18,12 +13,6 @@ if (import.meta.env.PROD) {
 }
 
 class InitMatrix extends EventEmitter {
-  constructor() {
-    super();
-
-    navigation.initMatrix = this;
-  }
-
   async init() {
     if (this.matrixClient || this.initializing) {
       console.warn('Client is already initialized!')
@@ -84,17 +73,9 @@ class InitMatrix extends EventEmitter {
       PREPARED: (prevState) => {
         console.log('PREPARED state');
         console.log('Previous state: ', prevState);
-        // TODO: remove global.initMatrix at end
         global.initMatrix = this;
         if (prevState === null) {
-          this.roomList = new RoomList(this.matrixClient);
-          this.accountData = new AccountData(this.roomList);
-          this.roomsInput = new RoomsInput(this.matrixClient, this.roomList);
-          this.notifications = new Notifications(this.roomList);
           this.emit('init_loading_finished');
-          this.notifications._initNoti();
-        } else {
-          this.notifications?._initNoti();
         }
       },
       RECONNECTING: () => {

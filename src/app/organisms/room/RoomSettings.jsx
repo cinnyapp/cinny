@@ -5,7 +5,6 @@ import './RoomSettings.scss';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import * as roomActions from '../../../client/action/room';
 
 import Text from '../../atoms/text/Text';
 import Tabs from '../../atoms/tabs/Tabs';
@@ -86,7 +85,7 @@ function GeneralSettings({ roomId }) {
               'danger'
             );
             if (!isConfirmed) return;
-            roomActions.leave(roomId);
+            mx.leave(roomId);
           }}
           iconSrc={LeaveArrowIC}
         >

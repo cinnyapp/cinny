@@ -28,7 +28,7 @@ import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
 import to from 'await-to-js';
-import { useSetAtom } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import {
   Badge,
   Box,
@@ -74,6 +74,7 @@ import { getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser
 import {
   canEditEvent,
   decryptAllTimelineEvent,
+  getAllParents,
   getEditedEvent,
   getEventReactions,
   getLatestEditableEvt,
@@ -103,14 +104,15 @@ import { createMentionElement, isEmptyEditor, moveCursor } from '../../component
 import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
 import { usePowerLevelsAPI, usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
-import initMatrix from '../../../client/initMatrix';
 import { useKeyDown } from '../../hooks/useKeyDown';
-import cons from '../../../client/state/cons';
 import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
 import { RenderMessageContent } from '../../components/RenderMessageContent';
 import { Image } from '../../components/media';
 import { ImageViewer } from '../../components/image-viewer';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { roomToParentsAtom } from '../../state/room/roomToParents';
+import { useRoomUnread } from '../../state/hooks/unread';
+import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -444,18 +446,19 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const canSendReaction = canSendEvent(MessageEvent.Reaction, myPowerLevel);
   const [editId, setEditId] = useState<string>();
   const { navigateRoom, navigateSpace } = useRoomNavigate();
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
 
   const imagePackRooms: Room[] = useMemo(() => {
-    const allParentSpaces = [
-      room.roomId,
-      ...(initMatrix.roomList?.getAllParentSpaces(room.roomId) ?? []),
-    ];
+    const allParentSpaces = [room.roomId].concat(
+      Array.from(getAllParents(roomToParents, room.roomId))
+    );
     return allParentSpaces.reduce<Room[]>((list, rId) => {
       const r = mx.getRoom(rId);
       if (r) list.push(r);
       return list;
     }, []);
-  }, [mx, room]);
+  }, [mx, room, roomToParents]);
 
   const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
   const readUptoEventIdRef = useRef<string>();
@@ -794,15 +797,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   // Remove unreadInfo on mark as read
   useEffect(() => {
-    const handleFullRead = (rId: string) => {
-      if (rId !== room.roomId) return;
+    if (!unread) {
       setUnreadInfo(undefined);
-    };
-    initMatrix.notifications?.on(cons.events.notifications.FULL_READ, handleFullRead);
-    return () => {
-      initMatrix.notifications?.removeListener(cons.events.notifications.FULL_READ, handleFullRead);
-    };
-  }, [room]);
+    }
+  }, [unread]);
 
   // scroll out of view msg editor in view.
   useEffect(() => {

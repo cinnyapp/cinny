@@ -1,8 +1,16 @@
-export type DisposeCallback<Q extends unknown[] = [], R = void> = (...args: Q) => R;
-export type DisposableContext<P extends unknown[] = [], Q extends unknown[] = [], R = void> = (
-  ...args: P
-) => DisposeCallback<Q, R>;
+export type DisposeCallback<DisposeArgs extends unknown[] = [], DisposeReturn = void> = (
+  ...args: DisposeArgs
+) => DisposeReturn;
+export type DisposableContext<
+  DisposableArgs extends unknown[] = [],
+  DisposeArgs extends unknown[] = [],
+  DisposeReturn = void
+> = (...args: DisposableArgs) => DisposeCallback<DisposeArgs, DisposeReturn>;
 
-export const disposable = <P extends unknown[], Q extends unknown[] = [], R = void>(
-  context: DisposableContext<P, Q, R>
+export const disposable = <
+  DisposableArgs extends unknown[],
+  DisposeArgs extends unknown[] = [],
+  DisposeReturn = void
+>(
+  context: DisposableContext<DisposableArgs, DisposeArgs, DisposeReturn>
 ) => context;

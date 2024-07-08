@@ -13,28 +13,33 @@ import BellIC from '../../../../public/res/ic/outlined/bell.svg';
 import BellRingIC from '../../../../public/res/ic/outlined/bell-ring.svg';
 import BellPingIC from '../../../../public/res/ic/outlined/bell-ping.svg';
 import BellOffIC from '../../../../public/res/ic/outlined/bell-off.svg';
+import { getNotificationType } from '../../utils/room';
 
-const items = [{
-  iconSrc: BellIC,
-  text: 'Global',
-  type: cons.notifs.DEFAULT,
-}, {
-  iconSrc: BellRingIC,
-  text: 'All messages',
-  type: cons.notifs.ALL_MESSAGES,
-}, {
-  iconSrc: BellPingIC,
-  text: 'Mentions & Keywords',
-  type: cons.notifs.MENTIONS_AND_KEYWORDS,
-}, {
-  iconSrc: BellOffIC,
-  text: 'Mute',
-  type: cons.notifs.MUTE,
-}];
+const items = [
+  {
+    iconSrc: BellIC,
+    text: 'Global',
+    type: cons.notifs.DEFAULT,
+  },
+  {
+    iconSrc: BellRingIC,
+    text: 'All messages',
+    type: cons.notifs.ALL_MESSAGES,
+  },
+  {
+    iconSrc: BellPingIC,
+    text: 'Mentions & Keywords',
+    type: cons.notifs.MENTIONS_AND_KEYWORDS,
+  },
+  {
+    iconSrc: BellOffIC,
+    text: 'Mute',
+    type: cons.notifs.MUTE,
+  },
+];
 
 function setRoomNotifType(roomId, newType) {
   const mx = initMatrix.matrixClient;
-  const { notifications } = initMatrix;
   let roomPushRule;
   try {
     roomPushRule = mx.getRoomPushRule('global', roomId);
@@ -47,22 +52,22 @@ function setRoomNotifType(roomId, newType) {
     if (roomPushRule) {
       promises.push(mx.deletePushRule('global', 'room', roomPushRule.rule_id));
     }
-    promises.push(mx.addPushRule('global', 'override', roomId, {
-      conditions: [
-        {
-          kind: 'event_match',
-          key: 'room_id',
-          pattern: roomId,
-        },
-      ],
-      actions: [
-        'dont_notify',
-      ],
-    }));
+    promises.push(
+      mx.addPushRule('global', 'override', roomId, {
+        conditions: [
+          {
+            kind: 'event_match',
+            key: 'room_id',
+            pattern: roomId,
+          },
+        ],
+        actions: ['dont_notify'],
+      })
+    );
     return promises;
   }
 
-  const oldState = notifications.getNotiType(roomId);
+  const oldState = getNotificationType(mx, roomId);
   if (oldState === cons.notifs.MUTE) {
     promises.push(mx.deletePushRule('global', 'override', roomId));
   }
@@ -75,25 +80,27 @@ function setRoomNotifType(roomId, newType) {
   }
 
   if (newType === cons.notifs.MENTIONS_AND_KEYWORDS) {
-    promises.push(mx.addPushRule('global', 'room', roomId, {
-      actions: [
-        'dont_notify',
-      ],
-    }));
+    promises.push(
+      mx.addPushRule('global', 'room', roomId, {
+        actions: ['dont_notify'],
+      })
+    );
     promises.push(mx.setPushRuleEnabled('global', 'room', roomId, true));
     return Promise.all(promises);
   }
 
   // cons.notifs.ALL_MESSAGES
-  promises.push(mx.addPushRule('global', 'room', roomId, {
-    actions: [
-      'notify',
-      {
-        set_tweak: 'sound',
-        value: 'default',
-      },
-    ],
-  }));
+  promises.push(
+    mx.addPushRule('global', 'room', roomId, {
+      actions: [
+        'notify',
+        {
+          set_tweak: 'sound',
+          value: 'default',
+        },
+      ],
+    })
+  );
 
   promises.push(mx.setPushRuleEnabled('global', 'room', roomId, true));
 
@@ -101,17 +108,20 @@ function setRoomNotifType(roomId, newType) {
 }
 
 function useNotifications(roomId) {
-  const { notifications } = initMatrix;
-  const [activeType, setActiveType] = useState(notifications.getNotiType(roomId));
+  const mx = initMatrix.matrixClient;
+  const [activeType, setActiveType] = useState(getNotificationType(mx, roomId));
   useEffect(() => {
-    setActiveType(notifications.getNotiType(roomId));
-  }, [roomId]);
+    setActiveType(getNotificationType(mx, roomId));
+  }, [mx, roomId]);
 
-  const setNotification = useCallback((item) => {
-    if (item.type === activeType.type) return;
-    setActiveType(item.type);
-    setRoomNotifType(roomId, item.type);
-  }, [activeType, roomId]);
+  const setNotification = useCallback(
+    (item) => {
+      if (item.type === activeType.type) return;
+      setActiveType(item.type);
+      setRoomNotifType(roomId, item.type);
+    },
+    [activeType, roomId]
+  );
   return [activeType, setNotification];
 }
 
@@ -120,21 +130,19 @@ function RoomNotification({ roomId }) {
 
   return (
     <div className="room-notification">
-      {
-        items.map((item) => (
-          <MenuItem
-            variant={activeType === item.type ? 'positive' : 'surface'}
-            key={item.type}
-            iconSrc={item.iconSrc}
-            onClick={() => setNotification(item)}
-          >
-            <Text varient="b1">
-              <span>{item.text}</span>
-              <RadioButton isActive={activeType === item.type} />
-            </Text>
-          </MenuItem>
-        ))
-      }
+      {items.map((item) => (
+        <MenuItem
+          variant={activeType === item.type ? 'positive' : 'surface'}
+          key={item.type}
+          iconSrc={item.iconSrc}
+          onClick={() => setNotification(item)}
+        >
+          <Text varient="b1">
+            <span>{item.text}</span>
+            <RadioButton isActive={activeType === item.type} />
+          </Text>
+        </MenuItem>
+      ))}
     </div>
   );
 }

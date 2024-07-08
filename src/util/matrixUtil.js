@@ -89,20 +89,6 @@ export function trimHTMLReply(html) {
   return html.slice(i + suffix.length);
 }
 
-export function hasDMWith(userId) {
-  const mx = initMatrix.matrixClient;
-  const directIds = [...initMatrix.roomList.directs];
-
-  return directIds.find((roomId) => {
-    const dRoom = mx.getRoom(roomId);
-    const roomMembers = dRoom.getMembers();
-    if (roomMembers.length <= 2 && dRoom.getMember(userId)) {
-      return true;
-    }
-    return false;
-  });
-}
-
 export function joinRuleToIconSrc(joinRule, isSpace) {
   return ({
     restricted: () => (isSpace ? SpaceIC : HashIC),

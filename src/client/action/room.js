@@ -107,34 +107,9 @@ async function join(roomIdOrAlias, isDM = false, via = undefined) {
       const targetUserId = guessDMRoomTargetId(mx.getRoom(resultRoom.roomId), mx.getUserId());
       await addRoomToMDirect(resultRoom.roomId, targetUserId);
     }
-    appDispatcher.dispatch({
-      type: cons.actions.room.JOIN,
-      roomId: resultRoom.roomId,
-      isDM,
-    });
     return resultRoom.roomId;
   } catch (e) {
     throw new Error(e);
-  }
-}
-
-/**
- *
- * @param {string} roomId
- * @param {boolean} isDM
- */
-async function leave(roomId) {
-  const mx = initMatrix.matrixClient;
-  const isDM = initMatrix.roomList.directs.has(roomId);
-  try {
-    await mx.leave(roomId);
-    appDispatcher.dispatch({
-      type: cons.actions.room.LEAVE,
-      roomId,
-      isDM,
-    });
-  } catch {
-    console.error('Unable to leave room.');
   }
 }
 
@@ -145,11 +120,6 @@ async function create(options, isDM = false) {
     if (isDM && typeof options.invite?.[0] === 'string') {
       await addRoomToMDirect(result.room_id, options.invite[0]);
     }
-    appDispatcher.dispatch({
-      type: cons.actions.room.CREATE,
-      roomId: result.room_id,
-      isDM,
-    });
     return result;
   } catch (e) {
     const errcodes = ['M_UNKNOWN', 'M_BAD_JSON', 'M_ROOM_IN_USE', 'M_INVALID_ROOM_STATE', 'M_UNSUPPORTED_ROOM_VERSION'];
@@ -348,7 +318,7 @@ async function setMyRoomAvatar(roomId, mxc) {
 export {
   convertToDm,
   convertToRoom,
-  join, leave,
+  join,
   createDM, createRoom,
   invite, kick, ban, unban,
   ignore, unignore,

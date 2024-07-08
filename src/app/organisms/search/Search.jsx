@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAtomValue } from 'jotai';
 import './Search.scss';
 
 import initMatrix from '../../../client/initMatrix';
@@ -19,6 +20,11 @@ import RoomSelector from '../../molecules/room-selector/RoomSelector';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { useDirects, useRooms, useSpaces } from '../../state/hooks/roomList';
+import { roomToUnreadAtom } from '../../state/room/roomToUnread';
+import { roomToParentsAtom } from '../../state/room/roomToParents';
+import { allRoomsAtom } from '../../state/room-list/roomList';
+import { mDirectAtom } from '../../state/mDirectList';
 
 function useVisiblityToggle(setResult) {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,9 +54,8 @@ function useVisiblityToggle(setResult) {
   return [isOpen, requestClose];
 }
 
-function mapRoomIds(roomIds) {
+function mapRoomIds(roomIds, directs, roomIdToParents) {
   const mx = initMatrix.matrixClient;
-  const { directs, roomIdToParents } = initMatrix.roomList;
 
   return roomIds.map((roomId) => {
     const room = mx.getRoom(roomId);
@@ -62,7 +67,7 @@ function mapRoomIds(roomIds) {
 
     let type = 'room';
     if (room.isSpaceRoom()) type = 'space';
-    else if (directs.has(roomId)) type = 'direct';
+    else if (directs.includes(roomId)) type = 'direct';
 
     return {
       type,
@@ -81,6 +86,12 @@ function Search() {
   const searchRef = useRef(null);
   const mx = initMatrix.matrixClient;
   const { navigateRoom, navigateSpace } = useRoomNavigate();
+  const mDirects = useAtomValue(mDirectAtom);
+  const spaces = useSpaces(mx, allRoomsAtom);
+  const rooms = useRooms(mx, allRoomsAtom, mDirects);
+  const directs = useDirects(mx, allRoomsAtom, mDirects);
+  const roomToUnread = useAtomValue(roomToUnreadAtom);
+  const roomToParents = useAtomValue(roomToParentsAtom);
 
   const handleSearchResults = (chunk, term) => {
     setResult({
@@ -97,7 +108,6 @@ function Search() {
       return;
     }
 
-    const { spaces, rooms, directs } = initMatrix.roomList;
     let ids = null;
 
     if (prefix) {
@@ -109,15 +119,15 @@ function Search() {
     }
 
     ids.sort(roomIdByActivity);
-    const mappedIds = mapRoomIds(ids);
+    const mappedIds = mapRoomIds(ids, directs, roomToParents);
     asyncSearch.setup(mappedIds, { keys: 'name', isContain: true, limit: 20 });
     if (prefix) handleSearchResults(mappedIds, prefix);
     else asyncSearch.search(term);
   };
 
   const loadRecentRooms = () => {
-    const { recentRooms } = navigation;
-    handleSearchResults(mapRoomIds(recentRooms).reverse());
+    const recentRooms = [];
+    handleSearchResults(mapRoomIds(recentRooms, directs, roomToParents).reverse());
   };
 
   const handleAfterOpen = () => {
@@ -169,7 +179,6 @@ function Search() {
     }
   };
 
-  const noti = initMatrix.notifications;
   const renderRoomSelector = (item) => {
     let imageSrc = null;
     let iconSrc = null;
@@ -188,9 +197,9 @@ function Search() {
         roomId={item.roomId}
         imageSrc={imageSrc}
         iconSrc={iconSrc}
-        isUnread={noti.hasNoti(item.roomId)}
-        notificationCount={noti.getTotalNoti(item.roomId)}
-        isAlert={noti.getHighlightNoti(item.roomId) > 0}
+        isUnread={roomToUnread.has(item.roomId)}
+        notificationCount={roomToUnread.get(item.roomId)?.total ?? 0}
+        isAlert={roomToUnread.get(item.roomId)?.highlight > 0}
         onClick={() => openItem(item.roomId, item.type)}
       />
     );
