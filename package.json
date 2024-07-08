@@ -50,7 +50,7 @@
     "html-react-parser": "4.2.0",
     "immer": "9.0.16",
     "is-hotkey": "0.2.0",
-    "jotai": "2.6.0",
+    "jotai": "2.8.4",
     "linkify-react": "4.1.1",
     "linkifyjs": "4.0.2",
     "matrix-js-sdk": "29.1.0",
