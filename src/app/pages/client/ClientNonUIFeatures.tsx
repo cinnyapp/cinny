@@ -6,6 +6,8 @@ import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '../../state/r
 import LogoSVG from '../../../../public/res/svg/cinny.svg';
 import LogoUnreadSVG from '../../../../public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '../../../../public/res/svg/cinny-highlight.svg';
+import NotificationSound from '../../../../public/sound/notification.ogg';
+import InviteSound from '../../../../public/sound/invite.ogg';
 import { setFavicon } from '../../utils/dom';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -28,14 +30,21 @@ function FaviconUpdater() {
   const roomToUnread = useAtomValue(roomToUnreadAtom);
 
   useEffect(() => {
-    if (roomToUnread.size === 0) {
-      setFavicon(LogoSVG);
-    } else {
-      const highlight = Array.from(roomToUnread.entries()).find(
-        ([, unread]) => unread.highlight > 0
-      );
+    let notification = false;
+    let highlight = false;
+    roomToUnread.forEach((unread) => {
+      if (unread.total > 0) {
+        notification = true;
+      }
+      if (unread.highlight > 0) {
+        highlight = true;
+      }
+    });
 
+    if (notification) {
       setFavicon(highlight ? LogoHighlightSVG : LogoUnreadSVG);
+    } else {
+      setFavicon(LogoSVG);
     }
   }, [roomToUnread]);
 
@@ -88,7 +97,7 @@ function InviteNotifications() {
   return (
     // eslint-disable-next-line jsx-a11y/media-has-caption
     <audio ref={audioRef} style={{ display: 'none' }}>
-      <source src="../../../../public/sound/invite.ogg" type="audio/ogg" />
+      <source src={InviteSound} type="audio/ogg" />
     </audio>
   );
 }
@@ -168,6 +177,7 @@ function MessageNotifications() {
       const cachedUnreadInfo = unreadCacheRef.current.get(room.roomId);
       unreadCacheRef.current.set(room.roomId, unreadInfo);
 
+      if (unreadInfo.total === 0) return;
       if (
         cachedUnreadInfo &&
         unreadEqual(unreadInfoToUnread(cachedUnreadInfo), unreadInfoToUnread(unreadInfo))
@@ -210,7 +220,7 @@ function MessageNotifications() {
   return (
     // eslint-disable-next-line jsx-a11y/media-has-caption
     <audio ref={audioRef} style={{ display: 'none' }}>
-      <source src="../../../../public/sound/notification.ogg" type="audio/ogg" />
+      <source src={NotificationSound} type="audio/ogg" />
     </audio>
   );
 }
