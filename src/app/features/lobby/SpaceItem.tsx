@@ -479,7 +479,7 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
             )}
           </Box>
           {canEditChild && (
-            <Box alignItems="Inherit" gap="200">
+            <Box shrink="No" alignItems="Inherit" gap="200">
               <AddRoomButton item={item} />
               {item.parentId === undefined && <AddSpaceButton item={item} />}
             </Box>
