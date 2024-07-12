@@ -35,6 +35,14 @@ or [ghcr image](https://github.com/cinnyapp/cinny/pkgs/container/cinny) by:
 ```
 docker pull ghcr.io/cinnyapp/cinny:latest
 ```
+If you want to try with the dev branch: 
+```
+docker pull ajbura/cinny:dev
+```
+or 
+```
+docker pull ghcr.io/cinnyapp/cinny:dev
+```
 
 <details>
 <summary>PGP Public Key to verify tarball</summary>

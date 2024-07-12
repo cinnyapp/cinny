@@ -1,0 +1,81 @@
+name: Dev branch deploy
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy-to-netlify:
+    name: Deploy to Netlify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+      - name: Setup node
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20.12.2
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build app
+        env:
+          NODE_OPTIONS: '--max_old_space_size=4096'
+        run: npm run build
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
+        with:
+          publish-dir: dist
+          deploy-message: 'Dev deploy ${{ github.sha }}'
+          enable-commit-comment: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          production-deploy: true
+          github-deployment-environment: nightly
+          github-deployment-description: 'Nightly deployment on each commit to dev branch'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_DEV }}
+        timeout-minutes: 1
+
+  publish-image:
+    name: Push Docker image to Docker Hub, ghcr
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.0.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.3.0
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3.2.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Login to the Container registry
+        uses: docker/login-action@v3.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5.5.1
+        with:
+          images: |
+            ${{ secrets.DOCKER_USERNAME }}/cinny
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,prefix={{branch}}-
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6.0.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
