@@ -26,6 +26,7 @@ import { useStore } from '../../hooks/useStore';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
 import { useDirects, useRooms, useSpaces } from '../../state/hooks/roomList';
 import { allRoomsAtom } from '../../state/room-list/roomList';
+import { mDirectAtom } from '../../state/mDirectList';
 
 function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
   const mountStore = useStore(roomId);
@@ -36,9 +37,10 @@ function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
   const [searchIds, setSearchIds] = useState(null);
   const mx = initMatrix.matrixClient;
   const roomIdToParents = useAtomValue(roomToParentsAtom);
+  const mDirects = useAtomValue(mDirectAtom);
   const spaces = useSpaces(mx, allRoomsAtom);
-  const rooms = useRooms(mx, allRoomsAtom);
-  const directs = useDirects(mx, allRoomsAtom);
+  const rooms = useRooms(mx, allRoomsAtom, mDirects);
+  const directs = useDirects(mx, allRoomsAtom, mDirects);
 
   useEffect(() => {
     const roomIds = onlySpaces ? [...spaces] : [...rooms, ...directs];
@@ -152,9 +154,9 @@ function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
             name={room.name}
             parentName={parents}
             roomId={rId}
-            imageSrc={directs.has(rId) ? imageSrc : null}
+            imageSrc={mDirects.has(rId) ? imageSrc : null}
             iconSrc={
-              directs.has(rId) ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())
+              mDirects.has(rId) ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())
             }
             isUnread={false}
             notificationCount={0}
