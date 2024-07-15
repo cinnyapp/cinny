@@ -73,7 +73,7 @@
     "slate-history": "0.93.0",
     "slate-react": "0.98.4",
     "tippy.js": "6.3.7",
-    "ua-parser-js": "1.0.35"
+    "ua-parser-js": "1.0.38"
   },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "0.2.3",
