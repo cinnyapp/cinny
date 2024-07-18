@@ -35,6 +35,7 @@ import { isMacOS } from '../../utils/user-agent';
 import { KeySymbol } from '../../utils/key-symbol';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
+import { stopPropagation } from '../../utils/keyboard';
 
 function BtnTooltip({ text, shortCode }: { text: string; shortCode?: string }) {
   return (
@@ -151,6 +152,7 @@ export function HeadingBlockButton() {
             isKeyForward: (evt: KeyboardEvent) =>
               evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu style={{ padding: config.space.S100 }}>

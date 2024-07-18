@@ -22,6 +22,7 @@ import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useDirectRooms } from '../direct/useDirectRooms';
 import { markAsRead } from '../../../../client/action/notifications';
+import { stopPropagation } from '../../../utils/keyboard';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -120,6 +121,7 @@ export function DirectTab() {
                 clickOutsideDeactivates: true,
                 isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                 isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                escapeDeactivates: stopPropagation,
               }}
             >
               <DirectMenu requestClose={() => setMenuAnchor(undefined)} />

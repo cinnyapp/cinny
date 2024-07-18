@@ -47,6 +47,7 @@ import { PageNav, PageNavHeader, PageNavContent } from '../../../components/page
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { markAsRead } from '../../../../client/action/notifications';
 import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
+import { stopPropagation } from '../../../utils/keyboard';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -121,6 +122,7 @@ function HomeHeader() {
               clickOutsideDeactivates: true,
               isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
               isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+              escapeDeactivates: stopPropagation,
             }}
           >
             <HomeMenu requestClose={() => setMenuAnchor(undefined)} />

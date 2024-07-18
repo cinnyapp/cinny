@@ -57,6 +57,7 @@ import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMet
 import { mDirectAtom } from '../../state/mDirectList';
 import { useClientConfig } from '../../hooks/useClientConfig';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
+import { stopPropagation } from '../../utils/keyboard';
 
 type RoomMenuProps = {
   room: Room;
@@ -240,6 +241,7 @@ export function RoomViewHeader() {
                             initialFocus: false,
                             clickOutsideDeactivates: true,
                             onDeactivate: () => setViewTopic(false),
+                            escapeDeactivates: stopPropagation,
                           }}
                         >
                           <RoomTopicViewer
@@ -331,6 +333,7 @@ export function RoomViewHeader() {
                   clickOutsideDeactivates: true,
                   isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                   isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  escapeDeactivates: stopPropagation,
                 }}
               >
                 <RoomMenu

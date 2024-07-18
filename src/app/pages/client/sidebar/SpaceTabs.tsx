@@ -90,6 +90,7 @@ import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { markAsRead } from '../../../../client/action/notifications';
 import { copyToClipboard } from '../../../utils/dom';
 import { openInviteUser, openSpaceSettings } from '../../../../client/action/navigation';
+import { stopPropagation } from '../../../utils/keyboard';
 
 type SpaceMenuProps = {
   room: Room;
@@ -463,6 +464,7 @@ function SpaceTab({
                     clickOutsideDeactivates: true,
                     isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                     isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                    escapeDeactivates: stopPropagation,
                   }}
                 >
                   <SpaceMenu

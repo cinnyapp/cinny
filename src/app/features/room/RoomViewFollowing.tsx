@@ -22,6 +22,7 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomLatestRenderedEvent } from '../../hooks/useRoomLatestRenderedEvent';
 import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
 import { EventReaders } from '../../components/event-readers';
+import { stopPropagation } from '../../utils/keyboard';
 
 export type RoomViewFollowingProps = {
   room: Room;
@@ -50,6 +51,7 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
                   initialFocus: false,
                   onDeactivate: () => setOpen(false),
                   clickOutsideDeactivates: true,
+                  escapeDeactivates: stopPropagation,
                 }}
               >
                 <Modal variant="Surface" size="300">

@@ -26,6 +26,7 @@ import * as css from './PdfViewer.css';
 import { AsyncStatus } from '../../hooks/useAsyncCallback';
 import { useZoom } from '../../hooks/useZoom';
 import { createPage, usePdfDocumentLoader, usePdfJSLoader } from '../../plugins/pdfjs-dist';
+import { stopPropagation } from '../../utils/keyboard';
 
 export type PdfViewerProps = {
   name: string;
@@ -201,6 +202,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
                       initialFocus: false,
                       onDeactivate: () => setJumpAnchor(undefined),
                       clickOutsideDeactivates: true,
+                      escapeDeactivates: stopPropagation,
                     }}
                   >
                     <Menu variant="Surface">

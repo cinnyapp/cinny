@@ -34,6 +34,7 @@ import * as styleCss from './style.css';
 import { ErrorCode } from '../../cs-errorcode';
 import { useDraggableItem } from './DnD';
 import { openCreateRoom, openSpaceAddExisting } from '../../../client/action/navigation';
+import { stopPropagation } from '../../utils/keyboard';
 
 function SpaceProfileLoading() {
   return (
@@ -277,6 +278,7 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
             clickOutsideDeactivates: true,
             isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu style={{ padding: config.space.S100 }}>
@@ -338,6 +340,7 @@ function AddSpaceButton({ item }: { item: HierarchyItem }) {
             clickOutsideDeactivates: true,
             isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu style={{ padding: config.space.S100 }}>

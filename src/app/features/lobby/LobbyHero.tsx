@@ -10,7 +10,7 @@ import { UseStateProvider } from '../../components/UseStateProvider';
 import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import * as css from './LobbyHero.css';
 import { PageHero } from '../../components/page';
-import { onEnterOrSpace } from '../../utils/keyboard';
+import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
 
 export function LobbyHero() {
   const mx = useMatrixClient();
@@ -46,6 +46,7 @@ export function LobbyHero() {
                         initialFocus: false,
                         clickOutsideDeactivates: true,
                         onDeactivate: () => setViewTopic(false),
+                        escapeDeactivates: stopPropagation,
                       }}
                     >
                       <RoomTopicViewer

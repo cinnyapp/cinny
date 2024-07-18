@@ -23,6 +23,7 @@ import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useHomeRooms } from '../home/useHomeRooms';
 import { markAsRead } from '../../../../client/action/notifications';
+import { stopPropagation } from '../../../utils/keyboard';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -122,6 +123,7 @@ export function HomeTab() {
                 clickOutsideDeactivates: true,
                 isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                 isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                escapeDeactivates: stopPropagation,
               }}
             >
               <HomeMenu requestClose={() => setMenuAnchor(undefined)} />

@@ -34,7 +34,7 @@ import { RoomAvatar } from '../../../components/room-avatar';
 import { addRoomIdToMDirect, getMxIdLocalPart, guessDmRoomUserId } from '../../../utils/matrix';
 import { Time } from '../../../components/message';
 import { useElementSizeObserver } from '../../../hooks/useElementSizeObserver';
-import { onEnterOrSpace } from '../../../utils/keyboard';
+import { onEnterOrSpace, stopPropagation } from '../../../utils/keyboard';
 import { RoomTopicViewer } from '../../../components/room-topic-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
@@ -140,6 +140,7 @@ function InviteCard({ room, userId, direct, compact, onNavigate }: InviteCardPro
                       initialFocus: false,
                       clickOutsideDeactivates: true,
                       onDeactivate: closeTopic,
+                      escapeDeactivates: stopPropagation,
                     }}
                   >
                     <RoomTopicViewer

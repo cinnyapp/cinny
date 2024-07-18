@@ -74,6 +74,7 @@ import {
 } from '../../../pages/pathUtils';
 import { copyToClipboard } from '../../../utils/dom';
 import { useClientConfig } from '../../../hooks/useClientConfig';
+import { stopPropagation } from '../../../utils/keyboard';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -148,6 +149,7 @@ export const MessageAllReactionItem = as<
               returnFocusOnDeactivate: false,
               onDeactivate: () => handleClose(),
               clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
             }}
           >
             <Modal variant="Surface" size="300">
@@ -201,6 +203,7 @@ export const MessageReadReceiptItem = as<
               initialFocus: false,
               onDeactivate: handleClose,
               clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
             }}
           >
             <Modal variant="Surface" size="300">
@@ -278,6 +281,7 @@ export const MessageSourceCodeItem = as<
               initialFocus: false,
               onDeactivate: handleClose,
               clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
             }}
           >
             <Modal variant="Surface" size="500">
@@ -401,6 +405,7 @@ export const MessageDeleteItem = as<
               initialFocus: false,
               onDeactivate: handleClose,
               clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
             }}
           >
             <Dialog variant="Surface">
@@ -530,6 +535,7 @@ export const MessageReportItem = as<
               initialFocus: false,
               onDeactivate: handleClose,
               clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
             }}
           >
             <Dialog variant="Surface">
@@ -875,6 +881,7 @@ export const Message = as<'div', MessageProps>(
                         clickOutsideDeactivates: true,
                         isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                         isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                        escapeDeactivates: stopPropagation,
                       }}
                     >
                       <Menu>
@@ -1089,6 +1096,7 @@ export const Event = as<'div', EventProps>(
                         clickOutsideDeactivates: true,
                         isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                         isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                        escapeDeactivates: stopPropagation,
                       }}
                     >
                       <Menu {...props} ref={ref}>

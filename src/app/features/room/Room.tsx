@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Box, Line } from 'folds';
 import { useParams } from 'react-router-dom';
+import { isKeyHotkey } from 'is-hotkey';
 import { RoomView } from './RoomView';
 import { MembersDrawer } from './MembersDrawer';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
@@ -8,6 +9,8 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
+import { useKeyDown } from '../../hooks/useKeyDown';
+import { markAsRead } from '../../../client/action/notifications';
 
 export function Room() {
   const { eventId } = useParams();
@@ -16,6 +19,18 @@ export function Room() {
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const screenSize = useScreenSizeContext();
   const powerLevels = usePowerLevels(room);
+
+  useKeyDown(
+    window,
+    useCallback(
+      (evt) => {
+        if (isKeyHotkey('escape', evt)) {
+          markAsRead(room.roomId);
+        }
+      },
+      [room.roomId]
+    )
+  );
 
   return (
     <PowerLevelsContextProvider value={powerLevels}>

@@ -41,6 +41,7 @@ import * as css from './style.css';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { getMxIdServer } from '../../../utils/matrix';
+import { stopPropagation } from '../../../utils/keyboard';
 
 const useServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams =>
   useMemo(
@@ -182,6 +183,7 @@ function ThirdPartyProtocolsSelector({
             initialFocus: false,
             onDeactivate: () => setMenuAnchor(undefined),
             clickOutsideDeactivates: true,
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu variant="Surface">
@@ -277,6 +279,7 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
             initialFocus: false,
             onDeactivate: () => setMenuAnchor(undefined),
             clickOutsideDeactivates: true,
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu variant="Surface">

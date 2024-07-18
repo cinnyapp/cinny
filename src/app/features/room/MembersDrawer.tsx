@@ -55,6 +55,7 @@ import { millify } from '../../plugins/millify';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { UserAvatar } from '../../components/user-avatar';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
+import { stopPropagation } from '../../utils/keyboard';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -300,6 +301,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                             clickOutsideDeactivates: true,
                             isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                            escapeDeactivates: stopPropagation,
                           }}
                         >
                           <Menu style={{ padding: config.space.S100 }}>
@@ -358,6 +360,7 @@ export function MembersDrawer({ room }: MembersDrawerProps) {
                             clickOutsideDeactivates: true,
                             isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                            escapeDeactivates: stopPropagation,
                           }}
                         >
                           <Menu style={{ padding: config.space.S100 }}>

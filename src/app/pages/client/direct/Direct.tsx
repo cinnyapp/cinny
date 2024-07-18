@@ -44,6 +44,7 @@ import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page
 import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { markAsRead } from '../../../../client/action/notifications';
+import { stopPropagation } from '../../../utils/keyboard';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -118,6 +119,7 @@ function DirectHeader() {
               clickOutsideDeactivates: true,
               isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
               isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+              escapeDeactivates: stopPropagation,
             }}
           >
             <DirectMenu requestClose={() => setMenuAnchor(undefined)} />

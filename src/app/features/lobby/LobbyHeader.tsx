@@ -30,6 +30,7 @@ import { openInviteUser, openSpaceSettings } from '../../../client/action/naviga
 import { IPowerLevels, usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveSpacePrompt } from '../../components/leave-space-prompt';
+import { stopPropagation } from '../../utils/keyboard';
 
 type LobbyMenuProps = {
   roomId: string;
@@ -197,6 +198,7 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
                   clickOutsideDeactivates: true,
                   isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                   isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  escapeDeactivates: stopPropagation,
                 }}
               >
                 <LobbyMenu

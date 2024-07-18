@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Box, Text, config } from 'folds';
 import { EventType, Room } from 'matrix-js-sdk';
-
+import { ReactEditor } from 'slate-react';
+import { isKeyHotkey } from 'is-hotkey';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { StateEvent } from '../../../types/matrix/room';
 import { usePowerLevelsAPI, usePowerLevelsContext } from '../../hooks/usePowerLevels';
@@ -15,10 +16,42 @@ import { RoomInput } from './RoomInput';
 import { RoomViewFollowing } from './RoomViewFollowing';
 import { Page } from '../../components/page';
 import { RoomViewHeader } from './RoomViewHeader';
+import { useKeyDown } from '../../hooks/useKeyDown';
+import { editableActiveElement } from '../../utils/dom';
+import navigation from '../../../client/state/navigation';
+
+const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
+  const { code } = evt;
+  console.log(code);
+  if (evt.metaKey || evt.altKey || evt.ctrlKey) {
+    return false;
+  }
+  // do not focus on F keys
+  if (/^F\d+$/.test(code)) return false;
+
+  // do not focus on numlock/scroll lock
+  if (
+    code.startsWith('OS') ||
+    code.startsWith('Meta') ||
+    code.startsWith('Shift') ||
+    code.startsWith('Alt') ||
+    code.startsWith('Control') ||
+    code.startsWith('Arrow') ||
+    code === 'Tab' ||
+    code === 'Space' ||
+    code === 'Enter' ||
+    code === 'NumLock' ||
+    code === 'ScrollLock'
+  ) {
+    return false;
+  }
+
+  return true;
+};
 
 export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
-  const roomInputRef = useRef(null);
-  const roomViewRef = useRef(null);
+  const roomInputRef = useRef<HTMLDivElement>(null);
+  const roomViewRef = useRef<HTMLDivElement>(null);
 
   const { roomId } = room;
   const editor = useEditor();
@@ -32,6 +65,25 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
   const canMessage = myUserId
     ? canSendEvent(EventType.RoomMessage, getPowerLevel(myUserId))
     : false;
+
+  useKeyDown(
+    window,
+    useCallback(
+      (evt) => {
+        if (editableActiveElement()) return;
+        if (
+          document.body.lastElementChild?.className !== 'ReactModalPortal' ||
+          navigation.isRawModalVisible
+        ) {
+          return;
+        }
+        if (shouldFocusMessageField(evt) || isKeyHotkey('mod+v')) {
+          ReactEditor.focus(editor);
+        }
+      },
+      [editor]
+    )
+  );
 
   return (
     <Page ref={roomViewRef}>
