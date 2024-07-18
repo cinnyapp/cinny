@@ -14,6 +14,8 @@ import {
 } from 'matrix-js-sdk';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 import { AccountDataEvent } from '../../types/matrix/accountData';
+import { getStateEvent } from './room';
+import { StateEvent } from '../../types/matrix/room';
 
 export const matchMxId = (id: string): RegExpMatchArray | null =>
   id.match(/^([@!$+#])(\S+):(\S+)$/);
@@ -42,8 +44,12 @@ export const parseMatrixToUrl = (url: string): [string | undefined, string | und
 export const getCanonicalAliasRoomId = (mx: MatrixClient, alias: string): string | undefined =>
   mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias)?.roomId;
 
-export const getCanonicalAliasOrRoomId = (mx: MatrixClient, roomId: string): string =>
-  mx.getRoom(roomId)?.getCanonicalAlias() || roomId;
+export const getCanonicalAliasOrRoomId = (mx: MatrixClient, roomId: string): string => {
+  const room = mx.getRoom(roomId);
+  if (!room) return roomId;
+  if (getStateEvent(room, StateEvent.RoomTombstone) !== undefined) return roomId;
+  return room.getCanonicalAlias() || roomId;
+};
 
 export const getImageInfo = (img: HTMLImageElement, fileOrBlob: File | Blob): IImageInfo => {
   const info: IImageInfo = {};
