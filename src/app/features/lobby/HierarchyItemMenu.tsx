@@ -27,6 +27,7 @@ import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveSpacePrompt } from '../../components/leave-space-prompt';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
+import { stopPropagation } from '../../utils/keyboard';
 
 type HierarchyItemWithParent = HierarchyItem & {
   parentId: string;
@@ -227,6 +228,7 @@ export function HierarchyItemMenu({
                 clickOutsideDeactivates: true,
                 isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                 isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                escapeDeactivates: stopPropagation,
               }}
             >
               <Menu style={{ maxWidth: toRem(150), width: '100vw' }}>

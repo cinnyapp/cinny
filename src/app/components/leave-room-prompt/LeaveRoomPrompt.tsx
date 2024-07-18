@@ -19,6 +19,7 @@ import {
 import { MatrixError } from 'matrix-js-sdk';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
+import { stopPropagation } from '../../utils/keyboard';
 
 type LeaveRoomPromptProps = {
   roomId: string;
@@ -52,6 +53,7 @@ export function LeaveRoomPrompt({ roomId, onDone, onCancel }: LeaveRoomPromptPro
             initialFocus: false,
             onDeactivate: onCancel,
             clickOutsideDeactivates: true,
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Dialog variant="Surface">

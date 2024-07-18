@@ -22,6 +22,7 @@ import {
 import FocusTrap from 'focus-trap-react';
 
 import { useDebounce } from '../../hooks/useDebounce';
+import { stopPropagation } from '../../utils/keyboard';
 
 export function ServerPicker({
   server,
@@ -103,6 +104,7 @@ export function ServerPicker({
                   clickOutsideDeactivates: true,
                   isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                   isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  escapeDeactivates: stopPropagation,
                 }}
               >
                 <Menu>

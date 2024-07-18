@@ -13,6 +13,7 @@ import {
   IconButton,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { stopPropagation } from '../utils/keyboard';
 
 export type UIAFlowOverlayProps = {
   currentStep: number;
@@ -28,7 +29,7 @@ export function UIAFlowOverlay({
 }: UIAFlowOverlayProps) {
   return (
     <Overlay open backdrop={<OverlayBackdrop />}>
-      <FocusTrap focusTrapOptions={{ initialFocus: false }}>
+      <FocusTrap focusTrapOptions={{ initialFocus: false, escapeDeactivates: stopPropagation }}>
         <Box style={{ height: '100%' }} direction="Column" grow="Yes" gap="400">
           <Box grow="Yes" direction="Column" alignItems="Center" justifyContent="Center">
             {children}

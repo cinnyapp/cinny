@@ -29,6 +29,7 @@ import {
   mimeTypeToExt,
 } from '../../../utils/mimeTypes';
 import * as css from './style.css';
+import { stopPropagation } from '../../../utils/keyboard';
 
 const renderErrorButton = (retry: () => void, text: string) => (
   <TooltipProvider
@@ -101,6 +102,7 @@ export function ReadTextFile({ body, mimeType, url, encInfo, renderViewer }: Rea
                 initialFocus: false,
                 onDeactivate: () => setTextViewer(false),
                 clickOutsideDeactivates: true,
+                escapeDeactivates: stopPropagation,
               }}
             >
               <Modal
@@ -184,6 +186,7 @@ export function ReadPdfFile({ body, mimeType, url, encInfo, renderViewer }: Read
                 initialFocus: false,
                 onDeactivate: () => setPdfViewer(false),
                 clickOutsideDeactivates: true,
+                escapeDeactivates: stopPropagation,
               }}
             >
               <Modal

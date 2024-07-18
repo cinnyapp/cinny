@@ -26,7 +26,7 @@ import { nameInitials } from '../../utils/common';
 import { millify } from '../../plugins/millify';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { onEnterOrSpace } from '../../utils/keyboard';
+import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
 import { RoomType, StateEvent } from '../../../types/matrix/room';
 import { useJoinedRoomId } from '../../hooks/useJoinedRoomId';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
@@ -107,6 +107,7 @@ function ErrorDialog({
               initialFocus: false,
               clickOutsideDeactivates: true,
               onDeactivate: closeError,
+              escapeDeactivates: stopPropagation,
             }}
           >
             <Dialog variant="Surface">
@@ -236,6 +237,7 @@ export const RoomCard = as<'div', RoomCardProps>(
                   initialFocus: false,
                   clickOutsideDeactivates: true,
                   onDeactivate: closeTopic,
+                  escapeDeactivates: stopPropagation,
                 }}
               >
                 {renderTopicViewer(roomName, roomTopic, closeTopic)}

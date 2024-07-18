@@ -36,6 +36,7 @@ import {
 import { PasswordInput } from '../../../components/password-input/PasswordInput';
 import { FieldError } from '../FiledError';
 import { getResetPasswordPath } from '../../pathUtils';
+import { stopPropagation } from '../../../utils/keyboard';
 
 function UsernameHint({ server }: { server: string }) {
   const [anchor, setAnchor] = useState<RectCords>();
@@ -54,6 +55,7 @@ function UsernameHint({ server }: { server: string }) {
             initialFocus: false,
             onDeactivate: () => setAnchor(undefined),
             clickOutsideDeactivates: true,
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu>

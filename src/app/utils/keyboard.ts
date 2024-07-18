@@ -30,3 +30,8 @@ export const onEnterOrSpace = (callback: () => void) => (evt: KeyboardEventLike)
     callback();
   }
 };
+
+export const stopPropagation = (evt: KeyboardEvent): boolean => {
+  evt.stopPropagation();
+  return true;
+};

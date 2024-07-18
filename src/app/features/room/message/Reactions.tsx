@@ -21,6 +21,7 @@ import { Reaction, ReactionTooltipMsg } from '../../../components/message';
 import { useRelations } from '../../../hooks/useRelations';
 import * as css from './styles.css';
 import { ReactionViewer } from '../reaction-viewer';
+import { stopPropagation } from '../../../utils/keyboard';
 
 export type ReactionsProps = {
   room: Room;
@@ -105,6 +106,7 @@ export const Reactions = as<'div', ReactionsProps>(
                   returnFocusOnDeactivate: false,
                   onDeactivate: () => setViewer(false),
                   clickOutsideDeactivates: true,
+                  escapeDeactivates: stopPropagation,
                 }}
               >
                 <Modal variant="Surface" size="300">

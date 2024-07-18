@@ -38,6 +38,7 @@ import {
 } from '../../hooks/useAsyncSearch';
 import { DebounceOptions, useDebounce } from '../../hooks/useDebounce';
 import { VirtualTile } from '../../components/virtualizer';
+import { stopPropagation } from '../../utils/keyboard';
 
 type OrderButtonProps = {
   order?: string;
@@ -66,6 +67,7 @@ function OrderButton({ order, onChange }: OrderButtonProps) {
             initialFocus: false,
             onDeactivate: () => setMenuAnchor(undefined),
             clickOutsideDeactivates: true,
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu variant="Surface">
@@ -202,6 +204,7 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
             initialFocus: false,
             onDeactivate: () => setMenuAnchor(undefined),
             clickOutsideDeactivates: true,
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu variant="Surface" style={{ width: toRem(250) }}>

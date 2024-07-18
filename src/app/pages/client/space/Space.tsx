@@ -73,6 +73,7 @@ import { useClientConfig } from '../../../hooks/useClientConfig';
 import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
 import { useStateEvent } from '../../../hooks/useStateEvent';
 import { StateEvent } from '../../../../types/matrix/room';
+import { stopPropagation } from '../../../utils/keyboard';
 
 type SpaceMenuProps = {
   room: Room;
@@ -248,6 +249,7 @@ function SpaceHeader() {
                 clickOutsideDeactivates: true,
                 isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                 isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                escapeDeactivates: stopPropagation,
               }}
             >
               <SpaceMenu room={space} requestClose={() => setMenuAnchor(undefined)} />

@@ -31,7 +31,7 @@ import {
 } from '../../components/RoomSummaryLoader';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { RoomTopicViewer } from '../../components/room-topic-viewer';
-import { onEnterOrSpace } from '../../utils/keyboard';
+import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
 import { Membership, RoomType } from '../../../types/matrix/room';
 import * as css from './RoomItem.css';
 import * as styleCss from './style.css';
@@ -264,6 +264,7 @@ function RoomProfile({
                           initialFocus: false,
                           clickOutsideDeactivates: true,
                           onDeactivate: () => setView(false),
+                          escapeDeactivates: stopPropagation,
                         }}
                       >
                         <RoomTopicViewer

@@ -26,6 +26,7 @@ import { getFileSrcUrl } from './util';
 import * as css from './style.css';
 import { bytesToSize } from '../../../utils/common';
 import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
+import { stopPropagation } from '../../../utils/keyboard';
 
 type RenderViewerProps = {
   src: string;
@@ -108,6 +109,7 @@ export const ImageContent = as<'div', ImageContentProps>(
                   initialFocus: false,
                   onDeactivate: () => setViewer(false),
                   clickOutsideDeactivates: true,
+                  escapeDeactivates: stopPropagation,
                 }}
               >
                 <Modal

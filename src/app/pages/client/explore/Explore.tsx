@@ -36,6 +36,7 @@ import { getMxIdServer } from '../../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
+import { stopPropagation } from '../../../utils/keyboard';
 
 export function AddServer() {
   const mx = useMatrixClient();
@@ -80,6 +81,7 @@ export function AddServer() {
               initialFocus: false,
               clickOutsideDeactivates: true,
               onDeactivate: () => setDialog(false),
+              escapeDeactivates: stopPropagation,
             }}
           >
             <Dialog variant="Surface">

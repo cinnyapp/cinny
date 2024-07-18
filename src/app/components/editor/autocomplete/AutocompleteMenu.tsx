@@ -4,7 +4,7 @@ import { isKeyHotkey } from 'is-hotkey';
 import { Header, Menu, Scroll, config } from 'folds';
 
 import * as css from './AutocompleteMenu.css';
-import { preventScrollWithArrowKey } from '../../../utils/keyboard';
+import { preventScrollWithArrowKey, stopPropagation } from '../../../utils/keyboard';
 
 type AutocompleteMenuProps = {
   requestClose: () => void;
@@ -24,6 +24,7 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
             allowOutsideClick: true,
             isKeyForward: (evt: KeyboardEvent) => isKeyHotkey('arrowdown', evt),
             isKeyBackward: (evt: KeyboardEvent) => isKeyHotkey('arrowup', evt),
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu className={css.AutocompleteMenu}>

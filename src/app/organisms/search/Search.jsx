@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAtomValue } from 'jotai';
 import './Search.scss';
 
@@ -25,6 +25,8 @@ import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { mDirectAtom } from '../../state/mDirectList';
+import { useKeyDown } from '../../hooks/useKeyDown';
+import { openSearch } from '../../../client/action/navigation';
 
 function useVisiblityToggle(setResult) {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,6 +50,27 @@ function useVisiblityToggle(setResult) {
       setResult(undefined);
     }
   }, [isOpen]);
+
+  useKeyDown(
+    window,
+    useCallback((event) => {
+      // Ctrl/Cmd +
+      if (event.ctrlKey || event.metaKey) {
+        // open search modal
+        if (event.key === 'k') {
+          event.preventDefault();
+          // means some menu or modal window is open
+          if (
+            document.body.lastChild.className !== 'ReactModalPortal' ||
+            navigation.isRawModalVisible
+          ) {
+            return;
+          }
+          openSearch();
+        }
+      }
+    }, [])
+  );
 
   const requestClose = () => setIsOpen(false);
 

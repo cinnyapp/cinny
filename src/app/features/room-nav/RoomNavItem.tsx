@@ -36,6 +36,7 @@ import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { useClientConfig } from '../../hooks/useClientConfig';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
 import { TypingIndicator } from '../../components/typing-indicator';
+import { stopPropagation } from '../../utils/keyboard';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -269,6 +270,7 @@ export function RoomNavItem({
                   clickOutsideDeactivates: true,
                   isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
                   isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  escapeDeactivates: stopPropagation,
                 }}
               >
                 <RoomNavItemMenu
