@@ -62,6 +62,11 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, re
     requestClose();
   };
 
+  const handleJoinAddress = () => {
+    openJoinAlias();
+    requestClose();
+  };
+
   return (
     <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
       <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
@@ -74,6 +79,16 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, re
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Mark as Read
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleJoinAddress}
+          size="300"
+          radii="300"
+          after={<Icon size="100" src={Icons.Link} />}
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Join with Address
           </Text>
         </MenuItem>
       </Box>
