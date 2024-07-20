@@ -83,7 +83,7 @@ export const SidebarItem = recipe({
           content: '',
           display: 'none',
           position: 'absolute',
-          left: toRem(-11.5 - PUSH_X),
+          left: toRem(-13.5 - PUSH_X),
           width: toRem(3 + PUSH_X),
           height: toRem(16),
           borderRadius: `0 ${toRem(4)} ${toRem(4)} 0`,
