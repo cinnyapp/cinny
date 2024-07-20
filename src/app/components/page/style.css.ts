@@ -2,7 +2,7 @@ import { style } from '@vanilla-extract/css';
 import { DefaultReset, color, config, toRem } from 'folds';
 
 export const PageNav = style({
-  width: toRem(280),
+  width: toRem(256),
 });
 
 export const PageNavHeader = style({
