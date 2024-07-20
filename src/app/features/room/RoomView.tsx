@@ -22,7 +22,6 @@ import navigation from '../../../client/state/navigation';
 
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
   const { code } = evt;
-  console.log(code);
   if (evt.metaKey || evt.altKey || evt.ctrlKey) {
     return false;
   }
@@ -77,7 +76,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
         ) {
           return;
         }
-        if (shouldFocusMessageField(evt) || isKeyHotkey('mod+v')) {
+        if (shouldFocusMessageField(evt) || isKeyHotkey('mod+v', evt)) {
           ReactEditor.focus(editor);
         }
       },
