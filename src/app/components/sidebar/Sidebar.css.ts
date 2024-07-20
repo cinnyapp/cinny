@@ -6,7 +6,7 @@ import { ContainerColor } from '../../styles/ContainerColor.css';
 export const Sidebar = style([
   DefaultReset,
   {
-    width: toRem(66),
+    width: toRem(70),
     backgroundColor: color.Background.Container,
     borderRight: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
 
