@@ -6,7 +6,7 @@ import { ContainerColor } from '../../styles/ContainerColor.css';
 export const Sidebar = style([
   DefaultReset,
   {
-    width: toRem(70),
+    width: toRem(66),
     backgroundColor: color.Background.Container,
     borderRight: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
 
@@ -83,7 +83,7 @@ export const SidebarItem = recipe({
           content: '',
           display: 'none',
           position: 'absolute',
-          left: toRem(-13.5 - PUSH_X),
+          left: toRem(-11.5 - PUSH_X),
           width: toRem(3 + PUSH_X),
           height: toRem(16),
           borderRadius: `0 ${toRem(4)} ${toRem(4)} 0`,
