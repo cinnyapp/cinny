@@ -52,7 +52,7 @@ const NavItemBase = style({
   backgroundColor: Container,
   color: OnContainer,
   outline: 'none',
-  minHeight: toRem(38),
+  minHeight: toRem(36),
 
   selectors: {
     '&:hover, &:focus-visible': {
@@ -111,6 +111,7 @@ export const NavItemContent = style({
   flexGrow: 1,
   display: 'flex',
   alignItems: 'center',
+  fontWeight: config.fontWeight.W500,
 
   selectors: {
     '&:hover': {
