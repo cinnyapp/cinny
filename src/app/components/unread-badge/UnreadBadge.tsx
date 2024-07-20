@@ -22,9 +22,9 @@ export function UnreadBadge({ highlight, count }: UnreadBadgeProps) {
     <Badge
       variant={highlight ? 'Success' : 'Secondary'}
       size={count > 0 ? '400' : '200'}
-      fill={count > 0 ? 'Solid' : 'Soft'}
+      fill="Solid"
       radii="Pill"
-      outlined
+      outlined={false}
     >
       {count > 0 && (
         <Text as="span" size="L400">
