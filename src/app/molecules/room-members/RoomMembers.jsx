@@ -4,7 +4,6 @@ import React, {
 import PropTypes from 'prop-types';
 import './RoomMembers.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import colorMXID from '../../../util/colorMXID';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { getUsernameOfRoomMember, getPowerLabel } from '../../../util/matrixUtil';
@@ -17,11 +16,11 @@ import Input from '../../atoms/input/Input';
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import SegmentedControls from '../../atoms/segmented-controls/SegmentedControls';
 import PeopleSelector from '../people-selector/PeopleSelector';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const PER_PAGE_MEMBER = 50;
 
-function normalizeMembers(members) {
-  const mx = initMatrix.matrixClient;
+function normalizeMembers(mx, members) {
   return members.map((member) => ({
     userId: member.userId,
     name: getUsernameOfRoomMember(member),
@@ -33,7 +32,7 @@ function normalizeMembers(members) {
 }
 
 function useMemberOfMembership(roomId, membership) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
   const [members, setMembers] = useState([]);
 
@@ -45,6 +44,7 @@ function useMemberOfMembership(roomId, membership) {
       if (isLoadingMembers) return;
       if (event && event?.getRoomId() !== roomId) return;
       const memberOfMembership = normalizeMembers(
+        mx,
         room.getMembersWithMembership(membership)
           .sort(memberByAtoZ).sort(memberByPowerLevel),
       );
@@ -66,7 +66,7 @@ function useMemberOfMembership(roomId, membership) {
       mx.removeListener('RoomMember.membership', updateMemberList);
       mx.removeListener('RoomMember.powerLevel', updateMemberList);
     };
-  }, [membership]);
+  }, [mx, membership]);
 
   return [members];
 }

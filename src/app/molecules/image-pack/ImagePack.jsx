@@ -4,7 +4,6 @@ import React, {
 import PropTypes from 'prop-types';
 import './ImagePack.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { suffixRename } from '../../../util/common';
 
@@ -19,6 +18,7 @@ import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import ImagePackProfile from './ImagePackProfile';
 import ImagePackItem from './ImagePackItem';
 import ImagePackUpload from './ImagePackUpload';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const renameImagePackItem = (shortcode) => new Promise((resolve) => {
   let isCompleted = false;
@@ -63,8 +63,7 @@ function getUsage(usage) {
   return 'both';
 }
 
-function isGlobalPack(roomId, stateKey) {
-  const mx = initMatrix.matrixClient;
+function isGlobalPack(mx, roomId, stateKey) {
   const globalContent = mx.getAccountData('im.ponies.emote_rooms')?.getContent();
   if (typeof globalContent !== 'object') return false;
 
@@ -75,13 +74,13 @@ function isGlobalPack(roomId, stateKey) {
 }
 
 function useRoomImagePack(roomId, stateKey) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
 
-  const packEvent = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
-  const pack = useMemo(() => (
-    ImagePackBuilder.parsePack(packEvent.getId(), packEvent.getContent())
-  ), [room, stateKey]);
+  const pack = useMemo(() => {
+    const packEvent = room.currentState.getStateEvents('im.ponies.room_emotes', stateKey);
+    return ImagePackBuilder.parsePack(packEvent.getId(), packEvent.getContent())
+  }, [room, stateKey]);
 
   const sendPackContent = (content) => {
     mx.sendStateEvent(roomId, 'im.ponies.room_emotes', content, stateKey);
@@ -94,14 +93,14 @@ function useRoomImagePack(roomId, stateKey) {
 }
 
 function useUserImagePack() {
-  const mx = initMatrix.matrixClient;
-  const packEvent = mx.getAccountData('im.ponies.user_emotes');
-  const pack = useMemo(() => (
-    ImagePackBuilder.parsePack(mx.getUserId(), packEvent?.getContent() ?? {
+  const mx = useMatrixClient();
+  const pack = useMemo(() => {
+    const packEvent = mx.getAccountData('im.ponies.user_emotes');
+    return ImagePackBuilder.parsePack(mx.getUserId(), packEvent?.getContent() ?? {
       pack: { display_name: 'Personal' },
       images: {},
     })
-  ), []);
+  }, [mx]);
 
   const sendPackContent = (content) => {
     mx.setAccountData('im.ponies.user_emotes', content);
@@ -223,10 +222,10 @@ function removeGlobalImagePack(mx, roomId, stateKey) {
 }
 
 function ImagePack({ roomId, stateKey, handlePackDelete }) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
   const [viewMore, setViewMore] = useState(false);
-  const [isGlobal, setIsGlobal] = useState(isGlobalPack(roomId, stateKey));
+  const [isGlobal, setIsGlobal] = useState(isGlobalPack(mx, roomId, stateKey));
 
   const { pack, sendPackContent } = useRoomImagePack(roomId, stateKey);
 
@@ -331,7 +330,7 @@ ImagePack.propTypes = {
 };
 
 function ImagePackUser() {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const [viewMore, setViewMore] = useState(false);
 
   const { pack, sendPackContent } = useUserImagePack();
@@ -397,7 +396,7 @@ function ImagePackUser() {
 
 function useGlobalImagePack() {
   const [, forceUpdate] = useReducer((count) => count + 1, 0);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
 
   const roomIdToStateKeys = new Map();
   const globalContent = mx.getAccountData('im.ponies.emote_rooms')?.getContent() ?? { rooms: {} };
@@ -419,13 +418,13 @@ function useGlobalImagePack() {
     return () => {
       mx.removeListener('accountData', handleEvent);
     };
-  }, []);
+  }, [mx]);
 
   return roomIdToStateKeys;
 }
 
 function ImagePackGlobal() {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const roomIdToStateKeys = useGlobalImagePack();
 
   const handleChange = (roomId, stateKey) => {

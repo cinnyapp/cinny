@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './RoomVisibility.scss';
 
-import initMatrix from '../../../client/initMatrix';
 
 import Text from '../../atoms/text/Text';
 import RadioButton from '../../atoms/button/RadioButton';
@@ -14,6 +13,7 @@ import HashGlobeIC from '../../../../public/res/ic/outlined/hash-globe.svg';
 import SpaceIC from '../../../../public/res/ic/outlined/space.svg';
 import SpaceLockIC from '../../../../public/res/ic/outlined/space-lock.svg';
 import SpaceGlobeIC from '../../../../public/res/ic/outlined/space-globe.svg';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const visibility = {
   INVITE: 'invite',
@@ -21,8 +21,7 @@ const visibility = {
   PUBLIC: 'public',
 };
 
-function setJoinRule(roomId, type) {
-  const mx = initMatrix.matrixClient;
+function setJoinRule(mx, roomId, type) {
   let allow;
   if (type === visibility.RESTRICTED) {
     const { currentState } = mx.getRoom(roomId);
@@ -46,26 +45,26 @@ function setJoinRule(roomId, type) {
 }
 
 function useVisibility(roomId) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
 
   const [activeType, setActiveType] = useState(room.getJoinRule());
   useEffect(() => {
     setActiveType(room.getJoinRule());
-  }, [roomId]);
+  }, [room]);
 
   const setNotification = useCallback((item) => {
     if (item.type === activeType.type) return;
     setActiveType(item.type);
-    setJoinRule(roomId, item.type);
-  }, [activeType, roomId]);
+    setJoinRule(mx, roomId, item.type);
+  }, [mx, activeType, roomId]);
 
   return [activeType, setNotification];
 }
 
 function RoomVisibility({ roomId }) {
   const [activeType, setVisibility] = useVisibility(roomId);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
   const isSpace = room.isSpaceRoom();
   const { currentState } = room;

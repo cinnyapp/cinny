@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './RoomNotification.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 
 import Text from '../../atoms/text/Text';
@@ -14,6 +13,7 @@ import BellRingIC from '../../../../public/res/ic/outlined/bell-ring.svg';
 import BellPingIC from '../../../../public/res/ic/outlined/bell-ping.svg';
 import BellOffIC from '../../../../public/res/ic/outlined/bell-off.svg';
 import { getNotificationType } from '../../utils/room';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const items = [
   {
@@ -38,8 +38,7 @@ const items = [
   },
 ];
 
-function setRoomNotifType(roomId, newType) {
-  const mx = initMatrix.matrixClient;
+function setRoomNotifType(mx, roomId, newType) {
   let roomPushRule;
   try {
     roomPushRule = mx.getRoomPushRule('global', roomId);
@@ -108,7 +107,7 @@ function setRoomNotifType(roomId, newType) {
 }
 
 function useNotifications(roomId) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const [activeType, setActiveType] = useState(getNotificationType(mx, roomId));
   useEffect(() => {
     setActiveType(getNotificationType(mx, roomId));
@@ -118,9 +117,9 @@ function useNotifications(roomId) {
     (item) => {
       if (item.type === activeType.type) return;
       setActiveType(item.type);
-      setRoomNotifType(roomId, item.type);
+      setRoomNotifType(mx, roomId, item.type);
     },
-    [activeType, roomId]
+    [mx, activeType, roomId]
   );
   return [activeType, setNotification];
 }

@@ -1,7 +1,6 @@
 import React from 'react';
 import './IgnoreUserList.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import * as roomActions from '../../../client/action/room';
 
 import Text from '../../atoms/text/Text';
@@ -14,10 +13,12 @@ import SettingTile from '../setting-tile/SettingTile';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import { useAccountData } from '../../hooks/useAccountData';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function IgnoreUserList() {
   useAccountData('m.ignored_user_list');
-  const ignoredUsers = initMatrix.matrixClient.getIgnoredUsers();
+  const mx = useMatrixClient();
+  const ignoredUsers = mx.getIgnoredUsers();
 
   const handleSubmit = (evt) => {
     evt.preventDefault();
@@ -26,7 +27,7 @@ function IgnoreUserList() {
     const userIds = value.split(' ').filter((v) => v.match(/^@\S+:\S+$/));
     if (userIds.length === 0) return;
     ignoreInput.value = '';
-    roomActions.ignore(userIds);
+    roomActions.ignore(mx, userIds);
   };
 
   return (
@@ -49,7 +50,7 @@ function IgnoreUserList() {
                     key={uId}
                     text={uId}
                     iconColor={CrossIC}
-                    onClick={() => roomActions.unignore([uId])}
+                    onClick={() => roomActions.unignore(mx, [uId])}
                   />
                 ))}
               </div>

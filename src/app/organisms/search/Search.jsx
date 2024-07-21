@@ -2,12 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAtomValue } from 'jotai';
 import './Search.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import AsyncSearch from '../../../util/AsyncSearch';
 import { joinRuleToIconSrc } from '../../../util/matrixUtil';
-import { roomIdByActivity } from '../../../util/sort';
 
 import Text from '../../atoms/text/Text';
 import RawIcon from '../../atoms/system-icons/RawIcon';
@@ -27,6 +25,8 @@ import { allRoomsAtom } from '../../state/room-list/roomList';
 import { mDirectAtom } from '../../state/mDirectList';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { openSearch } from '../../../client/action/navigation';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { factoryRoomIdByActivity } from '../../utils/sort';
 
 function useVisiblityToggle(setResult) {
   const [isOpen, setIsOpen] = useState(false);
@@ -77,9 +77,7 @@ function useVisiblityToggle(setResult) {
   return [isOpen, requestClose];
 }
 
-function mapRoomIds(roomIds, directs, roomIdToParents) {
-  const mx = initMatrix.matrixClient;
-
+function mapRoomIds(mx, roomIds, directs, roomIdToParents) {
   return roomIds.map((roomId) => {
     const room = mx.getRoom(roomId);
     const parentSet = roomIdToParents.get(roomId);
@@ -107,7 +105,7 @@ function Search() {
   const [asyncSearch] = useState(new AsyncSearch());
   const [isOpen, requestClose] = useVisiblityToggle(setResult);
   const searchRef = useRef(null);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const mDirects = useAtomValue(mDirectAtom);
   const spaces = useSpaces(mx, allRoomsAtom);
@@ -141,8 +139,8 @@ function Search() {
       ids = [...rooms].concat([...directs], [...spaces]);
     }
 
-    ids.sort(roomIdByActivity);
-    const mappedIds = mapRoomIds(ids, directs, roomToParents);
+    ids.sort(factoryRoomIdByActivity(mx));
+    const mappedIds = mapRoomIds(mx, ids, directs, roomToParents);
     asyncSearch.setup(mappedIds, { keys: 'name', isContain: true, limit: 20 });
     if (prefix) handleSearchResults(mappedIds, prefix);
     else asyncSearch.search(term);
@@ -150,7 +148,7 @@ function Search() {
 
   const loadRecentRooms = () => {
     const recentRooms = [];
-    handleSearchResults(mapRoomIds(recentRooms, directs, roomToParents).reverse());
+    handleSearchResults(mapRoomIds(mx, recentRooms, directs, roomToParents).reverse());
   };
 
   const handleAfterOpen = () => {

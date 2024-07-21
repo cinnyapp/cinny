@@ -2,7 +2,6 @@ import React, { useReducer, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomEmojis.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import { suffixRename } from '../../../util/common';
 
 import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
@@ -10,9 +9,10 @@ import Text from '../../atoms/text/Text';
 import Input from '../../atoms/input/Input';
 import Button from '../../atoms/button/Button';
 import ImagePack from '../image-pack/ImagePack';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function useRoomPacks(room) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const [, forceUpdate] = useReducer((count) => count + 1, 0);
 
   const packEvents = room.currentState.getStateEvents('im.ponies.room_emotes');
@@ -75,7 +75,7 @@ function useRoomPacks(room) {
 }
 
 function RoomEmojis({ roomId }) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
 
   const { usablePacks, createPack, deletePack } = useRoomPacks(room);

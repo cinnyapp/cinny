@@ -114,7 +114,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
     const unread = useRoomsUnread(allChild, roomToUnreadAtom);
 
     const handleMarkAsRead = () => {
-      allChild.forEach((childRoomId) => markAsRead(childRoomId));
+      allChild.forEach((childRoomId) => markAsRead(mx, childRoomId));
       requestClose();
     };
 

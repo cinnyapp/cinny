@@ -1,10 +1,9 @@
 /* eslint-disable import/prefer-default-export */
 import { useState, useEffect } from 'react';
-
-import initMatrix from '../../client/initMatrix';
+import { useMatrixClient } from './useMatrixClient';
 
 export function useDeviceList() {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const [deviceList, setDeviceList] = useState(null);
 
   useEffect(() => {
@@ -27,6 +26,6 @@ export function useDeviceList() {
       mx.removeListener('crypto.devicesUpdated', handleDevicesUpdate);
       isMounted = false;
     };
-  }, []);
+  }, [mx]);
   return deviceList;
 }

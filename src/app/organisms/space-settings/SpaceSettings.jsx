@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './SpaceSettings.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 
@@ -59,8 +58,8 @@ const tabItems = [
 ];
 
 function GeneralSettings({ roomId }) {
-  const roomName = initMatrix.matrixClient.getRoom(roomId)?.name;
   const mx = useMatrixClient();
+  const roomName = mx.getRoom(roomId)?.name;
 
   return (
     <>
@@ -124,7 +123,7 @@ function SpaceSettings() {
   const isOpen = window !== null;
   const roomId = window?.roomId;
 
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
 
   const handleTabChange = (tabItem) => {

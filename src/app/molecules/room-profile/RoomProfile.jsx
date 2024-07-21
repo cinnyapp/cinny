@@ -4,7 +4,6 @@ import { useAtomValue } from 'jotai';
 import Linkify from 'linkify-react';
 import './RoomProfile.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import colorMXID from '../../../util/colorMXID';
 
@@ -22,6 +21,7 @@ import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { mDirectAtom } from '../../state/mDirectList';
 import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function RoomProfile({ roomId }) {
   const isMountStore = useStore();
@@ -32,7 +32,7 @@ function RoomProfile({ roomId }) {
     type: cons.status.PRE_FLIGHT,
   });
 
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
   const isDM = mDirects.has(roomId);
   let avatarSrc = mx.getRoom(roomId).getAvatarUrl(mx.baseUrl, 36, 36, 'crop');
@@ -67,7 +67,7 @@ function RoomProfile({ roomId }) {
       });
       setIsEditing(false);
     };
-  }, [roomId]);
+  }, [mx, roomId]);
 
   const handleOnSubmit = async (e) => {
     e.preventDefault();

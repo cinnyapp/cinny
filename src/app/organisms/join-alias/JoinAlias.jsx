@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './JoinAlias.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { join } from '../../../client/action/room';
@@ -18,6 +17,7 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 
 import { useStore } from '../../hooks/useStore';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const ALIAS_OR_ID_REG = /^[#|!].+:.+\..+$/;
 
@@ -25,7 +25,7 @@ function JoinAliasContent({ term, requestClose }) {
   const [process, setProcess] = useState(false);
   const [error, setError] = useState(undefined);
 
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mountStore = useStore();
 
   const { navigateRoom } = useRoomNavigate();
@@ -63,7 +63,7 @@ function JoinAliasContent({ term, requestClose }) {
       }
     }
     try {
-      const roomId = await join(alias, false, via);
+      const roomId = await join(mx, alias, false, via);
       if (!mountStore.getItem()) return;
       openRoom(roomId);
     } catch {
