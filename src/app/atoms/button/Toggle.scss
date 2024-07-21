@@ -22,8 +22,7 @@
     height: 16px;
     background-color: var(--tc-surface-low);
     border-radius: calc(var(--bo-radius) / 2);
-    transition: transform 200ms ease-in-out,
-      opacity 200ms ease-in-out;
+    transition: transform 200ms ease-in-out, opacity 200ms ease-in-out;
     opacity: 0.6;
   }
 
@@ -36,7 +35,7 @@
       @include dir.prop(transform, var(--ltr), var(--rtl));
 
       transform: translateX(calc(125%));
-      background-color: white;
+      background-color: var(--bg-surface);
       opacity: 1;
     }
   }

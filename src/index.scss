@@ -19,25 +19,25 @@
   --bg-surface-active: rgba(0, 0, 0, 5%);
   --bg-surface-border: rgba(0, 0, 0, 6%);
 
-  --bg-primary: rgb(83, 110, 234);
-  --bg-primary-hover: rgba(83, 110, 234, 80%);
-  --bg-primary-active: rgba(83, 110, 234, 70%);
-  --bg-primary-border: rgba(83, 110, 234, 38%);
+  --bg-primary: rgb(18, 69, 168);
+  --bg-primary-hover: rgba(18, 69, 168, 80%);
+  --bg-primary-active: rgba(18, 69, 168, 70%);
+  --bg-primary-border: rgba(18, 69, 168, 38%);
 
-  --bg-positive: rgb(69, 184, 59);
-  --bg-positive-hover: rgba(69, 184, 59, 8%);
-  --bg-positive-active: rgba(69, 184, 59, 15%);
-  --bg-positive-border: rgba(69, 184, 59, 40%);
+  --bg-positive: rgb(1, 115, 67);
+  --bg-positive-hover: rgba(1, 115, 67, 8%);
+  --bg-positive-active: rgba(1, 115, 67, 15%);
+  --bg-positive-border: rgba(1, 115, 67, 40%);
 
-  --bg-caution: rgb(255, 179, 0);
-  --bg-caution-hover: rgba(255, 179, 0, 8%);
-  --bg-caution-active: rgba(255, 179, 0, 15%);
-  --bg-caution-border: rgba(255, 179, 0, 40%);
+  --bg-caution: rgb(134, 67, 0);
+  --bg-caution-hover: rgba(134, 67, 0, 8%);
+  --bg-caution-active: rgba(134, 67, 0, 15%);
+  --bg-caution-border: rgba(134, 67, 0, 40%);
 
-  --bg-danger: rgb(240, 71, 71);
-  --bg-danger-hover: rgba(240, 71, 71, 5%);
-  --bg-danger-active: rgba(240, 71, 71, 10%);
-  --bg-danger-border: rgba(240, 71, 71, 20%);
+  --bg-danger: rgb(157, 15, 15);
+  --bg-danger-hover: rgba(157, 15, 15, 5%);
+  --bg-danger-active: rgba(157, 15, 15, 10%);
+  --bg-danger-border: rgba(157, 15, 15, 20%);
 
   --bg-tooltip: #353535;
   --bg-badge: #989898;
@@ -56,16 +56,16 @@
   --tc-primary-low: rgba(255, 255, 255, 40%);
 
   --tc-positive-high: var(--bg-positive);
-  --tc-positive-normal: rgb(69, 184, 59, 80%);
-  --tc-positive-low: rgb(69, 184, 59, 60%);
+  --tc-positive-normal: rgb(1, 115, 67, 80%);
+  --tc-positive-low: rgb(1, 115, 67, 60%);
 
   --tc-caution-high: var(--bg-caution);
-  --tc-caution-normal: rgb(255, 179, 0, 80%);
-  --tc-caution-low: rgb(255, 179, 0, 60%);
+  --tc-caution-normal: rgb(134, 67, 0, 80%);
+  --tc-caution-low: rgb(134, 67, 0, 60%);
 
   --tc-danger-high: var(--bg-danger);
-  --tc-danger-normal: rgba(240, 71, 71, 88%);
-  --tc-danger-low: rgba(240, 71, 71, 60%);
+  --tc-danger-normal: rgba(157, 15, 15, 88%);
+  --tc-danger-low: rgba(157, 15, 15, 60%);
 
   --tc-code: #e62498;
   --tc-link: hsl(213deg 100% 45%);
@@ -78,12 +78,12 @@
   --ic-surface-low: #7c7c7c;
   --ic-primary-high: #ffffff;
   --ic-primary-normal: #ffffff;
-  --ic-positive-high: rgba(69, 184, 59);
-  --ic-positive-normal: rgba(69, 184, 59, 80%);
-  --ic-caution-high: rgba(255, 179, 0);
-  --ic-caution-normal: rgba(255, 179, 0, 80%);
-  --ic-danger-high: rgba(240, 71, 71);
-  --ic-danger-normal: rgba(240, 71, 71, 0.7);
+  --ic-positive-high: rgba(1, 115, 67);
+  --ic-positive-normal: rgba(1, 115, 67, 80%);
+  --ic-caution-high: rgba(134, 67, 0);
+  --ic-caution-normal: rgba(134, 67, 0, 80%);
+  --ic-danger-high: rgba(157, 15, 15);
+  --ic-danger-normal: rgba(157, 15, 15, 0.7);
 
   /* user mxid colors */
   --mx-uc-1: hsl(208, 100%, 45%);
@@ -210,20 +210,35 @@
 .dark-theme,
 .butter-theme {
   /* background color | --bg-[background type]: value */
-  --bg-surface: #1f2326;
-  --bg-surface-transparent: #1f232600;
-  --bg-surface-low: #15171a;
-  --bg-surface-low-transparent: #15171a00;
-  --bg-surface-extra-low: #15171a;
-  --bg-surface-extra-low-transparent: #15171a00;
-  --bg-surface-hover: #1f2326;
-  --bg-surface-active: #2a2e33;
-  --bg-surface-border: rgba(0, 0, 0, 20%);
+  --bg-surface: #262626;
+  --bg-surface-transparent: #26262600;
+  --bg-surface-low: #1a1a1a;
+  --bg-surface-low-transparent: #1a1a1a00;
+  --bg-surface-extra-low: #1a1a1a;
+  --bg-surface-extra-low-transparent: #1a1a1a00;
+  --bg-surface-hover: #333333;
+  --bg-surface-active: #404040;
+  --bg-surface-border: #404040;
 
-  --bg-primary: rgb(42, 98, 166);
-  --bg-primary-hover: rgba(42, 98, 166, 80%);
-  --bg-primary-active: rgba(42, 98, 166, 70%);
-  --bg-primary-border: rgba(42, 98, 166, 38%);
+  --bg-primary: rgb(189, 182, 236);
+  --bg-primary-hover: rgba(189, 182, 236, 0.8);
+  --bg-primary-active: rgba(189, 182, 236, 70%);
+  --bg-primary-border: rgba(189, 182, 236, 38%);
+
+  --bg-positive: rgb(133, 224, 186);
+  --bg-positive-hover: rgba(133, 224, 186, 8%);
+  --bg-positive-active: rgba(133, 224, 186, 15%);
+  --bg-positive-border: rgba(133, 224, 186, 40%);
+
+  --bg-caution: rgb(227, 186, 145);
+  --bg-caution-hover: rgba(227, 186, 145, 8%);
+  --bg-caution-active: rgba(227, 186, 145, 15%);
+  --bg-caution-border: rgba(227, 186, 145, 40%);
+
+  --bg-danger: rgb(230, 157, 157);
+  --bg-danger-hover: rgba(230, 157, 157, 5%);
+  --bg-danger-active: rgba(230, 157, 157, 10%);
+  --bg-danger-border: rgba(230, 157, 157, 20%);
 
   --bg-tooltip: #000;
   --bg-badge: hsl(0, 0%, 75%);
@@ -237,9 +252,21 @@
   --tc-surface-normal-low: rgba(255, 255, 255, 60%);
   --tc-surface-low: rgba(255, 255, 255, 58%);
 
-  --tc-primary-high: #ffffff;
-  --tc-primary-normal: rgba(255, 255, 255, 0.68);
-  --tc-primary-low: rgba(255, 255, 255, 0.4);
+  --tc-primary-high: rgb(44, 40, 67);
+  --tc-primary-normal: rgba(44, 40, 67, 0.68);
+  --tc-primary-low: rgba(44, 40, 67, 0.4);
+
+  --tc-positive-high: var(--bg-positive);
+  --tc-positive-normal: rgb(133, 224, 186, 80%);
+  --tc-positive-low: rgb(133, 224, 186, 60%);
+
+  --tc-caution-high: var(--bg-caution);
+  --tc-caution-normal: rgb(227, 186, 145, 80%);
+  --tc-caution-low: rgb(227, 186, 145, 60%);
+
+  --tc-danger-high: var(--bg-danger);
+  --tc-danger-normal: rgba(230, 157, 157, 88%);
+  --tc-danger-low: rgba(230, 157, 157, 60%);
 
   --tc-code: #e565b1;
   --tc-link: hsl(213deg 100% 80%);
@@ -249,7 +276,15 @@
   --ic-surface-high: rgb(255, 255, 255);
   --ic-surface-normal: rgba(255, 255, 255, 84%);
   --ic-surface-low: rgba(255, 255, 255, 64%);
-  --ic-primary-normal: #ffffff;
+  --ic-primary-high: var(--tc-primary-high);
+  --ic-primary-normal: var(--tc-primary-high);
+  --ic-primary-low: var(--tc-primary-high);
+  --ic-positive-high: rgba(133, 224, 186);
+  --ic-positive-normal: rgba(133, 224, 186, 80%);
+  --ic-caution-high: rgba(227, 186, 145);
+  --ic-caution-normal: rgba(227, 186, 145, 80%);
+  --ic-danger-high: rgba(230, 157, 157);
+  --ic-danger-normal: rgba(230, 157, 157, 0.7);
 
   --mx-uc-1: hsl(208, 100%, 75%);
   --mx-uc-2: hsl(301, 100%, 80%);
@@ -296,17 +331,20 @@
 
 .butter-theme {
   /* background color | --bg-[background type]: value */
-  --bg-surface: hsl(64, 6%, 14%);
-  --bg-surface-transparent: hsla(64, 6%, 14%, 0);
-  --bg-surface-low: hsl(64, 6%, 10%);
-  --bg-surface-low-transparent: hsla(64, 6%, 10%, 0);
-  --bg-surface-extra-low: hsl(64, 6%, 8%);
-  --bg-surface-extra-low-transparent: hsla(64, 6%, 8%, 0);
+  --bg-surface: #262621;
+  --bg-surface-transparent: #26262100;
+  --bg-surface-low: #1a1916;
+  --bg-surface-low-transparent: #1a191600;
+  --bg-surface-extra-low: #1a1916;
+  --bg-surface-extra-low-transparent: #1a1916;
+  --bg-surface-hover: #33322c;
+  --bg-surface-active: #403f38;
+  --bg-surface-border: #403f38;
 
   --bg-badge: #c4c1ab;
 
   /* text color | --tc-[background type]-[priority]: value */
-  --tc-surface-high: rgb(255, 251, 222, 94%);
+  --tc-surface-high: rgb(255, 251, 222);
   --tc-surface-normal: rgba(255, 251, 222, 94%);
   --tc-surface-normal-low: rgba(255, 251, 222, 60%);
   --tc-surface-low: rgba(255, 251, 222, 58%);
