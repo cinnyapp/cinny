@@ -52,7 +52,7 @@ jobs:
           gpg --export | xxd -p
           echo '${{ secrets.GNUPG_PASSPHRASE }}' | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign cinny-${{ steps.vars.outputs.tag }}.tar.gz
       - name: Upload tagged release
-        uses: softprops/action-gh-release@a74c6b72af54cfa997e81df42d94703d6313a2d0
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191
         with:
           files: |
             cinny-${{ steps.vars.outputs.tag }}.tar.gz
