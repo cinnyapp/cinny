@@ -30,15 +30,3 @@ export function toggleNickAvatarEvents() {
     type: cons.actions.settings.TOGGLE_NICKAVATAR_EVENT,
   });
 }
-
-export function toggleNotifications() {
-  appDispatcher.dispatch({
-    type: cons.actions.settings.TOGGLE_NOTIFICATIONS,
-  });
-}
-
-export function toggleNotificationSounds() {
-  appDispatcher.dispatch({
-    type: cons.actions.settings.TOGGLE_NOTIFICATION_SOUNDS,
-  });
-}

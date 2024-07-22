@@ -58,6 +58,7 @@ function InviteNotifications() {
   const mx = useMatrixClient();
 
   const navigate = useNavigate();
+  const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
 
   const notify = useCallback(
@@ -84,7 +85,7 @@ function InviteNotifications() {
 
   useEffect(() => {
     if (invites.length > perviousInviteLen && mx.getSyncState() === 'SYNCING') {
-      if (Notification.permission === 'granted') {
+      if (showNotifications && Notification.permission === 'granted') {
         notify(invites.length - perviousInviteLen);
       }
 
@@ -92,7 +93,7 @@ function InviteNotifications() {
         playSound();
       }
     }
-  }, [mx, invites, perviousInviteLen, notificationSound, notify, playSound]);
+  }, [mx, invites, perviousInviteLen, showNotifications, notificationSound, notify, playSound]);
 
   return (
     // eslint-disable-next-line jsx-a11y/media-has-caption

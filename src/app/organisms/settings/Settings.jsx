@@ -7,9 +7,8 @@ import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
 import {
   toggleSystemTheme,
-  toggleNotifications, toggleNotificationSounds,
 } from '../../../client/action/settings';
-import { usePermission } from '../../hooks/usePermission';
+import { usePermissionState } from '../../hooks/usePermission';
 
 import Text from '../../atoms/text/Text';
 import IconButton from '../../atoms/button/IconButton';
@@ -229,23 +228,25 @@ function AppearanceSection() {
 }
 
 function NotificationsSection() {
-  const [permission, setPermission] = usePermission('notifications', window.Notification?.permission);
-
-  const [, updateState] = useState({});
+  const notifPermission = usePermissionState('notifications', window.Notification?.permission ?? "denied");
+  const [showNotifications, setShowNotifications] = useSetting(settingsAtom, 'showNotifications')
+  const [isNotificationSounds, setIsNotificationSounds] = useSetting(settingsAtom, 'isNotificationSounds')
 
   const renderOptions = () => {
     if (window.Notification === undefined) {
       return <Text className="settings-notifications__not-supported">Not supported in this browser.</Text>;
     }
 
-    if (permission === 'granted') {
+    if (notifPermission === 'denied') {
+      return <Text>Permission Denied</Text>
+    }
+    
+    if (notifPermission === 'granted') {
       return (
         <Toggle
-          isActive={settings._showNotifications}
+          isActive={showNotifications}
           onToggle={() => {
-            toggleNotifications();
-            setPermission(window.Notification?.permission);
-            updateState({});
+            setShowNotifications(!showNotifications);
           }}
         />
       );
@@ -254,7 +255,9 @@ function NotificationsSection() {
     return (
       <Button
         variant="primary"
-        onClick={() => window.Notification.requestPermission().then(setPermission)}
+        onClick={() => window.Notification.requestPermission().then(() => {
+          setShowNotifications(window.Notification?.permission === 'granted');
+        })}
       >
         Request permission
       </Button>
@@ -274,8 +277,8 @@ function NotificationsSection() {
           title="Notification Sound"
           options={(
             <Toggle
-              isActive={settings.isNotificationSounds}
-              onToggle={() => { toggleNotificationSounds(); updateState({}); }}
+              isActive={isNotificationSounds}
+              onToggle={() => setIsNotificationSounds(!isNotificationSounds)}
             />
             )}
           content={<Text variant="b3">Play sound when new messages arrive.</Text>}
