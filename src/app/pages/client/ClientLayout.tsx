@@ -7,7 +7,7 @@ type ClientLayoutProps = {
 };
 export function ClientLayout({ nav, children }: ClientLayoutProps) {
   return (
-    <Box style={{ height: '100%' }}>
+    <Box grow="Yes">
       <Box shrink="No">{nav}</Box>
       <Box grow="Yes">{children}</Box>
     </Box>

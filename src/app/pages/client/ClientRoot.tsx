@@ -37,6 +37,7 @@ import { settingsAtom } from '../../state/settings';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useSyncState } from '../../hooks/useSyncState';
 import { stopPropagation } from '../../utils/keyboard';
+import { SyncStatus } from './SyncStatus';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -184,6 +185,7 @@ export function ClientRoot({ children }: ClientRootProps) {
 
   return (
     <SpecVersions baseUrl={baseUrl!}>
+      {mx && <SyncStatus mx={mx} />}
       {loading && mx && <ClientRootOptions mx={mx} />}
       {(loadState.status === AsyncStatus.Error || startState.status === AsyncStatus.Error) && (
         <SplashScreen>
