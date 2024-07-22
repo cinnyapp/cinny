@@ -1,7 +1,27 @@
-import { Box, Button, config, Dialog, Spinner, Text } from 'folds';
+import {
+  Box,
+  Button,
+  config,
+  Dialog,
+  Icon,
+  IconButton,
+  Icons,
+  Menu,
+  MenuItem,
+  PopOut,
+  RectCords,
+  Spinner,
+  Text,
+} from 'folds';
 import { HttpApiEvent, HttpApiEventHandlerMap, MatrixClient } from 'matrix-js-sdk';
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
-import { initClient, startClient } from '../../../client/initMatrix';
+import FocusTrap from 'focus-trap-react';
+import React, { MouseEventHandler, ReactNode, useCallback, useEffect, useState } from 'react';
+import {
+  clearCacheAndReload,
+  initClient,
+  logoutClient,
+  startClient,
+} from '../../../client/initMatrix';
 import { getSecret } from '../../../client/state/auth';
 import { SplashScreen } from '../../components/splash-screen';
 import { CapabilitiesAndMediaConfigLoader } from '../../components/CapabilitiesAndMediaConfigLoader';
@@ -16,6 +36,7 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useSyncState } from '../../hooks/useSyncState';
+import { stopPropagation } from '../../utils/keyboard';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -37,6 +58,73 @@ function ClientRootLoading() {
         <Text>Heating up</Text>
       </Box>
     </SplashScreen>
+  );
+}
+
+function ClientRootOptions({ mx }: { mx: MatrixClient }) {
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+
+  const handleToggle: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const cords = evt.currentTarget.getBoundingClientRect();
+    setMenuAnchor((currentState) => {
+      if (currentState) return undefined;
+      return cords;
+    });
+  };
+
+  return (
+    <IconButton
+      style={{
+        position: 'absolute',
+        top: config.space.S100,
+        right: config.space.S100,
+      }}
+      variant="Background"
+      fill="None"
+      onClick={handleToggle}
+    >
+      <Icon size="200" src={Icons.VerticalDots} />
+      <PopOut
+        anchor={menuAnchor}
+        position="Bottom"
+        align="End"
+        offset={6}
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              returnFocusOnDeactivate: false,
+              onDeactivate: () => setMenuAnchor(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Menu>
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                <MenuItem onClick={() => clearCacheAndReload(mx)} size="300" radii="300">
+                  <Text as="span" size="T300" truncate>
+                    Clear Cache and Reload
+                  </Text>
+                </MenuItem>
+                <MenuItem
+                  onClick={() => logoutClient(mx)}
+                  size="300"
+                  radii="300"
+                  variant="Critical"
+                  fill="None"
+                >
+                  <Text as="span" size="T300" truncate>
+                    Logout
+                  </Text>
+                </MenuItem>
+              </Box>
+            </Menu>
+          </FocusTrap>
+        }
+      />
+    </IconButton>
   );
 }
 
@@ -96,6 +184,7 @@ export function ClientRoot({ children }: ClientRootProps) {
 
   return (
     <SpecVersions baseUrl={baseUrl!}>
+      {loading && mx && <ClientRootOptions mx={mx} />}
       {(loadState.status === AsyncStatus.Error || startState.status === AsyncStatus.Error) && (
         <SplashScreen>
           <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">
