@@ -175,8 +175,8 @@ export function ClientRoot({ children }: ClientRootProps) {
 
   useSyncState(
     mx,
-    useCallback((state, prevState) => {
-      if (state === 'PREPARED' && prevState === null) {
+    useCallback((state) => {
+      if (state === 'PREPARED') {
         setLoading(false);
       }
     }, [])
