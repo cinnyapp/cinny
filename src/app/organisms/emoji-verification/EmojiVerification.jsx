@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './EmojiVerification.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { hasPrivateKey } from '../../../client/state/secretStorageKeys';
@@ -18,23 +17,24 @@ import Dialog from '../../molecules/dialog/Dialog';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useStore } from '../../hooks/useStore';
 import { accessSecretStorage } from '../settings/SecretStorageAccess';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function EmojiVerificationContent({ data, requestClose }) {
   const [sas, setSas] = useState(null);
   const [process, setProcess] = useState(false);
   const { request, targetDevice } = data;
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mountStore = useStore();
   const beginStore = useStore();
 
   const beginVerification = async () => {
     if (
-      isCrossVerified(mx.deviceId) &&
+      isCrossVerified(mx, mx.deviceId) &&
       (mx.getCrossSigningId() === null ||
         (await mx.crypto.crossSigningInfo.isStoredInKeyCache('self_signing')) === false)
     ) {
-      if (!hasPrivateKey(getDefaultSSKey())) {
-        const keyData = await accessSecretStorage('Emoji verification');
+      if (!hasPrivateKey(getDefaultSSKey(mx))) {
+        const keyData = await accessSecretStorage(mx, 'Emoji verification');
         if (!keyData) {
           request.cancel();
           return;
@@ -158,7 +158,7 @@ EmojiVerificationContent.propTypes = {
 
 function useVisibilityToggle() {
   const [data, setData] = useState(null);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
 
   useEffect(() => {
     const handleOpen = (request, targetDevice) => {
@@ -170,7 +170,7 @@ function useVisibilityToggle() {
       navigation.removeListener(cons.events.navigation.EMOJI_VERIFICATION_OPENED, handleOpen);
       mx.removeListener('crypto.verification.request', handleOpen);
     };
-  }, []);
+  }, [mx]);
 
   const requestClose = () => setData(null);
 

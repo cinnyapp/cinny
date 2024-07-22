@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomSettings.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 
@@ -30,6 +29,7 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import PopupWindow from '../../molecules/popup-window/PopupWindow';
 import IconButton from '../../atoms/button/IconButton';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const tabText = {
   GENERAL: 'General',
@@ -68,7 +68,7 @@ const tabItems = [
 ];
 
 function GeneralSettings({ roomId }) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
 
   return (
@@ -155,7 +155,8 @@ function RoomSettings() {
   const [window, requestClose] = useWindowToggle(setSelectedTab);
   const isOpen = window !== null;
   const roomId = window?.roomId;
-  const room = initMatrix.matrixClient.getRoom(roomId);
+  const mx = useMatrixClient();
+  const room = mx.getRoom(roomId);
 
   const handleTabChange = (tabItem) => {
     setSelectedTab(tabItem);

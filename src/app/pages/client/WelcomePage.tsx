@@ -18,7 +18,7 @@ export function WelcomePage() {
             title="Welcome to Cinny"
             subTitle={
               <span>
-                Yet anothor matrix client.{' '}
+                Yet another matrix client.{' '}
                 <a
                   href="https://github.com/cinnyapp/cinny/releases"
                   target="_blank"

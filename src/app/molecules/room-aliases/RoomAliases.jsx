@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomAliases.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { Debounce } from '../../../util/common';
 import { isRoomAliasAvailable } from '../../../util/matrixUtil';
@@ -16,8 +15,10 @@ import { MenuHeader } from '../../atoms/context-menu/ContextMenu';
 import SettingTile from '../setting-tile/SettingTile';
 
 import { useStore } from '../../hooks/useStore';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function useValidate(hsString) {
+  const mx = useMatrixClient();
   const [debounce] = useState(new Debounce());
   const [validate, setValidate] = useState({ alias: null, status: cons.status.PRE_FLIGHT });
 
@@ -62,7 +63,7 @@ function useValidate(hsString) {
         msg: `validating ${alias}...`,
       });
 
-      const isValid = await isRoomAliasAvailable(alias);
+      const isValid = await isRoomAliasAvailable(mx, alias);
       setValidate(() => {
         if (e.target.value !== value) {
           return { alias: null, status: cons.status.PRE_FLIGHT };
@@ -79,8 +80,7 @@ function useValidate(hsString) {
   return [validate, setValidateToDefault, handleAliasChange];
 }
 
-function getAliases(roomId) {
-  const mx = initMatrix.matrixClient;
+function getAliases(mx, roomId) {
   const room = mx.getRoom(roomId);
 
   const main = room.getCanonicalAlias();
@@ -95,7 +95,7 @@ function getAliases(roomId) {
 }
 
 function RoomAliases({ roomId }) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
   const userId = mx.getUserId();
   const hsString = userId.slice(userId.indexOf(':') + 1);
@@ -103,7 +103,7 @@ function RoomAliases({ roomId }) {
   const isMountedStore = useStore();
   const [isPublic, setIsPublic] = useState(false);
   const [isLocalVisible, setIsLocalVisible] = useState(false);
-  const [aliases, setAliases] = useState(getAliases(roomId));
+  const [aliases, setAliases] = useState(getAliases(mx, roomId));
   const [selectedAlias, setSelectedAlias] = useState(null);
   const [deleteAlias, setDeleteAlias] = useState(null);
   const [validate, setValidateToDefault, handleAliasChange] = useValidate(hsString);
@@ -140,7 +140,7 @@ function RoomAliases({ roomId }) {
     return () => {
       isUnmounted = true;
     };
-  }, [roomId]);
+  }, [mx, roomId]);
 
   const toggleDirectoryVisibility = () => {
     mx.setRoomDirectoryVisibility(roomId, isPublic ? 'private' : 'public');

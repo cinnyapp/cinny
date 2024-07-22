@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 
-import initMatrix from '../../../client/initMatrix';
 import colorMXID from '../../../util/colorMXID';
 
 import Text from '../../atoms/text/Text';
@@ -14,10 +13,11 @@ import PencilIC from '../../../../public/res/ic/outlined/pencil.svg';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import './ProfileEditor.scss';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function ProfileEditor({ userId }) {
   const [isEditing, setIsEditing] = useState(false);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const user = mx.getUser(mx.getUserId());
 
   const displayNameRef = useRef(null);
@@ -37,7 +37,7 @@ function ProfileEditor({ userId }) {
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [mx, userId]);
 
   const handleAvatarUpload = async (url) => {
     if (url === null) {

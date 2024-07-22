@@ -40,28 +40,30 @@ export function RoomTombstone({ roomId, body, replacementRoomId }: RoomTombstone
           </Text>
         )}
       </Box>
-      {replacementRoom?.getMyMembership() === Membership.Join ||
-      joinState.status === AsyncStatus.Success ? (
-        <Button onClick={handleOpen} size="300" variant="Success" fill="Solid" radii="300">
-          <Text size="B300">Open New Room</Text>
-        </Button>
-      ) : (
-        <Button
-          onClick={handleJoin}
-          size="300"
-          variant="Primary"
-          fill="Solid"
-          radii="300"
-          before={
-            joinState.status === AsyncStatus.Loading && (
-              <Spinner size="100" variant="Primary" fill="Solid" />
-            )
-          }
-          disabled={joinState.status === AsyncStatus.Loading}
-        >
-          <Text size="B300">Join New Room</Text>
-        </Button>
-      )}
+      <Box shrink="No">
+        {replacementRoom?.getMyMembership() === Membership.Join ||
+        joinState.status === AsyncStatus.Success ? (
+          <Button onClick={handleOpen} size="300" variant="Success" fill="Solid" radii="300">
+            <Text size="B300">Open New Room</Text>
+          </Button>
+        ) : (
+          <Button
+            onClick={handleJoin}
+            size="300"
+            variant="Primary"
+            fill="Solid"
+            radii="300"
+            before={
+              joinState.status === AsyncStatus.Loading && (
+                <Spinner size="100" variant="Primary" fill="Solid" />
+              )
+            }
+            disabled={joinState.status === AsyncStatus.Loading}
+          >
+            <Text size="B300">Join New Room</Text>
+          </Button>
+        )}
+      </Box>
     </RoomInputPlaceholder>
   );
 }

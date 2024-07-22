@@ -4,7 +4,6 @@ import './CrossSigning.scss';
 import FileSaver from 'file-saver';
 import { Formik } from 'formik';
 
-import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { copyToClipboard } from '../../../util/common';
 import { clearSecretStorageKeys } from '../../../client/state/secretStorageKeys';
@@ -17,6 +16,7 @@ import SettingTile from '../../molecules/setting-tile/SettingTile';
 
 import { authRequest } from './AuthRequest';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const failedDialog = () => {
   const renderFailure = (requestClose) => (
@@ -73,9 +73,9 @@ const securityKeyDialog = (key) => {
 function CrossSigningSetup() {
   const initialValues = { phrase: '', confirmPhrase: '' };
   const [genWithPhrase, setGenWithPhrase] = useState(undefined);
+  const mx = useMatrixClient();
 
   const setup = async (securityPhrase = undefined) => {
-    const mx = initMatrix.matrixClient;
     setGenWithPhrase(typeof securityPhrase === 'string');
     const recoveryKey = await mx.createRecoveryKeyFromPassphrase(securityPhrase);
     clearSecretStorageKeys();

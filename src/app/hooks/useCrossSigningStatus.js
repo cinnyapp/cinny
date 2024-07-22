@@ -1,12 +1,12 @@
 /* eslint-disable import/prefer-default-export */
 import { useState, useEffect } from 'react';
 
-import initMatrix from '../../client/initMatrix';
 import { hasCrossSigningAccountData } from '../../util/matrixUtil';
+import { useMatrixClient } from './useMatrixClient';
 
 export function useCrossSigningStatus() {
-  const mx = initMatrix.matrixClient;
-  const [isCSEnabled, setIsCSEnabled] = useState(hasCrossSigningAccountData());
+  const mx = useMatrixClient();
+  const [isCSEnabled, setIsCSEnabled] = useState(hasCrossSigningAccountData(mx));
 
   useEffect(() => {
     if (isCSEnabled) return undefined;
@@ -20,6 +20,6 @@ export function useCrossSigningStatus() {
     return () => {
       mx.removeListener('accountData', handleAccountData);
     };
-  }, [isCSEnabled === false]);
+  }, [mx, isCSEnabled]);
   return isCSEnabled;
 }

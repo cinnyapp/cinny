@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { useAtomValue } from 'jotai';
 import './SpaceAddExisting.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { joinRuleToIconSrc, getIdServer, genRoomVia } from '../../../util/matrixUtil';
@@ -27,6 +26,7 @@ import { roomToParentsAtom } from '../../state/room/roomToParents';
 import { useDirects, useRooms, useSpaces } from '../../state/hooks/roomList';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { mDirectAtom } from '../../state/mDirectList';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
   const mountStore = useStore(roomId);
@@ -35,7 +35,7 @@ function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
   const [allRoomIds, setAllRoomIds] = useState([]);
   const [selected, setSelected] = useState([]);
   const [searchIds, setSearchIds] = useState(null);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const roomIdToParents = useAtomValue(roomToParentsAtom);
   const mDirects = useAtomValue(mDirectAtom);
   const spaces = useSpaces(mx, allRoomsAtom);
@@ -48,7 +48,7 @@ function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
       (rId) => rId !== roomId && !roomIdToParents.get(rId)?.has(roomId)
     );
     setAllRoomIds(allIds);
-  }, [roomId, onlySpaces]);
+  }, [spaces, rooms, directs, roomIdToParents, roomId, onlySpaces]);
 
   const toggleSelection = (rId) => {
     if (process !== null) return;
@@ -215,7 +215,7 @@ function useVisibilityToggle() {
 
 function SpaceAddExisting() {
   const [data, requestClose] = useVisibilityToggle();
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(data?.roomId);
 
   return (

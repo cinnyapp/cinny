@@ -597,7 +597,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         // so timeline can be updated with evt like: edits, reactions etc
         if (atBottomRef.current) {
           if (document.hasFocus() && (!unreadInfo || mEvt.getSender() === mx.getUserId())) {
-            requestAnimationFrame(() => markAsRead(mEvt.getRoomId()));
+            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()));
           }
 
           if (document.hasFocus()) {
@@ -658,15 +658,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   const tryAutoMarkAsRead = useCallback(() => {
     if (!unreadInfo) {
-      requestAnimationFrame(() => markAsRead(room.roomId));
+      requestAnimationFrame(() => markAsRead(mx, room.roomId));
       return;
     }
     const evtTimeline = getEventTimeline(room, unreadInfo.readUptoEventId);
     const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
     if (latestTimeline === room.getLiveTimeline()) {
-      requestAnimationFrame(() => markAsRead(room.roomId));
+      requestAnimationFrame(() => markAsRead(mx, room.roomId));
     }
-  }, [room, unreadInfo]);
+  }, [mx, room, unreadInfo]);
 
   const debounceSetAtBottom = useDebounce(
     useCallback((entry: IntersectionObserverEntry) => {
@@ -832,7 +832,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   };
 
   const handleMarkAsRead = () => {
-    markAsRead(room.roomId);
+    markAsRead(mx, room.roomId);
   };
 
   const handleOpenReply: MouseEventHandler<HTMLButtonElement> = useCallback(

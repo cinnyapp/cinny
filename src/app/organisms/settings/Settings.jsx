@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.scss';
 
-import initMatrix from '../../../client/initMatrix';
+import { clearCacheAndReload, logoutClient } from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import settings from '../../../client/state/settings';
 import navigation from '../../../client/state/navigation';
@@ -47,6 +47,7 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { isMacOS } from '../../utils/user-agent';
 import { KeySymbol } from '../../utils/key-symbol';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function AppearanceSection() {
   const [, updateState] = useState({});
@@ -332,6 +333,8 @@ function SecuritySection() {
 }
 
 function AboutSection() {
+  const mx = useMatrixClient();
+  
   return (
     <div className="settings-about">
       <div className="settings-about__card">
@@ -348,7 +351,7 @@ function AboutSection() {
             <div className="settings-about__btns">
               <Button onClick={() => window.open('https://github.com/ajbura/cinny')}>Source code</Button>
               <Button onClick={() => window.open('https://cinny.in/#sponsor')}>Support</Button>
-              <Button onClick={() => initMatrix.clearCacheAndReload()} variant="danger">Clear cache & reload</Button>
+              <Button onClick={() => clearCacheAndReload(mx)} variant="danger">Clear cache & reload</Button>
             </div>
           </div>
         </div>
@@ -437,11 +440,12 @@ function useWindowToggle(setSelectedTab) {
 function Settings() {
   const [selectedTab, setSelectedTab] = useState(tabItems[0]);
   const [isOpen, requestClose] = useWindowToggle(setSelectedTab);
+  const mx = useMatrixClient();
 
   const handleTabChange = (tabItem) => setSelectedTab(tabItem);
   const handleLogout = async () => {
     if (await confirmDialog('Logout', 'Are you sure that you want to logout your session?', 'Logout', 'danger')) {
-      initMatrix.logout();
+      logoutClient(mx);
     }
   };
 
@@ -462,7 +466,7 @@ function Settings() {
     >
       {isOpen && (
         <div className="settings-window__content">
-          <ProfileEditor userId={initMatrix.matrixClient.getUserId()} />
+          <ProfileEditor userId={mx.getUserId()} />
           <Tabs
             items={tabItems}
             defaultSelected={tabItems.findIndex((tab) => tab.text === selectedTab.text)}

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './ProfileViewer.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { openReusableContextMenu } from '../../../client/action/navigation';
@@ -36,9 +35,10 @@ import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { getDMRoomFor } from '../../utils/matrix';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function ModerationTools({ roomId, userId }) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
   const roomMember = room.getMember(userId);
 
@@ -56,13 +56,13 @@ function ModerationTools({ roomId, userId }) {
   const handleKick = (e) => {
     e.preventDefault();
     const kickReason = e.target.elements['kick-reason']?.value.trim();
-    roomActions.kick(roomId, userId, kickReason !== '' ? kickReason : undefined);
+    mx.kick(roomId, userId, kickReason !== '' ? kickReason : undefined);
   };
 
   const handleBan = (e) => {
     e.preventDefault();
     const banReason = e.target.elements['ban-reason']?.value.trim();
-    roomActions.ban(roomId, userId, banReason !== '' ? banReason : undefined);
+    mx.ban(roomId, userId, banReason !== '' ? banReason : undefined);
   };
 
   return (
@@ -90,7 +90,7 @@ ModerationTools.propTypes = {
 function SessionInfo({ userId }) {
   const [devices, setDevices] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
 
   useEffect(() => {
     let isUnmounted = false;
@@ -111,7 +111,7 @@ function SessionInfo({ userId }) {
     return () => {
       isUnmounted = true;
     };
-  }, [userId]);
+  }, [mx, userId]);
 
   function renderSessionChips() {
     if (!isVisible) return null;
@@ -139,7 +139,7 @@ function SessionInfo({ userId }) {
       >
         <Text variant="b2">{`View ${
           devices?.length > 0
-            ? `${devices.length} ${devices.length == 1 ? 'session' : 'sessions'}`
+            ? `${devices.length} ${devices.length === 1 ? 'session' : 'sessions'}`
             : 'sessions'
         }`}</Text>
       </MenuItem>
@@ -155,10 +155,10 @@ SessionInfo.propTypes = {
 function ProfileFooter({ roomId, userId, onRequestClose }) {
   const [isCreatingDM, setIsCreatingDM] = useState(false);
   const [isIgnoring, setIsIgnoring] = useState(false);
-  const [isUserIgnored, setIsUserIgnored] = useState(initMatrix.matrixClient.isUserIgnored(userId));
+  const mx = useMatrixClient();
+  const [isUserIgnored, setIsUserIgnored] = useState(mx.isUserIgnored(userId));
 
   const isMountedRef = useRef(true);
-  const mx = initMatrix.matrixClient;
   const { navigateRoom } = useRoomNavigate();
   const room = mx.getRoom(roomId);
   const member = room.getMember(userId);
@@ -182,10 +182,10 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
   };
 
   useEffect(() => {
-    setIsUserIgnored(initMatrix.matrixClient.isUserIgnored(userId));
+    setIsUserIgnored(mx.isUserIgnored(userId));
     setIsIgnoring(false);
     setIsInviting(false);
-  }, [userId]);
+  }, [mx, userId]);
 
   const openDM = async () => {
     // Check and open if user already have a DM with userId.
@@ -199,7 +199,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     // Create new DM
     try {
       setIsCreatingDM(true);
-      const result = await roomActions.createDM(userId, await hasDevices(userId));
+      const result = await roomActions.createDM(mx, userId, await hasDevices(mx, userId));
       onCreated(result.room_id);
     } catch {
       if (isMountedRef.current === false) return;
@@ -213,9 +213,9 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     try {
       setIsIgnoring(true);
       if (isIgnored) {
-        await roomActions.unignore([userId]);
+        await roomActions.unignore(mx, [userId]);
       } else {
-        await roomActions.ignore([userId]);
+        await roomActions.ignore(mx, [userId]);
       }
 
       if (isMountedRef.current === false) return;
@@ -230,9 +230,9 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     try {
       setIsInviting(true);
       let isInviteSent = false;
-      if (isInvited) await roomActions.kick(roomId, userId);
+      if (isInvited) await mx.kick(roomId, userId);
       else {
-        await roomActions.invite(roomId, userId);
+        await mx.invite(roomId, userId);
         isInviteSent = true;
       }
       if (isMountedRef.current === false) return;
@@ -249,7 +249,7 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
         {isCreatingDM ? 'Creating room...' : 'Message'}
       </Button>
       {isBanned && canIKick && (
-        <Button variant="positive" onClick={() => roomActions.unban(roomId, userId)}>
+        <Button variant="positive" onClick={() => mx.unban(roomId, userId)}>
           Unban
         </Button>
       )}
@@ -306,7 +306,7 @@ function useToggleDialog() {
 }
 
 function useRerenderOnProfileChange(roomId, userId) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const [, forceUpdate] = useForceUpdate();
   useEffect(() => {
     const handleProfileChange = (mEvent, member) => {
@@ -323,19 +323,19 @@ function useRerenderOnProfileChange(roomId, userId) {
       mx.removeListener('RoomMember.powerLevel', handleProfileChange);
       mx.removeListener('RoomMember.membership', handleProfileChange);
     };
-  }, [roomId, userId]);
+  }, [mx, roomId, userId]);
 }
 
 function ProfileViewer() {
   const [isOpen, roomId, userId, closeDialog, handleAfterClose] = useToggleDialog();
   useRerenderOnProfileChange(roomId, userId);
 
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
 
   const renderProfile = () => {
     const roomMember = room.getMember(userId);
-    const username = roomMember ? getUsernameOfRoomMember(roomMember) : getUsername(userId);
+    const username = roomMember ? getUsernameOfRoomMember(roomMember) : getUsername(mx, userId);
     const avatarMxc = roomMember?.getMxcAvatarUrl?.() || mx.getUser(userId)?.avatarUrl;
     const avatarUrl =
       avatarMxc && avatarMxc !== 'null' ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
@@ -364,9 +364,9 @@ function ProfileViewer() {
           'caution'
         );
         if (!isConfirmed) return;
-        roomActions.setPowerLevel(roomId, userId, newPowerLevel);
+        roomActions.setPowerLevel(mx, roomId, userId, newPowerLevel);
       } else {
-        roomActions.setPowerLevel(roomId, userId, newPowerLevel);
+        roomActions.setPowerLevel(mx, roomId, userId, newPowerLevel);
       }
     };
 

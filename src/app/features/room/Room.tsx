@@ -11,10 +11,12 @@ import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePower
 import { useRoom } from '../../hooks/useRoom';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { markAsRead } from '../../../client/action/notifications';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 export function Room() {
   const { eventId } = useParams();
   const room = useRoom();
+  const mx = useMatrixClient();
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const screenSize = useScreenSizeContext();
@@ -25,7 +27,7 @@ export function Room() {
     useCallback(
       (evt) => {
         if (isKeyHotkey('escape', evt)) {
-          markAsRead(room.roomId);
+          markAsRead(mx, room.roomId);
         }
       },
       [room.roomId]

@@ -31,10 +31,11 @@ type HomeMenuProps = {
 const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, ref) => {
   const orphanRooms = useHomeRooms();
   const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
+  const mx = useMatrixClient();
 
   const handleMarkAsRead = () => {
     if (!unread) return;
-    orphanRooms.forEach((rId) => markAsRead(rId));
+    orphanRooms.forEach((rId) => markAsRead(mx, rId));
     requestClose();
   };
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './InviteUser.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import * as roomActions from '../../../client/action/room';
 import { hasDevices } from '../../../util/matrixUtil';
 
@@ -18,6 +17,7 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { getDMRoomFor } from '../../utils/matrix';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
   const [isSearching, updateIsSearching] = useState(false);
@@ -34,7 +34,7 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
 
   const usernameRef = useRef(null);
 
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const { navigateRoom } = useRoomNavigate();
 
   function getMapCopy(myMap) {
@@ -118,7 +118,7 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
       procUserError.delete(userId);
       updateUserProcError(getMapCopy(procUserError));
 
-      const result = await roomActions.createDM(userId, await hasDevices(userId));
+      const result = await roomActions.createDM(mx, userId, await hasDevices(mx, userId));
       roomIdToUserId.set(result.room_id, userId);
       updateRoomIdToUserId(getMapCopy(roomIdToUserId));
       onDMCreated(result.room_id);
@@ -137,7 +137,7 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
       procUserError.delete(userId);
       updateUserProcError(getMapCopy(procUserError));
 
-      await roomActions.invite(roomId, userId);
+      await mx.invite(roomId, userId);
 
       invitedUserIds.add(userId);
       updateInvitedUserIds(new Set(Array.from(invitedUserIds)));

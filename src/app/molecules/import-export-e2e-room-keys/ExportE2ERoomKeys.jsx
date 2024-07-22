@@ -3,7 +3,6 @@ import './ExportE2ERoomKeys.scss';
 
 import FileSaver from 'file-saver';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { encryptMegolmKeyFile } from '../../../util/cryptE2ERoomKeys';
 
@@ -13,8 +12,10 @@ import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 
 import { useStore } from '../../hooks/useStore';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function ExportE2ERoomKeys() {
+  const mx = useMatrixClient();
   const isMountStore = useStore();
   const [status, setStatus] = useState({
     isOngoing: false,
@@ -40,7 +41,7 @@ function ExportE2ERoomKeys() {
       type: cons.status.IN_FLIGHT,
     });
     try {
-      const keys = await initMatrix.matrixClient.exportRoomKeys();
+      const keys = await mx.exportRoomKeys();
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: true,

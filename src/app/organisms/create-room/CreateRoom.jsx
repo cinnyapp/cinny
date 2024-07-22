@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './CreateRoom.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { openReusableContextMenu } from '../../../client/action/navigation';
@@ -32,6 +31,7 @@ import SpaceGlobeIC from '../../../../public/res/ic/outlined/space-globe.svg';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
   const [joinRule, setJoinRule] = useState(parentId ? 'restricted' : 'invite');
@@ -46,7 +46,7 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
 
   const addressRef = useRef(null);
 
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const userHs = getIdServer(mx.getUserId());
 
   const handleSubmit = async (evt) => {
@@ -69,7 +69,7 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
     const powerLevel = roleIndex === 1 ? 101 : undefined;
 
     try {
-      const data = await roomActions.createRoom({
+      const data = await roomActions.createRoom(mx, {
         name,
         topic,
         joinRule,
@@ -113,7 +113,7 @@ function CreateRoomContent({ isSpace, parentId, onRequestClose }) {
       if (roomAlias === '') return;
       const roomAddress = `#${roomAlias}:${userHs}`;
 
-      if (await isRoomAliasAvailable(roomAddress)) {
+      if (await isRoomAliasAvailable(mx, roomAddress)) {
         setIsValidAddress(true);
       } else {
         setIsValidAddress(false);
@@ -278,7 +278,7 @@ function useWindowToggle() {
 function CreateRoom() {
   const [create, onRequestClose] = useWindowToggle();
   const { isSpace, parentId } = create ?? {};
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(parentId);
 
   return (

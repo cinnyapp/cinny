@@ -53,7 +53,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
 
     const handleMarkAsRead = () => {
-      markAsRead(room.roomId);
+      markAsRead(mx, room.roomId);
       requestClose();
     };
 

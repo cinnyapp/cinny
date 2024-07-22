@@ -1,13 +1,11 @@
-import initMatrix from '../initMatrix';
+import { MatrixClient } from "matrix-js-sdk";
 
-// eslint-disable-next-line import/prefer-default-export
-export async function markAsRead(roomId) {
-  const mx = initMatrix.matrixClient;
+export async function markAsRead(mx: MatrixClient, roomId: string) {
   const room = mx.getRoom(roomId);
   if (!room) return;
 
   const timeline = room.getLiveTimeline().getEvents();
-  const readEventId = room.getEventReadUpTo(mx.getUserId());
+  const readEventId = room.getEventReadUpTo(mx.getUserId()!);
 
   const getLatestValidEvent = () => {
     for (let i = timeline.length - 1; i >= 0; i -= 1) {

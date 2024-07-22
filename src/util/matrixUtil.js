@@ -1,5 +1,3 @@
-import initMatrix from '../client/initMatrix';
-
 import HashIC from '../../public/res/ic/outlined/hash.svg';
 import HashGlobeIC from '../../public/res/ic/outlined/hash-globe.svg';
 import HashLockIC from '../../public/res/ic/outlined/hash-lock.svg';
@@ -24,8 +22,7 @@ export async function getBaseUrl(servername) {
   }
 }
 
-export function getUsername(userId) {
-  const mx = initMatrix.matrixClient;
+export function getUsername(mx, userId) {
   const user = mx.getUser(userId);
   if (user === null) return userId;
   let username = user.displayName;
@@ -39,9 +36,9 @@ export function getUsernameOfRoomMember(roomMember) {
   return roomMember.name || roomMember.userId;
 }
 
-export async function isRoomAliasAvailable(alias) {
+export async function isRoomAliasAvailable(mx, alias) {
   try {
-    const result = await initMatrix.matrixClient.getRoomIdForAlias(alias);
+    const result = await mx.getRoomIdForAlias(alias);
     if (result.room_id) return false;
     return false;
   } catch (e) {
@@ -159,9 +156,8 @@ export function genRoomVia(room) {
   return via.concat(mostPop3.slice(0, 2));
 }
 
-export function isCrossVerified(deviceId) {
+export function isCrossVerified(mx, deviceId) {
   try {
-    const mx = initMatrix.matrixClient;
     const crossSignInfo = mx.getStoredCrossSigningForUser(mx.getUserId());
     const deviceInfo = mx.getStoredDevice(mx.getUserId(), deviceId);
     const deviceTrust = crossSignInfo.checkDeviceTrust(crossSignInfo, deviceInfo, false, true);
@@ -172,14 +168,12 @@ export function isCrossVerified(deviceId) {
   }
 }
 
-export function hasCrossSigningAccountData() {
-  const mx = initMatrix.matrixClient;
+export function hasCrossSigningAccountData(mx) {
   const masterKeyData = mx.getAccountData('m.cross_signing.master');
   return !!masterKeyData;
 }
 
-export function getDefaultSSKey() {
-  const mx = initMatrix.matrixClient;
+export function getDefaultSSKey(mx) {
   try {
     return mx.getAccountData('m.secret_storage.default_key').getContent().key;
   } catch {
@@ -187,8 +181,7 @@ export function getDefaultSSKey() {
   }
 }
 
-export function getSSKeyInfo(key) {
-  const mx = initMatrix.matrixClient;
+export function getSSKeyInfo(mx, key) {
   try {
     return mx.getAccountData(`m.secret_storage.key.${key}`).getContent();
   } catch {
@@ -196,8 +189,7 @@ export function getSSKeyInfo(key) {
   }
 }
 
-export async function hasDevices(userId) {
-  const mx = initMatrix.matrixClient;
+export async function hasDevices(mx, userId) {
   try {
     const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
     return Object.values(usersDeviceMap)

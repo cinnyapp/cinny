@@ -1,6 +1,5 @@
 import React from 'react';
 
-import initMatrix from '../../../client/initMatrix';
 import { openReusableContextMenu } from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
 
@@ -14,6 +13,7 @@ import NotificationSelector from './NotificationSelector';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 
 import { useAccountData } from '../../hooks/useAccountData';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 export const notifType = {
   ON: 'on',
@@ -52,7 +52,7 @@ export function getTypeActions(type, highlightValue = false) {
 }
 
 function useGlobalNotif() {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const pushRules = useAccountData('m.push_rules')?.getContent();
   const underride = pushRules?.global?.underride ?? [];
   const rulesToType = {

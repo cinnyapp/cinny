@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './ImageUpload.scss';
 
-import initMatrix from '../../../client/initMatrix';
 
 import Text from '../../atoms/text/Text';
 import Avatar from '../../atoms/avatar/Avatar';
@@ -10,6 +9,7 @@ import Spinner from '../../atoms/spinner/Spinner';
 import RawIcon from '../../atoms/system-icons/RawIcon';
 
 import PlusIC from '../../../../public/res/ic/outlined/plus.svg';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function ImageUpload({
   text, bgColor, imageSrc, onUpload, onRequestRemove,
@@ -17,12 +17,13 @@ function ImageUpload({
 }) {
   const [uploadPromise, setUploadPromise] = useState(null);
   const uploadImageRef = useRef(null);
+  const mx = useMatrixClient();
 
   async function uploadImage(e) {
     const file = e.target.files.item(0);
     if (file === null) return;
     try {
-      const uPromise = initMatrix.matrixClient.uploadContent(file);
+      const uPromise = mx.uploadContent(file);
       setUploadPromise(uPromise);
 
       const res = await uPromise;
@@ -35,7 +36,7 @@ function ImageUpload({
   }
 
   function cancelUpload() {
-    initMatrix.matrixClient.cancelUpload(uploadPromise);
+    mx.cancelUpload(uploadPromise);
     setUploadPromise(null);
     uploadImageRef.current.value = null;
   }

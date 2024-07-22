@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import './DeviceManage.scss';
 import dateFormat from 'dateformat';
 
-import initMatrix from '../../../client/initMatrix';
 import { isCrossVerified } from '../../../util/matrixUtil';
 import { openReusableDialog, openEmojiVerification } from '../../../client/action/navigation';
 
@@ -26,6 +25,7 @@ import { useStore } from '../../hooks/useStore';
 import { useDeviceList } from '../../hooks/useDeviceList';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
 import { accessSecretStorage } from './SecretStorageAccess';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const promptDeviceName = async (deviceName) => new Promise((resolve) => {
   let isCompleted = false;
@@ -63,14 +63,14 @@ const promptDeviceName = async (deviceName) => new Promise((resolve) => {
 
 function DeviceManage() {
   const TRUNCATED_COUNT = 4;
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const isCSEnabled = useCrossSigningStatus();
   const deviceList = useDeviceList();
   const [processing, setProcessing] = useState([]);
   const [truncated, setTruncated] = useState(true);
   const mountStore = useStore();
   mountStore.setItem(true);
-  const isMeVerified = isCrossVerified(mx.deviceId);
+  const isMeVerified = isCrossVerified(mx, mx.deviceId);
 
   useEffect(() => {
     setProcessing([]);
@@ -130,7 +130,7 @@ function DeviceManage() {
   };
 
   const verifyWithKey = async (device) => {
-    const keyData = await accessSecretStorage('Session verification');
+    const keyData = await accessSecretStorage(mx, 'Session verification');
     if (!keyData) return;
     addToProcessing(device);
     await mx.checkOwnCrossSigningTrust();
@@ -191,7 +191,7 @@ function DeviceManage() {
             )}
             {isCurrentDevice && (
               <Text style={{ marginTop: 'var(--sp-ultra-tight)' }} variant="b3">
-                {`Session Key: ${initMatrix.matrixClient.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
+                {`Session Key: ${mx.getDeviceEd25519Key().match(/.{1,4}/g).join(' ')}`}
               </Text>
             )}
           </>
@@ -204,7 +204,7 @@ function DeviceManage() {
   const verified = [];
   const noEncryption = [];
   deviceList.sort((a, b) => b.last_seen_ts - a.last_seen_ts).forEach((device) => {
-    const isVerified = isCrossVerified(device.device_id);
+    const isVerified = isCrossVerified(mx, device.device_id);
     if (isVerified === true) {
       verified.push(device);
     } else if (isVerified === false) {

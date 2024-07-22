@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './KeyBackup.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { deletePrivateKey } from '../../../client/state/secretStorageKeys';
 
@@ -22,10 +21,11 @@ import DownloadIC from '../../../../public/res/ic/outlined/download.svg';
 
 import { useStore } from '../../hooks/useStore';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function CreateKeyBackupDialog({ keyData }) {
   const [done, setDone] = useState(false);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mountStore = useStore();
 
   const doBackup = async () => {
@@ -80,7 +80,7 @@ CreateKeyBackupDialog.propTypes = {
 
 function RestoreKeyBackupDialog({ keyData }) {
   const [status, setStatus] = useState(false);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mountStore = useStore();
 
   const restoreBackup = async () => {
@@ -150,7 +150,7 @@ RestoreKeyBackupDialog.propTypes = {
 
 function DeleteKeyBackupDialog({ requestClose }) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mountStore = useStore();
 
   const deleteBackup = async () => {
@@ -187,7 +187,7 @@ DeleteKeyBackupDialog.propTypes = {
 };
 
 function KeyBackup() {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const isCSEnabled = useCrossSigningStatus();
   const [keyBackup, setKeyBackup] = useState(undefined);
   const mountStore = useStore();
@@ -215,7 +215,7 @@ function KeyBackup() {
   }, [isCSEnabled]);
 
   const openCreateKeyBackup = async () => {
-    const keyData = await accessSecretStorage('Create Key Backup');
+    const keyData = await accessSecretStorage(mx, 'Create Key Backup');
     if (keyData === null) return;
 
     openReusableDialog(
@@ -228,7 +228,7 @@ function KeyBackup() {
   };
 
   const openRestoreKeyBackup = async () => {
-    const keyData = await accessSecretStorage('Restore Key Backup');
+    const keyData = await accessSecretStorage(mx, 'Restore Key Backup');
     if (keyData === null) return;
 
     openReusableDialog(
