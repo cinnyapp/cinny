@@ -1,11 +1,5 @@
 import { Box, Button, config, Dialog, Spinner, Text } from 'folds';
-import {
-  ClientEvent,
-  ClientEventHandlerMap,
-  HttpApiEvent,
-  HttpApiEventHandlerMap,
-  MatrixClient,
-} from 'matrix-js-sdk';
+import { HttpApiEvent, HttpApiEventHandlerMap, MatrixClient } from 'matrix-js-sdk';
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { initClient, startClient } from '../../../client/initMatrix';
 import { getSecret } from '../../../client/state/auth';
@@ -21,6 +15,7 @@ import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
+import { useSyncState } from '../../hooks/useSyncState';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -88,16 +83,16 @@ export function ClientRoot({ children }: ClientRootProps) {
     if (mx && !mx.clientRunning) {
       startMatrix(mx);
     }
-    const handleSync: ClientEventHandlerMap[ClientEvent.Sync] = (state, prevState) => {
+  }, [mx, startMatrix]);
+
+  useSyncState(
+    mx,
+    useCallback((state, prevState) => {
       if (state === 'PREPARED' && prevState === null) {
         setLoading(false);
       }
-    };
-    mx?.on(ClientEvent.Sync, handleSync);
-    return () => {
-      mx?.removeListener(ClientEvent.Sync, handleSync);
-    };
-  }, [mx, startMatrix]);
+    }, [])
+  );
 
   return (
     <SpecVersions baseUrl={baseUrl!}>
