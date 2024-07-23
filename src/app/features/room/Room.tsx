@@ -12,6 +12,7 @@ import { useRoom } from '../../hooks/useRoom';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { markAsRead } from '../../../client/action/notifications';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useRoomMembers } from '../../hooks/useRoomMembers';
 
 export function Room() {
   const { eventId } = useParams();
@@ -21,6 +22,7 @@ export function Room() {
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const screenSize = useScreenSizeContext();
   const powerLevels = usePowerLevels(room);
+  const members = useRoomMembers(mx, room.roomId);
 
   useKeyDown(
     window,
@@ -30,7 +32,7 @@ export function Room() {
           markAsRead(mx, room.roomId);
         }
       },
-      [room.roomId]
+      [mx, room.roomId]
     )
   );
 
@@ -41,7 +43,7 @@ export function Room() {
         {screenSize === ScreenSize.Desktop && isDrawer && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
-            <MembersDrawer key={room.roomId} room={room} />
+            <MembersDrawer key={room.roomId} room={room} members={members} />
           </>
         )}
       </Box>

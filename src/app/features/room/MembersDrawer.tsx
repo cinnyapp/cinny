@@ -35,7 +35,6 @@ import classNames from 'classnames';
 
 import { openProfileViewer } from '../../../client/action/navigation';
 import * as css from './MembersDrawer.css';
-import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { Membership } from '../../../types/matrix/room';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -168,13 +167,13 @@ const getRoomMemberStr: SearchItemStrGetter<RoomMember> = (m, query) =>
 
 type MembersDrawerProps = {
   room: Room;
+  members: RoomMember[];
 };
-export function MembersDrawer({ room }: MembersDrawerProps) {
+export function MembersDrawer({ room, members }: MembersDrawerProps) {
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
-  const members = useRoomMembers(mx, room.roomId);
   const getPowerLevelTag = usePowerLevelTags();
   const fetchingMembers = members.length < room.getJoinedMemberCount();
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
