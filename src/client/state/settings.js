@@ -33,8 +33,6 @@ class Settings extends EventEmitter {
     this.isPeopleDrawer = this.getIsPeopleDrawer();
     this.hideMembershipEvents = this.getHideMembershipEvents();
     this.hideNickAvatarEvents = this.getHideNickAvatarEvents();
-    this._showNotifications = this.getShowNotifications();
-    this.isNotificationSounds = this.getIsNotificationSounds();
 
     this.darkModeQueryList = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -137,29 +135,6 @@ class Settings extends EventEmitter {
     return settings.isPeopleDrawer;
   }
 
-  get showNotifications() {
-    if (window.Notification?.permission !== 'granted') return false;
-    return this._showNotifications;
-  }
-
-  getShowNotifications() {
-    if (typeof this._showNotifications === 'boolean') return this._showNotifications;
-
-    const settings = getSettings();
-    if (settings === null) return true;
-    if (typeof settings.showNotifications === 'undefined') return true;
-    return settings.showNotifications;
-  }
-
-  getIsNotificationSounds() {
-    if (typeof this.isNotificationSounds === 'boolean') return this.isNotificationSounds;
-
-    const settings = getSettings();
-    if (settings === null) return true;
-    if (typeof settings.isNotificationSounds === 'undefined') return true;
-    return settings.isNotificationSounds;
-  }
-
   setter(action) {
     const actions = {
       [cons.actions.settings.TOGGLE_SYSTEM_THEME]: () => {
@@ -184,20 +159,6 @@ class Settings extends EventEmitter {
         this.hideNickAvatarEvents = !this.hideNickAvatarEvents;
         setSettings('hideNickAvatarEvents', this.hideNickAvatarEvents);
         this.emit(cons.events.settings.NICKAVATAR_EVENTS_TOGGLED, this.hideNickAvatarEvents);
-      },
-      [cons.actions.settings.TOGGLE_NOTIFICATIONS]: async () => {
-        if (window.Notification?.permission !== 'granted') {
-          this._showNotifications = false;
-        } else {
-          this._showNotifications = !this._showNotifications;
-        }
-        setSettings('showNotifications', this._showNotifications);
-        this.emit(cons.events.settings.NOTIFICATIONS_TOGGLED, this._showNotifications);
-      },
-      [cons.actions.settings.TOGGLE_NOTIFICATION_SOUNDS]: () => {
-        this.isNotificationSounds = !this.isNotificationSounds;
-        setSettings('isNotificationSounds', this.isNotificationSounds);
-        this.emit(cons.events.settings.NOTIFICATION_SOUNDS_TOGGLED, this.isNotificationSounds);
       },
     };
 

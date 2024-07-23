@@ -185,8 +185,11 @@ export const useBindRoomToUnreadAtom = (
   useSyncState(
     mx,
     useCallback(
-      (state) => {
-        if (state === SyncState.Prepared) {
+      (state, prevState) => {
+        if (
+          (state === SyncState.Prepared && prevState === null) ||
+          (state === SyncState.Syncing && prevState !== SyncState.Syncing)
+        ) {
           setUnreadAtom({
             type: 'RESET',
             unreadInfos: getUnreadInfos(mx),
