@@ -144,7 +144,6 @@ function AppearanceSection() {
               style={{ width: toRem(150) }}
               variant={pageZoom !== currentZoom ? 'Primary' : 'Background'}
               size="400"
-              inputSize={100}
               type="number"
               min="75"
               max="150"
