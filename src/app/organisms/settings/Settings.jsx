@@ -73,7 +73,10 @@ function AppearanceSection() {
 
   const [currentZoom, setCurrentZoom] = useState(pageZoom);
 
-  const handleZoomChange = (evt) => setCurrentZoom(evt.target.value ?? 100);
+  const handleZoomChange = (evt) => {
+    const newZoom = parseInt(evt.target.value, 10);
+    setCurrentZoom(newZoom ?? 100);
+  };
 
   const handleZoomEnter = (evt) => {
     if (isKeyHotkey('escape', evt)) {
