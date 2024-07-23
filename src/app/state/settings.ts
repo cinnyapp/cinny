@@ -10,6 +10,7 @@ export interface Settings {
   isMarkdown: boolean;
   editorToolbar: boolean;
   twitterEmoji: boolean;
+  pageZoom: number;
 
   isPeopleDrawer: boolean;
   memberSortFilterIndex: number;
@@ -33,6 +34,7 @@ const defaultSettings: Settings = {
   isMarkdown: true,
   editorToolbar: false,
   twitterEmoji: false,
+  pageZoom: 100,
 
   isPeopleDrawer: true,
   memberSortFilterIndex: 0,
