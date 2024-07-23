@@ -26,6 +26,30 @@ import { getMxIdLocalPart } from '../../utils/matrix';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 
+function SystemEmojiFeature() {
+  const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+
+  if (twitterEmoji) {
+    document.documentElement.style.setProperty('--font-emoji', 'Twemoji');
+  } else {
+    document.documentElement.style.setProperty('--font-emoji', 'Twemoji_DISABLED');
+  }
+
+  return null;
+}
+
+function PageZoomFeature() {
+  const [pageZoom] = useSetting(settingsAtom, 'pageZoom');
+
+  if (pageZoom === 100) {
+    document.documentElement.style.removeProperty('font-size');
+  } else {
+    document.documentElement.style.setProperty('font-size', `calc(1em * ${pageZoom / 100})`);
+  }
+
+  return null;
+}
+
 function FaviconUpdater() {
   const roomToUnread = useAtomValue(roomToUnreadAtom);
 
@@ -233,6 +257,8 @@ type ClientNonUIFeaturesProps = {
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
   return (
     <>
+      <SystemEmojiFeature />
+      <PageZoomFeature />
       <FaviconUpdater />
       <InviteNotifications />
       <MessageNotifications />

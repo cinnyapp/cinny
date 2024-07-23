@@ -32,24 +32,10 @@ import { SpecVersions } from './SpecVersions';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
 import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useSyncState } from '../../hooks/useSyncState';
 import { stopPropagation } from '../../utils/keyboard';
 import { SyncStatus } from './SyncStatus';
-
-function SystemEmojiFeature() {
-  const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
-
-  if (twitterEmoji) {
-    document.documentElement.style.setProperty('--font-emoji', 'Twemoji');
-  } else {
-    document.documentElement.style.setProperty('--font-emoji', 'Twemoji_DISABLED');
-  }
-
-  return null;
-}
 
 function ClientRootLoading() {
   return (
@@ -198,7 +184,7 @@ export function ClientRoot({ children }: ClientRootProps) {
                 {startState.status === AsyncStatus.Error && (
                   <Text>{`Failed to load. ${startState.error.message}`}</Text>
                 )}
-                <Button variant="Critical" onClick={loadMatrix}>
+                <Button variant="Critical" onClick={mx ? () => startMatrix(mx) : loadMatrix}>
                   <Text as="span" size="B400">
                     Retry
                   </Text>
@@ -220,7 +206,6 @@ export function ClientRoot({ children }: ClientRootProps) {
                   <Windows />
                   <Dialogs />
                   <ReusableContextMenu />
-                  <SystemEmojiFeature />
                 </MediaConfigProvider>
               </CapabilitiesProvider>
             )}
