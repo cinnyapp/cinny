@@ -71,11 +71,10 @@ function AppearanceSection() {
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const spacings = ['0', '100', '200', '300', '400', '500'];
 
-  const [currentZoom, setCurrentZoom] = useState(pageZoom);
+  const [currentZoom, setCurrentZoom] = useState(`${pageZoom}`);
 
   const handleZoomChange = (evt) => {
-    const newZoom = parseInt(evt.target.value, 10);
-    setCurrentZoom(newZoom ?? 100);
+    setCurrentZoom(evt.target.value);
   };
 
   const handleZoomEnter = (evt) => {
@@ -85,9 +84,7 @@ function AppearanceSection() {
     }
     if (isKeyHotkey('enter', evt)) {
       const newZoom = parseInt(evt.target.value, 10);
-      if (typeof newZoom !== 'number' && Number.isNaN(newZoom)) {
-        return;
-      }
+      if (Number.isNaN(newZoom)) return;
       const safeZoom = Math.max(Math.min(newZoom, 150), 75);
       setPageZoom(safeZoom);
       setCurrentZoom(safeZoom);
@@ -142,7 +139,7 @@ function AppearanceSection() {
           options={
             <Input
               style={{ width: toRem(150) }}
-              variant={pageZoom !== currentZoom ? 'Primary' : 'Background'}
+              variant={pageZoom === parseInt(currentZoom, 10) ? 'Background' : 'Primary'}
               size="400"
               type="number"
               min="75"
@@ -151,7 +148,7 @@ function AppearanceSection() {
               onChange={handleZoomChange}
               onKeyDown={handleZoomEnter}
               outlined
-              after={<Text variant="b2">%{pageZoom !== currentZoom ? ' (Enter)' : ''}</Text>}
+              after={<Text variant="b2">%</Text>}
             />
           }
           content={
