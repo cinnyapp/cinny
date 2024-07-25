@@ -24,7 +24,7 @@ export function WelcomePage() {
                   target="_blank"
                   rel="noreferrer noopener"
                 >
-                  v4.0.0
+                  v4.0.3
                 </a>
               </span>
             }
