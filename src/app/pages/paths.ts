@@ -35,6 +35,11 @@ export type _SearchPathSearchParams = {
   senders?: string;
 };
 export const _SEARCH_PATH = 'search/';
+
+export type _RoomSearchParams = {
+  /* comma separated string of servers */
+  viaServers?: string;
+};
 export const _ROOM_PATH = ':roomIdOrAlias/:eventId?/';
 
 export const HOME_PATH = '/home/';

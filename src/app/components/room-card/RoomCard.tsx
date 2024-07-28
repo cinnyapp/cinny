@@ -138,6 +138,7 @@ type RoomCardProps = {
   topic?: string;
   memberCount?: number;
   roomType?: string;
+  viaServers?: string[];
   onView?: (roomId: string) => void;
   renderTopicViewer: (name: string, topic: string, requestClose: () => void) => ReactNode;
 };
@@ -152,6 +153,7 @@ export const RoomCard = as<'div', RoomCardProps>(
       topic,
       memberCount,
       roomType,
+      viaServers,
       onView,
       renderTopicViewer,
       ...props
@@ -194,7 +196,7 @@ export const RoomCard = as<'div', RoomCardProps>(
     );
 
     const [joinState, join] = useAsyncCallback<Room, MatrixError, []>(
-      useCallback(() => mx.joinRoom(roomIdOrAlias), [mx, roomIdOrAlias])
+      useCallback(() => mx.joinRoom(roomIdOrAlias, { viaServers }), [mx, roomIdOrAlias, viaServers])
     );
     const joining =
       joinState.status === AsyncStatus.Loading || joinState.status === AsyncStatus.Success;

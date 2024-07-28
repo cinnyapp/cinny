@@ -9,8 +9,12 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 
-type JoinBeforeNavigateProps = { roomIdOrAlias: string };
-export function JoinBeforeNavigate({ roomIdOrAlias }: JoinBeforeNavigateProps) {
+type JoinBeforeNavigateProps = { roomIdOrAlias: string; eventId?: string; viaServers?: string[] };
+export function JoinBeforeNavigate({
+  roomIdOrAlias,
+  eventId,
+  viaServers,
+}: JoinBeforeNavigateProps) {
   const mx = useMatrixClient();
   const allRooms = useAtomValue(allRoomsAtom);
   const { navigateRoom, navigateSpace } = useRoomNavigate();
@@ -20,7 +24,7 @@ export function JoinBeforeNavigate({ roomIdOrAlias }: JoinBeforeNavigateProps) {
       navigateSpace(roomId);
       return;
     }
-    navigateRoom(roomId);
+    navigateRoom(roomId, eventId);
   };
 
   return (
@@ -46,6 +50,7 @@ export function JoinBeforeNavigate({ roomIdOrAlias }: JoinBeforeNavigateProps) {
                   topic={summary?.topic}
                   memberCount={summary?.num_joined_members}
                   roomType={summary?.room_type}
+                  viaServers={viaServers}
                   renderTopicViewer={(name, topic, requestClose) => (
                     <RoomTopicViewer name={name} topic={topic} requestClose={requestClose} />
                   )}

@@ -9,6 +9,7 @@ import { useSpace } from '../../../hooks/useSpace';
 import { getAllParents } from '../../../utils/room';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
+import { useSearchParamsViaServers } from '../../../hooks/router/useSearchParamsViaServers';
 
 export function SpaceRouteRoomProvider({ children }: { children: ReactNode }) {
   const mx = useMatrixClient();
@@ -16,7 +17,8 @@ export function SpaceRouteRoomProvider({ children }: { children: ReactNode }) {
   const roomToParents = useAtomValue(roomToParentsAtom);
   const allRooms = useAtomValue(allRoomsAtom);
 
-  const { roomIdOrAlias } = useParams();
+  const { roomIdOrAlias, eventId } = useParams();
+  const viaServers = useSearchParamsViaServers();
   const roomId = useSelectedRoom();
   const room = mx.getRoom(roomId);
 
@@ -26,7 +28,13 @@ export function SpaceRouteRoomProvider({ children }: { children: ReactNode }) {
     !allRooms.includes(room.roomId) ||
     !getAllParents(roomToParents, room.roomId).has(space.roomId)
   ) {
-    return <JoinBeforeNavigate roomIdOrAlias={roomIdOrAlias!} />;
+    return (
+      <JoinBeforeNavigate
+        roomIdOrAlias={roomIdOrAlias!}
+        eventId={eventId}
+        viaServers={viaServers}
+      />
+    );
   }
 
   return (
