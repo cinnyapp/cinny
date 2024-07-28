@@ -38,8 +38,38 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_DEV }}
         timeout-minutes: 1
 
+  check-interval:
+    name: Check time interval for publishing Docker image
+    runs-on: ubuntu-latest
+    outputs: 
+      pass: ${{ steps.check.outputs.pass }}
+    steps:
+      - name: Get image timestamp
+        run: |
+          last_publish_time='@0'
+          response=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKER_PASSWORD }}" \
+            -w %{http_code} -o manifest.json \
+            "https://hub.docker.com/v2/repositories/cinnyapp/cinny/tags/dev/")
+          if [ "$response" -eq 200 ]; then
+            last_publish_time=$(jq -r '.tag_last_pushed' manifest.json)
+          fi
+          echo "LAST_PUBLISH_TIME=$last_publish_time" >> $GITHUB_ENV
+      - name: Calculate time difference
+        id: check
+        run: |
+          current_time=$(date +%s)
+          last_publish_time=$(date -d "$LAST_PUBLISH_TIME" +%s 2>/dev/null || echo 0)
+          interval=$((current_time - last_publish_time))
+          if [ "$interval" -gt $((7 * 24 * 60 * 60)) ]; then
+          echo "pass=true" >> $GITHUB_OUTPUT
+          else
+          echo "pass=false" >> $GITHUB_OUTPUT
+          fi
+
   publish-image:
     name: Push Docker image to Docker Hub, ghcr
+    needs: check-interval
+    if: ${{ needs.check-interval.outputs.pass == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -70,6 +100,7 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/cinny
             ghcr.io/${{ github.repository }}
           tags: |
+            type=ref,event=branch
             type=sha,prefix={{branch}}-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.0.0
