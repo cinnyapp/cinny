@@ -28,25 +28,24 @@ import { useRoomUnread } from '../../state/hooks/unread';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { usePowerLevels, usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { copyToClipboard } from '../../utils/dom';
-import { getOriginBaseUrl, withOriginBaseUrl } from '../../pages/pathUtils';
 import { markAsRead } from '../../../client/action/notifications';
 import { openInviteUser, toggleRoomSettings } from '../../../client/action/navigation';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
-import { useClientConfig } from '../../hooks/useClientConfig';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
 import { TypingIndicator } from '../../components/typing-indicator';
 import { stopPropagation } from '../../utils/keyboard';
+import { getMatrixToRoom } from '../../plugins/matrix-to';
+import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../utils/matrix';
+import { getViaServers } from '../../plugins/via-servers';
 
 type RoomNavItemMenuProps = {
   room: Room;
-  linkPath: string;
   requestClose: () => void;
 };
 const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
-  ({ room, linkPath, requestClose }, ref) => {
+  ({ room, requestClose }, ref) => {
     const mx = useMatrixClient();
-    const { hashRouter } = useClientConfig();
     const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
     const powerLevels = usePowerLevels(room);
     const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
@@ -63,7 +62,9 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     };
 
     const handleCopyLink = () => {
-      copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), linkPath));
+      const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
+      const viaServers = isRoomAlias(roomIdOrAlias) ? undefined : getViaServers(room);
+      copyToClipboard(getMatrixToRoom(roomIdOrAlias, viaServers));
       requestClose();
     };
 
@@ -273,11 +274,7 @@ export function RoomNavItem({
                   escapeDeactivates: stopPropagation,
                 }}
               >
-                <RoomNavItemMenu
-                  room={room}
-                  linkPath={linkPath}
-                  requestClose={() => setMenuAnchor(undefined)}
-                />
+                <RoomNavItemMenu room={room} requestClose={() => setMenuAnchor(undefined)} />
               </FocusTrap>
             }
           >

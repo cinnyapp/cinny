@@ -34,15 +34,8 @@ import {
   NavItemContent,
   NavLink,
 } from '../../../components/nav';
-import {
-  getOriginBaseUrl,
-  getSpaceLobbyPath,
-  getSpacePath,
-  getSpaceRoomPath,
-  getSpaceSearchPath,
-  withOriginBaseUrl,
-} from '../../pathUtils';
-import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
+import { getSpaceLobbyPath, getSpaceRoomPath, getSpaceSearchPath } from '../../pathUtils';
+import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import {
   useSpaceLobbySelected,
@@ -69,11 +62,12 @@ import { useRoomsUnread } from '../../../state/hooks/unread';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { LeaveSpacePrompt } from '../../../components/leave-space-prompt';
 import { copyToClipboard } from '../../../utils/dom';
-import { useClientConfig } from '../../../hooks/useClientConfig';
 import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
 import { useStateEvent } from '../../../hooks/useStateEvent';
 import { StateEvent } from '../../../../types/matrix/room';
 import { stopPropagation } from '../../../utils/keyboard';
+import { getMatrixToRoom } from '../../../plugins/matrix-to';
+import { getViaServers } from '../../../plugins/via-servers';
 
 type SpaceMenuProps = {
   room: Room;
@@ -81,7 +75,6 @@ type SpaceMenuProps = {
 };
 const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClose }, ref) => {
   const mx = useMatrixClient();
-  const { hashRouter } = useClientConfig();
   const roomToParents = useAtomValue(roomToParentsAtom);
   const powerLevels = usePowerLevels(room);
   const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
@@ -100,8 +93,9 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClo
   };
 
   const handleCopyLink = () => {
-    const spacePath = getSpacePath(getCanonicalAliasOrRoomId(mx, room.roomId));
-    copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), spacePath));
+    const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
+    const viaServers = isRoomAlias(roomIdOrAlias) ? undefined : getViaServers(room);
+    copyToClipboard(getMatrixToRoom(roomIdOrAlias, viaServers));
     requestClose();
   };
 

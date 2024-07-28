@@ -95,65 +95,9 @@ export function joinRuleToIconSrc(joinRule, isSpace) {
   }[joinRule]?.() || null);
 }
 
-// NOTE: it gives userId with minimum power level 50;
-function getHighestPowerUserId(room) {
-  const userIdToPower = room.currentState.getStateEvents('m.room.power_levels', '')?.getContent().users;
-  let powerUserId = null;
-  if (!userIdToPower) return powerUserId;
-
-  Object.keys(userIdToPower).forEach((userId) => {
-    if (userIdToPower[userId] < 50) return;
-    if (powerUserId === null) {
-      powerUserId = userId;
-      return;
-    }
-    if (userIdToPower[userId] > userIdToPower[powerUserId]) {
-      powerUserId = userId;
-    }
-  });
-  return powerUserId;
-}
-
 export function getIdServer(userId) {
   const idParts = userId.split(':');
   return idParts[1];
-}
-
-export function getServerToPopulation(room) {
-  const members = room.getMembers();
-  const serverToPop = {};
-
-  members?.forEach((member) => {
-    const { userId } = member;
-    const server = getIdServer(userId);
-    const serverPop = serverToPop[server];
-    if (serverPop === undefined) {
-      serverToPop[server] = 1;
-      return;
-    }
-    serverToPop[server] = serverPop + 1;
-  });
-
-  return serverToPop;
-}
-
-export function genRoomVia(room) {
-  const via = [];
-  const userId = getHighestPowerUserId(room);
-  if (userId) {
-    const server = getIdServer(userId);
-    if (server) via.push(server);
-  }
-  const serverToPop = getServerToPopulation(room);
-  const sortedServers = Object.keys(serverToPop).sort(
-    (svrA, svrB) => serverToPop[svrB] - serverToPop[svrA],
-  );
-  const mostPop3 = sortedServers.slice(0, 3);
-  if (via.length === 0) return mostPop3;
-  if (mostPop3.includes(via[0])) {
-    mostPop3.splice(mostPop3.indexOf(via[0]), 1);
-  }
-  return via.concat(mostPop3.slice(0, 2));
 }
 
 export function isCrossVerified(mx, deviceId) {

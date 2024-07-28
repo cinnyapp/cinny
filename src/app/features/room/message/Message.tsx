@@ -51,7 +51,7 @@ import {
   getMemberAvatarMxc,
   getMemberDisplayName,
 } from '../../../utils/room';
-import { getCanonicalAliasOrRoomId, getMxIdLocalPart } from '../../../utils/matrix';
+import { getCanonicalAliasOrRoomId, getMxIdLocalPart, isRoomAlias } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
@@ -63,18 +63,10 @@ import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '../../../components/user-avatar';
-import { useSpaceOptionally } from '../../../hooks/useSpace';
-import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
-import {
-  getDirectRoomPath,
-  getHomeRoomPath,
-  getOriginBaseUrl,
-  getSpaceRoomPath,
-  withOriginBaseUrl,
-} from '../../../pages/pathUtils';
 import { copyToClipboard } from '../../../utils/dom';
-import { useClientConfig } from '../../../hooks/useClientConfig';
 import { stopPropagation } from '../../../utils/keyboard';
+import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
+import { getViaServers } from '../../../plugins/via-servers';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -321,23 +313,13 @@ export const MessageCopyLinkItem = as<
   }
 >(({ room, mEvent, onClose, ...props }, ref) => {
   const mx = useMatrixClient();
-  const { hashRouter } = useClientConfig();
-  const space = useSpaceOptionally();
-  const directSelected = useDirectSelected();
 
   const handleCopy = () => {
     const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
-    let eventPath = getHomeRoomPath(roomIdOrAlias, mEvent.getId());
-    if (space) {
-      eventPath = getSpaceRoomPath(
-        getCanonicalAliasOrRoomId(mx, space.roomId),
-        roomIdOrAlias,
-        mEvent.getId()
-      );
-    } else if (directSelected) {
-      eventPath = getDirectRoomPath(roomIdOrAlias, mEvent.getId());
-    }
-    copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), eventPath));
+    const eventId = mEvent.getId();
+    const viaServers = isRoomAlias(roomIdOrAlias) ? undefined : getViaServers(room);
+    if (!eventId) return;
+    copyToClipboard(getMatrixToRoomEvent(roomIdOrAlias, eventId, viaServers));
     onClose?.();
   };
 
