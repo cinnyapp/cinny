@@ -33,7 +33,13 @@ export const isRoomId = (id: string): boolean => validMxId(id) && id.startsWith(
 export const isRoomAlias = (id: string): boolean => validMxId(id) && id.startsWith('#');
 
 export const getCanonicalAliasRoomId = (mx: MatrixClient, alias: string): string | undefined =>
-  mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias)?.roomId;
+  mx
+    .getRooms()
+    ?.find(
+      (room) =>
+        room.getCanonicalAlias() === alias &&
+        getStateEvent(room, StateEvent.RoomTombstone) === undefined
+    )?.roomId;
 
 export const getCanonicalAliasOrRoomId = (mx: MatrixClient, roomId: string): string => {
   const room = mx.getRoom(roomId);
