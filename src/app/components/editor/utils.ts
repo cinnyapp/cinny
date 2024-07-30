@@ -158,10 +158,14 @@ export const resetEditorHistory = (editor: Editor) => {
 export const createMentionElement = (
   id: string,
   name: string,
-  highlight: boolean
+  highlight: boolean,
+  eventId?: string,
+  viaServers?: string[]
 ): MentionElement => ({
   type: BlockType.Mention,
   id,
+  eventId,
+  viaServers,
   highlight,
   name,
   children: [{ text: '' }],

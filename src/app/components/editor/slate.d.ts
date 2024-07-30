@@ -29,6 +29,8 @@ export type LinkElement = {
 export type MentionElement = {
   type: BlockType.Mention;
   id: string;
+  eventId?: string;
+  viaServers?: string[];
   highlight: boolean;
   name: string;
   children: Text[];
