@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { NavigateOptions, useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { getCanonicalAliasOrRoomId } from '../utils/matrix';
 import {
@@ -30,7 +30,7 @@ export const useRoomNavigate = () => {
   );
 
   const navigateRoom = useCallback(
-    (roomId: string, eventId?: string) => {
+    (roomId: string, eventId?: string, opts?: NavigateOptions) => {
       const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, roomId);
 
       const orphanParents = getOrphanParents(roomToParents, roomId);
@@ -41,16 +41,16 @@ export const useRoomNavigate = () => {
             ? spaceSelectedId
             : orphanParents[0]
         );
-        navigate(getSpaceRoomPath(pSpaceIdOrAlias, roomIdOrAlias, eventId));
+        navigate(getSpaceRoomPath(pSpaceIdOrAlias, roomIdOrAlias, eventId), opts);
         return;
       }
 
       if (mDirects.has(roomId)) {
-        navigate(getDirectRoomPath(roomIdOrAlias, eventId));
+        navigate(getDirectRoomPath(roomIdOrAlias, eventId), opts);
         return;
       }
 
-      navigate(getHomeRoomPath(roomIdOrAlias, eventId));
+      navigate(getHomeRoomPath(roomIdOrAlias, eventId), opts);
     },
     [mx, navigate, spaceSelectedId, roomToParents, mDirects]
   );
