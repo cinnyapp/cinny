@@ -69,7 +69,7 @@ export const renderMatrixMention = (
         href={href}
         {...customProps}
         className={css.Mention({ highlight: mx.getUserId() === userId })}
-        data-mentionId={userId}
+        data-mention-id={userId}
       >
         {`@${
           (currentRoom && getMemberDisplayName(currentRoom, userId)) ?? getMxIdLocalPart(userId)
@@ -92,8 +92,8 @@ export const renderMatrixMention = (
         className={css.Mention({
           highlight: currentRoomId === (mentionRoom?.roomId ?? roomIdOrAlias),
         })}
-        data-mentionId={mentionRoom?.roomId ?? roomIdOrAlias}
-        data-mentionVia={viaServers?.join(',')}
+        data-mention-id={mentionRoom?.roomId ?? roomIdOrAlias}
+        data-mention-via={viaServers?.join(',')}
       >
         {mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias}
       </a>
@@ -114,9 +114,9 @@ export const renderMatrixMention = (
         className={css.Mention({
           highlight: currentRoomId === (mentionRoom?.roomId ?? roomIdOrAlias),
         })}
-        data-mentionId={mentionRoom?.roomId ?? roomIdOrAlias}
-        data-mentionEventId={eventId}
-        data-mentionVia={viaServers?.join(',')}
+        data-mention-id={mentionRoom?.roomId ?? roomIdOrAlias}
+        data-mention-event-id={eventId}
+        data-mention-via={viaServers?.join(',')}
       >
         Message: {mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias}
       </a>
