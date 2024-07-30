@@ -24,9 +24,10 @@ import {
 } from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { HTMLReactParserOptions } from 'html-react-parser';
+import { Opts as LinkifyOpts } from 'linkifyjs';
 import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdLocalPart, isRoomId, isUserId } from '../../../utils/matrix';
+import { getMxIdLocalPart } from '../../../utils/matrix';
 import { InboxNotificationsPathSearchParams } from '../../paths';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { SequenceCard } from '../../../components/sequence-card';
@@ -52,8 +53,13 @@ import {
   Username,
 } from '../../../components/message';
 import colorMXID from '../../../../util/colorMXID';
-import { getReactCustomHtmlParser } from '../../../plugins/react-custom-html-parser';
-import { openJoinAlias, openProfileViewer } from '../../../../client/action/navigation';
+import {
+  factoryRenderLinkifyWithMention,
+  getReactCustomHtmlParser,
+  LINKIFY_OPTS,
+  makeMentionCustomProps,
+  renderMatrixMention,
+} from '../../../plugins/react-custom-html-parser';
 import { RenderMessageContent } from '../../../components/RenderMessageContent';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
@@ -70,6 +76,8 @@ import { ContainerColor } from '../../../styles/ContainerColor.css';
 import { VirtualTile } from '../../../components/virtualizer';
 import { UserAvatar } from '../../../components/user-avatar';
 import { EncryptedContent } from '../../../features/room/message';
+import { useMentionClickHandler } from '../../../hooks/useMentionClickHandler';
+import { useSpoilerClickHandler } from '../../../hooks/useSpoilerClickHandler';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -181,36 +189,26 @@ function RoomNotificationsGroupComp({
 }: RoomNotificationsGroupProps) {
   const mx = useMatrixClient();
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
-  const { navigateRoom, navigateSpace } = useRoomNavigate();
+  const mentionClickHandler = useMentionClickHandler(room.roomId);
+  const spoilerClickHandler = useSpoilerClickHandler();
 
+  const linkifyOpts = useMemo<LinkifyOpts>(
+    () => ({
+      ...LINKIFY_OPTS,
+      render: factoryRenderLinkifyWithMention((href) =>
+        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+      ),
+    }),
+    [mx, room, mentionClickHandler]
+  );
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
-      getReactCustomHtmlParser(mx, room, {
-        handleSpoilerClick: (evt) => {
-          const target = evt.currentTarget;
-          if (target.getAttribute('aria-pressed') === 'true') {
-            evt.stopPropagation();
-            target.setAttribute('aria-pressed', 'false');
-            target.style.cursor = 'initial';
-          }
-        },
-        handleMentionClick: (evt) => {
-          const target = evt.currentTarget;
-          const mentionId = target.getAttribute('data-mention-id');
-          if (typeof mentionId !== 'string') return;
-          if (isUserId(mentionId)) {
-            openProfileViewer(mentionId, room.roomId);
-            return;
-          }
-          if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
-            if (mx.getRoom(mentionId)?.isSpaceRoom()) navigateSpace(mentionId);
-            else navigateRoom(mentionId);
-            return;
-          }
-          openJoinAlias(mentionId);
-        },
+      getReactCustomHtmlParser(mx, room.roomId, {
+        linkifyOpts,
+        handleSpoilerClick: spoilerClickHandler,
+        handleMentionClick: mentionClickHandler,
       }),
-    [mx, room, navigateRoom, navigateSpace]
+    [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler]
   );
 
   const renderMatrixEvent = useMatrixEventRenderer<[IRoomEvent, string, GetContentCallback]>(
@@ -229,6 +227,7 @@ function RoomNotificationsGroupComp({
             mediaAutoLoad={mediaAutoLoad}
             urlPreview={urlPreview}
             htmlReactParserOptions={htmlReactParserOptions}
+            linkifyOpts={linkifyOpts}
             outlineAttachment
           />
         );
@@ -287,6 +286,7 @@ function RoomNotificationsGroupComp({
                     mediaAutoLoad={mediaAutoLoad}
                     urlPreview={urlPreview}
                     htmlReactParserOptions={htmlReactParserOptions}
+                    linkifyOpts={linkifyOpts}
                   />
                 );
               }

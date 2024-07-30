@@ -24,12 +24,14 @@ export const preventScrollWithArrowKey: KeyboardEventHandler = (evt) => {
   }
 };
 
-export const onEnterOrSpace = (callback: () => void) => (evt: KeyboardEventLike) => {
-  if (isKeyHotkey('enter', evt) || isKeyHotkey('space', evt)) {
-    evt.preventDefault();
-    callback();
-  }
-};
+export const onEnterOrSpace =
+  <T>(callback: (evt: T) => void) =>
+  (evt: KeyboardEventLike) => {
+    if (isKeyHotkey('enter', evt) || isKeyHotkey('space', evt)) {
+      evt.preventDefault();
+      callback(evt as T);
+    }
+  };
 
 export const stopPropagation = (evt: KeyboardEvent): boolean => {
   evt.stopPropagation();

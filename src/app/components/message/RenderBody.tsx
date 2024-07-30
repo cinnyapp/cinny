@@ -1,13 +1,10 @@
 import React from 'react';
 import parse, { HTMLReactParserOptions } from 'html-react-parser';
 import Linkify from 'linkify-react';
+import { Opts } from 'linkifyjs';
 import { MessageEmptyContent } from './content';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
-import {
-  LINKIFY_OPTS,
-  highlightText,
-  scaleSystemEmoji,
-} from '../../plugins/react-custom-html-parser';
+import { highlightText, scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
 
 type RenderBodyProps = {
   body: string;
@@ -15,12 +12,14 @@ type RenderBodyProps = {
 
   highlightRegex?: RegExp;
   htmlReactParserOptions: HTMLReactParserOptions;
+  linkifyOpts: Opts;
 };
 export function RenderBody({
   body,
   customBody,
   highlightRegex,
   htmlReactParserOptions,
+  linkifyOpts,
 }: RenderBodyProps) {
   if (body === '') <MessageEmptyContent />;
   if (customBody) {
@@ -28,7 +27,7 @@ export function RenderBody({
     return parse(sanitizeCustomHtml(customBody), htmlReactParserOptions);
   }
   return (
-    <Linkify options={LINKIFY_OPTS}>
+    <Linkify options={linkifyOpts}>
       {highlightRegex
         ? highlightText(highlightRegex, scaleSystemEmoji(body))
         : scaleSystemEmoji(body)}

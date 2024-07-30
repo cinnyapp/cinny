@@ -1,6 +1,7 @@
 import React from 'react';
 import { MsgType } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
+import { Opts } from 'linkifyjs';
 import {
   AudioContent,
   DownloadFile,
@@ -27,6 +28,7 @@ import { Image, MediaControl, Video } from './media';
 import { ImageViewer } from './image-viewer';
 import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
+import { testMatrixTo } from '../plugins/matrix-to';
 
 type RenderMessageContentProps = {
   displayName: string;
@@ -38,6 +40,7 @@ type RenderMessageContentProps = {
   urlPreview?: boolean;
   highlightRegex?: RegExp;
   htmlReactParserOptions: HTMLReactParserOptions;
+  linkifyOpts: Opts;
   outlineAttachment?: boolean;
 };
 export function RenderMessageContent({
@@ -50,8 +53,21 @@ export function RenderMessageContent({
   urlPreview,
   highlightRegex,
   htmlReactParserOptions,
+  linkifyOpts,
   outlineAttachment,
 }: RenderMessageContentProps) {
+  const renderUrlsPreview = (urls: string[]) => {
+    const filteredUrls = urls.filter((url) => !testMatrixTo(url));
+    if (filteredUrls.length === 0) return undefined;
+    return (
+      <UrlPreviewHolder>
+        {filteredUrls.map((url) => (
+          <UrlPreviewCard key={url} url={url} ts={ts} />
+        ))}
+      </UrlPreviewHolder>
+    );
+  };
+
   const renderFile = () => (
     <MFile
       content={getContent()}
@@ -95,19 +111,10 @@ export function RenderMessageContent({
             {...props}
             highlightRegex={highlightRegex}
             htmlReactParserOptions={htmlReactParserOptions}
+            linkifyOpts={linkifyOpts}
           />
         )}
-        renderUrlsPreview={
-          urlPreview
-            ? (urls) => (
-                <UrlPreviewHolder>
-                  {urls.map((url) => (
-                    <UrlPreviewCard key={url} url={url} ts={ts} />
-                  ))}
-                </UrlPreviewHolder>
-              )
-            : undefined
-        }
+        renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
       />
     );
   }
@@ -123,19 +130,10 @@ export function RenderMessageContent({
             {...props}
             highlightRegex={highlightRegex}
             htmlReactParserOptions={htmlReactParserOptions}
+            linkifyOpts={linkifyOpts}
           />
         )}
-        renderUrlsPreview={
-          urlPreview
-            ? (urls) => (
-                <UrlPreviewHolder>
-                  {urls.map((url) => (
-                    <UrlPreviewCard key={url} url={url} ts={ts} />
-                  ))}
-                </UrlPreviewHolder>
-              )
-            : undefined
-        }
+        renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
       />
     );
   }
@@ -150,19 +148,10 @@ export function RenderMessageContent({
             {...props}
             highlightRegex={highlightRegex}
             htmlReactParserOptions={htmlReactParserOptions}
+            linkifyOpts={linkifyOpts}
           />
         )}
-        renderUrlsPreview={
-          urlPreview
-            ? (urls) => (
-                <UrlPreviewHolder>
-                  {urls.map((url) => (
-                    <UrlPreviewCard key={url} url={url} ts={ts} />
-                  ))}
-                </UrlPreviewHolder>
-              )
-            : undefined
-        }
+        renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
       />
     );
   }
