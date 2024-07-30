@@ -42,7 +42,13 @@ export const parseMatrixToUrl = (url: string): [string | undefined, string | und
 };
 
 export const getCanonicalAliasRoomId = (mx: MatrixClient, alias: string): string | undefined =>
-  mx.getRooms()?.find((room) => room.getCanonicalAlias() === alias)?.roomId;
+  mx
+    .getRooms()
+    ?.find(
+      (room) =>
+        room.getCanonicalAlias() === alias &&
+        getStateEvent(room, StateEvent.RoomTombstone) === undefined
+    )?.roomId;
 
 export const getCanonicalAliasOrRoomId = (mx: MatrixClient, roomId: string): string => {
   const room = mx.getRoom(roomId);
