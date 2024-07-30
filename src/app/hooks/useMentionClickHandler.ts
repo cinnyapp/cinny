@@ -16,7 +16,7 @@ export const useMentionClickHandler = (roomId: string): ReactEventHandler<HTMLEl
     (evt) => {
       evt.preventDefault();
       const target = evt.currentTarget;
-      const mentionId = target.getAttribute('data-mentionId');
+      const mentionId = target.getAttribute('data-mention-id');
       if (typeof mentionId !== 'string') return;
 
       if (isUserId(mentionId)) {
@@ -24,14 +24,14 @@ export const useMentionClickHandler = (roomId: string): ReactEventHandler<HTMLEl
         return;
       }
 
-      const eventId = target.getAttribute('data-mentionEventId') || undefined;
+      const eventId = target.getAttribute('data-mention-event-id') || undefined;
       if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
         if (mx.getRoom(mentionId)?.isSpaceRoom()) navigateSpace(mentionId);
         else navigateRoom(mentionId, eventId);
         return;
       }
 
-      const viaServers = target.getAttribute('data-mentionVia') || undefined;
+      const viaServers = target.getAttribute('data-mention-via') || undefined;
       const path = getHomeRoomPath(mentionId, eventId);
 
       navigate(viaServers ? withSearchParam<_RoomSearchParams>(path, { viaServers }) : path);
