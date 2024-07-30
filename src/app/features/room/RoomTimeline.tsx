@@ -45,13 +45,12 @@ import {
   toRem,
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
+import { Opts as LinkifyOpts } from 'linkifyjs';
 import {
   decryptFile,
   eventWithShortcode,
   factoryEventSentBy,
   getMxIdLocalPart,
-  isRoomId,
-  isUserId,
 } from '../../utils/matrix';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
@@ -70,7 +69,13 @@ import {
   ImageContent,
   EventContent,
 } from '../../components/message';
-import { getReactCustomHtmlParser } from '../../plugins/react-custom-html-parser';
+import {
+  factoryRenderLinkifyWithMention,
+  getReactCustomHtmlParser,
+  LINKIFY_OPTS,
+  makeMentionCustomProps,
+  renderMatrixMention,
+} from '../../plugins/react-custom-html-parser';
 import {
   canEditEvent,
   decryptAllTimelineEvent,
@@ -85,7 +90,7 @@ import {
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-import { openJoinAlias, openProfileViewer } from '../../../client/action/navigation';
+import { openProfileViewer } from '../../../client/action/navigation';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { Reactions, Message, Event, EncryptedContent } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
@@ -109,10 +114,12 @@ import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
 import { RenderMessageContent } from '../../components/RenderMessageContent';
 import { Image } from '../../components/media';
 import { ImageViewer } from '../../components/image-viewer';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
 import { useRoomUnread } from '../../state/hooks/unread';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
+import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
+import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -445,9 +452,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const canRedact = canDoAction('redact', myPowerLevel);
   const canSendReaction = canSendEvent(MessageEvent.Reaction, myPowerLevel);
   const [editId, setEditId] = useState<string>();
-  const { navigateRoom, navigateSpace } = useRoomNavigate();
   const roomToParents = useAtomValue(roomToParentsAtom);
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  const { navigateRoom } = useRoomNavigate();
+  const mentionClickHandler = useMentionClickHandler(room.roomId);
+  const spoilerClickHandler = useSpoilerClickHandler();
 
   const imagePackRooms: Room[] = useMemo(() => {
     const allParentSpaces = [room.roomId].concat(
@@ -487,34 +496,23 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   >();
   const alive = useAlive();
 
+  const linkifyOpts = useMemo<LinkifyOpts>(
+    () => ({
+      ...LINKIFY_OPTS,
+      render: factoryRenderLinkifyWithMention((href) =>
+        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+      ),
+    }),
+    [mx, room, mentionClickHandler]
+  );
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
-      getReactCustomHtmlParser(mx, room, {
-        handleSpoilerClick: (evt) => {
-          const target = evt.currentTarget;
-          if (target.getAttribute('aria-pressed') === 'true') {
-            evt.stopPropagation();
-            target.setAttribute('aria-pressed', 'false');
-            target.style.cursor = 'initial';
-          }
-        },
-        handleMentionClick: (evt) => {
-          const target = evt.currentTarget;
-          const mentionId = target.getAttribute('data-mention-id');
-          if (typeof mentionId !== 'string') return;
-          if (isUserId(mentionId)) {
-            openProfileViewer(mentionId, room.roomId);
-            return;
-          }
-          if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
-            if (mx.getRoom(mentionId)?.isSpaceRoom()) navigateSpace(mentionId);
-            else navigateRoom(mentionId);
-            return;
-          }
-          openJoinAlias(mentionId);
-        },
+      getReactCustomHtmlParser(mx, room.roomId, {
+        linkifyOpts,
+        handleSpoilerClick: spoilerClickHandler,
+        handleMentionClick: mentionClickHandler,
       }),
-    [mx, room, navigateRoom, navigateSpace]
+    [mx, room, linkifyOpts, spoilerClickHandler, mentionClickHandler]
   );
   const parseMemberEvent = useMemberEventParser();
 
@@ -597,7 +595,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         // so timeline can be updated with evt like: edits, reactions etc
         if (atBottomRef.current) {
           if (document.hasFocus() && (!unreadInfo || mEvt.getSender() === mx.getUserId())) {
-            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()));
+            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!));
           }
 
           if (document.hasFocus()) {
@@ -819,6 +817,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   }, [scrollToElement, editId]);
 
   const handleJumpToLatest = () => {
+    if (eventId) {
+      navigateRoom(room.roomId, undefined, { replace: true });
+    }
     setTimeline(getInitialTimeline(room));
     scrollToBottomRef.current.count += 1;
     scrollToBottomRef.current.smooth = false;
@@ -1036,6 +1037,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 mediaAutoLoad={mediaAutoLoad}
                 urlPreview={showUrlPreview}
                 htmlReactParserOptions={htmlReactParserOptions}
+                linkifyOpts={linkifyOpts}
                 outlineAttachment={messageLayout === 2}
               />
             )}
@@ -1132,6 +1134,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                       mediaAutoLoad={mediaAutoLoad}
                       urlPreview={showUrlPreview}
                       htmlReactParserOptions={htmlReactParserOptions}
+                      linkifyOpts={linkifyOpts}
                       outlineAttachment={messageLayout === 2}
                     />
                   );

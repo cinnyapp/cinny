@@ -17,6 +17,7 @@ import { mDirectAtom } from '../../../state/mDirectList';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { factoryRoomIdByActivity } from '../../../utils/sort';
 import { RoomAvatar, RoomIcon } from '../../room-avatar';
+import { getViaServers } from '../../../plugins/via-servers';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 
@@ -104,10 +105,14 @@ export function RoomMentionAutocomplete({
   }, [query.text, search, resetSearch]);
 
   const handleAutocomplete: MentionAutoCompleteHandler = (roomAliasOrId, name) => {
+    const mentionRoom = mx.getRoom(roomAliasOrId);
+    const viaServers = mentionRoom ? getViaServers(mentionRoom) : undefined;
     const mentionEl = createMentionElement(
       roomAliasOrId,
       name.startsWith('#') ? name : `#${name}`,
-      roomId === roomAliasOrId || mx.getRoom(roomId)?.getCanonicalAlias() === roomAliasOrId
+      roomId === roomAliasOrId || mx.getRoom(roomId)?.getCanonicalAlias() === roomAliasOrId,
+      undefined,
+      viaServers
     );
     replaceWithElement(editor, query.range, mentionEl);
     moveCursor(editor, true);

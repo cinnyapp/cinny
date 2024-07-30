@@ -3,11 +3,11 @@ import { Box, Button, Spinner, Text, color } from 'folds';
 
 import * as css from './RoomTombstone.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { genRoomVia } from '../../../util/matrixUtil';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { Membership } from '../../../types/matrix/room';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { getViaServers } from '../../plugins/via-servers';
 
 type RoomTombstoneProps = { roomId: string; body?: string; replacementRoomId: string };
 export function RoomTombstone({ roomId, body, replacementRoomId }: RoomTombstoneProps) {
@@ -17,7 +17,7 @@ export function RoomTombstone({ roomId, body, replacementRoomId }: RoomTombstone
   const [joinState, handleJoin] = useAsyncCallback(
     useCallback(() => {
       const currentRoom = mx.getRoom(roomId);
-      const via = currentRoom ? genRoomVia(currentRoom) : [];
+      const via = currentRoom ? getViaServers(currentRoom) : [];
       return mx.joinRoom(replacementRoomId, {
         viaServers: via,
       });

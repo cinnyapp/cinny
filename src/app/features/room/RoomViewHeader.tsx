@@ -20,7 +20,7 @@ import {
   PopOut,
   RectCords,
 } from 'folds';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { JoinRule, Room } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
 
@@ -35,15 +35,8 @@ import { useRoom } from '../../hooks/useRoom';
 import { useSetSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
-import {
-  getHomeSearchPath,
-  getOriginBaseUrl,
-  getSpaceSearchPath,
-  joinPathComponent,
-  withOriginBaseUrl,
-  withSearchParam,
-} from '../../pages/pathUtils';
-import { getCanonicalAliasOrRoomId } from '../../utils/matrix';
+import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '../../pages/pathUtils';
+import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../utils/matrix';
 import { _SearchPathSearchParams } from '../../pages/paths';
 import * as css from './RoomViewHeader.css';
 import { useRoomUnread } from '../../state/hooks/unread';
@@ -55,128 +48,127 @@ import { copyToClipboard } from '../../utils/dom';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
 import { mDirectAtom } from '../../state/mDirectList';
-import { useClientConfig } from '../../hooks/useClientConfig';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { stopPropagation } from '../../utils/keyboard';
+import { getMatrixToRoom } from '../../plugins/matrix-to';
+import { getViaServers } from '../../plugins/via-servers';
 
 type RoomMenuProps = {
   room: Room;
-  linkPath: string;
   requestClose: () => void;
 };
-const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(
-  ({ room, linkPath, requestClose }, ref) => {
-    const mx = useMatrixClient();
-    const { hashRouter } = useClientConfig();
-    const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
-    const powerLevels = usePowerLevelsContext();
-    const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
-    const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
+const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose }, ref) => {
+  const mx = useMatrixClient();
+  const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  const powerLevels = usePowerLevelsContext();
+  const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
+  const canInvite = canDoAction('invite', getPowerLevel(mx.getUserId() ?? ''));
 
-    const handleMarkAsRead = () => {
-      markAsRead(mx, room.roomId);
-      requestClose();
-    };
+  const handleMarkAsRead = () => {
+    markAsRead(mx, room.roomId);
+    requestClose();
+  };
 
-    const handleInvite = () => {
-      openInviteUser(room.roomId);
-      requestClose();
-    };
+  const handleInvite = () => {
+    openInviteUser(room.roomId);
+    requestClose();
+  };
 
-    const handleCopyLink = () => {
-      copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), linkPath));
-      requestClose();
-    };
+  const handleCopyLink = () => {
+    const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
+    const viaServers = isRoomAlias(roomIdOrAlias) ? undefined : getViaServers(room);
+    copyToClipboard(getMatrixToRoom(roomIdOrAlias, viaServers));
+    requestClose();
+  };
 
-    const handleRoomSettings = () => {
-      toggleRoomSettings(room.roomId);
-      requestClose();
-    };
+  const handleRoomSettings = () => {
+    toggleRoomSettings(room.roomId);
+    requestClose();
+  };
 
-    return (
-      <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
-        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-          <MenuItem
-            onClick={handleMarkAsRead}
-            size="300"
-            after={<Icon size="100" src={Icons.CheckTwice} />}
-            radii="300"
-            disabled={!unread}
-          >
-            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Mark as Read
-            </Text>
-          </MenuItem>
-        </Box>
-        <Line variant="Surface" size="300" />
-        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-          <MenuItem
-            onClick={handleInvite}
-            variant="Primary"
-            fill="None"
-            size="300"
-            after={<Icon size="100" src={Icons.UserPlus} />}
-            radii="300"
-            disabled={!canInvite}
-          >
-            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Invite
-            </Text>
-          </MenuItem>
-          <MenuItem
-            onClick={handleCopyLink}
-            size="300"
-            after={<Icon size="100" src={Icons.Link} />}
-            radii="300"
-          >
-            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Copy Link
-            </Text>
-          </MenuItem>
-          <MenuItem
-            onClick={handleRoomSettings}
-            size="300"
-            after={<Icon size="100" src={Icons.Setting} />}
-            radii="300"
-          >
-            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Room Settings
-            </Text>
-          </MenuItem>
-        </Box>
-        <Line variant="Surface" size="300" />
-        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-          <UseStateProvider initial={false}>
-            {(promptLeave, setPromptLeave) => (
-              <>
-                <MenuItem
-                  onClick={() => setPromptLeave(true)}
-                  variant="Critical"
-                  fill="None"
-                  size="300"
-                  after={<Icon size="100" src={Icons.ArrowGoLeft} />}
-                  radii="300"
-                  aria-pressed={promptLeave}
-                >
-                  <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                    Leave Room
-                  </Text>
-                </MenuItem>
-                {promptLeave && (
-                  <LeaveRoomPrompt
-                    roomId={room.roomId}
-                    onDone={requestClose}
-                    onCancel={() => setPromptLeave(false)}
-                  />
-                )}
-              </>
-            )}
-          </UseStateProvider>
-        </Box>
-      </Menu>
-    );
-  }
-);
+  return (
+    <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <MenuItem
+          onClick={handleMarkAsRead}
+          size="300"
+          after={<Icon size="100" src={Icons.CheckTwice} />}
+          radii="300"
+          disabled={!unread}
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Mark as Read
+          </Text>
+        </MenuItem>
+      </Box>
+      <Line variant="Surface" size="300" />
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <MenuItem
+          onClick={handleInvite}
+          variant="Primary"
+          fill="None"
+          size="300"
+          after={<Icon size="100" src={Icons.UserPlus} />}
+          radii="300"
+          disabled={!canInvite}
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Invite
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleCopyLink}
+          size="300"
+          after={<Icon size="100" src={Icons.Link} />}
+          radii="300"
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Copy Link
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleRoomSettings}
+          size="300"
+          after={<Icon size="100" src={Icons.Setting} />}
+          radii="300"
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Room Settings
+          </Text>
+        </MenuItem>
+      </Box>
+      <Line variant="Surface" size="300" />
+      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+        <UseStateProvider initial={false}>
+          {(promptLeave, setPromptLeave) => (
+            <>
+              <MenuItem
+                onClick={() => setPromptLeave(true)}
+                variant="Critical"
+                fill="None"
+                size="300"
+                after={<Icon size="100" src={Icons.ArrowGoLeft} />}
+                radii="300"
+                aria-pressed={promptLeave}
+              >
+                <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                  Leave Room
+                </Text>
+              </MenuItem>
+              {promptLeave && (
+                <LeaveRoomPrompt
+                  roomId={room.roomId}
+                  onDone={requestClose}
+                  onCancel={() => setPromptLeave(false)}
+                />
+              )}
+            </>
+          )}
+        </UseStateProvider>
+      </Box>
+    </Menu>
+  );
+});
 
 export function RoomViewHeader() {
   const navigate = useNavigate();
@@ -195,8 +187,6 @@ export function RoomViewHeader() {
   const avatarUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc, 96, 96, 'crop') ?? undefined : undefined;
 
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
-  const location = useLocation();
-  const currentPath = joinPathComponent(location);
 
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {
@@ -336,11 +326,7 @@ export function RoomViewHeader() {
                   escapeDeactivates: stopPropagation,
                 }}
               >
-                <RoomMenu
-                  room={room}
-                  linkPath={currentPath}
-                  requestClose={() => setMenuAnchor(undefined)}
-                />
+                <RoomMenu room={room} requestClose={() => setMenuAnchor(undefined)} />
               </FocusTrap>
             }
           />

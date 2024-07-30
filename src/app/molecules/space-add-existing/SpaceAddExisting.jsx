@@ -5,7 +5,7 @@ import './SpaceAddExisting.scss';
 
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { joinRuleToIconSrc, getIdServer, genRoomVia } from '../../../util/matrixUtil';
+import { joinRuleToIconSrc, getIdServer } from '../../../util/matrixUtil';
 import { Debounce } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
@@ -27,6 +27,7 @@ import { useDirects, useRooms, useSpaces } from '../../state/hooks/roomList';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { mDirectAtom } from '../../state/mDirectList';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { getViaServers } from '../../plugins/via-servers';
 
 function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
   const mountStore = useStore(roomId);
@@ -69,7 +70,7 @@ function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
 
     const promises = selected.map((rId) => {
       const room = mx.getRoom(rId);
-      const via = genRoomVia(room);
+      const via = getViaServers(room);
       if (via.length === 0) {
         via.push(getIdServer(rId));
       }

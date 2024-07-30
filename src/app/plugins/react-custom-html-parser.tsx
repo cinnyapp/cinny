@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/alt-text */
-import React, { ReactEventHandler, Suspense, lazy } from 'react';
+import React, { ComponentPropsWithoutRef, ReactEventHandler, Suspense, lazy } from 'react';
 import {
   Element,
   Text as DOMText,
@@ -7,18 +7,25 @@ import {
   attributesToProps,
   domToReact,
 } from 'html-react-parser';
-import { MatrixClient, Room } from 'matrix-js-sdk';
+import { MatrixClient } from 'matrix-js-sdk';
 import classNames from 'classnames';
 import { Scroll, Text } from 'folds';
-import { Opts as LinkifyOpts } from 'linkifyjs';
+import { IntermediateRepresentation, Opts as LinkifyOpts, OptFn } from 'linkifyjs';
 import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import * as css from '../styles/CustomHtml.css';
-import { getMxIdLocalPart, getCanonicalAliasRoomId } from '../utils/matrix';
+import { getMxIdLocalPart, getCanonicalAliasRoomId, isRoomAlias } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
 import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
 import { findAndReplace } from '../utils/findAndReplace';
+import {
+  parseMatrixToRoom,
+  parseMatrixToRoomEvent,
+  parseMatrixToUser,
+  testMatrixTo,
+} from './matrix-to';
+import { onEnterOrSpace } from '../utils/keyboard';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
@@ -33,6 +40,108 @@ export const LINKIFY_OPTS: LinkifyOpts = {
     url: (value) => /^(https|http|ftp|mailto|magnet)?:/.test(value),
   },
   ignoreTags: ['span'],
+};
+
+export const makeMentionCustomProps = (
+  handleMentionClick?: ReactEventHandler<HTMLElement>
+): ComponentPropsWithoutRef<'a'> => ({
+  style: { cursor: 'pointer' },
+  target: '_blank',
+  rel: 'noreferrer noopener',
+  role: 'link',
+  tabIndex: handleMentionClick ? 0 : -1,
+  onKeyDown: handleMentionClick ? onEnterOrSpace(handleMentionClick) : undefined,
+  onClick: handleMentionClick,
+});
+
+export const renderMatrixMention = (
+  mx: MatrixClient,
+  currentRoomId: string | undefined,
+  href: string,
+  customProps: ComponentPropsWithoutRef<'a'>
+) => {
+  const userId = parseMatrixToUser(href);
+  if (userId) {
+    const currentRoom = mx.getRoom(currentRoomId);
+
+    return (
+      <a
+        href={href}
+        {...customProps}
+        className={css.Mention({ highlight: mx.getUserId() === userId })}
+        data-mention-id={userId}
+      >
+        {`@${
+          (currentRoom && getMemberDisplayName(currentRoom, userId)) ?? getMxIdLocalPart(userId)
+        }`}
+      </a>
+    );
+  }
+
+  const matrixToRoom = parseMatrixToRoom(href);
+  if (matrixToRoom) {
+    const { roomIdOrAlias, viaServers } = matrixToRoom;
+    const mentionRoom = mx.getRoom(
+      isRoomAlias(roomIdOrAlias) ? getCanonicalAliasRoomId(mx, roomIdOrAlias) : roomIdOrAlias
+    );
+
+    return (
+      <a
+        href={href}
+        {...customProps}
+        className={css.Mention({
+          highlight: currentRoomId === (mentionRoom?.roomId ?? roomIdOrAlias),
+        })}
+        data-mention-id={mentionRoom?.roomId ?? roomIdOrAlias}
+        data-mention-via={viaServers?.join(',')}
+      >
+        {mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias}
+      </a>
+    );
+  }
+
+  const matrixToRoomEvent = parseMatrixToRoomEvent(href);
+  if (matrixToRoomEvent) {
+    const { roomIdOrAlias, eventId, viaServers } = matrixToRoomEvent;
+    const mentionRoom = mx.getRoom(
+      isRoomAlias(roomIdOrAlias) ? getCanonicalAliasRoomId(mx, roomIdOrAlias) : roomIdOrAlias
+    );
+
+    return (
+      <a
+        href={href}
+        {...customProps}
+        className={css.Mention({
+          highlight: currentRoomId === (mentionRoom?.roomId ?? roomIdOrAlias),
+        })}
+        data-mention-id={mentionRoom?.roomId ?? roomIdOrAlias}
+        data-mention-event-id={eventId}
+        data-mention-via={viaServers?.join(',')}
+      >
+        Message: {mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias}
+      </a>
+    );
+  }
+
+  return undefined;
+};
+
+export const factoryRenderLinkifyWithMention = (
+  mentionRender: (href: string) => JSX.Element | undefined
+): OptFn<(ir: IntermediateRepresentation) => any> => {
+  const render: OptFn<(ir: IntermediateRepresentation) => any> = ({
+    tagName,
+    attributes,
+    content,
+  }) => {
+    if (tagName === 'a' && testMatrixTo(decodeURIComponent(attributes.href))) {
+      const mention = mentionRender(decodeURIComponent(attributes.href));
+      if (mention) return mention;
+    }
+
+    return <a {...attributes}>{content}</a>;
+  };
+  return render;
 };
 
 export const scaleSystemEmoji = (text: string): (string | JSX.Element)[] =>
@@ -76,8 +185,9 @@ export const highlightText = (
 
 export const getReactCustomHtmlParser = (
   mx: MatrixClient,
-  room: Room,
+  roomId: string | undefined,
   params: {
+    linkifyOpts: LinkifyOpts;
     highlightRegex?: RegExp;
     handleSpoilerClick?: ReactEventHandler<HTMLElement>;
     handleMentionClick?: ReactEventHandler<HTMLElement>;
@@ -215,54 +325,14 @@ export const getReactCustomHtmlParser = (
           }
         }
 
-        if (name === 'a') {
-          const mention = decodeURIComponent(props.href).match(
-            /^https?:\/\/matrix.to\/#\/((@|#|!).+:[^?/]+)/
+        if (name === 'a' && testMatrixTo(decodeURIComponent(props.href))) {
+          const mention = renderMatrixMention(
+            mx,
+            roomId,
+            decodeURIComponent(props.href),
+            makeMentionCustomProps(params.handleMentionClick)
           );
-          if (mention) {
-            // convert mention link to pill
-            const mentionId = mention[1];
-            const mentionPrefix = mention[2];
-            if (mentionPrefix === '#' || mentionPrefix === '!') {
-              const mentionRoom = mx.getRoom(
-                mentionPrefix === '#' ? getCanonicalAliasRoomId(mx, mentionId) : mentionId
-              );
-
-              return (
-                <span
-                  {...props}
-                  className={css.Mention({
-                    highlight: room.roomId === (mentionRoom?.roomId ?? mentionId),
-                  })}
-                  data-mention-id={mentionRoom?.roomId ?? mentionId}
-                  data-mention-href={props.href}
-                  role="button"
-                  tabIndex={params.handleMentionClick ? 0 : -1}
-                  onKeyDown={params.handleMentionClick}
-                  onClick={params.handleMentionClick}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {domToReact(children, opts)}
-                </span>
-              );
-            }
-            if (mentionPrefix === '@')
-              return (
-                <span
-                  {...props}
-                  className={css.Mention({ highlight: mx.getUserId() === mentionId })}
-                  data-mention-id={mentionId}
-                  data-mention-href={props.href}
-                  role="button"
-                  tabIndex={params.handleMentionClick ? 0 : -1}
-                  onKeyDown={params.handleMentionClick}
-                  onClick={params.handleMentionClick}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {`@${getMemberDisplayName(room, mentionId) ?? getMxIdLocalPart(mentionId)}`}
-                </span>
-              );
-          }
+          if (mention) return mention;
         }
 
         if (name === 'span' && 'data-mx-spoiler' in props) {
@@ -316,7 +386,7 @@ export const getReactCustomHtmlParser = (
         }
 
         if (linkify) {
-          return <Linkify options={LINKIFY_OPTS}>{jsx}</Linkify>;
+          return <Linkify options={params.linkifyOpts}>{jsx}</Linkify>;
         }
         return jsx;
       }

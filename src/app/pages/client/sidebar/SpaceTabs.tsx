@@ -47,13 +47,7 @@ import {
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
-import {
-  getOriginBaseUrl,
-  getSpaceLobbyPath,
-  getSpacePath,
-  joinPathComponent,
-  withOriginBaseUrl,
-} from '../../pathUtils';
+import { getSpaceLobbyPath, getSpacePath, joinPathComponent } from '../../pathUtils';
 import {
   SidebarAvatar,
   SidebarItem,
@@ -67,7 +61,7 @@ import {
 import { RoomUnreadProvider, RoomsUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
 import { UnreadBadge } from '../../../components/unread-badge';
-import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
+import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../../utils/matrix';
 import { RoomAvatar } from '../../../components/room-avatar';
 import { nameInitials, randomStr } from '../../../utils/common';
 import {
@@ -83,7 +77,6 @@ import { AccountDataEvent } from '../../../../types/matrix/accountData';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useOpenedSidebarFolderAtom } from '../../../state/hooks/openedSidebarFolder';
-import { useClientConfig } from '../../../hooks/useClientConfig';
 import { usePowerLevels, usePowerLevelsAPI } from '../../../hooks/usePowerLevels';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
@@ -91,6 +84,8 @@ import { markAsRead } from '../../../../client/action/notifications';
 import { copyToClipboard } from '../../../utils/dom';
 import { openInviteUser, openSpaceSettings } from '../../../../client/action/navigation';
 import { stopPropagation } from '../../../utils/keyboard';
+import { getMatrixToRoom } from '../../../plugins/matrix-to';
+import { getViaServers } from '../../../plugins/via-servers';
 
 type SpaceMenuProps = {
   room: Room;
@@ -100,7 +95,6 @@ type SpaceMenuProps = {
 const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
   ({ room, requestClose, onUnpin }, ref) => {
     const mx = useMatrixClient();
-    const { hashRouter } = useClientConfig();
     const roomToParents = useAtomValue(roomToParentsAtom);
     const powerLevels = usePowerLevels(room);
     const { getPowerLevel, canDoAction } = usePowerLevelsAPI(powerLevels);
@@ -124,8 +118,9 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
     };
 
     const handleCopyLink = () => {
-      const spacePath = getSpacePath(getCanonicalAliasOrRoomId(mx, room.roomId));
-      copyToClipboard(withOriginBaseUrl(getOriginBaseUrl(hashRouter), spacePath));
+      const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
+      const viaServers = isRoomAlias(roomIdOrAlias) ? undefined : getViaServers(room);
+      copyToClipboard(getMatrixToRoom(roomIdOrAlias, viaServers));
       requestClose();
     };
 

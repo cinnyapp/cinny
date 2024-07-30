@@ -18,8 +18,13 @@ import {
   ParagraphElement,
   UnorderedListElement,
 } from './slate';
-import { parseMatrixToUrl } from '../../utils/matrix';
 import { createEmoticonElement, createMentionElement } from './utils';
+import {
+  parseMatrixToRoom,
+  parseMatrixToRoomEvent,
+  parseMatrixToUser,
+  testMatrixTo,
+} from '../../plugins/matrix-to';
 
 const markNodeToType: Record<string, MarkType> = {
   b: MarkType.Bold,
@@ -68,11 +73,33 @@ const elementToInlineNode = (node: Element): MentionElement | EmoticonElement | 
     return createEmoticonElement(src, alt || 'Unknown Emoji');
   }
   if (node.name === 'a') {
-    const { href } = node.attribs;
+    const href = decodeURIComponent(node.attribs.href);
     if (typeof href !== 'string') return undefined;
-    const [mxId] = parseMatrixToUrl(href);
-    if (mxId) {
-      return createMentionElement(mxId, parseNodeText(node) || mxId, false);
+    if (testMatrixTo(href)) {
+      const userMention = parseMatrixToUser(href);
+      if (userMention) {
+        return createMentionElement(userMention, parseNodeText(node) || userMention, false);
+      }
+      const roomMention = parseMatrixToRoom(href);
+      if (roomMention) {
+        return createMentionElement(
+          roomMention.roomIdOrAlias,
+          parseNodeText(node) || roomMention.roomIdOrAlias,
+          false,
+          undefined,
+          roomMention.viaServers
+        );
+      }
+      const eventMention = parseMatrixToRoomEvent(href);
+      if (eventMention) {
+        return createMentionElement(
+          eventMention.roomIdOrAlias,
+          parseNodeText(node) || eventMention.roomIdOrAlias,
+          false,
+          eventMention.eventId,
+          eventMention.viaServers
+        );
+      }
     }
   }
   return undefined;

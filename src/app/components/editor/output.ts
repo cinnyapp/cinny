@@ -51,10 +51,19 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
     case BlockType.UnorderedList:
       return `<ul>${children}</ul>`;
 
-    case BlockType.Mention:
-      return `<a href="https://matrix.to/#/${encodeURIComponent(node.id)}">${sanitizeText(
-        node.name
-      )}</a>`;
+    case BlockType.Mention: {
+      let fragment = node.id;
+
+      if (node.eventId) {
+        fragment += `/${node.eventId}`;
+      }
+      if (node.viaServers && node.viaServers.length > 0) {
+        fragment += `?${node.viaServers.map((server) => `via=${server}`).join('&')}`;
+      }
+
+      const matrixTo = `https://matrix.to/#/${fragment}`;
+      return `<a href="${encodeURIComponent(matrixTo)}">${sanitizeText(node.name)}</a>`;
+    }
     case BlockType.Emoticon:
       return node.key.startsWith('mxc://')
         ? `<img data-mx-emoticon src="${node.key}" alt="${sanitizeText(
