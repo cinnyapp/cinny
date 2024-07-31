@@ -19,22 +19,23 @@ A Matrix client focusing primarily on simple, elegant and secure interface. The 
 <img align="center" src="https://raw.githubusercontent.com/cinnyapp/cinny-site/main/assets/preview2-light.png" height="380">
 
 ## Getting started
-Web app is available at https://app.cinny.in and gets updated on each new release. The `dev` branch is continuously deployed at https://dev.cinny.in but keep in mind that it could have things broken.
+* Web app is available at https://app.cinny.in and gets updated on each new release. The `dev` branch is continuously deployed at https://dev.cinny.in but keep in mind that it could have things broken.
 
-You can also download our desktop app from [cinny-desktop repository](https://github.com/cinnyapp/cinny-desktop).
+* You can also download our desktop app from [cinny-desktop repository](https://github.com/cinnyapp/cinny-desktop).
 
-To host Cinny on your own, download tarball of the app from [GitHub release](https://github.com/cinnyapp/cinny/releases/latest).
+* To host Cinny on your own, download tarball of the app from [GitHub release](https://github.com/cinnyapp/cinny/releases/latest).
 You can serve the application with a webserver of your choice by simply copying `dist/` directory to the webroot. 
-To set default Homeserver on login and register page, place a customized [`config.json`](config.json) in webroot of your choice.
+To set default Homeserver on login, register and Explore Community page, place a customized [`config.json`](config.json) in webroot of your choice.
+You will also need to setup redirects to serve the assests. An example setting of redirects for netlify is done in [`netlify.toml`](netlify.toml).
 
-Alternatively you can just pull the [DockerHub image](https://hub.docker.com/r/ajbura/cinny) by:
-```
-docker pull ajbura/cinny
-```
-or [ghcr image](https://github.com/cinnyapp/cinny/pkgs/container/cinny) by:
-```
-docker pull ghcr.io/cinnyapp/cinny:latest
-```
+* Alternatively you can just pull the [DockerHub image](https://hub.docker.com/r/ajbura/cinny) by:
+    ```
+    docker pull ajbura/cinny
+    ```
+    or [ghcr image](https://github.com/cinnyapp/cinny/pkgs/container/cinny) by:
+    ```
+    docker pull ghcr.io/cinnyapp/cinny:latest
+    ```
 
 <details>
 <summary>PGP Public Key to verify tarball</summary>
