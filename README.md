@@ -27,6 +27,7 @@ A Matrix client focusing primarily on simple, elegant and secure interface. The 
 You can serve the application with a webserver of your choice by simply copying `dist/` directory to the webroot. 
 To set default Homeserver on login, register and Explore Community page, place a customized [`config.json`](config.json) in webroot of your choice.
 You will also need to setup redirects to serve the assests. An example setting of redirects for netlify is done in [`netlify.toml`](netlify.toml). You can also set `hashRouter.enabled = true` in [`config.json`](config.json) if you have trouble setting redirects.
+To deploy on subdirectory, you need to rebuild the app youself after updating the `base` path in [`build.confg.ts`](build.confg.ts). For example, if you want to deploy on `https://cinny.in/app`, then change `base: '/app'`.
 
 * Alternatively you can just pull the [DockerHub image](https://hub.docker.com/r/ajbura/cinny) by:
     ```
