@@ -31,6 +31,8 @@ import { IPowerLevels, usePowerLevelsAPI } from '../../hooks/usePowerLevels';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveSpacePrompt } from '../../components/leave-space-prompt';
 import { stopPropagation } from '../../utils/keyboard';
+import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
+import { BackRouteHandler } from '../../components/BackRouteHandler';
 
 type LobbyMenuProps = {
   roomId: string;
@@ -123,6 +125,7 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
   const space = useSpace();
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+  const screenSize = useScreenSizeContext();
 
   const name = useRoomName(space);
   const avatarMxc = useRoomAvatar(space);
@@ -133,42 +136,72 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
   };
 
   return (
-    <PageHeader className={showProfile ? undefined : css.Header}>
+    <PageHeader className={showProfile ? undefined : css.Header} balance>
       <Box grow="Yes" alignItems="Center" gap="200">
-        <Box grow="Yes" basis="No" />
-        <Box justifyContent="Center" alignItems="Center" gap="300">
-          {showProfile && (
-            <>
-              <Avatar size="300">
-                <RoomAvatar
-                  roomId={space.roomId}
-                  src={avatarUrl}
-                  alt={name}
-                  renderFallback={() => <Text size="H4">{nameInitials(name)}</Text>}
-                />
-              </Avatar>
-              <Text size="H3" truncate>
-                {name}
-              </Text>
-            </>
+        {screenSize === ScreenSize.Mobile ? (
+          <>
+            <Box shrink="No">
+              <BackRouteHandler>
+                {(onBack) => (
+                  <IconButton onClick={onBack}>
+                    <Icon src={Icons.ArrowLeft} />
+                  </IconButton>
+                )}
+              </BackRouteHandler>
+            </Box>
+            <Box grow="Yes" justifyContent="Center">
+              {showProfile && (
+                <Text size="H3" truncate>
+                  {name}
+                </Text>
+              )}
+            </Box>
+          </>
+        ) : (
+          <>
+            <Box grow="Yes" basis="No" />
+            <Box justifyContent="Center" alignItems="Center" gap="300">
+              {showProfile && (
+                <>
+                  <Avatar size="300">
+                    <RoomAvatar
+                      roomId={space.roomId}
+                      src={avatarUrl}
+                      alt={name}
+                      renderFallback={() => <Text size="H4">{nameInitials(name)}</Text>}
+                    />
+                  </Avatar>
+                  <Text size="H3" truncate>
+                    {name}
+                  </Text>
+                </>
+              )}
+            </Box>
+          </>
+        )}
+        <Box
+          shrink="No"
+          grow={screenSize === ScreenSize.Mobile ? 'No' : 'Yes'}
+          basis={screenSize === ScreenSize.Mobile ? 'Yes' : 'No'}
+          justifyContent="End"
+        >
+          {screenSize !== ScreenSize.Mobile && (
+            <TooltipProvider
+              position="Bottom"
+              offset={4}
+              tooltip={
+                <Tooltip>
+                  <Text>Members</Text>
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => (
+                <IconButton ref={triggerRef} onClick={() => setPeopleDrawer((drawer) => !drawer)}>
+                  <Icon size="400" src={Icons.User} />
+                </IconButton>
+              )}
+            </TooltipProvider>
           )}
-        </Box>
-        <Box shrink="No" grow="Yes" basis="No" justifyContent="End">
-          <TooltipProvider
-            position="Bottom"
-            offset={4}
-            tooltip={
-              <Tooltip>
-                <Text>Members</Text>
-              </Tooltip>
-            }
-          >
-            {(triggerRef) => (
-              <IconButton ref={triggerRef} onClick={() => setPeopleDrawer((drawer) => !drawer)}>
-                <Icon size="400" src={Icons.User} />
-              </IconButton>
-            )}
-          </TooltipProvider>
           <TooltipProvider
             position="Bottom"
             align="End"

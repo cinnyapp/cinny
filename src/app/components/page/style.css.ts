@@ -1,4 +1,5 @@
 import { style } from '@vanilla-extract/css';
+import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { DefaultReset, color, config, toRem } from 'folds';
 
 export const PageNav = style({
@@ -33,11 +34,21 @@ export const PageNavContent = style({
   paddingBottom: config.space.S700,
 });
 
-export const PageHeader = style({
-  paddingLeft: config.space.S400,
-  paddingRight: config.space.S200,
-  borderBottomWidth: config.borderWidth.B300,
+export const PageHeader = recipe({
+  base: {
+    paddingLeft: config.space.S400,
+    paddingRight: config.space.S200,
+    borderBottomWidth: config.borderWidth.B300,
+  },
+  variants: {
+    balance: {
+      true: {
+        paddingLeft: config.space.S200,
+      },
+    },
+  },
 });
+export type PageHeaderVariants = RecipeVariants<typeof PageHeader>;
 
 export const PageContent = style([
   DefaultReset,

@@ -52,6 +52,7 @@ import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { stopPropagation } from '../../utils/keyboard';
 import { getMatrixToRoom } from '../../plugins/matrix-to';
 import { getViaServers } from '../../plugins/via-servers';
+import { BackRouteHandler } from '../../components/BackRouteHandler';
 
 type RoomMenuProps = {
   room: Room;
@@ -203,19 +204,36 @@ export function RoomViewHeader() {
   };
 
   return (
-    <PageHeader>
+    <PageHeader balance={screenSize === ScreenSize.Mobile}>
       <Box grow="Yes" gap="300">
+        {screenSize === ScreenSize.Mobile && (
+          <BackRouteHandler>
+            {(onBack) => (
+              <Box shrink="No" alignItems="Center">
+                <IconButton onClick={onBack}>
+                  <Icon src={Icons.ArrowLeft} />
+                </IconButton>
+              </Box>
+            )}
+          </BackRouteHandler>
+        )}
         <Box grow="Yes" alignItems="Center" gap="300">
-          <Avatar size="300">
-            <RoomAvatar
-              roomId={room.roomId}
-              src={avatarUrl}
-              alt={name}
-              renderFallback={() => (
-                <RoomIcon size="200" joinRule={room.getJoinRule() ?? JoinRule.Restricted} filled />
-              )}
-            />
-          </Avatar>
+          {screenSize !== ScreenSize.Mobile && (
+            <Avatar size="300">
+              <RoomAvatar
+                roomId={room.roomId}
+                src={avatarUrl}
+                alt={name}
+                renderFallback={() => (
+                  <RoomIcon
+                    size="200"
+                    joinRule={room.getJoinRule() ?? JoinRule.Restricted}
+                    filled
+                  />
+                )}
+              />
+            </Avatar>
+          )}
           <Box direction="Column">
             <Text size={topic ? 'H5' : 'H3'} truncate>
               {name}
