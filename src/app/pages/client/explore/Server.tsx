@@ -13,6 +13,7 @@ import {
   Button,
   Chip,
   Icon,
+  IconButton,
   Icons,
   Input,
   Line,
@@ -42,6 +43,8 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { getMxIdServer } from '../../../utils/matrix';
 import { stopPropagation } from '../../../utils/keyboard';
+import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
+import { BackRouteHandler } from '../../../components/BackRouteHandler';
 
 const useServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams =>
   useMemo(
@@ -344,6 +347,7 @@ export function PublicRooms() {
   const userServer = userId && getMxIdServer(userId);
   const allRooms = useAtomValue(allRoomsAtom);
   const { navigateSpace, navigateRoom } = useRoomNavigate();
+  const screenSize = useScreenSizeContext();
 
   const [searchParams] = useSearchParams();
   const serverSearchParams = useServerSearchParams(searchParams);
@@ -466,7 +470,7 @@ export function PublicRooms() {
 
   return (
     <Page>
-      <PageHeader>
+      <PageHeader balance>
         {isSearch ? (
           <>
             <Box grow="Yes" basis="No">
@@ -482,20 +486,34 @@ export function PublicRooms() {
             </Box>
 
             <Box grow="No" justifyContent="Center" alignItems="Center" gap="200">
-              <Icon size="400" src={Icons.Search} />
+              {screenSize !== ScreenSize.Mobile && <Icon size="400" src={Icons.Search} />}
               <Text size="H3" truncate>
                 Search
               </Text>
             </Box>
-            <Box grow="Yes" />
+            <Box grow="Yes" basis="No" />
           </>
         ) : (
-          <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
-            <Icon size="400" src={Icons.Category} />
-            <Text size="H3" truncate>
-              {server}
-            </Text>
-          </Box>
+          <>
+            <Box grow="Yes" basis="No">
+              {screenSize === ScreenSize.Mobile && (
+                <BackRouteHandler>
+                  {(onBack) => (
+                    <IconButton onClick={onBack}>
+                      <Icon src={Icons.ArrowLeft} />
+                    </IconButton>
+                  )}
+                </BackRouteHandler>
+              )}
+            </Box>
+            <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
+              {screenSize !== ScreenSize.Mobile && <Icon size="400" src={Icons.Category} />}
+              <Text size="H3" truncate>
+                {server}
+              </Text>
+            </Box>
+            <Box grow="Yes" basis="No" />
+          </>
         )}
       </PageHeader>
       <Box grow="Yes">

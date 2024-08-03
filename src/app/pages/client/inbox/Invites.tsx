@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Icon,
+  IconButton,
   Icons,
   Overlay,
   OverlayBackdrop,
@@ -39,6 +40,8 @@ import { RoomTopicViewer } from '../../../components/room-topic-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { useRoomTopic } from '../../../hooks/useRoomMeta';
+import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
+import { BackRouteHandler } from '../../../components/BackRouteHandler';
 
 const COMPACT_CARD_WIDTH = 548;
 
@@ -205,6 +208,7 @@ export function Invites() {
     useCallback(() => containerRef.current, []),
     useCallback((width) => setCompact(width <= COMPACT_CARD_WIDTH), [])
   );
+  const screenSize = useScreenSizeContext();
 
   const { navigateRoom, navigateSpace } = useRoomNavigate();
 
@@ -225,12 +229,26 @@ export function Invites() {
 
   return (
     <Page>
-      <PageHeader>
-        <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
-          <Icon size="400" src={Icons.Mail} />
-          <Text size="H3" truncate>
-            Invitations
-          </Text>
+      <PageHeader balance>
+        <Box grow="Yes" gap="200">
+          <Box grow="Yes" basis="No">
+            {screenSize === ScreenSize.Mobile && (
+              <BackRouteHandler>
+                {(onBack) => (
+                  <IconButton onClick={onBack}>
+                    <Icon src={Icons.ArrowLeft} />
+                  </IconButton>
+                )}
+              </BackRouteHandler>
+            )}
+          </Box>
+          <Box alignItems="Center" gap="200">
+            {screenSize !== ScreenSize.Mobile && <Icon size="400" src={Icons.Mail} />}
+            <Text size="H3" truncate>
+              Invitations
+            </Text>
+          </Box>
+          <Box grow="Yes" basis="No" />
         </Box>
       </PageHeader>
       <Box grow="Yes">

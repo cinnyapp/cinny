@@ -78,6 +78,8 @@ import { UserAvatar } from '../../../components/user-avatar';
 import { EncryptedContent } from '../../../features/room/message';
 import { useMentionClickHandler } from '../../../hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '../../../hooks/useSpoilerClickHandler';
+import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
+import { BackRouteHandler } from '../../../components/BackRouteHandler';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -484,6 +486,7 @@ export function Notifications() {
   const mx = useMatrixClient();
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
+  const screenSize = useScreenSizeContext();
 
   const { navigateRoom } = useRoomNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -549,12 +552,26 @@ export function Notifications() {
 
   return (
     <Page>
-      <PageHeader>
-        <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
-          <Icon size="400" src={Icons.Message} />
-          <Text size="H3" truncate>
-            Notification Messages
-          </Text>
+      <PageHeader balance>
+        <Box grow="Yes" gap="200">
+          <Box grow="Yes" basis="No">
+            {screenSize === ScreenSize.Mobile && (
+              <BackRouteHandler>
+                {(onBack) => (
+                  <IconButton onClick={onBack}>
+                    <Icon src={Icons.ArrowLeft} />
+                  </IconButton>
+                )}
+              </BackRouteHandler>
+            )}
+          </Box>
+          <Box alignItems="Center" gap="200">
+            {screenSize !== ScreenSize.Mobile && <Icon size="400" src={Icons.Message} />}
+            <Text size="H3" truncate>
+              Notification Messages
+            </Text>
+          </Box>
+          <Box grow="Yes" basis="No" />
         </Box>
       </PageHeader>
 
