@@ -1,6 +1,6 @@
-import EventEmitter from "events";
-import appDispatcher from "../dispatcher";
-import cons from "./cons";
+import EventEmitter from 'events';
+import appDispatcher from '../dispatcher';
+import cons from './cons';
 
 class Navigation extends EventEmitter {
   constructor() {
@@ -20,24 +20,16 @@ class Navigation extends EventEmitter {
   navigate(action) {
     const actions = {
       [cons.actions.navigation.OPEN_SPACE_SETTINGS]: () => {
-        this.emit(
-          cons.events.navigation.SPACE_SETTINGS_OPENED,
-          action.roomId,
-          action.tabText,
-        );
+        this.emit(cons.events.navigation.SPACE_SETTINGS_OPENED, action.roomId, action.tabText);
       },
       [cons.actions.navigation.OPEN_SPACE_ADDEXISTING]: () => {
-        this.emit(
-          cons.events.navigation.SPACE_ADDEXISTING_OPENED,
-          action.roomId,
-          action.spaces,
-        );
+        this.emit(cons.events.navigation.SPACE_ADDEXISTING_OPENED, action.roomId, action.spaces);
       },
       [cons.actions.navigation.TOGGLE_ROOM_SETTINGS]: () => {
         this.emit(
           cons.events.navigation.ROOM_SETTINGS_TOGGLED,
           action.roomId,
-          action.tabText,
+          action.tabText
         );
       },
       [cons.actions.navigation.OPEN_CREATE_ROOM]: () => {
@@ -54,18 +46,10 @@ class Navigation extends EventEmitter {
         );
       },
       [cons.actions.navigation.OPEN_INVITE_USER]: () => {
-        this.emit(
-          cons.events.navigation.INVITE_USER_OPENED,
-          action.roomId,
-          action.searchTerm,
-        );
+        this.emit(cons.events.navigation.INVITE_USER_OPENED, action.roomId, action.searchTerm);
       },
       [cons.actions.navigation.OPEN_PROFILE_VIEWER]: () => {
-        this.emit(
-          cons.events.navigation.PROFILE_VIEWER_OPENED,
-          action.userId,
-          action.roomId,
-        );
+        this.emit(cons.events.navigation.PROFILE_VIEWER_OPENED, action.userId, action.roomId);
       },
       [cons.actions.navigation.OPEN_SETTINGS]: () => {
         this.emit(cons.events.navigation.SETTINGS_OPENED, action.tabText);

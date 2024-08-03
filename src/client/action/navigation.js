@@ -1,5 +1,5 @@
-import appDispatcher from "../dispatcher";
-import cons from "../state/cons";
+import appDispatcher from '../dispatcher';
+import cons from '../state/cons';
 
 export function openSpaceSettings(roomId, tabText) {
   appDispatcher.dispatch({
@@ -21,9 +21,10 @@ export function toggleRoomSettings(roomId, tabText) {
   appDispatcher.dispatch({
     type: cons.actions.navigation.TOGGLE_ROOM_SETTINGS,
     roomId,
-    tabText,
+    tabText
   });
 }
+
 
 export function openCreateRoom(isSpace = false, parentId = null) {
   appDispatcher.dispatch({
