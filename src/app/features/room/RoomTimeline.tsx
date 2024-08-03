@@ -16,6 +16,7 @@ import {
   EventTimeline,
   EventTimelineSet,
   EventTimelineSetHandlerMap,
+  IContent,
   IEncryptedFile,
   MatrixClient,
   MatrixEvent,
@@ -908,8 +909,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const replyEvt = room.findEventById(replyId);
       if (!replyEvt) return;
       const editedReply = getEditedEvent(replyId, replyEvt, room.getUnfilteredTimelineSet());
-      const { body, formatted_body: formattedBody }: Record<string, string> =
-        editedReply?.getContent()['m.new_content'] ?? replyEvt.getContent();
+      // TODO: replace with `RoomMessageEventContent` once matrix-js-sdk is updated.
+      const content: IContent = editedReply?.getContent()['m.new_content'] ?? replyEvt.getContent();
+      const { body, formatted_body: formattedBody, 'm.relates_to': relatesTo } = content;
       const senderId = replyEvt.getSender();
       if (senderId && typeof body === 'string') {
         setReplyDraft({
@@ -917,6 +919,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           eventId: replyId,
           body,
           formattedBody,
+          relatesTo,
         });
         setTimeout(() => ReactEditor.focus(editor), 100);
       }

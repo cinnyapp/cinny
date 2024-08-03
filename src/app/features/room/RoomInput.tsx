@@ -310,6 +310,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             event_id: replyDraft.eventId,
           },
         };
+        if (replyDraft.relatesTo?.rel_type === 'm.thread') {
+          content['m.relates_to'].event_id = replyDraft.relatesTo.event_id;
+          content['m.relates_to'].rel_type = 'm.thread';
+          content['m.relates_to'].is_falling_back = false;
+        }
       }
       mx.sendMessage(roomId, content);
       resetEditor(editor);
