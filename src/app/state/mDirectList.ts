@@ -1,4 +1,4 @@
-import { atom, useSetAtom, WritableAtom } from 'jotai';
+import { atom, useSetAtom } from 'jotai';
 import { ClientEvent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import { useEffect } from 'react';
 import { AccountDataEvent } from '../../types/matrix/accountData';
@@ -10,17 +10,14 @@ export type MDirectAction = {
 };
 
 const baseMDirectAtom = atom(new Set<string>());
-export const mDirectAtom = atom<Set<string>, MDirectAction>(
+export const mDirectAtom = atom<Set<string>, [MDirectAction], undefined>(
   (get) => get(baseMDirectAtom),
   (get, set, action) => {
     set(baseMDirectAtom, action.rooms);
   }
 );
 
-export const useBindMDirectAtom = (
-  mx: MatrixClient,
-  mDirect: WritableAtom<Set<string>, MDirectAction>
-) => {
+export const useBindMDirectAtom = (mx: MatrixClient, mDirect: typeof mDirectAtom) => {
   const setMDirect = useSetAtom(mDirect);
 
   useEffect(() => {
@@ -33,10 +30,12 @@ export const useBindMDirectAtom = (
     }
 
     const handleAccountData = (event: MatrixEvent) => {
-      setMDirect({
-        type: 'UPDATE',
-        rooms: getMDirects(event),
-      });
+      if (event.getType() === AccountDataEvent.Direct) {
+        setMDirect({
+          type: 'UPDATE',
+          rooms: getMDirects(event),
+        });
+      }
     };
 
     mx.on(ClientEvent.AccountData, handleAccountData);

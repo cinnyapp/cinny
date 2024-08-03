@@ -1,7 +1,6 @@
 import React from 'react';
 import './KeywordNotification.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import { openReusableContextMenu } from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
 
@@ -21,6 +20,7 @@ import { useAccountData } from '../../hooks/useAccountData';
 import {
   notifType, typeToLabel, getActionType, getTypeActions,
 } from './GlobalNotification';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const DISPLAY_NAME = '.m.rule.contains_display_name';
 const ROOM_PING = '.m.rule.roomnotif';
@@ -28,7 +28,7 @@ const USERNAME = '.m.rule.contains_user_name';
 const KEYWORD = 'keyword';
 
 function useKeywordNotif() {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const pushRules = useAccountData('m.push_rules')?.getContent();
   const override = pushRules?.global?.override ?? [];
   const content = pushRules?.global?.content ?? [];

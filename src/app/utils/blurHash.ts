@@ -1,15 +1,15 @@
 import { encode } from 'blurhash';
 
-export const MATRIX_BLUR_HASH_PROPERTY_NAME = 'xyz.amorgan.blurhash';
-
 export const encodeBlurHash = (
   img: HTMLImageElement | HTMLVideoElement,
   width?: number,
   height?: number
 ): string | undefined => {
+  const imgWidth = img instanceof HTMLVideoElement ? img.videoWidth : img.width;
+  const imgHeight = img instanceof HTMLVideoElement ? img.videoHeight : img.height;
   const canvas = document.createElement('canvas');
-  canvas.width = width || img.width;
-  canvas.height = height || img.height;
+  canvas.width = width || imgWidth;
+  canvas.height = height || imgHeight;
   const context = canvas.getContext('2d');
 
   if (!context) return undefined;

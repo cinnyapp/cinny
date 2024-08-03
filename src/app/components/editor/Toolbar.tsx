@@ -10,27 +10,32 @@ import {
   Line,
   Menu,
   PopOut,
+  RectCords,
   Scroll,
   Text,
   Tooltip,
   TooltipProvider,
   toRem,
 } from 'folds';
-import React, { ReactNode, useState } from 'react';
+import React, { MouseEventHandler, ReactNode, useState } from 'react';
 import { ReactEditor, useSlate } from 'slate-react';
 import {
+  headingLevel,
   isAnyMarkActive,
   isBlockActive,
   isMarkActive,
   removeAllMark,
   toggleBlock,
   toggleMark,
-} from './common';
+} from './utils';
 import * as css from './Editor.css';
-import { BlockType, MarkType } from './Elements';
+import { BlockType, MarkType } from './types';
 import { HeadingLevel } from './slate';
 import { isMacOS } from '../../utils/user-agent';
 import { KeySymbol } from '../../utils/key-symbol';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
+import { stopPropagation } from '../../utils/keyboard';
 
 function BtnTooltip({ text, shortCode }: { text: string; shortCode?: string }) {
   return (
@@ -115,64 +120,104 @@ export function BlockButton({ format, icon, tooltip }: BlockButtonProps) {
 
 export function HeadingBlockButton() {
   const editor = useSlate();
-  const [level, setLevel] = useState<HeadingLevel>(1);
-  const [open, setOpen] = useState(false);
+  const level = headingLevel(editor);
+  const [anchor, setAnchor] = useState<RectCords>();
   const isActive = isBlockActive(editor, BlockType.Heading);
+  const modKey = isMacOS() ? KeySymbol.Command : 'Ctrl';
 
   const handleMenuSelect = (selectedLevel: HeadingLevel) => {
-    setOpen(false);
-    setLevel(selectedLevel);
+    setAnchor(undefined);
     toggleBlock(editor, BlockType.Heading, { level: selectedLevel });
     ReactEditor.focus(editor);
   };
 
+  const handleMenuOpen: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    if (isActive) {
+      toggleBlock(editor, BlockType.Heading);
+      return;
+    }
+    setAnchor(evt.currentTarget.getBoundingClientRect());
+  };
   return (
     <PopOut
-      open={open}
+      anchor={anchor}
       offset={5}
-      align="Start"
       position="Top"
       content={
         <FocusTrap
           focusTrapOptions={{
             initialFocus: false,
-            onDeactivate: () => setOpen(false),
+            onDeactivate: () => setAnchor(undefined),
             clickOutsideDeactivates: true,
             isKeyForward: (evt: KeyboardEvent) =>
               evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
+            escapeDeactivates: stopPropagation,
           }}
         >
           <Menu style={{ padding: config.space.S100 }}>
             <Box gap="100">
-              <IconButton onClick={() => handleMenuSelect(1)} size="400" radii="300">
-                <Icon size="200" src={Icons.Heading1} />
-              </IconButton>
-              <IconButton onClick={() => handleMenuSelect(2)} size="400" radii="300">
-                <Icon size="200" src={Icons.Heading2} />
-              </IconButton>
-              <IconButton onClick={() => handleMenuSelect(3)} size="400" radii="300">
-                <Icon size="200" src={Icons.Heading3} />
-              </IconButton>
+              <TooltipProvider
+                tooltip={<BtnTooltip text="Heading 1" shortCode={`${modKey} + 1`} />}
+                delay={500}
+              >
+                {(triggerRef) => (
+                  <IconButton
+                    ref={triggerRef}
+                    onClick={() => handleMenuSelect(1)}
+                    size="400"
+                    radii="300"
+                  >
+                    <Icon size="200" src={Icons.Heading1} />
+                  </IconButton>
+                )}
+              </TooltipProvider>
+              <TooltipProvider
+                tooltip={<BtnTooltip text="Heading 2" shortCode={`${modKey} + 2`} />}
+                delay={500}
+              >
+                {(triggerRef) => (
+                  <IconButton
+                    ref={triggerRef}
+                    onClick={() => handleMenuSelect(2)}
+                    size="400"
+                    radii="300"
+                  >
+                    <Icon size="200" src={Icons.Heading2} />
+                  </IconButton>
+                )}
+              </TooltipProvider>
+              <TooltipProvider
+                tooltip={<BtnTooltip text="Heading 3" shortCode={`${modKey} + 3`} />}
+                delay={500}
+              >
+                {(triggerRef) => (
+                  <IconButton
+                    ref={triggerRef}
+                    onClick={() => handleMenuSelect(3)}
+                    size="400"
+                    radii="300"
+                  >
+                    <Icon size="200" src={Icons.Heading3} />
+                  </IconButton>
+                )}
+              </TooltipProvider>
             </Box>
           </Menu>
         </FocusTrap>
       }
     >
-      {(ref) => (
-        <IconButton
-          style={{ width: 'unset' }}
-          ref={ref}
-          variant="SurfaceVariant"
-          onClick={() => (isActive ? toggleBlock(editor, BlockType.Heading) : setOpen(!open))}
-          aria-pressed={isActive}
-          size="400"
-          radii="300"
-        >
-          <Icon size="200" src={Icons[`Heading${level}`]} />
-          <Icon size="200" src={isActive ? Icons.Cross : Icons.ChevronBottom} />
-        </IconButton>
-      )}
+      <IconButton
+        style={{ width: 'unset' }}
+        variant="SurfaceVariant"
+        onClick={handleMenuOpen}
+        aria-pressed={isActive}
+        size="400"
+        radii="300"
+      >
+        <Icon size="200" src={level ? Icons[`Heading${level}`] : Icons.Heading1} />
+        <Icon size="200" src={isActive ? Icons.Cross : Icons.ChevronBottom} />
+      </IconButton>
     </PopOut>
   );
 }
@@ -210,8 +255,10 @@ export function ExitFormatting({ tooltip }: ExitFormattingProps) {
 export function Toolbar() {
   const editor = useSlate();
   const modKey = isMacOS() ? KeySymbol.Command : 'Ctrl';
+  const disableInline = isBlockActive(editor, BlockType.CodeBlock);
 
   const canEscape = isAnyMarkActive(editor) || !isBlockActive(editor, BlockType.Paragraph);
+  const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
 
   return (
     <Box className={css.EditorToolbarBase}>
@@ -237,12 +284,7 @@ export function Toolbar() {
               <MarkButton
                 format={MarkType.StrikeThrough}
                 icon={Icons.Strike}
-                tooltip={
-                  <BtnTooltip
-                    text="Strike Through"
-                    shortCode={`${modKey} + ${KeySymbol.Shift} + U`}
-                  />
-                }
+                tooltip={<BtnTooltip text="Strike Through" shortCode={`${modKey} + S`} />}
               />
               <MarkButton
                 format={MarkType.Code}
@@ -261,33 +303,22 @@ export function Toolbar() {
             <BlockButton
               format={BlockType.BlockQuote}
               icon={Icons.BlockQuote}
-              tooltip={
-                <BtnTooltip text="Block Quote" shortCode={`${modKey} + ${KeySymbol.Shift} + '`} />
-              }
+              tooltip={<BtnTooltip text="Block Quote" shortCode={`${modKey} + '`} />}
             />
             <BlockButton
               format={BlockType.CodeBlock}
               icon={Icons.BlockCode}
-              tooltip={
-                <BtnTooltip text="Block Code" shortCode={`${modKey} + ${KeySymbol.Shift} + ;`} />
-              }
+              tooltip={<BtnTooltip text="Block Code" shortCode={`${modKey} + ;`} />}
             />
             <BlockButton
               format={BlockType.OrderedList}
               icon={Icons.OrderList}
-              tooltip={
-                <BtnTooltip text="Ordered List" shortCode={`${modKey} + ${KeySymbol.Shift} + 7`} />
-              }
+              tooltip={<BtnTooltip text="Ordered List" shortCode={`${modKey} + 7`} />}
             />
             <BlockButton
               format={BlockType.UnorderedList}
               icon={Icons.UnorderList}
-              tooltip={
-                <BtnTooltip
-                  text="Unordered List"
-                  shortCode={`${modKey} + ${KeySymbol.Shift} + 8`}
-                />
-              }
+              tooltip={<BtnTooltip text="Unordered List" shortCode={`${modKey} + 8`} />}
             />
             <HeadingBlockButton />
           </Box>
@@ -296,11 +327,35 @@ export function Toolbar() {
               <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />
               <Box shrink="No" gap="100">
                 <ExitFormatting
-                  tooltip={<BtnTooltip text="Exit Formatting" shortCode={`${modKey} + E`} />}
+                  tooltip={
+                    <BtnTooltip text="Exit Formatting" shortCode={`Escape, ${modKey} + E`} />
+                  }
                 />
               </Box>
             </>
           )}
+          <Box className={css.MarkdownBtnBox} shrink="No" grow="Yes" justifyContent="End">
+            <TooltipProvider
+              align="End"
+              tooltip={<BtnTooltip text="Toggle Markdown" />}
+              delay={500}
+            >
+              {(triggerRef) => (
+                <IconButton
+                  ref={triggerRef}
+                  variant="SurfaceVariant"
+                  onClick={() => setIsMarkdown(!isMarkdown)}
+                  aria-pressed={isMarkdown}
+                  size="300"
+                  radii="300"
+                  disabled={disableInline || !!isAnyMarkActive(editor)}
+                >
+                  <Icon size="200" src={Icons.Markdown} filled={isMarkdown} />
+                </IconButton>
+              )}
+            </TooltipProvider>
+            <span />
+          </Box>
         </Box>
       </Scroll>
     </Box>

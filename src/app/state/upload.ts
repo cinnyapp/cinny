@@ -57,7 +57,7 @@ export const createUploadAtom = (file: TUploadContent) => {
     file,
     status: UploadStatus.Idle,
   });
-  return atom<Upload, UploadAtomAction>(
+  return atom<Upload, [UploadAtomAction], undefined>(
     (get) => get(baseUploadAtom),
     (get, set, update) => {
       const uploadState = get(baseUploadAtom);

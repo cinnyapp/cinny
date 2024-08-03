@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <title>Cinny</title>
     <meta name="name" content="Cinny" />
     <meta name="author" content="Ajay Bura" />
@@ -27,7 +27,7 @@
 
     <link id="favicon" rel="shortcut icon" href="./public/favicon.ico" />
 
-    <link rel="manifest" href="./public/manifest.json" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="application-name" content="Cinny" />
     <meta name="apple-mobile-web-app-title" content="Cinny" />
@@ -90,12 +90,6 @@
       window.global ||= window;
     </script>
     <div id="root"></div>
-    <audio id="notificationSound">
-      <source src="./public/sound/notification.ogg" type="audio/ogg" />
-    </audio>
-    <audio id="inviteSound">
-      <source src="./public/sound/invite.ogg" type="audio/ogg" />
-    </audio>
-    <script type="module" src="./src/index.jsx"></script>
+    <script type="module" src="./src/index.tsx"></script>
   </body>
 </html>

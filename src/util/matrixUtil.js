@@ -1,5 +1,3 @@
-import initMatrix from '../client/initMatrix';
-
 import HashIC from '../../public/res/ic/outlined/hash.svg';
 import HashGlobeIC from '../../public/res/ic/outlined/hash-globe.svg';
 import HashLockIC from '../../public/res/ic/outlined/hash-lock.svg';
@@ -24,8 +22,7 @@ export async function getBaseUrl(servername) {
   }
 }
 
-export function getUsername(userId) {
-  const mx = initMatrix.matrixClient;
+export function getUsername(mx, userId) {
   const user = mx.getUser(userId);
   if (user === null) return userId;
   let username = user.displayName;
@@ -39,9 +36,9 @@ export function getUsernameOfRoomMember(roomMember) {
   return roomMember.name || roomMember.userId;
 }
 
-export async function isRoomAliasAvailable(alias) {
+export async function isRoomAliasAvailable(mx, alias) {
   try {
-    const result = await initMatrix.matrixClient.resolveRoomAlias(alias);
+    const result = await mx.getRoomIdForAlias(alias);
     if (result.room_id) return false;
     return false;
   } catch (e) {
@@ -89,20 +86,6 @@ export function trimHTMLReply(html) {
   return html.slice(i + suffix.length);
 }
 
-export function hasDMWith(userId) {
-  const mx = initMatrix.matrixClient;
-  const directIds = [...initMatrix.roomList.directs];
-
-  return directIds.find((roomId) => {
-    const dRoom = mx.getRoom(roomId);
-    const roomMembers = dRoom.getMembers();
-    if (roomMembers.length <= 2 && dRoom.getMember(userId)) {
-      return true;
-    }
-    return false;
-  });
-}
-
 export function joinRuleToIconSrc(joinRule, isSpace) {
   return ({
     restricted: () => (isSpace ? SpaceIC : HashIC),
@@ -112,70 +95,13 @@ export function joinRuleToIconSrc(joinRule, isSpace) {
   }[joinRule]?.() || null);
 }
 
-// NOTE: it gives userId with minimum power level 50;
-function getHighestPowerUserId(room) {
-  const userIdToPower = room.currentState.getStateEvents('m.room.power_levels', '')?.getContent().users;
-  let powerUserId = null;
-  if (!userIdToPower) return powerUserId;
-
-  Object.keys(userIdToPower).forEach((userId) => {
-    if (userIdToPower[userId] < 50) return;
-    if (powerUserId === null) {
-      powerUserId = userId;
-      return;
-    }
-    if (userIdToPower[userId] > userIdToPower[powerUserId]) {
-      powerUserId = userId;
-    }
-  });
-  return powerUserId;
-}
-
 export function getIdServer(userId) {
   const idParts = userId.split(':');
   return idParts[1];
 }
 
-export function getServerToPopulation(room) {
-  const members = room.getMembers();
-  const serverToPop = {};
-
-  members?.forEach((member) => {
-    const { userId } = member;
-    const server = getIdServer(userId);
-    const serverPop = serverToPop[server];
-    if (serverPop === undefined) {
-      serverToPop[server] = 1;
-      return;
-    }
-    serverToPop[server] = serverPop + 1;
-  });
-
-  return serverToPop;
-}
-
-export function genRoomVia(room) {
-  const via = [];
-  const userId = getHighestPowerUserId(room);
-  if (userId) {
-    const server = getIdServer(userId);
-    if (server) via.push(server);
-  }
-  const serverToPop = getServerToPopulation(room);
-  const sortedServers = Object.keys(serverToPop).sort(
-    (svrA, svrB) => serverToPop[svrB] - serverToPop[svrA],
-  );
-  const mostPop3 = sortedServers.slice(0, 3);
-  if (via.length === 0) return mostPop3;
-  if (mostPop3.includes(via[0])) {
-    mostPop3.splice(mostPop3.indexOf(via[0]), 1);
-  }
-  return via.concat(mostPop3.slice(0, 2));
-}
-
-export function isCrossVerified(deviceId) {
+export function isCrossVerified(mx, deviceId) {
   try {
-    const mx = initMatrix.matrixClient;
     const crossSignInfo = mx.getStoredCrossSigningForUser(mx.getUserId());
     const deviceInfo = mx.getStoredDevice(mx.getUserId(), deviceId);
     const deviceTrust = crossSignInfo.checkDeviceTrust(crossSignInfo, deviceInfo, false, true);
@@ -186,14 +112,12 @@ export function isCrossVerified(deviceId) {
   }
 }
 
-export function hasCrossSigningAccountData() {
-  const mx = initMatrix.matrixClient;
+export function hasCrossSigningAccountData(mx) {
   const masterKeyData = mx.getAccountData('m.cross_signing.master');
   return !!masterKeyData;
 }
 
-export function getDefaultSSKey() {
-  const mx = initMatrix.matrixClient;
+export function getDefaultSSKey(mx) {
   try {
     return mx.getAccountData('m.secret_storage.default_key').getContent().key;
   } catch {
@@ -201,8 +125,7 @@ export function getDefaultSSKey() {
   }
 }
 
-export function getSSKeyInfo(key) {
-  const mx = initMatrix.matrixClient;
+export function getSSKeyInfo(mx, key) {
   try {
     return mx.getAccountData(`m.secret_storage.key.${key}`).getContent();
   } catch {
@@ -210,8 +133,7 @@ export function getSSKeyInfo(key) {
   }
 }
 
-export async function hasDevices(userId) {
-  const mx = initMatrix.matrixClient;
+export async function hasDevices(mx, userId) {
   try {
     const usersDeviceMap = await mx.downloadKeys([userId, mx.getUserId()]);
     return Object.values(usersDeviceMap)

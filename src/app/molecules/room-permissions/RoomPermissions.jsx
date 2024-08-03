@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomPermissions.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import { getPowerLabel } from '../../../util/matrixUtil';
 import { openReusableContextMenu } from '../../../client/action/navigation';
 import { getEventCords } from '../../../util/common';
@@ -16,6 +15,7 @@ import SettingTile from '../setting-tile/SettingTile';
 import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.svg';
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const permissionsInfo = {
   users_default: {
@@ -157,7 +157,7 @@ const spacePermsGroups = {
 
 function useRoomStateUpdate(roomId) {
   const [, forceUpdate] = useForceUpdate();
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
 
   useEffect(() => {
     const handleStateEvent = (event) => {
@@ -169,12 +169,12 @@ function useRoomStateUpdate(roomId) {
     return () => {
       mx.removeListener('RoomState.events', handleStateEvent);
     };
-  }, [roomId]);
+  }, [mx, roomId]);
 }
 
 function RoomPermissions({ roomId }) {
   useRoomStateUpdate(roomId);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
   const pLEvent = room.currentState.getStateEvents('m.room.power_levels')[0];
   const permissions = pLEvent.getContent();

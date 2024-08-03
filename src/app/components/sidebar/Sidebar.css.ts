@@ -1,6 +1,7 @@
-import { style } from '@vanilla-extract/css';
+import { createVar, style } from '@vanilla-extract/css';
 import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
-import { color, config, DefaultReset, toRem } from 'folds';
+import { color, config, DefaultReset, Disabled, FocusOutline, toRem } from 'folds';
+import { ContainerColor } from '../../styles/ContainerColor.css';
 
 export const Sidebar = style([
   DefaultReset,
@@ -28,13 +29,49 @@ export const SidebarStack = style([
   },
 ]);
 
+const DropLineDist = createVar();
+export const DropTarget = style({
+  vars: {
+    [DropLineDist]: toRem(-8),
+  },
+
+  selectors: {
+    '&[data-inside-folder=true]': {
+      vars: {
+        [DropLineDist]: toRem(-6),
+      },
+    },
+    '&[data-drop-child=true]': {
+      outline: `${config.borderWidth.B700} solid ${color.Success.Main}`,
+      borderRadius: config.radii.R400,
+    },
+    '&[data-drop-above=true]::after, &[data-drop-below=true]::after': {
+      content: '',
+      display: 'block',
+      position: 'absolute',
+      left: toRem(0),
+      width: '100%',
+      height: config.borderWidth.B700,
+      backgroundColor: color.Success.Main,
+    },
+    '&[data-drop-above=true]::after': {
+      top: DropLineDist,
+    },
+    '&[data-drop-below=true]::after': {
+      bottom: DropLineDist,
+    },
+  },
+});
+
 const PUSH_X = 2;
-export const SidebarAvatarBox = recipe({
+export const SidebarItem = recipe({
   base: [
     DefaultReset,
     {
+      minWidth: toRem(42),
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
       position: 'relative',
       transition: 'transform 200ms cubic-bezier(0, 0.8, 0.67, 0.97)',
 
@@ -59,6 +96,8 @@ export const SidebarAvatarBox = recipe({
         },
       },
     },
+    Disabled,
+    DropTarget,
   ],
   variants: {
     active: {
@@ -76,26 +115,27 @@ export const SidebarAvatarBox = recipe({
     },
   },
 });
+export type SidebarItemVariants = RecipeVariants<typeof SidebarItem>;
 
-export type SidebarAvatarBoxVariants = RecipeVariants<typeof SidebarAvatarBox>;
-
-export const SidebarBadgeBox = recipe({
+export const SidebarItemBadge = recipe({
   base: [
     DefaultReset,
     {
+      pointerEvents: 'none',
       position: 'absolute',
       zIndex: 1,
+      lineHeight: 0,
     },
   ],
   variants: {
     hasCount: {
       true: {
         top: toRem(-6),
-        right: toRem(-6),
+        left: toRem(-6),
       },
       false: {
         top: toRem(-2),
-        right: toRem(-2),
+        left: toRem(-2),
       },
     },
   },
@@ -103,9 +143,107 @@ export const SidebarBadgeBox = recipe({
     hasCount: false,
   },
 });
+export type SidebarItemBadgeVariants = RecipeVariants<typeof SidebarItemBadge>;
 
-export type SidebarBadgeBoxVariants = RecipeVariants<typeof SidebarBadgeBox>;
-
-export const SidebarBadgeOutline = style({
-  boxShadow: `0 0 0 ${config.borderWidth.B500} ${color.Background.Container}`,
+export const SidebarAvatar = recipe({
+  base: [
+    {
+      selectors: {
+        'button&': {
+          cursor: 'pointer',
+        },
+      },
+    },
+  ],
+  variants: {
+    size: {
+      '200': {
+        width: toRem(16),
+        height: toRem(16),
+        fontSize: toRem(10),
+        lineHeight: config.lineHeight.T200,
+        letterSpacing: config.letterSpacing.T200,
+      },
+      '300': {
+        width: toRem(34),
+        height: toRem(34),
+      },
+      '400': {
+        width: toRem(42),
+        height: toRem(42),
+      },
+    },
+    outlined: {
+      true: {
+        border: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
+      },
+    },
+  },
+  defaultVariants: {
+    size: '400',
+  },
 });
+export type SidebarAvatarVariants = RecipeVariants<typeof SidebarAvatar>;
+
+export const SidebarFolder = recipe({
+  base: [
+    ContainerColor({ variant: 'Background' }),
+    {
+      padding: config.space.S100,
+      width: toRem(42),
+      minHeight: toRem(42),
+      display: 'flex',
+      flexWrap: 'wrap',
+      outline: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
+      position: 'relative',
+
+      selectors: {
+        'button&': {
+          cursor: 'pointer',
+        },
+      },
+    },
+    FocusOutline,
+    DropTarget,
+  ],
+  variants: {
+    state: {
+      Close: {
+        gap: toRem(2),
+        borderRadius: config.radii.R400,
+      },
+      Open: {
+        paddingLeft: 0,
+        paddingRight: 0,
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: config.space.S200,
+        borderRadius: config.radii.R500,
+      },
+    },
+  },
+  defaultVariants: {
+    state: 'Close',
+  },
+});
+export type SidebarFolderVariants = RecipeVariants<typeof SidebarFolder>;
+
+export const SidebarFolderDropTarget = recipe({
+  base: {
+    width: '100%',
+    height: toRem(8),
+    position: 'absolute',
+    left: 0,
+  },
+  variants: {
+    position: {
+      Top: {
+        top: toRem(-4),
+      },
+      Bottom: {
+        bottom: toRem(-4),
+      },
+    },
+  },
+});
+export type SidebarFolderDropTargetVariants = RecipeVariants<typeof SidebarFolderDropTarget>;

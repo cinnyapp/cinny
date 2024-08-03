@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ImportE2ERoomKeys.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { decryptMegolmKeyFile } from '../../../util/cryptE2ERoomKeys';
 
@@ -14,8 +13,10 @@ import Spinner from '../../atoms/spinner/Spinner';
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
 
 import { useStore } from '../../hooks/useStore';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function ImportE2ERoomKeys() {
+  const mx = useMatrixClient();
   const isMountStore = useStore();
   const [keyFile, setKeyFile] = useState(null);
   const [status, setStatus] = useState({
@@ -45,7 +46,7 @@ function ImportE2ERoomKeys() {
           type: cons.status.IN_FLIGHT,
         });
       }
-      await initMatrix.matrixClient.importRoomKeys(JSON.parse(keys));
+      await mx.importRoomKeys(JSON.parse(keys));
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: false,

@@ -2,9 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './KeyBackup.scss';
-import { twemojify } from '../../../util/twemojify';
 
-import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { deletePrivateKey } from '../../../client/state/secretStorageKeys';
 
@@ -23,10 +21,11 @@ import DownloadIC from '../../../../public/res/ic/outlined/download.svg';
 
 import { useStore } from '../../hooks/useStore';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function CreateKeyBackupDialog({ keyData }) {
   const [done, setDone] = useState(false);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mountStore = useStore();
 
   const doBackup = async () => {
@@ -34,10 +33,7 @@ function CreateKeyBackupDialog({ keyData }) {
     let info;
 
     try {
-      info = await mx.prepareKeyBackupVersion(
-        null,
-        { secureSecretStorage: true },
-      );
+      info = await mx.prepareKeyBackupVersion(null, { secureSecretStorage: true });
       info = await mx.createKeyBackupVersion(info);
       await mx.scheduleAllGroupSessionsForBackup();
       if (!mountStore.getItem()) return;
@@ -65,7 +61,7 @@ function CreateKeyBackupDialog({ keyData }) {
       )}
       {done === true && (
         <>
-          <Text variant="h1">{twemojify('✅')}</Text>
+          <Text variant="h1">✅</Text>
           <Text>Successfully created backup</Text>
         </>
       )}
@@ -84,7 +80,7 @@ CreateKeyBackupDialog.propTypes = {
 
 function RestoreKeyBackupDialog({ keyData }) {
   const [status, setStatus] = useState(false);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mountStore = useStore();
 
   const restoreBackup = async () => {
@@ -104,12 +100,9 @@ function RestoreKeyBackupDialog({ keyData }) {
 
     try {
       const backupInfo = await mx.getKeyBackupVersion();
-      const info = await mx.restoreKeyBackupWithSecretStorage(
-        backupInfo,
-        undefined,
-        undefined,
-        { progressCallback },
-      );
+      const info = await mx.restoreKeyBackupWithSecretStorage(backupInfo, undefined, undefined, {
+        progressCallback,
+      });
       if (!mountStore.getItem()) return;
       setStatus({ done: `Successfully restored backup keys (${info.imported}/${info.total}).` });
     } catch (e) {
@@ -138,7 +131,7 @@ function RestoreKeyBackupDialog({ keyData }) {
       )}
       {status.done && (
         <>
-          <Text variant="h1">{twemojify('✅')}</Text>
+          <Text variant="h1">✅</Text>
           <Text>{status.done}</Text>
         </>
       )}
@@ -157,7 +150,7 @@ RestoreKeyBackupDialog.propTypes = {
 
 function DeleteKeyBackupDialog({ requestClose }) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mountStore = useStore();
 
   const deleteBackup = async () => {
@@ -176,14 +169,16 @@ function DeleteKeyBackupDialog({ requestClose }) {
 
   return (
     <div className="key-backup__delete">
-      <Text variant="h1">{twemojify('🗑')}</Text>
+      <Text variant="h1">🗑</Text>
       <Text weight="medium">Deleting key backup is permanent.</Text>
       <Text>All encrypted messages keys stored on server will be deleted.</Text>
-      {
-        isDeleting
-          ? <Spinner size="small" />
-          : <Button variant="danger" onClick={deleteBackup}>Delete</Button>
-      }
+      {isDeleting ? (
+        <Spinner size="small" />
+      ) : (
+        <Button variant="danger" onClick={deleteBackup}>
+          Delete
+        </Button>
+      )}
     </div>
   );
 }
@@ -192,7 +187,7 @@ DeleteKeyBackupDialog.propTypes = {
 };
 
 function KeyBackup() {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const isCSEnabled = useCrossSigningStatus();
   const [keyBackup, setKeyBackup] = useState(undefined);
   const mountStore = useStore();
@@ -220,44 +215,61 @@ function KeyBackup() {
   }, [isCSEnabled]);
 
   const openCreateKeyBackup = async () => {
-    const keyData = await accessSecretStorage('Create Key Backup');
+    const keyData = await accessSecretStorage(mx, 'Create Key Backup');
     if (keyData === null) return;
 
     openReusableDialog(
-      <Text variant="s1" weight="medium">Create Key Backup</Text>,
+      <Text variant="s1" weight="medium">
+        Create Key Backup
+      </Text>,
       () => <CreateKeyBackupDialog keyData={keyData} />,
-      () => fetchKeyBackupVersion(),
+      () => fetchKeyBackupVersion()
     );
   };
 
   const openRestoreKeyBackup = async () => {
-    const keyData = await accessSecretStorage('Restore Key Backup');
+    const keyData = await accessSecretStorage(mx, 'Restore Key Backup');
     if (keyData === null) return;
 
     openReusableDialog(
-      <Text variant="s1" weight="medium">Restore Key Backup</Text>,
-      () => <RestoreKeyBackupDialog keyData={keyData} />,
+      <Text variant="s1" weight="medium">
+        Restore Key Backup
+      </Text>,
+      () => <RestoreKeyBackupDialog keyData={keyData} />
     );
   };
 
-  const openDeleteKeyBackup = () => openReusableDialog(
-    <Text variant="s1" weight="medium">Delete Key Backup</Text>,
-    (requestClose) => (
-      <DeleteKeyBackupDialog
-        requestClose={(isDone) => {
-          if (isDone) setKeyBackup(null);
-          requestClose();
-        }}
-      />
-    ),
-  );
+  const openDeleteKeyBackup = () =>
+    openReusableDialog(
+      <Text variant="s1" weight="medium">
+        Delete Key Backup
+      </Text>,
+      (requestClose) => (
+        <DeleteKeyBackupDialog
+          requestClose={(isDone) => {
+            if (isDone) setKeyBackup(null);
+            requestClose();
+          }}
+        />
+      )
+    );
 
   const renderOptions = () => {
     if (keyBackup === undefined) return <Spinner size="small" />;
-    if (keyBackup === null) return <Button variant="primary" onClick={openCreateKeyBackup}>Create Backup</Button>;
+    if (keyBackup === null)
+      return (
+        <Button variant="primary" onClick={openCreateKeyBackup}>
+          Create Backup
+        </Button>
+      );
     return (
       <>
-        <IconButton src={DownloadIC} variant="positive" onClick={openRestoreKeyBackup} tooltip="Restore backup" />
+        <IconButton
+          src={DownloadIC}
+          variant="positive"
+          onClick={openRestoreKeyBackup}
+          tooltip="Restore backup"
+        />
         <IconButton src={BinIC} onClick={openDeleteKeyBackup} tooltip="Delete backup" />
       </>
     );
@@ -266,9 +278,12 @@ function KeyBackup() {
   return (
     <SettingTile
       title="Encrypted messages backup"
-      content={(
+      content={
         <>
-          <Text variant="b3">Online backup your encrypted messages keys with your account data in case you lose access to your sessions. Your keys will be secured with a unique Security Key.</Text>
+          <Text variant="b3">
+            Online backup your encrypted messages keys with your account data in case you lose
+            access to your sessions. Your keys will be secured with a unique Security Key.
+          </Text>
           {!isCSEnabled && (
             <InfoCard
               style={{ marginTop: 'var(--sp-ultra-tight)' }}
@@ -279,7 +294,7 @@ function KeyBackup() {
             />
           )}
         </>
-      )}
+      }
       options={isCSEnabled ? renderOptions() : null}
     />
   );

@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import './RoomEncryption.scss';
 
-import initMatrix from '../../../client/initMatrix';
 
 import Text from '../../atoms/text/Text';
 import Toggle from '../../atoms/button/Toggle';
 import SettingTile from '../setting-tile/SettingTile';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function RoomEncryption({ roomId }) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
   const encryptionEvents = room.currentState.getStateEvents('m.room.encryption');
   const [isEncrypted, setIsEncrypted] = useState(encryptionEvents.length > 0);

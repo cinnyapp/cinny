@@ -2,16 +2,21 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Dialog.scss';
 
-import { twemojify } from '../../../util/twemojify';
-
 import Text from '../../atoms/text/Text';
 import Header, { TitleWrapper } from '../../atoms/header/Header';
 import ScrollView from '../../atoms/scroll/ScrollView';
 import RawModal from '../../atoms/modal/RawModal';
 
 function Dialog({
-  className, isOpen, title, onAfterOpen, onAfterClose,
-  contentOptions, onRequestClose, closeFromOutside, children,
+  className,
+  isOpen,
+  title,
+  onAfterOpen,
+  onAfterClose,
+  contentOptions,
+  onRequestClose,
+  closeFromOutside,
+  children,
   invisibleScroll,
 }) {
   return (
@@ -28,19 +33,19 @@ function Dialog({
         <div className="dialog__content">
           <Header>
             <TitleWrapper>
-              {
-                typeof title === 'string'
-                  ? <Text variant="h2" weight="medium" primary>{twemojify(title)}</Text>
-                  : title
-              }
+              {typeof title === 'string' ? (
+                <Text variant="h2" weight="medium" primary>
+                  {title}
+                </Text>
+              ) : (
+                title
+              )}
             </TitleWrapper>
             {contentOptions}
           </Header>
           <div className="dialog__content__wrapper">
             <ScrollView autoHide={!invisibleScroll} invisible={invisibleScroll}>
-              <div className="dialog__content-container">
-                {children}
-              </div>
+              <div className="dialog__content-container">{children}</div>
             </ScrollView>
           </div>
         </div>

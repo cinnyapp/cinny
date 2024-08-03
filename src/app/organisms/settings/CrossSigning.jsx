@@ -3,9 +3,7 @@ import React, { useState } from 'react';
 import './CrossSigning.scss';
 import FileSaver from 'file-saver';
 import { Formik } from 'formik';
-import { twemojify } from '../../../util/twemojify';
 
-import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { copyToClipboard } from '../../../util/common';
 import { clearSecretStorageKeys } from '../../../client/state/secretStorageKeys';
@@ -18,19 +16,22 @@ import SettingTile from '../../molecules/setting-tile/SettingTile';
 
 import { authRequest } from './AuthRequest';
 import { useCrossSigningStatus } from '../../hooks/useCrossSigningStatus';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const failedDialog = () => {
   const renderFailure = (requestClose) => (
     <div className="cross-signing__failure">
-      <Text variant="h1">{twemojify('❌')}</Text>
+      <Text variant="h1">❌</Text>
       <Text weight="medium">Failed to setup cross signing. Please try again.</Text>
       <Button onClick={requestClose}>Close</Button>
     </div>
   );
 
   openReusableDialog(
-    <Text variant="s1" weight="medium">Setup cross signing</Text>,
-    renderFailure,
+    <Text variant="s1" weight="medium">
+      Setup cross signing
+    </Text>,
+    renderFailure
   );
 };
 
@@ -48,11 +49,11 @@ const securityKeyDialog = (key) => {
   const renderSecurityKey = () => (
     <div className="cross-signing__key">
       <Text weight="medium">Please save this security key somewhere safe.</Text>
-      <Text className="cross-signing__key-text">
-        {key.encodedPrivateKey}
-      </Text>
+      <Text className="cross-signing__key-text">{key.encodedPrivateKey}</Text>
       <div className="cross-signing__key-btn">
-        <Button variant="primary" onClick={() => copyKey(key)}>Copy</Button>
+        <Button variant="primary" onClick={() => copyKey(key)}>
+          Copy
+        </Button>
         <Button onClick={() => downloadKey(key)}>Download</Button>
       </div>
     </div>
@@ -62,17 +63,19 @@ const securityKeyDialog = (key) => {
   downloadKey();
 
   openReusableDialog(
-    <Text variant="s1" weight="medium">Security Key</Text>,
-    () => renderSecurityKey(),
+    <Text variant="s1" weight="medium">
+      Security Key
+    </Text>,
+    () => renderSecurityKey()
   );
 };
 
 function CrossSigningSetup() {
   const initialValues = { phrase: '', confirmPhrase: '' };
   const [genWithPhrase, setGenWithPhrase] = useState(undefined);
+  const mx = useMatrixClient();
 
   const setup = async (securityPhrase = undefined) => {
-    const mx = initMatrix.matrixClient;
     setGenWithPhrase(typeof securityPhrase === 'string');
     const recoveryKey = await mx.createRecoveryKeyFromPassphrase(securityPhrase);
     clearSecretStorageKeys();
@@ -112,7 +115,7 @@ function CrossSigningSetup() {
       errors.phrase = 'Phrase must contain 8-127 characters with no space.';
     }
     if (values.confirmPhrase.length > 0 && values.confirmPhrase !== values.phrase) {
-      errors.confirmPhrase = 'Phrase don\'t match.';
+      errors.confirmPhrase = "Phrase don't match.";
     }
     return errors;
   };
@@ -121,10 +124,14 @@ function CrossSigningSetup() {
     <div className="cross-signing__setup">
       <div className="cross-signing__setup-entry">
         <Text>
-          We will generate a <b>Security Key</b>, 
-          which you can use to manage messages backup and session verification.
+          We will generate a <b>Security Key</b>, which you can use to manage messages backup and
+          session verification.
         </Text>
-        {genWithPhrase !== false && <Button variant="primary" onClick={() => setup()} disabled={genWithPhrase !== undefined}>Generate Key</Button>}
+        {genWithPhrase !== false && (
+          <Button variant="primary" onClick={() => setup()} disabled={genWithPhrase !== undefined}>
+            Generate Key
+          </Button>
+        )}
         {genWithPhrase === false && <Spinner size="small" />}
       </div>
       <Text className="cross-signing__setup-divider">OR</Text>
@@ -133,9 +140,7 @@ function CrossSigningSetup() {
         onSubmit={(values) => setup(values.phrase)}
         validate={validator}
       >
-        {({
-          values, errors, handleChange, handleSubmit,
-        }) => (
+        {({ values, errors, handleChange, handleSubmit }) => (
           <form
             className="cross-signing__setup-entry"
             onSubmit={handleSubmit}
@@ -143,8 +148,8 @@ function CrossSigningSetup() {
           >
             <Text>
               Alternatively you can also set a <b>Security Phrase </b>
-              so you don't have to remember long Security Key, 
-              and optionally save the Key as backup.
+              so you don't have to remember long Security Key, and optionally save the Key as
+              backup.
             </Text>
             <Input
               name="phrase"
@@ -155,7 +160,11 @@ function CrossSigningSetup() {
               required
               disabled={genWithPhrase !== undefined}
             />
-            {errors.phrase && <Text variant="b3" className="cross-signing__error">{errors.phrase}</Text>}
+            {errors.phrase && (
+              <Text variant="b3" className="cross-signing__error">
+                {errors.phrase}
+              </Text>
+            )}
             <Input
               name="confirmPhrase"
               value={values.confirmPhrase}
@@ -165,8 +174,16 @@ function CrossSigningSetup() {
               required
               disabled={genWithPhrase !== undefined}
             />
-            {errors.confirmPhrase && <Text variant="b3" className="cross-signing__error">{errors.confirmPhrase}</Text>}
-            {genWithPhrase !== true && <Button variant="primary" type="submit" disabled={genWithPhrase !== undefined}>Set Phrase & Generate Key</Button>}
+            {errors.confirmPhrase && (
+              <Text variant="b3" className="cross-signing__error">
+                {errors.confirmPhrase}
+              </Text>
+            )}
+            {genWithPhrase !== true && (
+              <Button variant="primary" type="submit" disabled={genWithPhrase !== undefined}>
+                Set Phrase & Generate Key
+              </Button>
+            )}
             {genWithPhrase === true && <Spinner size="small" />}
           </form>
         )}
@@ -177,31 +194,36 @@ function CrossSigningSetup() {
 
 const setupDialog = () => {
   openReusableDialog(
-    <Text variant="s1" weight="medium">Setup cross signing</Text>,
-    () => <CrossSigningSetup />,
+    <Text variant="s1" weight="medium">
+      Setup cross signing
+    </Text>,
+    () => <CrossSigningSetup />
   );
 };
 
 function CrossSigningReset() {
   return (
     <div className="cross-signing__reset">
-      <Text variant="h1">{twemojify('✋🧑‍🚒🤚')}</Text>
+      <Text variant="h1">✋🧑‍🚒🤚</Text>
       <Text weight="medium">Resetting cross-signing keys is permanent.</Text>
       <Text>
-        Anyone you have verified with will see security alerts and your message backup will be lost. 
-        You almost certainly do not want to do this, 
-        unless you have lost <b>Security Key</b> or <b>Phrase</b> and 
-        every session you can cross-sign from.
+        Anyone you have verified with will see security alerts and your message backup will be lost.
+        You almost certainly do not want to do this, unless you have lost <b>Security Key</b> or{' '}
+        <b>Phrase</b> and every session you can cross-sign from.
       </Text>
-      <Button variant="danger" onClick={setupDialog}>Reset</Button>
+      <Button variant="danger" onClick={setupDialog}>
+        Reset
+      </Button>
     </div>
   );
 }
 
 const resetDialog = () => {
   openReusableDialog(
-    <Text variant="s1" weight="medium">Reset cross signing</Text>,
-    () => <CrossSigningReset />,
+    <Text variant="s1" weight="medium">
+      Reset cross signing
+    </Text>,
+    () => <CrossSigningReset />
   );
 };
 
@@ -210,12 +232,23 @@ function CrossSignin() {
   return (
     <SettingTile
       title="Cross signing"
-      content={<Text variant="b3">Setup to verify and keep track of all your sessions. Also required to backup encrypted message.</Text>}
-      options={(
-        isCSEnabled
-          ? <Button variant="danger" onClick={resetDialog}>Reset</Button>
-          : <Button variant="primary" onClick={setupDialog}>Setup</Button>
-      )}
+      content={
+        <Text variant="b3">
+          Setup to verify and keep track of all your sessions. Also required to backup encrypted
+          message.
+        </Text>
+      }
+      options={
+        isCSEnabled ? (
+          <Button variant="danger" onClick={resetDialog}>
+            Reset
+          </Button>
+        ) : (
+          <Button variant="primary" onClick={setupDialog}>
+            Setup
+          </Button>
+        )
+      }
     />
   );
 }

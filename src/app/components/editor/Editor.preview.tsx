@@ -14,6 +14,7 @@ import {
 
 import { CustomEditor, useEditor } from './Editor';
 import { Toolbar } from './Toolbar';
+import { stopPropagation } from '../../utils/keyboard';
 
 export function EditorPreview() {
   const [open, setOpen] = useState(false);
@@ -32,6 +33,7 @@ export function EditorPreview() {
               initialFocus: false,
               onDeactivate: () => setOpen(false),
               clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
             }}
           >
             <Modal size="500">

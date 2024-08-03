@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import './SecretStorageAccess.scss';
 import { deriveKey } from 'matrix-js-sdk/lib/crypto/key_passphrase';
 
-import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 import { getDefaultSSKey, getSSKeyInfo } from '../../../util/matrixUtil';
 import { storePrivateKey, hasPrivateKey, getPrivateKey } from '../../../client/state/secretStorageKeys';
@@ -14,11 +13,12 @@ import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 
 import { useStore } from '../../hooks/useStore';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function SecretStorageAccess({ onComplete }) {
-  const mx = initMatrix.matrixClient;
-  const sSKeyId = getDefaultSSKey();
-  const sSKeyInfo = getSSKeyInfo(sSKeyId);
+  const mx = useMatrixClient();
+  const sSKeyId = getDefaultSSKey(mx);
+  const sSKeyInfo = getSSKeyInfo(mx, sSKeyId);
   const isPassphrase = !!sSKeyInfo.passphrase;
   const [withPhrase, setWithPhrase] = useState(isPassphrase);
   const [process, setProcess] = useState(false);
@@ -98,12 +98,13 @@ SecretStorageAccess.propTypes = {
 };
 
 /**
+ * @param {MatrixClient} mx Matrix client
  * @param {string} title Title of secret storage access dialog
  * @returns {Promise<keyData | null>} resolve to keyData or null
  */
-export const accessSecretStorage = (title) => new Promise((resolve) => {
+export const accessSecretStorage = (mx, title) => new Promise((resolve) => {
   let isCompleted = false;
-  const defaultSSKey = getDefaultSSKey();
+  const defaultSSKey = getDefaultSSKey(mx);
   if (hasPrivateKey(defaultSSKey)) {
     resolve({ keyId: defaultSSKey, privateKey: getPrivateKey(defaultSSKey) });
     return;

@@ -1,7 +1,13 @@
 import { Room } from 'matrix-js-sdk';
-import { useCallback } from 'react';
+import { createContext, useCallback, useContext, useMemo } from 'react';
 import { useStateEvent } from './useStateEvent';
 import { StateEvent } from '../../types/matrix/room';
+import { useForceUpdate } from './useForceUpdate';
+import { useStateEventCallback } from './useStateEventCallback';
+import { useMatrixClient } from './useMatrixClient';
+import { getStateEvent } from '../utils/room';
+
+export type PowerLevelActions = 'invite' | 'redact' | 'kick' | 'ban' | 'historical';
 
 enum DefaultPowerLevels {
   usersDefault = 0,
@@ -14,7 +20,7 @@ enum DefaultPowerLevels {
   historical = 0,
 }
 
-interface IPowerLevels {
+export interface IPowerLevels {
   users_default?: number;
   state_default?: number;
   events_default?: number;
@@ -29,51 +35,135 @@ interface IPowerLevels {
   notifications?: Record<string, number>;
 }
 
-export function usePowerLevels(room: Room) {
+export function usePowerLevels(room: Room): IPowerLevels {
   const powerLevelsEvent = useStateEvent(room, StateEvent.RoomPowerLevels);
-  const powerLevels: IPowerLevels = powerLevelsEvent?.getContent() ?? DefaultPowerLevels;
+  const powerLevels: IPowerLevels =
+    powerLevelsEvent?.getContent<IPowerLevels>() ?? DefaultPowerLevels;
 
-  const getPowerLevel = useCallback(
-    (userId: string) => {
-      const { users_default: usersDefault, users } = powerLevels;
-      if (users && typeof users[userId] === 'number') {
-        return users[userId];
-      }
-      return usersDefault ?? DefaultPowerLevels.usersDefault;
+  return powerLevels;
+}
+
+export const PowerLevelsContext = createContext<IPowerLevels | null>(null);
+
+export const PowerLevelsContextProvider = PowerLevelsContext.Provider;
+
+export const usePowerLevelsContext = (): IPowerLevels => {
+  const pl = useContext(PowerLevelsContext);
+  if (!pl) throw new Error('PowerLevelContext is not initialized!');
+  return pl;
+};
+
+export const useRoomsPowerLevels = (rooms: Room[]): Map<string, IPowerLevels> => {
+  const mx = useMatrixClient();
+  const [updateCount, forceUpdate] = useForceUpdate();
+
+  useStateEventCallback(
+    mx,
+    useCallback(
+      (event) => {
+        const roomId = event.getRoomId();
+        if (
+          roomId &&
+          event.getType() === StateEvent.RoomPowerLevels &&
+          event.getStateKey() === '' &&
+          rooms.find((r) => r.roomId === roomId)
+        ) {
+          forceUpdate();
+        }
+      },
+      [rooms, forceUpdate]
+    )
+  );
+
+  const roomToPowerLevels = useMemo(
+    () => {
+      const rToPl = new Map<string, IPowerLevels>();
+
+      rooms.forEach((room) => {
+        const pl = getStateEvent(room, StateEvent.RoomPowerLevels, '')?.getContent<IPowerLevels>();
+        if (pl) rToPl.set(room.roomId, pl);
+      });
+
+      return rToPl;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rooms, updateCount]
+  );
+
+  return roomToPowerLevels;
+};
+
+export type GetPowerLevel = (powerLevels: IPowerLevels, userId: string | undefined) => number;
+export type CanSend = (
+  powerLevels: IPowerLevels,
+  eventType: string | undefined,
+  powerLevel: number
+) => boolean;
+export type CanDoAction = (
+  powerLevels: IPowerLevels,
+  action: PowerLevelActions,
+  powerLevel: number
+) => boolean;
+
+export type PowerLevelsAPI = {
+  getPowerLevel: GetPowerLevel;
+  canSendEvent: CanSend;
+  canSendStateEvent: CanSend;
+  canDoAction: CanDoAction;
+};
+
+export const powerLevelAPI: PowerLevelsAPI = {
+  getPowerLevel: (powerLevels, userId) => {
+    const { users_default: usersDefault, users } = powerLevels;
+    if (userId && users && typeof users[userId] === 'number') {
+      return users[userId];
+    }
+    return usersDefault ?? DefaultPowerLevels.usersDefault;
+  },
+  canSendEvent: (powerLevels, eventType, powerLevel) => {
+    const { events, events_default: eventsDefault } = powerLevels;
+    if (events && eventType && typeof events[eventType] === 'number') {
+      return powerLevel >= events[eventType];
+    }
+    return powerLevel >= (eventsDefault ?? DefaultPowerLevels.eventsDefault);
+  },
+  canSendStateEvent: (powerLevels, eventType, powerLevel) => {
+    const { events, state_default: stateDefault } = powerLevels;
+    if (events && eventType && typeof events[eventType] === 'number') {
+      return powerLevel >= events[eventType];
+    }
+    return powerLevel >= (stateDefault ?? DefaultPowerLevels.stateDefault);
+  },
+  canDoAction: (powerLevels, action, powerLevel) => {
+    const requiredPL = powerLevels[action];
+    if (typeof requiredPL === 'number') {
+      return powerLevel >= requiredPL;
+    }
+    return powerLevel >= DefaultPowerLevels[action];
+  },
+};
+
+export const usePowerLevelsAPI = (powerLevels: IPowerLevels) => {
+  const getPowerLevel = useCallback(
+    (userId: string | undefined) => powerLevelAPI.getPowerLevel(powerLevels, userId),
     [powerLevels]
   );
 
   const canSendEvent = useCallback(
-    (eventType: string | undefined, powerLevel: number) => {
-      const { events, events_default: eventsDefault } = powerLevels;
-      if (events && eventType && typeof events[eventType] === 'number') {
-        return powerLevel >= events[eventType];
-      }
-      return powerLevel >= (eventsDefault ?? DefaultPowerLevels.eventsDefault);
-    },
+    (eventType: string | undefined, powerLevel: number) =>
+      powerLevelAPI.canSendEvent(powerLevels, eventType, powerLevel),
     [powerLevels]
   );
 
   const canSendStateEvent = useCallback(
-    (eventType: string | undefined, powerLevel: number) => {
-      const { events, state_default: stateDefault } = powerLevels;
-      if (events && eventType && typeof events[eventType] === 'number') {
-        return powerLevel >= events[eventType];
-      }
-      return powerLevel >= (stateDefault ?? DefaultPowerLevels.stateDefault);
-    },
+    (eventType: string | undefined, powerLevel: number) =>
+      powerLevelAPI.canSendStateEvent(powerLevels, eventType, powerLevel),
     [powerLevels]
   );
 
   const canDoAction = useCallback(
-    (action: 'invite' | 'redact' | 'kick' | 'ban' | 'historical', powerLevel: number) => {
-      const requiredPL = powerLevels[action];
-      if (typeof requiredPL === 'number') {
-        return powerLevel >= requiredPL;
-      }
-      return powerLevel >= DefaultPowerLevels[action];
-    },
+    (action: PowerLevelActions, powerLevel: number) =>
+      powerLevelAPI.canDoAction(powerLevels, action, powerLevel),
     [powerLevels]
   );
 
@@ -83,4 +173,4 @@ export function usePowerLevels(room: Room) {
     canSendStateEvent,
     canDoAction,
   };
-}
+};

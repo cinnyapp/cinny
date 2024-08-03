@@ -1,10 +1,9 @@
 /* eslint-disable import/prefer-default-export */
 import { useState, useEffect } from 'react';
-
-import initMatrix from '../../client/initMatrix';
+import { useMatrixClient } from './useMatrixClient';
 
 export function useAccountData(eventType) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const [event, setEvent] = useState(mx.getAccountData(eventType));
 
   useEffect(() => {
@@ -16,7 +15,7 @@ export function useAccountData(eventType) {
     return () => {
       mx.removeListener('accountData', handleChange);
     };
-  }, [eventType]);
+  }, [mx, eventType]);
 
   return event;
 }

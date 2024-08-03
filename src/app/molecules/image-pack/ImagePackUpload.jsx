@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './ImagePackUpload.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import { scaleDownImage } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
@@ -10,9 +9,10 @@ import Button from '../../atoms/button/Button';
 import Input from '../../atoms/input/Input';
 import IconButton from '../../atoms/button/IconButton';
 import CirclePlusIC from '../../../../public/res/ic/outlined/circle-plus.svg';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function ImagePackUpload({ onUpload }) {
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const inputRef = useRef(null);
   const shortcodeRef = useRef(null);
   const [imgFile, setImgFile] = useState(null);

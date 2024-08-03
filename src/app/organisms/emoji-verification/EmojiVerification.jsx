@@ -2,9 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './EmojiVerification.scss';
-import { twemojify } from '../../../util/twemojify';
 
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
 import { hasPrivateKey } from '../../../client/state/secretStorageKeys';
@@ -19,22 +17,24 @@ import Dialog from '../../molecules/dialog/Dialog';
 import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import { useStore } from '../../hooks/useStore';
 import { accessSecretStorage } from '../settings/SecretStorageAccess';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 function EmojiVerificationContent({ data, requestClose }) {
   const [sas, setSas] = useState(null);
   const [process, setProcess] = useState(false);
   const { request, targetDevice } = data;
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
   const mountStore = useStore();
   const beginStore = useStore();
 
   const beginVerification = async () => {
     if (
-      isCrossVerified(mx.deviceId)
-      && (mx.getCrossSigningId() === null || await mx.crypto.crossSigningInfo.isStoredInKeyCache('self_signing') === false)
+      isCrossVerified(mx, mx.deviceId) &&
+      (mx.getCrossSigningId() === null ||
+        (await mx.crypto.crossSigningInfo.isStoredInKeyCache('self_signing')) === false)
     ) {
-      if (!hasPrivateKey(getDefaultSSKey())) {
-        const keyData = await accessSecretStorage('Emoji verification');
+      if (!hasPrivateKey(getDefaultSSKey(mx))) {
+        const keyData = await accessSecretStorage(mx, 'Emoji verification');
         if (!keyData) {
           request.cancel();
           return;
@@ -80,7 +80,7 @@ function EmojiVerificationContent({ data, requestClose }) {
       }
     };
 
-    if (request === null) return null;
+    if (request === null) return undefined;
     const req = request;
     req.on('change', handleChange);
     return () => {
@@ -106,16 +106,20 @@ function EmojiVerificationContent({ data, requestClose }) {
           {sas.sas.emoji.map((emoji, i) => (
             // eslint-disable-next-line react/no-array-index-key
             <div className="emoji-verification__emoji-block" key={`${emoji[1]}-${i}`}>
-              <Text variant="h1">{twemojify(emoji[0])}</Text>
+              <Text variant="h1">{emoji[0]}</Text>
               <Text>{emoji[1]}</Text>
             </div>
           ))}
         </div>
         <div className="emoji-verification__buttons">
-          {process ? renderWait() : (
+          {process ? (
+            renderWait()
+          ) : (
             <>
-              <Button variant="primary" onClick={sasConfirm}>They match</Button>
-              <Button onClick={sasMismatch}>{'They don\'t match'}</Button>
+              <Button variant="primary" onClick={sasConfirm}>
+                They match
+              </Button>
+              <Button onClick={sasMismatch}>No match</Button>
             </>
           )}
         </div>
@@ -127,9 +131,7 @@ function EmojiVerificationContent({ data, requestClose }) {
     return (
       <div className="emoji-verification__content">
         <Text>Please accept the request from other device.</Text>
-        <div className="emoji-verification__buttons">
-          {renderWait()}
-        </div>
+        <div className="emoji-verification__buttons">{renderWait()}</div>
       </div>
     );
   }
@@ -138,11 +140,13 @@ function EmojiVerificationContent({ data, requestClose }) {
     <div className="emoji-verification__content">
       <Text>Click accept to start the verification process.</Text>
       <div className="emoji-verification__buttons">
-        {
-          process
-            ? renderWait()
-            : <Button variant="primary" onClick={beginVerification}>Accept</Button>
-        }
+        {process ? (
+          renderWait()
+        ) : (
+          <Button variant="primary" onClick={beginVerification}>
+            Accept
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -154,7 +158,7 @@ EmojiVerificationContent.propTypes = {
 
 function useVisibilityToggle() {
   const [data, setData] = useState(null);
-  const mx = initMatrix.matrixClient;
+  const mx = useMatrixClient();
 
   useEffect(() => {
     const handleOpen = (request, targetDevice) => {
@@ -166,7 +170,7 @@ function useVisibilityToggle() {
       navigation.removeListener(cons.events.navigation.EMOJI_VERIFICATION_OPENED, handleOpen);
       mx.removeListener('crypto.verification.request', handleOpen);
     };
-  }, []);
+  }, [mx]);
 
   const requestClose = () => setData(null);
 
@@ -180,19 +184,19 @@ function EmojiVerification() {
     <Dialog
       isOpen={data !== null}
       className="emoji-verification"
-      title={(
+      title={
         <Text variant="s1" weight="medium" primary>
           Emoji verification
         </Text>
-      )}
+      }
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
       onRequestClose={requestClose}
     >
-      {
-        data !== null
-          ? <EmojiVerificationContent data={data} requestClose={requestClose} />
-          : <div />
-      }
+      {data !== null ? (
+        <EmojiVerificationContent data={data} requestClose={requestClose} />
+      ) : (
+        <div />
+      )}
     </Dialog>
   );
 }

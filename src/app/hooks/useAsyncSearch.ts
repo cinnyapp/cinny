@@ -17,7 +17,8 @@ export type UseAsyncSearchOptions = AsyncSearchOption & {
 };
 
 export type SearchItemStrGetter<TSearchItem extends object | string | number> = (
-  searchItem: TSearchItem
+  searchItem: TSearchItem,
+  query: string
 ) => string | string[];
 
 export type UseAsyncSearchResult<TSearchItem extends object | string | number> = {
@@ -38,7 +39,7 @@ export const useAsyncSearch = <TSearchItem extends object | string | number>(
     setResult(undefined);
 
     const handleMatch: MatchHandler<TSearchItem> = (item, query) => {
-      const itemStr = getItemStr(item);
+      const itemStr = getItemStr(item, query);
       if (Array.isArray(itemStr))
         return !!itemStr.find((i) =>
           matchQuery(normalize(i, options?.normalizeOptions), query, options?.matchOptions)

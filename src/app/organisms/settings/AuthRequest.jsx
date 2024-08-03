@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import './AuthRequest.scss';
 
-import initMatrix from '../../../client/initMatrix';
 import { openReusableDialog } from '../../../client/action/navigation';
 
 import Text from '../../atoms/text/Text';
@@ -11,6 +10,7 @@ import Input from '../../atoms/input/Input';
 import Spinner from '../../atoms/spinner/Spinner';
 
 import { useStore } from '../../hooks/useStore';
+import { getSecret } from '../../../client/state/auth';
 
 let lastUsedPassword;
 const getAuthId = (password) => ({
@@ -18,7 +18,7 @@ const getAuthId = (password) => ({
   password,
   identifier: {
     type: 'm.id.user',
-    user: initMatrix.matrixClient.getUserId(),
+    user: getSecret().userId,
   },
 });
 

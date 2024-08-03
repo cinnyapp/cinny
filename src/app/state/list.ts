@@ -12,7 +12,7 @@ export type ListAction<T> =
 
 export const createListAtom = <T>() => {
   const baseListAtom = atom<T[]>([]);
-  return atom<T[], ListAction<T>>(
+  return atom<T[], [ListAction<T>], undefined>(
     (get) => get(baseListAtom),
     (get, set, action) => {
       const items = get(baseListAtom);

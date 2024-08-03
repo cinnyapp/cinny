@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useAtomValue } from 'jotai';
 import './SpaceAddExisting.scss';
 
-import { twemojify } from '../../../util/twemojify';
-
-import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
-import { joinRuleToIconSrc, getIdServer, genRoomVia } from '../../../util/matrixUtil';
+import { joinRuleToIconSrc, getIdServer } from '../../../util/matrixUtil';
 import { Debounce } from '../../../util/common';
 
 import Text from '../../atoms/text/Text';
@@ -24,25 +22,34 @@ import CrossIC from '../../../../public/res/ic/outlined/cross.svg';
 import SearchIC from '../../../../public/res/ic/outlined/search.svg';
 
 import { useStore } from '../../hooks/useStore';
+import { roomToParentsAtom } from '../../state/room/roomToParents';
+import { useDirects, useRooms, useSpaces } from '../../state/hooks/roomList';
+import { allRoomsAtom } from '../../state/room-list/roomList';
+import { mDirectAtom } from '../../state/mDirectList';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { getViaServers } from '../../plugins/via-servers';
 
-function SpaceAddExistingContent({ roomId }) {
+function SpaceAddExistingContent({ roomId, spaces: onlySpaces }) {
   const mountStore = useStore(roomId);
   const [debounce] = useState(new Debounce());
   const [process, setProcess] = useState(null);
   const [allRoomIds, setAllRoomIds] = useState([]);
   const [selected, setSelected] = useState([]);
   const [searchIds, setSearchIds] = useState(null);
-  const mx = initMatrix.matrixClient;
-  const {
-    spaces, rooms, directs, roomIdToParents,
-  } = initMatrix.roomList;
+  const mx = useMatrixClient();
+  const roomIdToParents = useAtomValue(roomToParentsAtom);
+  const mDirects = useAtomValue(mDirectAtom);
+  const spaces = useSpaces(mx, allRoomsAtom);
+  const rooms = useRooms(mx, allRoomsAtom, mDirects);
+  const directs = useDirects(mx, allRoomsAtom, mDirects);
 
   useEffect(() => {
-    const allIds = [...spaces, ...rooms, ...directs].filter((rId) => (
-      rId !== roomId && !roomIdToParents.get(rId)?.has(roomId)
-    ));
+    const roomIds = onlySpaces ? [...spaces] : [...rooms, ...directs];
+    const allIds = roomIds.filter(
+      (rId) => rId !== roomId && !roomIdToParents.get(rId)?.has(roomId)
+    );
     setAllRoomIds(allIds);
-  }, [roomId]);
+  }, [spaces, rooms, directs, roomIdToParents, roomId, onlySpaces]);
 
   const toggleSelection = (rId) => {
     if (process !== null) return;
@@ -63,25 +70,31 @@ function SpaceAddExistingContent({ roomId }) {
 
     const promises = selected.map((rId) => {
       const room = mx.getRoom(rId);
-      const via = genRoomVia(room);
+      const via = getViaServers(room);
       if (via.length === 0) {
         via.push(getIdServer(rId));
       }
 
-      return mx.sendStateEvent(roomId, 'm.space.child', {
-        auto_join: false,
-        suggested: false,
-        via,
-      }, rId);
+      return mx.sendStateEvent(
+        roomId,
+        'm.space.child',
+        {
+          auto_join: false,
+          suggested: false,
+          via,
+        },
+        rId
+      );
     });
 
     mountStore.setItem(true);
     await Promise.allSettled(promises);
     if (mountStore.getItem() !== true) return;
 
-    const allIds = [...spaces, ...rooms, ...directs].filter((rId) => (
-      rId !== roomId && !roomIdToParents.get(rId)?.has(roomId) && !selected.includes(rId)
-    ));
+    const roomIds = onlySpaces ? [...spaces] : [...rooms, ...directs];
+    const allIds = roomIds.filter(
+      (rId) => rId !== roomId && !roomIdToParents.get(rId)?.has(roomId) && !selected.includes(rId)
+    );
     setAllRoomIds(allIds);
     setProcess(null);
     setSelected([]);
@@ -98,9 +111,7 @@ function SpaceAddExistingContent({ roomId }) {
       const searchedIds = allRoomIds.filter((rId) => {
         let name = mx.getRoom(rId)?.name;
         if (!name) return false;
-        name = name.normalize('NFKC')
-          .toLocaleLowerCase()
-          .replace(/\s/g, '');
+        name = name.normalize('NFKC').toLocaleLowerCase().replace(/\s/g, '');
         return name.includes(term);
       });
       setSearchIds(searchedIds);
@@ -114,66 +125,64 @@ function SpaceAddExistingContent({ roomId }) {
 
   return (
     <>
-      <form onSubmit={(ev) => { ev.preventDefault(); }}>
+      <form
+        onSubmit={(ev) => {
+          ev.preventDefault();
+        }}
+      >
         <RawIcon size="small" src={SearchIC} />
-        <Input
-          name="searchInput"
-          onChange={handleSearch}
-          placeholder="Search room"
-          autoFocus
-        />
+        <Input name="searchInput" onChange={handleSearch} placeholder="Search room" autoFocus />
         <IconButton size="small" type="button" onClick={handleSearchClear} src={CrossIC} />
       </form>
       {searchIds?.length === 0 && <Text>No results found</Text>}
-      {
-        (searchIds || allRoomIds).map((rId) => {
-          const room = mx.getRoom(rId);
-          let imageSrc = room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
-          if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
+      {(searchIds || allRoomIds).map((rId) => {
+        const room = mx.getRoom(rId);
+        let imageSrc =
+          room.getAvatarFallbackMember()?.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
+        if (imageSrc === null) imageSrc = room.getAvatarUrl(mx.baseUrl, 24, 24, 'crop') || null;
 
-          const parentSet = roomIdToParents.get(rId);
-          const parentNames = parentSet
-            ? [...parentSet].map((parentId) => mx.getRoom(parentId).name)
-            : undefined;
-          const parents = parentNames ? parentNames.join(', ') : null;
+        const parentSet = roomIdToParents.get(rId);
+        const parentNames = parentSet
+          ? [...parentSet].map((parentId) => mx.getRoom(parentId).name)
+          : undefined;
+        const parents = parentNames ? parentNames.join(', ') : null;
 
-          const handleSelect = () => toggleSelection(rId);
+        const handleSelect = () => toggleSelection(rId);
 
-          return (
-            <RoomSelector
-              key={rId}
-              name={room.name}
-              parentName={parents}
-              roomId={rId}
-              imageSrc={directs.has(rId) ? imageSrc : null}
-              iconSrc={
-                directs.has(rId)
-                  ? null
-                  : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())
-              }
-              isUnread={false}
-              notificationCount={0}
-              isAlert={false}
-              onClick={handleSelect}
-              options={(
-                <Checkbox
-                  isActive={selected.includes(rId)}
-                  variant="positive"
-                  onToggle={handleSelect}
-                  tabIndex={-1}
-                  disabled={process !== null}
-                />
-              )}
-            />
-          );
-        })
-      }
+        return (
+          <RoomSelector
+            key={rId}
+            name={room.name}
+            parentName={parents}
+            roomId={rId}
+            imageSrc={mDirects.has(rId) ? imageSrc : null}
+            iconSrc={
+              mDirects.has(rId) ? null : joinRuleToIconSrc(room.getJoinRule(), room.isSpaceRoom())
+            }
+            isUnread={false}
+            notificationCount={0}
+            isAlert={false}
+            onClick={handleSelect}
+            options={
+              <Checkbox
+                isActive={selected.includes(rId)}
+                variant="positive"
+                onToggle={handleSelect}
+                tabIndex={-1}
+                disabled={process !== null}
+              />
+            }
+          />
+        );
+      })}
       {selected.length !== 0 && (
         <div className="space-add-existing__footer">
           {process && <Spinner size="small" />}
           <Text weight="medium">{process || `${selected.length} item selected`}</Text>
-          { !process && (
-            <Button onClick={handleAdd} variant="primary">Add</Button>
+          {!process && (
+            <Button onClick={handleAdd} variant="primary">
+              Add
+            </Button>
           )}
         </div>
       )}
@@ -182,47 +191,51 @@ function SpaceAddExistingContent({ roomId }) {
 }
 SpaceAddExistingContent.propTypes = {
   roomId: PropTypes.string.isRequired,
+  spaces: PropTypes.bool.isRequired,
 };
 
 function useVisibilityToggle() {
-  const [roomId, setRoomId] = useState(null);
+  const [data, setData] = useState(null);
 
   useEffect(() => {
-    const handleOpen = (rId) => setRoomId(rId);
+    const handleOpen = (roomId, spaces) =>
+      setData({
+        roomId,
+        spaces,
+      });
     navigation.on(cons.events.navigation.SPACE_ADDEXISTING_OPENED, handleOpen);
     return () => {
       navigation.removeListener(cons.events.navigation.SPACE_ADDEXISTING_OPENED, handleOpen);
     };
   }, []);
 
-  const requestClose = () => setRoomId(null);
+  const requestClose = () => setData(null);
 
-  return [roomId, requestClose];
+  return [data, requestClose];
 }
 
 function SpaceAddExisting() {
-  const [roomId, requestClose] = useVisibilityToggle();
-  const mx = initMatrix.matrixClient;
-  const room = mx.getRoom(roomId);
+  const [data, requestClose] = useVisibilityToggle();
+  const mx = useMatrixClient();
+  const room = mx.getRoom(data?.roomId);
 
   return (
     <Dialog
-      isOpen={roomId !== null}
+      isOpen={!!room}
       className="space-add-existing"
-      title={(
+      title={
         <Text variant="s1" weight="medium" primary>
-          {roomId && twemojify(room.name)}
-          <span style={{ color: 'var(--tc-surface-low)' }}> — add existing rooms</span>
+          {room && room.name}
+          <span style={{ color: 'var(--tc-surface-low)' }}>
+            {' '}
+            — add existing {data?.spaces ? 'spaces' : 'rooms'}
+          </span>
         </Text>
-      )}
+      }
       contentOptions={<IconButton src={CrossIC} onClick={requestClose} tooltip="Close" />}
       onRequestClose={requestClose}
     >
-      {
-        roomId
-          ? <SpaceAddExistingContent roomId={roomId} />
-          : <div />
-      }
+      {room ? <SpaceAddExistingContent roomId={room.roomId} spaces={data.spaces} /> : <div />}
     </Dialog>
   );
 }

@@ -1,6 +1,6 @@
 // https://github.com/cloudrac3r/cadencegq/blob/master/pug/mxid.pug
 
-export function hashCode(str) {
+function hashCode(str) {
   let hash = 0;
   let i;
   let chr;

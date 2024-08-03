@@ -3,10 +3,12 @@
     "sourceMap": true,
     "jsx": "react",
     "target": "ES2016",
+    "module": "ES2020",
     "allowJs": true,
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "Node",
+    "resolveJsonModule": true,
     "outDir": "dist",
     "skipLibCheck": true
   },
