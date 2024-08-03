@@ -39,17 +39,19 @@ import { RoomTopicViewer } from '../../../components/room-topic-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { useRoomTopic } from '../../../hooks/useRoomMeta';
+import { DateTime, useDateTime } from '../../../utils/time';
 
 const COMPACT_CARD_WIDTH = 548;
 
 type InviteCardProps = {
   room: Room;
   userId: string;
+  dateTime: DateTime;
   direct?: boolean;
   compact?: boolean;
   onNavigate: (roomId: string) => void;
 };
-function InviteCard({ room, userId, direct, compact, onNavigate }: InviteCardProps) {
+function InviteCard({ room, userId, dateTime, direct, compact, onNavigate }: InviteCardProps) {
   const mx = useMatrixClient();
   const roomName = room.name || room.getCanonicalAlias() || room.roomId;
   const member = room.getMember(userId);
@@ -100,7 +102,7 @@ function InviteCard({ room, userId, direct, compact, onNavigate }: InviteCardPro
           </Text>
         </Box>
         <Box shrink="No">
-          <Time size="T200" ts={memberTs} priority="300" />
+          <Time size="T200" ts={memberTs} dateTime={dateTime} priority="300" />
         </Box>
       </Box>
       <Box gap="300">
@@ -200,6 +202,7 @@ export function Invites() {
   const spaceInvites = useSpaceInvites(mx, allInvitesAtom);
   const roomInvites = useRoomInvites(mx, allInvitesAtom, mDirects);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dateTime = useDateTime();
   const [compact, setCompact] = useState(document.body.clientWidth <= COMPACT_CARD_WIDTH);
   useElementSizeObserver(
     useCallback(() => containerRef.current, []),
@@ -216,6 +219,7 @@ export function Invites() {
         key={roomId}
         room={room}
         userId={userId}
+        dateTime={dateTime}
         compact={compact}
         direct={direct}
         onNavigate={handleNavigate}

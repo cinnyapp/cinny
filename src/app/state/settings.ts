@@ -23,6 +23,7 @@ export interface Settings {
   urlPreview: boolean;
   encUrlPreview: boolean;
   showHiddenEvents: boolean;
+  hour12: boolean;
 
   showNotifications: boolean;
   isNotificationSounds: boolean;
@@ -47,6 +48,7 @@ const defaultSettings: Settings = {
   urlPreview: true,
   encUrlPreview: false,
   showHiddenEvents: false,
+  hour12: false,
 
   showNotifications: true,
   isNotificationSounds: true,

@@ -70,6 +70,7 @@ import { ContainerColor } from '../../../styles/ContainerColor.css';
 import { VirtualTile } from '../../../components/virtualizer';
 import { UserAvatar } from '../../../components/user-avatar';
 import { EncryptedContent } from '../../../features/room/message';
+import { DateTime, useDateTime } from '../../../utils/time';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -168,6 +169,7 @@ const useNotificationTimeline = (
 type RoomNotificationsGroupProps = {
   room: Room;
   notifications: INotification[];
+  dateTime: DateTime;
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
   onOpen: (roomId: string, eventId: string) => void;
@@ -175,6 +177,7 @@ type RoomNotificationsGroupProps = {
 function RoomNotificationsGroupComp({
   room,
   notifications,
+  dateTime,
   mediaAutoLoad,
   urlPreview,
   onOpen,
@@ -435,7 +438,7 @@ function RoomNotificationsGroupComp({
                         <b>{displayName}</b>
                       </Text>
                     </Username>
-                    <Time ts={event.origin_server_ts} />
+                    <Time ts={event.origin_server_ts} dateTime={dateTime} />
                   </Box>
                   <Box shrink="No" gap="200" alignItems="Center">
                     <Chip
@@ -482,6 +485,7 @@ const DEFAULT_REFRESH_MS = 7000;
 
 export function Notifications() {
   const mx = useMatrixClient();
+  const dateTime = useDateTime();
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
 
@@ -625,6 +629,7 @@ export function Notifications() {
                         <RoomNotificationsGroupComp
                           room={groupRoom}
                           notifications={group.notifications}
+                          dateTime={dateTime}
                           mediaAutoLoad={mediaAutoLoad}
                           urlPreview={urlPreview}
                           onOpen={navigateRoom}

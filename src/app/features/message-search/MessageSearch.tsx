@@ -23,6 +23,7 @@ import { SearchResultGroup } from './SearchResultGroup';
 import { SearchInput } from './SearchInput';
 import { SearchFilters } from './SearchFilters';
 import { VirtualTile } from '../../components/virtualizer';
+import { useDateTime } from '../../utils/time';
 
 const useSearchPathSearchParams = (searchParams: URLSearchParams): _SearchPathSearchParams =>
   useMemo(
@@ -53,6 +54,7 @@ export function MessageSearch({
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
   const allRooms = useRooms(mx, allRoomsAtom, mDirects);
+  const dateTime = useDateTime();
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -294,6 +296,7 @@ export function MessageSearch({
                     room={groupRoom}
                     highlights={highlights}
                     items={group.items}
+                    dateTime={dateTime}
                     mediaAutoLoad={mediaAutoLoad}
                     urlPreview={urlPreview}
                     onOpen={navigateRoom}

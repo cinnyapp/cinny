@@ -33,11 +33,13 @@ import { ResultItem } from './useMessageSearch';
 import { SequenceCard } from '../../components/sequence-card';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { UserAvatar } from '../../components/user-avatar';
+import { DateTime } from '../../utils/time';
 
 type SearchResultGroupProps = {
   room: Room;
   highlights: string[];
   items: ResultItem[];
+  dateTime: DateTime;
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
   onOpen: (roomId: string, eventId: string) => void;
@@ -46,6 +48,7 @@ export function SearchResultGroup({
   room,
   highlights,
   items,
+  dateTime,
   mediaAutoLoad,
   urlPreview,
   onOpen,
@@ -228,7 +231,7 @@ export function SearchResultGroup({
                         <b>{displayName}</b>
                       </Text>
                     </Username>
-                    <Time ts={event.origin_server_ts} />
+                    <Time ts={event.origin_server_ts} dateTime={dateTime} />
                   </Box>
                   <Box shrink="No" gap="200" alignItems="Center">
                     <Chip

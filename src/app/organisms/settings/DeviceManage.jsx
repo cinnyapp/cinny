@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './DeviceManage.scss';
-import dateFormat from 'dateformat';
+import { useDateTime } from '../../utils/time';
 
 import { isCrossVerified } from '../../../util/matrixUtil';
 import { openReusableDialog, openEmojiVerification } from '../../../client/action/navigation';
@@ -71,6 +71,7 @@ function DeviceManage() {
   const mountStore = useStore();
   mountStore.setItem(true);
   const isMeVerified = isCrossVerified(mx, mx.deviceId);
+  const dateTime = useDateTime();
 
   useEffect(() => {
     setProcessing([]);
@@ -184,9 +185,9 @@ function DeviceManage() {
               <Text variant="b3">
                 Last activity
                 <span style={{ color: 'var(--tc-surface-normal)' }}>
-                  {dateFormat(new Date(lastTS), ' hh:MM TT, dd/mm/yyyy')}
+                  {` ${  dateTime.full(new Date(lastTS))}`}
                 </span>
-                {lastIP ? ` at ${lastIP}` : ''}
+                {lastIP ? ` from ${lastIP}` : ''}
               </Text>
             )}
             {isCurrentDevice && (

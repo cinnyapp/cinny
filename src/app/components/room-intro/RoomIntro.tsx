@@ -8,7 +8,7 @@ import { getMemberDisplayName, getStateEvent } from '../../utils/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
+import { DateTime } from '../../utils/time';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { RoomAvatar } from '../room-avatar';
 import { nameInitials } from '../../utils/common';
@@ -17,9 +17,10 @@ import { mDirectAtom } from '../../state/mDirectList';
 
 export type RoomIntroProps = {
   room: Room;
+  dateTime: DateTime;
 };
 
-export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => {
+export const RoomIntro = as<'div', RoomIntroProps>(({ room, dateTime, ...props }, ref) => {
   const mx = useMatrixClient();
   const { navigateRoom } = useRoomNavigate();
   const mDirects = useAtomValue(mDirectAtom);
@@ -65,7 +66,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             <Text size="T200" priority="300">
               {'Created by '}
               <b>@{creatorName}</b>
-              {` on ${timeDayMonthYear(ts)} ${timeHourMinute(ts)}`}
+              {` on ${dateTime.full(ts)}`}
             </Text>
           )}
         </Box>

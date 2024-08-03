@@ -75,6 +75,7 @@ import {
 import { copyToClipboard } from '../../../utils/dom';
 import { useClientConfig } from '../../../hooks/useClientConfig';
 import { stopPropagation } from '../../../utils/keyboard';
+import { DateTime } from '../../../utils/time';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -630,6 +631,7 @@ export type MessageProps = {
   canSendReaction?: boolean;
   imagePackRooms?: Room[];
   relations?: Relations;
+  dateTime: DateTime;
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
   onUserClick: MouseEventHandler<HTMLButtonElement>;
@@ -653,6 +655,7 @@ export const Message = as<'div', MessageProps>(
       canSendReaction,
       imagePackRooms,
       relations,
+      dateTime,
       messageLayout,
       messageSpacing,
       onUserClick,
@@ -709,7 +712,7 @@ export const Message = as<'div', MessageProps>(
               </Text>
             </>
           )}
-          <Time ts={mEvent.getTs()} compact={messageLayout === 1} />
+          <Time ts={mEvent.getTs()} compact={messageLayout === 1} dateTime={dateTime} />
         </Box>
       </Box>
     );

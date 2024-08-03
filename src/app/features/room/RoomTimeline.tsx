@@ -99,7 +99,7 @@ import { markAsRead } from '../../../client/action/notifications';
 import { useDebounce } from '../../hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import * as css from './RoomTimeline.css';
-import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
+import { isSameDay, minuteDifference, useDateTime } from '../../utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
 import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
 import { usePowerLevelsAPI, usePowerLevelsContext } from '../../hooks/usePowerLevels';
@@ -448,6 +448,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const roomToParents = useAtomValue(roomToParentsAtom);
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  const dateTime = useDateTime();
 
   const imagePackRooms: Room[] = useMemo(() => {
     const allParentSpaces = [room.roomId].concat(
@@ -984,6 +985,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             data-message-id={mEventId}
             room={room}
             mEvent={mEvent}
+            dateTime={dateTime}
             messageSpacing={messageSpacing}
             messageLayout={messageLayout}
             collapse={collapse}
@@ -1056,6 +1058,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             data-message-id={mEventId}
             room={room}
             mEvent={mEvent}
+            dateTime={dateTime}
             messageSpacing={messageSpacing}
             messageLayout={messageLayout}
             collapse={collapse}
@@ -1165,6 +1168,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             data-message-id={mEventId}
             room={room}
             mEvent={mEvent}
+            dateTime={dateTime}
             messageSpacing={messageSpacing}
             messageLayout={messageLayout}
             collapse={collapse}
@@ -1216,7 +1220,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const parsed = parseMemberEvent(mEvent);
 
-        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+        const timeJSX = (
+          <Time ts={mEvent.getTs()} compact={messageLayout === 1} dateTime={dateTime} />
+        );
 
         return (
           <Event
@@ -1249,7 +1255,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+        const timeJSX = (
+          <Time ts={mEvent.getTs()} compact={messageLayout === 1} dateTime={dateTime} />
+        );
 
         return (
           <Event
@@ -1283,7 +1291,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+        const timeJSX = (
+          <Time ts={mEvent.getTs()} compact={messageLayout === 1} dateTime={dateTime} />
+        );
 
         return (
           <Event
@@ -1317,7 +1327,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+        const timeJSX = (
+          <Time ts={mEvent.getTs()} compact={messageLayout === 1} dateTime={dateTime} />
+        );
 
         return (
           <Event
@@ -1353,7 +1365,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+      const timeJSX = (
+        <Time ts={mEvent.getTs()} compact={messageLayout === 1} dateTime={dateTime} />
+      );
 
       return (
         <Event
@@ -1394,7 +1408,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+      const timeJSX = (
+        <Time ts={mEvent.getTs()} compact={messageLayout === 1} dateTime={dateTime} />
+      );
 
       return (
         <Event
@@ -1444,7 +1460,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       newDivider = prevEvent?.getId() === readUptoEventIdRef.current;
     }
     if (!dayDivider) {
-      dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), mEvent.getTs()) : false;
+      dayDivider = prevEvent ? !isSameDay(prevEvent.getDate()!, mEvent.getDate()!) : false;
     }
 
     const collapsed =
@@ -1454,7 +1470,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       prevEvent !== undefined &&
       prevEvent.getSender() === mEvent.getSender() &&
       prevEvent.getType() === mEvent.getType() &&
-      minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
+      minuteDifference(prevEvent.getDate()!, mEvent.getDate()!) < 2;
 
     const eventJSX = reactionOrEditEvent(mEvent)
       ? null
@@ -1488,9 +1504,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
               <Text size="L400">
                 {(() => {
-                  if (today(mEvent.getTs())) return 'Today';
-                  if (yesterday(mEvent.getTs())) return 'Yesterday';
-                  return timeDayMonthYear(mEvent.getTs());
+                  const date = mEvent.getDate()!;
+                  const { relativeTerm } = dateTime.relative(date);
+                  return relativeTerm || dateTime.date(date);
                 })()}
               </Text>
             </Badge>
@@ -1553,7 +1569,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 }`,
               }}
             >
-              <RoomIntro room={room} />
+              <RoomIntro room={room} dateTime={dateTime} />
             </div>
           )}
           {(canPaginateBack || !rangeAtStart) &&

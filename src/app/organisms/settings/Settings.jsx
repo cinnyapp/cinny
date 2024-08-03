@@ -69,6 +69,7 @@ function AppearanceSection() {
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const [hour12, setHour12] = useSetting(settingsAtom, 'hour12');
   const spacings = ['0', '100', '200', '300', '400', '500'];
 
   const [currentZoom, setCurrentZoom] = useState(`${pageZoom}`);
@@ -265,6 +266,11 @@ function AppearanceSection() {
             />
           }
           content={<Text variant="b3">Show hidden state and message events.</Text>}
+        />
+        <SettingTile
+          title="12-hour time"
+          options={<Toggle isActive={hour12} onToggle={() => setHour12(!hour12)} />}
+          content={<Text variant="b3">Show timestamps in 12-hour format.</Text>}
         />
       </div>
     </div>
