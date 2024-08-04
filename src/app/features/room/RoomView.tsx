@@ -25,6 +25,7 @@ const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
   if (evt.metaKey || evt.altKey || evt.ctrlKey) {
     return false;
   }
+
   // do not focus on F keys
   if (/^F\d+$/.test(code)) return false;
 
@@ -36,6 +37,9 @@ const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
     code.startsWith('Alt') ||
     code.startsWith('Control') ||
     code.startsWith('Arrow') ||
+    code.startsWith('Page') ||
+    code.startsWith('End') ||
+    code.startsWith('Home') ||
     code === 'Tab' ||
     code === 'Space' ||
     code === 'Enter' ||
