@@ -10,7 +10,15 @@ import {
   SidebarItemTooltip,
   SidebarItem,
 } from '../../components/sidebar';
-import { DirectTab, HomeTab, SpaceTabs, InboxTab, ExploreTab, UserTab } from './sidebar';
+import {
+  DirectTab,
+  HomeTab,
+  SpaceTabs,
+  InboxTab,
+  ExploreTab,
+  UserTab,
+  UnverifiedTab,
+} from './sidebar';
 import { openCreateRoom, openSearch } from '../../../client/action/navigation';
 
 export function SidebarNav() {
@@ -64,6 +72,8 @@ export function SidebarNav() {
                   )}
                 </SidebarItemTooltip>
               </SidebarItem>
+
+              <UnverifiedTab />
 
               <InboxTab />
               <UserTab />
