@@ -9,6 +9,7 @@ import {
   useIntersectionObserver,
 } from '../../hooks/useIntersectionObserver';
 import * as css from './UrlPreviewCard.css';
+import { tryDecodeURIComponent } from '../../utils/dom';
 
 const linkStyles = { color: color.Success.Main };
 
@@ -43,7 +44,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
               priority="300"
             >
               {typeof prev['og:site_name'] === 'string' && `${prev['og:site_name']} | `}
-              {decodeURIComponent(url)}
+              {tryDecodeURIComponent(url)}
             </Text>
             <Text truncate priority="400">
               <b>{prev['og:title']}</b>

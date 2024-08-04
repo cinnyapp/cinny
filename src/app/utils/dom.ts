@@ -196,3 +196,11 @@ export const setFavicon = (url: string): void => {
   if (!favicon) return;
   favicon.setAttribute('href', url);
 };
+
+export const tryDecodeURIComponent = (encodedURIComponent: string): string => {
+  try {
+    return decodeURIComponent(encodedURIComponent);
+  } catch {
+    return encodedURIComponent;
+  }
+};

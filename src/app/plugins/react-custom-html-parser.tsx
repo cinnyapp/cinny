@@ -26,6 +26,7 @@ import {
   testMatrixTo,
 } from './matrix-to';
 import { onEnterOrSpace } from '../utils/keyboard';
+import { tryDecodeURIComponent } from '../utils/dom';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
@@ -134,8 +135,8 @@ export const factoryRenderLinkifyWithMention = (
     attributes,
     content,
   }) => {
-    if (tagName === 'a' && testMatrixTo(decodeURIComponent(attributes.href))) {
-      const mention = mentionRender(decodeURIComponent(attributes.href));
+    if (tagName === 'a' && testMatrixTo(tryDecodeURIComponent(attributes.href))) {
+      const mention = mentionRender(tryDecodeURIComponent(attributes.href));
       if (mention) return mention;
     }
 
@@ -325,11 +326,11 @@ export const getReactCustomHtmlParser = (
           }
         }
 
-        if (name === 'a' && testMatrixTo(decodeURIComponent(props.href))) {
+        if (name === 'a' && testMatrixTo(tryDecodeURIComponent(props.href))) {
           const mention = renderMatrixMention(
             mx,
             roomId,
-            decodeURIComponent(props.href),
+            tryDecodeURIComponent(props.href),
             makeMentionCustomProps(params.handleMentionClick)
           );
           if (mention) return mention;
