@@ -183,17 +183,17 @@ function MessageNotifications() {
       removed,
       data
     ) => {
+      if (mx.getSyncState() !== 'SYNCING') return;
+      if (document.hasFocus() && (selectedRoomId === room?.roomId || notificationSelected)) return;
       if (
-        mx.getSyncState() !== 'SYNCING' ||
-        selectedRoomId === room?.roomId ||
-        notificationSelected ||
         !room ||
         !data.liveEvent ||
         room.isSpaceRoom() ||
         !isNotificationEvent(mEvent) ||
         getNotificationType(mx, room.roomId) === NotificationType.Mute
-      )
+      ) {
         return;
+      }
 
       const sender = mEvent.getSender();
       const eventId = mEvent.getId();
