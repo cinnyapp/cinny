@@ -25,6 +25,7 @@ import {
   parseMatrixToUser,
   testMatrixTo,
 } from '../../plugins/matrix-to';
+import { tryDecodeURIComponent } from '../../utils/dom';
 
 const markNodeToType: Record<string, MarkType> = {
   b: MarkType.Bold,
@@ -73,7 +74,7 @@ const elementToInlineNode = (node: Element): MentionElement | EmoticonElement | 
     return createEmoticonElement(src, alt || 'Unknown Emoji');
   }
   if (node.name === 'a') {
-    const href = decodeURIComponent(node.attribs.href);
+    const href = tryDecodeURIComponent(node.attribs.href);
     if (typeof href !== 'string') return undefined;
     if (testMatrixTo(href)) {
       const userMention = parseMatrixToUser(href);
