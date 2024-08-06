@@ -186,9 +186,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       Transforms.insertFragment(editor, msgDraft);
     }, [editor, msgDraft]);
 
-    useEffect(() => {
-      if (!mobileOrTablet()) ReactEditor.focus(editor);
-      return () => {
+    useEffect(
+      () => () => {
         if (!isEmptyEditor(editor)) {
           const parsedDraft = JSON.parse(JSON.stringify(editor.children));
           setMsgDraft(parsedDraft);
@@ -197,8 +196,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
         resetEditor(editor);
         resetEditorHistory(editor);
-      };
-    }, [roomId, editor, setMsgDraft]);
+      },
+      [roomId, editor, setMsgDraft]
+    );
 
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
