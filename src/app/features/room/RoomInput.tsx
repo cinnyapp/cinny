@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
-import { EventType, IContent, MsgType, Room } from 'matrix-js-sdk';
+import { EventType, IContent, MsgType, RelationType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
 import {
@@ -310,9 +310,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             event_id: replyDraft.eventId,
           },
         };
-        if (replyDraft.relatesTo?.rel_type === 'm.thread') {
-          content['m.relates_to'].event_id = replyDraft.relatesTo.event_id;
-          content['m.relates_to'].rel_type = 'm.thread';
+        if (replyDraft.relation?.rel_type === RelationType.Thread) {
+          content['m.relates_to'].event_id = replyDraft.relation.event_id;
+          content['m.relates_to'].rel_type = RelationType.Thread;
           content['m.relates_to'].is_falling_back = false;
         }
       }

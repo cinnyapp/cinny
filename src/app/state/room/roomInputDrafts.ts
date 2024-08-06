@@ -41,7 +41,7 @@ export type IReplyDraft = {
   eventId: string;
   body: string;
   formattedBody?: string | undefined;
-  relatesTo?: IEventRelation | undefined;
+  relation?: IEventRelation | undefined;
 };
 const createReplyDraftAtom = () => atom<IReplyDraft | undefined>(undefined);
 export type TReplyDraftAtom = ReturnType<typeof createReplyDraftAtom>;

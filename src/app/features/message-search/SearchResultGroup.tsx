@@ -148,7 +148,7 @@ export function SearchResultGroup({
     }
   );
 
-  const handleOpenClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
+  const handleOpenClick: MouseEventHandler = (evt) => {
     const eventId = evt.currentTarget.getAttribute('data-event-id');
     if (!eventId) return;
     onOpen(room.roomId, eventId);
@@ -183,15 +183,16 @@ export function SearchResultGroup({
             event.sender;
           const senderAvatarMxc = getMemberAvatarMxc(room, event.sender);
 
+          const relation = event.content['m.relates_to'];
           const mainEventId =
-            event.content['m.relates_to']?.rel_type === RelationType.Replace
-              ? event.content['m.relates_to'].event_id
-              : event.event_id;
+            relation?.rel_type === RelationType.Replace ? relation.event_id : event.event_id;
 
           const getContent = (() =>
             event.content['m.new_content'] ?? event.content) as GetContentCallback;
 
-          const replyEventId = event.content['m.relates_to']?.['m.in_reply_to']?.event_id;
+          const replyEventId = relation?.['m.in_reply_to']?.event_id;
+          const threadRootId =
+            relation?.rel_type === RelationType.Thread ? relation.event_id : undefined;
 
           return (
             <SequenceCard
@@ -240,11 +241,10 @@ export function SearchResultGroup({
                 </Box>
                 {replyEventId && (
                   <Reply
-                    as="button"
                     mx={mx}
                     room={room}
-                    eventId={replyEventId}
-                    data-event-id={replyEventId}
+                    replyEventId={replyEventId}
+                    threadRootId={threadRootId}
                     onClick={handleOpenClick}
                   />
                 )}

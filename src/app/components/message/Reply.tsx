@@ -1,7 +1,7 @@
 import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { MouseEventHandler, ReactNode, useEffect, useMemo, useState } from 'react';
 import to from 'await-to-js';
 import classNames from 'classnames';
 import colorMXID from '../../../util/colorMXID';
@@ -22,6 +22,7 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
     <Box
       className={classNames(css.Reply, className)}
       alignItems="Center"
+      alignSelf="Start"
       gap="100"
       {...props}
       ref={ref}
@@ -40,13 +41,16 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
 type ReplyProps = {
   mx: MatrixClient;
   room: Room;
-  timelineSet?: EventTimelineSet;
-  eventId: string;
+  timelineSet?: EventTimelineSet | undefined;
+  replyEventId: string;
+  threadRootId?: string | undefined;
+  onClick?: MouseEventHandler | undefined;
 };
 
-export const Reply = as<'div', ReplyProps>(({ mx, room, timelineSet, eventId, ...props }, ref) => {
+export const Reply = as<'div', ReplyProps>((_, ref) => {
+  const { mx, room, timelineSet, replyEventId, threadRootId, onClick, ...props } = _;
   const [replyEvent, setReplyEvent] = useState<MatrixEvent | null | undefined>(
-    timelineSet?.findEventById(eventId)
+    timelineSet?.findEventById(replyEventId)
   );
   const placeholderWidth = useMemo(() => randomNumberBetween(40, 400), []);
 
@@ -62,7 +66,7 @@ export const Reply = as<'div', ReplyProps>(({ mx, room, timelineSet, eventId, ..
   useEffect(() => {
     let disposed = false;
     const loadEvent = async () => {
-      const [err, evt] = await to(mx.fetchRoomEvent(room.roomId, eventId));
+      const [err, evt] = await to(mx.fetchRoomEvent(room.roomId, replyEventId));
       const mEvent = new MatrixEvent(evt);
       if (disposed) return;
       if (err) {
@@ -78,37 +82,53 @@ export const Reply = as<'div', ReplyProps>(({ mx, room, timelineSet, eventId, ..
     return () => {
       disposed = true;
     };
-  }, [replyEvent, mx, room, eventId]);
+  }, [replyEvent, mx, room, replyEventId]);
 
   const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
   const bodyJSX = body ? scaleSystemEmoji(trimReplyFromBody(body)) : fallbackBody;
 
   return (
-    <ReplyLayout
-      userColor={sender ? colorMXID(sender) : undefined}
-      username={
-        sender && (
-          <Text size="T300" truncate>
-            <b>{getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)}</b>
-          </Text>
-        )
-      }
-      {...props}
-      ref={ref}
-    >
-      {replyEvent !== undefined ? (
-        <Text size="T300" truncate>
-          {badEncryption ? <MessageBadEncryptedContent /> : bodyJSX}
-        </Text>
-      ) : (
-        <LinePlaceholder
-          style={{
-            backgroundColor: color.SurfaceVariant.ContainerActive,
-            maxWidth: toRem(placeholderWidth),
-            width: '100%',
-          }}
-        />
+    <Box direction="Column" alignSelf="Start" {...props} ref={ref}>
+      {threadRootId && (
+        <Box
+          as="button"
+          className={css.ThreadIndicator}
+          alignItems="Center"
+          alignSelf="Start"
+          data-event-id={threadRootId}
+          onClick={onClick}
+        >
+          <Icon className={css.ThreadIndicatorIcon} src={Icons.Message} />
+          <Text size="T200">Threaded reply</Text>
+        </Box>
       )}
-    </ReplyLayout>
+      <ReplyLayout
+        as="button"
+        userColor={sender ? colorMXID(sender) : undefined}
+        username={
+          sender && (
+            <Text size="T300" truncate>
+              <b>{getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)}</b>
+            </Text>
+          )
+        }
+        data-event-id={replyEventId}
+        onClick={onClick}
+      >
+        {replyEvent !== undefined ? (
+          <Text size="T300" truncate>
+            {badEncryption ? <MessageBadEncryptedContent /> : bodyJSX}
+          </Text>
+        ) : (
+          <LinePlaceholder
+            style={{
+              backgroundColor: color.SurfaceVariant.ContainerActive,
+              maxWidth: toRem(placeholderWidth),
+              width: '100%',
+            }}
+          />
+        )}
+      </ReplyLayout>
+    </Box>
   );
 });

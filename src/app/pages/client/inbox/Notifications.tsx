@@ -20,6 +20,7 @@ import {
   IRoomEvent,
   JoinRule,
   Method,
+  RelationType,
   Room,
 } from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -352,7 +353,7 @@ function RoomNotificationsGroupComp({
     }
   );
 
-  const handleOpenClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
+  const handleOpenClick: MouseEventHandler = (evt) => {
     const eventId = evt.currentTarget.getAttribute('data-event-id');
     if (!eventId) return;
     onOpen(room.roomId, eventId);
@@ -403,7 +404,10 @@ function RoomNotificationsGroupComp({
           const senderAvatarMxc = getMemberAvatarMxc(room, event.sender);
           const getContent = (() => event.content) as GetContentCallback;
 
-          const replyEventId = event.content['m.relates_to']?.['m.in_reply_to']?.event_id;
+          const relation = event.content['m.relates_to'];
+          const replyEventId = relation?.['m.in_reply_to']?.event_id;
+          const threadRootId =
+            relation?.rel_type === RelationType.Thread ? relation.event_id : undefined;
 
           return (
             <SequenceCard
@@ -452,11 +456,10 @@ function RoomNotificationsGroupComp({
                 </Box>
                 {replyEventId && (
                   <Reply
-                    as="button"
                     mx={mx}
                     room={room}
-                    eventId={replyEventId}
-                    data-event-id={replyEventId}
+                    replyEventId={replyEventId}
+                    threadRootId={threadRootId}
                     onClick={handleOpenClick}
                   />
                 )}
