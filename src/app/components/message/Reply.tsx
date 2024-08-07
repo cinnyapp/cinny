@@ -88,7 +88,7 @@ export const Reply = as<'div', ReplyProps>((_, ref) => {
   const bodyJSX = body ? scaleSystemEmoji(trimReplyFromBody(body)) : fallbackBody;
 
   return (
-    <Box direction="Column" alignSelf="Start" {...props} ref={ref}>
+    <Box direction="Column" {...props} ref={ref}>
       {threadRootId && (
         <Box
           as="button"
