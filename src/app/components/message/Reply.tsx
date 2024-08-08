@@ -38,6 +38,13 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
   )
 );
 
+export const ThreadIndicator = as<'div'>(({ ...props }, ref) => (
+  <Box className={css.ThreadIndicator} alignItems="Center" alignSelf="Start" {...props} ref={ref}>
+    <Icon className={css.ThreadIndicatorIcon} src={Icons.Message} />
+    <Text size="T200">Threaded reply</Text>
+  </Box>
+));
+
 type ReplyProps = {
   mx: MatrixClient;
   room: Room;
@@ -90,17 +97,7 @@ export const Reply = as<'div', ReplyProps>((_, ref) => {
   return (
     <Box direction="Column" {...props} ref={ref}>
       {threadRootId && (
-        <Box
-          as="button"
-          className={css.ThreadIndicator}
-          alignItems="Center"
-          alignSelf="Start"
-          data-event-id={threadRootId}
-          onClick={onClick}
-        >
-          <Icon className={css.ThreadIndicatorIcon} src={Icons.Message} />
-          <Text size="T200">Threaded reply</Text>
-        </Box>
+        <ThreadIndicator as="button" data-event-id={threadRootId} onClick={onClick} />
       )}
       <ReplyLayout
         as="button"

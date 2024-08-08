@@ -8,9 +8,11 @@ export const ReplyBend = style({
 export const ThreadIndicator = style({
   opacity: config.opacity.P300,
   gap: '0.125rem',
-  cursor: 'pointer',
 
   selectors: {
+    'button&': {
+      cursor: 'pointer',
+    },
     ':hover&': {
       opacity: config.opacity.P500,
     },

@@ -106,7 +106,7 @@ import { CommandAutocomplete } from './CommandAutocomplete';
 import { Command, SHRUG, useCommands } from '../../hooks/useCommands';
 import { mobileOrTablet } from '../../utils/user-agent';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
-import { ReplyLayout } from '../../components/message';
+import { ReplyLayout, ThreadIndicator } from '../../components/message';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
 
 interface RoomInputProps {
@@ -494,22 +494,25 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   >
                     <Icon src={Icons.Cross} size="50" />
                   </IconButton>
-                  <ReplyLayout
-                    userColor={colorMXID(replyDraft.userId)}
-                    username={
+                  <Box direction="Column">
+                    {replyDraft.relation?.rel_type === RelationType.Thread && <ThreadIndicator />}
+                    <ReplyLayout
+                      userColor={colorMXID(replyDraft.userId)}
+                      username={
+                        <Text size="T300" truncate>
+                          <b>
+                            {getMemberDisplayName(room, replyDraft.userId) ??
+                              getMxIdLocalPart(replyDraft.userId) ??
+                              replyDraft.userId}
+                          </b>
+                        </Text>
+                      }
+                    >
                       <Text size="T300" truncate>
-                        <b>
-                          {getMemberDisplayName(room, replyDraft.userId) ??
-                            getMxIdLocalPart(replyDraft.userId) ??
-                            replyDraft.userId}
-                        </b>
+                        {trimReplyFromBody(replyDraft.body)}
                       </Text>
-                    }
-                  >
-                    <Text size="T300" truncate>
-                      {trimReplyFromBody(replyDraft.body)}
-                    </Text>
-                  </ReplyLayout>
+                    </ReplyLayout>
+                  </Box>
                 </Box>
               </div>
             )
