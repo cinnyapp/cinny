@@ -909,9 +909,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const replyEvt = room.findEventById(replyId);
       if (!replyEvt) return;
       const editedReply = getEditedEvent(replyId, replyEvt, room.getUnfilteredTimelineSet());
-      // TODO: replace with `RoomMessageEventContent` once matrix-js-sdk is updated.
       const content: IContent = editedReply?.getContent()['m.new_content'] ?? replyEvt.getContent();
-      const { body, formatted_body: formattedBody, 'm.relates_to': relation } = content;
+      const { body, formatted_body: formattedBody } = content;
+      const { 'm.relates_to': relation } = replyEvt.getOriginalContent();
       const senderId = replyEvt.getSender();
       if (senderId && typeof body === 'string') {
         setReplyDraft({
