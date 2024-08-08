@@ -390,7 +390,7 @@ export const getEditedEvent = (
 };
 
 export const canEditEvent = (mx: MatrixClient, mEvent: MatrixEvent) => {
-  const content = mEvent.getWireContent();
+  const content = mEvent.getContent();
   const relationType = content['m.relates_to']?.rel_type;
   return (
     mEvent.getSender() === mx.getUserId() &&
