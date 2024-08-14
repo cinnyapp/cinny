@@ -46,6 +46,7 @@ import {
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
 import { Opts as LinkifyOpts } from 'linkifyjs';
+import { useTranslation } from 'react-i18next';
 import {
   decryptFile,
   eventWithShortcode,
@@ -958,6 +959,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     },
     [editor]
   );
+  const { t } = useTranslation();
 
   const renderMatrixEvent = useMatrixEventRenderer<
     [string, MatrixEvent, number, EventTimelineSet, boolean]
@@ -1273,7 +1275,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 <Box grow="Yes" direction="Column">
                   <Text size="T300" priority="300">
                     <b>{senderName}</b>
-                    {' changed room name'}
+                    {t('Organisms.RoomCommon.changed_room_name')}
                   </Text>
                 </Box>
               }
