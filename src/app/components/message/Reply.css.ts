@@ -7,7 +7,7 @@ export const ReplyBend = style({
 
 export const ThreadIndicator = style({
   opacity: config.opacity.P300,
-  gap: '0.125rem',
+  gap: toRem(2),
 
   selectors: {
     'button&': {
@@ -20,8 +20,8 @@ export const ThreadIndicator = style({
 });
 
 export const ThreadIndicatorIcon = style({
-  width: '0.875rem',
-  height: '0.875rem',
+  width: toRem(14),
+  height: toRem(14),
 });
 
 export const Reply = style({
