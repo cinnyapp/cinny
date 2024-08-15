@@ -16,6 +16,7 @@ import {
   EventTimeline,
   EventTimelineSet,
   EventTimelineSetHandlerMap,
+  IContent,
   IEncryptedFile,
   MatrixClient,
   MatrixEvent,
@@ -837,13 +838,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     markAsRead(mx, room.roomId);
   };
 
-  const handleOpenReply: MouseEventHandler<HTMLButtonElement> = useCallback(
+  const handleOpenReply: MouseEventHandler = useCallback(
     async (evt) => {
-      const replyId = evt.currentTarget.getAttribute('data-reply-id');
-      if (typeof replyId !== 'string') return;
-      const replyTimeline = getEventTimeline(room, replyId);
+      const targetId = evt.currentTarget.getAttribute('data-event-id');
+      if (!targetId) return;
+      const replyTimeline = getEventTimeline(room, targetId);
       const absoluteIndex =
-        replyTimeline && getEventIdAbsoluteIndex(timeline.linkedTimelines, replyTimeline, replyId);
+        replyTimeline && getEventIdAbsoluteIndex(timeline.linkedTimelines, replyTimeline, targetId);
 
       if (typeof absoluteIndex === 'number') {
         scrollToItem(absoluteIndex, {
@@ -858,7 +859,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         });
       } else {
         setTimeline(getEmptyTimeline());
-        loadEventTimeline(replyId);
+        loadEventTimeline(targetId);
       }
     },
     [room, timeline, scrollToItem, loadEventTimeline]
@@ -909,8 +910,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const replyEvt = room.findEventById(replyId);
       if (!replyEvt) return;
       const editedReply = getEditedEvent(replyId, replyEvt, room.getUnfilteredTimelineSet());
-      const { body, formatted_body: formattedBody }: Record<string, string> =
-        editedReply?.getContent()['m.new_content'] ?? replyEvt.getContent();
+      const content: IContent = editedReply?.getContent()['m.new_content'] ?? replyEvt.getContent();
+      const { body, formatted_body: formattedBody } = content;
+      const { 'm.relates_to': relation } = replyEvt.getOriginalContent();
       const senderId = replyEvt.getSender();
       if (senderId && typeof body === 'string') {
         setReplyDraft({
@@ -918,6 +920,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           eventId: replyId,
           body,
           formattedBody,
+          relation,
         });
         setTimeout(() => ReactEditor.focus(editor), 100);
       }
@@ -969,7 +972,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const reactionRelations = getEventReactions(timelineSet, mEventId);
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
-        const { replyEventId } = mEvent;
+        const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
 
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
@@ -1004,12 +1007,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             reply={
               replyEventId && (
                 <Reply
-                  as="button"
                   mx={mx}
                   room={room}
                   timelineSet={timelineSet}
-                  eventId={replyEventId}
-                  data-reply-id={replyEventId}
+                  replyEventId={replyEventId}
+                  threadRootId={threadRootId}
                   onClick={handleOpenReply}
                 />
               )
@@ -1050,7 +1052,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const reactionRelations = getEventReactions(timelineSet, mEventId);
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
-        const { replyEventId } = mEvent;
+        const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
 
         return (
@@ -1077,12 +1079,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             reply={
               replyEventId && (
                 <Reply
-                  as="button"
                   mx={mx}
                   room={room}
                   timelineSet={timelineSet}
-                  eventId={replyEventId}
-                  data-reply-id={replyEventId}
+                  replyEventId={replyEventId}
+                  threadRootId={threadRootId}
                   onClick={handleOpenReply}
                 />
               )

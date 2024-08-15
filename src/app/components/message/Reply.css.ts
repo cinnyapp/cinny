@@ -5,6 +5,25 @@ export const ReplyBend = style({
   flexShrink: 0,
 });
 
+export const ThreadIndicator = style({
+  opacity: config.opacity.P300,
+  gap: toRem(2),
+
+  selectors: {
+    'button&': {
+      cursor: 'pointer',
+    },
+    ':hover&': {
+      opacity: config.opacity.P500,
+    },
+  },
+});
+
+export const ThreadIndicatorIcon = style({
+  width: toRem(14),
+  height: toRem(14),
+});
+
 export const Reply = style({
   marginBottom: toRem(1),
   minWidth: 0,

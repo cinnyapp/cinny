@@ -2,6 +2,7 @@ import { atom } from 'jotai';
 import { atomFamily } from 'jotai/utils';
 import { Descendant } from 'slate';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
+import { IEventRelation } from 'matrix-js-sdk';
 import { TListAtom, createListAtom } from '../list';
 import { createUploadAtomFamily } from '../upload';
 import { TUploadContent } from '../../utils/matrix';
@@ -39,7 +40,8 @@ export type IReplyDraft = {
   userId: string;
   eventId: string;
   body: string;
-  formattedBody?: string;
+  formattedBody?: string | undefined;
+  relation?: IEventRelation | undefined;
 };
 const createReplyDraftAtom = () => atom<IReplyDraft | undefined>(undefined);
 export type TReplyDraftAtom = ReturnType<typeof createReplyDraftAtom>;
