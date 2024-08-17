@@ -16,7 +16,6 @@ import {
   EventTimeline,
   EventTimelineSet,
   EventTimelineSetHandlerMap,
-  IEncryptedFile,
   MatrixClient,
   MatrixEvent,
   Room,
@@ -46,12 +45,7 @@ import {
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
 import { Opts as LinkifyOpts } from 'linkifyjs';
-import {
-  decryptFile,
-  eventWithShortcode,
-  factoryEventSentBy,
-  getMxIdLocalPart,
-} from '../../utils/matrix';
+import { eventWithShortcode, factoryEventSentBy, getMxIdLocalPart } from '../../utils/matrix';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
@@ -216,18 +210,6 @@ export const getEventIdAbsoluteIndex = (
     .reduce((accValue, timeline) => timeline.getEvents().length + accValue, 0);
   return baseIndex + eventIndex;
 };
-
-export const factoryGetFileSrcUrl =
-  (httpUrl: string, mimeType: string, encFile?: IEncryptedFile) => async (): Promise<string> => {
-    if (encFile) {
-      if (typeof httpUrl !== 'string') throw new Error('Malformed event');
-      const encRes = await fetch(httpUrl, { method: 'GET' });
-      const encData = await encRes.arrayBuffer();
-      const decryptedBlob = await decryptFile(encData, mimeType, encFile);
-      return URL.createObjectURL(decryptedBlob);
-    }
-    return httpUrl;
-  };
 
 type RoomTimelineProps = {
   room: Room;
