@@ -261,6 +261,17 @@ export const isEmptyEditor = (editor: Editor): boolean => {
   return false;
 };
 
+export const getAttemptedCommand = (editor: Editor): string | undefined => {
+  const lineBlock = editor.children[0];
+  if (!Element.isElement(lineBlock)) return undefined;
+  if (lineBlock.type !== BlockType.Paragraph) return undefined;
+
+  const [firstInline] = lineBlock.children;
+  const isCommand = Text.isText(firstInline) && firstInline.text[0] === '/';
+  if (isCommand) return firstInline.text.split(' ')[0];
+  return undefined;
+};
+
 export const getBeginCommand = (editor: Editor): string | undefined => {
   const lineBlock = editor.children[0];
   if (!Element.isElement(lineBlock)) return undefined;
