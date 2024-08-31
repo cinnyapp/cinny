@@ -52,10 +52,12 @@ import {
   trimCustomHtml,
   isEmptyEditor,
   getBeginCommand,
+  getAttemptedCommand,
   trimCommand,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
+import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { TUploadContent, encryptFile, getImageInfo, getMxIdLocalPart } from '../../utils/matrix';
 import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
 import { useFilePicker } from '../../hooks/useFilePicker';
@@ -242,10 +244,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       contents.forEach((content) => mx.sendMessage(roomId, content));
     };
 
-    const submit = useCallback(() => {
+    const submit = useCallback(async () => {
       uploadBoardHandlers.current?.handleSend();
 
-      const commandName = getBeginCommand(editor);
+      const attemptedCommandName = getAttemptedCommand(editor);
+      if (attemptedCommandName) {
+        const sendAsMessage = await confirmDialog(
+          'Invalid Command',
+          `"${attemptedCommandName}" is not a valid command. Would you like to send this as a message?`,
+          'Send as message'
+        );
+        if (!sendAsMessage) {
+          ReactEditor.focus(editor);
+          return;
+        }
+      }
 
       let plainText = toPlainText(editor.children).trim();
       let customHtml = trimCustomHtml(
@@ -257,6 +270,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       );
       let msgType = MsgType.Text;
 
+      const commandName = getBeginCommand(editor);
       if (commandName) {
         plainText = trimCommand(commandName, plainText);
         customHtml = trimCommand(commandName, customHtml);
