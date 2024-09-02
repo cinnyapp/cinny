@@ -3,7 +3,8 @@ import { Box, Icon, IconButton, Icons, Line, Scroll, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { IJoinRuleEventContent, JoinRule, RestrictedAllowType, Room } from 'matrix-js-sdk';
+import { JoinRule, RestrictedAllowType, Room } from 'matrix-js-sdk';
+import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
 import { useSpace } from '../../hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '../../components/page';
 import { HierarchyItem, useSpaceHierarchy } from '../../hooks/useSpaceHierarchy';
@@ -258,7 +259,7 @@ export function Lobby() {
         const joinRuleContent = getStateEvent(
           itemRoom,
           StateEvent.RoomJoinRules
-        )?.getContent<IJoinRuleEventContent>();
+        )?.getContent<RoomJoinRulesEventContent>();
 
         if (joinRuleContent) {
           const allow =
