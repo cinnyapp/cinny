@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './RoomVisibility.scss';
-
+import { EventTimeline } from 'matrix-js-sdk';
 
 import Text from '../../atoms/text/Text';
 import RadioButton from '../../atoms/button/RadioButton';
@@ -74,7 +74,7 @@ function RoomVisibility({ roomId }) {
   const roomVersion = Number(mCreate?.room_version ?? 0);
 
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel || 0;
-  const canChange = room.currentState.hasSufficientPowerLevelFor('state_default', myPowerlevel);
+  const canChange = room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.hasSufficientPowerLevelFor('state_default', myPowerlevel);
 
   const items = [{
     iconSrc: isSpace ? SpaceLockIC : HashLockIC,

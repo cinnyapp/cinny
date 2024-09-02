@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './ProfileViewer.scss';
+import { EventTimeline } from 'matrix-js-sdk';
 
 import cons from '../../../client/state/cons';
 import navigation from '../../../client/state/navigation';
@@ -44,13 +45,14 @@ function ModerationTools({ roomId, userId }) {
 
   const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel || 0;
   const powerLevel = roomMember?.powerLevel || 0;
+  const roomState = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
   const canIKick =
     roomMember?.membership === 'join' &&
-    room.currentState.hasSufficientPowerLevelFor('kick', myPowerLevel) &&
+    roomState?.hasSufficientPowerLevelFor('kick', myPowerLevel) &&
     powerLevel < myPowerLevel;
   const canIBan =
     ['join', 'leave'].includes(roomMember?.membership) &&
-    room.currentState.hasSufficientPowerLevelFor('ban', myPowerLevel) &&
+    roomState?.hasSufficientPowerLevelFor('ban', myPowerLevel) &&
     powerLevel < myPowerLevel;
 
   const handleKick = (e) => {
@@ -169,8 +171,10 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
 
   const myPowerlevel = room.getMember(mx.getUserId())?.powerLevel || 0;
   const userPL = room.getMember(userId)?.powerLevel || 0;
+  const roomState = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
+
   const canIKick =
-    room.currentState.hasSufficientPowerLevelFor('kick', myPowerlevel) && userPL < myPowerlevel;
+  roomState?.hasSufficientPowerLevelFor('kick', myPowerlevel) && userPL < myPowerlevel;
 
   const isBanned = member?.membership === 'ban';
 
@@ -343,8 +347,9 @@ function ProfileViewer() {
     const powerLevel = roomMember?.powerLevel || 0;
     const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel || 0;
 
+    const roomState = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
     const canChangeRole =
-      room.currentState.maySendEvent('m.room.power_levels', mx.getUserId()) &&
+      roomState?.maySendEvent('m.room.power_levels', mx.getUserId()) &&
       (powerLevel < myPowerLevel || userId === mx.getUserId());
 
     const handleChangePowerLevel = async (newPowerLevel) => {

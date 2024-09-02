@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomPermissions.scss';
+import { EventTimeline } from 'matrix-js-sdk';
 
 import { getPowerLabel } from '../../../util/matrixUtil';
 import { openReusableContextMenu } from '../../../client/action/navigation';
@@ -16,6 +17,7 @@ import ChevronBottomIC from '../../../../public/res/ic/outlined/chevron-bottom.s
 
 import { useForceUpdate } from '../../hooks/useForceUpdate';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { getStateEvent } from '../../utils/room';
 
 const permissionsInfo = {
   users_default: {
@@ -176,9 +178,9 @@ function RoomPermissions({ roomId }) {
   useRoomStateUpdate(roomId);
   const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
-  const pLEvent = room.currentState.getStateEvents('m.room.power_levels')[0];
+  const pLEvent = getStateEvent(room, 'm.room.power_levels');
   const permissions = pLEvent.getContent();
-  const canChangePermission = room.currentState.maySendStateEvent('m.room.power_levels', mx.getUserId());
+  const canChangePermission = room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.maySendStateEvent('m.room.power_levels', mx.getUserId());
   const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel ?? 100;
 
   const handlePowerSelector = (e, permKey, parentKey, powerLevel) => {
