@@ -1,10 +1,7 @@
 import { createClient, MatrixClient, IndexedDBStore, IndexedDBCryptoStore } from 'matrix-js-sdk';
-import Olm from '@matrix-org/olm';
 import { logger } from 'matrix-js-sdk/lib/logger';
 
 import { cryptoCallbacks } from './state/secretStorageKeys';
-
-global.Olm = Olm;
 
 if (import.meta.env.PROD) {
   logger.disableAll();
@@ -37,7 +34,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     verificationMethods: ['m.sas.v1'],
   });
 
-  await mx.initCrypto();
+  await mx.initRustCrypto();
 
   mx.setGlobalErrorOnUnknownDevices(false);
   mx.setMaxListeners(50);
