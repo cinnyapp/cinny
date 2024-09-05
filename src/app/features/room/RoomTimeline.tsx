@@ -726,6 +726,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           const editableEvtId = editableEvt?.getId();
           if (!editableEvtId) return;
           setEditId(editableEvtId);
+          evt.preventDefault()
         }
       },
       [mx, room, editor]
