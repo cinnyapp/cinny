@@ -20,10 +20,14 @@ import './app/i18n';
 document.body.classList.add(configClass, varsClass);
 settings.applyTheme();
 
+// Register Service Worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+  navigator.serviceWorker.register(
+    import.meta.env.MODE === 'production' ? '/sw.js' : '/dev-sw.js?dev-sw'
+  )
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type === 'token' && event.data?.responseKey) {
+      // Get the token for SW.
       const token = localStorage.getItem('cinny_access_token');
       event.source!.postMessage({
         responseKey: event.data.responseKey,

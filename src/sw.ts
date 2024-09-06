@@ -1,7 +1,7 @@
-async function askForAccessToken(client) {
+async function askForAccessToken(client: Client): Promise<string> {
   return new Promise((resolve) => {
     const responseKey = Math.random().toString(36);
-    const listener = (event) => {
+    const listener = (event: ExtendableMessageEvent) => {
       if (event.data.responseKey !== responseKey) return;
       resolve(event.data.token);
       self.removeEventListener('message', listener);
@@ -11,7 +11,17 @@ async function askForAccessToken(client) {
   });
 }
 
-self.addEventListener('fetch', (event) => {
+function fetchConfig(token?: string): RequestInit | undefined {
+  if (!token) return undefined;
+
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+}
+
+self.addEventListener('fetch', (event: FetchEvent) => {
   const { url, method } = event.request;
   if (method !== 'GET') return;
   if (
@@ -21,18 +31,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   event.respondWith(
-    (async () => {
-      if (!event.clientId) return;
+    (async (): Promise<Response> => {
       const client = await clients.get(event.clientId);
-      if (!client) return;
+      let token: string | undefined;
+      if (client) token = await askForAccessToken(client);
 
-      const token = await askForAccessToken(client);
-
-      return fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // eslint-disable-next-line consistent-return
+      return fetch(url, fetchConfig(token));
     })()
   );
 });

@@ -6,14 +6,11 @@ import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import inject from '@rollup/plugin-inject';
 import topLevelAwait from 'vite-plugin-top-level-await';
+import { VitePWA } from 'vite-plugin-pwa';
 import buildConfig from './build.config';
 
 const copyFiles = {
   targets: [
-    {
-      src: 'src/app/sw.js',
-      dest: '',
-    },
     {
       src: 'node_modules/@matrix-org/olm/olm.wasm',
       dest: '',
@@ -71,6 +68,16 @@ export default defineConfig({
     vanillaExtractPlugin(),
     wasm(),
     react(),
+    VitePWA({
+      srcDir: 'src',
+      filename: 'service-worker.js',
+      strategies: 'injectManifest',
+      injectRegister: false,
+      manifest: false,
+      injectManifest: {
+        injectionPoint: undefined,
+      },
+    }),
   ],
   optimizeDeps: {
     esbuildOptions: {
