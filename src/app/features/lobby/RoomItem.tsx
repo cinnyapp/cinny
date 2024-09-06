@@ -39,6 +39,8 @@ import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { ErrorCode } from '../../cs-errorcode';
 import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
 import { ItemDraggableTarget, useDraggableItem } from './DnD';
+import { mxcUrlToHttp } from '../../utils/matrix';
+import { useSpecVersions } from '../../hooks/useSpecVersions';
 
 type RoomJoinButtonProps = {
   roomId: string;
@@ -334,6 +336,8 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
     ref
   ) => {
     const mx = useMatrixClient();
+    const { versions } = useSpecVersions();
+    const useAuthentication = versions.includes('v1.11');
     const { roomId, content } = item;
     const room = getRoom(roomId);
     const targetRef = useRef<HTMLDivElement>(null);
@@ -364,7 +368,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                   name={localSummary.name}
                   topic={localSummary.topic}
                   avatarUrl={
-                    dm ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)
+                    dm ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication) : getRoomAvatarUrl(mx, room, 96, useAuthentication)
                   }
                   memberCount={localSummary.memberCount}
                   suggested={content.suggested}
@@ -418,8 +422,8 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                         topic={summaryState.data.topic}
                         avatarUrl={
                           summaryState.data?.avatar_url
-                            ? mx.mxcUrlToHttp(summaryState.data.avatar_url, 96, 96, 'crop') ??
-                              undefined
+                            ? mxcUrlToHttp(mx, summaryState.data.avatar_url, useAuthentication, 96, 96, 'crop') ??
+                            undefined
                             : undefined
                         }
                         memberCount={summaryState.data.num_joined_members}

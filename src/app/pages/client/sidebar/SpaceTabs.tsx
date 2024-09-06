@@ -86,6 +86,8 @@ import { openInviteUser, openSpaceSettings } from '../../../../client/action/nav
 import { stopPropagation } from '../../../utils/keyboard';
 import { getMatrixToRoom } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
+import { getRoomAvatarUrl } from '../../../utils/room';
+import { useSpecVersions } from '../../../hooks/useSpecVersions';
 
 type SpaceMenuProps = {
   room: Room;
@@ -225,18 +227,18 @@ const useDraggableItem = (
     return !target
       ? undefined
       : draggable({
-          element: target,
-          dragHandle,
-          getInitialData: () => ({ item }),
-          onDragStart: () => {
-            setDragging(true);
-            onDragging?.(item);
-          },
-          onDrop: () => {
-            setDragging(false);
-            onDragging?.(undefined);
-          },
-        });
+        element: target,
+        dragHandle,
+        getInitialData: () => ({ item }),
+        onDragStart: () => {
+          setDragging(true);
+          onDragging?.(item);
+        },
+        onDrop: () => {
+          setDragging(false);
+          onDragging?.(undefined);
+        },
+      });
   }, [targetRef, dragHandleRef, item, onDragging]);
 
   return dragging;
@@ -379,15 +381,17 @@ function SpaceTab({
   onUnpin,
 }: SpaceTabProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
   const targetRef = useRef<HTMLDivElement>(null);
 
   const spaceDraggable: SidebarDraggable = useMemo(
     () =>
       folder
         ? {
-            folder,
-            spaceId: space.roomId,
-          }
+          folder,
+          spaceId: space.roomId,
+        }
         : space.roomId,
     [folder, space]
   );
@@ -431,7 +435,7 @@ function SpaceTab({
               >
                 <RoomAvatar
                   roomId={space.roomId}
-                  src={space.getAvatarUrl(mx.baseUrl, 96, 96, 'crop') ?? undefined}
+                  src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
                   alt={space.name}
                   renderFallback={() => (
                     <Text size={folder ? 'H6' : 'H4'}>{nameInitials(space.name, 2)}</Text>
@@ -524,6 +528,8 @@ function ClosedSpaceFolder({
   disabled,
 }: ClosedSpaceFolderProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
   const handlerRef = useRef<HTMLDivElement>(null);
 
   const spaceDraggable: FolderDraggable = useMemo(() => ({ folder }), [folder]);
@@ -556,7 +562,7 @@ function ClosedSpaceFolder({
                     <SidebarAvatar key={sId} size="200" radii="300">
                       <RoomAvatar
                         roomId={space.roomId}
-                        src={space.getAvatarUrl(mx.baseUrl, 96, 96, 'crop') ?? undefined}
+                        src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
                         alt={space.name}
                         renderFallback={() => (
                           <Text size="Inherit">

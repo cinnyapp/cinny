@@ -18,6 +18,7 @@ import { useKeyDown } from '../../../hooks/useKeyDown';
 import { getMxIdLocalPart, getMxIdServer, validMxId } from '../../../utils/matrix';
 import { getMemberDisplayName, getMemberSearchStr } from '../../../utils/room';
 import { UserAvatar } from '../../user-avatar';
+import { useSpecVersions } from '../../../hooks/useSpecVersions';
 
 type MentionAutoCompleteHandler = (userId: string, name: string) => void;
 
@@ -84,6 +85,8 @@ export function UserMentionAutocomplete({
   requestClose,
 }: UserMentionAutocompleteProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
   const roomId: string = room.roomId!;
   const roomAliasOrId = room.getCanonicalAlias() || roomId;
   const members = useRoomMembers(mx, roomId);
@@ -143,7 +146,8 @@ export function UserMentionAutocomplete({
         />
       ) : (
         autoCompleteMembers.map((roomMember) => {
-          const avatarUrl = roomMember.getAvatarUrl(mx.baseUrl, 32, 32, 'crop', undefined, false);
+          const avatarMxcUrl = roomMember.getMxcAvatarUrl();
+          const avatarUrl = avatarMxcUrl ? mx.mxcUrlToHttp(avatarMxcUrl, 32, 32, 'crop', undefined, false, useAuthentication) : undefined;
           return (
             <MenuItem
               key={roomMember.userId}

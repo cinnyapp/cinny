@@ -5,7 +5,7 @@ import { MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import * as css from './Reaction.css';
 import { getHexcodeForEmoji, getShortcodeFor } from '../../plugins/emoji';
 import { getMemberDisplayName } from '../../utils/room';
-import { eventWithShortcode, getMxIdLocalPart } from '../../utils/matrix';
+import { eventWithShortcode, getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 
 export const Reaction = as<
   'button',
@@ -13,8 +13,9 @@ export const Reaction = as<
     mx: MatrixClient;
     count: number;
     reaction: string;
+    useAuthentication?: boolean;
   }
->(({ className, mx, count, reaction, ...props }, ref) => (
+>(({ className, mx, count, reaction, useAuthentication, ...props }, ref) => (
   <Box
     as="button"
     className={classNames(css.Reaction, className)}
@@ -28,7 +29,8 @@ export const Reaction = as<
       {reaction.startsWith('mxc://') ? (
         <img
           className={css.ReactionImg}
-          src={mx.mxcUrlToHttp(reaction) ?? reaction}
+          src={mxcUrlToHttp(mx, reaction, useAuthentication) ?? reaction
+          }
           alt={reaction}
         />
       ) : (

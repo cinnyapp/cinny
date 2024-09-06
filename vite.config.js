@@ -11,6 +11,10 @@ import buildConfig from './build.config';
 const copyFiles = {
   targets: [
     {
+      src: 'src/app/sw.js',
+      dest: '',
+    },
+    {
       src: 'node_modules/@matrix-org/olm/olm.wasm',
       dest: '',
     },
@@ -50,11 +54,11 @@ export default defineConfig({
     port: 8080,
     host: true,
     proxy: {
-      "^\\/.*?\\/olm\\.wasm$": {
+      '^\\/.*?\\/olm\\.wasm$': {
         target: 'http://localhost:8080',
-        rewrite: () => '/olm.wasm'
-      }
-    }
+        rewrite: () => '/olm.wasm',
+      },
+    },
   },
   plugins: [
     topLevelAwait({

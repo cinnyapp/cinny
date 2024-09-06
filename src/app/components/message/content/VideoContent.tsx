@@ -25,6 +25,8 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { getFileSrcUrl } from './util';
 import { bytesToSize } from '../../../../util/common';
 import { millisecondsToMinutesAndSeconds } from '../../../utils/common';
+import { mxcUrlToHttp } from '../../../utils/matrix';
+import { useSpecVersions } from '../../../hooks/useSpecVersions';
 
 type RenderVideoProps = {
   title: string;
@@ -61,6 +63,8 @@ export const VideoContent = as<'div', VideoContentProps>(
     ref
   ) => {
     const mx = useMatrixClient();
+    const { versions } = useSpecVersions();
+    const useAuthentication = versions.includes('v1.11');
     const blurHash = info.thumbnail_info?.[MATRIX_BLUR_HASH_PROPERTY_NAME];
 
     const [load, setLoad] = useState(false);
@@ -68,8 +72,8 @@ export const VideoContent = as<'div', VideoContentProps>(
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(
-        () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
-        [mx, url, mimeType, encInfo]
+        () => getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo),
+        [mx, url, useAuthentication, mimeType, encInfo]
       )
     );
 

@@ -30,6 +30,8 @@ import {
 } from '../../../utils/mimeTypes';
 import * as css from './style.css';
 import { stopPropagation } from '../../../utils/keyboard';
+import { mxcUrlToHttp } from '../../../utils/matrix';
+import { useSpecVersions } from '../../../hooks/useSpecVersions';
 
 const renderErrorButton = (retry: () => void, text: string) => (
   <TooltipProvider
@@ -75,11 +77,13 @@ type ReadTextFileProps = {
 };
 export function ReadTextFile({ body, mimeType, url, encInfo, renderViewer }: ReadTextFileProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
   const [textViewer, setTextViewer] = useState(false);
 
   const loadSrc = useCallback(
-    () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
-    [mx, url, mimeType, encInfo]
+    () => getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo),
+    [mx, url, useAuthentication, mimeType, encInfo]
   );
 
   const [textState, loadText] = useAsyncCallback(
@@ -166,14 +170,16 @@ export type ReadPdfFileProps = {
 };
 export function ReadPdfFile({ body, mimeType, url, encInfo, renderViewer }: ReadPdfFileProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
   const [pdfViewer, setPdfViewer] = useState(false);
 
   const [pdfState, loadPdf] = useAsyncCallback(
     useCallback(async () => {
-      const httpUrl = await getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo);
+      const httpUrl = await getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo);
       setPdfViewer(true);
       return httpUrl;
-    }, [mx, url, mimeType, encInfo])
+    }, [mx, url, useAuthentication, mimeType, encInfo])
   );
 
   return (
@@ -240,13 +246,15 @@ export type DownloadFileProps = {
 };
 export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFileProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
 
   const [downloadState, download] = useAsyncCallback(
     useCallback(async () => {
-      const httpUrl = await getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo);
+      const httpUrl = await getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo);
       FileSaver.saveAs(httpUrl, body);
       return httpUrl;
-    }, [mx, url, mimeType, encInfo, body])
+    }, [mx, url, useAuthentication, mimeType, encInfo, body])
   );
 
   return downloadState.status === AsyncStatus.Error ? (

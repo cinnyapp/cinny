@@ -38,6 +38,7 @@ import { stopPropagation } from '../../utils/keyboard';
 import { getMatrixToRoom } from '../../plugins/matrix-to';
 import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../utils/matrix';
 import { getViaServers } from '../../plugins/via-servers';
+import { useSpecVersions } from '../../hooks/useSpecVersions';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -175,6 +176,8 @@ export function RoomNavItem({
   linkPath,
 }: RoomNavItemProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
   const [hover, setHover] = useState(false);
   const { hoverProps } = useHover({ onHoverChange: setHover });
   const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
@@ -217,7 +220,7 @@ export function RoomNavItem({
                 <RoomAvatar
                   roomId={room.roomId}
                   src={
-                    direct ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)
+                    direct ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication) : getRoomAvatarUrl(mx, room, 96, useAuthentication)
                   }
                   alt={room.name}
                   renderFallback={() => (

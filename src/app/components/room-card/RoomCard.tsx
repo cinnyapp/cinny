@@ -21,7 +21,7 @@ import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
 import * as css from './style.css';
 import { RoomAvatar } from '../room-avatar';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { nameInitials } from '../../utils/common';
 import { millify } from '../../plugins/millify';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -32,6 +32,7 @@ import { useJoinedRoomId } from '../../hooks/useJoinedRoomId';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 import { getRoomAvatarUrl, getStateEvent } from '../../utils/room';
 import { useStateEventCallback } from '../../hooks/useStateEventCallback';
+import { useSpecVersions } from '../../hooks/useSpecVersions';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {
@@ -161,6 +162,8 @@ export const RoomCard = as<'div', RoomCardProps>(
     ref
   ) => {
     const mx = useMatrixClient();
+    const { versions } = useSpecVersions();
+    const useAuthentication = versions.includes('v1.11');
     const joinedRoomId = useJoinedRoomId(allRooms, roomIdOrAlias);
     const joinedRoom = mx.getRoom(joinedRoomId);
     const [topicEvent, setTopicEvent] = useState(() =>
@@ -171,8 +174,8 @@ export const RoomCard = as<'div', RoomCardProps>(
     const fallbackTopic = roomIdOrAlias;
 
     const avatar = joinedRoom
-      ? getRoomAvatarUrl(mx, joinedRoom, 96)
-      : avatarUrl && mx.mxcUrlToHttp(avatarUrl, 96, 96, 'crop');
+      ? getRoomAvatarUrl(mx, joinedRoom, 96, useAuthentication)
+      : avatarUrl && mxcUrlToHttp(mx, avatarUrl, useAuthentication, 96, 96, 'crop');
 
     const roomName = joinedRoom?.name || name || fallbackName;
     const roomTopic =

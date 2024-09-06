@@ -27,6 +27,8 @@ import * as css from './style.css';
 import { bytesToSize } from '../../../utils/common';
 import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
 import { stopPropagation } from '../../../utils/keyboard';
+import { mxcUrlToHttp } from '../../../utils/matrix';
+import { useSpecVersions } from '../../../hooks/useSpecVersions';
 
 type RenderViewerProps = {
   src: string;
@@ -69,6 +71,8 @@ export const ImageContent = as<'div', ImageContentProps>(
     ref
   ) => {
     const mx = useMatrixClient();
+    const { versions } = useSpecVersions();
+    const useAuthentication = versions.includes('v1.11');
     const blurHash = info?.[MATRIX_BLUR_HASH_PROPERTY_NAME];
 
     const [load, setLoad] = useState(false);
@@ -77,8 +81,8 @@ export const ImageContent = as<'div', ImageContentProps>(
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(
-        () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType || FALLBACK_MIMETYPE, encInfo),
-        [mx, url, mimeType, encInfo]
+        () => getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType || FALLBACK_MIMETYPE, encInfo),
+        [mx, url, useAuthentication, mimeType, encInfo]
       )
     );
 
