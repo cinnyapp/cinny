@@ -11,15 +11,19 @@ import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import * as css from './LobbyHero.css';
 import { PageHero } from '../../components/page';
 import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
+import { mxcUrlToHttp } from '../../utils/matrix';
+import { useSpecVersions } from '../../hooks/useSpecVersions';
 
 export function LobbyHero() {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
   const space = useSpace();
 
   const name = useRoomName(space);
   const topic = useRoomTopic(space);
   const avatarMxc = useRoomAvatar(space);
-  const avatarUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc, 96, 96, 'crop') ?? undefined : undefined;
+  const avatarUrl = avatarMxc ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined : undefined;
 
   return (
     <PageHero

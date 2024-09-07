@@ -12,6 +12,7 @@ import './index.scss';
 
 import settings from './client/state/settings';
 
+import { trimTrailingSlash } from './app/utils/common';
 import App from './app/pages/App';
 
 // import i18n (needs to be bundled ;))
@@ -19,6 +20,23 @@ import './app/i18n';
 
 document.body.classList.add(configClass, varsClass);
 settings.applyTheme();
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register(
+    import.meta.env.MODE === 'production' ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js` : '/dev-sw.js?dev-sw'
+  )
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data?.type === 'token' && event.data?.responseKey) {
+      // Get the token for SW.
+      const token = localStorage.getItem('cinny_access_token');
+      event.source!.postMessage({
+        responseKey: event.data.responseKey,
+        token,
+      })
+    }
+  })
+}
 
 const mountApp = () => {
   const rootContainer = document.getElementById('root');

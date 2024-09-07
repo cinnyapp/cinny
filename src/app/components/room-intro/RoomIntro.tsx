@@ -6,7 +6,7 @@ import { openInviteUser } from '../../../client/action/navigation';
 import { IRoomCreateContent, Membership, StateEvent } from '../../../types/matrix/room';
 import { getMemberDisplayName, getStateEvent } from '../../utils/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
@@ -14,6 +14,7 @@ import { RoomAvatar } from '../room-avatar';
 import { nameInitials } from '../../utils/common';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
 import { mDirectAtom } from '../../state/mDirectList';
+import { useSpecVersions } from '../../hooks/useSpecVersions';
 
 export type RoomIntroProps = {
   room: Room;
@@ -21,6 +22,8 @@ export type RoomIntroProps = {
 
 export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
   const { navigateRoom } = useRoomNavigate();
   const mDirects = useAtomValue(mDirectAtom);
 
@@ -28,7 +31,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const avatarMxc = useRoomAvatar(room, mDirects.has(room.roomId));
   const name = useRoomName(room);
   const topic = useRoomTopic(room);
-  const avatarHttpUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc) : undefined;
+  const avatarHttpUrl = avatarMxc ? mxcUrlToHttp(mx, avatarMxc, useAuthentication) : undefined;
 
   const createContent = createEvent?.getContent<IRoomCreateContent>();
   const ts = createEvent?.getTs();

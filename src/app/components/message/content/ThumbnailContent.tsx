@@ -3,6 +3,8 @@ import { IThumbnailContent } from '../../../../types/matrix/common';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { getFileSrcUrl } from './util';
+import { mxcUrlToHttp } from '../../../utils/matrix';
+import { useSpecVersions } from '../../../hooks/useSpecVersions';
 
 export type ThumbnailContentProps = {
   info: IThumbnailContent;
@@ -10,6 +12,8 @@ export type ThumbnailContentProps = {
 };
 export function ThumbnailContent({ info, renderImage }: ThumbnailContentProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
 
   const [thumbSrcState, loadThumbSrc] = useAsyncCallback(
     useCallback(() => {
@@ -19,11 +23,11 @@ export function ThumbnailContent({ info, renderImage }: ThumbnailContentProps) {
         throw new Error('Failed to load thumbnail');
       }
       return getFileSrcUrl(
-        mx.mxcUrlToHttp(thumbMxcUrl) ?? '',
+        mxcUrlToHttp(mx, thumbMxcUrl, useAuthentication) ?? '',
         thumbInfo.mimetype,
         info.thumbnail_file
       );
-    }, [mx, info])
+    }, [mx, info, useAuthentication])
   );
 
   useEffect(() => {
