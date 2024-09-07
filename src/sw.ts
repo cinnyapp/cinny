@@ -1,4 +1,4 @@
-async function askForAccessToken(client: Client): Promise<string> {
+async function askForAccessToken(client: Client): Promise<string | undefined> {
   return new Promise((resolve) => {
     const responseKey = Math.random().toString(36);
     const listener = (event: ExtendableMessageEvent) => {
