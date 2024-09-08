@@ -83,10 +83,7 @@ export function Register() {
           <SSOLogin
             providers={sso.identity_providers}
             redirectUrl={ssoRedirectUrl}
-            asIcons={
-              registerFlows.status === RegisterFlowStatus.FlowRequired &&
-              sso.identity_providers.length > 2
-            }
+            saveScreenSpace={registerFlows.status === RegisterFlowStatus.FlowRequired}
           />
           <span data-spacing-node />
         </>
