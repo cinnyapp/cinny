@@ -14,7 +14,7 @@ import { IntermediateRepresentation, Opts as LinkifyOpts, OptFn } from 'linkifyj
 import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import * as css from '../styles/CustomHtml.css';
-import { getMxIdLocalPart, getCanonicalAliasRoomId, isRoomAlias } from '../utils/matrix';
+import { getMxIdLocalPart, getCanonicalAliasRoomId, isRoomAlias, mxcUrlToHttp } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
 import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
@@ -72,9 +72,8 @@ export const renderMatrixMention = (
         className={css.Mention({ highlight: mx.getUserId() === userId })}
         data-mention-id={userId}
       >
-        {`@${
-          (currentRoom && getMemberDisplayName(currentRoom, userId)) ?? getMxIdLocalPart(userId)
-        }`}
+        {`@${(currentRoom && getMemberDisplayName(currentRoom, userId)) ?? getMxIdLocalPart(userId)
+          }`}
       </a>
     );
   }
@@ -192,6 +191,7 @@ export const getReactCustomHtmlParser = (
     highlightRegex?: RegExp;
     handleSpoilerClick?: ReactEventHandler<HTMLElement>;
     handleMentionClick?: ReactEventHandler<HTMLElement>;
+    useAuthentication?: boolean;
   }
 ): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
@@ -354,7 +354,7 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'img') {
-          const htmlSrc = mx.mxcUrlToHttp(props.src);
+          const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication);
           if (htmlSrc && props.src.startsWith('mxc://') === false) {
             return (
               <a href={htmlSrc} target="_blank" rel="noreferrer noopener">

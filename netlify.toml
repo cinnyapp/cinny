@@ -7,7 +7,12 @@
   from = "/manifest.json"
   to = "/manifest.json"
   status = 200
-  
+
+[[redirects]]
+  from = "/sw.js"
+  to = "/sw.js"
+  status = 200
+
 [[redirects]]
   from = "*/olm.wasm"
   to = "/olm.wasm"

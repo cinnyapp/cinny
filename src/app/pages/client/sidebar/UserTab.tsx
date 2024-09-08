@@ -5,8 +5,9 @@ import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '../../../compone
 import { openSettings } from '../../../../client/action/navigation';
 import { UserAvatar } from '../../../components/user-avatar';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdLocalPart } from '../../../utils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
 import { nameInitials } from '../../../utils/common';
+import { useSpecVersions } from '../../../hooks/useSpecVersions';
 
 type UserProfile = {
   avatar_url?: string;
@@ -14,12 +15,14 @@ type UserProfile = {
 };
 export function UserTab() {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
   const userId = mx.getUserId()!;
 
   const [profile, setProfile] = useState<UserProfile>({});
   const displayName = profile.displayname ?? getMxIdLocalPart(userId) ?? userId;
   const avatarUrl = profile.avatar_url
-    ? mx.mxcUrlToHttp(profile.avatar_url, 96, 96, 'crop') ?? undefined
+    ? mxcUrlToHttp(mx, profile.avatar_url, useAuthentication, 96, 96, 'crop') ?? undefined
     : undefined;
 
   useEffect(() => {

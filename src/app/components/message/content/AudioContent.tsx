@@ -17,6 +17,8 @@ import {
 } from '../../../hooks/media';
 import { useThrottle } from '../../../hooks/useThrottle';
 import { secondsToMinutesAndSeconds } from '../../../utils/common';
+import { mxcUrlToHttp } from '../../../utils/matrix';
+import { useSpecVersions } from '../../../hooks/useSpecVersions';
 
 const PLAY_TIME_THROTTLE_OPS = {
   wait: 500,
@@ -44,11 +46,13 @@ export function AudioContent({
   renderMediaControl,
 }: AudioContentProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
 
   const [srcState, loadSrc] = useAsyncCallback(
     useCallback(
-      () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
-      [mx, url, mimeType, encInfo]
+      () => getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo),
+      [mx, url, useAuthentication, mimeType, encInfo]
     )
   );
 

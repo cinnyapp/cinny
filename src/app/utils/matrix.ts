@@ -253,3 +253,23 @@ export const removeRoomIdFromMDirect = async (mx: MatrixClient, roomId: string):
 
   await mx.setAccountData(AccountDataEvent.Direct, userIdToRoomIds);
 };
+
+export const mxcUrlToHttp = (
+  mx: MatrixClient,
+  mxcUrl: string,
+  useAuthentication?: boolean,
+  width?: number,
+  height?: number,
+  resizeMethod?: string,
+  allowDirectLinks?: boolean,
+  allowRedirects?: boolean
+): string | null =>
+  mx.mxcUrlToHttp(
+    mxcUrl,
+    width,
+    height,
+    resizeMethod,
+    allowDirectLinks,
+    allowRedirects,
+    useAuthentication
+  );

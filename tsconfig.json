@@ -10,7 +10,8 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "outDir": "dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "lib": ["ES2016", "DOM"]
   },
   "exclude": ["node_modules", "dist"],
   "include": ["src"]

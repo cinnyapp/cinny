@@ -23,7 +23,6 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     localStorage: global.localStorage,
     dbName: 'web-sync-store',
   });
-  await indexedDBStore.startup();
 
   const mx = createClient({
     baseUrl: session.baseUrl,
@@ -38,6 +37,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   });
 
   await mx.initCrypto();
+  await indexedDBStore.startup();
 
   mx.setGlobalErrorOnUnknownDevices(false);
   mx.setMaxListeners(50);

@@ -18,6 +18,8 @@ import { useRelevantImagePacks } from '../../../hooks/useImagePacks';
 import { IEmoji, emojis } from '../../../plugins/emoji';
 import { ExtendedPackImage, PackUsage } from '../../../plugins/custom-emoji';
 import { useKeyDown } from '../../../hooks/useKeyDown';
+import { mxcUrlToHttp } from '../../../utils/matrix';
+import { useSpecVersions } from '../../../hooks/useSpecVersions';
 
 type EmoticonCompleteHandler = (key: string, shortcode: string) => void;
 
@@ -48,6 +50,8 @@ export function EmoticonAutocomplete({
   requestClose,
 }: EmoticonAutocompleteProps) {
   const mx = useMatrixClient();
+  const { versions } = useSpecVersions();
+  const useAuthentication = versions.includes('v1.11');
 
   const imagePacks = useRelevantImagePacks(mx, PackUsage.Emoticon, imagePackRooms);
   const recentEmoji = useRecentEmoji(mx, 20);
@@ -103,7 +107,7 @@ export function EmoticonAutocomplete({
                 <Box
                   shrink="No"
                   as="img"
-                  src={mx.mxcUrlToHttp(key) || key}
+                  src={mxcUrlToHttp(mx, key, useAuthentication) || key}
                   alt={emoticon.shortcode}
                   style={{ width: toRem(24), height: toRem(24), objectFit: 'contain' }}
                 />
