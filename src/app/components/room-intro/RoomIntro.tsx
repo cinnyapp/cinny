@@ -14,7 +14,7 @@ import { RoomAvatar } from '../room-avatar';
 import { nameInitials } from '../../utils/common';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
 import { mDirectAtom } from '../../state/mDirectList';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 export type RoomIntroProps = {
   room: Room;
@@ -22,8 +22,7 @@ export type RoomIntroProps = {
 
 export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => {
   const mx = useMatrixClient();
-  const { versions } = useSpecVersions();
-  const useAuthentication = versions.includes('v1.11');
+  const useAuthentication = useMediaAuthentication();
   const { navigateRoom } = useRoomNavigate();
   const mDirects = useAtomValue(mDirectAtom);
 

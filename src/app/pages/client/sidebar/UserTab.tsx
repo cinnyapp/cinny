@@ -7,7 +7,7 @@ import { UserAvatar } from '../../../components/user-avatar';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
 import { nameInitials } from '../../../utils/common';
-import { useSpecVersions } from '../../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 type UserProfile = {
   avatar_url?: string;
@@ -15,8 +15,7 @@ type UserProfile = {
 };
 export function UserTab() {
   const mx = useMatrixClient();
-  const { versions } = useSpecVersions();
-  const useAuthentication = versions.includes('v1.11');
+  const useAuthentication = useMediaAuthentication();
   const userId = mx.getUserId()!;
 
   const [profile, setProfile] = useState<UserProfile>({});

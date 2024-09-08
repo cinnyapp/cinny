@@ -42,7 +42,7 @@ import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { useRoomTopic } from '../../../hooks/useRoomMeta';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
-import { useSpecVersions } from '../../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 const COMPACT_CARD_WIDTH = 548;
 
@@ -55,8 +55,7 @@ type InviteCardProps = {
 };
 function InviteCard({ room, userId, direct, compact, onNavigate }: InviteCardProps) {
   const mx = useMatrixClient();
-  const { versions } = useSpecVersions();
-  const useAuthentication = versions.includes('v1.11');
+  const useAuthentication = useMediaAuthentication();
   const roomName = room.name || room.getCanonicalAlias() || room.roomId;
   const member = room.getMember(userId);
   const memberEvent = member?.events.member;

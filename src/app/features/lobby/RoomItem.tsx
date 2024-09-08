@@ -40,7 +40,7 @@ import { ErrorCode } from '../../cs-errorcode';
 import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
 import { ItemDraggableTarget, useDraggableItem } from './DnD';
 import { mxcUrlToHttp } from '../../utils/matrix';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 type RoomJoinButtonProps = {
   roomId: string;
@@ -336,8 +336,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
     ref
   ) => {
     const mx = useMatrixClient();
-    const { versions } = useSpecVersions();
-    const useAuthentication = versions.includes('v1.11');
+    const useAuthentication = useMediaAuthentication();
     const { roomId, content } = item;
     const room = getRoom(roomId);
     const targetRef = useRef<HTMLDivElement>(null);
