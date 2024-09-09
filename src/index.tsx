@@ -23,7 +23,12 @@ settings.applyTheme();
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(`${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`);
+  const swUrl =
+    import.meta.env.MODE === 'prod'
+      ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
+      : `/dev-sw.js?dev-sw`;
+
+  navigator.serviceWorker.register(swUrl);
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type === 'token' && event.data?.responseKey) {
       // Get the token for SW.
