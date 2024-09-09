@@ -34,7 +34,7 @@ import { stopPropagation } from '../../utils/keyboard';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../components/BackRouteHandler';
 import { mxcUrlToHttp } from '../../utils/matrix';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 type LobbyMenuProps = {
   roomId: string;
@@ -124,8 +124,7 @@ type LobbyHeaderProps = {
 };
 export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
   const mx = useMatrixClient();
-  const { versions } = useSpecVersions();
-  const useAuthentication = versions.includes('v1.11');
+  const useAuthentication = useMediaAuthentication();
   const space = useSpace();
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();

@@ -12,12 +12,11 @@ import * as css from './LobbyHero.css';
 import { PageHero } from '../../components/page';
 import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
 import { mxcUrlToHttp } from '../../utils/matrix';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 export function LobbyHero() {
   const mx = useMatrixClient();
-  const { versions } = useSpecVersions();
-  const useAuthentication = versions.includes('v1.11');
+  const useAuthentication = useMediaAuthentication();
   const space = useSpace();
 
   const name = useRoomName(space);

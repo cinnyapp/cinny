@@ -25,7 +25,7 @@ import { NotificationType, UnreadInfo } from '../../../types/matrix/room';
 import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -133,8 +133,7 @@ function MessageNotifications() {
   const notifRef = useRef<Notification>();
   const unreadCacheRef = useRef<Map<string, UnreadInfo>>(new Map());
   const mx = useMatrixClient();
-  const { versions } = useSpecVersions();
-  const useAuthentication = versions.includes('v1.11');
+  const useAuthentication = useMediaAuthentication();
   const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
 
@@ -243,6 +242,7 @@ function MessageNotifications() {
     playSound,
     notify,
     selectedRoomId,
+    useAuthentication,
   ]);
 
   return (

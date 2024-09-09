@@ -36,7 +36,7 @@ import { useDraggableItem } from './DnD';
 import { openCreateRoom, openSpaceAddExisting } from '../../../client/action/navigation';
 import { stopPropagation } from '../../utils/keyboard';
 import { mxcUrlToHttp } from '../../utils/matrix';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 function SpaceProfileLoading() {
   return (
@@ -410,8 +410,7 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
     ref
   ) => {
     const mx = useMatrixClient();
-    const { versions } = useSpecVersions();
-    const useAuthentication = versions.includes('v1.11');
+    const useAuthentication = useMediaAuthentication();
     const { roomId, content } = item;
     const space = getRoom(roomId);
     const targetRef = useRef<HTMLDivElement>(null);

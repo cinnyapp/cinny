@@ -11,15 +11,14 @@ import {
 import * as css from './UrlPreviewCard.css';
 import { tryDecodeURIComponent } from '../../utils/dom';
 import { mxcUrlToHttp } from '../../utils/matrix';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 const linkStyles = { color: color.Success.Main };
 
 export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
   ({ url, ts, ...props }, ref) => {
     const mx = useMatrixClient();
-    const { versions } = useSpecVersions();
-    const useAuthentication = versions.includes('v1.11');
+    const useAuthentication = useMediaAuthentication();
     const [previewStatus, loadPreview] = useAsyncCallback(
       useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
     );

@@ -55,7 +55,7 @@ import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { UserAvatar } from '../../components/user-avatar';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
 import { stopPropagation } from '../../utils/keyboard';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -172,8 +172,7 @@ type MembersDrawerProps = {
 };
 export function MembersDrawer({ room, members }: MembersDrawerProps) {
   const mx = useMatrixClient();
-  const { versions } = useSpecVersions();
-  const useAuthentication = versions.includes('v1.11');
+  const useAuthentication = useMediaAuthentication();
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);

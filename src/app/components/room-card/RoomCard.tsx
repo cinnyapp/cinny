@@ -32,7 +32,7 @@ import { useJoinedRoomId } from '../../hooks/useJoinedRoomId';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 import { getRoomAvatarUrl, getStateEvent } from '../../utils/room';
 import { useStateEventCallback } from '../../hooks/useStateEventCallback';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {
@@ -162,8 +162,7 @@ export const RoomCard = as<'div', RoomCardProps>(
     ref
   ) => {
     const mx = useMatrixClient();
-    const { versions } = useSpecVersions();
-    const useAuthentication = versions.includes('v1.11');
+    const useAuthentication = useMediaAuthentication();
     const joinedRoomId = useJoinedRoomId(allRooms, roomIdOrAlias);
     const joinedRoom = mx.getRoom(joinedRoomId);
     const [topicEvent, setTopicEvent] = useState(() =>

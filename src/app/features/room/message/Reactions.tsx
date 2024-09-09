@@ -22,7 +22,7 @@ import { useRelations } from '../../../hooks/useRelations';
 import * as css from './styles.css';
 import { ReactionViewer } from '../reaction-viewer';
 import { stopPropagation } from '../../../utils/keyboard';
-import { useSpecVersions } from '../../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 export type ReactionsProps = {
   room: Room;
@@ -34,8 +34,7 @@ export type ReactionsProps = {
 export const Reactions = as<'div', ReactionsProps>(
   ({ className, room, relations, mEventId, canSendReaction, onReactionToggle, ...props }, ref) => {
     const mx = useMatrixClient();
-    const { versions } = useSpecVersions();
-    const useAuthentication = versions.includes('v1.11');
+    const useAuthentication = useMediaAuthentication();
     const [viewer, setViewer] = useState<boolean | string>(false);
     const myUserId = mx.getUserId();
     const reactions = useRelations(

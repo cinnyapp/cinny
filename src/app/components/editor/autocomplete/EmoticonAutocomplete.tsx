@@ -19,7 +19,7 @@ import { IEmoji, emojis } from '../../../plugins/emoji';
 import { ExtendedPackImage, PackUsage } from '../../../plugins/custom-emoji';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 import { mxcUrlToHttp } from '../../../utils/matrix';
-import { useSpecVersions } from '../../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 type EmoticonCompleteHandler = (key: string, shortcode: string) => void;
 
@@ -50,8 +50,7 @@ export function EmoticonAutocomplete({
   requestClose,
 }: EmoticonAutocompleteProps) {
   const mx = useMatrixClient();
-  const { versions } = useSpecVersions();
-  const useAuthentication = versions.includes('v1.11');
+  const useAuthentication = useMediaAuthentication();
 
   const imagePacks = useRelevantImagePacks(mx, PackUsage.Emoticon, imagePackRooms);
   const recentEmoji = useRecentEmoji(mx, 20);
