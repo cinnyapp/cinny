@@ -174,7 +174,11 @@ export function ReadPdfFile({ body, mimeType, url, encInfo, renderViewer }: Read
 
   const [pdfState, loadPdf] = useAsyncCallback(
     useCallback(async () => {
-      const httpUrl = await getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo);
+      const httpUrl = await getFileSrcUrl(
+        mxcUrlToHttp(mx, url, useAuthentication) ?? '',
+        mimeType,
+        encInfo
+      );
       setPdfViewer(true);
       return httpUrl;
     }, [mx, url, useAuthentication, mimeType, encInfo])
@@ -248,8 +252,13 @@ export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFil
 
   const [downloadState, download] = useAsyncCallback(
     useCallback(async () => {
-      const httpUrl = await getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo);
-      FileSaver.saveAs(httpUrl, body);
+      const httpUrl = await getFileSrcUrl(
+        mxcUrlToHttp(mx, url, useAuthentication) ?? '',
+        mimeType,
+        encInfo
+      );
+      const httpSrc = httpUrl.startsWith('blob') ? httpUrl : await getSrcFile(httpUrl);
+      FileSaver.saveAs(httpSrc, body);
       return httpUrl;
     }, [mx, url, useAuthentication, mimeType, encInfo, body])
   );
