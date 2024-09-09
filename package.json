@@ -91,7 +91,7 @@
     "@types/react-google-recaptcha": "2.1.8",
     "@types/sanitize-html": "2.9.0",
     "@types/ua-parser-js": "0.7.36",
-    "@typescript-eslint/eslint-plugin": "5.46.1",
+    "@typescript-eslint/eslint-plugin": "8.4.0",
     "@typescript-eslint/parser": "5.46.1",
     "@vitejs/plugin-react": "4.2.0",
     "buffer": "6.0.3",
