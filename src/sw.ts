@@ -1,3 +1,8 @@
+/// <reference lib="WebWorker" />
+
+export type {};
+declare const self: ServiceWorkerGlobalScope;
+
 async function askForAccessToken(client: Client): Promise<string | undefined> {
   return new Promise((resolve) => {
     const responseKey = Math.random().toString(36);
@@ -32,11 +37,10 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   }
   event.respondWith(
     (async (): Promise<Response> => {
-      const client = await clients.get(event.clientId);
+      const client = await self.clients.get(event.clientId);
       let token: string | undefined;
       if (client) token = await askForAccessToken(client);
 
-      // eslint-disable-next-line consistent-return
       return fetch(url, fetchConfig(token));
     })()
   );

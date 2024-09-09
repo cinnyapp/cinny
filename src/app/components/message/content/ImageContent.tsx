@@ -28,7 +28,7 @@ import { bytesToSize } from '../../../utils/common';
 import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
 import { stopPropagation } from '../../../utils/keyboard';
 import { mxcUrlToHttp } from '../../../utils/matrix';
-import { useSpecVersions } from '../../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 type RenderViewerProps = {
   src: string;
@@ -71,8 +71,7 @@ export const ImageContent = as<'div', ImageContentProps>(
     ref
   ) => {
     const mx = useMatrixClient();
-    const { versions } = useSpecVersions();
-    const useAuthentication = versions.includes('v1.11');
+    const useAuthentication = useMediaAuthentication();
     const blurHash = info?.[MATRIX_BLUR_HASH_PROPERTY_NAME];
 
     const [load, setLoad] = useState(false);

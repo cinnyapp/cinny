@@ -67,7 +67,7 @@ import { copyToClipboard } from '../../../utils/dom';
 import { stopPropagation } from '../../../utils/keyboard';
 import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
-import { useSpecVersions } from '../../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -651,8 +651,7 @@ export const Message = as<'div', MessageProps>(
     ref
   ) => {
     const mx = useMatrixClient();
-    const { versions } = useSpecVersions();
-    const useAuthentication = versions.includes('v1.11');
+    const useAuthentication = useMediaAuthentication();
     const senderId = mEvent.getSender() ?? '';
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });

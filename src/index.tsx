@@ -23,19 +23,22 @@ settings.applyTheme();
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(
-    import.meta.env.MODE === 'production' ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js` : '/dev-sw.js?dev-sw'
-  )
+  const swUrl =
+    import.meta.env.MODE === 'production'
+      ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
+      : `/dev-sw.js?dev-sw`;
+
+  navigator.serviceWorker.register(swUrl);
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type === 'token' && event.data?.responseKey) {
       // Get the token for SW.
-      const token = localStorage.getItem('cinny_access_token');
+      const token = localStorage.getItem('cinny_access_token') ?? undefined;
       event.source!.postMessage({
         responseKey: event.data.responseKey,
         token,
-      })
+      });
     }
-  })
+  });
 }
 
 const mountApp = () => {

@@ -25,7 +25,7 @@ import { useRelations } from '../../../hooks/useRelations';
 import { Reaction } from '../../../components/message';
 import { getHexcodeForEmoji, getShortcodeFor } from '../../../plugins/emoji';
 import { UserAvatar } from '../../../components/user-avatar';
-import { useSpecVersions } from '../../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 export type ReactionViewerProps = {
   room: Room;
@@ -36,8 +36,7 @@ export type ReactionViewerProps = {
 export const ReactionViewer = as<'div', ReactionViewerProps>(
   ({ className, room, initialKey, relations, requestClose, ...props }, ref) => {
     const mx = useMatrixClient();
-    const { versions } = useSpecVersions();
-    const useAuthentication = versions.includes('v1.11');
+    const useAuthentication = useMediaAuthentication();
     const reactions = useRelations(
       relations,
       useCallback((rel) => [...(rel.getSortedAnnotationsByKey() ?? [])], [])

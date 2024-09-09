@@ -21,7 +21,7 @@ import * as css from './EventReaders.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { UserAvatar } from '../user-avatar';
-import { useSpecVersions } from '../../hooks/useSpecVersions';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 export type EventReadersProps = {
   room: Room;
@@ -31,8 +31,7 @@ export type EventReadersProps = {
 export const EventReaders = as<'div', EventReadersProps>(
   ({ className, room, eventId, requestClose, ...props }, ref) => {
     const mx = useMatrixClient();
-    const { versions } = useSpecVersions();
-    const useAuthentication = versions.includes('v1.11');
+    const useAuthentication = useMediaAuthentication();
     const latestEventReaders = useRoomEventReaders(room, eventId);
 
     const getName = (userId: string) =>

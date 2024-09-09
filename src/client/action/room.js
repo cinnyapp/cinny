@@ -244,11 +244,7 @@ async function unignore(mx, userIds) {
 }
 
 async function setPowerLevel(mx, roomId, userId, powerLevel) {
-  const room = mx.getRoom(roomId);
-
-  const powerlevelEvent = room.currentState.getStateEvents('m.room.power_levels')[0];
-
-  const result = await mx.setPowerLevel(roomId, userId, powerLevel, powerlevelEvent);
+  const result = await mx.setPowerLevel(roomId, userId, powerLevel);
   return result;
 }
 

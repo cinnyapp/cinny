@@ -90,7 +90,6 @@
     "@types/react-dom": "18.2.17",
     "@types/react-google-recaptcha": "2.1.8",
     "@types/sanitize-html": "2.9.0",
-    "@types/serviceworker": "0.0.95",
     "@types/ua-parser-js": "0.7.36",
     "@typescript-eslint/eslint-plugin": "5.46.1",
     "@typescript-eslint/parser": "5.46.1",
