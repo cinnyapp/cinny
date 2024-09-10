@@ -50,7 +50,7 @@ export function AudioContent({
 
   const [srcState, loadSrc] = useAsyncCallback(
     useCallback(
-      () => getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo),
+      () => getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo, true),
       [mx, url, useAuthentication, mimeType, encInfo]
     )
   );

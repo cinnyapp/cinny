@@ -71,7 +71,7 @@ export const VideoContent = as<'div', VideoContentProps>(
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(
-        () => getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo),
+        () => getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType, encInfo, true),
         [mx, url, useAuthentication, mimeType, encInfo]
       )
     );
