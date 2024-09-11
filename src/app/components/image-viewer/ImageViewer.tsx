@@ -6,6 +6,7 @@ import { Box, Chip, Header, Icon, IconButton, Icons, Text, as } from 'folds';
 import * as css from './ImageViewer.css';
 import { useZoom } from '../../hooks/useZoom';
 import { usePan } from '../../hooks/usePan';
+import { downloadMedia } from '../../utils/matrix';
 
 export type ImageViewerProps = {
   alt: string;
@@ -18,8 +19,9 @@ export const ImageViewer = as<'div', ImageViewerProps>(
     const { zoom, zoomIn, zoomOut, setZoom } = useZoom(0.2);
     const { pan, cursor, onMouseDown } = usePan(zoom !== 1);
 
-    const handleDownload = () => {
-      FileSaver.saveAs(src, alt);
+    const handleDownload = async () => {
+      const fileContent = await downloadMedia(src);
+      FileSaver.saveAs(fileContent, alt);
     };
 
     return (
