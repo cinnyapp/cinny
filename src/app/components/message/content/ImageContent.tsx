@@ -22,12 +22,11 @@ import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { IImageInfo, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getFileSrcUrl } from './util';
 import * as css from './style.css';
 import { bytesToSize } from '../../../utils/common';
 import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
 import { stopPropagation } from '../../../utils/keyboard';
-import { mxcUrlToHttp } from '../../../utils/matrix';
+import { decryptFile, downloadEncryptedMedia, mxcUrlToHttp } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 type RenderViewerProps = {
@@ -79,10 +78,16 @@ export const ImageContent = as<'div', ImageContentProps>(
     const [viewer, setViewer] = useState(false);
 
     const [srcState, loadSrc] = useAsyncCallback(
-      useCallback(
-        () => getFileSrcUrl(mxcUrlToHttp(mx, url, useAuthentication) ?? '', mimeType || FALLBACK_MIMETYPE, encInfo),
-        [mx, url, useAuthentication, mimeType, encInfo]
-      )
+      useCallback(async () => {
+        const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+        if (encInfo) {
+          const fileContent = await downloadEncryptedMedia(mediaUrl, (encBuf) =>
+            decryptFile(encBuf, mimeType ?? FALLBACK_MIMETYPE, encInfo)
+          );
+          return URL.createObjectURL(fileContent);
+        }
+        return mediaUrl;
+      }, [mx, url, useAuthentication, mimeType, encInfo])
     );
 
     const handleLoad = () => {

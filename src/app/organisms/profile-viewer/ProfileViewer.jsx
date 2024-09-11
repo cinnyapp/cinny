@@ -36,6 +36,7 @@ import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { getDMRoomFor } from '../../utils/matrix';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 function ModerationTools({ roomId, userId }) {
   const mx = useMatrixClient();
@@ -329,6 +330,7 @@ function useRerenderOnProfileChange(roomId, userId) {
 function ProfileViewer() {
   const [isOpen, roomId, userId, closeDialog, handleAfterClose] = useToggleDialog();
   useRerenderOnProfileChange(roomId, userId);
+  const useAuthentication = useMediaAuthentication();
 
   const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
@@ -338,7 +340,9 @@ function ProfileViewer() {
     const username = roomMember ? getUsernameOfRoomMember(roomMember) : getUsername(mx, userId);
     const avatarMxc = roomMember?.getMxcAvatarUrl?.() || mx.getUser(userId)?.avatarUrl;
     const avatarUrl =
-      avatarMxc && avatarMxc !== 'null' ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
+      avatarMxc && avatarMxc !== 'null'
+        ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop', undefined, undefined, useAuthentication)
+        : null;
 
     const powerLevel = roomMember?.powerLevel || 0;
     const myPowerLevel = room.getMember(mx.getUserId())?.powerLevel || 0;
