@@ -21,25 +21,30 @@ import './app/i18n';
 document.body.classList.add(configClass, varsClass);
 settings.applyTheme();
 
-// Register Service Worker
-if ('serviceWorker' in navigator) {
-  const swUrl =
-    import.meta.env.MODE === 'production'
-      ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
-      : `/dev-sw.js?dev-sw`;
+const registerServiceWorker = async () => {
+  if ('serviceWorker' in navigator) {
+    const swUrl =
+      import.meta.env.MODE === 'production'
+        ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
+        : `/dev-sw.js?dev-sw`;
 
-  navigator.serviceWorker.register(swUrl);
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    if (event.data?.type === 'token' && event.data?.responseKey) {
-      // Get the token for SW.
-      const token = localStorage.getItem('cinny_access_token') ?? undefined;
-      event.source!.postMessage({
-        responseKey: event.data.responseKey,
-        token,
+    await navigator.serviceWorker.register(swUrl);
+
+    navigator.serviceWorker.ready.then((registration) => {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type === 'token' && event.data?.messageId) {
+          const token = localStorage.getItem('cinny_access_token') ?? undefined;
+          registration.active?.postMessage({
+            messageId: event.data.messageId,
+            token,
+          });
+        }
       });
-    }
-  });
-}
+    });
+  }
+};
+
+window.addEventListener('load', registerServiceWorker);
 
 const mountApp = () => {
   const rootContainer = document.getElementById('root');
