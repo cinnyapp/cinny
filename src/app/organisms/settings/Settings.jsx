@@ -54,6 +54,7 @@ function AppearanceSection() {
   const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
   const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
+  const [mxidColor, setMXIDColor] = useSetting(settingsAtom, 'mxidColor');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
   const [pageZoom, setPageZoom] = useSetting(settingsAtom, 'pageZoom');
   const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
@@ -188,6 +189,11 @@ function AppearanceSection() {
               }}
             />
           }
+        />
+        <SettingTile
+          title="Username Color"
+          options={<Toggle isActive={mxidColor} onToggle={() => setMXIDColor(!mxidColor)} />}
+          content={<Text variant="b3">Color username with matrix userID.</Text>}
         />
         <SettingTile
           title="Use ENTER for Newline"

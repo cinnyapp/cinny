@@ -56,7 +56,13 @@ import {
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
-import { TUploadContent, encryptFile, getImageInfo, getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
+import {
+  TUploadContent,
+  encryptFile,
+  getImageInfo,
+  getMxIdLocalPart,
+  mxcUrlToHttp,
+} from '../../utils/matrix';
 import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
 import { useFilePicker } from '../../hooks/useFilePicker';
 import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
@@ -120,6 +126,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
   ({ editor, fileDropContainerRef, roomId, room }, ref) => {
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
+    const [mxidColor] = useSetting(settingsAtom, 'mxidColor');
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const commands = useCommands(mx, room);
@@ -499,7 +506,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   <Box direction="Column">
                     {replyDraft.relation?.rel_type === RelationType.Thread && <ThreadIndicator />}
                     <ReplyLayout
-                      userColor={colorMXID(replyDraft.userId)}
+                      userColor={mxidColor ? colorMXID(replyDraft.userId) : undefined}
                       username={
                         <Text size="T300" truncate>
                           <b>

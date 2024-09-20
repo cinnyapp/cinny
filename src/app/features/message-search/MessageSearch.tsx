@@ -55,6 +55,7 @@ export function MessageSearch({
   const allRooms = useRooms(mx, allRoomsAtom, mDirects);
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
+  const [mxidColor] = useSetting(settingsAtom, 'mxidColor');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -296,6 +297,7 @@ export function MessageSearch({
                     items={group.items}
                     mediaAutoLoad={mediaAutoLoad}
                     urlPreview={urlPreview}
+                    mxidColor={mxidColor}
                     onOpen={navigateRoom}
                   />
                 </VirtualTile>

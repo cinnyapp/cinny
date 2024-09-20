@@ -48,6 +48,7 @@ export const ThreadIndicator = as<'div'>(({ ...props }, ref) => (
 type ReplyProps = {
   mx: MatrixClient;
   room: Room;
+  mxidColor?: boolean;
   timelineSet?: EventTimelineSet | undefined;
   replyEventId: string;
   threadRootId?: string | undefined;
@@ -55,7 +56,7 @@ type ReplyProps = {
 };
 
 export const Reply = as<'div', ReplyProps>((_, ref) => {
-  const { mx, room, timelineSet, replyEventId, threadRootId, onClick, ...props } = _;
+  const { mx, room, mxidColor, timelineSet, replyEventId, threadRootId, onClick, ...props } = _;
   const [replyEvent, setReplyEvent] = useState<MatrixEvent | null | undefined>(
     timelineSet?.findEventById(replyEventId)
   );
@@ -101,7 +102,7 @@ export const Reply = as<'div', ReplyProps>((_, ref) => {
       )}
       <ReplyLayout
         as="button"
-        userColor={sender ? colorMXID(sender) : undefined}
+        userColor={sender && mxidColor ? colorMXID(sender) : undefined}
         username={
           sender && (
             <Text size="T300" truncate>

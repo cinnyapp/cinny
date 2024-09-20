@@ -51,7 +51,12 @@ import {
   getMemberAvatarMxc,
   getMemberDisplayName,
 } from '../../../utils/room';
-import { getCanonicalAliasOrRoomId, getMxIdLocalPart, isRoomAlias, mxcUrlToHttp } from '../../../utils/matrix';
+import {
+  getCanonicalAliasOrRoomId,
+  getMxIdLocalPart,
+  isRoomAlias,
+  mxcUrlToHttp,
+} from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
@@ -235,9 +240,9 @@ export const MessageSourceCodeItem = as<
   const getContent = (evt: MatrixEvent) =>
     evt.isEncrypted()
       ? {
-        [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
-        [`<== ORIGINAL_EVENT ==>`]: evt.event,
-      }
+          [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
+          [`<== ORIGINAL_EVENT ==>`]: evt.event,
+        }
       : evt.event;
 
   const getText = (): string => {
@@ -615,6 +620,7 @@ export type MessageProps = {
   relations?: Relations;
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
+  mxidColor?: boolean;
   onUserClick: MouseEventHandler<HTMLButtonElement>;
   onUsernameClick: MouseEventHandler<HTMLButtonElement>;
   onReplyClick: MouseEventHandler<HTMLButtonElement>;
@@ -638,6 +644,7 @@ export const Message = as<'div', MessageProps>(
       relations,
       messageLayout,
       messageSpacing,
+      mxidColor,
       onUserClick,
       onUsernameClick,
       onReplyClick,
@@ -673,7 +680,7 @@ export const Message = as<'div', MessageProps>(
       >
         <Username
           as="button"
-          style={{ color: colorMXID(senderId) }}
+          style={mxidColor ? { color: colorMXID(senderId) } : undefined}
           data-user-id={senderId}
           onContextMenu={onUserClick}
           onClick={onUsernameClick}
@@ -952,26 +959,26 @@ export const Message = as<'div', MessageProps>(
                         </Box>
                         {((!mEvent.isRedacted() && canDelete) ||
                           mEvent.getSender() !== mx.getUserId()) && (
-                            <>
-                              <Line size="300" />
-                              <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                                {!mEvent.isRedacted() && canDelete && (
-                                  <MessageDeleteItem
-                                    room={room}
-                                    mEvent={mEvent}
-                                    onClose={closeMenu}
-                                  />
-                                )}
-                                {mEvent.getSender() !== mx.getUserId() && (
-                                  <MessageReportItem
-                                    room={room}
-                                    mEvent={mEvent}
-                                    onClose={closeMenu}
-                                  />
-                                )}
-                              </Box>
-                            </>
-                          )}
+                          <>
+                            <Line size="300" />
+                            <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                              {!mEvent.isRedacted() && canDelete && (
+                                <MessageDeleteItem
+                                  room={room}
+                                  mEvent={mEvent}
+                                  onClose={closeMenu}
+                                />
+                              )}
+                              {mEvent.getSender() !== mx.getUserId() && (
+                                <MessageReportItem
+                                  room={room}
+                                  mEvent={mEvent}
+                                  onClose={closeMenu}
+                                />
+                              )}
+                            </Box>
+                          </>
+                        )}
                       </Menu>
                     </FocusTrap>
                   }
@@ -1095,26 +1102,26 @@ export const Event = as<'div', EventProps>(
                         </Box>
                         {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
                           (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
-                            <>
-                              <Line size="300" />
-                              <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                                {!mEvent.isRedacted() && canDelete && (
-                                  <MessageDeleteItem
-                                    room={room}
-                                    mEvent={mEvent}
-                                    onClose={closeMenu}
-                                  />
-                                )}
-                                {mEvent.getSender() !== mx.getUserId() && (
-                                  <MessageReportItem
-                                    room={room}
-                                    mEvent={mEvent}
-                                    onClose={closeMenu}
-                                  />
-                                )}
-                              </Box>
-                            </>
-                          )}
+                          <>
+                            <Line size="300" />
+                            <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                              {!mEvent.isRedacted() && canDelete && (
+                                <MessageDeleteItem
+                                  room={room}
+                                  mEvent={mEvent}
+                                  onClose={closeMenu}
+                                />
+                              )}
+                              {mEvent.getSender() !== mx.getUserId() && (
+                                <MessageReportItem
+                                  room={room}
+                                  mEvent={mEvent}
+                                  onClose={closeMenu}
+                                />
+                              )}
+                            </Box>
+                          </>
+                        )}
                       </Menu>
                     </FocusTrap>
                   }
