@@ -20,7 +20,6 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     localStorage: global.localStorage,
     dbName: 'web-sync-store',
   });
-  await indexedDBStore.startup();
 
   const mx = createClient({
     baseUrl: session.baseUrl,

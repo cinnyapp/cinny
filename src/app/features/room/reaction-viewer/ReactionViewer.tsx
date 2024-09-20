@@ -25,6 +25,7 @@ import { useRelations } from '../../../hooks/useRelations';
 import { Reaction } from '../../../components/message';
 import { getHexcodeForEmoji, getShortcodeFor } from '../../../plugins/emoji';
 import { UserAvatar } from '../../../components/user-avatar';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 export type ReactionViewerProps = {
   room: Room;
@@ -35,6 +36,7 @@ export type ReactionViewerProps = {
 export const ReactionViewer = as<'div', ReactionViewerProps>(
   ({ className, room, initialKey, relations, requestClose, ...props }, ref) => {
     const mx = useMatrixClient();
+    const useAuthentication = useMediaAuthentication();
     const reactions = useRelations(
       relations,
       useCallback((rel) => [...(rel.getSortedAnnotationsByKey() ?? [])], [])
@@ -81,6 +83,7 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
                     count={evts.size}
                     aria-selected={key === selectedKey}
                     onClick={() => setSelectedKey(key)}
+                    useAuthentication={useAuthentication}
                   />
                 );
               })}
@@ -107,14 +110,16 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
                   const member = room.getMember(senderId);
                   const name = (member ? getName(member) : getMxIdLocalPart(senderId)) ?? senderId;
 
-                  const avatarUrl = member?.getAvatarUrl(
-                    mx.baseUrl,
+                  const avatarMxcUrl = member?.getMxcAvatarUrl();
+                  const avatarUrl = avatarMxcUrl ? mx.mxcUrlToHttp(
+                    avatarMxcUrl,
                     100,
                     100,
                     'crop',
                     undefined,
-                    false
-                  );
+                    false,
+                    useAuthentication
+                  ) : undefined;
 
                   return (
                     <MenuItem

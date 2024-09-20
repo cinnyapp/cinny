@@ -18,11 +18,13 @@ import UserIC from '../../../../public/res/ic/outlined/user.svg';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { getDMRoomFor } from '../../utils/matrix';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
   const [isSearching, updateIsSearching] = useState(false);
   const [searchQuery, updateSearchQuery] = useState({});
   const [users, updateUsers] = useState([]);
+  const useAuthentication = useMediaAuthentication();
 
   const [procUsers, updateProcUsers] = useState(new Set()); // proc stands for processing.
   const [procUserError, updateUserProcError] = useState(new Map());
@@ -222,7 +224,15 @@ function InviteUser({ isOpen, roomId, searchTerm, onRequestClose }) {
           key={userId}
           avatarSrc={
             typeof user.avatar_url === 'string'
-              ? mx.mxcUrlToHttp(user.avatar_url, 42, 42, 'crop')
+              ? mx.mxcUrlToHttp(
+                  user.avatar_url,
+                  42,
+                  42,
+                  'crop',
+                  undefined,
+                  undefined,
+                  useAuthentication
+                )
               : null
           }
           name={name}

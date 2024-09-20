@@ -20,7 +20,6 @@ import FocusTrap from 'focus-trap-react';
 import { IFileInfo } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getFileSrcUrl, getSrcFile } from './util';
 import { bytesToSize } from '../../../utils/common';
 import {
   READABLE_EXT_TO_MIME_TYPE,
@@ -30,6 +29,13 @@ import {
 } from '../../../utils/mimeTypes';
 import * as css from './style.css';
 import { stopPropagation } from '../../../utils/keyboard';
+import {
+  decryptFile,
+  downloadEncryptedMedia,
+  downloadMedia,
+  mxcUrlToHttp,
+} from '../../../utils/matrix';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 const renderErrorButton = (retry: () => void, text: string) => (
   <TooltipProvider
@@ -75,21 +81,20 @@ type ReadTextFileProps = {
 };
 export function ReadTextFile({ body, mimeType, url, encInfo, renderViewer }: ReadTextFileProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const [textViewer, setTextViewer] = useState(false);
-
-  const loadSrc = useCallback(
-    () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
-    [mx, url, mimeType, encInfo]
-  );
 
   const [textState, loadText] = useAsyncCallback(
     useCallback(async () => {
-      const src = await loadSrc();
-      const blob = await getSrcFile(src);
-      const text = blob.text();
+      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const fileContent = encInfo
+        ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
+        : await downloadMedia(mediaUrl);
+
+      const text = fileContent.text();
       setTextViewer(true);
       return text;
-    }, [loadSrc])
+    }, [mx, useAuthentication, mimeType, encInfo, url])
   );
 
   return (
@@ -166,14 +171,18 @@ export type ReadPdfFileProps = {
 };
 export function ReadPdfFile({ body, mimeType, url, encInfo, renderViewer }: ReadPdfFileProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const [pdfViewer, setPdfViewer] = useState(false);
 
   const [pdfState, loadPdf] = useAsyncCallback(
     useCallback(async () => {
-      const httpUrl = await getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo);
+      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const fileContent = encInfo
+        ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
+        : await downloadMedia(mediaUrl);
       setPdfViewer(true);
-      return httpUrl;
-    }, [mx, url, mimeType, encInfo])
+      return URL.createObjectURL(fileContent);
+    }, [mx, url, useAuthentication, mimeType, encInfo])
   );
 
   return (
@@ -240,13 +249,19 @@ export type DownloadFileProps = {
 };
 export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFileProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
 
   const [downloadState, download] = useAsyncCallback(
     useCallback(async () => {
-      const httpUrl = await getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo);
-      FileSaver.saveAs(httpUrl, body);
-      return httpUrl;
-    }, [mx, url, mimeType, encInfo, body])
+      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const fileContent = encInfo
+        ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
+        : await downloadMedia(mediaUrl);
+
+      const fileURL = URL.createObjectURL(fileContent);
+      FileSaver.saveAs(fileURL, body);
+      return fileURL;
+    }, [mx, url, useAuthentication, mimeType, encInfo, body])
   );
 
   return downloadState.status === AsyncStatus.Error ? (

@@ -14,7 +14,12 @@ import { IntermediateRepresentation, Opts as LinkifyOpts, OptFn } from 'linkifyj
 import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import * as css from '../styles/CustomHtml.css';
-import { getMxIdLocalPart, getCanonicalAliasRoomId, isRoomAlias } from '../utils/matrix';
+import {
+  getMxIdLocalPart,
+  getCanonicalAliasRoomId,
+  isRoomAlias,
+  mxcUrlToHttp,
+} from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
 import { EMOJI_PATTERN, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
@@ -44,7 +49,8 @@ export const LINKIFY_OPTS: LinkifyOpts = {
 };
 
 export const makeMentionCustomProps = (
-  handleMentionClick?: ReactEventHandler<HTMLElement>
+  handleMentionClick?: ReactEventHandler<HTMLElement>,
+  content?: string
 ): ComponentPropsWithoutRef<'a'> => ({
   style: { cursor: 'pointer' },
   target: '_blank',
@@ -53,6 +59,7 @@ export const makeMentionCustomProps = (
   tabIndex: handleMentionClick ? 0 : -1,
   onKeyDown: handleMentionClick ? onEnterOrSpace(handleMentionClick) : undefined,
   onClick: handleMentionClick,
+  children: content,
 });
 
 export const renderMatrixMention = (
@@ -86,6 +93,8 @@ export const renderMatrixMention = (
       isRoomAlias(roomIdOrAlias) ? getCanonicalAliasRoomId(mx, roomIdOrAlias) : roomIdOrAlias
     );
 
+    const fallbackContent = mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias;
+
     return (
       <a
         href={href}
@@ -96,7 +105,7 @@ export const renderMatrixMention = (
         data-mention-id={mentionRoom?.roomId ?? roomIdOrAlias}
         data-mention-via={viaServers?.join(',')}
       >
-        {mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias}
+        {customProps.children ? customProps.children : fallbackContent}
       </a>
     );
   }
@@ -119,7 +128,9 @@ export const renderMatrixMention = (
         data-mention-event-id={eventId}
         data-mention-via={viaServers?.join(',')}
       >
-        Message: {mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias}
+        {customProps.children
+          ? customProps.children
+          : `Message: ${mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias}`}
       </a>
     );
   }
@@ -192,6 +203,7 @@ export const getReactCustomHtmlParser = (
     highlightRegex?: RegExp;
     handleSpoilerClick?: ReactEventHandler<HTMLElement>;
     handleMentionClick?: ReactEventHandler<HTMLElement>;
+    useAuthentication?: boolean;
   }
 ): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
@@ -327,12 +339,17 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'a' && testMatrixTo(tryDecodeURIComponent(props.href))) {
+          const content = children.find((child) => !(child instanceof DOMText))
+            ? undefined
+            : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
+
           const mention = renderMatrixMention(
             mx,
             roomId,
             tryDecodeURIComponent(props.href),
-            makeMentionCustomProps(params.handleMentionClick)
+            makeMentionCustomProps(params.handleMentionClick, content)
           );
+
           if (mention) return mention;
         }
 
@@ -354,7 +371,7 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'img') {
-          const htmlSrc = mx.mxcUrlToHttp(props.src);
+          const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication);
           if (htmlSrc && props.src.startsWith('mxc://') === false) {
             return (
               <a href={htmlSrc} target="_blank" rel="noreferrer noopener">

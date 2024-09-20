@@ -14,15 +14,19 @@ import { confirmDialog } from '../../molecules/confirm-dialog/ConfirmDialog';
 
 import './ProfileEditor.scss';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 function ProfileEditor({ userId }) {
   const [isEditing, setIsEditing] = useState(false);
   const mx = useMatrixClient();
   const user = mx.getUser(mx.getUserId());
+  const useAuthentication = useMediaAuthentication();
 
   const displayNameRef = useRef(null);
   const [avatarSrc, setAvatarSrc] = useState(
-    user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null
+    user.avatarUrl
+      ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop', undefined, undefined, useAuthentication)
+      : null
   );
   const [username, setUsername] = useState(user.displayName);
   const [disabled, setDisabled] = useState(true);
@@ -31,13 +35,25 @@ function ProfileEditor({ userId }) {
     let isMounted = true;
     mx.getProfileInfo(mx.getUserId()).then((info) => {
       if (!isMounted) return;
-      setAvatarSrc(info.avatar_url ? mx.mxcUrlToHttp(info.avatar_url, 80, 80, 'crop') : null);
+      setAvatarSrc(
+        info.avatar_url
+          ? mx.mxcUrlToHttp(
+              info.avatar_url,
+              80,
+              80,
+              'crop',
+              undefined,
+              undefined,
+              useAuthentication
+            )
+          : null
+      );
       setUsername(info.displayname);
     });
     return () => {
       isMounted = false;
     };
-  }, [mx, userId]);
+  }, [mx, userId, useAuthentication]);
 
   const handleAvatarUpload = async (url) => {
     if (url === null) {
@@ -54,7 +70,7 @@ function ProfileEditor({ userId }) {
       return;
     }
     mx.setAvatarUrl(url);
-    setAvatarSrc(mx.mxcUrlToHttp(url, 80, 80, 'crop'));
+    setAvatarSrc(mx.mxcUrlToHttp(url, 80, 80, 'crop', undefined, undefined, useAuthentication));
   };
 
   const saveDisplayName = () => {

@@ -22,9 +22,15 @@ import {
 import * as css from './style.css';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { getFileSrcUrl } from './util';
 import { bytesToSize } from '../../../../util/common';
 import { millisecondsToMinutesAndSeconds } from '../../../utils/common';
+import {
+  decryptFile,
+  downloadEncryptedMedia,
+  downloadMedia,
+  mxcUrlToHttp,
+} from '../../../utils/matrix';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 type RenderVideoProps = {
   title: string;
@@ -61,16 +67,22 @@ export const VideoContent = as<'div', VideoContentProps>(
     ref
   ) => {
     const mx = useMatrixClient();
+    const useAuthentication = useMediaAuthentication();
     const blurHash = info.thumbnail_info?.[MATRIX_BLUR_HASH_PROPERTY_NAME];
 
     const [load, setLoad] = useState(false);
     const [error, setError] = useState(false);
 
     const [srcState, loadSrc] = useAsyncCallback(
-      useCallback(
-        () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
-        [mx, url, mimeType, encInfo]
-      )
+      useCallback(async () => {
+        const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+        const fileContent = encInfo
+          ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
+              decryptFile(encBuf, mimeType, encInfo)
+            )
+          : await downloadMedia(mediaUrl);
+        return URL.createObjectURL(fileContent);
+      }, [mx, url, useAuthentication, mimeType, encInfo])
     );
 
     const handleLoad = () => {

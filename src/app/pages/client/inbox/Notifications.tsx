@@ -28,7 +28,7 @@ import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdLocalPart } from '../../../utils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
 import { InboxNotificationsPathSearchParams } from '../../paths';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { SequenceCard } from '../../../components/sequence-card';
@@ -81,6 +81,7 @@ import { useMentionClickHandler } from '../../../hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '../../../hooks/useSpoilerClickHandler';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -191,6 +192,7 @@ function RoomNotificationsGroupComp({
   onOpen,
 }: RoomNotificationsGroupProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
   const mentionClickHandler = useMentionClickHandler(room.roomId);
   const spoilerClickHandler = useSpoilerClickHandler();
@@ -208,10 +210,11 @@ function RoomNotificationsGroupComp({
     () =>
       getReactCustomHtmlParser(mx, room.roomId, {
         linkifyOpts,
+        useAuthentication,
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
       }),
-    [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler]
+    [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication]
   );
 
   const renderMatrixEvent = useMatrixEventRenderer<[IRoomEvent, string, GetContentCallback]>(
@@ -369,7 +372,7 @@ function RoomNotificationsGroupComp({
           <Avatar size="200" radii="300">
             <RoomAvatar
               roomId={room.roomId}
-              src={getRoomAvatarUrl(mx, room, 96)}
+              src={getRoomAvatarUrl(mx, room, 96, useAuthentication)}
               alt={room.name}
               renderFallback={() => (
                 <RoomIcon size="50" joinRule={room.getJoinRule() ?? JoinRule.Restricted} filled />
@@ -424,7 +427,7 @@ function RoomNotificationsGroupComp({
                         userId={event.sender}
                         src={
                           senderAvatarMxc
-                            ? mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? undefined
+                            ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ?? undefined
                             : undefined
                         }
                         alt={displayName}

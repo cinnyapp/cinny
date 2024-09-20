@@ -13,6 +13,8 @@ import { CommandElement, EmoticonElement, LinkElement, MentionElement } from './
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getBeginCommand } from './utils';
 import { BlockType } from './types';
+import { mxcUrlToHttp } from '../../utils/matrix';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 // Put this at the start and end of an inline component to work around this Chromium bug:
 // https://bugs.chromium.org/p/chromium/issues/detail?id=1249405
@@ -76,6 +78,7 @@ function RenderEmoticonElement({
   children,
 }: { element: EmoticonElement } & RenderElementProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const selected = useSelected();
   const focused = useFocused();
 
@@ -90,7 +93,7 @@ function RenderEmoticonElement({
         {element.key.startsWith('mxc://') ? (
           <img
             className={css.EmoticonImg}
-            src={mx.mxcUrlToHttp(element.key) ?? element.key}
+            src={mxcUrlToHttp(mx, element.key, useAuthentication) ?? element.key}
             alt={element.shortcode}
           />
         ) : (

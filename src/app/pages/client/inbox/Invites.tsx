@@ -42,6 +42,7 @@ import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { useRoomTopic } from '../../../hooks/useRoomMeta';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 const COMPACT_CARD_WIDTH = 548;
 
@@ -54,6 +55,7 @@ type InviteCardProps = {
 };
 function InviteCard({ room, userId, direct, compact, onNavigate }: InviteCardProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const roomName = room.name || room.getCanonicalAlias() || room.roomId;
   const member = room.getMember(userId);
   const memberEvent = member?.events.member;
@@ -110,7 +112,7 @@ function InviteCard({ room, userId, direct, compact, onNavigate }: InviteCardPro
         <Avatar size="300">
           <RoomAvatar
             roomId={room.roomId}
-            src={direct ? getDirectRoomAvatarUrl(mx, room, 96) : getRoomAvatarUrl(mx, room, 96)}
+            src={direct ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication) : getRoomAvatarUrl(mx, room, 96, useAuthentication)}
             alt={roomName}
             renderFallback={() => (
               <Text as="span" size="H6">

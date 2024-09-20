@@ -5,7 +5,6 @@ import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { Range } from 'react-range';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { getFileSrcUrl } from './util';
 import { IAudioInfo } from '../../../../types/matrix/common';
 import {
   PlayTimeCallback,
@@ -17,6 +16,13 @@ import {
 } from '../../../hooks/media';
 import { useThrottle } from '../../../hooks/useThrottle';
 import { secondsToMinutesAndSeconds } from '../../../utils/common';
+import {
+  decryptFile,
+  downloadEncryptedMedia,
+  downloadMedia,
+  mxcUrlToHttp,
+} from '../../../utils/matrix';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 const PLAY_TIME_THROTTLE_OPS = {
   wait: 500,
@@ -44,12 +50,16 @@ export function AudioContent({
   renderMediaControl,
 }: AudioContentProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
 
   const [srcState, loadSrc] = useAsyncCallback(
-    useCallback(
-      () => getFileSrcUrl(mx.mxcUrlToHttp(url) ?? '', mimeType, encInfo),
-      [mx, url, mimeType, encInfo]
-    )
+    useCallback(async () => {
+      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const fileContent = encInfo
+        ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
+        : await downloadMedia(mediaUrl);
+      return URL.createObjectURL(fileContent);
+    }, [mx, url, useAuthentication, mimeType, encInfo])
   );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);

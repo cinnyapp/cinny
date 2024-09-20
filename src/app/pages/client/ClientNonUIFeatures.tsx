@@ -22,9 +22,10 @@ import {
   isNotificationEvent,
 } from '../../utils/room';
 import { NotificationType, UnreadInfo } from '../../../types/matrix/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -132,6 +133,7 @@ function MessageNotifications() {
   const notifRef = useRef<Notification>();
   const unreadCacheRef = useRef<Map<string, UnreadInfo>>(new Map());
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
 
@@ -216,7 +218,7 @@ function MessageNotifications() {
         notify({
           roomName: room.name ?? 'Unknown',
           roomAvatar: avatarMxc
-            ? mx.mxcUrlToHttp(avatarMxc, 96, 96, 'crop') ?? undefined
+            ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined
             : undefined,
           username: getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender) ?? sender,
           roomId: room.roomId,
@@ -240,6 +242,7 @@ function MessageNotifications() {
     playSound,
     notify,
     selectedRoomId,
+    useAuthentication,
   ]);
 
   return (

@@ -33,6 +33,8 @@ import { LeaveSpacePrompt } from '../../components/leave-space-prompt';
 import { stopPropagation } from '../../utils/keyboard';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../components/BackRouteHandler';
+import { mxcUrlToHttp } from '../../utils/matrix';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 type LobbyMenuProps = {
   roomId: string;
@@ -122,6 +124,7 @@ type LobbyHeaderProps = {
 };
 export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const space = useSpace();
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
@@ -129,7 +132,7 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
 
   const name = useRoomName(space);
   const avatarMxc = useRoomAvatar(space);
-  const avatarUrl = avatarMxc ? mx.mxcUrlToHttp(avatarMxc, 96, 96, 'crop') ?? undefined : undefined;
+  const avatarUrl = avatarMxc ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined : undefined;
 
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setMenuAnchor(evt.currentTarget.getBoundingClientRect());

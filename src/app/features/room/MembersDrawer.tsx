@@ -55,6 +55,7 @@ import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { UserAvatar } from '../../components/user-avatar';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
 import { stopPropagation } from '../../utils/keyboard';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 export const MembershipFilters = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,
@@ -171,6 +172,7 @@ type MembersDrawerProps = {
 };
 export function MembersDrawer({ room, members }: MembersDrawerProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
@@ -426,9 +428,8 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                         }}
                         after={<Icon size="50" src={Icons.Cross} />}
                       >
-                        <Text size="B300">{`${result.items.length || 'No'} ${
-                          result.items.length === 1 ? 'Result' : 'Results'
-                        }`}</Text>
+                        <Text size="B300">{`${result.items.length || 'No'} ${result.items.length === 1 ? 'Result' : 'Results'
+                          }`}</Text>
                       </Chip>
                     )
                   }
@@ -483,14 +484,16 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
 
                   const member = tagOrMember;
                   const name = getName(member);
-                  const avatarUrl = member.getAvatarUrl(
-                    mx.baseUrl,
+                  const avatarMxcUrl = member.getMxcAvatarUrl();
+                  const avatarUrl = avatarMxcUrl ? mx.mxcUrlToHttp(
+                    avatarMxcUrl,
                     100,
                     100,
                     'crop',
                     undefined,
-                    false
-                  );
+                    false,
+                    useAuthentication
+                  ) : undefined;
 
                   return (
                     <MenuItem

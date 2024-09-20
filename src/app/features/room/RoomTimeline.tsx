@@ -116,6 +116,7 @@ import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -422,6 +423,7 @@ const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
 
 export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimelineProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
@@ -495,10 +497,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     () =>
       getReactCustomHtmlParser(mx, room.roomId, {
         linkifyOpts,
+        useAuthentication,
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
       }),
-    [mx, room, linkifyOpts, spoilerClickHandler, mentionClickHandler]
+    [mx, room, linkifyOpts, spoilerClickHandler, mentionClickHandler, useAuthentication]
   );
   const parseMemberEvent = useMemberEventParser();
 
@@ -710,6 +713,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           const editableEvtId = editableEvt?.getId();
           if (!editableEvtId) return;
           setEditId(editableEvtId);
+          evt.preventDefault();
         }
       },
       [mx, room, editor]

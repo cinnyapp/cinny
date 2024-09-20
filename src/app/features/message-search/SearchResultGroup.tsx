@@ -13,7 +13,7 @@ import {
   makeMentionCustomProps,
   renderMatrixMention,
 } from '../../plugins/react-custom-html-parser';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
 import {
@@ -38,6 +38,7 @@ import { SequenceCard } from '../../components/sequence-card';
 import { UserAvatar } from '../../components/user-avatar';
 import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 type SearchResultGroupProps = {
   room: Room;
@@ -56,6 +57,7 @@ export function SearchResultGroup({
   onOpen,
 }: SearchResultGroupProps) {
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const highlightRegex = useMemo(() => makeHighlightRegex(highlights), [highlights]);
 
   const mentionClickHandler = useMentionClickHandler(room.roomId);
@@ -75,10 +77,11 @@ export function SearchResultGroup({
       getReactCustomHtmlParser(mx, room.roomId, {
         linkifyOpts,
         highlightRegex,
+        useAuthentication,
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
       }),
-    [mx, room, linkifyOpts, highlightRegex, mentionClickHandler, spoilerClickHandler]
+    [mx, room, linkifyOpts, highlightRegex, mentionClickHandler, spoilerClickHandler, useAuthentication]
   );
 
   const renderMatrixEvent = useMatrixEventRenderer<[IEventWithRoomId, string, GetContentCallback]>(
@@ -161,7 +164,7 @@ export function SearchResultGroup({
           <Avatar size="200" radii="300">
             <RoomAvatar
               roomId={room.roomId}
-              src={getRoomAvatarUrl(mx, room, 96)}
+              src={getRoomAvatarUrl(mx, room, 96, useAuthentication)}
               alt={room.name}
               renderFallback={() => (
                 <RoomIcon size="50" joinRule={room.getJoinRule() ?? JoinRule.Restricted} filled />
@@ -209,7 +212,7 @@ export function SearchResultGroup({
                         userId={event.sender}
                         src={
                           senderAvatarMxc
-                            ? mx.mxcUrlToHttp(senderAvatarMxc, 48, 48, 'crop') ?? undefined
+                            ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ?? undefined
                             : undefined
                         }
                         alt={displayName}
