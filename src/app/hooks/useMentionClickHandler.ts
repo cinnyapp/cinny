@@ -14,6 +14,7 @@ export const useMentionClickHandler = (roomId: string): ReactEventHandler<HTMLEl
 
   const handleClick: ReactEventHandler<HTMLElement> = useCallback(
     (evt) => {
+      evt.stopPropagation();
       evt.preventDefault();
       const target = evt.currentTarget;
       const mentionId = target.getAttribute('data-mention-id');
