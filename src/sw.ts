@@ -23,8 +23,13 @@ function fetchConfig(token?: string): RequestInit | undefined {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    cache: 'default',
   };
 }
+
+self.addEventListener('activate', (event: ExtendableEvent) => {
+  event.waitUntil(clients.claim());
+});
 
 self.addEventListener('fetch', (event: FetchEvent) => {
   const { url, method } = event.request;
