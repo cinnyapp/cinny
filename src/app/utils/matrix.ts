@@ -273,3 +273,20 @@ export const mxcUrlToHttp = (
     allowRedirects,
     useAuthentication
   );
+
+export const downloadMedia = async (src: string): Promise<Blob> => {
+  // this request is authenticated by service worker
+  const res = await fetch(src, { method: 'GET' });
+  const blob = await res.blob();
+  return blob;
+};
+
+export const downloadEncryptedMedia = async (
+  src: string,
+  decryptContent: (buf: ArrayBuffer) => Promise<Blob>
+): Promise<Blob> => {
+  const encryptedContent = await downloadMedia(src);
+  const decryptedContent = await decryptContent(await encryptedContent.arrayBuffer());
+
+  return decryptedContent;
+};
