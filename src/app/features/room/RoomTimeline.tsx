@@ -85,7 +85,7 @@ import {
   reactionOrEditEvent,
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
+import { MessageLayout, settingsAtom } from '../../state/settings';
 import { openProfileViewer } from '../../../client/action/navigation';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { Reactions, Message, Event, EncryptedContent } from './message';
@@ -1028,7 +1028,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 urlPreview={showUrlPreview}
                 htmlReactParserOptions={htmlReactParserOptions}
                 linkifyOpts={linkifyOpts}
-                outlineAttachment={messageLayout === 2}
+                outlineAttachment={messageLayout === MessageLayout.Bubble}
               />
             )}
           </Message>
@@ -1124,7 +1124,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                       urlPreview={showUrlPreview}
                       htmlReactParserOptions={htmlReactParserOptions}
                       linkifyOpts={linkifyOpts}
-                      outlineAttachment={messageLayout === 2}
+                      outlineAttachment={messageLayout === MessageLayout.Bubble}
                     />
                   );
                 }
@@ -1208,7 +1208,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const parsed = parseMemberEvent(mEvent);
 
-        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+        const timeJSX = (
+          <Time ts={mEvent.getTs()} compact={messageLayout === MessageLayout.Compact} />
+        );
 
         return (
           <Event
@@ -1241,7 +1243,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+        const timeJSX = (
+          <Time ts={mEvent.getTs()} compact={messageLayout === MessageLayout.Compact} />
+        );
 
         return (
           <Event
@@ -1275,7 +1279,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+        const timeJSX = (
+          <Time ts={mEvent.getTs()} compact={messageLayout === MessageLayout.Compact} />
+        );
 
         return (
           <Event
@@ -1309,7 +1315,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-        const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+        const timeJSX = (
+          <Time ts={mEvent.getTs()} compact={messageLayout === MessageLayout.Compact} />
+        );
 
         return (
           <Event
@@ -1345,7 +1353,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+      const timeJSX = (
+        <Time ts={mEvent.getTs()} compact={messageLayout === MessageLayout.Compact} />
+      );
 
       return (
         <Event
@@ -1386,7 +1396,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-      const timeJSX = <Time ts={mEvent.getTs()} compact={messageLayout === 1} />;
+      const timeJSX = (
+        <Time ts={mEvent.getTs()} compact={messageLayout === MessageLayout.Compact} />
+      );
 
       return (
         <Event
@@ -1541,7 +1553,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             <div
               style={{
                 padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${
-                  messageLayout === 1 ? config.space.S400 : toRem(64)
+                  messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)
                 }`,
               }}
             >
@@ -1549,7 +1561,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             </div>
           )}
           {(canPaginateBack || !rangeAtStart) &&
-            (messageLayout === 1 ? (
+            (messageLayout === MessageLayout.Compact ? (
               <>
                 <CompactPlaceholder />
                 <CompactPlaceholder />
@@ -1568,7 +1580,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           {getItems().map(eventRenderer)}
 
           {(!liveTimelineLinked || !rangeAtEnd) &&
-            (messageLayout === 1 ? (
+            (messageLayout === MessageLayout.Compact ? (
               <>
                 <CompactPlaceholder ref={observeFrontAnchor} />
                 <CompactPlaceholder />

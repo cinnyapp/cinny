@@ -16,7 +16,7 @@ import {
   SpaceTabs,
   InboxTab,
   ExploreTab,
-  UserTab,
+  SettingsTab,
   UnverifiedTab,
 } from './sidebar';
 import { openCreateRoom, openSearch } from '../../../client/action/navigation';
@@ -76,7 +76,7 @@ export function SidebarNav() {
               <UnverifiedTab />
 
               <InboxTab />
-              <UserTab />
+              <SettingsTab />
             </SidebarStack>
           </>
         }

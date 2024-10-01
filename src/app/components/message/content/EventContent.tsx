@@ -1,6 +1,7 @@
 import { Box, Icon, IconSrc } from 'folds';
 import React, { ReactNode } from 'react';
 import { CompactLayout, ModernLayout } from '..';
+import { MessageLayout } from '../../../state/settings';
 
 export type EventContentProps = {
   messageLayout: number;
@@ -11,9 +12,9 @@ export type EventContentProps = {
 export function EventContent({ messageLayout, time, iconSrc, content }: EventContentProps) {
   const beforeJSX = (
     <Box gap="300" justifyContent="SpaceBetween" alignItems="Center" grow="Yes">
-      {messageLayout === 1 && time}
+      {messageLayout === MessageLayout.Compact && time}
       <Box
-        grow={messageLayout === 1 ? undefined : 'Yes'}
+        grow={messageLayout === MessageLayout.Compact ? undefined : 'Yes'}
         alignItems="Center"
         justifyContent="Center"
       >
@@ -25,11 +26,11 @@ export function EventContent({ messageLayout, time, iconSrc, content }: EventCon
   const msgContentJSX = (
     <Box justifyContent="SpaceBetween" alignItems="Baseline" gap="200">
       {content}
-      {messageLayout !== 1 && time}
+      {messageLayout !== MessageLayout.Compact && time}
     </Box>
   );
 
-  return messageLayout === 1 ? (
+  return messageLayout === MessageLayout.Compact ? (
     <CompactLayout before={beforeJSX}>{msgContentJSX}</CompactLayout>
   ) : (
     <ModernLayout before={beforeJSX}>{msgContentJSX}</ModernLayout>

@@ -27,14 +27,14 @@ export function PageRoot({ nav, children }: PageRootProps) {
 type ClientDrawerLayoutProps = {
   children: ReactNode;
 };
-export function PageNav({ children }: ClientDrawerLayoutProps) {
+export function PageNav({ size, children }: ClientDrawerLayoutProps & css.PageNavVariants) {
   const screenSize = useScreenSizeContext();
   const isMobile = screenSize === ScreenSize.Mobile;
 
   return (
     <Box
       grow={isMobile ? 'Yes' : undefined}
-      className={css.PageNav}
+      className={css.PageNav({ size })}
       shrink={isMobile ? 'Yes' : 'No'}
     >
       <Box grow="Yes" direction="Column">
@@ -44,15 +44,17 @@ export function PageNav({ children }: ClientDrawerLayoutProps) {
   );
 }
 
-export const PageNavHeader = as<'header'>(({ className, ...props }, ref) => (
-  <Header
-    className={classNames(css.PageNavHeader, className)}
-    variant="Background"
-    size="600"
-    {...props}
-    ref={ref}
-  />
-));
+export const PageNavHeader = as<'header', css.PageNavHeaderVariants>(
+  ({ className, outlined, ...props }, ref) => (
+    <Header
+      className={classNames(css.PageNavHeader({ outlined }), className)}
+      variant="Background"
+      size="600"
+      {...props}
+      ref={ref}
+    />
+  )
+);
 
 export function PageNavContent({
   scrollRef,
@@ -88,11 +90,11 @@ export const Page = as<'div'>(({ className, ...props }, ref) => (
 ));
 
 export const PageHeader = as<'div', css.PageHeaderVariants>(
-  ({ className, balance, ...props }, ref) => (
+  ({ className, outlined, balance, ...props }, ref) => (
     <Header
       as="header"
       size="600"
-      className={classNames(css.PageHeader({ balance }), className)}
+      className={classNames(css.PageHeader({ balance, outlined }), className)}
       {...props}
       ref={ref}
     />

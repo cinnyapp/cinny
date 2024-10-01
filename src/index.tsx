@@ -10,8 +10,6 @@ enableMapSet();
 
 import './index.scss';
 
-import settings from './client/state/settings';
-
 import { trimTrailingSlash } from './app/utils/common';
 import App from './app/pages/App';
 
@@ -19,7 +17,6 @@ import App from './app/pages/App';
 import './app/i18n';
 
 document.body.classList.add(configClass, varsClass);
-settings.applyTheme();
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
