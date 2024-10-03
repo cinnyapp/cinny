@@ -9,7 +9,7 @@ type CapabilitiesLoaderProps = {
 export function CapabilitiesLoader({ children }: CapabilitiesLoaderProps) {
   const mx = useMatrixClient();
 
-  const [state, load] = useAsyncCallback(useCallback(() => mx.getCapabilities(true), [mx]));
+  const [state, load] = useAsyncCallback(useCallback(() => mx.getCapabilities(), [mx]));
 
   useEffect(() => {
     load();

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomAliases.scss';
+import { EventTimeline } from 'matrix-js-sdk';
 
 import cons from '../../../client/state/cons';
 import { Debounce } from '../../../util/common';
@@ -108,7 +109,7 @@ function RoomAliases({ roomId }) {
   const [deleteAlias, setDeleteAlias] = useState(null);
   const [validate, setValidateToDefault, handleAliasChange] = useValidate(hsString);
 
-  const canPublishAlias = room.currentState.maySendStateEvent('m.room.canonical_alias', userId);
+  const canPublishAlias = room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.maySendStateEvent('m.room.canonical_alias', userId);
 
   useEffect(() => {
     isMountedStore.setItem(true)

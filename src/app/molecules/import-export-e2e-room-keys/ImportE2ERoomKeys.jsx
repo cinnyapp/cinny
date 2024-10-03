@@ -46,7 +46,7 @@ function ImportE2ERoomKeys() {
           type: cons.status.IN_FLIGHT,
         });
       }
-      await mx.importRoomKeys(JSON.parse(keys));
+      await mx.getCrypto()?.importRoomKeys(JSON.parse(keys));
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: false,

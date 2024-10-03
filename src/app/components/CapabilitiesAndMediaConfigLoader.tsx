@@ -19,7 +19,7 @@ export function CapabilitiesAndMediaConfigLoader({
     []
   >(
     useCallback(async () => {
-      const result = await Promise.allSettled([mx.getCapabilities(true), mx.getMediaConfig()]);
+      const result = await Promise.allSettled([mx.getCapabilities(), mx.getMediaConfig()]);
       const capabilities = promiseFulfilledResult(result[0]);
       const mediaConfig = promiseFulfilledResult(result[1]);
       return [capabilities, mediaConfig];

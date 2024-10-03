@@ -41,7 +41,7 @@ function ExportE2ERoomKeys() {
       type: cons.status.IN_FLIGHT,
     });
     try {
-      const keys = await mx.exportRoomKeys();
+      const keys = await mx.getCrypto()?.exportRoomKeys();
       if (isMountStore.getItem()) {
         setStatus({
           isOngoing: true,

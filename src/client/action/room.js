@@ -1,3 +1,4 @@
+import { EventTimeline } from 'matrix-js-sdk';
 import { getIdServer } from '../../util/matrixUtil';
 
 /**
@@ -63,7 +64,7 @@ function guessDMRoomTargetId(room, myUserId) {
   if (oldestMember) return oldestMember.userId;
 
   // if there are no joined members other than us, use the oldest member
-  room.currentState.getMembers().forEach((member) => {
+  room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.getMembers().forEach((member) => {
     if (member.userId === myUserId) return;
 
     if (typeof oldestMemberTs === 'undefined' || (member.events.member && member.events.member.getTs() < oldestMemberTs)) {
@@ -250,7 +251,7 @@ async function setPowerLevel(mx, roomId, userId, powerLevel) {
 
 async function setMyRoomNick(mx, roomId, nick) {
   const room = mx.getRoom(roomId);
-  const mEvent = room.currentState.getStateEvents('m.room.member', mx.getUserId());
+  const mEvent = room.getLiveTimeline().getState(EventTimeline.FORWARDS).getStateEvents('m.room.member', mx.getUserId());
   const content = mEvent?.getContent();
   if (!content) return;
   await mx.sendStateEvent(roomId, 'm.room.member', {
@@ -261,7 +262,7 @@ async function setMyRoomNick(mx, roomId, nick) {
 
 async function setMyRoomAvatar(mx, roomId, mxc) {
   const room = mx.getRoom(roomId);
-  const mEvent = room.currentState.getStateEvents('m.room.member', mx.getUserId());
+  const mEvent = room.getLiveTimeline().getState(EventTimeline.FORWARDS).getStateEvents('m.room.member', mx.getUserId());
   const content = mEvent?.getContent();
   if (!content) return;
   await mx.sendStateEvent(roomId, 'm.room.member', {

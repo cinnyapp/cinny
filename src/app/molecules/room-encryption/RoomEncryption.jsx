@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import './RoomEncryption.scss';
-
+import { EventTimeline } from 'matrix-js-sdk';
 
 import Text from '../../atoms/text/Text';
 import Toggle from '../../atoms/button/Toggle';
@@ -9,13 +9,14 @@ import SettingTile from '../setting-tile/SettingTile';
 
 import { confirmDialog } from '../confirm-dialog/ConfirmDialog';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { getStateEvents } from '../../utils/room';
 
 function RoomEncryption({ roomId }) {
   const mx = useMatrixClient();
   const room = mx.getRoom(roomId);
-  const encryptionEvents = room.currentState.getStateEvents('m.room.encryption');
+  const encryptionEvents = getStateEvents(room, 'm.room.encryption');
   const [isEncrypted, setIsEncrypted] = useState(encryptionEvents.length > 0);
-  const canEnableEncryption = room.currentState.maySendStateEvent('m.room.encryption', mx.getUserId());
+  const canEnableEncryption = room.getLiveTimeline().getState(EventTimeline.FORWARDS).maySendStateEvent('m.room.encryption', mx.getUserId());
 
   const handleEncryptionEnable = async () => {
     const joinRule = room.getJoinRule();

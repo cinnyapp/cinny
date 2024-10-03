@@ -336,7 +336,10 @@ const useTimelinePagination = (
           backwards ? Direction.Backward : Direction.Forward
         ) ?? timelineToPaginate;
       // Decrypt all event ahead of render cycle
-      if (mx.isRoomEncrypted(fetchedTimeline.getRoomId() ?? '')) {
+      const roomId = fetchedTimeline.getRoomId();
+      const room = roomId ? mx.getRoom(roomId) : null;
+
+      if (room?.hasEncryptionStateEvent()) {
         await to(decryptAllTimelineEvent(mx, fetchedTimeline));
       }
 
@@ -421,7 +424,6 @@ const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
 export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
-  const encryptedRoom = mx.isRoomEncrypted(room.roomId);
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
@@ -429,7 +431,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
-  const showUrlPreview = encryptedRoom ? encUrlPreview : urlPreview;
+  const showUrlPreview = room.hasEncryptionStateEvent() ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
   const powerLevels = usePowerLevelsContext();

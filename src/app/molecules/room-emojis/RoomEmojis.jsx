@@ -1,6 +1,7 @@
 import React, { useReducer, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './RoomEmojis.scss';
+import { EventTimeline } from 'matrix-js-sdk';
 
 import { suffixRename } from '../../../util/common';
 
@@ -10,12 +11,13 @@ import Input from '../../atoms/input/Input';
 import Button from '../../atoms/button/Button';
 import ImagePack from '../image-pack/ImagePack';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { getStateEvent, getStateEvents } from '../../utils/room';
 
 function useRoomPacks(room) {
   const mx = useMatrixClient();
   const [, forceUpdate] = useReducer((count) => count + 1, 0);
 
-  const packEvents = room.currentState.getStateEvents('im.ponies.room_emotes');
+  const packEvents = getStateEvents(room, 'im.ponies.room_emotes');
   const unUsablePacks = [];
   const usablePacks = packEvents.filter((mEvent) => {
     if (typeof mEvent.getContent()?.images !== 'object') {
@@ -40,7 +42,7 @@ function useRoomPacks(room) {
     };
   }, [room, mx]);
 
-  const isStateKeyAvailable = (key) => !room.currentState.getStateEvents('im.ponies.room_emotes', key);
+  const isStateKeyAvailable = (key) => !getStateEvent(room, 'im.ponies.room_emotes', key);
 
   const createPack = async (name) => {
     const packContent = {
@@ -80,7 +82,7 @@ function RoomEmojis({ roomId }) {
 
   const { usablePacks, createPack, deletePack } = useRoomPacks(room);
 
-  const canChange = room.currentState.maySendStateEvent('im.ponies.room_emote', mx.getUserId());
+  const canChange = room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.maySendStateEvent('im.ponies.room_emote', mx.getUserId());
 
   const handlePackCreate = (e) => {
     e.preventDefault();
