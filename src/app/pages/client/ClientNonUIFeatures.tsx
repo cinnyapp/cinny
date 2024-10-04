@@ -204,7 +204,14 @@ function MessageNotifications() {
       const cachedUnreadInfo = unreadCacheRef.current.get(room.roomId);
       unreadCacheRef.current.set(room.roomId, unreadInfo);
 
-      if (unreadInfo.total === 0) return;
+      if (unreadInfo.total === 0) {
+        const handleUnreadEvent: RoomEventHandlerMap[RoomEvent.UnreadNotifications] = () => {
+          handleTimelineEvent(mEvent, room, toStartOfTimeline, removed, data);
+          room.removeListener(RoomEvent.UnreadNotifications, handleUnreadEvent);
+        };
+        room.on(RoomEvent.UnreadNotifications, handleUnreadEvent);
+        return;
+      }
       if (
         cachedUnreadInfo &&
         unreadEqual(unreadInfoToUnread(cachedUnreadInfo), unreadInfoToUnread(unreadInfo))
