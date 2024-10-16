@@ -3,16 +3,26 @@
 export type {};
 declare const self: ServiceWorkerGlobalScope;
 
+type Message = { messageId: string };
+type MessageListener = (message: Message) => void;
+const messageListeners = new Map<string, MessageListener>();
+
+self.addEventListener('message', (event) => {
+  const { messageId } = event.data;
+  if (typeof messageId === 'string') {
+    messageListeners.get(messageId)?.(event.data);
+    messageListeners.delete(messageId);
+  }
+});
+
+type TokenMessage = Message & {
+  token?: string;
+};
 async function askForAccessToken(client: Client): Promise<string | undefined> {
   return new Promise((resolve) => {
-    const responseKey = Math.random().toString(36);
-    const listener = (event: ExtendableMessageEvent) => {
-      if (event.data.responseKey !== responseKey) return;
-      resolve(event.data.token);
-      self.removeEventListener('message', listener);
-    };
-    self.addEventListener('message', listener);
-    client.postMessage({ responseKey, type: 'token' });
+    const messageId = Math.random().toString(36);
+    messageListeners.set(messageId, (message: TokenMessage) => resolve(message.token));
+    client.postMessage({ messageId, type: 'token' });
   });
 }
 
