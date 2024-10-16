@@ -46,6 +46,7 @@ type SearchResultGroupProps = {
   items: ResultItem[];
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
+  mxidColor?: boolean;
   onOpen: (roomId: string, eventId: string) => void;
 };
 export function SearchResultGroup({
@@ -54,6 +55,7 @@ export function SearchResultGroup({
   items,
   mediaAutoLoad,
   urlPreview,
+  mxidColor,
   onOpen,
 }: SearchResultGroupProps) {
   const mx = useMatrixClient();
@@ -81,7 +83,15 @@ export function SearchResultGroup({
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
       }),
-    [mx, room, linkifyOpts, highlightRegex, mentionClickHandler, spoilerClickHandler, useAuthentication]
+    [
+      mx,
+      room,
+      linkifyOpts,
+      highlightRegex,
+      mentionClickHandler,
+      spoilerClickHandler,
+      useAuthentication,
+    ]
   );
 
   const renderMatrixEvent = useMatrixEventRenderer<[IEventWithRoomId, string, GetContentCallback]>(
@@ -212,7 +222,14 @@ export function SearchResultGroup({
                         userId={event.sender}
                         src={
                           senderAvatarMxc
-                            ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ?? undefined
+                            ? mxcUrlToHttp(
+                                mx,
+                                senderAvatarMxc,
+                                useAuthentication,
+                                48,
+                                48,
+                                'crop'
+                              ) ?? undefined
                             : undefined
                         }
                         alt={displayName}
@@ -224,7 +241,7 @@ export function SearchResultGroup({
               >
                 <Box gap="300" justifyContent="SpaceBetween" alignItems="Center" grow="Yes">
                   <Box gap="200" alignItems="Baseline">
-                    <Username style={{ color: colorMXID(event.sender) }}>
+                    <Username style={{ color: mxidColor ? colorMXID(event.sender) : undefined }}>
                       <Text as="span" truncate>
                         <b>{displayName}</b>
                       </Text>
@@ -246,6 +263,7 @@ export function SearchResultGroup({
                   <Reply
                     mx={mx}
                     room={room}
+                    mxidColor={mxidColor}
                     replyEventId={replyEventId}
                     threadRootId={threadRootId}
                     onClick={handleOpenClick}

@@ -424,6 +424,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const encryptedRoom = mx.isRoomEncrypted(room.roomId);
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
+  const [mxidColor] = useSetting(settingsAtom, 'mxidColor');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
@@ -978,6 +979,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             mEvent={mEvent}
             messageSpacing={messageSpacing}
             messageLayout={messageLayout}
+            mxidColor={mxidColor}
             collapse={collapse}
             highlight={highlighted}
             edit={editId === mEventId}
@@ -995,6 +997,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 <Reply
                   mx={mx}
                   room={room}
+                  mxidColor={mxidColor}
                   timelineSet={timelineSet}
                   replyEventId={replyEventId}
                   threadRootId={threadRootId}
@@ -1050,6 +1053,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             mEvent={mEvent}
             messageSpacing={messageSpacing}
             messageLayout={messageLayout}
+            mxidColor={mxidColor}
             collapse={collapse}
             highlight={highlighted}
             edit={editId === mEventId}
@@ -1067,6 +1071,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 <Reply
                   mx={mx}
                   room={room}
+                  mxidColor={mxidColor}
                   timelineSet={timelineSet}
                   replyEventId={replyEventId}
                   threadRootId={threadRootId}
@@ -1159,6 +1164,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             mEvent={mEvent}
             messageSpacing={messageSpacing}
             messageLayout={messageLayout}
+            mxidColor={mxidColor}
             collapse={collapse}
             highlight={highlighted}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}

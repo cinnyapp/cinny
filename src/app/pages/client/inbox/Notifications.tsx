@@ -182,6 +182,7 @@ type RoomNotificationsGroupProps = {
   notifications: INotification[];
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
+  mxidColor?: boolean;
   onOpen: (roomId: string, eventId: string) => void;
 };
 function RoomNotificationsGroupComp({
@@ -189,6 +190,7 @@ function RoomNotificationsGroupComp({
   notifications,
   mediaAutoLoad,
   urlPreview,
+  mxidColor,
   onOpen,
 }: RoomNotificationsGroupProps) {
   const mx = useMatrixClient();
@@ -427,7 +429,14 @@ function RoomNotificationsGroupComp({
                         userId={event.sender}
                         src={
                           senderAvatarMxc
-                            ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ?? undefined
+                            ? mxcUrlToHttp(
+                                mx,
+                                senderAvatarMxc,
+                                useAuthentication,
+                                48,
+                                48,
+                                'crop'
+                              ) ?? undefined
                             : undefined
                         }
                         alt={displayName}
@@ -439,7 +448,7 @@ function RoomNotificationsGroupComp({
               >
                 <Box gap="300" justifyContent="SpaceBetween" alignItems="Center" grow="Yes">
                   <Box gap="200" alignItems="Baseline">
-                    <Username style={{ color: colorMXID(event.sender) }}>
+                    <Username style={{ color: mxidColor ? colorMXID(event.sender) : undefined }}>
                       <Text as="span" truncate>
                         <b>{displayName}</b>
                       </Text>
@@ -461,6 +470,7 @@ function RoomNotificationsGroupComp({
                   <Reply
                     mx={mx}
                     room={room}
+                    mxidColor={mxidColor}
                     replyEventId={replyEventId}
                     threadRootId={threadRootId}
                     onClick={handleOpenClick}
@@ -492,6 +502,7 @@ export function Notifications() {
   const mx = useMatrixClient();
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
+  const [mxidColor] = useSetting(settingsAtom, 'mxidColor');
   const screenSize = useScreenSizeContext();
 
   const { navigateRoom } = useRoomNavigate();
@@ -648,6 +659,7 @@ export function Notifications() {
                         <RoomNotificationsGroupComp
                           room={groupRoom}
                           notifications={group.notifications}
+                          mxidColor={mxidColor}
                           mediaAutoLoad={mediaAutoLoad}
                           urlPreview={urlPreview}
                           onOpen={navigateRoom}
