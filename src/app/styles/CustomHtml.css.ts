@@ -171,7 +171,6 @@ export const EmoticonBase = style([
   DefaultReset,
   {
     display: 'inline-block',
-    padding: '0.05rem',
     height: '1em',
     verticalAlign: 'middle',
   },
