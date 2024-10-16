@@ -16,7 +16,6 @@ import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-python';
 
 import './ReactPrism.css';
-// we apply theme in client/state/settings.js
 // using classNames .prism-dark .prism-light from ReactPrism.css
 
 export default function ReactPrism({
