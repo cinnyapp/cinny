@@ -1,6 +1,10 @@
 import { MatrixClient } from "matrix-js-sdk";
 
 export async function markAsRead(mx: MatrixClient, roomId: string) {
+  // Won't mark messages (or whatever in room) as read when tab inactive
+  // or when browser is inactive (i.e. user interacts with some another app)
+  if (document.hidden || !document.hasFocus()) return;
+
   const room = mx.getRoom(roomId);
   if (!room) return;
 
