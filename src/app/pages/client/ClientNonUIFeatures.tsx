@@ -26,6 +26,7 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { invoke } from '@tauri-apps/api';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -71,6 +72,15 @@ function FaviconUpdater() {
     } else {
       setFavicon(LogoSVG);
     }
+
+    if (window.__TAURI__) {
+      try {
+        invoke('update_icon', { notification: notification, highlight: highlight });
+      } catch (error) {
+        console.error("There has been a problem with your Tauri invoke operation:", error);
+      }
+    }
+
   }, [roomToUnread]);
 
   return null;
