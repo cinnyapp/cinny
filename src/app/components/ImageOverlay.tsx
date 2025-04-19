@@ -10,7 +10,7 @@ export type RenderViewerProps = {
   requestClose: () => void;
 };
 
-export type ImageOverlayProps = RenderViewerProps & {
+type ImageOverlayProps = RenderViewerProps & {
   viewer: boolean;
   renderViewer: (props: RenderViewerProps) => ReactNode;
 };
