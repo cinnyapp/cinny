@@ -232,6 +232,7 @@ export function RoomNavItem({
   const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  const notificationMuted = notificationMode === RoomNotificationMode.Mute;
   const typingMember = useRoomTypingMember(room.roomId).filter(
     (receipt) => receipt.userId !== mx.getUserId()
   );
@@ -263,7 +264,7 @@ export function RoomNavItem({
       {...hoverProps}
       {...focusWithinProps}
     >
-      <NavLink to={linkPath}>
+      <NavLink to={linkPath} style={{ opacity: notificationMuted ? config.opacity.Disabled : config.opacity.P500 }}>
         <NavItemContent>
           <Box as="span" grow="Yes" alignItems="Center" gap="200">
             <Avatar size="200" radii="400">
@@ -284,7 +285,7 @@ export function RoomNavItem({
                 />
               ) : (
                 <RoomIcon
-                  style={{ opacity: unread ? config.opacity.P500 : config.opacity.P300 }}
+                  style={{ opacity: unread && !notificationMuted ? config.opacity.P500 : config.opacity.P300 }}
                   filled={selected}
                   size="100"
                   joinRule={room.getJoinRule()}
@@ -292,7 +293,7 @@ export function RoomNavItem({
               )}
             </Avatar>
             <Box as="span" grow="Yes">
-              <Text priority={unread ? '500' : '300'} as="span" size="Inherit" truncate>
+              <Text priority={unread && !notificationMuted ? '500' : '300'} as="span" size="Inherit" truncate>
                 {room.name}
               </Text>
             </Box>
@@ -301,7 +302,7 @@ export function RoomNavItem({
                 <TypingIndicator size="300" disableAnimation />
               </Badge>
             )}
-            {!optionsVisible && unread && (
+            {!optionsVisible && unread && !notificationMuted && (
               <UnreadBadgeCenter>
                 <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
               </UnreadBadgeCenter>
