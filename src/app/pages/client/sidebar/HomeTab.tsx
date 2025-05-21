@@ -26,6 +26,10 @@ import { markAsRead } from '../../../utils/notifications';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import {
+  getRoomNotificationMode, RoomNotificationMode,
+  useRoomsNotificationPreferencesContext
+} from '../../../hooks/useRoomsNotificationPreferences';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -74,6 +78,12 @@ export function HomeTab() {
   const homeSelected = useHomeSelected();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
+  const notificationPreferences = useRoomsNotificationPreferencesContext();
+  const hasUnreadFromUnmutedOrphanRooms = homeUnread?.from && orphanRooms.some(roomId => {
+    const notificationMode = getRoomNotificationMode(notificationPreferences, roomId);
+    return notificationMode !== RoomNotificationMode.Mute && homeUnread.from?.has(roomId);
+  });
+
   const handleHomeClick = () => {
     const activePath = navToActivePath.get('home');
     if (activePath && screenSize !== ScreenSize.Mobile) {
@@ -108,7 +118,7 @@ export function HomeTab() {
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
-      {homeUnread && (
+      {homeUnread && hasUnreadFromUnmutedOrphanRooms && (
         <SidebarItemBadge hasCount={homeUnread.total > 0}>
           <UnreadBadge highlight={homeUnread.highlight > 0} count={homeUnread.total} />
         </SidebarItemBadge>

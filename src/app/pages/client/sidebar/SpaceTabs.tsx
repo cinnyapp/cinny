@@ -93,6 +93,11 @@ import { useOpenSpaceSettings } from '../../../state/hooks/spaceSettings';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
+import {
+  getRoomNotificationMode,
+  RoomNotificationMode,
+  useRoomsNotificationPreferencesContext,
+} from '../../../hooks/useRoomsNotificationPreferences';
 
 type SpaceMenuProps = {
   room: Room;
@@ -403,6 +408,13 @@ function SpaceTab({
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const targetRef = useRef<HTMLDivElement>(null);
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const allChild = useSpaceChildren(
+    allRoomsAtom,
+    space.roomId,
+    useRecursiveChildScopeFactory(mx, roomToParents)
+  );
+  const notificationPreferences = useRoomsNotificationPreferencesContext();
 
   const spaceDraggable: SidebarDraggable = useMemo(
     () =>
@@ -432,70 +444,78 @@ function SpaceTab({
 
   return (
     <RoomUnreadProvider roomId={space.roomId}>
-      {(unread) => (
-        <SidebarItem
-          active={selected}
-          ref={targetRef}
-          aria-disabled={disabled}
-          data-drop-child={dropType === 'make-child'}
-          data-drop-above={dropType === 'reorder-above'}
-          data-drop-below={dropType === 'reorder-below'}
-          data-inside-folder={!!folder}
-        >
-          <SidebarItemTooltip tooltip={disabled ? undefined : space.name}>
-            {(triggerRef) => (
-              <SidebarAvatar
-                as="button"
-                data-id={space.roomId}
-                ref={triggerRef}
-                size={folder ? '300' : '400'}
-                onClick={onClick}
-                onContextMenu={handleContextMenu}
-              >
-                <RoomAvatar
-                  roomId={space.roomId}
-                  src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
-                  alt={space.name}
-                  renderFallback={() => (
-                    <Text size={folder ? 'H6' : 'H4'}>{nameInitials(space.name, 2)}</Text>
-                  )}
-                />
-              </SidebarAvatar>
-            )}
-          </SidebarItemTooltip>
-          {unread && (
-            <SidebarItemBadge hasCount={unread.total > 0}>
-              <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
-            </SidebarItemBadge>
-          )}
-          {menuAnchor && (
-            <PopOut
-              anchor={menuAnchor}
-              position="Right"
-              align="Start"
-              content={
-                <FocusTrap
-                  focusTrapOptions={{
-                    initialFocus: false,
-                    returnFocusOnDeactivate: false,
-                    onDeactivate: () => setMenuAnchor(undefined),
-                    clickOutsideDeactivates: true,
-                    isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                    isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                    escapeDeactivates: stopPropagation,
-                  }}
+      {(unread) => {
+        const hasUnreadFromUnmutedChildRooms =
+          unread?.from &&
+          allChild.some((childRoomId) => {
+            const notificationMode = getRoomNotificationMode(notificationPreferences, childRoomId);
+            return notificationMode !== RoomNotificationMode.Mute && unread.from?.has(childRoomId);
+          });
+        return (
+          <SidebarItem
+            active={selected}
+            ref={targetRef}
+            aria-disabled={disabled}
+            data-drop-child={dropType === 'make-child'}
+            data-drop-above={dropType === 'reorder-above'}
+            data-drop-below={dropType === 'reorder-below'}
+            data-inside-folder={!!folder}
+          >
+            <SidebarItemTooltip tooltip={disabled ? undefined : space.name}>
+              {(triggerRef) => (
+                <SidebarAvatar
+                  as="button"
+                  data-id={space.roomId}
+                  ref={triggerRef}
+                  size={folder ? '300' : '400'}
+                  onClick={onClick}
+                  onContextMenu={handleContextMenu}
                 >
-                  <SpaceMenu
-                    room={space}
-                    requestClose={() => setMenuAnchor(undefined)}
-                    onUnpin={onUnpin}
+                  <RoomAvatar
+                    roomId={space.roomId}
+                    src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
+                    alt={space.name}
+                    renderFallback={() => (
+                      <Text size={folder ? 'H6' : 'H4'}>{nameInitials(space.name, 2)}</Text>
+                    )}
                   />
-                </FocusTrap>
-              }
-            />
-          )}
-        </SidebarItem>
-      )}
+                </SidebarAvatar>
+              )}
+            </SidebarItemTooltip>
+            {unread && hasUnreadFromUnmutedChildRooms && (
+              <SidebarItemBadge hasCount={unread.total > 0}>
+                <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
+              </SidebarItemBadge>
+            )}
+            {menuAnchor && (
+              <PopOut
+                anchor={menuAnchor}
+                position="Right"
+                align="Start"
+                content={
+                  <FocusTrap
+                    focusTrapOptions={{
+                      initialFocus: false,
+                      returnFocusOnDeactivate: false,
+                      onDeactivate: () => setMenuAnchor(undefined),
+                      clickOutsideDeactivates: true,
+                      isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                      isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                      escapeDeactivates: stopPropagation,
+                    }}
+                  >
+                    <SpaceMenu
+                      room={space}
+                      requestClose={() => setMenuAnchor(undefined)}
+                      onUnpin={onUnpin}
+                    />
+                  </FocusTrap>
+                }
+              />
+            )}
+          </SidebarItem>
+        );
+      }}
     </RoomUnreadProvider>
   );
 }

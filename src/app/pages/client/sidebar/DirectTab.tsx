@@ -25,6 +25,11 @@ import { markAsRead } from '../../../utils/notifications';
 import { stopPropagation } from '../../../utils/keyboard';
 import { settingsAtom } from '../../../state/settings';
 import { useSetting } from '../../../state/hooks/settings';
+import {
+  getRoomNotificationMode,
+  RoomNotificationMode,
+  useRoomsNotificationPreferencesContext
+} from '../../../hooks/useRoomsNotificationPreferences';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -71,6 +76,12 @@ export function DirectTab() {
   const directUnread = useRoomsUnread(directs, roomToUnreadAtom);
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
+  const notificationPreferences = useRoomsNotificationPreferencesContext();
+  const hasUnreadFromUnmutedDirects = directUnread?.from && directs.some(directRoomId => {
+    const notificationMode = getRoomNotificationMode(notificationPreferences, directRoomId);
+    return notificationMode !== RoomNotificationMode.Mute && directUnread.from?.has(directRoomId);
+  });
+
   const directSelected = useDirectSelected();
 
   const handleDirectClick = () => {
@@ -106,7 +117,7 @@ export function DirectTab() {
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
-      {directUnread && (
+      {directUnread && hasUnreadFromUnmutedDirects && (
         <SidebarItemBadge hasCount={directUnread.total > 0}>
           <UnreadBadge highlight={directUnread.highlight > 0} count={directUnread.total} />
         </SidebarItemBadge>
