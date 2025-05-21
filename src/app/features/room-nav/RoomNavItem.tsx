@@ -257,7 +257,7 @@ export function RoomNavItem({
     <NavItem
       variant="Background"
       radii="400"
-      highlight={unread !== undefined}
+      highlight={unread !== undefined && !notificationMuted}
       aria-selected={selected}
       data-hover={!!menuAnchor}
       onContextMenu={handleContextMenu}
