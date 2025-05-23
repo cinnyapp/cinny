@@ -2,6 +2,8 @@ import { useAtomValue } from 'jotai';
 import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RoomEvent, RoomEventHandlerMap } from 'matrix-js-sdk';
+import to from 'await-to-js';
+import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '../../state/room/roomToUnread';
 import LogoSVG from '../../../../public/res/svg/cinny.svg';
 import LogoUnreadSVG from '../../../../public/res/svg/cinny-unread.svg';
@@ -156,18 +158,21 @@ function MessageNotifications() {
       roomName,
       roomAvatar,
       username,
+      body,
     }: {
       roomName: string;
       roomAvatar?: string;
       username: string;
       roomId: string;
       eventId: string;
+      body?: string;
     }) => {
-      const noti = new window.Notification(roomName, {
+      const text = (body ?? `New inbox notification from ${username}`);
+      const noti = new window.Notification(`${username} (${roomName})`, {
         icon: roomAvatar,
         badge: roomAvatar,
-        body: `New inbox notification from ${username}`,
-        silent: true,
+        body: text.length > 50 ? `${text.slice(0, 50)}...` : text,
+        silent: false,
       });
 
       noti.onclick = () => {
@@ -188,7 +193,7 @@ function MessageNotifications() {
   }, []);
 
   useEffect(() => {
-    const handleTimelineEvent: RoomEventHandlerMap[RoomEvent.Timeline] = (
+    const handleTimelineEvent: RoomEventHandlerMap[RoomEvent.Timeline] = async (
       mEvent,
       room,
       toStartOfTimeline,
@@ -211,6 +216,19 @@ function MessageNotifications() {
       const eventId = mEvent.getId();
       if (!sender || !eventId || mEvent.getSender() === mx.getUserId()) return;
       const unreadInfo = getUnreadInfo(room);
+
+      // Try to decrypt for the message notification.
+      if (mEvent.isEncrypted()) {
+        if (mEvent.isBeingDecrypted()) {
+          await mEvent.getDecryptionPromise();
+        }
+        else if (mx.getCrypto()) {
+          await to(mEvent.attemptDecryption(mx.getCrypto() as CryptoBackend));
+        }
+      }
+      // Get the (decrypted) message.
+      const { body } = mEvent.getContent();
+
       const cachedUnreadInfo = unreadCacheRef.current.get(room.roomId);
       unreadCacheRef.current.set(room.roomId, unreadInfo);
 
@@ -233,6 +251,7 @@ function MessageNotifications() {
           username: getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender) ?? sender,
           roomId: room.roomId,
           eventId,
+          body,
         });
       }
 
