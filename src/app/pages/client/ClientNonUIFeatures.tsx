@@ -119,6 +119,7 @@ function InviteNotifications() {
 
   const playSound = useCallback(() => {
     const audioElement = audioRef.current;
+    audioElement?.load(); // Reset to avoid sound volume being reduced in Tauri.
     audioElement?.play();
   }, []);
 
@@ -195,6 +196,7 @@ function MessageNotifications() {
 
   const playSound = useCallback(() => {
     const audioElement = audioRef.current;
+    audioElement?.load(); // Reset to avoid sound volume being reduced in Tauri.
     audioElement?.play();
   }, []);
 
