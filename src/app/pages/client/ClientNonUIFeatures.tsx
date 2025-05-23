@@ -109,7 +109,9 @@ function InviteNotifications() {
 
       noti.onclick = () => {
         if (!window.closed) navigate(getInboxInvitesPath());
-        noti.close();
+        if (noti && typeof noti.close === 'function') {
+          noti.close();
+        }
       };
     },
     [navigate]
@@ -177,11 +179,15 @@ function MessageNotifications() {
 
       noti.onclick = () => {
         if (!window.closed) navigate(getInboxNotificationsPath());
-        noti.close();
+        if (noti && typeof noti.close === 'function') {
+          noti.close();
+        }
         notifRef.current = undefined;
       };
 
-      notifRef.current?.close();
+       if (notifRef?.current && typeof notifRef.current.close === 'function') {
+         notifRef.current?.close();
+      }
       notifRef.current = noti;
     },
     [navigate]
