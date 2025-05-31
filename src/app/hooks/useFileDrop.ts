@@ -21,6 +21,7 @@ export const useFileDropZone = (
     const target = zoneRef.current;
     const handleDrop = (evt: DragEvent) => {
       evt.preventDefault();
+      evt.stopPropagation();
       dragStateRef.current = undefined;
       setActive(false);
       if (!evt.dataTransfer) return;
@@ -38,6 +39,7 @@ export const useFileDropZone = (
     const target = zoneRef.current;
     const handleDragEnter = (evt: DragEvent) => {
       if (evt.dataTransfer?.types.includes('Files')) {
+        evt.stopPropagation();
         dragStateRef.current = 'start';
         setActive(true);
       }
@@ -49,6 +51,7 @@ export const useFileDropZone = (
     };
     const handleDragOver = (evt: DragEvent) => {
       evt.preventDefault();
+      evt.stopPropagation();
       dragStateRef.current = 'over';
     };
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import { React, useEffect } from 'react';
 import { Provider as JotaiProvider } from 'jotai';
 import { OverlayContainerProvider, PopOutContainerProvider, TooltipContainerProvider } from 'folds';
 import { RouterProvider } from 'react-router-dom';
@@ -15,8 +15,40 @@ import { useCompositionEndTracking } from '../hooks/useComposingCheck';
 
 const queryClient = new QueryClient();
 
+/**
+ * Prevents file drag/drop behavior across the entire document,
+ * this could otherwise lead to unintended browser behaviors.
+ *
+ * Note that any drag/drop operation that uses files
+ * must use evt.stopPropagation() to override this behavior.
+ */
+const usePreventFileDragDrop = () => {
+  useEffect(() => {
+    const handleDragDrop = (evt: DragEvent) => {
+      if (evt.dataTransfer?.types.includes('Files')) {
+        evt.preventDefault();
+
+        // Block the cursor effect for drag/drop.
+        const { dataTransfer } = evt;
+        dataTransfer.dropEffect = 'none';
+      }
+    };
+    document.addEventListener('dragenter', handleDragDrop);
+    document.addEventListener('dragleave', handleDragDrop);
+    document.addEventListener('dragover', handleDragDrop);
+    document.addEventListener('drop', handleDragDrop);
+    return () => {
+      document.removeEventListener('dragenter', handleDragDrop);
+      document.removeEventListener('dragleave', handleDragDrop);
+      document.removeEventListener('dragover', handleDragDrop);
+      document.removeEventListener('drop', handleDragDrop);
+    };
+  }, []);
+};
+
 function App() {
   const screenSize = useScreenSize();
+  usePreventFileDragDrop();
   useCompositionEndTracking();
 
   const portalContainer = document.getElementById('portalContainer') ?? undefined;
