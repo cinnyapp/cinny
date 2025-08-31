@@ -578,49 +578,71 @@ function ClosedSpaceFolder({
   const tooltipName =
     folder.name ?? folder.content.map((i) => mx.getRoom(i)?.name ?? '').join(', ') ?? 'Unnamed';
 
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const allRooms = useAtomValue(allRoomsAtom);
+  const childScopeFactory = useRecursiveChildScopeFactory(mx, roomToParents);
+  
+  const folderRoomIds = folder.content.filter((i) => mx.getRoom(i)?.roomId);
+  const allChild = useMemo(() => {
+    if (folderRoomIds.length === 0) return [];
+    const selectors = folderRoomIds.map((roomId) => childScopeFactory(roomId));
+    return allRooms
+      .filter((room) => selectors.some((selector) => selector(room)))
+      .map((room) => room);
+  }, [folderRoomIds, childScopeFactory, allRooms]);
+  
+  const notificationPreferences = useRoomsNotificationPreferencesContext();
   return (
     <RoomsUnreadProvider rooms={folder.content}>
-      {(unread) => (
-        <SidebarItem
-          active={selected}
-          ref={handlerRef}
-          aria-disabled={disabled}
-          data-drop-child={dropType === 'make-child'}
-          data-drop-above={dropType === 'reorder-above'}
-          data-drop-below={dropType === 'reorder-below'}
-        >
-          <SidebarItemTooltip tooltip={disabled ? undefined : tooltipName}>
-            {(tooltipRef) => (
-              <SidebarFolder data-id={folder.id} as="button" ref={tooltipRef} onClick={onOpen}>
-                {folder.content.map((sId) => {
-                  const space = mx.getRoom(sId);
-                  if (!space) return null;
+      {(unread) => {
+        const hasUnreadFromUnmutedChildRooms =
+          unread?.from &&
+          allChild.some((childRoomId) => {
+            const notificationMode = getRoomNotificationMode(notificationPreferences, childRoomId);
+            return notificationMode !== RoomNotificationMode.Mute && unread.from?.has(childRoomId);
+          });
+        return (
+          <SidebarItem
+            active={selected}
+            ref={handlerRef}
+            aria-disabled={disabled}
+            data-drop-child={dropType === 'make-child'}
+            data-drop-above={dropType === 'reorder-above'}
+            data-drop-below={dropType === 'reorder-below'}
+          >
+            <SidebarItemTooltip tooltip={disabled ? undefined : tooltipName}>
+              {(tooltipRef) => (
+                <SidebarFolder data-id={folder.id} as="button" ref={tooltipRef} onClick={onOpen}>
+                  {folder.content.map((sId) => {
+                    const space = mx.getRoom(sId);
+                    if (!space) return null;
 
-                  return (
-                    <SidebarAvatar key={sId} size="200" radii="300">
-                      <RoomAvatar
-                        roomId={space.roomId}
-                        src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
-                        alt={space.name}
-                        renderFallback={() => (
-                          <Text size="Inherit">
-                            <b>{nameInitials(space.name, 2)}</b>
-                          </Text>
-                        )}
-                      />
-                    </SidebarAvatar>
-                  );
-                })}
-              </SidebarFolder>
+                    return (
+                      <SidebarAvatar key={sId} size="200" radii="300">
+                        <RoomAvatar
+                          roomId={space.roomId}
+                          src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
+                          alt={space.name}
+                          renderFallback={() => (
+                            <Text size="Inherit">
+                              <b>{nameInitials(space.name, 2)}</b>
+                            </Text>
+                          )}
+                        />
+                      </SidebarAvatar>
+                    );
+                  })}
+                </SidebarFolder>
+              )}
+            </SidebarItemTooltip>
+            {unread && hasUnreadFromUnmutedChildRooms && (
+              <SidebarItemBadge hasCount={unread.total > 0}>
+                <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
+              </SidebarItemBadge>
             )}
-          </SidebarItemTooltip>
-          {unread && (
-            <SidebarItemBadge hasCount={unread.total > 0}>
-              <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
-            </SidebarItemBadge>
-          )}
-        </SidebarItem>
-      )}
+          </SidebarItem>
+        );
+      }}
     </RoomsUnreadProvider>
   );
 }

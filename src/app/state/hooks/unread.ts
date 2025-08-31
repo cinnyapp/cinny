@@ -21,6 +21,7 @@ const getRoomsUnread = (rooms: string[], roomToUnread: RoomToUnread): Unread | u
     newUnread.total += roomUnread.total;
     newUnread.highlight += roomUnread.highlight;
     newUnread.from?.add(roomId);
+    roomUnread?.from?.forEach(originalRoomId => newUnread.from?.add(originalRoomId));
     return newUnread;
   }, undefined);
   return unread;
