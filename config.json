@@ -3,7 +3,6 @@
   "homeserverList": [
     "converser.eu",
     "matrix.org",
-    "monero.social",
     "mozilla.org",
     "unredacted.org",
     "xmr.se"
@@ -28,7 +27,7 @@
       "#PrivSec.dev:arcticfoxes.net",
       "#disroot:aria-net.org"
     ],
-    "servers": [ "matrix.org", "monero.social", "mozilla.org", "unredacted.org" ]
+    "servers": [ "matrix.org", "mozilla.org", "unredacted.org" ]
   },
 
   "hashRouter": {
