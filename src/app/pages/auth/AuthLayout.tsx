@@ -128,7 +128,7 @@ export function AuthLayout() {
         className={classNames(css.AuthLayout, PatternsCss.BackgroundDotPattern)}
         direction="Column"
         alignItems="Center"
-        justifyContent="SpaceBetween"
+        justifyContent="Center"
         gap="400"
       >
         <Box direction="Column" className={css.AuthCard}>

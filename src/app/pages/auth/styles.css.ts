@@ -6,13 +6,17 @@ export const AuthLayout = style({
   backgroundColor: color.Background.Container,
   color: color.Background.OnContainer,
   padding: config.space.S400,
-  paddingRight: config.space.S200,
-  paddingBottom: 0,
+  paddingBottom: config.space.S400,
   position: 'relative',
+  '@media': {
+    'screen and (max-width: 768px)': {
+      padding: config.space.S300,
+      paddingBottom: config.space.S300,
+    },
+  },
 });
 
 export const AuthCard = style({
-  marginTop: '1vh',
   maxWidth: toRem(460),
   width: '100%',
   backgroundColor: color.Surface.Container,
@@ -21,6 +25,12 @@ export const AuthCard = style({
   boxShadow: config.shadow.E100,
   border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
   overflow: 'hidden',
+  '@media': {
+    'screen and (max-width: 768px)': {
+      borderRadius: config.radii.R300,
+      maxWidth: '100%',
+    },
+  },
 });
 
 export const AuthLogo = style([
@@ -46,8 +56,20 @@ export const AuthCardContent = style({
   paddingTop: config.space.S700,
   paddingBottom: toRem(44),
   gap: toRem(44),
+  '@media': {
+    'screen and (max-width: 768px)': {
+      padding: config.space.S300,
+      paddingTop: config.space.S500,
+      paddingBottom: config.space.S500,
+      gap: config.space.S500,
+    },
+  },
 });
 
 export const AuthFooter = style({
   padding: config.space.S200,
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  right: 0,
 });
