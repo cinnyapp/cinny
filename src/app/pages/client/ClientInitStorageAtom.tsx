@@ -8,6 +8,8 @@ import { makeNavToActivePathAtom } from '../../state/navToActivePath';
 import { NavToActivePathProvider } from '../../state/hooks/navToActivePath';
 import { makeOpenedSidebarFolderAtom } from '../../state/openedSidebarFolder';
 import { OpenedSidebarFolderProvider } from '../../state/hooks/openedSidebarFolder';
+import { makeRoomToActiveThreadAtom } from '../../state/roomToActiveThread';
+import { RoomToActiveThreadProvider } from '../../state/hooks/roomToActiveThread';
 
 type ClientInitStorageAtomProps = {
   children: ReactNode;
@@ -22,15 +24,19 @@ export function ClientInitStorageAtom({ children }: ClientInitStorageAtomProps) 
 
   const navToActivePathAtom = useMemo(() => makeNavToActivePathAtom(userId), [userId]);
 
+  const roomToActiveThreadAtom = useMemo(() => makeRoomToActiveThreadAtom(userId), [userId]);
+
   const openedSidebarFolderAtom = useMemo(() => makeOpenedSidebarFolderAtom(userId), [userId]);
 
   return (
     <ClosedNavCategoriesProvider value={closedNavCategoriesAtom}>
       <ClosedLobbyCategoriesProvider value={closedLobbyCategoriesAtom}>
         <NavToActivePathProvider value={navToActivePathAtom}>
-          <OpenedSidebarFolderProvider value={openedSidebarFolderAtom}>
-            {children}
-          </OpenedSidebarFolderProvider>
+          <RoomToActiveThreadProvider value={roomToActiveThreadAtom}>
+            <OpenedSidebarFolderProvider value={openedSidebarFolderAtom}>
+              {children}
+            </OpenedSidebarFolderProvider>
+          </RoomToActiveThreadProvider>
         </NavToActivePathProvider>
       </ClosedLobbyCategoriesProvider>
     </ClosedNavCategoriesProvider>

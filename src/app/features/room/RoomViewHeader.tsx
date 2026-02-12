@@ -69,6 +69,7 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { ThreadsMenu } from './threads-menu';
 
 type RoomMenuProps = {
   room: Room;
@@ -263,6 +264,7 @@ export function RoomViewHeader() {
   const space = useSpaceOptionally();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
+  const [threadsMenuAnchor, setThreadsMenuAnchor] = useState<RectCords>();
   const mDirects = useAtomValue(mDirectAtom);
 
   const pinnedEvents = useRoomPinnedEvents(room);
@@ -293,6 +295,10 @@ export function RoomViewHeader() {
 
   const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setPinMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleOpenThreadsMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setThreadsMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
   return (
@@ -424,6 +430,27 @@ export function RoomViewHeader() {
               </IconButton>
             )}
           </TooltipProvider>
+
+          <TooltipProvider
+            position="Bottom"
+            offset={4}
+            tooltip={
+              <Tooltip>
+                <Text>My Threads</Text>
+              </Tooltip>
+            }
+          >
+            {(triggerRef) => (
+              <IconButton
+                style={{ position: 'relative' }}
+                onClick={handleOpenThreadsMenu}
+                ref={triggerRef}
+                aria-pressed={!!threadsMenuAnchor}
+              >
+                <Icon size="400" src={Icons.Thread} filled={!!threadsMenuAnchor} />
+              </IconButton>
+            )}
+          </TooltipProvider>
           <PopOut
             anchor={pinMenuAnchor}
             position="Bottom"
@@ -440,6 +467,25 @@ export function RoomViewHeader() {
                 }}
               >
                 <RoomPinMenu room={room} requestClose={() => setPinMenuAnchor(undefined)} />
+              </FocusTrap>
+            }
+          />
+          <PopOut
+            anchor={threadsMenuAnchor}
+            position="Bottom"
+            content={
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  returnFocusOnDeactivate: false,
+                  onDeactivate: () => setThreadsMenuAnchor(undefined),
+                  clickOutsideDeactivates: true,
+                  isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                  isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  escapeDeactivates: stopPropagation,
+                }}
+              >
+                <ThreadsMenu room={room} requestClose={() => setThreadsMenuAnchor(undefined)} />
               </FocusTrap>
             }
           />

@@ -1,12 +1,15 @@
 import React, { ComponentProps } from 'react';
 import { Text, as } from 'folds';
+import classNames from 'classnames';
 import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../utils/time';
+import * as css from './Time.css';
 
 export type TimeProps = {
   compact?: boolean;
   ts: number;
   hour24Clock: boolean;
   dateFormatString: string;
+  inheritPriority?: boolean;
 };
 
 /**
@@ -22,7 +25,7 @@ export type TimeProps = {
  * @returns {React.ReactElement} A <Text as="time"> element with the formatted date/time.
  */
 export const Time = as<'span', TimeProps & ComponentProps<typeof Text>>(
-  ({ compact, hour24Clock, dateFormatString, ts, ...props }, ref) => {
+  ({ compact, hour24Clock, dateFormatString, ts, inheritPriority, className, ...props }, ref) => {
     const formattedTime = timeHourMinute(ts, hour24Clock);
 
     let time = '';
@@ -33,11 +36,18 @@ export const Time = as<'span', TimeProps & ComponentProps<typeof Text>>(
     } else if (yesterday(ts)) {
       time = `Yesterday ${formattedTime}`;
     } else {
-      time = `${timeDayMonYear(ts, dateFormatString)} ${formattedTime}`;
+      time = `${timeDayMonYear(ts, dateFormatString)}, ${formattedTime}`;
     }
 
     return (
-      <Text as="time" style={{ flexShrink: 0 }} size="T200" priority="300" {...props} ref={ref}>
+      <Text
+        as="time"
+        className={classNames(css.Time, className)}
+        size="T200"
+        priority={inheritPriority ? undefined : '300'}
+        {...props}
+        ref={ref}
+      >
         {time}
       </Text>
     );
