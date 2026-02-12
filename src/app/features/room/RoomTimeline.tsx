@@ -84,6 +84,7 @@ import {
   reactionOrEditEvent,
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
+import { consumeSearchHighlightTarget } from '../../state/searchHighlight';
 import { MessageLayout, settingsAtom } from '../../state/settings';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { Reactions, Message, Event, EncryptedContent } from './message';
@@ -468,6 +469,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     powerLevelTags
   );
 
+  const searchHighlightRef = useRef<string | null>(null);
+  useEffect(() => {
+    const pendingHighlight = consumeSearchHighlightTarget(room.roomId, eventId);
+    if (pendingHighlight) {
+      searchHighlightRef.current = pendingHighlight;
+    }
+  }, [room.roomId, eventId]);
+
   const permissions = useRoomPermissions(creators, powerLevels);
 
   const canRedact = permissions.action('redact', mx.getSafeUserId());
@@ -576,18 +585,22 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     mx,
     room,
     useCallback(
-      (evtId, lTimelines, evtAbsIndex) => {
-        if (!alive()) return;
-        const evLength = getTimelinesEventsCount(lTimelines);
+    (evtId, lTimelines, evtAbsIndex) => {
+      if (!alive()) return;
+      const evLength = getTimelinesEventsCount(lTimelines);
 
-        setFocusItem({
-          index: evtAbsIndex,
-          scrollTo: true,
-          highlight: evtId !== readUptoEventIdRef.current,
-        });
-        setTimeline({
-          linkedTimelines: lTimelines,
-          range: {
+      const forceHighlight = searchHighlightRef.current === evtId;
+      if (forceHighlight) {
+        searchHighlightRef.current = null;
+      }
+      setFocusItem({
+        index: evtAbsIndex,
+        scrollTo: true,
+        highlight: forceHighlight || evtId !== readUptoEventIdRef.current,
+      });
+      setTimeline({
+        linkedTimelines: lTimelines,
+        range: {
             start: Math.max(evtAbsIndex - PAGINATION_LIMIT, 0),
             end: Math.min(evtAbsIndex + PAGINATION_LIMIT, evLength),
           },
@@ -661,10 +674,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           stopInView: true,
         });
         if (onScroll) onScroll(scrolled);
+        const forceHighlight = searchHighlightRef.current === evtId;
+        if (forceHighlight) {
+          searchHighlightRef.current = null;
+        }
         setFocusItem({
           index: absoluteIndex,
           scrollTo: false,
-          highlight,
+          highlight: forceHighlight || highlight,
         });
       } else {
         setTimeline(getEmptyTimeline());

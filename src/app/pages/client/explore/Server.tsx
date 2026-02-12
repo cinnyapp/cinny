@@ -122,23 +122,11 @@ function Search({ active, loading, searchInputRef, onSearch, onReset }: SearchPr
           )
         }
         after={
-          active ? (
-            <Chip
-              type="button"
-              variant="Secondary"
-              size="400"
-              radii="Pill"
-              outlined
-              after={<Icon size="50" src={Icons.Cross} />}
-              onClick={onReset}
-            >
-              <Text size="B300">Clear</Text>
-            </Chip>
-          ) : (
+          
             <Chip type="submit" variant="Primary" size="400" radii="Pill" outlined>
               <Text size="B300">Enter</Text>
             </Chip>
-          )
+          
         }
       />
     </Box>
