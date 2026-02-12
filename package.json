@@ -104,7 +104,7 @@
     "typescript": "4.9.4",
     "vite": "5.4.19",
     "vite-plugin-pwa": "0.20.5",
-    "vite-plugin-static-copy": "1.0.4",
+    "vite-plugin-static-copy": "2.3.2",
     "vite-plugin-top-level-await": "1.4.4"
   }
 }
