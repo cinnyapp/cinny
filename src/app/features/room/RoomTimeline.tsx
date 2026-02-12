@@ -1048,7 +1048,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             collapse={collapse}
             highlight={highlighted}
             edit={editId === mEventId}
-            canDelete={canRedact || canDeleteOwn}
+            canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
             canSendReaction={canSendReaction}
             canPinEvent={canPinEvent}
             imagePackRooms={imagePackRooms}
@@ -1130,7 +1130,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             collapse={collapse}
             highlight={highlighted}
             edit={editId === mEventId}
-            canDelete={canRedact || canDeleteOwn}
+            canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
             canSendReaction={canSendReaction}
             canPinEvent={canPinEvent}
             imagePackRooms={imagePackRooms}
@@ -1248,7 +1248,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             messageLayout={messageLayout}
             collapse={collapse}
             highlight={highlighted}
-            canDelete={canRedact || canDeleteOwn}
+            canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
             canSendReaction={canSendReaction}
             canPinEvent={canPinEvent}
             imagePackRooms={imagePackRooms}
