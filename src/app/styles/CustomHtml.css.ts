@@ -37,7 +37,6 @@ export const BlockQuote = style([
   {
     paddingLeft: config.space.S200,
     borderLeft: `${config.borderWidth.B700} solid ${color.SurfaceVariant.ContainerLine}`,
-    fontStyle: 'italic',
   },
 ]);
 

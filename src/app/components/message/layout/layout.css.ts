@@ -198,7 +198,6 @@ export const MessageTextBody = recipe({
     emote: {
       true: {
         color: color.Success.Main,
-        fontStyle: 'italic',
       },
     },
   },
