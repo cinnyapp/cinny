@@ -547,6 +547,28 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const atLiveEndRef = useRef(liveTimelineLinked && rangeAtEnd);
   atLiveEndRef.current = liveTimelineLinked && rangeAtEnd;
 
+  // Track pending reaction requests to prevent race conditions
+  const [pendingReactions, setPendingReactions] = useState<Set<string>>(new Set());
+
+  // Track which messages have pending reactions (for performance)
+  const [pendingMessages, setPendingMessages] = useState<Set<string>>(new Set());
+
+  // Track optimistic reactions for instant UI feedback (Slack-like)
+  const [optimisticReactions, setOptimisticReactions] = useState<
+    Map<string, { action: 'add' | 'remove'; key: string; shortcode?: string }>
+  >(new Map());
+
+  // Cleanup on unmount to prevent memory leaks
+  useEffect(
+    () => () => {
+      // Clear all pending states on unmount
+      setPendingReactions(new Set());
+      setPendingMessages(new Set());
+      setOptimisticReactions(new Map());
+    },
+    []
+  );
+
   const handleTimelinePagination = useTimelinePagination(
     mx,
     timeline,
@@ -616,7 +638,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             // Check if the document is in focus (user is actively viewing the app),
             // and either there are no unread messages or the latest message is from the current user.
             // If either condition is met, trigger the markAsRead function to send a read receipt.
-            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!, hideActivity));
+            const roomId = mEvt.getRoomId();
+            if (roomId) {
+              requestAnimationFrame(() => markAsRead(mx, roomId, hideActivity));
+            }
           }
 
           if (!document.hasFocus() && !unreadInfo) {
@@ -917,7 +942,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       evt.stopPropagation();
       const userId = evt.currentTarget.getAttribute('data-user-id');
       if (!userId) {
-        console.warn('Button should have "data-user-id" attribute!');
         return;
       }
       openUserRoomProfile(
@@ -934,7 +958,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       evt.preventDefault();
       const userId = evt.currentTarget.getAttribute('data-user-id');
       if (!userId) {
-        console.warn('Button should have "data-user-id" attribute!');
         return;
       }
       const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
@@ -955,7 +978,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     (evt, startThread = false) => {
       const replyId = evt.currentTarget.getAttribute('data-event-id');
       if (!replyId) {
-        console.warn('Button should have "data-event-id" attribute!');
         return;
       }
       const replyEvt = room.findEventById(replyId);
@@ -983,26 +1005,251 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   const handleReactionToggle = useCallback(
     (targetEventId: string, key: string, shortcode?: string) => {
-      const relations = getEventReactions(room.getUnfilteredTimelineSet(), targetEventId);
-      const allReactions = relations?.getSortedAnnotationsByKey() ?? [];
-      const [, reactionsSet] = allReactions.find(([k]) => k === key) ?? [];
-      const reactions = reactionsSet ? Array.from(reactionsSet) : [];
-      const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
+      const reactionKey = `${targetEventId}|${key}`;
 
-      if (myReaction && !!myReaction?.isRelation()) {
-        mx.redactEvent(room.roomId, myReaction.getId()!);
+      /* eslint-disable no-console */
+      console.log('🔄 [REACTION TOGGLE] Starting', {
+        targetEventId: `${targetEventId.slice(0, 20)}...`,
+        emoji: key,
+        shortcode,
+        timestamp: Date.now(),
+      });
+      /* eslint-enable no-console */
+
+      // WhatsApp-style: Prevent any reactions while ANY reaction is pending for this message
+      // (one reaction at a time per message)
+      if (pendingMessages.has(targetEventId)) {
+        /* eslint-disable no-console */
+        console.warn('⏸️ [REACTION BLOCKED] Message has pending reaction:', {
+          targetEventId: `${targetEventId.slice(0, 20)}...`,
+          pendingMessages: Array.from(pendingMessages).map((id) => `${id.slice(0, 20)}...`),
+        });
+        /* eslint-enable no-console */
         return;
       }
+
+      const relations = getEventReactions(room.getUnfilteredTimelineSet(), targetEventId);
+      const allReactions = relations?.getSortedAnnotationsByKey() ?? [];
+
+      // WhatsApp-style: Find if user has ANY existing reaction on this message
+      let myExistingReaction: MatrixEvent | null = null;
+      let myExistingReactionKey: string | null = null;
+
+      const myUserId = mx.getUserId();
+      if (myUserId) {
+        const foundReaction = Array.from(allReactions).find(([, reactionsSet]) => {
+          const reactions = reactionsSet ? Array.from(reactionsSet) : [];
+          return reactions.find(factoryEventSentBy(myUserId));
+        });
+
+        if (foundReaction) {
+          const [reactionEmoji, reactionsSet] = foundReaction;
+          const reactions = reactionsSet ? Array.from(reactionsSet) : [];
+          const myReaction = reactions.find(factoryEventSentBy(myUserId));
+          if (myReaction && !!myReaction?.isRelation()) {
+            myExistingReaction = myReaction;
+            myExistingReactionKey = reactionEmoji as string;
+          }
+        }
+      }
+
+      const isRemovingSame = myExistingReactionKey === key;
+      const isReplacingDifferent = myExistingReaction && !isRemovingSame;
+
+      /* eslint-disable no-console */
+      console.log('📊 [REACTION STATE] Analysis:', {
+        myExistingReactionKey,
+        newReactionKey: key,
+        isRemovingSame,
+        isReplacingDifferent,
+        hasExistingReaction: !!myExistingReaction,
+      });
+      /* eslint-enable no-console */
+
+      const [, reactionsSet] = allReactions.find(([k]) => k === key) ?? [];
+      const reactions = reactionsSet ? Array.from(reactionsSet) : [];
       const rShortcode =
         shortcode ||
         (reactions.find(eventWithShortcode)?.getContent().shortcode as string | undefined);
+
+      // Batch all state updates together for instant response
+      const optimisticUpdate = new Map(optimisticReactions);
+      const pendingUpdate = new Set(pendingReactions);
+      const messagesUpdate = new Set(pendingMessages);
+
+      // If replacing, mark old reaction for removal
+      if (isReplacingDifferent && myExistingReactionKey) {
+        const oldReactionKey = `${targetEventId}|${myExistingReactionKey}`;
+        optimisticUpdate.set(oldReactionKey, {
+          action: 'remove',
+          key: myExistingReactionKey,
+        });
+        pendingUpdate.add(oldReactionKey);
+      }
+
+      // Mark new reaction
+      optimisticUpdate.set(reactionKey, {
+        action: isRemovingSame ? 'remove' : 'add',
+        key,
+        shortcode: rShortcode,
+      });
+      pendingUpdate.add(reactionKey);
+      messagesUpdate.add(targetEventId);
+
+      // Apply all updates in one batch for instant UI response
+      /* eslint-disable no-console */
+      console.log('⚡ [OPTIMISTIC UPDATE] Applying:', {
+        optimisticKeys: Array.from(optimisticUpdate.entries()).map(([k, v]) => ({
+          key: k,
+          action: v.action,
+          emoji: v.key,
+        })),
+        pendingReactions: Array.from(pendingUpdate),
+        pendingMessages: Array.from(messagesUpdate),
+      });
+      /* eslint-enable no-console */
+      setOptimisticReactions(optimisticUpdate);
+      setPendingReactions(pendingUpdate);
+      setPendingMessages(messagesUpdate);
+
+      const rollback = () => {
+        /* eslint-disable no-console */
+        console.error('❌ [ROLLBACK] Reverting optimistic update due to error:', {
+          reactionKey,
+          timestamp: Date.now(),
+        });
+        /* eslint-enable no-console */
+        // Revert optimistic state on error
+        setOptimisticReactions((prev) => {
+          const next = new Map(prev);
+          next.delete(reactionKey);
+          if (isReplacingDifferent && myExistingReactionKey) {
+            next.delete(`${targetEventId}|${myExistingReactionKey}`);
+          }
+          return next;
+        });
+        setPendingReactions((prev) => {
+          const next = new Set(prev);
+          next.delete(reactionKey);
+          if (isReplacingDifferent && myExistingReactionKey) {
+            next.delete(`${targetEventId}|${myExistingReactionKey}`);
+          }
+          return next;
+        });
+        // Remove message from pending on error
+        setPendingMessages((prev) => {
+          const next = new Set(prev);
+          next.delete(targetEventId);
+          return next;
+        });
+      };
+
+      // Timeout protection: Auto-cleanup after 10 seconds if promise never resolves
+      const timeoutId = setTimeout(rollback, 10000);
+
+      const cleanup = () => {
+        /* eslint-disable no-console */
+        console.log('✅ [CLEANUP] Server confirmed reaction:', {
+          reactionKey,
+          timestamp: Date.now(),
+        });
+        /* eslint-enable no-console */
+        clearTimeout(timeoutId);
+        setPendingReactions((prev) => {
+          const next = new Set(prev);
+          next.delete(reactionKey);
+          if (isReplacingDifferent && myExistingReactionKey) {
+            next.delete(`${targetEventId}|${myExistingReactionKey}`);
+          }
+          return next;
+        });
+        // Remove optimistic state once server confirms
+        setOptimisticReactions((prev) => {
+          const next = new Map(prev);
+          next.delete(reactionKey);
+          if (isReplacingDifferent && myExistingReactionKey) {
+            next.delete(`${targetEventId}|${myExistingReactionKey}`);
+          }
+          return next;
+        });
+        // Remove message from pending if no more reactions pending
+        setPendingMessages((prev) => {
+          const next = new Set(prev);
+          next.delete(targetEventId);
+          return next;
+        });
+      };
+
+      // If clicking same reaction, just remove it
+      if (isRemovingSame && myExistingReaction) {
+        const eventIdValue = myExistingReaction.getId();
+        /* eslint-disable no-console */
+        console.log('🗑️ [REMOVE SAME] Removing existing reaction:', {
+          emoji: key,
+          eventId: eventIdValue ? `${eventIdValue.slice(0, 20)}...` : 'undefined',
+        });
+        /* eslint-enable no-console */
+        const reactionEventId = myExistingReaction.getId();
+        if (reactionEventId) {
+          mx.redactEvent(room.roomId, reactionEventId).then(cleanup).catch(rollback);
+        } else {
+          rollback();
+        }
+        return;
+      }
+
+      // If replacing different reaction, remove old one first, then add new
+      if (isReplacingDifferent && myExistingReaction) {
+        const eventIdValue = myExistingReaction.getId();
+        /* eslint-disable no-console */
+        console.log('🔄 [EMOJI CHANGE] Replacing emoji:', {
+          oldEmoji: myExistingReactionKey,
+          newEmoji: key,
+          oldEventId: eventIdValue ? `${eventIdValue.slice(0, 20)}...` : 'undefined',
+        });
+        /* eslint-enable no-console */
+        const replacementEventId = myExistingReaction.getId();
+        if (replacementEventId) {
+          /* eslint-disable no-console */
+          console.log('  Step 1/2: Removing old reaction...');
+          /* eslint-enable no-console */
+          mx.redactEvent(room.roomId, replacementEventId)
+            .then(() => {
+              /* eslint-disable no-console */
+              console.log('  Step 2/2: Adding new reaction...');
+              /* eslint-enable no-console */
+              return mx.sendEvent(
+                room.roomId,
+                // @ts-expect-error MessageEvent.Reaction type mismatch with matrix-js-sdk
+                MessageEvent.Reaction,
+                getReactionContent(targetEventId, key, rShortcode)
+              );
+            })
+            .then(cleanup)
+            .catch(rollback);
+        } else {
+          rollback();
+        }
+        return;
+      }
+
+      // No existing reaction, just add new one
+      /* eslint-disable no-console */
+      console.log('➕ [ADD NEW] Adding new reaction:', {
+        emoji: key,
+        targetEventId: `${targetEventId.slice(0, 20)}...`,
+      });
+      /* eslint-enable no-console */
       mx.sendEvent(
         room.roomId,
-        MessageEvent.Reaction as any,
+        // @ts-expect-error MessageEvent.Reaction type mismatch with matrix-js-sdk
+        MessageEvent.Reaction,
         getReactionContent(targetEventId, key, rShortcode)
-      );
+      )
+        .then(cleanup)
+        .catch(rollback);
     },
-    [mx, room]
+    [mx, room, pendingReactions, pendingMessages, optimisticReactions]
   );
   const handleEdit = useCallback(
     (editEvtId?: string) => {
@@ -1081,6 +1328,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                   mEventId={mEventId}
                   canSendReaction={canSendReaction}
                   onReactionToggle={handleReactionToggle}
+                  pendingReactions={pendingReactions}
+                  optimisticReactions={optimisticReactions}
                 />
               )
             }
@@ -1163,6 +1412,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                   mEventId={mEventId}
                   canSendReaction={canSendReaction}
                   onReactionToggle={handleReactionToggle}
+                  pendingReactions={pendingReactions}
+                  optimisticReactions={optimisticReactions}
                 />
               )
             }
@@ -1266,6 +1517,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                   mEventId={mEventId}
                   canSendReaction={canSendReaction}
                   onReactionToggle={handleReactionToggle}
+                  pendingReactions={pendingReactions}
+                  optimisticReactions={optimisticReactions}
                 />
               )
             }
