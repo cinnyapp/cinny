@@ -1,4 +1,21 @@
 import { MatrixClient, ReceiptType } from 'matrix-js-sdk';
+import { RoomAccountDataEvent } from '../../types/matrix/accountData';
+
+/**
+ * Clears a room's unread marker. This is distinct from marking an event in a room as unread.
+ * @param mx An instance of the Matrix client.
+ * @param roomId The ID of the room to clear the unread marker for.
+ * @returns A promise that completes when the room's unread marker is cleared.
+ * @see https://spec.matrix.org/v1.17/client-server-api/#unread-markers
+ */
+export async function clearUnreadMarker(mx: MatrixClient, roomId: string) {
+  const room = mx.getRoom(roomId);
+  if (!room) return;
+
+  await mx.setRoomAccountData(room.roomId, RoomAccountDataEvent.MarkedUnread, {
+    unread: false,
+  });
+}
 
 export async function markAsRead(mx: MatrixClient, roomId: string, privateReceipt: boolean) {
   const room = mx.getRoom(roomId);
@@ -23,4 +40,22 @@ export async function markAsRead(mx: MatrixClient, roomId: string, privateReceip
     latestEvent,
     privateReceipt ? ReceiptType.ReadPrivate : ReceiptType.Read
   );
+
+  await clearUnreadMarker(mx, roomId);
+}
+
+/**
+ * Marks the room as unread.
+ * @param mx An instance of the Matrix client.
+ * @param roomId The ID of the room to mark as unread.
+ * @returns A promise that completes when the room is marked as unread.
+ * @see https://spec.matrix.org/v1.17/client-server-api/#unread-markers
+ */
+export async function markAsUnread(mx: MatrixClient, roomId: string) {
+  const room = mx.getRoom(roomId);
+  if (!room) return;
+
+  await mx.setRoomAccountData(room.roomId, RoomAccountDataEvent.MarkedUnread, {
+    unread: true,
+  });
 }
