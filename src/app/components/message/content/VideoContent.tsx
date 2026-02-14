@@ -81,7 +81,8 @@ export const VideoContent = as<'div', VideoContentProps>(
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(async () => {
-        const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+        const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication);
+        if (!mediaUrl) throw new Error('Invalid media URL');
         const fileContent = encInfo
           ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
               decryptFile(encBuf, mimeType, encInfo)

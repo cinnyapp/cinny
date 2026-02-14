@@ -1,6 +1,6 @@
 import { MatrixClient, ReceiptType } from 'matrix-js-sdk';
 
-export async function markAsRead(mx: MatrixClient, roomId: string, privateReceipt: boolean) {
+export async function markAsRead(mx: MatrixClient, roomId: string, privateReceipt?: boolean) {
   const room = mx.getRoom(roomId);
   if (!room) return;
 
@@ -19,8 +19,15 @@ export async function markAsRead(mx: MatrixClient, roomId: string, privateReceip
   const latestEvent = getLatestValidEvent();
   if (latestEvent === null) return;
 
-  await mx.sendReadReceipt(
-    latestEvent,
-    privateReceipt ? ReceiptType.ReadPrivate : ReceiptType.Read
+  const latestEventId = latestEvent.getId();
+  if (!latestEventId) return;
+
+  // Set both the read receipt AND the fully_read marker
+  // The fully_read marker is what persists your read position across sessions
+  await mx.setRoomReadMarkers(
+    roomId,
+    latestEventId, // m.fully_read marker
+    latestEvent,   // m.read receipt event
+    privateReceipt ? { receiptType: ReceiptType.ReadPrivate } : undefined
   );
 }
