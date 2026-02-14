@@ -97,7 +97,7 @@ export const useThemeNames = (): Record<string, string> =>
       [DarkTheme.id]: 'Dark',
       [ButterTheme.id]: 'Butter',
       [CatppuccinLatteTheme.id]: 'Catppuccin Latte',
-      [CatppuccinFrappeTheme.id]: 'Catppuccin Frappe',
+      [CatppuccinFrappeTheme.id]: 'Catppuccin Frappé',
       [CatppuccinMacchiatoTheme.id]: 'Catppuccin Macchiato',
       [CatppuccinMochaTheme.id]: 'Catppuccin Mocha',
     }),
