@@ -34,7 +34,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
 
       return (
         <>
-          {imgUrl && <UrlPreviewImg src={imgUrl} alt={prev['og:title']} title={prev['og:title']} />}
+          {imgUrl && <UrlPreviewImg mxcUrl={prev['og:image']} src={imgUrl} alt={prev['og:title']} title={prev['og:title']} />}
           <UrlPreviewContent>
             <Text
               style={linkStyles}
