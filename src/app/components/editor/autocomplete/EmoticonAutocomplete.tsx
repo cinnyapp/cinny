@@ -88,6 +88,8 @@ export function EmoticonAutocomplete({
       {autoCompleteEmoticon.map((emoticon) => {
         const isCustomEmoji = 'url' in emoticon;
         const key = isCustomEmoji ? emoticon.url : emoticon.unicode;
+        const customEmojiUrl = mxcUrlToHttp(mx, key, useAuthentication);
+
         return (
           <MenuItem
             key={emoticon.shortcode + key}
@@ -98,11 +100,11 @@ export function EmoticonAutocomplete({
             }
             onClick={() => handleAutocomplete(key, emoticon.shortcode)}
             before={
-              isCustomEmoji ? (
+              isCustomEmoji && customEmojiUrl ? (
                 <Box
                   shrink="No"
                   as="img"
-                  src={mxcUrlToHttp(mx, key, useAuthentication) || key}
+                  src={customEmojiUrl}
                   alt={emoticon.shortcode}
                   style={{ width: toRem(24), height: toRem(24), objectFit: 'contain' }}
                 />

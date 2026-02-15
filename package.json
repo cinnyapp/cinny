@@ -67,7 +67,7 @@
     "react-google-recaptcha": "2.1.0",
     "react-i18next": "15.0.0",
     "react-range": "1.8.14",
-    "react-router-dom": "6.20.0",
+    "react-router-dom": "6.30.3",
     "sanitize-html": "2.12.1",
     "slate": "0.112.0",
     "slate-dom": "0.112.2",
