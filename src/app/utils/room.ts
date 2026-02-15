@@ -215,6 +215,18 @@ export const roomHaveNotification = (room: Room): boolean => {
   return total > 0 || highlight > 0;
 };
 
+export const getUnreadMarker = (mx: MatrixClient, room: Room) => {
+  const unreadMarkerData = room.getAccountData(RoomAccountDataEvent.MarkedUnread);
+  if (unreadMarkerData) {
+    const unreadMarketEventContent = unreadMarkerData.getContent<IUnreadContent>();
+    if (unreadMarketEventContent.unread) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   const userId = mx.getUserId();
   if (!userId) return false;
@@ -236,17 +248,6 @@ export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   }
   return true;
 };
-
-export const getUnreadMarker = (mx: MatrixClient, room: Room) => {
-  const unreadMarkerData = room.getAccountData(RoomAccountDataEvent.MarkedUnread);
-  if (unreadMarkerData) {
-    const unreadMarketEventContent = unreadMarkerData.getContent<IUnreadContent>();
-    if (unreadMarketEventContent.unread) {
-      return true;
-    }
-  }
-  return false;
-}
 
 export const getUnreadInfo = (mx: MatrixClient, room: Room): UnreadInfo => {
   const total = room.getUnreadNotificationCount(NotificationCountType.Total);

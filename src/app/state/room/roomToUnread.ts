@@ -108,8 +108,8 @@ export const unreadEqual = (u1: Unread, u2: Unread): boolean => {
   const countEqual = u1.highlight === u2.highlight && u1.total === u2.total;
   if (!countEqual) return false;
 
-  const unreadEqual = u1.unreadMarker == u2.unreadMarker;
-  if (!unreadEqual) return false;
+  const unreadMarkersEqual = u1.unreadMarker === u2.unreadMarker;
+  if (!unreadMarkersEqual) return false;
 
   const f1 = u1.from;
   const f2 = u2.from;
@@ -130,10 +130,7 @@ export const unreadEqual = (u1: Unread, u2: Unread): boolean => {
 
 const baseRoomToUnread = atom<RoomToUnread>(new Map());
 export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefined>(
-  (get) => {
-    console.warn('[Test] Getting baseRoomToUnread:', get(baseRoomToUnread));
-    return get(baseRoomToUnread);
-  },
+  (get) => get(baseRoomToUnread),
   (get, set, action) => {
     if (action.type === 'RESET') {
       const draftRoomToUnread: RoomToUnread = new Map();
@@ -153,10 +150,8 @@ export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefin
       if (currentUnread && unreadEqual(currentUnread, unreadInfoToUnread(unreadInfo))) {
         // Do not update if unread data has not changes
         // like total & highlight
-        console.warn('[Test] No changes; ignoring...');
         return;
       }
-      console.warn('[Test] Updating unread atom for room...');
       set(
         baseRoomToUnread,
         produce(get(baseRoomToUnread), (draftRoomToUnread) =>

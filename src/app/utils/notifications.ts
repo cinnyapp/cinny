@@ -59,5 +59,4 @@ export async function markAsUnread(mx: MatrixClient, roomId: string) {
   await mx.setRoomAccountData(room.roomId, RoomAccountDataEvent.MarkedUnread, {
     unread: true,
   });
-  console.warn(`[Test] Marked room ${roomId} unread.`);
 }
