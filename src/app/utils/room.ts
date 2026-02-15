@@ -18,9 +18,10 @@ import {
   RoomMember,
 } from 'matrix-js-sdk';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
-import { AccountDataEvent } from '../../types/matrix/accountData';
+import { AccountDataEvent, RoomAccountDataEvent } from '../../types/matrix/accountData';
 import {
   IRoomCreateContent,
+  IUnreadContent,
   Membership,
   MessageEvent,
   NotificationType,
@@ -161,7 +162,8 @@ export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): 
 
 export const isMutedRule = (rule: IPushRule) =>
   // Check for empty actions (new spec) or dont_notify (deprecated)
-  (rule.actions.length === 0 || rule.actions[0] === 'dont_notify') && rule.conditions?.[0]?.kind === 'event_match';
+  (rule.actions.length === 0 || rule.actions[0] === 'dont_notify') &&
+  rule.conditions?.[0]?.kind === 'event_match';
 
 export const findMutedRule = (overrideRules: IPushRule[], roomId: string) =>
   overrideRules.find((rule) => rule.rule_id === roomId && isMutedRule(rule));
@@ -216,6 +218,15 @@ export const roomHaveNotification = (room: Room): boolean => {
 export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   const userId = mx.getUserId();
   if (!userId) return false;
+
+  const unreadMarkerData = room.getAccountData(RoomAccountDataEvent.MarkedUnread);
+  if (unreadMarkerData) {
+    const unreadMarketEventContent = unreadMarkerData.getContent<IUnreadContent>();
+    if (unreadMarketEventContent.unread) {
+      return true;
+    }
+  }
+
   const readUpToId = room.getEventReadUpTo(userId);
   const liveEvents = room.getLiveTimeline().getEvents();
 

@@ -17,6 +17,7 @@ import {
   UnreadInfo,
   Unread,
   StateEvent,
+  IUnreadContent,
 } from '../../../types/matrix/room';
 import {
   getAllParents,
@@ -216,6 +217,18 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(room) });
     };
     mx.on(RoomEvent.Timeline, handleTimelineEvent);
+
+    const handleAccountDataEvent = (mEvent: MatrixEvent, room: Room, prevEvent?: MatrixEvent) => {
+      console.log('Account data event received:', mEvent);
+      const prevUnreadMarker = prevEvent?.getContent<IUnreadContent>().unread || false;
+      const nextUnreadMarker = mEvent.getContent<IUnreadContent>().unread || false;
+
+      if (nextUnreadMarker !== prevUnreadMarker) {
+        setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(room) });
+      }
+    };
+    mx.on(RoomEvent.AccountData, handleAccountDataEvent);
+
     return () => {
       mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
     };

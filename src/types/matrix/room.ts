@@ -1,3 +1,4 @@
+import { IContent } from 'matrix-js-sdk';
 import { IImageInfo } from './common';
 
 export enum Membership {
@@ -106,3 +107,7 @@ export type MemberPowerTag = {
   color?: string;
   icon?: MemberPowerTagIcon;
 };
+
+export interface IUnreadContent extends IContent {
+  unread?: boolean;
+}
