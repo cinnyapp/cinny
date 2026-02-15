@@ -51,8 +51,12 @@ export function BackRouteHandler({ children }: BackRouteHandlerProps) {
       },
       location.pathname
     );
-    if (spaceMatch?.params.spaceIdOrAlias) {
-      navigate(getSpacePath(spaceMatch.params.spaceIdOrAlias));
+    const encodedSpaceIdOrAlias = spaceMatch?.params.spaceIdOrAlias;
+    const decodedSpaceIdOrAlias =
+      encodedSpaceIdOrAlias && decodeURIComponent(encodedSpaceIdOrAlias);
+
+    if (decodedSpaceIdOrAlias) {
+      navigate(getSpacePath(decodedSpaceIdOrAlias));
       return;
     }
     if (
