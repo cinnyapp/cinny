@@ -32,6 +32,9 @@ export async function markAsRead(mx: MatrixClient, roomId: string, privateReceip
     }
     return null;
   };
+
+  await clearUnreadMarker(mx, roomId);
+
   if (timeline.length === 0) return;
   const latestEvent = getLatestValidEvent();
   if (latestEvent === null) return;
@@ -40,8 +43,6 @@ export async function markAsRead(mx: MatrixClient, roomId: string, privateReceip
     latestEvent,
     privateReceipt ? ReceiptType.ReadPrivate : ReceiptType.Read
   );
-
-  await clearUnreadMarker(mx, roomId);
 }
 
 /**
@@ -58,4 +59,5 @@ export async function markAsUnread(mx: MatrixClient, roomId: string) {
   await mx.setRoomAccountData(room.roomId, RoomAccountDataEvent.MarkedUnread, {
     unread: true,
   });
+  console.warn(`[Test] Marked room ${roomId} unread.`);
 }

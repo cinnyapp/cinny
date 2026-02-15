@@ -48,6 +48,7 @@ export type RoomToUnreadAction =
 export const unreadInfoToUnread = (unreadInfo: UnreadInfo): Unread => ({
   highlight: unreadInfo.highlight,
   total: unreadInfo.total,
+  unreadMarker: unreadInfo.unreadMarker,
   from: null,
 });
 
@@ -56,17 +57,19 @@ const putUnreadInfo = (
   allParents: Set<string>,
   unreadInfo: UnreadInfo
 ) => {
-  const oldUnread = roomToUnread.get(unreadInfo.roomId) ?? { highlight: 0, total: 0, from: null };
+  const oldUnread = roomToUnread.get(unreadInfo.roomId) ?? { highlight: 0, total: 0, unreadMarker: false, from: null };
   roomToUnread.set(unreadInfo.roomId, unreadInfoToUnread(unreadInfo));
 
   const newH = unreadInfo.highlight - oldUnread.highlight;
   const newT = unreadInfo.total - oldUnread.total;
+  const newMarker = unreadInfo.unreadMarker;
 
   allParents.forEach((parentId) => {
-    const oldParentUnread = roomToUnread.get(parentId) ?? { highlight: 0, total: 0, from: null };
+    const oldParentUnread = roomToUnread.get(parentId) ?? { highlight: 0, total: 0, unreadMarker: false, from: null };
     roomToUnread.set(parentId, {
       highlight: (oldParentUnread.highlight += newH),
       total: (oldParentUnread.total += newT),
+      unreadMarker: (oldParentUnread.unreadMarker) || newMarker,
       from: new Set([...(oldParentUnread.from ?? []), unreadInfo.roomId]),
     });
   });
@@ -77,18 +80,25 @@ const deleteUnreadInfo = (roomToUnread: RoomToUnread, allParents: Set<string>, r
   if (!oldUnread) return;
   roomToUnread.delete(roomId);
 
+  let newMarker = false;
+
   allParents.forEach((parentId) => {
     const oldParentUnread = roomToUnread.get(parentId);
     if (!oldParentUnread) return;
+
     const newFrom = new Set([...(oldParentUnread.from ?? roomId)]);
     newFrom.delete(roomId);
     if (newFrom.size === 0) {
       roomToUnread.delete(parentId);
       return;
     }
+
+    newMarker = newMarker || oldParentUnread.unreadMarker;
+
     roomToUnread.set(parentId, {
       highlight: oldParentUnread.highlight - oldUnread.highlight,
       total: oldParentUnread.total - oldUnread.total,
+      unreadMarker: newMarker,
       from: newFrom,
     });
   });
@@ -96,8 +106,10 @@ const deleteUnreadInfo = (roomToUnread: RoomToUnread, allParents: Set<string>, r
 
 export const unreadEqual = (u1: Unread, u2: Unread): boolean => {
   const countEqual = u1.highlight === u2.highlight && u1.total === u2.total;
-
   if (!countEqual) return false;
+
+  const unreadEqual = u1.unreadMarker == u2.unreadMarker;
+  if (!unreadEqual) return false;
 
   const f1 = u1.from;
   const f2 = u2.from;
@@ -118,7 +130,10 @@ export const unreadEqual = (u1: Unread, u2: Unread): boolean => {
 
 const baseRoomToUnread = atom<RoomToUnread>(new Map());
 export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefined>(
-  (get) => get(baseRoomToUnread),
+  (get) => {
+    console.warn('[Test] Getting baseRoomToUnread:', get(baseRoomToUnread));
+    return get(baseRoomToUnread);
+  },
   (get, set, action) => {
     if (action.type === 'RESET') {
       const draftRoomToUnread: RoomToUnread = new Map();
@@ -138,8 +153,10 @@ export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefin
       if (currentUnread && unreadEqual(currentUnread, unreadInfoToUnread(unreadInfo))) {
         // Do not update if unread data has not changes
         // like total & highlight
+        console.warn('[Test] No changes; ignoring...');
         return;
       }
+      console.warn('[Test] Updating unread atom for room...');
       set(
         baseRoomToUnread,
         produce(get(baseRoomToUnread), (draftRoomToUnread) =>
@@ -214,22 +231,31 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       }
 
       if (mEvent.getSender() === mx.getUserId()) return;
-      setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(room) });
+      setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(mx, room) });
     };
     mx.on(RoomEvent.Timeline, handleTimelineEvent);
 
     const handleAccountDataEvent = (mEvent: MatrixEvent, room: Room, prevEvent?: MatrixEvent) => {
-      console.log('Account data event received:', mEvent);
-      const prevUnreadMarker = prevEvent?.getContent<IUnreadContent>().unread || false;
       const nextUnreadMarker = mEvent.getContent<IUnreadContent>().unread || false;
-
-      if (nextUnreadMarker !== prevUnreadMarker) {
-        setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(room) });
+      if (prevEvent) {
+        const prevUnreadMarker = prevEvent.getContent<IUnreadContent>().unread || false;
+        
+        // Skip unnecessary update events
+        if (nextUnreadMarker === prevUnreadMarker) return;
+      }
+      
+      if (nextUnreadMarker) {
+        // Room is now unread -> push unread entry
+        setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(mx, room) });
+      } else {
+        // Room is now read -> clear unread entry
+        setUnreadAtom({ type: 'DELETE', roomId: room.roomId });
       }
     };
     mx.on(RoomEvent.AccountData, handleAccountDataEvent);
 
     return () => {
+      mx.removeListener(RoomEvent.AccountData, handleAccountDataEvent);
       mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
     };
   }, [mx, setUnreadAtom]);

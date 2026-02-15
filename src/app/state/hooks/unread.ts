@@ -13,14 +13,19 @@ const getRoomsUnread = (rooms: string[], roomToUnread: RoomToUnread): Unread | u
   const unread = rooms.reduce<Unread | undefined>((u, roomId) => {
     const roomUnread = roomToUnread.get(roomId);
     if (!roomUnread) return u;
+    
     const newUnread: Unread = u ?? {
       total: 0,
       highlight: 0,
+      unreadMarker: false,
       from: new Set(),
     };
+
     newUnread.total += roomUnread.total;
     newUnread.highlight += roomUnread.highlight;
+    newUnread.unreadMarker = newUnread.unreadMarker || roomUnread.unreadMarker;
     newUnread.from?.add(roomId);
+
     return newUnread;
   }, undefined);
   return unread;
