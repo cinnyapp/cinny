@@ -18,7 +18,7 @@ export const useFilePasteHandler = (onPaste: (file: File[]) => void): ClipboardE
       if (window.__TAURI__) {
         try {
           const result: string = await invoke("clipboard_read_image");
-          const file = base64ToFile(result, 'image.png', 'image/png');
+          const file = base64ToFile(result, 'image.webp', 'image/webp');
           evt.preventDefault();
           onPaste([file]);
         } catch(e) {
