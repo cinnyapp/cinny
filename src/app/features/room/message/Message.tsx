@@ -351,6 +351,35 @@ export const MessageCopyLinkItem = as<
   );
 });
 
+export const MessageCopyTextItem = as<
+  'button',
+  {
+    mEvent: MatrixEvent;
+    onClose?: () => void;
+  }
+>(({ mEvent, onClose, ...props }, ref) => {
+  const handleCopy = () => {
+    const content = mEvent.getContent();
+    copyToClipboard(content.body ?? '');
+    onClose?.();
+  };
+
+  return (
+    <MenuItem
+      size="300"
+      after={<Icon size="100" src={Icons.Message} />}
+      radii="300"
+      onClick={handleCopy}
+      {...props}
+      ref={ref}
+    >
+      <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+        Copy Message
+      </Text>
+    </MenuItem>
+  );
+});
+
 export const MessagePinItem = as<
   'button',
   {
@@ -1090,6 +1119,7 @@ export const Message = as<'div', MessageProps>(
                           {canPinEvent && (
                             <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           )}
+                          <MessageCopyTextItem mEvent={mEvent} onClose={closeMenu} />
                         </Box>
                         {((!mEvent.isRedacted() && canDelete) ||
                           mEvent.getSender() !== mx.getUserId()) && (
