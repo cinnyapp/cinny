@@ -86,7 +86,8 @@ export function ReadTextFile({ body, mimeType, url, encInfo, renderViewer }: Rea
 
   const [textState, loadText] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication);
+      if (!mediaUrl) throw new Error('Invalid media URL');
       const fileContent = encInfo
         ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
         : await downloadMedia(mediaUrl);
@@ -176,7 +177,8 @@ export function ReadPdfFile({ body, mimeType, url, encInfo, renderViewer }: Read
 
   const [pdfState, loadPdf] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication);
+      if (!mediaUrl) throw new Error('Invalid media URL');
       const fileContent = encInfo
         ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
         : await downloadMedia(mediaUrl);
@@ -253,7 +255,8 @@ export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFil
 
   const [downloadState, download] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication);
+      if (!mediaUrl) throw new Error('Invalid media URL');
       const fileContent = encInfo
         ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
         : await downloadMedia(mediaUrl);

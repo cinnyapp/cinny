@@ -183,7 +183,7 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
               onClick={() => setAdvance(!advance)}
               type="button"
             >
-              <Text size="T200">Advance Options</Text>
+              <Text size="T200">Advanced Options</Text>
             </Chip>
           </Box>
         </Box>

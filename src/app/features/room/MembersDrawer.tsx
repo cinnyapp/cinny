@@ -51,7 +51,7 @@ import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useMembershipFilter, useMembershipFilterMenu } from '../../hooks/useMemberFilter';
 import { useMemberPowerSort, useMemberSort, useMemberSortMenu } from '../../hooks/useMemberSort';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
+import { useGetMemberPowerLevel, usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { MembershipFilterMenu } from '../../components/MembershipFilterMenu';
 import { MemberSortMenu } from '../../components/MemberSortMenu';
 import { useOpenUserRoomProfile, useUserRoomProfileState } from '../../state/hooks/userRoomProfile';
@@ -185,6 +185,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
   const getPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
+  const getPowerLevel = useGetMemberPowerLevel(powerLevels);
 
   const fetchingMembers = members.length < room.getJoinedMemberCount();
   const openUserRoomProfile = useOpenUserRoomProfile();
@@ -198,7 +199,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
 
   const membershipFilter = useMembershipFilter(membershipFilterIndex, membershipFilterMenu);
   const memberSort = useMemberSort(sortFilterIndex, sortFilterMenu);
-  const memberPowerSort = useMemberPowerSort(creators);
+  const memberPowerSort = useMemberPowerSort(creators, getPowerLevel);
 
   const typingMembers = useRoomTypingMember(room.roomId);
 

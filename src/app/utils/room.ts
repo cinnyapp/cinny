@@ -160,7 +160,8 @@ export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): 
 };
 
 export const isMutedRule = (rule: IPushRule) =>
-  rule.actions[0] === 'dont_notify' && rule.conditions?.[0]?.kind === 'event_match';
+  // Check for empty actions (new spec) or dont_notify (deprecated)
+  (rule.actions.length === 0 || rule.actions[0] === 'dont_notify') && rule.conditions?.[0]?.kind === 'event_match';
 
 export const findMutedRule = (overrideRules: IPushRule[], roomId: string) =>
   overrideRules.find((rule) => rule.rule_id === roomId && isMutedRule(rule));

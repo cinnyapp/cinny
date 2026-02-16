@@ -1,11 +1,10 @@
 {
-  "defaultHomeserver": 2,
+  "defaultHomeserver": 1,
   "homeserverList": [
     "converser.eu",
-    "envs.net",
     "matrix.org",
-    "monero.social",
     "mozilla.org",
+    "unredacted.org",
     "xmr.se"
   ],
   "allowCustomHomeservers": true,
@@ -15,7 +14,7 @@
     "spaces": [
       "#cinny-space:matrix.org",
       "#community:matrix.org",
-      "#space:envs.net",
+      "#space:unredacted.org",
       "#science-space:matrix.org",
       "#libregaming-games:tchncs.de",
       "#mathematics-on:matrix.org"
@@ -28,7 +27,7 @@
       "#PrivSec.dev:arcticfoxes.net",
       "#disroot:aria-net.org"
     ],
-    "servers": ["envs.net", "matrix.org", "monero.social", "mozilla.org"]
+    "servers": [ "matrix.org", "mozilla.org", "unredacted.org" ]
   },
 
   "hashRouter": {
