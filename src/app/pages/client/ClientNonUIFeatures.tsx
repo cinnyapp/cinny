@@ -8,7 +8,7 @@ import LogoUnreadSVG from '../../../../public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '../../../../public/res/svg/cinny-highlight.svg';
 import NotificationSound from '../../../../public/sound/notification.ogg';
 import InviteSound from '../../../../public/sound/invite.ogg';
-import { notificationPermission, setFavicon } from '../../utils/dom';
+import { notificationPermission, setFavicon, setTitle } from '../../utils/dom';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { allInvitesAtom } from '../../state/room-list/inviteList';
@@ -26,6 +26,7 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { useSelectedSpace } from '../../hooks/router/useSelectedSpace';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -72,6 +73,32 @@ function FaviconUpdater() {
       setFavicon(LogoSVG);
     }
   }, [roomToUnread]);
+
+  return null;
+}
+
+function TitleUpdater() {
+  const mx = useMatrixClient();
+  const selectedRoomId = useSelectedRoom();
+  const selectedSpaceId = useSelectedSpace();
+  
+  useEffect(() => {
+    let title = 'Cinny | ';
+    if (selectedSpaceId) {
+      const space = mx.getRoom(selectedSpaceId);
+      title += space?.name ?? 'Unknown Space';
+    }
+    if (selectedRoomId) {
+      const room = mx.getRoom(selectedRoomId);
+      const roomName = room?.name ?? 'Unknown Room';
+      title += selectedSpaceId ? ` - #${roomName}` : `#${roomName}`;
+    }
+    if (!selectedRoomId && !selectedSpaceId) {
+      title = 'Cinny';
+    }
+
+    setTitle(title);
+  }, [mx, selectedRoomId, selectedSpaceId]);
 
   return null;
 }
@@ -263,6 +290,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <SystemEmojiFeature />
       <PageZoomFeature />
       <FaviconUpdater />
+      <TitleUpdater />
       <InviteNotifications />
       <MessageNotifications />
       {children}
