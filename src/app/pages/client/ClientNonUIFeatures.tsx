@@ -83,26 +83,22 @@ function TitleUpdater() {
   const selectedRoom = useSelectedRoom();
 
   useEffect(() => {
-    const spaceName = selectedSpace ? mx.getRoom(selectedSpace)?.name : undefined;
-    const roomName = selectedRoom ? mx.getRoom(selectedRoom)?.name : undefined;
+    const space = selectedSpace ? mx.getRoom(selectedSpace) : undefined;
+    const room = selectedRoom ? mx.getRoom(selectedRoom) : undefined;
 
-    let title = 'Cinny | ';
-    if (spaceName) {
-      title += spaceName;
-    }
-    if (roomName) {
-      title += spaceName ? ` - #${roomName}` : `#${roomName}`;
-    }
-    if (!roomName && !spaceName) {
-      title = 'Cinny';
-    }
+    const spaceName = space?.name || space?.roomId;
+    const roomName = room?.name || room?.roomId;
 
-    setTitle(title);
+    const parts: string[] = [];
+    if (roomName) parts.push(roomName);
+    if (spaceName) parts.push(spaceName);
+    parts.push('Cinny');
+
+    document.title = parts.join(' – ');
   }, [mx, selectedRoom, selectedSpace]);
 
   return null;
 }
-
 function InviteNotifications() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const invites = useAtomValue(allInvitesAtom);
