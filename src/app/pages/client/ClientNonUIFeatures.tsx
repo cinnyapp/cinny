@@ -79,26 +79,26 @@ function FaviconUpdater() {
 
 function TitleUpdater() {
   const mx = useMatrixClient();
-  const selectedRoomId = useSelectedRoom();
-  const selectedSpaceId = useSelectedSpace();
-  
+  const selectedSpace = useSelectedSpace();
+  const selectedRoom = useSelectedRoom();
+
   useEffect(() => {
+    const spaceName = selectedSpace ? mx.getRoom(selectedSpace)?.name : undefined;
+    const roomName = selectedRoom ? mx.getRoom(selectedRoom)?.name : undefined;
+
     let title = 'Cinny | ';
-    if (selectedSpaceId) {
-      const space = mx.getRoom(selectedSpaceId);
-      title += space?.name ?? 'Unknown Space';
+    if (spaceName) {
+      title += spaceName;
     }
-    if (selectedRoomId) {
-      const room = mx.getRoom(selectedRoomId);
-      const roomName = room?.name ?? 'Unknown Room';
-      title += selectedSpaceId ? ` - #${roomName}` : `#${roomName}`;
+    if (roomName) {
+      title += spaceName ? ` - #${roomName}` : `#${roomName}`;
     }
-    if (!selectedRoomId && !selectedSpaceId) {
+    if (!roomName && !spaceName) {
       title = 'Cinny';
     }
 
     setTitle(title);
-  }, [mx, selectedRoomId, selectedSpaceId]);
+  }, [mx, selectedRoom, selectedSpace]);
 
   return null;
 }
