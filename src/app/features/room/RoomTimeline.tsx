@@ -53,6 +53,13 @@ import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator'
 import { useAlive } from '../../hooks/useAlive';
 import { editableActiveElement, scrollToBottom } from '../../utils/dom';
 import {
+  TimelineEvent,
+  TimelineEventGroup,
+  generateEventGroups,
+  renderMemberChangeMessage
+} from './TimelineEventGrouping';
+import { CollapsableEventGroup } from './CollapsableEventGroup';
+import {
   DefaultPlaceholder,
   CompactPlaceholder,
   Reply,
@@ -1572,10 +1579,30 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   let isPrevRendered = false;
   let newDivider = false;
   let dayDivider = false;
-  const eventRenderer = (item: number) => {
+  const eventRenderer = (group: TimelineEventGroup) => {
+
+    if (group.type == StateEvent.RoomMember) {
+      const membershipChangeEvents = group.events.filter(timelineEvent => {
+        const membershipChanged = isMembershipChanged(timelineEvent.mEvent);
+        return !(membershipChanged && hideMembershipEvents) && !(!membershipChanged && hideNickAvatarEvents)
+      });
+      if (membershipChangeEvents.length > 3) {
+        return dayDividerWrappingFunction(membershipChangeEvents[0], () => {
+          return (
+            <CollapsableEventGroup
+                collapsedMessage={renderMemberChangeMessage(room, membershipChangeEvents)}>
+              {membershipChangeEvents.map(singleEventRenderer)}
+            </CollapsableEventGroup>
+          );
+        });
+      }
+    }
+
+    return group.events.map(i => dayDividerWrappingFunction(i, singleEventRenderer));
+  };
+  const eventDataFunction = (item: number) => {
     const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
     if (!eventTimeline) return null;
-    const timelineSet = eventTimeline?.getTimelineSet();
     const mEvent = getTimelineEvent(eventTimeline, getTimelineRelativeIndex(item, baseIndex));
     const mEventId = mEvent?.getId();
 
@@ -1589,6 +1616,17 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       return null;
     }
 
+    return { item, mEvent, eventTimeline, baseIndex };
+  };
+  const eventGroupingFunction = (previousEvent: TimelineEvent, nextEvent: TimelineEvent) => {
+      return previousEvent.mEvent.getType() === nextEvent.mEvent.getType()
+          && inSameDay(previousEvent.mEvent.getTs(), nextEvent.mEvent.getTs());
+  };
+
+  const dayDividerWrappingFunction = (timelineEvent: TimelineEvent, eventRenderer) => {
+    const { item, mEvent, eventTimeline, baseIndex } = timelineEvent;
+    const mEventId = mEvent?.getId();
+
     if (!newDivider && readUptoEventIdRef.current) {
       newDivider = prevEvent?.getId() === readUptoEventIdRef.current;
     }
@@ -1596,27 +1634,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), mEvent.getTs()) : false;
     }
 
-    const collapsed =
-      isPrevRendered &&
-      !dayDivider &&
-      (!newDivider || eventSender === mx.getUserId()) &&
-      prevEvent !== undefined &&
-      prevEvent.getSender() === eventSender &&
-      prevEvent.getType() === mEvent.getType() &&
-      minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
-
-    const eventJSX = reactionOrEditEvent(mEvent)
-      ? null
-      : renderMatrixEvent(
-          mEvent.getType(),
-          typeof mEvent.getStateKey() === 'string',
-          mEventId,
-          mEvent,
-          item,
-          timelineSet,
-          collapsed
-        );
-    prevEvent = mEvent;
+    const eventJSX = eventRenderer(timelineEvent);
     isPrevRendered = !!eventJSX;
 
     const newDividerJSX =
@@ -1659,6 +1677,38 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         </React.Fragment>
       );
     }
+
+    return eventJSX;
+  };
+
+  const singleEventRenderer = (timelineEvent: TimelineEvent) => {
+    const { item, mEvent, eventTimeline, baseIndex } = timelineEvent;
+    const timelineSet = eventTimeline?.getTimelineSet();
+    const mEventId = mEvent?.getId();
+
+    const eventSender = mEvent.getSender();
+
+    const collapsed =
+      isPrevRendered &&
+      !dayDivider &&
+      (!newDivider || eventSender === mx.getUserId()) &&
+      prevEvent !== undefined &&
+      prevEvent.getSender() === eventSender &&
+      prevEvent.getType() === mEvent.getType() &&
+      minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
+
+    const eventJSX = reactionOrEditEvent(mEvent)
+      ? null
+      : renderMatrixEvent(
+          mEvent.getType(),
+          typeof mEvent.getStateKey() === 'string',
+          mEventId,
+          mEvent,
+          item,
+          timelineSet,
+          collapsed
+        );
+    prevEvent = mEvent;
 
     return eventJSX;
   };
@@ -1738,7 +1788,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               </>
             ))}
 
-          {getItems().map(eventRenderer)}
+          {generateEventGroups(getItems(), eventDataFunction, eventGroupingFunction).map(eventRenderer)}
 
           {(!liveTimelineLinked || !rangeAtEnd) &&
             (messageLayout === MessageLayout.Compact ? (
