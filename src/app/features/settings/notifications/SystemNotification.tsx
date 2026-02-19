@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Text, Switch, Button, color, Spinner } from 'folds';
 import { IPusherRequest } from 'matrix-js-sdk';
 import { SequenceCard } from '../../../components/sequence-card';
@@ -15,7 +15,22 @@ function EmailNotification() {
   const mx = useMatrixClient();
   const [result, refreshResult] = useEmailNotifications();
 
-  const [setState, setEnable] = useAsyncCallback(
+  // Keep a stable reference of the last successful result to prevent UI flickering
+  const stableResultRef = useRef(result);
+  const stableResult = useMemo(() => {
+    if (result !== undefined) return result;
+    return stableResultRef.current;
+  }, [result]);
+  useEffect(() => {
+    if (result !== undefined) stableResultRef.current = result;
+  }, [result]);
+
+  const [optimisticEnabled, setOptimisticEnabled] = useState<boolean | undefined>(undefined);
+  useEffect(() => {
+    if (stableResult != null) setOptimisticEnabled(stableResult.enabled);
+  }, [stableResult]);
+
+  const [updateState, setEnable] = useAsyncCallback(
     useCallback(
       async (email: string, enable: boolean) => {
         if (enable) {
@@ -29,7 +44,6 @@ function EmailNotification() {
             data: {
               brand: 'Cinny',
             },
-            append: true,
           });
           return;
         }
@@ -43,12 +57,15 @@ function EmailNotification() {
     )
   );
 
+  const loading = result === undefined || updateState.status === AsyncStatus.Loading;
+
   const handleChange = (value: boolean) => {
-    if (result && result.email) {
-      setEnable(result.email, value).then(() => {
-        refreshResult();
-      });
-    }
+    if (!stableResult?.email) return;
+    setOptimisticEnabled(value);
+    setEnable(stableResult.email, value).then(
+      () => refreshResult(),
+      () => setOptimisticEnabled(stableResult.enabled)
+    );
   };
 
   return (
@@ -56,29 +73,38 @@ function EmailNotification() {
       title="Email Notification"
       description={
         <>
-          {result && !result.email && (
+          {stableResult && !stableResult.email && (
             <Text as="span" style={{ color: color.Critical.Main }} size="T200">
               Your account does not have any email attached.
             </Text>
           )}
-          {result && result.email && <>Send notification to your email. {`("${result.email}")`}</>}
+          {stableResult?.email && (
+            <>Send notification to your email. {`("${stableResult.email}")`}</>
+          )}
           {result === null && (
             <Text as="span" style={{ color: color.Critical.Main }} size="T200">
               Unexpected Error!
             </Text>
           )}
-          {result === undefined && 'Send notification to your email.'}
+          {updateState.status === AsyncStatus.Error && (
+            <Text as="span" style={{ color: color.Critical.Main }} size="T200">
+              Failed to update. Please try again.
+            </Text>
+          )}
+          {stableResult === undefined && 'Send notification to your email.'}
         </>
       }
       after={
-        <>
-          {setState.status !== AsyncStatus.Loading &&
-            typeof result === 'object' &&
-            result?.email && <Switch value={result.enabled} onChange={handleChange} />}
-          {(setState.status === AsyncStatus.Loading || result === undefined) && (
-            <Spinner variant="Secondary" />
+        <Box gap="200" alignItems="Center">
+          {loading && <Spinner variant="Secondary" />}
+          {stableResult?.email && (
+            <Switch
+              disabled={loading}
+              value={optimisticEnabled ?? stableResult.enabled}
+              onChange={handleChange}
+            />
           )}
-        </>
+        </Box>
       }
     />
   );
