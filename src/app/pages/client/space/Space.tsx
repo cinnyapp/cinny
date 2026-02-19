@@ -2,6 +2,7 @@ import React, {
   MouseEventHandler,
   forwardRef,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -47,8 +48,9 @@ import {
 } from '../../../hooks/router/useSelectedSpace';
 import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
+import { spaceRoomsAtom } from '../../../state/spaceRooms';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
-import { makeNavCategoryId } from '../../../state/closedNavCategories';
+import { makeNavCategoryId, getNavCategoryIdParts } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
@@ -59,6 +61,7 @@ import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page
 import { usePowerLevels } from '../../../hooks/usePowerLevels';
 import { useRecursiveChildScopeFactory, useSpaceChildren } from '../../../state/hooks/roomList';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
+import { roomToChildrenAtom } from '../../../state/room/roomToChildren';
 import { markAsRead } from '../../../utils/notifications';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { UseStateProvider } from '../../../components/UseStateProvider';
@@ -384,7 +387,10 @@ export function Space() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
   const roomToUnread = useAtomValue(roomToUnreadAtom);
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const roomToChildren = useAtomValue(roomToChildrenAtom);
   const allRooms = useAtomValue(allRoomsAtom);
+  const [spaceRooms] = useAtom(spaceRoomsAtom);
   const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
   const notificationPreferences = useRoomsNotificationPreferencesContext();
 
@@ -406,21 +412,141 @@ export function Space() {
     [mx, allJoinedRooms]
   );
 
+  const closedCategoriesCache = useRef(new Map());
+  const ancestorsCollapsedCache = useRef(new Map());
+  useEffect(() => {
+    closedCategoriesCache.current.clear();
+    ancestorsCollapsedCache.current.clear();
+  }, [closedCategories, roomToParents, getRoom]);
+
+  /**
+   * Recursively checks if a given parentId (or all its ancestors) is in a closed category.
+   *
+   * @param spaceId - The root space ID.
+   * @param parentId - The parent space ID to start the check from.
+   * @param previousId - The last ID checked, only used to ignore root collapse state.
+   * @param visited - Set used to prevent recursion errors.
+   * @returns True if parentId or all ancestors is in a closed category.
+   */
+  const getInClosedCategories = useCallback(
+    (
+      spaceId: string,
+      parentId: string,
+      previousId?: string,
+      visited: Set<string> = new Set()
+    ): boolean => {
+      // Ignore root space being collapsed if in a subspace,
+      // this is due to many spaces dumping all rooms in the top-level space.
+      if (parentId === spaceId && previousId) {
+        if (spaceRooms.has(previousId) || getRoom(previousId)?.isSpaceRoom()) {
+          return false;
+        }
+      }
+
+      const categoryId = makeNavCategoryId(spaceId, parentId);
+
+      // Prevent infinite recursion
+      if (visited.has(categoryId)) return false;
+      visited.add(categoryId);
+
+      if (closedCategoriesCache.current.has(categoryId)) {
+        return closedCategoriesCache.current.get(categoryId);
+      }
+
+      if (closedCategories.has(categoryId)) {
+        closedCategoriesCache.current.set(categoryId, true);
+        return true;
+      }
+
+      const parentParentIds = roomToParents.get(parentId);
+      if (!parentParentIds || parentParentIds.size === 0) {
+        closedCategoriesCache.current.set(categoryId, false);
+        return false;
+      }
+
+      // As a subspace can be in multiple spaces,
+      // only return true if all parent spaces are closed.
+      const allClosed = !Array.from(parentParentIds).some(
+        (id) => !getInClosedCategories(spaceId, id, parentId, visited)
+      );
+      visited.delete(categoryId);
+      closedCategoriesCache.current.set(categoryId, allClosed);
+      return allClosed;
+    },
+    [closedCategories, getRoom, roomToParents, spaceRooms]
+  );
+
+  /**
+   * Recursively checks if the given room or any of its descendants should be visible.
+   *
+   * @param roomId - The room ID to check.
+   * @param visited - Set used to prevent recursion errors.
+   * @returns True if the room or any descendant should be visible.
+   */
+  const getContainsShowRoom = useCallback(
+    (roomId: string, visited: Set<string> = new Set()): boolean => {
+        const showRoom =
+          roomToUnread.has(roomId) ||
+          roomId === selectedRoomId ||
+          (isActiveCallReady && activeCallRoomId === roomId);
+      if (showRoom) {
+        return true;
+      }
+
+      // Prevent infinite recursion
+      if (visited.has(roomId)) return false;
+      visited.add(roomId);
+
+      const childIds = roomToChildren.get(roomId);
+      if (!childIds || childIds.size === 0) {
+        return false;
+      }
+
+      return Array.from(childIds).some((id) => getContainsShowRoom(id, visited));
+    },
+    [roomToUnread, selectedRoomId, roomToChildren]
+  );
+
+  /**
+   * Determines whether all parent categories are collapsed.
+   *
+   * @param spaceId - The root space ID.
+   * @param roomId - The room ID to start the check from.
+   * @returns True if every parent category is collapsed; false otherwise.
+   */
+  const getAllAncestorsCollapsed = (spaceId: string, roomId: string): boolean => {
+    const categoryId = makeNavCategoryId(spaceId, roomId);
+    if (ancestorsCollapsedCache.current.has(categoryId)) {
+      return ancestorsCollapsedCache.current.get(categoryId);
+    }
+
+    const parentIds = roomToParents.get(roomId);
+    if (!parentIds || parentIds.size === 0) {
+      ancestorsCollapsedCache.current.set(categoryId, false);
+      return false;
+    }
+
+    const allCollapsed = !Array.from(parentIds).some(
+      (id) => !getInClosedCategories(spaceId, id, roomId)
+    );
+    ancestorsCollapsedCache.current.set(categoryId, allCollapsed);
+    return allCollapsed;
+  };
+
   const hierarchy = useSpaceJoinedHierarchy(
     space.roomId,
     getRoom,
     useCallback(
       (parentId, roomId) => {
-        if (!closedCategories.has(makeNavCategoryId(space.roomId, parentId))) {
+        if (!getInClosedCategories(space.roomId, parentId, roomId)) {
           return false;
         }
-        const showRoomAnyway =
-          roomToUnread.has(roomId) ||
-          roomId === selectedRoomId ||
-          (isActiveCallReady && activeCallRoomId === roomId);
-        return !showRoomAnyway;
+        if (getContainsShowRoom(roomId)) return false;
+        return true;
       },
       [
+        getContainsShowRoom,
+        getInClosedCategories,
         space.roomId,
         closedCategories,
         roomToUnread,
@@ -430,8 +556,8 @@ export function Space() {
       ]
     ),
     useCallback(
-      (sId) => closedCategories.has(makeNavCategoryId(space.roomId, sId)),
-      [closedCategories, space.roomId]
+      (sId) => getInClosedCategories(space.roomId, sId),
+      [getInClosedCategories, space.roomId]
     )
   );
 
@@ -442,12 +568,27 @@ export function Space() {
     overscan: 10,
   });
 
-  const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
-    closedCategories.has(categoryId)
-  );
+  const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) => {
+    const collapsed = closedCategories.has(categoryId);
+    const [spaceId, roomId] = getNavCategoryIdParts(categoryId);
+
+    // Only prevent collapsing if all parents are collapsed
+    const toggleable = !getAllAncestorsCollapsed(spaceId, roomId);
+
+    if (toggleable) {
+      return collapsed;
+    }
+    return !collapsed;
+  });
 
   const getToLink = (roomId: string) =>
     getSpaceRoomPath(spaceIdOrAlias, getCanonicalAliasOrRoomId(mx, roomId));
+
+  const getCategoryPadding = (depth: number): string | undefined => {
+    if (depth === 0) return undefined;
+    if (depth === 1) return config.space.S400;
+    return config.space.S200;
+  };
 
   return (
     <PageNav>
@@ -501,12 +642,18 @@ export function Space() {
             }}
           >
             {virtualizer.getVirtualItems().map((vItem) => {
-              const { roomId } = hierarchy[vItem.index] ?? {};
+              const { roomId, depth } = hierarchy[vItem.index] ?? {};
               const room = mx.getRoom(roomId);
               if (!room) return null;
 
+              const paddingLeft = `calc((${depth} - 1) * ${config.space.S200})`;
+
               if (room.isSpaceRoom()) {
                 const categoryId = makeNavCategoryId(space.roomId, roomId);
+                const closed = getInClosedCategories(space.roomId, roomId);
+                const toggleable = !getAllAncestorsCollapsed(space.roomId, roomId);
+
+                const paddingTop = getCategoryPadding(depth);
 
                 return (
                   <VirtualTile
@@ -514,12 +661,19 @@ export function Space() {
                     key={vItem.index}
                     ref={virtualizer.measureElement}
                   >
-                    <div style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}>
+                    <div
+                      style={{
+                        paddingTop,
+                        paddingLeft,
+                      }}
+                    >
                       <NavCategoryHeader>
                         <RoomNavCategoryButton
                           data-category-id={categoryId}
                           onClick={handleCategoryClick}
-                          closed={closedCategories.has(categoryId)}
+                          closed={closed}
+                          aria-expanded={!closed}
+                          aria-disabled={!toggleable}
                         >
                           {roomId === space.roomId ? 'Rooms' : room?.name}
                         </RoomNavCategoryButton>
@@ -531,14 +685,19 @@ export function Space() {
 
               return (
                 <VirtualTile virtualItem={vItem} key={vItem.index} ref={virtualizer.measureElement}>
-                  <RoomNavItem
-                    room={room}
-                    selected={selectedRoomId === roomId}
-                    showAvatar={mDirects.has(roomId)}
-                    direct={mDirects.has(roomId)}
-                    linkPath={getToLink(roomId)}
-                    notificationMode={getRoomNotificationMode(notificationPreferences, room.roomId)}
-                  />
+                  <div style={{ paddingLeft }}>
+                    <RoomNavItem
+                      room={room}
+                      selected={selectedRoomId === roomId}
+                      showAvatar={mDirects.has(roomId)}
+                      direct={mDirects.has(roomId)}
+                      linkPath={getToLink(roomId)}
+                      notificationMode={getRoomNotificationMode(
+                        notificationPreferences,
+                        room.roomId
+                      )}
+                    />
+                  </div>
                 </VirtualTile>
               );
             })}

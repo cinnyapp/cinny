@@ -66,3 +66,5 @@ export const makeClosedNavCategoriesAtom = (userId: string): ClosedNavCategories
 };
 
 export const makeNavCategoryId = (...args: string[]): string => args.join('|');
+
+export const getNavCategoryIdParts = (categoryId: string): string[] => categoryId.split('|');
