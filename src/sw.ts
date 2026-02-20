@@ -150,9 +150,9 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   // we pass a Promise and the browser
   // suspends the request while we wait for the session
   event.respondWith(
-    requestSessionWithTimeout(clientId).then((s) => {
-      if (!s) return fetch(url);
-      return fetch(url, fetchConfig(s.accessToken));
+    requestSessionWithTimeout(clientId).then((fetchedSession) => {
+      if (!fetchedSession) return fetch(url);
+      return fetch(url, fetchConfig(fetchedSession.accessToken));
     })
   );
 });
