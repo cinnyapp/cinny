@@ -35,7 +35,7 @@ import { useHover, useFocusWithin } from 'react-aria';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
-import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
+import { type RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
 import {
   AvatarBase,
   BubbleLayout,
@@ -358,12 +358,17 @@ export const MessageCopyTextItem = as<
     onClose?: () => void;
   }
 >(({ mEvent, onClose, ...props }, ref) => {
+  const content = mEvent.getContent();
+  const { body, msgtype } = content;
+
+  if (msgtype !== 'm.text' && msgtype !== 'm.emote' && msgtype !== 'm.notice') {
+    return null;
+  }
+
   const handleCopy = () => {
-    const content = mEvent.getContent();
-    copyToClipboard(content.body ?? '');
+    copyToClipboard(body ?? '');
     onClose?.();
   };
-
   return (
     <MenuItem
       size="300"
