@@ -1,5 +1,8 @@
 import { createTheme } from '@vanilla-extract/css';
 import { color } from 'folds';
+import { flavors, FlavorName, ColorName } from '@catppuccin/palette';
+
+type ThemeConfig = Parameters<typeof createTheme<typeof color>>[1];
 
 export const silverTheme = createTheme(color, {
   Background: {
@@ -98,7 +101,7 @@ export const silverTheme = createTheme(color, {
   },
 });
 
-const darkThemeData = {
+const darkThemeData: ThemeConfig = {
   Background: {
     Container: '#1A1A1A',
     ContainerHover: '#262626',
@@ -236,3 +239,113 @@ export const butterTheme = createTheme(color, {
     OnContainer: '#F2EED3',
   },
 });
+
+const catppuccinTheme = (flavor: FlavorName): ThemeConfig => {
+  const c = (colorName: ColorName, opacity?: number) => {
+    const { r, g, b } = flavors[flavor].colors[colorName].rgb;
+    return opacity ? `rgba(${r}, ${g}, ${b}, ${opacity / 100})` : `rgb(${r}, ${g}, ${b})`;
+  };
+
+  return {
+    ...darkThemeData,
+    Background: {
+      Container: c('mantle'),
+      ContainerHover: c('base'),
+      ContainerActive: c('surface0'),
+      ContainerLine: c('surface1'),
+      OnContainer: c('text'),
+    },
+
+    Surface: {
+      Container: c('base'),
+      ContainerHover: c('surface0'),
+      ContainerActive: c('surface1'),
+      ContainerLine: c('surface2'),
+      OnContainer: c('text'),
+    },
+
+    SurfaceVariant: {
+      Container: c('mantle'),
+      ContainerHover: c('mantle', 50),
+      ContainerActive: c('surface0'),
+      ContainerLine: c('surface1'),
+      OnContainer: c('text'),
+    },
+
+    Primary: {
+      Main: c('mauve'),
+      MainHover: c('mauve', 85),
+      MainActive: c('mauve', 70),
+      MainLine: 'transparent',
+      OnMain: c('base'),
+      Container: c('mauve', 10),
+      ContainerHover: c('mauve', 15),
+      ContainerActive: c('mauve', 10),
+      ContainerLine: 'transparent',
+      OnContainer: c('mauve'),
+    },
+
+    Secondary: {
+      Main: c('subtext1'),
+      MainHover: c('subtext0'),
+      MainActive: c('overlay2'),
+      MainLine: 'transparent',
+      OnMain: c('base'),
+      Container: c('surface0'),
+      ContainerHover: c('surface1'),
+      ContainerActive: c('surface2'),
+      ContainerLine: c('overlay0'),
+      OnContainer: c('text'),
+    },
+
+    Success: {
+      Main: c('green'),
+      MainHover: c('green', 85),
+      MainActive: c('green', 70),
+      MainLine: 'transparent',
+      OnMain: c('mantle'),
+      Container: c('surface0'),
+      ContainerHover: c('green', 20),
+      ContainerActive: c('green', 15),
+      ContainerLine: c('surface0'),
+      OnContainer: c('green'),
+    },
+
+    Warning: {
+      Main: c('peach'),
+      MainHover: c('peach', 85),
+      MainActive: c('peach', 70),
+      MainLine: 'transparent',
+      OnMain: c('mantle'),
+      Container: c('surface0'),
+      ContainerHover: c('peach', 20),
+      ContainerActive: c('peach', 15),
+      ContainerLine: c('surface0'),
+      OnContainer: c('peach'),
+    },
+
+    Critical: {
+      Main: c('red'),
+      MainHover: c('red', 85),
+      MainActive: c('red', 70),
+      MainLine: 'transparent',
+      OnMain: c('mantle'),
+      Container: c('mantle'),
+      ContainerHover: c('red', 20),
+      ContainerActive: c('red', 15),
+      ContainerLine: c('surface0'),
+      OnContainer: c('red'),
+    },
+
+    Other: {
+      FocusRing: 'rgba(0 0 0 / 50%)',
+      Shadow: 'rgba(0 0 0 / 20%)',
+      Overlay: 'rgba(17, 17, 27, 0.6)',
+    },
+  };
+};
+
+export const catppuccinLatteTheme = createTheme(color, catppuccinTheme('latte'));
+export const catppuccinFrappeTheme = createTheme(color, catppuccinTheme('frappe'));
+export const catppuccinMacchiatoTheme = createTheme(color, catppuccinTheme('macchiato'));
+export const catppuccinMochaTheme = createTheme(color, catppuccinTheme('mocha'));
