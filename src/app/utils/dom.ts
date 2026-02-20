@@ -211,10 +211,6 @@ export const setFavicon = (url: string): void => {
   favicon.setAttribute('href', url);
 };
 
-export const setTitle = (title?: string): void => {
-  document.title = title ?? 'Cinny';
-};
-
 export const tryDecodeURIComponent = (encodedURIComponent: string): string => {
   try {
     return decodeURIComponent(encodedURIComponent);

@@ -306,6 +306,7 @@ function PageZoomInput() {
 function Appearance() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
+  const [dynamicPageTitle, setDynamicPageTitle] = useSetting(settingsAtom, 'showDynamicPageTitle');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
 
   return (
@@ -337,6 +338,16 @@ function Appearance() {
         <SettingTile
           title="Monochrome Mode"
           after={<Switch variant="Primary" value={monochromeMode} onChange={setMonochromeMode} />}
+        />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Dynamic Page Title"
+          description="Display your curent Room/Space in your window title."
+          after={
+            <Switch variant="Primary" value={dynamicPageTitle} onChange={setDynamicPageTitle} />
+          }
         />
       </SequenceCard>
 

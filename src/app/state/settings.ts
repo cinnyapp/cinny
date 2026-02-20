@@ -20,6 +20,7 @@ export interface Settings {
   twitterEmoji: boolean;
   pageZoom: number;
   hideActivity: boolean;
+  showDynamicPageTitle: boolean;
 
   isPeopleDrawer: boolean;
   memberSortFilterIndex: number;
@@ -54,6 +55,7 @@ const defaultSettings: Settings = {
   twitterEmoji: false,
   pageZoom: 100,
   hideActivity: false,
+  showDynamicPageTitle: false,
 
   isPeopleDrawer: true,
   memberSortFilterIndex: 0,

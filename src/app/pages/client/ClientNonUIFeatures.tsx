@@ -8,7 +8,7 @@ import LogoUnreadSVG from '../../../../public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '../../../../public/res/svg/cinny-highlight.svg';
 import NotificationSound from '../../../../public/sound/notification.ogg';
 import InviteSound from '../../../../public/sound/invite.ogg';
-import { notificationPermission, setFavicon, setTitle } from '../../utils/dom';
+import { notificationPermission, setFavicon } from '../../utils/dom';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { allInvitesAtom } from '../../state/room-list/inviteList';
@@ -281,12 +281,21 @@ type ClientNonUIFeaturesProps = {
 };
 
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
+  const [showDynamicPageTitle] = useSetting(settingsAtom, 'showDynamicPageTitle');
+  const defaultTitleRef = useRef(document.title);
+
+  useEffect(() => {
+    if (!showDynamicPageTitle && document.title !== defaultTitleRef.current) {
+      document.title = defaultTitleRef.current;
+    }
+  }, [showDynamicPageTitle]);
+
   return (
     <>
       <SystemEmojiFeature />
       <PageZoomFeature />
       <FaviconUpdater />
-      <TitleUpdater />
+      {showDynamicPageTitle && <TitleUpdater />}
       <InviteNotifications />
       <MessageNotifications />
       {children}
