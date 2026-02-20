@@ -2,36 +2,36 @@ import React from 'react';
 import { Box, Text, Icon, Icons, config, IconSrc } from 'folds';
 import { SequenceCard } from '../sequence-card';
 import { SettingTile } from '../setting-tile';
-import { CreateRoomVoice } from './types';
+import { CreateRoomType } from './types';
 
-type CreateRoomVoiceSelectorProps = {
-  value?: CreateRoomVoice;
-  onSelect: (value: CreateRoomVoice) => void;
+type CreateRoomTypeSelectorProps = {
+  value?: CreateRoomType;
+  onSelect: (value: CreateRoomType) => void;
   disabled?: boolean;
-  getIcon: (kind: CreateRoomVoice) => IconSrc;
+  getIcon: (type: CreateRoomType) => IconSrc;
 };
-export function CreateRoomVoiceSelector({
+export function CreateRoomTypeSelector({
   value,
   onSelect,
   disabled,
   getIcon,
-}: CreateRoomVoiceSelectorProps) {
+}: CreateRoomTypeSelectorProps) {
   return (
     <Box shrink="No" direction="Column" gap="100">
       <SequenceCard
         style={{ padding: config.space.S300 }}
-        variant={value === CreateRoomVoice.TextRoom ? 'Primary' : 'SurfaceVariant'}
+        variant={value === CreateRoomType.TextRoom ? 'Primary' : 'SurfaceVariant'}
         direction="Column"
         gap="100"
         as="button"
         type="button"
-        aria-pressed={value === CreateRoomVoice.TextRoom}
-        onClick={() => onSelect(CreateRoomVoice.TextRoom)}
+        aria-pressed={value === CreateRoomType.TextRoom}
+        onClick={() => onSelect(CreateRoomType.TextRoom)}
         disabled={disabled}
       >
         <SettingTile
-          before={<Icon size="400" src={getIcon(CreateRoomVoice.TextRoom)} />}
-          after={value === CreateRoomVoice.TextRoom && <Icon src={Icons.Check} />}
+          before={<Icon size="400" src={getIcon(CreateRoomType.TextRoom)} />}
+          after={value === CreateRoomType.TextRoom && <Icon src={Icons.Check} />}
         >
           <Text size="H6">Text</Text>
           <Text size="T300" priority="300">
@@ -41,18 +41,18 @@ export function CreateRoomVoiceSelector({
       </SequenceCard>
       <SequenceCard
         style={{ padding: config.space.S300 }}
-        variant={value === CreateRoomVoice.VoiceRoom ? 'Primary' : 'SurfaceVariant'}
+        variant={value === CreateRoomType.VoiceRoom ? 'Primary' : 'SurfaceVariant'}
         direction="Column"
         gap="100"
         as="button"
         type="button"
-        aria-pressed={value === CreateRoomVoice.VoiceRoom}
-        onClick={() => onSelect(CreateRoomVoice.VoiceRoom)}
+        aria-pressed={value === CreateRoomType.VoiceRoom}
+        onClick={() => onSelect(CreateRoomType.VoiceRoom)}
         disabled={disabled}
       >
         <SettingTile
-          before={<Icon size="400" src={getIcon(CreateRoomVoice.VoiceRoom)} />}
-          after={value === CreateRoomVoice.VoiceRoom && <Icon src={Icons.Check} />}
+          before={<Icon size="400" src={getIcon(CreateRoomType.VoiceRoom)} />}
+          after={value === CreateRoomType.VoiceRoom && <Icon src={Icons.Check} />}
         >
           <Text size="H6">Voice</Text>
           <Text size="T300" priority="300">

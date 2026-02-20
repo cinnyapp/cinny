@@ -88,7 +88,7 @@ export function CallNavStatus() {
           >
             {(triggerRef) => (
               <IconButton fill="None" size="300" ref={triggerRef} onClick={hangUp}>
-                <Icon src={Icons.Phone} />
+                <Icon src={Icons.PhoneDown} />
               </IconButton>
             )}
           </TooltipProvider>

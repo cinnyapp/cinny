@@ -15,6 +15,7 @@ import {
   MatrixClient,
   MatrixEvent,
   MatrixEventEvent,
+  RoomStateEvent,
 } from 'matrix-js-sdk';
 import {
   ClientWidgetApi,
@@ -128,6 +129,7 @@ export class SmallWidget extends EventEmitter {
     );
     this.iframe = iframe;
     this.messaging = new ClientWidgetApi(this.mockWidget, iframe, driver);
+    this.messaging.setViewedRoomId(this.roomId ?? null);
 
     // Emit events during the widget lifecycle
     this.messaging.on('preparing', () => this.emit('preparing'));
@@ -175,6 +177,7 @@ export class SmallWidget extends EventEmitter {
 
     this.client.on(ClientEvent.Event, this.onEvent);
     this.client.on(MatrixEventEvent.Decrypted, this.onEventDecrypted);
+    this.client.on(RoomStateEvent.Events, this.onStateUpdate);
     this.client.on(ClientEvent.ToDeviceEvent, this.onToDeviceEvent);
     this.messaging.on(
       `action:${WidgetApiFromWidgetAction.UpdateAlwaysOnScreen}`,
@@ -198,15 +201,21 @@ export class SmallWidget extends EventEmitter {
 
   private onEvent = (ev: MatrixEvent): void => {
     this.client.decryptEventIfNeeded(ev);
-    this.feedEvent(ev);
+    if (!ev.isState()) this.feedEvent(ev);
   };
 
   private onEventDecrypted = (ev: MatrixEvent): void => {
-    this.feedEvent(ev);
+    if (!ev.isState()) this.feedEvent(ev);
   };
 
   private onReadEvent = (ev: MatrixEvent): void => {
     this.feedEvent(ev);
+  };
+
+  private onStateUpdate = (ev: MatrixEvent): void => {
+    if (this.messaging === null || !ev.isState()) return;
+    const raw = ev.getEffectiveEvent();
+    this.messaging.feedStateUpdate(raw as IRoomEvent).catch(() => null);
   };
 
   private onToDeviceEvent = async (ev: MatrixEvent): Promise<void> => {
@@ -317,7 +326,7 @@ export class SmallWidget extends EventEmitter {
         this.eventsToFeed.add(ev);
       } else {
         const raw = ev.getEffectiveEvent();
-        this.messaging.feedEvent(raw as IRoomEvent, this.roomId ?? '').catch(() => null);
+        this.messaging.feedEvent(raw as IRoomEvent).catch(() => null);
       }
     }
   }
@@ -331,6 +340,11 @@ export class SmallWidget extends EventEmitter {
       this.messaging.removeAllListeners(); // Remove listeners attached by SmallWidget
       this.messaging = null;
     }
+
+    this.client.off(ClientEvent.Event, this.onEvent);
+    this.client.off(MatrixEventEvent.Decrypted, this.onEventDecrypted);
+    this.client.off(RoomStateEvent.Events, this.onStateUpdate);
+    this.client.off(ClientEvent.ToDeviceEvent, this.onToDeviceEvent);
   }
 }
 

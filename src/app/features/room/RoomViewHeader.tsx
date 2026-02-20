@@ -450,7 +450,7 @@ export function RoomViewHeader() {
             </>
           )}
 
-          {!room.isCallRoom() && screenSize === ScreenSize.Desktop && (
+          {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"
               offset={4}
@@ -466,7 +466,7 @@ export function RoomViewHeader() {
                   ref={triggerRef}
                   onClick={() => setPeopleDrawer((drawer) => !drawer)}
                 >
-                  <Icon size="400" src={Icons.User} />
+                  <Icon size="400" src={Icons.User} filled={peopleDrawer} />
                 </IconButton>
               )}
             </TooltipProvider>

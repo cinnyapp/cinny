@@ -33,25 +33,25 @@ import {
   createRoom,
   CreateRoomAliasInput,
   CreateRoomData,
-  CreateRoomKind,
-  CreateRoomKindSelector,
+  CreateRoomAccess,
+  CreateRoomAccessSelector,
   RoomVersionSelector,
   useAdditionalCreators,
 } from '../../components/create-room';
 import { RoomType } from '../../../types/matrix/room';
 
-const getCreateSpaceKindToIcon = (kind: CreateRoomKind) => {
-  if (kind === CreateRoomKind.Private) return Icons.SpaceLock;
-  if (kind === CreateRoomKind.Restricted) return Icons.Space;
+const getCreateSpaceAccessToIcon = (access: CreateRoomAccess) => {
+  if (access === CreateRoomAccess.Private) return Icons.SpaceLock;
+  if (access === CreateRoomAccess.Restricted) return Icons.Space;
   return Icons.SpaceGlobe;
 };
 
 type CreateSpaceFormProps = {
-  defaultKind?: CreateRoomKind;
+  defaultAccess?: CreateRoomAccess;
   space?: Room;
   onCreate?: (roomId: string) => void;
 };
-export function CreateSpaceForm({ defaultKind, space, onCreate }: CreateSpaceFormProps) {
+export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceFormProps) {
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -65,8 +65,8 @@ export function CreateSpaceForm({ defaultKind, space, onCreate }: CreateSpaceFor
 
   const allowRestricted = space && restrictedSupported(selectedRoomVersion);
 
-  const [kind, setKind] = useState(
-    defaultKind ?? allowRestricted ? CreateRoomKind.Restricted : CreateRoomKind.Private
+  const [access, setAccess] = useState(
+    defaultAccess ?? (allowRestricted ? CreateRoomAccess.Restricted : CreateRoomAccess.Private)
   );
 
   const allowAdditionalCreators = creatorsSupported(selectedRoomVersion);
@@ -76,13 +76,13 @@ export function CreateSpaceForm({ defaultKind, space, onCreate }: CreateSpaceFor
   const [knock, setKnock] = useState(false);
   const [advance, setAdvance] = useState(false);
 
-  const allowKnock = kind === CreateRoomKind.Private && knockSupported(selectedRoomVersion);
+  const allowKnock = access === CreateRoomAccess.Private && knockSupported(selectedRoomVersion);
   const allowKnockRestricted =
-    kind === CreateRoomKind.Restricted && knockRestrictedSupported(selectedRoomVersion);
+    access === CreateRoomAccess.Restricted && knockRestrictedSupported(selectedRoomVersion);
 
   const handleRoomVersionChange = (version: string) => {
     if (!restrictedSupported(version)) {
-      setKind(CreateRoomKind.Private);
+      setAccess(CreateRoomAccess.Private);
     }
     selectRoomVersion(version);
   };
@@ -108,12 +108,12 @@ export function CreateSpaceForm({ defaultKind, space, onCreate }: CreateSpaceFor
       aliasInput && aliasInput.value ? replaceSpaceWithDash(aliasInput.value) : undefined;
 
     if (!roomName) return;
-    const publicRoom = kind === CreateRoomKind.Public;
+    const publicRoom = access === CreateRoomAccess.Public;
     let roomKnock = false;
-    if (allowKnock && kind === CreateRoomKind.Private) {
+    if (allowKnock && access === CreateRoomAccess.Private) {
       roomKnock = knock;
     }
-    if (allowKnockRestricted && kind === CreateRoomKind.Restricted) {
+    if (allowKnockRestricted && access === CreateRoomAccess.Restricted) {
       roomKnock = knock;
     }
 
@@ -121,7 +121,7 @@ export function CreateSpaceForm({ defaultKind, space, onCreate }: CreateSpaceFor
       version: selectedRoomVersion,
       type: RoomType.Space,
       parent: space,
-      kind,
+      access,
       name: roomName,
       topic: roomTopic || undefined,
       aliasLocalPart: publicRoom ? aliasLocalPart : undefined,
@@ -139,19 +139,19 @@ export function CreateSpaceForm({ defaultKind, space, onCreate }: CreateSpaceFor
     <Box as="form" onSubmit={handleSubmit} grow="Yes" direction="Column" gap="500">
       <Box direction="Column" gap="100">
         <Text size="L400">Access</Text>
-        <CreateRoomKindSelector
-          value={kind}
-          onSelect={setKind}
+        <CreateRoomAccessSelector
+          value={access}
+          onSelect={setAccess}
           canRestrict={allowRestricted}
           disabled={disabled}
-          getIcon={getCreateSpaceKindToIcon}
+          getIcon={getCreateSpaceAccessToIcon}
         />
       </Box>
       <Box shrink="No" direction="Column" gap="100">
         <Text size="L400">Name</Text>
         <Input
           required
-          before={<Icon size="100" src={getCreateSpaceKindToIcon(kind)} />}
+          before={<Icon size="100" src={getCreateSpaceAccessToIcon(access)} />}
           name="nameInput"
           autoFocus
           size="500"
@@ -172,7 +172,7 @@ export function CreateSpaceForm({ defaultKind, space, onCreate }: CreateSpaceFor
         />
       </Box>
 
-      {kind === CreateRoomKind.Public && <CreateRoomAliasInput disabled={disabled} />}
+      {access === CreateRoomAccess.Public && <CreateRoomAliasInput disabled={disabled} />}
 
       <Box shrink="No" direction="Column" gap="100">
         <Box gap="200" alignItems="End">
@@ -202,7 +202,7 @@ export function CreateSpaceForm({ defaultKind, space, onCreate }: CreateSpaceFor
             />
           </SequenceCard>
         )}
-        {kind !== CreateRoomKind.Public && advance && (allowKnock || allowKnockRestricted) && (
+        {access !== CreateRoomAccess.Public && advance && (allowKnock || allowKnockRestricted) && (
           <SequenceCard
             style={{ padding: config.space.S300 }}
             variant="SurfaceVariant"
