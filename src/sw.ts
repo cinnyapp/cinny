@@ -120,26 +120,29 @@ function fetchConfig(token: string): RequestInit {
   };
 }
 
+function respondMediaRequest(event: FetchEvent, session: SessionInfo): void {
+  const { url } = event.request;
+  if (!validMediaRequest(url, session.baseUrl)) return;
+
+  event.respondWith(fetch(url, fetchConfig(session.accessToken)));
+}
+
 self.addEventListener('fetch', (event: FetchEvent) => {
-  const { url, method } = event.request;
-  if (method !== 'GET') return;
+  if (event.request.method !== 'GET') return;
 
   const { clientId } = event;
   if (!clientId) return;
 
-  let session = sessions.get(clientId);
-
-  if (!session) {
-    event.waitUntil(
-      (async () => {
-        session = await requestSessionWithTimeout(clientId);
-      })()
-    );
+  const session = sessions.get(clientId);
+  if (session) {
+    respondMediaRequest(event, session);
+    return;
   }
 
-  if (!session) return;
+  const responsePending = requestSessionWithTimeout(clientId).then((s) => {
+    if (!s) return;
+    respondMediaRequest(event, s);
+  });
 
-  if (!validMediaRequest(url, session.baseUrl)) return;
-
-  event.respondWith(fetch(url, fetchConfig(session.accessToken)));
+  event.waitUntil(responsePending);
 });
