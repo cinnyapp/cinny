@@ -106,13 +106,17 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
 
 const MEDIA_PATHS = ['/_matrix/client/v1/media/download', '/_matrix/client/v1/media/thumbnail'];
 
-function isMediaRequest(url: string): boolean {
+function validMediaRequest(url: string, baseUrl?: string): boolean {
+  let pathname: string;
   try {
-    const { pathname } = new URL(url);
-    return MEDIA_PATHS.some((p) => pathname.startsWith(p));
+    ({ pathname } = new URL(url));
   } catch {
     return false;
   }
+
+  if (!baseUrl) return MEDIA_PATHS.some((p) => pathname.startsWith(p));
+
+  return MEDIA_PATHS.some((p) => url.startsWith(new URL(p, baseUrl).href));
 }
 
 function fetchConfig(token: string): RequestInit {
@@ -126,7 +130,7 @@ function fetchConfig(token: string): RequestInit {
 
 function respondMediaRequest(event: FetchEvent, session: SessionInfo): void {
   const { url } = event.request;
-  if (!isMediaRequest(url)) return;
+  if (!validMediaRequest(url, session.baseUrl)) return;
 
   event.respondWith(fetch(url, fetchConfig(session.accessToken)));
 }
@@ -144,7 +148,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   }
 
   const { url } = event.request;
-  if (!isMediaRequest(url)) return;
+  if (!validMediaRequest(url)) return;
 
   // respondWith must be called synchronously, so
   // we pass a Promise and the browser
