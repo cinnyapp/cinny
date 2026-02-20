@@ -19,15 +19,19 @@ import {
   IconButton,
   Icons,
   Line,
+  Menu,
+  MenuItem,
   Overlay,
   OverlayBackdrop,
   OverlayCenter,
   PopOut,
+  RectCords,
   Scroll,
   Text,
   config,
   toRem,
 } from 'folds';
+import FocusTrap from 'focus-trap-react';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
@@ -117,6 +121,13 @@ import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
+import { useQueryClient } from '@tanstack/react-query';
+import { delayedEventsSupportedAtom, roomIdToScheduledTimeAtomFamily, roomIdToEditingScheduledDelayIdAtomFamily } from '../../state/scheduledMessages';
+import { sendDelayedMessage, sendDelayedMessageE2EE, computeDelayMs, cancelDelayedEvent } from '../../utils/delayedEvents';
+import { SchedulePickerDialog } from './schedule-send';
+import * as css from './schedule-send/SchedulePickerDialog.css';
+import { timeHourMinute, timeDayMonthYear } from '../../utils/time';
+import { stopPropagation } from '../../utils/keyboard';
 
 interface RoomInputProps {
   editor: Editor;
@@ -220,6 +231,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const isComposing = useComposingCheck();
 
+    const queryClient = useQueryClient();
+    const delayedEventsSupported = useAtomValue(delayedEventsSupportedAtom);
+    const [scheduledTime, setScheduledTime] = useAtom(roomIdToScheduledTimeAtomFamily(roomId));
+    const [editingScheduledDelayId, setEditingScheduledDelayId] = useAtom(roomIdToEditingScheduledDelayIdAtomFamily(roomId));
+    const [scheduleMenuAnchor, setScheduleMenuAnchor] = useState<RectCords>();
+    const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+    const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+    const isEncrypted = room.hasEncryptionStateEvent();
+
     useElementSizeObserver(
       useCallback(() => document.body, []),
       useCallback((width) => setHideStickerBtn(width < 500), [])
@@ -296,7 +316,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       contents.forEach((content) => mx.sendMessage(roomId, content as any));
     };
 
-    const submit = useCallback(() => {
+    const submit = useCallback(async () => {
       uploadBoardHandlers.current?.handleSend();
 
       const commandName = getBeginCommand(editor);
@@ -372,12 +392,49 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           content['m.relates_to'].is_falling_back = false;
         }
       }
-      mx.sendMessage(roomId, content as any);
-      resetEditor(editor);
-      resetEditorHistory(editor);
-      setReplyDraft(undefined);
-      sendTypingStatus(false);
-    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
+      const invalidate = () =>
+        queryClient.invalidateQueries({ queryKey: ['delayedEvents', roomId] });
+
+      const resetInput = () => {
+        resetEditor(editor);
+        resetEditorHistory(editor);
+        setReplyDraft(undefined);
+        sendTypingStatus(false);
+      };
+
+      if (scheduledTime) {
+        try {
+          const delayMs = computeDelayMs(scheduledTime);
+          if (editingScheduledDelayId) {
+            await cancelDelayedEvent(mx, editingScheduledDelayId);
+          }
+          if (isEncrypted) {
+            await sendDelayedMessageE2EE(mx, roomId, room, content, delayMs);
+          } else {
+            await sendDelayedMessage(mx, roomId, content, delayMs);
+          }
+          invalidate();
+          setEditingScheduledDelayId(null);
+          setScheduledTime(null);
+          resetInput();
+        } catch {
+          // Network/server error — leave editor and scheduled state intact for retry
+        }
+      } else if (editingScheduledDelayId) {
+        try {
+          await cancelDelayedEvent(mx, editingScheduledDelayId);
+          mx.sendMessage(roomId, content as any);
+          invalidate();
+          setEditingScheduledDelayId(null);
+          resetInput();
+        } catch {
+          // Cancel failed — leave state intact for retry
+        }
+      } else {
+        mx.sendMessage(roomId, content as any);
+        resetInput();
+      }
+    }, [mx, roomId, room, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands, scheduledTime, setScheduledTime, isEncrypted, queryClient, editingScheduledDelayId, setEditingScheduledDelayId]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -544,7 +601,36 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}
           top={
-            replyDraft && (
+            <>
+              {scheduledTime && (
+                <div>
+                  <Box
+                    alignItems="Center"
+                    gap="300"
+                    style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
+                  >
+                    <IconButton
+                      onClick={() => {
+                        setScheduledTime(null);
+                        setEditingScheduledDelayId(null);
+                      }}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                    >
+                      <Icon src={Icons.Cross} size="50" />
+                    </IconButton>
+                    <Box direction="Row" gap="200" alignItems="Center">
+                      <Icon size="100" src={Icons.Clock} />
+                      <Text size="T300">
+                        Scheduled for {timeDayMonthYear(scheduledTime.getTime())} at{' '}
+                        {timeHourMinute(scheduledTime.getTime(), hour24Clock)}
+                      </Text>
+                    </Box>
+                  </Box>
+                </div>
+              )}
+            {replyDraft && (
               <div>
                 <Box
                   alignItems="Center"
@@ -580,7 +666,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </Box>
                 </Box>
               </div>
-            )
+            )}
+            </>
           }
           before={
             <IconButton
@@ -669,9 +756,73 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </PopOut>
                 )}
               </UseStateProvider>
-              <IconButton onClick={submit} variant="SurfaceVariant" size="300" radii="300">
-                <Icon src={Icons.Send} />
-              </IconButton>
+              <PopOut
+                anchor={scheduleMenuAnchor}
+                position="Top"
+                align="End"
+                offset={5}
+                content={
+                  <FocusTrap
+                    focusTrapOptions={{
+                      initialFocus: false,
+                      onDeactivate: () => setScheduleMenuAnchor(undefined),
+                      clickOutsideDeactivates: true,
+                      escapeDeactivates: stopPropagation,
+                    }}
+                  >
+                    <Menu>
+                      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                        <MenuItem
+                          size="300"
+                          radii="300"
+                          onClick={() => {
+                            setScheduleMenuAnchor(undefined);
+                            submit();
+                          }}
+                          before={<Icon size="100" src={Icons.Send} />}
+                        >
+                          <Text size="B300">Send Now</Text>
+                        </MenuItem>
+                        <MenuItem
+                          size="300"
+                          radii="300"
+                          onClick={() => {
+                            setScheduleMenuAnchor(undefined);
+                            setShowSchedulePicker(true);
+                          }}
+                          before={<Icon size="100" src={Icons.Clock} />}
+                        >
+                          <Text size="B300">Schedule Send</Text>
+                        </MenuItem>
+                      </Box>
+                    </Menu>
+                  </FocusTrap>
+                }
+              />
+              <Box display="Flex" alignItems="Center">
+                <IconButton
+                  onClick={submit}
+                  variant={scheduledTime ? 'Primary' : 'SurfaceVariant'}
+                  size="300"
+                  radii="0"
+                  className={delayedEventsSupported ? css.SplitSendButton : undefined}
+                >
+                  <Icon src={scheduledTime ? Icons.Clock : Icons.Send} />
+                </IconButton>
+                {delayedEventsSupported && (
+                  <IconButton
+                    onClick={(evt: React.MouseEvent<HTMLButtonElement>) => {
+                      setScheduleMenuAnchor(evt.currentTarget.getBoundingClientRect());
+                    }}
+                    variant={scheduledTime ? 'Primary' : 'SurfaceVariant'}
+                    size="300"
+                    radii="0"
+                    className={css.SplitChevronButton}
+                  >
+                    <Icon size="50" src={Icons.ChevronBottom} />
+                  </IconButton>
+                )}
+              </Box>
             </>
           }
           bottom={
@@ -683,6 +834,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             )
           }
         />
+        {showSchedulePicker && (
+          <SchedulePickerDialog
+            initialTime={scheduledTime?.getTime()}
+            showEncryptionWarning={isEncrypted}
+            onCancel={() => setShowSchedulePicker(false)}
+            onSubmit={(date) => {
+              setScheduledTime(date);
+              setShowSchedulePicker(false);
+            }}
+          />
+        )}
       </div>
     );
   }

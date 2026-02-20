@@ -1,4 +1,6 @@
 import React, { useCallback, useRef } from 'react';
+import { useAtomValue } from 'jotai';
+import { Transforms } from 'slate';
 import { Box, Text, config } from 'folds';
 import { EventType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
@@ -7,7 +9,7 @@ import { useStateEvent } from '../../hooks/useStateEvent';
 import { StateEvent } from '../../../types/matrix/room';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useEditor } from '../../components/editor';
+import { useEditor, resetEditor } from '../../components/editor';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
 import { RoomViewTyping } from './RoomViewTyping';
@@ -22,6 +24,9 @@ import { settingsAtom } from '../../state/settings';
 import { useSetting } from '../../state/hooks/settings';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
+import { ScheduledMessagesList } from './schedule-send';
+import { useDelayedEventsSupport } from '../../hooks/useDelayedEventsSupport';
+import { delayedEventsSupportedAtom } from '../../state/scheduledMessages';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
@@ -74,6 +79,18 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
   const permissions = useRoomPermissions(creators, powerLevels);
   const canMessage = permissions.event(EventType.RoomMessage, mx.getSafeUserId());
 
+  useDelayedEventsSupport();
+  const delayedEventsSupported = useAtomValue(delayedEventsSupportedAtom);
+
+  const handleEditMessage = useCallback(
+    (body: string) => {
+      resetEditor(editor);
+      if (body) Transforms.insertText(editor, body);
+      ReactEditor.focus(editor);
+    },
+    [editor]
+  );
+
   useKeyDown(
     window,
     useCallback(
@@ -105,6 +122,9 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
         <RoomViewTyping room={room} />
       </Box>
       <Box shrink="No" direction="Column">
+        {canMessage && delayedEventsSupported && (
+          <ScheduledMessagesList room={room} onEditMessage={handleEditMessage} />
+        )}
         <div style={{ padding: `0 ${config.space.S400}` }}>
           {tombstoneEvent ? (
             <RoomTombstone
