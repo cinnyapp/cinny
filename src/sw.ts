@@ -3,14 +3,6 @@
 export type {};
 declare const self: ServiceWorkerGlobalScope;
 
-self.addEventListener('install', () => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event: ExtendableEvent) => {
-  event.waitUntil(self.clients.claim());
-});
-
 type SessionInfo = {
   accessToken: string;
   baseUrl: string;
@@ -21,6 +13,9 @@ type SessionInfo = {
  */
 const sessions = new Map<string, SessionInfo>();
 
+const clientToResolve = new Map<string, (value: SessionInfo | undefined) => void>();
+const clientToSessionPromise = new Map<string, Promise<SessionInfo | undefined>>();
+
 async function cleanupDeadClients() {
   const activeClients = await self.clients.matchAll();
   const activeIds = new Set(activeClients.map((c) => c.id));
@@ -28,9 +23,71 @@ async function cleanupDeadClients() {
   Array.from(sessions.keys()).forEach((id) => {
     if (!activeIds.has(id)) {
       sessions.delete(id);
+      clientToResolve.delete(id);
+      clientToSessionPromise.delete(id);
     }
   });
 }
+
+function setSession(clientId: string, accessToken: any, baseUrl: any) {
+  if (typeof accessToken === 'string' && typeof baseUrl === 'string') {
+    sessions.set(clientId, { accessToken, baseUrl });
+  } else {
+    // Logout or invalid session
+    sessions.delete(clientId);
+  }
+
+  const resolveSession = clientToResolve.get(clientId);
+  if (resolveSession) {
+    resolveSession(sessions.get(clientId));
+    clientToResolve.delete(clientId);
+    clientToSessionPromise.delete(clientId);
+  }
+}
+
+function requestSession(client: Client): Promise<SessionInfo | undefined> {
+  const promise =
+    clientToSessionPromise.get(client.id) ??
+    new Promise((resolve) => {
+      clientToResolve.set(client.id, resolve);
+      client.postMessage({ type: 'requestSession' });
+    });
+
+  if (!clientToSessionPromise.has(client.id)) {
+    clientToSessionPromise.set(client.id, promise);
+  }
+
+  return promise;
+}
+
+async function requestSessionWithTimeout(
+  clientId: string,
+  timeoutMs = 3000
+): Promise<SessionInfo | undefined> {
+  const client = await self.clients.get(clientId);
+  if (!client) return undefined;
+
+  const sessionPromise = requestSession(client);
+
+  const timeout = new Promise<undefined>((resolve) => {
+    setTimeout(() => resolve(undefined), timeoutMs);
+  });
+
+  return Promise.race([sessionPromise, timeout]);
+}
+
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event: ExtendableEvent) => {
+  event.waitUntil(
+    (async () => {
+      await self.clients.claim();
+      await cleanupDeadClients();
+    })()
+  );
+});
 
 /**
  * Receive session updates from clients
@@ -41,23 +98,25 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
 
   const { type, accessToken, baseUrl } = event.data || {};
 
-  if (type !== 'setSession') return;
-
-  cleanupDeadClients();
-
-  if (typeof accessToken === 'string' && typeof baseUrl === 'string') {
-    sessions.set(client.id, { accessToken, baseUrl });
-  } else {
-    // Logout or invalid session
-    sessions.delete(client.id);
+  if (type === 'setSession') {
+    setSession(client.id, accessToken, baseUrl);
+    cleanupDeadClients();
   }
 });
 
-function validMediaRequest(url: string, baseUrl: string): boolean {
-  const downloadUrl = new URL('/_matrix/client/v1/media/download', baseUrl);
-  const thumbnailUrl = new URL('/_matrix/client/v1/media/thumbnail', baseUrl);
+const MEDIA_PATHS = ['/_matrix/client/v1/media/download', '/_matrix/client/v1/media/thumbnail'];
 
-  return url.startsWith(downloadUrl.href) || url.startsWith(thumbnailUrl.href);
+function validMediaRequest(url: string, baseUrl?: string): boolean {
+  let pathname: string;
+  try {
+    ({ pathname } = new URL(url));
+  } catch {
+    return false;
+  }
+
+  if (!baseUrl) return MEDIA_PATHS.some((p) => pathname.startsWith(p));
+
+  return MEDIA_PATHS.some((p) => url.startsWith(new URL(p, baseUrl).href));
 }
 
 function fetchConfig(token: string): RequestInit {
@@ -69,16 +128,35 @@ function fetchConfig(token: string): RequestInit {
   };
 }
 
-self.addEventListener('fetch', (event: FetchEvent) => {
-  const { url, method } = event.request;
-
-  if (method !== 'GET') return;
-  if (!event.clientId) return;
-
-  const session = sessions.get(event.clientId);
-  if (!session) return;
-
+function respondMediaRequest(event: FetchEvent, session: SessionInfo): void {
+  const { url } = event.request;
   if (!validMediaRequest(url, session.baseUrl)) return;
 
   event.respondWith(fetch(url, fetchConfig(session.accessToken)));
+}
+
+self.addEventListener('fetch', (event: FetchEvent) => {
+  if (event.request.method !== 'GET') return;
+
+  const { clientId } = event;
+  if (!clientId) return;
+
+  const session = sessions.get(clientId);
+  if (session) {
+    respondMediaRequest(event, session);
+    return;
+  }
+
+  const { url } = event.request;
+  if (!validMediaRequest(url)) return;
+
+  // respondWith must be called synchronously, so
+  // we pass a Promise and the browser
+  // suspends the request while we wait for the session
+  event.respondWith(
+    requestSessionWithTimeout(clientId).then((fetchedSession) => {
+      if (!fetchedSession) return fetch(event.request);
+      return fetch(url, fetchConfig(fetchedSession.accessToken));
+    })
+  );
 });
