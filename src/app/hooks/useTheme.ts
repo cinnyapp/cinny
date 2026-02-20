@@ -1,7 +1,15 @@
 import { lightTheme } from 'folds';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { onDarkFontWeight, onLightFontWeight } from '../../config.css';
-import { butterTheme, darkTheme, silverTheme } from '../../colors.css';
+import {
+  butterTheme,
+  darkTheme,
+  silverTheme,
+  catppuccinMochaTheme,
+  catppuccinMacchiatoTheme,
+  catppuccinFrappeTheme,
+  catppuccinLatteTheme,
+} from '../../colors.css';
 import { settingsAtom } from '../state/settings';
 import { useSetting } from '../state/hooks/settings';
 
@@ -21,6 +29,11 @@ export const LightTheme: Theme = {
   kind: ThemeKind.Light,
   classNames: [lightTheme, onLightFontWeight, 'prism-light'],
 };
+export const CatppuccinLatteTheme: Theme = {
+  id: 'catppuccin-latte-theme',
+  kind: ThemeKind.Light,
+  classNames: ['catppuccin-latte-theme', catppuccinLatteTheme, onLightFontWeight, 'prism-light'],
+};
 
 export const SilverTheme: Theme = {
   id: 'silver-theme',
@@ -37,9 +50,41 @@ export const ButterTheme: Theme = {
   kind: ThemeKind.Dark,
   classNames: ['butter-theme', butterTheme, onDarkFontWeight, 'prism-dark'],
 };
+export const CatppuccinFrappeTheme: Theme = {
+  id: 'catppuccin-frappe-theme',
+  kind: ThemeKind.Dark,
+  classNames: ['catppuccin-frappe-theme', catppuccinFrappeTheme, onDarkFontWeight, 'prism-dark'],
+};
+export const CatppuccinMacchiatoTheme: Theme = {
+  id: 'catppuccin-macchiato-theme',
+  kind: ThemeKind.Dark,
+  classNames: [
+    'catppuccin-macchiato-theme',
+    catppuccinMacchiatoTheme,
+    onDarkFontWeight,
+    'prism-dark',
+  ],
+};
+export const CatppuccinMochaTheme: Theme = {
+  id: 'catppuccin-mocha-theme',
+  kind: ThemeKind.Dark,
+  classNames: ['catppuccin-mocha-theme', catppuccinMochaTheme, onDarkFontWeight, 'prism-dark'],
+};
 
 export const useThemes = (): Theme[] => {
-  const themes: Theme[] = useMemo(() => [LightTheme, SilverTheme, DarkTheme, ButterTheme], []);
+  const themes: Theme[] = useMemo(
+    () => [
+      LightTheme,
+      SilverTheme,
+      DarkTheme,
+      ButterTheme,
+      CatppuccinLatteTheme,
+      CatppuccinFrappeTheme,
+      CatppuccinMacchiatoTheme,
+      CatppuccinMochaTheme,
+    ],
+    []
+  );
 
   return themes;
 };
@@ -51,6 +96,10 @@ export const useThemeNames = (): Record<string, string> =>
       [SilverTheme.id]: 'Silver',
       [DarkTheme.id]: 'Dark',
       [ButterTheme.id]: 'Butter',
+      [CatppuccinLatteTheme.id]: 'Catppuccin Latte',
+      [CatppuccinFrappeTheme.id]: 'Catppuccin Frappé',
+      [CatppuccinMacchiatoTheme.id]: 'Catppuccin Macchiato',
+      [CatppuccinMochaTheme.id]: 'Catppuccin Mocha',
     }),
     []
   );
