@@ -11,6 +11,10 @@ export const UrlPreviewImg = as<'img'>(({ className, alt, ...props }, ref) => (
   <img className={classNames(css.UrlPreviewImg, className)} alt={alt} {...props} ref={ref} />
 ));
 
+export const UrlPreviewHeroImg = as<'img'>(({ className, alt, ...props }, ref) => (
+  <img className={classNames(css.UrlPreviewHeroImg, className)} alt={alt} {...props} ref={ref} />
+));
+
 export const UrlPreviewContent = as<'div'>(({ className, ...props }, ref) => (
   <Box
     grow="Yes"

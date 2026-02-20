@@ -1,4 +1,5 @@
 import { recipe } from '@vanilla-extract/recipes';
+import { style } from '@vanilla-extract/css';
 import { DefaultReset, color, toRem } from 'folds';
 
 export const UrlPreviewHolderGradient = recipe({
@@ -24,6 +25,7 @@ export const UrlPreviewHolderGradient = recipe({
     },
   },
 });
+
 export const UrlPreviewHolderBtn = recipe({
   base: [
     DefaultReset,
@@ -45,3 +47,17 @@ export const UrlPreviewHolderBtn = recipe({
     },
   },
 });
+
+export const UrlPreviewModal = style([
+  DefaultReset,
+  {
+    width: '90vw',
+    height: '85vh',
+    maxWidth: toRem(1200),
+    maxHeight: toRem(1000),
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    backgroundColor: color.Background.Container,
+  },
+]);
