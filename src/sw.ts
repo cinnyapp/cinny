@@ -104,20 +104,15 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   }
 });
 
-function isMediaRequest(url: string, baseUrl?: string): boolean {
-  const mediaPaths = ['/_matrix/client/v1/media/download', '/_matrix/client/v1/media/thumbnail'];
+const MEDIA_PATHS = ['/_matrix/client/v1/media/download', '/_matrix/client/v1/media/thumbnail'];
+
+function isMediaRequest(url: string): boolean {
   try {
     const { pathname } = new URL(url);
-    if (!mediaPaths.some((p) => pathname.startsWith(p))) return false;
+    return MEDIA_PATHS.some((p) => pathname.startsWith(p));
   } catch {
     return false;
   }
-  if (!baseUrl) return true;
-
-  const downloadUrl = new URL('/_matrix/client/v1/media/download', baseUrl);
-  const thumbnailUrl = new URL('/_matrix/client/v1/media/thumbnail', baseUrl);
-
-  return url.startsWith(downloadUrl.href) || url.startsWith(thumbnailUrl.href);
 }
 
 function fetchConfig(token: string): RequestInit {
@@ -131,7 +126,7 @@ function fetchConfig(token: string): RequestInit {
 
 function respondMediaRequest(event: FetchEvent, session: SessionInfo): void {
   const { url } = event.request;
-  if (!isMediaRequest(url, session.baseUrl)) return;
+  if (!isMediaRequest(url)) return;
 
   event.respondWith(fetch(url, fetchConfig(session.accessToken)));
 }
@@ -157,7 +152,6 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   event.respondWith(
     requestSessionWithTimeout(clientId).then((s) => {
       if (!s) return fetch(url);
-      if (!isMediaRequest(url, s.baseUrl)) return fetch(url);
       return fetch(url, fetchConfig(s.accessToken));
     })
   );
