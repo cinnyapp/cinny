@@ -155,7 +155,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   // suspends the request while we wait for the session
   event.respondWith(
     requestSessionWithTimeout(clientId).then((fetchedSession) => {
-      if (!fetchedSession) return fetch(url);
+      if (!fetchedSession) return fetch(event.request);
       return fetch(url, fetchConfig(fetchedSession.accessToken));
     })
   );
