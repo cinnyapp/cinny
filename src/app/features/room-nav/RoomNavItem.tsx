@@ -217,7 +217,6 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     );
   }
 );
-RoomNavItemMenu.displayName = 'RoomNavItemMenu';
 
 type RoomNavItemProps = {
   room: Room;
@@ -369,7 +368,6 @@ export function RoomNavItem({
                     size="100"
                     joinRule={room.getJoinRule()}
                     roomType={room.getType()}
-                    locked={room.isCallRoom() && !canJoinCall}
                   />
                 )}
               </Avatar>

@@ -28,14 +28,14 @@ export function RoomNavUser({ room, callMembership }: RoomNavUserProps) {
   const avatarUrl = avatarMxcUrl
     ? mx.mxcUrlToHttp(avatarMxcUrl, 32, 32, 'crop', undefined, false, useAuthentication)
     : undefined;
-  const getName = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId);
+  const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId);
   const isCallParticipant = isActiveCall && userId !== mx.getUserId();
 
   const handleNavUserClick: React.MouseEventHandler<HTMLButtonElement> = (evt) => {
     openProfile(room.roomId, space?.roomId, userId, evt.currentTarget.getBoundingClientRect());
   };
 
-  const ariaLabel = isCallParticipant ? `Call Participant: ${getName}` : getName;
+  const ariaLabel = isCallParticipant ? `Call Participant: ${name}` : name;
 
   return (
     <NavItem variant="Background" radii="400">
@@ -47,12 +47,12 @@ export function RoomNavUser({ room, callMembership }: RoomNavUserProps) {
                 <UserAvatar
                   userId={userId}
                   src={avatarUrl ?? undefined}
-                  alt={getName}
+                  alt={name}
                   renderFallback={() => <Icon size="50" src={Icons.User} filled />}
                 />
               </Avatar>
               <Text as="span" size="B400" priority="300" truncate>
-                {getName}
+                {name}
               </Text>
             </Box>
           </Box>

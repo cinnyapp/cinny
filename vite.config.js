@@ -114,6 +114,12 @@ export default defineConfig({
     }),
   ],
   optimizeDeps: {
+    // Rebuild dep optimizer cache on each dev start to avoid stale API shapes.
+    force: true,
+    // Keep matrix-widget-api prebundled so matrix-js-sdk can import its named exports in dev.
+    // Force CJS interop for stability across optimizer cache rebuilds.
+    include: ['matrix-widget-api'],
+    needsInterop: ['matrix-widget-api'],
     esbuildOptions: {
       define: {
         global: 'globalThis',

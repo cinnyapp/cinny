@@ -1,4 +1,4 @@
-export * from './CreateRoomKindSelector';
+export * from './CreateRoomAccessSelector';
 export * from './CreateRoomAliasInput';
 export * from './RoomVersionSelector';
 export * from './utils';

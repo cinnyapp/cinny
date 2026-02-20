@@ -21,7 +21,6 @@ import { settingsAtom } from '../../state/settings';
 import { useSetting } from '../../state/hooks/settings';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useCallState } from '../../pages/client/call/CallProvider';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 
 const FN_KEYS_REGEX = /^F\d+$/;
@@ -61,7 +60,6 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
 
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const screenSize = useScreenSizeContext();
-  const { isChatOpen } = useCallState();
 
   const { roomId } = room;
   const editor = useEditor();
@@ -93,59 +91,57 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
   );
 
   return (
-    (!room.isCallRoom() || isChatOpen) && (
-      <Page
-        ref={roomViewRef}
-        style={
-          room.isCallRoom() && screenSize === ScreenSize.Desktop
-            ? { maxWidth: toRem(399), minWidth: toRem(399) }
-            : {}
-        }
-      >
-        <Box grow="Yes" direction="Column">
-          <RoomTimeline
-            key={roomId}
-            room={room}
-            eventId={eventId}
-            roomInputRef={roomInputRef}
-            editor={editor}
-          />
-          <RoomViewTyping room={room} />
-        </Box>
-        <Box shrink="No" direction="Column">
-          <div style={{ padding: `0 ${config.space.S400}` }}>
-            {tombstoneEvent ? (
-              <RoomTombstone
-                roomId={roomId}
-                body={tombstoneEvent.getContent().body}
-                replacementRoomId={tombstoneEvent.getContent().replacement_room}
-              />
-            ) : (
-              <>
-                {canMessage && (
-                  <RoomInput
-                    room={room}
-                    editor={editor}
-                    roomId={roomId}
-                    fileDropContainerRef={roomViewRef}
-                    ref={roomInputRef}
-                  />
-                )}
-                {!canMessage && (
-                  <RoomInputPlaceholder
-                    style={{ padding: config.space.S200 }}
-                    alignItems="Center"
-                    justifyContent="Center"
-                  >
-                    <Text align="Center">You do not have permission to post in this room</Text>
-                  </RoomInputPlaceholder>
-                )}
-              </>
-            )}
-          </div>
-          {hideActivity ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing room={room} />}
-        </Box>
-      </Page>
-    )
+    <Page
+      ref={roomViewRef}
+      style={
+        room.isCallRoom() && screenSize === ScreenSize.Desktop
+          ? { maxWidth: toRem(399), minWidth: toRem(399) }
+          : {}
+      }
+    >
+      <Box grow="Yes" direction="Column">
+        <RoomTimeline
+          key={roomId}
+          room={room}
+          eventId={eventId}
+          roomInputRef={roomInputRef}
+          editor={editor}
+        />
+        <RoomViewTyping room={room} />
+      </Box>
+      <Box shrink="No" direction="Column">
+        <div style={{ padding: `0 ${config.space.S400}` }}>
+          {tombstoneEvent ? (
+            <RoomTombstone
+              roomId={roomId}
+              body={tombstoneEvent.getContent().body}
+              replacementRoomId={tombstoneEvent.getContent().replacement_room}
+            />
+          ) : (
+            <>
+              {canMessage && (
+                <RoomInput
+                  room={room}
+                  editor={editor}
+                  roomId={roomId}
+                  fileDropContainerRef={roomViewRef}
+                  ref={roomInputRef}
+                />
+              )}
+              {!canMessage && (
+                <RoomInputPlaceholder
+                  style={{ padding: config.space.S200 }}
+                  alignItems="Center"
+                  justifyContent="Center"
+                >
+                  <Text align="Center">You do not have permission to post in this room</Text>
+                </RoomInputPlaceholder>
+              )}
+            </>
+          )}
+        </div>
+        {hideActivity ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing room={room} />}
+      </Box>
+    </Page>
   );
 }

@@ -10,8 +10,7 @@ import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
 import { RoomType, StateEvent } from '../../../types/matrix/room';
 import { getViaServers } from '../../plugins/via-servers';
 import { getMxIdServer } from '../../utils/matrix';
-import { IPowerLevels } from '../../hooks/usePowerLevels';
-import { CreateRoomKind } from './types';
+import { CreateRoomAccess } from './types';
 
 export const createRoomCreationContent = (
   type: RoomType | undefined,
@@ -33,7 +32,7 @@ export const createRoomCreationContent = (
 };
 
 export const createRoomJoinRulesState = (
-  kind: CreateRoomKind,
+  access: CreateRoomAccess,
   parent: Room | undefined,
   knock: boolean
 ) => {
@@ -41,13 +40,13 @@ export const createRoomJoinRulesState = (
     join_rule: knock ? JoinRule.Knock : JoinRule.Invite,
   };
 
-  if (kind === CreateRoomKind.Public) {
+  if (access === CreateRoomAccess.Public) {
     content = {
       join_rule: JoinRule.Public,
     };
   }
 
-  if (kind === CreateRoomKind.Restricted && parent) {
+  if (access === CreateRoomAccess.Restricted && parent) {
     content = {
       join_rule: knock ? ('knock_restricted' as JoinRule) : JoinRule.Restricted,
       allow: [
@@ -89,43 +88,17 @@ export const createRoomCallState = () => ({
   content: {},
 });
 
-export const createPowerLevelContentOverrides = (
-  base: IPowerLevels,
-  overrides: Partial<IPowerLevels>
-): IPowerLevels => ({
-  ...base,
-  ...overrides,
-  ...(base.events || overrides.events
-    ? {
-        events: {
-          ...base.events,
-          ...overrides.events,
-        },
-      }
-    : {}),
-  ...(base.users || overrides.users
-    ? {
-        users: {
-          ...base.users,
-          ...overrides.users,
-        },
-      }
-    : {}),
-  ...(base.notifications || overrides.notifications
-    ? {
-        notifications: {
-          ...base.notifications,
-          ...overrides.notifications,
-        },
-      }
-    : {}),
+export const createVoiceRoomPowerLevelsOverride = () => ({
+  events: {
+    [StateEvent.GroupCallMemberPrefix]: 0,
+  },
 });
 
 export type CreateRoomData = {
   version: string;
   type?: RoomType;
   parent?: Room;
-  kind: CreateRoomKind;
+  access: CreateRoomAccess;
   name: string;
   topic?: string;
   aliasLocalPart?: string;
@@ -133,7 +106,6 @@ export type CreateRoomData = {
   knock: boolean;
   allowFederation: boolean;
   additionalCreators?: string[];
-  powerLevelContentOverrides?: IPowerLevels;
 };
 export const createRoom = async (mx: MatrixClient, data: CreateRoomData): Promise<string> => {
   const initialState: ICreateRoomStateEvent[] = [];
@@ -150,7 +122,7 @@ export const createRoom = async (mx: MatrixClient, data: CreateRoomData): Promis
     initialState.push(createRoomCallState());
   }
 
-  initialState.push(createRoomJoinRulesState(data.kind, data.parent, data.knock));
+  initialState.push(createRoomJoinRulesState(data.access, data.parent, data.knock));
 
   const options: ICreateRoomOpts = {
     room_version: data.version,
@@ -162,6 +134,8 @@ export const createRoom = async (mx: MatrixClient, data: CreateRoomData): Promis
       data.allowFederation,
       data.additionalCreators
     ),
+    power_level_content_override:
+      data.type === RoomType.Call ? createVoiceRoomPowerLevelsOverride() : undefined,
     initial_state: initialState,
   };
 
@@ -178,16 +152,6 @@ export const createRoom = async (mx: MatrixClient, data: CreateRoomData): Promis
       },
       result.room_id
     );
-  }
-
-  if (data.powerLevelContentOverrides) {
-    const roomPowers = await mx.getStateEvent(result.room_id, StateEvent.RoomPowerLevels, '');
-    const updatedPowers = createPowerLevelContentOverrides(
-      roomPowers,
-      data.powerLevelContentOverrides
-    );
-
-    await mx.sendStateEvent(result.room_id, StateEvent.RoomPowerLevels as any, updatedPowers, '');
   }
 
   return result.room_id;

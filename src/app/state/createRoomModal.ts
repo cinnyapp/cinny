@@ -1,9 +1,9 @@
 import { atom } from 'jotai';
-import { CreateRoomVoice } from '../components/create-room/types';
+import { CreateRoomType } from '../components/create-room/types';
 
 export type CreateRoomModalState = {
   spaceId?: string;
-  voice?: CreateRoomVoice;
+  type?: CreateRoomType;
 };
 
 export const createRoomModalAtom = atom<CreateRoomModalState | undefined>(undefined);

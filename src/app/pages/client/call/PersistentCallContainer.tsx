@@ -96,7 +96,7 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
             'Element Call',
             'm.call',
             newUrl,
-            true,
+            false,
             getWidgetData(mx, roomIdToSet, {}, { skipLobby: true, callIntent: 'audio' }),
             roomIdToSet,
           );

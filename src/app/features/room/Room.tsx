@@ -15,6 +15,7 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { CallView } from '../call/CallView';
 import { RoomViewHeader } from './RoomViewHeader';
+import { useCallState } from '../../pages/client/call/CallProvider';
 
 export function Room() {
   const { eventId } = useParams();
@@ -25,7 +26,8 @@ export function Room() {
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const screenSize = useScreenSizeContext();
   const powerLevels = usePowerLevels(room);
-  const members = useRoomMembers(mx, room?.roomId);
+  const members = useRoomMembers(mx, room.roomId);
+  const { isChatOpen } = useCallState();
 
   useKeyDown(
     window,
@@ -46,13 +48,13 @@ export function Room() {
           <RoomViewHeader />
           <Box grow="Yes">
             <CallView room={room} />
-            {room.isCallRoom() && screenSize === ScreenSize.Desktop && (
+            {room.isCallRoom() && screenSize === ScreenSize.Desktop && isChatOpen && (
               <Line variant="Background" direction="Vertical" size="300" />
             )}
-            <RoomView room={room} eventId={eventId} />
+            {(!room.isCallRoom() || isChatOpen) && <RoomView room={room} eventId={eventId} />}
           </Box>
         </Box>
-        {!room.isCallRoom() && screenSize === ScreenSize.Desktop && isDrawer && (
+        {screenSize === ScreenSize.Desktop && isDrawer && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
             <MembersDrawer key={room.roomId} room={room} members={members} />
