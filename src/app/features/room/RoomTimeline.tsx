@@ -57,8 +57,8 @@ import {
   TimelineEventGroup,
   generateEventGroups,
   renderMemberChangeMessage
-} from './TimelineEventGrouping';
-import { CollapsableEventGroup } from './CollapsableEventGroup';
+} from './message/grouping/TimelineEventGrouping';
+import { CollapsableEventGroup } from './message/grouping/CollapsableEventGroup';
 import {
   DefaultPlaceholder,
   CompactPlaceholder,

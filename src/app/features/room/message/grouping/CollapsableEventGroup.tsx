@@ -11,7 +11,7 @@ import {
   MessageBase,
   Time,
   EventContent,
-} from '../../components/message';
+} from '../../../../components/message';
 
 export function CollapsableEventGroup({ messageLayout, collapsedMessage, children, ...props }) {
     const [collapsed, setCollapsed ] = useState<boolean>(true);

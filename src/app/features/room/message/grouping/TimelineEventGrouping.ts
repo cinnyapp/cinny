@@ -1,6 +1,6 @@
-import { getMemberDisplayName, isMembershipChanged } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
-import { IMemberContent, Membership } from '../../../types/matrix/room';
+import { getMemberDisplayName, isMembershipChanged } from '../../../../utils/room';
+import { getMxIdLocalPart } from '../../../../utils/matrix';
+import { IMemberContent, Membership } from '../../../../../types/matrix/room';
 
 export type TimelineEvent = {
     item: number;
