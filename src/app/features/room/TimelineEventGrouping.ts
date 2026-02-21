@@ -66,7 +66,7 @@ export const renderMemberChangeMessage = (room, membershipChangeEvents: Timeline
         }
         const names = Object.keys(counter.members);
         if (counter.count <= 2) {
-            return `${names.join('and')} ${counter.verb}`;
+            return `${names.join(' and ')} ${counter.verb}`;
         }
 
         return `${names[0]}, ${names[1]}, and ${counter.count - 2} others ${counter.verb}`;
