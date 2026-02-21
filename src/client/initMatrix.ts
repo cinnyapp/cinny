@@ -3,26 +3,31 @@ import { createClient, MatrixClient, IndexedDBStore, IndexedDBCryptoStore } from
 import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '../app/state/navToActivePath';
 import { pushSessionToSW } from '../sw-session';
-import { Session, getSessionStoreName } from '../app/state/sessions';
+// import { Session, getSessionStoreName } from '../app/state/sessions';
 import { SlidingSyncController } from '../client/SlidingSyncController';
 
-export const initClient = async (session: Session): Promise<MatrixClient> => {
-  const storeName = getSessionStoreName(session);
+type Session = {
+  baseUrl: string;
+  accessToken: string;
+  userId: string;
+  deviceId: string;
+};
 
+export const initClient = async (session: Session): Promise<MatrixClient> => {
   const indexedDBStore = new IndexedDBStore({
     indexedDB: global.indexedDB,
     localStorage: global.localStorage,
-    dbName: storeName.sync,
+    dbName: 'web-sync-store',
   });
 
-  const cryptoStore = new IndexedDBCryptoStore(global.indexedDB, storeName.crypto);
+  const legacyCryptoStore = new IndexedDBCryptoStore(global.indexedDB, 'crypto-store');
 
   const mx = createClient({
     baseUrl: session.baseUrl,
     accessToken: session.accessToken,
     userId: session.userId,
     store: indexedDBStore,
-    cryptoStore,
+    cryptoStore: legacyCryptoStore,
     deviceId: session.deviceId,
     timelineSupport: true,
     cryptoCallbacks: cryptoCallbacks as any,

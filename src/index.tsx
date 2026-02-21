@@ -11,10 +11,10 @@ import { readyServiceWorker } from './serviceWorkerBridge';
 
 enableMapSet();
 
-import './index.css';
+// import './index.css';
 
 import { trimTrailingSlash } from './app/utils/common';
-import App from './app/pages/App';
+// import App from './app/pages/App';
 
 // import i18n (needs to be bundled ;))
 import './app/i18n';

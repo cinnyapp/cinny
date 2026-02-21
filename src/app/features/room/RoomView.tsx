@@ -72,11 +72,11 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canMessage = permissions.event(EventType.RoomMessage, mx.getSafeUserId());
-  const { getPowerLevel, canSendEvent } = usePowerLevelsAPI(powerLevels);
-  const myUserId = mx.getUserId();
-  const [powerLevelTags, getPowerLevelTag] = usePowerLevelTags(room, powerLevels);
-  const theme = useTheme();
-  const accessibleTagColors = useAccessibleTagColors(theme.kind, powerLevelTags);
+  // const { getPowerLevel, canSendEvent } = usePowerLevelsAPI(powerLevels);
+  // const myUserId = mx.getUserId();
+  // const [powerLevelTags, getPowerLevelTag] = usePowerLevelTags(room, powerLevels);
+  // const theme = useTheme();
+  // const accessibleTagColors = useAccessibleTagColors(theme.kind, powerLevelTags);
 
   useKeyDown(
     window,
