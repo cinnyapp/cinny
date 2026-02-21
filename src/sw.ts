@@ -106,17 +106,20 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
 
 const MEDIA_PATHS = ['/_matrix/client/v1/media/download', '/_matrix/client/v1/media/thumbnail'];
 
-function validMediaRequest(url: string, baseUrl?: string): boolean {
-  let pathname: string;
+function mediaPath(url: string): boolean {
   try {
-    ({ pathname } = new URL(url));
+    const { pathname } = new URL(url);
+    return MEDIA_PATHS.some((p) => pathname.startsWith(p));
   } catch {
     return false;
   }
+}
 
-  if (!baseUrl) return MEDIA_PATHS.some((p) => pathname.startsWith(p));
-
-  return MEDIA_PATHS.some((p) => url.startsWith(new URL(p, baseUrl).href));
+function validMediaRequest(url: string, baseUrl: string): boolean {
+  return MEDIA_PATHS.some((p) => {
+    const validUrl = new URL(p, baseUrl);
+    return url.startsWith(validUrl.href);
+  });
 }
 
 function fetchConfig(token: string): RequestInit {
@@ -128,35 +131,28 @@ function fetchConfig(token: string): RequestInit {
   };
 }
 
-function respondMediaRequest(event: FetchEvent, session: SessionInfo): void {
-  const { url } = event.request;
-  if (!validMediaRequest(url, session.baseUrl)) return;
-
-  event.respondWith(fetch(url, fetchConfig(session.accessToken)));
-}
-
 self.addEventListener('fetch', (event: FetchEvent) => {
-  if (event.request.method !== 'GET') return;
+  const { url, method } = event.request;
+
+  if (method !== 'GET' || !mediaPath(url)) return;
 
   const { clientId } = event;
   if (!clientId) return;
 
   const session = sessions.get(clientId);
   if (session) {
-    respondMediaRequest(event, session);
+    if (validMediaRequest(url, session.baseUrl)) {
+      event.respondWith(fetch(url, fetchConfig(session.accessToken)));
+    }
     return;
   }
 
-  const { url } = event.request;
-  if (!validMediaRequest(url)) return;
-
-  // respondWith must be called synchronously, so
-  // we pass a Promise and the browser
-  // suspends the request while we wait for the session
   event.respondWith(
-    requestSessionWithTimeout(clientId).then((fetchedSession) => {
-      if (!fetchedSession) return fetch(event.request);
-      return fetch(url, fetchConfig(fetchedSession.accessToken));
+    requestSessionWithTimeout(clientId).then((s) => {
+      if (s && validMediaRequest(url, s.baseUrl)) {
+        return fetch(url, fetchConfig(s.accessToken));
+      }
+      return fetch(event.request);
     })
   );
 });
