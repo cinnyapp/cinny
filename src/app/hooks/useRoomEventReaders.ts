@@ -21,7 +21,6 @@ const getEventReaders = (room: Room, evtId?: string) => {
 
 export const useRoomEventReaders = (room: Room, eventId?: string): string[] => {
   const [readers, setReaders] = useState<string[]>(() => getEventReaders(room, eventId));
-
   useEffect(() => {
     setReaders(getEventReaders(room, eventId));
 
@@ -46,6 +45,7 @@ export const useRoomEventReaders = (room: Room, eventId?: string): string[] => {
 
     room.on(RoomEvent.Receipt, handleReceipt);
     room.on(RoomEvent.LocalEchoUpdated, handleLocalEcho);
+
     return () => {
       room.removeListener(RoomEvent.Receipt, handleReceipt);
       room.removeListener(RoomEvent.LocalEchoUpdated, handleLocalEcho);

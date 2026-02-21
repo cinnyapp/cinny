@@ -1,0 +1,9 @@
+http:
+  bind_addresses: ['0.0.0.0']
+  port: 5000
+
+apps:
+  cc.cinny.web:
+    type: webpush
+    vapid_private_key: /data/private_key.pem
+    vapid_contact_email: help@cinny.cc

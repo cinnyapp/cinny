@@ -1,0 +1,10 @@
+(tls_cloudflare) {
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+}
+
+<URL-HERE> {
+  import tls_cloudflare
+  reverse_proxy sygnal:5000
+}

@@ -1,0 +1,49 @@
+.bottom-sheet-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  // The backdrop fade will also be smoother with a transition
+  transition: opacity 300ms ease-out;
+  z-index: 999;
+}
+
+.bottom-sheet-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  // Set transform from the component's style prop
+  // The 'will-change' property is a performance hint for the browser
+  will-change: transform;
+  z-index: 1000;
+
+  // Your existing styles for the sheet itself
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -2px A10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+
+  // This is the magic: apply a transition only when this class is present
+  &.is-transitioning {
+    transition: transform 300ms ease-out;
+  }
+}
+
+// Your other styles remain the same
+.bottom-sheet-grabber {
+  width: 40px;
+  height: 5px;
+  background-color: #ccc;
+  border-radius: 2.5px;
+  margin: 8px auto;
+  cursor: grab;
+}
+
+.bottom-sheet-content {
+  padding: 16px;
+  overflow-y: auto;
+}

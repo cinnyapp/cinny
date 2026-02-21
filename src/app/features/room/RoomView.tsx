@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { Box, Text, config } from 'folds';
+import { Box, Text, config } from 'folds'; // Assuming 'folds' is a UI library
 import { EventType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { isKeyHotkey } from 'is-hotkey';
@@ -24,16 +24,20 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 
 const FN_KEYS_REGEX = /^F\d+$/;
+
+/**
+ * Determines if a keyboard event should trigger focusing the message input field.
+ * @param evt - The KeyboardEvent.
+ * @returns True if the input should be focused, false otherwise.
+ */
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
   const { code } = evt;
   if (evt.metaKey || evt.altKey || evt.ctrlKey) {
     return false;
   }
 
-  // do not focus on F keys
   if (FN_KEYS_REGEX.test(code)) return false;
 
-  // do not focus on numlock/scroll lock
   if (
     code.startsWith('OS') ||
     code.startsWith('Meta') ||
@@ -52,27 +56,27 @@ const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
   ) {
     return false;
   }
-
   return true;
 };
 
 export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
   const roomInputRef = useRef<HTMLDivElement>(null);
   const roomViewRef = useRef<HTMLDivElement>(null);
-
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-
   const { roomId } = room;
   const editor = useEditor();
-
   const mx = useMatrixClient();
-
   const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canMessage = permissions.event(EventType.RoomMessage, mx.getSafeUserId());
+  const { getPowerLevel, canSendEvent } = usePowerLevelsAPI(powerLevels);
+  const myUserId = mx.getUserId();
+  const [powerLevelTags, getPowerLevelTag] = usePowerLevelTags(room, powerLevels);
+  const theme = useTheme();
+  const accessibleTagColors = useAccessibleTagColors(theme.kind, powerLevelTags);
 
   useKeyDown(
     window,
@@ -83,8 +87,11 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
         if (portalContainer && portalContainer.children.length > 0) {
           return;
         }
+
         if (shouldFocusMessageField(evt) || isKeyHotkey('mod+v', evt)) {
-          ReactEditor.focus(editor);
+          if (editor) {
+            ReactEditor.focus(editor);
+          }
         }
       },
       [editor]
@@ -93,8 +100,8 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
 
   return (
     <Page ref={roomViewRef}>
-      <RoomViewHeader />
-      <Box grow="Yes" direction="Column">
+      {!room.isCallRoom() && <RoomViewHeader />}
+      <Box grow="Yes" direction="Column" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
         <RoomTimeline
           key={roomId}
           room={room}
@@ -106,6 +113,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
       </Box>
       <Box shrink="No" direction="Column">
         <div style={{ padding: `0 ${config.space.S400}` }}>
+          {' '}
           {tombstoneEvent ? (
             <RoomTombstone
               roomId={roomId}
@@ -114,7 +122,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
             />
           ) : (
             <>
-              {canMessage && (
+              {canMessage ? (
                 <RoomInput
                   room={room}
                   editor={editor}
@@ -122,8 +130,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
                   fileDropContainerRef={roomViewRef}
                   ref={roomInputRef}
                 />
-              )}
-              {!canMessage && (
+              ) : (
                 <RoomInputPlaceholder
                   style={{ padding: config.space.S200 }}
                   alignItems="Center"

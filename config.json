@@ -8,6 +8,13 @@
     "xmr.se"
   ],
   "allowCustomHomeservers": true,
+  "elementCallUrl": null,
+
+  "pushNotificationDetails": {
+    "pushNotifyUrl": "https://cinny.cc/_matrix/push/v1/notify",
+    "vapidPublicKey": "BHLwykXs79AbKNiblEtZZRAgnt7o5_ieImhVJD8QZ01MVwAHnXwZzNgQEJJEU3E5CVsihoKtb7yaNe5x3vmkWkI",
+    "webPushAppID": "cc.cinny.web"
+  },
 
   "featuredCommunities": {
     "openAsDefault": false,

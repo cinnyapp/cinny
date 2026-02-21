@@ -65,6 +65,7 @@ import {
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
+import { CallNavStatus } from '../../../features/room-nav/RoomCallNavStatus';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -357,6 +358,7 @@ export function Home() {
           </Box>
         </PageNavContent>
       )}
+      <CallNavStatus />
     </PageNav>
   );
 }

@@ -3,29 +3,26 @@ import { createClient, MatrixClient, IndexedDBStore, IndexedDBCryptoStore } from
 import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '../app/state/navToActivePath';
 import { pushSessionToSW } from '../sw-session';
-
-type Session = {
-  baseUrl: string;
-  accessToken: string;
-  userId: string;
-  deviceId: string;
-};
+import { Session, getSessionStoreName } from '../app/state/sessions';
+import { SlidingSyncController } from '../client/SlidingSyncController';
 
 export const initClient = async (session: Session): Promise<MatrixClient> => {
+  const storeName = getSessionStoreName(session);
+
   const indexedDBStore = new IndexedDBStore({
     indexedDB: global.indexedDB,
     localStorage: global.localStorage,
-    dbName: 'web-sync-store',
+    dbName: storeName.sync,
   });
 
-  const legacyCryptoStore = new IndexedDBCryptoStore(global.indexedDB, 'crypto-store');
+  const cryptoStore = new IndexedDBCryptoStore(global.indexedDB, storeName.crypto);
 
   const mx = createClient({
     baseUrl: session.baseUrl,
     accessToken: session.accessToken,
     userId: session.userId,
     store: indexedDBStore,
-    cryptoStore: legacyCryptoStore,
+    cryptoStore,
     deviceId: session.deviceId,
     timelineSupport: true,
     cryptoCallbacks: cryptoCallbacks as any,
@@ -41,9 +38,23 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
 };
 
 export const startClient = async (mx: MatrixClient) => {
-  await mx.startClient({
-    lazyLoadMembers: true,
-  });
+  const syncController = SlidingSyncController.getInstance();
+
+  await syncController.verifyServerSupport(mx);
+
+  if (SlidingSyncController.isSupportedOnServer) {
+    const slidingSync = await syncController.initialize(mx);
+
+    await mx.startClient({
+      slidingSync: slidingSync,
+      lazyLoadMembers: true,
+    });
+  } else {
+    await mx.startClient({
+      initialSyncLimit: 20,
+      lazyLoadMembers: true,
+    });
+  }
 };
 
 export const clearCacheAndReload = async (mx: MatrixClient) => {

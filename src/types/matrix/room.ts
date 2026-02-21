@@ -32,6 +32,8 @@ export enum StateEvent {
   RoomGuestAccess = 'm.room.guest_access',
   RoomServerAcl = 'm.room.server_acl',
   RoomTombstone = 'm.room.tombstone',
+  GroupCallPrefix = "org.matrix.msc3401.call",
+  GroupCallMemberPrefix = "org.matrix.msc3401.call.member",
 
   SpaceChild = 'm.space.child',
   SpaceParent = 'm.space.parent',

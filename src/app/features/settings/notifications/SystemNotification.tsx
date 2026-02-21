@@ -1,6 +1,8 @@
-import React, { useCallback } from 'react';
+/* eslint-disable no-nested-ternary */
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Text, Switch, Button, color, Spinner } from 'folds';
 import { IPusherRequest } from 'matrix-js-sdk';
+import { useAtom } from 'jotai';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
@@ -10,6 +12,14 @@ import { getNotificationState, usePermissionState } from '../../../hooks/usePerm
 import { useEmailNotifications } from '../../../hooks/useEmailNotifications';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import {
+  requestBrowserNotificationPermission,
+  enablePushNotifications,
+  disablePushNotifications,
+} from './PushNotifications';
+import { useClientConfig } from '../../../hooks/useClientConfig';
+import { pushSubscriptionAtom } from '../../../state/pushSubscription';
+import { DeregisterAllPushersSetting } from './DeregisterPushNotifications';
 
 function EmailNotification() {
   const mx = useMatrixClient();
@@ -84,21 +94,93 @@ function EmailNotification() {
   );
 }
 
+function WebPushNotificationSetting() {
+  const mx = useMatrixClient();
+  const clientConfig = useClientConfig();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [usePushNotifications, setPushNotifications] = useSetting(
+    settingsAtom,
+    'usePushNotifications'
+  );
+  const pushSubAtom = useAtom(pushSubscriptionAtom);
+
+  const browserPermission = usePermissionState('notifications', getNotificationState());
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
+  const handleRequestPermissionAndEnable = async () => {
+    setIsLoading(true);
+    try {
+      const permissionResult = await requestBrowserNotificationPermission();
+      if (permissionResult === 'granted') {
+        await enablePushNotifications(mx, clientConfig, pushSubAtom);
+        setPushNotifications(true);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePushSwitchChange = async (wantsPush: boolean) => {
+    setIsLoading(true);
+
+    try {
+      if (wantsPush) {
+        await enablePushNotifications(mx, clientConfig, pushSubAtom);
+      } else {
+        await disablePushNotifications(mx, clientConfig, pushSubAtom);
+      }
+      setPushNotifications(wantsPush);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <SettingTile
+      title="Background Push Notifications"
+      description={
+        browserPermission === 'denied' ? (
+          <Text as="span" style={{ color: color.Critical.Main }} size="T200">
+            Permission blocked. Please allow notifications in your browser settings.
+          </Text>
+        ) : (
+          'Receive notifications when the app is closed or in the background.'
+        )
+      }
+      after={
+        isLoading ? (
+          <Spinner variant="Secondary" />
+        ) : browserPermission === 'prompt' ? (
+          <Button size="300" radii="300" onClick={handleRequestPermissionAndEnable}>
+            <Text size="B300">Enable</Text>
+          </Button>
+        ) : browserPermission === 'granted' ? (
+          <Switch value={usePushNotifications} onChange={handlePushSwitchChange} />
+        ) : null
+      }
+    />
+  );
+}
+
 export function SystemNotification() {
-  const notifPermission = usePermissionState('notifications', getNotificationState());
-  const [showNotifications, setShowNotifications] = useSetting(settingsAtom, 'showNotifications');
+  const [showInAppNotifs, setShowInAppNotifs] = useSetting(settingsAtom, 'useInAppNotifications');
   const [isNotificationSounds, setIsNotificationSounds] = useSetting(
     settingsAtom,
     'isNotificationSounds'
   );
 
-  const requestNotificationPermission = () => {
-    window.Notification.requestPermission();
-  };
-
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">System</Text>
+      <Text size="L400">System & Notifications</Text>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <WebPushNotificationSetting />
+      </SequenceCard>
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"
@@ -106,31 +188,9 @@ export function SystemNotification() {
         gap="400"
       >
         <SettingTile
-          title="Desktop Notifications"
-          description={
-            notifPermission === 'denied' ? (
-              <Text as="span" style={{ color: color.Critical.Main }} size="T200">
-                {'Notification' in window
-                  ? 'Notification permission is blocked. Please allow notification permission from browser address bar.'
-                  : 'Notifications are not supported by the system.'}
-              </Text>
-            ) : (
-              <span>Show desktop notifications when message arrive.</span>
-            )
-          }
-          after={
-            notifPermission === 'prompt' ? (
-              <Button size="300" radii="300" onClick={requestNotificationPermission}>
-                <Text size="B300">Enable</Text>
-              </Button>
-            ) : (
-              <Switch
-                disabled={notifPermission !== 'granted'}
-                value={showNotifications}
-                onChange={setShowNotifications}
-              />
-            )
-          }
+          title="In-App Notifications"
+          description="Show a notification when a message arrives while the app is open (but not focused on the room)."
+          after={<Switch value={showInAppNotifs} onChange={setShowInAppNotifs} />}
         />
       </SequenceCard>
       <SequenceCard
@@ -141,7 +201,7 @@ export function SystemNotification() {
       >
         <SettingTile
           title="Notification Sound"
-          description="Play sound when new message arrive."
+          description="Play sound when new message arrives and app is open."
           after={<Switch value={isNotificationSounds} onChange={setIsNotificationSounds} />}
         />
       </SequenceCard>
@@ -152,6 +212,15 @@ export function SystemNotification() {
         gap="400"
       >
         <EmailNotification />
+      </SequenceCard>
+
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <DeregisterAllPushersSetting />
       </SequenceCard>
     </Box>
   );

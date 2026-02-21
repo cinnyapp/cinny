@@ -1,28 +1,35 @@
 import { useCallback, useMemo } from 'react';
-import { Room } from 'matrix-js-sdk';
+import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { StateEvent } from '../../types/matrix/room';
+import { useMatrixClient } from './useMatrixClient';
 import { useForceUpdate } from './useForceUpdate';
 import { useStateEventCallback } from './useStateEventCallback';
-import { getStateEvents } from '../utils/room';
 
-export const useStateEvents = (room: Room, eventType: StateEvent) => {
+export const useStateEvents = (rooms: Room[], eventType: StateEvent): number => {
+  const mx = useMatrixClient();
+
   const [updateCount, forceUpdate] = useForceUpdate();
 
-  useStateEventCallback(
-    room.client,
-    useCallback(
-      (event) => {
-        if (event.getRoomId() === room.roomId && event.getType() === eventType) {
-          forceUpdate();
+  const relevantRoomIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (rooms && Array.isArray(rooms)) {
+      rooms.forEach((room) => {
+        if (room?.roomId) {
+          ids.add(room.roomId);
         }
-      },
-      [room, eventType, forceUpdate]
-    )
+      });
+    }
+    return ids;
+  }, [rooms]);
+  const handleEventCallback = useCallback(
+    (event: MatrixEvent) => {
+      const eventRoomId = event.getRoomId();
+      if (eventRoomId && event.getType() === eventType && relevantRoomIds.has(eventRoomId)) {
+        forceUpdate();
+      }
+    },
+    [eventType, relevantRoomIds, forceUpdate]
   );
-
-  return useMemo(
-    () => getStateEvents(room, eventType),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [room, eventType, updateCount]
-  );
+  useStateEventCallback(mx, handleEventCallback);
+  return updateCount;
 };

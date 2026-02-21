@@ -57,7 +57,11 @@ function FaviconUpdater() {
   useEffect(() => {
     let notification = false;
     let highlight = false;
+    let total = 0;
     roomToUnread.forEach((unread) => {
+      if (unread.from === null) {
+        total += unread.total;
+      }
       if (unread.total > 0) {
         notification = true;
       }
@@ -71,6 +75,11 @@ function FaviconUpdater() {
     } else {
       setFavicon(LogoSVG);
     }
+    try {
+      navigator.setAppBadge(total);
+    } catch (e) {
+      // Likely Firefox/Gecko-based and doesn't support badging API
+    }
   }, [roomToUnread]);
 
   return null;
@@ -83,7 +92,7 @@ function InviteNotifications() {
   const mx = useMatrixClient();
 
   const navigate = useNavigate();
-  const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
+  const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
 
   const notify = useCallback(
@@ -134,7 +143,7 @@ function MessageNotifications() {
   const unreadCacheRef = useRef<Map<string, UnreadInfo>>(new Map());
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
-  const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
+  const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
 
   const navigate = useNavigate();
@@ -187,6 +196,7 @@ function MessageNotifications() {
     ) => {
       if (mx.getSyncState() !== 'SYNCING') return;
       if (document.hasFocus() && (selectedRoomId === room?.roomId || notificationSelected)) return;
+
       if (
         !room ||
         !data.liveEvent ||

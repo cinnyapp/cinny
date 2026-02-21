@@ -9,7 +9,9 @@ export const Sidebar = style([
     width: toRem(66),
     backgroundColor: color.Background.Container,
     borderRight: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
-
+    MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
+    userSelect: 'none',
     display: 'flex',
     flexDirection: 'column',
     color: color.Background.OnContainer,
@@ -19,6 +21,9 @@ export const Sidebar = style([
 export const SidebarStack = style([
   DefaultReset,
   {
+    MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
+    userSelect: 'none',
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
@@ -68,6 +73,9 @@ export const SidebarItem = recipe({
   base: [
     DefaultReset,
     {
+      MozUserSelect: 'none',
+      WebkitUserSelect: 'none',
+      userSelect: 'none',
       minWidth: toRem(42),
       display: 'flex',
       alignItems: 'center',
@@ -101,6 +109,9 @@ export const SidebarItem = recipe({
   ],
   variants: {
     active: {
+      MozUserSelect: 'none',
+      WebkitUserSelect: 'none',
+      userSelect: 'none',
       true: {
         selectors: {
           '&::before': {
@@ -148,6 +159,9 @@ export type SidebarItemBadgeVariants = RecipeVariants<typeof SidebarItemBadge>;
 export const SidebarAvatar = recipe({
   base: [
     {
+      MozUserSelect: 'none',
+      WebkitUserSelect: 'none',
+      userSelect: 'none',
       selectors: {
         'button&': {
           cursor: 'pointer',
@@ -158,6 +172,9 @@ export const SidebarAvatar = recipe({
   variants: {
     size: {
       '200': {
+        MozUserSelect: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
         width: toRem(16),
         height: toRem(16),
         fontSize: toRem(10),
@@ -165,10 +182,16 @@ export const SidebarAvatar = recipe({
         letterSpacing: config.letterSpacing.T200,
       },
       '300': {
+        MozUserSelect: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
         width: toRem(34),
         height: toRem(34),
       },
       '400': {
+        MozUserSelect: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
         width: toRem(42),
         height: toRem(42),
       },

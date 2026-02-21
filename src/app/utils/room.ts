@@ -260,19 +260,20 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
 export const joinRuleToIconSrc = (
   icons: Record<IconName, IconSrc>,
   joinRule: JoinRule,
-  space: boolean
+  space: boolean,
+  call: boolean
 ): IconSrc | undefined => {
   if (joinRule === JoinRule.Restricted) {
-    return space ? icons.Space : icons.Hash;
+    return space ? icons.Space : call ? icons.VolumeHigh : icons.Hash;
   }
   if (joinRule === JoinRule.Knock) {
-    return space ? icons.SpaceLock : icons.HashLock;
+    return space ? icons.SpaceLock : call ? icons.VolumeHigh : icons.HashLock;
   }
   if (joinRule === JoinRule.Invite) {
-    return space ? icons.SpaceLock : icons.HashLock;
+    return space ? icons.SpaceLock : call ? icons.VolumeHigh : icons.HashLock;
   }
   if (joinRule === JoinRule.Public) {
-    return space ? icons.SpaceGlobe : icons.HashGlobe;
+    return space ? icons.SpaceGlobe : call ? icons.VolumeHigh : icons.HashGlobe;
   }
   return undefined;
 };

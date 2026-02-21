@@ -51,14 +51,14 @@ export function EmoticonAutocomplete({
     const list: Array<EmoticonSearchItem> = [];
     return list.concat(
       imagePacks.flatMap((pack) => pack.getImages(ImageUsage.Emoticon)),
-      emojis
+      emojis,
     );
   }, [imagePacks]);
 
   const [result, search, resetSearch] = useAsyncSearch(
     searchList,
     getEmoticonSearchStr,
-    SEARCH_OPTIONS
+    SEARCH_OPTIONS,
   );
   const autoCompleteEmoticon = result ? result.items.slice(0, 20) : recentEmoji;
 

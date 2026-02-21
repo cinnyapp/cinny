@@ -5,3 +5,5 @@ devAssets
 
 .DS_Store
 .idea
+
+.env
