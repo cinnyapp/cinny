@@ -1,35 +1,25 @@
-import {
-    useState,
-    Button
-} from 'react';
-import {
-    Text,
-    Icons,
-    Box
-} from 'folds';
+import { useState, Button } from 'react';
+import { Text, Icons, Box } from 'folds';
 import {
   MessageBase,
   Time,
-  EventContent,
+  ToggleableContent,
 } from '../../../../components/message';
 
 export function CollapsableEventGroup({ messageLayout, collapsedMessage, children, ...props }) {
-    const [collapsed, setCollapsed ] = useState<boolean>(true);
-
-    const collapsedStateJsx = (
-        <Text size="T300" priority="300">{collapsedMessage}</Text>
-    );
     return (
         <MessageBase {...props}>
-            <EventContent
+            <ToggleableContent
                 messageLayout={messageLayout}
-                iconSrc={collapsed ? Icons.ChevronRight : Icons.ChevronBottom}
-                content={
-                    <Box grow="Yes" direction="Column" onClick={() => setCollapsed(!collapsed)} data-collapsed={collapsed}>
-                        {collapsed ? collapsedStateJsx : children}
+                fullContent={
+                    <Box grow="Yes" direction="Column">{children}</Box>
+                }
+                collapsedContent={
+                    <Box grow="Yes" direction="Column">
+                        <Text size="T300" priority="300">{collapsedMessage}</Text>
                     </Box>
                 }>
-            </EventContent>
+            </ToggleableContent>
         </MessageBase>
     );
 }
