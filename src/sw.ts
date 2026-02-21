@@ -104,11 +104,19 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   }
 });
 
-function validMediaRequest(url: string, baseUrl: string): boolean {
-  const downloadUrl = new URL('/_matrix/client/v1/media/download', baseUrl);
-  const thumbnailUrl = new URL('/_matrix/client/v1/media/thumbnail', baseUrl);
+const MEDIA_PATHS = ['/_matrix/client/v1/media/download', '/_matrix/client/v1/media/thumbnail'];
 
-  return url.startsWith(downloadUrl.href) || url.startsWith(thumbnailUrl.href);
+function validMediaRequest(url: string, baseUrl?: string): boolean {
+  let pathname: string;
+  try {
+    ({ pathname } = new URL(url));
+  } catch {
+    return false;
+  }
+
+  if (!baseUrl) return MEDIA_PATHS.some((p) => pathname.startsWith(p));
+
+  return MEDIA_PATHS.some((p) => url.startsWith(new URL(p, baseUrl).href));
 }
 
 function fetchConfig(token: string): RequestInit {
@@ -139,10 +147,16 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     return;
   }
 
-  const responsePending = requestSessionWithTimeout(clientId).then((s) => {
-    if (!s) return;
-    respondMediaRequest(event, s);
-  });
+  const { url } = event.request;
+  if (!validMediaRequest(url)) return;
 
-  event.waitUntil(responsePending);
+  // respondWith must be called synchronously, so
+  // we pass a Promise and the browser
+  // suspends the request while we wait for the session
+  event.respondWith(
+    requestSessionWithTimeout(clientId).then((fetchedSession) => {
+      if (!fetchedSession) return fetch(event.request);
+      return fetch(url, fetchConfig(fetchedSession.accessToken));
+    })
+  );
 });
