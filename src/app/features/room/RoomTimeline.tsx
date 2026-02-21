@@ -1586,7 +1586,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const membershipChanged = isMembershipChanged(timelineEvent.mEvent);
         return !(membershipChanged && hideMembershipEvents) && !(!membershipChanged && hideNickAvatarEvents)
       });
-      if (membershipChangeEvents.length > 3) {
+      if (membershipChangeEvents.length > 1) {
         return dayDividerWrappingFunction(membershipChangeEvents[0], () => {
           return (
             <CollapsableEventGroup
