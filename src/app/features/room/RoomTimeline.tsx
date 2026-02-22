@@ -1639,6 +1639,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const dayDividerWrappingFunction = (timelineEvent: TimelineEvent, eventRenderer) => {
     const { item, mEvent, eventTimeline, baseIndex } = timelineEvent;
     const mEventId = mEvent?.getId();
+    const eventSender = mEvent?.getSender();
 
     if (!newDivider && readUptoEventIdRef.current) {
       newDivider = prevEvent?.getId() === readUptoEventIdRef.current;
