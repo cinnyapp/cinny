@@ -28,9 +28,8 @@ export const generateEventGroups = (items : number[], dataFunction, discriminato
             }
 
             collector(currentGroup, timelineEvent);
-
+            previousTimelineEvent = timelineEvent;
         }
-        previousTimelineEvent = timelineEvent;
     });
 
     if (currentGroup && currentGroup.events.length) {
