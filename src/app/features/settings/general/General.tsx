@@ -48,6 +48,7 @@ import {
 import { stopPropagation } from '../../../utils/keyboard';
 import { useMessageLayoutItems } from '../../../hooks/useMessageLayout';
 import { useMessageSpacingItems } from '../../../hooks/useMessageSpacing';
+import { useMembershipEventsVisibilityItems } from '../../../hooks/useMembershipEventsVisibility';
 import { useDateFormatItems } from '../../../hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
 
@@ -879,14 +880,82 @@ function SelectMessageSpacing() {
   );
 }
 
+function SelectMembershipEvents() {
+  const [menuCords, setMenuCords] = useState<RectCords>();
+  const [membershipEvents, setMembershipEvents] = useSetting(
+    settingsAtom,
+    'membershipEvents'
+  );
+  const membershipEventsVisibilityItems = useMembershipEventsVisibilityItems();
+
+  const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuCords(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleSelect = (visibility: MembershipEventsVisibility) => {
+    setMembershipEvents(visibility);
+    setMenuCords(undefined);
+  };
+
+  return (
+    <>
+      <Button
+        size="300"
+        variant="Secondary"
+        outlined
+        fill="Soft"
+        radii="300"
+        after={<Icon size="300" src={Icons.ChevronBottom} />}
+        onClick={handleMenu}
+      >
+        <Text size="T300">
+          {membershipEventsVisibilityItems.find((i) => i.visibility === membershipEvents)?.name ?? membershipEvents}
+        </Text>
+      </Button>
+      <PopOut
+        anchor={menuCords}
+        offset={5}
+        position="Bottom"
+        align="End"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              onDeactivate: () => setMenuCords(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) =>
+                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
+              isKeyBackward: (evt: KeyboardEvent) =>
+                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Menu>
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                {membershipEventsVisibilityItems.map((item) => (
+                  <MenuItem
+                    key={item.visibility}
+                    size="300"
+                    variant={membershipEvents === item.visibility ? 'Primary' : 'Surface'}
+                    radii="300"
+                    onClick={() => handleSelect(item.visibility)}
+                  >
+                    <Text size="T300">{item.name}</Text>
+                  </MenuItem>
+                ))}
+              </Box>
+            </Menu>
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
+
 function Messages() {
   const [legacyUsernameColor, setLegacyUsernameColor] = useSetting(
     settingsAtom,
     'legacyUsernameColor'
-  );
-  const [hideMembershipEvents, setHideMembershipEvents] = useSetting(
-    settingsAtom,
-    'hideMembershipEvents'
   );
   const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(
     settingsAtom,
@@ -919,16 +988,7 @@ function Messages() {
         />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Hide Membership Change"
-          after={
-            <Switch
-              variant="Primary"
-              value={hideMembershipEvents}
-              onChange={setHideMembershipEvents}
-            />
-          }
-        />
+        <SettingTile title="Membership Changes" after={<SelectMembershipEvents />} />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile

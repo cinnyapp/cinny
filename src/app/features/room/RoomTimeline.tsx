@@ -91,7 +91,7 @@ import {
   reactionOrEditEvent,
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
-import { MessageLayout, settingsAtom } from '../../state/settings';
+import { MessageLayout, MembershipEventsVisibility, settingsAtom } from '../../state/settings';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { Reactions, Message, Event, EncryptedContent } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
@@ -445,7 +445,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
   const direct = useIsDirectRoom();
-  const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
+  const [membershipEvents] = useSetting(settingsAtom, 'membershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
@@ -1304,7 +1304,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       },
       [StateEvent.RoomMember]: (mEventId, mEvent, item) => {
         const membershipChanged = isMembershipChanged(mEvent);
-        if (membershipChanged && hideMembershipEvents) return null;
+        if (membershipChanged && membershipEvents === MembershipEventsVisibility.Hidden) return null;
         if (!membershipChanged && hideNickAvatarEvents) return null;
 
         const highlighted = focusItem?.index === item && focusItem.highlight;
@@ -1580,7 +1580,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   let newDivider = false;
   let dayDivider = false;
   const eventRenderer = (group: TimelineEventGroup) => {
-    if (group.type == StateEvent.RoomMember) {
+    if (membershipEvents == MembershipEventsVisibility.Summary && group.type == StateEvent.RoomMember) {
       if (group.events.length > 1) {
         return dayDividerWrappingFunction(group.events[0], () => {
           return (
@@ -1604,7 +1604,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       }
 
       const membershipChanged = isMembershipChanged(timelineEvent.mEvent);
-      if ((membershipChanged && hideMembershipEvents) || (!membershipChanged && hideNickAvatarEvents)) {
+      if ((membershipChanged && membershipEvents == MembershipEventsVisibility.Hidden) || (!membershipChanged && hideNickAvatarEvents)) {
         return;
       }
 
