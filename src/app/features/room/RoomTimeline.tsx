@@ -55,9 +55,9 @@ import { editableActiveElement, scrollToBottom } from '../../utils/dom';
 import {
   TimelineEvent,
   TimelineEventGroup,
-  generateEventGroups,
-  renderMemberChangeMessage
+  generateEventGroups
 } from './message/grouping/TimelineEventGrouping';
+import { createMemberChangeTracker } from './message/grouping/MemberDifference';
 import { CollapsableEventGroup } from './message/grouping/CollapsableEventGroup';
 import {
   DefaultPlaceholder,
@@ -1580,18 +1580,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   let newDivider = false;
   let dayDivider = false;
   const eventRenderer = (group: TimelineEventGroup) => {
-
     if (group.type == StateEvent.RoomMember) {
-      const membershipChangeEvents = group.events.filter(timelineEvent => {
-        const membershipChanged = isMembershipChanged(timelineEvent.mEvent);
-        return !(membershipChanged && hideMembershipEvents) && !(!membershipChanged && hideNickAvatarEvents)
-      });
-      if (membershipChangeEvents.length > 1) {
-        return dayDividerWrappingFunction(membershipChangeEvents[0], () => {
+      if (group.events.length > 1) {
+        return dayDividerWrappingFunction(group.events[0], () => {
           return (
             <CollapsableEventGroup
-                collapsedMessage={renderMemberChangeMessage(room, membershipChangeEvents)}>
-              {membershipChangeEvents.map(singleEventRenderer)}
+                collapsedMessage={group.data.getFinalMessage()}>
+              {group.events.map(singleEventRenderer)}
             </CollapsableEventGroup>
           );
         });
@@ -1599,6 +1594,23 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     }
 
     return group.events.map(i => dayDividerWrappingFunction(i, singleEventRenderer));
+  };
+  const groupCollectorFunction = (group: TimelineEventGroup, timelineEvent: TimelineEvent) => {
+
+    if (group.type === StateEvent.RoomMember) {
+      if (!group.data) {
+        group.data = createMemberChangeTracker(room);
+      }
+
+      const membershipChanged = isMembershipChanged(timelineEvent.mEvent);
+      if ((membershipChanged && hideMembershipEvents) || (!membershipChanged && hideNickAvatarEvents)) {
+        return;
+      }
+
+      group.data.accept(timelineEvent);
+    }
+
+    group.events.push(timelineEvent);
   };
   const eventDataFunction = (item: number) => {
     const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
@@ -1788,7 +1800,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               </>
             ))}
 
-          {generateEventGroups(getItems(), eventDataFunction, eventGroupingFunction).map(eventRenderer)}
+          {generateEventGroups(getItems(), eventDataFunction, eventGroupingFunction, groupCollectorFunction, eventRenderer)}
 
           {(!liveTimelineLinked || !rangeAtEnd) &&
             (messageLayout === MessageLayout.Compact ? (
