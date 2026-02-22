@@ -1585,6 +1585,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         return dayDividerWrappingFunction(group.events[0], () => {
           return (
             <CollapsableEventGroup
+                messageLayout={messageLayout}
                 collapsedMessage={group.data.getFinalMessage()}>
               {group.events.map(singleEventRenderer)}
             </CollapsableEventGroup>
