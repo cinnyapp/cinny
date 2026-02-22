@@ -31,6 +31,42 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
 
     const renderContent = (prev: IPreviewUrlResponse) => {
       const imgUrl = mxcUrlToHttp(mx, prev['og:image'] || '', useAuthentication, 256, 256, 'scale', false);
+      const rawImgUrl = prev['og:image'] ? mxcUrlToHttp(mx, prev['og:image'], useAuthentication) : null;
+
+      const title = prev['og:title'];
+      const description = prev['og:description'];
+      const siteName = prev['og:site_name'];
+
+      const isHeroImage =
+        rawImgUrl &&
+        (prev['og:type']?.startsWith('image') || !description || title === url);
+
+      if (isHeroImage) {
+        return (
+          <>
+            <UrlPreviewHeroImg
+              src={rawImgUrl ?? ''}
+              alt={title}
+              title={title}
+              onClick={() => setViewImage(rawImgUrl)}
+            />
+            <UrlPreviewContent>
+              <Text
+                style={linkStyles}
+                truncate
+                as="a"
+                href={url}
+                target="_blank"
+                rel="no-referrer"
+                size="T200"
+                priority="300"
+              >
+                {tryDecodeURIComponent(url)}
+              </Text>
+            </UrlPreviewContent>
+          </>
+        );
+      }
 
       return (
         <>
@@ -61,13 +97,41 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
     };
 
     return (
-      <UrlPreview {...props} ref={ref}>
-        {previewStatus.status === AsyncStatus.Success ? (
-          renderContent(previewStatus.data)
-        ) : (
-          <Box grow="Yes" alignItems="Center" justifyContent="Center">
-            <Spinner variant="Secondary" size="400" />
-          </Box>
+      <>
+        <UrlPreview {...props} ref={ref}>
+          {previewStatus.status === AsyncStatus.Success ? (
+            renderContent(previewStatus.data)
+          ) : (
+            <Box grow="Yes" alignItems="Center" justifyContent="Center" style={{ minHeight: '102px' }}>
+              <Spinner variant="Secondary" size="400" />
+            </Box>
+          )}
+        </UrlPreview>
+
+        {viewImage && (
+          <Overlay open backdrop={<OverlayBackdrop />}>
+            <OverlayCenter>
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  onDeactivate: () => setViewImage(null),
+                  clickOutsideDeactivates: true,
+                  escapeDeactivates: stopPropagation,
+                }}
+              >
+                <Modal
+                  className={css.UrlPreviewModal}
+                  onContextMenu={(evt: React.MouseEvent) => evt.stopPropagation()}
+                >
+                  <ImageViewer
+                    src={viewImage}
+                    alt="Image Preview"
+                    requestClose={() => setViewImage(null)}
+                  />
+                </Modal>
+              </FocusTrap>
+            </OverlayCenter>
+          </Overlay>
         )}
       </UrlPreview>
     );
