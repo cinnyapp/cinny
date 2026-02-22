@@ -12,11 +12,11 @@ jobs:
       PR_NUMBER: ${{github.event.number}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.2.0
+        uses: actions/checkout@v6.0.2
       - name: Setup node
-        uses: actions/setup-node@v4.4.0
+        uses: actions/setup-node@v6.2.0
         with:
-          node-version: 20.12.2
+          node-version: 24.13.1
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
@@ -25,7 +25,7 @@ jobs:
           NODE_OPTIONS: '--max_old_space_size=4096'
         run: npm run build
       - name: Upload artifact
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: preview
           path: dist
@@ -33,7 +33,7 @@ jobs:
       - name: Save pr number
         run: echo ${PR_NUMBER} > ./pr.txt
       - name: Upload pr number
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: pr
           path: ./pr.txt
