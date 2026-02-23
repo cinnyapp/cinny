@@ -1,22 +1,7 @@
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { IPreviewUrlResponse } from 'matrix-js-sdk';
-import {
-  Box,
-  Icon,
-  IconButton,
-  Icons,
-  Modal,
-  Overlay,
-  OverlayCenter,
-  OverlayBackdrop,
-  Scroll,
-  Spinner,
-  Text,
-  as,
-  color,
-  config,
-} from 'folds';
-import FocusTrap from 'focus-trap-react';
+import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
+import { RenderViewerProps, ImageOverlay } from '../ImageOverlay';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
@@ -28,16 +13,8 @@ import * as css from './UrlPreviewCard.css';
 import { tryDecodeURIComponent } from '../../utils/dom';
 import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { stopPropagation } from '../../utils/keyboard';
-import { ModalWide } from '../../styles/Modal.css';
 
 const linkStyles = { color: color.Success.Main };
-
-type RenderViewerProps = {
-  src: string;
-  alt: string;
-  requestClose: () => void;
-};
 
 export const UrlPreviewCard = as<
   'div',
@@ -80,30 +57,15 @@ export const UrlPreviewCard = as<
           />
         )}
         {imgUrl && (
-          <Overlay open={viewer} backdrop={<OverlayBackdrop />}>
-            <OverlayCenter>
-              <FocusTrap
-                focusTrapOptions={{
-                  initialFocus: false,
-                  onDeactivate: () => setViewer(false),
-                  clickOutsideDeactivates: true,
-                  escapeDeactivates: stopPropagation,
-                }}
-              >
-                <Modal
-                  className={ModalWide}
-                  size="500"
-                  onContextMenu={(evt: any) => evt.stopPropagation()}
-                >
-                  {renderViewer({
-                    src: imgUrl,
-                    alt: prev['og:title'],
-                    requestClose: () => setViewer(false),
-                  })}
-                </Modal>
-              </FocusTrap>
-            </OverlayCenter>
-          </Overlay>
+          <ImageOverlay
+            src={imgUrl}
+            alt={prev['og:title']}
+            viewer={viewer}
+            requestClose={() => {
+              setViewer(false);
+            }}
+            renderViewer={renderViewer}
+          />
         )}
         <UrlPreviewContent>
           <Text
