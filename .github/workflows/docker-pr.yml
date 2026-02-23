@@ -5,6 +5,7 @@ on:
     paths:
       - 'Dockerfile'
       - '.github/workflows/docker-pr.yml'
+      - '.github/workflows/prod-deploy.yml'
 
 jobs:
   docker-build:
