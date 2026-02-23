@@ -90,7 +90,7 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/cinny
             ghcr.io/${{ github.repository }}
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         with:
           context: .
           platforms: linux/amd64,linux/arm64
