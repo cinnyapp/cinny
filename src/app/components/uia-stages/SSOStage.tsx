@@ -26,7 +26,12 @@ export function SSOStage({
 
   useEffect(() => {
     const handleMessage = (evt: MessageEvent) => {
-      if (ssoWindow && evt.data === 'authDone' && evt.source === ssoWindow) {
+      if (
+        evt.origin === new URL(ssoRedirectURL).origin &&
+        ssoWindow &&
+        evt.data === 'authDone' &&
+        evt.source === ssoWindow
+      ) {
         ssoWindow.close();
         setSSOWindow(undefined);
         handleSubmit();
@@ -37,7 +42,7 @@ export function SSOStage({
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [ssoWindow, handleSubmit]);
+  }, [ssoWindow, handleSubmit, ssoRedirectURL]);
 
   return (
     <Dialog>
