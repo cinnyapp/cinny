@@ -180,6 +180,13 @@ export const usePermissionGroups = (): PermissionGroup[] => {
         {
           location: {
             state: true,
+            key: StateEvent.PoniesRoomEmotes,
+          },
+          name: 'Manage Emojis & Stickers',
+        },
+        {
+          location: {
+            state: true,
             key: StateEvent.RoomServerAcl,
           },
           name: 'Change Server ACLs',

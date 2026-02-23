@@ -1,5 +1,5 @@
 ## Builder
-FROM node:20.12.2-alpine3.18 as builder
+FROM node:24.13.1-alpine AS builder
 
 WORKDIR /src
 
@@ -11,7 +11,7 @@ RUN npm run build
 
 
 ## App
-FROM nginx:1.29.3-alpine
+FROM nginx:1.29.5-alpine
 
 COPY --from=builder /src/dist /app
 COPY --from=builder /src/docker-nginx.conf /etc/nginx/conf.d/default.conf
