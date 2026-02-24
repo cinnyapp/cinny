@@ -20,11 +20,11 @@ export function CallNavStatus() {
   const {
     activeCallRoomId,
     isActiveCallReady,
-    isMicEnabled,
     isAudioEnabled,
+    isDeafened,
     isVideoEnabled,
-    toggleMic,
     toggleAudio,
+    toggleDeafened,
     toggleVideo,
     hangUp,
   } = useCallState();
@@ -102,13 +102,13 @@ export function CallNavStatus() {
           offset={4}
           tooltip={
             <Tooltip>
-              <Text>{!isMicEnabled ? 'Unmute' : 'Mute'}</Text>
+              <Text>{!isAudioEnabled ? 'Unmute' : 'Mute'}</Text>
             </Tooltip>
           }
         >
           {(triggerRef) => (
-            <IconButton fill="None" size="300" ref={triggerRef} onClick={toggleMic}>
-              <Icon src={!isMicEnabled ? Icons.MicMute : Icons.Mic} />
+            <IconButton fill="None" size="300" ref={triggerRef} onClick={toggleAudio}>
+              <Icon src={!isAudioEnabled ? Icons.MicMute : Icons.Mic} />
             </IconButton>
           )}
         </TooltipProvider>
@@ -117,13 +117,13 @@ export function CallNavStatus() {
           offset={4}
           tooltip={
             <Tooltip>
-              <Text>{!isAudioEnabled ? 'Undeafened' : 'Deafen'}</Text>
+              <Text>{!isDeafened ? 'Undeafened' : 'Deafen'}</Text>
             </Tooltip>
           }
         >
           {(triggerRef) => (
-            <IconButton fill="None" size="300" ref={triggerRef} onClick={toggleAudio}>
-              <Icon src={!isAudioEnabled ? Icons.HeadphoneMute : Icons.Headphone} />
+            <IconButton fill="None" size="300" ref={triggerRef} onClick={toggleDeafened}>
+              <Icon src={isDeafened ? Icons.HeadphoneMute : Icons.Headphone} />
             </IconButton>
           )}
         </TooltipProvider>
