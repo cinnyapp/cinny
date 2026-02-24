@@ -19,7 +19,7 @@ import { is } from 'immer/dist/internal';
 
 interface MediaStatePayload {
   data?: {
-    mic_enabled?: boolean;
+    audio_enabled?: boolean;
     video_enabled?: boolean;
   };
 }
@@ -255,7 +255,7 @@ export function CallProvider({ children }: CallProviderProps) {
       ev.preventDefault();
 
       /* eslint-disable camelcase */
-      const { mic_enabled: audio_enabled, video_enabled } = ev.detail.data ?? {};
+      const { audio_enabled, video_enabled } = ev.detail.data ?? {};
 
       if (typeof audio_enabled === 'boolean' && audio_enabled !== isMicEnabled) {
         setIsMicEnabledState(audio_enabled);
