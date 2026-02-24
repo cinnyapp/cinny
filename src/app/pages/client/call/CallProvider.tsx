@@ -160,33 +160,39 @@ export function CallProvider({ children }: CallProviderProps) {
     [activeClientWidgetApi, activeCallRoomId, activeClientWidgetApiRoomId]
   );
 
-  const setMic = useCallback(async (newState: boolean) => {
-    if (newState == isMicEnabled) return;
-    setIsMicEnabledState(newState);
-    // If user is deafened and user is unmuting the mic, undeafen
-    if (newState && !isAudioEnabled) setAudio(true);
+  const setMic = useCallback(
+    async (newState: boolean) => {
+      if (newState == isMicEnabled) return;
+      setIsMicEnabledState(newState);
+      // If user is deafened and user is unmuting the mic, undeafen
+      if (newState && !isAudioEnabled) setAudio(true);
 
-    if (isActiveCallReady) {
-      try {
-        await sendWidgetAction(WIDGET_MEDIA_STATE_UPDATE_ACTION, {
-          audio_enabled: newState,
-          video_enabled: isVideoEnabled,
-        });
-      } catch (error) {
-        setIsMicEnabledState(!newState);
-        setAudio(!newState);
-        throw error;
+      if (isActiveCallReady) {
+        try {
+          await sendWidgetAction(WIDGET_MEDIA_STATE_UPDATE_ACTION, {
+            audio_enabled: newState,
+            video_enabled: isVideoEnabled,
+          });
+        } catch (error) {
+          setIsMicEnabledState(!newState);
+          setAudio(!newState);
+          throw error;
+        }
       }
-    }
-  }, [isMicEnabled, isAudioEnabled, isVideoEnabled, sendWidgetAction, isActiveCallReady]);
+    },
+    [isMicEnabled, isAudioEnabled, isVideoEnabled, sendWidgetAction, isActiveCallReady]
+  );
 
-  const setAudio = useCallback(async (newState: boolean) => {
-    if (newState == isAudioEnabled) return;
-    setIsAudioEnabledState(newState);
-    
-    // If mic is unmuted and user is deafening, mute mic
-    if (!newState && isMicEnabled) setMic(false);
-  }, [isAudioEnabled, isMicEnabled, isVideoEnabled, sendWidgetAction, isActiveCallReady]);
+  const setAudio = useCallback(
+    async (newState: boolean) => {
+      if (newState == isAudioEnabled) return;
+      setIsAudioEnabledState(newState);
+
+      // If mic is unmuted and user is deafening, mute mic
+      if (!newState && isMicEnabled) setMic(false);
+    },
+    [isAudioEnabled, isMicEnabled, isVideoEnabled, sendWidgetAction, isActiveCallReady]
+  );
 
   const toggleMic = useCallback(async () => {
     const newState = !isMicEnabled;
@@ -228,10 +234,13 @@ export function CallProvider({ children }: CallProviderProps) {
       return;
     }
 
-    // Deafen
-    const iframeDoc = activeClientWidgetIframeRef?.contentDocument || activeClientWidgetIframeRef?.contentWindow?.document;
+    const iframeDoc =
+      activeClientWidgetIframeRef?.contentDocument ||
+      activeClientWidgetIframeRef?.contentWindow?.document;
+
+    // Loop over all audio elements of the call iframe and set muted according to the isAudioEnabled (deafened) state
     iframeDoc?.querySelectorAll('audio').forEach((el) => {
-      (el as HTMLAudioElement).volume = isAudioEnabled ? 1 : 0;
+      (el as HTMLAudioElement).muted = !isAudioEnabled;
     });
 
     const handleHangup = (ev: CustomEvent) => {
