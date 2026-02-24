@@ -45,12 +45,12 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_PR_CINNY }}
         timeout-minutes: 1
       - name: Comment preview on PR
-        uses: thollander/actions-comment-pull-request@e4a76dd2b0a3c2027c3fd84147a67c22ee4c90fa
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b #v3.0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
         with:
-          pr_number: ${{ steps.pr.outputs.id }}
-          comment_tag: ${{ steps.pr.outputs.id }}
+          pr-number: ${{ steps.pr.outputs.id }}
+          comment-tag: ${{ steps.pr.outputs.id }}
           message: |
               Preview: ${{ steps.netlify.outputs.deploy-url }}
               ⚠️ Exercise caution. Use test accounts. ⚠️
