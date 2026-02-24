@@ -41,8 +41,8 @@ export function CallNavStatus() {
     <Box direction="Column" shrink="No">
       <Line variant="Surface" size="300" />
       <Box className={css.Actions} direction="Row" alignItems="Center" gap="100">
-        <Box className={css.RoomButtonWrap} grow="Yes">
-          {hasActiveCall && (
+        <Box className={`${css.VoiceAppear} ${hasActiveCall ? 'active' : ''}`} grow="Yes">
+          <Chip size="500" fill="Soft" className={css.RoomButton}>
             <TooltipProvider
               position="Top"
               offset={4}
@@ -53,48 +53,50 @@ export function CallNavStatus() {
               }
             >
               {(triggerRef) => (
-                <Chip
-                  size="500"
-                  fill="Soft"
-                  as="button"
-                  onClick={handleGoToCallRoom}
-                  ref={triggerRef}
-                  className={css.RoomButton}
-                >
-                  {isConnected ? (
-                    <Icon size="300" src={Icons.VolumeHigh} style={{ color: color.Success.Main }} />
-                  ) : (
-                    <Spinner size="300" variant="Secondary" />
-                  )}
-                  <Text
-                    as="span"
-                    size="L400"
-                    style={{ color: isConnected ? color.Success.Main : color.Warning.Main }}
-                  >
-                    {isConnected ? 'Connected' : 'Connecting'}
-                  </Text>
-                </Chip>
+                <Box as="button" ref={triggerRef} onClick={handleGoToCallRoom}>
+                  <Box direction="Row" alignItems="Center" gap="200">
+                    {isConnected ? (
+                      <Icon
+                        size="300"
+                        src={Icons.VolumeHigh}
+                        style={{ color: color.Success.Main }}
+                      />
+                    ) : (
+                      <Spinner size="300" variant="Secondary" />
+                    )}
+
+                    <Text
+                      as="span"
+                      size="L400"
+                      style={{
+                        color: isConnected ? color.Success.Main : color.Warning.Main,
+                      }}
+                    >
+                      {isConnected ? 'Connected' : 'Connecting'}
+                    </Text>
+                  </Box>
+                </Box>
               )}
             </TooltipProvider>
-          )}
+            <TooltipProvider
+              position="Top"
+              offset={4}
+              tooltip={
+                <Tooltip>
+                  <Text>Hang Up</Text>
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => (
+                <IconButton fill="None" size="300" ref={triggerRef} onClick={hangUp}>
+                  <Icon src={Icons.PhoneDown} />
+                </IconButton>
+              )}
+            </TooltipProvider>
+          </Chip>
         </Box>
-        {hasActiveCall && (
-          <TooltipProvider
-            position="Top"
-            offset={4}
-            tooltip={
-              <Tooltip>
-                <Text>Hang Up</Text>
-              </Tooltip>
-            }
-          >
-            {(triggerRef) => (
-              <IconButton fill="None" size="300" ref={triggerRef} onClick={hangUp}>
-                <Icon src={Icons.PhoneDown} />
-              </IconButton>
-            )}
-          </TooltipProvider>
-        )}
+      </Box>
+      <Box className={css.VoiceControls} direction="Row" alignItems="Center" gap="100">
         <TooltipProvider
           position="Top"
           offset={4}
