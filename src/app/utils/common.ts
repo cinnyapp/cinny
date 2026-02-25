@@ -138,3 +138,5 @@ export const splitWithSpace = (content: string): string[] => {
   if (trimmedContent === '') return [];
   return trimmedContent.split(' ');
 };
+
+export const singleOrNull = <T>(array: T[]): T | null => (array.length === 1 ? array[0] : null);
