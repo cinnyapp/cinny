@@ -18,6 +18,7 @@ export type IMemberContent = {
 
 export enum StateEvent {
   RoomCanonicalAlias = 'm.room.canonical_alias',
+  VoiceParticipant = 'io.cinny.voice.participant',
   RoomCreate = 'm.room.create',
   RoomJoinRules = 'm.room.join_rules',
   RoomMember = 'm.room.member',
@@ -50,6 +51,7 @@ export enum MessageEvent {
 
 export enum RoomType {
   Space = 'm.space',
+  Voice = 'io.cinny.voice',
 }
 
 export type MSpaceChildContent = {

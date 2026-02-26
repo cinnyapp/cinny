@@ -33,5 +33,9 @@
   "hashRouter": {
     "enabled": false,
     "basename": "/"
+  },
+
+  "livekit": {
+    "serviceUrl": ""
   }
 }

@@ -23,6 +23,7 @@ import {
   restrictedSupported,
 } from '../../utils/matrix';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { RoomType } from '../../../types/matrix/room';
 import { millisecondsToMinutes, replaceSpaceWithDash } from '../../utils/common';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useCapabilities } from '../../hooks/useCapabilities';
@@ -45,6 +46,12 @@ const getCreateRoomKindToIcon = (kind: CreateRoomKind) => {
   return Icons.HashGlobe;
 };
 
+const getVoiceRoomKindToIcon = (kind: CreateRoomKind) => {
+  if (kind === CreateRoomKind.Private) return Icons.Lock;
+  if (kind === CreateRoomKind.Restricted) return Icons.VolumeHigh;
+  return Icons.VolumeHigh;
+};
+
 type CreateRoomFormProps = {
   defaultKind?: CreateRoomKind;
   space?: Room;
@@ -53,6 +60,7 @@ type CreateRoomFormProps = {
 export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormProps) {
   const mx = useMatrixClient();
   const alive = useAlive();
+  const [isVoiceChannel, setIsVoiceChannel] = useState(false);
 
   const capabilities = useCapabilities();
   const roomVersions = capabilities['m.room_versions'];
@@ -118,12 +126,13 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
 
     create({
       version: selectedRoomVersion,
+      type: isVoiceChannel ? RoomType.Voice : undefined,
       parent: space,
       kind,
       name: roomName,
       topic: roomTopic || undefined,
       aliasLocalPart: publicRoom ? aliasLocalPart : undefined,
-      encryption: publicRoom ? false : encryption,
+      encryption: publicRoom ? false : (isVoiceChannel ? false : encryption),
       knock: roomKnock,
       allowFederation: federation,
       additionalCreators: allowAdditionalCreators ? additionalCreators : undefined,
@@ -136,6 +145,35 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
 
   return (
     <Box as="form" onSubmit={handleSubmit} grow="Yes" direction="Column" gap="500">
+      {space && (
+        <Box direction="Column" gap="100">
+          <Text size="L400">Channel Type</Text>
+          <Box gap="200">
+            <Chip
+              variant={!isVoiceChannel ? 'Primary' : undefined}
+              fill={!isVoiceChannel ? 'Solid' : 'Soft'}
+              radii="Pill"
+              before={<Icon src={Icons.Hash} size="100" />}
+              onClick={() => setIsVoiceChannel(false)}
+              type="button"
+              aria-pressed={!isVoiceChannel}
+            >
+              <Text size="T300">Text</Text>
+            </Chip>
+            <Chip
+              variant={isVoiceChannel ? 'Primary' : undefined}
+              fill={isVoiceChannel ? 'Solid' : 'Soft'}
+              radii="Pill"
+              before={<Icon src={Icons.VolumeHigh} size="100" />}
+              onClick={() => setIsVoiceChannel(true)}
+              type="button"
+              aria-pressed={isVoiceChannel}
+            >
+              <Text size="T300">Voice</Text>
+            </Chip>
+          </Box>
+        </Box>
+      )}
       <Box direction="Column" gap="100">
         <Text size="L400">Access</Text>
         <CreateRoomKindSelector
@@ -150,7 +188,7 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
         <Text size="L400">Name</Text>
         <Input
           required
-          before={<Icon size="100" src={getCreateRoomKindToIcon(kind)} />}
+          before={<Icon size="100" src={isVoiceChannel ? getVoiceRoomKindToIcon(kind) : getCreateRoomKindToIcon(kind)} />}
           name="nameInput"
           autoFocus
           size="500"

@@ -18,6 +18,10 @@ export type ClientConfig = {
   };
 
   hashRouter?: HashRouterConfig;
+
+  livekit?: {
+    serviceUrl?: string;
+  };
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

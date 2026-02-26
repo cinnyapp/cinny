@@ -47,7 +47,8 @@ import {
 } from '../../../hooks/router/useSelectedSpace';
 import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
+import { RoomNavCategoryButton, RoomNavItem, VoiceRoomNavItem } from '../../../features/room-nav';
+import { isVoiceRoom } from '../../../utils/room';
 import { makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
@@ -514,6 +515,18 @@ export function Space() {
                         </RoomNavCategoryButton>
                       </NavCategoryHeader>
                     </div>
+                  </VirtualTile>
+                );
+              }
+
+              if (isVoiceRoom(room)) {
+                return (
+                  <VirtualTile virtualItem={vItem} key={vItem.index} ref={virtualizer.measureElement}>
+                    <VoiceRoomNavItem
+                      room={room}
+                      selected={selectedRoomId === roomId}
+                      linkPath={getToLink(roomId)}
+                    />
                   </VirtualTile>
                 );
               }

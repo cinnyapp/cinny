@@ -83,14 +83,25 @@ export const isRoom = (room: Room | null): boolean => {
   if (!room) return false;
   const event = getStateEvent(room, StateEvent.RoomCreate);
   if (!event) return true;
-  return event.getContent().type !== RoomType.Space;
+  const type = event.getContent().type;
+  return type !== RoomType.Space && type !== RoomType.Voice;
+};
+
+export const isVoiceRoom = (room: Room | null): boolean => {
+  if (!room) return false;
+  const event = getStateEvent(room, StateEvent.RoomCreate);
+  if (!event) return false;
+  return event.getContent().type === RoomType.Voice;
 };
 
 export const isUnsupportedRoom = (room: Room | null): boolean => {
   if (!room) return false;
   const event = getStateEvent(room, StateEvent.RoomCreate);
   if (!event) return true; // Consider room unsupported if m.room.create event doesn't exist
-  return event.getContent().type !== undefined && event.getContent().type !== RoomType.Space;
+  const type = event.getContent().type;
+  return (
+    type !== undefined && type !== RoomType.Space && type !== RoomType.Voice
+  );
 };
 
 export function isValidChild(mEvent: MatrixEvent): boolean {

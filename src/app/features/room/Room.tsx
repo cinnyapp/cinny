@@ -13,6 +13,8 @@ import { useKeyDown } from '../../hooks/useKeyDown';
 import { markAsRead } from '../../utils/notifications';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomMembers } from '../../hooks/useRoomMembers';
+import { isVoiceRoom } from '../../utils/room';
+import { VoiceRoom } from '../voice-room';
 
 export function Room() {
   const { eventId } = useParams();
@@ -36,6 +38,10 @@ export function Room() {
       [mx, room.roomId, hideActivity]
     )
   );
+
+  if (isVoiceRoom(room)) {
+    return <VoiceRoom room={room} />;
+  }
 
   return (
     <PowerLevelsContextProvider value={powerLevels}>
