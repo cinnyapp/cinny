@@ -284,12 +284,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           return getImageMsgContent(mx, fileItem, upload.mxc, replyDraft);
         }
         if (fileItem.file.type.startsWith('video')) {
-          return getVideoMsgContent(mx, fileItem, upload.mxc);
+          return getVideoMsgContent(mx, fileItem, upload.mxc, replyDraft);
         }
         if (fileItem.file.type.startsWith('audio')) {
-          return getAudioMsgContent(fileItem, upload.mxc);
+          return getAudioMsgContent(fileItem, upload.mxc, replyDraft);
         }
-        return getFileMsgContent(fileItem, upload.mxc);
+        return getFileMsgContent(fileItem, upload.mxc, replyDraft);
       });
       handleCancelUpload(uploads);
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
