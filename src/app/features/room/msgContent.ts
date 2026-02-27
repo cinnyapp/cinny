@@ -43,7 +43,7 @@ const generateThumbnailContent = async (
   return thumbnailContent;
 };
 
-export const getReplyEvent = (replyDraft: any): any => {
+export const getReplyEvent = (replyDraft: IContent): IEventRelation => {
   const relatesTo: IContent = {};
 
   relatesTo['m.in_reply_to'] = {
@@ -62,7 +62,7 @@ export const getImageMsgContent = async (
   mx: MatrixClient,
   item: TUploadItem,
   mxc: string,
-  replyDraft?: any
+  replyDraft?: IContent
 ): Promise<IContent> => {
   const { file, originalFile, encInfo, metadata } = item;
   const [imgError, imgEl] = await to(loadImageElement(getImageFileUrl(originalFile)));
@@ -100,7 +100,7 @@ export const getVideoMsgContent = async (
   mx: MatrixClient,
   item: TUploadItem,
   mxc: string,
-  replyDraft?: any
+  replyDraft?: IContent
 ): Promise<IContent> => {
   const { file, originalFile, encInfo, metadata } = item;
 
@@ -147,7 +147,11 @@ export const getVideoMsgContent = async (
   return content;
 };
 
-export const getAudioMsgContent = (item: TUploadItem, mxc: string, replyDraft?: any): IContent => {
+export const getAudioMsgContent = (
+  item: TUploadItem,
+  mxc: string,
+  replyDraft?: IContent
+): IContent => {
   const { file, encInfo } = item;
   const content: IContent = {
     msgtype: MsgType.Audio,
@@ -170,7 +174,11 @@ export const getAudioMsgContent = (item: TUploadItem, mxc: string, replyDraft?: 
   return content;
 };
 
-export const getFileMsgContent = (item: TUploadItem, mxc: string, replyDraft?: any): IContent => {
+export const getFileMsgContent = (
+  item: TUploadItem,
+  mxc: string,
+  replyDraft?: IContent
+): IContent => {
   const { file, encInfo } = item;
   const content: IContent = {
     msgtype: MsgType.File,
