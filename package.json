@@ -73,6 +73,7 @@
     "slate-dom": "0.112.2",
     "slate-history": "0.110.3",
     "slate-react": "0.112.1",
+    "livekit-client": "2.5.6",
     "ua-parser-js": "1.0.35"
   },
   "devDependencies": {

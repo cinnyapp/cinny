@@ -51,6 +51,7 @@ import { RoomNotificationModeSwitcher } from '../../components/RoomNotificationS
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { VoiceMembers } from '../voice/VoiceMembers';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -253,6 +254,7 @@ export function RoomNavItem({
   const optionsVisible = hover || !!menuAnchor;
 
   return (
+    <>
     <NavItem
       variant="Background"
       radii="400"
@@ -354,5 +356,7 @@ export function RoomNavItem({
         </NavItemOptions>
       )}
     </NavItem>
+    <VoiceMembers roomId={room.roomId} />
+    </>
   );
 }

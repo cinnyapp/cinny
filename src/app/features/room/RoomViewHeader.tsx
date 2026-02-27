@@ -69,6 +69,8 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { voiceSessionAtom } from '../../state/voiceChannel';
+import { useVoiceActions } from '../voice/VoiceChannelProvider';
 
 type RoomMenuProps = {
   room: Room;
@@ -277,6 +279,26 @@ export function RoomViewHeader() {
 
   const [peopleDrawer, setPeopleDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
 
+  const voiceSession = useAtomValue(voiceSessionAtom);
+  const { joinVoice, leaveVoice } = useVoiceActions();
+  const isInThisVoice = voiceSession?.roomId === room.roomId;
+  const [joiningVoice, setJoiningVoice] = useState(false);
+
+  const handleVoiceToggle = async () => {
+    if (isInThisVoice) {
+      await leaveVoice();
+      return;
+    }
+    setJoiningVoice(true);
+    try {
+      await joinVoice(room.roomId, false);
+    } catch (err) {
+      console.error('Failed to join voice:', err);
+    } finally {
+      setJoiningVoice(false);
+    }
+  };
+
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {
       rooms: room.roomId,
@@ -370,6 +392,32 @@ export function RoomViewHeader() {
           </Box>
         </Box>
         <Box shrink="No">
+          <TooltipProvider
+            position="Bottom"
+            offset={4}
+            tooltip={
+              <Tooltip>
+                <Text>{isInThisVoice ? 'Leave Voice' : 'Join Voice'}</Text>
+              </Tooltip>
+            }
+          >
+            {(triggerRef) => (
+              <IconButton
+                ref={triggerRef}
+                onClick={handleVoiceToggle}
+                disabled={joiningVoice}
+                variant={isInThisVoice ? 'Critical' : 'Background'}
+                fill={isInThisVoice ? 'Soft' : 'None'}
+                aria-label={isInThisVoice ? 'Leave Voice Channel' : 'Join Voice Channel'}
+              >
+                <Icon
+                  size="400"
+                  src={isInThisVoice ? Icons.MicMute : Icons.Mic}
+                  filled={isInThisVoice}
+                />
+              </IconButton>
+            )}
+          </TooltipProvider>
           {!ecryptedRoom && (
             <TooltipProvider
               position="Bottom"

@@ -33,5 +33,7 @@
   "hashRouter": {
     "enabled": false,
     "basename": "/"
-  }
+  },
+
+  "lkJwtServiceUrl": ""
 }

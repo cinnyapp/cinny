@@ -18,6 +18,13 @@ export type ClientConfig = {
   };
 
   hashRouter?: HashRouterConfig;
+
+  /**
+   * URL of the lk-jwt-service used for LiveKit voice/video calls.
+   * Example: "https://lk-jwt-service.example.com"
+   * See: https://github.com/element-hq/lk-jwt-service
+   */
+  lkJwtServiceUrl?: string;
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

@@ -2,6 +2,10 @@ import { useAtomValue } from 'jotai';
 import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RoomEvent, RoomEventHandlerMap } from 'matrix-js-sdk';
+import { VoiceChannelProvider } from '../../features/voice/VoiceChannelProvider';
+import { VoiceControlBar } from '../../features/voice/VoiceControlBar';
+import { VideoOverlay } from '../../features/voice/VideoOverlay';
+import { useClientConfig } from '../../hooks/useClientConfig';
 import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '../../state/room/roomToUnread';
 import LogoSVG from '../../../../public/res/svg/cinny.svg';
 import LogoUnreadSVG from '../../../../public/res/svg/cinny-unread.svg';
@@ -258,14 +262,18 @@ type ClientNonUIFeaturesProps = {
 };
 
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
+  const { lkJwtServiceUrl } = useClientConfig();
+
   return (
-    <>
+    <VoiceChannelProvider lkJwtServiceUrl={lkJwtServiceUrl}>
       <SystemEmojiFeature />
       <PageZoomFeature />
       <FaviconUpdater />
       <InviteNotifications />
       <MessageNotifications />
       {children}
-    </>
+      <VoiceControlBar />
+      <VideoOverlay />
+    </VoiceChannelProvider>
   );
 }
