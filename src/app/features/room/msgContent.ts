@@ -1,4 +1,4 @@
-import { IContent, MatrixClient, MsgType } from 'matrix-js-sdk';
+import { IContent, MatrixClient, RelationType, MsgType } from 'matrix-js-sdk';
 import to from 'await-to-js';
 import {
   IThumbnailContent,
@@ -46,7 +46,8 @@ const generateThumbnailContent = async (
 export const getImageMsgContent = async (
   mx: MatrixClient,
   item: TUploadItem,
-  mxc: string
+  mxc: string,
+  replyDraft?: any
 ): Promise<IContent> => {
   const { file, originalFile, encInfo, metadata } = item;
   const [imgError, imgEl] = await to(loadImageElement(getImageFileUrl(originalFile)));
@@ -58,6 +59,19 @@ export const getImageMsgContent = async (
     body: file.name,
     [MATRIX_SPOILER_PROPERTY_NAME]: metadata.markedAsSpoiler,
   };
+
+  if (replyDraft) {
+    content['m.relates_to'] = {
+      'm.in_reply_to': {
+        event_id: replyDraft.eventId,
+      },
+    };
+    if (replyDraft.relation?.rel_type === RelationType.Thread) {
+      content['m.relates_to'].event_id = replyDraft.relation.event_id;
+      content['m.relates_to'].rel_type = RelationType.Thread;
+      content['m.relates_to'].is_falling_back = false;
+    }
+  }
   if (imgEl) {
     const blurHash = encodeBlurHash(imgEl, 512, scaleYDimension(imgEl.width, 512, imgEl.height));
 

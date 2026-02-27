@@ -281,7 +281,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         if (!fileItem) throw new Error('Broken upload');
 
         if (fileItem.file.type.startsWith('image')) {
-          return getImageMsgContent(mx, fileItem, upload.mxc);
+          return getImageMsgContent(mx, fileItem, upload.mxc, replyDraft);
         }
         if (fileItem.file.type.startsWith('video')) {
           return getVideoMsgContent(mx, fileItem, upload.mxc);
