@@ -118,6 +118,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
+import { StickerEventContent } from 'matrix-js-sdk/lib/types';
 
 const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};
@@ -454,11 +455,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         await getImageUrlBlob(stickerUrl)
       );
 
-      mx.sendEvent(roomId, EventType.Sticker, {
+      const content: StickerEventContent = {
         body: label,
         url: mxc,
         info,
-      });
+      };
+      if (replyDraft) {
+        content['m.relates_to'] = getReplyContent(replyDraft);
+        setReplyDraft(undefined);
+      }
+      mx.sendEvent(roomId, EventType.Sticker, content);
     };
 
     return (
