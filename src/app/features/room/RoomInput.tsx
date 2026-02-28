@@ -119,6 +119,23 @@ import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
 
+const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
+  if (!replyDraft) return {};
+
+  const relatesTo: IEventRelation = {};
+
+  relatesTo['m.in_reply_to'] = {
+    event_id: replyDraft.eventId,
+  };
+
+  if (replyDraft.relation?.rel_type === RelationType.Thread) {
+    relatesTo.event_id = replyDraft.relation.event_id;
+    relatesTo.rel_type = RelationType.Thread;
+    relatesTo.is_falling_back = false;
+  }
+  return relatesTo;
+};
+
 interface RoomInputProps {
   editor: Editor;
   fileDropContainerRef: RefObject<HTMLElement>;
@@ -277,29 +294,31 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
-      const plaintext = toPlainText(editor.children, isMarkdown).trim();
-      const replyDraftBase = plaintext.length === 0 ? replyDraft : undefined;
-      setReplyDraft(undefined);
-
-      const contentsPromises = uploads.map(async (upload, index) => {
-        const replyDraftContent = index === 0 ? replyDraftBase : undefined;
-
+      const contentsPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (!fileItem) throw new Error('Broken upload');
 
         if (fileItem.file.type.startsWith('image')) {
-          return getImageMsgContent(mx, fileItem, upload.mxc, replyDraftContent);
+          return getImageMsgContent(mx, fileItem, upload.mxc);
         }
         if (fileItem.file.type.startsWith('video')) {
-          return getVideoMsgContent(mx, fileItem, upload.mxc, replyDraftContent);
+          return getVideoMsgContent(mx, fileItem, upload.mxc);
         }
         if (fileItem.file.type.startsWith('audio')) {
-          return getAudioMsgContent(fileItem, upload.mxc, replyDraftContent);
+          return getAudioMsgContent(fileItem, upload.mxc);
         }
-        return getFileMsgContent(fileItem, upload.mxc, replyDraftContent);
+        return getFileMsgContent(fileItem, upload.mxc);
       });
       handleCancelUpload(uploads);
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
+
+      if (contents.length > 0) {
+        const plaintext = toPlainText(editor.children, isMarkdown).trim();
+        const replyContent = plaintext.length === 0 ? getReplyContent(replyDraft) : undefined;
+        if (replyContent) contents[0]['m.relates_to'] = replyContent;
+        setReplyDraft(undefined);
+      }
+
       contents.forEach((content) => mx.sendMessage(roomId, content as any));
     };
 
@@ -367,18 +386,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         content.format = 'org.matrix.custom.html';
         content.formatted_body = formattedBody;
       }
-      if (replyDraft) {
-        content['m.relates_to'] = {
-          'm.in_reply_to': {
-            event_id: replyDraft.eventId,
-          },
-        };
-        if (replyDraft.relation?.rel_type === RelationType.Thread) {
-          content['m.relates_to'].event_id = replyDraft.relation.event_id;
-          content['m.relates_to'].rel_type = RelationType.Thread;
-          content['m.relates_to'].is_falling_back = false;
-        }
-      }
+      if (replyDraft) content['m.relates_to'] = getReplyContent(replyDraft);
       mx.sendMessage(roomId, content as any);
       resetEditor(editor);
       resetEditorHistory(editor);

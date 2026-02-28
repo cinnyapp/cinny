@@ -1,4 +1,4 @@
-import { IContent, MatrixClient, RelationType, MsgType, IEventRelation } from 'matrix-js-sdk';
+import { IContent, MatrixClient, MsgType } from 'matrix-js-sdk';
 import to from 'await-to-js';
 import {
   IThumbnailContent,
@@ -43,28 +43,10 @@ const generateThumbnailContent = async (
   return thumbnailContent;
 };
 
-export const getReplyEvent = (replyDraft: IContent): IEventRelation => {
-  if (!replyDraft) return {};
-
-  const relatesTo: IEventRelation = {};
-
-  relatesTo['m.in_reply_to'] = {
-    event_id: replyDraft.eventId,
-  };
-
-  if (replyDraft.relation?.rel_type === RelationType.Thread) {
-    relatesTo.event_id = replyDraft.relation.event_id;
-    relatesTo.rel_type = RelationType.Thread;
-    relatesTo.is_falling_back = false;
-  }
-  return relatesTo;
-};
-
 export const getImageMsgContent = async (
   mx: MatrixClient,
   item: TUploadItem,
-  mxc: string,
-  replyDraft?: IContent
+  mxc: string
 ): Promise<IContent> => {
   const { file, originalFile, encInfo, metadata } = item;
   const [imgError, imgEl] = await to(loadImageElement(getImageFileUrl(originalFile)));
@@ -76,8 +58,6 @@ export const getImageMsgContent = async (
     body: file.name,
     [MATRIX_SPOILER_PROPERTY_NAME]: metadata.markedAsSpoiler,
   };
-
-  if (replyDraft) content['m.relates_to'] = getReplyEvent(replyDraft);
 
   if (imgEl) {
     const blurHash = encodeBlurHash(imgEl, 512, scaleYDimension(imgEl.width, 512, imgEl.height));
@@ -101,8 +81,7 @@ export const getImageMsgContent = async (
 export const getVideoMsgContent = async (
   mx: MatrixClient,
   item: TUploadItem,
-  mxc: string,
-  replyDraft?: IContent
+  mxc: string
 ): Promise<IContent> => {
   const { file, originalFile, encInfo, metadata } = item;
 
@@ -115,7 +94,6 @@ export const getVideoMsgContent = async (
     body: file.name,
     [MATRIX_SPOILER_PROPERTY_NAME]: metadata.markedAsSpoiler,
   };
-  if (replyDraft) content['m.relates_to'] = getReplyEvent(replyDraft);
   if (videoEl) {
     const [thumbError, thumbContent] = await to(
       generateThumbnailContent(
@@ -149,11 +127,7 @@ export const getVideoMsgContent = async (
   return content;
 };
 
-export const getAudioMsgContent = (
-  item: TUploadItem,
-  mxc: string,
-  replyDraft?: IContent
-): IContent => {
+export const getAudioMsgContent = (item: TUploadItem, mxc: string): IContent => {
   const { file, encInfo } = item;
   const content: IContent = {
     msgtype: MsgType.Audio,
@@ -164,7 +138,6 @@ export const getAudioMsgContent = (
       size: file.size,
     },
   };
-  if (replyDraft) content['m.relates_to'] = getReplyEvent(replyDraft);
   if (encInfo) {
     content.file = {
       ...encInfo,
@@ -176,11 +149,7 @@ export const getAudioMsgContent = (
   return content;
 };
 
-export const getFileMsgContent = (
-  item: TUploadItem,
-  mxc: string,
-  replyDraft?: IContent
-): IContent => {
+export const getFileMsgContent = (item: TUploadItem, mxc: string): IContent => {
   const { file, encInfo } = item;
   const content: IContent = {
     msgtype: MsgType.File,
@@ -191,7 +160,6 @@ export const getFileMsgContent = (
       size: file.size,
     },
   };
-  if (replyDraft) content['m.relates_to'] = getReplyEvent(replyDraft);
   if (encInfo) {
     content.file = {
       ...encInfo,
