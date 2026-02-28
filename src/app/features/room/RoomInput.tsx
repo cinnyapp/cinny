@@ -292,7 +292,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         return getFileMsgContent(fileItem, upload.mxc);
       });
       handleCancelUpload(uploads);
-      const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
+      let contents = fulfilledPromiseSettledResult(
+        await Promise.allSettled(contentsPromises)
+      ) as any as IContent[];
+
+      if (replyDraft) {
+        contents = contents.map((o) => ({
+          ...o,
+          'm.relates_to': {
+            'm.in_reply_to': {
+              event_id: replyDraft.eventId,
+            },
+          },
+        }));
+        setReplyDraft(undefined);
+      }
       contents.forEach((content) => mx.sendMessage(roomId, content as any));
     };
 
