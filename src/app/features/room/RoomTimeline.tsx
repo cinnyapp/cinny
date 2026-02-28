@@ -55,9 +55,12 @@ import { editableActiveElement, scrollToBottom } from '../../utils/dom';
 import {
   TimelineEvent,
   TimelineEventGroup,
-  generateEventGroups
+  TimelineEventGrouping,
+  generateEventGroups,
+  getTimelineGroupingType
 } from './message/grouping/TimelineEventGrouping';
 import { createMemberChangeTracker } from './message/grouping/MemberDifference';
+import { createRoomStateSummary } from './message/grouping/RoomStateSummary';
 import { CollapsableEventGroup } from './message/grouping/CollapsableEventGroup';
 import {
   DefaultPlaceholder,
@@ -1580,7 +1583,21 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   let newDivider = false;
   let dayDivider = false;
   const eventRenderer = (group: TimelineEventGroup) => {
-    if (membershipEvents == MembershipEventsVisibility.Summary && group.type == StateEvent.RoomMember) {
+    if (membershipEvents == MembershipEventsVisibility.Summary && group.type == TimelineEventGrouping.RoomMember) {
+      if (group.events.length > 1) {
+        return dayDividerWrappingFunction(group.events[0], () => {
+          return (
+            <CollapsableEventGroup
+                messageLayout={messageLayout}
+                collapsedMessage={group.data.getFinalMessage()}>
+              {group.events.map(singleEventRenderer)}
+            </CollapsableEventGroup>
+          );
+        });
+      }
+    }
+
+    if (group.type !== TimelineEventGrouping.Default) {
       if (group.events.length > 1) {
         return dayDividerWrappingFunction(group.events[0], () => {
           return (
@@ -1598,7 +1615,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   };
   const groupCollectorFunction = (group: TimelineEventGroup, timelineEvent: TimelineEvent) => {
 
-    if (group.type === StateEvent.RoomMember) {
+    if (group.type === TimelineEventGrouping.RoomMember) {
       if (!group.data) {
         group.data = createMemberChangeTracker(room);
       }
@@ -1608,6 +1625,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         return;
       }
 
+      group.data.accept(timelineEvent);
+    }
+
+    if (group.type === TimelineEventGrouping.RoomState) {
+      if (!group.data) {
+        group.data = createRoomStateSummary(room);
+      }
       group.data.accept(timelineEvent);
     }
 
@@ -1632,7 +1656,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     return { item, mEvent, eventTimeline, baseIndex };
   };
   const eventGroupingFunction = (previousEvent: TimelineEvent, nextEvent: TimelineEvent) => {
-      return previousEvent.mEvent.getType() === nextEvent.mEvent.getType()
+      return getTimelineGroupingType(previousEvent.mEvent.getType()) === getTimelineGroupingType(nextEvent.mEvent.getType())
           && inSameDay(previousEvent.mEvent.getTs(), nextEvent.mEvent.getTs());
   };
 
