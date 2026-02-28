@@ -828,6 +828,7 @@ export const Message = as<'div', MessageProps>(
             room={room}
             mEvent={mEvent}
             imagePackRooms={imagePackRooms}
+            canDeleteOwn={canDelete}
             onCancel={() => onEditId()}
           />
         ) : (

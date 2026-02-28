@@ -60,10 +60,11 @@ type MessageEditorProps = {
   room: Room;
   mEvent: MatrixEvent;
   imagePackRooms?: Room[];
+  canDeleteOwn?: boolean;
   onCancel: () => void;
 };
 export const MessageEditor = as<'div', MessageEditorProps>(
-  ({ room, roomId, mEvent, imagePackRooms, onCancel, ...props }, ref) => {
+  ({ room, roomId, mEvent, imagePackRooms, onCancel, canDeleteOwn, ...props }, ref) => {
     const mx = useMatrixClient();
     const editor = useEditor();
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
@@ -110,7 +111,11 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
         const [prevBody, prevCustomHtml, prevMentions] = getPrevBodyAndFormattedBody();
 
-        if (plainText === '') return undefined;
+        if (plainText === '') {
+          const eventId = mEvent.getId();
+          if (canDeleteOwn && eventId) mx.redactEvent(room.roomId, eventId);
+          return undefined;
+        }
         if (prevBody) {
           if (prevCustomHtml && trimReplyFromFormattedBody(prevCustomHtml) === customHtml) {
             return undefined;
