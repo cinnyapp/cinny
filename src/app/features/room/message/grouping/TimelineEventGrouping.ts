@@ -1,5 +1,5 @@
 import { MatrixEvent, EventTimeline } from 'matrix-js-sdk';
-import { StateEvent } from '../../../../../types/matrix/room';
+import { StateEvent, MessageEvent } from '../../../../../types/matrix/room';
 
 export type TimelineEvent = {
     item: number;
@@ -21,6 +21,13 @@ export enum TimelineEventGrouping {
     RoomState = 'm.room.grouping.state',
     MessagePin = 'm.room.grouping.message.pin'
 }
+
+/**
+ * Event types that should be ignored when checking if a new group should be created
+ */
+const NON_GROUP_BREAKING_EVENTS = [
+    MessageEvent.Reaction
+];
 
 const ROOM_STATE_EVENTS = [
     StateEvent.RoomName,
@@ -50,7 +57,6 @@ export const isHiddenRoomStateEvent = (mEvent: MatrixEvent) => {
     return !VISIBLE_ROOM_STATE_EVENTS.includes(mEvent.getType());
 };
 
-
 export const getTimelineGroupingType = type => {
     if (type === StateEvent.RoomMember) {
         return TimelineEventGrouping.RoomMember;
@@ -70,11 +76,24 @@ export const generateEventGroups = (items : number[], dataFunction, discriminato
         const timelineEvent = dataFunction(item);
 
         if (timelineEvent !== null) {
+            const type = timelineEvent.mEvent.getType();
+
+            if (NON_GROUP_BREAKING_EVENTS.includes(type)) {
+                // Events that don't affect groupings should still be part of the timeline, so
+                // we either append them to the current group if it's a default group, or insert
+                // it as a default group before the current one.
+                if (currentGroup && currentGroup.type == TimelineEventGrouping.DEFAULT) {
+                    collector(currentGroup, timelineEvent);
+                } else {
+                    collectedValues.push(consumer({ item, type: TimelineEventGrouping.DEFAULT, events: [ timelineEvent ] }));
+                }
+                return;
+            }
+
             if (!currentGroup || !discriminator(previousTimelineEvent, timelineEvent)) {
                 if (currentGroup) {
                     collectedValues.push(consumer(currentGroup));
                 }
-                const type = timelineEvent.mEvent.getType();
                 currentGroup = { item, type: getTimelineGroupingType(type), events: [] };
             }
 

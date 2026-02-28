@@ -1641,8 +1641,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     return { item, mEvent, eventTimeline, baseIndex };
   };
   const eventGroupingFunction = (previousEvent: TimelineEvent, nextEvent: TimelineEvent) => {
-      return getTimelineGroupingType(previousEvent.mEvent.getType()) === getTimelineGroupingType(nextEvent.mEvent.getType())
-          && inSameDay(previousEvent.mEvent.getTs(), nextEvent.mEvent.getTs());
+    return getTimelineGroupingType(previousEvent.mEvent.getType()) === getTimelineGroupingType(nextEvent.mEvent.getType())
+        && inSameDay(previousEvent.mEvent.getTs(), nextEvent.mEvent.getTs());
   };
 
   const dayDividerWrappingFunction = (timelineEvent: TimelineEvent, eventRenderer) => {
