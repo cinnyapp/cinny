@@ -29,6 +29,7 @@ import {
   toRem,
 } from 'folds';
 
+import { StickerEventContent } from 'matrix-js-sdk/lib/types';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   CustomEditor,
@@ -118,7 +119,6 @@ import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
-import { StickerEventContent } from 'matrix-js-sdk/lib/types';
 
 const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};
@@ -136,6 +136,9 @@ const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation =>
   }
   return relatesTo;
 };
+interface ReplyEventContent {
+  'm.relates_to'?: IEventRelation;
+}
 
 interface RoomInputProps {
   editor: Editor;
@@ -455,7 +458,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         await getImageUrlBlob(stickerUrl)
       );
 
-      const content: StickerEventContent = {
+      const content: StickerEventContent & ReplyEventContent = {
         body: label,
         url: mxc,
         info,

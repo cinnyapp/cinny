@@ -58,7 +58,6 @@ export const getImageMsgContent = async (
     body: file.name,
     [MATRIX_SPOILER_PROPERTY_NAME]: metadata.markedAsSpoiler,
   };
-
   if (imgEl) {
     const blurHash = encodeBlurHash(imgEl, 512, scaleYDimension(imgEl.width, 512, imgEl.height));
 
