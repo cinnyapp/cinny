@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
-import { EventType, IContent, MsgType, RelationType, Room } from 'matrix-js-sdk';
+import { EventType, IContent, IEventRelation, MsgType, RelationType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
 import {
@@ -68,6 +68,7 @@ import { useFilePicker } from '../../hooks/useFilePicker';
 import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
 import { useFileDropZone } from '../../hooks/useFileDrop';
 import {
+  IReplyDraft,
   TUploadItem,
   TUploadMetadata,
   roomIdToMsgDraftAtomFamily,
@@ -276,22 +277,26 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
-      const contentsPromises = uploads.map(async (upload) => {
-        const replyDraftCont = replyDraft;
-        setReplyDraft(undefined);
+      const plaintext = toPlainText(editor.children, isMarkdown).trim();
+      const replyDraftBase = plaintext.length === 0 ? replyDraft : undefined;
+      setReplyDraft(undefined);
+
+      const contentsPromises = uploads.map(async (upload, index) => {
+        const replyDraftContent = index === 0 ? replyDraftBase : undefined;
+
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (!fileItem) throw new Error('Broken upload');
 
         if (fileItem.file.type.startsWith('image')) {
-          return getImageMsgContent(mx, fileItem, upload.mxc, replyDraftCont);
+          return getImageMsgContent(mx, fileItem, upload.mxc, replyDraftContent);
         }
         if (fileItem.file.type.startsWith('video')) {
-          return getVideoMsgContent(mx, fileItem, upload.mxc, replyDraftCont);
+          return getVideoMsgContent(mx, fileItem, upload.mxc, replyDraftContent);
         }
         if (fileItem.file.type.startsWith('audio')) {
-          return getAudioMsgContent(fileItem, upload.mxc, replyDraftCont);
+          return getAudioMsgContent(fileItem, upload.mxc, replyDraftContent);
         }
-        return getFileMsgContent(fileItem, upload.mxc, replyDraftCont);
+        return getFileMsgContent(fileItem, upload.mxc, replyDraftContent);
       });
       handleCancelUpload(uploads);
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));

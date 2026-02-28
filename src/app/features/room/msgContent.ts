@@ -1,4 +1,4 @@
-import { IContent, MatrixClient, RelationType, MsgType } from 'matrix-js-sdk';
+import { IContent, MatrixClient, RelationType, MsgType, IEventRelation } from 'matrix-js-sdk';
 import to from 'await-to-js';
 import {
   IThumbnailContent,
@@ -44,7 +44,9 @@ const generateThumbnailContent = async (
 };
 
 export const getReplyEvent = (replyDraft: IContent): IEventRelation => {
-  const relatesTo: IContent = {};
+  if (!replyDraft) return {};
+
+  const relatesTo: IEventRelation = {};
 
   relatesTo['m.in_reply_to'] = {
     event_id: replyDraft.eventId,
