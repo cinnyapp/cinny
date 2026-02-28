@@ -74,6 +74,10 @@ export const createRoomParentState = (parent: Room) => ({
   },
 });
 
+const createSpacePowerLevelsOverride = () => ({
+  events_default: 50,
+});
+
 export const createRoomEncryptionState = () => ({
   type: 'm.room.encryption',
   state_key: '',
@@ -120,6 +124,10 @@ export const createRoom = async (mx: MatrixClient, data: CreateRoomData): Promis
     ),
     initial_state: initialState,
   };
+
+  if (data.type === RoomType.Space) {
+    options.power_level_content_override = createSpacePowerLevelsOverride();
+  }
 
   const result = await mx.createRoom(options);
 

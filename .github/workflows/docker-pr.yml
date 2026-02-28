@@ -5,6 +5,7 @@ on:
     paths:
       - 'Dockerfile'
       - '.github/workflows/docker-pr.yml'
+      - '.github/workflows/prod-deploy.yml'
 
 jobs:
   docker-build:
@@ -13,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
       - name: Build Docker image
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         with:
           context: .
           push: false
