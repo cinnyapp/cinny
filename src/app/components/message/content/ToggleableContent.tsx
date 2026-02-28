@@ -33,10 +33,15 @@ export function ToggleableContent({ messageLayout, time, fullContent, collapsedC
   );
 
   const msgContentJSX = (
-    <Box justifyContent="SpaceBetween" alignItems="Baseline" gap="200">
-      {collapsed ? collapsedContent : fullContent}
-      {messageLayout !== MessageLayout.Compact && time}
-    </Box>
+    <React.Fragment>
+      <Box justifyContent="SpaceBetween" alignItems="Baseline" gap="200">
+        {collapsedContent}
+        {messageLayout !== MessageLayout.Compact && time}
+      </Box>
+      <Box justifyContent="SpaceBetween" alignItems="Baseline" gap="200">
+        {collapsed ? '' : fullContent}
+      </Box>
+    </React.Fragment>
   );
 
   if (messageLayout === MessageLayout.Compact) {
