@@ -9,7 +9,8 @@ export type TimelineEvent = {
 };
 
 export type TimelineEventGroup = {
-    type: number;
+    item: number,
+    type: TimelineEventGrouping;
     events: TimelineEvent[];
     data?: any;
 };
@@ -74,7 +75,7 @@ export const generateEventGroups = (items : number[], dataFunction, discriminato
                     collectedValues.push(consumer(currentGroup));
                 }
                 const type = timelineEvent.mEvent.getType();
-                currentGroup = { type: getTimelineGroupingType(type), events: [] };
+                currentGroup = { item, type: getTimelineGroupingType(type), events: [] };
             }
 
             collector(currentGroup, timelineEvent);
