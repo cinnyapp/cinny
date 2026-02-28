@@ -57,7 +57,8 @@ import {
   TimelineEventGroup,
   TimelineEventGrouping,
   generateEventGroups,
-  getTimelineGroupingType
+  getTimelineGroupingType,
+  isHiddenRoomStateEvent
 } from './message/grouping/TimelineEventGrouping';
 import { createMemberChangeTracker } from './message/grouping/MemberDifference';
 import { createRoomStateSummary } from './message/grouping/RoomStateSummary';
@@ -1479,58 +1480,40 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           </Event>
         );
       },
+      [StateEvent.RoomCreate]: (mEventId, mEvent, item) => {
+        if (!showHiddenEvents) return null;
+        if (Object.keys(mEvent.getContent()).length === 0) return null;
+        if (mEvent.getRelation()) return null;
+        if (mEvent.isRedaction()) return null;
+        return renderBasicEvent(mEventId, mEvent, item, Icons.Flag, ' created this room');
+      },
     },
     (mEventId, mEvent, item) => {
       if (!showHiddenEvents) return null;
-      const highlighted = focusItem?.index === item && focusItem.highlight;
-      const senderId = mEvent.getSender() ?? '';
-      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
-
-      const timeJSX = (
-        <Time
-          ts={mEvent.getTs()}
-          compact={messageLayout === MessageLayout.Compact}
-          hour24Clock={hour24Clock}
-          dateFormatString={dateFormatString}
-        />
-      );
-
-      return (
-        <Event
-          key={mEvent.getId()}
-          data-message-item={item}
-          data-message-id={mEventId}
-          room={room}
-          mEvent={mEvent}
-          highlight={highlighted}
-          messageSpacing={messageSpacing}
-          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-          hideReadReceipts={hideActivity}
-          showDeveloperTools={showDeveloperTools}
-        >
-          <EventContent
-            messageLayout={messageLayout}
-            time={timeJSX}
-            iconSrc={Icons.Code}
-            content={
-              <Box grow="Yes" direction="Column">
-                <Text size="T300" priority="300">
-                  <b>{senderName}</b>
-                  {' sent '}
-                  <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
-                  {' state event'}
-                </Text>
-              </Box>
-            }
-          />
-        </Event>
-      );
+      return renderBasicEvent(mEventId, mEvent, item, Icons.Code, (
+        <React.Fragment>
+          {' sent '}
+          <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
+          {' state event'}
+        </React.Fragment>
+      ));
     },
     (mEventId, mEvent, item) => {
       if (!showHiddenEvents) return null;
       if (Object.keys(mEvent.getContent()).length === 0) return null;
       if (mEvent.getRelation()) return null;
       if (mEvent.isRedaction()) return null;
+      return renderBasicEvent(mEventId, mEvent, item, Icons.Code, (
+        <React.Fragment>
+          {' sent '}
+          <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
+          {' event'}
+        </React.Fragment>
+      ));
+    }
+  );
+
+  const renderBasicEvent = (mEventId: number, mEvent: StateEvent, item, iconSrc, messageBody: ReactNode) => {
 
       const highlighted = focusItem?.index === item && focusItem.highlight;
       const senderId = mEvent.getSender() ?? '';
@@ -1561,22 +1544,19 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           <EventContent
             messageLayout={messageLayout}
             time={timeJSX}
-            iconSrc={Icons.Code}
+            iconSrc={iconSrc}
             content={
               <Box grow="Yes" direction="Column">
                 <Text size="T300" priority="300">
                   <b>{senderName}</b>
-                  {' sent '}
-                  <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
-                  {' event'}
+                  {messageBody}
                 </Text>
               </Box>
             }
           />
         </Event>
       );
-    }
-  );
+  };
 
   let prevEvent: MatrixEvent | undefined;
   let isPrevRendered = false;
@@ -1629,6 +1609,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     }
 
     if (group.type === TimelineEventGrouping.RoomState) {
+      if (!showHiddenEvents && isHiddenRoomStateEvent(timelineEvent.mEvent)) {
+        return;
+      }
+
       if (!group.data) {
         group.data = createRoomStateSummary(room);
       }

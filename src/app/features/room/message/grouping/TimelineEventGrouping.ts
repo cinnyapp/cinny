@@ -1,3 +1,4 @@
+import { MatrixEvent, EventTimeline } from 'matrix-js-sdk';
 import { StateEvent } from '../../../../../types/matrix/room';
 
 export type TimelineEvent = {
@@ -33,6 +34,21 @@ const ROOM_STATE_EVENTS = [
     StateEvent.RoomCreate,
     StateEvent.RoomJoinRules
 ];
+
+const VISIBLE_ROOM_STATE_EVENTS = [
+    StateEvent.RoomName,
+    StateEvent.RoomTopic,
+    StateEvent.RoomAvatar
+];
+/*
+ * Checks whether a room state event is hidden.
+ * Since unknown/unhandled events are also implicitly hidden this only
+ * cares about the events that belong to the TimelineEventGrouping.RoomState
+ */
+export const isHiddenRoomStateEvent = (mEvent: MatrixEvent) => {
+    return !VISIBLE_ROOM_STATE_EVENTS.includes(mEvent.getType());
+};
+
 
 export const getTimelineGroupingType = type => {
     if (type === StateEvent.RoomMember) {
