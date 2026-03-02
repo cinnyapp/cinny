@@ -95,7 +95,7 @@ export const generateEventGroups = (items : number[], dataFunction, discriminato
                 if (currentGroup) {
                     collectedValues.push(consumer(currentGroup));
                 }
-                currentGroup = { item, type: getTimelineGroupingType(type), events: [] };
+                currentGroup = { item: timelineEvent.mEvent.getId(), type: getTimelineGroupingType(type), events: [] };
             }
 
             collector(currentGroup, timelineEvent);

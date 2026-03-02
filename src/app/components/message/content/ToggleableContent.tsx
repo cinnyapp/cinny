@@ -9,9 +9,28 @@ export type ToggleableContentProps = {
   fullContent: ReactNode;
   collapsedContent: ReactNode;
 };
-export function ToggleableContent({ messageLayout, time, fullContent, collapsedContent }: EventContentProps) {
 
-  const [collapsed, setCollapsed ] = useState<boolean>(true);
+const storedStateKeys = [];
+const sharedOpenedState = {};
+
+// Store the state somewhere that it can be restored when the component is recreated (React dumps state on unattach)
+const rememberOpenedState = (item: string, opened: boolean) => {
+  // clean up any state more than 20 interactions to avoid taking up memory
+  while (storedStateKeys.length > 20) {
+    delete sharedOpenedState[storedStateKeys.shift()];
+  }
+  const index = storedStateKeys.indexOf(item);
+  if (index > -1) {
+    storedStateKeys.splice(index, 1);
+  }
+  // Push the new state / ensure most recent is always at the end of the list
+  storedStateKeys.push(item);
+  sharedOpenedState[item] = opened;
+};
+
+export function ToggleableContent({ item, messageLayout, time, fullContent, collapsedContent }: EventContentProps) {
+
+  const [collapsed, setCollapsed ] = useState<boolean>(!sharedOpenedState[item]);
 
   const beforeJSX = (
     <Box gap="300" justifyContent="SpaceBetween" alignItems="Start" grow="Yes">
@@ -21,7 +40,10 @@ export function ToggleableContent({ messageLayout, time, fullContent, collapsedC
         alignItems="Center"
         justifyContent="Center"
       >
-        <Button variant="Secondary" fill="Soft" size="B400" onClick={() => setCollapsed(!collapsed)}>
+        <Button variant="Secondary" fill="Soft" size="B400" onClick={() => {
+          rememberOpenedState(item, collapsed);
+          setCollapsed(!collapsed);
+        }}>
           <Icon
             style={{ opacity: 0.6 }}
             size="50"

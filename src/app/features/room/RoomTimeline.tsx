@@ -1569,6 +1569,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           return (
             <CollapsableEventGroup
                 key={group.item}
+                item={group.item}
                 messageLayout={messageLayout}
                 collapsedMessage={group.data.getFinalMessage()}>
               {group.events.map(singleEventRenderer)}

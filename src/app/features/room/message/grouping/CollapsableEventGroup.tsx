@@ -6,10 +6,11 @@ import {
   ToggleableContent,
 } from '../../../../components/message';
 
-export function CollapsableEventGroup({ messageLayout, collapsedMessage, children, ...props }) {
+export function CollapsableEventGroup({ item, messageLayout, collapsedMessage, children, ...props }) {
     return (
         <MessageBase {...props}>
             <ToggleableContent
+                item={item}
                 messageLayout={messageLayout}
                 fullContent={
                     <Box grow="Yes" direction="Column">{children}</Box>
