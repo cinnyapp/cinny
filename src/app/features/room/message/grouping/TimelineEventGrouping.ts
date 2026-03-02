@@ -26,7 +26,8 @@ export enum TimelineEventGrouping {
  * Event types that should be ignored when checking if a new group should be created
  */
 const NON_GROUP_BREAKING_EVENTS = [
-    MessageEvent.Reaction
+    MessageEvent.Reaction,
+    MessageEvent.RoomRedaction
 ];
 
 const ROOM_STATE_EVENTS = [
