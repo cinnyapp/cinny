@@ -1,5 +1,14 @@
+import { style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
-import { DefaultReset, color, toRem } from 'folds';
+import { DefaultReset, color, config, toRem } from 'folds';
+
+export const UrlPreviewAudio = style([
+  DefaultReset,
+  {
+    padding: config.space.S300,
+    paddingTop: 0,
+  },
+]);
 
 export const UrlPreviewHolderGradient = recipe({
   base: [
