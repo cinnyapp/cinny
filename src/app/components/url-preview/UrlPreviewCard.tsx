@@ -16,7 +16,7 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { AudioContent, ImageContent, VideoContent } from '../message';
 import { Image, MediaControl, Video } from '../media';
 import { ImageViewer } from '../image-viewer';
-import { onEnterOrSpace } from '../../utils/keyboard';
+import { onEnterOrSpace } from '$utils/keyboard';
 
 const linkStyles = { color: color.Success.Main };
 
