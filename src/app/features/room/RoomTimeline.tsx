@@ -127,6 +127,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 
+import './RoomTimeline.css';
+
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
     <Box
@@ -1062,6 +1064,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               replyEventId && (
                 <Reply
                   room={room}
+                  replier={mEvent.getSender()}
                   timelineSet={timelineSet}
                   replyEventId={replyEventId}
                   threadRootId={threadRootId}
