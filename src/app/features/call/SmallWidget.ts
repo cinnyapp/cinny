@@ -25,10 +25,9 @@ import {
   IWidgetData,
   MatrixCapabilities,
   WidgetApiFromWidgetAction,
-  WidgetKind,
 } from 'matrix-widget-api';
 import { CinnyWidget } from './CinnyWidget';
-import { SmallWidgetDriver } from './SmallWidgetDriver';
+import { CallWidgetDriver } from '../../plugins/call';
 
 /**
  * Generates the URL for the Element Call widget.
@@ -41,7 +40,7 @@ export const getWidgetUrl = (
   roomId: string,
   elementCallUrl: string,
   widgetId: string,
-  setParams: any,
+  setParams: any
 ): URL => {
   const baseUrl = window.location.origin;
   const url = elementCallUrl
@@ -119,14 +118,11 @@ export class SmallWidget extends EventEmitter {
   startMessaging(iframe: HTMLIFrameElement): ClientWidgetApi {
     // Ensure the driver is correctly instantiated
     // The capabilities array might need adjustment based on required permissions
-    const driver = new SmallWidgetDriver(
-      this.client,
-      [],
-      this.mockWidget,
-      WidgetKind.Room,
-      true,
-      this.roomId,
-    );
+    if (!this.roomId) {
+      throw new Error('Can not start call. no roomId found');
+    }
+
+    const driver = new CallWidgetDriver(this.client, this.roomId);
     this.iframe = iframe;
     this.messaging = new ClientWidgetApi(this.mockWidget, iframe, driver);
     this.messaging.setViewedRoomId(this.roomId ?? null);
@@ -193,7 +189,7 @@ export class SmallWidget extends EventEmitter {
           // MAKE PERSISTENT HERE
           // Send the ack after the widget actually has become sticky.
         }
-      },
+      }
     );
 
     return this.messaging;
@@ -360,7 +356,7 @@ export const getWidgetData = (
   client: MatrixClient,
   roomId: string,
   currentData: object,
-  overwriteData: object,
+  overwriteData: object
 ): IWidgetData => {
   // Example: Determine E2EE based on room state if needed
   const perParticipantE2EE = true; // Default or based on logic
@@ -396,7 +392,7 @@ export const createVirtualWidget = (
   url: URL,
   waitForIframeLoad: boolean,
   data: IWidgetData,
-  roomId: string,
+  roomId: string
 ): IApp => ({
   client,
   id,
