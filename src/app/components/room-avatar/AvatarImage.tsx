@@ -25,6 +25,11 @@ export function AvatarImage({ src, alt, uniformIcons, onError }: AvatarImageProp
 
   return (
     <FoldsAvatarImage
+      // We sample avatar pixels in bgColorImg() via canvas getImageData().
+      // Firefox blocks cross-origin canvas pixel reads to mitigate data exfiltration risk.
+      // Matrix media is cross-origin by design, so we opt into CORS mode for this image.
+      // https://developer.mozilla.org/en-US/docs/Web/HTML/How_to/CORS_enabled_image
+      crossOrigin="anonymous"
       className={css.RoomAvatar}
       style={{ backgroundColor: useUniformIcons ? normalizedBg : undefined }}
       src={src}
