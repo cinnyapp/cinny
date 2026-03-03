@@ -84,7 +84,6 @@ import { ContainerColor } from '../../../styles/ContainerColor.css';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { BreakWord } from '../../../styles/Text.css';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
-import { CallNavStatus } from '../../../features/room-nav/RoomCallNavStatus';
 import { useCallState } from '../call/CallProvider';
 
 type SpaceMenuProps = {
@@ -545,7 +544,6 @@ export function Space() {
           </NavCategory>
         </Box>
       </PageNavContent>
-      <CallNavStatus />
     </PageNav>
   );
 }

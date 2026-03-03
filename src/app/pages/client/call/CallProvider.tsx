@@ -15,7 +15,6 @@ import {
 } from 'matrix-widget-api';
 import { useParams } from 'react-router-dom';
 import { SmallWidget } from '../../../features/call/SmallWidget';
-import { is } from 'immer/dist/internal';
 
 interface MediaStatePayload {
   data?: {
