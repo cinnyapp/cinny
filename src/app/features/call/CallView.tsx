@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { Box, Button, config, Spinner, Text } from 'folds';
 import { useCallState } from '../../pages/client/call/CallProvider';
-import { useCallMembers } from '../../hooks/useCallMemberships';
+import { useCallMembers, useCallSession } from '../../hooks/useCall';
 
 import { CallRefContext } from '../../pages/client/call/PersistentCallContainer';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
@@ -79,7 +79,8 @@ export function CallView({ room }: { room: Room }) {
 
   const isActiveCallRoom = activeCallRoomId === room.roomId;
   const callIsCurrentAndReady = isActiveCallRoom && isActiveCallReady;
-  const callMembers = useCallMembers(mx, room.roomId);
+  const callSession = useCallSession(room);
+  const callMembers = useCallMembers(room, callSession);
 
   const getName = (userId: string) =>
     getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId);

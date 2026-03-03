@@ -7,8 +7,7 @@ import * as css from './styles.css';
 import { CallRoomName } from './CallRoomName';
 import { CallControl } from './CallControl';
 import { ContainerColor } from '../../styles/ContainerColor.css';
-import { useCallMembers } from '../../hooks/useCallMemberships';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { ScreenSize, useScreenSize } from '../../hooks/useScreenSize';
 import { MemberGlance } from './MemberGlance';
 import { StatusDivider } from './components';
@@ -17,8 +16,8 @@ type CallStatusProps = {
   room: Room;
 };
 export function CallStatus({ room }: CallStatusProps) {
-  const mx = useMatrixClient();
-  const callMembers = useCallMembers(mx, room.roomId);
+  const callSession = useCallSession(room);
+  const callMembers = useCallMembers(room, callSession);
   const screenSize = useScreenSize();
 
   return (

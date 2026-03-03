@@ -52,7 +52,7 @@ import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { useRoomName } from '../../hooks/useRoomMeta';
-import { useCallMembers } from '../../hooks/useCallMemberships';
+import { useCallMembers, useCallSession } from '../../hooks/useCall';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -255,7 +255,8 @@ export function RoomNavItem({
   };
 
   const optionsVisible = hover || !!menuAnchor;
-  const callMembers = useCallMembers(mx, room.roomId);
+  const callSession = useCallSession(room);
+  const callMembers = useCallMembers(room, callSession);
 
   return (
     <NavItem
