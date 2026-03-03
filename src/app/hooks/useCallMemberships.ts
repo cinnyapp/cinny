@@ -19,7 +19,12 @@ export const useCallMembers = (mx: MatrixClient, roomId: string): CallMembership
 
     const updateMemberships = () => {
       if (!room.isCallRoom()) return;
-      setMemberships(MatrixRTCSession.callMembershipsForRoom(room));
+      setMemberships(
+        MatrixRTCSession.sessionMembershipsForRoom(room, {
+          id: '',
+          application: 'm.call',
+        })
+      );
     };
 
     updateMemberships();
