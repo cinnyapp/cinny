@@ -1,5 +1,5 @@
-import React, { MouseEventHandler, forwardRef, useState, MouseEvent } from 'react';
-import { EventType, Room } from 'matrix-js-sdk';
+import React, { MouseEventHandler, forwardRef, useState } from 'react';
+import { Room } from 'matrix-js-sdk';
 import {
   Avatar,
   Box,
@@ -16,13 +16,10 @@ import {
   RectCords,
   Badge,
   Spinner,
-  Tooltip,
-  TooltipProvider,
 } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
 import FocusTrap from 'focus-trap-react';
-import { useNavigate } from 'react-router-dom';
-import { NavButton, NavItem, NavItemContent, NavItemOptions } from '../../components/nav';
+import { NavItem, NavItemContent, NavItemOptions, NavLink } from '../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
@@ -54,12 +51,8 @@ import { RoomNotificationModeSwitcher } from '../../components/RoomNotificationS
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
-import { useCallState } from '../../pages/client/call/CallProvider';
-import { useCallMembers } from '../../hooks/useCallMemberships';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
-import { RoomNavUser } from './RoomNavUser';
 import { useRoomName } from '../../hooks/useRoomMeta';
+import { useCallMembers } from '../../hooks/useCallMemberships';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -245,31 +238,7 @@ export function RoomNavItem({
     (receipt) => receipt.userId !== mx.getUserId()
   );
 
-  const {
-    isActiveCallReady,
-    activeCallRoomId,
-    setActiveCallRoomId,
-    setViewedCallRoomId,
-    isChatOpen,
-    toggleChat,
-    hangUp,
-  } = useCallState();
-
-  const isActiveCall = isActiveCallReady && activeCallRoomId === room.roomId;
-  const callMemberships = useCallMembers(mx, room.roomId);
-
-  const powerLevels = usePowerLevels(room);
-  const creators = useRoomCreators(room);
   const roomName = useRoomName(room);
-
-  const permissions = useRoomPermissions(creators, powerLevels);
-  const canJoinCall = permissions.event(EventType.GroupCallMemberPrefix, mx.getSafeUserId());
-
-  const { navigateRoom } = useRoomNavigate();
-  const navigate = useNavigate();
-
-  const screenSize = useScreenSizeContext();
-  const isMobile = screenSize === ScreenSize.Mobile;
 
   const handleContextMenu: MouseEventHandler<HTMLElement> = (evt) => {
     evt.preventDefault();
@@ -285,206 +254,128 @@ export function RoomNavItem({
     setMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
-  const handleNavItemClick: MouseEventHandler<HTMLElement> = (evt) => {
-    if (room.isCallRoom()) {
-      if (!isMobile) {
-        if (!isActiveCall && canJoinCall) {
-          hangUp();
-          setActiveCallRoomId(room.roomId);
-        } else {
-          navigateRoom(room.roomId);
-        }
-      } else {
-        evt.stopPropagation();
-        if (isChatOpen) toggleChat();
-        setViewedCallRoomId(room.roomId);
-        navigateRoom(room.roomId);
-      }
-    } else {
-      navigate(linkPath);
-    }
-  };
-
-  const handleChatButtonClick = (evt: MouseEvent<HTMLButtonElement>) => {
-    evt.stopPropagation();
-    if (!isChatOpen) toggleChat();
-    setViewedCallRoomId(room.roomId);
-    navigate(linkPath);
-  };
-
   const optionsVisible = hover || !!menuAnchor;
-  const ariaLabel = [
-    roomName,
-    room.isCallRoom()
-      ? [
-          'Call Room',
-          isActiveCall && 'Currently in Call',
-          callMemberships.length && `${callMemberships.length} in Call`,
-        ]
-      : 'Text Room',
-    unread?.total && `${unread.total} Messages`,
-  ]
-    .flat()
-    .filter(Boolean)
-    .join(', ');
+  const callMembers = useCallMembers(mx, room.roomId);
 
   return (
-    <Box direction="Column" grow="Yes">
-      <NavItem
-        variant="Background"
-        radii="400"
-        highlight={unread !== undefined}
-        aria-selected={selected}
-        data-hover={!!menuAnchor}
-        onContextMenu={handleContextMenu}
-        {...hoverProps}
-        {...focusWithinProps}
-      >
-        <NavButton onClick={handleNavItemClick} aria-label={ariaLabel}>
-          <NavItemContent>
-            <Box as="span" grow="Yes" alignItems="Center" gap="200">
-              <Avatar size="200" radii="400">
-                {showAvatar ? (
-                  <RoomAvatar
-                    roomId={room.roomId}
-                    src={
-                      direct
-                        ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)
-                        : getRoomAvatarUrl(mx, room, 96, useAuthentication)
-                    }
-                    alt={roomName}
-                    renderFallback={() => (
-                      <Text as="span" size="H6">
-                        {nameInitials(roomName)}
-                      </Text>
-                    )}
-                  />
-                ) : (
-                  <RoomIcon
-                    style={{
-                      opacity: unread || isActiveCall ? config.opacity.P500 : config.opacity.P300,
-                    }}
-                    filled={selected || isActiveCall}
-                    size="100"
-                    joinRule={room.getJoinRule()}
-                    roomType={room.getType()}
-                  />
-                )}
-              </Avatar>
-              <Box as="span" grow="Yes">
-                <Text
-                  priority={unread || isActiveCall ? '500' : '300'}
-                  as="span"
-                  size="Inherit"
-                  truncate
-                >
-                  {roomName}
-                </Text>
-              </Box>
-              {!optionsVisible && !unread && !selected && typingMember.length > 0 && (
-                <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
-                  <TypingIndicator size="300" disableAnimation />
-                </Badge>
-              )}
-              {!optionsVisible && unread && (
-                <UnreadBadgeCenter>
-                  <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
-                </UnreadBadgeCenter>
-              )}
-              {!optionsVisible && notificationMode !== RoomNotificationMode.Unset && (
-                <Icon
-                  size="50"
-                  src={getRoomNotificationModeIcon(notificationMode)}
-                  aria-label={notificationMode}
+    <NavItem
+      variant="Background"
+      radii="400"
+      highlight={unread !== undefined}
+      aria-selected={selected}
+      data-hover={!!menuAnchor}
+      onContextMenu={handleContextMenu}
+      {...hoverProps}
+      {...focusWithinProps}
+    >
+      <NavLink to={linkPath}>
+        <NavItemContent>
+          <Box as="span" grow="Yes" alignItems="Center" gap="200">
+            <Avatar size="200" radii="400">
+              {showAvatar ? (
+                <RoomAvatar
+                  roomId={room.roomId}
+                  src={
+                    direct
+                      ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)
+                      : getRoomAvatarUrl(mx, room, 96, useAuthentication)
+                  }
+                  alt={roomName}
+                  renderFallback={() => (
+                    <Text as="span" size="H6">
+                      {nameInitials(roomName)}
+                    </Text>
+                  )}
+                />
+              ) : (
+                <RoomIcon
+                  style={{
+                    opacity: unread ? config.opacity.P500 : config.opacity.P300,
+                  }}
+                  filled={selected}
+                  size="100"
+                  joinRule={room.getJoinRule()}
+                  roomType={room.getType()}
                 />
               )}
+            </Avatar>
+            <Box as="span" grow="Yes">
+              <Text priority={unread ? '500' : '300'} as="span" size="Inherit" truncate>
+                {roomName}
+              </Text>
             </Box>
-          </NavItemContent>
-        </NavButton>
-        {optionsVisible && (
-          <NavItemOptions>
-            <PopOut
-              id={`menu-${room.roomId}`}
-              aria-expanded={!!menuAnchor}
-              anchor={menuAnchor}
-              offset={menuAnchor?.width === 0 ? 0 : undefined}
-              alignOffset={menuAnchor?.width === 0 ? 0 : -5}
-              position="Bottom"
-              align={menuAnchor?.width === 0 ? 'Start' : 'End'}
-              content={
-                <FocusTrap
-                  focusTrapOptions={{
-                    initialFocus: false,
-                    returnFocusOnDeactivate: false,
-                    onDeactivate: () => setMenuAnchor(undefined),
-                    clickOutsideDeactivates: true,
-                    isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                    isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                    escapeDeactivates: stopPropagation,
-                  }}
-                >
-                  <RoomNavItemMenu
-                    room={room}
-                    requestClose={() => setMenuAnchor(undefined)}
-                    notificationMode={notificationMode}
-                  />
-                </FocusTrap>
-              }
-            >
-              {room.isCallRoom() && (
-                <TooltipProvider
-                  position="Bottom"
-                  offset={4}
-                  tooltip={
-                    <Tooltip>
-                      <Text>Open Chat</Text>
-                    </Tooltip>
-                  }
-                >
-                  {(triggerRef) => (
-                    <IconButton
-                      ref={triggerRef}
-                      data-testid="chat-button"
-                      onClick={handleChatButtonClick}
-                      aria-pressed={isChatOpen && selected}
-                      aria-label="Open Chat"
-                      variant="Background"
-                      fill="None"
-                      size="300"
-                      radii="300"
-                    >
-                      <Icon size="50" src={Icons.Message} />
-                    </IconButton>
-                  )}
-                </TooltipProvider>
-              )}
-              <IconButton
-                onClick={handleOpenMenu}
-                aria-pressed={!!menuAnchor}
-                aria-controls={`menu-${room.roomId}`}
-                aria-label="More Options"
-                variant="Background"
-                fill="None"
-                size="300"
-                radii="300"
+            {!optionsVisible && !unread && !selected && typingMember.length > 0 && (
+              <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
+                <TypingIndicator size="300" disableAnimation />
+              </Badge>
+            )}
+            {!optionsVisible && unread && (
+              <UnreadBadgeCenter>
+                <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
+              </UnreadBadgeCenter>
+            )}
+            {!optionsVisible && notificationMode !== RoomNotificationMode.Unset && (
+              <Icon
+                size="50"
+                src={getRoomNotificationModeIcon(notificationMode)}
+                aria-label={notificationMode}
+              />
+            )}
+            {room.isCallRoom() && callMembers.length > 0 && (
+              <Badge variant="Critical" fill="Solid" size="400">
+                <Text as="span" size="L400" truncate>
+                  {callMembers.length} Live
+                </Text>
+              </Badge>
+            )}
+          </Box>
+        </NavItemContent>
+      </NavLink>
+      {optionsVisible && (
+        <NavItemOptions>
+          <PopOut
+            id={`menu-${room.roomId}`}
+            aria-expanded={!!menuAnchor}
+            anchor={menuAnchor}
+            offset={menuAnchor?.width === 0 ? 0 : undefined}
+            alignOffset={menuAnchor?.width === 0 ? 0 : -5}
+            position="Bottom"
+            align={menuAnchor?.width === 0 ? 'Start' : 'End'}
+            content={
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  returnFocusOnDeactivate: false,
+                  onDeactivate: () => setMenuAnchor(undefined),
+                  clickOutsideDeactivates: true,
+                  isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                  isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  escapeDeactivates: stopPropagation,
+                }}
               >
-                <Icon size="50" src={Icons.VerticalDots} />
-              </IconButton>
-            </PopOut>
-          </NavItemOptions>
-        )}
-      </NavItem>
-      {room.isCallRoom() && (
-        <Box direction="Column" style={{ paddingLeft: config.space.S200 }}>
-          {callMemberships.map((callMembership) => (
-            <RoomNavUser
-              key={callMembership.membershipID}
-              room={room}
-              callMembership={callMembership}
-            />
-          ))}
-        </Box>
+                <RoomNavItemMenu
+                  room={room}
+                  requestClose={() => setMenuAnchor(undefined)}
+                  notificationMode={notificationMode}
+                />
+              </FocusTrap>
+            }
+          >
+            <IconButton
+              onClick={handleOpenMenu}
+              aria-pressed={!!menuAnchor}
+              aria-controls={`menu-${room.roomId}`}
+              aria-label="More Options"
+              variant="Background"
+              fill="None"
+              size="300"
+              radii="300"
+            >
+              <Icon size="50" src={Icons.VerticalDots} />
+            </IconButton>
+          </PopOut>
+        </NavItemOptions>
       )}
-    </Box>
+    </NavItem>
   );
 }
