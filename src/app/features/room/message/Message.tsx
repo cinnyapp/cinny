@@ -327,11 +327,9 @@ export const MessageCopyLinkItem = as<
   const mx = useMatrixClient();
 
   const handleCopy = () => {
-    const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
     const eventId = mEvent.getId();
-    const viaServers = isRoomAlias(roomIdOrAlias) ? undefined : getViaServers(room);
     if (!eventId) return;
-    copyToClipboard(getMatrixToRoomEvent(roomIdOrAlias, eventId, viaServers));
+    copyToClipboard(getMatrixToRoomEvent(room.roomId, eventId, getViaServers(room)));
     onClose?.();
   };
 
