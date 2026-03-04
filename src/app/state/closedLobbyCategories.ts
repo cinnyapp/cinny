@@ -66,3 +66,5 @@ export const makeClosedLobbyCategoriesAtom = (userId: string): ClosedLobbyCatego
 };
 
 export const makeLobbyCategoryId = (...args: string[]): string => args.join('|');
+
+export const getLobbyCategoryIdParts = (categoryId: string): string[] => categoryId.split('|');

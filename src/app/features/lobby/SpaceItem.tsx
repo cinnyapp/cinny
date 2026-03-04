@@ -15,6 +15,9 @@ import {
   MenuItem,
   RectCords,
   config,
+  IconButton,
+  TooltipProvider,
+  Tooltip,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import classNames from 'classnames';
@@ -359,15 +362,42 @@ function AddSpaceButton({ item }: { item: HierarchyItem }) {
         </FocusTrap>
       }
     >
-      <Chip
-        variant="SurfaceVariant"
-        radii="Pill"
-        before={<Icon src={Icons.Plus} size="50" />}
-        onClick={handleAddSpace}
-        aria-pressed={!!cords}
-      >
-        <Text size="B300">Add Space</Text>
-      </Chip>
+      {item.parentId === undefined ? (
+        <Chip
+          variant="SurfaceVariant"
+          radii="Pill"
+          before={<Icon src={Icons.Plus} size="50" />}
+          onClick={handleAddSpace}
+          aria-pressed={!!cords}
+        >
+          <Text size="B300">Add Space</Text>
+        </Chip>
+      ) : (
+        <TooltipProvider
+          position="Bottom"
+          offset={4}
+          tooltip={
+            <Tooltip>
+              <Text>Add Space</Text>
+            </Tooltip>
+          }
+        >
+          {(triggerRef) => (
+            <IconButton
+              ref={triggerRef}
+              onClick={handleAddSpace}
+              aria-pressed={!!cords}
+              aria-label="Add Space"
+              variant="SurfaceVariant"
+              fill="None"
+              size="300"
+              radii="300"
+            >
+              <Icon size="50" src={Icons.SpacePlus} />
+            </IconButton>
+          )}
+        </TooltipProvider>
+      )}
       {addExisting && (
         <AddExistingModal space parentId={item.roomId} requestClose={() => setAddExisting(false)} />
       )}
@@ -485,7 +515,7 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
           {space && canEditChild && (
             <Box shrink="No" alignItems="Inherit" gap="200">
               <AddRoomButton item={item} />
-              {item.parentId === undefined && <AddSpaceButton item={item} />}
+              <AddSpaceButton item={item} />
             </Box>
           )}
         </Box>

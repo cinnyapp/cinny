@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useCallback, useMemo, useRef, useState } from 'react';
+import React, { MouseEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Chip, Icon, IconButton, Icons, Line, Scroll, Spinner, Text, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
@@ -31,7 +31,7 @@ import {
   useRoomsPowerLevels,
 } from '../../hooks/usePowerLevels';
 import { mDirectAtom } from '../../state/mDirectList';
-import { makeLobbyCategoryId } from '../../state/closedLobbyCategories';
+import { makeLobbyCategoryId, getLobbyCategoryIdParts } from '../../state/closedLobbyCategories';
 import { useCategoryHandler } from '../../hooks/useCategoryHandler';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
@@ -73,6 +73,11 @@ const useCanDropLobbyItem = (
       }
 
       const containerSpaceId = space.roomId;
+
+      // only allow to be dropped in parent space
+      if (item.parentId !== container.item.roomId && item.parentId !== container.item.parentId) {
+        return false;
+      }
 
       const powerLevels = roomsPowerLevels.get(containerSpaceId) ?? {};
       const creators = getRoomCreatorsForRoomId(mx, containerSpaceId);
@@ -167,6 +172,7 @@ export function Lobby() {
   const screenSize = useScreenSizeContext();
   const [onTop, setOnTop] = useState(true);
   const [closedCategories, setClosedCategories] = useAtom(useClosedLobbyCategoriesAtom());
+  const roomToParents = useAtomValue(roomToParentsAtom);
   const [sidebarItems] = useSidebarItems(
     useOrphanSpaces(mx, allRoomsAtom, useAtomValue(roomToParentsAtom))
   );
@@ -188,6 +194,85 @@ export function Lobby() {
 
   const getRoom = useGetRoom(allJoinedRooms);
 
+  const closedCategoriesCache = useRef(new Map());
+  useEffect(() => {
+    closedCategoriesCache.current.clear();
+  }, [closedCategories, roomToParents, getRoom]);
+
+  /**
+   * Recursively checks if a given parentId (or all its ancestors) is in a closed category.
+   *
+   * @param spaceId - The root space ID.
+   * @param parentId - The parent space ID to start the check from.
+   * @param previousId - The last ID checked, only used to ignore root collapse state.
+   * @param visited - Set used to prevent recursion errors.
+   * @returns True if parentId or all ancestors is in a closed category.
+   */
+  const getInClosedCategories = useCallback(
+    (
+      spaceId: string,
+      parentId: string,
+      previousId?: string,
+      visited: Set<string> = new Set()
+    ): boolean => {
+      // Ignore root space being collapsed if in a subspace,
+      // this is due to many spaces dumping all rooms in the top-level space.
+      if (parentId === spaceId && previousId) {
+        if (spaceRooms.has(previousId) || getRoom(previousId)?.isSpaceRoom()) {
+          return false;
+        }
+      }
+
+      const categoryId = makeLobbyCategoryId(spaceId, parentId);
+
+      // Prevent infinite recursion
+      if (visited.has(categoryId)) return false;
+      visited.add(categoryId);
+
+      if (closedCategoriesCache.current.has(categoryId)) {
+        return closedCategoriesCache.current.get(categoryId);
+      }
+
+      if (closedCategories.has(categoryId)) {
+        closedCategoriesCache.current.set(categoryId, true);
+        return true;
+      }
+
+      const parentParentIds = roomToParents.get(parentId);
+      if (!parentParentIds || parentParentIds.size === 0) {
+        closedCategoriesCache.current.set(categoryId, false);
+        return false;
+      }
+
+      // As a subspace can be in multiple spaces,
+      // only return true if all parent spaces are closed.
+      const allClosed = !Array.from(parentParentIds).some(
+        (id) => !getInClosedCategories(spaceId, id, parentId, visited)
+      );
+      visited.delete(categoryId);
+      closedCategoriesCache.current.set(categoryId, allClosed);
+      return allClosed;
+    },
+    [closedCategories, getRoom, roomToParents, spaceRooms]
+  );
+
+  /**
+   * Determines whether all parent categories are collapsed.
+   *
+   * @param spaceId - The root space ID.
+   * @param roomId - The room ID to start the check from.
+   * @returns True if every parent category is collapsed; false otherwise.
+   */
+  const getAllAncestorsCollapsed = (spaceId: string, roomId: string): boolean => {
+    const parentIds = roomToParents.get(roomId);
+
+    if (!parentIds || parentIds.size === 0) {
+      return false;
+    }
+
+    return !Array.from(parentIds).some((id) => !getInClosedCategories(spaceId, id, roomId));
+  };
+
   const [draggingItem, setDraggingItem] = useState<HierarchyItem>();
   const hierarchy = useSpaceHierarchy(
     space.roomId,
@@ -195,9 +280,9 @@ export function Lobby() {
     getRoom,
     useCallback(
       (childId) =>
-        closedCategories.has(makeLobbyCategoryId(space.roomId, childId)) ||
+        getInClosedCategories(space.roomId, childId) ||
         (draggingItem ? 'space' in draggingItem : false),
-      [closedCategories, space.roomId, draggingItem]
+      [draggingItem, getInClosedCategories, space.roomId]
     )
   );
 
@@ -298,7 +383,7 @@ export function Lobby() {
 
         // remove from current space
         if (item.parentId !== containerParentId) {
-          mx.sendStateEvent(item.parentId, StateEvent.SpaceChild as any, {}, item.roomId);
+          await mx.sendStateEvent(item.parentId, StateEvent.SpaceChild as any, {}, item.roomId);
         }
 
         if (
@@ -318,7 +403,7 @@ export function Lobby() {
               joinRuleContent.allow?.filter((allowRule) => allowRule.room_id !== item.parentId) ??
               [];
             allow.push({ type: RestrictedAllowType.RoomMembership, room_id: containerParentId });
-            mx.sendStateEvent(itemRoom.roomId, StateEvent.RoomJoinRules as any, {
+            await mx.sendStateEvent(itemRoom.roomId, StateEvent.RoomJoinRules as any, {
               ...joinRuleContent,
               allow,
             });
@@ -404,9 +489,18 @@ export function Lobby() {
     [setSpaceRooms]
   );
 
-  const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
-    closedCategories.has(categoryId)
-  );
+  const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) => {
+    const collapsed = closedCategories.has(categoryId);
+    const [spaceId, roomId] = getLobbyCategoryIdParts(categoryId);
+
+    // Prevent collapsing if all parents are collapsed
+    const toggleable = !getAllAncestorsCollapsed(spaceId, roomId);
+
+    if (toggleable) {
+      return collapsed;
+    }
+    return !collapsed;
+  });
 
   const handleOpenRoom: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const rId = evt.currentTarget.getAttribute('data-room-id');
@@ -468,14 +562,20 @@ export function Lobby() {
                       const item = hierarchy[vItem.index];
                       if (!item) return null;
                       const nextSpaceId = hierarchy[vItem.index + 1]?.space.roomId;
-
                       const categoryId = makeLobbyCategoryId(space.roomId, item.space.roomId);
+                      const inClosedCategory = getInClosedCategories(
+                        space.roomId,
+                        item.space.roomId
+                      );
+
+                      const paddingLeft = `calc((${item.space.depth} - 1) * ${config.space.S200})`;
 
                       return (
                         <VirtualTile
                           virtualItem={vItem}
                           style={{
                             paddingTop: vItem.index === 0 ? 0 : config.space.S500,
+                            paddingLeft,
                           }}
                           ref={virtualizer.measureElement}
                           key={vItem.index}
@@ -489,8 +589,7 @@ export function Lobby() {
                             roomsPowerLevels={roomsPowerLevels}
                             categoryId={categoryId}
                             closed={
-                              closedCategories.has(categoryId) ||
-                              (draggingItem ? 'space' in draggingItem : false)
+                              inClosedCategory || (draggingItem ? 'space' in draggingItem : false)
                             }
                             handleClose={handleCategoryClick}
                             draggingItem={draggingItem}
