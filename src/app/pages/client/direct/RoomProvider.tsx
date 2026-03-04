@@ -5,10 +5,11 @@ import { IsDirectRoomProvider, RoomProvider } from '../../../hooks/useRoom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { JoinBeforeNavigate } from '../../../features/join-before-navigate';
 import { useDirectRooms } from './useDirectRooms';
+import { useDirectGroups } from './useDirectGroups';
 
 export function DirectRouteRoomProvider({ children }: { children: ReactNode }) {
   const mx = useMatrixClient();
-  const rooms = useDirectRooms();
+  const rooms = [...useDirectRooms(), ...useDirectGroups()];
 
   const { roomIdOrAlias, eventId } = useParams();
   const roomId = useSelectedRoom();

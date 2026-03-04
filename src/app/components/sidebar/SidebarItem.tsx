@@ -29,9 +29,9 @@ export function SidebarItemTooltip({
 }: {
   tooltip?: ReactNode | string;
   children: (triggerRef: RefCallback<HTMLElement | SVGElement>) => ReactNode;
-}) {
+}): React.JSX.Element {
   if (!tooltip) {
-    return children(() => undefined);
+    return <>{children(() => undefined)}</>;
   }
 
   return (

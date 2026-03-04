@@ -15,7 +15,6 @@ import {
   config,
   toRem,
 } from 'folds';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import { useNavigate } from 'react-router-dom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -32,7 +31,6 @@ import {
 import { getDirectCreatePath, getDirectRoomPath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
-import { VirtualTile } from '../../../components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
@@ -51,7 +49,7 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
-import { useAllRooms } from './useAllRooms';
+import { useDirectGroups } from './useDirectGroups';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -59,12 +57,14 @@ type DirectMenuProps = {
 const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }, ref) => {
   const mx = useMatrixClient();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-  const orphanRooms = useDirectRooms();
-  const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
+  const directs = useDirectRooms();
+  const groups = useDirectGroups();
+  const rooms = useMemo(() => [...groups, ...directs], [groups, directs]);
+  const unread = useRoomsUnread(rooms, roomToUnreadAtom);
 
   const handleMarkAsRead = () => {
     if (!unread) return;
-    orphanRooms.forEach((rId) => markAsRead(mx, rId, hideActivity));
+    rooms.forEach((rId) => markAsRead(mx, rId, hideActivity));
     requestClose();
   };
 
@@ -148,12 +148,12 @@ function DirectEmpty() {
         icon={<Icon size="600" src={Icons.Mention} />}
         title={
           <Text size="H5" align="Center">
-            No Direct Messages
+            No DMs or Groups
           </Text>
         }
         content={
           <Text size="T300" align="Center">
-            You do not have any direct messages yet.
+            You do not have any DMs or group chats yet.
           </Text>
         }
         options={
@@ -168,12 +168,15 @@ function DirectEmpty() {
   );
 }
 
-const DEFAULT_CATEGORY_ID = makeNavCategoryId('direct', 'direct');
+const GROUPS_CATEGORY_ID = makeNavCategoryId('direct', 'group');
+const DMS_CATEGORY_ID = makeNavCategoryId('direct', 'dm');
 export function Direct() {
   const mx = useMatrixClient();
   useNavToActivePathMapper('direct');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const directs = useAllRooms();
+  const directs = useDirectRooms();
+  const groups = useDirectGroups();
+  const rooms = useMemo(() => [...groups, ...directs], [groups, directs]);
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const roomToUnread = useAtomValue(roomToUnreadAtom);
   const navigate = useNavigate();
@@ -181,23 +184,23 @@ export function Direct() {
   const createDirectSelected = useDirectCreateSelected();
 
   const selectedRoomId = useSelectedRoom();
-  const noRoomToDisplay = directs.length === 0;
+  const noRoomToDisplay = rooms.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
   const sortedDirects = useMemo(() => {
     const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));
-    if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
+    if (closedCategories.has(DMS_CATEGORY_ID)) {
       return items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
     }
     return items;
   }, [mx, directs, closedCategories, roomToUnread, selectedRoomId]);
-
-  const virtualizer = useVirtualizer({
-    count: sortedDirects.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 38,
-    overscan: 10,
-  });
+  const sortedGroups = useMemo(() => {
+    const items = Array.from(groups).sort(factoryRoomIdByActivity(mx));
+    if (closedCategories.has(GROUPS_CATEGORY_ID)) {
+      return items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
+    }
+    return items;
+  }, [mx, groups, closedCategories, roomToUnread, selectedRoomId]);
 
   const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
     closedCategories.has(categoryId)
@@ -232,46 +235,57 @@ export function Direct() {
             <NavCategory>
               <NavCategoryHeader>
                 <RoomNavCategoryButton
-                  closed={closedCategories.has(DEFAULT_CATEGORY_ID)}
-                  data-category-id={DEFAULT_CATEGORY_ID}
+                  closed={closedCategories.has(DMS_CATEGORY_ID)}
+                  data-category-id={DMS_CATEGORY_ID}
                   onClick={handleCategoryClick}
                 >
-                  Chats
+                  Direct Messages
                 </RoomNavCategoryButton>
               </NavCategoryHeader>
-              <div
-                style={{
-                  position: 'relative',
-                  height: virtualizer.getTotalSize(),
-                }}
-              >
-                {virtualizer.getVirtualItems().map((vItem) => {
-                  const roomId = sortedDirects[vItem.index];
-                  const room = mx.getRoom(roomId);
-                  if (!room) return null;
-                  const selected = selectedRoomId === roomId;
+              {sortedDirects.map((roomId) => {
+                const room = mx.getRoom(roomId);
+                if (!room) return null;
+                const selected = selectedRoomId === roomId;
 
-                  return (
-                    <VirtualTile
-                      virtualItem={vItem}
-                      key={vItem.index}
-                      ref={virtualizer.measureElement}
-                    >
-                      <RoomNavItem
-                        room={room}
-                        selected={selected}
-                        showAvatar
-                        direct
-                        linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
-                        notificationMode={getRoomNotificationMode(
-                          notificationPreferences,
-                          room.roomId
-                        )}
-                      />
-                    </VirtualTile>
-                  );
-                })}
-              </div>
+                return (
+                  <RoomNavItem
+                    key={roomId}
+                    room={room}
+                    selected={selected}
+                    showAvatar
+                    direct
+                    linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                    notificationMode={getRoomNotificationMode(notificationPreferences, room.roomId)}
+                  />
+                );
+              })}
+            </NavCategory>
+            <NavCategory>
+              <NavCategoryHeader>
+                <RoomNavCategoryButton
+                  closed={closedCategories.has(GROUPS_CATEGORY_ID)}
+                  data-category-id={GROUPS_CATEGORY_ID}
+                  onClick={handleCategoryClick}
+                >
+                  Groups
+                </RoomNavCategoryButton>
+              </NavCategoryHeader>
+              {sortedGroups.map((roomId) => {
+                const room = mx.getRoom(roomId);
+                if (!room) return null;
+                const selected = selectedRoomId === roomId;
+
+                return (
+                  <RoomNavItem
+                    key={roomId}
+                    room={room}
+                    selected={selected}
+                    showAvatar
+                    linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                    notificationMode={getRoomNotificationMode(notificationPreferences, room.roomId)}
+                  />
+                );
+              })}
             </NavCategory>
           </Box>
         </PageNavContent>
