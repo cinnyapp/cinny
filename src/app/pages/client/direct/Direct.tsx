@@ -51,6 +51,7 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
+import { useAllRooms } from './useAllRooms';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -172,7 +173,7 @@ export function Direct() {
   const mx = useMatrixClient();
   useNavToActivePathMapper('direct');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const directs = useDirectRooms();
+  const directs = useAllRooms();
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const roomToUnread = useAtomValue(roomToUnreadAtom);
   const navigate = useNavigate();
