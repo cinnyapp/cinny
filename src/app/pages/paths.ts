@@ -22,6 +22,7 @@ export const RESET_PASSWORD_PATH = '/reset-password/:server?/';
 export const _CREATE_PATH = 'create/';
 export const _JOIN_PATH = 'join/';
 export const _LOBBY_PATH = 'lobby/';
+export const _WELCOME_PATH = 'welcome/';
 /**
  * array of rooms and senders mxId assigned
  * to search param as string should be "," separated
@@ -53,6 +54,7 @@ export type DirectCreateSearchParams = {
   userId?: string;
 };
 export const DIRECT_CREATE_PATH = `/direct/${_CREATE_PATH}`;
+export const DIRECT_WELCOME_PATH = `/direct/${_WELCOME_PATH}`;
 export const DIRECT_ROOM_PATH = `/direct/${_ROOM_PATH}`;
 
 export const SPACE_PATH = '/:spaceIdOrAlias/';

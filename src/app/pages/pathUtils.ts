@@ -1,6 +1,7 @@
 import { generatePath, Path } from 'react-router-dom';
 import {
   DIRECT_CREATE_PATH,
+  DIRECT_WELCOME_PATH,
   DIRECT_PATH,
   DIRECT_ROOM_PATH,
   EXPLORE_FEATURED_PATH,
@@ -102,6 +103,7 @@ export const getHomeRoomPath = (roomIdOrAlias: string, eventId?: string): string
 
 export const getDirectPath = (): string => DIRECT_PATH;
 export const getDirectCreatePath = (): string => DIRECT_CREATE_PATH;
+export const getDirectWelcomePath = (): string => DIRECT_WELCOME_PATH;
 export const getDirectRoomPath = (roomIdOrAlias: string, eventId?: string): string => {
   const params = {
     roomIdOrAlias: encodeURIComponent(roomIdOrAlias),

@@ -29,9 +29,11 @@ import {
   _SEARCH_PATH,
   _SERVER_PATH,
   CREATE_PATH,
+  _WELCOME_PATH,
 } from './paths';
 import {
   getAppPathFromHref,
+  getDirectWelcomePath,
   getExploreFeaturedPath,
   getHomePath,
   getInboxNotificationsPath,
@@ -63,11 +65,11 @@ import { ClientRoomsNotificationPreferences } from './client/ClientRoomsNotifica
 import { SpaceSettingsRenderer } from '../features/space-settings';
 import { UserRoomProfileRenderer } from '../components/UserRoomProfileRenderer';
 import { CreateRoomModalRenderer } from '../features/create-room';
-import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
+import { DirectWelcome } from './client/direct/DirectWelcome';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -78,7 +80,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
       <Route
         index
         loader={() => {
-          if (getFallbackSession()) return redirect(getHomePath());
+          if (getFallbackSession()) return redirect(getDirectWelcomePath());
           const afterLoginPath = getAppPathFromHref(getOriginBaseUrl(), window.location.href);
           if (afterLoginPath) setAfterLoginRedirectPath(afterLoginPath);
           return redirect(getLoginPath());
@@ -149,7 +151,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           </AuthRouteThemeManager>
         }
       >
-        <Route
+        {/* <Route
           path={HOME_PATH}
           element={
             <PageRoot
@@ -175,7 +177,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
               </HomeRouteRoomProvider>
             }
           />
-        </Route>
+        </Route> */}
         <Route
           path={DIRECT_PATH}
           element={
@@ -191,6 +193,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           }
         >
           {mobile ? null : <Route index element={<WelcomePage />} />}
+          <Route path={_WELCOME_PATH} element={<DirectWelcome />} />
           <Route path={_CREATE_PATH} element={<DirectCreate />} />
           <Route
             path={_ROOM_PATH}

@@ -28,7 +28,7 @@ import {
   NavItem,
   NavItemContent,
 } from '../../../components/nav';
-import { getDirectCreatePath, getDirectRoomPath } from '../../pathUtils';
+import { getDirectCreatePath, getDirectRoomPath, getDirectWelcomePath } from '../../pathUtils';
 import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
@@ -48,7 +48,10 @@ import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
-import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
+import {
+  useDirectCreateSelected,
+  useDirectWelcomeSelected,
+} from '../../../hooks/router/useDirectSelected';
 import { useDirectGroups } from './useDirectGroups';
 
 type DirectMenuProps = {
@@ -182,6 +185,7 @@ export function Direct() {
   const navigate = useNavigate();
 
   const createDirectSelected = useDirectCreateSelected();
+  const welcomeDirectSelected = useDirectWelcomeSelected();
 
   const selectedRoomId = useSelectedRoom();
   const noRoomToDisplay = rooms.length === 0;
@@ -215,6 +219,22 @@ export function Direct() {
         <PageNavContent scrollRef={scrollRef}>
           <Box direction="Column" gap="300">
             <NavCategory>
+              <NavItem variant="Background" radii="400" aria-selected={welcomeDirectSelected}>
+                <NavButton onClick={() => navigate(getDirectWelcomePath())}>
+                  <NavItemContent>
+                    <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                      <Avatar size="200" radii="400">
+                        <Icon src={Icons.Inbox} size="100" />
+                      </Avatar>
+                      <Box as="span" grow="Yes">
+                        <Text as="span" size="Inherit" truncate>
+                          Welcome
+                        </Text>
+                      </Box>
+                    </Box>
+                  </NavItemContent>
+                </NavButton>
+              </NavItem>
               <NavItem variant="Background" radii="400" aria-selected={createDirectSelected}>
                 <NavButton onClick={() => navigate(getDirectCreatePath())}>
                   <NavItemContent>
