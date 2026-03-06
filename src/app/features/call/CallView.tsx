@@ -1,13 +1,12 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Box, Button, Icon, Icons, Text } from 'folds';
 import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
 import {
   useCallEmbed,
-  useCallEmbedRef,
   useCallJoined,
   useCallStart,
+  useSyncCallEmbedPlacement,
 } from '../../hooks/useCallEmbed';
-import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 
 export function CallView() {
@@ -16,27 +15,11 @@ export function CallView() {
   const callJoined = useCallJoined(callEmbed);
   const direct = useIsDirectRoom();
 
-  const callEmbedRef = useCallEmbedRef();
   const callViewRef = useRef<HTMLDivElement>(null);
+  useSyncCallEmbedPlacement(callViewRef);
 
   const startCall = useCallStart(direct);
   const joining = callEmbed?.room.roomId === room.roomId && !callJoined;
-
-  const syncCallEmbedPlacement = useCallback(() => {
-    const embedEl = callEmbedRef.current;
-    const container = callViewRef.current;
-    if (!embedEl || !container) return;
-
-    embedEl.style.top = `${container.offsetTop}px`;
-    embedEl.style.left = `${container.offsetLeft}px`;
-    embedEl.style.width = `${container.clientWidth}px`;
-    embedEl.style.height = `${container.clientHeight}px`;
-  }, [callEmbedRef]);
-
-  useResizeObserver(
-    syncCallEmbedPlacement,
-    useCallback(() => callViewRef.current, [])
-  );
 
   return (
     <Box

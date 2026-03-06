@@ -11,6 +11,7 @@ import {
 import { useMatrixClient } from './useMatrixClient';
 import { ThemeKind, useTheme } from './useTheme';
 import { callEmbedAtom } from '../state/callEmbed';
+import { useResizeObserver } from './useResizeObserver';
 
 const CallEmbedContext = createContext<CallEmbed | undefined>(undefined);
 
@@ -98,4 +99,24 @@ export const useCallThemeSync = (embed: CallEmbed) => {
 
     embed.setTheme(name);
   }, [theme.kind, embed]);
+};
+
+export const useSyncCallEmbedPlacement = (containerViewRef: RefObject<HTMLDivElement>): void => {
+  const callEmbedRef = useCallEmbedRef();
+
+  const syncCallEmbedPlacement = useCallback(() => {
+    const embedEl = callEmbedRef.current;
+    const container = containerViewRef.current;
+    if (!embedEl || !container) return;
+
+    embedEl.style.top = `${container.offsetTop}px`;
+    embedEl.style.left = `${container.offsetLeft}px`;
+    embedEl.style.width = `${container.clientWidth}px`;
+    embedEl.style.height = `${container.clientHeight}px`;
+  }, [callEmbedRef, containerViewRef]);
+
+  useResizeObserver(
+    syncCallEmbedPlacement,
+    useCallback(() => containerViewRef.current, [containerViewRef])
+  );
 };
