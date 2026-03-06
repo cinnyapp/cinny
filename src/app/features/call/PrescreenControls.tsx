@@ -34,18 +34,19 @@ export function PrescreenControls({ canJoin }: PrescreenControlsProps) {
       gap="400"
       radii="500"
       alignItems="Center"
+      justifyContent="SpaceBetween"
+      wrap="Wrap"
     >
-      <Box alignItems="Inherit" gap="200">
+      <Box shrink="No" alignItems="Inherit" justifyContent="SpaceBetween" gap="200">
         <MicrophoneButton enabled={microphone} onToggle={toggleMicrophone} />
         <SoundButton enabled={sound} onToggle={toggleSound} />
       </Box>
       <ControlDivider />
-      <Box alignItems="Inherit" gap="200">
+      <Box shrink="No" alignItems="Inherit" justifyContent="SpaceBetween" gap="200">
         <VideoButton enabled={video} onToggle={toggleVideo} />
         <ChatButton />
       </Box>
-      <ControlDivider />
-      <Box alignItems="Inherit" gap="200">
+      <Box grow="Yes" direction="Column">
         <Button
           variant={disabled ? 'Secondary' : 'Success'}
           fill={disabled ? 'Soft' : 'Solid'}

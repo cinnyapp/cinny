@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Box, color, Header, Text } from 'folds';
+import { Box, color, Header, Text, toRem } from 'folds';
 import { useCallEmbed, useCallJoined, useSyncCallEmbedPlacement } from '../../hooks/useCallEmbed';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { PrescreenControls } from './PrescreenControls';
@@ -51,12 +51,13 @@ export function CallView() {
     <Box
       ref={callViewRef}
       className={ContainerColor({ variant: 'Surface' })}
+      style={{ minWidth: toRem(280) }}
       grow="Yes"
       justifyContent="Center"
       alignItems="Center"
     >
       {!currentJoined && (
-        <Box direction="Column" gap="100">
+        <Box style={{ maxWidth: toRem(382), width: '100%' }} direction="Column" gap="100">
           <Header size="300">
             {inOtherCall ? <AlreadyInCallMessage /> : <JoinMessage canJoin={canJoin} />}
           </Header>
