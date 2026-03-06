@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, forwardRef, useState } from 'react';
+import React, { MouseEventHandler, forwardRef, useCallback, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Box,
@@ -38,7 +38,12 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '../../pages/pathUtils';
-import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '../../utils/matrix';
+import {
+  getCanonicalAliasOrRoomId,
+  isRoomAlias,
+  mxcUrlToHttp,
+  removeRoomIdFromMDirect,
+} from '../../utils/matrix';
 import { _SearchPathSearchParams } from '../../pages/paths';
 import * as css from './RoomViewHeader.css';
 import { useRoomUnread } from '../../state/hooks/unread';
@@ -69,6 +74,8 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { DirectInvitePrompt } from '../../components/direct-invite-prompt';
+import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 
 type RoomMenuProps = {
   room: Room;
@@ -83,11 +90,14 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canInvite = permissions.action('invite', mx.getSafeUserId());
+  const mDirects = useAtomValue(mDirectAtom);
+  const isDirectConversation = mDirects.has(room.roomId);
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const notificationMode = getRoomNotificationMode(notificationPreferences, room.roomId);
   const { navigateRoom } = useRoomNavigate();
 
   const [invitePrompt, setInvitePrompt] = useState(false);
+  const [directInvitePrompt, setDirectInvitePrompt] = useState(false);
 
   const handleMarkAsRead = () => {
     markAsRead(mx, room.roomId, hideActivity);
@@ -95,8 +105,35 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
   };
 
   const handleInvite = () => {
+    if (isDirectConversation) {
+      setDirectInvitePrompt(true);
+      return;
+    }
     setInvitePrompt(true);
   };
+
+  const handleInviteDirect = () => {
+    setDirectInvitePrompt(false);
+    setInvitePrompt(true);
+  };
+
+  const [convertState, convertToRoom] = useAsyncCallback<void, Error, []>(
+    useCallback(async () => {
+      await removeRoomIdFromMDirect(mx, room.roomId);
+    }, [mx, room.roomId])
+  );
+
+  const handleConvertAndInvite = () => {
+    if (convertState.status === AsyncStatus.Loading) return;
+    convertToRoom().catch(() => {});
+  };
+
+  useEffect(() => {
+    if (convertState.status === AsyncStatus.Success) {
+      setDirectInvitePrompt(false);
+      setInvitePrompt(true);
+    }
+  }, [convertState.status]);
 
   const handleCopyLink = () => {
     const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
@@ -121,6 +158,20 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
             setInvitePrompt(false);
             requestClose();
           }}
+        />
+      )}
+      {directInvitePrompt && (
+        <DirectInvitePrompt
+          onCancel={() => {
+            setDirectInvitePrompt(false);
+            requestClose();
+          }}
+          onInviteDirect={handleInviteDirect}
+          onConvertAndInvite={handleConvertAndInvite}
+          converting={convertState.status === AsyncStatus.Loading}
+          convertError={
+            convertState.status === AsyncStatus.Error ? convertState.error.message : undefined
+          }
         />
       )}
       <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>

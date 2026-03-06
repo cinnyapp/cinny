@@ -10,6 +10,7 @@ type InfoCardProps = {
   title?: ReactNode;
   description?: ReactNode;
   before?: ReactNode;
+  beforeAlign?: 'Start' | 'Center';
   after?: ReactNode;
   children?: ReactNode;
 };
@@ -18,6 +19,7 @@ export function InfoCard({
   title,
   description,
   before,
+  beforeAlign = 'Start',
   after,
   children,
 }: InfoCardProps) {
@@ -29,7 +31,7 @@ export function InfoCard({
     >
       <Box gap="200" alignItems="Center">
         {before && (
-          <Box shrink="No" alignSelf="Start">
+          <Box shrink="No" alignSelf={beforeAlign}>
             {before}
           </Box>
         )}
