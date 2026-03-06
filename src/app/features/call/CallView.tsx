@@ -1,25 +1,37 @@
 import React, { useRef } from 'react';
-import { Box, Button, Icon, Icons, Text } from 'folds';
-import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
-import {
-  useCallEmbed,
-  useCallJoined,
-  useCallStart,
-  useSyncCallEmbedPlacement,
-} from '../../hooks/useCallEmbed';
+import { Box, Header, Text } from 'folds';
+import { useSyncCallEmbedPlacement } from '../../hooks/useCallEmbed';
 import { ContainerColor } from '../../styles/ContainerColor.css';
+import { PrescreenControls } from './PrescreenControls';
+import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
+import { useRoom } from '../../hooks/useRoom';
+import { useRoomCreators } from '../../hooks/useRoomCreators';
+import { useRoomPermissions } from '../../hooks/useRoomPermissions';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { StateEvent } from '../../../types/matrix/room';
+
+function HeaderJoinMessage({ canJoin }: { canJoin?: boolean }) {
+  return (
+    <Text style={{ margin: 'auto' }} size="L400" align="Center">
+      {canJoin
+        ? 'Voice chat’s empty — be the first to hop in!'
+        : "You don't have permission to join!"}
+    </Text>
+  );
+}
 
 export function CallView() {
+  const mx = useMatrixClient();
   const room = useRoom();
-  const callEmbed = useCallEmbed();
-  const callJoined = useCallJoined(callEmbed);
-  const direct = useIsDirectRoom();
 
   const callViewRef = useRef<HTMLDivElement>(null);
   useSyncCallEmbedPlacement(callViewRef);
 
-  const startCall = useCallStart(direct);
-  const joining = callEmbed?.room.roomId === room.roomId && !callJoined;
+  const powerLevels = usePowerLevelsContext();
+  const creators = useRoomCreators(room);
+
+  const permissions = useRoomPermissions(creators, powerLevels);
+  const canJoin = permissions.event(StateEvent.GroupCallMemberPrefix, mx.getSafeUserId());
 
   return (
     <Box
@@ -29,14 +41,12 @@ export function CallView() {
       justifyContent="Center"
       alignItems="Center"
     >
-      <Button
-        variant="Success"
-        onClick={() => startCall(room)}
-        disabled={joining}
-        before={<Icon src={Icons.ArrowRight} size="200" />}
-      >
-        <Text size="B400">Join</Text>
-      </Button>
+      <Box direction="Column" gap="100">
+        <Header size="300">
+          <HeaderJoinMessage canJoin={canJoin} />
+        </Header>
+        <PrescreenControls canJoin={canJoin} />
+      </Box>
     </Box>
   );
 }
