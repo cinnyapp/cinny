@@ -372,7 +372,7 @@ export function RoomNavItem({
       </NavLink>
       {optionsVisible && (
         <NavItemOptions>
-          {selected && (callEmbed?.room.roomId === room.roomId || room.isCallRoom()) && (
+          {selected && (callEmbed?.roomId === room.roomId || room.isCallRoom()) && (
             <CallChatToggle />
           )}
           <PopOut

@@ -4,6 +4,7 @@ import {
   CallEmbedContextProvider,
   CallEmbedRefContextProvider,
   useCallHangupEvent,
+  useCallJoined,
   useCallThemeSync,
 } from '../hooks/useCallEmbed';
 import { callEmbedAtom } from '../state/callEmbed';
@@ -30,9 +31,10 @@ type CallEmbedProviderProps = {
 export function CallEmbedProvider({ children }: CallEmbedProviderProps) {
   const callEmbed = useAtomValue(callEmbedAtom);
   const callEmbedRef = useRef<HTMLDivElement>(null);
+  const joined = useCallJoined(callEmbed);
 
   const selectedRoom = useSelectedRoom();
-  const callVisible = callEmbed && selectedRoom === callEmbed.room.roomId;
+  const callVisible = callEmbed && selectedRoom === callEmbed.roomId && joined;
 
   return (
     <CallEmbedContextProvider value={callEmbed}>

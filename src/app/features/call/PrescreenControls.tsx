@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Icon, Icons, Text } from 'folds';
+import { Box, Button, Icon, Icons, Spinner, Text } from 'folds';
 import { SequenceCard } from '../../components/sequence-card';
 import * as css from './styles.css';
 import { ChatButton, ControlDivider, MicrophoneButton, SoundButton, VideoButton } from './Controls';
@@ -17,8 +17,12 @@ export function PrescreenControls({ canJoin }: PrescreenControlsProps) {
   const callJoined = useCallJoined(callEmbed);
   const direct = useIsDirectRoom();
 
+  const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
+
   const startCall = useCallStart(direct);
-  const joining = callEmbed?.room.roomId === room.roomId && !callJoined;
+  const joining = callEmbed?.roomId === room.roomId && !callJoined;
+
+  const disabled = inOtherCall || !canJoin;
 
   const { microphone, video, sound, toggleMicrophone, toggleVideo, toggleSound } =
     useCallPreferences();
@@ -43,12 +47,17 @@ export function PrescreenControls({ canJoin }: PrescreenControlsProps) {
       <ControlDivider />
       <Box alignItems="Inherit" gap="200">
         <Button
-          variant={canJoin ? 'Success' : 'Secondary'}
-          fill={canJoin ? 'Solid' : 'Soft'}
+          variant={disabled ? 'Secondary' : 'Success'}
+          fill={disabled ? 'Soft' : 'Solid'}
           onClick={() => startCall(room, new CallControlState(microphone, video, sound))}
-          disabled={joining}
-          before={<Icon src={Icons.Phone} size="200" filled />}
-          aria-disabled={!canJoin}
+          disabled={disabled || joining}
+          before={
+            joining ? (
+              <Spinner variant="Success" fill="Solid" size="200" />
+            ) : (
+              <Icon src={Icons.Phone} size="200" filled />
+            )
+          }
         >
           <Text size="B400">Join</Text>
         </Button>

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
-import { Box, Header, Text } from 'folds';
-import { useSyncCallEmbedPlacement } from '../../hooks/useCallEmbed';
+import { Box, color, Header, Text } from 'folds';
+import { useCallEmbed, useCallJoined, useSyncCallEmbedPlacement } from '../../hooks/useCallEmbed';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { PrescreenControls } from './PrescreenControls';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
@@ -10,12 +10,20 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { StateEvent } from '../../../types/matrix/room';
 
-function HeaderJoinMessage({ canJoin }: { canJoin?: boolean }) {
+function JoinMessage({ canJoin }: { canJoin?: boolean }) {
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
       {canJoin
-        ? 'Voice chat’s empty — be the first to hop in!'
+        ? 'Voice chat’s empty — Be the first to hop in!'
         : "You don't have permission to join!"}
+    </Text>
+  );
+}
+
+function AlreadyInCallMessage() {
+  return (
+    <Text style={{ margin: 'auto', color: color.Warning.Main }} size="L400" align="Center">
+      Already in another call — End the current call to join!
     </Text>
   );
 }
@@ -33,6 +41,12 @@ export function CallView() {
   const permissions = useRoomPermissions(creators, powerLevels);
   const canJoin = permissions.event(StateEvent.GroupCallMemberPrefix, mx.getSafeUserId());
 
+  const callEmbed = useCallEmbed();
+  const callJoined = useCallJoined(callEmbed);
+  const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
+
+  const currentJoined = callEmbed?.roomId === room.roomId && callJoined;
+
   return (
     <Box
       ref={callViewRef}
@@ -41,12 +55,14 @@ export function CallView() {
       justifyContent="Center"
       alignItems="Center"
     >
-      <Box direction="Column" gap="100">
-        <Header size="300">
-          <HeaderJoinMessage canJoin={canJoin} />
-        </Header>
-        <PrescreenControls canJoin={canJoin} />
-      </Box>
+      {!currentJoined && (
+        <Box direction="Column" gap="100">
+          <Header size="300">
+            {inOtherCall ? <AlreadyInCallMessage /> : <JoinMessage canJoin={canJoin} />}
+          </Header>
+          <PrescreenControls canJoin={canJoin} />
+        </Box>
+      )}
     </Box>
   );
 }

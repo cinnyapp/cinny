@@ -159,6 +159,10 @@ export class CallEmbed {
     this.start();
   }
 
+  get roomId(): string {
+    return this.room.roomId;
+  }
+
   public setTheme(theme: ElementCallThemeKind) {
     return this.call.transport.send(WidgetApiToWidgetAction.ThemeChange, {
       name: theme,
@@ -178,7 +182,7 @@ export class CallEmbed {
 
   private start() {
     // Room widgets get locked to the room they were added in
-    this.call.setViewedRoomId(this.room.roomId);
+    this.call.setViewedRoomId(this.roomId);
     this.disposables.push(
       this.listenEvent(ElementWidgetActions.JoinCall, this.onCallJoined.bind(this))
     );

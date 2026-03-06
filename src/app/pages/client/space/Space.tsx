@@ -414,9 +414,7 @@ export function Space() {
           return false;
         }
         const showRoomAnyway =
-          roomToUnread.has(roomId) ||
-          roomId === selectedRoomId ||
-          callEmbed?.room.roomId === roomId;
+          roomToUnread.has(roomId) || roomId === selectedRoomId || callEmbed?.roomId === roomId;
         return !showRoomAnyway;
       },
       [space.roomId, closedCategories, roomToUnread, selectedRoomId, callEmbed]
