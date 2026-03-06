@@ -33,23 +33,6 @@ export const useCallSession = (room: Room): MatrixRTCSession => {
   return session;
 };
 
-export const useCallJoined = (session: MatrixRTCSession): boolean => {
-  const [joined, setJoined] = useState(session.isJoined());
-
-  useEffect(() => {
-    const updateState = () => {
-      setJoined(session.isJoined());
-    };
-
-    session.on(MatrixRTCSessionEvent.JoinStateChanged, updateState);
-    return () => {
-      session.removeListener(MatrixRTCSessionEvent.JoinStateChanged, updateState);
-    };
-  }, [session]);
-
-  return joined;
-};
-
 export const useCallMembers = (room: Room, session: MatrixRTCSession): CallMembership[] => {
   const [memberships, setMemberships] = useState<CallMembership[]>(
     MatrixRTCSession.sessionMembershipsForRoom(room, session.sessionDescription)

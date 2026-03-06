@@ -68,9 +68,8 @@ import { Create } from './client/create';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
-import { PersistentCallContainer } from './client/call/PersistentCallContainer';
-import { CallProvider } from './client/call/CallProvider';
 import { CallStatusRenderer } from './CallStatusRenderer';
+import { CallEmbedProvider } from '../components/CallEmbedProvider';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -127,7 +126,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                 <ClientRoomsNotificationPreferences>
                   <ClientBindAtoms>
                     <ClientNonUIFeatures>
-                      <CallProvider>
+                      <CallEmbedProvider>
                         <ClientLayout
                           nav={
                             <MobileFriendlyClientNav>
@@ -135,12 +134,10 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                             </MobileFriendlyClientNav>
                           }
                         >
-                          <PersistentCallContainer>
-                            <Outlet />
-                          </PersistentCallContainer>
+                          <Outlet />
                         </ClientLayout>
                         <CallStatusRenderer />
-                      </CallProvider>
+                      </CallEmbedProvider>
                       <SearchModalRenderer />
                       <UserRoomProfileRenderer />
                       <CreateRoomModalRenderer />

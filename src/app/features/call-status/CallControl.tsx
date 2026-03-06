@@ -1,11 +1,11 @@
 import { Box, Chip, Icon, IconButton, Icons, Text, Tooltip, TooltipProvider } from 'folds';
 import React, { useState } from 'react';
-import { useCallState } from '../../pages/client/call/CallProvider';
 import { StatusDivider } from './components';
+import { CallEmbed, useCallControlState } from '../../plugins/call';
 
 type MicrophoneButtonProps = {
   enabled: boolean;
-  onToggle: () => Promise<void>;
+  onToggle: () => Promise<unknown>;
 };
 function MicrophoneButton({ enabled, onToggle }: MicrophoneButtonProps) {
   return (
@@ -36,7 +36,7 @@ function MicrophoneButton({ enabled, onToggle }: MicrophoneButtonProps) {
 
 type SoundButtonProps = {
   enabled: boolean;
-  onToggle: () => Promise<void>;
+  onToggle: () => void;
 };
 function SoundButton({ enabled, onToggle }: SoundButtonProps) {
   return (
@@ -71,7 +71,7 @@ function SoundButton({ enabled, onToggle }: SoundButtonProps) {
 
 type VideoButtonProps = {
   enabled: boolean;
-  onToggle: () => Promise<void>;
+  onToggle: () => Promise<unknown>;
 };
 function VideoButton({ enabled, onToggle }: VideoButtonProps) {
   return (
@@ -133,25 +133,22 @@ function ScreenShareButton() {
   );
 }
 
-export function CallControl() {
-  const {
-    isAudioEnabled,
-    isVideoEnabled,
-    isDeafened,
-    toggleAudio,
-    toggleVideo,
-    hangUp,
-    toggleDeafened,
-  } = useCallState();
+export function CallControl({ callEmbed }: { callEmbed: CallEmbed }) {
+  const { microphone, video, sound } = useCallControlState(callEmbed.control);
 
   return (
     <Box shrink="No" alignItems="Center" gap="300">
       <Box alignItems="Inherit" gap="200">
-        <MicrophoneButton enabled={isAudioEnabled} onToggle={toggleAudio} />
-        <SoundButton enabled={!isDeafened} onToggle={toggleDeafened} />
-        <StatusDivider />
-        <VideoButton enabled={isVideoEnabled} onToggle={toggleVideo} />
-        <ScreenShareButton />
+        <MicrophoneButton
+          enabled={microphone}
+          onToggle={() => callEmbed.control.toggleMicrophone()}
+        />
+        <SoundButton enabled={sound} onToggle={() => callEmbed.control.toggleSound()} />
+      </Box>
+      <StatusDivider />
+      <Box alignItems="Inherit" gap="200">
+        <VideoButton enabled={video} onToggle={() => callEmbed.control.toggleVideo()} />
+        {false && <ScreenShareButton />}
       </Box>
       <StatusDivider />
       <Chip
@@ -160,7 +157,7 @@ export function CallControl() {
         fill="Soft"
         before={<Icon size="50" src={Icons.PhoneDown} filled />}
         outlined
-        onClick={hangUp}
+        onClick={() => callEmbed.hangup()}
       >
         <Text as="span" size="L400">
           End

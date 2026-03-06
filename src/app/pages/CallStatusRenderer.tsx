@@ -1,17 +1,11 @@
 import React from 'react';
+import { useCallEmbed } from '../hooks/useCallEmbed';
 import { CallStatus } from '../features/call-status';
-import { useCallState } from './client/call/CallProvider';
-import { useMatrixClient } from '../hooks/useMatrixClient';
 
 export function CallStatusRenderer() {
-  const mx = useMatrixClient();
-  const callState = useCallState();
+  const callEmbed = useCallEmbed();
 
-  const roomId = callState.activeCallRoomId;
+  if (!callEmbed) return null;
 
-  const room = roomId && mx.getRoom(roomId);
-
-  if (!room) return null;
-
-  return <CallStatus room={room} />;
+  return <CallStatus callEmbed={callEmbed} />;
 }

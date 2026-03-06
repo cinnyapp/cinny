@@ -84,7 +84,7 @@ import { ContainerColor } from '../../../styles/ContainerColor.css';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { BreakWord } from '../../../styles/Text.css';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
-import { useCallState } from '../call/CallProvider';
+import { useCallEmbed } from '../../../hooks/useCallEmbed';
 
 type SpaceMenuProps = {
   room: Room;
@@ -391,7 +391,7 @@ export function Space() {
   const selectedRoomId = useSelectedRoom();
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
-  const { isActiveCallReady, activeCallRoomId } = useCallState();
+  const callEmbed = useCallEmbed();
 
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
@@ -416,17 +416,10 @@ export function Space() {
         const showRoomAnyway =
           roomToUnread.has(roomId) ||
           roomId === selectedRoomId ||
-          (isActiveCallReady && activeCallRoomId === roomId);
+          callEmbed?.room.roomId === roomId;
         return !showRoomAnyway;
       },
-      [
-        space.roomId,
-        closedCategories,
-        roomToUnread,
-        selectedRoomId,
-        activeCallRoomId,
-        isActiveCallReady,
-      ]
+      [space.roomId, closedCategories, roomToUnread, selectedRoomId, callEmbed]
     ),
     useCallback(
       (sId) => closedCategories.has(makeNavCategoryId(space.roomId, sId)),
@@ -437,7 +430,7 @@ export function Space() {
   const virtualizer = useVirtualizer({
     count: hierarchy.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 32,
+    estimateSize: () => 0,
     overscan: 10,
   });
 

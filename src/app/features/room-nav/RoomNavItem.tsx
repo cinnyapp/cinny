@@ -19,6 +19,7 @@ import {
 } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
 import FocusTrap from 'focus-trap-react';
+import { useAtom } from 'jotai';
 import { NavItem, NavItemContent, NavItemOptions, NavLink } from '../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -53,6 +54,8 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { useRoomName } from '../../hooks/useRoomMeta';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
+import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
+import { callChatAtom } from '../../state/callEmbed';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -211,6 +214,24 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
   }
 );
 
+function CallChatToggle() {
+  const [chat, setChat] = useAtom(callChatAtom);
+
+  return (
+    <IconButton
+      onClick={() => setChat(!chat)}
+      aria-pressed={chat}
+      aria-label="Toggle Chat"
+      variant="Background"
+      fill="None"
+      size="300"
+      radii="300"
+    >
+      <Icon size="50" src={Icons.Message} filled={chat} />
+    </IconButton>
+  );
+}
+
 type RoomNavItemProps = {
   room: Room;
   selected: boolean;
@@ -257,6 +278,20 @@ export function RoomNavItem({
   const optionsVisible = hover || !!menuAnchor;
   const callSession = useCallSession(room);
   const callMembers = useCallMembers(room, callSession);
+  const startCall = useCallStart(direct);
+  const callEmbed = useCallEmbed();
+
+  const handleStartCall: MouseEventHandler<HTMLAnchorElement> = (evt) => {
+    // Do not restart if already in call
+    if (callEmbed?.room.roomId === room.roomId) {
+      return;
+    }
+    // Start call in second click
+    if (selected) {
+      evt.preventDefault();
+      startCall(room);
+    }
+  };
 
   return (
     <NavItem
@@ -269,7 +304,7 @@ export function RoomNavItem({
       {...hoverProps}
       {...focusWithinProps}
     >
-      <NavLink to={linkPath}>
+      <NavLink to={linkPath} onClick={room.isCallRoom() ? handleStartCall : undefined}>
         <NavItemContent>
           <Box as="span" grow="Yes" alignItems="Center" gap="200">
             <Avatar size="200" radii="400">
@@ -334,6 +369,9 @@ export function RoomNavItem({
       </NavLink>
       {optionsVisible && (
         <NavItemOptions>
+          {selected && (callEmbed?.room.roomId === room.roomId || room.isCallRoom()) && (
+            <CallChatToggle />
+          )}
           <PopOut
             id={`menu-${room.roomId}`}
             aria-expanded={!!menuAnchor}

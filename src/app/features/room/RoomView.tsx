@@ -93,11 +93,9 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
   return (
     <Page
       ref={roomViewRef}
-      style={
-        room.isCallRoom() && screenSize === ScreenSize.Desktop
-          ? { maxWidth: toRem(399), minWidth: toRem(399) }
-          : {}
-      }
+      style={{
+        maxWidth: room.isCallRoom() && screenSize === ScreenSize.Desktop ? toRem(450) : undefined,
+      }}
     >
       <Box grow="Yes" direction="Column">
         <RoomTimeline

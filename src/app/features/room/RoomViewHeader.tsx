@@ -24,7 +24,7 @@ import {
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
 import { Room } from 'matrix-js-sdk';
-
+import { useAtom } from 'jotai';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { PageHeader } from '../../components/page';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -67,8 +67,9 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
-import { useCallState } from '../../pages/client/call/CallProvider';
 import { ContainerColor } from '../../styles/ContainerColor.css';
+import { callChatAtom } from '../../state/callEmbed';
+import { RoomSettingsPage } from '../../state/roomSettings';
 
 type RoomMenuProps = {
   room: Room;
@@ -265,7 +266,8 @@ export function RoomViewHeader() {
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
   const direct = useIsDirectRoom();
 
-  const { isChatOpen, toggleChat } = useCallState();
+  const [chat, setChat] = useAtom(callChatAtom);
+
   const pinnedEvents = useRoomPinnedEvents(room);
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const encryptedRoom = !!encryptionEvent;
@@ -294,6 +296,16 @@ export function RoomViewHeader() {
 
   const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setPinMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const openSettings = useOpenRoomSettings();
+  const parentSpace = useSpaceOptionally();
+  const handleMemberToggle = () => {
+    if (room.isCallRoom()) {
+      openSettings(room.roomId, parentSpace?.roomId, RoomSettingsPage.MembersPage);
+      return;
+    }
+    setPeopleDrawer(!peopleDrawer);
   };
 
   return (
@@ -371,84 +383,80 @@ export function RoomViewHeader() {
         </Box>
 
         <Box shrink="No">
-          {(!room.isCallRoom() || isChatOpen) && (
-            <>
-              {!encryptedRoom && (
-                <TooltipProvider
-                  position="Bottom"
-                  offset={4}
-                  tooltip={
-                    <Tooltip>
-                      <Text>Search</Text>
-                    </Tooltip>
-                  }
-                >
-                  {(triggerRef) => (
-                    <IconButton fill="None" ref={triggerRef} onClick={handleSearchClick}>
-                      <Icon size="400" src={Icons.Search} />
-                    </IconButton>
-                  )}
-                </TooltipProvider>
+          {!encryptedRoom && (
+            <TooltipProvider
+              position="Bottom"
+              offset={4}
+              tooltip={
+                <Tooltip>
+                  <Text>Search</Text>
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => (
+                <IconButton fill="None" ref={triggerRef} onClick={handleSearchClick}>
+                  <Icon size="400" src={Icons.Search} />
+                </IconButton>
               )}
-              <TooltipProvider
-                position="Bottom"
-                offset={4}
-                tooltip={
-                  <Tooltip>
-                    <Text>Pinned Messages</Text>
-                  </Tooltip>
-                }
-              >
-                {(triggerRef) => (
-                  <IconButton
-                    fill="None"
-                    style={{ position: 'relative' }}
-                    onClick={handleOpenPinMenu}
-                    ref={triggerRef}
-                    aria-pressed={!!pinMenuAnchor}
-                  >
-                    {pinnedEvents.length > 0 && (
-                      <Badge
-                        style={{
-                          position: 'absolute',
-                          left: toRem(3),
-                          top: toRem(3),
-                        }}
-                        variant="Secondary"
-                        size="400"
-                        fill="Solid"
-                        radii="Pill"
-                      >
-                        <Text as="span" size="L400">
-                          {pinnedEvents.length}
-                        </Text>
-                      </Badge>
-                    )}
-                    <Icon size="400" src={Icons.Pin} filled={!!pinMenuAnchor} />
-                  </IconButton>
-                )}
-              </TooltipProvider>
-              <PopOut
-                anchor={pinMenuAnchor}
-                position="Bottom"
-                content={
-                  <FocusTrap
-                    focusTrapOptions={{
-                      initialFocus: false,
-                      returnFocusOnDeactivate: false,
-                      onDeactivate: () => setPinMenuAnchor(undefined),
-                      clickOutsideDeactivates: true,
-                      isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                      isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                      escapeDeactivates: stopPropagation,
-                    }}
-                  >
-                    <RoomPinMenu room={room} requestClose={() => setPinMenuAnchor(undefined)} />
-                  </FocusTrap>
-                }
-              />
-            </>
+            </TooltipProvider>
           )}
+          <TooltipProvider
+            position="Bottom"
+            offset={4}
+            tooltip={
+              <Tooltip>
+                <Text>Pinned Messages</Text>
+              </Tooltip>
+            }
+          >
+            {(triggerRef) => (
+              <IconButton
+                fill="None"
+                style={{ position: 'relative' }}
+                onClick={handleOpenPinMenu}
+                ref={triggerRef}
+                aria-pressed={!!pinMenuAnchor}
+              >
+                {pinnedEvents.length > 0 && (
+                  <Badge
+                    style={{
+                      position: 'absolute',
+                      left: toRem(3),
+                      top: toRem(3),
+                    }}
+                    variant="Secondary"
+                    size="400"
+                    fill="Solid"
+                    radii="Pill"
+                  >
+                    <Text as="span" size="L400">
+                      {pinnedEvents.length}
+                    </Text>
+                  </Badge>
+                )}
+                <Icon size="400" src={Icons.Pin} filled={!!pinMenuAnchor} />
+              </IconButton>
+            )}
+          </TooltipProvider>
+          <PopOut
+            anchor={pinMenuAnchor}
+            position="Bottom"
+            content={
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  returnFocusOnDeactivate: false,
+                  onDeactivate: () => setPinMenuAnchor(undefined),
+                  clickOutsideDeactivates: true,
+                  isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                  isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  escapeDeactivates: stopPropagation,
+                }}
+              >
+                <RoomPinMenu room={room} requestClose={() => setPinMenuAnchor(undefined)} />
+              </FocusTrap>
+            }
+          />
 
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
@@ -461,12 +469,8 @@ export function RoomViewHeader() {
               }
             >
               {(triggerRef) => (
-                <IconButton
-                  fill="None"
-                  ref={triggerRef}
-                  onClick={() => setPeopleDrawer((drawer) => !drawer)}
-                >
-                  <Icon size="400" src={Icons.User} filled={peopleDrawer} />
+                <IconButton fill="None" ref={triggerRef} onClick={handleMemberToggle}>
+                  <Icon size="400" src={Icons.User} />
                 </IconButton>
               )}
             </TooltipProvider>
@@ -483,8 +487,8 @@ export function RoomViewHeader() {
               }
             >
               {(triggerRef) => (
-                <IconButton fill="None" ref={triggerRef} onClick={toggleChat}>
-                  <Icon size="400" src={Icons.Message} filled={isChatOpen} />
+                <IconButton fill="None" ref={triggerRef} onClick={() => setChat(!chat)}>
+                  <Icon size="400" src={Icons.Message} filled={chat} />
                 </IconButton>
               )}
             </TooltipProvider>
