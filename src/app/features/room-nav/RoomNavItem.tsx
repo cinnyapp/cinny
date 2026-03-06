@@ -19,7 +19,7 @@ import {
 } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
 import FocusTrap from 'focus-trap-react';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { NavItem, NavItemContent, NavItemOptions, NavLink } from '../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -56,6 +56,8 @@ import { useRoomName } from '../../hooks/useRoomMeta';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
 import { callChatAtom } from '../../state/callEmbed';
+import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
+import { CallControlState } from '../../plugins/call/CallControlState';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -280,6 +282,7 @@ export function RoomNavItem({
   const callMembers = useCallMembers(room, callSession);
   const startCall = useCallStart(direct);
   const callEmbed = useCallEmbed();
+  const callPref = useAtomValue(useCallPreferencesAtom());
 
   const handleStartCall: MouseEventHandler<HTMLAnchorElement> = (evt) => {
     // Do not join if already in call
@@ -289,7 +292,7 @@ export function RoomNavItem({
     // Start call in second click
     if (selected) {
       evt.preventDefault();
-      startCall(room);
+      startCall(room, new CallControlState(callPref.microphone, callPref.video, callPref.sound));
     }
   };
 
