@@ -282,8 +282,8 @@ export function RoomNavItem({
   const callEmbed = useCallEmbed();
 
   const handleStartCall: MouseEventHandler<HTMLAnchorElement> = (evt) => {
-    // Do not restart if already in call
-    if (callEmbed?.room.roomId === room.roomId) {
+    // Do not join if already in call
+    if (callEmbed) {
       return;
     }
     // Start call in second click
