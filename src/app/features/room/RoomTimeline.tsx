@@ -27,6 +27,7 @@ import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
+import { SessionMembershipData } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import to from 'await-to-js';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -1476,6 +1477,28 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
+      const callMember = mEvent.getType() === StateEvent.GroupCallMemberPrefix;
+      const callJoined = mEvent.getContent<SessionMembershipData>().application;
+      const callIcon = callJoined ? Icons.Phone : Icons.PhoneDown;
+
+      let content = (
+        <Text size="T300" priority="300">
+          <b>{senderName}</b>
+          {' sent '}
+          <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
+          {' state event'}
+        </Text>
+      );
+
+      if (callMember) {
+        content = (
+          <Text size="T300" priority="300">
+            <b>{senderName}</b>
+            {callJoined ? ' joined the call' : ' ended the call'}
+          </Text>
+        );
+      }
+
       const timeJSX = (
         <Time
           ts={mEvent.getTs()}
@@ -1501,15 +1524,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           <EventContent
             messageLayout={messageLayout}
             time={timeJSX}
-            iconSrc={Icons.Code}
+            iconSrc={callMember ? callIcon : Icons.Code}
             content={
               <Box grow="Yes" direction="Column">
-                <Text size="T300" priority="300">
-                  <b>{senderName}</b>
-                  {' sent '}
-                  <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
-                  {' state event'}
-                </Text>
+                {content}
               </Box>
             }
           />
