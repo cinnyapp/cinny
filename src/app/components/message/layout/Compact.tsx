@@ -10,10 +10,12 @@ type CompactLayoutProps = {
 export const CompactLayout = as<'div', CompactLayoutProps>(
   ({ before, context, children, ...props }, ref) => (
     <Box direction="Column" {...props} ref={ref}>
-      <Box gap="200">
-        <Box className={css.CompactHeader} shrink="No" />
-        {context}
-      </Box>
+      {!!context && (
+        <Box gap="200">
+          <Box className={css.CompactHeader} shrink="No" />
+          {context}
+        </Box>
+      )}
       <Box gap="200">
         <Box className={css.CompactHeader} gap="200" shrink="No">
           {before}
