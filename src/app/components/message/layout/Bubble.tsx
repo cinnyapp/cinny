@@ -30,16 +30,18 @@ type BubbleLayoutProps = {
   hideBubble?: boolean;
   before?: ReactNode;
   header?: ReactNode;
+  context?: ReactNode;
 };
 
 export const BubbleLayout = as<'div', BubbleLayoutProps>(
-  ({ hideBubble, before, header, children, ...props }, ref) => (
+  ({ hideBubble, before, header, context, children, ...props }, ref) => (
     <Box gap="300" {...props} ref={ref}>
       <Box className={css.BubbleBefore} shrink="No">
         {before}
       </Box>
       <Box grow="Yes" direction="Column">
         {header}
+        {context}
         {hideBubble ? (
           children
         ) : (

@@ -4,15 +4,22 @@ import * as css from './layout.css';
 
 type CompactLayoutProps = {
   before?: ReactNode;
+  context?: ReactNode;
 };
 
 export const CompactLayout = as<'div', CompactLayoutProps>(
-  ({ before, children, ...props }, ref) => (
-    <Box gap="200" {...props} ref={ref}>
-      <Box className={css.CompactHeader} gap="200" shrink="No">
-        {before}
+  ({ before, context, children, ...props }, ref) => (
+    <Box direction="Column" {...props} ref={ref}>
+      <Box gap="200">
+        <Box className={css.CompactHeader} shrink="No" />
+        {context}
       </Box>
-      {children}
+      <Box gap="200">
+        <Box className={css.CompactHeader} gap="200" shrink="No">
+          {before}
+        </Box>
+        {children}
+      </Box>
     </Box>
   )
 );
