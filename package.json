@@ -10,6 +10,7 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
+    "preview": "vite preview",
     "lint": "yarn check:eslint && yarn check:prettier",
     "check:eslint": "eslint src/*",
     "check:prettier": "prettier --check .",
@@ -55,6 +56,7 @@
     "linkify-react": "4.3.2",
     "linkifyjs": "4.3.2",
     "matrix-js-sdk": "38.2.0",
+    "matrix-widget-api": "1.17.0",
     "millify": "6.1.0",
     "pdfjs-dist": "4.2.67",
     "prismjs": "1.30.0",
@@ -76,6 +78,7 @@
     "ua-parser-js": "1.0.35"
   },
   "devDependencies": {
+    "@element-hq/element-call-embedded": "0.16.3",
     "@esbuild-plugins/node-globals-polyfill": "0.2.3",
     "@rollup/plugin-inject": "5.0.3",
     "@rollup/plugin-wasm": "6.1.1",
