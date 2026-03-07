@@ -56,7 +56,7 @@
     "linkify-react": "4.3.2",
     "linkifyjs": "4.3.2",
     "matrix-js-sdk": "38.2.0",
-    "matrix-widget-api": "1.17.0",
+    "matrix-widget-api": "1.13.0",
     "millify": "6.1.0",
     "pdfjs-dist": "4.2.67",
     "prismjs": "1.30.0",
