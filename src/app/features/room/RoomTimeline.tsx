@@ -1470,34 +1470,57 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           </Event>
         );
       },
+      [StateEvent.GroupCallMemberPrefix]: (mEventId, mEvent, item) => {
+        const highlighted = focusItem?.index === item && focusItem.highlight;
+        const senderId = mEvent.getSender() ?? '';
+        const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+
+        const callJoined = mEvent.getContent<SessionMembershipData>().application;
+
+        const timeJSX = (
+          <Time
+            ts={mEvent.getTs()}
+            compact={messageLayout === MessageLayout.Compact}
+            hour24Clock={hour24Clock}
+            dateFormatString={dateFormatString}
+          />
+        );
+
+        return (
+          <Event
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            highlight={highlighted}
+            messageSpacing={messageSpacing}
+            canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+            hideReadReceipts={hideActivity}
+            showDeveloperTools={showDeveloperTools}
+          >
+            <EventContent
+              messageLayout={messageLayout}
+              time={timeJSX}
+              iconSrc={callJoined ? Icons.Phone : Icons.PhoneDown}
+              content={
+                <Box grow="Yes" direction="Column">
+                  <Text size="T300" priority="300">
+                    <b>{senderName}</b>
+                    {callJoined ? ' joined the call' : ' ended the call'}
+                  </Text>
+                </Box>
+              }
+            />
+          </Event>
+        );
+      },
     },
     (mEventId, mEvent, item) => {
       if (!showHiddenEvents) return null;
       const highlighted = focusItem?.index === item && focusItem.highlight;
       const senderId = mEvent.getSender() ?? '';
       const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
-
-      const callMember = mEvent.getType() === StateEvent.GroupCallMemberPrefix;
-      const callJoined = mEvent.getContent<SessionMembershipData>().application;
-      const callIcon = callJoined ? Icons.Phone : Icons.PhoneDown;
-
-      let content = (
-        <Text size="T300" priority="300">
-          <b>{senderName}</b>
-          {' sent '}
-          <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
-          {' state event'}
-        </Text>
-      );
-
-      if (callMember) {
-        content = (
-          <Text size="T300" priority="300">
-            <b>{senderName}</b>
-            {callJoined ? ' joined the call' : ' ended the call'}
-          </Text>
-        );
-      }
 
       const timeJSX = (
         <Time
@@ -1524,10 +1547,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           <EventContent
             messageLayout={messageLayout}
             time={timeJSX}
-            iconSrc={callMember ? callIcon : Icons.Code}
+            iconSrc={Icons.Code}
             content={
               <Box grow="Yes" direction="Column">
-                {content}
+                <Text size="T300" priority="300">
+                  <b>{senderName}</b>
+                  {' sent '}
+                  <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
+                  {' state event'}
+                </Text>
               </Box>
             }
           />
