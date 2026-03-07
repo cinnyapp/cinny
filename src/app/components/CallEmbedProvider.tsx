@@ -7,9 +7,10 @@ import {
   useCallJoined,
   useCallThemeSync,
 } from '../hooks/useCallEmbed';
-import { callEmbedAtom } from '../state/callEmbed';
+import { callChatAtom, callEmbedAtom } from '../state/callEmbed';
 import { CallEmbed } from '../plugins/call';
 import { useSelectedRoom } from '../hooks/router/useSelectedRoom';
+import { ScreenSize, useScreenSizeContext } from '../hooks/useScreenSize';
 
 function CallUtils({ embed }: { embed: CallEmbed }) {
   const setCallEmbed = useSetAtom(callEmbedAtom);
@@ -34,7 +35,12 @@ export function CallEmbedProvider({ children }: CallEmbedProviderProps) {
   const joined = useCallJoined(callEmbed);
 
   const selectedRoom = useSelectedRoom();
-  const callVisible = callEmbed && selectedRoom === callEmbed.roomId && joined;
+  const chat = useAtomValue(callChatAtom);
+  const screenSize = useScreenSizeContext();
+
+  const chatOnlyView = chat && screenSize !== ScreenSize.Desktop;
+
+  const callVisible = callEmbed && selectedRoom === callEmbed.roomId && joined && !chatOnlyView;
 
   return (
     <CallEmbedContextProvider value={callEmbed}>

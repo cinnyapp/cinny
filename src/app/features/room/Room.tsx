@@ -17,6 +17,7 @@ import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { CallView } from '../call/CallView';
 import { RoomViewHeader } from './RoomViewHeader';
 import { callChatAtom } from '../../state/callEmbed';
+import { CallChatView } from './CallChatView';
 
 export function Room() {
   const { eventId } = useParams();
@@ -42,20 +43,37 @@ export function Room() {
     )
   );
 
+  const callView = room.isCallRoom();
+
   return (
     <PowerLevelsContextProvider value={powerLevels}>
       <Box grow="Yes">
-        <Box grow="Yes" direction="Column">
-          <RoomViewHeader />
-          <Box grow="Yes">
-            {room.isCallRoom() && <CallView />}
-            {room.isCallRoom() && screenSize === ScreenSize.Desktop && chat && (
+        {callView && (screenSize === ScreenSize.Desktop || !chat) && (
+          <Box grow="Yes" direction="Column">
+            <RoomViewHeader callView />
+            <Box grow="Yes">
+              <CallView />
+            </Box>
+          </Box>
+        )}
+        {!callView && (
+          <Box grow="Yes" direction="Column">
+            <RoomViewHeader />
+            <Box grow="Yes">
+              <RoomView eventId={eventId} />
+            </Box>
+          </Box>
+        )}
+
+        {callView && chat && (
+          <>
+            {screenSize === ScreenSize.Desktop && (
               <Line variant="Background" direction="Vertical" size="300" />
             )}
-            {(!room.isCallRoom() || chat) && <RoomView room={room} eventId={eventId} />}
-          </Box>
-        </Box>
-        {!room.isCallRoom() && screenSize === ScreenSize.Desktop && isDrawer && (
+            <CallChatView />
+          </>
+        )}
+        {!callView && screenSize === ScreenSize.Desktop && isDrawer && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
             <MembersDrawer key={room.roomId} room={room} members={members} />

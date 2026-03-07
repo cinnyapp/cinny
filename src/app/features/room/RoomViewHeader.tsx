@@ -255,7 +255,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
   );
 });
 
-export function RoomViewHeader() {
+export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const navigate = useNavigate();
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -301,7 +301,7 @@ export function RoomViewHeader() {
   const openSettings = useOpenRoomSettings();
   const parentSpace = useSpaceOptionally();
   const handleMemberToggle = () => {
-    if (room.isCallRoom()) {
+    if (callView) {
       openSettings(room.roomId, parentSpace?.roomId, RoomSettingsPage.MembersPage);
       return;
     }
@@ -476,7 +476,7 @@ export function RoomViewHeader() {
             </TooltipProvider>
           )}
 
-          {room.isCallRoom() && !direct && (
+          {callView && (
             <TooltipProvider
               position="Bottom"
               offset={4}
