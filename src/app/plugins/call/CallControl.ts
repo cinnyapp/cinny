@@ -59,10 +59,8 @@ export class CallControl extends EventEmitter implements CallControlState {
     const callDocument = this.iframe.contentDocument ?? this.iframe.contentWindow?.document;
     if (callDocument) {
       callDocument.querySelectorAll('audio').forEach((el) => {
-        if (el) {
-          // eslint-disable-next-line no-param-reassign
-          el.muted = !sound;
-        }
+        // eslint-disable-next-line no-param-reassign
+        el.muted = !sound;
       });
     }
   }
