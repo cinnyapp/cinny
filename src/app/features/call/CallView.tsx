@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Badge, Box, color, Header, Scroll, Text, toRem } from 'folds';
-import { useCallEmbed, useCallJoined, useSyncCallEmbedPlacement } from '../../hooks/useCallEmbed';
+import { useCallEmbed, useCallJoined, useCallEmbedPlacementSync } from '../../hooks/useCallEmbed';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { PrescreenControls } from './PrescreenControls';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
@@ -44,7 +44,7 @@ export function CallView() {
   const room = useRoom();
 
   const callViewRef = useRef<HTMLDivElement>(null);
-  useSyncCallEmbedPlacement(callViewRef);
+  useCallEmbedPlacementSync(callViewRef);
 
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);

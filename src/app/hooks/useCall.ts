@@ -53,3 +53,12 @@ export const useCallMembers = (room: Room, session: MatrixRTCSession): CallMembe
 
   return memberships;
 };
+
+export const useCallMembersChange = (session: MatrixRTCSession, callback: () => void): void => {
+  useEffect(() => {
+    session.on(MatrixRTCSessionEvent.MembershipsChanged, callback);
+    return () => {
+      session.removeListener(MatrixRTCSessionEvent.MembershipsChanged, callback);
+    };
+  }, [session, callback]);
+};

@@ -6,6 +6,7 @@ import {
   useCallHangupEvent,
   useCallJoined,
   useCallThemeSync,
+  useCallMemberSoundSync,
 } from '../hooks/useCallEmbed';
 import { callChatAtom, callEmbedAtom } from '../state/callEmbed';
 import { CallEmbed } from '../plugins/call';
@@ -15,6 +16,7 @@ import { ScreenSize, useScreenSizeContext } from '../hooks/useScreenSize';
 function CallUtils({ embed }: { embed: CallEmbed }) {
   const setCallEmbed = useSetAtom(callEmbedAtom);
 
+  useCallMemberSoundSync(embed);
   useCallThemeSync(embed);
   useCallHangupEvent(
     embed,

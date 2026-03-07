@@ -13,6 +13,7 @@ import { ThemeKind, useTheme } from './useTheme';
 import { callEmbedAtom } from '../state/callEmbed';
 import { useResizeObserver } from './useResizeObserver';
 import { CallControlState } from '../plugins/call/CallControlState';
+import { useCallMembersChange, useCallSession } from './useCall';
 
 const CallEmbedContext = createContext<CallEmbed | undefined>(undefined);
 
@@ -99,6 +100,14 @@ export const useCallHangupEvent = (embed: CallEmbed, callback: () => void) => {
   useClientWidgetApiEvent(embed.call, ElementWidgetActions.HangupCall, callback);
 };
 
+export const useCallMemberSoundSync = (embed: CallEmbed) => {
+  const callSession = useCallSession(embed.room);
+  useCallMembersChange(
+    callSession,
+    useCallback(() => embed.control.applySound(), [embed])
+  );
+};
+
 export const useCallThemeSync = (embed: CallEmbed) => {
   const theme = useTheme();
 
@@ -109,7 +118,7 @@ export const useCallThemeSync = (embed: CallEmbed) => {
   }, [theme.kind, embed]);
 };
 
-export const useSyncCallEmbedPlacement = (containerViewRef: RefObject<HTMLDivElement>): void => {
+export const useCallEmbedPlacementSync = (containerViewRef: RefObject<HTMLDivElement>): void => {
   const callEmbedRef = useCallEmbedRef();
 
   const syncCallEmbedPlacement = useCallback(() => {
