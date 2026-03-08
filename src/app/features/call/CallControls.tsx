@@ -10,6 +10,7 @@ import {
   MenuItem,
   PopOut,
   RectCords,
+  Spinner,
   Text,
   toRem,
 } from 'folds';
@@ -27,6 +28,7 @@ import {
 import { CallEmbed, useCallControlState } from '../../plugins/call';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { stopPropagation } from '../../utils/keyboard';
+import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 
 type CallControlsProps = {
   callEmbed: CallEmbed;
@@ -68,6 +70,12 @@ export function CallControls({ callEmbed }: CallControlsProps) {
     callEmbed.control.toggleSettings();
     setCords(undefined);
   };
+
+  const [hangupState, hangup] = useAsyncCallback(
+    useCallback(() => callEmbed.hangup(), [callEmbed])
+  );
+  const exiting =
+    hangupState.status === AsyncStatus.Loading || hangupState.status === AsyncStatus.Success;
 
   return (
     <Box
@@ -175,8 +183,15 @@ export function CallControls({ callEmbed }: CallControlsProps) {
               style={{ minWidth: toRem(88) }}
               variant="Critical"
               fill="Solid"
-              onClick={() => callEmbed.hangup()}
-              before={<Icon src={Icons.PhoneDown} size="200" filled />}
+              onClick={hangup}
+              before={
+                exiting ? (
+                  <Spinner variant="Critical" fill="Solid" size="200" />
+                ) : (
+                  <Icon src={Icons.PhoneDown} size="200" filled />
+                )
+              }
+              disabled={exiting}
             >
               <Text size="B400">End</Text>
             </Button>
