@@ -57,7 +57,6 @@ import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
 import { callChatAtom } from '../../state/callEmbed';
 import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
-import { CallControlState } from '../../plugins/call/CallControlState';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -292,7 +291,7 @@ export function RoomNavItem({
     // Start call in second click
     if (selected) {
       evt.preventDefault();
-      startCall(room, new CallControlState(callPref.microphone, callPref.video, callPref.sound));
+      startCall(room, callPref);
     }
   };
 

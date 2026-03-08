@@ -6,7 +6,6 @@ import { ChatButton, ControlDivider, MicrophoneButton, SoundButton, VideoButton 
 import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
 import { useCallEmbed, useCallJoined, useCallStart } from '../../hooks/useCallEmbed';
 import { useCallPreferences } from '../../state/hooks/callPreferences';
-import { CallControlState } from '../../plugins/call/CallControlState';
 
 type PrescreenControlsProps = {
   canJoin?: boolean;
@@ -50,7 +49,7 @@ export function PrescreenControls({ canJoin }: PrescreenControlsProps) {
         <Button
           variant={disabled ? 'Secondary' : 'Success'}
           fill={disabled ? 'Soft' : 'Solid'}
-          onClick={() => startCall(room, new CallControlState(microphone, video, sound))}
+          onClick={() => startCall(room, { microphone, video, sound })}
           disabled={disabled || joining}
           before={
             joining ? (

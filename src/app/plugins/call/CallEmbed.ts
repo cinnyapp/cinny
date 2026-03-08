@@ -220,6 +220,7 @@ export class CallEmbed {
     });
     this.call.stop();
     this.container.removeChild(this.iframe);
+    this.control.dispose();
 
     this.mx.off(ClientEvent.Event, this.onEvent.bind(this));
     this.mx.off(MatrixEventEvent.Decrypted, this.onEventDecrypted.bind(this));
@@ -233,6 +234,21 @@ export class CallEmbed {
 
   private onCallJoined(): void {
     this.joined = true;
+    this.applyStyles();
+    this.control.startObserving();
+  }
+
+  private applyStyles(): void {
+    const doc = this.document;
+    if (!doc) return;
+
+    doc.body.style.setProperty('background', 'none', 'important');
+    const controls = doc.body.querySelector('[data-testid="incall_leave"]')?.parentElement
+      ?.parentElement;
+    if (controls) {
+      controls.style.setProperty('position', 'absolute');
+      controls.style.setProperty('visibility', 'hidden');
+    }
   }
 
   private onEvent(ev: MatrixEvent): void {

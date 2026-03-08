@@ -1,5 +1,5 @@
 import { Box, Chip, Icon, IconButton, Icons, Text, Tooltip, TooltipProvider } from 'folds';
-import React, { useState } from 'react';
+import React from 'react';
 import { StatusDivider } from './components';
 import { CallEmbed, useCallControlState } from '../../plugins/call';
 
@@ -104,9 +104,11 @@ function VideoButton({ enabled, onToggle }: VideoButtonProps) {
   );
 }
 
-function ScreenShareButton() {
-  const [enabled, setEnabled] = useState(false);
-
+type ScreenShareButtonProps = {
+  enabled: boolean;
+  onToggle: () => void;
+};
+function ScreenShareButton({ enabled, onToggle }: ScreenShareButtonProps) {
   return (
     <TooltipProvider
       position="Top"
@@ -123,7 +125,7 @@ function ScreenShareButton() {
           fill="Soft"
           radii="300"
           size="300"
-          onClick={() => setEnabled(!enabled)}
+          onClick={onToggle}
           outlined
         >
           <Icon size="100" src={Icons.ScreenShare} filled={enabled} />
@@ -134,7 +136,7 @@ function ScreenShareButton() {
 }
 
 export function CallControl({ callEmbed }: { callEmbed: CallEmbed }) {
-  const { microphone, video, sound } = useCallControlState(callEmbed.control);
+  const { microphone, video, sound, screenshare } = useCallControlState(callEmbed.control);
 
   return (
     <Box shrink="No" alignItems="Center" gap="300">
@@ -144,8 +146,12 @@ export function CallControl({ callEmbed }: { callEmbed: CallEmbed }) {
           onToggle={() => callEmbed.control.toggleMicrophone()}
         />
         <SoundButton enabled={sound} onToggle={() => callEmbed.control.toggleSound()} />
+        <StatusDivider />
         <VideoButton enabled={video} onToggle={() => callEmbed.control.toggleVideo()} />
-        {false && <ScreenShareButton />}
+        <ScreenShareButton
+          enabled={screenshare}
+          onToggle={() => callEmbed.control.toggleScreenshare()}
+        />
       </Box>
       <StatusDivider />
       <Chip

@@ -18,3 +18,7 @@ export const ControlDivider = style({
 export const CallMemberCard = style({
   padding: config.space.S300,
 });
+
+export const CallControlContainer = style({
+  padding: config.space.S400,
+});
