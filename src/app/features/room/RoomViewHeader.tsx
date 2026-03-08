@@ -24,7 +24,6 @@ import {
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
 import { Room } from 'matrix-js-sdk';
-import { useAtom } from 'jotai';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { PageHeader } from '../../components/page';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -68,7 +67,6 @@ import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { ContainerColor } from '../../styles/ContainerColor.css';
-import { callChatAtom } from '../../state/callEmbed';
 import { RoomSettingsPage } from '../../state/roomSettings';
 
 type RoomMenuProps = {
@@ -265,8 +263,6 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
   const direct = useIsDirectRoom();
-
-  const [chat, setChat] = useAtom(callChatAtom);
 
   const pinnedEvents = useRoomPinnedEvents(room);
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
@@ -471,24 +467,6 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               {(triggerRef) => (
                 <IconButton fill="None" ref={triggerRef} onClick={handleMemberToggle}>
                   <Icon size="400" src={Icons.User} />
-                </IconButton>
-              )}
-            </TooltipProvider>
-          )}
-
-          {callView && (
-            <TooltipProvider
-              position="Bottom"
-              offset={4}
-              tooltip={
-                <Tooltip>
-                  <Text>Chat</Text>
-                </Tooltip>
-              }
-            >
-              {(triggerRef) => (
-                <IconButton fill="None" ref={triggerRef} onClick={() => setChat(!chat)}>
-                  <Icon size="400" src={Icons.Message} filled={chat} />
                 </IconButton>
               )}
             </TooltipProvider>
