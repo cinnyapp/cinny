@@ -118,7 +118,7 @@ export function CallView() {
       grow="Yes"
     >
       {!currentJoined && <CallPrescreen />}
-      <CallJoined joined={callJoined} containerRef={callContainerRef} />
+      <CallJoined joined={currentJoined} containerRef={callContainerRef} />
     </Box>
   );
 }
