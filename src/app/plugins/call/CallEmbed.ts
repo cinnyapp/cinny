@@ -163,6 +163,10 @@ export class CallEmbed {
     return this.room.roomId;
   }
 
+  get document(): Document | undefined {
+    return this.iframe.contentDocument ?? this.iframe.contentWindow?.document;
+  }
+
   public setTheme(theme: ElementCallThemeKind) {
     return this.call.transport.send(WidgetApiToWidgetAction.ThemeChange, {
       name: theme,

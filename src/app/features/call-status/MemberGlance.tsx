@@ -10,13 +10,15 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { StackedAvatar } from '../../components/stacked-avatar';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { getMouseEventCords } from '../../utils/dom';
+import * as css from './styles.css';
 
 type MemberGlanceProps = {
   room: Room;
   members: CallMembership[];
+  speakers: Set<string>;
   max?: number;
 };
-export function MemberGlance({ room, members, max = 6 }: MemberGlanceProps) {
+export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const openUserProfile = useOpenUserRoomProfile();
@@ -38,6 +40,7 @@ export function MemberGlance({ room, members, max = 6 }: MemberGlanceProps) {
         return (
           <StackedAvatar
             key={callMember.membershipID}
+            className={speakers.has(callMember.sender) ? css.SpeakerAvatarOutline : undefined}
             title={name}
             as="button"
             variant="Background"

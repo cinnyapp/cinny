@@ -15,3 +15,7 @@ export const CallStatus = style([
 export const ControlDivider = style({
   height: toRem(16),
 });
+
+export const SpeakerAvatarOutline = style({
+  boxShadow: `0 0 0 ${config.borderWidth.B600} ${color.Success.Main}`,
+});
