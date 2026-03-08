@@ -3,16 +3,18 @@ import { CallEmbed } from '../plugins/call';
 import { useMutationObserver } from './useMutationObserver';
 import { isUserId } from '../utils/matrix';
 import { useCallMembers, useCallSession } from './useCall';
+import { useCallJoined } from './useCallEmbed';
 
 export const useCallSpeakers = (callEmbed: CallEmbed): Set<string> => {
   const [speakers, setSpeakers] = useState(new Set<string>());
   const callSession = useCallSession(callEmbed.room);
   const callMembers = useCallMembers(callEmbed.room, callSession);
+  const joined = useCallJoined(callEmbed);
 
   const videoContainers = useMemo(() => {
-    if (callMembers) return callEmbed.document?.querySelectorAll('[data-video-fit]');
+    if (callMembers && joined) return callEmbed.document?.querySelectorAll('[data-video-fit]');
     return undefined;
-  }, [callEmbed, callMembers]);
+  }, [callEmbed, callMembers, joined]);
 
   const mutationObserver = useMutationObserver(
     useCallback(

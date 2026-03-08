@@ -20,12 +20,12 @@ function MicrophoneButton({ enabled, onToggle }: MicrophoneButtonProps) {
       {(anchorRef) => (
         <IconButton
           ref={anchorRef}
-          variant={enabled ? 'Background' : 'Warning'}
+          variant={enabled ? 'Surface' : 'Warning'}
           fill="Soft"
           radii="300"
           size="300"
           onClick={() => onToggle()}
-          outlined={!enabled}
+          outlined
         >
           <Icon size="100" src={enabled ? Icons.Mic : Icons.MicMute} filled={!enabled} />
         </IconButton>
@@ -51,12 +51,12 @@ function SoundButton({ enabled, onToggle }: SoundButtonProps) {
       {(anchorRef) => (
         <IconButton
           ref={anchorRef}
-          variant={enabled ? 'Background' : 'Warning'}
+          variant={enabled ? 'Surface' : 'Warning'}
           fill="Soft"
           radii="300"
           size="300"
           onClick={() => onToggle()}
-          outlined={!enabled}
+          outlined
         >
           <Icon
             size="100"
@@ -86,12 +86,12 @@ function VideoButton({ enabled, onToggle }: VideoButtonProps) {
       {(anchorRef) => (
         <IconButton
           ref={anchorRef}
-          variant={enabled ? 'Success' : 'Background'}
+          variant={enabled ? 'Success' : 'Surface'}
           fill="Soft"
           radii="300"
           size="300"
           onClick={() => onToggle()}
-          outlined={enabled}
+          outlined
         >
           <Icon
             size="100"
@@ -119,12 +119,12 @@ function ScreenShareButton() {
       {(anchorRef) => (
         <IconButton
           ref={anchorRef}
-          variant={enabled ? 'Success' : 'Background'}
+          variant={enabled ? 'Success' : 'Surface'}
           fill="Soft"
           radii="300"
           size="300"
           onClick={() => setEnabled(!enabled)}
-          outlined={enabled}
+          outlined
         >
           <Icon size="100" src={Icons.ScreenShare} filled={enabled} />
         </IconButton>
@@ -144,9 +144,6 @@ export function CallControl({ callEmbed }: { callEmbed: CallEmbed }) {
           onToggle={() => callEmbed.control.toggleMicrophone()}
         />
         <SoundButton enabled={sound} onToggle={() => callEmbed.control.toggleSound()} />
-      </Box>
-      <StatusDivider />
-      <Box alignItems="Inherit" gap="200">
         <VideoButton enabled={video} onToggle={() => callEmbed.control.toggleVideo()} />
         {false && <ScreenShareButton />}
       </Box>
