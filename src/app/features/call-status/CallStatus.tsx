@@ -41,7 +41,9 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
     >
       <Box grow="Yes" alignItems="Center" gap="200">
         {memberVisible ? (
-          <LiveChip count={callMembers.length} room={room} members={callMembers} />
+          <Box shrink="No">
+            <LiveChip count={callMembers.length} room={room} members={callMembers} />
+          </Box>
         ) : (
           <Spinner variant="Secondary" size="200" />
         )}
@@ -60,7 +62,11 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
             </>
           )}
         </Box>
-        {memberVisible && <MemberGlance room={room} members={callMembers} speakers={speakers} />}
+        {memberVisible && (
+          <Box shrink="No">
+            <MemberGlance room={room} members={callMembers} speakers={speakers} />
+          </Box>
+        )}
       </Box>
       {memberVisible && !compact && <StatusDivider />}
       <Box shrink="No" alignItems="Center" justifyContent="Center" gap="Inherit">
