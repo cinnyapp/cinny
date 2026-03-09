@@ -74,7 +74,7 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
             <CallRoomName room={room} />
           </Box>
         )}
-        <CallControl compact={compact} callEmbed={callEmbed} />
+        <CallControl callJoined={callJoined} compact={compact} callEmbed={callEmbed} />
       </Box>
     </Box>
   );
