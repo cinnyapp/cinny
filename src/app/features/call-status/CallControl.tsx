@@ -1,7 +1,8 @@
-import { Box, Chip, Icon, IconButton, Icons, Text, Tooltip, TooltipProvider } from 'folds';
-import React from 'react';
+import { Box, Chip, Icon, IconButton, Icons, Spinner, Text, Tooltip, TooltipProvider } from 'folds';
+import React, { useCallback } from 'react';
 import { StatusDivider } from './components';
 import { CallEmbed, useCallControlState } from '../../plugins/call';
+import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 
 type MicrophoneButtonProps = {
   enabled: boolean;
@@ -135,8 +136,14 @@ function ScreenShareButton({ enabled, onToggle }: ScreenShareButtonProps) {
   );
 }
 
-export function CallControl({ callEmbed }: { callEmbed: CallEmbed }) {
+export function CallControl({ callEmbed, compact }: { callEmbed: CallEmbed; compact: boolean }) {
   const { microphone, video, sound, screenshare } = useCallControlState(callEmbed.control);
+
+  const [hangupState, hangup] = useAsyncCallback(
+    useCallback(() => callEmbed.hangup(), [callEmbed])
+  );
+  const exiting =
+    hangupState.status === AsyncStatus.Loading || hangupState.status === AsyncStatus.Success;
 
   return (
     <Box shrink="No" alignItems="Center" gap="300">
@@ -146,25 +153,36 @@ export function CallControl({ callEmbed }: { callEmbed: CallEmbed }) {
           onToggle={() => callEmbed.control.toggleMicrophone()}
         />
         <SoundButton enabled={sound} onToggle={() => callEmbed.control.toggleSound()} />
-        <StatusDivider />
+        {!compact && <StatusDivider />}
         <VideoButton enabled={video} onToggle={() => callEmbed.control.toggleVideo()} />
-        <ScreenShareButton
-          enabled={screenshare}
-          onToggle={() => callEmbed.control.toggleScreenshare()}
-        />
+        {!compact && (
+          <ScreenShareButton
+            enabled={screenshare}
+            onToggle={() => callEmbed.control.toggleScreenshare()}
+          />
+        )}
       </Box>
       <StatusDivider />
       <Chip
         variant="Critical"
-        radii="300"
+        radii="Pill"
         fill="Soft"
-        before={<Icon size="50" src={Icons.PhoneDown} filled />}
+        before={
+          exiting ? (
+            <Spinner variant="Critical" fill="Soft" size="50" />
+          ) : (
+            <Icon size="50" src={Icons.PhoneDown} filled />
+          )
+        }
+        disabled={exiting}
         outlined
-        onClick={() => callEmbed.hangup()}
+        onClick={hangup}
       >
-        <Text as="span" size="L400">
-          End
-        </Text>
+        {!compact && (
+          <Text as="span" size="L400">
+            End
+          </Text>
+        )}
       </Chip>
     </Box>
   );
