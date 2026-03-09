@@ -41,83 +41,89 @@ type ChangePasswordData = {
   logoutDevices: boolean;
 };
 
-/**
- * Change the user's password using the Matrix password change API
- * @param mx Matrix client instance
- * @param authDict Authentication dictionary for UIA (undefined for initial request)
- * @param newPassword The new password to set
- * @param logoutDevices Whether to logout other devices (defaults to true for security)
- * @returns Tuple with either auth data (for UIA continuation) or success response
- */
-const changePassword = async (
-  mx: MatrixClient,
-  authDict: AuthDict | undefined,
-  newPassword: string,
-  logoutDevices = true
-): Promise<ChangePasswordResult> => {
+export function ChangePassword() {
+  const [showDialog, setShowDialog] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const capabilities = useCapabilities();
 
-  // For the initial request, pass undefined instead of null
-  // This ensures the auth field is omitted from the request body
-  const [err, res] = await to<ChangePasswordResponse, MatrixError>(
-    mx.setPassword(authDict, newPassword, logoutDevices)
-  );
+  // Check if password change is disabled by server capabilities
+  const disableChangePassword = capabilities['m.change_password']?.enabled === false;
 
-  if (err) {
-    console.error('Password change error:', err.httpStatus, err.data);
-    // If we get a 401, it means we need to perform UIA
-    if (err.httpStatus === 401) {
-      const authData = err.data as IAuthData;
-      return [authData, undefined];
-    }
-    // Any other error should be thrown
-    throw err;
+  const handleOpenDialog = () => setShowDialog(true);
+  const handleCloseDialog = () => {
+    setShowDialog(false);
+    setShowSuccess(false);
+  };
+  const handleSuccess = () => {
+    setShowDialog(false);
+    setShowSuccess(true);
+  };
+
+  if (disableChangePassword) {
+    return (
+      <>
+        <Box direction="Column" gap="100">
+          <Text size="L400">Account Security</Text>
+          <SequenceCard
+            className={SequenceCardStyle}
+            variant="SurfaceVariant"
+            direction="Column"
+            gap="400"
+          >
+            <SettingTile
+              title="Password"
+              description="Contact your homeserver's administrator to change your password."
+              after={
+                <Button
+                  size="400"
+                  variant="Secondary"
+                  fill="Soft"
+                  outlined
+                  radii="300"
+                  disabled="True"
+                >
+                  <Text size="B400">Change</Text>
+                </Button>
+              }
+            />
+          </SequenceCard>
+        </Box>
+      </>
+    );
   }
 
-  return [undefined, res];
-};
-
-
-function ChangePasswordSuccess({ onClose }: { onClose: () => void }) {
   return (
-    <Overlay open backdrop={<OverlayBackdrop />}>
-      <OverlayCenter>
-        <FocusTrap>
-          <Dialog>
-            <Header
-              style={{
-                padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
-              }}
-              variant="Surface"
-              size="500"
-            >
-              <Box grow="Yes">
-                <Text size="H4">Password Changed</Text>
-              </Box>
-              <IconButton size="300" onClick={onClose} radii="300">
-                <Icon src={Icons.Cross} />
-              </IconButton>
-            </Header>
-            <Box
-              style={{ padding: `0 ${config.space.S400} ${config.space.S400}` }}
-              direction="Column"
-              gap="400"
-            >
-              <Box direction="Column" gap="400">
-                <Text size="T200">
-                  Your password has been successfully changed. Your other devices may need to be
-                  re-verified.
-                </Text>
-              </Box>
-              <Button variant="Primary" onClick={onClose}>
-                <Text as="span" size="B400">
-                  Continue
-                </Text>
+    <>
+      <Box direction="Column" gap="100">
+        <Text size="L400">Account Security</Text>
+        <SequenceCard
+          className={SequenceCardStyle}
+          variant="SurfaceVariant"
+          direction="Column"
+          gap="400"
+        >
+          <SettingTile
+            title="Password"
+            description="Credentials used to sign into your account"
+            after={
+              <Button
+                size="400"
+                variant="Secondary"
+                fill="Soft"
+                outlined
+                radii="300"
+                onClick={handleOpenDialog}
+              >
+                <Text size="B400">Change</Text>
               </Button>
-            </Box>
-          </Dialog>
-        </FocusTrap>
-      </OverlayCenter>
-    </Overlay>
+            }
+          />
+        </SequenceCard>
+      </Box>
+
+      {showDialog && <ChangePasswordForm onCancel={handleCloseDialog} onSuccess={handleSuccess} />}
+      {showSuccess && <ChangePasswordSuccess onClose={handleCloseDialog} />}
+    </>
   );
 }
 
@@ -125,42 +131,37 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
   const mx = useMatrixClient();
   const [formData, setFormData] = useState<ChangePasswordData | null>(null);
 
-  const [changePasswordState, handleChangePassword] = useAsyncCallback<
+  const [changePasswordState, attemptPasswordChange] = useAsyncCallback<
     ChangePasswordResult,
     Error,
     [AuthDict | null, string, boolean]
   >(
-    useCallback(
-      async (authDict, newPassword, logoutDevices) =>
-        changePassword(mx, authDict, newPassword, logoutDevices),
-      [mx]
-    )
+    useCallback(async (authDict, newPassword, logoutDevices) => {
+      // For the initial request, pass undefined instead of null
+      // This ensures the auth field is omitted from the request body
+      const [err, res] = await to<ChangePasswordResponse, MatrixError>(
+        mx.setPassword(authDict, newPassword, logoutDevices)
+      );
+
+      if (err) {
+        console.error('Password change error:', err.httpStatus, err.data);
+        // If we get a 401, it means we need to perform UIA
+        if (err.httpStatus === 401) {
+          const authData = err.data as IAuthData;
+          return [authData, undefined];
+        }
+        // Any other error should be thrown
+        throw err;
+      }
+
+      return [undefined, res];
+    }, [mx])
   );
 
   const [ongoingAuthData, changePasswordResult] =
     changePasswordState.status === AsyncStatus.Success
       ? changePasswordState.data
       : [undefined, undefined];
-
-  const handleFormSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
-    evt.preventDefault();
-
-    const formDataObj = new FormData(evt.currentTarget);
-    const newPassword = formDataObj.get('newPassword') as string;
-    const confirmPassword = formDataObj.get('confirmPassword') as string;
-    const logoutDevices = formDataObj.get('logoutDevices') === 'on';
-
-    if (!newPassword || !confirmPassword || newPassword !== confirmPassword) {
-      return;
-    }
-
-    // Store form data for UIA completion
-    setFormData({ newPassword, logoutDevices });
-
-    // Just call the async callback - don't handle the result here
-    // The component state will automatically update and handle UIA vs success
-    handleChangePassword(null, newPassword, logoutDevices);
-  };
 
   // Handle successful completion
   useEffect(() => {
@@ -207,7 +208,7 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
             ongoingFlow={ongoingFlow}
             action={(authDict) => {
               if (formData) {
-                handleChangePassword(authDict, formData.newPassword, formData.logoutDevices);
+                attemptPasswordChange(authDict, formData.newPassword, formData.logoutDevices);
               } else {
                 onCancel();
               }
@@ -221,6 +222,26 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
 
   const isLoading = changePasswordState.status === AsyncStatus.Loading;
   const error = changePasswordState.status === AsyncStatus.Error ? changePasswordState.error : undefined;
+  const handleFormSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
+    evt.preventDefault();
+
+    const formDataObj = new FormData(evt.currentTarget);
+    const newPassword = formDataObj.get('newPassword') as string;
+    const confirmPassword = formDataObj.get('confirmPassword') as string;
+    const logoutDevices = formDataObj.get('logoutDevices') === 'on';
+
+    if (!newPassword || !confirmPassword || newPassword !== confirmPassword) {
+      return;
+    }
+
+    // Store form data for UIA completion
+    setFormData({ newPassword, logoutDevices });
+
+    // Try to set password without authentication.
+    // Response will contain authData for UIA to proceed.
+    // TODO: is there ANY way to do UIA before asking the user for their new password?
+    attemptPasswordChange(null, newPassword, logoutDevices);
+  };
 
   return (
     <Overlay open backdrop={<OverlayBackdrop />}>
@@ -314,88 +335,46 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
   );
 }
 
-export function ChangePassword() {
-  const [showDialog, setShowDialog] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const capabilities = useCapabilities();
-
-  // Check if password change is disabled by server capabilities
-  const disableChangePassword = capabilities['m.change_password']?.enabled === false;
-
-  const handleOpenDialog = () => setShowDialog(true);
-  const handleCloseDialog = () => {
-    setShowDialog(false);
-    setShowSuccess(false);
-  };
-  const handleSuccess = () => {
-    setShowDialog(false);
-    setShowSuccess(true);
-  };
-
-  if (disableChangePassword) {
-    return (
-      <>
-        <Box direction="Column" gap="100">
-          <Text size="L400">Account Security</Text>
-          <SequenceCard
-            className={SequenceCardStyle}
-            variant="SurfaceVariant"
-            direction="Column"
-            gap="400"
-          >
-            <SettingTile
-              title="Password"
-              description="Contact your homeserver's administrator to change your password."
-              after={
-                <Button
-                  size="400"
-                  variant="Secondary"
-                  fill="Soft"
-                  outlined
-                  radii="300"
-                  disabled="True"
-                >
-                  <Text size="B400">Change</Text>
-                </Button>
-              }
-            />
-          </SequenceCard>
-        </Box>
-      </>
-    );
-  }
-
+function ChangePasswordSuccess({ onClose }: { onClose: () => void }) {
   return (
-    <>
-      <Box direction="Column" gap="100">
-        <Text size="L400">Account Security</Text>
-        <SequenceCard
-          className={SequenceCardStyle}
-          variant="SurfaceVariant"
-          direction="Column"
-          gap="400"
-        >
-          <SettingTile
-            title="Password"
-            description="Credentials used to sign into your account"
-            after={
-              <Button
-                size="400"
-                variant="Secondary"
-                fill="Soft"
-                outlined
-                radii="300"
-                onClick={handleOpenDialog}
-              >
-                <Text size="B400">Change</Text>
+    <Overlay open backdrop={<OverlayBackdrop />}>
+      <OverlayCenter>
+        <FocusTrap>
+          <Dialog>
+            <Header
+              style={{
+                padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
+              }}
+              variant="Surface"
+              size="500"
+            >
+              <Box grow="Yes">
+                <Text size="H4">Password Changed</Text>
+              </Box>
+              <IconButton size="300" onClick={onClose} radii="300">
+                <Icon src={Icons.Cross} />
+              </IconButton>
+            </Header>
+            <Box
+              style={{ padding: `0 ${config.space.S400} ${config.space.S400}` }}
+              direction="Column"
+              gap="400"
+            >
+              <Box direction="Column" gap="400">
+                <Text size="T200">
+                  Your password has been successfully changed. Your other devices may need to be
+                  re-verified.
+                </Text>
+              </Box>
+              <Button variant="Primary" onClick={onClose}>
+                <Text as="span" size="B400">
+                  Continue
+                </Text>
               </Button>
-            }
-          />
-        </SequenceCard>
-      </Box>
-
-      {showDialog && <ChangePasswordForm onCancel={handleCloseDialog} onSuccess={handleSuccess} />}
-      {showSuccess && <ChangePasswordSuccess onClose={handleCloseDialog} />}
-    </>
+            </Box>
+          </Dialog>
+        </FocusTrap>
+      </OverlayCenter>
+    </Overlay>
   );
 }
