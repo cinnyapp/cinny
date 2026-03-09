@@ -13,9 +13,28 @@ import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { CallMemberRenderer } from './CallMemberCard';
 import * as css from './styles.css';
 import { CallControls } from './CallControls';
+import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 
-function JoinMessage({ hasParticipant }: { hasParticipant?: boolean }) {
+function LivekitServerMissingMessage() {
+  return (
+    <Text style={{ margin: 'auto', color: color.Critical.Main }} size="L400" align="Center">
+      Your homeserver does not support calling. But you can still join call started by others.
+    </Text>
+  );
+}
+
+function JoinMessage({
+  hasParticipant,
+  livekitSupported,
+}: {
+  hasParticipant?: boolean;
+  livekitSupported?: boolean;
+}) {
   if (hasParticipant) return null;
+
+  if (livekitSupported === false) {
+    return <LivekitServerMissingMessage />;
+  }
 
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
@@ -43,12 +62,13 @@ function AlreadyInCallMessage() {
 function CallPrescreen() {
   const mx = useMatrixClient();
   const room = useRoom();
+  const livekitSupported = useLivekitSupport();
 
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
 
   const permissions = useRoomPermissions(creators, powerLevels);
-  const canJoin = permissions.event(StateEvent.GroupCallMemberPrefix, mx.getSafeUserId());
+  const hasPermission = permissions.event(StateEvent.GroupCallMemberPrefix, mx.getSafeUserId());
 
   const callSession = useCallSession(room);
   const callMembers = useCallMembers(room, callSession);
@@ -56,6 +76,8 @@ function CallPrescreen() {
 
   const callEmbed = useCallEmbed();
   const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
+
+  const canJoin = hasPermission && (livekitSupported || hasParticipant);
 
   return (
     <Scroll variant="Surface" hideTrack>
@@ -77,7 +99,11 @@ function CallPrescreen() {
           <PrescreenControls canJoin={canJoin} />
           <Header size="300">
             {!inOtherCall &&
-              (canJoin ? <JoinMessage hasParticipant={hasParticipant} /> : <NoPermissionMessage />)}
+              (hasPermission ? (
+                <JoinMessage hasParticipant={hasParticipant} livekitSupported={livekitSupported} />
+              ) : (
+                <NoPermissionMessage />
+              ))}
             {inOtherCall && <AlreadyInCallMessage />}
           </Header>
         </Box>
