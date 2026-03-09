@@ -68,6 +68,7 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
+import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
 
 type RoomMenuProps = {
   room: Room;
@@ -304,6 +305,11 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
     setPeopleDrawer(!peopleDrawer);
   };
 
+  const callEmbed = useCallEmbed();
+  const startCall = useCallStart(direct);
+  const callStarted = callEmbed && callEmbed.roomId === room.roomId;
+  const inAnotherCall = callEmbed && !callStarted;
+
   return (
     <PageHeader
       className={ContainerColor({ variant: 'Surface' })}
@@ -453,7 +459,33 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </FocusTrap>
             }
           />
-
+          {direct && !callStarted && (
+            <TooltipProvider
+              position="Bottom"
+              offset={4}
+              tooltip={
+                <Tooltip>
+                  {inAnotherCall ? (
+                    <Text size="L400">Already in another call — End the current call to join!</Text>
+                  ) : (
+                    <Text>Start Call</Text>
+                  )}
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => (
+                <IconButton
+                  variant="Surface"
+                  fill="None"
+                  ref={triggerRef}
+                  onClick={() => startCall(room, { microphone: true, video: true, sound: true })}
+                  disabled={inAnotherCall}
+                >
+                  <Icon size="400" src={Icons.VideoCamera} filled={callStarted} />
+                </IconButton>
+              )}
+            </TooltipProvider>
+          )}
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"
