@@ -31,6 +31,15 @@ import { useCapabilities } from '../../../hooks/useCapabilities';
 
 type ChangePasswordResponse = Record<string, never>;
 type ChangePasswordResult = [IAuthData, undefined] | [undefined, ChangePasswordResponse];
+type ChangePasswordFormProps = {
+  onCancel: () => void;
+  onSuccess: () => void;
+};
+
+type ChangePasswordData = {
+  newPassword: string;
+  logoutDevices: boolean;
+};
 
 /**
  * Change the user's password using the Matrix password change API
@@ -112,16 +121,9 @@ function ChangePasswordSuccess({ onClose }: { onClose: () => void }) {
   );
 }
 
-type ChangePasswordFormProps = {
-  onCancel: () => void;
-  onSuccess: () => void;
-};
-
 function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
   const mx = useMatrixClient();
-  const [formData, setFormData] = useState<{ newPassword: string; logoutDevices: boolean } | null>(
-    null
-  );
+  const [formData, setFormData] = useState<ChangePasswordData | null>(null);
 
   const [changePasswordState, handleChangePassword] = useAsyncCallback<
     ChangePasswordResult,
@@ -153,8 +155,7 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
     }
 
     // Store form data for UIA completion
-    const formState = { newPassword, logoutDevices };
-    setFormData(formState);
+    setFormData({ newPassword, logoutDevices });
 
     // Just call the async callback - don't handle the result here
     // The component state will automatically update and handle UIA vs success
@@ -394,7 +395,6 @@ export function ChangePassword() {
       </Box>
 
       {showDialog && <ChangePasswordForm onCancel={handleCloseDialog} onSuccess={handleSuccess} />}
-
       {showSuccess && <ChangePasswordSuccess onClose={handleCloseDialog} />}
     </>
   );
