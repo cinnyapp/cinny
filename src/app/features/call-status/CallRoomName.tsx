@@ -1,6 +1,6 @@
 import React from 'react';
 import { Room } from 'matrix-js-sdk';
-import { Chip, Text } from 'folds';
+import { Chip, Icon, Icons, Text } from 'folds';
 import { useAtomValue } from 'jotai';
 import { useRoomName } from '../../hooks/useRoomMeta';
 import { RoomIcon } from '../../components/room-avatar';
@@ -38,7 +38,11 @@ export function CallRoomName({ room }: CallRoomNameProps) {
       variant="Background"
       radii="Pill"
       before={
-        <RoomIcon size="200" joinRule={room.getJoinRule()} roomType={room.getType()} filled />
+        dm ? (
+          <Icon size="200" src={Icons.VolumeHigh} filled />
+        ) : (
+          <RoomIcon size="200" joinRule={room.getJoinRule()} roomType={room.getType()} filled />
+        )
       }
       onClick={() => navigateRoom(room.roomId)}
     >
