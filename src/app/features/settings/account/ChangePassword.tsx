@@ -256,52 +256,51 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
             >
               <Box direction="Column" gap="400">
                 <Text size="T200">
-                  Enter your new password. You may need to re-verify your other devices after
-                  changing your password.
+                  Enter your current password and a new password.
                 </Text>
 
                 <ConfirmPasswordMatch initialValue>
-                  {(match, doMatch, passRef, confPassRef) => (
-                    <>
-                      <Box direction="Column" gap="100">
-                        <Text size="L400">New Password</Text>
-                        <PasswordInput
-                          ref={passRef}
-                          onChange={doMatch}
-                          name="newPassword"
-                          size="400"
-                          outlined
-                          required
-                          autoFocus
-                        />
-                      </Box>
-                      <Box direction="Column" gap="100">
-                        <Text size="L400">Confirm New Password</Text>
-                        <PasswordInput
-                          ref={confPassRef}
-                          onChange={doMatch}
-                          name="confirmPassword"
-                          size="400"
-                          style={{ color: match ? undefined : color.Critical.Main }}
-                          outlined
-                          required
-                        />
-                      </Box>
-                    </>
+                  {(match, doMatch, currPassRef, passRef, confPassRef) => (
+                    <Box direction="Column" gap="100">
+                      <Text size="L400">Current Password</Text>
+                      <PasswordInput
+                        ref={currPassRef}
+                        name="currentPassword"
+                        size="400"
+                        outlined
+                        required
+                        autoFocus
+                      />
+                      <Text size="L400">New Password</Text>
+                      <PasswordInput
+                        ref={passRef}
+                        onChange={doMatch}
+                        name="newPassword"
+                        size="400"
+                        outlined
+                        required
+                      />
+                      <Text size="L400">Confirm New Password</Text>
+                      <PasswordInput
+                        ref={confPassRef}
+                        onChange={doMatch}
+                        name="confirmPassword"
+                        size="400"
+                        style={{ color: match ? undefined : color.Critical.Main }}
+                        outlined
+                        required
+                      />
+                    </Box>
                   )}
                 </ConfirmPasswordMatch>
 
                 <Box direction="Column" gap="100">
                   <Box alignItems="Center" gap="200">
-                    <input type="checkbox" id="logoutDevices" name="logoutDevices" defaultChecked />
-                    <Text as="label" htmlFor="logoutDevices" size="T300">
-                      Sign out all other devices
+                    <Checkbox id="logoutDevices" name="logoutDevices" defaultChecked />
+                    <Text as="label" size="T300">
+                      Logout other devices
                     </Text>
                   </Box>
-                  <Text size="T200" priority="300">
-                    Recommended for security. Unchecking this may leave your other devices logged
-                    in.
-                  </Text>
                 </Box>
 
                 {error && (
@@ -318,7 +317,7 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
                 <Button variant="Primary" type="submit" disabled={isLoading}>
                   {isLoading && <Spinner variant="Primary" size="300" />}
                   <Text as="span" size="B400">
-                    Change Password
+                    Submit
                   </Text>
                 </Button>
               </Box>
@@ -349,7 +348,36 @@ export function ChangePassword() {
   };
 
   if (disableChangePassword) {
-    return (<></>);
+    return (
+      <>
+        <Box direction="Column" gap="100">
+          <Text size="L400">Account Security</Text>
+          <SequenceCard
+            className={SequenceCardStyle}
+            variant="SurfaceVariant"
+            direction="Column"
+            gap="400"
+          >
+            <SettingTile
+              title="Password"
+              description="Contact your homeserver's administrator to change your password."
+              after={
+                <Button
+                  size="400"
+                  variant="Secondary"
+                  fill="Soft"
+                  outlined
+                  radii="300"
+                  disabled="True"
+                >
+                  <Text size="B400">Change</Text>
+                </Button>
+              }
+            />
+          </SequenceCard>
+        </Box>
+      </>
+    );
   }
 
   return (
@@ -374,7 +402,7 @@ export function ChangePassword() {
                 radii="300"
                 onClick={handleOpenDialog}
               >
-                <Text size="B400">Edit</Text>
+                <Text size="B400">Change</Text>
               </Button>
             }
           />
