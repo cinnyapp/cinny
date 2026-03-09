@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { MessageEvent, StateEvent } from '../../../../types/matrix/room';
 import { PermissionGroup } from '../../common-settings/permissions';
 
-export const usePermissionGroups = (): PermissionGroup[] => {
+export const usePermissionGroups = (isCallRoom: boolean): PermissionGroup[] => {
   const groups: PermissionGroup[] = useMemo(() => {
     const messagesGroup: PermissionGroup = {
       name: 'Messages',
@@ -42,6 +42,19 @@ export const usePermissionGroups = (): PermissionGroup[] => {
         {
           location: {},
           name: 'Other Message Events',
+        },
+      ],
+    };
+
+    const callSettingsGroup: PermissionGroup = {
+      name: 'Calls',
+      items: [
+        {
+          location: {
+            state: true,
+            key: StateEvent.GroupCallMemberPrefix,
+          },
+          name: 'Join Call',
         },
       ],
     };
@@ -203,12 +216,13 @@ export const usePermissionGroups = (): PermissionGroup[] => {
 
     return [
       messagesGroup,
+      ...(isCallRoom ? [callSettingsGroup] : []),
       moderationGroup,
       roomOverviewGroup,
       roomSettingsGroup,
       otherSettingsGroup,
     ];
-  }, []);
+  }, [isCallRoom]);
 
   return groups;
 };
