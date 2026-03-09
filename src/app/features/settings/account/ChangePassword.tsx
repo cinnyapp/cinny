@@ -126,7 +126,7 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
   const [changePasswordState, handleChangePassword] = useAsyncCallback<
     ChangePasswordResult,
     Error,
-    [AuthDict, string, boolean]
+    [AuthDict | null, string, boolean]
   >(
     useCallback(
       async (authDict, newPassword, logoutDevices) =>
@@ -144,12 +144,11 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
     evt.preventDefault();
 
     const formDataObj = new FormData(evt.currentTarget);
-    const currentPassword = formDataObj.get('currentPassword') as string;
     const newPassword = formDataObj.get('newPassword') as string;
     const confirmPassword = formDataObj.get('confirmPassword') as string;
     const logoutDevices = formDataObj.get('logoutDevices') === 'on';
 
-    if (!currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword) {
+    if (!newPassword || !confirmPassword || newPassword !== confirmPassword) {
       return;
     }
 
@@ -159,12 +158,7 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
 
     // Just call the async callback - don't handle the result here
     // The component state will automatically update and handle UIA vs success
-    handleChangePassword({
-      identifier: mx.getUserId()!,
-      password: currentPassword,
-      session: mx.getSessionId()!,
-      type: 'Password'
-    }, newPassword, logoutDevices);
+    handleChangePassword(null, newPassword, logoutDevices);
   };
 
   // Handle successful completion
@@ -225,8 +219,7 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
   }
 
   const isLoading = changePasswordState.status === AsyncStatus.Loading;
-  const error =
-    changePasswordState.status === AsyncStatus.Error ? changePasswordState.error : undefined;
+  const error = changePasswordState.status === AsyncStatus.Error ? changePasswordState.error : undefined;
 
   return (
     <Overlay open backdrop={<OverlayBackdrop />}>
@@ -260,17 +253,8 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
                 </Text>
 
                 <ConfirmPasswordMatch initialValue>
-                  {(match, doMatch, currPassRef, passRef, confPassRef) => (
+                  {(match, doMatch, passRef, confPassRef) => (
                     <Box direction="Column" gap="100">
-                      <Text size="L400">Current Password</Text>
-                      <PasswordInput
-                        ref={currPassRef}
-                        name="currentPassword"
-                        size="400"
-                        outlined
-                        required
-                        autoFocus
-                      />
                       <Text size="L400">New Password</Text>
                       <PasswordInput
                         ref={passRef}
