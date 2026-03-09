@@ -1477,32 +1477,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
         const content = mEvent.getContent<SessionMembershipData>();
         const prevContent = mEvent.getPrevContent();
-        const intent = 'm.call.intent' in content && content['m.call.intent'];
-        const prevIntent = 'm.call.intent' in prevContent && prevContent['m.call.intent'];
 
         const callJoined = content.application;
-
-        let bodyJSX;
-        let iconSrc;
-
-        if (typeof intent === 'string' && typeof prevIntent === 'string') {
-          const video = intent === 'video';
-          iconSrc = video ? Icons.VideoCamera : Icons.VideoCameraMute;
-
-          bodyJSX = (
-            <Text size="T300" priority="300">
-              <b>{senderName}</b>
-              {video ? ' started the camera' : ' stopped the camera'}
-            </Text>
-          );
-        } else {
-          bodyJSX = (
-            <Text size="T300" priority="300">
-              <b>{senderName}</b>
-              {callJoined ? ' joined the call' : ' ended the call'}
-            </Text>
-          );
-          iconSrc = callJoined ? Icons.Phone : Icons.PhoneDown;
+        if (callJoined && 'application' in prevContent) {
+          return null;
         }
 
         const timeJSX = (
@@ -1530,10 +1508,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             <EventContent
               messageLayout={messageLayout}
               time={timeJSX}
-              iconSrc={iconSrc}
+              iconSrc={callJoined ? Icons.Phone : Icons.PhoneDown}
               content={
                 <Box grow="Yes" direction="Column">
-                  {bodyJSX}
+                  <Text size="T300" priority="300">
+                    <b>{senderName}</b>
+                    {callJoined ? ' joined the call' : ' ended the call'}
+                  </Text>
                 </Box>
               }
             />
