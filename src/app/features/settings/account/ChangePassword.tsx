@@ -1,8 +1,8 @@
 import to from 'await-to-js';
-import { AuthDict, IAuthData, MatrixClient, MatrixError } from 'matrix-js-sdk';
 import React, { FormEventHandler, useCallback, useState, useEffect } from 'react';
 import {
   Box,
+  Checkbox,
   Text,
   Button,
   Overlay,
@@ -18,7 +18,7 @@ import {
   color,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import AuthDict from 'matrix-js-sdk';
+import { PasswordDict, IAuthData, MatrixClient, MatrixError } from 'matrix-js-sdk';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
@@ -54,7 +54,7 @@ const changePassword = async (
   );
 
   if (err) {
-    console.log('Password change error:', err.httpStatus, err.data);
+    console.error('Password change error:', err.httpStatus, err.data);
     // If we get a 401, it means we need to perform UIA
     if (err.httpStatus === 401) {
       const authData = err.data as IAuthData;
@@ -64,8 +64,6 @@ const changePassword = async (
     throw err;
   }
 
-  console.log('Password change successful:', res);
-  // Success case - return empty response
   return [undefined, res];
 };
 
@@ -128,7 +126,7 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
   const [changePasswordState, handleChangePassword] = useAsyncCallback<
     ChangePasswordResult,
     Error,
-    [AuthDict | undefined, string, boolean]
+    [AuthDict, string, boolean]
   >(
     useCallback(
       async (authDict, newPassword, logoutDevices) =>
@@ -146,12 +144,14 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
     evt.preventDefault();
 
     const formDataObj = new FormData(evt.currentTarget);
+    const currentPassword = formDataObj.get('currentPassword') as string;
     const newPassword = formDataObj.get('newPassword') as string;
     const confirmPassword = formDataObj.get('confirmPassword') as string;
     const logoutDevices = formDataObj.get('logoutDevices') === 'on';
 
-    if (!newPassword || !confirmPassword) return;
-    if (newPassword !== confirmPassword) return;
+    if (!currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword) {
+      return;
+    }
 
     // Store form data for UIA completion
     const formState = { newPassword, logoutDevices };
@@ -159,7 +159,12 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
 
     // Just call the async callback - don't handle the result here
     // The component state will automatically update and handle UIA vs success
-    handleChangePassword(undefined, newPassword, logoutDevices);
+    handleChangePassword({
+      identifier: mx.getUserId()!,
+      password: currentPassword,
+      session: mx.getSessionId()!,
+      type: 'Password'
+    }, newPassword, logoutDevices);
   };
 
   // Handle successful completion
