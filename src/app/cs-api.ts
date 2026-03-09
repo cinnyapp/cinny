@@ -20,6 +20,16 @@ export type AutoDiscoveryInfo = Record<string, unknown> & {
   'm.identity_server'?: {
     base_url: string;
   };
+  'org.matrix.msc2965.authentication'?: {
+    account?: string;
+    issuer?: string;
+  };
+  'org.matrix.msc4143.rtc_foci'?: [
+    {
+      livekit_service_url: string;
+      type: 'livekit';
+    }
+  ];
 };
 
 export const autoDiscovery = async (

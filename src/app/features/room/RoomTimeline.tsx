@@ -27,6 +27,7 @@ import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
+import { SessionMembershipData } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import to from 'await-to-js';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -1479,6 +1480,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             />
           </Event>
         );
+      },
+      [StateEvent.GroupCallMemberPrefix]: (mEventId, mEvent, item) => {
+        const callJoined = mEvent.getContent<SessionMembershipData>().application;
+        return renderBasicEvent(mEventId, mEvent, item, callJoined ? Icons.Phone : Icons.PhoneDown, callJoined ? ' joined the call' : ' ended the call');
       },
       [StateEvent.RoomCreate]: (mEventId, mEvent, item) => {
         if (!showHiddenEvents) return null;
