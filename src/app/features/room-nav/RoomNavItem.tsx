@@ -57,6 +57,8 @@ import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
 import { callChatAtom } from '../../state/callEmbed';
 import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
+import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
+import { livekitSupport } from '../../hooks/useLivekitSupport';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -282,8 +284,14 @@ export function RoomNavItem({
   const startCall = useCallStart(direct);
   const callEmbed = useCallEmbed();
   const callPref = useAtomValue(useCallPreferencesAtom());
+  const autoDiscoveryInfo = useAutoDiscoveryInfo();
 
   const handleStartCall: MouseEventHandler<HTMLAnchorElement> = (evt) => {
+    // Do not join if no livekit support or call is not started by others
+    if (!livekitSupport(autoDiscoveryInfo) && callMembers.length === 0) {
+      return;
+    }
+
     // Do not join if already in call
     if (callEmbed) {
       return;

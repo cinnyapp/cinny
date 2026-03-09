@@ -35,6 +35,7 @@ import { stopPropagation } from '../../utils/keyboard';
 import { SyncStatus } from './SyncStatus';
 import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
 import { getFallbackSession } from '../../state/sessions';
+import { AutoDiscovery } from './AutoDiscovery';
 
 function ClientRootLoading() {
   return (
@@ -143,7 +144,7 @@ type ClientRootProps = {
 };
 export function ClientRoot({ children }: ClientRootProps) {
   const [loading, setLoading] = useState(true);
-  const { baseUrl } = getFallbackSession() ?? {};
+  const { baseUrl, userId } = getFallbackSession() ?? {};
 
   const [loadState, loadMatrix] = useAsyncCallback<MatrixClient, Error, []>(
     useCallback(() => {
@@ -183,47 +184,55 @@ export function ClientRoot({ children }: ClientRootProps) {
   );
 
   return (
-    <SpecVersions baseUrl={baseUrl!}>
-      {mx && <SyncStatus mx={mx} />}
-      {loading && <ClientRootOptions mx={mx} />}
-      {(loadState.status === AsyncStatus.Error || startState.status === AsyncStatus.Error) && (
-        <SplashScreen>
-          <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">
-            <Dialog>
-              <Box direction="Column" gap="400" style={{ padding: config.space.S400 }}>
-                {loadState.status === AsyncStatus.Error && (
-                  <Text>{`Failed to load. ${loadState.error.message}`}</Text>
-                )}
-                {startState.status === AsyncStatus.Error && (
-                  <Text>{`Failed to start. ${startState.error.message}`}</Text>
-                )}
-                <Button variant="Critical" onClick={mx ? () => startMatrix(mx) : loadMatrix}>
-                  <Text as="span" size="B400">
-                    Retry
-                  </Text>
-                </Button>
-              </Box>
-            </Dialog>
-          </Box>
-        </SplashScreen>
-      )}
-      {loading || !mx ? (
-        <ClientRootLoading />
-      ) : (
-        <MatrixClientProvider value={mx}>
-          <ServerConfigsLoader>
-            {(serverConfigs) => (
-              <CapabilitiesProvider value={serverConfigs.capabilities ?? {}}>
-                <MediaConfigProvider value={serverConfigs.mediaConfig ?? {}}>
-                  <AuthMetadataProvider value={serverConfigs.authMetadata}>
-                    {children}
-                  </AuthMetadataProvider>
-                </MediaConfigProvider>
-              </CapabilitiesProvider>
-            )}
-          </ServerConfigsLoader>
-        </MatrixClientProvider>
-      )}
-    </SpecVersions>
+    <AutoDiscovery userId={userId!} baseUrl={baseUrl!}>
+      <SpecVersions baseUrl={baseUrl!}>
+        {mx && <SyncStatus mx={mx} />}
+        {loading && <ClientRootOptions mx={mx} />}
+        {(loadState.status === AsyncStatus.Error || startState.status === AsyncStatus.Error) && (
+          <SplashScreen>
+            <Box
+              direction="Column"
+              grow="Yes"
+              alignItems="Center"
+              justifyContent="Center"
+              gap="400"
+            >
+              <Dialog>
+                <Box direction="Column" gap="400" style={{ padding: config.space.S400 }}>
+                  {loadState.status === AsyncStatus.Error && (
+                    <Text>{`Failed to load. ${loadState.error.message}`}</Text>
+                  )}
+                  {startState.status === AsyncStatus.Error && (
+                    <Text>{`Failed to start. ${startState.error.message}`}</Text>
+                  )}
+                  <Button variant="Critical" onClick={mx ? () => startMatrix(mx) : loadMatrix}>
+                    <Text as="span" size="B400">
+                      Retry
+                    </Text>
+                  </Button>
+                </Box>
+              </Dialog>
+            </Box>
+          </SplashScreen>
+        )}
+        {loading || !mx ? (
+          <ClientRootLoading />
+        ) : (
+          <MatrixClientProvider value={mx}>
+            <ServerConfigsLoader>
+              {(serverConfigs) => (
+                <CapabilitiesProvider value={serverConfigs.capabilities ?? {}}>
+                  <MediaConfigProvider value={serverConfigs.mediaConfig ?? {}}>
+                    <AuthMetadataProvider value={serverConfigs.authMetadata}>
+                      {children}
+                    </AuthMetadataProvider>
+                  </MediaConfigProvider>
+                </CapabilitiesProvider>
+              )}
+            </ServerConfigsLoader>
+          </MatrixClientProvider>
+        )}
+      </SpecVersions>
+    </AutoDiscovery>
   );
 }
