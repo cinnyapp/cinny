@@ -268,11 +268,6 @@ function ChangePasswordForm({ onCancel, onSuccess }: ChangePasswordFormProps) {
               </Box>
 
               <Box gap="200" justifyContent="End">
-                <Button type="button" variant="Secondary" onClick={onCancel} disabled={isLoading}>
-                  <Text as="span" size="B400">
-                    Cancel
-                  </Text>
-                </Button>
                 <Button variant="Primary" type="submit" disabled={isLoading}>
                   {isLoading && <Spinner variant="Primary" size="300" />}
                   <Text as="span" size="B400">
@@ -306,10 +301,14 @@ export function ChangePassword() {
     setShowSuccess(true);
   };
 
+  if (disableChangePassword) {
+    return (<></>);
+  }
+
   return (
     <>
       <Box direction="Column" gap="100">
-        <Text size="L400">Password</Text>
+        <Text size="L400">Account Security</Text>
         <SequenceCard
           className={SequenceCardStyle}
           variant="SurfaceVariant"
@@ -317,22 +316,18 @@ export function ChangePassword() {
           gap="400"
         >
           <SettingTile
-            title="Change Password"
-            description={
-              disableChangePassword
-                ? 'Password changes are disabled by your server administrator.'
-                : 'Change your account password. This will require authentication with your current password.'
-            }
+            title="Password"
+            description="Credentials used to sign into your account"
             after={
               <Button
-                variant="Secondary"
                 size="400"
+                variant="Secondary"
+                fill="Soft"
                 outlined
                 radii="300"
                 onClick={handleOpenDialog}
-                disabled={disableChangePassword}
               >
-                <Text size="B400">Change</Text>
+                <Text size="B400">Edit</Text>
               </Button>
             }
           />
