@@ -19,12 +19,15 @@ import { RoomViewHeader } from './RoomViewHeader';
 import { callChatAtom } from '../../state/callEmbed';
 import { CallChatView } from './CallChatView';
 import { useCallEmbed } from '../../hooks/useCallEmbed';
+import { useCallMembers, useCallSession } from '../../hooks/useCall';
 
 export function Room() {
   const { eventId } = useParams();
   const room = useRoom();
   const mx = useMatrixClient();
 
+  const callSession = useCallSession(room);
+  const callMembers = useCallMembers(room, callSession);
   const callEmbed = useCallEmbed();
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
@@ -46,7 +49,7 @@ export function Room() {
     )
   );
 
-  const callView = callEmbed?.roomId === room.roomId || room.isCallRoom();
+  const callView = callEmbed?.roomId === room.roomId || room.isCallRoom() || callMembers.length > 0;
 
   return (
     <PowerLevelsContextProvider value={powerLevels}>
