@@ -36,6 +36,7 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
       className={classNames(css.CallStatus, ContainerColor({ variant: 'Background' }))}
       shrink="No"
       gap="400"
+      alignItems={compact ? undefined : 'Center'}
       direction={compact ? 'Column' : 'Row'}
     >
       <Box grow="Yes" alignItems="Center" gap="200">
