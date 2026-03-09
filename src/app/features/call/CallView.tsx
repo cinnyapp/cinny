@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { RefObject, useRef } from 'react';
 import { Badge, Box, color, Header, Scroll, Text, toRem } from 'folds';
 import { useCallEmbed, useCallJoined, useCallEmbedPlacementSync } from '../../hooks/useCallEmbed';
 import { ContainerColor } from '../../styles/ContainerColor.css';
@@ -12,6 +12,7 @@ import { StateEvent } from '../../../types/matrix/room';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { CallMemberRenderer } from './CallMemberCard';
 import * as css from './styles.css';
+import { CallControls } from './CallControls';
 
 function JoinMessage({ hasParticipant }: { hasParticipant?: boolean }) {
   if (hasParticipant) return null;
@@ -39,12 +40,9 @@ function AlreadyInCallMessage() {
   );
 }
 
-export function CallView() {
+function CallPrescreen() {
   const mx = useMatrixClient();
   const room = useRoom();
-
-  const callViewRef = useRef<HTMLDivElement>(null);
-  useCallEmbedPlacementSync(callViewRef);
 
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
@@ -57,49 +55,70 @@ export function CallView() {
   const hasParticipant = callMembers.length > 0;
 
   const callEmbed = useCallEmbed();
-  const callJoined = useCallJoined(callEmbed);
   const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
+
+  return (
+    <Scroll variant="Surface" hideTrack>
+      <Box className={css.CallViewContent} alignItems="Center" justifyContent="Center">
+        <Box style={{ maxWidth: toRem(382), width: '100%' }} direction="Column" gap="100">
+          {hasParticipant && (
+            <Header size="300">
+              <Box grow="Yes" alignItems="Center">
+                <Text size="L400">Participant</Text>
+              </Box>
+              <Badge variant="Critical" fill="Solid" size="400">
+                <Text as="span" size="L400" truncate>
+                  {callMembers.length} Live
+                </Text>
+              </Badge>
+            </Header>
+          )}
+          <CallMemberRenderer members={callMembers} />
+          <PrescreenControls canJoin={canJoin} />
+          <Header size="300">
+            {!inOtherCall &&
+              (canJoin ? <JoinMessage hasParticipant={hasParticipant} /> : <NoPermissionMessage />)}
+            {inOtherCall && <AlreadyInCallMessage />}
+          </Header>
+        </Box>
+      </Box>
+    </Scroll>
+  );
+}
+
+type CallJoinedProps = {
+  containerRef: RefObject<HTMLDivElement>;
+  joined: boolean;
+};
+function CallJoined({ joined, containerRef }: CallJoinedProps) {
+  const callEmbed = useCallEmbed();
+
+  return (
+    <Box grow="Yes" direction="Column">
+      <Box grow="Yes" ref={containerRef} />
+      {callEmbed && joined && <CallControls callEmbed={callEmbed} />}
+    </Box>
+  );
+}
+
+export function CallView() {
+  const room = useRoom();
+  const callContainerRef = useRef<HTMLDivElement>(null);
+  useCallEmbedPlacementSync(callContainerRef);
+
+  const callEmbed = useCallEmbed();
+  const callJoined = useCallJoined(callEmbed);
 
   const currentJoined = callEmbed?.roomId === room.roomId && callJoined;
 
   return (
     <Box
-      ref={callViewRef}
       className={ContainerColor({ variant: 'Surface' })}
       style={{ minWidth: toRem(280) }}
       grow="Yes"
     >
-      {!currentJoined && (
-        <Scroll variant="Surface" hideTrack>
-          <Box className={css.CallViewContent} alignItems="Center" justifyContent="Center">
-            <Box style={{ maxWidth: toRem(382), width: '100%' }} direction="Column" gap="100">
-              {hasParticipant && (
-                <Header size="300">
-                  <Box grow="Yes" alignItems="Center">
-                    <Text size="L400">Participant</Text>
-                  </Box>
-                  <Badge variant="Critical" fill="Solid" size="400">
-                    <Text as="span" size="L400" truncate>
-                      {callMembers.length} Live
-                    </Text>
-                  </Badge>
-                </Header>
-              )}
-              <CallMemberRenderer members={callMembers} />
-              <PrescreenControls canJoin={canJoin} />
-              <Header size="300">
-                {!inOtherCall &&
-                  (canJoin ? (
-                    <JoinMessage hasParticipant={hasParticipant} />
-                  ) : (
-                    <NoPermissionMessage />
-                  ))}
-                {inOtherCall && <AlreadyInCallMessage />}
-              </Header>
-            </Box>
-          </Box>
-        </Scroll>
-      )}
+      {!currentJoined && <CallPrescreen />}
+      <CallJoined joined={currentJoined} containerRef={callContainerRef} />
     </Box>
   );
 }

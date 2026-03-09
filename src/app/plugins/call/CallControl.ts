@@ -14,12 +14,58 @@ export class CallControl extends EventEmitter implements CallControlState {
 
   private iframe: HTMLIFrameElement;
 
+  private controlMutationObserver: MutationObserver;
+
+  private get document(): Document | undefined {
+    return this.iframe.contentDocument ?? this.iframe.contentWindow?.document;
+  }
+
+  private get screenshareButton(): HTMLElement | undefined {
+    const screenshareBtn = this.document?.querySelector(
+      '[data-testid="incall_screenshare"]'
+    ) as HTMLElement | null;
+
+    return screenshareBtn ?? undefined;
+  }
+
+  private get settingsButton(): HTMLElement | undefined {
+    const leaveBtn = this.document?.querySelector('[data-testid="incall_leave"]');
+
+    const settingsButton = leaveBtn?.previousElementSibling as HTMLElement | null;
+
+    return settingsButton ?? undefined;
+  }
+
+  private get reactionsButton(): HTMLElement | undefined {
+    const reactionsButton = this.settingsButton?.previousElementSibling as HTMLElement | null;
+
+    return reactionsButton ?? undefined;
+  }
+
+  private get spotlightButton(): HTMLInputElement | undefined {
+    const spotlightButton = this.document?.querySelector(
+      'input[value="spotlight"]'
+    ) as HTMLInputElement | null;
+
+    return spotlightButton ?? undefined;
+  }
+
+  private get gridButton(): HTMLInputElement | undefined {
+    const gridButton = this.document?.querySelector(
+      'input[value="grid"]'
+    ) as HTMLInputElement | null;
+
+    return gridButton ?? undefined;
+  }
+
   constructor(state: CallControlState, call: ClientWidgetApi, iframe: HTMLIFrameElement) {
     super();
 
     this.state = state;
     this.call = call;
     this.iframe = iframe;
+
+    this.controlMutationObserver = new MutationObserver(this.onControlMutation.bind(this));
   }
 
   public getState(): CallControlState {
@@ -38,6 +84,14 @@ export class CallControl extends EventEmitter implements CallControlState {
     return this.state.sound;
   }
 
+  public get screenshare(): boolean {
+    return this.state.screenshare;
+  }
+
+  public get spotlight(): boolean {
+    return this.state.spotlight;
+  }
+
   public async applyState() {
     await this.setMediaState({
       audio_enabled: this.microphone,
@@ -45,6 +99,26 @@ export class CallControl extends EventEmitter implements CallControlState {
     });
     this.setSound(this.sound);
     this.emitStateUpdate();
+  }
+
+  public startObserving() {
+    this.controlMutationObserver.disconnect();
+
+    const screenshareBtn = this.screenshareButton;
+    if (screenshareBtn) {
+      this.controlMutationObserver.observe(screenshareBtn, {
+        attributes: true,
+        attributeFilter: ['data-kind'],
+      });
+    }
+    const spotlightBtn = this.spotlightButton;
+    if (spotlightBtn) {
+      this.controlMutationObserver.observe(spotlightBtn, {
+        attributes: true,
+      });
+    }
+
+    this.onControlMutation();
   }
 
   public applySound() {
@@ -72,7 +146,9 @@ export class CallControl extends EventEmitter implements CallControlState {
     const state = new CallControlState(
       data.audio_enabled ?? this.microphone,
       data.video_enabled ?? this.video,
-      this.sound
+      this.sound,
+      this.screenshare,
+      this.spotlight
     );
 
     this.state = state;
@@ -81,6 +157,20 @@ export class CallControl extends EventEmitter implements CallControlState {
     if (this.microphone && !this.sound) {
       this.toggleSound();
     }
+  }
+
+  public onControlMutation() {
+    const screenshare: boolean = this.screenshareButton?.getAttribute('data-kind') === 'primary';
+    const spotlight: boolean = this.spotlightButton?.checked ?? false;
+
+    this.state = new CallControlState(
+      this.microphone,
+      this.video,
+      this.sound,
+      screenshare,
+      spotlight
+    );
+    this.emitStateUpdate();
   }
 
   public toggleMicrophone() {
@@ -104,13 +194,43 @@ export class CallControl extends EventEmitter implements CallControlState {
 
     this.setSound(sound);
 
-    const state = new CallControlState(this.microphone, this.video, sound);
+    const state = new CallControlState(
+      this.microphone,
+      this.video,
+      sound,
+      this.screenshare,
+      this.spotlight
+    );
     this.state = state;
     this.emitStateUpdate();
 
     if (!this.sound && this.microphone) {
       this.toggleMicrophone();
     }
+  }
+
+  public toggleScreenshare() {
+    this.screenshareButton?.click();
+  }
+
+  public toggleSpotlight() {
+    if (this.spotlight) {
+      this.gridButton?.click();
+      return;
+    }
+    this.spotlightButton?.click();
+  }
+
+  public toggleReactions() {
+    this.reactionsButton?.click();
+  }
+
+  public toggleSettings() {
+    this.settingsButton?.click();
+  }
+
+  public dispose() {
+    this.controlMutationObserver.disconnect();
   }
 
   private emitStateUpdate() {

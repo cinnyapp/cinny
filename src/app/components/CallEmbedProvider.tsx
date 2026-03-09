@@ -1,5 +1,6 @@
 import React, { ReactNode, useCallback, useRef } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { config } from 'folds';
 import {
   CallEmbedContextProvider,
   CallEmbedRefContextProvider,

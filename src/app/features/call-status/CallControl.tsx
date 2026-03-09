@@ -1,7 +1,8 @@
-import { Box, Chip, Icon, IconButton, Icons, Text, Tooltip, TooltipProvider } from 'folds';
-import React, { useState } from 'react';
+import { Box, Chip, Icon, IconButton, Icons, Spinner, Text, Tooltip, TooltipProvider } from 'folds';
+import React, { useCallback } from 'react';
 import { StatusDivider } from './components';
 import { CallEmbed, useCallControlState } from '../../plugins/call';
+import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 
 type MicrophoneButtonProps = {
   enabled: boolean;
@@ -104,9 +105,11 @@ function VideoButton({ enabled, onToggle }: VideoButtonProps) {
   );
 }
 
-function ScreenShareButton() {
-  const [enabled, setEnabled] = useState(false);
-
+type ScreenShareButtonProps = {
+  enabled: boolean;
+  onToggle: () => void;
+};
+function ScreenShareButton({ enabled, onToggle }: ScreenShareButtonProps) {
   return (
     <TooltipProvider
       position="Top"
@@ -123,7 +126,7 @@ function ScreenShareButton() {
           fill="Soft"
           radii="300"
           size="300"
-          onClick={() => setEnabled(!enabled)}
+          onClick={onToggle}
           outlined
         >
           <Icon size="100" src={Icons.ScreenShare} filled={enabled} />
@@ -133,8 +136,14 @@ function ScreenShareButton() {
   );
 }
 
-export function CallControl({ callEmbed }: { callEmbed: CallEmbed }) {
-  const { microphone, video, sound } = useCallControlState(callEmbed.control);
+export function CallControl({ callEmbed, compact }: { callEmbed: CallEmbed; compact: boolean }) {
+  const { microphone, video, sound, screenshare } = useCallControlState(callEmbed.control);
+
+  const [hangupState, hangup] = useAsyncCallback(
+    useCallback(() => callEmbed.hangup(), [callEmbed])
+  );
+  const exiting =
+    hangupState.status === AsyncStatus.Loading || hangupState.status === AsyncStatus.Success;
 
   return (
     <Box shrink="No" alignItems="Center" gap="300">
@@ -144,21 +153,36 @@ export function CallControl({ callEmbed }: { callEmbed: CallEmbed }) {
           onToggle={() => callEmbed.control.toggleMicrophone()}
         />
         <SoundButton enabled={sound} onToggle={() => callEmbed.control.toggleSound()} />
+        {!compact && <StatusDivider />}
         <VideoButton enabled={video} onToggle={() => callEmbed.control.toggleVideo()} />
-        {false && <ScreenShareButton />}
+        {!compact && (
+          <ScreenShareButton
+            enabled={screenshare}
+            onToggle={() => callEmbed.control.toggleScreenshare()}
+          />
+        )}
       </Box>
       <StatusDivider />
       <Chip
         variant="Critical"
-        radii="300"
+        radii="Pill"
         fill="Soft"
-        before={<Icon size="50" src={Icons.PhoneDown} filled />}
+        before={
+          exiting ? (
+            <Spinner variant="Critical" fill="Soft" size="50" />
+          ) : (
+            <Icon size="50" src={Icons.PhoneDown} filled />
+          )
+        }
+        disabled={exiting}
         outlined
-        onClick={() => callEmbed.hangup()}
+        onClick={hangup}
       >
-        <Text as="span" size="L400">
-          End
-        </Text>
+        {!compact && (
+          <Text as="span" size="L400">
+            End
+          </Text>
+        )}
       </Chip>
     </Box>
   );

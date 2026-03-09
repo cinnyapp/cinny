@@ -14,7 +14,7 @@ export function MemberSpeaking({ room, speakers }: MemberSpeakingProps) {
   );
   return (
     <Box alignItems="Center" gap="100">
-      <Icon size="100" src={Icons.Phone} filled />
+      <Icon size="100" src={Icons.Mic} filled />
       <Text size="T200" truncate>
         {speakingNames.length === 1 && (
           <>

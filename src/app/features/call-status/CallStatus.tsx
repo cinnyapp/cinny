@@ -47,18 +47,17 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
         ) : (
           <Spinner variant="Secondary" size="200" />
         )}
-        <Box
-          grow="Yes"
-          alignItems="Center"
-          gap="Inherit"
-          justifyContent={compact ? 'Center' : undefined}
-        >
-          <CallRoomName room={room} />
-          {speakers.size > 0 && !compact && (
+        <Box grow="Yes" alignItems="Center" gap="Inherit">
+          {!compact && (
             <>
-              <StatusDivider />
-              <span data-spacing-node />
-              <MemberSpeaking room={room} speakers={speakers} />
+              <CallRoomName room={room} />
+              {speakers.size > 0 && (
+                <>
+                  <StatusDivider />
+                  <span data-spacing-node />
+                  <MemberSpeaking room={room} speakers={speakers} />
+                </>
+              )}
             </>
           )}
         </Box>
@@ -69,8 +68,13 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
         )}
       </Box>
       {memberVisible && !compact && <StatusDivider />}
-      <Box shrink="No" alignItems="Center" justifyContent="Center" gap="Inherit">
-        <CallControl callEmbed={callEmbed} />
+      <Box shrink="No" alignItems="Center" gap="Inherit">
+        {compact && (
+          <Box grow="Yes">
+            <CallRoomName room={room} />
+          </Box>
+        )}
+        <CallControl compact={compact} callEmbed={callEmbed} />
       </Box>
     </Box>
   );
