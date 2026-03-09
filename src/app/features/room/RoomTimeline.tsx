@@ -1475,7 +1475,35 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-        const callJoined = mEvent.getContent<SessionMembershipData>().application;
+        const content = mEvent.getContent<SessionMembershipData>();
+        const prevContent = mEvent.getPrevContent();
+        const intent = 'm.call.intent' in content && content['m.call.intent'];
+        const prevIntent = 'm.call.intent' in prevContent && prevContent['m.call.intent'];
+
+        const callJoined = content.application;
+
+        let bodyJSX;
+        let iconSrc;
+
+        if (typeof intent === 'string' && typeof prevIntent === 'string') {
+          const video = intent === 'video';
+          iconSrc = video ? Icons.VideoCamera : Icons.VideoCameraMute;
+
+          bodyJSX = (
+            <Text size="T300" priority="300">
+              <b>{senderName}</b>
+              {video ? ' started the camera' : ' stopped the camera'}
+            </Text>
+          );
+        } else {
+          bodyJSX = (
+            <Text size="T300" priority="300">
+              <b>{senderName}</b>
+              {callJoined ? ' joined the call' : ' ended the call'}
+            </Text>
+          );
+          iconSrc = callJoined ? Icons.Phone : Icons.PhoneDown;
+        }
 
         const timeJSX = (
           <Time
@@ -1502,13 +1530,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             <EventContent
               messageLayout={messageLayout}
               time={timeJSX}
-              iconSrc={callJoined ? Icons.Phone : Icons.PhoneDown}
+              iconSrc={iconSrc}
               content={
                 <Box grow="Yes" direction="Column">
-                  <Text size="T300" priority="300">
-                    <b>{senderName}</b>
-                    {callJoined ? ' joined the call' : ' ended the call'}
-                  </Text>
+                  {bodyJSX}
                 </Box>
               }
             />
