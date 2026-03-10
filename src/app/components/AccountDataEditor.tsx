@@ -27,6 +27,7 @@ import { useTextAreaCodeEditor } from '../hooks/useTextAreaCodeEditor';
 const EDITOR_INTENT_SPACE_COUNT = 2;
 
 export type AccountDataSubmitCallback = (type: string, content: object) => Promise<void>;
+export type AccountDataDeleteCallback = (type: string) => Promise<void>;
 
 type AccountDataInfo = {
   type: string;
@@ -83,8 +84,7 @@ function AccountDataEdit({
 
     if (
       !typeStr ||
-      parsedContent === null ||
-      defaultContent === JSON.stringify(parsedContent, null, EDITOR_INTENT_SPACE_COUNT)
+      parsedContent === null
     ) {
       return;
     }
@@ -121,7 +121,7 @@ function AccountDataEdit({
       aria-disabled={submitting}
     >
       <Box shrink="No" direction="Column" gap="100">
-        <Text size="L400">Account Data</Text>
+        <Text size="L400">Field Name</Text>
         <Box gap="300">
           <Box grow="Yes" direction="Column">
             <Input
@@ -195,9 +195,22 @@ function AccountDataEdit({
 type AccountDataViewProps = {
   type: string;
   defaultContent: string;
-  onEdit: () => void;
+  requestClose: () => void;
+  onEdit?: () => void;
+  submitDelete?: AccountDataDeleteCallback;
 };
-function AccountDataView({ type, defaultContent, onEdit }: AccountDataViewProps) {
+function AccountDataView({ type, defaultContent, onEdit, requestClose, submitDelete }: AccountDataViewProps) {
+  const [deleteState, deleteCallback] = useAsyncCallback<void, MatrixError, []>(useCallback(
+    async () => {
+      if (submitDelete !== undefined) {
+        await submitDelete(type);
+        requestClose();
+      }
+    },
+    [type, submitDelete, requestClose],
+  ));
+  const deleting = deleteState.status === AsyncStatus.Loading;
+
   return (
     <Box
       direction="Column"
@@ -208,7 +221,7 @@ function AccountDataView({ type, defaultContent, onEdit }: AccountDataViewProps)
     >
       <Box shrink="No" gap="300" alignItems="End">
         <Box grow="Yes" direction="Column" gap="100">
-          <Text size="L400">Account Data</Text>
+          <Text size="L400">Field Name</Text>
           <Input
             variant="SurfaceVariant"
             size="400"
@@ -218,9 +231,23 @@ function AccountDataView({ type, defaultContent, onEdit }: AccountDataViewProps)
             required
           />
         </Box>
-        <Button variant="Secondary" size="400" radii="300" onClick={onEdit}>
-          <Text size="B400">Edit</Text>
-        </Button>
+        {onEdit && (
+          <Button variant="Secondary" size="400" radii="300" onClick={onEdit}>
+            <Text size="B400">Edit</Text>
+          </Button>
+        )}
+        {submitDelete && (
+          <Button
+            variant="Critical"
+            size="400"
+            radii="300"
+            disabled={deleting}
+            before={deleting && <Spinner variant="Critical" fill="Solid" size="300" />}
+            onClick={deleteCallback}
+          >
+            <Text size="B400">Delete</Text>
+          </Button>
+        )}
       </Box>
       <Box grow="Yes" direction="Column" gap="100">
         <Text size="L400">JSON Content</Text>
@@ -243,8 +270,9 @@ function AccountDataView({ type, defaultContent, onEdit }: AccountDataViewProps)
 
 export type AccountDataEditorProps = {
   type?: string;
-  content?: object;
-  submitChange: AccountDataSubmitCallback;
+  content?: unknown;
+  submitChange?: AccountDataSubmitCallback;
+  submitDelete?: AccountDataDeleteCallback;
   requestClose: () => void;
 };
 
@@ -252,6 +280,7 @@ export function AccountDataEditor({
   type,
   content,
   submitChange,
+  submitDelete,
   requestClose,
 }: AccountDataEditorProps) {
   const [data, setData] = useState<AccountDataInfo>({
@@ -301,7 +330,7 @@ export function AccountDataEditor({
         </Box>
       </PageHeader>
       <Box grow="Yes" direction="Column">
-        {edit ? (
+        {(edit && submitChange) ? (
           <AccountDataEdit
             type={data.type}
             defaultContent={contentJSONStr}
@@ -313,7 +342,9 @@ export function AccountDataEditor({
           <AccountDataView
             type={data.type}
             defaultContent={contentJSONStr}
-            onEdit={() => setEdit(true)}
+            requestClose={requestClose}
+            onEdit={submitChange ? () => setEdit(true) : undefined}
+            submitDelete={submitDelete}
           />
         )}
       </Box>

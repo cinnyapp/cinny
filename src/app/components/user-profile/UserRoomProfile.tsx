@@ -1,5 +1,5 @@
 import { Box, Button, config, Icon, Icons, Text } from 'folds';
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserHero, UserHeroName } from './UserHero';
 import { getMxIdServer, mxcUrlToHttp } from '../../utils/matrix';
@@ -9,7 +9,7 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { usePowerLevels } from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
 import { useUserPresence } from '../../hooks/useUserPresence';
-import { IgnoredUserAlert, MutualRoomsChip, OptionsChip, ServerChip, ShareChip } from './UserChips';
+import { IgnoredUserAlert, MutualRoomsChip, OptionsChip, ServerChip, ShareChip, TimezoneChip } from './UserChips';
 import { useCloseUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { PowerChip } from './PowerChip';
 import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
@@ -22,6 +22,7 @@ import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
 import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
+import { useExtendedProfile } from '../../hooks/useExtendedProfile';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -56,8 +57,23 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
   const displayName = getMemberDisplayName(room, userId);
   const avatarMxc = getMemberAvatarMxc(room, userId);
   const avatarUrl = (avatarMxc && mxcUrlToHttp(mx, avatarMxc, useAuthentication)) ?? undefined;
+  const [extendedProfile, refreshExtendedProfile] = useExtendedProfile(userId);
+  const timezone = useMemo(() => {
+    // @ts-expect-error Intl.supportedValuesOf isn't in the types yet
+    const supportedTimezones = Intl.supportedValuesOf('timeZone') as string[];
+    const profileTimezone = extendedProfile?.['us.cloke.msc4175.tz'];
+    if (profileTimezone && supportedTimezones.includes(profileTimezone)) {
+      return profileTimezone;
+    } 
+      return undefined;
+    
+  }, [extendedProfile]);
 
   const presence = useUserPresence(userId);
+
+  useEffect(() => {
+    refreshExtendedProfile();
+  }, [refreshExtendedProfile]);
 
   const handleMessage = () => {
     closeUserRoomProfile();
@@ -77,7 +93,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
       <Box direction="Column" gap="500" style={{ padding: config.space.S400 }}>
         <Box direction="Column" gap="400">
           <Box gap="400" alignItems="Start">
-            <UserHeroName displayName={displayName} userId={userId} />
+            <UserHeroName displayName={displayName} userId={userId} extendedProfile={extendedProfile ?? undefined} />
             {userId !== myUserId && (
               <Box shrink="No">
                 <Button
@@ -96,9 +112,10 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
           <Box alignItems="Center" gap="200" wrap="Wrap">
             {server && <ServerChip server={server} />}
             <ShareChip userId={userId} />
+            {timezone && <TimezoneChip timezone={timezone} />}
             {creator ? <CreatorChip /> : <PowerChip userId={userId} />}
             {userId !== myUserId && <MutualRoomsChip userId={userId} />}
-            {userId !== myUserId && <OptionsChip userId={userId} />}
+            {userId !== myUserId && <OptionsChip userId={userId} extendedProfile={extendedProfile ?? null} />}
           </Box>
         </Box>
         {ignored && <IgnoredUserAlert />}

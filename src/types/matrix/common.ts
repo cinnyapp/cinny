@@ -3,7 +3,8 @@ import { MsgType } from 'matrix-js-sdk';
 
 export const MATRIX_BLUR_HASH_PROPERTY_NAME = 'xyz.amorgan.blurhash';
 export const MATRIX_SPOILER_PROPERTY_NAME = 'page.codeberg.everypizza.msc4193.spoiler';
-export const MATRIX_SPOILER_REASON_PROPERTY_NAME = 'page.codeberg.everypizza.msc4193.spoiler.reason';
+export const MATRIX_SPOILER_REASON_PROPERTY_NAME =
+  'page.codeberg.everypizza.msc4193.spoiler.reason';
 
 export type IImageInfo = {
   w?: number;
@@ -87,4 +88,10 @@ export type ILocationContent = {
   body?: string;
   geo_uri?: string;
   info?: IThumbnailContent;
+};
+
+export type IProfileFieldsCapability = {
+  enabled?: boolean;
+  allowed?: string[];
+  disallowed?: string[];
 };

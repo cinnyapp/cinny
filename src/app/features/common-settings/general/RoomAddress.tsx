@@ -7,8 +7,6 @@ import {
   Chip,
   color,
   config,
-  Icon,
-  Icons,
   Input,
   Spinner,
   Text,
@@ -33,6 +31,7 @@ import { useAlive } from '../../../hooks/useAlive';
 import { StateEvent } from '../../../../types/matrix/room';
 import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
 import { getMxIdServer } from '../../../utils/matrix';
+import { CollapsibleCard } from '../../../components/CollapsibleCard';
 
 type RoomPublishedAddressesProps = {
   permissions: RoomPermissionsAPI;
@@ -373,64 +372,40 @@ export function RoomLocalAddresses({ permissions }: { permissions: RoomPermissio
   const { localAliasesState, addLocalAlias, removeLocalAlias } = useLocalAliases(room.roomId);
 
   return (
-    <SequenceCard
-      className={SequenceCardStyle}
-      variant="SurfaceVariant"
-      direction="Column"
-      gap="400"
+    <CollapsibleCard
+      expand={expand}
+      setExpand={setExpand}
+      title="Local Addresses"
+      description="Set local address so users can join through your homeserver."
     >
-      <SettingTile
-        title="Local Addresses"
-        description="Set local address so users can join through your homeserver."
-        after={
-          <Button
-            type="button"
-            onClick={() => setExpand(!expand)}
-            size="300"
-            variant="Secondary"
-            fill="Soft"
-            outlined
-            radii="300"
-            before={
-              <Icon size="100" src={expand ? Icons.ChevronTop : Icons.ChevronBottom} filled />
-            }
-          >
-            <Text as="span" size="B300" truncate>
-              {expand ? 'Collapse' : 'Expand'}
+      <CutoutCard variant="Surface" style={{ padding: config.space.S300 }}>
+        {localAliasesState.status === AsyncStatus.Loading && (
+          <Box gap="100">
+            <Spinner variant="Secondary" size="100" />
+            <Text size="T200">Loading...</Text>
+          </Box>
+        )}
+        {localAliasesState.status === AsyncStatus.Success &&
+          (localAliasesState.data.length === 0 ? (
+            <Box direction="Column" gap="100">
+              <Text size="L400">No Addresses</Text>
+            </Box>
+          ) : (
+            <LocalAddressesList
+              localAliases={localAliasesState.data}
+              removeLocalAlias={removeLocalAlias}
+              canEditCanonical={canEditCanonical}
+            />
+          ))}
+        {localAliasesState.status === AsyncStatus.Error && (
+          <Box gap="100">
+            <Text size="T200" style={{ color: color.Critical.Main }}>
+              {localAliasesState.error.message}
             </Text>
-          </Button>
-        }
-      />
-      {expand && (
-        <CutoutCard variant="Surface" style={{ padding: config.space.S300 }}>
-          {localAliasesState.status === AsyncStatus.Loading && (
-            <Box gap="100">
-              <Spinner variant="Secondary" size="100" />
-              <Text size="T200">Loading...</Text>
-            </Box>
-          )}
-          {localAliasesState.status === AsyncStatus.Success &&
-            (localAliasesState.data.length === 0 ? (
-              <Box direction="Column" gap="100">
-                <Text size="L400">No Addresses</Text>
-              </Box>
-            ) : (
-              <LocalAddressesList
-                localAliases={localAliasesState.data}
-                removeLocalAlias={removeLocalAlias}
-                canEditCanonical={canEditCanonical}
-              />
-            ))}
-          {localAliasesState.status === AsyncStatus.Error && (
-            <Box gap="100">
-              <Text size="T200" style={{ color: color.Critical.Main }}>
-                {localAliasesState.error.message}
-              </Text>
-            </Box>
-          )}
-        </CutoutCard>
-      )}
+          </Box>
+        )}
+      </CutoutCard>
       {expand && <LocalAddressInput addLocalAlias={addLocalAlias} />}
-    </SequenceCard>
+    </CollapsibleCard>
   );
 }

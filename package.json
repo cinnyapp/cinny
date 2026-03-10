@@ -75,7 +75,8 @@
     "slate-dom": "0.112.2",
     "slate-history": "0.110.3",
     "slate-react": "0.112.1",
-    "ua-parser-js": "1.0.35"
+    "ua-parser-js": "1.0.35",
+    "zod": "4.1.8"
   },
   "devDependencies": {
     "@element-hq/element-call-embedded": "0.16.3",

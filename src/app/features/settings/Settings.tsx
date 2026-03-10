@@ -21,10 +21,9 @@ import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { Account } from './account';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
+import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { UserAvatar } from '../../components/user-avatar';
-import { nameInitials } from '../../utils/common';
 import { Notifications } from './notifications';
 import { Devices } from './devices';
 import { EmojisStickers } from './emojis-stickers';
@@ -99,9 +98,8 @@ type SettingsProps = {
 export function Settings({ initialPage, requestClose }: SettingsProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
-  const userId = mx.getUserId()!;
+  const userId = mx.getUserId() as string;
   const profile = useUserProfile(userId);
-  const displayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
   const avatarUrl = profile.avatarUrl
     ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
     : undefined;
@@ -132,7 +130,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
                   <UserAvatar
                     userId={userId}
                     src={avatarUrl}
-                    renderFallback={() => <Text size="H6">{nameInitials(displayName)}</Text>}
+                    renderFallback={() => <Icon size="100" src={Icons.User} filled />}
                   />
                 </Avatar>
                 <Text size="H4" truncate>

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Text } from 'folds';
+import { Icon, Icons } from 'folds';
 import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '../../../components/sidebar';
 import { UserAvatar } from '../../../components/user-avatar';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
-import { nameInitials } from '../../../utils/common';
+import { mxcUrlToHttp } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { Settings } from '../../../features/settings';
 import { useUserProfile } from '../../../hooks/useUserProfile';
@@ -13,12 +12,11 @@ import { Modal500 } from '../../../components/Modal500';
 export function SettingsTab() {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
-  const userId = mx.getUserId()!;
+  const userId = mx.getUserId() as string;
   const profile = useUserProfile(userId);
 
   const [settings, setSettings] = useState(false);
 
-  const displayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
   const avatarUrl = profile.avatarUrl
     ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
     : undefined;
@@ -34,7 +32,7 @@ export function SettingsTab() {
             <UserAvatar
               userId={userId}
               src={avatarUrl}
-              renderFallback={() => <Text size="H4">{nameInitials(displayName)}</Text>}
+              renderFallback={() => <Icon size="400" src={Icons.User} filled />}
             />
           </SidebarAvatar>
         )}

@@ -21,6 +21,7 @@ import { UserPresence } from '../../hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../presence';
 import { ImageViewer } from '../image-viewer';
 import { stopPropagation } from '../../utils/keyboard';
+import { ExtendedProfile } from '../../hooks/useExtendedProfile';
 
 type UserHeroProps = {
   userId: string;
@@ -95,9 +96,11 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
 type UserHeroNameProps = {
   displayName?: string;
   userId: string;
+  extendedProfile?: ExtendedProfile;
 };
-export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
+export function UserHeroName({ displayName, userId, extendedProfile }: UserHeroNameProps) {
   const username = getMxIdLocalPart(userId);
+  const pronouns = extendedProfile?.["io.fsky.nyx.pronouns"];
 
   return (
     <Box grow="Yes" direction="Column" gap="0">
@@ -110,9 +113,10 @@ export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
           {displayName ?? username ?? userId}
         </Text>
       </Box>
-      <Box alignItems="Center" gap="100" wrap="Wrap">
+      <Box alignItems="Start" gap="100" wrap="Wrap" direction='Column'>
         <Text size="T200" className={classNames(BreakWord, LineClamp3)} title={username}>
           @{username}
+          {pronouns && <span> · {pronouns.map(({ summary }) => summary).join(", ")}</span>}
         </Text>
       </Box>
     </Box>

@@ -11,6 +11,7 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { decryptMegolmKeyFile, encryptMegolmKeyFile } from '../../../../util/cryptE2ERoomKeys';
 import { useAlive } from '../../../hooks/useAlive';
 import { useFilePicker } from '../../../hooks/useFilePicker';
+import { CollapsibleCard } from '../../../components/CollapsibleCard';
 
 function ExportKeys() {
   const mx = useMatrixClient();
@@ -121,37 +122,18 @@ function ExportKeys() {
   );
 }
 
-function ExportKeysTile() {
+function ExportKeysCard() {
   const [expand, setExpand] = useState(false);
 
   return (
-    <>
-      <SettingTile
-        title="Export Messages Data"
-        description="Save password protected copy of encryption data on your device to decrypt messages later."
-        after={
-          <Box>
-            <Button
-              type="button"
-              onClick={() => setExpand(!expand)}
-              size="300"
-              variant="Secondary"
-              fill="Soft"
-              outlined
-              radii="300"
-              before={
-                <Icon size="100" src={expand ? Icons.ChevronTop : Icons.ChevronBottom} filled />
-              }
-            >
-              <Text as="span" size="B300" truncate>
-                {expand ? 'Collapse' : 'Expand'}
-              </Text>
-            </Button>
-          </Box>
-        }
-      />
-      {expand && <ExportKeys />}
-    </>
+    <CollapsibleCard
+      expand={expand}
+      setExpand={setExpand}
+      title="Export Messages Data"
+      description="Save password protected copy of encryption data on your device to decrypt messages later."
+    >
+      <ExportKeys />
+    </CollapsibleCard>
   );
 }
 
@@ -304,14 +286,7 @@ export function LocalBackup() {
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Local Backup</Text>
-      <SequenceCard
-        className={SequenceCardStyle}
-        variant="SurfaceVariant"
-        direction="Column"
-        gap="400"
-      >
-        <ExportKeysTile />
-      </SequenceCard>
+      <ExportKeysCard />
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

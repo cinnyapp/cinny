@@ -1,324 +1,283 @@
-import React, {
-  ChangeEventHandler,
-  FormEventHandler,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import {
-  Box,
-  Text,
-  IconButton,
-  Icon,
-  Icons,
-  Input,
-  Avatar,
-  Button,
-  Overlay,
-  OverlayBackdrop,
-  OverlayCenter,
-  Modal,
-  Dialog,
-  Header,
-  config,
-  Spinner,
-} from 'folds';
-import FocusTrap from 'focus-trap-react';
+import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { Box, Text, Button, config, Spinner, Line } from 'folds';
+import { UserEvent, ValidatedAuthMetadata } from 'matrix-js-sdk';
 import { SequenceCard } from '../../../components/sequence-card';
-import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { UserProfile, useUserProfile } from '../../../hooks/useUserProfile';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
-import { UserAvatar } from '../../../components/user-avatar';
+import { getMxIdServer, mxcUrlToHttp } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { nameInitials } from '../../../utils/common';
+import { UserHero, UserHeroName } from '../../../components/user-profile/UserHero';
+import {
+  ExtendedProfile,
+  profileEditsAllowed,
+  useExtendedProfile,
+} from '../../../hooks/useExtendedProfile';
+import { ProfileFieldContext, ProfileFieldElementProps } from './fields/ProfileFieldContext';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useFilePicker } from '../../../hooks/useFilePicker';
-import { useObjectURL } from '../../../hooks/useObjectURL';
-import { stopPropagation } from '../../../utils/keyboard';
-import { ImageEditor } from '../../../components/image-editor';
-import { ModalWide } from '../../../styles/Modal.css';
-import { createUploadAtom, UploadSuccess } from '../../../state/upload';
-import { CompactUploadCardRenderer } from '../../../components/upload-card';
+import { CutoutCard } from '../../../components/cutout-card';
+import { ServerChip, ShareChip, TimezoneChip } from '../../../components/user-profile/UserChips';
+import { SequenceCardStyle } from '../styles.css';
+import { useUserProfile } from '../../../hooks/useUserProfile';
+import { useAuthMetadata } from '../../../hooks/useAuthMetadata';
+import { useAccountManagementActions } from '../../../hooks/useAccountManagement';
+import { withSearchParam } from '../../../pages/pathUtils';
 import { useCapabilities } from '../../../hooks/useCapabilities';
+import { ProfileAvatar } from './fields/ProfileAvatar';
+import { ProfileTextField } from './fields/ProfileTextField';
+import { ProfilePronouns } from './fields/ProfilePronouns';
+import { ProfileTimezone } from './fields/ProfileTimezone';
 
-type ProfileProps = {
-  profile: UserProfile;
-  userId: string;
-};
-function ProfileAvatar({ profile, userId }: ProfileProps) {
-  const mx = useMatrixClient();
-  const useAuthentication = useMediaAuthentication();
-  const capabilities = useCapabilities();
-  const [alertRemove, setAlertRemove] = useState(false);
-  const disableSetAvatar = capabilities['m.set_avatar_url']?.enabled === false;
+function IdentityProviderSettings({ authMetadata }: { authMetadata: ValidatedAuthMetadata }) {
+  const accountManagementActions = useAccountManagementActions();
 
-  const defaultDisplayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
-  const avatarUrl = profile.avatarUrl
-    ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
-    : undefined;
+  const openProviderProfileSettings = useCallback(() => {
+    const authUrl = authMetadata?.account_management_uri ?? authMetadata?.issuer;
+    if (!authUrl) return;
 
-  const [imageFile, setImageFile] = useState<File>();
-  const imageFileURL = useObjectURL(imageFile);
-  const uploadAtom = useMemo(() => {
-    if (imageFile) return createUploadAtom(imageFile);
-    return undefined;
-  }, [imageFile]);
-
-  const pickFile = useFilePicker(setImageFile, false);
-
-  const handleRemoveUpload = useCallback(() => {
-    setImageFile(undefined);
-  }, []);
-
-  const handleUploaded = useCallback(
-    (upload: UploadSuccess) => {
-      const { mxc } = upload;
-      mx.setAvatarUrl(mxc);
-      handleRemoveUpload();
-    },
-    [mx, handleRemoveUpload]
-  );
-
-  const handleRemoveAvatar = () => {
-    mx.setAvatarUrl('');
-    setAlertRemove(false);
-  };
+    window.open(
+      withSearchParam(authUrl, {
+        action: accountManagementActions.profile,
+      }),
+      '_blank'
+    );
+  }, [authMetadata, accountManagementActions]);
 
   return (
-    <SettingTile
-      title={
-        <Text as="span" size="L400">
-          Avatar
-        </Text>
-      }
-      after={
-        <Avatar size="500" radii="300">
-          <UserAvatar
-            userId={userId}
-            src={avatarUrl}
-            renderFallback={() => <Text size="H4">{nameInitials(defaultDisplayName)}</Text>}
-          />
-        </Avatar>
-      }
-    >
-      {uploadAtom ? (
-        <Box gap="200" direction="Column">
-          <CompactUploadCardRenderer
-            uploadAtom={uploadAtom}
-            onRemove={handleRemoveUpload}
-            onComplete={handleUploaded}
-          />
-        </Box>
-      ) : (
-        <Box gap="200">
+    <CutoutCard style={{ padding: config.space.S200 }} variant="Surface">
+      <SettingTile
+        after={
           <Button
-            onClick={() => pickFile('image/*')}
             size="300"
             variant="Secondary"
             fill="Soft"
-            outlined
             radii="300"
-            disabled={disableSetAvatar}
+            outlined
+            onClick={openProviderProfileSettings}
           >
-            <Text size="B300">Upload</Text>
+            <Text size="B300">Open</Text>
           </Button>
-          {avatarUrl && (
-            <Button
-              size="300"
-              variant="Critical"
-              fill="None"
-              radii="300"
-              disabled={disableSetAvatar}
-              onClick={() => setAlertRemove(true)}
-            >
-              <Text size="B300">Remove</Text>
-            </Button>
-          )}
-        </Box>
-      )}
-
-      {imageFileURL && (
-        <Overlay open={false} backdrop={<OverlayBackdrop />}>
-          <OverlayCenter>
-            <FocusTrap
-              focusTrapOptions={{
-                initialFocus: false,
-                onDeactivate: handleRemoveUpload,
-                clickOutsideDeactivates: true,
-                escapeDeactivates: stopPropagation,
-              }}
-            >
-              <Modal className={ModalWide} variant="Surface" size="500">
-                <ImageEditor
-                  name={imageFile?.name ?? 'Unnamed'}
-                  url={imageFileURL}
-                  requestClose={handleRemoveUpload}
-                />
-              </Modal>
-            </FocusTrap>
-          </OverlayCenter>
-        </Overlay>
-      )}
-
-      <Overlay open={alertRemove} backdrop={<OverlayBackdrop />}>
-        <OverlayCenter>
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: () => setAlertRemove(false),
-              clickOutsideDeactivates: true,
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Dialog variant="Surface">
-              <Header
-                style={{
-                  padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
-                  borderBottomWidth: config.borderWidth.B300,
-                }}
-                variant="Surface"
-                size="500"
-              >
-                <Box grow="Yes">
-                  <Text size="H4">Remove Avatar</Text>
-                </Box>
-                <IconButton size="300" onClick={() => setAlertRemove(false)} radii="300">
-                  <Icon src={Icons.Cross} />
-                </IconButton>
-              </Header>
-              <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
-                <Box direction="Column" gap="200">
-                  <Text priority="400">Are you sure you want to remove profile avatar?</Text>
-                </Box>
-                <Button variant="Critical" onClick={handleRemoveAvatar}>
-                  <Text size="B400">Remove</Text>
-                </Button>
-              </Box>
-            </Dialog>
-          </FocusTrap>
-        </OverlayCenter>
-      </Overlay>
-    </SettingTile>
+        }
+      >
+        <Text size="T200">Change profile settings in your homeserver&apos;s account dashboard.</Text>
+      </SettingTile>
+    </CutoutCard>
   );
 }
 
-function ProfileDisplayName({ profile, userId }: ProfileProps) {
-  const mx = useMatrixClient();
-  const capabilities = useCapabilities();
-  const disableSetDisplayname = capabilities['m.set_displayname']?.enabled === false;
+/// Context props which are passed to every field element.
+/// Right now this is only a flag for if the profile is being saved.
+export type FieldContext = { busy: boolean };
 
-  const defaultDisplayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
-  const [displayName, setDisplayName] = useState<string>(defaultDisplayName);
+/// Field editor elements for the pre-MSC4133 profile fields. This should only
+/// ever contain keys for `displayname` and `avatar_url`.
+const LEGACY_FIELD_ELEMENTS = {
+  avatar_url: ProfileAvatar,
+  displayname: (props: ProfileFieldElementProps<'displayname', FieldContext>) => (
+    <ProfileTextField label="Display Name" {...props} />
+  ),
+};
 
-  const [changeState, changeDisplayName] = useAsyncCallback(
-    useCallback((name: string) => mx.setDisplayName(name), [mx])
-  );
-  const changingDisplayName = changeState.status === AsyncStatus.Loading;
-
-  useEffect(() => {
-    setDisplayName(defaultDisplayName);
-  }, [defaultDisplayName]);
-
-  const handleChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
-    const name = evt.currentTarget.value;
-    setDisplayName(name);
-  };
-
-  const handleReset = () => {
-    setDisplayName(defaultDisplayName);
-  };
-
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
-    evt.preventDefault();
-    if (changingDisplayName) return;
-
-    const target = evt.target as HTMLFormElement | undefined;
-    const displayNameInput = target?.displayNameInput as HTMLInputElement | undefined;
-    const name = displayNameInput?.value;
-    if (!name) return;
-
-    changeDisplayName(name);
-  };
-
-  const hasChanges = displayName !== defaultDisplayName;
-  return (
-    <SettingTile
-      title={
-        <Text as="span" size="L400">
-          Display Name
-        </Text>
-      }
-    >
-      <Box direction="Column" grow="Yes" gap="100">
-        <Box
-          as="form"
-          onSubmit={handleSubmit}
-          gap="200"
-          aria-disabled={changingDisplayName || disableSetDisplayname}
-        >
-          <Box grow="Yes" direction="Column">
-            <Input
-              required
-              name="displayNameInput"
-              value={displayName}
-              onChange={handleChange}
-              variant="Secondary"
-              radii="300"
-              style={{ paddingRight: config.space.S200 }}
-              readOnly={changingDisplayName || disableSetDisplayname}
-              after={
-                hasChanges &&
-                !changingDisplayName && (
-                  <IconButton
-                    type="reset"
-                    onClick={handleReset}
-                    size="300"
-                    radii="300"
-                    variant="Secondary"
-                  >
-                    <Icon src={Icons.Cross} size="100" />
-                  </IconButton>
-                )
-              }
-            />
-          </Box>
-          <Button
-            size="400"
-            variant={hasChanges ? 'Success' : 'Secondary'}
-            fill={hasChanges ? 'Solid' : 'Soft'}
-            outlined
-            radii="300"
-            disabled={!hasChanges || changingDisplayName}
-            type="submit"
-          >
-            {changingDisplayName && <Spinner variant="Success" fill="Solid" size="300" />}
-            <Text size="B400">Save</Text>
-          </Button>
-        </Box>
-      </Box>
-    </SettingTile>
-  );
-}
+/// Field editor elements for MSC4133 extended profile fields.
+/// These will appear in the UI in the order they are defined in this map.
+const EXTENDED_FIELD_ELEMENTS = {
+  'io.fsky.nyx.pronouns': ProfilePronouns,
+  'us.cloke.msc4175.tz': ProfileTimezone,
+};
 
 export function Profile() {
   const mx = useMatrixClient();
-  const userId = mx.getUserId()!;
-  const profile = useUserProfile(userId);
+  const userId = mx.getUserId() as string;
+  const server = getMxIdServer(userId);
+  const authMetadata = useAuthMetadata();
+  const accountManagementActions = useAccountManagementActions();
+  const useAuthentication = useMediaAuthentication();
+  const capabilities = useCapabilities();
+
+  const [extendedProfile, refreshExtendedProfile] = useExtendedProfile(userId);
+  const extendedProfileSupported = extendedProfile !== null;
+  const legacyProfile = useUserProfile(userId);
+
+  // next-gen auth identity providers may provide profile settings if they want
+  const profileEditableThroughIDP =
+    authMetadata !== undefined &&
+    authMetadata.account_management_actions_supported?.includes(accountManagementActions.profile);
+
+  const [fieldElementConstructors, profileEditableThroughClient] = useMemo(() => {
+    const entries = Object.entries({
+      ...LEGACY_FIELD_ELEMENTS,
+      // don't show the MSC4133 elements if the HS doesn't support them
+      ...(extendedProfileSupported ? EXTENDED_FIELD_ELEMENTS : {}),
+    }).filter(([key]) => 
+      // don't show fields if the HS blocks them with capabilities
+      profileEditsAllowed(key, capabilities, extendedProfileSupported)
+    );
+    return [Object.fromEntries(entries), entries.length > 0];
+  }, [capabilities, extendedProfileSupported]);
+
+  const [fieldDefaults, setFieldDefaults] = useState<ExtendedProfile>({
+    displayname: legacyProfile.displayName,
+    avatar_url: legacyProfile.avatarUrl,
+  });
+
+  // this updates the field defaults when the extended profile data is (re)loaded.
+  // it has to be a layout effect to prevent flickering on saves.
+  // if MSC4133 isn't supported by the HS this does nothing
+  useLayoutEffect(() => {
+    // `extendedProfile` includes the old dn/av fields, so
+    // we don't have to add those here
+    if (extendedProfile) {
+      setFieldDefaults(extendedProfile);
+    }
+  }, [setFieldDefaults, extendedProfile]);
+
+  const [saveState, handleSave] = useAsyncCallback(
+    useCallback(
+      async (fields: ExtendedProfile) => {
+        if (extendedProfileSupported) {
+          await Promise.all(
+            Object.entries(fields).map(async ([key, value]) => {
+              if (value === undefined) {
+                await mx.deleteExtendedProfileProperty(key);
+              } else {
+                await mx.setExtendedProfileProperty(key, value);
+              }
+            })
+          );
+          
+          // calling this will trigger the layout effect to update the defaults
+          // once the profile request completes
+          await refreshExtendedProfile();
+
+          // synthesize a profile update for ourselves to update our name and avatar in the rest
+          // of the UI. code copied from matrix-js-sdk
+          const user = mx.getUser(userId);
+          if (user) {
+            user.displayName = fields.displayname;
+            user.avatarUrl = fields.avatar_url;
+            user.emit(UserEvent.DisplayName, user.events.presence, user);
+            user.emit(UserEvent.AvatarUrl, user.events.presence, user);
+          }
+        } else {
+          await mx.setDisplayName(fields.displayname ?? '');
+          await mx.setAvatarUrl(fields.avatar_url ?? '');
+          // layout effect does nothing because `extendedProfile` is undefined
+          // so we have to update the defaults explicitly here
+          setFieldDefaults(fields);
+        }
+      },
+      [mx, userId, refreshExtendedProfile, extendedProfileSupported, setFieldDefaults]
+    )
+  );
+
+  const saving = saveState.status === AsyncStatus.Loading;
+  const loadingExtendedProfile = extendedProfile === undefined;
+  const busy = saving || loadingExtendedProfile;
 
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Profile</Text>
       <SequenceCard
-        className={SequenceCardStyle}
-        variant="SurfaceVariant"
+        variant="Surface"
+        outlined
         direction="Column"
-        gap="400"
+        style={{
+          overflow: 'hidden',
+        }}
       >
-        <ProfileAvatar userId={userId} profile={profile} />
-        <ProfileDisplayName userId={userId} profile={profile} />
+        <ProfileFieldContext
+          fieldDefaults={fieldDefaults}
+          fieldElements={fieldElementConstructors}
+          context={{ busy }}
+        >
+          {(reset, hasChanges, fields, fieldElements) => {
+            const heroAvatarUrl =
+              (fields.avatar_url && mxcUrlToHttp(mx, fields.avatar_url, useAuthentication)) ??
+              undefined;
+            return (
+              <>
+                <UserHero userId={userId} avatarUrl={heroAvatarUrl} />
+                <Box direction="Column" gap="400" style={{ padding: config.space.S400 }}>
+                  <Box gap="400" alignItems="Start">
+                    <UserHeroName
+                      userId={userId}
+                      displayName={fields.displayname as string}
+                      extendedProfile={fields}
+                    />
+                  </Box>
+                  <Box alignItems="Center" gap="200" wrap="Wrap">
+                    {server && <ServerChip server={server} />}
+                    <ShareChip userId={userId} />
+                    {fields['us.cloke.msc4175.tz'] && (
+                      <TimezoneChip timezone={fields['us.cloke.msc4175.tz']} />
+                    )}
+                  </Box>
+                </Box>
+                <Line />
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                  radii="0"
+                >
+                  {profileEditableThroughIDP && (
+                    <IdentityProviderSettings authMetadata={authMetadata} />
+                  )}
+                  {profileEditableThroughClient && (
+                    <>
+                      <Box gap="300" direction="Column">
+                        {fieldElements}
+                      </Box>
+                      <Box gap="300" alignItems="Center">
+                        <Button
+                          type="submit"
+                          size="300"
+                          variant={!busy && hasChanges ? 'Success' : 'Secondary'}
+                          fill={!busy && hasChanges ? 'Solid' : 'Soft'}
+                          outlined
+                          radii="300"
+                          disabled={!hasChanges || busy}
+                          onClick={() => handleSave(fields)}
+                        >
+                          <Text size="B300">Save</Text>
+                        </Button>
+                        <Button
+                          type="reset"
+                          size="300"
+                          variant="Secondary"
+                          fill="Soft"
+                          outlined
+                          radii="300"
+                          onClick={reset}
+                          disabled={!hasChanges || busy}
+                        >
+                          <Text size="B300">Cancel</Text>
+                        </Button>
+                        {saving && <Spinner size="300" />}
+                      </Box>
+                    </>
+                  )}
+                  {!(profileEditableThroughClient || profileEditableThroughIDP) && (
+                    <CutoutCard style={{ padding: config.space.S200 }} variant="Critical">
+                      <SettingTile>
+                        <Box direction="Column" gap="200">
+                          <Box gap="200" justifyContent="SpaceBetween">
+                            <Text size="L400">Profile Editing Disabled</Text>
+                          </Box>
+                          <Box direction="Column">
+                            <Text size="T200">
+                              Your homeserver does not allow you to edit your profile.
+                            </Text>
+                          </Box>
+                        </Box>
+                      </SettingTile>
+                    </CutoutCard>
+                  )}
+                </SequenceCard>
+              </>
+            );
+          }}
+        </ProfileFieldContext>
       </SequenceCard>
     </Box>
   );
