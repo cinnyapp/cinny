@@ -17,6 +17,8 @@ import {
   EventTimelineSet,
   EventTimelineSetHandlerMap,
   IContent,
+  IEvent,
+  M_POLL_START,
   MatrixClient,
   MatrixEvent,
   Room,
@@ -1022,6 +1024,168 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     [string, MatrixEvent, number, EventTimelineSet, boolean]
   >(
     {
+      [M_POLL_START.name]: (mEventId, mEvent, item, timelineSet, collapse) => {
+        const reactionRelations = getEventReactions(timelineSet, mEventId);
+        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const hasReactions = reactions && reactions.length > 0;
+        const { replyEventId, threadRootId } = mEvent;
+        const highlighted = focusItem?.index === item && focusItem.highlight;
+
+        // TODO: handle edits
+        // TODO: make sure polls can't be edited after there have been votes on it (e.g. ignore that event)
+        //       ^ maybe this should be done server side?
+        const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
+        const getContent = (() =>
+          editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent()) as GetContentCallback;
+
+        const senderId = mEvent.getSender() ?? '';
+        const senderDisplayName =
+          getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+
+        // collect all votes
+        // select per user only the most recent one (by event.origin_server_ts)
+        // aggregate the votes into an object of {answer_id: [{user, vote_event_id}]}
+        //
+        // we do this like this because it implicitly handles:
+        // - vote redactions
+        // - polls where you can vote on multiple items
+        const latestVoteEventByUser = timelineSet.relations
+          .getAllChildEventsForEvent(mEventId)
+          .map((evt) => evt.event)
+          .reduce((users: Record<string, Partial<IEvent> | undefined>, evt) => {
+            if (!evt.sender) {
+              return users;
+            }
+
+            const newGrouped = users;
+            const currentNewest = newGrouped[evt.sender];
+            if (
+              !currentNewest ||
+              (currentNewest.origin_server_ts || 0) <= (evt.origin_server_ts || 0)
+            ) {
+              newGrouped[evt.sender] = evt;
+            }
+            return newGrouped;
+          }, {});
+
+        const votesDeduped = Object.values(latestVoteEventByUser).map((voteEvent) => {
+          // TODO: remove non null/undefined assertions
+          const answers = voteEvent!.content!['org.matrix.msc3381.poll.response']
+            .answers as string[];
+          const userId = voteEvent!.sender as string;
+          const voteEventId = voteEvent!.event_id as string;
+
+          return {
+            answers,
+            userId,
+            eventId: voteEventId,
+          };
+        });
+
+        const content = getContent<IContent>();
+        const pollContent = content['org.matrix.msc3381.poll.start'];
+
+        const title = pollContent.question['org.matrix.msc1767.text'];
+
+        const answers = pollContent.answers.map(
+          // TODO: proper typing
+          (answer: { id: string; 'org.matrix.msc1767.text': any }) => ({
+            id: answer.id,
+            body: answer['org.matrix.msc1767.text'],
+          })
+        );
+
+        const answerIds: string[] = pollContent.answers.map(
+          // TODO: proper typing
+          (answer: { id: string }) => answer.id
+        );
+
+        const votesByAnswer = Object.fromEntries(
+          answerIds.map((answerId) => [
+            answerId,
+            votesDeduped
+              .filter((vote) => vote.answers.includes(answerId))
+              .map((vote) => ({
+                eventId: vote.eventId,
+                userId: vote.userId,
+              })),
+          ])
+        );
+
+        // TODO: do not show the answer yet if pollType is m.undisclosed
+        const pollType = pollContent.kind;
+        const totalVoteCount = votesDeduped.reduce((count, evt) => count + evt.answers.length, 0);
+        const ownUserId = room.client.getUserId();
+        const ownVoteEvent = latestVoteEventByUser[ownUserId || ''];
+        let ownVotes = ownVoteEvent?.content?.['org.matrix.msc3381.poll.response']?.answers;
+        console.log({ ownVotes, ownVoteEvent });
+
+        console.log({ votesByAnswer });
+
+        return (
+          <Message
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            messageSpacing={messageSpacing}
+            messageLayout={messageLayout}
+            collapse={collapse}
+            highlight={highlighted}
+            edit={editId === mEventId}
+            canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
+            canSendReaction={canSendReaction}
+            canPinEvent={canPinEvent}
+            imagePackRooms={imagePackRooms}
+            relations={hasReactions ? reactionRelations : undefined}
+            onUserClick={handleUserClick}
+            onUsernameClick={handleUsernameClick}
+            onReplyClick={handleReplyClick}
+            onReactionToggle={handleReactionToggle}
+            onEditId={handleEdit}
+            reply={
+              replyEventId && (
+                <Reply
+                  room={room}
+                  timelineSet={timelineSet}
+                  replyEventId={replyEventId}
+                  threadRootId={threadRootId}
+                  onClick={handleOpenReply}
+                  getMemberPowerTag={getMemberPowerTag}
+                  accessibleTagColors={accessiblePowerTagColors}
+                  legacyUsernameColor={legacyUsernameColor || direct}
+                />
+              )
+            }
+            reactions={
+              reactionRelations && (
+                <Reactions
+                  style={{ marginTop: config.space.S200 }}
+                  room={room}
+                  relations={reactionRelations}
+                  mEventId={mEventId}
+                  canSendReaction={canSendReaction}
+                  onReactionToggle={handleReactionToggle}
+                />
+              )
+            }
+            hideReadReceipts={hideActivity}
+            showDeveloperTools={showDeveloperTools}
+            memberPowerTag={getMemberPowerTag(senderId)}
+            accessibleTagColors={accessiblePowerTagColors}
+            legacyUsernameColor={legacyUsernameColor || direct}
+            hour24Clock={hour24Clock}
+            dateFormatString={dateFormatString}
+          >
+            {mEvent.isRedacted() ? (
+              <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
+            ) : (
+              <h1>Poll</h1>
+            )}
+          </Message>
+        );
+      },
       [MessageEvent.RoomMessage]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const reactionRelations = getEventReactions(timelineSet, mEventId);
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
