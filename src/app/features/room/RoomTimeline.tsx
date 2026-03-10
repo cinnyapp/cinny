@@ -40,6 +40,8 @@ import {
   Icon,
   Icons,
   Line,
+  ProgressBar,
+  RadioButton,
   Scroll,
   Text,
   as,
@@ -67,6 +69,10 @@ import {
   MSticker,
   ImageContent,
   EventContent,
+  Attachment,
+  AttachmentHeader,
+  AttachmentBox,
+  AttachmentContent,
 } from '../../components/message';
 import {
   factoryRenderLinkifyWithMention,
@@ -1181,7 +1187,75 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             {mEvent.isRedacted() ? (
               <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
             ) : (
-              <h1>Poll</h1>
+              // TODO: stop abusing the Attachment elements
+              <Attachment outlined={messageLayout === MessageLayout.Bubble}>
+                <AttachmentHeader>
+                  <Box grow="Yes">
+                    <Text size="T300">Poll</Text>
+                  </Box>
+
+                  {/* TODO: make this a hyperlink that opens a dialog that shows who voted for what */}
+                  <Text size="C400">
+                    {totalVoteCount} {totalVoteCount === 1 ? 'vote' : 'votes'}
+                  </Text>
+                </AttachmentHeader>
+                <AttachmentBox>
+                  <AttachmentContent>
+                    <Box gap="200" direction="Column">
+                      <Text size="H5">{title}</Text>
+                      <Line />
+
+                      {answers.map((answer: any) => (
+                        <Box direction="Column" gap="200" alignItems="Start" justifyItems="Center">
+                          <Box direction="Row" gap="200" alignItems="Center" shrink="No" grow="Yes">
+                            <Box shrink="No">
+                              <RadioButton
+                                size="50"
+                                checked={(ownVotes || []).includes(answer.id)}
+                              />
+                            </Box>
+                            <Box
+                              grow="Yes"
+                              display="InlineFlex"
+                              direction="Row"
+                              gap="200"
+                              alignItems="Center"
+                              justifyItems="Stretch"
+                              justifyContent="Stretch"
+                            >
+                              <Text align="Left">{answer.body}</Text>
+                            </Box>
+                            <Text align="Right">
+                              {votesByAnswer[answer.id].length}{' '}
+                              {votesByAnswer[answer.id].length === 1 ? 'vote' : 'votes'}
+                            </Text>
+                          </Box>
+
+                          {/* <Box direction="Row" alignItems="Center" grow="Yes" display="InlineFlex"> */}
+                          <ProgressBar
+                            style={{ width: '100%' }}
+                            as="div"
+                            variant={(ownVotes || []).includes(answer.id) ? 'Primary' : 'Secondary'}
+                            max={totalVoteCount}
+                            value={votesByAnswer[answer.id].length}
+                            fill="Soft"
+                            min={0}
+                            outlined={messageLayout === MessageLayout.Bubble}
+                          />
+                          {/* </Box> */}
+                        </Box>
+                      ))}
+
+                      {/* {renderAudioContent({
+                      info: audioInfo,
+                      mimeType: safeMimeType,
+                      url: mxcUrl,
+                      encInfo: content.file,
+                    })} */}
+                    </Box>
+                  </AttachmentContent>
+                </AttachmentBox>
+              </Attachment>
             )}
           </Message>
         );
