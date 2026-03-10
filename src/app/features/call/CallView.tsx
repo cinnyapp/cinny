@@ -97,7 +97,7 @@ function CallPrescreen() {
           )}
           <CallMemberRenderer members={callMembers} />
           <PrescreenControls canJoin={canJoin} />
-          <Header size="300">
+          <Box className={css.PrescreenMessage} alignItems="Center">
             {!inOtherCall &&
               (hasPermission ? (
                 <JoinMessage hasParticipant={hasParticipant} livekitSupported={livekitSupported} />
@@ -105,7 +105,7 @@ function CallPrescreen() {
                 <NoPermissionMessage />
               ))}
             {inOtherCall && <AlreadyInCallMessage />}
-          </Header>
+          </Box>
         </Box>
       </Box>
     </Scroll>
