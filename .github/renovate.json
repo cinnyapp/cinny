@@ -4,7 +4,7 @@
     "config:recommended",
     ":dependencyDashboardApproval",
     ":semanticCommits"
-  ]
+  ],
   "labels": ["Dependencies"],
   "packageRules": [
     {
