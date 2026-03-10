@@ -8,6 +8,11 @@ export enum MessageLayout {
   Compact = 1,
   Bubble = 2,
 }
+export enum MembershipEventsVisibility {
+  Hidden = 0,
+  Visible = 1,
+  Summary = 2,
+}
 
 export interface Settings {
   themeId?: string;
@@ -26,7 +31,7 @@ export interface Settings {
   enterForNewline: boolean;
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
-  hideMembershipEvents: boolean;
+  membershipEvents: MembershipEventsVisibility;
   hideNickAvatarEvents: boolean;
   mediaAutoLoad: boolean;
   urlPreview: boolean;
@@ -60,7 +65,7 @@ const defaultSettings: Settings = {
   enterForNewline: false,
   messageLayout: 0,
   messageSpacing: '400',
-  hideMembershipEvents: false,
+  membershipEvents: 2,
   hideNickAvatarEvents: true,
   mediaAutoLoad: true,
   urlPreview: true,

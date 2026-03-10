@@ -5,3 +5,4 @@ export * from './AudioContent';
 export * from './FileContent';
 export * from './FallbackContent';
 export * from './EventContent';
+export * from './ToggleableContent';

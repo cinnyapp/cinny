@@ -54,6 +54,17 @@ import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator'
 import { useAlive } from '../../hooks/useAlive';
 import { editableActiveElement, scrollToBottom } from '../../utils/dom';
 import {
+  TimelineEvent,
+  TimelineEventGroup,
+  TimelineEventGrouping,
+  generateEventGroups,
+  getTimelineGroupingType,
+  isHiddenRoomStateEvent
+} from './message/grouping/TimelineEventGrouping';
+import { createMemberChangeTracker } from './message/grouping/MemberDifference';
+import { createRoomStateSummary } from './message/grouping/RoomStateSummary';
+import { CollapsableEventGroup } from './message/grouping/CollapsableEventGroup';
+import {
   DefaultPlaceholder,
   CompactPlaceholder,
   Reply,
@@ -85,7 +96,7 @@ import {
   reactionOrEditEvent,
 } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
-import { MessageLayout, settingsAtom } from '../../state/settings';
+import { MessageLayout, MembershipEventsVisibility, settingsAtom } from '../../state/settings';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
 import { Reactions, Message, Event, EncryptedContent } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
@@ -439,7 +450,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
   const direct = useIsDirectRoom();
-  const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
+  const [membershipEvents] = useSetting(settingsAtom, 'membershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
@@ -1298,7 +1309,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       },
       [StateEvent.RoomMember]: (mEventId, mEvent, item) => {
         const membershipChanged = isMembershipChanged(mEvent);
-        if (membershipChanged && hideMembershipEvents) return null;
+        if (membershipChanged && membershipEvents === MembershipEventsVisibility.Hidden) return null;
         if (!membershipChanged && hideNickAvatarEvents) return null;
 
         const highlighted = focusItem?.index === item && focusItem.highlight;
@@ -1471,102 +1482,43 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         );
       },
       [StateEvent.GroupCallMemberPrefix]: (mEventId, mEvent, item) => {
-        const highlighted = focusItem?.index === item && focusItem.highlight;
-        const senderId = mEvent.getSender() ?? '';
-        const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
-
         const callJoined = mEvent.getContent<SessionMembershipData>().application;
-
-        const timeJSX = (
-          <Time
-            ts={mEvent.getTs()}
-            compact={messageLayout === MessageLayout.Compact}
-            hour24Clock={hour24Clock}
-            dateFormatString={dateFormatString}
-          />
-        );
-
-        return (
-          <Event
-            key={mEvent.getId()}
-            data-message-item={item}
-            data-message-id={mEventId}
-            room={room}
-            mEvent={mEvent}
-            highlight={highlighted}
-            messageSpacing={messageSpacing}
-            canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-            hideReadReceipts={hideActivity}
-            showDeveloperTools={showDeveloperTools}
-          >
-            <EventContent
-              messageLayout={messageLayout}
-              time={timeJSX}
-              iconSrc={callJoined ? Icons.Phone : Icons.PhoneDown}
-              content={
-                <Box grow="Yes" direction="Column">
-                  <Text size="T300" priority="300">
-                    <b>{senderName}</b>
-                    {callJoined ? ' joined the call' : ' ended the call'}
-                  </Text>
-                </Box>
-              }
-            />
-          </Event>
-        );
+        return renderBasicEvent(mEventId, mEvent, item, callJoined ? Icons.Phone : Icons.PhoneDown, callJoined ? ' joined the call' : ' ended the call');
+      },
+      [StateEvent.RoomCreate]: (mEventId, mEvent, item) => {
+        if (!showHiddenEvents) return null;
+        if (Object.keys(mEvent.getContent()).length === 0) return null;
+        if (mEvent.getRelation()) return null;
+        if (mEvent.isRedaction()) return null;
+        return renderBasicEvent(mEventId, mEvent, item, Icons.Flag, ' created this room');
       },
     },
     (mEventId, mEvent, item) => {
       if (!showHiddenEvents) return null;
-      const highlighted = focusItem?.index === item && focusItem.highlight;
-      const senderId = mEvent.getSender() ?? '';
-      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
-
-      const timeJSX = (
-        <Time
-          ts={mEvent.getTs()}
-          compact={messageLayout === MessageLayout.Compact}
-          hour24Clock={hour24Clock}
-          dateFormatString={dateFormatString}
-        />
-      );
-
-      return (
-        <Event
-          key={mEvent.getId()}
-          data-message-item={item}
-          data-message-id={mEventId}
-          room={room}
-          mEvent={mEvent}
-          highlight={highlighted}
-          messageSpacing={messageSpacing}
-          canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-          hideReadReceipts={hideActivity}
-          showDeveloperTools={showDeveloperTools}
-        >
-          <EventContent
-            messageLayout={messageLayout}
-            time={timeJSX}
-            iconSrc={Icons.Code}
-            content={
-              <Box grow="Yes" direction="Column">
-                <Text size="T300" priority="300">
-                  <b>{senderName}</b>
-                  {' sent '}
-                  <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
-                  {' state event'}
-                </Text>
-              </Box>
-            }
-          />
-        </Event>
-      );
+      return renderBasicEvent(mEventId, mEvent, item, Icons.Code, (
+        <React.Fragment>
+          {' sent '}
+          <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
+          {' state event'}
+        </React.Fragment>
+      ));
     },
     (mEventId, mEvent, item) => {
       if (!showHiddenEvents) return null;
       if (Object.keys(mEvent.getContent()).length === 0) return null;
       if (mEvent.getRelation()) return null;
       if (mEvent.isRedaction()) return null;
+      return renderBasicEvent(mEventId, mEvent, item, Icons.Code, (
+        <React.Fragment>
+          {' sent '}
+          <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
+          {' event'}
+        </React.Fragment>
+      ));
+    }
+  );
+
+  const renderBasicEvent = (mEventId: number, mEvent: StateEvent, item, iconSrc, messageBody: ReactNode) => {
 
       const highlighted = focusItem?.index === item && focusItem.highlight;
       const senderId = mEvent.getSender() ?? '';
@@ -1597,31 +1549,88 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           <EventContent
             messageLayout={messageLayout}
             time={timeJSX}
-            iconSrc={Icons.Code}
+            iconSrc={iconSrc}
             content={
               <Box grow="Yes" direction="Column">
                 <Text size="T300" priority="300">
                   <b>{senderName}</b>
-                  {' sent '}
-                  <code className={customHtmlCss.Code}>{mEvent.getType()}</code>
-                  {' event'}
+                  {messageBody}
                 </Text>
               </Box>
             }
           />
         </Event>
       );
-    }
-  );
+  };
 
   let prevEvent: MatrixEvent | undefined;
   let isPrevRendered = false;
   let newDivider = false;
   let dayDivider = false;
-  const eventRenderer = (item: number) => {
+  const eventRenderer = (group: TimelineEventGroup) => {
+    if (membershipEvents == MembershipEventsVisibility.Summary && group.type == TimelineEventGrouping.RoomMember) {
+      if (group.events.length > 1) {
+        return dayDividerWrappingFunction(group.events[0], () => {
+          return (
+            <CollapsableEventGroup
+                key={group.item}
+                item={group.item}
+                messageLayout={messageLayout}
+                collapsedMessage={group.data.getFinalMessage()}>
+              {group.events.map(singleEventRenderer)}
+            </CollapsableEventGroup>
+          );
+        });
+      }
+    }
+
+    if (group.type !== TimelineEventGrouping.Default) {
+      if (group.events.length > 1) {
+        return dayDividerWrappingFunction(group.events[0], () => {
+          return (
+            <CollapsableEventGroup
+                messageLayout={messageLayout}
+                collapsedMessage={group.data.getFinalMessage()}>
+              {group.events.map(singleEventRenderer)}
+            </CollapsableEventGroup>
+          );
+        });
+      }
+    }
+
+    return group.events.map(i => dayDividerWrappingFunction(i, singleEventRenderer));
+  };
+  const groupCollectorFunction = (group: TimelineEventGroup, timelineEvent: TimelineEvent) => {
+
+    if (group.type === TimelineEventGrouping.RoomMember) {
+      if (!group.data) {
+        group.data = createMemberChangeTracker(room);
+      }
+
+      const membershipChanged = isMembershipChanged(timelineEvent.mEvent);
+      if ((membershipChanged && membershipEvents == MembershipEventsVisibility.Hidden) || (!membershipChanged && hideNickAvatarEvents)) {
+        return;
+      }
+
+      group.data.accept(timelineEvent);
+    }
+
+    if (group.type === TimelineEventGrouping.RoomState) {
+      if (!showHiddenEvents && isHiddenRoomStateEvent(timelineEvent.mEvent)) {
+        return;
+      }
+
+      if (!group.data) {
+        group.data = createRoomStateSummary(room);
+      }
+      group.data.accept(timelineEvent);
+    }
+
+    group.events.push(timelineEvent);
+  };
+  const eventDataFunction = (item: number) => {
     const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
     if (!eventTimeline) return null;
-    const timelineSet = eventTimeline?.getTimelineSet();
     const mEvent = getTimelineEvent(eventTimeline, getTimelineRelativeIndex(item, baseIndex));
     const mEventId = mEvent?.getId();
 
@@ -1635,6 +1644,18 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       return null;
     }
 
+    return { item, mEvent, eventTimeline, baseIndex };
+  };
+  const eventGroupingFunction = (previousEvent: TimelineEvent, nextEvent: TimelineEvent) => {
+    return getTimelineGroupingType(previousEvent.mEvent.getType()) === getTimelineGroupingType(nextEvent.mEvent.getType())
+        && inSameDay(previousEvent.mEvent.getTs(), nextEvent.mEvent.getTs());
+  };
+
+  const dayDividerWrappingFunction = (timelineEvent: TimelineEvent, eventRenderer) => {
+    const { item, mEvent, eventTimeline, baseIndex } = timelineEvent;
+    const mEventId = mEvent?.getId();
+    const eventSender = mEvent?.getSender();
+
     if (!newDivider && readUptoEventIdRef.current) {
       newDivider = prevEvent?.getId() === readUptoEventIdRef.current;
     }
@@ -1642,27 +1663,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), mEvent.getTs()) : false;
     }
 
-    const collapsed =
-      isPrevRendered &&
-      !dayDivider &&
-      (!newDivider || eventSender === mx.getUserId()) &&
-      prevEvent !== undefined &&
-      prevEvent.getSender() === eventSender &&
-      prevEvent.getType() === mEvent.getType() &&
-      minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
-
-    const eventJSX = reactionOrEditEvent(mEvent)
-      ? null
-      : renderMatrixEvent(
-          mEvent.getType(),
-          typeof mEvent.getStateKey() === 'string',
-          mEventId,
-          mEvent,
-          item,
-          timelineSet,
-          collapsed
-        );
-    prevEvent = mEvent;
+    const eventJSX = eventRenderer(timelineEvent);
     isPrevRendered = !!eventJSX;
 
     const newDividerJSX =
@@ -1705,6 +1706,38 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         </React.Fragment>
       );
     }
+
+    return eventJSX;
+  };
+
+  const singleEventRenderer = (timelineEvent: TimelineEvent) => {
+    const { item, mEvent, eventTimeline, baseIndex } = timelineEvent;
+    const timelineSet = eventTimeline?.getTimelineSet();
+    const mEventId = mEvent?.getId();
+
+    const eventSender = mEvent.getSender();
+
+    const collapsed =
+      isPrevRendered &&
+      !dayDivider &&
+      (!newDivider || eventSender === mx.getUserId()) &&
+      prevEvent !== undefined &&
+      prevEvent.getSender() === eventSender &&
+      prevEvent.getType() === mEvent.getType() &&
+      minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
+
+    const eventJSX = reactionOrEditEvent(mEvent)
+      ? null
+      : renderMatrixEvent(
+          mEvent.getType(),
+          typeof mEvent.getStateKey() === 'string',
+          mEventId,
+          mEvent,
+          item,
+          timelineSet,
+          collapsed
+        );
+    prevEvent = mEvent;
 
     return eventJSX;
   };
@@ -1784,7 +1817,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               </>
             ))}
 
-          {getItems().map(eventRenderer)}
+          {generateEventGroups(getItems(), eventDataFunction, eventGroupingFunction, groupCollectorFunction, eventRenderer)}
 
           {(!liveTimelineLinked || !rangeAtEnd) &&
             (messageLayout === MessageLayout.Compact ? (
