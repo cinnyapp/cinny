@@ -1048,6 +1048,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderDisplayName =
           getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
 
+        // TODO: check event /type/ to make sure it is a vote event and not another type of poll event
+        // TODO: check if poll.end event is in here and if so, disallow voting on the poll (may need authentication check?)
         // collect all votes
         // select per user only the most recent one (by event.origin_server_ts)
         // aggregate the votes into an object of {answer_id: [{user, vote_event_id}]}
