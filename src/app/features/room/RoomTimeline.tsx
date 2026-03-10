@@ -1045,8 +1045,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent()) as GetContentCallback;
 
         const senderId = mEvent.getSender() ?? '';
-        const senderDisplayName =
-          getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
 
         // TODO: check event /type/ to make sure it is a vote event and not another type of poll event
         // TODO: check if poll.end event is in here and if so, disallow voting on the poll (may need authentication check?)
@@ -1120,15 +1118,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           ])
         );
 
-        // TODO: do not show the answer yet if pollType is m.undisclosed
+        // TODO: do not show the answer yet if pollType is m.undisclosed, and remove eslint ignore below
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
         const pollType = pollContent.kind;
         const totalVoteCount = votesDeduped.reduce((count, evt) => count + evt.answers.length, 0);
         const ownUserId = room.client.getUserId();
         const ownVoteEvent = latestVoteEventByUser[ownUserId || ''];
-        let ownVotes = ownVoteEvent?.content?.['org.matrix.msc3381.poll.response']?.answers;
-        console.log({ ownVotes, ownVoteEvent });
-
-        console.log({ votesByAnswer });
+        const ownVotes = ownVoteEvent?.content?.['org.matrix.msc3381.poll.response']?.answers;
 
         return (
           <Message
