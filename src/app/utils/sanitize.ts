@@ -100,7 +100,7 @@ const transformATag: Transformer = (tagName, attribs) => ({
   tagName,
   attribs: {
     ...attribs,
-    rel: 'noopener',
+    rel: 'noreferrer noopener',
     target: '_blank',
   },
 });
@@ -112,7 +112,7 @@ const transformImgTag: Transformer = (tagName, attribs) => {
       tagName: 'a',
       attribs: {
         href: src,
-        rel: 'noopener',
+        rel: 'noreferrer noopener',
         target: '_blank',
       },
       text: attribs.alt || src,

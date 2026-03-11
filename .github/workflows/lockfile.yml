@@ -14,9 +14,9 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: NPM Lockfile Changes
-        uses: codepunkt/npm-lockfile-changes@b40543471c36394409466fdb277a73a0856d7891
+        uses: codepunkt/npm-lockfile-changes@b40543471c36394409466fdb277a73a0856d7891 # v1.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # Optional inputs, can be deleted safely if you are happy with default values.
