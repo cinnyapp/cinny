@@ -1187,7 +1187,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             ) : (
               // TODO: stop abusing the Attachment elements
               <Attachment outlined={messageLayout === MessageLayout.Bubble}>
-                <AttachmentHeader>
+                <Box
+                  alignItems="Center"
+                  style={{
+                    padding: config.space.S300,
+                  }}
+                >
                   <Box grow="Yes">
                     <Text size="T300">Poll</Text>
                   </Box>
@@ -1196,16 +1201,20 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                   <Text size="C400">
                     {totalVoteCount} {totalVoteCount === 1 ? 'vote' : 'votes'}
                   </Text>
-                </AttachmentHeader>
+                </Box>
                 <AttachmentBox>
                   <AttachmentContent>
-                    <Box gap="200" direction="Column">
+                    <Box gap="300" direction="Column">
                       <Text size="H5">{title}</Text>
                       <Line />
-
                       {answers.map((answer: any) => (
-                        <Box direction="Column" gap="200" alignItems="Start" justifyItems="Center">
-                          <Box direction="Row" gap="200" alignItems="Center" shrink="No" grow="Yes">
+                        <Box direction="Column" gap="200" justifyItems="Center">
+                          <Box
+                            direction="Row"
+                            gap="200"
+                            alignItems="Center"
+                            style={{ width: '100%' }}
+                          >
                             <Box shrink="No">
                               <RadioButton
                                 size="50"
