@@ -146,7 +146,7 @@ export class CallEmbed {
 
     let initialMediaEvent = true;
     this.disposables.push(
-      this.listenEvent<ElementMediaStateDetail>(ElementWidgetActions.DeviceMute, (evt) => {
+      this.listenAction<ElementMediaStateDetail>(ElementWidgetActions.DeviceMute, (evt) => {
         if (initialMediaEvent) {
           initialMediaEvent = false;
           this.control.applyState();
@@ -177,18 +177,27 @@ export class CallEmbed {
     return this.call.transport.send(ElementWidgetActions.HangupCall, {});
   }
 
-  public listenEvent<T>(type: string, callback: (event: CustomEvent<T>) => void) {
-    this.call.on(`action:${type}`, callback);
-    return () => {
-      this.call.off(`action:${type}`, callback);
-    };
+  public onPreparing(callback: () => void) {
+    return this.listenEvent('preparing', callback);
+  }
+
+  public onPreparingError(callback: (error: any) => void) {
+    return this.listenEvent('error:preparing', callback);
+  }
+
+  public onReady(callback: () => void) {
+    return this.listenEvent('ready', callback);
+  }
+
+  public onCapabilitiesNotified(callback: () => void) {
+    return this.listenEvent('capabilitiesNotified', callback);
   }
 
   private start() {
     // Room widgets get locked to the room they were added in
     this.call.setViewedRoomId(this.roomId);
     this.disposables.push(
-      this.listenEvent(ElementWidgetActions.JoinCall, this.onCallJoined.bind(this))
+      this.listenAction(ElementWidgetActions.JoinCall, this.onCallJoined.bind(this))
     );
 
     // Populate the map of "read up to" events for this widget with the current event in every room.
@@ -374,5 +383,16 @@ export class CallEmbed {
         });
       }
     }
+  }
+
+  public listenAction<T>(type: string, callback: (event: CustomEvent<T>) => void) {
+    return this.listenEvent(`action:${type}`, callback);
+  }
+
+  public listenEvent<T>(type: string, callback: (event: T) => void) {
+    this.call.on(type, callback);
+    return () => {
+      this.call.off(type, callback);
+    };
   }
 }
