@@ -16,11 +16,11 @@ export const getMatrixToRoom = (roomIdOrAlias: string, viaServers?: string[]): s
 };
 
 export const getMatrixToRoomEvent = (
-  roomIdOrAlias: string,
+  roomId: string,
   eventId: string,
   viaServers?: string[]
 ): string => {
-  let fragment = `${roomIdOrAlias}/${eventId}`;
+  let fragment = `${roomId}/${eventId}`;
 
   if (Array.isArray(viaServers) && viaServers.length > 0) {
     fragment = withViaServers(fragment, viaServers);

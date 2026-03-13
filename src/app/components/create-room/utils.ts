@@ -7,10 +7,10 @@ import {
   Room,
 } from 'matrix-js-sdk';
 import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
-import { CreateRoomKind } from './CreateRoomKindSelector';
 import { RoomType, StateEvent } from '../../../types/matrix/room';
 import { getViaServers } from '../../plugins/via-servers';
 import { getMxIdServer } from '../../utils/matrix';
+import { CreateRoomAccess } from './types';
 
 export const createRoomCreationContent = (
   type: RoomType | undefined,
@@ -32,7 +32,7 @@ export const createRoomCreationContent = (
 };
 
 export const createRoomJoinRulesState = (
-  kind: CreateRoomKind,
+  access: CreateRoomAccess,
   parent: Room | undefined,
   knock: boolean
 ) => {
@@ -40,13 +40,13 @@ export const createRoomJoinRulesState = (
     join_rule: knock ? JoinRule.Knock : JoinRule.Invite,
   };
 
-  if (kind === CreateRoomKind.Public) {
+  if (access === CreateRoomAccess.Public) {
     content = {
       join_rule: JoinRule.Public,
     };
   }
 
-  if (kind === CreateRoomKind.Restricted && parent) {
+  if (access === CreateRoomAccess.Restricted && parent) {
     content = {
       join_rule: knock ? ('knock_restricted' as JoinRule) : JoinRule.Restricted,
       allow: [
@@ -74,6 +74,10 @@ export const createRoomParentState = (parent: Room) => ({
   },
 });
 
+const createSpacePowerLevelsOverride = () => ({
+  events_default: 50,
+});
+
 export const createRoomEncryptionState = () => ({
   type: 'm.room.encryption',
   state_key: '',
@@ -82,11 +86,23 @@ export const createRoomEncryptionState = () => ({
   },
 });
 
+export const createRoomCallState = () => ({
+  type: 'org.matrix.msc3401.call',
+  state_key: '',
+  content: {},
+});
+
+export const createVoiceRoomPowerLevelsOverride = () => ({
+  events: {
+    [StateEvent.GroupCallMemberPrefix]: 0,
+  },
+});
+
 export type CreateRoomData = {
   version: string;
   type?: RoomType;
   parent?: Room;
-  kind: CreateRoomKind;
+  access: CreateRoomAccess;
   name: string;
   topic?: string;
   aliasLocalPart?: string;
@@ -106,7 +122,11 @@ export const createRoom = async (mx: MatrixClient, data: CreateRoomData): Promis
     initialState.push(createRoomParentState(data.parent));
   }
 
-  initialState.push(createRoomJoinRulesState(data.kind, data.parent, data.knock));
+  if (data.type === RoomType.Call) {
+    initialState.push(createRoomCallState());
+  }
+
+  initialState.push(createRoomJoinRulesState(data.access, data.parent, data.knock));
 
   const options: ICreateRoomOpts = {
     room_version: data.version,
@@ -118,8 +138,14 @@ export const createRoom = async (mx: MatrixClient, data: CreateRoomData): Promis
       data.allowFederation,
       data.additionalCreators
     ),
+    power_level_content_override:
+      data.type === RoomType.Call ? createVoiceRoomPowerLevelsOverride() : undefined,
     initial_state: initialState,
   };
+
+  if (data.type === RoomType.Space) {
+    options.power_level_content_override = createSpacePowerLevelsOverride();
+  }
 
   const result = await mx.createRoom(options);
 

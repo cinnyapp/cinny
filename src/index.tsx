@@ -34,17 +34,14 @@ if ('serviceWorker' in navigator) {
 
   navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
   navigator.serviceWorker.ready.then(sendSessionToSW);
-  window.addEventListener('load', sendSessionToSW);
 
-  // When returning from background
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
+  navigator.serviceWorker.addEventListener('message', (ev) => {
+    const { type } = ev.data ?? {};
+
+    if (type === 'requestSession') {
       sendSessionToSW();
     }
   });
-
-  // When restored from bfcache (important on iOS)
-  window.addEventListener('pageshow', sendSessionToSW);
 }
 
 const mountApp = () => {

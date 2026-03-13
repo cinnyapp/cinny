@@ -30,7 +30,15 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
     if (previewStatus.status === AsyncStatus.Error) return null;
 
     const renderContent = (prev: IPreviewUrlResponse) => {
-      const imgUrl = mxcUrlToHttp(mx, prev['og:image'] || '', useAuthentication, 256, 256, 'scale', false);
+      const imgUrl = mxcUrlToHttp(
+        mx,
+        prev['og:image'] || '',
+        useAuthentication,
+        256,
+        256,
+        'scale',
+        false
+      );
 
       return (
         <>
@@ -42,7 +50,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
               as="a"
               href={url}
               target="_blank"
-              rel="no-referrer"
+              rel="noreferrer"
               size="T200"
               priority="300"
             >

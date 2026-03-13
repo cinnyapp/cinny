@@ -87,13 +87,21 @@ export const scaleYDimension = (x: number, scaledX: number, y: number): number =
 };
 
 export const parseGeoUri = (location: string) => {
-  const [, data] = location.split(':');
-  const [cords] = data.split(';');
-  const [latitude, longitude] = cords.split(',');
-  return {
-    latitude,
-    longitude,
-  };
+  try {
+    const [, data] = location.split(':');
+    const [cords] = data.split(';');
+    const [latitude, longitude] = cords.split(',');
+
+    if (typeof latitude === 'string' && typeof longitude === 'string') {
+      return {
+        latitude,
+        longitude,
+      };
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 const START_SLASHES_REG = /^\/+/g;

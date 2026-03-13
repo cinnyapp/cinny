@@ -1,4 +1,5 @@
 name: Deploy PR to Netlify
+run-name: "Deploy PR to Netlify (${{ github.event.workflow_run.head_branch }})"
 
 on:
   workflow_run:
@@ -15,7 +16,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download pr number
-        uses: dawidd6/action-download-artifact@ac66b43f0e6a346234dd65d4d0c8fbb31cb316e5
+        uses: dawidd6/action-download-artifact@2536c51d3d126276eb39f74d6bc9c72ac6ef30d3 # v16
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
@@ -24,7 +25,7 @@ jobs:
         id: pr
         run: echo "id=$(<pr.txt)" >> $GITHUB_OUTPUT
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@ac66b43f0e6a346234dd65d4d0c8fbb31cb316e5
+        uses: dawidd6/action-download-artifact@2536c51d3d126276eb39f74d6bc9c72ac6ef30d3 # v16
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
@@ -32,7 +33,7 @@ jobs:
           path: dist
       - name: Deploy to Netlify
         id: netlify
-        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654 # v3.0.0
         with:
           publish-dir: dist
           deploy-message: "Deploy PR ${{ steps.pr.outputs.id }}"
@@ -45,12 +46,12 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_PR_CINNY }}
         timeout-minutes: 1
       - name: Comment preview on PR
-        uses: thollander/actions-comment-pull-request@fabd468d3a1a0b97feee5f6b9e499eab0dd903f6
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b #v3.0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
         with:
-          pr_number: ${{ steps.pr.outputs.id }}
-          comment_tag: ${{ steps.pr.outputs.id }}
+          pr-number: ${{ steps.pr.outputs.id }}
+          comment-tag: ${{ steps.pr.outputs.id }}
           message: |
               Preview: ${{ steps.netlify.outputs.deploy-url }}
               ⚠️ Exercise caution. Use test accounts. ⚠️
