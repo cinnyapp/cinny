@@ -3,12 +3,18 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboardApproval",
-    ":semanticCommits"
+    ":semanticCommits",
+    "group:monorepos"
   ],
   "labels": ["Dependencies"],
+  "rebaseWhen": "conflicted",
   "packageRules": [
     {
       "matchUpdateTypes": ["lockFileMaintenance"]
+    },
+    {
+      "groupName": "Slatejs",
+      "matchPackageNames": ["slate", "slate-dom", "slate-history", "slate-react"]
     }
   ],
   "lockFileMaintenance": {
