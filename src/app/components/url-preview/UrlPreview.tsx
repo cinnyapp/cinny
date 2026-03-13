@@ -4,15 +4,7 @@ import { Box, as } from 'folds';
 import * as css from './UrlPreview.css';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-
-// mxcToHttp at ../../utils/matrix implements deprecated endpoint
-// GET /_matrix/media/v3/download/{serverName}/{mediaId}
-function mxcToHttp(mxcUrl: string, baseUrl: string) {
-  const match = mxcUrl.match(/^mxc:\/\/([^/]+)\/(.+)$/);
-  if (!match) return null;
-  const [, server, mediaId] = match;
-  return `${baseUrl}/_matrix/client/v1/media/download/${server}/${mediaId}`;
-}
+import { mxcUrlToHttp } from '../../utils/matrix';
 
 export const UrlPreview = as<'div'>(({ className, ...props }, ref) => (
   <Box shrink="No" className={classNames(css.UrlPreview, className)} {...props} ref={ref} />
@@ -28,7 +20,8 @@ export const UrlPreviewImg = as<'img', { mxcUrl:string }>(({ className, alt, mxc
   };
   const openMediaInNewTab = async () => {
     try {
-      const httpUrl = mxcToHttp(mxcUrl, mx.getHomeserverUrl());
+      const useAuthentication = true;
+      const httpUrl = mxcUrlToHttp(mx, mxcUrl, useAuthentication);
       if (httpUrl) {
         const res = await fetch(httpUrl, {
            headers: {
@@ -43,7 +36,7 @@ export const UrlPreviewImg = as<'img', { mxcUrl:string }>(({ className, alt, mxc
          const blobUrl = URL.createObjectURL(blob);
          window.open(blobUrl, "_blank");
       }
-			else (console.error("Error parsing mxc:// url", mxcUrl));
+      else (console.error("Error parsing mxc:// url", mxcUrl));
     } catch (err) {
       console.error("Error opening media", err);
     }
