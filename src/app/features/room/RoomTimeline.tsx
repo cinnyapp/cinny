@@ -16,11 +16,16 @@ import {
   EventTimeline,
   EventTimelineSet,
   EventTimelineSetHandlerMap,
+  ExtensibleAnyMessageEventContent,
   IContent,
-  IEvent,
+  M_MESSAGE,
+  M_POLL_RESPONSE,
   M_POLL_START,
+  M_TEXT,
   MatrixClient,
   MatrixEvent,
+  PollResponseEvent,
+  PollStartEventContent,
   Room,
   RoomEvent,
   RoomEventHandlerMap,
@@ -70,7 +75,6 @@ import {
   ImageContent,
   EventContent,
   Attachment,
-  AttachmentHeader,
   AttachmentBox,
   AttachmentContent,
 } from '../../components/message';
@@ -1057,60 +1061,84 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         // - polls where you can vote on multiple items
         const latestVoteEventByUser = timelineSet.relations
           .getAllChildEventsForEvent(mEventId)
-          .map((evt) => evt.event)
-          .reduce((users: Record<string, Partial<IEvent> | undefined>, evt) => {
-            if (!evt.sender) {
-              return users;
+          .reduce((userMap: Record<string, MatrixEvent>, evt) => {
+            const sender = evt.getSender();
+            if (!sender) {
+              return userMap;
             }
 
-            const newGrouped = users;
-            const currentNewest = newGrouped[evt.sender];
-            if (
-              !currentNewest ||
-              (currentNewest.origin_server_ts || 0) <= (evt.origin_server_ts || 0)
-            ) {
-              newGrouped[evt.sender] = evt;
+            const newUserMap = userMap;
+            const currentNewestVoteTimestamp = newUserMap[sender]?.getTs() || 0;
+            const newVoteTimestamp = evt.getTs() || 0;
+            if (currentNewestVoteTimestamp <= newVoteTimestamp) {
+              newUserMap[sender] = evt;
             }
-            return newGrouped;
+            return newUserMap;
           }, {});
 
-        const votesDeduped = Object.values(latestVoteEventByUser).map((voteEvent) => {
-          // TODO: remove non null/undefined assertions
-          const answers = voteEvent!.content!['org.matrix.msc3381.poll.response']
-            .answers as string[];
-          const userId = voteEvent!.sender as string;
-          const voteEventId = voteEvent!.event_id as string;
+        const votesDeduped = Object.values(latestVoteEventByUser)
+          .map((voteEvent) => {
+            const content = voteEvent.getContent<PollResponseEvent>();
+            let responseContent;
 
-          return {
-            answers,
-            userId,
-            eventId: voteEventId,
-          };
-        });
+            if (M_POLL_RESPONSE.name in content) {
+              responseContent = content[M_POLL_RESPONSE.name];
+            } else {
+              responseContent = content[M_POLL_RESPONSE.altName];
+            }
 
-        const content = getContent<IContent>();
-        const pollContent = content['org.matrix.msc3381.poll.start'];
-
-        const title = pollContent.question['org.matrix.msc1767.text'];
-
-        const answers = pollContent.answers.map(
-          // TODO: proper typing
-          (answer: { id: string; 'org.matrix.msc1767.text': any }) => ({
-            id: answer.id,
-            body: answer['org.matrix.msc1767.text'],
+            return {
+              answers: responseContent.answers,
+              userId: voteEvent.getSender(),
+              eventId: voteEvent.getId(),
+            };
           })
-        );
+          .filter((x) => x !== undefined);
 
-        const answerIds: string[] = pollContent.answers.map(
-          // TODO: proper typing
-          (answer: { id: string }) => answer.id
-        );
+        const content = mEvent.getContent<PollStartEventContent>();
+        const pollContent =
+          M_POLL_START.name in content ? content[M_POLL_START.name] : content[M_POLL_START.altName];
+        console.log({ pollContent });
+
+        const getBodyFromExtensibleAnyMessageEventContent = (
+          e: ExtensibleAnyMessageEventContent
+        ) => {
+          if ('body' in e && typeof e.body === 'string') {
+            return e.body;
+          }
+
+          if (M_TEXT.name in e) {
+            return e[M_TEXT.name];
+          }
+
+          if (M_TEXT.altName in e) {
+            return e[M_TEXT.altName];
+          }
+
+          if (M_MESSAGE.name in e) {
+            return e[M_MESSAGE.name][0].body;
+          }
+
+          if (M_MESSAGE.altName in e) {
+            return e[M_MESSAGE.altName][0].body;
+          }
+
+          // TODO: handle extensible text, e.g. html
+          return '';
+        };
+
+        const title = getBodyFromExtensibleAnyMessageEventContent(pollContent.question);
+
+        const answers = pollContent.answers.map((answer) => ({
+          id: answer.id,
+          body: getBodyFromExtensibleAnyMessageEventContent(answer),
+        }));
 
         const votesByAnswer = Object.fromEntries(
-          answerIds.map((answerId) => [
-            answerId,
+          answers.map(({ id }) => [
+            id,
             votesDeduped
-              .filter((vote) => vote.answers.includes(answerId))
+              .filter((vote) => vote.answers.includes(id))
               .map((vote) => ({
                 eventId: vote.eventId,
                 userId: vote.userId,
@@ -1121,10 +1149,17 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         // TODO: do not show the answer yet if pollType is m.undisclosed, and remove eslint ignore below
         // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
         const pollType = pollContent.kind;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
+        const allowedVotes = pollContent.max_selections || 1;
+
         const totalVoteCount = votesDeduped.reduce((count, evt) => count + evt.answers.length, 0);
         const ownUserId = room.client.getUserId();
-        const ownVoteEvent = latestVoteEventByUser[ownUserId || ''];
-        const ownVotes = ownVoteEvent?.content?.['org.matrix.msc3381.poll.response']?.answers;
+        const ownVoteEvent = latestVoteEventByUser[ownUserId || ''].getContent<PollResponseEvent>();
+        const ownVotes = (
+          M_POLL_RESPONSE.name in ownVoteEvent
+            ? ownVoteEvent[M_POLL_RESPONSE.name]
+            : ownVoteEvent[M_POLL_RESPONSE.altName]
+        ).answers;
 
         return (
           <Message
@@ -1208,57 +1243,49 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                       <Text size="H5">{title}</Text>
                       <Line />
                       {answers.map((answer: any) => (
-                        <Box direction="Column" gap="200" justifyItems="Center">
-                          <Box
-                            direction="Row"
-                            gap="200"
-                            alignItems="Center"
-                            style={{ width: '100%' }}
-                          >
-                            <Box shrink="No">
-                              <RadioButton
-                                size="50"
-                                checked={(ownVotes || []).includes(answer.id)}
-                              />
-                            </Box>
+                        <Box direction="Row" gap="300" justifyItems="Center">
+                          <Box direction="Row" alignItems="Center">
+                            <RadioButton size="50" checked={(ownVotes || []).includes(answer.id)} />
+                          </Box>
+                          <Box direction="Column" grow="Yes" gap="200">
                             <Box
-                              grow="Yes"
-                              display="InlineFlex"
                               direction="Row"
                               gap="200"
                               alignItems="Center"
-                              justifyItems="Stretch"
-                              justifyContent="Stretch"
+                              style={{ width: '100%' }}
                             >
-                              <Text align="Left">{answer.body}</Text>
+                              <Box
+                                grow="Yes"
+                                display="InlineFlex"
+                                direction="Row"
+                                gap="200"
+                                alignItems="Center"
+                                justifyItems="Stretch"
+                                justifyContent="Stretch"
+                              >
+                                <Text align="Left">{answer.body}</Text>
+                              </Box>
+                              <Text align="Right">
+                                {votesByAnswer[answer.id].length}{' '}
+                                {votesByAnswer[answer.id].length === 1 ? 'vote' : 'votes'}
+                              </Text>
                             </Box>
-                            <Text align="Right">
-                              {votesByAnswer[answer.id].length}{' '}
-                              {votesByAnswer[answer.id].length === 1 ? 'vote' : 'votes'}
-                            </Text>
-                          </Box>
 
-                          {/* <Box direction="Row" alignItems="Center" grow="Yes" display="InlineFlex"> */}
-                          <ProgressBar
-                            style={{ width: '100%' }}
-                            as="div"
-                            variant={(ownVotes || []).includes(answer.id) ? 'Primary' : 'Secondary'}
-                            max={totalVoteCount}
-                            value={votesByAnswer[answer.id].length}
-                            fill="Soft"
-                            min={0}
-                            outlined={messageLayout === MessageLayout.Bubble}
-                          />
-                          {/* </Box> */}
+                            <ProgressBar
+                              style={{ width: '100%' }}
+                              as="div"
+                              variant={
+                                (ownVotes || []).includes(answer.id) ? 'Primary' : 'Secondary'
+                              }
+                              max={totalVoteCount}
+                              value={votesByAnswer[answer.id].length}
+                              fill="Soft"
+                              min={0}
+                              outlined={messageLayout === MessageLayout.Bubble}
+                            />
+                          </Box>
                         </Box>
                       ))}
-
-                      {/* {renderAudioContent({
-                      info: audioInfo,
-                      mimeType: safeMimeType,
-                      url: mxcUrl,
-                      encInfo: content.file,
-                    })} */}
                     </Box>
                   </AttachmentContent>
                 </AttachmentBox>
