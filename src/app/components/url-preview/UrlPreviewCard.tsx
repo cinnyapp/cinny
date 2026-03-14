@@ -1,7 +1,7 @@
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { IPreviewUrlResponse } from 'matrix-js-sdk';
 import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
-import { RenderViewerProps, ImageOverlay } from '../ImageOverlay';
+import { ImageOverlay } from '../ImageOverlay';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription } from './UrlPreview';
@@ -16,115 +16,117 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { AudioContent, ImageContent, VideoContent } from '../message';
 import { Image, MediaControl, Video } from '../media';
 import { ImageViewer } from '../image-viewer';
+import { onEnterOrSpace } from '../../utils/keyboard';
 
 const linkStyles = { color: color.Success.Main };
 
-export const UrlPreviewCard = as<
-  'div',
-  { url: string; ts: number; renderViewer: (props: RenderViewerProps) => ReactNode }
->(({ url, ts, renderViewer, ...props }, ref) => {
-  const mx = useMatrixClient();
-  const useAuthentication = useMediaAuthentication();
-  const [viewer, setViewer] = useState(false);
-  const [previewStatus, loadPreview] = useAsyncCallback(
-    useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
-  );
-
-  useEffect(() => {
-    loadPreview();
-  }, [loadPreview]);
-
-  if (previewStatus.status === AsyncStatus.Error) return null;
-
-  const renderContent = (prev: IPreviewUrlResponse) => {
-    const thumbUrl = mxcUrlToHttp(
-      mx,
-      prev['og:image'] || '',
-      useAuthentication,
-      256,
-      256,
-      'scale',
-      false
+export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
+  ({ url, ts, ...props }, ref) => {
+    const mx = useMatrixClient();
+    const useAuthentication = useMediaAuthentication();
+    const [viewer, setViewer] = useState(false);
+    const [previewStatus, loadPreview] = useAsyncCallback(
+      useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
     );
 
-    const imgUrl = mxcUrlToHttp(mx, prev['og:image'] || '', useAuthentication);
+    useEffect(() => {
+      loadPreview();
+    }, [loadPreview]);
 
-    return (
-      <Box grow="Yes" direction="ColumnReverse" gap="0">
-        {(prev['og:video'] && (
-          <VideoContent
-            style={{
-              aspectRatio:
-                ((prev['og:video:width'] as number) ?? 1) /
-                ((prev['og:video:height'] as number) ?? 1),
-            }}
-            body={prev['og:title']}
-            info={{}}
-            url={prev['og:video'] as string}
-            mimeType={(prev['og:video:type'] as string) ?? ''}
-            renderVideo={(vidProps) => <Video style={{ objectFit: 'contain' }} {...vidProps} />}
-            renderThumbnail={() => <Image src={imgUrl ?? undefined} />}
-          />
-        )) ||
-          (prev['og:image'] && (
-            <ImageContent
+    if (previewStatus.status === AsyncStatus.Error) return null;
+
+    const renderContent = (prev: IPreviewUrlResponse) => {
+      const thumbUrl = mxcUrlToHttp(
+        mx,
+        prev['og:image'] || '',
+        useAuthentication,
+        256,
+        256,
+        'scale',
+        false
+      );
+
+      const imgUrl = mxcUrlToHttp(mx, prev['og:image'] || '', useAuthentication);
+
+      return (
+        <Box grow="Yes" direction="ColumnReverse" gap="0">
+          {(prev['og:video'] && (
+            <VideoContent
               style={{
-                aspectRatio: (prev['og:image:width'] ?? 1) / (prev['og:image:height'] ?? 1),
+                aspectRatio:
+                  ((prev['og:video:width'] as number) ?? 1) /
+                  ((prev['og:video:height'] as number) ?? 1),
               }}
-              autoPlay
               body={prev['og:title']}
-              url={prev['og:image']}
-              renderViewer={(p) => <ImageViewer {...p} />}
-              renderImage={(p) => <Image style={{ objectFit: 'contain' }} {...p} />}
+              info={{}}
+              url={prev['og:video'] as string}
+              mimeType={(prev['og:video:type'] as string) ?? ''}
+              renderVideo={(vidProps) => <Video style={{ objectFit: 'contain' }} {...vidProps} />}
+              renderThumbnail={() => <Image src={imgUrl ?? undefined} />}
             />
           )) ||
-          (prev['og:audio'] && (
-            <Box className={css.UrlPreviewAudio}>
-              <AudioContent
-                url={(prev['og:audio'] as string) ?? ''}
-                mimeType={(prev['og:audio:type'] as string) ?? ''}
-                info={{}}
-                renderMediaControl={(p) => <MediaControl {...p} />}
+            (prev['og:image'] && (
+              <ImageContent
+                style={{
+                  aspectRatio: (prev['og:image:width'] ?? 1) / (prev['og:image:height'] ?? 1),
+                }}
+                autoPlay
+                tabIndex={0}
+                onKeyDown={(evt) => onEnterOrSpace(() => setViewer(true))(evt)}
+                body={prev['og:title']}
+                url={prev['og:image']}
+                renderViewer={(p) => <ImageViewer {...p} />}
+                renderImage={(p) => <Image style={{ objectFit: 'contain' }} {...p} />}
               />
-            </Box>
-          ))}
-        <UrlPreviewContent>
-          <Text
-            style={linkStyles}
-            truncate
-            as="a"
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-            size="T200"
-            priority="300"
-          >
-            {typeof prev['og:site_name'] === 'string' && `${prev['og:site_name']} | `}
-            {tryDecodeURIComponent(url)}
-          </Text>
-          <Text truncate priority="400">
-            <b>{prev['og:title']}</b>
-          </Text>
-          <Text size="T200" priority="300">
-            <UrlPreviewDescription>{prev['og:description']}</UrlPreviewDescription>
-          </Text>
-        </UrlPreviewContent>
-      </Box>
-    );
-  };
-
-  return (
-    <UrlPreview {...props} ref={ref}>
-      {previewStatus.status === AsyncStatus.Success ? (
-        renderContent(previewStatus.data)
-      ) : (
-        <Box grow="Yes" alignItems="Center" justifyContent="Center">
-          <Spinner variant="Secondary" size="400" />
+            )) ||
+            (prev['og:audio'] && (
+              <Box className={css.UrlPreviewAudio}>
+                <AudioContent
+                  url={(prev['og:audio'] as string) ?? ''}
+                  mimeType={(prev['og:audio:type'] as string) ?? ''}
+                  info={{}}
+                  renderMediaControl={(p) => <MediaControl {...p} />}
+                />
+              </Box>
+            ))}
+          <UrlPreviewContent>
+            <Text
+              style={linkStyles}
+              truncate
+              as="a"
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              size="T200"
+              priority="300"
+            >
+              {typeof prev['og:site_name'] === 'string' && `${prev['og:site_name']} | `}
+              {tryDecodeURIComponent(url)}
+            </Text>
+            <Text truncate priority="400">
+              <b>{prev['og:title']}</b>
+            </Text>
+            <Text size="T200" priority="300">
+              <UrlPreviewDescription>{prev['og:description']}</UrlPreviewDescription>
+            </Text>
+          </UrlPreviewContent>
         </Box>
-      )}
-    </UrlPreview>
-  );
-});
+      );
+    };
+
+    return (
+      <UrlPreview {...props} ref={ref}>
+        {previewStatus.status === AsyncStatus.Success ? (
+          renderContent(previewStatus.data)
+        ) : (
+          <Box grow="Yes" alignItems="Center" justifyContent="Center">
+            <Spinner variant="Secondary" size="400" />
+          </Box>
+        )}
+      </UrlPreview>
+    );
+  }
+);
 
 export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
   const scrollRef = useRef<HTMLDivElement>(null);

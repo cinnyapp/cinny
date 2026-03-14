@@ -64,12 +64,7 @@ export function RenderMessageContent({
     return (
       <UrlPreviewHolder>
         {filteredUrls.map((url) => (
-          <UrlPreviewCard
-            key={url}
-            url={url}
-            renderViewer={(p) => <ImageViewer {...p} />}
-            ts={ts}
-          />
+          <UrlPreviewCard key={url} url={url} ts={ts} />
         ))}
       </UrlPreviewHolder>
     );
