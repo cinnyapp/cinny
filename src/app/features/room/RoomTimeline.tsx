@@ -20,7 +20,6 @@ import {
   IContent,
   M_MESSAGE,
   M_POLL_END,
-  M_POLL_KIND_DISCLOSED,
   M_POLL_KIND_UNDISCLOSED,
   M_POLL_RESPONSE,
   M_POLL_START,
@@ -143,6 +142,7 @@ import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/u
 import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { EndPollModal } from '../../components/message/poll/EndPoll';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -1034,6 +1034,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   );
   const { t } = useTranslation();
 
+  const [openEndPollModal, setOpenEndPollModal] = useState('');
   const renderMatrixEvent = useMatrixEventRenderer<
     [string, MatrixEvent, number, EventTimelineSet, boolean]
   >(
@@ -1165,7 +1166,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           ])
         );
 
-        // TODO: do not show the answer yet if pollType is m.undisclosed, and remove eslint ignore below
         const getPollKind = (kind: string) => {
           if (kind === M_POLL_KIND_UNDISCLOSED.name || kind === M_POLL_KIND_UNDISCLOSED.altName) {
             return 'm.poll.undisclosed' as const;
@@ -1193,6 +1193,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           pollKind === 'm.poll.disclosed' ||
           (pollKind === 'm.poll.undisclosed' && endedEvent != null);
 
+        // TODO: actually send events when things are clicked
         return (
           <Message
             key={mEvent.getId()}
@@ -1277,7 +1278,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                     <Box gap="300" direction="Column">
                       <Text size="H5">{title}</Text>
                       <Line />
-                      {answers.map((answer: any) => (
+                      {answers.map((answer) => (
                         <Box direction="Row" gap="300" justifyItems="Center">
                           <Box direction="Row" alignItems="Center">
                             <RadioButton size="50" checked={(ownVotes || []).includes(answer.id)} />
@@ -1323,6 +1324,19 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                           </Box>
                         </Box>
                       ))}
+                      {senderId === ownUserId && pollKind === 'm.poll.undisclosed' ? (
+                        <>
+                          <Line />
+                          <Button onClick={() => setOpenEndPollModal(mEventId)}>
+                            <Text size="B400">End poll</Text>
+                          </Button>
+                          <EndPollModal
+                            open={openEndPollModal}
+                            setOpen={setOpenEndPollModal}
+                            eventID={mEventId}
+                          />
+                        </>
+                      ) : null}
                     </Box>
                   </AttachmentContent>
                 </AttachmentBox>
