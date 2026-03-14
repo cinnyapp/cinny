@@ -19,6 +19,9 @@ import {
   ExtensibleAnyMessageEventContent,
   IContent,
   M_MESSAGE,
+  M_POLL_END,
+  M_POLL_KIND_DISCLOSED,
+  M_POLL_KIND_UNDISCLOSED,
   M_POLL_RESPONSE,
   M_POLL_START,
   M_TEXT,
@@ -40,6 +43,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import {
   Badge,
   Box,
+  Button,
   Chip,
   ContainerColor,
   Icon,
@@ -1050,8 +1054,23 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
         const senderId = mEvent.getSender() ?? '';
 
-        // TODO: check event /type/ to make sure it is a vote event and not another type of poll event
         // TODO: check if poll.end event is in here and if so, disallow voting on the poll (may need authentication check?)
+        let endedEvent;
+        const childEvents = timelineSet.relations
+          .getAllChildEventsForEvent(mEventId)
+          .filter((event) => {
+            if (
+              event.getType() !== M_POLL_RESPONSE.name &&
+              event.getType() !== M_POLL_RESPONSE.altName
+            ) {
+              if (event.getType() === M_POLL_END.name || event.getType() === M_POLL_END.altName) {
+                endedEvent = event;
+              }
+              return false;
+            }
+
+            return true;
+          });
         // collect all votes
         // select per user only the most recent one (by event.origin_server_ts)
         // aggregate the votes into an object of {answer_id: [{user, vote_event_id}]}
@@ -1059,9 +1078,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         // we do this like this because it implicitly handles:
         // - vote redactions
         // - polls where you can vote on multiple items
-        const latestVoteEventByUser = timelineSet.relations
-          .getAllChildEventsForEvent(mEventId)
-          .reduce((userMap: Record<string, MatrixEvent>, evt) => {
+        const latestVoteEventByUser = childEvents.reduce(
+          (userMap: Record<string, MatrixEvent>, evt) => {
             const sender = evt.getSender();
             if (!sender) {
               return userMap;
@@ -1074,7 +1092,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               newUserMap[sender] = evt;
             }
             return newUserMap;
-          }, {});
+          },
+          {}
+        );
 
         const votesDeduped = Object.values(latestVoteEventByUser)
           .map((voteEvent) => {
@@ -1098,7 +1118,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const content = mEvent.getContent<PollStartEventContent>();
         const pollContent =
           M_POLL_START.name in content ? content[M_POLL_START.name] : content[M_POLL_START.altName];
-        console.log({ pollContent });
 
         const getBodyFromExtensibleAnyMessageEventContent = (
           e: ExtensibleAnyMessageEventContent
@@ -1147,19 +1166,32 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         );
 
         // TODO: do not show the answer yet if pollType is m.undisclosed, and remove eslint ignore below
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-        const pollType = pollContent.kind;
+        const getPollKind = (kind: string) => {
+          if (kind === M_POLL_KIND_UNDISCLOSED.name || kind === M_POLL_KIND_UNDISCLOSED.altName) {
+            return 'm.poll.undisclosed' as const;
+          }
+
+          return 'm.poll.disclosed' as const;
+        };
+
+        const pollKind = getPollKind(pollContent.kind);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
         const allowedVotes = pollContent.max_selections || 1;
 
         const totalVoteCount = votesDeduped.reduce((count, evt) => count + evt.answers.length, 0);
         const ownUserId = room.client.getUserId();
-        const ownVoteEvent = latestVoteEventByUser[ownUserId || ''].getContent<PollResponseEvent>();
-        const ownVotes = (
-          M_POLL_RESPONSE.name in ownVoteEvent
-            ? ownVoteEvent[M_POLL_RESPONSE.name]
-            : ownVoteEvent[M_POLL_RESPONSE.altName]
-        ).answers;
+        const ownVoteEvent =
+          latestVoteEventByUser[ownUserId || '']?.getContent<PollResponseEvent>();
+        const ownVotes = ownVoteEvent
+          ? (M_POLL_RESPONSE.name in ownVoteEvent
+              ? ownVoteEvent[M_POLL_RESPONSE.name]
+              : ownVoteEvent[M_POLL_RESPONSE.altName]
+            ).answers
+          : [];
+
+        const canShowResults =
+          pollKind === 'm.poll.disclosed' ||
+          (pollKind === 'm.poll.undisclosed' && endedEvent != null);
 
         return (
           <Message
@@ -1229,7 +1261,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                   }}
                 >
                   <Box grow="Yes">
-                    <Text size="T300">Poll</Text>
+                    <Text size="T300">
+                      {pollKind === 'm.poll.disclosed' ? 'Poll' : 'Undisclosed poll'}
+                      {endedEvent ? ' (ended)' : ''}
+                    </Text>
                   </Box>
 
                   {/* TODO: make this a hyperlink that opens a dialog that shows who voted for what */}
@@ -1271,18 +1306,20 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                               </Text>
                             </Box>
 
-                            <ProgressBar
-                              style={{ width: '100%' }}
-                              as="div"
-                              variant={
-                                (ownVotes || []).includes(answer.id) ? 'Primary' : 'Secondary'
-                              }
-                              max={totalVoteCount}
-                              value={votesByAnswer[answer.id].length}
-                              fill="Soft"
-                              min={0}
-                              outlined={messageLayout === MessageLayout.Bubble}
-                            />
+                            {canShowResults ? (
+                              <ProgressBar
+                                style={{ width: '100%' }}
+                                as="div"
+                                variant={
+                                  (ownVotes || []).includes(answer.id) ? 'Primary' : 'Secondary'
+                                }
+                                max={totalVoteCount}
+                                value={votesByAnswer[answer.id].length}
+                                fill="Soft"
+                                min={0}
+                                outlined={messageLayout === MessageLayout.Bubble}
+                              />
+                            ) : null}
                           </Box>
                         </Box>
                       ))}
