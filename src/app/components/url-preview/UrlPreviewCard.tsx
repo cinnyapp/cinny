@@ -1,7 +1,7 @@
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { IPreviewUrlResponse } from 'matrix-js-sdk';
 import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
-import { RenderViewerProps, ImageOverlay } from '../ImageOverlay';
+import { ImageOverlay } from '../ImageOverlay';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
@@ -13,97 +13,100 @@ import * as css from './UrlPreviewCard.css';
 import { tryDecodeURIComponent } from '../../utils/dom';
 import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { ImageViewer } from '../image-viewer';
+import { onEnterOrSpace } from '../../utils/keyboard';
 
 const linkStyles = { color: color.Success.Main };
 
-export const UrlPreviewCard = as<
-  'div',
-  { url: string; ts: number; renderViewer: (props: RenderViewerProps) => ReactNode }
->(({ url, ts, renderViewer, ...props }, ref) => {
-  const mx = useMatrixClient();
-  const useAuthentication = useMediaAuthentication();
-  const [viewer, setViewer] = useState(false);
-  const [previewStatus, loadPreview] = useAsyncCallback(
-    useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
-  );
-
-  useEffect(() => {
-    loadPreview();
-  }, [loadPreview]);
-
-  if (previewStatus.status === AsyncStatus.Error) return null;
-
-  const renderContent = (prev: IPreviewUrlResponse) => {
-    const thumbUrl = mxcUrlToHttp(
-      mx,
-      prev['og:image'] || '',
-      useAuthentication,
-      256,
-      256,
-      'scale',
-      false
+export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
+  ({ url, ts, ...props }, ref) => {
+    const mx = useMatrixClient();
+    const useAuthentication = useMediaAuthentication();
+    const [viewer, setViewer] = useState(false);
+    const [previewStatus, loadPreview] = useAsyncCallback(
+      useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
     );
 
-    const imgUrl = mxcUrlToHttp(mx, prev['og:image'] || '', useAuthentication);
+    useEffect(() => {
+      loadPreview();
+    }, [loadPreview]);
+
+    if (previewStatus.status === AsyncStatus.Error) return null;
+
+    const renderContent = (prev: IPreviewUrlResponse) => {
+      const thumbUrl = mxcUrlToHttp(
+        mx,
+        prev['og:image'] || '',
+        useAuthentication,
+        256,
+        256,
+        'scale',
+        false
+      );
+
+      const imgUrl = mxcUrlToHttp(mx, prev['og:image'] || '', useAuthentication);
+
+      return (
+        <>
+          {thumbUrl && (
+            <UrlPreviewImg
+              src={thumbUrl}
+              alt={prev['og:title']}
+              title={prev['og:title']}
+              tabIndex={0}
+              onKeyDown={(evt) => onEnterOrSpace(() => setViewer(true))(evt)}
+              onClick={() => setViewer(true)}
+            />
+          )}
+          {imgUrl && (
+            <ImageOverlay
+              src={imgUrl}
+              alt={prev['og:title']}
+              viewer={viewer}
+              requestClose={() => {
+                setViewer(false);
+              }}
+              renderViewer={(p) => <ImageViewer {...p} />}
+            />
+          )}
+          <UrlPreviewContent>
+            <Text
+              style={linkStyles}
+              truncate
+              as="a"
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              size="T200"
+              priority="300"
+            >
+              {typeof prev['og:site_name'] === 'string' && `${prev['og:site_name']} | `}
+              {tryDecodeURIComponent(url)}
+            </Text>
+            <Text truncate priority="400">
+              <b>{prev['og:title']}</b>
+            </Text>
+            <Text size="T200" priority="300">
+              <UrlPreviewDescription>{prev['og:description']}</UrlPreviewDescription>
+            </Text>
+          </UrlPreviewContent>
+        </>
+      );
+    };
 
     return (
-      <>
-        {thumbUrl && (
-          <UrlPreviewImg
-            src={thumbUrl}
-            alt={prev['og:title']}
-            title={prev['og:title']}
-            onClick={() => setViewer(true)}
-          />
+      <UrlPreview {...props} ref={ref}>
+        {previewStatus.status === AsyncStatus.Success ? (
+          renderContent(previewStatus.data)
+        ) : (
+          <Box grow="Yes" alignItems="Center" justifyContent="Center">
+            <Spinner variant="Secondary" size="400" />
+          </Box>
         )}
-        {imgUrl && (
-          <ImageOverlay
-            src={imgUrl}
-            alt={prev['og:title']}
-            viewer={viewer}
-            requestClose={() => {
-              setViewer(false);
-            }}
-            renderViewer={renderViewer}
-          />
-        )}
-        <UrlPreviewContent>
-          <Text
-            style={linkStyles}
-            truncate
-            as="a"
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-            size="T200"
-            priority="300"
-          >
-            {typeof prev['og:site_name'] === 'string' && `${prev['og:site_name']} | `}
-            {tryDecodeURIComponent(url)}
-          </Text>
-          <Text truncate priority="400">
-            <b>{prev['og:title']}</b>
-          </Text>
-          <Text size="T200" priority="300">
-            <UrlPreviewDescription>{prev['og:description']}</UrlPreviewDescription>
-          </Text>
-        </UrlPreviewContent>
-      </>
+      </UrlPreview>
     );
-  };
-
-  return (
-    <UrlPreview {...props} ref={ref}>
-      {previewStatus.status === AsyncStatus.Success ? (
-        renderContent(previewStatus.data)
-      ) : (
-        <Box grow="Yes" alignItems="Center" justifyContent="Center">
-          <Spinner variant="Secondary" size="400" />
-        </Box>
-      )}
-    </UrlPreview>
-  );
-});
+  }
+);
 
 export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
   const scrollRef = useRef<HTMLDivElement>(null);
