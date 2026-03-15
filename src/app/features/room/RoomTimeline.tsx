@@ -1333,10 +1333,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                               >
                                 <Text align="Left">{answer.body}</Text>
                               </Box>
-                              <Text align="Right">
-                                {votesByAnswer[answer.id].length}{' '}
-                                {votesByAnswer[answer.id].length === 1 ? 'vote' : 'votes'}
-                              </Text>
+                              {canShowResults ? (
+                                <Text align="Right">
+                                  {votesByAnswer[answer.id].length}{' '}
+                                  {votesByAnswer[answer.id].length === 1 ? 'vote' : 'votes'}
+                                </Text>
+                              ) : null}
                             </Box>
 
                             {canShowResults ? (
