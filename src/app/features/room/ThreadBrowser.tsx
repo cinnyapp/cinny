@@ -282,10 +282,10 @@ export function ThreadBrowser({ room, onOpenThread, onClose, overlay }: ThreadBr
       direction="Column"
       shrink="No"
     >
-      <Header className={css.ThreadDrawerHeader} variant="Background" size="400">
+      <Header className={css.ThreadDrawerHeader} variant="Background" size="600">
         <Box grow="Yes" alignItems="Center" gap="200">
           <Icon size="200" src={Icons.Thread} />
-          <Text size="H4" truncate>
+          <Text size="H5" truncate>
             Threads
           </Text>
         </Box>
@@ -293,14 +293,8 @@ export function ThreadBrowser({ room, onOpenThread, onClose, overlay }: ThreadBr
           <Text size="T300" priority="300" truncate>
             # {room.name}
           </Text>
-          <IconButton
-            onClick={onClose}
-            variant="SurfaceVariant"
-            size="300"
-            radii="300"
-            aria-label="Close threads"
-          >
-            <Icon size="200" src={Icons.Cross} />
+          <IconButton onClick={onClose} variant="Background" aria-label="Close threads">
+            <Icon src={Icons.Cross} />
           </IconButton>
         </Box>
       </Header>

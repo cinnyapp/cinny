@@ -2,7 +2,7 @@ import { style, globalStyle } from '@vanilla-extract/css';
 import { config, color, toRem } from 'folds';
 
 export const ThreadDrawer = style({
-  width: toRem(440),
+  width: toRem(490),
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -20,12 +20,12 @@ globalStyle(`body ${messageList} [data-message-id]`, {
 });
 
 globalStyle(`body ${messageList} [data-message-id]:hover`, {
-  backgroundColor: `${color.Surface.ContainerHover} !important`,
+  backgroundColor: `${color.Background.ContainerHover} !important`,
 });
 
 export const ThreadDrawerHeader = style({
   flexShrink: 0,
-  padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
+  padding: `0 ${config.space.S200} 0 ${config.space.S300}`,
   borderBottomWidth: config.borderWidth.B300,
 });
 

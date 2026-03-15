@@ -98,12 +98,6 @@ export function Room() {
             <CallChatView />
           </>
         )}
-        {!callView && screenSize === ScreenSize.Desktop && isDrawer && (
-          <>
-            <Line variant="Background" direction="Vertical" size="300" />
-            <MembersDrawer key={room.roomId} room={room} members={members} />
-          </>
-        )}
         {screenSize === ScreenSize.Desktop && openThreadId && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
@@ -115,7 +109,7 @@ export function Room() {
             />
           </>
         )}
-        {screenSize === ScreenSize.Desktop && threadBrowserOpen && !openThreadId && (
+        {screenSize === ScreenSize.Desktop && !openThreadId && threadBrowserOpen && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
             <ThreadBrowser
@@ -129,6 +123,16 @@ export function Room() {
             />
           </>
         )}
+        {screenSize === ScreenSize.Desktop &&
+          !openThreadId &&
+          !threadBrowserOpen &&
+          !callView &&
+          isDrawer && (
+            <>
+              <Line variant="Background" direction="Vertical" size="300" />
+              <MembersDrawer key={room.roomId} room={room} members={members} />
+            </>
+          )}
         {screenSize !== ScreenSize.Desktop && openThreadId && (
           <ThreadDrawer
             key={`thread-${room.roomId}-${openThreadId}`}

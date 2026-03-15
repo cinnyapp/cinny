@@ -153,7 +153,8 @@ function ThreadMessage({
       hideReadReceipts={showHideReads}
       showDeveloperTools={showDeveloperTools}
       reply={
-        replyEventId && (
+        replyEventId &&
+        replyEventId !== threadRootIdProp && (
           <Reply
             room={room}
             timelineSet={timelineSet}
@@ -163,11 +164,11 @@ function ThreadMessage({
         )
       }
       reactions={
-        hasReactions ? (
+        hasReactions && reactionRelations ? (
           <Reactions
             style={{ marginTop: config.space.S200 }}
             room={room}
-            relations={reactionRelations!}
+            relations={reactionRelations}
             mEventId={mEventId}
             canSendReaction={canSendReaction}
             onReactionToggle={onReactionToggle}
@@ -592,7 +593,7 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
       <Header className={css.ThreadDrawerHeader} variant="Background" size="600">
         <Box grow="Yes" alignItems="Center" gap="200">
           <Icon size="200" src={Icons.Thread} />
-          <Text size="H4" truncate>
+          <Text size="H5" truncate>
             Thread
           </Text>
         </Box>
@@ -600,14 +601,8 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
           <Text size="T300" priority="300" truncate>
             # {room.name}
           </Text>
-          <IconButton
-            onClick={onClose}
-            variant="SurfaceVariant"
-            size="300"
-            radii="300"
-            aria-label="Close thread"
-          >
-            <Icon size="200" src={Icons.Cross} />
+          <IconButton onClick={onClose} variant="Background" aria-label="Close thread">
+            <Icon src={Icons.Cross} />
           </IconButton>
         </Box>
       </Header>
@@ -622,13 +617,14 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
           style={{
             maxHeight: '200px',
             flexShrink: 0,
+            height: 'auto',
           }}
         >
           <Box
             className={css.messageList}
             direction="Column"
             style={{
-              padding: `${config.space.S600} 0`,
+              padding: `${config.space.S200} 0`,
             }}
           >
             <ThreadMessage {...sharedMessageProps} mEvent={rootEvent} />
