@@ -710,6 +710,7 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
           <RoomViewFollowingPlaceholder />
         ) : (
           <RoomViewFollowing
+            style={{ backgroundColor: 'transparent' }}
             room={room}
             threadEventId={latestThreadEventId}
             participantIds={threadParticipantIds}

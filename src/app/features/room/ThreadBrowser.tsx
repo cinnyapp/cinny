@@ -96,9 +96,10 @@ function ThreadPreview({ room, thread, onClick }: ThreadPreviewProps) {
   const handleJumpClick: MouseEventHandler = useCallback(
     (evt) => {
       evt.stopPropagation();
+      onClick(thread.id);
       navigateRoom(room.roomId, thread.id);
     },
-    [navigateRoom, room.roomId, thread.id]
+    [onClick, navigateRoom, room.roomId, thread.id]
   );
 
   const { rootEvent } = thread;
@@ -178,6 +179,7 @@ function ThreadPreview({ room, thread, onClick }: ThreadPreviewProps) {
           />
         )}
         <Box
+          direction="Column"
           style={{
             maxHeight: '200px',
             overflow: 'auto',
