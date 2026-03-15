@@ -1056,7 +1056,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
 
         // TODO: check if poll.end event is in here and if so, disallow voting on the poll (may need authentication check?)
-        let endedEvent;
+        let endedEvent: MatrixEvent | undefined;
         const childEvents = timelineSet.relations
           .getAllChildEventsForEvent(mEventId)
           .filter((event) => {
@@ -1072,6 +1072,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
             return true;
           });
+
+        console.log({ mEventId, childEvents });
         // collect all votes
         // select per user only the most recent one (by event.origin_server_ts)
         // aggregate the votes into an object of {answer_id: [{user, vote_event_id}]}
@@ -1089,7 +1091,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             const newUserMap = userMap;
             const currentNewestVoteTimestamp = newUserMap[sender]?.getTs() || 0;
             const newVoteTimestamp = evt.getTs() || 0;
-            if (currentNewestVoteTimestamp <= newVoteTimestamp) {
+            if (
+              // pick newest
+              currentNewestVoteTimestamp <= newVoteTimestamp &&
+              // ignore events after poll ended event
+              (!endedEvent || (endedEvent && newVoteTimestamp <= endedEvent?.getTs()))
+            ) {
               newUserMap[sender] = evt;
             }
             return newUserMap;
@@ -1175,6 +1182,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         };
 
         const pollKind = getPollKind(pollContent.kind);
+        // TODO: make buttons checkboxes when >1 votes are allowed
         // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
         const allowedVotes = pollContent.max_selections || 1;
 
@@ -1281,7 +1289,31 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                       {answers.map((answer) => (
                         <Box direction="Row" gap="300" justifyItems="Center">
                           <Box direction="Row" alignItems="Center">
-                            <RadioButton size="50" checked={(ownVotes || []).includes(answer.id)} />
+                            <RadioButton
+                              size="50"
+                              onClick={async () => {
+                                let x = await mx.sendEvent(
+                                  room.roomId,
+                                  M_POLL_RESPONSE.name as string,
+                                  {
+                                    'm.relates_to': {
+                                      event_id: mEventId,
+                                      rel_type: 'm.reference',
+                                    },
+
+                                    'm.selections': [answer.id],
+                                    'm.poll.response': {
+                                      answers: [answer.id],
+                                    },
+                                    'org.matrix.msc3381.poll.response': {
+                                      answers: [answer.id],
+                                    },
+                                  } as IContent
+                                );
+                                console.log({ x });
+                              }}
+                              checked={(ownVotes || []).includes(answer.id)}
+                            />
                           </Box>
                           <Box direction="Column" grow="Yes" gap="200">
                             <Box
