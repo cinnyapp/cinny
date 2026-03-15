@@ -5,6 +5,7 @@ import {
 } from 'browser-encrypt-attachment';
 import {
   EventTimeline,
+  EventTimelineSet,
   MatrixClient,
   MatrixError,
   MatrixEvent,
@@ -16,8 +17,8 @@ import {
 import to from 'await-to-js';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 import { AccountDataEvent } from '../../types/matrix/accountData';
-import { getStateEvent } from './room';
-import { Membership, StateEvent } from '../../types/matrix/room';
+import { getEventReactions, getReactionContent, getStateEvent } from './room';
+import { Membership, MessageEvent, StateEvent } from '../../types/matrix/room';
 
 const DOMAIN_REGEX = /\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b/;
 
@@ -371,4 +372,37 @@ export const knockRestrictedSupported = (version: string): boolean => {
 export const creatorsSupported = (version: string): boolean => {
   const unsupportedVersion = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'];
   return !unsupportedVersion.includes(version);
+};
+
+export const toggleReaction = (
+  mx: MatrixClient,
+  room: Room,
+  targetEventId: string,
+  key: string,
+  shortcode?: string,
+  timelineSet?: EventTimelineSet
+) => {
+  const relations = getEventReactions(
+    timelineSet ?? room.getUnfilteredTimelineSet(),
+    targetEventId
+  );
+  const allReactions = relations?.getSortedAnnotationsByKey() ?? [];
+  const [, reactionsSet] = allReactions.find(([reactionKey]) => reactionKey === key) ?? [];
+  const reactions: MatrixEvent[] = reactionsSet ? Array.from(reactionsSet) : [];
+  const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
+
+  const myReactionId = myReaction?.getId();
+  if (myReaction && myReactionId && myReaction.isRelation()) {
+    mx.redactEvent(room.roomId, myReactionId);
+    return;
+  }
+
+  const resolvedShortcode =
+    shortcode || (reactions.find(eventWithShortcode)?.getContent().shortcode as string | undefined);
+
+  mx.sendEvent(
+    room.roomId,
+    MessageEvent.Reaction as any,
+    getReactionContent(targetEventId, key, resolvedShortcode)
+  );
 };

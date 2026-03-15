@@ -1,5 +1,6 @@
-import React, { MouseEventHandler, forwardRef, useState } from 'react';
+import React, { MouseEventHandler, forwardRef, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { useAtom } from 'jotai';
 import {
   Box,
   Avatar,
@@ -23,7 +24,8 @@ import {
   Spinner,
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
-import { Room } from 'matrix-js-sdk';
+import { MatrixEvent, NotificationCountType, Room, RoomEvent } from 'matrix-js-sdk';
+import { ThreadEvent } from 'matrix-js-sdk/lib/models/thread';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { PageHeader } from '../../components/page';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -68,6 +70,8 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
+import { roomIdToOpenThreadAtomFamily } from '../../state/room/roomToOpenThread';
+import { roomIdToThreadBrowserAtomFamily } from '../../state/room/roomToThreadBrowser';
 
 type RoomMenuProps = {
   room: Room;
@@ -263,6 +267,10 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
   const direct = useIsDirectRoom();
+  const [threadBrowserOpen, setThreadBrowserOpen] = useAtom(
+    roomIdToThreadBrowserAtomFamily(room.roomId)
+  );
+  const [openThreadId, setOpenThread] = useAtom(roomIdToOpenThreadAtomFamily(room.roomId));
 
   const pinnedEvents = useRoomPinnedEvents(room);
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
@@ -275,6 +283,98 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
     : undefined;
 
   const [peopleDrawer, setPeopleDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const [unreadThreadsCount, setUnreadThreadsCount] = useState(0);
+  const [hasThreadHighlights, setHasThreadHighlights] = useState(false);
+
+  useEffect(() => {
+    const scanTimelineForThreads = (timeline: any) => {
+      const events = timeline.getEvents();
+      const threadRoots = new Set<string>();
+
+      events.forEach((event: MatrixEvent) => {
+        if (event.isThreadRoot) {
+          const rootId = event.getId();
+          if (rootId && !room.getThread(rootId)) {
+            threadRoots.add(rootId);
+          }
+        }
+
+        const { threadRootId } = event;
+        if (threadRootId && !room.getThread(threadRootId)) {
+          threadRoots.add(threadRootId);
+        }
+      });
+
+      threadRoots.forEach((rootId) => {
+        const rootEvent = room.findEventById(rootId);
+        if (rootEvent) {
+          room.createThread(rootId, rootEvent, [], false);
+        }
+      });
+    };
+
+    const liveTimeline = room.getLiveTimeline();
+    scanTimelineForThreads(liveTimeline);
+
+    let backwardTimeline = liveTimeline.getNeighbouringTimeline('b' as any);
+    while (backwardTimeline) {
+      scanTimelineForThreads(backwardTimeline);
+      backwardTimeline = backwardTimeline.getNeighbouringTimeline('b' as any);
+    }
+
+    const handleTimeline = (event: MatrixEvent, eventRoom?: Room) => {
+      if (eventRoom?.roomId !== room.roomId) return;
+
+      if (event.isThreadRoot) {
+        const rootId = event.getId();
+        if (rootId && !room.getThread(rootId)) {
+          const rootEvent = room.findEventById(rootId);
+          if (rootEvent) {
+            room.createThread(rootId, rootEvent, [], false);
+          }
+        }
+      }
+
+      const { threadRootId } = event;
+      if (threadRootId && !room.getThread(threadRootId)) {
+        const rootEvent = room.findEventById(threadRootId);
+        if (rootEvent) {
+          room.createThread(threadRootId, rootEvent, [], false);
+        }
+      }
+    };
+
+    mx.on(RoomEvent.Timeline, handleTimeline as any);
+    return () => {
+      mx.off(RoomEvent.Timeline, handleTimeline as any);
+    };
+  }, [room, mx]);
+
+  useEffect(() => {
+    const updateThreadCounts = () => {
+      let total = 0;
+
+      room.getThreads().forEach((thread) => {
+        total += room.getThreadUnreadNotificationCount(thread.id, NotificationCountType.Total);
+      });
+
+      setUnreadThreadsCount(total);
+      setHasThreadHighlights(
+        room.threadsAggregateNotificationType === NotificationCountType.Highlight
+      );
+    };
+
+    updateThreadCounts();
+    room.on(ThreadEvent.New, updateThreadCounts as any);
+    room.on(ThreadEvent.Update, updateThreadCounts as any);
+    room.on(ThreadEvent.NewReply, updateThreadCounts as any);
+
+    return () => {
+      room.removeListener(ThreadEvent.New, updateThreadCounts as any);
+      room.removeListener(ThreadEvent.Update, updateThreadCounts as any);
+      room.removeListener(ThreadEvent.NewReply, updateThreadCounts as any);
+    };
+  }, [room]);
 
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {
@@ -453,6 +553,52 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </FocusTrap>
             }
           />
+          <TooltipProvider
+            position="Bottom"
+            offset={4}
+            tooltip={
+              <Tooltip>
+                <Text>Threads</Text>
+              </Tooltip>
+            }
+          >
+            {(triggerRef) => (
+              <IconButton
+                fill="None"
+                ref={triggerRef}
+                onClick={() => {
+                  if (openThreadId) {
+                    setOpenThread(undefined);
+                    setThreadBrowserOpen(true);
+                    return;
+                  }
+
+                  setThreadBrowserOpen(!threadBrowserOpen);
+                }}
+                aria-pressed={threadBrowserOpen || !!openThreadId}
+                style={{ position: 'relative' }}
+              >
+                {unreadThreadsCount > 0 && (
+                  <Badge
+                    style={{
+                      position: 'absolute',
+                      left: toRem(3),
+                      top: toRem(3),
+                    }}
+                    variant={hasThreadHighlights ? 'Critical' : 'Secondary'}
+                    size="400"
+                    fill="Solid"
+                    radii="Pill"
+                  >
+                    <Text as="span" size="L400">
+                      {unreadThreadsCount}
+                    </Text>
+                  </Badge>
+                )}
+                <Icon size="400" src={Icons.Thread} filled={threadBrowserOpen} />
+              </IconButton>
+            )}
+          </TooltipProvider>
 
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider

@@ -23,6 +23,7 @@ import {
   RoomEvent,
   RoomEventHandlerMap,
 } from 'matrix-js-sdk';
+import { THREAD_RELATION_TYPE, ThreadEvent } from 'matrix-js-sdk/lib/models/thread';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';
@@ -32,6 +33,7 @@ import to from 'await-to-js';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
   Badge,
+  Avatar,
   Box,
   Chip,
   ContainerColor,
@@ -48,7 +50,7 @@ import {
 import { isKeyHotkey } from 'is-hotkey';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { useTranslation } from 'react-i18next';
-import { eventWithShortcode, factoryEventSentBy, getMxIdLocalPart } from '../../utils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp, toggleReaction } from '../../utils/matrix';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
@@ -79,8 +81,8 @@ import {
   getEditedEvent,
   getEventReactions,
   getLatestEditableEvt,
+  getMemberAvatarMxc,
   getMemberDisplayName,
-  getReactionContent,
   isMembershipChanged,
   reactionOrEditEvent,
 } from '../../utils/room';
@@ -102,6 +104,7 @@ import * as css from './RoomTimeline.css';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
 import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
+import { roomIdToOpenThreadAtomFamily } from '../../state/room/roomToOpenThread';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
 import { useKeyDown } from '../../hooks/useKeyDown';
@@ -127,6 +130,7 @@ import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/u
 import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { UserAvatar } from '../../components/user-avatar';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -388,6 +392,128 @@ const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void)
   }, [room, onArrive]);
 };
 
+const useThreadUpdate = (room: Room, onUpdate: () => void) => {
+  useEffect(() => {
+    room.on(ThreadEvent.New, onUpdate as any);
+    room.on(ThreadEvent.Update, onUpdate as any);
+    room.on(ThreadEvent.NewReply, onUpdate as any);
+
+    return () => {
+      room.removeListener(ThreadEvent.New, onUpdate as any);
+      room.removeListener(ThreadEvent.Update, onUpdate as any);
+      room.removeListener(ThreadEvent.NewReply, onUpdate as any);
+    };
+  }, [room, onUpdate]);
+};
+
+const getThreadReplyCount = (room: Room, eventId: string): number =>
+  room
+    .getUnfilteredTimelineSet()
+    .getLiveTimeline()
+    .getEvents()
+    .filter(
+      (ev) => ev.threadRootId === eventId && ev.getId() !== eventId && !reactionOrEditEvent(ev)
+    ).length;
+
+function ThreadReplyChip({
+  room,
+  mEventId,
+  openThreadId,
+  onToggle,
+}: {
+  room: Room;
+  mEventId: string;
+  openThreadId: string | undefined;
+  onToggle: () => void;
+}) {
+  const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
+
+  const replyEvents = room
+    .getUnfilteredTimelineSet()
+    .getLiveTimeline()
+    .getEvents()
+    .filter(
+      (ev) => ev.threadRootId === mEventId && ev.getId() !== mEventId && !reactionOrEditEvent(ev)
+    );
+
+  const replyCount = replyEvents.length;
+  if (replyCount === 0) return null;
+
+  const uniqueSenders: string[] = [];
+  const seen = new Set<string>();
+  replyEvents.forEach((ev) => {
+    const senderId = ev.getSender();
+    if (senderId && !seen.has(senderId)) {
+      seen.add(senderId);
+      uniqueSenders.push(senderId);
+    }
+  });
+
+  const latestReply = replyEvents[replyEvents.length - 1];
+  const latestSenderId = latestReply?.getSender() ?? '';
+  const latestSenderName =
+    getMemberDisplayName(room, latestSenderId) ??
+    getMxIdLocalPart(latestSenderId) ??
+    latestSenderId;
+  const latestBody = (latestReply?.getContent()?.body as string | undefined) ?? '';
+  const isOpen = openThreadId === mEventId;
+
+  return (
+    <Chip
+      style={{ marginTop: config.space.S200 }}
+      size="400"
+      variant={isOpen ? 'Primary' : 'SurfaceVariant'}
+      radii="300"
+      before={
+        <Box alignItems="Center" style={{ gap: 0 }}>
+          {uniqueSenders.slice(0, 3).map((senderId, index) => {
+            const avatarMxc = getMemberAvatarMxc(room, senderId);
+            const avatarUrl = avatarMxc
+              ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 20, 20, 'crop') ?? undefined
+              : undefined;
+            const displayName =
+              getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+
+            return (
+              <Avatar key={senderId} size="200" style={{ marginLeft: index > 0 ? '-4px' : 0 }}>
+                <UserAvatar
+                  userId={senderId}
+                  src={avatarUrl}
+                  alt={displayName}
+                  renderFallback={() => (
+                    <span style={{ fontSize: '10px', fontWeight: 'bold', lineHeight: 1 }}>
+                      {displayName[0]?.toUpperCase() ?? '?'}
+                    </span>
+                  )}
+                />
+              </Avatar>
+            );
+          })}
+        </Box>
+      }
+      onClick={onToggle}
+    >
+      <Text size="T300" style={{ whiteSpace: 'nowrap' }}>
+        {replyCount}&nbsp;{replyCount === 1 ? 'reply' : 'replies'}
+      </Text>
+      {latestBody && (
+        <Text
+          size="T300"
+          style={{
+            opacity: 0.7,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          &nbsp;·&nbsp;{latestSenderName}:&nbsp;{latestBody.slice(0, 60)}
+        </Text>
+      )}
+    </Chip>
+  );
+}
+
 const useLiveTimelineRefresh = (room: Room, onRefresh: () => void) => {
   useEffect(() => {
     const handleTimelineRefresh: RoomEventHandlerMap[RoomEvent.TimelineRefresh] = (r) => {
@@ -455,6 +581,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const ignoredUsersSet = useMemo(() => new Set(ignoredUsersList), [ignoredUsersList]);
 
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
+  const openThreadId = useAtomValue(roomIdToOpenThreadAtomFamily(room.roomId));
+  const setOpenThread = useSetAtom(roomIdToOpenThreadAtomFamily(room.roomId));
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
 
@@ -608,6 +736,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     room,
     useCallback(
       (mEvt: MatrixEvent) => {
+        // Thread reply events are re-emitted from the Thread to the Room and
+        // must not increment the main timeline range or scroll it.
+        // useThreadUpdate handles the chip re-render for these events.
+        if (mEvt.threadRootId !== undefined) return;
+
         // if user is at bottom of timeline
         // keep paginating timeline and conditionally mark as read
         // otherwise we update timeline without paginating
@@ -643,6 +776,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       },
       [mx, room, unreadInfo, hideActivity]
     )
+  );
+
+  useThreadUpdate(
+    room,
+    useCallback(() => {
+      setTimeline((currentTimeline) => ({ ...currentTimeline }));
+    }, [])
   );
 
   const handleOpenEvent = useCallback(
@@ -959,6 +1099,16 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         console.warn('Button should have "data-event-id" attribute!');
         return;
       }
+
+      if (startThread) {
+        const rootEvent = room.findEventById(replyId);
+        if (rootEvent && !room.getThread(replyId)) {
+          room.createThread(replyId, rootEvent, [], false);
+        }
+        setOpenThread(openThreadId === replyId ? undefined : replyId);
+        return;
+      }
+
       const replyEvt = room.findEventById(replyId);
       if (!replyEvt) return;
       const editedReply = getEditedEvent(replyId, replyEvt, room.getUnfilteredTimelineSet());
@@ -979,30 +1129,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         setTimeout(() => ReactEditor.focus(editor), 100);
       }
     },
-    [room, setReplyDraft, editor]
+    [room, setReplyDraft, editor, setOpenThread, openThreadId]
   );
 
   const handleReactionToggle = useCallback(
-    (targetEventId: string, key: string, shortcode?: string) => {
-      const relations = getEventReactions(room.getUnfilteredTimelineSet(), targetEventId);
-      const allReactions = relations?.getSortedAnnotationsByKey() ?? [];
-      const [, reactionsSet] = allReactions.find(([k]) => k === key) ?? [];
-      const reactions = reactionsSet ? Array.from(reactionsSet) : [];
-      const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
-
-      if (myReaction && !!myReaction?.isRelation()) {
-        mx.redactEvent(room.roomId, myReaction.getId()!);
-        return;
-      }
-      const rShortcode =
-        shortcode ||
-        (reactions.find(eventWithShortcode)?.getContent().shortcode as string | undefined);
-      mx.sendEvent(
-        room.roomId,
-        MessageEvent.Reaction as any,
-        getReactionContent(targetEventId, key, rShortcode)
-      );
-    },
+    (targetEventId: string, key: string, shortcode?: string) =>
+      toggleReaction(mx, room, targetEventId, key, shortcode),
     [mx, room]
   );
   const handleEdit = useCallback(
@@ -1028,6 +1160,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
+        const threadReplyCount = getThreadReplyCount(room, mEventId);
 
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
         const getContent = (() =>
@@ -1073,18 +1206,33 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 />
               )
             }
-            reactions={
-              reactionRelations && (
-                <Reactions
-                  style={{ marginTop: config.space.S200 }}
-                  room={room}
-                  relations={reactionRelations}
-                  mEventId={mEventId}
-                  canSendReaction={canSendReaction}
-                  onReactionToggle={handleReactionToggle}
-                />
-              )
-            }
+            reactions={(() => {
+              const threadChip =
+                threadReplyCount > 0 ? (
+                  <ThreadReplyChip
+                    room={room}
+                    mEventId={mEventId}
+                    openThreadId={openThreadId}
+                    onToggle={() => setOpenThread(openThreadId === mEventId ? undefined : mEventId)}
+                  />
+                ) : null;
+              if (!reactionRelations && !threadChip) return undefined;
+              return (
+                <>
+                  {reactionRelations && (
+                    <Reactions
+                      style={{ marginTop: config.space.S200 }}
+                      room={room}
+                      relations={reactionRelations}
+                      mEventId={mEventId}
+                      canSendReaction={canSendReaction}
+                      onReactionToggle={handleReactionToggle}
+                    />
+                  )}
+                  {threadChip}
+                </>
+              );
+            })()}
             hideReadReceipts={hideActivity}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(senderId)}
@@ -1118,6 +1266,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
+        const threadReplyCount = getThreadReplyCount(room, mEventId);
 
         return (
           <Message
@@ -1155,18 +1304,33 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 />
               )
             }
-            reactions={
-              reactionRelations && (
-                <Reactions
-                  style={{ marginTop: config.space.S200 }}
-                  room={room}
-                  relations={reactionRelations}
-                  mEventId={mEventId}
-                  canSendReaction={canSendReaction}
-                  onReactionToggle={handleReactionToggle}
-                />
-              )
-            }
+            reactions={(() => {
+              const threadChip =
+                threadReplyCount > 0 ? (
+                  <ThreadReplyChip
+                    room={room}
+                    mEventId={mEventId}
+                    openThreadId={openThreadId}
+                    onToggle={() => setOpenThread(openThreadId === mEventId ? undefined : mEventId)}
+                  />
+                ) : null;
+              if (!reactionRelations && !threadChip) return undefined;
+              return (
+                <>
+                  {reactionRelations && (
+                    <Reactions
+                      style={{ marginTop: config.space.S200 }}
+                      room={room}
+                      relations={reactionRelations}
+                      mEventId={mEventId}
+                      canSendReaction={canSendReaction}
+                      onReactionToggle={handleReactionToggle}
+                    />
+                  )}
+                  {threadChip}
+                </>
+              );
+            })()}
             hideReadReceipts={hideActivity}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
@@ -1237,6 +1401,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const highlighted = focusItem?.index === item && focusItem.highlight;
+        const threadReplyCount = getThreadReplyCount(room, mEventId);
 
         return (
           <Message
@@ -1258,18 +1423,33 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onUsernameClick={handleUsernameClick}
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
-            reactions={
-              reactionRelations && (
-                <Reactions
-                  style={{ marginTop: config.space.S200 }}
-                  room={room}
-                  relations={reactionRelations}
-                  mEventId={mEventId}
-                  canSendReaction={canSendReaction}
-                  onReactionToggle={handleReactionToggle}
-                />
-              )
-            }
+            reactions={(() => {
+              const threadChip =
+                threadReplyCount > 0 ? (
+                  <ThreadReplyChip
+                    room={room}
+                    mEventId={mEventId}
+                    openThreadId={openThreadId}
+                    onToggle={() => setOpenThread(openThreadId === mEventId ? undefined : mEventId)}
+                  />
+                ) : null;
+              if (!reactionRelations && !threadChip) return undefined;
+              return (
+                <>
+                  {reactionRelations && (
+                    <Reactions
+                      style={{ marginTop: config.space.S200 }}
+                      room={room}
+                      relations={reactionRelations}
+                      mEventId={mEventId}
+                      canSendReaction={canSendReaction}
+                      onReactionToggle={handleReactionToggle}
+                    />
+                  )}
+                  {threadChip}
+                </>
+              );
+            })()}
             hideReadReceipts={hideActivity}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
@@ -1638,6 +1818,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       return null;
     }
     if (mEvent.isRedacted() && !showHiddenEvents) {
+      return null;
+    }
+    // Only hide actual thread replies (rel_type === m.thread) from the main timeline.
+    // Plain replies (m.in_reply_to) to thread roots must remain visible.
+    if (mEvent.isRelation(THREAD_RELATION_TYPE.name) && mEvent.threadRootId !== mEventId) {
       return null;
     }
 

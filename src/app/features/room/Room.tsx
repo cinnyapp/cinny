@@ -1,10 +1,12 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Box, Line } from 'folds';
 import { useParams } from 'react-router-dom';
 import { isKeyHotkey } from 'is-hotkey';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { RoomView } from './RoomView';
 import { MembersDrawer } from './MembersDrawer';
+import { ThreadBrowser } from './ThreadBrowser';
+import { ThreadDrawer } from './ThreadDrawer';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -17,6 +19,8 @@ import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { CallView } from '../call/CallView';
 import { RoomViewHeader } from './RoomViewHeader';
 import { callChatAtom } from '../../state/callEmbed';
+import { roomIdToOpenThreadAtomFamily } from '../../state/room/roomToOpenThread';
+import { roomIdToThreadBrowserAtomFamily } from '../../state/room/roomToThreadBrowser';
 import { CallChatView } from './CallChatView';
 
 export function Room() {
@@ -30,6 +34,27 @@ export function Room() {
   const powerLevels = usePowerLevels(room);
   const members = useRoomMembers(mx, room.roomId);
   const chat = useAtomValue(callChatAtom);
+  const [openThreadId, setOpenThread] = useAtom(roomIdToOpenThreadAtomFamily(room.roomId));
+  const [threadBrowserOpen, setThreadBrowserOpen] = useAtom(
+    roomIdToThreadBrowserAtomFamily(room.roomId)
+  );
+
+  useEffect(() => {
+    if (!eventId) return;
+
+    const event = room.findEventById(eventId);
+    const threadRootId = event?.threadRootId;
+    if (!threadRootId) return;
+
+    if (!room.getThread(threadRootId)) {
+      const rootEvent = room.findEventById(threadRootId);
+      if (rootEvent) {
+        room.createThread(threadRootId, rootEvent, [], false);
+      }
+    }
+
+    setOpenThread(threadRootId);
+  }, [eventId, room, setOpenThread]);
 
   useKeyDown(
     window,
@@ -47,7 +72,7 @@ export function Room() {
 
   return (
     <PowerLevelsContextProvider value={powerLevels}>
-      <Box grow="Yes">
+      <Box grow="Yes" style={{ position: 'relative' }}>
         {callView && (screenSize === ScreenSize.Desktop || !chat) && (
           <Box grow="Yes" direction="Column">
             <RoomViewHeader callView />
@@ -78,6 +103,52 @@ export function Room() {
             <Line variant="Background" direction="Vertical" size="300" />
             <MembersDrawer key={room.roomId} room={room} members={members} />
           </>
+        )}
+        {screenSize === ScreenSize.Desktop && openThreadId && (
+          <>
+            <Line variant="Background" direction="Vertical" size="300" />
+            <ThreadDrawer
+              key={`thread-${room.roomId}-${openThreadId}`}
+              room={room}
+              threadRootId={openThreadId}
+              onClose={() => setOpenThread(undefined)}
+            />
+          </>
+        )}
+        {screenSize === ScreenSize.Desktop && threadBrowserOpen && !openThreadId && (
+          <>
+            <Line variant="Background" direction="Vertical" size="300" />
+            <ThreadBrowser
+              key={`thread-browser-${room.roomId}`}
+              room={room}
+              onOpenThread={(threadId) => {
+                setOpenThread(threadId);
+                setThreadBrowserOpen(false);
+              }}
+              onClose={() => setThreadBrowserOpen(false)}
+            />
+          </>
+        )}
+        {screenSize !== ScreenSize.Desktop && openThreadId && (
+          <ThreadDrawer
+            key={`thread-${room.roomId}-${openThreadId}`}
+            room={room}
+            threadRootId={openThreadId}
+            onClose={() => setOpenThread(undefined)}
+            overlay
+          />
+        )}
+        {screenSize !== ScreenSize.Desktop && threadBrowserOpen && !openThreadId && (
+          <ThreadBrowser
+            key={`thread-browser-${room.roomId}`}
+            room={room}
+            onOpenThread={(threadId) => {
+              setOpenThread(threadId);
+              setThreadBrowserOpen(false);
+            }}
+            onClose={() => setThreadBrowserOpen(false)}
+            overlay
+          />
         )}
       </Box>
     </PowerLevelsContextProvider>

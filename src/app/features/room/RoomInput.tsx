@@ -118,14 +118,42 @@ import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
 
+const getReplyContent = (replyDraft: any) => {
+  if (!replyDraft) return undefined;
+
+  const relation: Record<string, any> = {};
+
+  if (replyDraft.relation?.rel_type === RelationType.Thread) {
+    relation.event_id = replyDraft.relation.event_id;
+    relation.rel_type = RelationType.Thread;
+
+    if (replyDraft.body && replyDraft.eventId !== replyDraft.relation.event_id) {
+      relation['m.in_reply_to'] = {
+        event_id: replyDraft.eventId,
+      };
+      relation.is_falling_back = false;
+    } else {
+      relation.is_falling_back = true;
+    }
+  } else {
+    relation['m.in_reply_to'] = {
+      event_id: replyDraft.eventId,
+    };
+  }
+
+  return relation;
+};
+
 interface RoomInputProps {
   editor: Editor;
   fileDropContainerRef: RefObject<HTMLElement>;
   roomId: string;
   room: Room;
+  threadRootId?: string;
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
-  ({ editor, fileDropContainerRef, roomId, room }, ref) => {
+  ({ editor, fileDropContainerRef, roomId, room, threadRootId }, ref) => {
+    const draftKey = threadRootId ?? roomId;
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
@@ -139,8 +167,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const powerLevels = usePowerLevelsContext();
     const creators = useRoomCreators(room);
 
-    const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
-    const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
+    const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(draftKey));
+    const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(draftKey));
     const replyUserID = replyDraft?.userId;
 
     const powerLevelTags = usePowerLevelTags(room, powerLevels);
@@ -161,7 +189,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       legacyUsernameColor || direct ? colorMXID(replyUserID ?? '') : replyPowerColor;
 
     const [uploadBoard, setUploadBoard] = useState(true);
-    const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
+    const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(draftKey));
     const uploadFamilyObserverAtom = createUploadFamilyObserverAtom(
       roomUploadAtomFamily,
       selectedFiles.map((f) => f.file)
@@ -226,21 +254,41 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
 
     useEffect(() => {
+      if (!threadRootId) return;
+
+      setReplyDraft((prev) => {
+        if (
+          prev?.relation?.rel_type === RelationType.Thread &&
+          prev.relation.event_id === threadRootId
+        ) {
+          return prev;
+        }
+
+        return {
+          userId: mx.getUserId() ?? '',
+          eventId: threadRootId,
+          body: '',
+          relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+        };
+      });
+    }, [mx, setReplyDraft, threadRootId]);
+
+    useEffect(() => {
       Transforms.insertFragment(editor, msgDraft);
     }, [editor, msgDraft]);
 
     useEffect(
       () => () => {
-        if (!isEmptyEditor(editor)) {
+        if (isEmptyEditor(editor)) {
+          setMsgDraft([]);
+        } else {
           const parsedDraft = JSON.parse(JSON.stringify(editor.children));
           setMsgDraft(parsedDraft);
-        } else {
-          setMsgDraft([]);
         }
         resetEditor(editor);
         resetEditorHistory(editor);
       },
-      [roomId, editor, setMsgDraft]
+      [draftKey, editor, setMsgDraft]
     );
 
     const handleFileMetadata = useCallback(
@@ -276,6 +324,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
+      const plainText = toPlainText(editor.children, isMarkdown).trim();
       const contentsPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (!fileItem) throw new Error('Broken upload');
@@ -293,7 +342,25 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       });
       handleCancelUpload(uploads);
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
-      contents.forEach((content) => mx.sendMessage(roomId, content as any));
+
+      if (contents.length > 0 && plainText.length === 0 && replyDraft) {
+        contents[0]['m.relates_to'] = getReplyContent(replyDraft);
+      }
+
+      contents.forEach((content) => mx.sendMessage(roomId, threadRootId ?? null, content as any));
+
+      if (replyDraft) {
+        if (threadRootId) {
+          setReplyDraft({
+            userId: mx.getUserId() ?? '',
+            eventId: threadRootId,
+            body: '',
+            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+          });
+        } else {
+          setReplyDraft(undefined);
+        }
+      }
     };
 
     const submit = useCallback(() => {
@@ -361,23 +428,33 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         content.formatted_body = formattedBody;
       }
       if (replyDraft) {
-        content['m.relates_to'] = {
-          'm.in_reply_to': {
-            event_id: replyDraft.eventId,
-          },
-        };
-        if (replyDraft.relation?.rel_type === RelationType.Thread) {
-          content['m.relates_to'].event_id = replyDraft.relation.event_id;
-          content['m.relates_to'].rel_type = RelationType.Thread;
-          content['m.relates_to'].is_falling_back = false;
-        }
+        content['m.relates_to'] = getReplyContent(replyDraft);
       }
-      mx.sendMessage(roomId, content as any);
+      mx.sendMessage(roomId, threadRootId ?? null, content as any);
       resetEditor(editor);
       resetEditorHistory(editor);
-      setReplyDraft(undefined);
+      if (threadRootId) {
+        setReplyDraft({
+          userId: mx.getUserId() ?? '',
+          eventId: threadRootId,
+          body: '',
+          relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+        });
+      } else {
+        setReplyDraft(undefined);
+      }
       sendTypingStatus(false);
-    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
+    }, [
+      mx,
+      roomId,
+      threadRootId,
+      editor,
+      replyDraft,
+      sendTypingStatus,
+      setReplyDraft,
+      isMarkdown,
+      commands,
+    ]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -443,7 +520,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         body: label,
         url: mxc,
         info,
+        ...(replyDraft ? { 'm.relates_to': getReplyContent(replyDraft) } : {}),
       });
+
+      if (replyDraft) {
+        if (threadRootId) {
+          setReplyDraft({
+            userId: mx.getUserId() ?? '',
+            eventId: threadRootId,
+            body: '',
+            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+          });
+        } else {
+          setReplyDraft(undefined);
+        }
+      }
     };
 
     return (
@@ -544,7 +635,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}
           top={
-            replyDraft && (
+            replyDraft &&
+            (!threadRootId || replyDraft.body) && (
               <div>
                 <Box
                   alignItems="Center"
@@ -552,7 +644,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
                 >
                   <IconButton
-                    onClick={() => setReplyDraft(undefined)}
+                    onClick={() => {
+                      if (threadRootId) {
+                        setReplyDraft({
+                          userId: mx.getUserId() ?? '',
+                          eventId: threadRootId,
+                          body: '',
+                          relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+                        });
+                        return;
+                      }
+
+                      setReplyDraft(undefined);
+                    }}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
