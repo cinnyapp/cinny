@@ -228,9 +228,13 @@ const parseCodeBlockNode = (node: Element): CodeBlockElement[] | ParagraphElemen
       children: [{ text }],
     }));
     const childCode = node.children[0];
-    const className =
-      isTag(childCode) && childCode.tagName === 'code' ? childCode.attribs.class ?? '' : '';
-    const prefix = { text: `${mdSequence}${className.replace('language-', '')}` };
+    const attribs =
+      isTag(childCode) && childCode.tagName === 'code' ? childCode.attribs : undefined;
+    const languageClass = attribs?.class;
+    const customLabel = attribs?.['data-label'];
+    const prefix = {
+      text: `${mdSequence}${customLabel ?? languageClass?.replace('language-', '') ?? ''}`,
+    };
     const suffix = { text: mdSequence };
     return [
       { type: BlockType.Paragraph, children: [prefix] },
