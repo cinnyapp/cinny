@@ -18,7 +18,7 @@ export const CodeBlockRule: BlockMDRule = {
     const [, g1, g2] = match;
     // use last identifier after dot, e.g. for "example.json" gets us "json" as language code.
     const langCode = g1 ? g1.substring(g1.lastIndexOf('.') + 1) : null;
-    const filename = g1 != langCode ? g1 : null;
+    const filename = g1 !== langCode ? g1 : null;
     const classNameAtt = langCode ? ` class="language-${langCode}"` : '';
     const filenameAtt = filename ? ` data-label="${filename}"` : '';
     return `<pre data-md="${CODEBLOCK_MD_1}"><code${classNameAtt}${filenameAtt}>${g2}</code></pre>`;
