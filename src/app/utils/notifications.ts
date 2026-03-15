@@ -1,17 +1,22 @@
 import { MatrixClient, ReceiptType } from 'matrix-js-sdk';
+import { THREAD_RELATION_TYPE } from 'matrix-js-sdk/lib/models/thread';
 
 export async function markAsRead(mx: MatrixClient, roomId: string, privateReceipt: boolean) {
   const room = mx.getRoom(roomId);
   if (!room) return;
 
   const timeline = room.getLiveTimeline().getEvents();
-  const readEventId = room.getEventReadUpTo(mx.getUserId()!);
+  const userId = mx.getUserId();
+  if (!userId) return;
+  const readEventId = room.getEventReadUpTo(userId);
 
   const getLatestValidEvent = () => {
     for (let i = timeline.length - 1; i >= 0; i -= 1) {
       const latestEvent = timeline[i];
       if (latestEvent.getId() === readEventId) return null;
-      if (!latestEvent.isSending()) return latestEvent;
+      if (!latestEvent.isRelation(THREAD_RELATION_TYPE.name) && !latestEvent.isSending()) {
+        return latestEvent;
+      }
     }
     return null;
   };

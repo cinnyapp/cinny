@@ -17,6 +17,7 @@ import {
   Room,
   RoomMember,
 } from 'matrix-js-sdk';
+import { THREAD_RELATION_TYPE } from 'matrix-js-sdk/lib/models/thread';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import {
@@ -203,6 +204,7 @@ export const isNotificationEvent = (mEvent: MatrixEvent) => {
 
   if (mEvent.isRedacted()) return false;
   if (mEvent.getRelation()?.rel_type === 'm.replace') return false;
+  if (mEvent.isRelation(THREAD_RELATION_TYPE.name)) return false;
 
   return true;
 };
