@@ -42,14 +42,11 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import {
   Badge,
   Box,
-  Button,
   Chip,
   ContainerColor,
   Icon,
   Icons,
   Line,
-  ProgressBar,
-  RadioButton,
   Scroll,
   Text,
   as,
@@ -77,9 +74,6 @@ import {
   MSticker,
   ImageContent,
   EventContent,
-  Attachment,
-  AttachmentBox,
-  AttachmentContent,
 } from '../../components/message';
 import {
   factoryRenderLinkifyWithMention,
@@ -142,7 +136,7 @@ import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/u
 import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
-import { EndPollModal } from '../../components/message/poll/EndPoll';
+import { Poll } from '../../components/message/poll/Poll';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -1034,7 +1028,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   );
   const { t } = useTranslation();
 
-  const [openEndPollModal, setOpenEndPollModal] = useState('');
   const renderMatrixEvent = useMatrixEventRenderer<
     [string, MatrixEvent, number, EventTimelineSet, boolean]
   >(
@@ -1046,13 +1039,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
 
-        // TODO: handle edits
-        // TODO: make sure polls can't be edited after there have been votes on it (e.g. ignore that event)
-        //       ^ maybe this should be done server side?
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-        const getContent = (() =>
-          editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent()) as GetContentCallback;
-
         const senderId = mEvent.getSender() ?? '';
 
         // TODO: check if poll.end event is in here and if so, disallow voting on the poll (may need authentication check?)
@@ -1073,7 +1060,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             return true;
           });
 
-        console.log({ mEventId, childEvents });
         // collect all votes
         // select per user only the most recent one (by event.origin_server_ts)
         // aggregate the votes into an object of {answer_id: [{user, vote_event_id}]}
@@ -1182,8 +1168,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         };
 
         const pollKind = getPollKind(pollContent.kind);
-        // TODO: make buttons checkboxes when >1 votes are allowed
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
         const allowedVotes = pollContent.max_selections || 1;
 
         const totalVoteCount = votesDeduped.reduce((count, evt) => count + evt.answers.length, 0);
@@ -1261,120 +1245,23 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             {mEvent.isRedacted() ? (
               <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
             ) : (
-              // TODO: stop abusing the Attachment elements
-              <Attachment outlined={messageLayout === MessageLayout.Bubble}>
-                <Box
-                  alignItems="Center"
-                  style={{
-                    padding: config.space.S300,
-                  }}
-                >
-                  <Box grow="Yes">
-                    <Text size="T300">
-                      {pollKind === 'm.poll.disclosed' ? 'Poll' : 'Undisclosed poll'}
-                      {endedEvent ? ' (ended)' : ''}
-                    </Text>
-                  </Box>
-
-                  {/* TODO: make this a hyperlink that opens a dialog that shows who voted for what */}
-                  <Text size="C400">
-                    {totalVoteCount} {totalVoteCount === 1 ? 'vote' : 'votes'}
-                  </Text>
-                </Box>
-                <AttachmentBox>
-                  <AttachmentContent>
-                    <Box gap="300" direction="Column">
-                      <Text size="H5">{title}</Text>
-                      <Line />
-                      {answers.map((answer) => (
-                        <Box direction="Row" gap="300" justifyItems="Center">
-                          <Box direction="Row" alignItems="Center">
-                            <RadioButton
-                              size="50"
-                              onClick={async () => {
-                                let x = await mx.sendEvent(
-                                  room.roomId,
-                                  M_POLL_RESPONSE.name as string,
-                                  {
-                                    'm.relates_to': {
-                                      event_id: mEventId,
-                                      rel_type: 'm.reference',
-                                    },
-
-                                    'm.selections': [answer.id],
-                                    'm.poll.response': {
-                                      answers: [answer.id],
-                                    },
-                                    'org.matrix.msc3381.poll.response': {
-                                      answers: [answer.id],
-                                    },
-                                  } as IContent
-                                );
-                                console.log({ x });
-                              }}
-                              checked={(ownVotes || []).includes(answer.id)}
-                            />
-                          </Box>
-                          <Box direction="Column" grow="Yes" gap="200">
-                            <Box
-                              direction="Row"
-                              gap="200"
-                              alignItems="Center"
-                              style={{ width: '100%' }}
-                            >
-                              <Box
-                                grow="Yes"
-                                display="InlineFlex"
-                                direction="Row"
-                                gap="200"
-                                alignItems="Center"
-                                justifyItems="Stretch"
-                                justifyContent="Stretch"
-                              >
-                                <Text align="Left">{answer.body}</Text>
-                              </Box>
-                              {canShowResults ? (
-                                <Text align="Right">
-                                  {votesByAnswer[answer.id].length}{' '}
-                                  {votesByAnswer[answer.id].length === 1 ? 'vote' : 'votes'}
-                                </Text>
-                              ) : null}
-                            </Box>
-
-                            {canShowResults ? (
-                              <ProgressBar
-                                style={{ width: '100%' }}
-                                as="div"
-                                variant={
-                                  (ownVotes || []).includes(answer.id) ? 'Primary' : 'Secondary'
-                                }
-                                max={totalVoteCount}
-                                value={votesByAnswer[answer.id].length}
-                                fill="Soft"
-                                min={0}
-                                outlined={messageLayout === MessageLayout.Bubble}
-                              />
-                            ) : null}
-                          </Box>
-                        </Box>
-                      ))}
-                      {senderId === ownUserId && pollKind === 'm.poll.undisclosed' ? (
-                        <>
-                          <Line />
-                          <Button onClick={() => setOpenEndPollModal(mEventId)}>
-                            <Text size="B400">End poll</Text>
-                          </Button>
-                          <EndPollModal
-                            open={openEndPollModal}
-                            setOpen={setOpenEndPollModal}
-                            eventID={mEventId}
-                          />
-                        </>
-                      ) : null}
-                    </Box>
-                  </AttachmentContent>
-                </AttachmentBox>
-              </Attachment>
+              <Poll
+                messageLayout={messageLayout}
+                pollKind={pollKind}
+                endedEvent={endedEvent}
+                allowedVotes={allowedVotes}
+                totalVoteCount={totalVoteCount}
+                title={title}
+                answers={answers}
+                room={room}
+                mEventId={mEventId}
+                ownVotes={ownVotes}
+                canShowResults={canShowResults}
+                votesByAnswer={votesByAnswer}
+                senderId={senderId}
+                ownUserId={ownUserId}
+                edited={!!editedEvent}
+              />
             )}
           </Message>
         );

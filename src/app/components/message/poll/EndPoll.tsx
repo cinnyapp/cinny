@@ -16,15 +16,15 @@ import { stopPropagation } from '../../../utils/keyboard';
 
 export const EndPollModal = as<
   'div',
-  { open: string; setOpen: (open: string) => void; eventID: string }
->(({ open, setOpen, eventID }, ref) => (
+  { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>> }
+>(({ open, setOpen }, ref) => (
   // TODO: implement sending actual poll end event
-  <Overlay ref={ref} open={open === eventID} backdrop={<OverlayBackdrop />}>
+  <Overlay ref={ref} open={open} backdrop={<OverlayBackdrop />}>
     <OverlayCenter>
       <FocusTrap
         focusTrapOptions={{
           initialFocus: false,
-          onDeactivate: () => setOpen(''),
+          onDeactivate: () => setOpen(false),
           clickOutsideDeactivates: true,
           escapeDeactivates: stopPropagation,
         }}
@@ -52,7 +52,7 @@ export const EndPollModal = as<
               <Button
                 variant="Secondary"
                 fill="Soft"
-                onClick={() => setOpen('')}
+                onClick={() => setOpen(false)}
                 style={{ width: '100%' }}
               >
                 <Text size="B400">Cancel</Text>
@@ -60,7 +60,7 @@ export const EndPollModal = as<
               <Button
                 variant="Primary"
                 fill="Soft"
-                onClick={() => setOpen('')}
+                onClick={() => setOpen(false)}
                 style={{ width: '100%' }}
               >
                 <Text size="B400">End poll</Text>
