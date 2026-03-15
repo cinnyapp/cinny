@@ -322,6 +322,13 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
       backwardTimeline = backwardTimeline.getNeighbouringTimeline('b' as any);
     }
 
+    // Initialize thread timeline sets then fetch threads from server
+    room.createThreadsTimelineSets().then(() =>
+      room.fetchRoomThreads()
+    ).catch(() => {
+      // Silently ignore — server may not support threads
+    });
+
     const handleTimeline = (event: MatrixEvent, eventRoom?: Room) => {
       if (eventRoom?.roomId !== room.roomId) return;
 
