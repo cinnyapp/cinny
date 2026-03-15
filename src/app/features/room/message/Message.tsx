@@ -676,6 +676,7 @@ export type MessageProps = {
   reply?: ReactNode;
   reactions?: ReactNode;
   hideReadReceipts?: boolean;
+  hideThreadButton?: boolean;
   showDeveloperTools?: boolean;
   memberPowerTag?: MemberPowerTag;
   accessibleTagColors?: Map<string, string>;
@@ -707,6 +708,7 @@ export const Message = as<'div', MessageProps>(
       reply,
       reactions,
       hideReadReceipts,
+      hideThreadButton,
       showDeveloperTools,
       memberPowerTag,
       accessibleTagColors,
@@ -872,8 +874,6 @@ export const Message = as<'div', MessageProps>(
       }, 100);
     };
 
-    const isThreadedMessage = mEvent.threadRootId !== undefined;
-
     return (
       <MessageBase
         className={classNames(css.MessageBase, className, {
@@ -938,7 +938,7 @@ export const Message = as<'div', MessageProps>(
                 >
                   <Icon src={Icons.ReplyArrow} size="100" />
                 </IconButton>
-                {!isThreadedMessage && (
+                {!hideThreadButton && (
                   <IconButton
                     onClick={(ev) => onReplyClick(ev, true)}
                     data-event-id={mEvent.getId()}
@@ -1028,7 +1028,7 @@ export const Message = as<'div', MessageProps>(
                               Reply
                             </Text>
                           </MenuItem>
-                          {!isThreadedMessage && (
+                          {!hideThreadButton && (
                             <MenuItem
                               size="300"
                               after={<Icon src={Icons.ThreadPlus} size="100" />}

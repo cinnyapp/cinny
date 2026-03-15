@@ -151,6 +151,7 @@ function ThreadMessage({
       hour24Clock={hour24Clock}
       dateFormatString={dateFormatString}
       hideReadReceipts={showHideReads}
+      hideThreadButton
       showDeveloperTools={showDeveloperTools}
       reply={
         replyEventId &&

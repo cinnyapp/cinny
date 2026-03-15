@@ -406,14 +406,17 @@ const useThreadUpdate = (room: Room, onUpdate: () => void) => {
   }, [room, onUpdate]);
 };
 
-const getThreadReplyCount = (room: Room, eventId: string): number =>
-  room
+const getThreadReplyCount = (room: Room, eventId: string): number => {
+  const thread = room.getThread(eventId);
+  if (thread) return thread.length;
+  return room
     .getUnfilteredTimelineSet()
     .getLiveTimeline()
     .getEvents()
     .filter(
       (ev) => ev.threadRootId === eventId && ev.getId() !== eventId && !reactionOrEditEvent(ev)
     ).length;
+};
 
 function ThreadReplyChip({
   room,
@@ -429,15 +432,19 @@ function ThreadReplyChip({
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
 
-  const replyEvents = room
-    .getUnfilteredTimelineSet()
-    .getLiveTimeline()
-    .getEvents()
-    .filter(
-      (ev) => ev.threadRootId === mEventId && ev.getId() !== mEventId && !reactionOrEditEvent(ev)
-    );
+  const thread = room.getThread(mEventId);
+  const replyEvents = thread
+    ? thread.events.filter((ev) => ev.getId() !== mEventId && !reactionOrEditEvent(ev))
+    : room
+        .getUnfilteredTimelineSet()
+        .getLiveTimeline()
+        .getEvents()
+        .filter(
+          (ev) =>
+            ev.threadRootId === mEventId && ev.getId() !== mEventId && !reactionOrEditEvent(ev)
+        );
 
-  const replyCount = replyEvents.length;
+  const replyCount = thread ? thread.length : replyEvents.length;
   if (replyCount === 0) return null;
 
   const uniqueSenders: string[] = [];
@@ -739,7 +746,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         // Thread reply events are re-emitted from the Thread to the Room and
         // must not increment the main timeline range or scroll it.
         // useThreadUpdate handles the chip re-render for these events.
-        if (mEvt.threadRootId !== undefined) return;
+        // Only skip actual thread replies (rel_type === m.thread),
+        // not thread roots or plain replies to thread roots.
+        if (mEvt.isRelation(THREAD_RELATION_TYPE.name)) return;
 
         // if user is at bottom of timeline
         // keep paginating timeline and conditionally mark as read
@@ -1234,6 +1243,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               );
             })()}
             hideReadReceipts={hideActivity}
+            hideThreadButton={threadReplyCount > 0}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(senderId)}
             accessibleTagColors={accessiblePowerTagColors}
@@ -1332,6 +1342,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               );
             })()}
             hideReadReceipts={hideActivity}
+            hideThreadButton={threadReplyCount > 0}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
             accessibleTagColors={accessiblePowerTagColors}
@@ -1451,6 +1462,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
               );
             })()}
             hideReadReceipts={hideActivity}
+            hideThreadButton={threadReplyCount > 0}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
             accessibleTagColors={accessiblePowerTagColors}
