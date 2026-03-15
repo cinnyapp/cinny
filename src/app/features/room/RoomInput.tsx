@@ -7,9 +7,10 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
-import { EventType, IContent, MsgType, RelationType, Room } from 'matrix-js-sdk';
+import { EventType, IContent, MatrixError, MsgType, RelationType, Room } from 'matrix-js-sdk';
+import type { RoomMessageEventContent } from 'matrix-js-sdk/lib/@types/events';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
 import {
@@ -28,10 +29,12 @@ import {
   RectCords,
   Scroll,
   Text,
+  color,
   config,
   toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
@@ -121,8 +124,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
-import { useQueryClient } from '@tanstack/react-query';
-import { delayedEventsSupportedAtom, roomIdToScheduledTimeAtomFamily, roomIdToEditingScheduledDelayIdAtomFamily } from '../../state/scheduledMessages';
+import { delayedEventsSupportedAtom, roomIdToScheduledTimeAtomFamily, roomIdToEditingScheduledDelayIdAtomFamily, serverMaxDelayMsAtom } from '../../state/scheduledMessages';
 import { sendDelayedMessage, sendDelayedMessageE2EE, computeDelayMs, cancelDelayedEvent } from '../../utils/delayedEvents';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
@@ -235,8 +237,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const delayedEventsSupported = useAtomValue(delayedEventsSupportedAtom);
     const [scheduledTime, setScheduledTime] = useAtom(roomIdToScheduledTimeAtomFamily(roomId));
     const [editingScheduledDelayId, setEditingScheduledDelayId] = useAtom(roomIdToEditingScheduledDelayIdAtomFamily(roomId));
+    const setServerMaxDelayMs = useSetAtom(serverMaxDelayMsAtom);
     const [scheduleMenuAnchor, setScheduleMenuAnchor] = useState<RectCords>();
     const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+    const [sendError, setSendError] = useState<string>();
     const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
     const isEncrypted = room.hasEncryptionStateEvent();
 
@@ -416,14 +420,27 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           invalidate();
           setEditingScheduledDelayId(null);
           setScheduledTime(null);
+          setSendError(undefined);
           resetInput();
-        } catch {
+        } catch (e: unknown) {
+          if (
+            e instanceof MatrixError &&
+            e.data?.['org.matrix.msc4140.errcode'] === 'M_MAX_DELAY_EXCEEDED'
+          ) {
+            const serverLimit = e.data['org.matrix.msc4140.max_delay'];
+            if (typeof serverLimit === 'number') {
+              setServerMaxDelayMs(serverLimit);
+            }
+            setSendError('Scheduled time exceeds the maximum delay allowed by this server. Please choose an earlier time.');
+          } else {
+            setSendError('Failed to schedule message. Please try again.');
+          }
           // Network/server error — leave editor and scheduled state intact for retry
         }
       } else if (editingScheduledDelayId) {
         try {
           await cancelDelayedEvent(mx, editingScheduledDelayId);
-          mx.sendMessage(roomId, content as any);
+          mx.sendMessage(roomId, content as RoomMessageEventContent);
           invalidate();
           setEditingScheduledDelayId(null);
           resetInput();
@@ -434,7 +451,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         mx.sendMessage(roomId, content as any);
         resetInput();
       }
-    }, [mx, roomId, room, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands, scheduledTime, setScheduledTime, isEncrypted, queryClient, editingScheduledDelayId, setEditingScheduledDelayId]);
+    }, [mx, roomId, room, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands, scheduledTime, setScheduledTime, isEncrypted, queryClient, editingScheduledDelayId, setEditingScheduledDelayId, setServerMaxDelayMs, setSendError]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -613,6 +630,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       onClick={() => {
                         setScheduledTime(null);
                         setEditingScheduledDelayId(null);
+                        setSendError(undefined);
                       }}
                       variant="SurfaceVariant"
                       size="300"
@@ -629,6 +647,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     </Box>
                   </Box>
                 </div>
+              )}
+              {sendError && (
+                <Box style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}>
+                  <Text style={{ color: color.Critical.Main }} size="T300">
+                    {sendError}
+                  </Text>
+                </Box>
               )}
             {replyDraft && (
               <div>
@@ -841,6 +866,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             onCancel={() => setShowSchedulePicker(false)}
             onSubmit={(date) => {
               setScheduledTime(date);
+              setSendError(undefined);
               setShowSchedulePicker(false);
             }}
           />

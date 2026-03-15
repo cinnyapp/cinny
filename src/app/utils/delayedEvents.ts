@@ -102,13 +102,6 @@ export async function cancelDelayedEvent(
   await mx._unstable_updateDelayedEvent(delayId, UpdateDelayedEventAction.Cancel);
 }
 
-export async function sendDelayedEventNow(
-  mx: MatrixClient,
-  delayId: string
-): Promise<void> {
-  await mx._unstable_updateDelayedEvent(delayId, UpdateDelayedEventAction.Send);
-}
-
 export function computeDelayMs(targetDate: Date): number {
   const delay = targetDate.getTime() - Date.now();
   if (delay <= 0) throw new Error('Scheduled time must be in the future');

@@ -18,11 +18,13 @@ import {
   PopOut,
   RectCords,
 } from 'folds';
+import { useAtomValue } from 'jotai';
 import { stopPropagation } from '../../../utils/keyboard';
 import { timeDayMonthYear, timeHourMinute, hoursToMs, daysToMs } from '../../../utils/time';
 import { DatePicker, TimePicker } from '../../../components/time-date';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import { serverMaxDelayMsAtom } from '../../../state/scheduledMessages';
 
 type SchedulePickerDialogProps = {
   initialTime?: number;
@@ -38,7 +40,8 @@ export function SchedulePickerDialog({
   onSubmit,
 }: SchedulePickerDialogProps) {
   const now = Date.now();
-  const maxDelay = daysToMs(30);
+  const serverMaxDelayMs = useAtomValue(serverMaxDelayMsAtom);
+  const maxDelay = serverMaxDelayMs ?? daysToMs(30);
   const defaultTs = initialTime ?? now + hoursToMs(1);
   const [ts, setTs] = useState(() => Math.max(defaultTs, now + 60000));
   const [error, setError] = useState<string>();
@@ -66,7 +69,8 @@ export function SchedulePickerDialog({
       return;
     }
     if (delay > maxDelay) {
-      setError('Cannot schedule more than 30 days in advance');
+      const maxDays = Math.round(maxDelay / daysToMs(1));
+      setError(`Cannot schedule more than ${maxDays} day${maxDays !== 1 ? 's' : ''} in advance`);
       return;
     }
     setError(undefined);

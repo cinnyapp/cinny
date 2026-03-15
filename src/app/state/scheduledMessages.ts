@@ -7,6 +7,8 @@ export const roomIdToScheduledTimeAtomFamily = atomFamily<string, ReturnType<typ
   () => atom<Date | null>(null)
 );
 
+export const serverMaxDelayMsAtom = atom<number | null>(null);
+
 // Save the delay_id instead of cancelling the message immediately in case
 // the edit process is cancelled
 export const roomIdToEditingScheduledDelayIdAtomFamily = atomFamily<

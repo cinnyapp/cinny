@@ -11,7 +11,8 @@ export function useDelayedEventsSupport(): void {
   useEffect(() => {
     let cancelled = false;
     supportsDelayedEvents(mx).then((supported) => {
-      if (!cancelled) setSupported(supported);
+      if (cancelled) return;
+      setSupported(supported);
     });
     return () => {
       cancelled = true;
