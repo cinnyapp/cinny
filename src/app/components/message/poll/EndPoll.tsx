@@ -12,7 +12,7 @@ import {
   OverlayCenter,
   Text,
 } from 'folds';
-import { IContent, M_POLL_END, Room } from 'matrix-js-sdk';
+import { M_POLL_END, Room } from 'matrix-js-sdk';
 import { stopPropagation } from '../../../utils/keyboard';
 
 export const EndPollModal = as<
@@ -36,7 +36,7 @@ export const EndPollModal = as<
   }
 >(({ room, votesByAnswer, answers, eventId, open, setOpen }, ref) => {
   // TODO: handle multiple winners
-  let [winnerID, winnerVotes] = Object.entries(votesByAnswer).reduce(
+  const [winnerID, winnerVotes] = Object.entries(votesByAnswer).reduce(
     (currentWinner: [string, number], answer) => {
       let newWinner = currentWinner;
       if (currentWinner[1] < answer[1].length) {
@@ -47,7 +47,7 @@ export const EndPollModal = as<
     ['', -1]
   );
 
-  let winningAnswer = answers.find((x) => x.id === winnerID);
+  const winningAnswer = answers.find((x) => x.id === winnerID);
 
   // TODO: implement sending actual poll end event
   return (

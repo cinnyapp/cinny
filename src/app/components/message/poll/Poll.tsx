@@ -1,5 +1,5 @@
 import { Box, Button, config, Line, ProgressBar, RadioButton, Text } from 'folds';
-import { IContent, M_POLL_RESPONSE, MatrixEvent, Room } from 'matrix-js-sdk';
+import { M_POLL_RESPONSE, MatrixEvent, Room } from 'matrix-js-sdk';
 import React, { useState } from 'react';
 import { Attachment, AttachmentBox, AttachmentContent } from '../../message';
 import { MessageLayout } from '../../../state/settings';
@@ -78,25 +78,20 @@ export function Poll({
                     size="50"
                     disabled={!!endedEvent}
                     onClick={async () => {
-                      let x = await room.client.sendEvent(
-                        room.roomId,
-                        M_POLL_RESPONSE.name as string,
-                        {
-                          'm.relates_to': {
-                            event_id: mEventId,
-                            rel_type: 'm.reference',
-                          },
-
-                          'm.selections': [answer.id],
-                          'm.poll.response': {
-                            answers: [answer.id],
-                          },
-                          'org.matrix.msc3381.poll.response': {
-                            answers: [answer.id],
-                          },
-                        } as IContent
-                      );
-                      console.log({ x });
+                      // @ts-expect-error this is allowed according to one of the function overloads, but that overload is /unreachable/ type-wise
+                      await room.client.sendEvent(room.roomId, M_POLL_RESPONSE.name as string, {
+                        'm.relates_to': {
+                          event_id: mEventId,
+                          rel_type: 'm.reference',
+                        },
+                        'm.selections': [answer.id],
+                        'm.poll.response': {
+                          answers: [answer.id],
+                        },
+                        'org.matrix.msc3381.poll.response': {
+                          answers: [answer.id],
+                        },
+                      });
                     }}
                     checked={(ownVotes || []).includes(answer.id)}
                   />
