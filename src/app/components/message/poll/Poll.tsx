@@ -137,13 +137,21 @@ export function Poll({
                 </Box>
               </Box>
             ))}
-            {senderId === ownUserId && pollKind === 'm.poll.undisclosed' ? (
+            {/* TODO: allow people with redaction power level to also close polls */}
+            {senderId === ownUserId && pollKind === 'm.poll.undisclosed' && !endedEvent ? (
               <>
                 <Line />
                 <Button onClick={() => setOpenEndPollModal(true)}>
                   <Text size="B400">End poll</Text>
                 </Button>
-                <EndPollModal open={openEndPollModal} setOpen={setOpenEndPollModal} />
+                <EndPollModal
+                  room={room}
+                  eventId={mEventId}
+                  open={openEndPollModal}
+                  answers={answers}
+                  votesByAnswer={votesByAnswer}
+                  setOpen={setOpenEndPollModal}
+                />
               </>
             ) : null}
           </Box>
