@@ -5,6 +5,10 @@ import { Attachment, AttachmentBox, AttachmentContent } from '../../message';
 import { MessageLayout } from '../../../state/settings';
 import { EndPollModal } from './EndPoll';
 
+function pluralize(amount: number, noun: string) {
+  return amount === 1 ? noun : `${noun}s`;
+}
+
 export function Poll({
   messageLayout,
   pollKind,
@@ -62,7 +66,7 @@ export function Poll({
         <Box gap="200">
           {edited ? <Text size="C400">(Edited)</Text> : null}
           <Text size="C400">
-            {totalVoteCount} {totalVoteCount === 1 ? 'vote' : 'votes'}
+            {totalVoteCount} {pluralize(totalVoteCount, 'vote')}
           </Text>
         </Box>
       </Box>
@@ -112,7 +116,7 @@ export function Poll({
                     {canShowResults ? (
                       <Text align="Right">
                         {votesByAnswer[answer.id].length}{' '}
-                        {votesByAnswer[answer.id].length === 1 ? 'vote' : 'votes'}
+                        {pluralize(votesByAnswer[answer.id].length, 'vote')}
                       </Text>
                     ) : null}
                   </Box>
