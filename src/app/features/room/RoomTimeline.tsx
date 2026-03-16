@@ -19,11 +19,12 @@ import {
   IContent,
   MatrixClient,
   MatrixEvent,
+  RelationType,
   Room,
   RoomEvent,
   RoomEventHandlerMap,
 } from 'matrix-js-sdk';
-import { THREAD_RELATION_TYPE, ThreadEvent } from 'matrix-js-sdk/lib/models/thread';
+import { ThreadEvent } from 'matrix-js-sdk/lib/models/thread';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';
@@ -762,7 +763,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         // useThreadUpdate handles the chip re-render for these events.
         // Only skip actual thread replies (rel_type === m.thread),
         // not thread roots or plain replies to thread roots.
-        if (mEvt.isRelation(THREAD_RELATION_TYPE.name)) return;
+        if (mEvt.isRelation(RelationType.Thread)) return;
 
         // if user is at bottom of timeline
         // keep paginating timeline and conditionally mark as read
@@ -1851,7 +1852,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     }
     // Only hide actual thread replies (rel_type === m.thread) from the main timeline.
     // Plain replies (m.in_reply_to) to thread roots must remain visible.
-    if (mEvent.isRelation(THREAD_RELATION_TYPE.name) && mEvent.threadRootId !== mEventId) {
+    if (mEvent.isRelation(RelationType.Thread) && mEvent.threadRootId !== mEventId) {
       return null;
     }
 

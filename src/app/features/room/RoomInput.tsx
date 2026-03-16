@@ -68,6 +68,7 @@ import { useFilePicker } from '../../hooks/useFilePicker';
 import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
 import { useFileDropZone } from '../../hooks/useFileDrop';
 import {
+  IReplyDraft,
   TUploadItem,
   TUploadMetadata,
   roomIdToMsgDraftAtomFamily,
@@ -118,10 +119,8 @@ import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
 
-const getReplyContent = (replyDraft: any) => {
-  if (!replyDraft) return undefined;
-
-  const relation: Record<string, any> = {};
+const getReplyContent = (replyDraft: IReplyDraft): IContent['m.relates_to'] => {
+  const relation: Record<string, unknown> = {};
 
   if (replyDraft.relation?.rel_type === RelationType.Thread) {
     relation.event_id = replyDraft.relation.event_id;
