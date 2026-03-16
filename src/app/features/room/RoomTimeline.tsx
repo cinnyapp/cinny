@@ -406,16 +406,30 @@ const useThreadUpdate = (room: Room, onUpdate: () => void) => {
   }, [room, onUpdate]);
 };
 
-const getThreadReplyCount = (room: Room, eventId: string): number => {
-  const thread = room.getThread(eventId);
-  if (thread) return thread.length;
-  return room
+const buildThreadReplyCountMap = (room: Room): Map<string, number> => {
+  const counts = new Map<string, number>();
+  room
     .getUnfilteredTimelineSet()
     .getLiveTimeline()
     .getEvents()
-    .filter(
-      (ev) => ev.threadRootId === eventId && ev.getId() !== eventId && !reactionOrEditEvent(ev)
-    ).length;
+    .forEach((ev) => {
+      const rootId = ev.threadRootId;
+      if (rootId && ev.getId() !== rootId && !reactionOrEditEvent(ev)) {
+        counts.set(rootId, (counts.get(rootId) || 0) + 1);
+      }
+    });
+  return counts;
+};
+
+const getThreadReplyCount = (
+  room: Room,
+  eventId: string,
+  fallbackCounts?: Map<string, number>
+): number => {
+  const thread = room.getThread(eventId);
+  if (thread) return thread.length;
+  if (fallbackCounts) return fallbackCounts.get(eventId) ?? 0;
+  return buildThreadReplyCountMap(room).get(eventId) ?? 0;
 };
 
 function ThreadReplyChip({
@@ -1159,6 +1173,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   );
   const { t } = useTranslation();
 
+  // Build a map of thread reply counts once per render to avoid O(n²) timeline scans.
+  const threadReplyCountMap = buildThreadReplyCountMap(room);
+
   const renderMatrixEvent = useMatrixEventRenderer<
     [string, MatrixEvent, number, EventTimelineSet, boolean]
   >(
@@ -1169,7 +1186,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
-        const threadReplyCount = getThreadReplyCount(room, mEventId);
+        const threadReplyCount = getThreadReplyCount(room, mEventId, threadReplyCountMap);
 
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
         const getContent = (() =>
@@ -1276,7 +1293,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
-        const threadReplyCount = getThreadReplyCount(room, mEventId);
+        const threadReplyCount = getThreadReplyCount(room, mEventId, threadReplyCountMap);
 
         return (
           <Message
@@ -1412,7 +1429,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const highlighted = focusItem?.index === item && focusItem.highlight;
-        const threadReplyCount = getThreadReplyCount(room, mEventId);
+        const threadReplyCount = getThreadReplyCount(room, mEventId, threadReplyCountMap);
 
         return (
           <Message

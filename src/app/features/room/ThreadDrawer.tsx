@@ -352,19 +352,44 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
       }
     };
     const onThreadUpdate = () => forceUpdate((n) => n + 1);
-    mx.on(RoomEvent.Timeline, onTimeline as any);
+    (room as any).on(RoomEvent.Timeline, onTimeline as any);
     (room as any).on(RoomEvent.Redaction, onRedaction as any);
     (room as any).on(ThreadEvent.Update, onThreadUpdate as any);
     (room as any).on(ThreadEvent.NewReply, onThreadUpdate as any);
     return () => {
-      mx.off(RoomEvent.Timeline, onTimeline as any);
+      (room as any).removeListener(RoomEvent.Timeline, onTimeline as any);
       (room as any).removeListener(RoomEvent.Redaction, onRedaction as any);
       (room as any).removeListener(ThreadEvent.Update, onThreadUpdate as any);
       (room as any).removeListener(ThreadEvent.NewReply, onThreadUpdate as any);
     };
   }, [mx, room, threadRootId]);
 
-  // Mark thread as read when viewing it
+  // Use the Thread object if available (authoritative source with full history).
+  // Fall back to scanning the live room timeline for local echoes and the
+  // window before the Thread object is registered by the SDK.
+  const replyEvents: MatrixEvent[] = (() => {
+    const thread = room.getThread(threadRootId);
+    const fromThread = thread?.events ?? [];
+    if (fromThread.length > 0) {
+      return fromThread.filter(
+        (ev: MatrixEvent) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
+      );
+    }
+    return room
+      .getUnfilteredTimelineSet()
+      .getLiveTimeline()
+      .getEvents()
+      .filter(
+        (ev: MatrixEvent) =>
+          ev.threadRootId === threadRootId &&
+          ev.getId() !== threadRootId &&
+          !reactionOrEditEvent(ev)
+      );
+  })();
+
+  replyEventsRef.current = replyEvents;
+
+  // Mark thread as read when viewing it and when new messages arrive
   useEffect(() => {
     const markThreadAsRead = async () => {
       const thread = room.getThread(threadRootId);
@@ -393,34 +418,8 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
       }
     };
 
-    // Mark as read when opened and when new messages arrive
     markThreadAsRead();
-  }, [mx, room, threadRootId, forceUpdate]);
-
-  // Use the Thread object if available (authoritative source with full history).
-  // Fall back to scanning the live room timeline for local echoes and the
-  // window before the Thread object is registered by the SDK.
-  const replyEvents: MatrixEvent[] = (() => {
-    const thread = room.getThread(threadRootId);
-    const fromThread = thread?.events ?? [];
-    if (fromThread.length > 0) {
-      return fromThread.filter(
-        (ev: MatrixEvent) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
-      );
-    }
-    return room
-      .getUnfilteredTimelineSet()
-      .getLiveTimeline()
-      .getEvents()
-      .filter(
-        (ev: MatrixEvent) =>
-          ev.threadRootId === threadRootId &&
-          ev.getId() !== threadRootId &&
-          !reactionOrEditEvent(ev)
-      );
-  })();
-
-  replyEventsRef.current = replyEvents;
+  }, [mx, room, threadRootId, replyEvents.length]);
 
   // Auto-scroll to bottom when event count grows (if the user is near the bottom).
   useEffect(() => {

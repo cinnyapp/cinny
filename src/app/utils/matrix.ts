@@ -389,7 +389,11 @@ export const toggleReaction = (
   const allReactions = relations?.getSortedAnnotationsByKey() ?? [];
   const [, reactionsSet] = allReactions.find(([reactionKey]) => reactionKey === key) ?? [];
   const reactions: MatrixEvent[] = reactionsSet ? Array.from(reactionsSet) : [];
-  const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
+  const userId = mx.getUserId();
+  if (!userId) {
+    return;
+  }
+  const myReaction = reactions.find(factoryEventSentBy(userId));
 
   const myReactionId = myReaction?.getId();
   if (myReaction && myReactionId && myReaction.isRelation()) {
