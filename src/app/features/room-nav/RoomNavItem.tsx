@@ -293,7 +293,7 @@ export function RoomNavItem({
   const hasCallPermission = permissions.event(StateEvent.GroupCallMemberPrefix, mx.getSafeUserId());
 
   const handleStartCall: MouseEventHandler<HTMLAnchorElement> = (evt) => {
-    // Do not join if no livekit support or call is not started by others
+    // Do not join if missing permissions or no livekit support and call is not started by others
     if (!hasCallPermission || (!livekitSupport(autoDiscoveryInfo) && callMembers.length === 0)) {
       return;
     }
