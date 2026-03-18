@@ -59,6 +59,7 @@ import { callChatAtom } from '../../state/callEmbed';
 import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
+import { StateEvent } from '../../../types/matrix/room';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -286,9 +287,14 @@ export function RoomNavItem({
   const callPref = useAtomValue(useCallPreferencesAtom());
   const autoDiscoveryInfo = useAutoDiscoveryInfo();
 
+  const powerLevels = usePowerLevels(room);
+  const creators = useRoomCreators(room);
+  const permissions = useRoomPermissions(creators, powerLevels);
+  const hasCallPermission = permissions.event(StateEvent.GroupCallMemberPrefix, mx.getSafeUserId());
+
   const handleStartCall: MouseEventHandler<HTMLAnchorElement> = (evt) => {
     // Do not join if no livekit support or call is not started by others
-    if (!livekitSupport(autoDiscoveryInfo) && callMembers.length === 0) {
+    if (!hasCallPermission || (!livekitSupport(autoDiscoveryInfo) && callMembers.length === 0)) {
       return;
     }
 
