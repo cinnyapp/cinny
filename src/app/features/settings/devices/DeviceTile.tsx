@@ -248,6 +248,7 @@ export function DeviceDeleteBtn({
   onDeleteToggle,
   disabled,
 }: DeviceDeleteBtnProps) {
+  const { t } = useTranslation();
   return deleted ? (
     <Chip
       variant="Critical"
