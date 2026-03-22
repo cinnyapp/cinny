@@ -11,6 +11,9 @@
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "cap:sync": "cap sync ios",
+    "cap:open": "cap open ios",
+    "cap:deploy": "npm run build && npm run cap:sync && npm run cap:open",
     "lint": "npm run check:eslint && npm run check:prettier",
     "check:eslint": "eslint src/*",
     "check:prettier": "prettier --check .",
@@ -62,6 +65,7 @@
   "author": "Ajay Bura",
   "license": "AGPL-3.0-only",
   "dependencies": {
+    "@capacitor/core": "^6.0.0",
     "@atlaskit/pragmatic-drag-and-drop": "1.1.6",
     "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "1.3.0",
     "@atlaskit/pragmatic-drag-and-drop-hitbox": "1.0.3",
@@ -119,6 +123,8 @@
     "ua-parser-js": "1.0.35"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
     "@element-hq/element-call-embedded": "0.16.3",
     "@esbuild-plugins/node-globals-polyfill": "0.2.3",
     "@rollup/plugin-inject": "5.0.3",

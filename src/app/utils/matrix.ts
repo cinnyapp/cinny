@@ -18,6 +18,7 @@ import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/co
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import { getStateEvent } from './room';
 import { Membership, StateEvent } from '../../types/matrix/room';
+import { isCapacitorNative } from './capacitor';
 
 const DOMAIN_REGEX = /\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b/;
 
@@ -297,8 +298,15 @@ export const mxcUrlToHttp = (
   );
 
 export const downloadMedia = async (src: string): Promise<Blob> => {
-  // this request is authenticated by service worker
-  const res = await fetch(src, { method: 'GET' });
+  // In Capacitor (WKWebView) the service worker is unavailable, so we must
+  // inject the Authorization header manually for authenticated media endpoints.
+  // On web the service worker handles this transparently.
+  const headers: HeadersInit = {};
+  if (isCapacitorNative()) {
+    const token = localStorage.getItem('cinny_access_token');
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+  const res = await fetch(src, { method: 'GET', headers });
   const blob = await res.blob();
   return blob;
 };

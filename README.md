@@ -109,3 +109,25 @@ docker run -p 8080:80 cinny:latest
 ```
 
 This will forward your `localhost` port 8080 to the container's port 80. You can visit the app in your browser by navigating to `http://localhost:8080`.
+
+### Running the iOS app
+You can run cinny as an iOS app via Capacitor on both real devices and iOS simulators. Currently, it is a thin wrapper around the web app and implements no device native functionality such as push notifications.
+
+```sh
+npm install
+npm run build
+```
+You need cocoapods to install the Pods dependencies:
+```sh
+brew install cocoapods
+pushd ios/App/Pods
+pod install
+popd
+# then sync the web assets into the iOS project
+npx cap sync ios
+# open the iOS project in Xcode
+npx cap open ios
+```
+
+then click the play button in Xcode to run the app.
+To sign and load the app on a device, you may have to change the `PRODUCT_BUNDLE_IDENTIFIER` in `ios/App/App.xcodeproj/project.pbxproj` to something unique.
