@@ -62,12 +62,14 @@ body:
         Please provide information about your environment. Include the following:
         - OS:
         - Browser: 
-        - Cinny Version:
+        - Cinny Web Version: (app.cinny.in or self hosted)
+        - Cinny desktop Version: (appimage or deb or flatpak)
         - Matrix Homeserver: 
       placeholder: |
         - OS: Windows 11
         - Browser: Chrome 120.0.6099.109
-        - Cinny Version: 3.2.0 (app.cinny.in or self hosted)
+        - Cinny Web Version: 3.2.0 (app.cinny.in or self hosted)
+        - Cinny desktop Version: 3.2.0 (appimage or deb or flatpak)
         - Matrix Homeserver: matrix.org (Synapse 1.97.0)
       render: text
     validations:
