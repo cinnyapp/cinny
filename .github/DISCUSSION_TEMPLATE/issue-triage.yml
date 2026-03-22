@@ -116,7 +116,7 @@ body:
       value: |
         # User Acknowledgements
         > [!TIP]
-        > Use these links to review the existing Cinny [Discussions](https://github.com/cinnyapp/cinny/discussions?discussions_q=) and [Issues](https://github.com/cinnyapp/cnny/issues?q=sort%3Areactions-desc).
+        > Use these links to review the existing Cinny [Discussions](https://github.com/cinnyapp/cinny/discussions?discussions_q=) and [Issues](https://github.com/cinnyapp/cinny/issues?q=sort%3Areactions-desc).
   - type: checkboxes #add faqs in future
     attributes:
       label: "I acknowledge that:"
