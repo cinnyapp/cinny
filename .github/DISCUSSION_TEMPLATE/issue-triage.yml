@@ -1,0 +1,127 @@
+labels: ["needs-confirmation"]
+body:
+  - type: markdown #add faqs in future
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > Please read through [the Discussion rules](https://github.com/cinnyapp/cinny/discussions/2653) and check for both existing [Discussions](https://github.com/cinnyapp/cinny/discussions?discussions_q=) and [Issues](https://github.com/cinnyapp/cinny/issues?q=sort%3Areactions-desc) prior to opening a new Discussion.
+  - type: markdown
+    attributes:
+      value: "# Issue Details"
+  - type: textarea
+    attributes:
+      label: Issue Description
+      description: |
+        Provide a detailed description of the issue.  Include relevant information, such as:
+        - The feature or configuration option you encounter the issue with.
+        - Screenshots, screen recordings, or other supporting media (as needed).
+        - If this is a regression of an existing issue that was closed or resolved, please include the previous item reference (Discussion, Issue, PR, commit) in your description.
+      placeholder: |
+        When I try to send a message in a room, the message doesn't appear in the timeline.
+        OR
+        The application crashes when I click on the settings button.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: |
+        Describe how you expect Cinny to behave in this situation.
+      placeholder: |
+        I expected the message to appear in the room timeline immediately after sending.
+        OR
+        The settings panel should open smoothly without any crashes.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Actual Behavior
+      description: |
+        Describe how Cinny actually behaves in this situation.  If it is not immediately obvious how the actual behavior differs from the expected behavior described above, please be sure to mention the deviation specifically.
+      placeholder: |
+        The application freezes for 3 seconds and then shows a white screen.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction Steps
+      description: |
+        Provide a detailed set of step-by-step instructions for reproducing this issue.
+      placeholder: |
+        1. Open Cinny and log in to my account
+        2. Navigate to the #general room
+        3. Type a message in the message box
+        4. Press Enter to send
+        5. Notice that the message doesn't appear in the timeline
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environement
+      description: |
+        Please provide information about your environment. Include the following:
+        - OS:
+        - Browser: 
+        - Cinny Web Version: (app.cinny.in or self hosted)
+        - Cinny desktop Version: (appimage or deb or flatpak)
+        - Matrix Homeserver: 
+      placeholder: |
+        - OS: Windows 11
+        - Browser: Chrome 120.0.6099.109
+        - Cinny Web Version: 3.2.0 (app.cinny.in or self hosted)
+        - Cinny desktop Version: 3.2.0 (appimage or deb or flatpak)
+        - Matrix Homeserver: matrix.org (Synapse 1.97.0)
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: |
+        If applicable, add browser console logs to help explain your problem.
+        
+        **To get browser console logs:**
+        - Chrome/Edge: Press F12 → Console tab
+        - Firefox: Press F12 → Console tab  
+        - Safari: Develop → Show Web Inspector → Console
+        
+        Please wrap large log outputs in code blocks with triple backticks (```).
+      placeholder: |
+        ```
+        Error: Failed to send message
+            at MessageComposer.sendMessage (composer.js:245)
+            at HTMLButtonElement.onClick (composer.js:189)
+        TypeError: Cannot read property 'content' of undefined
+            at RoomTimeline.render (timeline.js:567)
+        ```
+      render: shell
+    validations:
+      required: false
+  - type: textarea 
+    attributes:
+      label: Additional context
+      description: |
+        Add any other context about the problem here (e.g., when did this start happening, does it happen on different homeservers, etc.)
+      placeholder: |
+        - This started happening after I updated to version 3.2.0
+        - It only happens in encrypted rooms, not in public rooms
+        - I've tried on both Firefox and Chrome with the same result
+        - It works fine on my phone using the same account
+        - This happens on all homeservers I've tested (matrix.org, mozilla.org)
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        # User Acknowledgements
+        > [!TIP]
+        > Use these links to review the existing Cinny [Discussions](https://github.com/cinnyapp/cinny/discussions?discussions_q=) and [Issues](https://github.com/cinnyapp/cinny/issues?q=sort%3Areactions-desc).
+  - type: checkboxes #add faqs in future
+    attributes:
+      label: "I acknowledge that:"
+      options:
+        - label: I have searched the Cinny repository (both open and closed Discussions and Issues) and confirm this is not a duplicate of an existing issue or discussion.
+          required: true
+        - label: I have checked the "Preview" tab on all text fields to ensure that everything looks right, and have wrapped all configuration and code in code blocks with a group of three backticks (` ``` `) on separate lines.
+          required: true
