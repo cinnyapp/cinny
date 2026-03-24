@@ -18,7 +18,7 @@ Bug reports and feature suggestions must use descriptive and concise titles and 
 ## Pull requests
 
 > ### Legal Notice
-> When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license.
+> When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license. You will also be asked to [sign the CLA](https://github.com/cinnyapp/cla) upon submiting your pull request.
 
 **NOTE: If you want to add new features, please discuss with maintainers before coding or opening a pull request.** This is to ensure that we are on same track and following our roadmap.
 

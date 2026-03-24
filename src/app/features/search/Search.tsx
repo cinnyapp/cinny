@@ -286,7 +286,7 @@ export function Search({ requestClose }: SearchProps) {
                   gap="100"
                 >
                   <Text size="H6" align="Center">
-                    {result ? 'No Match Found' : `No Rooms'}`}
+                    {result ? 'No Match Found' : 'No Rooms'}
                   </Text>
                   <Text size="T200" align="Center">
                     {result
