@@ -34,7 +34,11 @@ export const MessageTextBody = as<'div', css.MessageTextBodyVariants & { notice?
       as={asComp}
       size="T400"
       priority={notice ? '300' : '400'}
-      className={classNames(css.MessageTextBody({ preWrap, jumboEmoji, emote }), className)}
+      className={classNames(
+        css.MessageTextBody({ preWrap, jumboEmoji, emote }),
+        css.MessageTextBodyBidi,
+        className
+      )}
       {...props}
       ref={ref}
     />

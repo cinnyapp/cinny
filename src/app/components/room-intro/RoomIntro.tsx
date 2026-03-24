@@ -66,7 +66,9 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             {name}
           </Text>
           <Text size="T400" priority="400">
-            {typeof topic === 'string' ? topic : 'This is the beginning of conversation.'}
+            <span style={{ unicodeBidi: 'plaintext' }}>
+              {typeof topic === 'string' ? topic : 'This is the beginning of conversation.'}
+            </span>
           </Text>
           {creatorName && ts && (
             <Text size="T200" priority="300">
