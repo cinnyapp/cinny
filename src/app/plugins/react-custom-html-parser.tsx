@@ -46,6 +46,34 @@ const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
 const EMOJI_REG_G = new RegExp(`${URL_NEG_LB}(${EMOJI_PATTERN})`, 'g');
 
+const RTL_CHAR_REG = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+const LTR_CHAR_REG = /[A-Za-z\u00C0-\u00FF]/;
+
+const collectDomText = (nodes: ChildNode[] | undefined, textParts: string[]) => {
+  if (!nodes) return;
+  nodes.forEach((node) => {
+    if (node instanceof DOMText) {
+      textParts.push(node.data);
+      return;
+    }
+    if (node instanceof Element) {
+      collectDomText(node.children as ChildNode[] | undefined, textParts);
+    }
+  });
+};
+
+const detectDomDirection = (nodes: ChildNode[] | undefined): 'rtl' | 'ltr' | undefined => {
+  const textParts: string[] = [];
+  collectDomText(nodes, textParts);
+  const text = textParts.join('');
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (RTL_CHAR_REG.test(ch)) return 'rtl';
+    if (LTR_CHAR_REG.test(ch)) return 'ltr';
+  }
+  return undefined;
+};
+
 export const LINKIFY_OPTS: LinkifyOpts = {
   attributes: {
     target: '_blank',
@@ -376,8 +404,14 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'p') {
+          const dir = detectDomDirection(children as unknown as ChildNode[]);
           return (
-            <Text {...props} className={classNames(css.Paragraph, css.MarginSpaced)} size="Inherit">
+            <Text
+              {...props}
+              dir={dir ?? 'auto'}
+              className={classNames(css.Paragraph, css.MarginSpaced)}
+              size="Inherit"
+            >
               {domToReact(children, opts)}
             </Text>
           );
@@ -388,25 +422,43 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'blockquote') {
+          const dir = detectDomDirection(children as unknown as ChildNode[]);
           return (
-            <Text {...props} size="Inherit" as="blockquote" className={css.BlockQuote}>
+            <Text
+              {...props}
+              dir={dir ?? 'auto'}
+              size="Inherit"
+              as="blockquote"
+              className={css.BlockQuote}
+            >
               {domToReact(children, opts)}
             </Text>
           );
         }
 
         if (name === 'ul') {
+          const dir = detectDomDirection(children as unknown as ChildNode[]);
           return (
-            <ul {...props} className={css.List}>
+            <ul {...props} dir={dir ?? 'auto'} className={css.List}>
               {domToReact(children, opts)}
             </ul>
           );
         }
         if (name === 'ol') {
+          const dir = detectDomDirection(children as unknown as ChildNode[]);
           return (
-            <ol {...props} className={css.List}>
+            <ol {...props} dir={dir ?? 'auto'} className={css.List}>
               {domToReact(children, opts)}
             </ol>
+          );
+        }
+
+        if (name === 'li') {
+          const dir = detectDomDirection(children as unknown as ChildNode[]);
+          return (
+            <li {...props} dir={dir ?? 'auto'}>
+              {domToReact(children, opts)}
+            </li>
           );
         }
 
