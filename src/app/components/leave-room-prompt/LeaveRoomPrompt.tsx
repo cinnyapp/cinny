@@ -20,6 +20,8 @@ import { MatrixError } from 'matrix-js-sdk';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../utils/keyboard';
+import { useSetAtom } from 'jotai';
+import { allRoomsAtom } from '../../state/room-list/roomList';
 
 type LeaveRoomPromptProps = {
   roomId: string;
@@ -28,11 +30,13 @@ type LeaveRoomPromptProps = {
 };
 export function LeaveRoomPrompt({ roomId, onDone, onCancel }: LeaveRoomPromptProps) {
   const mx = useMatrixClient();
+  const setRoomsAtom = useSetAtom(allRoomsAtom);
 
   const [leaveState, leaveRoom] = useAsyncCallback<undefined, MatrixError, []>(
     useCallback(async () => {
-      mx.leave(roomId);
-    }, [mx, roomId])
+      await mx.leave(roomId);
+      setRoomsAtom({ type: 'DELETE', roomId });
+    }, [mx, roomId, setRoomsAtom])
   );
 
   const handleLeave = () => {
