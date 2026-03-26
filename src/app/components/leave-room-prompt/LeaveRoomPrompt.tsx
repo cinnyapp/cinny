@@ -28,12 +28,11 @@ type LeaveRoomPromptProps = {
 };
 export function LeaveRoomPrompt({ roomId, onDone, onCancel }: LeaveRoomPromptProps) {
   const mx = useMatrixClient();
-  const setRoomsAtom = useSetAtom(allRoomsAtom);
 
   const [leaveState, leaveRoom] = useAsyncCallback<undefined, MatrixError, []>(
     useCallback(async () => {
       mx.leave(roomId);
-      }, [mx, roomId])
+    }, [mx, roomId])
   );
 
   const handleLeave = () => {
