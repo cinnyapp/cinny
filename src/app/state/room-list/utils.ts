@@ -37,24 +37,35 @@ export const useBindRoomsWithMembershipsAtom = (
       }
     };
 
-    const handleMembershipChange = (room: Room) => {
-      if (satisfyMembership(room)) {
-        setRoomsAtom({ type: 'PUT', roomId: room.roomId });
+    const handleMembershipEvent = (event: any, _state: any, _room: Room) => {
+      if (event.getType() !== "m.room.member") return;
+      if (event.getStateKey() !== mx.getUserId()) return;
+
+      const membership = event.getContent()?.membership as Membership;
+      const roomId = event.getRoomId(); // so the roomId cannot be undefined
+
+      if (memberships.includes(membership)) {
+        setRoomsAtom({ type: "PUT", roomId });
+        console.log('DEBUG - PUT a room:', roomId);
       } else {
-        setRoomsAtom({ type: 'DELETE', roomId: room.roomId });
+        setRoomsAtom({ type: "DELETE", roomId });
+        console.log('DEBUG - DELETED a room:', roomId);
       }
     };
+
 
     const handleDeleteRoom = (roomId: string) => {
       setRoomsAtom({ type: 'DELETE', roomId });
     };
 
     mx.on(ClientEvent.Room, handleAddRoom);
-    mx.on(RoomEvent.MyMembership, handleMembershipChange);
+    mx.on(RoomEvent.State, handleMembershipEvent);
+    mx.on(RoomEvent.Timeline, handleMembershipEvent);
     mx.on(ClientEvent.DeleteRoom, handleDeleteRoom);
     return () => {
       mx.removeListener(ClientEvent.Room, handleAddRoom);
-      mx.removeListener(RoomEvent.MyMembership, handleMembershipChange);
+      mx.removeListener(RoomEvent.State, handleMembershipEvent);
+      mx.removeListener(RoomEvent.Timeline, handleMembershipEvent);
       mx.removeListener(ClientEvent.DeleteRoom, handleDeleteRoom);
     };
   }, [mx, memberships, setRoomsAtom]);
