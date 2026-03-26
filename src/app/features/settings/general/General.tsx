@@ -365,7 +365,9 @@ function Appearance() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
-  const [customBackgroundEnabled, setCustomBackgroundEnabled] = useSetting(settingsAtom,'customBackgroundEnabled');
+
+  const [customBackgroundEnabled, setCustomBackgroundEnabled] = useSetting(settingsAtom, 'customBackgroundEnabled');
+  const [transparency,   setTransparency]   = useSetting(settingsAtom, 'transparency');
   const [customBgColor1, setCustomBgColor1] = useSetting(settingsAtom, 'customBgColor1');
   const [customBgColor2, setCustomBgColor2] = useSetting(settingsAtom, 'customBgColor2');
   const [customBgColor3, setCustomBgColor3] = useSetting(settingsAtom, 'customBgColor3');
@@ -399,13 +401,16 @@ function Appearance() {
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
-          title="Custom Background"
-          description="Choose custom background gradient."
+          title="Custom Gradient"
+          description="Choose a custom gradient theme."
           after={
             <Switch
               variant="Primary"
               value={customBackgroundEnabled}
-              onChange={setCustomBackgroundEnabled}
+              onChange={(value) => {
+                setCustomBackgroundEnabled(value);
+                if(value && transparency == 0) setTransparency(15)
+              }}
             />
           }
         />
