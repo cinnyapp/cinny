@@ -60,7 +60,7 @@ export const useBindRoomsWithMembershipsAtom = (
 
     mx.on(ClientEvent.Room, handleAddRoom);
     mx.on(RoomEvent.State, handleMembershipEvent);
-    mx.on(RoomEvent.Timeline, handleMembershipEvent);
+    mx.on(RoomEvent.Timeline, handleMembershipEvent); // for Redundancy, if RoomEvent.State doesn't fire
     mx.on(ClientEvent.DeleteRoom, handleDeleteRoom);
     return () => {
       mx.removeListener(ClientEvent.Room, handleAddRoom);
