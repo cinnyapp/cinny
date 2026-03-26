@@ -15,6 +15,15 @@ export interface Settings {
   lightThemeId?: string;
   darkThemeId?: string;
   monochromeMode?: boolean;
+  customBackgroundEnabled: boolean;
+  transparency: number;
+  blur: number;
+  angle: number;
+  customBgColor1: string,
+  customBgColor2: string,
+  customBgColor3: string,
+  customBgColor4: string,
+  customBgColor5: string,
   isMarkdown: boolean;
   editorToolbar: boolean;
   twitterEmoji: boolean;
@@ -48,7 +57,17 @@ const defaultSettings: Settings = {
   useSystemTheme: true,
   lightThemeId: undefined,
   darkThemeId: undefined,
+
   monochromeMode: false,
+  customBackgroundEnabled: false,
+  transparency: 0.5,
+  blur: 20,
+  angle: 45,
+  customBgColor1: '#6600ff',
+  customBgColor2: '#ff0000',
+  customBgColor3: '#00ff11',
+  customBgColor4: '#00eaff',
+  customBgColor5: '#ddff00',
   isMarkdown: true,
   editorToolbar: false,
   twitterEmoji: false,

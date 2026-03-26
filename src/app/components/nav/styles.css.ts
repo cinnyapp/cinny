@@ -81,6 +81,7 @@ const NavItemBase = style({
     },
   },
 });
+
 export const NavItem = recipe({
   base: [DefaultReset, NavItemBase, Disabled],
   variants: {

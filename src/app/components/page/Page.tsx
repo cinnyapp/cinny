@@ -14,7 +14,8 @@ export function PageRoot({ nav, children }: PageRootProps) {
   const screenSize = useScreenSizeContext();
 
   return (
-    <Box grow="Yes" className={ContainerColor({ variant: 'Background' })}>
+    //{classNames(ContainerColor({ variant: 'Background' }), backgroundFrontLayer)}
+    <Box grow="Yes" className={classNames(ContainerColor({ variant: 'Background' }))} direction="Row">
       {nav}
       {screenSize !== ScreenSize.Mobile && (
         <Line variant="Background" size="300" direction="Vertical" />

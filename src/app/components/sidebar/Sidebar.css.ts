@@ -16,6 +16,19 @@ export const Sidebar = style([
   },
 ]);
 
+export const SidebarFrontLayer = style([
+  DefaultReset,
+  {
+    width: toRem(66),
+    backgroundColor: color.Background.Container,
+    borderRight: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
+
+    display: 'flex',
+    flexDirection: 'column',
+    color: color.Background.OnContainer,
+  },
+]);
+
 export const SidebarStack = style([
   DefaultReset,
   {
