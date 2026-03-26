@@ -68,13 +68,11 @@ export function CustomThemeManager() {
 
   useEffect(() => {
     if (!customBackgroundEnabled) {
-      document.body.style.setProperty('--custom-gradient', 'none');
+      document.body.style.background = 'none';
       document.body.style.opacity = '1';
-      document.body.style.backdropFilter = `blur(0px)`;
+      document.body.style.backdropFilter = 'none';
       return;
     }
-
-    console.log("Monochrome mode:", monochromeMode);
 
     const colors = [customBgColor1, customBgColor2, customBgColor3, customBgColor4, customBgColor5]
       .filter(Boolean)
@@ -83,8 +81,6 @@ export function CustomThemeManager() {
     
     const gradient = `linear-gradient(${angle}deg, ${colors})`;
     document.body.style.background = gradient;
-
-    console.log(colors);
     
     if (blur && blur > 0) {
       document.body.style.backdropFilter = `blur(${blur}px)`;

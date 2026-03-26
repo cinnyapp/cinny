@@ -59,7 +59,7 @@ const defaultSettings: Settings = {
   darkThemeId: undefined,
   monochromeMode: false,
   customBackgroundEnabled: false,
-  transparency: 0.5,
+  transparency: 15,
   blur: 0,
   angle: 45,
   customBgColor1: '#6600ff',

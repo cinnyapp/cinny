@@ -54,6 +54,7 @@ body {
   /*Why font-variant-ligatures => https://github.com/rsms/inter/issues/222 */
   font-variant-ligatures: no-contextual;
 }
+
 #root {
   width: 100%;
   height: 100%;
