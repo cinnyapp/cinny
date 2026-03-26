@@ -60,7 +60,7 @@ const defaultSettings: Settings = {
   monochromeMode: false,
   customBackgroundEnabled: false,
   transparency: 0.5,
-  blur: 20,
+  blur: 0,
   angle: 45,
   customBgColor1: '#6600ff',
   customBgColor2: '#ff0000',
