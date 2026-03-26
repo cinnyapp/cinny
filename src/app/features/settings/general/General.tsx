@@ -53,8 +53,6 @@ import { useMessageLayoutItems } from '../../../hooks/useMessageLayout';
 import { useMessageSpacingItems } from '../../../hooks/useMessageSpacing';
 import { useDateFormatItems } from '../../../hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
-import { transcode } from 'buffer';
-import { current } from 'immer';
 
 type ThemeSelectorProps = {
   themeNames: Record<string, string>;

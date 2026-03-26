@@ -57,7 +57,6 @@ const defaultSettings: Settings = {
   useSystemTheme: true,
   lightThemeId: undefined,
   darkThemeId: undefined,
-
   monochromeMode: false,
   customBackgroundEnabled: false,
   transparency: 0.5,
