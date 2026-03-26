@@ -46,10 +46,8 @@ export const useBindRoomsWithMembershipsAtom = (
 
       if (memberships.includes(membership)) {
         setRoomsAtom({ type: "PUT", roomId });
-        console.log('DEBUG - PUT a room:', roomId);
       } else {
         setRoomsAtom({ type: "DELETE", roomId });
-        console.log('DEBUG - DELETED a room:', roomId);
       }
     };
 
