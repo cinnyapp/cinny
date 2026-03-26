@@ -38,16 +38,16 @@ export const useBindRoomsWithMembershipsAtom = (
     };
 
     const handleMembershipEvent = (event: any, _state: any, _room: Room) => {
-      if (event.getType() !== "m.room.member") return;
+      if (event.getType() !== 'm.room.member') return;
       if (event.getStateKey() !== mx.getUserId()) return;
 
       const membership = event.getContent()?.membership as Membership;
       const roomId = event.getRoomId(); // so the roomId cannot be undefined
 
       if (memberships.includes(membership)) {
-        setRoomsAtom({ type: "PUT", roomId });
+        setRoomsAtom({ type: 'PUT', roomId });
       } else {
-        setRoomsAtom({ type: "DELETE", roomId });
+        setRoomsAtom({ type: 'DELETE', roomId });
       }
     };
 
