@@ -9,6 +9,72 @@ function pluralize(amount: number, noun: string) {
   return amount === 1 ? noun : `${noun}s`;
 }
 
+function PollAnswer({
+  answer,
+  endedEvent,
+  onClick,
+  ownVotes,
+  canShowResults,
+  votesByAnswer,
+  totalVoteCount,
+  messageLayout,
+}: {
+  answer: { id: string; body: string };
+  endedEvent: MatrixEvent | undefined;
+  onClick: React.MouseEventHandler<HTMLInputElement> | undefined;
+  ownVotes: string[];
+  canShowResults: boolean;
+  votesByAnswer: { [k: string]: { eventId: string | undefined; userId: string | undefined }[] };
+  totalVoteCount: number;
+  messageLayout: MessageLayout;
+}) {
+  return (
+    <Box key={answer.id} direction="Row" gap="300" justifyItems="Center">
+      <Box direction="Row" alignItems="Center">
+        <RadioButton
+          size="50"
+          disabled={!!endedEvent}
+          onClick={onClick}
+          checked={(ownVotes || []).includes(answer.id)}
+        />
+      </Box>
+      <Box direction="Column" grow="Yes" gap="200">
+        <Box direction="Row" gap="200" alignItems="Center" style={{ width: '100%' }}>
+          <Box
+            grow="Yes"
+            display="InlineFlex"
+            direction="Row"
+            gap="200"
+            alignItems="Center"
+            justifyItems="Stretch"
+            justifyContent="Stretch"
+          >
+            <Text align="Left">{answer.body}</Text>
+          </Box>
+          {canShowResults ? (
+            <Text align="Right">
+              {votesByAnswer[answer.id].length} {pluralize(votesByAnswer[answer.id].length, 'vote')}
+            </Text>
+          ) : null}
+        </Box>
+
+        {canShowResults ? (
+          <ProgressBar
+            style={{ width: '100%' }}
+            as="div"
+            variant={(ownVotes || []).includes(answer.id) ? 'Primary' : 'Secondary'}
+            max={totalVoteCount}
+            value={votesByAnswer[answer.id].length}
+            fill="Soft"
+            min={0}
+            outlined={messageLayout === MessageLayout.Bubble}
+          />
+        ) : null}
+      </Box>
+    </Box>
+  );
+}
+
 export function Poll({
   messageLayout,
   pollKind,
@@ -76,65 +142,32 @@ export function Poll({
             <Text size="H5">{title}</Text>
             <Line />
             {answers.map((answer) => (
-              <Box key={answer.id} direction="Row" gap="300" justifyItems="Center">
-                <Box direction="Row" alignItems="Center">
-                  <RadioButton
-                    size="50"
-                    disabled={!!endedEvent}
-                    onClick={async () => {
-                      // @ts-expect-error this is allowed according to one of the function overloads, but that overload is /unreachable/ type-wise
-                      await room.client.sendEvent(room.roomId, M_POLL_RESPONSE.name as string, {
-                        'm.relates_to': {
-                          event_id: mEventId,
-                          rel_type: 'm.reference',
-                        },
-                        'm.selections': [answer.id],
-                        'm.poll.response': {
-                          answers: [answer.id],
-                        },
-                        'org.matrix.msc3381.poll.response': {
-                          answers: [answer.id],
-                        },
-                      });
-                    }}
-                    checked={(ownVotes || []).includes(answer.id)}
-                  />
-                </Box>
-                <Box direction="Column" grow="Yes" gap="200">
-                  <Box direction="Row" gap="200" alignItems="Center" style={{ width: '100%' }}>
-                    <Box
-                      grow="Yes"
-                      display="InlineFlex"
-                      direction="Row"
-                      gap="200"
-                      alignItems="Center"
-                      justifyItems="Stretch"
-                      justifyContent="Stretch"
-                    >
-                      <Text align="Left">{answer.body}</Text>
-                    </Box>
-                    {canShowResults ? (
-                      <Text align="Right">
-                        {votesByAnswer[answer.id].length}{' '}
-                        {pluralize(votesByAnswer[answer.id].length, 'vote')}
-                      </Text>
-                    ) : null}
-                  </Box>
-
-                  {canShowResults ? (
-                    <ProgressBar
-                      style={{ width: '100%' }}
-                      as="div"
-                      variant={(ownVotes || []).includes(answer.id) ? 'Primary' : 'Secondary'}
-                      max={totalVoteCount}
-                      value={votesByAnswer[answer.id].length}
-                      fill="Soft"
-                      min={0}
-                      outlined={messageLayout === MessageLayout.Bubble}
-                    />
-                  ) : null}
-                </Box>
-              </Box>
+              <PollAnswer
+                key={answer.id}
+                answer={answer}
+                endedEvent={endedEvent}
+                onClick={async () => {
+                  // @ts-expect-error this is allowed according to one of the function overloads, but that overload is /unreachable/ type-wise
+                  await room.client.sendEvent(room.roomId, M_POLL_RESPONSE.name as string, {
+                    'm.relates_to': {
+                      event_id: mEventId,
+                      rel_type: 'm.reference',
+                    },
+                    'm.selections': [answer.id],
+                    'm.poll.response': {
+                      answers: [answer.id],
+                    },
+                    'org.matrix.msc3381.poll.response': {
+                      answers: [answer.id],
+                    },
+                  });
+                }}
+                ownVotes={ownVotes}
+                canShowResults={canShowResults}
+                votesByAnswer={votesByAnswer}
+                totalVoteCount={totalVoteCount}
+                messageLayout={messageLayout}
+              />
             ))}
             {/* TODO: allow people with redaction power level to also close polls */}
             {senderId === ownUserId && pollKind === 'm.poll.undisclosed' && !endedEvent ? (
