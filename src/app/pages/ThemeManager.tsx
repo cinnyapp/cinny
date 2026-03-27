@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect } from 'react';
-import { configClass, varsClass } from 'folds';
+import { config, configClass, varsClass } from 'folds';
 import {
   DarkTheme,
   LightTheme,
@@ -55,6 +55,7 @@ export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
 
 export function CustomThemeManager() {
   const [customBackgroundEnabled] = useSetting(settingsAtom, 'customBackgroundEnabled');
+  const [customBackgroundOnly] = useSetting(settingsAtom, 'customBackgroundOnly');
   const [customBgColor1] = useSetting(settingsAtom, 'customBgColor1');
   const [customBgColor2] = useSetting(settingsAtom, 'customBgColor2');
   const [customBgColor3] = useSetting(settingsAtom, 'customBgColor3');
@@ -63,33 +64,52 @@ export function CustomThemeManager() {
   const [transparency] = useSetting(settingsAtom, 'transparency');
   const [angle] = useSetting(settingsAtom, 'angle');
   const [blur] = useSetting(settingsAtom, 'blur');
-
   const [monochromeMode] = useSetting(settingsAtom, 'monochromeMode');
 
   useEffect(() => {
+    const gradientLayer = document.getElementById('gradientLayer');
+    if (!gradientLayer) return;
+
+    gradientLayer.style.setProperty('z-index', customBackgroundOnly ? config.zIndex.Z100 : config.zIndex.Max);
+
     if (!customBackgroundEnabled) {
-      document.body.style.background = 'none';
-      document.body.style.opacity = '1';
-      document.body.style.backdropFilter = 'none';
+      gradientLayer.style.background = 'none';
+      gradientLayer.style.opacity = '0';
+      gradientLayer.style.backdropFilter = 'none';
       return;
     }
 
     const colors = [customBgColor1, customBgColor2, customBgColor3, customBgColor4, customBgColor5]
       .filter(Boolean)
-      .map(c => (monochromeMode ? hexToGrayscale(c) : c))  
+      .map((c) => (monochromeMode ? hexToGrayscale(c) : c))
       .join(', ');
-    
-    const gradient = `linear-gradient(${angle}deg, ${colors})`;
-    document.body.style.background = gradient;
-    
+
+    gradientLayer.style.background = `linear-gradient(${angle}deg, ${colors})`;
+
     if (blur && blur > 0) {
-      document.body.style.backdropFilter = `blur(${blur}px)`;
+      gradientLayer.style.backdropFilter = `blur(${blur}px)`;
+    } else {
+      gradientLayer.style.backdropFilter = 'none';
     }
-    
+
     if (transparency !== undefined) {
-      document.body.style.opacity = `${1 - transparency / 100}`;
+      gradientLayer.style.opacity = `${transparency / 100}`;
+    } else {
+      gradientLayer.style.opacity = '0';
     }
-  }, [customBackgroundEnabled, customBgColor1, customBgColor2, customBgColor3, customBgColor4, customBgColor5, transparency, angle, blur, monochromeMode]);
+  }, [
+    customBackgroundEnabled,
+    customBackgroundOnly,
+    customBgColor1,
+    customBgColor2,
+    customBgColor3,
+    customBgColor4,
+    customBgColor5,
+    transparency,
+    angle,
+    blur,
+    monochromeMode,
+  ]);
 
   return null;
 }

@@ -367,6 +367,7 @@ function Appearance() {
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
 
   const [customBackgroundEnabled, setCustomBackgroundEnabled] = useSetting(settingsAtom, 'customBackgroundEnabled');
+  const [customBackgroundOnly, setCustomBackgroundOnly] = useSetting(settingsAtom, 'customBackgroundOnly');
   const [transparency,   setTransparency]   = useSetting(settingsAtom, 'transparency');
   const [customBgColor1, setCustomBgColor1] = useSetting(settingsAtom, 'customBgColor1');
   const [customBgColor2, setCustomBgColor2] = useSetting(settingsAtom, 'customBgColor2');
@@ -446,6 +447,19 @@ function Appearance() {
                 onRemove={() => setCustomBgColor5('')}
               />
             </Box>
+          </SequenceCard>
+
+          <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+            <SettingTile
+              title="Background only"
+              after={
+                <Switch
+                  variant="Primary"
+                  value={customBackgroundOnly}
+                  onChange={setCustomBackgroundOnly}
+                />
+              }
+            />
           </SequenceCard>
 
           <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">

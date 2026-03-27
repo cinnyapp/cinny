@@ -16,6 +16,7 @@ export interface Settings {
   darkThemeId?: string;
   monochromeMode?: boolean;
   customBackgroundEnabled: boolean;
+  customBackgroundOnly: boolean;
   transparency: number;
   blur: number;
   angle: number;
@@ -59,6 +60,7 @@ const defaultSettings: Settings = {
   darkThemeId: undefined,
   monochromeMode: false,
   customBackgroundEnabled: false,
+  customBackgroundOnly: false,
   transparency: 15,
   blur: 0,
   angle: 45,
