@@ -70,33 +70,23 @@ export function CustomThemeManager() {
     const gradientLayer = document.getElementById('gradientLayer');
     if (!gradientLayer) return;
 
-    gradientLayer.style.setProperty('z-index', customBackgroundOnly ? config.zIndex.Z100 : config.zIndex.Max);
+    const colors = [customBgColor1, customBgColor2, customBgColor3, customBgColor4, customBgColor5]
+      .filter(Boolean)
+      .map((c) => (monochromeMode ? hexToGrayscale(c) : c))
+      .join(', ');
 
-    if (!customBackgroundEnabled) {
+    if (!customBackgroundEnabled || !colors) {
       gradientLayer.style.background = 'none';
       gradientLayer.style.opacity = '0';
       gradientLayer.style.backdropFilter = 'none';
       return;
     }
 
-    const colors = [customBgColor1, customBgColor2, customBgColor3, customBgColor4, customBgColor5]
-      .filter(Boolean)
-      .map((c) => (monochromeMode ? hexToGrayscale(c) : c))
-      .join(', ');
-
+    gradientLayer.style.setProperty('z-index', customBackgroundOnly ? config.zIndex.Z100 : config.zIndex.Max);
     gradientLayer.style.background = `linear-gradient(${angle}deg, ${colors})`;
-
-    if (blur && blur > 0) {
-      gradientLayer.style.backdropFilter = `blur(${blur}px)`;
-    } else {
-      gradientLayer.style.backdropFilter = 'none';
-    }
-
-    if (transparency !== undefined) {
-      gradientLayer.style.opacity = `${transparency / 100}`;
-    } else {
-      gradientLayer.style.opacity = '0';
-    }
+    gradientLayer.style.backdropFilter = blur > 0 ? `blur(${blur}px)` : 'none';
+    gradientLayer.style.opacity = `${(transparency ?? 0) / 100}`;
+    
   }, [
     customBackgroundEnabled,
     customBackgroundOnly,

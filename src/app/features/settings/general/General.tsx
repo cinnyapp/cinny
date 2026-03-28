@@ -329,15 +329,12 @@ function PageZoomInput() {
   return <NumberSettingInput settingKey="pageZoom" min={75} max={150} percent={true} />;
 }
 
-function ColorPickerButton({
-  color,
-  onChange,
-  onRemove,
-}: {
-  color?: string;
+type ColorPickerButtonProps = {
+  color: string;
   onChange: (color: string) => void;
   onRemove?: () => void;
-}) {
+}
+function ColorPickerButton({ color, onChange, onRemove, }: ColorPickerButtonProps) {
   return (
     <HexColorPickerPopOut
       picker={<HexColorPicker color={color || '#000000'} onChange={onChange} />}
@@ -351,7 +348,7 @@ function ColorPickerButton({
           type="button"
           variant="Secondary"
           fill="Soft"
-          radii="300"
+          radii="500"
           style={{ flex: 1 }}
         >
           <PowerColorBadge color={color} />
@@ -451,7 +448,7 @@ function Appearance() {
 
           <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
             <SettingTile
-              title="Background only"
+              title="Background Only"
               after={
                 <Switch
                   variant="Primary"
