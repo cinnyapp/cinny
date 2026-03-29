@@ -59,7 +59,8 @@ export class CallEmbed {
     mx: MatrixClient,
     room: Room,
     intent: ElementCallIntent,
-    themeKind: ElementCallThemeKind
+    themeKind: ElementCallThemeKind,
+    videoEnabled?: boolean
   ): Widget {
     const userId = mx.getSafeUserId();
     const deviceId = mx.getDeviceId() ?? '';
@@ -82,6 +83,10 @@ export class CallEmbed {
       lang: 'en-EN',
       theme: themeKind,
     });
+
+    if (videoEnabled !== undefined) {
+      params.set('camera', videoEnabled.toString());
+    }
 
     const widgetUrl = new URL(
       `${trimTrailingSlash(import.meta.env.BASE_URL)}/public/element-call/index.html`,
@@ -245,6 +250,7 @@ export class CallEmbed {
     this.joined = true;
     this.applyStyles();
     this.control.startObserving();
+    this.control.applyState();
   }
 
   private applyStyles(): void {
