@@ -11,7 +11,8 @@
       "#space:unredacted.org",
       "#science-space:matrix.org",
       "#libregaming-games:tchncs.de",
-      "#mathematics-on:matrix.org"
+      "#mathematics-on:matrix.org",
+      "#stickers-and-emojis:tastytea.de"
     ],
     "rooms": [
       "#cinny:matrix.org",
@@ -21,7 +22,7 @@
       "#PrivSec.dev:arcticfoxes.net",
       "#disroot:aria-net.org"
     ],
-    "servers": ["matrix.org", "mozilla.org", "unredacted.org"]
+    "servers": ["matrixrooms.info", "matrix.org", "mozilla.org", "unredacted.org"]
   },
 
   "hashRouter": {

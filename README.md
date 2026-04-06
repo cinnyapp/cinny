@@ -16,6 +16,10 @@ A Matrix client focusing primarily on simple, elegant and secure interface. The 
 - [Roadmap](https://github.com/orgs/cinnyapp/projects/1)
 - [Contributing](./CONTRIBUTING.md)
 
+> [!IMPORTANT] 
+We are currently in the [process of replacing the matrix-js-sdk](https://github.com/cinnyapp/cinny/issues/257#issuecomment-3714406704) with our own SDK. As a result, we will not be accepting any pull requests until further notice.
+Thank you for your understanding.
+
 <img align="center" src="https://raw.githubusercontent.com/cinnyapp/cinny-site/main/assets/preview2-light.png" height="380">
 
 ## Getting started
