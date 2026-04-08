@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DateFormat } from '../state/settings';
-import i18next from 'i18next';
 
 export type DateFormatItem = {
   name: string;
   format: DateFormat;
 };
 
-export const useDateFormatItems = (): DateFormatItem[] =>
-  useMemo(
+export const useDateFormatItems = (): DateFormatItem[] => {
+  const { t } = useTranslation('settingsGeneral');
+
+  return useMemo(
     () => [
       {
         format: 'D MMM YYYY',
@@ -32,8 +34,9 @@ export const useDateFormatItems = (): DateFormatItem[] =>
       },
       {
         format: '',
-        name: i18next.t('settingsGeneral:customLabel', { defaultValue: 'Custom' }),
+        name: t('customLabel', { defaultValue: 'Custom' }),
       },
     ],
-    []
+    [t]
   );
+};

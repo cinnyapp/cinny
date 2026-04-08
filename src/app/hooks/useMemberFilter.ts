@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import i18next from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { RoomMember } from 'matrix-js-sdk';
 import { Membership } from '../../types/matrix/room';
 
@@ -22,32 +22,35 @@ export type MembershipFilterItem = {
   filterFn: MembershipFilterFn;
 };
 
-export const useMembershipFilterMenu = (): MembershipFilterItem[] =>
-  useMemo(
+export const useMembershipFilterMenu = (): MembershipFilterItem[] => {
+  const { t } = useTranslation('common');
+
+  return useMemo(
     () => [
       {
-        name: i18next.t('common:joined', { defaultValue: 'Joined' }),
+        name: t('joined', { defaultValue: 'Joined' }),
         filterFn: MembershipFilter.filterJoined,
       },
       {
-        name: i18next.t('common:invited', { defaultValue: 'Invited' }),
+        name: t('invited', { defaultValue: 'Invited' }),
         filterFn: MembershipFilter.filterInvited,
       },
       {
-        name: i18next.t('common:left', { defaultValue: 'Left' }),
+        name: t('left', { defaultValue: 'Left' }),
         filterFn: MembershipFilter.filterLeaved,
       },
       {
-        name: i18next.t('common:kicked', { defaultValue: 'Kicked' }),
+        name: t('kicked', { defaultValue: 'Kicked' }),
         filterFn: MembershipFilter.filterKicked,
       },
       {
-        name: i18next.t('common:banned', { defaultValue: 'Banned' }),
+        name: t('banned', { defaultValue: 'Banned' }),
         filterFn: MembershipFilter.filterBanned,
       },
     ],
-    []
+    [t]
   );
+};
 
 export const useMembershipFilter = (
   index: number,

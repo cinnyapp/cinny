@@ -15,7 +15,7 @@ import {
 } from 'folds';
 import { JoinRule } from 'matrix-js-sdk';
 import FocusTrap from 'focus-trap-react';
-import i18next from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { stopPropagation } from '../utils/keyboard';
 import { getRoomIconSrc } from '../utils/room';
 
@@ -39,29 +39,33 @@ export const useJoinRuleIcons = (roomType?: string): JoinRuleIcons =>
 
 type JoinRuleLabels = Record<ExtendedJoinRules, string>;
 export const useRoomJoinRuleLabel = (): JoinRuleLabels =>
-  useMemo(
-    () => ({
-      [JoinRule.Invite]: i18next.t('roomSettings:joinRuleInviteOnly', {
-        defaultValue: 'Invite Only',
+  {
+    const { t } = useTranslation('roomSettings');
+
+    return useMemo(
+      () => ({
+        [JoinRule.Invite]: t('joinRuleInviteOnly', {
+          defaultValue: 'Invite Only',
+        }),
+        [JoinRule.Knock]: t('joinRuleKnockAndInvite', {
+          defaultValue: 'Knock & Invite',
+        }),
+        knock_restricted: t('joinRuleSpaceMembersOrKnock', {
+          defaultValue: 'Space Members or Knock',
+        }),
+        [JoinRule.Restricted]: t('joinRuleSpaceMembers', {
+          defaultValue: 'Space Members',
+        }),
+        [JoinRule.Public]: t('joinRulePublic', {
+          defaultValue: 'Public',
+        }),
+        [JoinRule.Private]: t('joinRuleInviteOnly', {
+          defaultValue: 'Invite Only',
+        }),
       }),
-      [JoinRule.Knock]: i18next.t('roomSettings:joinRuleKnockAndInvite', {
-        defaultValue: 'Knock & Invite',
-      }),
-      knock_restricted: i18next.t('roomSettings:joinRuleSpaceMembersOrKnock', {
-        defaultValue: 'Space Members or Knock',
-      }),
-      [JoinRule.Restricted]: i18next.t('roomSettings:joinRuleSpaceMembers', {
-        defaultValue: 'Space Members',
-      }),
-      [JoinRule.Public]: i18next.t('roomSettings:joinRulePublic', {
-        defaultValue: 'Public',
-      }),
-      [JoinRule.Private]: i18next.t('roomSettings:joinRuleInviteOnly', {
-        defaultValue: 'Invite Only',
-      }),
-    }),
-    []
-  );
+      [t]
+    );
+  };
 
 type JoinRulesSwitcherProps<T extends ExtendedJoinRules[]> = {
   icons: JoinRuleIcons;
@@ -81,6 +85,7 @@ export function JoinRulesSwitcher<T extends ExtendedJoinRules[]>({
   disabled,
   changing,
 }: JoinRulesSwitcherProps<T>) {
+  const { t } = useTranslation('roomSettings');
   const [cords, setCords] = useState<RectCords>();
 
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -153,7 +158,7 @@ export function JoinRulesSwitcher<T extends ExtendedJoinRules[]>({
       >
         <Text size="B300">
           {labels[value] ??
-            i18next.t('roomSettings:joinRuleUnsupported', { defaultValue: 'Unsupported' })}
+            t('joinRuleUnsupported', { defaultValue: 'Unsupported' })}
         </Text>
       </Button>
     </PopOut>

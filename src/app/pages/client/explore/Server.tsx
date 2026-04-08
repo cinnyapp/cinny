@@ -28,7 +28,6 @@ import {
   toRem,
 } from 'folds';
 import { useTranslation } from 'react-i18next';
-import i18next from 'i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
@@ -64,24 +63,27 @@ type RoomTypeFilter = {
   title: string;
   value: string | undefined;
 };
-const useRoomTypeFilters = (): RoomTypeFilter[] =>
-  useMemo(
+const useRoomTypeFilters = (): RoomTypeFilter[] => {
+  const { t } = useTranslation('explore');
+
+  return useMemo(
     () => [
       {
-        title: i18next.t('explore:allFilter', { defaultValue: 'All' }),
+        title: t('allFilter', { defaultValue: 'All' }),
         value: undefined,
       },
       {
-        title: i18next.t('explore:spacesFilter', { defaultValue: 'Spaces' }),
+        title: t('spacesFilter', { defaultValue: 'Spaces' }),
         value: RoomType.Space,
       },
       {
-        title: i18next.t('explore:roomsFilter', { defaultValue: 'Rooms' }),
+        title: t('roomsFilter', { defaultValue: 'Rooms' }),
         value: 'null',
       },
     ],
-    []
+    [t]
   );
+};
 
 const FALLBACK_ROOMS_LIMIT = 24;
 
