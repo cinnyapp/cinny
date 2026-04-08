@@ -2,6 +2,7 @@ import { Chip, config, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text } fr
 import React, { MouseEventHandler, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
+import { useTranslation } from 'react-i18next';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { PowerColorBadge, PowerIcon } from '../power';
 import { getPowerTagIconSrc } from '../../hooks/useMemberPowerTag';
@@ -16,6 +17,7 @@ import { SpaceSettingsPage } from '../../state/spaceSettings';
 import { RoomSettingsPage } from '../../state/roomSettings';
 
 export function CreatorChip() {
+  const { t } = useTranslation('userProfile');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const room = useRoom();
@@ -70,7 +72,7 @@ export function CreatorChip() {
                   close();
                 }}
               >
-                <Text size="B300">Manage Powers</Text>
+                <Text size="B300">{t('managePowers', { defaultValue: 'Manage Powers' })}</Text>
               </MenuItem>
             </div>
           </Menu>

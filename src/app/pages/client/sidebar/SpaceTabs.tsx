@@ -24,6 +24,7 @@ import {
   config,
   toRem,
 } from 'folds';
+import { useTranslation } from 'react-i18next';
 import { useAtom, useAtomValue } from 'jotai';
 import { Room } from 'matrix-js-sdk';
 import {
@@ -101,6 +102,7 @@ type SpaceMenuProps = {
 };
 const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
   ({ room, requestClose, onUnpin }, ref) => {
+    const { t } = useTranslation('lobby');
     const mx = useMatrixClient();
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const roomToParents = useAtomValue(roomToParentsAtom);
@@ -166,7 +168,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             disabled={!unread}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Mark as Read
+              {t('markAsRead', { ns: 'common', defaultValue: 'Mark as Read' })}
             </Text>
           </MenuItem>
           {onUnpin && (
@@ -195,7 +197,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             disabled={!canInvite}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Invite
+              {t('invite', { defaultValue: 'Invite' })}
             </Text>
           </MenuItem>
           <MenuItem
@@ -215,7 +217,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Space Settings
+              {t('spaceSettings', { defaultValue: 'Space Settings' })}
             </Text>
           </MenuItem>
         </Box>

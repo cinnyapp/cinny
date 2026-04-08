@@ -1,0 +1,5 @@
+{
+  "connecting": "Подключение...",
+  "connectionLostReconnecting": "Соединение потеряно! Переподключение...",
+  "connectionLost": "Соединение потеряно!"
+}

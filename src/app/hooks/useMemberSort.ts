@@ -1,5 +1,6 @@
 import { RoomMember } from 'matrix-js-sdk';
 import { useCallback, useMemo } from 'react';
+import i18next from 'i18next';
 
 export const MemberSort = {
   Ascending: (a: RoomMember, b: RoomMember) =>
@@ -23,19 +24,19 @@ export const useMemberSortMenu = (): MemberSortItem[] =>
   useMemo(
     () => [
       {
-        name: 'A to Z',
+        name: i18next.t('common:sortAToZ', { defaultValue: 'A to Z' }),
         sortFn: MemberSort.Ascending,
       },
       {
-        name: 'Z to A',
+        name: i18next.t('common:sortZToA', { defaultValue: 'Z to A' }),
         sortFn: MemberSort.Descending,
       },
       {
-        name: 'Newest',
+        name: i18next.t('common:newest', { defaultValue: 'Newest' }),
         sortFn: MemberSort.NewestFirst,
       },
       {
-        name: 'Oldest',
+        name: i18next.t('common:oldest', { defaultValue: 'Oldest' }),
         sortFn: MemberSort.Oldest,
       },
     ],

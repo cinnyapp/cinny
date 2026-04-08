@@ -1,0 +1,14 @@
+{
+  "homeTitle": "Home",
+  "noRoomsTitle": "No Rooms",
+  "noRoomsDescription": "You do not have any rooms yet.",
+  "createRoomButton": "Create Room",
+  "exploreCommunityRoomsButton": "Explore Community Rooms",
+  "createRoomNavItem": "Create Room",
+  "joinWithAddressNavItem": "Join with Address",
+  "messageSearchNavItem": "Message Search",
+  "messageSearchTitle": "Message Search",
+  "roomsCategoryTitle": "Rooms",
+  "createRoomTitle": "Create Room",
+  "createRoomSubtitle": "Build a Room for Real-Time Conversations."
+}

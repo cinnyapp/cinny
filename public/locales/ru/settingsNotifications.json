@@ -1,0 +1,45 @@
+{
+  "title": "Уведомления",
+  "systemHeader": "Система",
+  "desktopNotificationsTitle": "Уведомления на рабочем столе",
+  "desktopNotificationsDescription": "Показывать уведомления на рабочем столе при получении сообщений.",
+  "permissionBlocked": "Разрешение на уведомления заблокировано. Разрешите уведомления в адресной строке браузера.",
+  "notificationsNotSupported": "Уведомления не поддерживаются системой.",
+  "enable": "Включить",
+  "notificationSoundTitle": "Звук уведомлений",
+  "notificationSoundDescription": "Проигрывать звук при получении новых сообщений.",
+
+  "emailNotificationTitle": "Email‑уведомления",
+  "emailNotificationsDisplayName": "Email-уведомления",
+  "noEmailAttached": "К аккаунту не привязан email.",
+  "sendToEmail": "Отправлять уведомления на email. (\"{{email}}\")",
+  "unexpectedError": "Неожиданная ошибка!",
+  "sendToEmailGeneric": "Отправлять уведомления на email.",
+
+  "allMessagesHeader": "Все сообщения",
+  "badgeLabel": "Значок:",
+  "oneToOneChats": "Личные чаты",
+  "oneToOneChatsEncrypted": "Личные чаты (шифрованные)",
+  "rooms": "Комнаты",
+  "roomsEncrypted": "Комнаты (шифрованные)",
+
+  "specialMessagesHeader": "Особые сообщения",
+  "mentionUserId": "Упоминание User ID (\"{{userId}}\")",
+  "containsDisplayName": "Содержит отображаемое имя{{suffix}}",
+  "containsUsername": "Содержит имя пользователя (\"{{username}}\")",
+  "mentionRoom": "Упоминание @room",
+  "containsRoom": "Содержит @room",
+
+  "keywordMessagesHeader": "Сообщения по ключевым словам",
+  "selectKeywordTitle": "Выберите ключевое слово",
+  "selectKeywordDescription": "Настройте уведомления для сообщений, содержащих указанное ключевое слово.",
+  "save": "Сохранить",
+
+  "blockMessagesHeader": "Блокировка сообщений",
+  "blockMessagesMoved": "Эта опция перенесена в раздел \"Аккаунт > Блокировка пользователей\".",
+
+  "modeOff": "Отключить",
+  "modeNotifySilent": "Без звука",
+  "modeNotifyLoud": "Со звуком"
+}
+

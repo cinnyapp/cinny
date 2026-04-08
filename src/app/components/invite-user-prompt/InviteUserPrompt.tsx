@@ -42,6 +42,7 @@ import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { BreakWord } from '../../styles/Text.css';
 import { useAlive } from '../../hooks/useAlive';
+import { useTranslation } from 'react-i18next';
 
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 1000,
@@ -56,6 +57,7 @@ type InviteUserProps = {
   requestClose: () => void;
 };
 export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
+  const { t } = useTranslation('prompts');
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -169,7 +171,7 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
               >
                 <Box grow="Yes">
                   <Text size="H4" truncate>
-                    Invite
+                    {t('inviteTitle', { defaultValue: 'Invite' })}
                   </Text>
                 </Box>
                 <Box shrink="No">
@@ -187,14 +189,14 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
                 gap="400"
               >
                 <Box direction="Column" gap="100">
-                  <Text size="L400">User ID</Text>
+                  <Text size="L400">{t('userIdLabel', { defaultValue: 'User ID' })}</Text>
                   <div>
                     <Input
                       size="500"
                       ref={inputRef}
                       onChange={handleSearchChange}
                       onKeyDown={handleKeyDown}
-                      placeholder="@username:server"
+                      placeholder={t('userIdPlaceholder', { defaultValue: '@username:server' })}
                       name="userIdInput"
                       variant="Background"
                       disabled={inviting}
@@ -260,7 +262,9 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
                   </div>
                 </Box>
                 <Box direction="Column" gap="100">
-                  <Text size="L400">Reason (Optional)</Text>
+                  <Text size="L400">
+                    {t('reasonOptionalLabel', { defaultValue: 'Reason (Optional)' })}
+                  </Text>
                   <TextArea
                     size="500"
                     name="reasonInput"
@@ -279,7 +283,7 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
                   disabled={!validUserId || inviting}
                   before={inviting && <Spinner size="200" variant="Primary" fill="Solid" />}
                 >
-                  <Text size="B400">Invite</Text>
+                  <Text size="B400">{t('inviteTitle', { defaultValue: 'Invite' })}</Text>
                 </Button>
               </Box>
             </Box>

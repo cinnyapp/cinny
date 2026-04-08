@@ -23,6 +23,7 @@ import {
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { RoomMember } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { useRoom } from '../../../hooks/useRoom';
 import { useRoomMembers } from '../../../hooks/useRoomMembers';
@@ -75,6 +76,7 @@ type MembersProps = {
   requestClose: () => void;
 };
 export function Members({ requestClose }: MembersProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const room = useRoom();
@@ -157,7 +159,10 @@ export function Members({ requestClose }: MembersProps) {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              {room.getJoinedMemberCount()} Members
+              {t('membersCount', {
+                count: room.getJoinedMemberCount(),
+                defaultValue: '{{count}} Members',
+              })}
             </Text>
           </Box>
           <Box shrink="No">
@@ -182,7 +187,7 @@ export function Members({ requestClose }: MembersProps) {
                   before={<Icon size="200" src={Icons.Search} />}
                   variant="SurfaceVariant"
                   size="500"
-                  placeholder="Search"
+                  placeholder={t('search', { defaultValue: 'Search' })}
                   outlined
                   after={
                     result && (
@@ -197,8 +202,11 @@ export function Members({ requestClose }: MembersProps) {
                       >
                         <Text size="B300">
                           {result.items.length === 0
-                            ? 'No Results'
-                            : `${result.items.length} Results`}
+                            ? t('noResults', { defaultValue: 'No Results' })
+                            : t('resultsCount', {
+                                count: result.items.length,
+                                defaultValue: '{{count}} Results',
+                              })}
                         </Text>
                       </Chip>
                     )
@@ -282,7 +290,7 @@ export function Members({ requestClose }: MembersProps) {
                   radii="Pill"
                   outlined
                   size="300"
-                  aria-label="Scroll to Top"
+                  aria-label={t('scrollToTop', { defaultValue: 'Scroll to Top' })}
                 >
                   <Icon src={Icons.ChevronTop} size="300" />
                 </IconButton>
@@ -295,7 +303,10 @@ export function Members({ requestClose }: MembersProps) {
 
               {!fetchingMembers && !result && flattenTagMembers.length === 0 && (
                 <Text style={{ padding: config.space.S300 }} align="Center">
-                  {`No "${membershipFilter.name}" Members`}
+                  {t('noFilteredMembers', {
+                    filter: membershipFilter.name,
+                    defaultValue: 'No "{{filter}}" Members',
+                  })}
                 </Text>
               )}
 

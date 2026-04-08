@@ -13,6 +13,7 @@ import {
   color,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import { stopPropagation } from '../utils/keyboard';
 import { SettingTile } from './setting-tile';
 import { SecretStorageKeyContent } from '../../types/matrix/accountData';
@@ -33,6 +34,7 @@ export function ManualVerificationMethodSwitcher({
   value,
   onChange,
 }: ManualVerificationMethodSwitcherProps) {
+  const { t } = useTranslation('common');
   const [menuCords, setMenuCords] = useState<RectCords>();
 
   const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -55,8 +57,10 @@ export function ManualVerificationMethodSwitcher({
         onClick={handleMenu}
       >
         <Text as="span" size="B300">
-          {value === ManualVerificationMethod.RecoveryPassphrase && 'Recovery Passphrase'}
-          {value === ManualVerificationMethod.RecoveryKey && 'Recovery Key'}
+          {value === ManualVerificationMethod.RecoveryPassphrase &&
+            t('recoveryPassphrase', { defaultValue: 'Recovery Passphrase' })}
+          {value === ManualVerificationMethod.RecoveryKey &&
+            t('recoveryKey', { defaultValue: 'Recovery Key' })}
         </Text>
       </Chip>
       <PopOut
@@ -87,7 +91,9 @@ export function ManualVerificationMethodSwitcher({
                   onClick={() => handleSelect(ManualVerificationMethod.RecoveryPassphrase)}
                 >
                   <Box grow="Yes">
-                    <Text size="T300">Recovery Passphrase</Text>
+                    <Text size="T300">
+                      {t('recoveryPassphrase', { defaultValue: 'Recovery Passphrase' })}
+                    </Text>
                   </Box>
                 </MenuItem>
                 <MenuItem
@@ -98,7 +104,7 @@ export function ManualVerificationMethodSwitcher({
                   onClick={() => handleSelect(ManualVerificationMethod.RecoveryKey)}
                 >
                   <Box grow="Yes">
-                    <Text size="T300">Recovery Key</Text>
+                    <Text size="T300">{t('recoveryKey', { defaultValue: 'Recovery Key' })}</Text>
                   </Box>
                 </MenuItem>
               </Box>
@@ -120,6 +126,7 @@ export function ManualVerificationTile({
   secretStorageKeyContent,
   options,
 }: ManualVerificationTileProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
 
   const hasPassphrase = !!secretStorageKeyContent.passphrase;
@@ -133,7 +140,11 @@ export function ManualVerificationTile({
     async (recoveryKey: Uint8Array) => {
       const crypto = mx.getCrypto();
       if (!crypto) {
-        throw new Error('Unexpected Error! Crypto object not found.');
+        throw new Error(
+          t('unexpectedCryptoObjectNotFound', {
+            defaultValue: 'Unexpected Error! Crypto object not found.',
+          })
+        );
       }
 
       storePrivateKey(secretStorageKeyId, recoveryKey);
@@ -154,8 +165,12 @@ export function ManualVerificationTile({
   return (
     <Box direction="Column" gap="200">
       <SettingTile
-        title="Verify Manually"
-        description={hasPassphrase ? 'Select a verification method.' : 'Provide recovery key.'}
+        title={t('verifyManually', { defaultValue: 'Verify Manually' })}
+        description={
+          hasPassphrase
+            ? t('selectVerificationMethod', { defaultValue: 'Select a verification method.' })
+            : t('provideRecoveryKey', { defaultValue: 'Provide recovery key.' })
+        }
         after={
           <Box alignItems="Center" gap="200">
             {hasPassphrase && (
@@ -167,7 +182,7 @@ export function ManualVerificationTile({
       />
       {verifyState.status === AsyncStatus.Success ? (
         <Text size="T200" style={{ color: color.Success.Main }}>
-          <b>Device verified!</b>
+          <b>{t('deviceVerifiedShort', { defaultValue: 'Device verified!' })}</b>
         </Text>
       ) : (
         <Box direction="Column" gap="100">

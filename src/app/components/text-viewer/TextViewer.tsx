@@ -3,6 +3,7 @@ import React, { ComponentProps, HTMLAttributes, Suspense, forwardRef, lazy } fro
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Scroll, Text, as } from 'folds';
 import { ErrorBoundary } from 'react-error-boundary';
+import { useTranslation } from 'react-i18next';
 import * as css from './TextViewer.css';
 import { copyToClipboard } from '../../utils/dom';
 
@@ -40,6 +41,7 @@ export type TextViewerProps = {
 
 export const TextViewer = as<'div', TextViewerProps>(
   ({ className, name, text, langName, requestClose, ...props }, ref) => {
+    const { t } = useTranslation('common');
     const handleCopy = () => {
       copyToClipboard(text);
     };
@@ -62,7 +64,7 @@ export const TextViewer = as<'div', TextViewerProps>(
           </Box>
           <Box shrink="No" alignItems="Center" gap="200">
             <Chip variant="Primary" radii="300" onClick={handleCopy}>
-              <Text size="B300">Copy All</Text>
+              <Text size="B300">{t('copyAll', { defaultValue: 'Copy All' })}</Text>
             </Chip>
           </Box>
         </Header>

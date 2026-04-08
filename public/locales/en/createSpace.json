@@ -1,0 +1,16 @@
+{
+  "access": "Access",
+  "name": "Name",
+  "topicOptional": "Topic (Optional)",
+  "options": "Options",
+  "advancedOptions": "Advanced Options",
+  "knockToJoin": "Knock to Join",
+  "knockToJoinSpaceDescription": "Anyone can send request to join this space.",
+  "allowFederation": "Allow Federation",
+  "allowFederationDescription": "Users from other servers can join.",
+  "serverRateLimitedMinutes": "Server rate-limited your request for {{minutes}} minutes!",
+  "create": "Create",
+  "newSpaceTitle": "New Space",
+  "createSpaceTitle": "Create Space",
+  "createSpaceHeroSubtitle": "Build a space for your community."
+}

@@ -1,5 +1,6 @@
 import { Room } from 'matrix-js-sdk';
 import { useMemo } from 'react';
+import i18next from 'i18next';
 import { IPowerLevels } from './usePowerLevels';
 import { useStateEvent } from './useStateEvent';
 import { MemberPowerTag, StateEvent } from '../../types/matrix/room';
@@ -47,31 +48,31 @@ export const getUsedPowers = (powerLevels: IPowerLevels): Set<number> => {
 
 const DEFAULT_TAGS: PowerLevelTags = {
   9001: {
-    name: 'Goku',
+    name: i18next.t('roomSettings:powerTagGoku', { defaultValue: 'Goku' }),
     color: '#ff6a00',
   },
   150: {
-    name: 'Manager',
+    name: i18next.t('roomSettings:powerTagManager', { defaultValue: 'Manager' }),
     color: '#ff6a7f',
   },
   101: {
-    name: 'Founder',
+    name: i18next.t('roomSettings:powerTagFounder', { defaultValue: 'Founder' }),
     color: '#0000ff',
   },
   100: {
-    name: 'Admin',
+    name: i18next.t('roomSettings:powerTagAdmin', { defaultValue: 'Admin' }),
     color: '#0088ff',
   },
   50: {
-    name: 'Moderator',
+    name: i18next.t('roomSettings:powerTagModerator', { defaultValue: 'Moderator' }),
     color: '#1fd81f',
   },
   0: {
-    name: 'Member',
+    name: i18next.t('roomSettings:powerTagMember', { defaultValue: 'Member' }),
     color: '#91cfdf',
   },
   [-1]: {
-    name: 'Muted',
+    name: i18next.t('roomSettings:powerTagMuted', { defaultValue: 'Muted' }),
     color: '#888888',
   },
 };
@@ -83,7 +84,9 @@ const generateFallbackTag = (powerLevelTags: PowerLevelTags, power: number): Mem
   const tag = typeof tagPower === 'number' ? powerLevelTags[tagPower] : undefined;
 
   return {
-    name: tag ? `${tag.name} ${power}` : `Team ${power}`,
+    name: tag
+      ? `${tag.name} ${power}`
+      : i18next.t('roomSettings:teamPowerTag', { power, defaultValue: 'Team {{power}}' }),
   };
 };
 

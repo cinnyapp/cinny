@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+
+It is necessary to support UI localization in EN and RU, as well as other languages.
+The translation file structure should be logically divided between files by modules, pages, and other logical elements.
+It is necessary to determine what can be seen by the user and localize it.
+
+The t(key, { defaultValue: 'english fallback text' }) function should contain the source string in English for all translations.
+
+Use camelCase for localization keys.
+

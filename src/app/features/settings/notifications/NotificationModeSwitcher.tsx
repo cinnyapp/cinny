@@ -14,6 +14,7 @@ import {
 import { IPushRule } from 'matrix-js-sdk';
 import React, { MouseEventHandler, useMemo, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import { NotificationMode, useNotificationActionsMode } from '../../../hooks/useNotificationMode';
 import { stopPropagation } from '../../../utils/keyboard';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
@@ -22,22 +23,20 @@ export const useNotificationModes = (): NotificationMode[] =>
   useMemo(() => [NotificationMode.NotifyLoud, NotificationMode.Notify, NotificationMode.OFF], []);
 
 const useNotificationModeStr = (): Record<NotificationMode, string> =>
-  useMemo(
-    () => ({
-      [NotificationMode.OFF]: 'Disable',
-      [NotificationMode.Notify]: 'Notify Silent',
-      [NotificationMode.NotifyLoud]: 'Notify Loud',
-    }),
-    []
-  );
+  useMemo(() => ({} as Record<NotificationMode, string>), []);
 
 type NotificationModeSwitcherProps = {
   pushRule: IPushRule;
   onChange: (mode: NotificationMode) => Promise<void>;
 };
 export function NotificationModeSwitcher({ pushRule, onChange }: NotificationModeSwitcherProps) {
+  const { t } = useTranslation('settingsNotifications');
   const modes = useNotificationModes();
-  const modeToStr = useNotificationModeStr();
+  const modeToStr: Record<NotificationMode, string> = {
+    [NotificationMode.OFF]: t('modeOff', { defaultValue: 'Disable' }),
+    [NotificationMode.Notify]: t('modeNotifySilent', { defaultValue: 'Notify Silent' }),
+    [NotificationMode.NotifyLoud]: t('modeNotifyLoud', { defaultValue: 'Notify Loud' }),
+  };
   const selectedMode = useNotificationActionsMode(pushRule.actions);
   const [changeState, change] = useAsyncCallback(onChange);
   const changing = changeState.status === AsyncStatus.Loading;

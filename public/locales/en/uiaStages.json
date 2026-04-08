@@ -1,0 +1,35 @@
+{
+  "emailLabel": "Email",
+  "sendVerificationEmail": "Send Verification Email",
+  "cancel": "Cancel",
+  "sendingVerificationEmail": "Sending verification email...",
+  "verifyEmailTitle": "Verify Email",
+  "failedToSendVerificationEmail": "Failed to send verification email request.",
+  "verificationRequestSentTitle": "Verification Request Sent",
+  "checkEmailAndValidate": "Please check your email \"{{email}}\" and validate before continuing further.",
+  "continue": "Continue",
+  "provideEmailTitle": "Provide Email",
+  "provideEmailMessage": "Please provide email to send verification request.",
+
+  "accountPasswordTitle": "Account Password",
+  "passwordAuthDescription": "To perform this action you need to authenticate yourself by entering you account password.",
+  "passwordLabel": "Password",
+  "invalidPassword": "Invalid Password!",
+
+  "invalidDataTitle": "Invalid Data",
+  "invalidRecaptchaData": "No valid data found to proceed with ReCAPTCHA.",
+  "recaptchaPrompt": "Please check the box below to proceed.",
+
+  "ssoLoginTitle": "SSO Login",
+  "ssoAuthDescription": "To perform this action you need to authenticate yourself by SSO login.",
+  "continueWithSso": "Continue with SSO",
+
+  "retry": "Retry",
+  "termsSubmitFailed": "Failed to submit Terms and Condition Acceptance.",
+  "failedToRegister": "Failed to register.",
+  "registrationTokenTitle": "Registration Token",
+  "registrationTokenLabel": "Registration Token",
+  "invalidRegistrationToken": "Invalid registration token provided.",
+  "registrationTokenPrompt": "Please submit registration token provided by you homeserver admin."
+}
+

@@ -15,6 +15,7 @@ import {
   Text,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import { General } from './general';
 import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
@@ -50,46 +51,46 @@ type SettingsMenuItem = {
   icon: IconSrc;
 };
 
-const useSettingsMenuItems = (): SettingsMenuItem[] =>
+const useSettingsMenuItems = (t: (key: string, options: any) => string): SettingsMenuItem[] =>
   useMemo(
     () => [
       {
         page: SettingsPages.GeneralPage,
-        name: 'General',
+        name: t('general', { defaultValue: 'General' }),
         icon: Icons.Setting,
       },
       {
         page: SettingsPages.AccountPage,
-        name: 'Account',
+        name: t('account', { defaultValue: 'Account' }),
         icon: Icons.User,
       },
       {
         page: SettingsPages.NotificationPage,
-        name: 'Notifications',
+        name: t('notifications', { defaultValue: 'Notifications' }),
         icon: Icons.Bell,
       },
       {
         page: SettingsPages.DevicesPage,
-        name: 'Devices',
+        name: t('devices', { defaultValue: 'Devices' }),
         icon: Icons.Monitor,
       },
       {
         page: SettingsPages.EmojisStickersPage,
-        name: 'Emojis & Stickers',
+        name: t('emojisAndStickers', { defaultValue: 'Emojis & Stickers' }),
         icon: Icons.Smile,
       },
       {
         page: SettingsPages.DeveloperToolsPage,
-        name: 'Developer Tools',
+        name: t('developerTools', { defaultValue: 'Developer Tools' }),
         icon: Icons.Terminal,
       },
       {
         page: SettingsPages.AboutPage,
-        name: 'About',
+        name: t('about', { defaultValue: 'About' }),
         icon: Icons.Info,
       },
     ],
-    []
+    [t]
   );
 
 type SettingsProps = {
@@ -97,6 +98,7 @@ type SettingsProps = {
   requestClose: () => void;
 };
 export function Settings({ initialPage, requestClose }: SettingsProps) {
+  const { t } = useTranslation('settings');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const userId = mx.getUserId()!;
@@ -111,7 +113,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
     if (initialPage) return initialPage;
     return screenSize === ScreenSize.Mobile ? undefined : SettingsPages.GeneralPage;
   });
-  const menuItems = useSettingsMenuItems();
+  const menuItems = useSettingsMenuItems(t);
 
   const handlePageRequestClose = () => {
     if (screenSize === ScreenSize.Mobile) {
@@ -136,7 +138,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
                   />
                 </Avatar>
                 <Text size="H4" truncate>
-                  Settings
+                  {t('title', { defaultValue: 'Settings' })}
                 </Text>
               </Box>
               <Box shrink="No">
@@ -184,7 +186,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
                         before={<Icon src={Icons.Power} size="100" />}
                         onClick={() => setLogout(true)}
                       >
-                        <Text size="B400">Logout</Text>
+                        <Text size="B400">{t('logout', { defaultValue: 'Logout' })}</Text>
                       </Button>
                       {logout && (
                         <Overlay open backdrop={<OverlayBackdrop />}>

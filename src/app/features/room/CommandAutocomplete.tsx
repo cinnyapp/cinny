@@ -2,6 +2,7 @@ import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, use
 import { Editor } from 'slate';
 import { Box, config, MenuItem, Text } from 'folds';
 import { Room } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { Command, useCommands } from '../../hooks/useCommands';
 import {
   AutocompleteMenu,
@@ -36,6 +37,7 @@ export function CommandAutocomplete({
   query,
   requestClose,
 }: CommandAutocompleteProps) {
+  const { t } = useTranslation('room');
   const mx = useMatrixClient();
   const commands = useCommands(mx, room);
   const commandNames = useMemo(() => Object.keys(commands) as Command[], [commands]);
@@ -74,7 +76,7 @@ export function CommandAutocomplete({
     <AutocompleteMenu
       headerContent={
         <Box grow="Yes" direction="Row" gap="200" justifyContent="SpaceBetween">
-          <Text size="L400">Commands</Text>
+          <Text size="L400">{t('commands', { defaultValue: 'Commands' })}</Text>
         </Box>
       }
       requestClose={requestClose}

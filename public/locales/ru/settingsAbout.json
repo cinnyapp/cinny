@@ -1,0 +1,15 @@
+{
+  "title": "О приложении",
+  "logoAlt": "Логотип Cinny",
+  "appName": "Cinny",
+  "appVersion": "v4.11.1",
+  "tagline": "Ещё один Matrix‑клиент.",
+  "sourceCode": "Исходный код",
+  "support": "Поддержать",
+  "optionsHeader": "Опции",
+  "clearCacheReloadTitle": "Очистить кэш и перезагрузить",
+  "clearCacheReloadDescription": "Удалить все локальные данные и заново загрузить их с сервера.",
+  "clearCacheButton": "Очистить кэш",
+  "creditsHeader": "Благодарности"
+}
+

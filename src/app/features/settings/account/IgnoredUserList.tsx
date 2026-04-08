@@ -1,5 +1,6 @@
 import React, { ChangeEventHandler, FormEventHandler, useCallback, useState } from 'react';
 import { Box, Button, Chip, Icon, IconButton, Icons, Input, Spinner, Text, config } from 'folds';
+import { useTranslation } from 'react-i18next';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
@@ -10,6 +11,7 @@ import { useIgnoredUsers } from '../../../hooks/useIgnoredUsers';
 import { useAlive } from '../../../hooks/useAlive';
 
 function IgnoreUserInput({ userList }: { userList: string[] }) {
+  const { t } = useTranslation('settingsAccount');
   const mx = useMatrixClient();
   const [userId, setUserId] = useState<string>('');
   const alive = useAlive();
@@ -89,7 +91,7 @@ function IgnoreUserInput({ userList }: { userList: string[] }) {
         disabled={ignoring}
       >
         {ignoring && <Spinner variant="Secondary" size="300" />}
-        <Text size="B400">Block</Text>
+        <Text size="B400">{t('block', { defaultValue: 'Block' })}</Text>
       </Button>
     </Box>
   );
@@ -129,12 +131,13 @@ function IgnoredUserChip({ userId, userList }: { userId: string; userList: strin
 }
 
 export function IgnoredUserList() {
+  const { t } = useTranslation('settingsAccount');
   const ignoredUsers = useIgnoredUsers();
 
   return (
     <Box direction="Column" gap="100">
       <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
-        <Text size="L400">Blocked Users</Text>
+        <Text size="L400">{t('blockedUsersHeader', { defaultValue: 'Blocked Users' })}</Text>
       </Box>
       <SequenceCard
         className={SequenceCardStyle}
@@ -143,14 +146,17 @@ export function IgnoredUserList() {
         gap="400"
       >
         <SettingTile
-          title="Select User"
-          description="Prevent receiving messages or invites from user by adding their userId."
+          title={t('selectUserTitle', { defaultValue: 'Select User' })}
+          description={t('selectUserDescription', {
+            defaultValue:
+              'Prevent receiving messages or invites from user by adding their userId.',
+          })}
         >
           <Box direction="Column" gap="300">
             <IgnoreUserInput userList={ignoredUsers} />
             {ignoredUsers.length > 0 && (
               <Box direction="Inherit" gap="100">
-                <Text size="L400">Users</Text>
+                <Text size="L400">{t('usersHeader', { defaultValue: 'Users' })}</Text>
                 <Box wrap="Wrap" gap="200">
                   {ignoredUsers.map((userId) => (
                     <IgnoredUserChip key={userId} userId={userId} userList={ignoredUsers} />

@@ -29,6 +29,7 @@ import {
 import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 import * as css from './MembersDrawer.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -64,14 +65,25 @@ type MemberDrawerHeaderProps = {
   room: Room;
 };
 function MemberDrawerHeader({ room }: MemberDrawerHeaderProps) {
+  const { t } = useTranslation('room');
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
 
   return (
     <Header className={css.MembersDrawerHeader} variant="Background" size="600">
       <Box grow="Yes" alignItems="Center" gap="200">
         <Box grow="Yes" alignItems="Center" gap="200">
-          <Text title={`${room.getJoinedMemberCount()} Members`} size="H5" truncate>
-            {`${millify(room.getJoinedMemberCount())} Members`}
+          <Text
+            title={t('membersCount', {
+              defaultValue: '{{count}} Members',
+              count: room.getJoinedMemberCount(),
+            })}
+            size="H5"
+            truncate
+          >
+            {t('membersCount', {
+              defaultValue: '{{count}} Members',
+              count: millify(room.getJoinedMemberCount()),
+            })}
           </Text>
         </Box>
         <Box shrink="No" alignItems="Center">
@@ -81,7 +93,7 @@ function MemberDrawerHeader({ room }: MemberDrawerHeaderProps) {
             offset={4}
             tooltip={
               <Tooltip>
-                <Text>Close</Text>
+                <Text>{t('close', { defaultValue: 'Close' })}</Text>
               </Tooltip>
             }
           >
@@ -177,6 +189,7 @@ type MembersDrawerProps = {
   members: RoomMember[];
 };
 export function MembersDrawer({ room, members }: MembersDrawerProps) {
+  const { t } = useTranslation('room');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -326,7 +339,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                   ref={searchInputRef}
                   onChange={handleSearchChange}
                   style={{ paddingRight: config.space.S200 }}
-                  placeholder="Type name..."
+                  placeholder={t('typeNamePlaceholder', { defaultValue: 'Type name...' })}
                   variant="Surface"
                   size="400"
                   radii="400"
@@ -347,9 +360,16 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                         }}
                         after={<Icon size="50" src={Icons.Cross} />}
                       >
-                        <Text size="B300">{`${result.items.length || 'No'} ${
-                          result.items.length === 1 ? 'Result' : 'Results'
-                        }`}</Text>
+                        <Text size="B300">
+                          {t('resultsCount', {
+                            defaultValue: '{{count}} {{label}}',
+                            count: result.items.length || t('noResults', { defaultValue: 'No' }),
+                            label:
+                              result.items.length === 1
+                                ? t('result', { defaultValue: 'Result' })
+                                : t('results', { defaultValue: 'Results' }),
+                          })}
+                        </Text>
                       </Chip>
                     )
                   }
@@ -364,7 +384,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                 radii="Pill"
                 outlined
                 size="300"
-                aria-label="Scroll to Top"
+                aria-label={t('scrollToTop', { defaultValue: 'Scroll to Top' })}
               >
                 <Icon src={Icons.ChevronTop} size="300" />
               </IconButton>
@@ -372,7 +392,10 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
 
             {!fetchingMembers && !result && processMembers.length === 0 && (
               <Text style={{ padding: config.space.S300 }} align="Center">
-                {`No "${membershipFilter.name}" Members`}
+                {t('noMembersOfType', {
+                  defaultValue: 'No "{{membership}}" Members',
+                  membership: membershipFilter.name,
+                })}
               </Text>
             )}
 

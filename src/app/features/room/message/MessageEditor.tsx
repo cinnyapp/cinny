@@ -23,6 +23,7 @@ import { Editor, Transforms } from 'slate';
 import { ReactEditor } from 'slate-react';
 import { IContent, IMentions, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
 import { isKeyHotkey } from 'is-hotkey';
+import { useTranslation } from 'react-i18next';
 import {
   AUTOCOMPLETE_PREFIXES,
   AutocompletePrefix,
@@ -64,6 +65,7 @@ type MessageEditorProps = {
 };
 export const MessageEditor = as<'div', MessageEditorProps>(
   ({ room, roomId, mEvent, imagePackRooms, onCancel, ...props }, ref) => {
+    const { t } = useTranslation('message');
     const mx = useMatrixClient();
     const editor = useEditor();
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
@@ -257,7 +259,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         )}
         <CustomEditor
           editor={editor}
-          placeholder="Edit message..."
+          placeholder={t('editMessagePlaceholder', { defaultValue: 'Edit message...' })}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           bottom={
@@ -281,10 +283,10 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                       ) : undefined
                     }
                   >
-                    <Text size="B300">Save</Text>
+                    <Text size="B300">{t('save', { defaultValue: 'Save' })}</Text>
                   </Chip>
                   <Chip onClick={onCancel} variant="SurfaceVariant" radii="Pill">
-                    <Text size="B300">Cancel</Text>
+                    <Text size="B300">{t('cancel', { defaultValue: 'Cancel' })}</Text>
                   </Chip>
                 </Box>
                 <Box gap="Inherit">

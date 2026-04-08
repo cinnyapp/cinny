@@ -20,6 +20,7 @@ import classNames from 'classnames';
 import { BlurhashCanvas } from 'react-blurhash';
 import FocusTrap from 'focus-trap-react';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
+import { useTranslation } from 'react-i18next';
 import { IImageInfo, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -76,6 +77,7 @@ export const ImageContent = as<'div', ImageContentProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation('message');
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const blurHash = validBlurHash(info?.[MATRIX_BLUR_HASH_PROPERTY_NAME]);
@@ -163,7 +165,7 @@ export const ImageContent = as<'div', ImageContentProps>(
               onClick={loadSrc}
               before={<Icon size="Inherit" src={Icons.Photo} filled />}
             >
-              <Text size="B300">View</Text>
+              <Text size="B300">{t('view', { defaultValue: 'View' })}</Text>
             </Button>
           </Box>
         )}
@@ -207,7 +209,7 @@ export const ImageContent = as<'div', ImageContentProps>(
                     }
                   }}
                 >
-                  <Text size="B300">Spoiler</Text>
+                  <Text size="B300">{t('spoiler', { defaultValue: 'Spoiler' })}</Text>
                 </Chip>
               )}
             </TooltipProvider>
@@ -225,7 +227,7 @@ export const ImageContent = as<'div', ImageContentProps>(
             <TooltipProvider
               tooltip={
                 <Tooltip variant="Critical">
-                  <Text>Failed to load image!</Text>
+                  <Text>{t('failedToLoadImage', { defaultValue: 'Failed to load image!' })}</Text>
                 </Tooltip>
               }
               position="Top"
@@ -242,7 +244,7 @@ export const ImageContent = as<'div', ImageContentProps>(
                   onClick={handleRetry}
                   before={<Icon size="Inherit" src={Icons.Warning} filled />}
                 >
-                  <Text size="B300">Retry</Text>
+                  <Text size="B300">{t('retry', { defaultValue: 'Retry' })}</Text>
                 </Button>
               )}
             </TooltipProvider>

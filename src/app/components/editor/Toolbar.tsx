@@ -36,6 +36,7 @@ import { KeySymbol } from '../../utils/key-symbol';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { stopPropagation } from '../../utils/keyboard';
+import { useTranslation } from 'react-i18next';
 
 function BtnTooltip({ text, shortCode }: { text: string; shortCode?: string }) {
   return (
@@ -253,6 +254,7 @@ export function ExitFormatting({ tooltip }: ExitFormattingProps) {
 }
 
 export function Toolbar() {
+  const { t } = useTranslation('common');
   const editor = useSlate();
   const modKey = isMacOS() ? KeySymbol.Command : 'Ctrl';
   const disableInline = isBlockActive(editor, BlockType.CodeBlock);
@@ -296,7 +298,12 @@ export function Toolbar() {
               <MarkButton
                 format={MarkType.Spoiler}
                 icon={Icons.EyeBlind}
-                tooltip={<BtnTooltip text="Spoiler" shortCode={`${modKey} + H`} />}
+                tooltip={
+                  <BtnTooltip
+                    text={t('spoiler', { defaultValue: 'Spoiler' })}
+                    shortCode={`${modKey} + H`}
+                  />
+                }
               />
             </Box>
             <Line variant="SurfaceVariant" direction="Vertical" style={{ height: toRem(12) }} />

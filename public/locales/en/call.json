@@ -1,0 +1,15 @@
+{
+  "gridView": "Grid View",
+  "spotlightView": "Spotlight View",
+  "reactions": "Reactions",
+  "settings": "Settings",
+  "join": "Join",
+  "end": "End",
+  "homeserverNoCallingSupport": "Your homeserver does not support calling. But you can still join call started by others.",
+  "voiceChatEmpty": "Voice chat’s empty — Be the first to hop in!",
+  "noPermissionToJoin": "You don't have permission to join!",
+  "alreadyInAnotherCall": "Already in another call — End the current call to join!",
+  "participant": "Participant",
+  "liveCount": "{{count}} Live"
+}
+

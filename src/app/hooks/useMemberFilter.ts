@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import i18next from 'i18next';
 import { RoomMember } from 'matrix-js-sdk';
 import { Membership } from '../../types/matrix/room';
 
@@ -25,23 +26,23 @@ export const useMembershipFilterMenu = (): MembershipFilterItem[] =>
   useMemo(
     () => [
       {
-        name: 'Joined',
+        name: i18next.t('common:joined', { defaultValue: 'Joined' }),
         filterFn: MembershipFilter.filterJoined,
       },
       {
-        name: 'Invited',
+        name: i18next.t('common:invited', { defaultValue: 'Invited' }),
         filterFn: MembershipFilter.filterInvited,
       },
       {
-        name: 'Left',
+        name: i18next.t('common:left', { defaultValue: 'Left' }),
         filterFn: MembershipFilter.filterLeaved,
       },
       {
-        name: 'Kicked',
+        name: i18next.t('common:kicked', { defaultValue: 'Kicked' }),
         filterFn: MembershipFilter.filterKicked,
       },
       {
-        name: 'Banned',
+        name: i18next.t('common:banned', { defaultValue: 'Banned' }),
         filterFn: MembershipFilter.filterBanned,
       },
     ],

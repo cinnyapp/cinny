@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Box, Text, color } from 'folds';
 import { Link, useSearchParams } from 'react-router-dom';
 import { SSOAction } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { useAuthFlows } from '../../../hooks/useAuthFlows';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
@@ -35,6 +36,7 @@ const useLoginSearchParams = (searchParams: URLSearchParams): LoginPathSearchPar
   );
 
 export function Login() {
+  const { t } = useTranslation('auth');
   const server = useAuthServer();
   const { hashRouter } = useClientConfig();
   const { loginFlows } = useAuthFlows();
@@ -57,7 +59,7 @@ export function Login() {
   return (
     <Box direction="Column" gap="500">
       <Text size="H2" priority="400">
-        Login
+        {t('loginTitle', { defaultValue: 'Login' })}
       </Text>
       {parsedFlows.token && loginSearchParams.loginToken && (
         <TokenLogin token={loginSearchParams.loginToken} />
@@ -86,13 +88,18 @@ export function Login() {
       {!parsedFlows.password && !parsedFlows.sso && (
         <>
           <Text style={{ color: color.Critical.Main }}>
-            {`This client does not support login on "${server}" homeserver. Password and SSO based login method not found.`}
+            {t('loginNotSupportedOnHomeserver', {
+              defaultValue:
+                'This client does not support login on "{{server}}" homeserver. Password and SSO based login method not found.',
+              server,
+            })}
           </Text>
           <span data-spacing-node />
         </>
       )}
       <Text align="Center">
-        Do not have an account? <Link to={getRegisterPath(server)}>Register</Link>
+        {t('noAccountPrefix', { defaultValue: 'Do not have an account?' })}{' '}
+        <Link to={getRegisterPath(server)}>{t('registerLink', { defaultValue: 'Register' })}</Link>
       </Text>
     </Box>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { startTransition, useState } from 'react';
 import { Badge, color, Icon, Icons, Text } from 'folds';
 import {
   SidebarAvatar,
@@ -56,7 +56,7 @@ function UnverifiedIndicator() {
                 as="button"
                 ref={triggerRef}
                 outlined
-                onClick={() => setSettings(true)}
+                onClick={() => startTransition(() => setSettings(true))}
               >
                 <Icon
                   style={{ color: unverified ? color.Critical.Main : color.Warning.Main }}

@@ -1,6 +1,7 @@
 import React, { FormEventHandler, useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import {
   Avatar,
   Box,
@@ -39,6 +40,7 @@ import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page
 import { stopPropagation } from '../../../utils/keyboard';
 
 export function AddServer() {
+  const { t } = useTranslation('explore');
   const mx = useMatrixClient();
   const navigate = useNavigate();
   const [dialog, setDialog] = useState(false);
@@ -94,7 +96,7 @@ export function AddServer() {
                 size="500"
               >
                 <Box grow="Yes">
-                  <Text size="H4">Add Server</Text>
+                  <Text size="H4">{t('addServerTitle', { defaultValue: 'Add Server' })}</Text>
                 </Box>
                 <IconButton size="300" onClick={() => setDialog(false)} radii="300">
                   <Icon src={Icons.Cross} />
@@ -107,32 +109,25 @@ export function AddServer() {
                 direction="Column"
                 gap="400"
               >
-                <Text priority="400">Add server name to explore public communities.</Text>
+                <Text priority="400">
+                  {t('addServerDescription', {
+                    defaultValue: 'Add server name to explore public communities.',
+                  })}
+                </Text>
                 <Box direction="Column" gap="100">
-                  <Text size="L400">Server Name</Text>
+                  <Text size="L400">{t('serverNameLabel', { defaultValue: 'Server Name' })}</Text>
                   <Input ref={serverInputRef} name="serverInput" variant="Background" required />
                   {exploreState.status === AsyncStatus.Error && (
                     <Text style={{ color: color.Critical.Main }} size="T300">
-                      Failed to load public rooms. Please try again.
+                      {t('loadPublicRoomsFailed', {
+                        defaultValue: 'Failed to load public rooms. Please try again.',
+                      })}
                     </Text>
                   )}
                 </Box>
                 <Box direction="Column" gap="200">
-                  {/* <Button
-                    type="submit"
-                    variant="Secondary"
-                    before={
-                      exploreState.status === AsyncStatus.Loading ? (
-                        <Spinner fill="Solid" variant="Secondary" size="200" />
-                      ) : undefined
-                    }
-                    aria-disabled={exploreState.status === AsyncStatus.Loading}
-                  >
-                    <Text size="B400">Save</Text>
-                  </Button> */}
-
                   <Button type="submit" onClick={handleView} variant="Secondary" fill="Soft">
-                    <Text size="B400">View</Text>
+                    <Text size="B400">{t('viewButton', { defaultValue: 'View' })}</Text>
                   </Button>
                 </Box>
               </Box>
@@ -148,7 +143,7 @@ export function AddServer() {
         onClick={() => setDialog(true)}
       >
         <Text size="B300" truncate>
-          Add Server
+          {t('addServerTitle', { defaultValue: 'Add Server' })}
         </Text>
       </Button>
     </>
@@ -156,6 +151,7 @@ export function AddServer() {
 }
 
 export function Explore() {
+  const { t } = useTranslation('explore');
   const mx = useMatrixClient();
   useNavToActivePathMapper('explore');
   const userId = mx.getUserId();
@@ -173,7 +169,7 @@ export function Explore() {
         <Box grow="Yes" gap="300">
           <Box grow="Yes">
             <Text size="H4" truncate>
-              Explore Community
+              {t('exploreCommunityTitle', { defaultValue: 'Explore Community' })}
             </Text>
           </Box>
         </Box>
@@ -191,7 +187,7 @@ export function Explore() {
                     </Avatar>
                     <Box as="span" grow="Yes">
                       <Text as="span" size="Inherit" truncate>
-                        Featured
+                        {t('featuredLabel', { defaultValue: 'Featured' })}
                       </Text>
                     </Box>
                   </Box>
@@ -229,7 +225,7 @@ export function Explore() {
             <NavCategory>
               <NavCategoryHeader>
                 <Text size="O400" style={{ paddingLeft: config.space.S200 }}>
-                  Servers
+                  {t('serversHeader', { defaultValue: 'Servers' })}
                 </Text>
               </NavCategoryHeader>
               {servers.map((server) => (

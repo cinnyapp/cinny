@@ -2,6 +2,7 @@
 import React, { forwardRef, MouseEventHandler, useCallback, useMemo, useRef } from 'react';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
+import { useTranslation } from 'react-i18next';
 import {
   Avatar,
   Box,
@@ -111,6 +112,7 @@ function PinnedMessage({
   hour24Clock,
   dateFormatString,
 }: PinnedMessageProps) {
+  const { t: tMessage } = useTranslation('message');
   const pinnedEvent = useRoomEvent(room, eventId);
   const useAuthentication = useMediaAuthentication();
   const mx = useMatrixClient();
@@ -142,7 +144,7 @@ function PinnedMessage({
   const renderOptions = () => (
     <Box shrink="No" gap="200" alignItems="Center">
       <Chip data-event-id={eventId} onClick={handleOpenClick} variant="Secondary" radii="Pill">
-        <Text size="T200">Open</Text>
+        <Text size="T200">{tMessage('open', { defaultValue: 'Open' })}</Text>
       </Chip>
       {canPinEvent && (
         <IconButton
@@ -168,7 +170,9 @@ function PinnedMessage({
     return (
       <Box gap="300" justifyContent="SpaceBetween" alignItems="Center">
         <Box>
-          <Text style={{ color: color.Critical.Main }}>Failed to load message!</Text>
+          <Text style={{ color: color.Critical.Main }}>
+            {tMessage('failedToLoadMessage', { defaultValue: 'Failed to load message!' })}
+          </Text>
         </Box>
         {renderOptions()}
       </Box>
@@ -249,6 +253,7 @@ type RoomPinMenuProps = {
 };
 export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
   ({ room, requestClose }, ref) => {
+    const { t } = useTranslation('room');
     const mx = useMatrixClient();
     const userId = mx.getUserId()!;
     const powerLevels = usePowerLevelsContext();
@@ -454,7 +459,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
         <Box grow="Yes" direction="Column">
           <Header className={css.PinMenuHeader} size="500">
             <Box grow="Yes">
-              <Text size="H5">Pinned Messages</Text>
+              <Text size="H5">{t('pinnedMessages', { defaultValue: 'Pinned Messages' })}</Text>
             </Box>
             <Box shrink="No">
               <IconButton size="300" onClick={requestClose} radii="300">
@@ -527,10 +532,13 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                       alignItems="Center"
                     >
                       <Text size="H4" align="Center">
-                        No Pinned Messages
+                        {t('noPinnedMessages', { defaultValue: 'No Pinned Messages' })}
                       </Text>
                       <Text size="T400" align="Center">
-                        Users with sufficient power level can pin a messages from its context menu.
+                        {t('pinnedMessagesEmptyDescription', {
+                          defaultValue:
+                            'Users with sufficient power level can pin messages from their context menu.',
+                        })}
                       </Text>
                     </Box>
                   </Box>

@@ -1,0 +1,14 @@
+{
+  "userId": "User ID",
+  "userIdPlaceholder": "@username:server",
+  "validUserIdRequired": "Please enter a valid User ID.",
+  "options": "Options",
+  "endToEndEncryption": "End-to-End Encryption",
+  "encryptionIrreversible": "Once this feature is enabled, it can't be disabled after the room is created.",
+  "serverRateLimitedMinutes": "Server rate-limited your request for {{minutes}} minutes!",
+  "create": "Create",
+  "createChatTitle": "Create Chat",
+  "createChatHeroSubtitle": "Start a private, encrypted chat by entering a user ID.",
+  "directMessagesTitle": "Direct Messages",
+  "chatsCategoryTitle": "Chats"
+}

@@ -24,6 +24,7 @@ import {
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
 import { Room } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { PageHeader } from '../../components/page';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -74,6 +75,7 @@ type RoomMenuProps = {
   requestClose: () => void;
 };
 const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose }, ref) => {
+  const { t } = useTranslation('room');
   const mx = useMatrixClient();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
@@ -131,7 +133,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
           disabled={!unread}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Mark as Read
+            {t('markAsRead', { defaultValue: 'Mark as Read' })}
           </Text>
         </MenuItem>
         <RoomNotificationModeSwitcher roomId={room.roomId} value={notificationMode}>
@@ -150,7 +152,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
               onClick={handleOpen}
             >
               <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                Notifications
+                {t('notifications', { defaultValue: 'Notifications' })}
               </Text>
             </MenuItem>
           )}
@@ -169,7 +171,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
           disabled={!canInvite}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Invite
+            {t('invite', { defaultValue: 'Invite' })}
           </Text>
         </MenuItem>
         <MenuItem
@@ -179,7 +181,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
           radii="300"
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Copy Link
+            {t('copyLink', { defaultValue: 'Copy Link' })}
           </Text>
         </MenuItem>
         <MenuItem
@@ -189,7 +191,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
           radii="300"
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Room Settings
+            {t('roomSettings', { defaultValue: 'Room Settings' })}
           </Text>
         </MenuItem>
         <UseStateProvider initial={false}>
@@ -203,7 +205,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
                 aria-pressed={promptJump}
               >
                 <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                  Jump to Time
+                  {t('jumpToTime', { defaultValue: 'Jump to Time' })}
                 </Text>
               </MenuItem>
               {promptJump && (
@@ -235,7 +237,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
                 aria-pressed={promptLeave}
               >
                 <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                  Leave Room
+                  {t('leaveRoom', { defaultValue: 'Leave Room' })}
                 </Text>
               </MenuItem>
               {promptLeave && (
@@ -254,6 +256,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
 });
 
 export function RoomViewHeader({ callView }: { callView?: boolean }) {
+  const { t } = useTranslation('room');
   const navigate = useNavigate();
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -385,7 +388,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               offset={4}
               tooltip={
                 <Tooltip>
-                  <Text>Search</Text>
+                  <Text>{t('search', { defaultValue: 'Search' })}</Text>
                 </Tooltip>
               }
             >
@@ -401,7 +404,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
             offset={4}
             tooltip={
               <Tooltip>
-                <Text>Pinned Messages</Text>
+                <Text>{t('pinnedMessages', { defaultValue: 'Pinned Messages' })}</Text>
               </Tooltip>
             }
           >
@@ -461,9 +464,13 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               tooltip={
                 <Tooltip>
                   {callView ? (
-                    <Text>Members</Text>
+                    <Text>{t('members', { defaultValue: 'Members' })}</Text>
                   ) : (
-                    <Text>{peopleDrawer ? 'Hide Members' : 'Show Members'}</Text>
+                    <Text>
+                      {peopleDrawer
+                        ? t('hideMembers', { defaultValue: 'Hide Members' })
+                        : t('showMembers', { defaultValue: 'Show Members' })}
+                    </Text>
                   )}
                 </Tooltip>
               }
@@ -482,7 +489,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
             offset={4}
             tooltip={
               <Tooltip>
-                <Text>More Options</Text>
+                <Text>{t('moreOptions', { defaultValue: 'More Options' })}</Text>
               </Tooltip>
             }
           >

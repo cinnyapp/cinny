@@ -17,6 +17,7 @@ import {
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { factoryRoomIdByActivity } from '../../../utils/sort';
@@ -56,6 +57,7 @@ type DirectMenuProps = {
   requestClose: () => void;
 };
 const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }, ref) => {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const orphanRooms = useDirectRooms();
@@ -78,7 +80,7 @@ const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }
           aria-disabled={!unread}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Mark as Read
+            {t('markAsRead', { defaultValue: 'Mark as Read' })}
           </Text>
         </MenuItem>
       </Box>
@@ -87,6 +89,7 @@ const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }
 });
 
 function DirectHeader() {
+  const { t } = useTranslation('createChat');
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -103,7 +106,7 @@ function DirectHeader() {
         <Box alignItems="Center" grow="Yes" gap="300">
           <Box grow="Yes">
             <Text size="H4" truncate>
-              Direct Messages
+              {t('directMessagesTitle', { defaultValue: 'Direct Messages' })}
             </Text>
           </Box>
           <Box>
@@ -169,6 +172,7 @@ function DirectEmpty() {
 
 const DEFAULT_CATEGORY_ID = makeNavCategoryId('direct', 'direct');
 export function Direct() {
+  const { t } = useTranslation('createChat');
   const mx = useMatrixClient();
   useNavToActivePathMapper('direct');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -220,7 +224,7 @@ export function Direct() {
                       </Avatar>
                       <Box as="span" grow="Yes">
                         <Text as="span" size="Inherit" truncate>
-                          Create Chat
+                          {t('createChatTitle', { defaultValue: 'Create Chat' })}
                         </Text>
                       </Box>
                     </Box>
@@ -235,7 +239,7 @@ export function Direct() {
                   data-category-id={DEFAULT_CATEGORY_ID}
                   onClick={handleCategoryClick}
                 >
-                  Chats
+                  {t('chatsCategoryTitle', { defaultValue: 'Chats' })}
                 </RoomNavCategoryButton>
               </NavCategoryHeader>
               <div

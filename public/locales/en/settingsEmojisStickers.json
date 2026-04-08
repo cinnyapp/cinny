@@ -1,0 +1,25 @@
+{
+  "title": "Emojis & Stickers",
+  "defaultPackHeader": "Default Pack",
+  "view": "View",
+
+  "roomPacksHeader": "Room Packs",
+  "save": "Save",
+  "close": "Close",
+  "selectAll": "Select All",
+  "unselectAll": "Unselect All",
+  "unknown": "Unknown",
+  "noPacksTitle": "No Packs",
+  "noPacksSubtitle": "Pack from rooms will appear here. You do not have any room with packs yet.",
+
+  "favoritePacksHeader": "Favorite Packs",
+  "selectPackTitle": "Select Pack",
+  "selectPackDescription": "Pick emojis and stickers pack from rooms to use in all rooms.",
+  "select": "Select",
+
+  "failedToApplyChanges": "Failed to apply changes! Please try again.",
+  "changesSavedApplyWhenReady": "Changes saved! Apply when ready.",
+  "reset": "Reset",
+  "applyChanges": "Apply Changes"
+}
+

@@ -1,7 +1,8 @@
 import { MemberPowerTag } from '../../types/matrix/room';
+import i18next from 'i18next';
 
 const DEFAULT_TAG: MemberPowerTag = {
-  name: 'Founder',
+  name: i18next.t('roomSettings:powerTagFounder', { defaultValue: 'Founder' }),
   color: '#0000ff',
 };
 

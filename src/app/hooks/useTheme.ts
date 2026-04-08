@@ -1,5 +1,6 @@
 import { lightTheme } from 'folds';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import i18next from 'i18next';
 import { onDarkFontWeight, onLightFontWeight } from '../../config.css';
 import { butterTheme, darkTheme, silverTheme } from '../../colors.css';
 import { settingsAtom } from '../state/settings';
@@ -47,10 +48,10 @@ export const useThemes = (): Theme[] => {
 export const useThemeNames = (): Record<string, string> =>
   useMemo(
     () => ({
-      [LightTheme.id]: 'Light',
-      [SilverTheme.id]: 'Silver',
-      [DarkTheme.id]: 'Dark',
-      [ButterTheme.id]: 'Butter',
+      [LightTheme.id]: i18next.t('settingsGeneral:themeLight', { defaultValue: 'Light' }),
+      [SilverTheme.id]: i18next.t('settingsGeneral:themeSilver', { defaultValue: 'Silver' }),
+      [DarkTheme.id]: i18next.t('settingsGeneral:themeDark', { defaultValue: 'Dark' }),
+      [ButterTheme.id]: i18next.t('settingsGeneral:themeButter', { defaultValue: 'Butter' }),
     }),
     []
   );

@@ -1,215 +1,217 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MessageEvent, StateEvent } from '../../../../types/matrix/room';
 import { PermissionGroup } from '../../common-settings/permissions';
 
 export const usePermissionGroups = (isCallRoom: boolean): PermissionGroup[] => {
+  const { t } = useTranslation('roomSettings');
   const groups: PermissionGroup[] = useMemo(() => {
     const messagesGroup: PermissionGroup = {
-      name: 'Messages',
+      name: t('groupMessages', { defaultValue: 'Messages' }),
       items: [
         {
           location: {
             key: MessageEvent.RoomMessage,
           },
-          name: 'Send Messages',
+          name: t('sendMessages', { defaultValue: 'Send Messages' }),
         },
         {
           location: {
             key: MessageEvent.Sticker,
           },
-          name: 'Send Stickers',
+          name: t('sendStickers', { defaultValue: 'Send Stickers' }),
         },
         {
           location: {
             key: MessageEvent.Reaction,
           },
-          name: 'Send Reactions',
+          name: t('sendReactions', { defaultValue: 'Send Reactions' }),
         },
         {
           location: {
             notification: true,
             key: 'room',
           },
-          name: 'Ping @room',
+          name: t('pingRoom', { defaultValue: 'Ping @room' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomPinnedEvents,
           },
-          name: 'Pin Messages',
+          name: t('pinMessages', { defaultValue: 'Pin Messages' }),
         },
         {
           location: {},
-          name: 'Other Message Events',
+          name: t('otherMessageEvents', { defaultValue: 'Other Message Events' }),
         },
       ],
     };
 
     const callSettingsGroup: PermissionGroup = {
-      name: 'Calls',
+      name: t('groupCalls', { defaultValue: 'Calls' }),
       items: [
         {
           location: {
             state: true,
             key: StateEvent.GroupCallMemberPrefix,
           },
-          name: 'Join Call',
+          name: t('joinCall', { defaultValue: 'Join Call' }),
         },
       ],
     };
 
     const moderationGroup: PermissionGroup = {
-      name: 'Moderation',
+      name: t('groupModeration', { defaultValue: 'Moderation' }),
       items: [
         {
           location: {
             action: true,
             key: 'invite',
           },
-          name: 'Invite',
+          name: t('invite', { defaultValue: 'Invite' }),
         },
         {
           location: {
             action: true,
             key: 'kick',
           },
-          name: 'Kick',
+          name: t('kick', { defaultValue: 'Kick' }),
         },
         {
           location: {
             action: true,
             key: 'ban',
           },
-          name: 'Ban',
+          name: t('ban', { defaultValue: 'Ban' }),
         },
         {
           location: {
             action: true,
             key: 'redact',
           },
-          name: 'Delete Others Messages',
+          name: t('deleteOthersMessages', { defaultValue: 'Delete Others Messages' }),
         },
         {
           location: {
             key: MessageEvent.RoomRedaction,
           },
-          name: 'Delete Self Messages',
+          name: t('deleteSelfMessages', { defaultValue: 'Delete Self Messages' }),
         },
       ],
     };
 
     const roomOverviewGroup: PermissionGroup = {
-      name: 'Room Overview',
+      name: t('groupRoomOverview', { defaultValue: 'Room Overview' }),
       items: [
         {
           location: {
             state: true,
             key: StateEvent.RoomAvatar,
           },
-          name: 'Room Avatar',
+          name: t('roomAvatar', { defaultValue: 'Room Avatar' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomName,
           },
-          name: 'Room Name',
+          name: t('roomName', { defaultValue: 'Room Name' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomTopic,
           },
-          name: 'Room Topic',
+          name: t('roomTopic', { defaultValue: 'Room Topic' }),
         },
       ],
     };
 
     const roomSettingsGroup: PermissionGroup = {
-      name: 'Settings',
+      name: t('groupSettings', { defaultValue: 'Settings' }),
       items: [
         {
           location: {
             state: true,
             key: StateEvent.RoomJoinRules,
           },
-          name: 'Change Room Access',
+          name: t('changeRoomAccess', { defaultValue: 'Change Room Access' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomCanonicalAlias,
           },
-          name: 'Publish Address',
+          name: t('publishAddress', { defaultValue: 'Publish Address' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomPowerLevels,
           },
-          name: 'Change All Permission',
+          name: t('changeAllPermission', { defaultValue: 'Change All Permission' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.PowerLevelTags,
           },
-          name: 'Edit Power Levels',
+          name: t('editPowerLevels', { defaultValue: 'Edit Power Levels' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomEncryption,
           },
-          name: 'Enable Encryption',
+          name: t('enableEncryption', { defaultValue: 'Enable Encryption' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomHistoryVisibility,
           },
-          name: 'History Visibility',
+          name: t('historyVisibility', { defaultValue: 'History Visibility' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomTombstone,
           },
-          name: 'Upgrade Room',
+          name: t('upgradeRoom', { defaultValue: 'Upgrade Room' }),
         },
         {
           location: {
             state: true,
           },
-          name: 'Other Settings',
+          name: t('otherSettings', { defaultValue: 'Other Settings' }),
         },
       ],
     };
 
     const otherSettingsGroup: PermissionGroup = {
-      name: 'Other',
+      name: t('groupOther', { defaultValue: 'Other' }),
       items: [
         {
           location: {
             state: true,
             key: StateEvent.PoniesRoomEmotes,
           },
-          name: 'Manage Emojis & Stickers',
+          name: t('manageEmojisStickers', { defaultValue: 'Manage Emojis & Stickers' }),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomServerAcl,
           },
-          name: 'Change Server ACLs',
+          name: t('changeServerAcls', { defaultValue: 'Change Server ACLs' }),
         },
         {
           location: {
             state: true,
             key: 'im.vector.modular.widgets',
           },
-          name: 'Modify Widgets',
+          name: t('modifyWidgets', { defaultValue: 'Modify Widgets' }),
         },
       ],
     };
@@ -222,7 +224,7 @@ export const usePermissionGroups = (isCallRoom: boolean): PermissionGroup[] => {
       roomSettingsGroup,
       otherSettingsGroup,
     ];
-  }, [isCallRoom]);
+  }, [isCallRoom, t]);
 
   return groups;
 };

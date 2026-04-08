@@ -1,6 +1,7 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
 import { IContent } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { JUMBO_EMOJI_REG, URL_REG } from '../../utils/regex';
 import { trimReplyFromBody } from '../../utils/room';
 import { MessageTextBody } from './layout';
@@ -190,6 +191,7 @@ type MImageProps = {
   outlined?: boolean;
 };
 export function MImage({ content, renderImageContent, outlined }: MImageProps) {
+  const { t } = useTranslation('message');
   const imgInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
   if (typeof mxcUrl !== 'string') {
@@ -205,7 +207,7 @@ export function MImage({ content, renderImageContent, outlined }: MImageProps) {
         }}
       >
         {renderImageContent({
-          body: content.body || 'Image',
+          body: content.body || t('image', { defaultValue: 'Image' }),
           info: imgInfo,
           mimeType: imgInfo?.mimetype,
           url: mxcUrl,
@@ -234,6 +236,7 @@ type MVideoProps = {
   outlined?: boolean;
 };
 export function MVideo({ content, renderAsFile, renderVideoContent, outlined }: MVideoProps) {
+  const { t } = useTranslation('message');
   const videoInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
   const safeMimeType = getBlobSafeMimeType(videoInfo?.mimetype ?? '');
@@ -247,7 +250,7 @@ export function MVideo({ content, renderAsFile, renderVideoContent, outlined }: 
 
   const height = scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400);
 
-  const filename = content.filename ?? content.body ?? 'Video';
+  const filename = content.filename ?? content.body ?? t('video', { defaultValue: 'Video' });
 
   return (
     <Attachment outlined={outlined}>
@@ -271,7 +274,7 @@ export function MVideo({ content, renderAsFile, renderVideoContent, outlined }: 
         }}
       >
         {renderVideoContent({
-          body: content.body || 'Video',
+          body: content.body || t('video', { defaultValue: 'Video' }),
           info: videoInfo,
           mimeType: safeMimeType,
           url: mxcUrl,
@@ -297,6 +300,7 @@ type MAudioProps = {
   outlined?: boolean;
 };
 export function MAudio({ content, renderAsFile, renderAudioContent, outlined }: MAudioProps) {
+  const { t } = useTranslation('message');
   const audioInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
   const safeMimeType = getBlobSafeMimeType(audioInfo?.mimetype ?? '');
@@ -308,7 +312,7 @@ export function MAudio({ content, renderAsFile, renderAudioContent, outlined }: 
     return <BrokenContent />;
   }
 
-  const filename = content.filename ?? content.body ?? 'Audio';
+  const filename = content.filename ?? content.body ?? t('audio', { defaultValue: 'Audio' });
   return (
     <Attachment outlined={outlined}>
       <AttachmentHeader>
@@ -352,6 +356,7 @@ type MFileProps = {
   outlined?: boolean;
 };
 export function MFile({ content, renderFileContent, outlined }: MFileProps) {
+  const { t } = useTranslation('message');
   const fileInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
 
@@ -363,14 +368,16 @@ export function MFile({ content, renderFileContent, outlined }: MFileProps) {
     <Attachment outlined={outlined}>
       <AttachmentHeader>
         <FileHeader
-          body={content.filename ?? content.body ?? 'Unnamed File'}
+          body={
+            content.filename ?? content.body ?? t('unnamedFile', { defaultValue: 'Unnamed File' })
+          }
           mimeType={fileInfo?.mimetype ?? FALLBACK_MIMETYPE}
         />
       </AttachmentHeader>
       <AttachmentBox>
         <AttachmentContent>
           {renderFileContent({
-            body: content.filename ?? content.body ?? 'File',
+            body: content.filename ?? content.body ?? t('file', { defaultValue: 'File' }),
             info: fileInfo ?? {},
             mimeType: fileInfo?.mimetype ?? FALLBACK_MIMETYPE,
             url: mxcUrl,
@@ -386,6 +393,7 @@ type MLocationProps = {
   content: IContent;
 };
 export function MLocation({ content }: MLocationProps) {
+  const { t } = useTranslation('message');
   const geoUri = content.geo_uri;
   if (typeof geoUri !== 'string') return <BrokenContent />;
   const location = parseGeoUri(geoUri);
@@ -404,7 +412,7 @@ export function MLocation({ content }: MLocationProps) {
         radii="Pill"
         before={<Icon src={Icons.External} size="50" />}
       >
-        <Text size="B300">Open Location</Text>
+        <Text size="B300">{t('openLocation', { defaultValue: 'Open Location' })}</Text>
       </Chip>
     </Box>
   );
@@ -415,6 +423,7 @@ type MStickerProps = {
   renderImageContent: (props: RenderImageContentProps) => ReactNode;
 };
 export function MSticker({ content, renderImageContent }: MStickerProps) {
+  const { t } = useTranslation('message');
   const imgInfo = content?.info;
   const mxcUrl = content.file?.url ?? content.url;
   if (typeof mxcUrl !== 'string') {
@@ -430,7 +439,7 @@ export function MSticker({ content, renderImageContent }: MStickerProps) {
       }}
     >
       {renderImageContent({
-        body: content.body || 'Sticker',
+        body: content.body || t('sticker', { defaultValue: 'Sticker' }),
         info: imgInfo,
         mimeType: imgInfo?.mimetype,
         url: mxcUrl,

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { DateFormat } from '../state/settings';
+import i18next from 'i18next';
 
 export type DateFormatItem = {
   name: string;
@@ -31,7 +32,7 @@ export const useDateFormatItems = (): DateFormatItem[] =>
       },
       {
         format: '',
-        name: 'Custom',
+        name: i18next.t('settingsGeneral:customLabel', { defaultValue: 'Custom' }),
       },
     ],
     []

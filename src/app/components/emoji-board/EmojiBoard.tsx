@@ -30,6 +30,7 @@ import { useThrottle } from '../../hooks/useThrottle';
 import { addRecentEmoji } from '../../plugins/recent-emoji';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { ImagePack, ImageUsage, PackImageReader } from '../../plugins/custom-emoji';
+import i18next from 'i18next';
 import { getEmoticonSearchStr } from '../../plugins/utils';
 import {
   SearchInput,
@@ -82,13 +83,17 @@ const useGroups = (
 
     g.push({
       id: RECENT_GROUP_ID,
-      name: 'Recent',
+      name: i18next.t('common:recent', { defaultValue: 'Recent' }),
       items: recentEmojis,
     });
 
     imagePacks.forEach((pack) => {
       let label = pack.meta.name;
-      if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+      if (!label) {
+        label = isUserId(pack.id)
+          ? i18next.t('lobby:personalPack', { defaultValue: 'Personal Pack' })
+          : mx.getRoom(pack.id)?.name;
+      }
 
       g.push({
         id: pack.id,
@@ -116,7 +121,11 @@ const useGroups = (
 
     imagePacks.forEach((pack) => {
       let label = pack.meta.name;
-      if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+      if (!label) {
+        label = isUserId(pack.id)
+          ? i18next.t('lobby:personalPack', { defaultValue: 'Personal Pack' })
+          : mx.getRoom(pack.id)?.name;
+      }
 
       g.push({
         id: pack.id,
@@ -189,7 +198,7 @@ function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarP
         <GroupIcon
           active={activeGroupId === RECENT_GROUP_ID}
           id={RECENT_GROUP_ID}
-          label="Recent"
+          label={i18next.t('common:recent', { defaultValue: 'Recent' })}
           icon={Icons.RecentClock}
           onClick={handleScrollToGroup}
         />
@@ -199,7 +208,11 @@ function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarP
           <SidebarDivider />
           {packs.map((pack) => {
             let label = pack.meta.name;
-            if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+            if (!label) {
+              label = isUserId(pack.id)
+                ? i18next.t('lobby:personalPack', { defaultValue: 'Personal Pack' })
+                : mx.getRoom(pack.id)?.name;
+            }
 
             const url =
               mxcUrlToHttp(mx, pack.getAvatarUrl(usage) ?? '', useAuthentication) ?? undefined;
@@ -209,7 +222,7 @@ function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarP
                 key={pack.id}
                 active={activeGroupId === pack.id}
                 id={pack.id}
-                label={label ?? 'Unknown Pack'}
+                label={label ?? i18next.t('lobby:unknownPack', { defaultValue: 'Unknown Pack' })}
                 url={url}
                 onClick={handleScrollToGroup}
               />
@@ -262,7 +275,11 @@ function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: StickerSide
       <SidebarStack>
         {packs.map((pack) => {
           let label = pack.meta.name;
-          if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+          if (!label) {
+            label = isUserId(pack.id)
+              ? i18next.t('lobby:personalPack', { defaultValue: 'Personal Pack' })
+              : mx.getRoom(pack.id)?.name;
+          }
 
           const url =
             mxcUrlToHttp(mx, pack.getAvatarUrl(usage) ?? '', useAuthentication) ?? undefined;
@@ -272,7 +289,7 @@ function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: StickerSide
               key={pack.id}
               active={activeGroupId === pack.id}
               id={pack.id}
-              label={label ?? 'Unknown Pack'}
+              label={label ?? i18next.t('lobby:unknownPack', { defaultValue: 'Unknown Pack' })}
               url={url}
               onClick={handleScrollToGroup}
             />
@@ -541,7 +558,11 @@ export function EmojiBoard({
             {searchedItems && (
               <EmojiGroup
                 id={SEARCH_GROUP_ID}
-                label={searchedItems.length ? 'Search Results' : 'No Results found'}
+                  label={
+                    searchedItems.length
+                      ? i18next.t('common:searchResults', { defaultValue: 'Search Results' })
+                      : i18next.t('common:noResultsFound', { defaultValue: 'No Results found' })
+                  }
               >
                 {searchedItems.map(renderItem)}
               </EmojiGroup>

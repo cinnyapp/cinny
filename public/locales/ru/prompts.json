@@ -1,0 +1,24 @@
+{
+  "leaveRoomTitle": "Покинуть комнату",
+  "leaveRoomConfirm": "Вы уверены, что хотите покинуть эту комнату?",
+  "failedToLeaveRoom": "Не удалось покинуть комнату!",
+  "leaving": "Выходим...",
+  "leave": "Покинуть",
+
+  "leaveSpaceTitle": "Покинуть пространство",
+  "leaveSpaceConfirm": "Вы уверены, что хотите покинуть это пространство?",
+  "failedToLeaveSpace": "Не удалось покинуть пространство!",
+
+  "inviteTitle": "Пригласить",
+  "userIdLabel": "User ID",
+  "userIdPlaceholder": "@username:server",
+  "reasonOptionalLabel": "Причина (необязательно)",
+  "open": "Открыть",
+
+  "joinWithAddressTitle": "Вступить по адресу",
+  "joinWithAddressHelp": "Введите публичный адрес, чтобы присоединиться к сообществу. Примеры адресов:",
+  "addressLabel": "Адрес",
+  "addressPlaceholder": "#community:server",
+  "invalidAddress": "Неверный адрес"
+}
+

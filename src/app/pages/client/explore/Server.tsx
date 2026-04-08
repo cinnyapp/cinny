@@ -27,6 +27,8 @@ import {
   config,
   toRem,
 } from 'folds';
+import { useTranslation } from 'react-i18next';
+import i18next from 'i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
@@ -66,15 +68,15 @@ const useRoomTypeFilters = (): RoomTypeFilter[] =>
   useMemo(
     () => [
       {
-        title: 'All',
+        title: i18next.t('explore:allFilter', { defaultValue: 'All' }),
         value: undefined,
       },
       {
-        title: 'Spaces',
+        title: i18next.t('explore:spacesFilter', { defaultValue: 'Spaces' }),
         value: RoomType.Space,
       },
       {
-        title: 'Rooms',
+        title: i18next.t('explore:roomsFilter', { defaultValue: 'Rooms' }),
         value: 'null',
       },
     ],
@@ -91,6 +93,7 @@ type SearchProps = {
   onReset: () => void;
 };
 function Search({ active, loading, searchInputRef, onSearch, onReset }: SearchProps) {
+  const { t } = useTranslation('explore');
   const handleSearchSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
     const { searchInput } = evt.target as HTMLFormElement & {
@@ -106,14 +109,14 @@ function Search({ active, loading, searchInputRef, onSearch, onReset }: SearchPr
   return (
     <Box as="form" direction="Column" gap="100" onSubmit={handleSearchSubmit}>
       <span data-spacing-node />
-      <Text size="L400">Search</Text>
+      <Text size="L400">{t('searchLabel', { defaultValue: 'Search' })}</Text>
       <Input
         ref={searchInputRef}
         style={{ paddingRight: config.space.S300 }}
         name="searchInput"
         size="500"
         variant="Background"
-        placeholder="Search for keyword"
+        placeholder={t('searchPlaceholder', { defaultValue: 'Search for keyword' })}
         before={
           active && loading ? (
             <Spinner variant="Secondary" size="200" />
@@ -132,11 +135,11 @@ function Search({ active, loading, searchInputRef, onSearch, onReset }: SearchPr
               after={<Icon size="50" src={Icons.Cross} />}
               onClick={onReset}
             >
-              <Text size="B300">Clear</Text>
+              <Text size="B300">{t('clearButton', { defaultValue: 'Clear' })}</Text>
             </Chip>
           ) : (
             <Chip type="submit" variant="Primary" size="400" radii="Pill" outlined>
-              <Text size="B300">Enter</Text>
+              <Text size="B300">{t('enterButton', { defaultValue: 'Enter' })}</Text>
             </Chip>
           )
         }
@@ -153,6 +156,7 @@ function ThirdPartyProtocolsSelector({
   instanceId?: string;
   onChange: (instanceId?: string) => void;
 }) {
+  const { t } = useTranslation('explore');
   const mx = useMatrixClient();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
@@ -196,7 +200,7 @@ function ThirdPartyProtocolsSelector({
               style={{ padding: config.space.S100, minWidth: toRem(100) }}
             >
               <Text style={{ padding: config.space.S100 }} size="L400" truncate>
-                Protocols
+                {t('protocolsLabel', { defaultValue: 'Protocols' })}
               </Text>
               <Box direction="Column">
                 <MenuItem
@@ -252,6 +256,7 @@ type LimitButtonProps = {
   onLimitChange: (limit: string) => void;
 };
 function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
+  const { t } = useTranslation('explore');
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const handleLimitSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
@@ -288,7 +293,7 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
           <Menu variant="Surface">
             <Box direction="Column" gap="400" style={{ padding: config.space.S300 }}>
               <Box direction="Column" gap="100">
-                <Text size="L400">Presets</Text>
+                <Text size="L400">{t('presetsLabel', { defaultValue: 'Presets' })}</Text>
                 <Box gap="100" wrap="Wrap">
                   <Chip variant="SurfaceVariant" onClick={() => setLimit('24')} radii="Pill">
                     <Text size="T200">24</Text>
@@ -303,7 +308,7 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
               </Box>
               <Box as="form" onSubmit={handleLimitSubmit} direction="Column" gap="300">
                 <Box direction="Column" gap="100">
-                  <Text size="L400">Custom Limit</Text>
+                  <Text size="L400">{t('customLimitLabel', { defaultValue: 'Custom Limit' })}</Text>
                   <Input
                     name="limitInput"
                     size="300"
@@ -314,11 +319,11 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
                     outlined
                     type="number"
                     radii="400"
-                    aria-label="Per Page Item Limit"
+                    aria-label={t('perPageItemLimitAria', { defaultValue: 'Per Page Item Limit' })}
                   />
                 </Box>
                 <Button type="submit" size="300" variant="Primary" radii="400">
-                  <Text size="B300">Change Limit</Text>
+                  <Text size="B300">{t('changeLimitButton', { defaultValue: 'Change Limit' })}</Text>
                 </Button>
               </Box>
             </Box>
@@ -334,13 +339,16 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
         variant="SurfaceVariant"
         after={<Icon size="100" src={Icons.ChevronBottom} />}
       >
-        <Text size="T200" truncate>{`Page Limit: ${limit}`}</Text>
+        <Text size="T200" truncate>
+          {t('pageLimitWithValue', { value: limit, defaultValue: 'Page Limit: {{value}}' })}
+        </Text>
       </Chip>
     </PopOut>
   );
 }
 
 export function PublicRooms() {
+  const { t } = useTranslation('explore');
   const { server } = useParams();
   const mx = useMatrixClient();
   const userId = mx.getUserId();
@@ -488,7 +496,7 @@ export function PublicRooms() {
             <Box grow="No" justifyContent="Center" alignItems="Center" gap="200">
               {screenSize !== ScreenSize.Mobile && <Icon size="400" src={Icons.Search} />}
               <Text size="H3" truncate>
-                Search
+                {t('searchLabel', { defaultValue: 'Search' })}
               </Text>
             </Box>
             <Box grow="Yes" basis="No" />
@@ -532,9 +540,16 @@ export function PublicRooms() {
                 <Box direction="Column" gap="400">
                   <Box direction="Column" gap="300">
                     {isSearch ? (
-                      <Text size="H4">{`Results for "${serverSearchParams.term}"`}</Text>
+                      <Text size="H4">
+                        {t('resultsForTerm', {
+                          term: serverSearchParams.term,
+                          defaultValue: 'Results for "{{term}}"',
+                        })}
+                      </Text>
                     ) : (
-                      <Text size="H4">Popular Communities</Text>
+                      <Text size="H4">
+                        {t('popularCommunitiesTitle', { defaultValue: 'Popular Communities' })}
+                      </Text>
                     )}
                     <Box gap="200">
                       {roomTypeFilters.map((filter) => (
@@ -624,7 +639,7 @@ export function PublicRooms() {
                               disabled={!data.prev_batch}
                             >
                               <Text size="B300" truncate>
-                                Previous Page
+                                {t('previousPage', { defaultValue: 'Previous Page' })}
                               </Text>
                             </Button>
                             <Box data-spacing-node grow="Yes" />
@@ -635,7 +650,7 @@ export function PublicRooms() {
                               disabled={!data.next_batch}
                             >
                               <Text size="B300" truncate>
-                                Next Page
+                                {t('nextPage', { defaultValue: 'Next Page' })}
                               </Text>
                             </Button>
                           </Box>
@@ -651,7 +666,7 @@ export function PublicRooms() {
                       >
                         <Icon size="400" src={Icons.Info} />
                         <Text size="T300" align="Center">
-                          No communities found!
+                          {t('noCommunitiesFound', { defaultValue: 'No communities found!' })}
                         </Text>
                       </Box>
                     ))}

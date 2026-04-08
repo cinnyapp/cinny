@@ -24,6 +24,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
 import { useDirectUsers } from '../../hooks/useDirectUsers';
 import { SettingTile } from '../setting-tile';
@@ -83,6 +84,7 @@ export function AdditionalCreatorInput({
   onRemove,
   disabled,
 }: AdditionalCreatorInputProps) {
+  const { t } = useTranslation('createRoom');
   const mx = useMatrixClient();
   const [menuCords, setMenuCords] = useState<RectCords>();
   const directUsers = useDirectUsers();
@@ -150,8 +152,11 @@ export function AdditionalCreatorInput({
 
   return (
     <SettingTile
-      title="Founders"
-      description="Special privileged users can be assigned during creation. These users have elevated control and can only be modified during a upgrade."
+      title={t('founders', { defaultValue: 'Founders' })}
+      description={t('foundersDescription', {
+        defaultValue:
+          'Special privileged users can be assigned during creation. These users have elevated control and can only be modified during a upgrade.',
+      })}
     >
       <Box shrink="No" direction="Column" gap="100">
         <Box gap="200" wrap="Wrap">
@@ -201,7 +206,9 @@ export function AdditionalCreatorInput({
                           variant="Background"
                           radii="300"
                           outlined
-                          placeholder="@username:server"
+                          placeholder={t('userIdPlaceholder', {
+                            defaultValue: '@username:server',
+                          })}
                           onChange={handleCreatorChange}
                           onKeyDown={handleCreatorKeyDown}
                         />
@@ -213,7 +220,7 @@ export function AdditionalCreatorInput({
                         onClick={handleEnterClick}
                         disabled={!validUserId}
                       >
-                        <Text size="B400">Enter</Text>
+                        <Text size="B400">{t('enter', { defaultValue: 'Enter' })}</Text>
                       </Button>
                     </Box>
                     <Line size="300" />
@@ -263,10 +270,12 @@ export function AdditionalCreatorInput({
                           gap="100"
                         >
                           <Text size="H6" align="Center">
-                            No Suggestions
+                            {t('noSuggestions', { defaultValue: 'No Suggestions' })}
                           </Text>
                           <Text size="T200" align="Center">
-                            Please provide the user ID and hit Enter.
+                            {t('provideUserIdHint', {
+                              defaultValue: 'Please provide the user ID and hit Enter.',
+                            })}
                           </Text>
                         </Box>
                       )}

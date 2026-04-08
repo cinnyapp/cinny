@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { Dialog, Text, Box, Button, config } from 'folds';
 import { AuthType } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { StageComponentProps } from './types';
 
 function TermsErrorDialog({
@@ -14,6 +15,7 @@ function TermsErrorDialog({
   onRetry: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation('uiaStages');
   return (
     <Dialog>
       <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
@@ -23,12 +25,12 @@ function TermsErrorDialog({
         </Box>
         <Button variant="Critical" onClick={onRetry}>
           <Text as="span" size="B400">
-            Retry
+            {t('retry', { defaultValue: 'Retry' })}
           </Text>
         </Button>
         <Button variant="Critical" fill="None" outlined onClick={onCancel}>
           <Text as="span" size="B400">
-            Cancel
+            {t('cancel', { defaultValue: 'Cancel' })}
           </Text>
         </Button>
       </Box>
@@ -37,6 +39,7 @@ function TermsErrorDialog({
 }
 
 export function AutoTermsStageDialog({ stageData, submitAuthDict, onCancel }: StageComponentProps) {
+  const { t } = useTranslation('uiaStages');
   const { errorCode, error, session } = stageData;
 
   const handleSubmit = useCallback(
@@ -58,7 +61,10 @@ export function AutoTermsStageDialog({ stageData, submitAuthDict, onCancel }: St
     return (
       <TermsErrorDialog
         title={errorCode}
-        message={error ?? 'Failed to submit Terms and Condition Acceptance.'}
+        message={
+          error ??
+          t('termsSubmitFailed', { defaultValue: 'Failed to submit Terms and Condition Acceptance.' })
+        }
         onRetry={handleSubmit}
         onCancel={onCancel}
       />

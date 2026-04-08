@@ -1,0 +1,6 @@
+{
+  "heatingUp": "Запуск...",
+  "clearCacheAndReload": "Очистить кэш и перезагрузить",
+  "failedToLoad": "Не удалось загрузить. {{message}}",
+  "failedToStart": "Не удалось запустить. {{message}}"
+}

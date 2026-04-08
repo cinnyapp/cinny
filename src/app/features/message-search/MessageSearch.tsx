@@ -5,6 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { SearchOrderBy } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { PageHero, PageHeroEmpty, PageHeroSection } from '../../components/page';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { _SearchPathSearchParams } from '../../pages/paths';
@@ -50,6 +51,7 @@ export function MessageSearch({
   senders,
   scrollRef,
 }: MessageSearchProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
   const allRooms = useRooms(mx, allRoomsAtom, mDirects);
@@ -198,7 +200,7 @@ export function MessageSearch({
           radii="Pill"
           outlined
           size="300"
-          aria-label="Scroll to Top"
+          aria-label={t('scrollToTop', { defaultValue: 'Scroll to Top' })}
         >
           <Icon src={Icons.ChevronTop} size="300" />
         </IconButton>
@@ -229,8 +231,11 @@ export function MessageSearch({
           <PageHeroSection>
             <PageHero
               icon={<Icon size="600" src={Icons.Message} />}
-              title="Search Messages"
-              subTitle="Find helpful messages in your community by searching with related keywords."
+              title={t('searchMessagesTitle', { defaultValue: 'Search Messages' })}
+              subTitle={t('searchMessagesSubtitle', {
+                defaultValue:
+                  'Find helpful messages in your community by searching with related keywords.',
+              })}
             />
           </PageHeroSection>
         </PageHeroEmpty>
@@ -245,7 +250,10 @@ export function MessageSearch({
         >
           <Icon size="200" src={Icons.Info} />
           <Text>
-            No results found for <b>{`"${msgSearchParams.term}"`}</b>
+            {t('noResultsFoundFor', {
+              query: msgSearchParams.term,
+              defaultValue: 'No results found for "{{query}}"',
+            })}{' '}
           </Text>
         </Box>
       )}
@@ -262,7 +270,12 @@ export function MessageSearch({
       {vItems.length > 0 && (
         <Box direction="Column" gap="300">
           <Box direction="Column" gap="200">
-            <Text size="H5">{`Results for "${msgSearchParams.term}"`}</Text>
+            <Text size="H5">
+              {t('resultsForQuery', {
+                query: msgSearchParams.term,
+                defaultValue: 'Results for "{{query}}"',
+              })}
+            </Text>
             <Line size="300" variant="Surface" />
           </Box>
           <div

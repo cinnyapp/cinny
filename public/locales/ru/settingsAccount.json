@@ -1,0 +1,24 @@
+{
+  "profileHeader": "Профиль",
+  "avatarLabel": "Аватар",
+  "upload": "Загрузить",
+  "remove": "Удалить",
+  "removeAvatarTitle": "Удалить аватар",
+  "removeAvatarConfirm": "Вы уверены, что хотите удалить аватар профиля?",
+  "displayNameLabel": "Отображаемое имя",
+  "save": "Сохранить",
+
+  "matrixIdHeader": "Matrix ID",
+  "copy": "Копировать",
+
+  "blockedUsersHeader": "Заблокированные пользователи",
+  "selectUserTitle": "Выберите пользователя",
+  "selectUserDescription": "Чтобы не получать сообщения и приглашения от пользователя, добавьте его userId.",
+  "block": "Блокировать",
+  "usersHeader": "Пользователи",
+
+  "contactInformationHeader": "Контактная информация",
+  "emailAddressTitle": "Email",
+  "emailAddressDescription": "Email, привязанный к вашему аккаунту."
+}
+

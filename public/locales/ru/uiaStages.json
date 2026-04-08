@@ -1,0 +1,35 @@
+{
+  "emailLabel": "Email",
+  "sendVerificationEmail": "Отправить письмо подтверждения",
+  "cancel": "Отмена",
+  "sendingVerificationEmail": "Отправка письма подтверждения...",
+  "verifyEmailTitle": "Подтвердите email",
+  "failedToSendVerificationEmail": "Не удалось отправить запрос на подтверждение email.",
+  "verificationRequestSentTitle": "Запрос подтверждения отправлен",
+  "checkEmailAndValidate": "Проверьте почту \"{{email}}\" и подтвердите адрес, прежде чем продолжить.",
+  "continue": "Продолжить",
+  "provideEmailTitle": "Укажите email",
+  "provideEmailMessage": "Укажите email, чтобы отправить запрос подтверждения.",
+
+  "accountPasswordTitle": "Пароль аккаунта",
+  "passwordAuthDescription": "Чтобы выполнить это действие, необходимо подтвердить пароль аккаунта.",
+  "passwordLabel": "Пароль",
+  "invalidPassword": "Неверный пароль!",
+
+  "invalidDataTitle": "Некорректные данные",
+  "invalidRecaptchaData": "Недостаточно данных для продолжения с ReCAPTCHA.",
+  "recaptchaPrompt": "Поставьте галочку ниже, чтобы продолжить.",
+
+  "ssoLoginTitle": "Вход через SSO",
+  "ssoAuthDescription": "Чтобы выполнить это действие, необходимо подтвердить вход через SSO.",
+  "continueWithSso": "Продолжить через SSO",
+
+  "retry": "Повторить",
+  "termsSubmitFailed": "Не удалось принять условия использования.",
+  "failedToRegister": "Не удалось зарегистрироваться.",
+  "registrationTokenTitle": "Токен регистрации",
+  "registrationTokenLabel": "Токен регистрации",
+  "invalidRegistrationToken": "Указан неверный токен регистрации.",
+  "registrationTokenPrompt": "Введите токен регистрации, предоставленный администратором homeserver."
+}
+

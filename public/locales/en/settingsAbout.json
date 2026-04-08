@@ -1,0 +1,15 @@
+{
+  "title": "About",
+  "logoAlt": "Cinny logo",
+  "appName": "Cinny",
+  "appVersion": "v4.11.1",
+  "tagline": "Yet another matrix client.",
+  "sourceCode": "Source Code",
+  "support": "Support",
+  "optionsHeader": "Options",
+  "clearCacheReloadTitle": "Clear Cache & Reload",
+  "clearCacheReloadDescription": "Clear all your locally stored data and reload from server.",
+  "clearCacheButton": "Clear Cache",
+  "creditsHeader": "Credits"
+}
+

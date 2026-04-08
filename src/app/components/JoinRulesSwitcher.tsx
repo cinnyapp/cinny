@@ -15,6 +15,7 @@ import {
 } from 'folds';
 import { JoinRule } from 'matrix-js-sdk';
 import FocusTrap from 'focus-trap-react';
+import i18next from 'i18next';
 import { stopPropagation } from '../utils/keyboard';
 import { getRoomIconSrc } from '../utils/room';
 
@@ -40,12 +41,24 @@ type JoinRuleLabels = Record<ExtendedJoinRules, string>;
 export const useRoomJoinRuleLabel = (): JoinRuleLabels =>
   useMemo(
     () => ({
-      [JoinRule.Invite]: 'Invite Only',
-      [JoinRule.Knock]: 'Knock & Invite',
-      knock_restricted: 'Space Members or Knock',
-      [JoinRule.Restricted]: 'Space Members',
-      [JoinRule.Public]: 'Public',
-      [JoinRule.Private]: 'Invite Only',
+      [JoinRule.Invite]: i18next.t('roomSettings:joinRuleInviteOnly', {
+        defaultValue: 'Invite Only',
+      }),
+      [JoinRule.Knock]: i18next.t('roomSettings:joinRuleKnockAndInvite', {
+        defaultValue: 'Knock & Invite',
+      }),
+      knock_restricted: i18next.t('roomSettings:joinRuleSpaceMembersOrKnock', {
+        defaultValue: 'Space Members or Knock',
+      }),
+      [JoinRule.Restricted]: i18next.t('roomSettings:joinRuleSpaceMembers', {
+        defaultValue: 'Space Members',
+      }),
+      [JoinRule.Public]: i18next.t('roomSettings:joinRulePublic', {
+        defaultValue: 'Public',
+      }),
+      [JoinRule.Private]: i18next.t('roomSettings:joinRuleInviteOnly', {
+        defaultValue: 'Invite Only',
+      }),
     }),
     []
   );
@@ -138,7 +151,10 @@ export function JoinRulesSwitcher<T extends ExtendedJoinRules[]>({
         onClick={handleOpenMenu}
         disabled={disabled}
       >
-        <Text size="B300">{labels[value] ?? 'Unsupported'}</Text>
+        <Text size="B300">
+          {labels[value] ??
+            i18next.t('roomSettings:joinRuleUnsupported', { defaultValue: 'Unsupported' })}
+        </Text>
       </Button>
     </PopOut>
   );

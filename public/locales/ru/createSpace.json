@@ -1,0 +1,16 @@
+{
+  "access": "Доступ",
+  "name": "Название",
+  "topicOptional": "Тема (необязательно)",
+  "options": "Параметры",
+  "advancedOptions": "Расширенные параметры",
+  "knockToJoin": "Запрос на вход",
+  "knockToJoinSpaceDescription": "Любой может отправить запрос на вход в это пространство.",
+  "allowFederation": "Разрешить федерацию",
+  "allowFederationDescription": "Пользователи с других серверов могут присоединяться.",
+  "serverRateLimitedMinutes": "Сервер ограничил частоту запросов на {{minutes}} мин!",
+  "create": "Создать",
+  "newSpaceTitle": "Новое пространство",
+  "createSpaceTitle": "Создать пространство",
+  "createSpaceHeroSubtitle": "Создайте пространство для вашего сообщества."
+}

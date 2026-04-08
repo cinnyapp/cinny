@@ -1,0 +1,17 @@
+{
+  "markAsRead": "Mark as Read",
+  "invite": "Invite",
+  "copyLink": "Copy Link",
+  "spaceSettings": "Space Settings",
+  "eventTimeline": "Event Timeline",
+  "leaveSpace": "Leave Space",
+  "lobbyNav": "Lobby",
+  "messageSearchNav": "Message Search",
+  "roomsCategoryTitle": "Rooms",
+  "spaceUpgradedTitle": "Space Upgraded",
+  "spaceUpgradedDescription": "This space has been replaced and is no longer active.",
+  "failedToJoinReplacementSpace": "Failed to join replacement space!",
+  "openNewSpace": "Open New Space",
+  "joinNewSpace": "Join New Space"
+}
+

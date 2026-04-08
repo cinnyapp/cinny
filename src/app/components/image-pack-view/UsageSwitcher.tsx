@@ -1,6 +1,7 @@
 import React, { MouseEventHandler, useMemo, useState } from 'react';
 import { Box, Button, config, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import i18next from 'i18next';
 import { ImageUsage } from '../../plugins/custom-emoji';
 import { stopPropagation } from '../../utils/keyboard';
 
@@ -9,10 +10,10 @@ export const useUsageStr = (): ((usage: ImageUsage[]) => string) => {
     const sticker = usage.includes(ImageUsage.Sticker);
     const emoticon = usage.includes(ImageUsage.Emoticon);
 
-    if (sticker && emoticon) return 'Both';
-    if (sticker) return 'Sticker';
-    if (emoticon) return 'Emoji';
-    return 'Both';
+    if (sticker && emoticon) return i18next.t('imagePack:usageBoth', { defaultValue: 'Both' });
+    if (sticker) return i18next.t('imagePack:usageSticker', { defaultValue: 'Sticker' });
+    if (emoticon) return i18next.t('imagePack:usageEmoji', { defaultValue: 'Emoji' });
+    return i18next.t('imagePack:usageBoth', { defaultValue: 'Both' });
   };
   return getUsageStr;
 };

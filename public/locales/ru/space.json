@@ -1,0 +1,17 @@
+{
+  "markAsRead": "Отметить как прочитанное",
+  "invite": "Пригласить",
+  "copyLink": "Копировать ссылку",
+  "spaceSettings": "Настройки пространства",
+  "eventTimeline": "Лента событий",
+  "leaveSpace": "Покинуть пространство",
+  "lobbyNav": "Лобби",
+  "messageSearchNav": "Поиск сообщений",
+  "roomsCategoryTitle": "Комнаты",
+  "spaceUpgradedTitle": "Пространство обновлено",
+  "spaceUpgradedDescription": "Это пространство было заменено и больше не активно.",
+  "failedToJoinReplacementSpace": "Не удалось присоединиться к новому пространству!",
+  "openNewSpace": "Открыть новое пространство",
+  "joinNewSpace": "Вступить в новое пространство"
+}
+

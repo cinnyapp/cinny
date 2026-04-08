@@ -1,0 +1,45 @@
+{
+  "inboxTitle": "Inbox",
+  "notificationsNavLabel": "Notifications",
+  "invitesNavLabel": "Invites",
+
+  "invitesTitle": "Invites",
+  "filterLabel": "Filter",
+  "encryptedBadge": "Encrypted",
+  "directMessageBadge": "Direct Message",
+  "spaceBadge": "Space",
+  "decline": "Decline",
+  "accept": "Accept",
+  "fromLabel": "From:",
+  "reasonLabel": "Reason:",
+
+  "primaryTab": "Primary",
+  "publicTab": "Public",
+  "spamTab": "Spam",
+
+  "noInvitesTitle": "No Invites",
+  "noInvitesKnownSubtitle": "When someone you share a room with sends you an invite, it’ll show up here.",
+  "noInvitesUnknownSubtitle": "Invites from people outside your rooms will appear here.",
+
+  "declineAll": "Decline All",
+
+  "spamInvitesTitle": "{{count}} Spam Invites",
+  "spamInvitesSubtitle": "Some of the following invites may contain harmful content or have been sent by banned users.",
+  "reportAll": "Report All",
+  "blockAll": "Block All",
+  "hideAll": "Hide All",
+  "viewAll": "View All",
+  "noSpamInvitesTitle": "No Spam Invites",
+  "noSpamInvitesSubtitle": "Invites detected as spam appear here.",
+  "spamInviteReportReason": "Spam Invite",
+
+  "notificationsTitle": "Notification Messages",
+  "allNotificationsFilter": "All Notifications",
+  "highlightedFilter": "Highlighted",
+  "scrollToTop": "Scroll to Top",
+  "markAsRead": "Mark as Read",
+  "open": "Open",
+  "noNotificationsTitle": "No Notifications",
+  "noNotificationsSubtitle": "You don't have any new notifications to display yet."
+}
+

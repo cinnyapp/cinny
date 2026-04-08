@@ -1,0 +1,6 @@
+{
+  "heatingUp": "Heating up",
+  "clearCacheAndReload": "Clear Cache and Reload",
+  "failedToLoad": "Failed to load. {{message}}",
+  "failedToStart": "Failed to start. {{message}}"
+}

@@ -1,0 +1,24 @@
+{
+  "profileHeader": "Profile",
+  "avatarLabel": "Avatar",
+  "upload": "Upload",
+  "remove": "Remove",
+  "removeAvatarTitle": "Remove Avatar",
+  "removeAvatarConfirm": "Are you sure you want to remove profile avatar?",
+  "displayNameLabel": "Display Name",
+  "save": "Save",
+
+  "matrixIdHeader": "Matrix ID",
+  "copy": "Copy",
+
+  "blockedUsersHeader": "Blocked Users",
+  "selectUserTitle": "Select User",
+  "selectUserDescription": "Prevent receiving messages or invites from user by adding their userId.",
+  "block": "Block",
+  "usersHeader": "Users",
+
+  "contactInformationHeader": "Contact Information",
+  "emailAddressTitle": "Email Address",
+  "emailAddressDescription": "Email address attached to your account."
+}
+

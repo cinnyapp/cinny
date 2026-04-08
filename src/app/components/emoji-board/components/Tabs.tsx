@@ -1,5 +1,6 @@
 import React, { CSSProperties } from 'react';
 import { Badge, Box, Text } from 'folds';
+import i18next from 'i18next';
 import { EmojiBoardTab } from '../types';
 
 const styles: CSSProperties = {
@@ -24,7 +25,7 @@ export function EmojiBoardTabs({
         onClick={() => onTabChange(EmojiBoardTab.Sticker)}
       >
         <Text as="span" size="L400">
-          Sticker
+          {i18next.t('common:sticker', { defaultValue: 'Sticker' })}
         </Text>
       </Badge>
       <Badge
@@ -36,7 +37,7 @@ export function EmojiBoardTabs({
         onClick={() => onTabChange(EmojiBoardTab.Emoji)}
       >
         <Text as="span" size="L400">
-          Emoji
+          {i18next.t('common:emoji', { defaultValue: 'Emoji' })}
         </Text>
       </Badge>
     </Box>

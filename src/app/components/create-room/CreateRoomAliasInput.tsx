@@ -9,6 +9,7 @@ import React, {
 import { MatrixError } from 'matrix-js-sdk';
 import { Box, color, Icon, Icons, Input, Spinner, Text, toRem } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
+import { useTranslation } from 'react-i18next';
 import { getMxIdServer } from '../../utils/matrix';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { replaceSpaceWithDash } from '../../utils/common';
@@ -16,6 +17,7 @@ import { AsyncState, AsyncStatus, useAsync } from '../../hooks/useAsyncCallback'
 import { useDebounce } from '../../hooks/useDebounce';
 
 export function CreateRoomAliasInput({ disabled }: { disabled?: boolean }) {
+  const { t } = useTranslation('createRoom');
   const mx = useMatrixClient();
   const aliasInputRef = useRef<HTMLInputElement>(null);
   const [aliasAvail, setAliasAvail] = useState<AsyncState<boolean, Error>>({
@@ -78,9 +80,11 @@ export function CreateRoomAliasInput({ disabled }: { disabled?: boolean }) {
 
   return (
     <Box shrink="No" direction="Column" gap="100">
-      <Text size="L400">Address (Optional)</Text>
+      <Text size="L400">{t('addressOptional', { defaultValue: 'Address (Optional)' })}</Text>
       <Text size="T200" priority="300">
-        Pick an unique address to make it discoverable.
+        {t('addressOptionalDescription', {
+          defaultValue: 'Pick an unique address to make it discoverable.',
+        })}
       </Text>
       <Input
         ref={aliasInputRef}
@@ -109,7 +113,11 @@ export function CreateRoomAliasInput({ disabled }: { disabled?: boolean }) {
         <Box style={{ color: color.Critical.Main }} alignItems="Center" gap="100">
           <Icon src={Icons.Warning} filled size="50" />
           <Text size="T200">
-            <b>This address is already taken. Please select a different one.</b>
+            <b>
+              {t('addressTaken', {
+                defaultValue: 'This address is already taken. Please select a different one.',
+              })}
+            </b>
           </Text>
         </Box>
       )}

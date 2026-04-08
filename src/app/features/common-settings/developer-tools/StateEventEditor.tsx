@@ -1,4 +1,5 @@
 import React, { FormEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Text,
@@ -41,6 +42,7 @@ type StateEventEditProps = {
   requestClose: () => void;
 };
 function StateEventEdit({ type, stateKey, content, requestClose }: StateEventEditProps) {
+  const { t } = useTranslation(['settingsDeveloperTools', 'common']);
   const mx = useMatrixClient();
   const room = useRoom();
   const alive = useAlive();
@@ -118,7 +120,9 @@ function StateEventEdit({ type, stateKey, content, requestClose }: StateEventEdi
       aria-disabled={submitting}
     >
       <Box shrink="No" direction="Column" gap="100">
-        <Text size="L400">State Event</Text>
+        <Text size="L400">
+          {t('stateEvent', { ns: 'settingsDeveloperTools', defaultValue: 'State Event' })}
+        </Text>
         <SequenceCard
           className={SequenceCardStyle}
           variant="SurfaceVariant"
@@ -138,7 +142,7 @@ function StateEventEdit({ type, stateKey, content, requestClose }: StateEventEdi
                   disabled={submitting}
                   before={submitting && <Spinner variant="Primary" fill="Solid" size="300" />}
                 >
-                  <Text size="B300">Save</Text>
+                  <Text size="B300">{t('save', { ns: 'common', defaultValue: 'Save' })}</Text>
                 </Button>
                 <Button
                   variant="Secondary"
@@ -148,7 +152,7 @@ function StateEventEdit({ type, stateKey, content, requestClose }: StateEventEdi
                   onClick={requestClose}
                   disabled={submitting}
                 >
-                  <Text size="B300">Cancel</Text>
+                  <Text size="B300">{t('cancel', { ns: 'common', defaultValue: 'Cancel' })}</Text>
                 </Button>
               </Box>
             }
@@ -163,7 +167,7 @@ function StateEventEdit({ type, stateKey, content, requestClose }: StateEventEdi
       </Box>
       <Box grow="Yes" direction="Column" gap="100">
         <Box shrink="No">
-          <Text size="L400">JSON Content</Text>
+          <Text size="L400">{t('jsonContent', { ns: 'common', defaultValue: 'JSON Content' })}</Text>
         </Box>
         <TextAreaComponent
           ref={textAreaRef}
@@ -194,12 +198,15 @@ type StateEventViewProps = {
   onEditContent?: (content: object) => void;
 };
 function StateEventView({ content, eventJSONStr, onEditContent }: StateEventViewProps) {
+  const { t } = useTranslation(['settingsDeveloperTools', 'common']);
   return (
     <Box direction="Column" style={{ padding: config.space.S400 }} gap="400">
       <Box grow="Yes" direction="Column" gap="100">
         <Box gap="200" alignItems="End">
           <Box grow="Yes">
-            <Text size="L400">State Event</Text>
+            <Text size="L400">
+              {t('stateEvent', { ns: 'settingsDeveloperTools', defaultValue: 'State Event' })}
+            </Text>
           </Box>
           {onEditContent && (
             <Box shrink="No" gap="200">
@@ -210,7 +217,7 @@ function StateEventView({ content, eventJSONStr, onEditContent }: StateEventView
                 outlined
                 onClick={() => onEditContent(content)}
               >
-                <Text size="B300">Edit</Text>
+                <Text size="B300">{t('edit', { ns: 'common', defaultValue: 'Edit' })}</Text>
               </Chip>
             </Box>
           )}
@@ -241,6 +248,7 @@ export type StateEventEditorProps = StateEventInfo & {
 };
 
 export function StateEventEditor({ type, stateKey, requestClose }: StateEventEditorProps) {
+  const { t } = useTranslation('settingsDeveloperTools');
   const mx = useMatrixClient();
   const room = useRoom();
   const stateEvent = useStateEvent(room, type as unknown as StateEvent, stateKey);
@@ -271,7 +279,7 @@ export function StateEventEditor({ type, stateKey, requestClose }: StateEventEdi
               onClick={requestClose}
               before={<Icon size="100" src={Icons.ArrowLeft} />}
             >
-              <Text size="T300">Developer Tools</Text>
+              <Text size="T300">{t('title', { defaultValue: 'Developer Tools' })}</Text>
             </Chip>
           </Box>
           <Box shrink="No">
