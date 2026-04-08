@@ -8,5 +8,8 @@
   "directMessagesTooltip": "Direct Messages",
   "exploreCommunityTooltip": "Explore Community",
   "searchTooltip": "Search",
-  "userSettingsTooltip": "User Settings"
+  "userSettingsTooltip": "User Settings",
+  "inboxTooltip": "Inbox",
+  "unverifiedDeviceTooltip": "Unverified Device",
+  "unverifiedDevicesTooltip": "Unverified Devices"
 }

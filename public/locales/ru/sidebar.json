@@ -8,5 +8,8 @@
   "directMessagesTooltip": "Личные сообщения",
   "exploreCommunityTooltip": "Поиск сообществ",
   "searchTooltip": "Поиск",
-  "userSettingsTooltip": "Настройки пользователя"
+  "userSettingsTooltip": "Настройки пользователя",
+  "inboxTooltip": "Входящие",
+  "unverifiedDeviceTooltip": "Непроверенное устройство",
+  "unverifiedDevicesTooltip": "Непроверенные устройства"
 }
