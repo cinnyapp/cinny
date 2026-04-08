@@ -1,0 +1,19 @@
+{
+  "bold": "Жирный",
+  "italic": "Курсив",
+  "underline": "Подчеркнутый",
+  "strikeThrough": "Зачеркнутый",
+  "inlineCode": "Встроенный код",
+  "spoiler": "Спойлер",
+  "blockQuote": "Цитата",
+  "blockCode": "Блок кода",
+  "orderedList": "Нумерованный список",
+  "unorderedList": "Маркированный список",
+  "heading1": "Заголовок 1",
+  "heading2": "Заголовок 2",
+  "heading3": "Заголовок 3",
+  "exit": "Выход",
+  "exitFormatting": "Выйти из форматирования",
+  "enableMarkdown": "Включить Markdown",
+  "disableMarkdown": "Выключить Markdown"
+}

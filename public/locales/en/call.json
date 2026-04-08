@@ -10,6 +10,20 @@
   "noPermissionToJoin": "You don't have permission to join!",
   "alreadyInAnotherCall": "Already in another call — End the current call to join!",
   "participant": "Participant",
-  "liveCount": "{{count}} Live"
+  "liveCount": "{{count}} Live",
+  "turnOffMicrophone": "Turn Off Microphone",
+  "turnOnMicrophone": "Turn On Microphone",
+  "turnOffSound": "Turn Off Sound",
+  "turnOnSound": "Turn On Sound",
+  "stopCamera": "Stop Camera",
+  "startCamera": "Start Camera",
+  "stopScreenshare": "Stop Screenshare",
+  "startScreenshare": "Start Screenshare",
+  "closeChat": "Close Chat",
+  "openChat": "Open Chat",
+  "speakingOneSuffix": " is speaking...",
+  "andWord": " and ",
+  "speakingManySuffix": " are speaking...",
+  "othersCount": "{{count}} others"
 }
 

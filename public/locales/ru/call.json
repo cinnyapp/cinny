@@ -10,6 +10,20 @@
   "noPermissionToJoin": "У вас нет прав на вход!",
   "alreadyInAnotherCall": "Вы уже в другом звонке — Завершите текущий звонок, чтобы присоединиться!",
   "participant": "Участник",
-  "liveCount": "В эфире: {{count}}"
+  "liveCount": "В эфире: {{count}}",
+  "turnOffMicrophone": "Выключить микрофон",
+  "turnOnMicrophone": "Включить микрофон",
+  "turnOffSound": "Выключить звук",
+  "turnOnSound": "Включить звук",
+  "stopCamera": "Остановить камеру",
+  "startCamera": "Включить камеру",
+  "stopScreenshare": "Остановить демонстрацию экрана",
+  "startScreenshare": "Начать демонстрацию экрана",
+  "closeChat": "Закрыть чат",
+  "openChat": "Открыть чат",
+  "speakingOneSuffix": " говорит...",
+  "andWord": " и ",
+  "speakingManySuffix": " говорят...",
+  "othersCount": "ещё {{count}}"
 }
 

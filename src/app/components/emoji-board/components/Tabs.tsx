@@ -14,7 +14,7 @@ export function EmojiBoardTabs({
   tab: EmojiBoardTab;
   onTabChange: (tab: EmojiBoardTab) => void;
 }) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation('emoji');
 
   return (
     <Box gap="100">

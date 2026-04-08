@@ -1,6 +1,7 @@
 import { Room } from 'matrix-js-sdk';
 import React from 'react';
 import { Box, Icon, Icons, Text } from 'folds';
+import { useTranslation } from 'react-i18next';
 import { getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 
@@ -9,6 +10,7 @@ type MemberSpeakingProps = {
   speakers: Set<string>;
 };
 export function MemberSpeaking({ room, speakers }: MemberSpeakingProps) {
+  const { t } = useTranslation('call');
   const speakingNames = Array.from(speakers).map(
     (userId) => getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId
   );
@@ -20,7 +22,7 @@ export function MemberSpeaking({ room, speakers }: MemberSpeakingProps) {
           <>
             <b>{speakingNames[0]}</b>
             <Text as="span" size="Inherit" priority="300">
-              {' is speaking...'}
+              {t('speakingOneSuffix', { defaultValue: ' is speaking...' })}
             </Text>
           </>
         )}
@@ -28,11 +30,11 @@ export function MemberSpeaking({ room, speakers }: MemberSpeakingProps) {
           <>
             <b>{speakingNames[0]}</b>
             <Text as="span" size="Inherit" priority="300">
-              {' and '}
+              {t('andWord', { defaultValue: ' and ' })}
             </Text>
             <b>{speakingNames[1]}</b>
             <Text as="span" size="Inherit" priority="300">
-              {' are speaking...'}
+              {t('speakingManySuffix', { defaultValue: ' are speaking...' })}
             </Text>
           </>
         )}
@@ -44,11 +46,11 @@ export function MemberSpeaking({ room, speakers }: MemberSpeakingProps) {
             </Text>
             <b>{speakingNames[1]}</b>
             <Text as="span" size="Inherit" priority="300">
-              {' and '}
+              {t('andWord', { defaultValue: ' and ' })}
             </Text>
             <b>{speakingNames[2]}</b>
             <Text as="span" size="Inherit" priority="300">
-              {' are speaking...'}
+              {t('speakingManySuffix', { defaultValue: ' are speaking...' })}
             </Text>
           </>
         )}
@@ -64,11 +66,16 @@ export function MemberSpeaking({ room, speakers }: MemberSpeakingProps) {
             </Text>
             <b>{speakingNames[2]}</b>
             <Text as="span" size="Inherit" priority="300">
-              {' and '}
+              {t('andWord', { defaultValue: ' and ' })}
             </Text>
-            <b>{speakingNames.length - 3} others</b>
+            <b>
+              {t('othersCount', {
+                count: speakingNames.length - 3,
+                defaultValue: '{{count}} others',
+              })}
+            </b>
             <Text as="span" size="Inherit" priority="300">
-              {' are speaking...'}
+              {t('speakingManySuffix', { defaultValue: ' are speaking...' })}
             </Text>
           </>
         )}

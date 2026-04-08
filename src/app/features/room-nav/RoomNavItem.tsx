@@ -255,6 +255,7 @@ export function RoomNavItem({
   linkPath,
 }: RoomNavItemProps) {
   const { t } = useTranslation('lobby');
+  const { t: tCall } = useTranslation('call');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const [hover, setHover] = useState(false);
@@ -374,7 +375,7 @@ export function RoomNavItem({
             {room.isCallRoom() && callMembers.length > 0 && (
               <Badge variant="Critical" fill="Solid" size="400">
                 <Text as="span" size="L400" truncate>
-                  {callMembers.length} Live
+                  {tCall('liveCount', { count: callMembers.length, defaultValue: '{{count}} Live' })}
                 </Text>
               </Badge>
             )}

@@ -3,7 +3,7 @@ import { Box, toRem, config, Icons, Icon, Text } from 'folds';
 import { useTranslation } from 'react-i18next';
 
 export function NoStickerPacks() {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation('emoji');
   return (
     <Box
       style={{ padding: `${toRem(60)} ${config.space.S500}` }}
