@@ -2,12 +2,19 @@ import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend, { HttpBackendOptions } from 'i18next-http-backend';
 import { initReactI18next } from 'react-i18next';
+import dayjs from 'dayjs';
+import 'dayjs/locale/en';
+import 'dayjs/locale/ru';
 import { trimTrailingSlash } from './utils/common';
 import { getSettings, setSettings } from './state/settings';
 
 const supportedLngs = ['en', 'ru'] as const;
 const DEFAULT_LNG = 'en';
 const DEFAULT_NS = 'roomCommon';
+const normalizeLng = (lng: string | undefined): (typeof supportedLngs)[number] =>
+  supportedLngs.includes(lng as (typeof supportedLngs)[number])
+    ? (lng as (typeof supportedLngs)[number])
+    : DEFAULT_LNG;
 
 const initialSavedLng = getSettings().language;
 const initialLng =
@@ -56,14 +63,19 @@ initPromise.then(() => {
   const settings = getSettings();
 
   // Normalize to supported list.
-  const normalizedLng = supportedLngs.includes(resolvedLng as (typeof supportedLngs)[number])
-    ? resolvedLng
-    : DEFAULT_LNG;
+  const normalizedLng = normalizeLng(resolvedLng);
+
+  // Keep dayjs locale in sync with app language.
+  dayjs.locale(normalizedLng);
 
   // Don't overwrite an explicit user choice.
   if (settings.language == null) {
     setSettings({ ...settings, language: normalizedLng });
   }
+});
+
+i18n.on('languageChanged', (lng) => {
+  dayjs.locale(normalizeLng(lng));
 });
 
 export default i18n;
