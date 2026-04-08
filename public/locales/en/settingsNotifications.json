@@ -40,6 +40,10 @@
 
   "modeOff": "Disable",
   "modeNotifySilent": "Notify Silent",
-  "modeNotifyLoud": "Notify Loud"
+  "modeNotifyLoud": "Notify Loud",
+  "roomNotifyModeDefault": "Default",
+  "roomNotifyModeAllMessages": "All Messages",
+  "roomNotifyModeMentionKeywords": "Mention & Keywords",
+  "roomNotifyModeMute": "Mute"
 }
 

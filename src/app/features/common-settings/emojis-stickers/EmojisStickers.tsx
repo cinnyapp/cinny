@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Icon, IconButton, Icons, Scroll, Text } from 'folds';
+import { useTranslation } from 'react-i18next';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { ImagePack } from '../../../plugins/custom-emoji';
 import { ImagePackView } from '../../../components/image-pack-view';
@@ -9,6 +10,7 @@ type EmojisStickersProps = {
   requestClose: () => void;
 };
 export function EmojisStickers({ requestClose }: EmojisStickersProps) {
+  const { t } = useTranslation(['roomSettings', 'spaceSettings']);
   const [imagePack, setImagePack] = useState<ImagePack>();
 
   const handleImagePackViewClose = () => {
@@ -25,7 +27,7 @@ export function EmojisStickers({ requestClose }: EmojisStickersProps) {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              Emojis & Stickers
+              {t('emojisAndStickers', { ns: 'roomSettings', defaultValue: 'Emojis & Stickers' })}
             </Text>
           </Box>
           <Box shrink="No">

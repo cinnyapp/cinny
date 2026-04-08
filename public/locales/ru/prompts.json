@@ -10,7 +10,7 @@
   "failedToLeaveSpace": "Не удалось покинуть пространство!",
 
   "inviteTitle": "Пригласить",
-  "userIdLabel": "User ID",
+  "userIdLabel": "ID пользователя",
   "userIdPlaceholder": "@username:server",
   "reasonOptionalLabel": "Причина (необязательно)",
   "open": "Открыть",

@@ -47,7 +47,7 @@ type CreatePackTileProps = {
   roomId: string;
 };
 function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
-  const { t } = useTranslation(['lobby', 'common']);
+  const { t } = useTranslation(['lobby', 'common', 'imagePack']);
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -113,7 +113,7 @@ function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
           alignItems="End"
         >
           <Box direction="Column" gap="100" grow="Yes">
-            <Text size="L400">{t('name', { ns: 'common', defaultValue: 'Name' })}</Text>
+            <Text size="L400">{t('name', { ns: 'imagePack', defaultValue: 'Name' })}</Text>
             <Input
               name="nameInput"
               required

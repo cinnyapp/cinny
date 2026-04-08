@@ -40,6 +40,10 @@
 
   "modeOff": "Отключить",
   "modeNotifySilent": "Без звука",
-  "modeNotifyLoud": "Со звуком"
+  "modeNotifyLoud": "Со звуком",
+  "roomNotifyModeDefault": "По умолчанию",
+  "roomNotifyModeAllMessages": "Все сообщения",
+  "roomNotifyModeMentionKeywords": "Упоминания и ключевые слова",
+  "roomNotifyModeMute": "Без уведомлений"
 }
 
