@@ -8,6 +8,8 @@ import {
 
 const SPACE_ROOMS = 'spaceRooms';
 
+export const PINNED_ROOMS_STORAGE_KEY = 'spacePinnedRooms';
+
 const baseSpaceRoomsAtom = atomWithLocalStorage<Set<string>>(
   SPACE_ROOMS,
   (key) => {

@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, forwardRef, useState } from 'react';
+import React, { MouseEventHandler, forwardRef, useEffect, useState } from 'react';
 import { Room } from 'matrix-js-sdk';
 import {
   Avatar,
@@ -59,6 +59,7 @@ import { callChatAtom } from '../../state/callEmbed';
 import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
+import { PINNED_ROOMS_STORAGE_KEY } from '../../state/spaceRooms';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -77,6 +78,41 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     const canInvite = permissions.action('invite', mx.getSafeUserId());
     const openRoomSettings = useOpenRoomSettings();
     const space = useSpaceOptionally();
+
+    const [pinned, setPinned] = useState(false);
+
+    const getPinnedRoomIds = () => {
+      const item = window.localStorage.getItem(PINNED_ROOMS_STORAGE_KEY);
+      if (!item) return new Set<string>();
+      try {
+        const parsed = JSON.parse(item);
+        if (!Array.isArray(parsed)) return new Set<string>();
+        return new Set(parsed.filter((roomId) => typeof roomId === 'string'));
+      } catch {
+        return new Set<string>();
+      }
+    };
+
+    useEffect(() => {
+      const pinnedRoomIds = getPinnedRoomIds();
+      setPinned(pinnedRoomIds.has(room.roomId));
+    }, [room.roomId]);
+
+    const handleTogglePin = () => {
+      const pinnedRoomIds = getPinnedRoomIds();
+      if (pinnedRoomIds.has(room.roomId)) {
+        pinnedRoomIds.delete(room.roomId);
+      } else {
+        pinnedRoomIds.add(room.roomId);
+      }
+      window.localStorage.setItem(
+        PINNED_ROOMS_STORAGE_KEY,
+        JSON.stringify(Array.from(pinnedRoomIds))
+      );
+      window.dispatchEvent(new Event('spacePinnedRoomsUpdated'));
+      setPinned(pinnedRoomIds.has(room.roomId));
+      requestClose();
+    };
 
     const [invitePrompt, setInvitePrompt] = useState(false);
 
@@ -122,6 +158,16 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
               Mark as Read
+            </Text>
+          </MenuItem>
+          <MenuItem
+            onClick={handleTogglePin}
+            size="300"
+            after={<Icon size="100" src={Icons.Pin} />}
+            radii="300"
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              {pinned ? 'Unpin' : 'Pin'}
             </Text>
           </MenuItem>
           <RoomNotificationModeSwitcher roomId={room.roomId} value={notificationMode}>

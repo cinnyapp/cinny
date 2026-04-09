@@ -2,6 +2,7 @@ import React, {
   MouseEventHandler,
   forwardRef,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -85,6 +86,7 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { BreakWord } from '../../../styles/Text.css';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
 import { useCallEmbed } from '../../../hooks/useCallEmbed';
+import { PINNED_ROOMS_STORAGE_KEY } from '../../../state/spaceRooms';
 
 type SpaceMenuProps = {
   room: Room;
@@ -394,6 +396,8 @@ export function Space() {
   const callEmbed = useCallEmbed();
 
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
+  const pinnedRoomsInitialized = useRef(false);
+  const [pinnedRoomIds, setPinnedRoomIds] = useState<Set<string>>(new Set());
 
   const getRoom = useCallback(
     (rId: string): Room | undefined => {
@@ -403,6 +407,20 @@ export function Space() {
       return undefined;
     },
     [mx, allJoinedRooms]
+  );
+
+  const sortByActivity = useCallback(
+    (sId: string) => closedCategories.has(makeNavCategoryId(space.roomId, sId)),
+    [closedCategories, space.roomId]
+  );
+
+  const stableSort = useCallback(() => false, []);
+
+  const fullHierarchy = useSpaceJoinedHierarchy(
+    space.roomId,
+    getRoom,
+    useCallback(() => false, []),
+    stableSort
   );
 
   const hierarchy = useSpaceJoinedHierarchy(
@@ -419,22 +437,84 @@ export function Space() {
       },
       [space.roomId, closedCategories, roomToUnread, selectedRoomId, callEmbed]
     ),
-    useCallback(
-      (sId) => closedCategories.has(makeNavCategoryId(space.roomId, sId)),
-      [closedCategories, space.roomId]
-    )
+    sortByActivity
   );
 
-  const virtualizer = useVirtualizer({
-    count: hierarchy.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 0,
-    overscan: 10,
-  });
+  const getPinnedRoomIdsFromStorage = useCallback(() => {
+    const item = window.localStorage.getItem(PINNED_ROOMS_STORAGE_KEY);
+    if (!item) return new Set<string>();
+
+    try {
+      const value = JSON.parse(item);
+      if (!Array.isArray(value)) return new Set<string>();
+      return new Set(value.filter((roomId) => typeof roomId === 'string'));
+    } catch {
+      return new Set<string>();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pinnedRoomsInitialized.current) return;
+    pinnedRoomsInitialized.current = true;
+    setPinnedRoomIds(getPinnedRoomIdsFromStorage());
+  }, [getPinnedRoomIdsFromStorage]);
+
+  useEffect(() => {
+    const handlePinnedRoomsUpdated = () => {
+      setPinnedRoomIds(getPinnedRoomIdsFromStorage());
+    };
+
+    window.addEventListener('spacePinnedRoomsUpdated', handlePinnedRoomsUpdated);
+    return () => window.removeEventListener('spacePinnedRoomsUpdated', handlePinnedRoomsUpdated);
+  }, [getPinnedRoomIdsFromStorage]);
 
   const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) =>
     closedCategories.has(categoryId)
   );
+
+  const pinnedCategoryId = makeNavCategoryId(space.roomId, 'pinned');
+
+  const pinnedHierarchy = useMemo(
+    () => fullHierarchy.filter(({ roomId }) => roomId && pinnedRoomIds.has(roomId)),
+    [fullHierarchy, pinnedRoomIds]
+  );
+
+  const collapsedPinnedHierarchy = useMemo(
+    () =>
+      pinnedHierarchy.filter(
+        ({ roomId }) =>
+          roomId &&
+          (roomToUnread.has(roomId) || roomId === selectedRoomId || callEmbed?.roomId === roomId)
+      ),
+    [pinnedHierarchy, roomToUnread, selectedRoomId, callEmbed]
+  );
+
+  const visiblePinnedHierarchy = closedCategories.has(pinnedCategoryId)
+    ? collapsedPinnedHierarchy
+    : pinnedHierarchy;
+
+  const visibleHierarchy = useMemo(
+    () => hierarchy.filter(({ roomId }) => roomId && !pinnedRoomIds.has(roomId)),
+    [hierarchy, pinnedRoomIds]
+  );
+
+  const visibleRoomCount = useMemo(
+    () =>
+      visibleHierarchy.reduce((count, { roomId }) => {
+        const room = roomId ? mx.getRoom(roomId) : undefined;
+        return count + (room && !room.isSpaceRoom() ? 1 : 0);
+      }, 0),
+    [visibleHierarchy, mx]
+  );
+
+  const hasVisibleRooms = visibleRoomCount > 0;
+
+  const virtualizer = useVirtualizer({
+    count: visibleHierarchy.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 0,
+    overscan: 10,
+  });
 
   const getToLink = (roomId: string) =>
     getSpaceRoomPath(spaceIdOrAlias, getCanonicalAliasOrRoomId(mx, roomId));
@@ -484,44 +564,24 @@ export function Space() {
               </NavLink>
             </NavItem>
           </NavCategory>
-          <NavCategory
-            style={{
-              height: virtualizer.getTotalSize(),
-              position: 'relative',
-            }}
-          >
-            {virtualizer.getVirtualItems().map((vItem) => {
-              const { roomId } = hierarchy[vItem.index] ?? {};
-              const room = mx.getRoom(roomId);
-              if (!room) return null;
-
-              if (room.isSpaceRoom()) {
-                const categoryId = makeNavCategoryId(space.roomId, roomId);
-
+          {pinnedHierarchy.length > 0 && (
+            <NavCategory>
+              <NavCategoryHeader>
+                <RoomNavCategoryButton
+                  data-category-id={pinnedCategoryId}
+                  onClick={handleCategoryClick}
+                  closed={closedCategories.has(pinnedCategoryId)}
+                >
+                  Pinned
+                </RoomNavCategoryButton>
+              </NavCategoryHeader>
+              {visiblePinnedHierarchy.map(({ roomId }) => {
+                if (!roomId) return null;
+                const room = mx.getRoom(roomId);
+                if (!room || room.isSpaceRoom()) return null;
                 return (
-                  <VirtualTile
-                    virtualItem={vItem}
-                    key={vItem.index}
-                    ref={virtualizer.measureElement}
-                  >
-                    <div style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}>
-                      <NavCategoryHeader>
-                        <RoomNavCategoryButton
-                          data-category-id={categoryId}
-                          onClick={handleCategoryClick}
-                          closed={closedCategories.has(categoryId)}
-                        >
-                          {roomId === space.roomId ? 'Rooms' : room?.name}
-                        </RoomNavCategoryButton>
-                      </NavCategoryHeader>
-                    </div>
-                  </VirtualTile>
-                );
-              }
-
-              return (
-                <VirtualTile virtualItem={vItem} key={vItem.index} ref={virtualizer.measureElement}>
                   <RoomNavItem
+                    key={roomId}
                     room={room}
                     selected={selectedRoomId === roomId}
                     showAvatar={mDirects.has(roomId)}
@@ -529,10 +589,70 @@ export function Space() {
                     linkPath={getToLink(roomId)}
                     notificationMode={getRoomNotificationMode(notificationPreferences, room.roomId)}
                   />
-                </VirtualTile>
-              );
-            })}
-          </NavCategory>
+                );
+              })}
+            </NavCategory>
+          )}
+          {hasVisibleRooms && (
+            <NavCategory
+              style={{
+                height: virtualizer.getTotalSize(),
+                position: 'relative',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((vItem) => {
+                const { roomId } = visibleHierarchy[vItem.index] ?? {};
+                const room = mx.getRoom(roomId);
+                if (!room) return null;
+
+                if (room.isSpaceRoom()) {
+                  const categoryId = makeNavCategoryId(space.roomId, roomId);
+
+                  return (
+                    <VirtualTile
+                      virtualItem={vItem}
+                      key={vItem.index}
+                      ref={virtualizer.measureElement}
+                    >
+                      <div
+                        style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}
+                      >
+                        <NavCategoryHeader>
+                          <RoomNavCategoryButton
+                            data-category-id={categoryId}
+                            onClick={handleCategoryClick}
+                            closed={closedCategories.has(categoryId)}
+                          >
+                            {roomId === space.roomId ? 'Rooms' : room?.name}
+                          </RoomNavCategoryButton>
+                        </NavCategoryHeader>
+                      </div>
+                    </VirtualTile>
+                  );
+                }
+
+                return (
+                  <VirtualTile
+                    virtualItem={vItem}
+                    key={vItem.index}
+                    ref={virtualizer.measureElement}
+                  >
+                    <RoomNavItem
+                      room={room}
+                      selected={selectedRoomId === roomId}
+                      showAvatar={mDirects.has(roomId)}
+                      direct={mDirects.has(roomId)}
+                      linkPath={getToLink(roomId)}
+                      notificationMode={getRoomNotificationMode(
+                        notificationPreferences,
+                        room.roomId
+                      )}
+                    />
+                  </VirtualTile>
+                );
+              })}
+            </NavCategory>
+          )}
         </Box>
       </PageNavContent>
     </PageNav>
