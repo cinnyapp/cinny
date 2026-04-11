@@ -13,6 +13,7 @@ import { getLoginPath, getRegisterPath, withSearchParam } from '../../pathUtils'
 import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
 import { LoginPathSearchParams } from '../../paths';
 import { useClientConfig } from '../../../hooks/useClientConfig';
+import { setAfterLoginRedirectPath } from '../../afterLoginRedirectPath';
 
 const getLoginTokenSearchParam = () => {
   // when using hasRouter query params in existing route
@@ -30,6 +31,7 @@ const useLoginSearchParams = (searchParams: URLSearchParams): LoginPathSearchPar
       username: searchParams.get('username') ?? undefined,
       email: searchParams.get('email') ?? undefined,
       loginToken: searchParams.get('loginToken') ?? undefined,
+      redirect_after_login: searchParams.get('redirect_after_login') ?? undefined,
     }),
     [searchParams]
   );
@@ -53,6 +55,18 @@ export function Login() {
   }
 
   const parsedFlows = useParsedLoginFlows(loginFlows.flows);
+
+  React.useEffect(() => {
+    if (loginSearchParams.redirect_after_login) {
+      setAfterLoginRedirectPath(loginSearchParams.redirect_after_login);
+    }
+  }, [loginSearchParams.redirect_after_login]);
+
+  const registerPath = loginSearchParams.redirect_after_login
+    ? withSearchParam(getRegisterPath(server), {
+        redirect_after_login: loginSearchParams.redirect_after_login,
+      })
+    : getRegisterPath(server);
 
   return (
     <Box direction="Column" gap="500">
@@ -92,7 +106,7 @@ export function Login() {
         </>
       )}
       <Text align="Center">
-        Do not have an account? <Link to={getRegisterPath(server)}>Register</Link>
+        Do not have an account? <Link to={registerPath}>Register</Link>
       </Text>
     </Box>
   );
