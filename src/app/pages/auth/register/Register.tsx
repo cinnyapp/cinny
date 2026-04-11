@@ -12,6 +12,8 @@ import { SupportedUIAFlowsLoader } from '../../../components/SupportedUIAFlowsLo
 import { getLoginPath } from '../../pathUtils';
 import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
 import { RegisterPathSearchParams } from '../../paths';
+import { setAfterLoginRedirectPath } from '../../afterLoginRedirectPath';
+import { withSearchParam } from '../../pathUtils';
 
 const useRegisterSearchParams = (searchParams: URLSearchParams): RegisterPathSearchParams =>
   useMemo(
@@ -19,6 +21,7 @@ const useRegisterSearchParams = (searchParams: URLSearchParams): RegisterPathSea
       username: searchParams.get('username') ?? undefined,
       email: searchParams.get('email') ?? undefined,
       token: searchParams.get('token') ?? undefined,
+      redirect_after_login: searchParams.get('redirect_after_login') ?? undefined,
     }),
     [searchParams]
   );
@@ -32,6 +35,18 @@ export function Register() {
 
   // redirect to /login because only that path handle m.login.token
   const ssoRedirectUrl = usePathWithOrigin(getLoginPath(server));
+
+  React.useEffect(() => {
+    if (registerSearchParams.redirect_after_login) {
+      setAfterLoginRedirectPath(registerSearchParams.redirect_after_login);
+    }
+  }, [registerSearchParams.redirect_after_login]);
+
+  const loginPath = registerSearchParams.redirect_after_login
+    ? withSearchParam(getLoginPath(server), {
+        redirect_after_login: registerSearchParams.redirect_after_login,
+      })
+    : getLoginPath(server);
 
   return (
     <Box direction="Column" gap="500">
@@ -91,7 +106,7 @@ export function Register() {
         </>
       )}
       <Text align="Center">
-        Already have an account? <Link to={getLoginPath(server)}>Login</Link>
+        Already have an account? <Link to={loginPath}>Login</Link>
       </Text>
     </Box>
   );
