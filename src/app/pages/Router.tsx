@@ -87,9 +87,14 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         }}
       />
       <Route
-        loader={() => {
+        loader={({ request }) => {
           if (getFallbackSession()) {
             return redirect(getHomePath());
+          }
+          const url = new URL(request.url);
+          const redirectAfterLogin = url.searchParams.get('redirect_after_login');
+          if (redirectAfterLogin) {
+            setAfterLoginRedirectPath(redirectAfterLogin);
           }
 
           return null;
