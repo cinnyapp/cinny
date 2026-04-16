@@ -13,15 +13,9 @@
       "matchUpdateTypes": ["lockFileMaintenance"]
     },
     {
-      "groupName": "Slatejs",
       "matchPackageNames": ["slate", "slate-dom", "slate-history", "slate-react"]
     },
     {
-      "groupName": "Call",
-      "matchPackageNames": ["@element-hq/element-call-embedded", "matrix-widget-api"]
-    },
-    {
-      "groupName": "Linkify",
       "matchPackageNames": ["linkifyjs", "linkify-react"]
     }
   ],
