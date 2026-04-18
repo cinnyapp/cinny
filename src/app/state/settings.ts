@@ -25,6 +25,7 @@ export interface Settings {
   editorToolbar: boolean;
   twitterEmoji: boolean;
   pageZoom: number;
+  customFont: string;
   hideActivity: boolean;
 
   isPeopleDrawer: boolean;
@@ -59,6 +60,7 @@ const defaultSettings: Settings = {
   editorToolbar: false,
   twitterEmoji: false,
   pageZoom: 100,
+  customFont: 'InterVariable',
   hideActivity: false,
 
   isPeopleDrawer: true,
@@ -102,5 +104,5 @@ export const settingsAtom = atom<Settings, [Settings], undefined>(
   (get, set, update) => {
     set(baseSettings, update);
     setSettings(update);
-  }
+  },
 );
