@@ -23,12 +23,12 @@ import { useAtom, useAtomValue } from 'jotai';
 import { NavItem, NavItemContent, NavItemOptions, NavLink } from '../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
-import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
+import { getDirectRoomAvatarUrl, getRoomAvatarUrl, getStateEvent } from '../../utils/room';
 import { nameInitials } from '../../utils/common';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomUnread } from '../../state/hooks/unread';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
-import { usePowerLevels } from '../../hooks/usePowerLevels';
+import { getPowersLevelFromMatrixEvent, usePowerLevels } from '../../hooks/usePowerLevels';
 import { copyToClipboard } from '../../utils/dom';
 import { markAsRead } from '../../utils/notifications';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -49,8 +49,8 @@ import {
   RoomNotificationMode,
 } from '../../hooks/useRoomsNotificationPreferences';
 import { RoomNotificationModeSwitcher } from '../../components/RoomNotificationSwitcher';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
+import { getRoomCreatorsForRoomId, useRoomCreators } from '../../hooks/useRoomCreators';
+import { getRoomPermissionsAPI, useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { useRoomName } from '../../hooks/useRoomMeta';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
@@ -59,6 +59,7 @@ import { callChatAtom } from '../../state/callEmbed';
 import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
+import { StateEvent } from '../../../types/matrix/room';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -287,8 +288,18 @@ export function RoomNavItem({
   const autoDiscoveryInfo = useAutoDiscoveryInfo();
 
   const handleStartCall: MouseEventHandler<HTMLAnchorElement> = (evt) => {
-    // Do not join if no livekit support or call is not started by others
-    if (!livekitSupport(autoDiscoveryInfo) && callMembers.length === 0) {
+    const powerLevelsEvent = getStateEvent(room, StateEvent.RoomPowerLevels);
+    const powerLevels = getPowersLevelFromMatrixEvent(powerLevelsEvent);
+    const creators = getRoomCreatorsForRoomId(mx, room.roomId);
+    const permissions = getRoomPermissionsAPI(creators, powerLevels);
+
+    const hasCallPermission = permissions.event(
+      StateEvent.GroupCallMemberPrefix,
+      mx.getSafeUserId()
+    );
+
+    // Do not join if missing permissions or no livekit support and call is not started by others
+    if (!hasCallPermission || (!livekitSupport(autoDiscoveryInfo) && callMembers.length === 0)) {
       return;
     }
 

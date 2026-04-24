@@ -57,7 +57,7 @@ const fillMissingPowers = (powerLevels: IPowerLevels): IPowerLevels =>
     return draftPl;
   });
 
-const getPowersLevelFromMatrixEvent = (mEvent?: MatrixEvent): IPowerLevels => {
+export const getPowersLevelFromMatrixEvent = (mEvent?: MatrixEvent): IPowerLevels => {
   const plContent = mEvent?.getContent<IPowerLevels>();
 
   const powerLevels = !plContent ? DEFAULT_POWER_LEVELS : fillMissingPowers(plContent);
