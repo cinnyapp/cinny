@@ -339,10 +339,10 @@ function CallButton() {
             fill="None"
             ref={triggerRef}
             onClick={handleOpenMenu}
-            disabled={inAnotherCall}
+            disabled={inAnotherCall || callStarted}
             aria-pressed={!!menuAnchor}
           >
-            <Icon size="400" src={Icons.VideoCamera} filled={callStarted} />
+            <Icon size="400" src={Icons.VideoCamera} filled={!!menuAnchor} />
           </IconButton>
         )}
       </TooltipProvider>
@@ -381,6 +381,11 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const screenSize = useScreenSizeContext();
   const room = useRoom();
   const space = useSpaceOptionally();
+  const powerLevels = usePowerLevelsContext();
+  const creators = useRoomCreators(room);
+  const permissions = useRoomPermissions(creators, powerLevels);
+
+  const hasCallPermission = permissions.event(StateEvent.GroupCallMemberPrefix, mx.getSafeUserId());
 
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
@@ -575,7 +580,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </FocusTrap>
             }
           />
-          {direct && <CallButton />}
+          {direct && hasCallPermission && <CallButton />}
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"
