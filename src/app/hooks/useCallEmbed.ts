@@ -48,7 +48,7 @@ export const createCallEmbed = (
   const ongoing =
     MatrixRTCSession.sessionMembershipsForRoom(room, rtcSession.sessionDescription).length > 0;
 
-  const intent = CallEmbed.getIntent(dm, ongoing);
+  const intent = CallEmbed.getIntent(dm, ongoing, pref?.video);
   const widget = CallEmbed.getWidget(mx, room, intent, themeKind);
   const controlState = pref && new CallControlState(pref.microphone, pref.video, pref.sound);
 
@@ -101,6 +101,7 @@ export const useCallJoined = (embed?: CallEmbed): boolean => {
 
 export const useCallHangupEvent = (embed: CallEmbed, callback: () => void) => {
   useClientWidgetApiEvent(embed.call, ElementWidgetActions.HangupCall, callback);
+  useClientWidgetApiEvent(embed.call, ElementWidgetActions.Close, callback);
 };
 
 export const useCallMemberSoundSync = (embed: CallEmbed) => {
