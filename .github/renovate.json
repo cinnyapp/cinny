@@ -3,12 +3,20 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboardApproval",
-    ":semanticCommits"
+    ":semanticCommits",
+    "group:monorepos"
   ],
   "labels": ["Dependencies"],
+  "rebaseWhen": "conflicted",
   "packageRules": [
     {
       "matchUpdateTypes": ["lockFileMaintenance"]
+    },
+    {
+      "matchPackageNames": ["slate", "slate-dom", "slate-history", "slate-react"]
+    },
+    {
+      "matchPackageNames": ["linkifyjs", "linkify-react"]
     }
   ],
   "lockFileMaintenance": {

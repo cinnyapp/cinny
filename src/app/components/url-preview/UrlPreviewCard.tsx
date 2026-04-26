@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { IPreviewUrlResponse } from 'matrix-js-sdk';
 import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
+import { ImageOverlay } from '../ImageOverlay';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
@@ -12,6 +13,8 @@ import * as css from './UrlPreviewCard.css';
 import { tryDecodeURIComponent } from '../../utils/dom';
 import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { ImageViewer } from '../image-viewer';
+import { onEnterOrSpace } from '../../utils/keyboard';
 
 const linkStyles = { color: color.Success.Main };
 
@@ -19,6 +22,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
   ({ url, ts, ...props }, ref) => {
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
+    const [viewer, setViewer] = useState(false);
     const [previewStatus, loadPreview] = useAsyncCallback(
       useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
     );
@@ -30,7 +34,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
     if (previewStatus.status === AsyncStatus.Error) return null;
 
     const renderContent = (prev: IPreviewUrlResponse) => {
-      const imgUrl = mxcUrlToHttp(
+      const thumbUrl = mxcUrlToHttp(
         mx,
         prev['og:image'] || '',
         useAuthentication,
@@ -40,9 +44,31 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
         false
       );
 
+      const imgUrl = mxcUrlToHttp(mx, prev['og:image'] || '', useAuthentication);
+
       return (
         <>
-          {imgUrl && <UrlPreviewImg src={imgUrl} alt={prev['og:title']} title={prev['og:title']} />}
+          {thumbUrl && (
+            <UrlPreviewImg
+              src={thumbUrl}
+              alt={prev['og:title']}
+              title={prev['og:title']}
+              tabIndex={0}
+              onKeyDown={(evt) => onEnterOrSpace(() => setViewer(true))(evt)}
+              onClick={() => setViewer(true)}
+            />
+          )}
+          {imgUrl && (
+            <ImageOverlay
+              src={imgUrl}
+              alt={prev['og:title']}
+              viewer={viewer}
+              requestClose={() => {
+                setViewer(false);
+              }}
+              renderViewer={(p) => <ImageViewer {...p} />}
+            />
+          )}
           <UrlPreviewContent>
             <Text
               style={linkStyles}

@@ -71,7 +71,7 @@ const permittedTagToAttributes = {
   ul: ['data-md'],
   a: ['name', 'target', 'href', 'rel', 'data-md'],
   img: ['width', 'height', 'alt', 'title', 'src', 'data-mx-emoticon'],
-  code: ['class', 'data-md'],
+  code: ['class', 'data-md', 'data-label'],
   strong: ['data-md'],
   i: ['data-md'],
   em: ['data-md'],
