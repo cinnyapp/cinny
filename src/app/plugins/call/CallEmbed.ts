@@ -104,9 +104,6 @@ export class CallEmbed {
       theme: themeKind,
       header: 'none',
     });
-    if (CallEmbed.startingDMCall(intent)) {
-      params.append('sendNotificationType', 'ring');
-    }
 
     const widgetUrl = new URL(
       `${trimTrailingSlash(import.meta.env.BASE_URL)}/public/element-call/index.html`,
