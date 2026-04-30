@@ -139,6 +139,7 @@ const getInlineElement = (node: ChildNode, processText: ProcessTextCallback): In
   }
 
   if (isTag(node)) {
+    if (node.name === 'p' && node?.children?.length === 0) return [{ text: '' }];
     const markType = getInlineNodeMarkType(node);
     if (markType) {
       return getInlineMarkElement(markType, node, (child) => {
