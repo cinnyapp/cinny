@@ -1,4 +1,4 @@
-import React, { CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, ReactNode, useMemo } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
 import { IContent } from 'matrix-js-sdk';
 import { JUMBO_EMOJI_REG, URL_REG } from '../../utils/regex';
@@ -83,17 +83,22 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
   const trimmedBody = trimReplyFromBody(body);
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+  
+  const cleanedMessage = useMemo(
+    () => typeof customBody === 'string'? customBody?.replace(/<li>(<p><\/p>)?<\/li>/gi, '<li><br></li>') : undefined,
+    [customBody]
+  );
 
   return (
     <>
       <MessageTextBody
-        preWrap={typeof customBody !== 'string'}
+        preWrap={typeof cleanedMessage !== 'string'}
         jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
         style={style}
       >
         {renderBody({
           body: trimmedBody,
-          customBody: typeof customBody === 'string' ? customBody : undefined,
+          customBody: typeof customBody === 'string' ? cleanedMessage : undefined,
         })}
         {edited && <MessageEditedContent />}
       </MessageTextBody>
