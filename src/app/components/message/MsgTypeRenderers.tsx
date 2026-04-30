@@ -1,4 +1,4 @@
-import React, { CSSProperties, ReactNode, useMemo } from 'react';
+import React, { CSSProperties, ReactNode } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
 import { IContent } from 'matrix-js-sdk';
 import { JUMBO_EMOJI_REG, URL_REG } from '../../utils/regex';
@@ -29,6 +29,7 @@ import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
 import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
 import { FileHeader, FileDownloadButton } from './FileHeader';
+import * as css from './MsgTypeRenderers.css';
 
 export function MBadEncrypted() {
   return (
@@ -83,27 +84,22 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
   const trimmedBody = trimReplyFromBody(body);
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
-  
-  const cleanedMessage = useMemo(
-    () => typeof customBody === 'string'? customBody?.replace(/<li>(<p><\/p>)?<\/li>/gi, '<li><br></li>') : undefined,
-    [customBody]
-  );
 
   return (
-    <>
+    <div className={css.MText}>
       <MessageTextBody
-        preWrap={typeof cleanedMessage !== 'string'}
+        preWrap={typeof customBody !== 'string'}
         jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
         style={style}
       >
         {renderBody({
           body: trimmedBody,
-          customBody: typeof customBody === 'string' ? cleanedMessage : undefined,
+          customBody: typeof customBody === 'string' ? customBody : undefined,
         })}
         {edited && <MessageEditedContent />}
       </MessageTextBody>
       {renderUrlsPreview && urls && urls.length > 0 && renderUrlsPreview(urls)}
-    </>
+    </div>
   );
 }
 

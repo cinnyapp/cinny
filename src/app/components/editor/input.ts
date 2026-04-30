@@ -139,7 +139,6 @@ const getInlineElement = (node: ChildNode, processText: ProcessTextCallback): In
   }
 
   if (isTag(node)) {
-    if (node.name === 'p' && node?.children?.length === 0) return [{ text: '' }];
     const markType = getInlineNodeMarkType(node);
     if (markType) {
       return getInlineMarkElement(markType, node, (child) => {
@@ -158,9 +157,12 @@ const getInlineElement = (node: ChildNode, processText: ProcessTextCallback): In
       return children;
     }
 
-    return node.childNodes.flatMap((child) => getInlineElement(child, processText));
+    if (node?.childNodes?.length > 0)
+      return node.childNodes.flatMap((child) => getInlineElement(child, processText));
+    return [{ text: '' }];
   }
 
+  if (node?.childNodes?.length > 0) return [{ text: '' }];
   return [];
 };
 
