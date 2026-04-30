@@ -29,7 +29,6 @@ import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
 import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
 import { FileHeader, FileDownloadButton } from './FileHeader';
-import * as css from './MsgTypeRenderers.css';
 
 export function MBadEncrypted() {
   return (
@@ -86,7 +85,7 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
   return (
-    <div className={css.MText}>
+    <>
       <MessageTextBody
         preWrap={typeof customBody !== 'string'}
         jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
@@ -99,7 +98,7 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
         {edited && <MessageEditedContent />}
       </MessageTextBody>
       {renderUrlsPreview && urls && urls.length > 0 && renderUrlsPreview(urls)}
-    </div>
+    </>
   );
 }
 
