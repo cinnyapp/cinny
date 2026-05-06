@@ -1,6 +1,8 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { Box, Badge, toRem, Text } from 'folds';
 import { millify } from '../../plugins/millify';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
 
 type UnreadBadgeProps = {
   highlight?: boolean;
@@ -18,6 +20,11 @@ export function UnreadBadgeCenter({ children }: { children: ReactNode }) {
 }
 
 export function UnreadBadge({ highlight, count }: UnreadBadgeProps) {
+  const [hideUnreadActivityDots] = useSetting(settingsAtom, 'hideUnreadActivityDots');
+
+  // Suppress the dot-only indicator (no count, not a highlight) when hidden by user.
+  if (hideUnreadActivityDots && count <= 0 && !highlight) return null;
+
   return (
     <Badge
       variant={highlight ? 'Success' : 'Secondary'}
