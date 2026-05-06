@@ -1,6 +1,30 @@
-import React, { ReactNode, useCallback, useRef } from 'react';
+/* eslint-disable jsx-a11y/media-has-caption */
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { config } from 'folds';
+import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
+import FocusTrap from 'focus-trap-react';
+import {
+  Avatar,
+  Box,
+  Button,
+  config,
+  Dialog,
+  Icon,
+  Icons,
+  Overlay,
+  OverlayBackdrop,
+  OverlayCenter,
+  Text,
+} from 'folds';
+import {
+  EventTimelineSetHandlerMap,
+  EventType,
+  RelationType,
+  Room,
+  RoomEvent,
+} from 'matrix-js-sdk';
+import { IRTCNotificationContent, RTCNotificationType } from 'matrix-js-sdk/lib/matrixrtc/types';
+import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import {
   CallEmbedContextProvider,
   CallEmbedRefContextProvider,
@@ -8,11 +32,294 @@ import {
   useCallJoined,
   useCallThemeSync,
   useCallMemberSoundSync,
+  useCallStart,
 } from '../hooks/useCallEmbed';
 import { callChatAtom, callEmbedAtom } from '../state/callEmbed';
 import { CallEmbed } from '../plugins/call';
 import { useSelectedRoom } from '../hooks/router/useSelectedRoom';
 import { ScreenSize, useScreenSizeContext } from '../hooks/useScreenSize';
+import { useMatrixClient } from '../hooks/useMatrixClient';
+import CallSound from '../../../public/sound/call.ogg';
+import { useCallMembersChange, useCallSession } from '../hooks/useCall';
+import { useRoomAvatar, useRoomName } from '../hooks/useRoomMeta';
+import { mDirectAtom } from '../state/mDirectList';
+import { useMediaAuthentication } from '../hooks/useMediaAuthentication';
+import { mxcUrlToHttp } from '../utils/matrix';
+import { RoomAvatar, RoomIcon } from './room-avatar';
+import { useRoomNavigate } from '../hooks/useRoomNavigate';
+import { getStateEvent } from '../utils/room';
+import { StateEvent } from '../../types/matrix/room';
+import { getPowersLevelFromMatrixEvent } from '../hooks/usePowerLevels';
+import { getRoomCreatorsForRoomId } from '../hooks/useRoomCreators';
+import { getRoomPermissionsAPI } from '../hooks/useRoomPermissions';
+
+type IncomingCallInfo = {
+  room: Room;
+  sender: string;
+  senderTs: number;
+  lifetime: number;
+  intent?: string;
+  notificationType: RTCNotificationType;
+  refEventId: string;
+};
+type IncomingCallProps = {
+  dm: boolean;
+  info: IncomingCallInfo;
+  onIgnore: () => void;
+  onAnswer: (room: Room, video: boolean) => void;
+  onReject: (room: Room, eventId: string) => void;
+};
+function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallProps) {
+  const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
+  const { room } = info;
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const roomName = useRoomName(room);
+  const roomAvatar = useRoomAvatar(room, dm);
+  const avatarUrl = roomAvatar
+    ? mxcUrlToHttp(mx, roomAvatar, useAuthentication, 96, 96, 'crop') ?? undefined
+    : undefined;
+
+  const session = useCallSession(room);
+  useCallMembersChange(
+    session,
+    useCallback(() => {
+      const members = MatrixRTCSession.sessionMembershipsForRoom(room, session.sessionDescription);
+      if (members.length === 0) {
+        onIgnore();
+      }
+    }, [room, session, onIgnore])
+  );
+
+  const playSound = useCallback(() => {
+    const audioElement = audioRef.current;
+    audioElement?.play();
+  }, []);
+
+  useEffect(() => {
+    if (info.notificationType === 'ring') {
+      playSound();
+    }
+  }, [playSound, info.notificationType]);
+
+  return (
+    <>
+      <Overlay open backdrop={<OverlayBackdrop />}>
+        <OverlayCenter style={{ alignItems: 'start', paddingTop: config.space.S100 }}>
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              onDeactivate: () => onIgnore(),
+              clickOutsideDeactivates: false,
+              escapeDeactivates: false,
+            }}
+          >
+            <Dialog>
+              <Box
+                style={{
+                  padding: `${config.space.S300} ${config.space.S400} ${config.space.S400}`,
+                }}
+                direction="Column"
+                gap="500"
+              >
+                <Box direction="Column" gap="300">
+                  <Box gap="200" alignItems="Center">
+                    {info.intent === 'video' && <Icon size="50" src={Icons.VideoCamera} filled />}
+                    <Text size="L400">Incoming Call</Text>
+                  </Box>
+                  <Box direction="Row" gap="300" alignItems="Center">
+                    <Box shrink="No">
+                      <Avatar size="400">
+                        <RoomAvatar
+                          roomId={room.roomId}
+                          src={avatarUrl}
+                          alt={roomName}
+                          renderFallback={() => (
+                            <RoomIcon
+                              roomType={room.getType()}
+                              size="400"
+                              joinRule={room.getJoinRule()}
+                              filled
+                            />
+                          )}
+                        />
+                      </Avatar>
+                    </Box>
+                    <Box grow="Yes" direction="Column" gap="0">
+                      <Text size="H4" truncate>
+                        {roomName}
+                      </Text>
+                      <Text size="T200">{info.sender}</Text>
+                    </Box>
+                  </Box>
+                </Box>
+                <Box gap="300">
+                  <Button
+                    style={{ flexGrow: 1 }}
+                    variant="Critical"
+                    fill="Soft"
+                    size="400"
+                    radii="400"
+                    onClick={() => (dm ? onReject(room, info.refEventId) : onIgnore())}
+                    before={<Icon size="200" src={Icons.PhoneDown} filled />}
+                  >
+                    <Text as="span" size="B400">
+                      {dm ? 'Reject' : 'Ignore'}
+                    </Text>
+                  </Button>
+                  <Button
+                    style={{ flexGrow: 1 }}
+                    variant="Success"
+                    size="400"
+                    radii="400"
+                    onClick={() => onAnswer(room, info.intent === 'video')}
+                    before={<Icon size="200" src={Icons.Phone} filled />}
+                  >
+                    <Text as="span" size="B400">
+                      Answer
+                    </Text>
+                  </Button>
+                </Box>
+              </Box>
+            </Dialog>
+          </FocusTrap>
+        </OverlayCenter>
+      </Overlay>
+      <audio ref={audioRef} loop style={{ display: 'none' }}>
+        <source src={CallSound} type="audio/ogg" />
+      </audio>
+    </>
+  );
+}
+
+type IncomingCallListenerProps = {
+  callEmbed?: CallEmbed;
+  joined?: boolean;
+};
+function IncomingCallListener({ callEmbed, joined }: IncomingCallListenerProps) {
+  const mx = useMatrixClient();
+  const directs = useAtomValue(mDirectAtom);
+  const { navigateRoom } = useRoomNavigate();
+
+  const [callInfo, setCallInfo] = useState<IncomingCallInfo>();
+  const dm = callInfo ? directs.has(callInfo.room.roomId) : false;
+  const startCall = useCallStart(dm);
+
+  const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = useCallback(
+    async (event, room, toStartOfTimeline, removed, data) => {
+      // only process rtc notification reference events.
+      // we do not want to wait to decrypt all events.
+      if (event.getRelation()?.rel_type !== RelationType.Reference) return;
+
+      if (event.isEncrypted()) {
+        if (!event.isBeingDecrypted()) {
+          await event.attemptDecryption(mx.getCrypto() as CryptoBackend);
+        }
+        await event.getDecryptionPromise();
+      }
+
+      if (
+        !room ||
+        event.getType() !== EventType.RTCNotification ||
+        event.getSender() === mx.getSafeUserId() ||
+        !data.liveEvent
+      ) {
+        return;
+      }
+
+      const sender = event.getSender();
+      const content = event.getContent<IRTCNotificationContent>();
+      const senderTs =
+        content.sender_ts - event.getTs() > 20000 ? event.getTs() : content.sender_ts;
+      const lifetime = Math.min(content.lifetime, 120000);
+      const notificationType = content.notification_type;
+      const relation =
+        event.getRelation()?.rel_type === RelationType.Reference ? event.getRelation() : undefined;
+      const refEventId = relation?.event_id;
+
+      const mention =
+        content['m.mentions'].room || content['m.mentions'].user_ids?.includes(mx.getSafeUserId());
+      if (!sender || !refEventId || !mention || Date.now() >= senderTs + lifetime) {
+        return;
+      }
+
+      const powerLevelsEvent = getStateEvent(room, StateEvent.RoomPowerLevels);
+      const powerLevels = getPowersLevelFromMatrixEvent(powerLevelsEvent);
+      const creators = getRoomCreatorsForRoomId(mx, room.roomId);
+      const permissions = getRoomPermissionsAPI(creators, powerLevels);
+
+      const hasCallPermission = permissions.event(
+        StateEvent.GroupCallMemberPrefix,
+        mx.getSafeUserId()
+      );
+      if (!hasCallPermission) return;
+
+      const info: IncomingCallInfo = {
+        room,
+        sender,
+        senderTs,
+        lifetime,
+        intent:
+          'm.call.intent' in content && typeof content['m.call.intent'] === 'string'
+            ? content['m.call.intent']
+            : undefined,
+        notificationType,
+        refEventId,
+      };
+
+      setCallInfo(info);
+    },
+    [mx]
+  );
+
+  useEffect(() => {
+    mx.on(RoomEvent.Timeline, handleTimelineEvent);
+    return () => {
+      mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
+    };
+  }, [mx, handleTimelineEvent]);
+
+  const handleIgnore = useCallback(() => {
+    setCallInfo(undefined);
+  }, []);
+
+  const handleReject = useCallback(
+    (room: Room, eventId: string) => {
+      mx.sendEvent(room.roomId, EventType.RTCDecline, {
+        'm.relates_to': {
+          rel_type: RelationType.Reference,
+          event_id: eventId,
+        },
+      });
+      setCallInfo(undefined);
+    },
+    [mx]
+  );
+
+  const handleAnswer = useCallback(
+    (room: Room, video: boolean) => {
+      startCall(room, { microphone: true, video, sound: true });
+      setCallInfo(undefined);
+      navigateRoom(room.roomId);
+    },
+    [startCall, navigateRoom]
+  );
+
+  if (callInfo && callEmbed?.roomId === callInfo.room.roomId) {
+    return null;
+  }
+  return !joined && callInfo ? (
+    <IncomingCall
+      dm={dm}
+      info={callInfo}
+      onIgnore={handleIgnore}
+      onAnswer={handleAnswer}
+      onReject={handleReject}
+    />
+  ) : null;
+}
 
 function CallUtils({ embed }: { embed: CallEmbed }) {
   const setCallEmbed = useSetAtom(callEmbedAtom);
@@ -48,7 +355,10 @@ export function CallEmbedProvider({ children }: CallEmbedProviderProps) {
   return (
     <CallEmbedContextProvider value={callEmbed}>
       {callEmbed && <CallUtils embed={callEmbed} />}
-      <CallEmbedRefContextProvider value={callEmbedRef}>{children}</CallEmbedRefContextProvider>
+      <CallEmbedRefContextProvider value={callEmbedRef}>
+        <IncomingCallListener callEmbed={callEmbed} joined={joined} />
+        {children}
+      </CallEmbedRefContextProvider>
       <div
         data-call-embed-container
         style={{
