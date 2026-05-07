@@ -70,9 +70,12 @@ export class CallEmbed {
     );
   }
 
-  static startingDMCall(intent: ElementCallIntent): boolean {
+  static startingCall(intent: ElementCallIntent): boolean {
     return (
-      intent === ElementCallIntent.StartCallDM || intent === ElementCallIntent.StartCallDMVoice
+      intent === ElementCallIntent.StartCallDM ||
+      intent === ElementCallIntent.StartCallDMVoice ||
+      intent === ElementCallIntent.StartCall ||
+      intent === ElementCallIntent.StartCallVoice
     );
   }
 
@@ -104,6 +107,10 @@ export class CallEmbed {
       theme: themeKind,
       header: 'none',
     });
+
+    if (!room.isCallRoom() && CallEmbed.startingCall(intent)) {
+      params.append('sendNotificationType', CallEmbed.dmCall(intent) ? 'ring' : 'notification');
+    }
 
     const widgetUrl = new URL(
       `${trimTrailingSlash(import.meta.env.BASE_URL)}/public/element-call/index.html`,
