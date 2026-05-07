@@ -250,7 +250,7 @@ function IncomingCallListener({ callEmbed, joined }: IncomingCallListenerProps) 
       const creators = getRoomCreatorsForRoomId(mx, room.roomId);
       const permissions = getRoomPermissionsAPI(creators, powerLevels);
 
-      const hasCallPermission = permissions.event(
+      const hasCallPermission = permissions.stateEvent(
         StateEvent.GroupCallMemberPrefix,
         mx.getSafeUserId()
       );

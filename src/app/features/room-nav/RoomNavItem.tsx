@@ -293,7 +293,7 @@ export function RoomNavItem({
     const creators = getRoomCreatorsForRoomId(mx, room.roomId);
     const permissions = getRoomPermissionsAPI(creators, powerLevels);
 
-    const hasCallPermission = permissions.event(
+    const hasCallPermission = permissions.stateEvent(
       StateEvent.GroupCallMemberPrefix,
       mx.getSafeUserId()
     );
@@ -378,7 +378,7 @@ export function RoomNavItem({
                 aria-label={notificationMode}
               />
             )}
-            {room.isCallRoom() && callMembers.length > 0 && (
+            {callMembers.length > 0 && (
               <Badge variant="Critical" fill="Solid" size="400">
                 <Text as="span" size="L400" truncate>
                   {callMembers.length} Live
