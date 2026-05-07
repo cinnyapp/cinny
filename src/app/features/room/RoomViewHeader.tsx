@@ -70,6 +70,7 @@ import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
 import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
+import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 
 type RoomMenuProps = {
   room: Room;
@@ -385,7 +386,11 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const creators = useRoomCreators(room);
   const permissions = useRoomPermissions(creators, powerLevels);
 
-  const hasCallPermission = permissions.event(StateEvent.GroupCallMemberPrefix, mx.getSafeUserId());
+  const hasCallPermission = permissions.stateEvent(
+    StateEvent.GroupCallMemberPrefix,
+    mx.getSafeUserId()
+  );
+  const livekitSupported = useLivekitSupport();
 
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
@@ -580,7 +585,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </FocusTrap>
             }
           />
-          {direct && hasCallPermission && <CallButton />}
+          {livekitSupported && hasCallPermission && <CallButton />}
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"
