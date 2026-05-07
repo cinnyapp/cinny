@@ -585,7 +585,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </FocusTrap>
             }
           />
-          {livekitSupported && hasCallPermission && <CallButton />}
+          {!room.isCallRoom() && livekitSupported && hasCallPermission && <CallButton />}
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"
