@@ -157,10 +157,12 @@ const getInlineElement = (node: ChildNode, processText: ProcessTextCallback): In
       return children;
     }
 
-    return node.childNodes.flatMap((child) => getInlineElement(child, processText));
+    const children = node.childNodes.flatMap((child) => getInlineElement(child, processText));
+    if (children.length === 0) return [{ text: '' }];
+    return children;
   }
 
-  return [];
+  return [{ text: '' }];
 };
 
 const parseBlockquoteNode = (
