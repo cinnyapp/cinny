@@ -133,7 +133,7 @@ const getRestoreAnchor = (
 
 const getRestoreScrollData = (scrollTop: number, restoreAnchorData: RestoreAnchorData) => {
   const [anchorItem, anchorElement] = restoreAnchorData;
-  if (!anchorItem || !anchorElement) {
+  if (typeof anchorItem !== 'number' || !anchorElement) {
     return undefined;
   }
   return {
