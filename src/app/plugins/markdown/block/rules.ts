@@ -10,18 +10,22 @@ export const HeadingRule: BlockMDRule = {
   },
 };
 
-const CODEBLOCK_MD_1 = '```';
-const CODEBLOCK_REG_1 = /^`{3}(\S*)\n((?:.*\n)+?)`{3} *(?!.)\n?/m;
+// opening fence: 3 or more backticks
+// capture the exact fence length in group 1
+// optional info string in group 2
+// code content in group 3
+// closing fence must match the exact same fence sequence via \1
+const CODEBLOCK_REG_1 = /^(`{3,})(?!`)(\S*)\n((?:.*\n)+?)\1 *(?!.)\n?/m;
 export const CodeBlockRule: BlockMDRule = {
   match: (text) => text.match(CODEBLOCK_REG_1),
   html: (match) => {
-    const [, g1, g2] = match;
+    const [, fence, g1, g2] = match;
     // use last identifier after dot, e.g. for "example.json" gets us "json" as language code.
     const langCode = g1 ? g1.substring(g1.lastIndexOf('.') + 1) : null;
     const filename = g1 !== langCode ? g1 : null;
     const classNameAtt = langCode ? ` class="language-${langCode}"` : '';
     const filenameAtt = filename ? ` data-label="${filename}"` : '';
-    return `<pre data-md="${CODEBLOCK_MD_1}"><code${classNameAtt}${filenameAtt}>${g2}</code></pre>`;
+    return `<pre data-md="${fence}"><code${classNameAtt}${filenameAtt}>${g2}</code></pre>`;
   },
 };
 
