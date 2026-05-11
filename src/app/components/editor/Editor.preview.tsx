@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import {
   config,
   Icon,
@@ -17,6 +18,7 @@ import { Toolbar } from './Toolbar';
 import { stopPropagation } from '../../utils/keyboard';
 
 export function EditorPreview() {
+  const { t } = useTranslation('room');
   const [open, setOpen] = useState(false);
   const editor = useEditor();
   const [toolbar, setToolbar] = useState(false);
@@ -40,7 +42,7 @@ export function EditorPreview() {
               <div style={{ padding: config.space.S400 }}>
                 <CustomEditor
                   editor={editor}
-                  placeholder="Send a message..."
+                  placeholder={t('messagePlaceholder', { defaultValue: 'Send a message...' })}
                   before={
                     <IconButton variant="SurfaceVariant" size="300" radii="300">
                       <Icon src={Icons.PlusCircle} />

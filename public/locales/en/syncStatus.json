@@ -1,0 +1,5 @@
+{
+  "connecting": "Connecting...",
+  "connectionLostReconnecting": "Connection Lost! Reconnecting...",
+  "connectionLost": "Connection Lost!"
+}

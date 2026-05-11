@@ -2,6 +2,7 @@ import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, Room } from 'matrix-js-sdk';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 import { getMemberDisplayName, trimReplyFromBody } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { LinePlaceholder } from './placeholder';
@@ -37,19 +38,22 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
   )
 );
 
-export const ThreadIndicator = as<'div'>(({ ...props }, ref) => (
-  <Box
-    shrink="No"
-    className={css.ThreadIndicator}
-    alignItems="Center"
-    gap="100"
-    {...props}
-    ref={ref}
-  >
-    <Icon size="50" src={Icons.Thread} />
-    <Text size="L400">Thread</Text>
-  </Box>
-));
+export const ThreadIndicator = as<'div'>(({ ...props }, ref) => {
+  const { t } = useTranslation('message');
+  return (
+    <Box
+      shrink="No"
+      className={css.ThreadIndicator}
+      alignItems="Center"
+      gap="100"
+      {...props}
+      ref={ref}
+    >
+      <Icon size="50" src={Icons.Thread} />
+      <Text size="L400">{t('thread', { defaultValue: 'Thread' })}</Text>
+    </Box>
+  );
+});
 
 type ReplyProps = {
   room: Room;

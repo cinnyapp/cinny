@@ -20,6 +20,7 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { Link } from 'react-router-dom';
 import { MatrixError } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../../utils/matrix';
 import { EMAIL_REGEX } from '../../../utils/regex';
 import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
@@ -39,6 +40,7 @@ import { getResetPasswordPath } from '../../pathUtils';
 import { stopPropagation } from '../../../utils/keyboard';
 
 function UsernameHint({ server }: { server: string }) {
+  const { t } = useTranslation('auth');
   const [anchor, setAnchor] = useState<RectCords>();
 
   const handleOpenMenu: MouseEventHandler<HTMLElement> = (evt) => {
@@ -60,7 +62,7 @@ function UsernameHint({ server }: { server: string }) {
         >
           <Menu>
             <Header size="300" style={{ padding: `0 ${config.space.S200}` }}>
-              <Text size="L400">Hint</Text>
+              <Text size="L400">{t('hintTitle', { defaultValue: 'Hint' })}</Text>
             </Header>
             <Box
               style={{ padding: config.space.S200, paddingTop: 0 }}
@@ -70,19 +72,19 @@ function UsernameHint({ server }: { server: string }) {
             >
               <Text size="T300">
                 <Text as="span" size="Inherit" priority="300">
-                  Username:
+                  {t('hintUsernameLabel', { defaultValue: 'Username:' })}
                 </Text>{' '}
                 user123
               </Text>
               <Text size="T300">
                 <Text as="span" size="Inherit" priority="300">
-                  Matrix ID:
+                  {t('hintMatrixIdLabel', { defaultValue: 'Matrix ID:' })}
                 </Text>
                 {` @user123:${server}`}
               </Text>
               <Text size="T300">
                 <Text as="span" size="Inherit" priority="300">
-                  Email:
+                  {t('hintEmailLabel', { defaultValue: 'Email:' })}
                 </Text>
                 {` user123@${server}`}
               </Text>
@@ -111,6 +113,7 @@ type PasswordLoginFormProps = {
   defaultEmail?: string;
 };
 export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLoginFormProps) {
+  const { t } = useTranslation('auth');
   const server = useAuthServer();
   const clientConfig = useClientConfig();
 
@@ -200,7 +203,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
     <Box as="form" onSubmit={handleSubmit} direction="Inherit" gap="400">
       <Box direction="Column" gap="100">
         <Text as="label" size="L400" priority="300">
-          Username
+          {t('usernameLabel', { defaultValue: 'Username' })}
         </Text>
         <Input
           defaultValue={defaultUsername ?? defaultEmail}
@@ -215,49 +218,81 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         {loginState.status === AsyncStatus.Error && (
           <>
             {loginState.error.errcode === LoginError.ServerNotAllowed && (
-              <FieldError message="Login with custom server not allowed by your client instance." />
+              <FieldError
+                message={t('loginCustomServerNotAllowed', {
+                  defaultValue:
+                    'Login with custom server not allowed by your client instance.',
+                })}
+              />
             )}
             {loginState.error.errcode === LoginError.InvalidServer && (
-              <FieldError message="Failed to find your Matrix ID server." />
+              <FieldError
+                message={t('failedToFindMatrixIdServer', {
+                  defaultValue: 'Failed to find your Matrix ID server.',
+                })}
+              />
             )}
           </>
         )}
       </Box>
       <Box direction="Column" gap="100">
         <Text as="label" size="L400" priority="300">
-          Password
+          {t('passwordLabel', { defaultValue: 'Password' })}
         </Text>
         <PasswordInput name="passwordInput" variant="Background" size="500" outlined required />
         <Box alignItems="Start" justifyContent="SpaceBetween" gap="200">
           {loginState.status === AsyncStatus.Error && (
             <>
               {loginState.error.errcode === LoginError.Forbidden && (
-                <FieldError message="Invalid Username or Password." />
+                <FieldError
+                  message={t('invalidUsernameOrPassword', {
+                    defaultValue: 'Invalid Username or Password.',
+                  })}
+                />
               )}
               {loginState.error.errcode === LoginError.UserDeactivated && (
-                <FieldError message="This account has been deactivated." />
+                <FieldError
+                  message={t('accountDeactivated', {
+                    defaultValue: 'This account has been deactivated.',
+                  })}
+                />
               )}
               {loginState.error.errcode === LoginError.InvalidRequest && (
-                <FieldError message="Failed to login. Part of your request data is invalid." />
+                <FieldError
+                  message={t('failedToLoginInvalidRequest', {
+                    defaultValue: 'Failed to login. Part of your request data is invalid.',
+                  })}
+                />
               )}
               {loginState.error.errcode === LoginError.RateLimited && (
-                <FieldError message="Failed to login. Your login request has been rate-limited by server, Please try after some time." />
+                <FieldError
+                  message={t('failedToLoginRateLimited', {
+                    defaultValue:
+                      'Failed to login. Your login request has been rate-limited by server, Please try after some time.',
+                  })}
+                />
               )}
               {loginState.error.errcode === LoginError.Unknown && (
-                <FieldError message="Failed to login. Unknown reason." />
+                <FieldError
+                  message={t('failedToLoginUnknown', {
+                    defaultValue: 'Failed to login. Unknown reason.',
+                  })}
+                />
               )}
             </>
           )}
           <Box grow="Yes" shrink="No" justifyContent="End">
             <Text as="span" size="T200" priority="400" align="Right">
-              <Link to={getResetPasswordPath(server)}>Forget Password?</Link>
+              <Link to={getResetPasswordPath(server)}>
+                {t('forgotPasswordLink', { defaultValue: 'Forget Password?' })}
+              </Link>
             </Text>
           </Box>
         </Box>
       </Box>
       <Button type="submit" variant="Primary" size="500">
         <Text as="span" size="B500">
-          Login
+          {t('loginButton', { defaultValue: 'Login' })}
         </Text>
       </Button>
 

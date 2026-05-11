@@ -14,6 +14,7 @@ import {
 } from 'folds';
 import { HistoryVisibility, MatrixError } from 'matrix-js-sdk';
 import { RoomHistoryVisibilityEventContent } from 'matrix-js-sdk/lib/types';
+import { useTranslation } from 'react-i18next';
 import FocusTrap from 'focus-trap-react';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
@@ -26,15 +27,17 @@ import { useStateEvent } from '../../../hooks/useStateEvent';
 import { stopPropagation } from '../../../utils/keyboard';
 import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
 
-const useVisibilityStr = () =>
+const useVisibilityStr = (t: (key: string, options?: object) => string) =>
   useMemo(
     () => ({
-      [HistoryVisibility.Invited]: 'After Invite',
-      [HistoryVisibility.Joined]: 'After Join',
-      [HistoryVisibility.Shared]: 'All Messages',
-      [HistoryVisibility.WorldReadable]: 'All Messages (Guests)',
+      [HistoryVisibility.Invited]: t('historyAfterInvite', { defaultValue: 'After Invite' }),
+      [HistoryVisibility.Joined]: t('historyAfterJoin', { defaultValue: 'After Join' }),
+      [HistoryVisibility.Shared]: t('historyAllMessages', { defaultValue: 'All Messages' }),
+      [HistoryVisibility.WorldReadable]: t('historyAllMessagesGuests', {
+        defaultValue: 'All Messages (Guests)',
+      }),
     }),
-    []
+    [t]
   );
 
 const useVisibilityMenu = () =>
@@ -52,6 +55,7 @@ type RoomHistoryVisibilityProps = {
   permissions: RoomPermissionsAPI;
 };
 export function RoomHistoryVisibility({ permissions }: RoomHistoryVisibilityProps) {
+  const { t } = useTranslation('settingsGeneral');
   const mx = useMatrixClient();
   const room = useRoom();
 
@@ -62,7 +66,7 @@ export function RoomHistoryVisibility({ permissions }: RoomHistoryVisibilityProp
     visibilityEvent?.getContent<RoomHistoryVisibilityEventContent>().history_visibility ??
     HistoryVisibility.Shared;
   const visibilityMenu = useVisibilityMenu();
-  const visibilityStr = useVisibilityStr();
+  const visibilityStr = useVisibilityStr(t);
 
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
@@ -96,8 +100,11 @@ export function RoomHistoryVisibility({ permissions }: RoomHistoryVisibilityProp
       gap="400"
     >
       <SettingTile
-        title="Message History Visibility"
-        description="Changes to history visibility will only apply to future messages. The visibility of existing history will have no effect."
+        title={t('historyVisibilityTitle', { defaultValue: 'Message History Visibility' })}
+        description={t('historyVisibilityDescription', {
+          defaultValue:
+            'Changes to history visibility will only apply to future messages. The visibility of existing history will have no effect.',
+        })}
         after={
           <PopOut
             anchor={menuAnchor}

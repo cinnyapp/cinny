@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RoomMember } from 'matrix-js-sdk';
 import { Membership } from '../../types/matrix/room';
 
@@ -21,32 +22,35 @@ export type MembershipFilterItem = {
   filterFn: MembershipFilterFn;
 };
 
-export const useMembershipFilterMenu = (): MembershipFilterItem[] =>
-  useMemo(
+export const useMembershipFilterMenu = (): MembershipFilterItem[] => {
+  const { t } = useTranslation('common');
+
+  return useMemo(
     () => [
       {
-        name: 'Joined',
+        name: t('joined', { defaultValue: 'Joined' }),
         filterFn: MembershipFilter.filterJoined,
       },
       {
-        name: 'Invited',
+        name: t('invited', { defaultValue: 'Invited' }),
         filterFn: MembershipFilter.filterInvited,
       },
       {
-        name: 'Left',
+        name: t('left', { defaultValue: 'Left' }),
         filterFn: MembershipFilter.filterLeaved,
       },
       {
-        name: 'Kicked',
+        name: t('kicked', { defaultValue: 'Kicked' }),
         filterFn: MembershipFilter.filterKicked,
       },
       {
-        name: 'Banned',
+        name: t('banned', { defaultValue: 'Banned' }),
         filterFn: MembershipFilter.filterBanned,
       },
     ],
-    []
+    [t]
   );
+};
 
 export const useMembershipFilter = (
   index: number,

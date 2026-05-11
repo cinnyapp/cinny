@@ -1,5 +1,6 @@
 import React, { RefObject, useRef } from 'react';
 import { Badge, Box, color, Header, Scroll, Text, toRem } from 'folds';
+import { useTranslation } from 'react-i18next';
 import { useCallEmbed, useCallJoined, useCallEmbedPlacementSync } from '../../hooks/useCallEmbed';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { PrescreenControls } from './PrescreenControls';
@@ -16,9 +17,13 @@ import { CallControls } from './CallControls';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 
 function LivekitServerMissingMessage() {
+  const { t } = useTranslation('call');
   return (
     <Text style={{ margin: 'auto', color: color.Critical.Main }} size="L400" align="Center">
-      Your homeserver does not support calling. But you can still join call started by others.
+      {t('homeserverNoCallingSupport', {
+        defaultValue:
+          'Your homeserver does not support calling. But you can still join call started by others.',
+      })}
     </Text>
   );
 }
@@ -30,6 +35,7 @@ function JoinMessage({
   hasParticipant?: boolean;
   livekitSupported?: boolean;
 }) {
+  const { t } = useTranslation('call');
   if (hasParticipant) return null;
 
   if (livekitSupported === false) {
@@ -38,28 +44,33 @@ function JoinMessage({
 
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
-      Voice chat’s empty — Be the first to hop in!
+      {t('voiceChatEmpty', { defaultValue: 'Voice chat’s empty — Be the first to hop in!' })}
     </Text>
   );
 }
 
 function NoPermissionMessage() {
+  const { t } = useTranslation('call');
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
-      You don&#39;t have permission to join!
+      {t('noPermissionToJoin', { defaultValue: "You don't have permission to join!" })}
     </Text>
   );
 }
 
 function AlreadyInCallMessage() {
+  const { t } = useTranslation('call');
   return (
     <Text style={{ margin: 'auto', color: color.Warning.Main }} size="L400" align="Center">
-      Already in another call — End the current call to join!
+      {t('alreadyInAnotherCall', {
+        defaultValue: 'Already in another call — End the current call to join!',
+      })}
     </Text>
   );
 }
 
 function CallPrescreen() {
+  const { t } = useTranslation('call');
   const mx = useMatrixClient();
   const room = useRoom();
   const livekitSupported = useLivekitSupport();
@@ -86,11 +97,11 @@ function CallPrescreen() {
           {hasParticipant && (
             <Header size="300">
               <Box grow="Yes" alignItems="Center">
-                <Text size="L400">Participant</Text>
+                <Text size="L400">{t('participant', { defaultValue: 'Participant' })}</Text>
               </Box>
               <Badge variant="Critical" fill="Solid" size="400">
                 <Text as="span" size="L400" truncate>
-                  {callMembers.length} Live
+                  {t('liveCount', { count: callMembers.length, defaultValue: '{{count}} Live' })}
                 </Text>
               </Badge>
             </Header>

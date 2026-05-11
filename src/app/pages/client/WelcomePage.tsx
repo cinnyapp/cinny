@@ -1,9 +1,11 @@
 import React from 'react';
 import { Box, Button, Icon, Icons, Text, config, toRem } from 'folds';
+import { useTranslation } from 'react-i18next';
 import { Page, PageHero, PageHeroSection } from '../../components/page';
 import CinnySVG from '../../../../public/res/svg/cinny.svg';
 
 export function WelcomePage() {
+  const { t } = useTranslation(['welcome', 'common']);
   return (
     <Page>
       <Box
@@ -14,11 +16,18 @@ export function WelcomePage() {
       >
         <PageHeroSection>
           <PageHero
-            icon={<img width="70" height="70" src={CinnySVG} alt="Cinny Logo" />}
-            title="Welcome to Cinny"
+            icon={
+              <img
+                width="70"
+                height="70"
+                src={CinnySVG}
+                alt={t('cinnyLogoAlt', { ns: 'common', defaultValue: 'Cinny Logo' })}
+              />
+            }
+            title={t('welcomeTitle', { defaultValue: 'Welcome to Cinny' })}
             subTitle={
               <span>
-                Yet another matrix client.{' '}
+                {t('subtitlePrefix', { defaultValue: 'Yet another matrix client.' })}{' '}
                 <a
                   href="https://github.com/cinnyapp/cinny/releases"
                   target="_blank"
@@ -39,7 +48,7 @@ export function WelcomePage() {
                   before={<Icon size="200" src={Icons.Code} />}
                 >
                   <Text as="span" size="B400" truncate>
-                    Source Code
+                    {t('sourceCodeButton', { defaultValue: 'Source Code' })}
                   </Text>
                 </Button>
                 <Button
@@ -51,7 +60,7 @@ export function WelcomePage() {
                   before={<Icon size="200" src={Icons.Heart} />}
                 >
                   <Text as="span" size="B400" truncate>
-                    Support
+                    {t('supportButton', { defaultValue: 'Support' })}
                   </Text>
                 </Button>
               </Box>

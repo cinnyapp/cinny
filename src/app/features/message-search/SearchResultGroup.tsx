@@ -51,6 +51,7 @@ import {
 } from '../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
+import { useTranslation } from 'react-i18next';
 
 type SearchResultGroupProps = {
   room: Room;
@@ -74,6 +75,7 @@ export function SearchResultGroup({
   hour24Clock,
   dateFormatString,
 }: SearchResultGroupProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const highlightRegex = useMemo(() => makeHighlightRegex(highlights), [highlights]);
@@ -165,7 +167,10 @@ export function SearchResultGroup({
         return (
           <Box grow="Yes" direction="Column">
             <Text size="T400" priority="300">
-              Room Tombstone. {content.body}
+              {t('roomTombstoneWithBody', {
+                body: content.body,
+                defaultValue: 'Room Tombstone. {{body}}',
+              })}
             </Text>
           </Box>
         );
@@ -180,7 +185,7 @@ export function SearchResultGroup({
         <Box grow="Yes" direction="Column">
           <Text size="T400" priority="300">
             <code className={customHtmlCss.Code}>{event.type}</code>
-            {' event'}
+            {t('event', { defaultValue: ' event' })}
           </Text>
         </Box>
       );
@@ -303,7 +308,7 @@ export function SearchResultGroup({
                       variant="Secondary"
                       radii="400"
                     >
-                      <Text size="T200">Open</Text>
+                      <Text size="T200">{t('open', { defaultValue: 'Open' })}</Text>
                     </Chip>
                   </Box>
                 </Box>

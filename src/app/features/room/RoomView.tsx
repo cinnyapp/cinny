@@ -3,6 +3,7 @@ import { Box, Text, config } from 'folds';
 import { EventType } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { isKeyHotkey } from 'is-hotkey';
+import { useTranslation } from 'react-i18next';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { StateEvent } from '../../../types/matrix/room';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
@@ -55,6 +56,7 @@ const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
 };
 
 export function RoomView({ eventId }: { eventId?: string }) {
+  const { t } = useTranslation('room');
   const roomInputRef = useRef<HTMLDivElement>(null);
   const roomViewRef = useRef<HTMLDivElement>(null);
 
@@ -127,7 +129,11 @@ export function RoomView({ eventId }: { eventId?: string }) {
                   alignItems="Center"
                   justifyContent="Center"
                 >
-                  <Text align="Center">You do not have permission to post in this room</Text>
+                  <Text align="Center">
+                    {t('noPermissionToPost', {
+                      defaultValue: 'You do not have permission to post in this room',
+                    })}
+                  </Text>
                 </RoomInputPlaceholder>
               )}
             </>

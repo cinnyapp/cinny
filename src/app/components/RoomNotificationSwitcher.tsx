@@ -1,6 +1,7 @@
 import { Box, config, Icon, Menu, MenuItem, PopOut, RectCords, Text } from 'folds';
 import React, { MouseEventHandler, ReactNode, useMemo, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import { stopPropagation } from '../utils/keyboard';
 import {
   getRoomNotificationModeIcon,
@@ -20,16 +21,23 @@ const useRoomNotificationModes = (): RoomNotificationMode[] =>
     []
   );
 
-const useRoomNotificationModeStr = (): Record<RoomNotificationMode, string> =>
-  useMemo(
+const useRoomNotificationModeStr = (): Record<RoomNotificationMode, string> => {
+  const { t } = useTranslation('settingsNotifications');
+
+  return useMemo(
     () => ({
-      [RoomNotificationMode.Unset]: 'Default',
-      [RoomNotificationMode.AllMessages]: 'All Messages',
-      [RoomNotificationMode.SpecialMessages]: 'Mention & Keywords',
-      [RoomNotificationMode.Mute]: 'Mute',
+      [RoomNotificationMode.Unset]: t('roomNotifyModeDefault', { defaultValue: 'Default' }),
+      [RoomNotificationMode.AllMessages]: t('roomNotifyModeAllMessages', {
+        defaultValue: 'All Messages',
+      }),
+      [RoomNotificationMode.SpecialMessages]: t('roomNotifyModeMentionKeywords', {
+        defaultValue: 'Mention & Keywords',
+      }),
+      [RoomNotificationMode.Mute]: t('roomNotifyModeMute', { defaultValue: 'Mute' }),
     }),
-    []
+    [t]
   );
+};
 
 type NotificationModeSwitcherProps = {
   roomId: string;

@@ -59,6 +59,7 @@ import { callChatAtom } from '../../state/callEmbed';
 import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
+import { useTranslation } from 'react-i18next';
 import { StateEvent } from '../../../types/matrix/room';
 
 type RoomNavItemMenuProps = {
@@ -68,6 +69,7 @@ type RoomNavItemMenuProps = {
 };
 const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
   ({ room, requestClose, notificationMode }, ref) => {
+    const { t } = useTranslation('room');
     const mx = useMatrixClient();
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
@@ -122,7 +124,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             disabled={!unread}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Mark as Read
+              {t('markAsRead', { defaultValue: 'Mark as Read' })}
             </Text>
           </MenuItem>
           <RoomNotificationModeSwitcher roomId={room.roomId} value={notificationMode}>
@@ -141,7 +143,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
                 onClick={handleOpen}
               >
                 <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                  Notifications
+                  {t('notifications', { defaultValue: 'Notifications' })}
                 </Text>
               </MenuItem>
             )}
@@ -160,7 +162,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             disabled={!canInvite}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Invite
+              {t('invite', { defaultValue: 'Invite' })}
             </Text>
           </MenuItem>
           <MenuItem
@@ -170,7 +172,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Copy Link
+              {t('copyLink', { defaultValue: 'Copy Link' })}
             </Text>
           </MenuItem>
           <MenuItem
@@ -180,7 +182,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Room Settings
+              {t('roomSettings', { defaultValue: 'Room Settings' })}
             </Text>
           </MenuItem>
         </Box>
@@ -199,7 +201,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
                   aria-pressed={promptLeave}
                 >
                   <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                    Leave Room
+                    {t('leaveRoom', { defaultValue: 'Leave Room' })}
                   </Text>
                 </MenuItem>
                 {promptLeave && (
@@ -219,13 +221,14 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
 );
 
 function CallChatToggle() {
+  const { t } = useTranslation('lobby');
   const [chat, setChat] = useAtom(callChatAtom);
 
   return (
     <IconButton
       onClick={() => setChat(!chat)}
       aria-pressed={chat}
-      aria-label="Toggle Chat"
+      aria-label={t('toggleChat', { defaultValue: 'Toggle Chat' })}
       variant="Background"
       fill="None"
       size="300"
@@ -252,6 +255,8 @@ export function RoomNavItem({
   notificationMode,
   linkPath,
 }: RoomNavItemProps) {
+  const { t } = useTranslation('lobby');
+  const { t: tCall } = useTranslation('call');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const [hover, setHover] = useState(false);
@@ -381,7 +386,7 @@ export function RoomNavItem({
             {room.isCallRoom() && callMembers.length > 0 && (
               <Badge variant="Critical" fill="Solid" size="400">
                 <Text as="span" size="L400" truncate>
-                  {callMembers.length} Live
+                  {tCall('liveCount', { count: callMembers.length, defaultValue: '{{count}} Live' })}
                 </Text>
               </Badge>
             )}
@@ -425,7 +430,7 @@ export function RoomNavItem({
               onClick={handleOpenMenu}
               aria-pressed={!!menuAnchor}
               aria-controls={`menu-${room.roomId}`}
-              aria-label="More Options"
+              aria-label={t('moreOptions', { ns: 'lobby', defaultValue: 'More Options' })}
               variant="Background"
               fill="None"
               size="300"

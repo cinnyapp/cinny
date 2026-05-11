@@ -1,6 +1,7 @@
 import React, { FormEventHandler, useCallback } from 'react';
 import { Box, Text, Button, Spinner, color } from 'folds';
 import { decodeRecoveryKey, deriveRecoveryKeyFromPassphrase } from 'matrix-js-sdk/lib/crypto-api';
+import { useTranslation } from 'react-i18next';
 import { PasswordInput } from './password-input';
 import {
   SecretStorageKeyContent,
@@ -22,6 +23,7 @@ export function SecretStorageRecoveryPassphrase({
   passphraseContent,
   onDecodedRecoveryKey,
 }: SecretStorageRecoveryPassphraseProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -42,12 +44,14 @@ export function SecretStorageRecoveryPassphrase({
         const match = await mx.secretStorage.checkKey(decodedRecoveryKey, keyContent as any);
 
         if (!match) {
-          throw new Error('Invalid recovery passphrase.');
+          throw new Error(
+            t('invalidRecoveryPassphrase', { defaultValue: 'Invalid recovery passphrase.' })
+          );
         }
 
         return decodedRecoveryKey;
       },
-      [mx, keyContent]
+      [mx, keyContent, t]
     )
   );
 
@@ -77,7 +81,9 @@ export function SecretStorageRecoveryPassphrase({
     <Box as="form" onSubmit={handleSubmit} direction="Column" gap="100">
       <Box gap="200" alignItems="End">
         <Box grow="Yes" direction="Column" gap="100">
-          <Text size="L400">Recovery Passphrase</Text>
+          <Text size="L400">
+            {t('recoveryPassphrase', { defaultValue: 'Recovery Passphrase' })}
+          </Text>
           <PasswordInput
             name="recoveryPassphraseInput"
             size="400"
@@ -99,7 +105,7 @@ export function SecretStorageRecoveryPassphrase({
             before={loading && <Spinner size="200" variant="Success" fill="Solid" />}
           >
             <Text as="span" size="B400">
-              Verify
+              {t('verify', { defaultValue: 'Verify' })}
             </Text>
           </Button>
         </Box>
@@ -123,6 +129,7 @@ export function SecretStorageRecoveryKey({
   keyContent,
   onDecodedRecoveryKey,
 }: SecretStorageRecoveryKeyProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -134,12 +141,12 @@ export function SecretStorageRecoveryKey({
         const match = await mx.secretStorage.checkKey(decodedRecoveryKey, keyContent as any);
 
         if (!match) {
-          throw new Error('Invalid recovery key.');
+          throw new Error(t('invalidRecoveryKey', { defaultValue: 'Invalid recovery key.' }));
         }
 
         return decodedRecoveryKey;
       },
-      [mx, keyContent]
+      [mx, keyContent, t]
     )
   );
 
@@ -167,7 +174,7 @@ export function SecretStorageRecoveryKey({
     <Box as="form" onSubmit={handleSubmit} direction="Column" gap="100">
       <Box gap="200" alignItems="End">
         <Box grow="Yes" direction="Column" gap="100">
-          <Text size="L400">Recovery Key</Text>
+          <Text size="L400">{t('recoveryKey', { defaultValue: 'Recovery Key' })}</Text>
           <PasswordInput
             name="recoveryKeyInput"
             size="400"
@@ -189,7 +196,7 @@ export function SecretStorageRecoveryKey({
             before={loading && <Spinner size="200" variant="Success" fill="Solid" />}
           >
             <Text as="span" size="B400">
-              Verify
+              {t('verify', { defaultValue: 'Verify' })}
             </Text>
           </Button>
         </Box>

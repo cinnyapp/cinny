@@ -20,6 +20,7 @@ import {
   config,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 
 import { useDebounce } from '../../hooks/useDebounce';
 import { stopPropagation } from '../../utils/keyboard';
@@ -35,6 +36,7 @@ export function ServerPicker({
   allowCustomServer?: boolean;
   onServerChange: (server: string) => void;
 }) {
+  const { t } = useTranslation('auth');
   const [serverMenuAnchor, setServerMenuAnchor] = useState<RectCords>();
   const serverInputRef = useRef<HTMLInputElement>(null);
 
@@ -109,7 +111,9 @@ export function ServerPicker({
               >
                 <Menu>
                   <Header size="300" style={{ padding: `0 ${config.space.S200}` }}>
-                    <Text size="L400">Homeserver List</Text>
+                    <Text size="L400">
+                      {t('homeserverListTitle', { defaultValue: 'Homeserver List' })}
+                    </Text>
                   </Header>
                   <div style={{ padding: config.space.S100, paddingTop: 0 }}>
                     {serverList?.map((serverName) => (

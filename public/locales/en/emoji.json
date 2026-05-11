@@ -1,0 +1,17 @@
+{
+  "emoji": "Emoji",
+  "sticker": "Sticker",
+  "searchOrTextReaction": "Search or Text Reaction ",
+  "search": "Search",
+  "react": "React",
+  "noStickerPacks": "No Sticker Packs!",
+  "addStickersFromSettings": "Add stickers from user, room or space settings.",
+  "emojiGroupPeople": "Smileys & People",
+  "emojiGroupNature": "Animals & Nature",
+  "emojiGroupFood": "Food & Drinks",
+  "emojiGroupActivity": "Activity",
+  "emojiGroupTravel": "Travel & Places",
+  "emojiGroupObject": "Objects",
+  "emojiGroupSymbol": "Symbols",
+  "emojiGroupFlag": "Flags"
+}

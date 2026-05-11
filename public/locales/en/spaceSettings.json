@@ -1,0 +1,34 @@
+{
+  "general": "General",
+  "members": "Members",
+  "permissions": "Permissions",
+  "emojisAndStickers": "Emojis & Stickers",
+  "developerTools": "Developer Tools",
+
+  "groupManage": "Manage",
+  "manageSpaceRooms": "Manage space rooms",
+  "messageEvents": "Message Events",
+
+  "groupModeration": "Moderation",
+  "invite": "Invite",
+  "kick": "Kick",
+  "ban": "Ban",
+
+  "groupSpaceOverview": "Space Overview",
+  "spaceAvatar": "Space Avatar",
+  "spaceName": "Space Name",
+  "spaceTopic": "Space Topic",
+
+  "groupSettings": "Settings",
+  "changeSpaceAccess": "Change Space Access",
+  "publishAddress": "Publish Address",
+  "changeAllPermission": "Change All Permission",
+  "editPowerLevels": "Edit Power Levels",
+  "upgradeSpace": "Upgrade Space",
+  "otherSettings": "Other Settings",
+
+  "groupOther": "Other",
+  "manageEmojisStickers": "Manage Emojis & Stickers",
+  "changeServerAcls": "Change Server ACLs"
+}
+

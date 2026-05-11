@@ -2,12 +2,14 @@ import React from 'react';
 import { useSetAtom } from 'jotai';
 import { useParams } from 'react-router-dom';
 import { Box, Text, TooltipProvider, Tooltip, Icon, Icons, IconButton, toRem } from 'folds';
+import { useTranslation } from 'react-i18next';
 import { Page, PageHeader } from '../../components/page';
 import { callChatAtom } from '../../state/callEmbed';
 import { RoomView } from './RoomView';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 
 export function CallChatView() {
+  const { t } = useTranslation('room');
   const { eventId } = useParams();
   const setChat = useSetAtom(callChatAtom);
   const screenSize = useScreenSizeContext();
@@ -26,7 +28,7 @@ export function CallChatView() {
         <Box grow="Yes" alignItems="Center" gap="200">
           <Box grow="Yes">
             <Text size="H5" truncate>
-              Chat
+              {t('chat', { defaultValue: 'Chat' })}
             </Text>
           </Box>
           <Box shrink="No" alignItems="Center">
@@ -36,7 +38,7 @@ export function CallChatView() {
               offset={4}
               tooltip={
                 <Tooltip>
-                  <Text>Close</Text>
+                  <Text>{t('close', { defaultValue: 'Close' })}</Text>
                 </Tooltip>
               }
             >

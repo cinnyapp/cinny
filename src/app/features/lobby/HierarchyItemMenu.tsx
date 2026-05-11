@@ -26,6 +26,7 @@ import { stopPropagation } from '../../utils/keyboard';
 import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { useOpenSpaceSettings } from '../../state/hooks/spaceSettings';
+import { useTranslation } from 'react-i18next';
 import { IPowerLevels } from '../../hooks/usePowerLevels';
 import { getRoomCreatorsForRoomId } from '../../hooks/useRoomCreators';
 import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
@@ -42,6 +43,7 @@ function SuggestMenuItem({
   item: HierarchyItemWithParent;
   requestClose: () => void;
 }) {
+  const { t } = useTranslation('lobby');
   const mx = useMatrixClient();
   const { roomId, parentId, content } = item;
 
@@ -67,7 +69,9 @@ function SuggestMenuItem({
       disabled={toggleState.status === AsyncStatus.Loading}
     >
       <Text as="span" size="T300" truncate>
-        {content.suggested ? 'Unset Suggested' : 'Set Suggested'}
+        {content.suggested
+          ? t('unsetSuggested', { defaultValue: 'Unset Suggested' })
+          : t('setSuggested', { defaultValue: 'Set Suggested' })}
       </Text>
     </MenuItem>
   );
@@ -80,6 +84,7 @@ function RemoveMenuItem({
   item: HierarchyItemWithParent;
   requestClose: () => void;
 }) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const { roomId, parentId } = item;
 
@@ -111,7 +116,7 @@ function RemoveMenuItem({
       disabled={removeState.status === AsyncStatus.Loading}
     >
       <Text as="span" size="T300" truncate>
-        Remove
+        {t('remove', { defaultValue: 'Remove' })}
       </Text>
     </MenuItem>
   );
@@ -126,6 +131,7 @@ function InviteMenuItem({
   requestClose: () => void;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation('lobby');
   const mx = useMatrixClient();
   const room = mx.getRoom(item.roomId);
   const [invitePrompt, setInvitePrompt] = useState(false);
@@ -146,7 +152,7 @@ function InviteMenuItem({
         disabled={disabled || !room}
       >
         <Text as="span" size="T300" truncate>
-          Invite
+          {t('invite', { defaultValue: 'Invite' })}
         </Text>
       </MenuItem>
       {invitePrompt && room && (
@@ -171,6 +177,7 @@ function SettingsMenuItem({
   requestClose: () => void;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation('lobby');
   const openRoomSettings = useOpenRoomSettings();
   const openSpaceSettings = useOpenSpaceSettings();
   const space = useSpaceOptionally();
@@ -187,7 +194,7 @@ function SettingsMenuItem({
   return (
     <MenuItem onClick={handleSettings} size="300" radii="300" disabled={disabled}>
       <Text as="span" size="T300" truncate>
-        Settings
+        {t('settings', { defaultValue: 'Settings' })}
       </Text>
     </MenuItem>
   );
@@ -211,6 +218,7 @@ export function HierarchyItemMenu({
   pinned,
   onTogglePin,
 }: HierarchyItemMenuProps) {
+  const { t } = useTranslation('lobby');
   const mx = useMatrixClient();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
@@ -274,7 +282,9 @@ export function HierarchyItemMenu({
                         }}
                       >
                         <Text as="span" size="T300" truncate>
-                          {pinned ? 'Unpin from Sidebar' : 'Pin to Sidebar'}
+                          {pinned
+                            ? t('unpinFromSidebar', { defaultValue: 'Unpin from Sidebar' })
+                            : t('pinToSidebar', { defaultValue: 'Pin to Sidebar' })}
                         </Text>
                       </MenuItem>
                     )}
@@ -297,7 +307,7 @@ export function HierarchyItemMenu({
                             aria-pressed={promptLeave}
                           >
                             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                              Leave
+                              {t('leave', { defaultValue: 'Leave' })}
                             </Text>
                           </MenuItem>
                           {promptLeave &&

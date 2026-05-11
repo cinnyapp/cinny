@@ -1,0 +1,49 @@
+{
+  "title": "Notifications",
+  "systemHeader": "System",
+  "desktopNotificationsTitle": "Desktop Notifications",
+  "desktopNotificationsDescription": "Show desktop notifications when message arrive.",
+  "permissionBlocked": "Notification permission is blocked. Please allow notification permission from browser address bar.",
+  "notificationsNotSupported": "Notifications are not supported by the system.",
+  "enable": "Enable",
+  "notificationSoundTitle": "Notification Sound",
+  "notificationSoundDescription": "Play sound when new message arrive.",
+
+  "emailNotificationTitle": "Email Notification",
+  "emailNotificationsDisplayName": "Email Notifications",
+  "noEmailAttached": "Your account does not have any email attached.",
+  "sendToEmail": "Send notification to your email. (\"{{email}}\")",
+  "unexpectedError": "Unexpected Error!",
+  "sendToEmailGeneric": "Send notification to your email.",
+
+  "allMessagesHeader": "All Messages",
+  "badgeLabel": "Badge:",
+  "oneToOneChats": "1-to-1 Chats",
+  "oneToOneChatsEncrypted": "1-to-1 Chats (Encrypted)",
+  "rooms": "Rooms",
+  "roomsEncrypted": "Rooms (Encrypted)",
+
+  "specialMessagesHeader": "Special Messages",
+  "mentionUserId": "Mention User ID (\"{{userId}}\")",
+  "containsDisplayName": "Contains Displayname{{suffix}}",
+  "containsUsername": "Contains Username (\"{{username}}\")",
+  "mentionRoom": "Mention @room",
+  "containsRoom": "Contains @room",
+
+  "keywordMessagesHeader": "Keyword Messages",
+  "selectKeywordTitle": "Select Keyword",
+  "selectKeywordDescription": "Set a notification preference for message containing given keyword.",
+  "save": "Save",
+
+  "blockMessagesHeader": "Block Messages",
+  "blockMessagesMoved": "This option has been moved to \"Account > Block Users\" section.",
+
+  "modeOff": "Disable",
+  "modeNotifySilent": "Notify Silent",
+  "modeNotifyLoud": "Notify Loud",
+  "roomNotifyModeDefault": "Default",
+  "roomNotifyModeAllMessages": "All Messages",
+  "roomNotifyModeMentionKeywords": "Mention & Keywords",
+  "roomNotifyModeMute": "Mute"
+}
+

@@ -1,0 +1,32 @@
+{
+  "title": "Developer Tools",
+  "optionsHeader": "Options",
+  "enableDeveloperTools": "Enable Developer Tools",
+  "roomIdTitle": "Room ID",
+  "roomIdDescription": "Copy room ID to clipboard. (\"{{roomId}}\")",
+  "dataHeader": "Data",
+  "newMessageEventTitle": "New Message Event",
+  "newMessageEventDescription": "Create and send a new message event within the room.",
+  "compose": "Compose",
+  "roomStateTitle": "Room State",
+  "roomStateDescription": "State events of the room.",
+  "defaultStateKey": "Default",
+  "stateEventType": "State Event Type",
+  "stateEvent": "State Event",
+  "messageEventType": "Message Event Type",
+  "stateKeyOptional": "State Key (Optional)",
+  "accessTokenTitle": "Access Token",
+  "accessTokenDescription": "Copy access token to clipboard.",
+  "copy": "Copy",
+
+  "accountDataHeader": "Account Data",
+  "accountDataDescription": "Private personalization data stored within room.",
+  "globalTitle": "Global",
+  "globalDescription": "Data stored in your global account data.",
+  "collapse": "Collapse",
+  "expand": "Expand",
+  "eventsHeader": "Events",
+  "totalLabel": "Total: {{count}}",
+  "addNew": "Add New"
+}
+

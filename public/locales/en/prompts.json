@@ -1,0 +1,24 @@
+{
+  "leaveRoomTitle": "Leave Room",
+  "leaveRoomConfirm": "Are you sure you want to leave this room?",
+  "failedToLeaveRoom": "Failed to leave room!",
+  "leaving": "Leaving...",
+  "leave": "Leave",
+
+  "leaveSpaceTitle": "Leave Space",
+  "leaveSpaceConfirm": "Are you sure you want to leave this space?",
+  "failedToLeaveSpace": "Failed to leave space!",
+
+  "inviteTitle": "Invite",
+  "userIdLabel": "User ID",
+  "userIdPlaceholder": "@username:server",
+  "reasonOptionalLabel": "Reason (Optional)",
+  "open": "Open",
+
+  "joinWithAddressTitle": "Join with Address",
+  "joinWithAddressHelp": "Enter public address to join the community. Addresses looks like:",
+  "addressLabel": "Address",
+  "addressPlaceholder": "#community:server",
+  "invalidAddress": "Invalid Address"
+}
+

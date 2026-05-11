@@ -2,6 +2,7 @@ import React, { KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo } from '
 import { Editor } from 'slate';
 import { Box, MenuItem, Text, toRem } from 'folds';
 import { Room } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 
 import { AutocompleteQuery } from './autocompleteQuery';
 import { AutocompleteMenu } from './AutocompleteMenu';
@@ -41,6 +42,7 @@ export function EmoticonAutocomplete({
   query,
   requestClose,
 }: EmoticonAutocompleteProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
 
@@ -84,7 +86,10 @@ export function EmoticonAutocomplete({
   });
 
   return autoCompleteEmoticon.length === 0 ? null : (
-    <AutocompleteMenu headerContent={<Text size="L400">Emojis</Text>} requestClose={requestClose}>
+    <AutocompleteMenu
+      headerContent={<Text size="L400">{t('emojis', { defaultValue: 'Emojis' })}</Text>}
+      requestClose={requestClose}
+    >
       {autoCompleteEmoticon.map((emoticon) => {
         const isCustomEmoji = 'url' in emoticon;
         const key = isCustomEmoji ? emoticon.url : emoticon.unicode;

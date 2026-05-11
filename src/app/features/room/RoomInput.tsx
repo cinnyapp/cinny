@@ -12,6 +12,7 @@ import { isKeyHotkey } from 'is-hotkey';
 import { EventType, IContent, MsgType, RelationType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Dialog,
@@ -126,6 +127,7 @@ interface RoomInputProps {
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
   ({ editor, fileDropContainerRef, roomId, room }, ref) => {
+    const { t } = useTranslation('room');
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
@@ -497,9 +499,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               >
                 <Icon size="600" src={Icons.File} />
                 <Text size="H4" align="Center">
-                  {`Drop Files in "${room?.name || 'Room'}"`}
+                  {t('dropFilesTitle', {
+                    defaultValue: 'Drop Files in "{{room}}"',
+                    room: room?.name || t('unknownRoom', { defaultValue: 'Room' }),
+                  })}
                 </Text>
-                <Text align="Center">Drag and drop files here or click for selection dialog</Text>
+                <Text align="Center">
+                  {t('dropFilesDescription', {
+                    defaultValue: 'Drag and drop files here or click for selection dialog',
+                  })}
+                </Text>
               </Box>
             </Dialog>
           </OverlayCenter>
@@ -539,7 +548,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         <CustomEditor
           editableName="RoomInput"
           editor={editor}
-          placeholder="Send a message..."
+          placeholder={t('messagePlaceholder', { defaultValue: 'Send a message...' })}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}

@@ -1,0 +1,15 @@
+{
+  "addSpaceTooltip": "Добавить пространство",
+  "createSpaceTitle": "Создать пространство",
+  "createSpaceDescription": "Создайте пространство для вашего сообщества.",
+  "joinWithAddressTitle": "Присоединиться по адресу",
+  "joinWithAddressDescription": "Станьте частью существующего сообщества.",
+  "homeTooltip": "Главная",
+  "directMessagesTooltip": "Личные сообщения",
+  "exploreCommunityTooltip": "Поиск сообществ",
+  "searchTooltip": "Поиск",
+  "userSettingsTooltip": "Настройки пользователя",
+  "inboxTooltip": "Входящие",
+  "unverifiedDeviceTooltip": "Непроверенное устройство",
+  "unverifiedDevicesTooltip": "Непроверенные устройства"
+}

@@ -16,6 +16,7 @@ import {
 } from 'folds';
 import { SettingTile } from '../../components/setting-tile';
 import { SequenceCard } from '../../components/sequence-card';
+import { useTranslation } from 'react-i18next';
 import {
   creatorsSupported,
   knockRestrictedSupported,
@@ -52,6 +53,7 @@ type CreateSpaceFormProps = {
   onCreate?: (roomId: string) => void;
 };
 export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceFormProps) {
+  const { t } = useTranslation('createSpace');
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -138,7 +140,7 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
   return (
     <Box as="form" onSubmit={handleSubmit} grow="Yes" direction="Column" gap="500">
       <Box direction="Column" gap="100">
-        <Text size="L400">Access</Text>
+        <Text size="L400">{t('access', { defaultValue: 'Access' })}</Text>
         <CreateRoomAccessSelector
           value={access}
           onSelect={setAccess}
@@ -148,7 +150,7 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
         />
       </Box>
       <Box shrink="No" direction="Column" gap="100">
-        <Text size="L400">Name</Text>
+        <Text size="L400">{t('name', { defaultValue: 'Name' })}</Text>
         <Input
           required
           before={<Icon size="100" src={getCreateSpaceAccessToIcon(access)} />}
@@ -162,7 +164,7 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
         />
       </Box>
       <Box shrink="No" direction="Column" gap="100">
-        <Text size="L400">Topic (Optional)</Text>
+        <Text size="L400">{t('topicOptional', { defaultValue: 'Topic (Optional)' })}</Text>
         <TextArea
           name="topicTextAria"
           size="500"
@@ -176,7 +178,7 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
 
       <Box shrink="No" direction="Column" gap="100">
         <Box gap="200" alignItems="End">
-          <Text size="L400">Options</Text>
+          <Text size="L400">{t('options', { defaultValue: 'Options' })}</Text>
           <Box grow="Yes" justifyContent="End">
             <Chip
               radii="Pill"
@@ -184,7 +186,7 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
               onClick={() => setAdvance(!advance)}
               type="button"
             >
-              <Text size="T200">Advanced Options</Text>
+              <Text size="T200">{t('advancedOptions', { defaultValue: 'Advanced Options' })}</Text>
             </Chip>
           </Box>
         </Box>
@@ -210,8 +212,10 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
             gap="500"
           >
             <SettingTile
-              title="Knock to Join"
-              description="Anyone can send request to join this space."
+              title={t('knockToJoin', { defaultValue: 'Knock to Join' })}
+              description={t('knockToJoinSpaceDescription', {
+                defaultValue: 'Anyone can send request to join this space.',
+              })}
               after={
                 <Switch variant="Primary" value={knock} onChange={setKnock} disabled={disabled} />
               }
@@ -226,8 +230,10 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
           gap="500"
         >
           <SettingTile
-            title="Allow Federation"
-            description="Users from other servers can join."
+            title={t('allowFederation', { defaultValue: 'Allow Federation' })}
+            description={t('allowFederationDescription', {
+              defaultValue: 'Users from other servers can join.',
+            })}
             after={
               <Switch
                 variant="Primary"
@@ -254,9 +260,12 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
           <Text size="T300" style={{ color: color.Critical.Main }}>
             <b>
               {error instanceof MatrixError && error.name === ErrorCode.M_LIMIT_EXCEEDED
-                ? `Server rate-limited your request for ${millisecondsToMinutes(
-                    (error.data.retry_after_ms as number | undefined) ?? 0
-                  )} minutes!`
+                ? t('serverRateLimitedMinutes', {
+                    defaultValue: 'Server rate-limited your request for {{minutes}} minutes!',
+                    minutes: millisecondsToMinutes(
+                      (error.data.retry_after_ms as number | undefined) ?? 0
+                    ),
+                  })
                 : error.message}
             </b>
           </Text>
@@ -271,7 +280,7 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
           disabled={disabled}
           before={loading && <Spinner variant="Primary" fill="Solid" size="200" />}
         >
-          <Text size="B500">Create</Text>
+          <Text size="B500">{t('create', { defaultValue: 'Create' })}</Text>
         </Button>
       </Box>
     </Box>

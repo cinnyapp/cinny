@@ -19,6 +19,7 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import * as css from './style.css';
 import { RoomAvatar } from '../room-avatar';
 import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
@@ -94,6 +95,7 @@ function ErrorDialog({
   message: string;
   children: (openError: () => void) => ReactNode;
 }) {
+  const { t } = useTranslation('common');
   const [viewError, setViewError] = useState(false);
   const closeError = () => setViewError(false);
   const openError = () => setViewError(true);
@@ -120,7 +122,7 @@ function ErrorDialog({
                   </Text>
                 </Box>
                 <Button size="400" variant="Secondary" fill="Soft" onClick={closeError}>
-                  <Text size="B400">Cancel</Text>
+                  <Text size="B400">{t('cancel', { defaultValue: 'Cancel' })}</Text>
                 </Button>
               </Box>
             </Dialog>
@@ -161,6 +163,8 @@ export const RoomCard = as<'div', RoomCardProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation('common');
+    const { t: tRoomCard } = useTranslation('roomCard');
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const joinedRoomId = useJoinedRoomId(allRooms, roomIdOrAlias);
@@ -224,7 +228,7 @@ export const RoomCard = as<'div', RoomCardProps>(
           </Avatar>
           {(roomType === RoomType.Space || joinedRoom?.isSpaceRoom()) && (
             <Badge variant="Secondary" fill="Soft" outlined>
-              <Text size="L400">Space</Text>
+              <Text size="L400">{t('space', { defaultValue: 'Space' })}</Text>
             </Badge>
           )}
         </Box>
@@ -252,7 +256,9 @@ export const RoomCard = as<'div', RoomCardProps>(
         {typeof joinedMemberCount === 'number' && (
           <Box gap="100">
             <Icon size="50" src={Icons.User} />
-            <Text size="T200">{`${millify(joinedMemberCount)} Members`}</Text>
+            <Text size="T200">
+              {`${millify(joinedMemberCount)} ${t('members', { defaultValue: 'Members' })}`}
+            </Text>
           </Box>
         )}
         {typeof joinedRoomId === 'string' && (
@@ -263,7 +269,7 @@ export const RoomCard = as<'div', RoomCardProps>(
             size="300"
           >
             <Text size="B300" truncate>
-              View
+              {t('view', { defaultValue: 'View' })}
             </Text>
           </Button>
         )}
@@ -276,7 +282,7 @@ export const RoomCard = as<'div', RoomCardProps>(
             before={joining && <Spinner size="50" variant="Secondary" fill="Soft" />}
           >
             <Text size="B300" truncate>
-              {joining ? 'Joining' : 'Join'}
+              {joining ? t('joining', { defaultValue: 'Joining' }) : t('join', { defaultValue: 'Join' })}
             </Text>
           </Button>
         )}
@@ -290,12 +296,15 @@ export const RoomCard = as<'div', RoomCardProps>(
               size="300"
             >
               <Text size="B300" truncate>
-                Retry
+                {t('retry', { defaultValue: 'Retry' })}
               </Text>
             </Button>
             <ErrorDialog
-              title="Join Error"
-              message={joinState.error.message || 'Failed to join. Unknown Error.'}
+              title={tRoomCard('joinErrorTitle', { defaultValue: 'Join Error' })}
+              message={
+                joinState.error.message ||
+                tRoomCard('failedToJoinUnknown', { defaultValue: 'Failed to join. Unknown Error.' })
+              }
             >
               {(openError) => (
                 <Button
@@ -307,7 +316,7 @@ export const RoomCard = as<'div', RoomCardProps>(
                   size="300"
                 >
                   <Text size="B300" truncate>
-                    View Error
+                    {tRoomCard('viewError', { defaultValue: 'View Error' })}
                   </Text>
                 </Button>
               )}

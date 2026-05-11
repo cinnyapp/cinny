@@ -2,6 +2,7 @@ import React, { useEffect, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Editor } from 'slate';
 import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 
 import { AutocompleteQuery } from './autocompleteQuery';
 import { AutocompleteMenu } from './AutocompleteMenu';
@@ -90,6 +91,7 @@ export function UserMentionAutocomplete({
   query,
   requestClose,
 }: UserMentionAutocompleteProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const roomId: string = room.roomId!;
@@ -137,7 +139,10 @@ export function UserMentionAutocomplete({
     getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
 
   return (
-    <AutocompleteMenu headerContent={<Text size="L400">Mentions</Text>} requestClose={requestClose}>
+    <AutocompleteMenu
+      headerContent={<Text size="L400">{t('mentions', { defaultValue: 'Mentions' })}</Text>}
+      requestClose={requestClose}
+    >
       {query.text === 'room' && (
         <UnknownMentionItem
           userId={roomAliasOrId}

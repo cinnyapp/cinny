@@ -15,6 +15,7 @@ import { isKeyHotkey } from 'is-hotkey';
 import { Room } from 'matrix-js-sdk';
 import { atom, PrimitiveAtom, useAtom, useSetAtom } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useTranslation } from 'react-i18next';
 import { IEmoji, emojiGroups, emojis } from '../../plugins/emoji';
 import { useEmojiGroupLabels } from './useEmojiGroupLabels';
 import { useEmojiGroupIcons } from './useEmojiGroupIcons';
@@ -72,6 +73,8 @@ const useGroups = (
   imagePacks: ImagePack[]
 ): [EmojiGroupItem[], StickerGroupItem[]] => {
   const mx = useMatrixClient();
+  const { t: tCommon } = useTranslation('common');
+  const { t: tLobby } = useTranslation('lobby');
 
   const recentEmojis = useRecentEmoji(mx, 21);
   const labels = useEmojiGroupLabels();
@@ -82,13 +85,17 @@ const useGroups = (
 
     g.push({
       id: RECENT_GROUP_ID,
-      name: 'Recent',
+      name: tCommon('recent', { defaultValue: 'Recent' }),
       items: recentEmojis,
     });
 
     imagePacks.forEach((pack) => {
       let label = pack.meta.name;
-      if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+      if (!label) {
+        label = isUserId(pack.id)
+          ? tLobby('personalPack', { defaultValue: 'Personal Pack' })
+          : mx.getRoom(pack.id)?.name;
+      }
 
       g.push({
         id: pack.id,
@@ -108,7 +115,7 @@ const useGroups = (
     });
 
     return g;
-  }, [mx, recentEmojis, labels, imagePacks, tab]);
+  }, [mx, recentEmojis, labels, imagePacks, tab, tCommon, tLobby]);
 
   const stickerGroupItems = useMemo(() => {
     const g: StickerGroupItem[] = [];
@@ -116,7 +123,11 @@ const useGroups = (
 
     imagePacks.forEach((pack) => {
       let label = pack.meta.name;
-      if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+      if (!label) {
+        label = isUserId(pack.id)
+          ? tLobby('personalPack', { defaultValue: 'Personal Pack' })
+          : mx.getRoom(pack.id)?.name;
+      }
 
       g.push({
         id: pack.id,
@@ -128,7 +139,7 @@ const useGroups = (
     });
 
     return g;
-  }, [mx, imagePacks, tab]);
+  }, [mx, imagePacks, tab, tLobby]);
 
   return [emojiGroupItems, stickerGroupItems];
 };
@@ -172,6 +183,8 @@ type EmojiSidebarProps = {
 function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
+  const { t: tCommon } = useTranslation('common');
+  const { t: tLobby } = useTranslation('lobby');
 
   const [activeGroupId, setActiveGroupId] = useAtom(activeGroupAtom);
   const usage = ImageUsage.Emoticon;
@@ -189,7 +202,7 @@ function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarP
         <GroupIcon
           active={activeGroupId === RECENT_GROUP_ID}
           id={RECENT_GROUP_ID}
-          label="Recent"
+          label={tCommon('recent', { defaultValue: 'Recent' })}
           icon={Icons.RecentClock}
           onClick={handleScrollToGroup}
         />
@@ -199,7 +212,11 @@ function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarP
           <SidebarDivider />
           {packs.map((pack) => {
             let label = pack.meta.name;
-            if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+            if (!label) {
+              label = isUserId(pack.id)
+                ? tLobby('personalPack', { defaultValue: 'Personal Pack' })
+                : mx.getRoom(pack.id)?.name;
+            }
 
             const url =
               mxcUrlToHttp(mx, pack.getAvatarUrl(usage) ?? '', useAuthentication) ?? undefined;
@@ -209,7 +226,7 @@ function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarP
                 key={pack.id}
                 active={activeGroupId === pack.id}
                 id={pack.id}
-                label={label ?? 'Unknown Pack'}
+                label={label ?? tLobby('unknownPack', { defaultValue: 'Unknown Pack' })}
                 url={url}
                 onClick={handleScrollToGroup}
               />
@@ -248,6 +265,7 @@ type StickerSidebarProps = {
 function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: StickerSidebarProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
+  const { t: tLobby } = useTranslation('lobby');
 
   const [activeGroupId, setActiveGroupId] = useAtom(activeGroupAtom);
   const usage = ImageUsage.Sticker;
@@ -262,7 +280,11 @@ function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: StickerSide
       <SidebarStack>
         {packs.map((pack) => {
           let label = pack.meta.name;
-          if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+          if (!label) {
+            label = isUserId(pack.id)
+              ? tLobby('personalPack', { defaultValue: 'Personal Pack' })
+              : mx.getRoom(pack.id)?.name;
+          }
 
           const url =
             mxcUrlToHttp(mx, pack.getAvatarUrl(usage) ?? '', useAuthentication) ?? undefined;
@@ -272,7 +294,7 @@ function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: StickerSide
               key={pack.id}
               active={activeGroupId === pack.id}
               id={pack.id}
-              label={label ?? 'Unknown Pack'}
+              label={label ?? tLobby('unknownPack', { defaultValue: 'Unknown Pack' })}
               url={url}
               onClick={handleScrollToGroup}
             />
@@ -377,6 +399,7 @@ export function EmojiBoard({
   addToRecentEmoji = true,
 }: EmojiBoardProps) {
   const mx = useMatrixClient();
+  const { t: tCommon } = useTranslation('common');
 
   const emojiTab = tab === EmojiBoardTab.Emoji;
   const usage = emojiTab ? ImageUsage.Emoticon : ImageUsage.Sticker;
@@ -541,7 +564,11 @@ export function EmojiBoard({
             {searchedItems && (
               <EmojiGroup
                 id={SEARCH_GROUP_ID}
-                label={searchedItems.length ? 'Search Results' : 'No Results found'}
+                  label={
+                    searchedItems.length
+                      ? tCommon('searchResults', { defaultValue: 'Search Results' })
+                      : tCommon('noResultsFound', { defaultValue: 'No Results found' })
+                  }
               >
                 {searchedItems.map(renderItem)}
               </EmojiGroup>

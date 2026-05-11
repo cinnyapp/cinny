@@ -1,0 +1,45 @@
+{
+  "inboxTitle": "Входящие",
+  "notificationsNavLabel": "Уведомления",
+  "invitesNavLabel": "Приглашения",
+
+  "invitesTitle": "Приглашения",
+  "filterLabel": "Фильтр",
+  "encryptedBadge": "Шифрование",
+  "directMessageBadge": "Личные сообщения",
+  "spaceBadge": "Пространство",
+  "decline": "Отклонить",
+  "accept": "Принять",
+  "fromLabel": "От:",
+  "reasonLabel": "Причина:",
+
+  "primaryTab": "Основные",
+  "publicTab": "Публичные",
+  "spamTab": "Спам",
+
+  "noInvitesTitle": "Нет приглашений",
+  "noInvitesKnownSubtitle": "Когда кто-то из общих комнат отправит вам приглашение, оно появится здесь.",
+  "noInvitesUnknownSubtitle": "Приглашения от людей вне ваших комнат появятся здесь.",
+
+  "declineAll": "Отклонить все",
+
+  "spamInvitesTitle": "{{count}} спам‑приглашений",
+  "spamInvitesSubtitle": "Некоторые приглашения ниже могут содержать вредоносный контент или быть отправлены заблокированными пользователями.",
+  "reportAll": "Пожаловаться на все",
+  "blockAll": "Заблокировать всех",
+  "hideAll": "Скрыть все",
+  "viewAll": "Показать все",
+  "noSpamInvitesTitle": "Нет спам‑приглашений",
+  "noSpamInvitesSubtitle": "Приглашения, распознанные как спам, появятся здесь.",
+  "spamInviteReportReason": "Спам‑приглашение",
+
+  "notificationsTitle": "Уведомления",
+  "allNotificationsFilter": "Все уведомления",
+  "highlightedFilter": "Важные",
+  "scrollToTop": "Наверх",
+  "markAsRead": "Отметить прочитанным",
+  "open": "Открыть",
+  "noNotificationsTitle": "Нет уведомлений",
+  "noNotificationsSubtitle": "Пока нет новых уведомлений для отображения."
+}
+

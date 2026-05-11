@@ -2,6 +2,7 @@ import { Box, Button, color, config, Icon, Icons, Input, Spinner, Switch, Text }
 import React, { FormEventHandler, useCallback, useState } from 'react';
 import { ICreateRoomStateEvent, MatrixError, Preset, Visibility } from 'matrix-js-sdk';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SettingTile } from '../../components/setting-tile';
 import { SequenceCard } from '../../components/sequence-card';
 import { addRoomIdToMDirect, isUserId } from '../../utils/matrix';
@@ -17,6 +18,7 @@ type CreateChatProps = {
   defaultUserId?: string;
 };
 export function CreateChat({ defaultUserId }: CreateChatProps) {
+  const { t } = useTranslation('createChat');
   const mx = useMatrixClient();
   const alive = useAlive();
   const navigate = useNavigate();
@@ -75,10 +77,10 @@ export function CreateChat({ defaultUserId }: CreateChatProps) {
   return (
     <Box as="form" onSubmit={handleSubmit} grow="Yes" direction="Column" gap="500">
       <Box direction="Column" gap="100">
-        <Text size="L400">User ID</Text>
+        <Text size="L400">{t('userId', { defaultValue: 'User ID' })}</Text>
         <Input
           defaultValue={defaultUserId}
-          placeholder="@username:server"
+          placeholder={t('userIdPlaceholder', { defaultValue: '@username:server' })}
           name="userIdInput"
           variant="SurfaceVariant"
           size="500"
@@ -92,13 +94,13 @@ export function CreateChat({ defaultUserId }: CreateChatProps) {
           <Box style={{ color: color.Critical.Main }} alignItems="Center" gap="100">
             <Icon src={Icons.Warning} filled size="50" />
             <Text size="T200" style={{ color: color.Critical.Main }}>
-              <b>Please enter a valid User ID.</b>
+              <b>{t('validUserIdRequired', { defaultValue: 'Please enter a valid User ID.' })}</b>
             </Text>
           </Box>
         )}
       </Box>
       <Box shrink="No" direction="Column" gap="100">
-        <Text size="L400">Options</Text>
+        <Text size="L400">{t('options', { defaultValue: 'Options' })}</Text>
         <SequenceCard
           style={{ padding: config.space.S300 }}
           variant="SurfaceVariant"
@@ -106,8 +108,11 @@ export function CreateChat({ defaultUserId }: CreateChatProps) {
           gap="500"
         >
           <SettingTile
-            title="End-to-End Encryption"
-            description="Once this feature is enabled, it can't be disabled after the room is created."
+            title={t('endToEndEncryption', { defaultValue: 'End-to-End Encryption' })}
+            description={t('encryptionIrreversible', {
+              defaultValue:
+                "Once this feature is enabled, it can't be disabled after the room is created.",
+            })}
             after={
               <Switch
                 variant="Primary"
@@ -125,9 +130,12 @@ export function CreateChat({ defaultUserId }: CreateChatProps) {
           <Text size="T300" style={{ color: color.Critical.Main }}>
             <b>
               {error instanceof MatrixError && error.name === ErrorCode.M_LIMIT_EXCEEDED
-                ? `Server rate-limited your request for ${millisecondsToMinutes(
-                    (error.data.retry_after_ms as number | undefined) ?? 0
-                  )} minutes!`
+                ? t('serverRateLimitedMinutes', {
+                    defaultValue: 'Server rate-limited your request for {{minutes}} minutes!',
+                    minutes: millisecondsToMinutes(
+                      (error.data.retry_after_ms as number | undefined) ?? 0
+                    ),
+                  })
                 : error.message}
             </b>
           </Text>
@@ -142,7 +150,7 @@ export function CreateChat({ defaultUserId }: CreateChatProps) {
           disabled={disabled}
           before={loading && <Spinner variant="Primary" fill="Solid" size="200" />}
         >
-          <Text size="B500">Create</Text>
+          <Text size="B500">{t('create', { defaultValue: 'Create' })}</Text>
         </Button>
       </Box>
     </Box>

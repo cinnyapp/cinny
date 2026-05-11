@@ -20,6 +20,7 @@ import {
   RectCords,
 } from 'folds';
 import { Direction, MatrixError } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../../utils/keyboard';
@@ -37,6 +38,7 @@ type JumpToTimeProps = {
   onSubmit: (eventId: string) => void;
 };
 export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
+  const { t } = useTranslation('room');
   const mx = useMatrixClient();
   const room = useRoom();
   const alive = useAlive();
@@ -106,7 +108,9 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
               size="500"
             >
               <Box grow="Yes">
-                <Text size="H4">Jump to Time</Text>
+                <Text size="H4">
+                  {t('jumpToTimeDialogTitle', { defaultValue: 'Jump to Time' })}
+                </Text>
               </Box>
               <IconButton size="300" onClick={onCancel} radii="300">
                 <Icon src={Icons.Cross} />
@@ -116,7 +120,7 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
               <Box direction="Row" gap="300">
                 <Box direction="Column" gap="100">
                   <Text size="L400" priority="400">
-                    Time
+                    {t('timeLabel', { defaultValue: 'Time' })}
                   </Text>
                   <Box gap="100" alignItems="Center">
                     <Chip
@@ -157,7 +161,7 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
                 </Box>
                 <Box direction="Column" gap="100">
                   <Text size="L400" priority="400">
-                    Date
+                    {t('dateLabel', { defaultValue: 'Date' })}
                   </Text>
                   <Box gap="100" alignItems="Center">
                     <Chip
@@ -198,7 +202,7 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
                 </Box>
               </Box>
               <Box direction="Column" gap="100">
-                <Text size="L400">Preset</Text>
+                <Text size="L400">{t('presetLabel', { defaultValue: 'Preset' })}</Text>
                 <Box gap="200">
                   {createTs < todayTs && (
                     <Chip
@@ -207,7 +211,7 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
                       aria-pressed={ts === todayTs}
                       onClick={handleToday}
                     >
-                      <Text size="B300">Today</Text>
+                      <Text size="B300">{t('today', { defaultValue: 'Today' })}</Text>
                     </Chip>
                   )}
                   {createTs < yesterdayTs && (
@@ -217,7 +221,7 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
                       aria-pressed={ts === yesterdayTs}
                       onClick={handleYesterday}
                     >
-                      <Text size="B300">Yesterday</Text>
+                      <Text size="B300">{t('yesterday', { defaultValue: 'Yesterday' })}</Text>
                     </Chip>
                   )}
                   <Chip
@@ -226,7 +230,7 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
                     aria-pressed={ts === createTs}
                     onClick={handleBeginning}
                   >
-                    <Text size="B300">Beginning</Text>
+                    <Text size="B300">{t('beginning', { defaultValue: 'Beginning' })}</Text>
                   </Chip>
                 </Box>
               </Box>
@@ -249,7 +253,7 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
                 }
                 onClick={handleSubmit}
               >
-                <Text size="B400">Open Timeline</Text>
+                <Text size="B400">{t('openTimeline', { defaultValue: 'Open Timeline' })}</Text>
               </Button>
             </Box>
           </Dialog>

@@ -1,5 +1,6 @@
 import React, { ReactNode, useEffect } from 'react';
 import { Box, Chip, Icon, IconButton, Icons, Text, color, config, toRem } from 'folds';
+import { useTranslation } from 'react-i18next';
 import { UploadCard, UploadCardError, UploadCardProgress } from './UploadCard';
 import { UploadStatus, UploadSuccess, useBindUploadAtom } from '../../state/upload';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -91,7 +92,7 @@ function MediaPreview({ fileItem, onSpoiler, children }: MediaPreviewProps) {
           before={<Icon src={Icons.EyeBlind} size="50" />}
           onClick={() => onSpoiler(!metadata.markedAsSpoiler)}
         >
-          <Text size="B300">Spoiler</Text>
+          <Text size="B300">{t('spoiler', { defaultValue: 'Spoiler' })}</Text>
         </Chip>
       </Box>
     </Box>
@@ -112,6 +113,7 @@ export function UploadCardRenderer({
   onRemove,
   onComplete,
 }: UploadCardRendererProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const mediaConfig = useMediaConfig();
   const allowSize = mediaConfig['m.upload.size'] || Infinity;
@@ -151,17 +153,17 @@ export function UploadCardRenderer({
             <Chip
               as="button"
               onClick={startUpload}
-              aria-label="Retry Upload"
+              aria-label={t('retryUpload', { defaultValue: 'Retry Upload' })}
               variant="Critical"
               radii="Pill"
               outlined
             >
-              <Text size="B300">Retry</Text>
+              <Text size="B300">{t('retry', { defaultValue: 'Retry' })}</Text>
             </Chip>
           )}
           <IconButton
             onClick={removeUpload}
-            aria-label="Cancel Upload"
+            aria-label={t('cancelUpload', { defaultValue: 'Cancel Upload' })}
             variant="SurfaceVariant"
             radii="Pill"
             size="300"

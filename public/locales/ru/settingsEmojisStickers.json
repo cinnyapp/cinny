@@ -1,0 +1,25 @@
+{
+  "title": "Эмодзи и стикеры",
+  "defaultPackHeader": "Пак по умолчанию",
+  "view": "Открыть",
+
+  "roomPacksHeader": "Паки из комнат",
+  "save": "Сохранить",
+  "close": "Закрыть",
+  "selectAll": "Выбрать все",
+  "unselectAll": "Снять выбор",
+  "unknown": "Неизвестно",
+  "noPacksTitle": "Нет паков",
+  "noPacksSubtitle": "Паки из комнат появятся здесь. Пока у вас нет комнат с паками.",
+
+  "favoritePacksHeader": "Избранные паки",
+  "selectPackTitle": "Выбор пака",
+  "selectPackDescription": "Выберите пак эмодзи и стикеров из комнат, чтобы использовать его во всех комнатах.",
+  "select": "Выбрать",
+
+  "failedToApplyChanges": "Не удалось применить изменения. Попробуйте ещё раз.",
+  "changesSavedApplyWhenReady": "Изменения сохранены. Примените, когда будете готовы.",
+  "reset": "Сбросить",
+  "applyChanges": "Применить изменения"
+}
+

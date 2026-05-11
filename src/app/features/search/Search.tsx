@@ -59,6 +59,7 @@ import { useKeyDown } from '../../hooks/useKeyDown';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { KeySymbol } from '../../utils/key-symbol';
 import { isMacOS } from '../../utils/user-agent';
+import { useTranslation } from 'react-i18next';
 
 enum SearchRoomType {
   Rooms = '#',
@@ -135,6 +136,7 @@ type SearchProps = {
   requestClose: () => void;
 };
 export function Search({ requestClose }: SearchProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -269,7 +271,7 @@ export function Search({ requestClose }: SearchProps) {
                 variant="Background"
                 radii="400"
                 outlined
-                placeholder="Search"
+                placeholder={t('search', { defaultValue: 'Search' })}
                 before={<Icon size="200" src={Icons.Search} />}
                 onChange={handleInputChange}
                 onKeyDown={handleInputKeyDown}
@@ -286,12 +288,19 @@ export function Search({ requestClose }: SearchProps) {
                   gap="100"
                 >
                   <Text size="H6" align="Center">
-                    {result ? 'No Match Found' : 'No Rooms'}
+                    {result
+                      ? t('noMatchFound', { defaultValue: 'No Match Found' })
+                      : t('noRooms', { defaultValue: 'No Rooms' })}
                   </Text>
                   <Text size="T200" align="Center">
                     {result
-                      ? `No match found for "${result.query}".`
-                      : `You do not have any Rooms to display yet.`}
+                      ? t('noMatchFoundFor', {
+                          defaultValue: 'No match found for "{{query}}".',
+                          query: result.query,
+                        })
+                      : t('noRoomsToDisplay', {
+                          defaultValue: 'You do not have any Rooms to display yet.',
+                        })}
                   </Text>
                 </Box>
               )}
@@ -409,7 +418,10 @@ export function Search({ requestClose }: SearchProps) {
             <Line size="300" />
             <Box shrink="No" justifyContent="Center" style={{ padding: config.space.S200 }}>
               <Text size="T200" priority="300">
-                Type <b>#</b> for rooms, <b>@</b> for DMs and <b>*</b> for spaces. Hotkey:{' '}
+                {t('searchHintPrefixes', {
+                  defaultValue:
+                    'Type # for rooms, @ for DMs and * for spaces. Hotkey:',
+                })}{' '}
                 <b>{isMacOS() ? KeySymbol.Command : 'Ctrl'} + k</b>
               </Text>
             </Box>

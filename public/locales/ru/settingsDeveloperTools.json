@@ -1,0 +1,32 @@
+{
+  "title": "Инструменты разработчика",
+  "optionsHeader": "Опции",
+  "enableDeveloperTools": "Включить инструменты разработчика",
+  "roomIdTitle": "ID комнаты",
+  "roomIdDescription": "Скопировать ID комнаты в буфер обмена. (\"{{roomId}}\")",
+  "dataHeader": "Данные",
+  "newMessageEventTitle": "Новое событие сообщения",
+  "newMessageEventDescription": "Создать и отправить новое событие сообщения в комнате.",
+  "compose": "Создать",
+  "roomStateTitle": "Состояние комнаты",
+  "roomStateDescription": "События состояния комнаты.",
+  "defaultStateKey": "По умолчанию",
+  "stateEventType": "Тип события состояния",
+  "stateEvent": "Событие состояния",
+  "messageEventType": "Тип сообщения",
+  "stateKeyOptional": "Ключ состояния (необязательно)",
+  "accessTokenTitle": "Access Token",
+  "accessTokenDescription": "Скопировать токен доступа в буфер обмена.",
+  "copy": "Копировать",
+
+  "accountDataHeader": "Данные аккаунта",
+  "accountDataDescription": "Приватные персональные данные, хранящиеся в комнате.",
+  "globalTitle": "Глобальные",
+  "globalDescription": "Данные, сохранённые в глобальных данных аккаунта.",
+  "collapse": "Свернуть",
+  "expand": "Развернуть",
+  "eventsHeader": "События",
+  "totalLabel": "Всего: {{count}}",
+  "addNew": "Добавить"
+}
+

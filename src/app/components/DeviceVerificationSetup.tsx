@@ -16,6 +16,7 @@ import {
 import FileSaver from 'file-saver';
 import to from 'await-to-js';
 import { AuthDict, IAuthData, MatrixError, UIAuthCallback } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { PasswordInput } from './password-input';
 import { ContainerColor } from '../styles/ContainerColor.css';
 import { copyToClipboard } from '../utils/dom';
@@ -71,6 +72,7 @@ type SetupVerificationProps = {
   onComplete: (recoveryKey: string) => void;
 };
 function SetupVerification({ onComplete }: SetupVerificationProps) {
+  const { t } = useTranslation('common');
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -80,7 +82,11 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
   const handleAction = useCallback(
     async (authDict: AuthDict) => {
       if (!uiaAction) {
-        throw new Error('Unexpected Error! UIA action is perform without data.');
+        throw new Error(
+          t('unexpectedUiaNoData', {
+            defaultValue: 'Unexpected Error! UIA action is perform without data.',
+          })
+        );
       }
       if (alive()) {
         setNextAuthData(null);
@@ -123,7 +129,13 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
               if (alive()) {
                 setUIAAction(action);
               } else {
-                reject(new Error('Authentication failed! Failed to setup device verification.'));
+                reject(
+                  new Error(
+                    t('authFailedSetupVerification', {
+                      defaultValue: 'Authentication failed! Failed to setup device verification.',
+                    })
+                  )
+                );
               }
               return;
             }
@@ -137,11 +149,20 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
     useCallback(
       async (passphrase) => {
         const crypto = mx.getCrypto();
-        if (!crypto) throw new Error('Unexpected Error! Crypto module not found!');
+        if (!crypto)
+          throw new Error(
+            t('unexpectedCryptoNotFound', {
+              defaultValue: 'Unexpected Error! Crypto module not found!',
+            })
+          );
 
         const recoveryKeyData = await crypto.createRecoveryKeyFromPassphrase(passphrase);
         if (!recoveryKeyData.encodedPrivateKey) {
-          throw new Error('Unexpected Error! Failed to create recovery key.');
+          throw new Error(
+            t('unexpectedCreateRecoveryKeyFailed', {
+              defaultValue: 'Unexpected Error! Failed to create recovery key.',
+            })
+          );
         }
         clearSecretStorageKeys();
 
@@ -182,11 +203,13 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
   return (
     <Box as="form" onSubmit={handleSubmit} direction="Column" gap="400">
       <Text size="T300">
-        Generate a <b>Recovery Key</b> for verifying identity if you do not have access to other
-        devices. Additionally, setup a passphrase as a memorable alternative.
+        {t('generateRecoveryKeyDescription', {
+          defaultValue:
+            'Generate a Recovery Key for verifying identity if you do not have access to other devices. Additionally, setup a passphrase as a memorable alternative.',
+        })}
       </Text>
       <Box direction="Column" gap="100">
-        <Text size="L400">Passphrase (Optional)</Text>
+        <Text size="L400">{t('passphraseOptional', { defaultValue: 'Passphrase (Optional)' })}</Text>
         <PasswordInput name="passphraseInput" size="400" readOnly={loading} />
       </Box>
       <Button
@@ -194,11 +217,15 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
         disabled={loading}
         before={loading && <Spinner size="200" variant="Primary" fill="Solid" />}
       >
-        <Text size="B400">Continue</Text>
+        <Text size="B400">{t('continue', { defaultValue: 'Continue' })}</Text>
       </Button>
       {setupState.status === AsyncStatus.Error && (
         <Text size="T200" style={{ color: color.Critical.Main }}>
-          <b>{setupState.error ? setupState.error.message : 'Unexpected Error!'}</b>
+          <b>
+            {setupState.error
+              ? setupState.error.message
+              : t('unexpectedError', { defaultValue: 'Unexpected Error!' })}
+          </b>
         </Text>
       )}
       {nextAuthData !== null && uiaAction && (
@@ -206,7 +233,10 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
           authData={nextAuthData ?? uiaAction.authData}
           unsupported={() => (
             <Text size="T200">
-              Authentication steps to perform this action are not supported by client.
+              {t('authStepsNotSupported', {
+                defaultValue:
+                  'Authentication steps to perform this action are not supported by client.',
+              })}
             </Text>
           )}
         >
@@ -228,6 +258,7 @@ type RecoveryKeyDisplayProps = {
   recoveryKey: string;
 };
 function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
+  const { t } = useTranslation('common');
   const [show, setShow] = useState(false);
 
   const handleCopy = () => {
@@ -246,11 +277,13 @@ function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
   return (
     <Box direction="Column" gap="400">
       <Text size="T300">
-        Store the Recovery Key in a safe place for future use, as you will need it to verify your
-        identity if you do not have access to other devices.
+        {t('storeRecoveryKeyDescription', {
+          defaultValue:
+            'Store the Recovery Key in a safe place for future use, as you will need it to verify your identity if you do not have access to other devices.',
+        })}
       </Text>
       <Box direction="Column" gap="100">
-        <Text size="L400">Recovery Key</Text>
+        <Text size="L400">{t('recoveryKey', { defaultValue: 'Recovery Key' })}</Text>
         <Box
           className={ContainerColor({ variant: 'SurfaceVariant' })}
           style={{
@@ -265,16 +298,20 @@ function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
             {safeToDisplayKey}
           </Text>
           <Chip onClick={() => setShow(!show)} variant="Secondary" radii="Pill">
-            <Text size="B300">{show ? 'Hide' : 'Show'}</Text>
+            <Text size="B300">
+              {show
+                ? t('hide', { defaultValue: 'Hide' })
+                : t('show', { defaultValue: 'Show' })}
+            </Text>
           </Chip>
         </Box>
       </Box>
       <Box direction="Column" gap="200">
         <Button onClick={handleCopy}>
-          <Text size="B400">Copy</Text>
+          <Text size="B400">{t('copy', { defaultValue: 'Copy' })}</Text>
         </Button>
         <Button onClick={handleDownload} fill="Soft">
-          <Text size="B400">Download</Text>
+          <Text size="B400">{t('download', { defaultValue: 'Download' })}</Text>
         </Button>
       </Box>
     </Box>
@@ -286,6 +323,7 @@ type DeviceVerificationSetupProps = {
 };
 export const DeviceVerificationSetup = forwardRef<HTMLDivElement, DeviceVerificationSetupProps>(
   ({ onCancel }, ref) => {
+    const { t } = useTranslation('common');
     const [recoveryKey, setRecoveryKey] = useState<string>();
 
     return (
@@ -299,7 +337,9 @@ export const DeviceVerificationSetup = forwardRef<HTMLDivElement, DeviceVerifica
           size="500"
         >
           <Box grow="Yes">
-            <Text size="H4">Setup Device Verification</Text>
+            <Text size="H4">
+              {t('setupDeviceVerification', { defaultValue: 'Setup Device Verification' })}
+            </Text>
           </Box>
           <IconButton size="300" radii="300" onClick={onCancel}>
             <Icon src={Icons.Cross} />
@@ -321,6 +361,7 @@ type DeviceVerificationResetProps = {
 };
 export const DeviceVerificationReset = forwardRef<HTMLDivElement, DeviceVerificationResetProps>(
   ({ onCancel }, ref) => {
+    const { t } = useTranslation('common');
     const [reset, setReset] = useState(false);
 
     return (
@@ -334,7 +375,9 @@ export const DeviceVerificationReset = forwardRef<HTMLDivElement, DeviceVerifica
           size="500"
         >
           <Box grow="Yes">
-            <Text size="H4">Reset Device Verification</Text>
+            <Text size="H4">
+              {t('resetDeviceVerification', { defaultValue: 'Reset Device Verification' })}
+            </Text>
           </Box>
           <IconButton size="300" radii="300" onClick={onCancel}>
             <Icon src={Icons.Cross} />
@@ -356,16 +399,20 @@ export const DeviceVerificationReset = forwardRef<HTMLDivElement, DeviceVerifica
           <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
             <Box direction="Column" gap="200">
               <Text size="H1">✋🧑‍🚒🤚</Text>
-              <Text size="T300">Resetting device verification is permanent.</Text>
               <Text size="T300">
-                Anyone you have verified with will see security alerts and your encryption backup
-                will be lost. You almost certainly do not want to do this, unless you have lost{' '}
-                <b>Recovery Key</b> or <b>Recovery Passphrase</b> and every device you can verify
-                from.
+                {t('resetVerificationPermanent', {
+                  defaultValue: 'Resetting device verification is permanent.',
+                })}
+              </Text>
+              <Text size="T300">
+                {t('resetVerificationWarning', {
+                  defaultValue:
+                    'Anyone you have verified with will see security alerts and your encryption backup will be lost. You almost certainly do not want to do this, unless you have lost Recovery Key or Recovery Passphrase and every device you can verify from.',
+                })}
               </Text>
             </Box>
             <Button variant="Critical" onClick={() => setReset(true)}>
-              <Text size="B400">Reset</Text>
+              <Text size="B400">{t('reset', { defaultValue: 'Reset' })}</Text>
             </Button>
           </Box>
         )}

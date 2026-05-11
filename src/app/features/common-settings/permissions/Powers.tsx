@@ -1,6 +1,7 @@
 /* eslint-disable react/no-array-index-key */
 import React, { useState, MouseEventHandler, ReactNode } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -36,6 +37,7 @@ type PeekPermissionsProps = {
   children: (handleOpen: MouseEventHandler<HTMLButtonElement>, opened: boolean) => ReactNode;
 };
 function PeekPermissions({ powerLevels, power, permissionGroups, children }: PeekPermissionsProps) {
+  const { t } = useTranslation('common');
   const [menuCords, setMenuCords] = useState<RectCords>();
 
   const handleOpen: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -83,7 +85,10 @@ function PeekPermissions({ powerLevels, power, permissionGroups, children }: Pee
                                 color: hasPower ? undefined : color.Critical.Main,
                               }}
                             >
-                              {hasPower ? '✅' : '❌'} {item.name}
+                              {hasPower
+                                ? t('permissionAllowedPrefix', { defaultValue: '✅' })
+                                : t('permissionDeniedPrefix', { defaultValue: '❌' })}{' '}
+                              {item.name}
                             </Text>
                           );
                         })}
@@ -108,6 +113,7 @@ type PowersProps = {
   onEdit?: () => void;
 };
 export function Powers({ powerLevels, permissionGroups, onEdit }: PowersProps) {
+  const { t } = useTranslation('roomSettings');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const room = useRoom();
@@ -127,8 +133,11 @@ export function Powers({ powerLevels, permissionGroups, onEdit }: PowersProps) {
           gap="400"
         >
           <SettingTile
-            title="Founders"
-            description="Founding members has all permissions and can only be changed during upgrade."
+            title={t('founders', { defaultValue: 'Founders' })}
+            description={t('foundersDescription', {
+              defaultValue:
+                'Founding members has all permissions and can only be changed during upgrade.',
+            })}
           />
 
           <SettingTile>
@@ -155,8 +164,10 @@ export function Powers({ powerLevels, permissionGroups, onEdit }: PowersProps) {
         gap="400"
       >
         <SettingTile
-          title="Power Levels"
-          description="Manage and customize incremental power levels for users."
+          title={t('powerLevels', { defaultValue: 'Power Levels' })}
+          description={t('powerLevelsDescription', {
+            defaultValue: 'Manage and customize incremental power levels for users.',
+          })}
           after={
             onEdit && (
               <Box gap="200">
@@ -168,7 +179,7 @@ export function Powers({ powerLevels, permissionGroups, onEdit }: PowersProps) {
                   outlined
                   onClick={onEdit}
                 >
-                  <Text size="B300">Edit</Text>
+                  <Text size="B300">{t('edit', { ns: 'common', defaultValue: 'Edit' })}</Text>
                 </Button>
               </Box>
             )

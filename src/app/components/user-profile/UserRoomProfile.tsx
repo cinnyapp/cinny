@@ -1,5 +1,6 @@
 import { Box, Button, config, Icon, Icons, Text } from 'folds';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { UserHero, UserHeroName } from './UserHero';
 import { getMxIdServer, mxcUrlToHttp } from '../../utils/matrix';
@@ -27,6 +28,7 @@ type UserRoomProfileProps = {
   userId: string;
 };
 export function UserRoomProfile({ userId }: UserRoomProfileProps) {
+  const { t } = useTranslation('userProfile');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const navigate = useNavigate();
@@ -88,7 +90,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
                   before={<Icon size="50" src={Icons.Message} filled />}
                   onClick={handleMessage}
                 >
-                  <Text size="B300">Message</Text>
+                  <Text size="B300">{t('message', { defaultValue: 'Message' })}</Text>
                 </Button>
               </Box>
             )}

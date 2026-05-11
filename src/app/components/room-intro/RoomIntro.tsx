@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { Avatar, Box, Button, Spinner, Text, as } from 'folds';
 import { Room } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
+import { useTranslation } from 'react-i18next';
 import { IRoomCreateContent, Membership, StateEvent } from '../../../types/matrix/room';
 import { getMemberDisplayName, getStateEvent } from '../../utils/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -23,6 +24,7 @@ export type RoomIntroProps = {
 };
 
 export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => {
+  const { t } = useTranslation('room');
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const { navigateRoom } = useRoomNavigate();
@@ -66,19 +68,27 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
             {name}
           </Text>
           <Text size="T400" priority="400">
-            {typeof topic === 'string' ? topic : 'This is the beginning of conversation.'}
+            {typeof topic === 'string'
+              ? topic
+              : t('beginningOfConversation', {
+                  defaultValue: 'This is the beginning of conversation.',
+                })}
           </Text>
           {creatorName && ts && (
             <Text size="T200" priority="300">
-              {'Created by '}
+              {t('createdByPrefix', { defaultValue: 'Created by ' })}
               <b>@{creatorName}</b>
-              {` on ${timeDayMonthYear(ts)} ${timeHourMinute(ts, hour24Clock)}`}
+              {t('createdOn', {
+                defaultValue: ' on {{date}} {{time}}',
+                date: timeDayMonthYear(ts),
+                time: timeHourMinute(ts, hour24Clock),
+              })}
             </Text>
           )}
         </Box>
         <Box gap="200" wrap="Wrap">
           <Button onClick={() => setInvitePrompt(true)} variant="Secondary" size="300" radii="300">
-            <Text size="B300">Invite Member</Text>
+            <Text size="B300">{t('inviteMember', { defaultValue: 'Invite Member' })}</Text>
           </Button>
 
           {invitePrompt && (
@@ -93,7 +103,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
                 fill="Soft"
                 radii="300"
               >
-                <Text size="B300">Open Old Room</Text>
+                <Text size="B300">{t('openOldRoom', { defaultValue: 'Open Old Room' })}</Text>
               </Button>
             ) : (
               <Button
@@ -109,7 +119,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
                   ) : undefined
                 }
               >
-                <Text size="B300">Join Old Room</Text>
+                <Text size="B300">{t('joinOldRoom', { defaultValue: 'Join Old Room' })}</Text>
               </Button>
             ))}
         </Box>

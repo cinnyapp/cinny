@@ -1,0 +1,15 @@
+{
+  "addSpaceTooltip": "Add Space",
+  "createSpaceTitle": "Create Space",
+  "createSpaceDescription": "Build a space for your community.",
+  "joinWithAddressTitle": "Join with Address",
+  "joinWithAddressDescription": "Become a part of existing community.",
+  "homeTooltip": "Home",
+  "directMessagesTooltip": "Direct Messages",
+  "exploreCommunityTooltip": "Explore Community",
+  "searchTooltip": "Search",
+  "userSettingsTooltip": "User Settings",
+  "inboxTooltip": "Inbox",
+  "unverifiedDeviceTooltip": "Unverified Device",
+  "unverifiedDevicesTooltip": "Unverified Devices"
+}

@@ -1,0 +1,17 @@
+{
+  "emoji": "Эмодзи",
+  "sticker": "Стикер",
+  "searchOrTextReaction": "Поиск или текстовая реакция ",
+  "search": "Поиск",
+  "react": "Реакция",
+  "noStickerPacks": "Нет наборов стикеров!",
+  "addStickersFromSettings": "Добавьте стикеры из настроек пользователя, комнаты или пространства.",
+  "emojiGroupPeople": "Смайлы и люди",
+  "emojiGroupNature": "Животные и природа",
+  "emojiGroupFood": "Еда и напитки",
+  "emojiGroupActivity": "Активности",
+  "emojiGroupTravel": "Путешествия и места",
+  "emojiGroupObject": "Объекты",
+  "emojiGroupSymbol": "Символы",
+  "emojiGroupFlag": "Флаги"
+}

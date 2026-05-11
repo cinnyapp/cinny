@@ -1,0 +1,14 @@
+{
+  "homeTitle": "Главная",
+  "noRoomsTitle": "Нет комнат",
+  "noRoomsDescription": "У вас пока нет комнат.",
+  "createRoomButton": "Создать комнату",
+  "exploreCommunityRoomsButton": "Найти комнаты сообществ",
+  "createRoomNavItem": "Создать комнату",
+  "joinWithAddressNavItem": "Присоединиться по адресу",
+  "messageSearchNavItem": "Поиск сообщений",
+  "messageSearchTitle": "Поиск сообщений",
+  "roomsCategoryTitle": "Комнаты",
+  "createRoomTitle": "Создать комнату",
+  "createRoomSubtitle": "Создайте комнату для общения в реальном времени."
+}

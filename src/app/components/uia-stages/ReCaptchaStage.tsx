@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog, Text, Box, Button, config } from 'folds';
 import { AuthType } from 'matrix-js-sdk';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { useTranslation } from 'react-i18next';
 import { StageComponentProps } from './types';
 
 function ReCaptchaErrorDialog({
@@ -13,6 +14,7 @@ function ReCaptchaErrorDialog({
   message: string;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation('uiaStages');
   return (
     <Dialog>
       <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
@@ -22,7 +24,7 @@ function ReCaptchaErrorDialog({
         </Box>
         <Button variant="Critical" fill="None" outlined onClick={onCancel}>
           <Text as="span" size="B400">
-            Cancel
+            {t('cancel', { defaultValue: 'Cancel' })}
           </Text>
         </Button>
       </Box>
@@ -31,6 +33,7 @@ function ReCaptchaErrorDialog({
 }
 
 export function ReCaptchaStageDialog({ stageData, submitAuthDict, onCancel }: StageComponentProps) {
+  const { t } = useTranslation('uiaStages');
   const { info, session } = stageData;
 
   const publicKey = info?.public_key;
@@ -46,8 +49,10 @@ export function ReCaptchaStageDialog({ stageData, submitAuthDict, onCancel }: St
   if (typeof publicKey !== 'string' || !session) {
     return (
       <ReCaptchaErrorDialog
-        title="Invalid Data"
-        message="No valid data found to proceed with ReCAPTCHA."
+        title={t('invalidDataTitle', { defaultValue: 'Invalid Data' })}
+        message={t('invalidRecaptchaData', {
+          defaultValue: 'No valid data found to proceed with ReCAPTCHA.',
+        })}
         onCancel={onCancel}
       />
     );
@@ -56,7 +61,9 @@ export function ReCaptchaStageDialog({ stageData, submitAuthDict, onCancel }: St
   return (
     <Dialog>
       <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
-        <Text>Please check the box below to proceed.</Text>
+        <Text>
+          {t('recaptchaPrompt', { defaultValue: 'Please check the box below to proceed.' })}
+        </Text>
         <ReCAPTCHA sitekey={publicKey} onChange={handleChange} />
       </Box>
     </Dialog>

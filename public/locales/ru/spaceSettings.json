@@ -1,0 +1,34 @@
+{
+  "general": "Общие",
+  "members": "Участники",
+  "permissions": "Права",
+  "emojisAndStickers": "Эмодзи и стикеры",
+  "developerTools": "Инструменты разработчика",
+
+  "groupManage": "Управление",
+  "manageSpaceRooms": "Управление комнатами пространства",
+  "messageEvents": "События сообщений",
+
+  "groupModeration": "Модерация",
+  "invite": "Приглашение",
+  "kick": "Исключение",
+  "ban": "Блокировка",
+
+  "groupSpaceOverview": "Обзор пространства",
+  "spaceAvatar": "Аватар пространства",
+  "spaceName": "Название пространства",
+  "spaceTopic": "Тема пространства",
+
+  "groupSettings": "Настройки",
+  "changeSpaceAccess": "Изменение доступа к пространству",
+  "publishAddress": "Публикация адреса",
+  "changeAllPermission": "Изменение всех прав",
+  "editPowerLevels": "Редактирование уровней прав",
+  "upgradeSpace": "Обновление пространства",
+  "otherSettings": "Другие настройки",
+
+  "groupOther": "Другое",
+  "manageEmojisStickers": "Управление эмодзи и стикерами",
+  "changeServerAcls": "Изменение ACL сервера"
+}
+

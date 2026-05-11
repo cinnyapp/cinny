@@ -26,7 +26,7 @@ export interface Settings {
   twitterEmoji: boolean;
   pageZoom: number;
   hideActivity: boolean;
-
+  language?: string;
   isPeopleDrawer: boolean;
   memberSortFilterIndex: number;
   enterForNewline: boolean;
@@ -60,7 +60,7 @@ const defaultSettings: Settings = {
   twitterEmoji: false,
   pageZoom: 100,
   hideActivity: false,
-
+  language: undefined,
   isPeopleDrawer: true,
   memberSortFilterIndex: 0,
   enterForNewline: false,

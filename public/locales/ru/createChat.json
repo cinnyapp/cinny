@@ -1,0 +1,14 @@
+{
+  "userId": "ID пользователя",
+  "userIdPlaceholder": "@username:server",
+  "validUserIdRequired": "Введите корректный ID пользователя.",
+  "options": "Параметры",
+  "endToEndEncryption": "Сквозное шифрование",
+  "encryptionIrreversible": "После включения эту функцию нельзя отключить после создания комнаты.",
+  "serverRateLimitedMinutes": "Сервер ограничил частоту запросов на {{minutes}} мин!",
+  "create": "Создать",
+  "createChatTitle": "Создать чат",
+  "createChatHeroSubtitle": "Начните приватный зашифрованный чат, введя ID пользователя.",
+  "directMessagesTitle": "Личные сообщения",
+  "chatsCategoryTitle": "Чаты"
+}

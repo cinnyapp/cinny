@@ -1,8 +1,15 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MemberPowerTag } from '../../types/matrix/room';
 
-const DEFAULT_TAG: MemberPowerTag = {
-  name: 'Founder',
-  color: '#0000ff',
-};
+export const useRoomCreatorsTag = (): MemberPowerTag => {
+  const { t } = useTranslation('roomSettings');
 
-export const useRoomCreatorsTag = (): MemberPowerTag => DEFAULT_TAG;
+  return useMemo(
+    () => ({
+      name: t('powerTagFounder', { defaultValue: 'Founder' }),
+      color: '#0000ff',
+    }),
+    [t]
+  );
+};

@@ -35,6 +35,7 @@ import { useHover, useFocusWithin } from 'react-aria';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
 import {
   AvatarBase,
@@ -131,6 +132,7 @@ export const MessageAllReactionItem = as<
   }
 >(({ room, relations, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation('message');
 
   const handleClose = () => {
     setOpen(false);
@@ -176,7 +178,7 @@ export const MessageAllReactionItem = as<
         aria-pressed={open}
       >
         <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          View Reactions
+          {t('viewReactions', { defaultValue: 'View Reactions' })}
         </Text>
       </MenuItem>
     </>
@@ -192,6 +194,7 @@ export const MessageReadReceiptItem = as<
   }
 >(({ room, eventId, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation('message');
 
   const handleClose = () => {
     setOpen(false);
@@ -226,7 +229,7 @@ export const MessageReadReceiptItem = as<
         aria-pressed={open}
       >
         <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          Read Receipts
+          {t('readReceipts', { defaultValue: 'Read Receipts' })}
         </Text>
       </MenuItem>
     </>
@@ -242,6 +245,7 @@ export const MessageSourceCodeItem = as<
   }
 >(({ room, mEvent, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation('message');
 
   const getContent = (evt: MatrixEvent) =>
     evt.isEncrypted()
@@ -290,7 +294,7 @@ export const MessageSourceCodeItem = as<
           >
             <Modal variant="Surface" size="500">
               <TextViewer
-                name="Source Code"
+                name={t('sourceCode', { defaultValue: 'Source Code' })}
                 langName="json"
                 text={getText()}
                 requestClose={handleClose}
@@ -309,7 +313,7 @@ export const MessageSourceCodeItem = as<
         aria-pressed={open}
       >
         <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          View Source
+          {t('viewSource', { defaultValue: 'View Source' })}
         </Text>
       </MenuItem>
     </>
@@ -325,6 +329,7 @@ export const MessageCopyLinkItem = as<
   }
 >(({ room, mEvent, onClose, ...props }, ref) => {
   const mx = useMatrixClient();
+  const { t } = useTranslation('message');
 
   const handleCopy = () => {
     const eventId = mEvent.getId();
@@ -343,7 +348,7 @@ export const MessageCopyLinkItem = as<
       ref={ref}
     >
       <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-        Copy Link
+        {t('copyLink', { defaultValue: 'Copy Link' })}
       </Text>
     </MenuItem>
   );
@@ -358,6 +363,7 @@ export const MessagePinItem = as<
   }
 >(({ room, mEvent, onClose, ...props }, ref) => {
   const mx = useMatrixClient();
+  const { t } = useTranslation('message');
   const pinnedEvents = useRoomPinnedEvents(room);
   const isPinned = pinnedEvents.includes(mEvent.getId() ?? '');
 
@@ -383,7 +389,9 @@ export const MessagePinItem = as<
       ref={ref}
     >
       <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-        {isPinned ? 'Unpin Message' : 'Pin Message'}
+        {isPinned
+          ? t('unpinMessage', { defaultValue: 'Unpin Message' })
+          : t('pinMessage', { defaultValue: 'Pin Message' })}
       </Text>
     </MenuItem>
   );
@@ -398,6 +406,7 @@ export const MessageDeleteItem = as<
   }
 >(({ room, mEvent, onClose, ...props }, ref) => {
   const mx = useMatrixClient();
+  const { t } = useTranslation('message');
   const [open, setOpen] = useState(false);
 
   const [deleteState, deleteMessage] = useAsyncCallback(
@@ -450,7 +459,9 @@ export const MessageDeleteItem = as<
                 size="500"
               >
                 <Box grow="Yes">
-                  <Text size="H4">Delete Message</Text>
+                  <Text size="H4">
+                    {t('deleteMessageTitle', { defaultValue: 'Delete Message' })}
+                  </Text>
                 </Box>
                 <IconButton size="300" onClick={handleClose} radii="300">
                   <Icon src={Icons.Cross} />
@@ -464,19 +475,24 @@ export const MessageDeleteItem = as<
                 gap="400"
               >
                 <Text priority="400">
-                  This action is irreversible! Are you sure that you want to delete this message?
+                  {t('deleteMessageWarning', {
+                    defaultValue:
+                      'This action is irreversible! Are you sure that you want to delete this message?',
+                  })}
                 </Text>
                 <Box direction="Column" gap="100">
                   <Text size="L400">
-                    Reason{' '}
+                    {t('reasonLabel', { defaultValue: 'Reason' })}{' '}
                     <Text as="span" size="T200">
-                      (optional)
+                      ({t('optional', { defaultValue: 'optional' })})
                     </Text>
                   </Text>
                   <Input name="reasonInput" variant="Background" />
                   {deleteState.status === AsyncStatus.Error && (
                     <Text style={{ color: color.Critical.Main }} size="T300">
-                      Failed to delete message! Please try again.
+                      {t('failedToDeleteMessage', {
+                        defaultValue: 'Failed to delete message! Please try again.',
+                      })}
                     </Text>
                   )}
                 </Box>
@@ -491,7 +507,9 @@ export const MessageDeleteItem = as<
                   aria-disabled={deleteState.status === AsyncStatus.Loading}
                 >
                   <Text size="B400">
-                    {deleteState.status === AsyncStatus.Loading ? 'Deleting...' : 'Delete'}
+                    {deleteState.status === AsyncStatus.Loading
+                      ? t('deleting', { defaultValue: 'Deleting...' })
+                      : t('delete', { defaultValue: 'Delete' })}
                   </Text>
                 </Button>
               </Box>
@@ -511,7 +529,7 @@ export const MessageDeleteItem = as<
         ref={ref}
       >
         <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          Delete
+          {t('delete', { defaultValue: 'Delete' })}
         </Text>
       </Button>
     </>
@@ -528,6 +546,7 @@ export const MessageReportItem = as<
 >(({ room, mEvent, onClose, ...props }, ref) => {
   const mx = useMatrixClient();
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation('message');
 
   const [reportState, reportMessage] = useAsyncCallback(
     useCallback(
@@ -550,7 +569,11 @@ export const MessageReportItem = as<
     const reasonInput = target?.reasonInput as HTMLInputElement | undefined;
     const reason = reasonInput && reasonInput.value.trim();
     if (reasonInput) reasonInput.value = '';
-    reportMessage(eventId, reason ? -100 : -50, reason || 'No reason provided');
+    reportMessage(
+      eventId,
+      reason ? -100 : -50,
+      reason || t('noReasonProvided', { defaultValue: 'No reason provided' })
+    );
   };
 
   const handleClose = () => {
@@ -580,7 +603,9 @@ export const MessageReportItem = as<
                 size="500"
               >
                 <Box grow="Yes">
-                  <Text size="H4">Report Message</Text>
+                  <Text size="H4">
+                    {t('reportMessageTitle', { defaultValue: 'Report Message' })}
+                  </Text>
                 </Box>
                 <IconButton size="300" onClick={handleClose} radii="300">
                   <Icon src={Icons.Cross} />
@@ -594,20 +619,26 @@ export const MessageReportItem = as<
                 gap="400"
               >
                 <Text priority="400">
-                  Report this message to server, which may then notify the appropriate people to
-                  take action.
+                  {t('reportMessageDescription', {
+                    defaultValue:
+                      'Report this message to server, which may then notify the appropriate people to take action.',
+                  })}
                 </Text>
                 <Box direction="Column" gap="100">
-                  <Text size="L400">Reason</Text>
+                  <Text size="L400">{t('reasonLabel', { defaultValue: 'Reason' })}</Text>
                   <Input name="reasonInput" variant="Background" required />
                   {reportState.status === AsyncStatus.Error && (
                     <Text style={{ color: color.Critical.Main }} size="T300">
-                      Failed to report message! Please try again.
+                      {t('failedToReportMessage', {
+                        defaultValue: 'Failed to report message! Please try again.',
+                      })}
                     </Text>
                   )}
                   {reportState.status === AsyncStatus.Success && (
                     <Text style={{ color: color.Success.Main }} size="T300">
-                      Message has been reported to server.
+                      {t('messageReported', {
+                        defaultValue: 'Message has been reported to server.',
+                      })}
                     </Text>
                   )}
                 </Box>
@@ -625,7 +656,9 @@ export const MessageReportItem = as<
                   }
                 >
                   <Text size="B400">
-                    {reportState.status === AsyncStatus.Loading ? 'Reporting...' : 'Report'}
+                    {reportState.status === AsyncStatus.Loading
+                      ? t('reporting', { defaultValue: 'Reporting...' })
+                      : t('report', { defaultValue: 'Report' })}
                   </Text>
                 </Button>
               </Box>
@@ -645,7 +678,7 @@ export const MessageReportItem = as<
         ref={ref}
       >
         <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          Report
+          {t('report', { defaultValue: 'Report' })}
         </Text>
       </Button>
     </>
@@ -718,6 +751,7 @@ export const Message = as<'div', MessageProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation('message');
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const senderId = mEvent.getSender() ?? '';
@@ -998,7 +1032,7 @@ export const Message = as<'div', MessageProps>(
                                 size="T300"
                                 truncate
                               >
-                                Add Reaction
+                                {t('addReaction', { defaultValue: 'Add Reaction' })}
                               </Text>
                             </MenuItem>
                           )}
@@ -1025,7 +1059,7 @@ export const Message = as<'div', MessageProps>(
                               size="T300"
                               truncate
                             >
-                              Reply
+                              {t('reply', { defaultValue: 'Reply' })}
                             </Text>
                           </MenuItem>
                           {!isThreadedMessage && (
@@ -1045,7 +1079,7 @@ export const Message = as<'div', MessageProps>(
                                 size="T300"
                                 truncate
                               >
-                                Reply in Thread
+                                {t('replyInThread', { defaultValue: 'Reply in Thread' })}
                               </Text>
                             </MenuItem>
                           )}
@@ -1066,7 +1100,7 @@ export const Message = as<'div', MessageProps>(
                                 size="T300"
                                 truncate
                               >
-                                Edit Message
+                                {t('editMessage', { defaultValue: 'Edit Message' })}
                               </Text>
                             </MenuItem>
                           )}
