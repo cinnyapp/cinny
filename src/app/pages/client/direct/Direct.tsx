@@ -107,7 +107,12 @@ function DirectHeader() {
             </Text>
           </Box>
           <Box>
-            <IconButton aria-pressed={!!menuAnchor} variant="Background" onClick={handleOpenMenu}>
+            <IconButton
+              aria-pressed={!!menuAnchor}
+              variant="Background"
+              fill="None"
+              onClick={handleOpenMenu}
+            >
               <Icon src={Icons.VerticalDots} size="200" />
             </IconButton>
           </Box>

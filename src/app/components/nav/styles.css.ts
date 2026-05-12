@@ -49,7 +49,6 @@ const NavItemBase = style({
   display: 'flex',
   justifyContent: 'start',
   cursor: 'pointer',
-  backgroundColor: Container,
   color: OnContainer,
   outline: 'none',
   minHeight: toRem(36),

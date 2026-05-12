@@ -11,9 +11,11 @@ import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { useTheme } from '../../../hooks/useTheme';
 
 export function SpaceSearch() {
   const mx = useMatrixClient();
+  const theme = useTheme();
   const scrollRef = useRef<HTMLDivElement>(null);
   const space = useSpace();
   const screenSize = useScreenSizeContext();
@@ -27,7 +29,7 @@ export function SpaceSearch() {
   );
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       <PageHeader balance>
         <Box grow="Yes" alignItems="Center" gap="200">
           <Box grow="Yes" basis="No">

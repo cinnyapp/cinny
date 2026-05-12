@@ -67,6 +67,7 @@ import { useIgnoredUsers } from '../../../hooks/useIgnoredUsers';
 import { useReportRoomSupported } from '../../../hooks/useReportRoomSupported';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import { useTheme } from '../../../hooks/useTheme';
 
 const COMPACT_CARD_WIDTH = 548;
 
@@ -693,6 +694,7 @@ function SpamInvites({
 
 export function Invites() {
   const mx = useMatrixClient();
+  const theme = useTheme();
   const useAuthentication = useMediaAuthentication();
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const allRooms = useAtomValue(allRoomsAtom);
@@ -746,7 +748,7 @@ export function Invites() {
   };
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       <PageHeader balance>
         <Box grow="Yes" gap="200">
           <Box grow="Yes" basis="No">

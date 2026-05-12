@@ -45,6 +45,7 @@ import { getMxIdServer } from '../../../utils/matrix';
 import { stopPropagation } from '../../../utils/keyboard';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { useTheme } from '../../../hooks/useTheme';
 
 const useServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams =>
   useMemo(
@@ -343,6 +344,7 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
 export function PublicRooms() {
   const { server } = useParams();
   const mx = useMatrixClient();
+  const theme = useTheme();
   const userId = mx.getUserId();
   const userServer = userId && getMxIdServer(userId);
   const allRooms = useAtomValue(allRoomsAtom);
@@ -469,7 +471,7 @@ export function PublicRooms() {
   };
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       <PageHeader balance>
         {isSearch ? (
           <>

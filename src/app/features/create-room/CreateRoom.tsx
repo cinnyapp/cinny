@@ -213,6 +213,7 @@ export function CreateRoomForm({
           <Text size="L400">Options</Text>
           <Box grow="Yes" justifyContent="End">
             <Chip
+              fill="None"
               radii="Pill"
               before={<Icon src={advance ? Icons.ChevronTop : Icons.ChevronBottom} size="50" />}
               onClick={() => setAdvance(!advance)}

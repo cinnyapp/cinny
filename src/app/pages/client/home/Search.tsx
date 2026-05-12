@@ -5,14 +5,16 @@ import { MessageSearch } from '../../../features/message-search';
 import { useHomeRooms } from './useHomeRooms';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { useTheme } from '../../../hooks/useTheme';
 
 export function HomeSearch() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rooms = useHomeRooms();
   const screenSize = useScreenSizeContext();
+  const theme = useTheme();
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       <PageHeader balance>
         <Box grow="Yes" alignItems="Center" gap="200">
           <Box grow="Yes" basis="No">

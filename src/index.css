@@ -22,8 +22,7 @@
   --font-secondary: 'InterVariable', var(--font-emoji), sans-serif;
 }
 
-.dark-theme,
-.butter-theme {
+.global-dark {
   --tc-link: hsl(213deg 100% 80%);
 
   --mx-uc-1: hsl(208, 100%, 75%);

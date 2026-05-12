@@ -6,9 +6,11 @@ import { Page, PageHeader } from '../../components/page';
 import { callChatAtom } from '../../state/callEmbed';
 import { RoomView } from './RoomView';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
+import { useTheme } from '../../hooks/useTheme';
 
 export function CallChatView() {
   const { eventId } = useParams();
+  const theme = useTheme();
   const setChat = useSetAtom(callChatAtom);
   const screenSize = useScreenSizeContext();
 
@@ -16,6 +18,7 @@ export function CallChatView() {
 
   return (
     <Page
+      transparent={theme.flat}
       style={{
         width: screenSize === ScreenSize.Desktop ? toRem(456) : '100%',
         flexShrink: 0,
@@ -41,7 +44,7 @@ export function CallChatView() {
               }
             >
               {(triggerRef) => (
-                <IconButton ref={triggerRef} variant="Surface" onClick={handleClose}>
+                <IconButton ref={triggerRef} variant="Surface" fill="None" onClick={handleClose}>
                   <Icon src={Icons.Cross} />
                 </IconButton>
               )}

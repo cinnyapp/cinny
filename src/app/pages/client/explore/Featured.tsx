@@ -18,8 +18,10 @@ import * as css from './style.css';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { useTheme } from '../../../hooks/useTheme';
 
 export function FeaturedRooms() {
+  const theme = useTheme();
   const { featuredCommunities } = useClientConfig();
   const { rooms, spaces } = featuredCommunities ?? {};
   const allRooms = useAtomValue(allRoomsAtom);
@@ -27,7 +29,7 @@ export function FeaturedRooms() {
   const { navigateSpace, navigateRoom } = useRoomNavigate();
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       {screenSize === ScreenSize.Mobile && (
         <PageHeader>
           <Box shrink="No">

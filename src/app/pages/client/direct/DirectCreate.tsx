@@ -17,10 +17,12 @@ import {
 } from '../../../components/page';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
 import { CreateChat } from '../../../features/create-chat';
+import { useTheme } from '../../../hooks/useTheme';
 
 export function DirectCreate() {
   const mx = useMatrixClient();
   const screenSize = useScreenSizeContext();
+  const theme = useTheme();
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -38,7 +40,7 @@ export function DirectCreate() {
   }, [mx, navigate, directs, userId]);
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       {screenSize === ScreenSize.Mobile && (
         <PageHeader balance outlined={false}>
           <Box grow="Yes" alignItems="Center" gap="200">

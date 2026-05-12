@@ -180,6 +180,7 @@ export function CreateSpaceForm({ defaultAccess, space, onCreate }: CreateSpaceF
           <Box grow="Yes" justifyContent="End">
             <Chip
               radii="Pill"
+              fill="None"
               before={<Icon src={advance ? Icons.ChevronTop : Icons.ChevronBottom} size="50" />}
               onClick={() => setAdvance(!advance)}
               type="button"

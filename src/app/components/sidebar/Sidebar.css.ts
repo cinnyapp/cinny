@@ -1,13 +1,11 @@
 import { createVar, style } from '@vanilla-extract/css';
 import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { color, config, DefaultReset, Disabled, FocusOutline, toRem } from 'folds';
-import { ContainerColor } from '../../styles/ContainerColor.css';
 
 export const Sidebar = style([
   DefaultReset,
   {
     width: toRem(66),
-    backgroundColor: color.Background.Container,
     borderRight: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
 
     display: 'flex',
@@ -187,7 +185,6 @@ export type SidebarAvatarVariants = RecipeVariants<typeof SidebarAvatar>;
 
 export const SidebarFolder = recipe({
   base: [
-    ContainerColor({ variant: 'Background' }),
     {
       padding: config.space.S100,
       width: toRem(42),

@@ -10,6 +10,7 @@ import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../components/BackRouteHandler';
+import { useTheme } from '../../hooks/useTheme';
 
 type JoinBeforeNavigateProps = { roomIdOrAlias: string; eventId?: string; viaServers?: string[] };
 export function JoinBeforeNavigate({
@@ -21,6 +22,7 @@ export function JoinBeforeNavigate({
   const allRooms = useAtomValue(allRoomsAtom);
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const screenSize = useScreenSizeContext();
+  const theme = useTheme();
 
   const handleView = (roomId: string) => {
     if (mx.getRoom(roomId)?.isSpaceRoom()) {
@@ -31,7 +33,7 @@ export function JoinBeforeNavigate({
   };
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       <PageHeader balance>
         <Box grow="Yes" gap="200">
           <Box shrink="No">

@@ -1,7 +1,6 @@
 import React, { RefObject, useRef } from 'react';
 import { Badge, Box, color, Header, Scroll, Text, toRem } from 'folds';
 import { useCallEmbed, useCallJoined, useCallEmbedPlacementSync } from '../../hooks/useCallEmbed';
-import { ContainerColor } from '../../styles/ContainerColor.css';
 import { PrescreenControls } from './PrescreenControls';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
@@ -138,11 +137,7 @@ export function CallView() {
   const currentJoined = callEmbed?.roomId === room.roomId && callJoined;
 
   return (
-    <Box
-      className={ContainerColor({ variant: 'Surface' })}
-      style={{ minWidth: toRem(280) }}
-      grow="Yes"
-    >
+    <Box style={{ minWidth: toRem(280) }} grow="Yes">
       {!currentJoined && <CallPrescreen />}
       <CallJoined joined={currentJoined} containerRef={callContainerRef} />
     </Box>

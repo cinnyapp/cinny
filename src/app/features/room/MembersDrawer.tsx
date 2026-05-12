@@ -56,7 +56,6 @@ import { MembershipFilterMenu } from '../../components/MembershipFilterMenu';
 import { MemberSortMenu } from '../../components/MemberSortMenu';
 import { useOpenUserRoomProfile, useUserRoomProfileState } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
-import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 
@@ -89,6 +88,7 @@ function MemberDrawerHeader({ room }: MemberDrawerHeaderProps) {
               <IconButton
                 ref={triggerRef}
                 variant="Background"
+                fill="None"
                 onClick={() => setPeopleDrawer(false)}
               >
                 <Icon src={Icons.Cross} />
@@ -132,6 +132,7 @@ function MemberItem({
       aria-pressed={pressed}
       data-user-id={member.userId}
       variant="Background"
+      fill="None"
       radii="400"
       onClick={onClick}
       before={
@@ -245,11 +246,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
   };
 
   return (
-    <Box
-      className={classNames(css.MembersDrawer, ContainerColor({ variant: 'Background' }))}
-      shrink="No"
-      direction="Column"
-    >
+    <Box className={classNames(css.MembersDrawer)} shrink="No" direction="Column">
       <MemberDrawerHeader room={room} />
       <Box className={css.MemberDrawerContentBase} grow="Yes">
         <Scroll ref={scrollRef} variant="Background" size="300" visibility="Hover" hideTrack>
@@ -279,6 +276,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                             )) as MouseEventHandler<HTMLButtonElement>
                         }
                         variant="Background"
+                        fill="None"
                         size="400"
                         radii="300"
                         before={<Icon src={Icons.Filter} size="50" />}
@@ -311,6 +309,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                             )) as MouseEventHandler<HTMLButtonElement>
                         }
                         variant="Background"
+                        fill="None"
                         size="400"
                         radii="300"
                         after={<Icon src={Icons.Sort} size="50" />}

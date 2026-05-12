@@ -9,12 +9,14 @@ import {
 } from '../../../components/page';
 import { CreateSpaceForm } from '../../../features/create-space';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
+import { useTheme } from '../../../hooks/useTheme';
 
 export function Create() {
   const { navigateSpace } = useRoomNavigate();
+  const theme = useTheme();
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       <Box grow="Yes">
         <Scroll hideTrack visibility="Hover">
           <PageContent>

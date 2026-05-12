@@ -1,6 +1,7 @@
 import { style } from '@vanilla-extract/css';
 import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { DefaultReset, color, config, toRem } from 'folds';
+import { ContainerColor } from '../../styles/ContainerColor.css';
 
 export const PageNav = recipe({
   variants: {
@@ -58,6 +59,19 @@ export const PageNavContent = style({
   paddingRight: 0,
   paddingBottom: config.space.S700,
 });
+
+export const Page = recipe({
+  base: [ContainerColor({ variant: 'Surface' })],
+  variants: {
+    transparent: {
+      true: {
+        background: 'transparent',
+      },
+    },
+  },
+});
+
+export type PageVariants = RecipeVariants<typeof Page>;
 
 export const PageHeader = recipe({
   base: {

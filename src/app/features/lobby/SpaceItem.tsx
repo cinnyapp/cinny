@@ -64,6 +64,7 @@ function InaccessibleSpaceProfile({ roomId, suggested }: InaccessibleSpaceProfil
       as="span"
       className={css.HeaderChip}
       variant="Surface"
+      fill="None"
       size="500"
       before={
         <Avatar size="200" radii="300">
@@ -121,6 +122,7 @@ function UnjoinedSpaceProfile({
     <Chip
       className={css.HeaderChip}
       variant="Surface"
+      fill="None"
       size="500"
       onClick={join}
       disabled={!canJoin}
@@ -187,6 +189,7 @@ function SpaceProfile({
       onClick={handleClose}
       className={css.HeaderChip}
       variant="Surface"
+      fill="None"
       size="500"
       before={
         <Avatar size="200" radii="300">
@@ -230,6 +233,7 @@ function RootSpaceProfile({ closed, categoryId, handleClose }: RootSpaceProfileP
       onClick={handleClose}
       className={css.HeaderChip}
       variant="Surface"
+      fill="None"
       size="500"
       after={<Icon src={closed ? Icons.ChevronRight : Icons.ChevronBottom} size="50" />}
     >

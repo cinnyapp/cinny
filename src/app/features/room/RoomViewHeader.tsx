@@ -66,7 +66,6 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
-import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
 
 type RoomMenuProps = {
@@ -305,10 +304,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   };
 
   return (
-    <PageHeader
-      className={ContainerColor({ variant: 'Surface' })}
-      balance={screenSize === ScreenSize.Mobile}
-    >
+    <PageHeader balance={screenSize === ScreenSize.Mobile}>
       <Box grow="Yes" gap="300">
         {screenSize === ScreenSize.Mobile && (
           <BackRouteHandler>

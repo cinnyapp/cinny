@@ -14,7 +14,7 @@ export function PageRoot({ nav, children }: PageRootProps) {
   const screenSize = useScreenSizeContext();
 
   return (
-    <Box grow="Yes" className={ContainerColor({ variant: 'Background' })}>
+    <Box grow="Yes">
       {nav}
       {screenSize !== ScreenSize.Mobile && (
         <Line variant="Background" size="300" direction="Vertical" />
@@ -79,11 +79,11 @@ export function PageNavContent({
   );
 }
 
-export const Page = as<'div'>(({ className, ...props }, ref) => (
+export const Page = as<'div', css.PageVariants>(({ className, transparent, ...props }, ref) => (
   <Box
     grow="Yes"
     direction="Column"
-    className={classNames(ContainerColor({ variant: 'Surface' }), className)}
+    className={classNames(css.Page({ transparent }), className)}
     {...props}
     ref={ref}
   />

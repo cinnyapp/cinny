@@ -36,6 +36,7 @@ export function CallRoomName({ room }: CallRoomNameProps) {
   return (
     <Chip
       variant="Background"
+      fill="None"
       radii="Pill"
       before={
         <RoomIcon size="200" joinRule={room.getJoinRule()} roomType={room.getType()} filled />

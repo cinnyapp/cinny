@@ -56,6 +56,7 @@ import { useGetRoom } from '../../hooks/useGetRoom';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
 import { getRoomCreatorsForRoomId } from '../../hooks/useRoomCreators';
+import { useTheme } from '../../hooks/useTheme';
 
 const useCanDropLobbyItem = (
   space: Room,
@@ -151,6 +152,7 @@ const useCanDropLobbyItem = (
 export function Lobby() {
   const navigate = useNavigate();
   const mx = useMatrixClient();
+  const theme = useTheme();
   const mDirects = useAtomValue(mDirectAtom);
   const allRooms = useAtomValue(allRoomsAtom);
   const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
@@ -430,7 +432,7 @@ export function Lobby() {
   return (
     <PowerLevelsContextProvider value={spacePowerLevels}>
       <Box grow="Yes">
-        <Page>
+        <Page transparent={theme.flat}>
           <LobbyHeader
             showProfile={!onTop}
             powerLevels={roomsPowerLevels.get(space.roomId) ?? {}}

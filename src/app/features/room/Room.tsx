@@ -18,11 +18,14 @@ import { CallView } from '../call/CallView';
 import { RoomViewHeader } from './RoomViewHeader';
 import { callChatAtom } from '../../state/callEmbed';
 import { CallChatView } from './CallChatView';
+import { Page } from '../../components/page';
+import { useTheme } from '../../hooks/useTheme';
 
 export function Room() {
   const { eventId } = useParams();
   const room = useRoom();
   const mx = useMatrixClient();
+  const theme = useTheme();
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
@@ -49,20 +52,20 @@ export function Room() {
     <PowerLevelsContextProvider value={powerLevels}>
       <Box grow="Yes">
         {callView && (screenSize === ScreenSize.Desktop || !chat) && (
-          <Box grow="Yes" direction="Column">
+          <Page transparent={theme.flat}>
             <RoomViewHeader callView />
             <Box grow="Yes">
               <CallView />
             </Box>
-          </Box>
+          </Page>
         )}
         {!callView && (
-          <Box grow="Yes" direction="Column">
+          <Page transparent={theme.flat}>
             <RoomViewHeader />
             <Box grow="Yes">
               <RoomView eventId={eventId} />
             </Box>
-          </Box>
+          </Page>
         )}
 
         {callView && chat && (

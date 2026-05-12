@@ -1,11 +1,9 @@
 import React from 'react';
 import { Box, Spinner } from 'folds';
-import classNames from 'classnames';
 import { LiveChip } from './LiveChip';
 import * as css from './styles.css';
 import { CallRoomName } from './CallRoomName';
 import { CallControl } from './CallControl';
-import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { ScreenSize, useScreenSize } from '../../hooks/useScreenSize';
 import { MemberGlance } from './MemberGlance';
@@ -33,7 +31,7 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
 
   return (
     <Box
-      className={classNames(css.CallStatus, ContainerColor({ variant: 'Background' }))}
+      className={css.CallStatus}
       shrink="No"
       gap="400"
       alignItems={compact ? undefined : 'Center'}

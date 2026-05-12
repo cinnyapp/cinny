@@ -12,14 +12,16 @@ import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
 import { CreateRoomForm } from '../../../features/create-room';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
+import { useTheme } from '../../../hooks/useTheme';
 
 export function HomeCreateRoom() {
   const screenSize = useScreenSizeContext();
+  const theme = useTheme();
 
   const { navigateRoom } = useRoomNavigate();
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       {screenSize === ScreenSize.Mobile && (
         <PageHeader balance outlined={false}>
           <Box grow="Yes" alignItems="Center" gap="200">

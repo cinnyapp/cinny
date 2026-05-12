@@ -1,7 +1,6 @@
-import { lightTheme } from 'folds';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { onDarkFontWeight, onLightFontWeight } from '../../config.css';
-import { butterTheme, darkTheme, silverTheme } from '../../colors.css';
+import { lightTheme, butterTheme, darkTheme, silverTheme, moonlightTheme } from '../../colors.css';
 import { settingsAtom } from '../state/settings';
 import { useSetting } from '../state/hooks/settings';
 
@@ -14,6 +13,8 @@ export type Theme = {
   id: string;
   kind: ThemeKind;
   classNames: string[];
+  flat?: boolean;
+  gradient?: string;
 };
 
 export const LightTheme: Theme = {
@@ -25,21 +26,31 @@ export const LightTheme: Theme = {
 export const SilverTheme: Theme = {
   id: 'silver-theme',
   kind: ThemeKind.Light,
-  classNames: ['silver-theme', silverTheme, onLightFontWeight, 'prism-light'],
+  classNames: [silverTheme, onLightFontWeight, 'prism-light'],
 };
+
 export const DarkTheme: Theme = {
   id: 'dark-theme',
   kind: ThemeKind.Dark,
-  classNames: ['dark-theme', darkTheme, onDarkFontWeight, 'prism-dark'],
+  classNames: ['global-dark', darkTheme, onDarkFontWeight, 'prism-dark'],
 };
 export const ButterTheme: Theme = {
   id: 'butter-theme',
   kind: ThemeKind.Dark,
-  classNames: ['butter-theme', butterTheme, onDarkFontWeight, 'prism-dark'],
+  classNames: ['global-dark', butterTheme, onDarkFontWeight, 'prism-dark'],
+};
+export const MoonlightTheme: Theme = {
+  id: 'moonlight-theme',
+  kind: ThemeKind.Dark,
+  classNames: ['global-dark', moonlightTheme, onDarkFontWeight, 'prism-dark'],
+  flat: true,
 };
 
 export const useThemes = (): Theme[] => {
-  const themes: Theme[] = useMemo(() => [LightTheme, SilverTheme, DarkTheme, ButterTheme], []);
+  const themes: Theme[] = useMemo(
+    () => [LightTheme, SilverTheme, DarkTheme, ButterTheme, MoonlightTheme],
+    []
+  );
 
   return themes;
 };
@@ -51,6 +62,7 @@ export const useThemeNames = (): Record<string, string> =>
       [SilverTheme.id]: 'Silver',
       [DarkTheme.id]: 'Dark',
       [ButterTheme.id]: 'Butter',
+      [MoonlightTheme.id]: 'Moonlight',
     }),
     []
   );

@@ -39,9 +39,9 @@ export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
     document.body.classList.add(...activeTheme.classNames);
 
     if (monochromeMode) {
-      document.body.style.filter = 'grayscale(1)';
+      document.body.style.setProperty('filter', 'grayscale(1)');
     } else {
-      document.body.style.filter = '';
+      document.body.style.removeProperty('filter');
     }
   }, [activeTheme, monochromeMode]);
 

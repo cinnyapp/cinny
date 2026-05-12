@@ -563,6 +563,7 @@ const DEFAULT_REFRESH_MS = 7000;
 
 export function Notifications() {
   const mx = useMatrixClient();
+  const theme = useTheme();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
@@ -635,7 +636,7 @@ export function Notifications() {
   }, [timelineState, notificationTimeline, lastVItemIndex, loadTimeline]);
 
   return (
-    <Page>
+    <Page transparent={theme.flat}>
       <PageHeader balance>
         <Box grow="Yes" gap="200">
           <Box grow="Yes" basis="No">
