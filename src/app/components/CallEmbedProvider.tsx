@@ -7,6 +7,7 @@ import {
   Avatar,
   Box,
   Button,
+  color,
   config,
   Dialog,
   Icon,
@@ -52,6 +53,7 @@ import { StateEvent } from '../../types/matrix/room';
 import { getPowersLevelFromMatrixEvent } from '../hooks/usePowerLevels';
 import { getRoomCreatorsForRoomId } from '../hooks/useRoomCreators';
 import { getRoomPermissionsAPI } from '../hooks/useRoomPermissions';
+import { useLivekitSupport } from '../hooks/useLivekitSupport';
 
 type IncomingCallInfo = {
   room: Room;
@@ -72,6 +74,7 @@ type IncomingCallProps = {
 function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
+  const livekitSupported = useLivekitSupport();
   const { room } = info;
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -176,12 +179,22 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
                     radii="400"
                     onClick={() => onAnswer(room, info.intent === 'video')}
                     before={<Icon size="200" src={Icons.Phone} filled />}
+                    disabled={!livekitSupported}
                   >
                     <Text as="span" size="B400">
                       Answer
                     </Text>
                   </Button>
                 </Box>
+                {!livekitSupported && (
+                  <Text
+                    style={{ margin: 'auto', color: color.Critical.Main }}
+                    size="L400"
+                    align="Center"
+                  >
+                    Your homeserver does not support calling.
+                  </Text>
+                )}
               </Box>
             </Dialog>
           </FocusTrap>
