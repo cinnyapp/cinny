@@ -1,12 +1,5 @@
 import { replaceMatch } from '../internal';
-import {
-  BlockQuoteRule,
-  CodeBlockRule,
-  ESC_BLOCK_SEQ,
-  HeadingRule,
-  OrderedListRule,
-  UnorderedListRule,
-} from './rules';
+import { BlockQuoteRule, CodeBlockRule, ESC_BLOCK_SEQ, HeadingRule, ListRule } from './rules';
 import { runBlockRule } from './runner';
 import { BlockMDParser } from './type';
 
@@ -23,8 +16,7 @@ export const parseBlockMD: BlockMDParser = (text, parseInline) => {
 
   if (!result) result = runBlockRule(text, CodeBlockRule, parseBlockMD, parseInline);
   if (!result) result = runBlockRule(text, BlockQuoteRule, parseBlockMD, parseInline);
-  if (!result) result = runBlockRule(text, OrderedListRule, parseBlockMD, parseInline);
-  if (!result) result = runBlockRule(text, UnorderedListRule, parseBlockMD, parseInline);
+  if (!result) result = runBlockRule(text, ListRule, parseBlockMD, parseInline);
   if (!result) result = runBlockRule(text, HeadingRule, parseBlockMD, parseInline);
 
   // replace \n with <br/> because want to preserve empty lines

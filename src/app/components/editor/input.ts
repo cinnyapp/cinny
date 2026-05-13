@@ -255,10 +255,67 @@ const parseCodeBlockNode = (node: Element): CodeBlockElement[] | ParagraphElemen
     },
   ];
 };
-const parseListNode = (
+
+const parseListMarkdown = (
   node: Element,
-  processText: ProcessTextCallback
-): OrderedListElement[] | UnorderedListElement[] | ParagraphElement[] => {
+  processText: ProcessTextCallback,
+  depth = 0
+): ParagraphElement[] => {
+  const md = isTag(node) && node.name === 'ul' ? '*' : '-';
+  const prefix = node.attribs['data-md'] ?? md;
+  const [starOrHyphen] = prefix.match(/^\*|-$/) ?? [];
+  const [digitOrChar] = prefix.match(/^[\da-zA-Z]/) ?? [];
+
+  const digit = digitOrChar ? parseInt(digitOrChar, 10) : undefined;
+
+  const lines: ParagraphElement[] = [];
+  let lineNo = digit === undefined || Number.isNaN(digit) ? digitOrChar ?? 1 : digit;
+  const pushLine = (line: InlineElement[]) => {
+    lines.push({
+      type: BlockType.Paragraph,
+      children: [
+        {
+          text: `${Array(depth + 1).join(' ')}${starOrHyphen ? `${starOrHyphen} ` : `${lineNo}. `}`,
+        },
+        ...line,
+      ],
+    });
+    if (typeof lineNo === 'string') {
+      lineNo = String.fromCharCode(lineNo.charCodeAt(0) + 1);
+    } else {
+      lineNo += 1;
+    }
+  };
+
+  node.children.forEach((child) => {
+    if (isText(child)) {
+      pushLine([{ text: processText(child.data) }]);
+      return;
+    }
+
+    if (isTag(child)) {
+      if (child.name === 'ul' || child.name === 'ol') {
+        lines.push(...parseListMarkdown(child, processText, depth + 1));
+        return;
+      }
+      if (child.name === 'li') {
+        child.children.forEach((c) => {
+          if (isTag(c) && (c.name === 'ul' || c.name === 'ol')) {
+            lines.push(...parseListMarkdown(c, processText, depth + 1));
+            return;
+          }
+          pushLine(getInlineElement(c, processText));
+        });
+        return;
+      }
+    }
+
+    pushLine(getInlineElement(child, processText));
+  });
+
+  return lines;
+};
+const parseListLines = (children: ChildNode[], processText: ProcessTextCallback) => {
   const listLines: Array<InlineElement[]> = [];
   let lineHolder: InlineElement[] = [];
 
@@ -269,7 +326,7 @@ const parseListNode = (
     lineHolder = [];
   };
 
-  node.children.forEach((child) => {
+  children.forEach((child) => {
     if (isText(child)) {
       lineHolder.push({ text: processText(child.data) });
       return;
@@ -292,24 +349,23 @@ const parseListNode = (
   });
   appendLine();
 
-  const mdSequence = node.attribs['data-md'];
-  if (mdSequence !== undefined) {
-    const prefix = mdSequence || '-';
-    const [starOrHyphen] = prefix.match(/^\*|-$/) ?? [];
-    return listLines.map((lineChildren) => ({
-      type: BlockType.Paragraph,
-      children: [
-        { text: `${starOrHyphen ? `${starOrHyphen} ` : `${prefix}. `} ` },
-        ...lineChildren,
-      ],
-    }));
+  return listLines;
+};
+const parseListNode = (
+  node: Element,
+  processText: ProcessTextCallback
+): OrderedListElement[] | UnorderedListElement[] | ParagraphElement[] => {
+  if (node.attribs['data-md'] !== undefined) {
+    return parseListMarkdown(node, processText);
   }
+
+  const lines = parseListLines(node.childNodes, processText);
 
   if (node.name === 'ol') {
     return [
       {
         type: BlockType.OrderedList,
-        children: listLines.map((lineChildren) => ({
+        children: lines.map((lineChildren) => ({
           type: BlockType.ListItem,
           children: lineChildren,
         })),
@@ -320,7 +376,7 @@ const parseListNode = (
   return [
     {
       type: BlockType.UnorderedList,
-      children: listLines.map((lineChildren) => ({
+      children: lines.map((lineChildren) => ({
         type: BlockType.ListItem,
         children: lineChildren,
       })),
