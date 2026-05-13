@@ -273,22 +273,21 @@ const CallMenu = forwardRef<HTMLDivElement, CallMenuProps>(
     };
 
     return (
-      <Menu ref={ref} style={{ padding: config.space.S200 }}>
+      <Menu ref={ref} style={{ padding: config.space.S200, minWidth: toRem(150) }}>
         <Box direction="Column" gap="200">
-          <Box direction="Column">
-            <Text size="L400">Start Call</Text>
-          </Box>
-          <Box alignItems="Center" gap="200">
+          <Text size="L400">Start Call</Text>
+          <Box direction="Column" gap="200">
             <Button
               size="300"
               variant="Success"
+              fill="Soft"
+              outlined
               radii="300"
               before={<Icon size="100" src={Icons.Phone} filled />}
               onClick={handleVoice}
             >
               <Text size="B300">Voice</Text>
             </Button>
-
             <Button
               size="300"
               variant="Success"
