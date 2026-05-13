@@ -18,7 +18,7 @@ import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 function LivekitServerMissingMessage() {
   return (
     <Text style={{ margin: 'auto', color: color.Critical.Main }} size="L400" align="Center">
-      Your homeserver does not support calling. But you can still join call started by others.
+      Your homeserver does not support calling.
     </Text>
   );
 }
@@ -30,11 +30,11 @@ function JoinMessage({
   hasParticipant?: boolean;
   livekitSupported?: boolean;
 }) {
-  if (hasParticipant) return null;
-
   if (livekitSupported === false) {
     return <LivekitServerMissingMessage />;
   }
+
+  if (hasParticipant) return null;
 
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
@@ -80,7 +80,7 @@ function CallPrescreen() {
   const callEmbed = useCallEmbed();
   const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
 
-  const canJoin = hasPermission && (livekitSupported || hasParticipant);
+  const canJoin = hasPermission && livekitSupported;
 
   return (
     <Scroll variant="Surface" hideTrack>

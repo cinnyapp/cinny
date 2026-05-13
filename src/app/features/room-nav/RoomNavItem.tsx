@@ -298,8 +298,8 @@ export function RoomNavItem({
       mx.getSafeUserId()
     );
 
-    // Do not join if missing permissions or no livekit support and call is not started by others
-    if (!hasCallPermission || (!livekitSupport(autoDiscoveryInfo) && callMembers.length === 0)) {
+    // Do not join if missing permissions or no livekit support
+    if (!hasCallPermission || !livekitSupport(autoDiscoveryInfo)) {
       return;
     }
 
