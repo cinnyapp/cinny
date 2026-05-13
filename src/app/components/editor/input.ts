@@ -193,7 +193,7 @@ const parseBlockquoteNode = (
 
       if (child.name === 'p') {
         appendLine();
-        quoteLines.push(child.children.flatMap((c) => getInlineElement(c, processText)));
+        quoteLines.push(getInlineElement(child, processText));
         return;
       }
 
@@ -283,7 +283,7 @@ const parseListNode = (
 
       if (child.name === 'li') {
         appendLine();
-        listLines.push(child.children.flatMap((c) => getInlineElement(c, processText)));
+        listLines.push(getInlineElement(child, processText));
         return;
       }
 
@@ -331,7 +331,7 @@ const parseHeadingNode = (
   node: Element,
   processText: ProcessTextCallback
 ): HeadingElement | ParagraphElement => {
-  const children = node.children.flatMap((child) => getInlineElement(child, processText));
+  const children = getInlineElement(node, processText);
 
   const headingMatch = node.name.match(/^h([123456])$/);
   const [, g1AsLevel] = headingMatch ?? ['h3', '3'];
@@ -394,7 +394,7 @@ export const domToEditorInput = (
         appendLine();
         children.push({
           type: BlockType.Paragraph,
-          children: node.children.flatMap((child) => getInlineElement(child, processText)),
+          children: getInlineElement(node, processText),
         });
         return;
       }
