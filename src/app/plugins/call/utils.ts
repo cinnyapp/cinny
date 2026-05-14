@@ -15,6 +15,8 @@ export function getCallCapabilities(
 
   capabilities.add(MatrixCapabilities.Screenshots);
   capabilities.add(MatrixCapabilities.AlwaysOnScreen);
+  capabilities.add(MatrixCapabilities.MSC4039UploadFile);
+  capabilities.add(MatrixCapabilities.MSC4039DownloadFile);
   capabilities.add(MatrixCapabilities.MSC3846TurnServers);
   capabilities.add(MatrixCapabilities.MSC4157SendDelayedEvent);
   capabilities.add(MatrixCapabilities.MSC4157UpdateDelayedEvent);
