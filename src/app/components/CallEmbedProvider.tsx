@@ -16,6 +16,7 @@ import {
   OverlayBackdrop,
   OverlayCenter,
   Text,
+  toRem,
 } from 'folds';
 import {
   EventTimelineSetHandlerMap,
@@ -54,6 +55,7 @@ import { getPowersLevelFromMatrixEvent } from '../hooks/usePowerLevels';
 import { getRoomCreatorsForRoomId } from '../hooks/useRoomCreators';
 import { getRoomPermissionsAPI } from '../hooks/useRoomPermissions';
 import { useLivekitSupport } from '../hooks/useLivekitSupport';
+import { CallAvatarAnimation } from '../styles/Animations.css';
 
 type IncomingCallInfo = {
   room: Room;
@@ -110,7 +112,7 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
   return (
     <>
       <Overlay open backdrop={<OverlayBackdrop />}>
-        <OverlayCenter style={{ alignItems: 'start', paddingTop: config.space.S100 }}>
+        <OverlayCenter>
           <FocusTrap
             focusTrapOptions={{
               initialFocus: false,
@@ -119,72 +121,35 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
               escapeDeactivates: false,
             }}
           >
-            <Dialog>
-              <Box
-                style={{
-                  padding: `${config.space.S300} ${config.space.S400} ${config.space.S400}`,
-                }}
-                direction="Column"
-                gap="500"
-              >
-                <Box direction="Column" gap="300">
-                  <Box gap="200" alignItems="Center">
-                    {info.intent === 'video' && <Icon size="50" src={Icons.VideoCamera} filled />}
-                    <Text size="L400">Incoming Call</Text>
+            <Dialog style={{ maxWidth: toRem(324) }}>
+              <Box style={{ padding: config.space.S400 }} direction="Column" gap="700">
+                <Text size="T200" align="Center">
+                  {info.sender}
+                </Text>
+                <Box direction="Column" gap="500" alignItems="Center">
+                  <Box shrink="No">
+                    <Avatar size="500" className={CallAvatarAnimation}>
+                      <RoomAvatar
+                        roomId={room.roomId}
+                        src={avatarUrl}
+                        alt={roomName}
+                        renderFallback={() => (
+                          <RoomIcon
+                            roomType={room.getType()}
+                            size="400"
+                            joinRule={room.getJoinRule()}
+                            filled
+                          />
+                        )}
+                      />
+                    </Avatar>
                   </Box>
-                  <Box direction="Row" gap="300" alignItems="Center">
-                    <Box shrink="No">
-                      <Avatar size="400">
-                        <RoomAvatar
-                          roomId={room.roomId}
-                          src={avatarUrl}
-                          alt={roomName}
-                          renderFallback={() => (
-                            <RoomIcon
-                              roomType={room.getType()}
-                              size="400"
-                              joinRule={room.getJoinRule()}
-                              filled
-                            />
-                          )}
-                        />
-                      </Avatar>
-                    </Box>
-                    <Box grow="Yes" direction="Column" gap="0">
-                      <Text size="H4" truncate>
-                        {roomName}
-                      </Text>
-                      <Text size="T200">{info.sender}</Text>
-                    </Box>
+                  <Box grow="Yes" direction="Column" gap="100">
+                    <Text size="H3" align="Center" truncate>
+                      {roomName}
+                    </Text>
+                    <Text size="T300">Incoming Call</Text>
                   </Box>
-                </Box>
-                <Box gap="300">
-                  <Button
-                    style={{ flexGrow: 1 }}
-                    variant="Critical"
-                    fill="Soft"
-                    size="400"
-                    radii="400"
-                    onClick={() => (dm ? onReject(room, info.refEventId) : onIgnore())}
-                    before={<Icon size="200" src={Icons.PhoneDown} filled />}
-                  >
-                    <Text as="span" size="B400">
-                      {dm ? 'Reject' : 'Ignore'}
-                    </Text>
-                  </Button>
-                  <Button
-                    style={{ flexGrow: 1 }}
-                    variant="Success"
-                    size="400"
-                    radii="400"
-                    onClick={() => onAnswer(room, info.intent === 'video')}
-                    before={<Icon size="200" src={Icons.Phone} filled />}
-                    disabled={!livekitSupported}
-                  >
-                    <Text as="span" size="B400">
-                      Answer
-                    </Text>
-                  </Button>
                 </Box>
                 {!livekitSupported && (
                   <Text
@@ -195,6 +160,40 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
                     Your homeserver does not support calling.
                   </Text>
                 )}
+                <Box direction="Column" gap="300">
+                  <Button
+                    style={{ flexGrow: 1 }}
+                    variant="Success"
+                    size="400"
+                    radii="400"
+                    onClick={() => onAnswer(room, info.intent === 'video')}
+                    before={
+                      <Icon
+                        size="200"
+                        src={info.intent === 'video' ? Icons.VideoCamera : Icons.Phone}
+                        filled
+                      />
+                    }
+                    disabled={!livekitSupported}
+                  >
+                    <Text as="span" size="B400">
+                      Answer
+                    </Text>
+                  </Button>
+                  <Button
+                    style={{ flexGrow: 1 }}
+                    variant="Success"
+                    fill="Soft"
+                    size="400"
+                    radii="400"
+                    onClick={() => (dm ? onReject(room, info.refEventId) : onIgnore())}
+                    before={<Icon size="200" src={Icons.Cross} filled />}
+                  >
+                    <Text as="span" size="B400">
+                      {dm ? 'Reject' : 'Ignore'}
+                    </Text>
+                  </Button>
+                </Box>
               </Box>
             </Dialog>
           </FocusTrap>
