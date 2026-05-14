@@ -339,6 +339,14 @@ function CallButton() {
             fill="None"
             ref={triggerRef}
             onClick={handleOpenMenu}
+            onContextMenu={(evt) => {
+              evt.preventDefault();
+              startCall(room, {
+                microphone: true,
+                video: true,
+                sound: true,
+              });
+            }}
             disabled={inAnotherCall || callStarted}
             aria-pressed={!!menuAnchor}
           >
