@@ -56,6 +56,7 @@ import { getRoomCreatorsForRoomId } from '../hooks/useRoomCreators';
 import { getRoomPermissionsAPI } from '../hooks/useRoomPermissions';
 import { useLivekitSupport } from '../hooks/useLivekitSupport';
 import { CallAvatarAnimation } from '../styles/Animations.css';
+import { webRTCSupported } from '../utils/rtc';
 
 type IncomingCallInfo = {
   room: Room;
@@ -77,6 +78,8 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const livekitSupported = useLivekitSupport();
+  const rtcSupported = webRTCSupported();
+  const canAnswer = livekitSupported && rtcSupported;
   const { room } = info;
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -160,6 +163,15 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
                     Your homeserver does not support calling.
                   </Text>
                 )}
+                {!webRTCSupported && (
+                  <Text
+                    style={{ margin: 'auto', color: color.Critical.Main }}
+                    size="L400"
+                    align="Center"
+                  >
+                    Your browser does not support WebRTC, which is required for calling.
+                  </Text>
+                )}
                 <Box direction="Column" gap="300">
                   <Button
                     style={{ flexGrow: 1 }}
@@ -174,7 +186,7 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
                         filled
                       />
                     }
-                    disabled={!livekitSupported}
+                    disabled={!canAnswer}
                   >
                     <Text as="span" size="B400">
                       Answer

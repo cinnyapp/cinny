@@ -14,6 +14,7 @@ import { CallMemberRenderer } from './CallMemberCard';
 import * as css from './styles.css';
 import { CallControls } from './CallControls';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
+import { webRTCSupported } from '../../utils/rtc';
 
 function LivekitServerMissingMessage() {
   return (
@@ -23,13 +24,27 @@ function LivekitServerMissingMessage() {
   );
 }
 
+function WebRTCMissingError() {
+  return (
+    <Text style={{ margin: 'auto', color: color.Critical.Main }} size="L400" align="Center">
+      Your browser does not support WebRTC, which is required for calling.
+    </Text>
+  );
+}
+
 function JoinMessage({
   hasParticipant,
   livekitSupported,
+  rtcSupported,
 }: {
   hasParticipant?: boolean;
   livekitSupported?: boolean;
+  rtcSupported?: boolean;
 }) {
+  if (rtcSupported === false) {
+    return <WebRTCMissingError />;
+  }
+
   if (livekitSupported === false) {
     return <LivekitServerMissingMessage />;
   }
@@ -63,6 +78,7 @@ function CallPrescreen() {
   const mx = useMatrixClient();
   const room = useRoom();
   const livekitSupported = useLivekitSupport();
+  const rtcSupported = webRTCSupported();
 
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
@@ -80,7 +96,7 @@ function CallPrescreen() {
   const callEmbed = useCallEmbed();
   const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
 
-  const canJoin = hasPermission && livekitSupported;
+  const canJoin = hasPermission && livekitSupported && rtcSupported;
 
   return (
     <Scroll variant="Surface" hideTrack>
@@ -103,7 +119,11 @@ function CallPrescreen() {
           <Box className={css.PrescreenMessage} alignItems="Center">
             {!inOtherCall &&
               (hasPermission ? (
-                <JoinMessage hasParticipant={hasParticipant} livekitSupported={livekitSupported} />
+                <JoinMessage
+                  hasParticipant={hasParticipant}
+                  livekitSupported={livekitSupported}
+                  rtcSupported={rtcSupported}
+                />
               ) : (
                 <NoPermissionMessage />
               ))}

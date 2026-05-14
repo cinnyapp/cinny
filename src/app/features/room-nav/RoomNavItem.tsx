@@ -60,6 +60,7 @@ import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
 import { StateEvent } from '../../../types/matrix/room';
+import { webRTCSupported } from '../../utils/rtc';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -298,8 +299,8 @@ export function RoomNavItem({
       mx.getSafeUserId()
     );
 
-    // Do not join if missing permissions or no livekit support
-    if (!hasCallPermission || !livekitSupport(autoDiscoveryInfo)) {
+    // Do not join if missing permissions or no livekit support or no webRTC support
+    if (!hasCallPermission || !livekitSupport(autoDiscoveryInfo) || !webRTCSupported()) {
       return;
     }
 

@@ -71,6 +71,7 @@ import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
 import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
+import { webRTCSupported } from '../../utils/rtc';
 
 type RoomMenuProps = {
   room: Room;
@@ -398,6 +399,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
     mx.getSafeUserId()
   );
   const livekitSupported = useLivekitSupport();
+  const rtcSupported = webRTCSupported();
 
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
@@ -592,7 +594,9 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </FocusTrap>
             }
           />
-          {!room.isCallRoom() && livekitSupported && hasCallPermission && <CallButton />}
+          {!room.isCallRoom() && livekitSupported && rtcSupported && hasCallPermission && (
+            <CallButton />
+          )}
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"
