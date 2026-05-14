@@ -10,6 +10,7 @@ import React, {
   useState,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Icon,
@@ -101,6 +102,7 @@ type SpaceMenuProps = {
 };
 const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
   ({ room, requestClose, onUnpin }, ref) => {
+    const { t } = useTranslation();
     const mx = useMatrixClient();
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const roomToParents = useAtomValue(roomToParentsAtom);
@@ -166,7 +168,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             disabled={!unread}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Mark as Read
+              {t('sidebar.markAsRead')}
             </Text>
           </MenuItem>
           {onUnpin && (
@@ -177,7 +179,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
               after={<Icon size="100" src={Icons.Pin} />}
             >
               <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                Unpin
+                {t('sidebar.unpin')}
               </Text>
             </MenuItem>
           )}
@@ -195,7 +197,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             disabled={!canInvite}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Invite
+              {t('room.invite')}
             </Text>
           </MenuItem>
           <MenuItem
@@ -205,7 +207,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Copy Link
+              {t('sidebar.copyLink')}
             </Text>
           </MenuItem>
           <MenuItem
@@ -215,7 +217,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             radii="300"
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Space Settings
+              {t('sidebar.spaceSettings')}
             </Text>
           </MenuItem>
         </Box>

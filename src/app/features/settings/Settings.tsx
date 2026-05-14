@@ -15,6 +15,7 @@ import {
   Text,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import { General } from './general';
 import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
@@ -46,7 +47,7 @@ export enum SettingsPages {
 
 type SettingsMenuItem = {
   page: SettingsPages;
-  name: string;
+  nameKey: string;
   icon: IconSrc;
 };
 
@@ -55,37 +56,37 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
     () => [
       {
         page: SettingsPages.GeneralPage,
-        name: 'General',
+        nameKey: 'settings.general',
         icon: Icons.Setting,
       },
       {
         page: SettingsPages.AccountPage,
-        name: 'Account',
+        nameKey: 'settings.account',
         icon: Icons.User,
       },
       {
         page: SettingsPages.NotificationPage,
-        name: 'Notifications',
+        nameKey: 'settings.notifications',
         icon: Icons.Bell,
       },
       {
         page: SettingsPages.DevicesPage,
-        name: 'Devices',
+        nameKey: 'settings.devices',
         icon: Icons.Monitor,
       },
       {
         page: SettingsPages.EmojisStickersPage,
-        name: 'Emojis & Stickers',
+        nameKey: 'settings.emojisStickers',
         icon: Icons.Smile,
       },
       {
         page: SettingsPages.DeveloperToolsPage,
-        name: 'Developer Tools',
+        nameKey: 'settings.developerTools',
         icon: Icons.Terminal,
       },
       {
         page: SettingsPages.AboutPage,
-        name: 'About',
+        nameKey: 'settings.about',
         icon: Icons.Info,
       },
     ],
@@ -97,6 +98,7 @@ type SettingsProps = {
   requestClose: () => void;
 };
 export function Settings({ initialPage, requestClose }: SettingsProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const userId = mx.getUserId()!;
@@ -136,7 +138,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
                   />
                 </Avatar>
                 <Text size="H4" truncate>
-                  Settings
+                  {t('settings.title')}
                 </Text>
               </Box>
               <Box shrink="No">
@@ -152,7 +154,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
                 <div style={{ flexGrow: 1 }}>
                   {menuItems.map((item) => (
                     <MenuItem
-                      key={item.name}
+                      key={item.nameKey}
                       variant="Background"
                       radii="400"
                       aria-pressed={activePage === item.page}
@@ -166,7 +168,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
                         size="T300"
                         truncate
                       >
-                        {item.name}
+                        {t(item.nameKey)}
                       </Text>
                     </MenuItem>
                   ))}
@@ -184,7 +186,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
                         before={<Icon src={Icons.Power} size="100" />}
                         onClick={() => setLogout(true)}
                       >
-                        <Text size="B400">Logout</Text>
+                        <Text size="B400">{t('common.logout')}</Text>
                       </Button>
                       {logout && (
                         <Overlay open backdrop={<OverlayBackdrop />}>

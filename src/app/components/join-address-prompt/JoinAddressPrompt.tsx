@@ -19,6 +19,7 @@ import {
 import { stopPropagation } from '../../utils/keyboard';
 import { isRoomAlias, isRoomId } from '../../utils/matrix';
 import { parseMatrixToRoom, parseMatrixToRoomEvent, testMatrixTo } from '../../plugins/matrix-to';
+import { useTranslation } from 'react-i18next';
 import { tryDecodeURIComponent } from '../../utils/dom';
 
 type JoinAddressProps = {
@@ -26,6 +27,7 @@ type JoinAddressProps = {
   onCancel: () => void;
 };
 export function JoinAddressPrompt({ onOpen, onCancel }: JoinAddressProps) {
+  const { t } = useTranslation();
   const [invalid, setInvalid] = useState(false);
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
@@ -80,7 +82,7 @@ export function JoinAddressPrompt({ onOpen, onCancel }: JoinAddressProps) {
               size="500"
             >
               <Box grow="Yes">
-                <Text size="H4">Join with Address</Text>
+                <Text size="H4">{t('dialog.joinWithAddress')}</Text>
               </Box>
               <IconButton size="300" onClick={onCancel} radii="300">
                 <Icon src={Icons.Cross} />
@@ -95,7 +97,7 @@ export function JoinAddressPrompt({ onOpen, onCancel }: JoinAddressProps) {
             >
               <Box direction="Column" gap="200">
                 <Text priority="400" size="T300">
-                  Enter public address to join the community. Addresses looks like:
+                  {t('dialog.joinAddressDesc')}
                 </Text>
                 <Text as="ul" size="T200" priority="300" style={{ paddingLeft: config.space.S400 }}>
                   <li>#community:server</li>
@@ -104,23 +106,23 @@ export function JoinAddressPrompt({ onOpen, onCancel }: JoinAddressProps) {
                 </Text>
               </Box>
               <Box direction="Column" gap="100">
-                <Text size="L400">Address</Text>
+                <Text size="L400">{t('dialog.address')}</Text>
                 <Input
                   size="500"
                   autoFocus
                   name="addressInput"
                   variant="Background"
-                  placeholder="#community:server"
+                  placeholder={t('dialog.addressPlaceholder')}
                   required
                 />
                 {invalid && (
                   <Text size="T200" style={{ color: color.Critical.Main }}>
-                    <b>Invalid Address</b>
+                    <b>{t('dialog.invalidAddress')}</b>
                   </Text>
                 )}
               </Box>
               <Button type="submit" variant="Primary">
-                <Text size="B400">Open</Text>
+                <Text size="B400">{t('dialog.open')}</Text>
               </Button>
             </Box>
           </Dialog>

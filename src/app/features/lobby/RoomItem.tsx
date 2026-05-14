@@ -19,6 +19,7 @@ import {
   toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import { JoinRule, MatrixError, Room } from 'matrix-js-sdk';
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -44,6 +45,7 @@ type RoomJoinButtonProps = {
   via?: string[];
 };
 function RoomJoinButton({ roomId, via }: RoomJoinButtonProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
 
   const [joinState, join] = useAsyncCallback<Room, MatrixError, []>(
@@ -91,7 +93,7 @@ function RoomJoinButton({ roomId, via }: RoomJoinButtonProps) {
         onClick={join}
         disabled={!canJoin}
       >
-        <Text size="B300">Join</Text>
+        <Text size="B300">{t('common.join')}</Text>
       </Chip>
     </Box>
   );
@@ -127,6 +129,7 @@ type RoomProfileErrorProps = {
   via?: string[];
 };
 function RoomProfileError({ roomId, suggested, inaccessibleRoom, via }: RoomProfileErrorProps) {
+  const { t } = useTranslation();
   return (
     <Box grow="Yes" gap="300">
       <Avatar>
@@ -146,12 +149,12 @@ function RoomProfileError({ roomId, suggested, inaccessibleRoom, via }: RoomProf
       <Box grow="Yes" direction="Column" className={css.ErrorNameContainer}>
         <Box gap="200" alignItems="Center">
           <Text size="H5" truncate>
-            Unknown
+            {t('lobby.unknown')}
           </Text>
           {suggested && (
             <Box shrink="No" alignItems="Center">
               <Badge variant="Success" fill="Soft" radii="Pill" outlined>
-                <Text size="L400">Suggested</Text>
+                <Text size="L400">{t('lobby.suggested')}</Text>
               </Badge>
             </Box>
           )}
@@ -159,7 +162,7 @@ function RoomProfileError({ roomId, suggested, inaccessibleRoom, via }: RoomProf
         <Box gap="200" alignItems="Center">
           {inaccessibleRoom ? (
             <Badge variant="Secondary" fill="Soft" radii="300" size="500">
-              <Text size="L400">Inaccessible</Text>
+              <Text size="L400">{t('lobby.inaccessible')}</Text>
             </Badge>
           ) : (
             <Text size="T200" truncate>
@@ -195,6 +198,7 @@ function RoomProfile({
   joinRule,
   options,
 }: RoomProfileProps) {
+  const { t } = useTranslation();
   return (
     <Box grow="Yes" gap="300">
       <Avatar>
@@ -213,7 +217,7 @@ function RoomProfile({
           {suggested && (
             <Box shrink="No" alignItems="Center">
               <Badge variant="Success" fill="Soft" radii="Pill" outlined>
-                <Text size="L400">Suggested</Text>
+                <Text size="L400">{t('lobby.suggested')}</Text>
               </Badge>
             </Box>
           )}
@@ -221,7 +225,9 @@ function RoomProfile({
         <Box gap="200" alignItems="Center">
           {memberCount && (
             <Box shrink="No" gap="200">
-              <Text size="T200" priority="300">{`${millify(memberCount)} Members`}</Text>
+              <Text size="T200" priority="300">
+                {t('room.membersCount', { count: millify(memberCount) })}
+              </Text>
             </Box>
           )}
           {memberCount && topic && (
@@ -311,6 +317,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const { roomId, content } = item;
@@ -359,7 +366,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                           fill="None"
                           size="400"
                           radii="Pill"
-                          aria-label="Open Room"
+                          aria-label={t('lobby.openRoom')}
                         >
                           <Icon size="50" src={Icons.ArrowRight} />
                         </Chip>

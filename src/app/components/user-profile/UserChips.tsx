@@ -1,4 +1,5 @@
 import React, { MouseEventHandler, useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
@@ -43,6 +44,7 @@ import { CutoutCard } from '../cutout-card';
 import { SettingTile } from '../setting-tile';
 
 export function ServerChip({ server }: { server: string }) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const myServer = getMxIdServer(mx.getSafeUserId());
   const navigate = useNavigate();
@@ -87,7 +89,7 @@ export function ServerChip({ server }: { server: string }) {
                   close();
                 }}
               >
-                <Text size="B300">Copy Server</Text>
+                <Text size="B300">{t('userProfile.copyServer')}</Text>
               </MenuItem>
               <MenuItem
                 variant="Surface"
@@ -99,7 +101,7 @@ export function ServerChip({ server }: { server: string }) {
                   closeProfile();
                 }}
               >
-                <Text size="B300">Explore Community</Text>
+                <Text size="B300">{t('userProfile.exploreCommunity')}</Text>
               </MenuItem>
             </div>
             <Line size="300" />
@@ -114,7 +116,7 @@ export function ServerChip({ server }: { server: string }) {
                   close();
                 }}
               >
-                <Text size="B300">Open in Browser</Text>
+                <Text size="B300">{t('userProfile.openInBrowser')}</Text>
               </MenuItem>
             </div>
           </Menu>
@@ -143,6 +145,7 @@ export function ServerChip({ server }: { server: string }) {
 }
 
 export function ShareChip({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const [cords, setCords] = useState<RectCords>();
 
   const [copied, setCopied] = useTimeoutToggle();
@@ -183,7 +186,7 @@ export function ShareChip({ userId }: { userId: string }) {
                   close();
                 }}
               >
-                <Text size="B300">Copy User ID</Text>
+                <Text size="B300">{t('userProfile.copyUserId')}</Text>
               </MenuItem>
               <MenuItem
                 variant="Surface"
@@ -196,7 +199,7 @@ export function ShareChip({ userId }: { userId: string }) {
                   close();
                 }}
               >
-                <Text size="B300">Copy User Link</Text>
+                <Text size="B300">{t('userProfile.copyUserLink')}</Text>
               </MenuItem>
             </div>
           </Menu>
@@ -217,7 +220,7 @@ export function ShareChip({ userId }: { userId: string }) {
         aria-pressed={!!cords}
       >
         <Text size="B300" truncate>
-          Share
+          {t('userProfile.share')}
         </Text>
       </Chip>
     </PopOut>
@@ -231,6 +234,7 @@ type MutualRoomsData = {
 };
 
 export function MutualRoomsChip({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const mutualRoomSupported = useMutualRoomsSupport();
   const mutualRoomsState = useMutualRooms(userId);
@@ -370,7 +374,7 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
                     {mutual.spaces.length > 0 && (
                       <Box direction="Column" gap="100">
                         <Text style={{ paddingLeft: config.space.S100 }} size="L400">
-                          Spaces
+                          {t('common.spaces')}
                         </Text>
                         {mutual.spaces.map(renderItem)}
                       </Box>
@@ -378,7 +382,7 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
                     {mutual.rooms.length > 0 && (
                       <Box direction="Column" gap="100">
                         <Text style={{ paddingLeft: config.space.S100 }} size="L400">
-                          Rooms
+                          {t('common.rooms')}
                         </Text>
                         {mutual.rooms.map(renderItem)}
                       </Box>
@@ -386,7 +390,7 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
                     {mutual.directs.length > 0 && (
                       <Box direction="Column" gap="100">
                         <Text style={{ paddingLeft: config.space.S100 }} size="L400">
-                          Direct Messages
+                          {t('direct.title')}
                         </Text>
                         {mutual.directs.map(renderItem)}
                       </Box>
@@ -411,8 +415,8 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
       >
         <Text size="B300">
           {mutualRoomsState.status === AsyncStatus.Success &&
-            `${mutualRoomsState.data.length} Mutual Rooms`}
-          {mutualRoomsState.status === AsyncStatus.Loading && 'Mutual Rooms'}
+            t('userProfile.mutualRoomsCount', { count: mutualRoomsState.data.length })}
+          {mutualRoomsState.status === AsyncStatus.Loading && t('userProfile.mutualRooms')}
         </Text>
       </Chip>
     </PopOut>
@@ -420,15 +424,16 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
 }
 
 export function IgnoredUserAlert() {
+  const { t } = useTranslation();
   return (
     <CutoutCard style={{ padding: config.space.S200 }} variant="Critical">
       <SettingTile>
         <Box direction="Column" gap="200">
           <Box gap="200" justifyContent="SpaceBetween">
-            <Text size="L400">Blocked User</Text>
+            <Text size="L400">{t('userProfile.blockedUser')}</Text>
           </Box>
           <Box direction="Column">
-            <Text size="T200">You do not receive any messages or invites from this user.</Text>
+            <Text size="T200">{t('userProfile.blockedUserDesc')}</Text>
           </Box>
         </Box>
       </SettingTile>
@@ -437,6 +442,7 @@ export function IgnoredUserAlert() {
 }
 
 export function OptionsChip({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const [cords, setCords] = useState<RectCords>();
 
@@ -495,7 +501,9 @@ export function OptionsChip({ userId }: { userId: string }) {
                 }
                 disabled={ignoring}
               >
-                <Text size="B300">{ignored ? 'Unblock User' : 'Block User'}</Text>
+                <Text size="B300">
+                  {ignored ? t('userProfile.unblockUser') : t('userProfile.blockUser')}
+                </Text>
               </MenuItem>
             </div>
           </Menu>

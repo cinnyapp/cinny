@@ -28,6 +28,7 @@ import {
   config,
   toRem,
 } from 'folds';
+import { useTranslation } from 'react-i18next';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
@@ -126,6 +127,7 @@ interface RoomInputProps {
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
   ({ editor, fileDropContainerRef, roomId, room }, ref) => {
+    const { t } = useTranslation();
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
@@ -381,10 +383,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (
-          (isKeyHotkey('mod+enter', evt) || (!enterForNewline && isKeyHotkey('enter', evt))) &&
-          !isComposing(evt)
-        ) {
+        if (isKeyHotkey('mod+enter', evt) || (!enterForNewline && isKeyHotkey('enter', evt))) {
+          if (isComposing(evt)) {
+            // IME confirming keydown (Safari): block Slate's default newline insertion
+            evt.preventDefault();
+            return;
+          }
           evt.preventDefault();
           submit();
         }
@@ -497,9 +501,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               >
                 <Icon size="600" src={Icons.File} />
                 <Text size="H4" align="Center">
-                  {`Drop Files in "${room?.name || 'Room'}"`}
+                  {t('room.dropFiles', { roomName: room?.name || 'Room' })}
                 </Text>
-                <Text align="Center">Drag and drop files here or click for selection dialog</Text>
+                <Text align="Center">{t('room.dropFilesHint')}</Text>
               </Box>
             </Dialog>
           </OverlayCenter>
@@ -539,7 +543,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         <CustomEditor
           editableName="RoomInput"
           editor={editor}
-          placeholder="Send a message..."
+          placeholder={t('room.sendMessage')}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}
@@ -624,12 +628,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         onCustomEmojiSelect={handleEmoticonSelect}
                         onStickerSelect={handleStickerSelect}
                         requestClose={() => {
-                          setEmojiBoardTab((t) => {
-                            if (t) {
+                          setEmojiBoardTab((tab) => {
+                            if (tab) {
                               if (!mobileOrTablet()) ReactEditor.focus(editor);
                               return undefined;
                             }
-                            return t;
+                            return tab;
                           });
                         }}
                       />

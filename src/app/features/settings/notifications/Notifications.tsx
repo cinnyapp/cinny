@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
+import { useTranslation } from 'react-i18next';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SystemNotification } from './SystemNotification';
 import { AllMessagesNotifications } from './AllMessages';
@@ -13,13 +14,14 @@ type NotificationsProps = {
   requestClose: () => void;
 };
 export function Notifications({ requestClose }: NotificationsProps) {
+  const { t } = useTranslation();
   return (
     <Page>
       <PageHeader outlined={false}>
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              Notifications
+              {t('settings.notificationSettings.title')}
             </Text>
           </Box>
           <Box shrink="No">
@@ -38,7 +40,7 @@ export function Notifications({ requestClose }: NotificationsProps) {
               <SpecialMessagesNotifications />
               <KeywordMessagesNotifications />
               <Box direction="Column" gap="100">
-                <Text size="L400">Block Messages</Text>
+                <Text size="L400">{t('settings.notificationSettings.blockMessages')}</Text>
                 <SequenceCard
                   className={SequenceCardStyle}
                   variant="SurfaceVariant"
@@ -46,7 +48,7 @@ export function Notifications({ requestClose }: NotificationsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    description={'This option has been moved to "Account > Block Users" section.'}
+                    description={t('settings.notificationSettings.blockMessagesMoved')}
                   />
                 </SequenceCard>
               </Box>

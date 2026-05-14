@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { Menu, Box, Text, Chip } from 'folds';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import * as css from './styles.css';
 import { PickerColumn } from './PickerColumn';
@@ -13,6 +14,7 @@ type DatePickerProps = {
 };
 export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
   ({ min, max, value, onChange }, ref) => {
+    const { t } = useTranslation();
     const selectedYear = dayjs(value).year();
     const selectedMonth = dayjs(value).month() + 1;
     const selectedDay = dayjs(value).date();
@@ -59,7 +61,7 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     return (
       <Menu className={css.PickerMenu} ref={ref}>
         <Box direction="Row" gap="200" className={css.PickerContainer}>
-          <PickerColumn title="Day">
+          <PickerColumn title={t('datePicker.day')}>
             {Array.from(Array(daysInMonth(selectedMonth, selectedYear)).keys())
               .map((i) => i + 1)
               .map((day) => (
@@ -80,7 +82,7 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
                 </Chip>
               ))}
           </PickerColumn>
-          <PickerColumn title="Month">
+          <PickerColumn title={t('datePicker.month')}>
             {Array.from(Array(12).keys())
               .map((i) => i + 1)
               .map((month) => (
@@ -105,7 +107,7 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
                 </Chip>
               ))}
           </PickerColumn>
-          <PickerColumn title="Year">
+          <PickerColumn title={t('datePicker.year')}>
             {Array.from(Array(yearsRange).keys())
               .map((i) => minYear + i)
               .map((year) => (

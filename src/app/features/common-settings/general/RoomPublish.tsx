@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, color, Spinner, Switch, Text } from 'folds';
 import { JoinRule, MatrixError } from 'matrix-js-sdk';
 import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
+import { useTranslation } from 'react-i18next';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
 import { SettingTile } from '../../../components/setting-tile';
@@ -18,6 +19,7 @@ type RoomPublishProps = {
   permissions: RoomPermissionsAPI;
 };
 export function RoomPublish({ permissions }: RoomPublishProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const room = useRoom();
 
@@ -46,11 +48,11 @@ export function RoomPublish({ permissions }: RoomPublishProps) {
       gap="400"
     >
       <SettingTile
-        title="Publish to Directory"
+        title={t('roomSettings.publishToDirectory')}
         description={
           room.isSpaceRoom()
-            ? 'List the space in the public directory to make it discoverable by others.'
-            : 'List the room in the public directory to make it discoverable by others.'
+            ? t('roomSettings.publishSpaceDesc')
+            : t('roomSettings.publishRoomDesc')
         }
         after={
           <Box gap="200" alignItems="Center">

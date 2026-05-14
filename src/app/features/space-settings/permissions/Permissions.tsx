@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Icon, IconButton, Icons, Scroll, Text } from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { useRoom } from '../../../hooks/useRoom';
@@ -14,6 +15,7 @@ type PermissionsProps = {
   requestClose: () => void;
 };
 export function Permissions({ requestClose }: PermissionsProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const room = useRoom();
   const powerLevels = usePowerLevels(room);
@@ -41,7 +43,7 @@ export function Permissions({ requestClose }: PermissionsProps) {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              Permissions
+              {t('roomSettings.permissions')}
             </Text>
           </Box>
           <Box shrink="No">

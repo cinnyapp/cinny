@@ -3,6 +3,7 @@ import { color, Text } from 'folds';
 import { JoinRule, MatrixError, RestrictedAllowType } from 'matrix-js-sdk';
 import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
 import { useAtomValue } from 'jotai';
+import { useTranslation } from 'react-i18next';
 import {
   ExtendedJoinRules,
   JoinRulesSwitcher,
@@ -41,6 +42,7 @@ type RoomJoinRulesProps = {
   permissions: RoomPermissionsAPI;
 };
 export function RoomJoinRules({ permissions }: RoomJoinRulesProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const room = useRoom();
   const allowKnockRestricted = knockRestrictedSupported(room.getVersion());
@@ -127,11 +129,11 @@ export function RoomJoinRules({ permissions }: RoomJoinRulesProps) {
       gap="400"
     >
       <SettingTile
-        title={room.isSpaceRoom() ? 'Space Access' : 'Room Access'}
+        title={room.isSpaceRoom() ? t('roomSettings.spaceAccess') : t('roomSettings.roomAccess')}
         description={
           room.isSpaceRoom()
-            ? 'Change how people can join the space.'
-            : 'Change how people can join the room.'
+            ? t('roomSettings.changeJoinSpace')
+            : t('roomSettings.changeJoinRoom')
         }
         after={
           <JoinRulesSwitcher

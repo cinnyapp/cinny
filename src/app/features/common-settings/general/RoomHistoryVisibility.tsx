@@ -14,6 +14,7 @@ import {
 } from 'folds';
 import { HistoryVisibility, MatrixError } from 'matrix-js-sdk';
 import { RoomHistoryVisibilityEventContent } from 'matrix-js-sdk/lib/types';
+import { useTranslation } from 'react-i18next';
 import FocusTrap from 'focus-trap-react';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
@@ -26,16 +27,18 @@ import { useStateEvent } from '../../../hooks/useStateEvent';
 import { stopPropagation } from '../../../utils/keyboard';
 import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
 
-const useVisibilityStr = () =>
-  useMemo(
+const useVisibilityStr = () => {
+  const { t } = useTranslation();
+  return useMemo(
     () => ({
-      [HistoryVisibility.Invited]: 'After Invite',
-      [HistoryVisibility.Joined]: 'After Join',
-      [HistoryVisibility.Shared]: 'All Messages',
-      [HistoryVisibility.WorldReadable]: 'All Messages (Guests)',
+      [HistoryVisibility.Invited]: t('roomSettings.afterInvite'),
+      [HistoryVisibility.Joined]: t('roomSettings.afterJoin'),
+      [HistoryVisibility.Shared]: t('roomSettings.allMessages'),
+      [HistoryVisibility.WorldReadable]: t('roomSettings.allMessagesGuests'),
     }),
-    []
+    [t]
   );
+};
 
 const useVisibilityMenu = () =>
   useMemo(
@@ -52,6 +55,7 @@ type RoomHistoryVisibilityProps = {
   permissions: RoomPermissionsAPI;
 };
 export function RoomHistoryVisibility({ permissions }: RoomHistoryVisibilityProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const room = useRoom();
 
@@ -96,8 +100,8 @@ export function RoomHistoryVisibility({ permissions }: RoomHistoryVisibilityProp
       gap="400"
     >
       <SettingTile
-        title="Message History Visibility"
-        description="Changes to history visibility will only apply to future messages. The visibility of existing history will have no effect."
+        title={t('roomSettings.historyVisibility')}
+        description={t('roomSettings.historyNote')}
         after={
           <PopOut
             anchor={menuAnchor}

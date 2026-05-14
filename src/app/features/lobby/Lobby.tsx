@@ -1,4 +1,5 @@
 import React, { MouseEventHandler, useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Chip, Icon, IconButton, Icons, Line, Scroll, Spinner, Text, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
@@ -149,6 +150,7 @@ const useCanDropLobbyItem = (
 };
 
 export function Lobby() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
@@ -450,7 +452,7 @@ export function Lobby() {
                       radii="Pill"
                       outlined
                       size="300"
-                      aria-label="Scroll to Top"
+                      aria-label={t('lobby.scrollToTop')}
                     >
                       <Icon src={Icons.ChevronTop} size="300" />
                     </IconButton>
@@ -526,7 +528,7 @@ export function Lobby() {
                         radii="Pill"
                         before={<Spinner variant="Secondary" fill="Soft" size="100" />}
                       >
-                        <Text size="L400">Reordering</Text>
+                        <Text size="L400">{t('lobby.reordering')}</Text>
                       </Chip>
                     </Box>
                   )}

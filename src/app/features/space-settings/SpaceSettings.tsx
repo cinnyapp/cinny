@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAtomValue } from 'jotai';
 import { Avatar, Box, config, Icon, IconButton, Icons, IconSrc, MenuItem, Text } from 'folds';
 import { JoinRule } from 'matrix-js-sdk';
@@ -20,7 +21,7 @@ import { Permissions } from './permissions';
 
 type SpaceSettingsMenuItem = {
   page: SpaceSettingsPage;
-  name: string;
+  nameKey: string;
   icon: IconSrc;
 };
 
@@ -29,27 +30,27 @@ const useSpaceSettingsMenuItems = (): SpaceSettingsMenuItem[] =>
     () => [
       {
         page: SpaceSettingsPage.GeneralPage,
-        name: 'General',
+        nameKey: 'settings.general',
         icon: Icons.Setting,
       },
       {
         page: SpaceSettingsPage.MembersPage,
-        name: 'Members',
+        nameKey: 'roomSettings.members',
         icon: Icons.User,
       },
       {
         page: SpaceSettingsPage.PermissionsPage,
-        name: 'Permissions',
+        nameKey: 'roomSettings.permissions',
         icon: Icons.Lock,
       },
       {
         page: SpaceSettingsPage.EmojisStickersPage,
-        name: 'Emojis & Stickers',
+        nameKey: 'settings.emojisStickers',
         icon: Icons.Smile,
       },
       {
         page: SpaceSettingsPage.DeveloperToolsPage,
-        name: 'Developer Tools',
+        nameKey: 'settings.developerTools',
         icon: Icons.Terminal,
       },
     ],
@@ -61,6 +62,7 @@ type SpaceSettingsProps = {
   requestClose: () => void;
 };
 export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps) {
+  const { t } = useTranslation();
   const room = useRoom();
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -128,7 +130,7 @@ export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps)
                 <div style={{ flexGrow: 1 }}>
                   {menuItems.map((item) => (
                     <MenuItem
-                      key={item.name}
+                      key={item.nameKey}
                       variant="Background"
                       radii="400"
                       aria-pressed={activePage === item.page}
@@ -142,7 +144,7 @@ export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps)
                         size="T300"
                         truncate
                       >
-                        {item.name}
+                        {t(item.nameKey)}
                       </Text>
                     </MenuItem>
                   ))}

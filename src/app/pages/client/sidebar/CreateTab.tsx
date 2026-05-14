@@ -2,6 +2,7 @@ import React, { MouseEventHandler, useState } from 'react';
 import { Box, config, Icon, Icons, Menu, PopOut, RectCords, Text } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SidebarAvatar, SidebarItem, SidebarItemTooltip } from '../../../components/sidebar';
 import { stopPropagation } from '../../../utils/keyboard';
 import { SequenceCard } from '../../../components/sequence-card';
@@ -18,6 +19,7 @@ import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
 
 export function CreateTab() {
+  const { t } = useTranslation();
   const createSelected = useCreateSelected();
 
   const navigate = useNavigate();
@@ -40,7 +42,7 @@ export function CreateTab() {
 
   return (
     <SidebarItem active={createSelected}>
-      <SidebarItemTooltip tooltip="Add Space">
+      <SidebarItemTooltip tooltip={t('sidebar.addSpace')}>
         {(triggerRef) => (
           <PopOut
             anchor={menuCords}
@@ -73,9 +75,9 @@ export function CreateTab() {
                       onClick={handleCreateSpace}
                     >
                       <SettingTile before={<Icon size="400" src={Icons.Space} />}>
-                        <Text size="H6">Create Space</Text>
+                        <Text size="H6">{t('create.createSpace')}</Text>
                         <Text size="T300" priority="300">
-                          Build a space for your community.
+                          {t('create.buildSpaceDesc')}
                         </Text>
                       </SettingTile>
                     </SequenceCard>
@@ -90,9 +92,9 @@ export function CreateTab() {
                       onClick={handleJoinWithAddress}
                     >
                       <SettingTile before={<Icon size="400" src={Icons.Link} />}>
-                        <Text size="H6">Join with Address</Text>
+                        <Text size="H6">{t('create.joinWithAddress')}</Text>
                         <Text size="T300" priority="300">
-                          Become a part of existing community.
+                          {t('create.joinAddressDesc')}
                         </Text>
                       </SettingTile>
                     </SequenceCard>

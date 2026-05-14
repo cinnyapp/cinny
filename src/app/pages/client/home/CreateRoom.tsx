@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Icon, Icons, Scroll, IconButton } from 'folds';
 import {
   Page,
@@ -14,6 +15,7 @@ import { CreateRoomForm } from '../../../features/create-room';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 
 export function HomeCreateRoom() {
+  const { t } = useTranslation();
   const screenSize = useScreenSizeContext();
 
   const { navigateRoom } = useRoomNavigate();
@@ -41,8 +43,8 @@ export function HomeCreateRoom() {
                 <Box direction="Column" gap="700">
                   <PageHero
                     icon={<Icon size="600" src={Icons.Hash} />}
-                    title="Create Room"
-                    subTitle="Build a Room for Real-Time Conversations."
+                    title={t('create.createRoom')}
+                    subTitle={t('create.createRoomDesc')}
                   />
                   <CreateRoomForm onCreate={navigateRoom} />
                 </Box>

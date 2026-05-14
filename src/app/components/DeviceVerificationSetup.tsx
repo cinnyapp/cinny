@@ -1,4 +1,5 @@
 import React, { FormEventHandler, forwardRef, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   Header,
@@ -71,6 +72,7 @@ type SetupVerificationProps = {
   onComplete: (recoveryKey: string) => void;
 };
 function SetupVerification({ onComplete }: SetupVerificationProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -182,11 +184,10 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
   return (
     <Box as="form" onSubmit={handleSubmit} direction="Column" gap="400">
       <Text size="T300">
-        Generate a <b>Recovery Key</b> for verifying identity if you do not have access to other
-        devices. Additionally, setup a passphrase as a memorable alternative.
+        {t('verification.generateRecoveryKeyDesc')}
       </Text>
       <Box direction="Column" gap="100">
-        <Text size="L400">Passphrase (Optional)</Text>
+        <Text size="L400">{t('verification.passphraseOptional')}</Text>
         <PasswordInput name="passphraseInput" size="400" readOnly={loading} />
       </Box>
       <Button
@@ -194,11 +195,11 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
         disabled={loading}
         before={loading && <Spinner size="200" variant="Primary" fill="Solid" />}
       >
-        <Text size="B400">Continue</Text>
+        <Text size="B400">{t('common.continue')}</Text>
       </Button>
       {setupState.status === AsyncStatus.Error && (
         <Text size="T200" style={{ color: color.Critical.Main }}>
-          <b>{setupState.error ? setupState.error.message : 'Unexpected Error!'}</b>
+          <b>{setupState.error ? setupState.error.message : t('verification.unexpectedError')}</b>
         </Text>
       )}
       {nextAuthData !== null && uiaAction && (
@@ -206,7 +207,7 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
           authData={nextAuthData ?? uiaAction.authData}
           unsupported={() => (
             <Text size="T200">
-              Authentication steps to perform this action are not supported by client.
+              {t('verification.authNotSupported')}
             </Text>
           )}
         >
@@ -228,6 +229,7 @@ type RecoveryKeyDisplayProps = {
   recoveryKey: string;
 };
 function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
+  const { t } = useTranslation();
   const [show, setShow] = useState(false);
 
   const handleCopy = () => {
@@ -246,11 +248,10 @@ function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
   return (
     <Box direction="Column" gap="400">
       <Text size="T300">
-        Store the Recovery Key in a safe place for future use, as you will need it to verify your
-        identity if you do not have access to other devices.
+        {t('verification.storeRecoveryKey')}
       </Text>
       <Box direction="Column" gap="100">
-        <Text size="L400">Recovery Key</Text>
+        <Text size="L400">{t('verification.recoveryKey')}</Text>
         <Box
           className={ContainerColor({ variant: 'SurfaceVariant' })}
           style={{
@@ -265,16 +266,16 @@ function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
             {safeToDisplayKey}
           </Text>
           <Chip onClick={() => setShow(!show)} variant="Secondary" radii="Pill">
-            <Text size="B300">{show ? 'Hide' : 'Show'}</Text>
+            <Text size="B300">{show ? t('verification.hide') : t('verification.show')}</Text>
           </Chip>
         </Box>
       </Box>
       <Box direction="Column" gap="200">
         <Button onClick={handleCopy}>
-          <Text size="B400">Copy</Text>
+          <Text size="B400">{t('verification.copy')}</Text>
         </Button>
         <Button onClick={handleDownload} fill="Soft">
-          <Text size="B400">Download</Text>
+          <Text size="B400">{t('verification.download')}</Text>
         </Button>
       </Box>
     </Box>
@@ -286,6 +287,7 @@ type DeviceVerificationSetupProps = {
 };
 export const DeviceVerificationSetup = forwardRef<HTMLDivElement, DeviceVerificationSetupProps>(
   ({ onCancel }, ref) => {
+    const { t } = useTranslation();
     const [recoveryKey, setRecoveryKey] = useState<string>();
 
     return (
@@ -299,7 +301,7 @@ export const DeviceVerificationSetup = forwardRef<HTMLDivElement, DeviceVerifica
           size="500"
         >
           <Box grow="Yes">
-            <Text size="H4">Setup Device Verification</Text>
+            <Text size="H4">{t('verification.setupTitle')}</Text>
           </Box>
           <IconButton size="300" radii="300" onClick={onCancel}>
             <Icon src={Icons.Cross} />
@@ -321,6 +323,7 @@ type DeviceVerificationResetProps = {
 };
 export const DeviceVerificationReset = forwardRef<HTMLDivElement, DeviceVerificationResetProps>(
   ({ onCancel }, ref) => {
+    const { t } = useTranslation();
     const [reset, setReset] = useState(false);
 
     return (
@@ -334,7 +337,7 @@ export const DeviceVerificationReset = forwardRef<HTMLDivElement, DeviceVerifica
           size="500"
         >
           <Box grow="Yes">
-            <Text size="H4">Reset Device Verification</Text>
+            <Text size="H4">{t('verification.resetTitle')}</Text>
           </Box>
           <IconButton size="300" radii="300" onClick={onCancel}>
             <Icon src={Icons.Cross} />
@@ -356,16 +359,13 @@ export const DeviceVerificationReset = forwardRef<HTMLDivElement, DeviceVerifica
           <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
             <Box direction="Column" gap="200">
               <Text size="H1">✋🧑‍🚒🤚</Text>
-              <Text size="T300">Resetting device verification is permanent.</Text>
+              <Text size="T300">{t('verification.resetPermanent')}</Text>
               <Text size="T300">
-                Anyone you have verified with will see security alerts and your encryption backup
-                will be lost. You almost certainly do not want to do this, unless you have lost{' '}
-                <b>Recovery Key</b> or <b>Recovery Passphrase</b> and every device you can verify
-                from.
+                {t('verification.resetWarning')}
               </Text>
             </Box>
             <Button variant="Critical" onClick={() => setReset(true)}>
-              <Text size="B400">Reset</Text>
+              <Text size="B400">{t('verification.reset')}</Text>
             </Button>
           </Box>
         )}

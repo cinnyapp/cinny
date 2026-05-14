@@ -18,6 +18,7 @@ import {
   config,
 } from 'folds';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 import FocusTrap from 'focus-trap-react';
 import * as css from './style.css';
 import { RoomAvatar } from '../room-avatar';
@@ -94,6 +95,7 @@ function ErrorDialog({
   message: string;
   children: (openError: () => void) => ReactNode;
 }) {
+  const { t } = useTranslation();
   const [viewError, setViewError] = useState(false);
   const closeError = () => setViewError(false);
   const openError = () => setViewError(true);
@@ -120,7 +122,7 @@ function ErrorDialog({
                   </Text>
                 </Box>
                 <Button size="400" variant="Secondary" fill="Soft" onClick={closeError}>
-                  <Text size="B400">Cancel</Text>
+                  <Text size="B400">{t('common.cancel')}</Text>
                 </Button>
               </Box>
             </Dialog>
@@ -161,6 +163,7 @@ export const RoomCard = as<'div', RoomCardProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const joinedRoomId = useJoinedRoomId(allRooms, roomIdOrAlias);
@@ -224,7 +227,7 @@ export const RoomCard = as<'div', RoomCardProps>(
           </Avatar>
           {(roomType === RoomType.Space || joinedRoom?.isSpaceRoom()) && (
             <Badge variant="Secondary" fill="Soft" outlined>
-              <Text size="L400">Space</Text>
+              <Text size="L400">{t('inbox.space')}</Text>
             </Badge>
           )}
         </Box>
@@ -252,7 +255,7 @@ export const RoomCard = as<'div', RoomCardProps>(
         {typeof joinedMemberCount === 'number' && (
           <Box gap="100">
             <Icon size="50" src={Icons.User} />
-            <Text size="T200">{`${millify(joinedMemberCount)} Members`}</Text>
+            <Text size="T200">{`${millify(joinedMemberCount)} ${t('common.members')}`}</Text>
           </Box>
         )}
         {typeof joinedRoomId === 'string' && (
@@ -263,7 +266,7 @@ export const RoomCard = as<'div', RoomCardProps>(
             size="300"
           >
             <Text size="B300" truncate>
-              View
+              {t('common.view')}
             </Text>
           </Button>
         )}
@@ -276,7 +279,7 @@ export const RoomCard = as<'div', RoomCardProps>(
             before={joining && <Spinner size="50" variant="Secondary" fill="Soft" />}
           >
             <Text size="B300" truncate>
-              {joining ? 'Joining' : 'Join'}
+              {joining ? t('common.joining') : t('common.join')}
             </Text>
           </Button>
         )}
@@ -290,12 +293,12 @@ export const RoomCard = as<'div', RoomCardProps>(
               size="300"
             >
               <Text size="B300" truncate>
-                Retry
+                {t('common.retry')}
               </Text>
             </Button>
             <ErrorDialog
-              title="Join Error"
-              message={joinState.error.message || 'Failed to join. Unknown Error.'}
+              title={t('common.joinError')}
+              message={joinState.error.message || t('common.failedJoin')}
             >
               {(openError) => (
                 <Button
@@ -307,7 +310,7 @@ export const RoomCard = as<'div', RoomCardProps>(
                   size="300"
                 >
                   <Text size="B300" truncate>
-                    View Error
+                    {t('common.viewError')}
                   </Text>
                 </Button>
               )}

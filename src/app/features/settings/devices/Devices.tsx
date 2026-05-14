@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
@@ -40,6 +41,7 @@ type DevicesProps = {
   requestClose: () => void;
 };
 export function Devices({ requestClose }: DevicesProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const crypto = mx.getCrypto();
   const crossSigningActive = useCrossSigningActive();
@@ -70,7 +72,7 @@ export function Devices({ requestClose }: DevicesProps) {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              Devices
+              {t('settings.devices')}
             </Text>
           </Box>
           <Box shrink="No">
@@ -85,7 +87,7 @@ export function Devices({ requestClose }: DevicesProps) {
           <PageContent>
             <Box direction="Column" gap="700">
               <Box direction="Column" gap="100">
-                <Text size="L400">Security</Text>
+                <Text size="L400">{t('settings.deviceSettings.security')}</Text>
                 <SequenceCard
                   className={SequenceCardStyle}
                   variant="SurfaceVariant"
@@ -93,8 +95,8 @@ export function Devices({ requestClose }: DevicesProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title="Device Verification"
-                    description="To verify device identity and grant access to encrypted messages."
+                    title={t('settings.deviceSettings.deviceVerification')}
+                    description={t('settings.deviceSettings.deviceVerificationDesc')}
                     after={
                       <>
                         <EnableVerification visible={!crossSigningActive} />
@@ -113,7 +115,7 @@ export function Devices({ requestClose }: DevicesProps) {
                 </SequenceCard>
               </Box>
               <Box direction="Column" gap="100">
-                <Text size="L400">Current</Text>
+                <Text size="L400">{t('settings.deviceSettings.current')}</Text>
                 {currentDevice ? (
                   <SequenceCard
                     className={SequenceCardStyle}

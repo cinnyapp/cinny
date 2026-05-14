@@ -1,4 +1,5 @@
 import React, { forwardRef, MouseEventHandler, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MatrixError, Room } from 'matrix-js-sdk';
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
 import { Box, config, Text } from 'folds';
@@ -65,6 +66,7 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
     const mx = useMatrixClient();
 
     const { fetching, error, rooms } = useFetchSpaceHierarchyLevel(spaceItem.roomId, true);
@@ -217,10 +219,10 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
                 gap="100"
               >
                 <Text size="H5" align="Center">
-                  No Rooms
+                  {t('lobby.noRooms')}
                 </Text>
                 <Text align="Center" size="T300" priority="300">
-                  This space does not contains rooms yet.
+                  {t('lobby.noRoomsDesc')}
                 </Text>
               </Box>
             </SequenceCard>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   config,
@@ -28,6 +29,7 @@ type CreateSpaceModalProps = {
   state: CreateSpaceModalState;
 };
 function CreateSpaceModal({ state }: CreateSpaceModalProps) {
+  const { t } = useTranslation();
   const { spaceId } = state;
   const closeDialog = useCloseCreateSpaceModal();
 
@@ -58,7 +60,7 @@ function CreateSpaceModal({ state }: CreateSpaceModalProps) {
                   }}
                 >
                   <Box grow="Yes">
-                    <Text size="H4">New Space</Text>
+                    <Text size="H4">{t('create.newSpace')}</Text>
                   </Box>
                   <Box shrink="No">
                     <IconButton size="300" radii="300" onClick={closeDialog}>

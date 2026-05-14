@@ -24,6 +24,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
 import { useDirectUsers } from '../../hooks/useDirectUsers';
 import { SettingTile } from '../setting-tile';
@@ -84,6 +85,7 @@ export function AdditionalCreatorInput({
   disabled,
 }: AdditionalCreatorInputProps) {
   const mx = useMatrixClient();
+  const { t } = useTranslation();
   const [menuCords, setMenuCords] = useState<RectCords>();
   const directUsers = useDirectUsers();
 
@@ -150,8 +152,8 @@ export function AdditionalCreatorInput({
 
   return (
     <SettingTile
-      title="Founders"
-      description="Special privileged users can be assigned during creation. These users have elevated control and can only be modified during a upgrade."
+      title={t('create.founders')}
+      description={t('create.foundersDesc')}
     >
       <Box shrink="No" direction="Column" gap="100">
         <Box gap="200" wrap="Wrap">
@@ -201,7 +203,7 @@ export function AdditionalCreatorInput({
                           variant="Background"
                           radii="300"
                           outlined
-                          placeholder="@username:server"
+                          placeholder={t('dialog.userIdPlaceholder')}
                           onChange={handleCreatorChange}
                           onKeyDown={handleCreatorKeyDown}
                         />
@@ -213,7 +215,7 @@ export function AdditionalCreatorInput({
                         onClick={handleEnterClick}
                         disabled={!validUserId}
                       >
-                        <Text size="B400">Enter</Text>
+                        <Text size="B400">{t('create.enter')}</Text>
                       </Button>
                     </Box>
                     <Line size="300" />
@@ -263,10 +265,10 @@ export function AdditionalCreatorInput({
                           gap="100"
                         >
                           <Text size="H6" align="Center">
-                            No Suggestions
+                            {t('create.noSuggestions')}
                           </Text>
                           <Text size="T200" align="Center">
-                            Please provide the user ID and hit Enter.
+                            {t('create.noSuggestionsDesc')}
                           </Text>
                         </Box>
                       )}

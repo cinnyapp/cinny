@@ -1,5 +1,6 @@
 import React, { FormEventHandler, RefObject } from 'react';
 import { Box, Text, Input, Icon, Icons, Spinner, Chip, config } from 'folds';
+import { useTranslation } from 'react-i18next';
 
 type SearchProps = {
   active?: boolean;
@@ -9,6 +10,7 @@ type SearchProps = {
   onReset: () => void;
 };
 export function SearchInput({ active, loading, searchInputRef, onSearch, onReset }: SearchProps) {
+  const { t } = useTranslation();
   const handleSearchSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
     const { searchInput } = evt.target as HTMLFormElement & {
@@ -24,7 +26,7 @@ export function SearchInput({ active, loading, searchInputRef, onSearch, onReset
   return (
     <Box as="form" direction="Column" gap="100" onSubmit={handleSearchSubmit}>
       <span data-spacing-node />
-      <Text size="L400">Search</Text>
+      <Text size="L400">{t('common.search')}</Text>
       <Input
         ref={searchInputRef}
         style={{ paddingRight: config.space.S300 }}
@@ -32,7 +34,7 @@ export function SearchInput({ active, loading, searchInputRef, onSearch, onReset
         autoFocus
         size="500"
         variant="Background"
-        placeholder="Search for keyword"
+        placeholder={t('search.searchForKeyword')}
         autoComplete="off"
         before={
           active && loading ? (
@@ -53,11 +55,11 @@ export function SearchInput({ active, loading, searchInputRef, onSearch, onReset
               after={<Icon size="50" src={Icons.Cross} />}
               onClick={onReset}
             >
-              <Text size="B300">Clear</Text>
+              <Text size="B300">{t('common.clear')}</Text>
             </Chip>
           ) : (
             <Chip type="submit" variant="Primary" size="400" radii="Pill" outlined>
-              <Text size="B300">Enter</Text>
+              <Text size="B300">{t('common.enter')}</Text>
             </Chip>
           )
         }

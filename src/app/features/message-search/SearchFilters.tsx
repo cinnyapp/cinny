@@ -26,6 +26,7 @@ import {
   RectCords,
 } from 'folds';
 import { SearchOrderBy } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import FocusTrap from 'focus-trap-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -45,6 +46,7 @@ type OrderButtonProps = {
   onChange: (order?: string) => void;
 };
 function OrderButton({ order, onChange }: OrderButtonProps) {
+  const { t } = useTranslation();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const rankOrder = order === SearchOrderBy.Rank;
 
@@ -72,7 +74,7 @@ function OrderButton({ order, onChange }: OrderButtonProps) {
         >
           <Menu variant="Surface">
             <Header size="300" variant="Surface" style={{ padding: `0 ${config.space.S300}` }}>
-              <Text size="L400">Sort by</Text>
+              <Text size="L400">{t('search.sortBy')}</Text>
             </Header>
             <Line variant="Surface" size="300" />
             <div style={{ padding: config.space.S100 }}>
@@ -83,7 +85,7 @@ function OrderButton({ order, onChange }: OrderButtonProps) {
                 radii="300"
                 aria-pressed={!rankOrder}
               >
-                <Text size="T300">Recent</Text>
+                <Text size="T300">{t('search.recent')}</Text>
               </MenuItem>
               <MenuItem
                 onClick={() => setOrder(SearchOrderBy.Rank)}
@@ -92,7 +94,7 @@ function OrderButton({ order, onChange }: OrderButtonProps) {
                 radii="300"
                 aria-pressed={rankOrder}
               >
-                <Text size="T300">Relevance</Text>
+                <Text size="T300">{t('search.relevance')}</Text>
               </MenuItem>
             </div>
           </Menu>
@@ -105,7 +107,11 @@ function OrderButton({ order, onChange }: OrderButtonProps) {
         after={<Icon size="50" src={Icons.Sort} />}
         onClick={handleOpenMenu}
       >
-        {rankOrder ? <Text size="T200">Relevance</Text> : <Text size="T200">Recent</Text>}
+        {rankOrder ? (
+          <Text size="T200">{t('search.relevance')}</Text>
+        ) : (
+          <Text size="T200">{t('search.recent')}</Text>
+        )}
       </Chip>
     </PopOut>
   );
@@ -127,6 +133,7 @@ type SelectRoomButtonProps = {
   onChange: (rooms?: string[]) => void;
 };
 function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButtonProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
@@ -215,7 +222,7 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
                 gap="100"
                 style={{ padding: config.space.S200, paddingBottom: 0 }}
               >
-                <Text size="L400">Search</Text>
+                <Text size="L400">{t('common.search')}</Text>
                 <Input
                   onChange={handleSearchChange}
                   size="300"
@@ -238,11 +245,15 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
                     paddingRight: 0,
                   }}
                 >
-                  {!searchResult && <Text size="L400">Rooms</Text>}
-                  {searchResult && <Text size="L400">{`Rooms for "${searchResult.query}"`}</Text>}
+                  {!searchResult && <Text size="L400">{t('common.rooms')}</Text>}
+                  {searchResult && (
+                    <Text size="L400">
+                      {t('search.roomsForQuery', { query: searchResult.query })}
+                    </Text>
+                  )}
                   {searchResult && searchResult.items.length === 0 && (
                     <Text style={{ padding: config.space.S400 }} size="T300" align="Center">
-                      No match found!
+                      {t('search.noMatchFound')}
                     </Text>
                   )}
                   <div
@@ -292,9 +303,11 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
               <Box shrink="No" direction="Column" gap="100" style={{ padding: config.space.S200 }}>
                 <Button size="300" variant="Secondary" radii="300" onClick={handleSave}>
                   {localSelected && localSelected.length > 0 ? (
-                    <Text size="B300">Save ({localSelected.length})</Text>
+                    <Text size="B300">
+                      {t('search.saveCount', { count: localSelected.length })}
+                    </Text>
                   ) : (
-                    <Text size="B300">Save</Text>
+                    <Text size="B300">{t('common.save')}</Text>
                   )}
                 </Button>
                 <Button
@@ -305,7 +318,7 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
                   onClick={handleDeselectAll}
                   disabled={!localSelected || localSelected.length === 0}
                 >
-                  <Text size="B300">Deselect All</Text>
+                  <Text size="B300">{t('search.deselectAll')}</Text>
                 </Button>
               </Box>
             </Box>
@@ -319,7 +332,7 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
         radii="Pill"
         before={<Icon size="100" src={Icons.PlusCircle} />}
       >
-        <Text size="T200">Select Rooms</Text>
+        <Text size="T200">{t('search.selectRooms')}</Text>
       </Chip>
     </PopOut>
   );
@@ -347,11 +360,12 @@ export function SearchFilters({
   onGlobalChange,
   onOrderChange,
 }: SearchFiltersProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Filter</Text>
+      <Text size="L400">{t('common.filter')}</Text>
       <Box gap="200" wrap="Wrap">
         <Chip
           variant={!global ? 'Success' : 'Surface'}
@@ -370,7 +384,7 @@ export function SearchFilters({
             outlined
             onClick={() => onGlobalChange(true)}
           >
-            <Text size="T200">Global</Text>
+            <Text size="T200">{t('search.global')}</Text>
           </Chip>
         )}
         <Line

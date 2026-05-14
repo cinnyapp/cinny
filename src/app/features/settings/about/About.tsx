@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Text, IconButton, Icon, Icons, Scroll, Button, config, toRem } from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
@@ -12,6 +13,7 @@ type AboutProps = {
   requestClose: () => void;
 };
 export function About({ requestClose }: AboutProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
 
   return (
@@ -20,7 +22,7 @@ export function About({ requestClose }: AboutProps) {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              About
+              {t('settings.about')}
             </Text>
           </Box>
           <Box shrink="No">
@@ -39,7 +41,7 @@ export function About({ requestClose }: AboutProps) {
                   <img
                     style={{ width: toRem(60), height: toRem(60) }}
                     src={CinnySVG}
-                    alt="Cinny logo"
+                    alt={t('settings.aboutPage.cinnyLogo')}
                   />
                 </Box>
                 <Box direction="Column" gap="300">
@@ -48,7 +50,7 @@ export function About({ requestClose }: AboutProps) {
                       <Text size="H3">Cinny</Text>
                       <Text size="T200">v4.11.1</Text>
                     </Box>
-                    <Text>Yet another matrix client.</Text>
+                    <Text>{t('settings.aboutPage.tagline')}</Text>
                   </Box>
 
                   <Box gap="200" wrap="Wrap">
@@ -63,7 +65,7 @@ export function About({ requestClose }: AboutProps) {
                       radii="300"
                       before={<Icon src={Icons.Code} size="100" filled />}
                     >
-                      <Text size="B300">Source Code</Text>
+                      <Text size="B300">{t('settings.aboutPage.sourceCode')}</Text>
                     </Button>
                     <Button
                       as="a"
@@ -76,13 +78,13 @@ export function About({ requestClose }: AboutProps) {
                       radii="300"
                       before={<Icon src={Icons.Heart} size="100" filled />}
                     >
-                      <Text size="B300">Support</Text>
+                      <Text size="B300">{t('settings.aboutPage.support')}</Text>
                     </Button>
                   </Box>
                 </Box>
               </Box>
               <Box direction="Column" gap="100">
-                <Text size="L400">Options</Text>
+                <Text size="L400">{t('common.options')}</Text>
                 <SequenceCard
                   className={SequenceCardStyle}
                   variant="SurfaceVariant"
@@ -90,8 +92,8 @@ export function About({ requestClose }: AboutProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title="Clear Cache & Reload"
-                    description="Clear all your locally stored data and reload from server."
+                    title={t('settings.aboutPage.clearCache')}
+                    description={t('settings.aboutPage.clearCacheDesc')}
                     after={
                       <Button
                         onClick={() => clearCacheAndReload(mx)}
@@ -101,14 +103,14 @@ export function About({ requestClose }: AboutProps) {
                         radii="300"
                         outlined
                       >
-                        <Text size="B300">Clear Cache</Text>
+                        <Text size="B300">{t('settings.aboutPage.clearCacheBtn')}</Text>
                       </Button>
                     }
                   />
                 </SequenceCard>
               </Box>
               <Box direction="Column" gap="100">
-                <Text size="L400">Credits</Text>
+                <Text size="L400">{t('settings.aboutPage.credits')}</Text>
                 <SequenceCard
                   className={SequenceCardStyle}
                   variant="SurfaceVariant"

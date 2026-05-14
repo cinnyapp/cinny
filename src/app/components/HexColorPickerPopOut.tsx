@@ -1,6 +1,7 @@
 import FocusTrap from 'focus-trap-react';
 import { Box, Button, config, Menu, PopOut, RectCords, Text } from 'folds';
 import React, { MouseEventHandler, ReactNode, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { stopPropagation } from '../utils/keyboard';
 
 type HexColorPickerPopOutProps = {
@@ -9,6 +10,7 @@ type HexColorPickerPopOutProps = {
   onRemove?: () => void;
 };
 export function HexColorPickerPopOut({ picker, onRemove, children }: HexColorPickerPopOutProps) {
+  const { t } = useTranslation();
   const [cords, setCords] = useState<RectCords>();
 
   const handleOpen: MouseEventHandler<HTMLElement> = (evt) => {
@@ -45,7 +47,7 @@ export function HexColorPickerPopOut({ picker, onRemove, children }: HexColorPic
                   radii="400"
                   onClick={() => onRemove()}
                 >
-                  <Text size="B300">Remove</Text>
+                  <Text size="B300">{t('roomSettings.remove')}</Text>
                 </Button>
               )}
             </Box>

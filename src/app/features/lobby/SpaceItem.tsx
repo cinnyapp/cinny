@@ -38,6 +38,7 @@ import { useOpenCreateSpaceModal } from '../../state/hooks/createSpaceModal';
 import { AddExistingModal } from '../add-existing';
 import { CreateRoomType } from '../../components/create-room/types';
 import { BetaNoticeBadge } from '../../components/BetaNoticeBadge';
+import { useTranslation } from 'react-i18next';
 
 function SpaceProfileLoading() {
   return (
@@ -59,6 +60,7 @@ type InaccessibleSpaceProfileProps = {
   suggested?: boolean;
 };
 function InaccessibleSpaceProfile({ roomId, suggested }: InaccessibleSpaceProfileProps) {
+  const { t } = useTranslation();
   return (
     <Chip
       as="span"
@@ -80,15 +82,15 @@ function InaccessibleSpaceProfile({ roomId, suggested }: InaccessibleSpaceProfil
     >
       <Box alignItems="Center" gap="200">
         <Text size="H4" truncate>
-          Unknown
+          {t('lobby.unknown')}
         </Text>
 
         <Badge variant="Secondary" fill="Soft" radii="Pill" outlined>
-          <Text size="L400">Inaccessible</Text>
+          <Text size="L400">{t('lobby.inaccessible')}</Text>
         </Badge>
         {suggested && (
           <Badge variant="Success" fill="Soft" radii="Pill" outlined>
-            <Text size="L400">Suggested</Text>
+            <Text size="L400">{t('lobby.suggested')}</Text>
           </Badge>
         )}
       </Box>
@@ -116,6 +118,7 @@ function UnjoinedSpaceProfile({
     useCallback(() => mx.joinRoom(roomId, { viaServers: via }), [mx, roomId, via])
   );
 
+  const { t } = useTranslation();
   const canJoin = joinState.status === AsyncStatus.Idle || joinState.status === AsyncStatus.Error;
   return (
     <Chip
@@ -144,11 +147,11 @@ function UnjoinedSpaceProfile({
     >
       <Box alignItems="Center" gap="200">
         <Text size="H4" truncate>
-          {name || 'Unknown'}
+          {name || t('lobby.unknown')}
         </Text>
         {suggested && (
           <Badge variant="Success" fill="Soft" radii="Pill" outlined>
-            <Text size="L400">Suggested</Text>
+            <Text size="L400">{t('lobby.suggested')}</Text>
           </Badge>
         )}
         {joinState.status === AsyncStatus.Error && (
@@ -181,6 +184,7 @@ function SpaceProfile({
   categoryId,
   handleClose,
 }: SpaceProfileProps) {
+  const { t } = useTranslation();
   return (
     <Chip
       data-category-id={categoryId}
@@ -210,7 +214,7 @@ function SpaceProfile({
         </Text>
         {suggested && (
           <Badge variant="Success" fill="Soft" radii="Pill" outlined>
-            <Text size="L400">Suggested</Text>
+            <Text size="L400">{t('lobby.suggested')}</Text>
           </Badge>
         )}
       </Box>
@@ -224,6 +228,7 @@ type RootSpaceProfileProps = {
   handleClose?: MouseEventHandler<HTMLButtonElement>;
 };
 function RootSpaceProfile({ closed, categoryId, handleClose }: RootSpaceProfileProps) {
+  const { t } = useTranslation();
   return (
     <Chip
       data-category-id={categoryId}
@@ -235,7 +240,7 @@ function RootSpaceProfile({ closed, categoryId, handleClose }: RootSpaceProfileP
     >
       <Box alignItems="Center" gap="200">
         <Text size="H4" truncate>
-          Rooms
+          {t('lobby.rooms')}
         </Text>
       </Box>
     </Chip>
@@ -243,6 +248,7 @@ function RootSpaceProfile({ closed, categoryId, handleClose }: RootSpaceProfileP
 }
 
 function AddRoomButton({ item }: { item: HierarchyItem }) {
+  const { t } = useTranslation();
   const [cords, setCords] = useState<RectCords>();
   const openCreateRoomModal = useOpenCreateRoomModal();
   const [addExisting, setAddExisting] = useState(false);
@@ -285,7 +291,7 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
               fill="None"
               onClick={() => handleCreateRoom(CreateRoomType.TextRoom)}
             >
-              <Text size="T300">Chat Room</Text>
+              <Text size="T300">{t('lobby.chatRoom')}</Text>
             </MenuItem>
             <MenuItem
               size="300"
@@ -295,10 +301,10 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
               onClick={() => handleCreateRoom(CreateRoomType.VoiceRoom)}
               after={<BetaNoticeBadge />}
             >
-              <Text size="T300">Voice Room</Text>
+              <Text size="T300">{t('lobby.voiceRoom')}</Text>
             </MenuItem>
             <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
-              <Text size="T300">Existing Room</Text>
+              <Text size="T300">{t('lobby.existingRoom')}</Text>
             </MenuItem>
           </Menu>
         </FocusTrap>
@@ -311,7 +317,7 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
         onClick={handleAddRoom}
         aria-pressed={!!cords}
       >
-        <Text size="B300">Add Room</Text>
+        <Text size="B300">{t('lobby.addRoom')}</Text>
       </Chip>
       {addExisting && (
         <AddExistingModal parentId={item.roomId} requestClose={() => setAddExisting(false)} />
@@ -321,6 +327,7 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
 }
 
 function AddSpaceButton({ item }: { item: HierarchyItem }) {
+  const { t } = useTranslation();
   const [cords, setCords] = useState<RectCords>();
   const openCreateSpaceModal = useOpenCreateSpaceModal();
   const [addExisting, setAddExisting] = useState(false);
@@ -362,10 +369,10 @@ function AddSpaceButton({ item }: { item: HierarchyItem }) {
               fill="None"
               onClick={handleCreateSpace}
             >
-              <Text size="T300">New Space</Text>
+              <Text size="T300">{t('lobby.newSpace')}</Text>
             </MenuItem>
             <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
-              <Text size="T300">Existing Space</Text>
+              <Text size="T300">{t('lobby.existingSpace')}</Text>
             </MenuItem>
           </Menu>
         </FocusTrap>
@@ -378,7 +385,7 @@ function AddSpaceButton({ item }: { item: HierarchyItem }) {
         onClick={handleAddSpace}
         aria-pressed={!!cords}
       >
-        <Text size="B300">Add Space</Text>
+        <Text size="B300">{t('lobby.addSpace')}</Text>
       </Chip>
       {addExisting && (
         <AddExistingModal space parentId={item.roomId} requestClose={() => setAddExisting(false)} />

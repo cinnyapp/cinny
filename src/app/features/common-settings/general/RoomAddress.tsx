@@ -15,6 +15,7 @@ import {
   toRem,
 } from 'folds';
 import { MatrixError } from 'matrix-js-sdk';
+import { useTranslation } from 'react-i18next';
 import { SettingTile } from '../../../components/setting-tile';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
@@ -39,6 +40,7 @@ type RoomPublishedAddressesProps = {
 };
 
 export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const room = useRoom();
 
@@ -61,7 +63,7 @@ export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesPr
       gap="400"
     >
       <SettingTile
-        title="Published Addresses"
+        title={t('roomSettings.publishedAddresses')}
         description={
           <span>
             If access is <b>Public</b>, Published addresses will be used to join by anyone.
@@ -71,7 +73,7 @@ export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesPr
       <CutoutCard variant="Surface" style={{ padding: config.space.S300 }}>
         {publishedAliases.length === 0 ? (
           <Box direction="Column" gap="100">
-            <Text size="L400">No Addresses</Text>
+            <Text size="L400">{t('roomSettings.noAddresses')}</Text>
             <Text size="T200">
               To publish an address, it needs to be set as a local address first
             </Text>
@@ -86,7 +88,7 @@ export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesPr
                   </Text>
                   {alias === canonicalAlias && (
                     <Badge variant="Success" fill="Solid" size="500">
-                      <Text size="L400">Main</Text>
+                      <Text size="L400">{t('roomSettings.main')}</Text>
                     </Badge>
                   )}
                 </Box>
@@ -100,7 +102,7 @@ export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesPr
                         disabled={loading}
                         onClick={() => setMain(undefined)}
                       >
-                        <Text size="B300">Unset Main</Text>
+                        <Text size="B300">{t('roomSettings.unsetMain')}</Text>
                       </Chip>
                     ) : (
                       <Chip
@@ -110,7 +112,7 @@ export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesPr
                         disabled={loading}
                         onClick={() => setMain(alias)}
                       >
-                        <Text size="B300">Set Main</Text>
+                        <Text size="B300">{t('roomSettings.setMain')}</Text>
                       </Chip>
                     )}
                   </Box>
@@ -131,6 +133,7 @@ export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesPr
 }
 
 function LocalAddressInput({ addLocalAlias }: { addLocalAlias: (alias: string) => Promise<void> }) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const userId = mx.getSafeUserId();
   const server = getMxIdServer(userId);
@@ -183,7 +186,7 @@ function LocalAddressInput({ addLocalAlias }: { addLocalAlias: (alias: string) =
             disabled={adding}
             before={adding && <Spinner size="100" variant="Success" fill="Solid" />}
           >
-            <Text size="B400">Save</Text>
+            <Text size="B400">{t('roomSettings.save')}</Text>
           </Button>
         </Box>
       </Box>
@@ -207,6 +210,7 @@ function LocalAddressesList({
   removeLocalAlias: (alias: string) => Promise<void>;
   canEditCanonical?: boolean;
 }) {
+  const { t } = useTranslation();
   const room = useRoom();
   const alive = useAlive();
 
@@ -271,7 +275,7 @@ function LocalAddressesList({
       {selectedAliases.length > 0 && (
         <Box gap="200">
           <Box grow="Yes">
-            <Text size="L400">{selectedAliases.length} Selected</Text>
+            <Text size="L400">{selectedAliases.length} {t('roomSettings.selected')}</Text>
           </Box>
           <Box shrink="No" gap="Inherit">
             {canEditCanonical &&
@@ -287,7 +291,7 @@ function LocalAddressesList({
                     )
                   }
                 >
-                  <Text size="B300">Unpublish</Text>
+                  <Text size="B300">{t('roomSettings.unpublish')}</Text>
                 </Chip>
               ) : (
                 <Chip
@@ -301,7 +305,7 @@ function LocalAddressesList({
                     )
                   }
                 >
-                  <Text size="B300">Publish</Text>
+                  <Text size="B300">{t('roomSettings.publish')}</Text>
                 </Chip>
               ))}
             <Chip
@@ -315,7 +319,7 @@ function LocalAddressesList({
                 )
               }
             >
-              <Text size="B300">Delete</Text>
+              <Text size="B300">{t('roomSettings.delete')}</Text>
             </Chip>
           </Box>
         </Box>
@@ -360,6 +364,7 @@ function LocalAddressesList({
 }
 
 export function RoomLocalAddresses({ permissions }: { permissions: RoomPermissionsAPI }) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const room = useRoom();
 
@@ -380,7 +385,7 @@ export function RoomLocalAddresses({ permissions }: { permissions: RoomPermissio
       gap="400"
     >
       <SettingTile
-        title="Local Addresses"
+        title={t('roomSettings.localAddresses')}
         description="Set local address so users can join through your homeserver."
         after={
           <Button
@@ -396,7 +401,7 @@ export function RoomLocalAddresses({ permissions }: { permissions: RoomPermissio
             }
           >
             <Text as="span" size="B300" truncate>
-              {expand ? 'Collapse' : 'Expand'}
+              {expand ? t('roomSettings.collapse') : t('roomSettings.expand')}
             </Text>
           </Button>
         }
@@ -406,13 +411,13 @@ export function RoomLocalAddresses({ permissions }: { permissions: RoomPermissio
           {localAliasesState.status === AsyncStatus.Loading && (
             <Box gap="100">
               <Spinner variant="Secondary" size="100" />
-              <Text size="T200">Loading...</Text>
+              <Text size="T200">{t('roomSettings.loading')}</Text>
             </Box>
           )}
           {localAliasesState.status === AsyncStatus.Success &&
             (localAliasesState.data.length === 0 ? (
               <Box direction="Column" gap="100">
-                <Text size="L400">No Addresses</Text>
+                <Text size="L400">{t('roomSettings.noAddresses')}</Text>
               </Box>
             ) : (
               <LocalAddressesList

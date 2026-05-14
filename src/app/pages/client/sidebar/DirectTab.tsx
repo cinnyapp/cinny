@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text, config, toRem } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
+import { useTranslation } from 'react-i18next';
 import { useDirects } from '../../../state/hooks/roomList';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { mDirectAtom } from '../../../state/mDirectList';
@@ -30,6 +31,7 @@ type DirectMenuProps = {
   requestClose: () => void;
 };
 const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }, ref) => {
+  const { t } = useTranslation();
   const orphanRooms = useDirectRooms();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
@@ -52,7 +54,7 @@ const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }
           aria-disabled={!unread}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Mark as Read
+            {t('sidebar.markAsRead')}
           </Text>
         </MenuItem>
       </Box>
@@ -61,6 +63,7 @@ const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }
 });
 
 export function DirectTab() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const mx = useMatrixClient();
   const screenSize = useScreenSizeContext();
@@ -93,7 +96,7 @@ export function DirectTab() {
   };
   return (
     <SidebarItem active={directSelected}>
-      <SidebarItemTooltip tooltip="Direct Messages">
+      <SidebarItemTooltip tooltip={t('sidebar.directMessages')}>
         {(triggerRef) => (
           <SidebarAvatar
             as="button"

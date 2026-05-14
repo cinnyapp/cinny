@@ -1,4 +1,5 @@
 import React, { FormEventHandler, useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Text,
@@ -46,6 +47,7 @@ type CreatePackTileProps = {
   roomId: string;
 };
 function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -96,10 +98,7 @@ function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
       direction="Column"
       gap="400"
     >
-      <SettingTile
-        title="New Pack"
-        description="Add your own emoji and sticker pack to use in room."
-      >
+      <SettingTile title={t('roomSettings.newPack')} description={t('roomSettings.newPackDesc')}>
         <Box
           style={{ marginTop: config.space.S200 }}
           as="form"
@@ -108,7 +107,7 @@ function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
           alignItems="End"
         >
           <Box direction="Column" gap="100" grow="Yes">
-            <Text size="L400">Name</Text>
+            <Text size="L400">{t('roomSettings.name')}</Text>
             <Input
               name="nameInput"
               required
@@ -130,7 +129,7 @@ function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
             disabled={creating}
             before={creating && <Spinner size="200" variant="Success" fill="Solid" />}
           >
-            <Text size="B400">Create</Text>
+            <Text size="B400">{t('roomSettings.create')}</Text>
           </Button>
         </Box>
       </SettingTile>
@@ -142,6 +141,7 @@ type RoomPacksProps = {
   onViewPack: (imagePack: ImagePack) => void;
 };
 export function RoomPacks({ onViewPack }: RoomPacksProps) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const room = useRoom();
@@ -255,7 +255,7 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
                 outlined
                 onClick={() => onViewPack(pack)}
               >
-                <Text size="B300">View</Text>
+                <Text size="B300">{t('roomSettings.view')}</Text>
               </Button>
             )
           }
@@ -267,7 +267,7 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
   return (
     <>
       <Box direction="Column" gap="100">
-        <Text size="L400">Packs</Text>
+        <Text size="L400">{t('roomSettings.packs')}</Text>
         {canEdit && <CreatePackTile roomId={room.roomId} packs={packs} />}
         {packs.map(renderPack)}
         {packs.length === 0 && (
@@ -288,10 +288,10 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
               }}
             >
               <Text size="H5" align="Center">
-                No Packs
+                {t('roomSettings.noPacks')}
               </Text>
               <Text size="T200" align="Center">
-                There are no emoji or sticker packs to display at the moment.
+                {t('roomSettings.noPacksDesc')}
               </Text>
             </Box>
           </SequenceCard>
@@ -315,11 +315,14 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
             <Box grow="Yes" direction="Column">
               {applyState.status === AsyncStatus.Error ? (
                 <Text size="T200">
-                  <b>Failed to remove packs! Please try again.</b>
+                  <b>{t('roomSettings.failedRemovePacks')}</b>
                 </Text>
               ) : (
                 <Text size="T200">
-                  <b>Delete selected packs. ({removedPacks.length} selected)</b>
+                  <b>
+                    {t('roomSettings.deleteSelectedPacks', { count: removedPacks.length })} (
+                    {removedPacks.length} {t('roomSettings.selected')})
+                  </b>
                 </Text>
               )}
             </Box>
@@ -332,7 +335,7 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
                 disabled={applyingChanges}
                 onClick={handleCancelChanges}
               >
-                <Text size="B300">Cancel</Text>
+                <Text size="B300">{t('roomSettings.cancel')}</Text>
               </Button>
               <Button
                 size="300"
@@ -342,7 +345,7 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
                 before={applyingChanges && <Spinner variant="Critical" fill="Solid" size="100" />}
                 onClick={handleApplyChanges}
               >
-                <Text size="B300">Delete</Text>
+                <Text size="B300">{t('roomSettings.delete')}</Text>
               </Button>
             </Box>
           </Box>

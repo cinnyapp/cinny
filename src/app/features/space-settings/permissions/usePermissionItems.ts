@@ -1,143 +1,145 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StateEvent } from '../../../../types/matrix/room';
 import { PermissionGroup } from '../../common-settings/permissions';
 
 export const usePermissionGroups = (): PermissionGroup[] => {
+  const { t } = useTranslation();
   const groups: PermissionGroup[] = useMemo(() => {
     const messagesGroup: PermissionGroup = {
-      name: 'Manage',
+      name: t('permissions.manage'),
       items: [
         {
           location: {
             state: true,
             key: StateEvent.SpaceChild,
           },
-          name: 'Manage space rooms',
+          name: t('permissions.manageSpaceRooms'),
         },
         {
           location: {},
-          name: 'Message Events',
+          name: t('permissions.messageEvents'),
         },
       ],
     };
 
     const moderationGroup: PermissionGroup = {
-      name: 'Moderation',
+      name: t('permissions.moderation'),
       items: [
         {
           location: {
             action: true,
             key: 'invite',
           },
-          name: 'Invite',
+          name: t('permissions.invite'),
         },
         {
           location: {
             action: true,
             key: 'kick',
           },
-          name: 'Kick',
+          name: t('permissions.kick'),
         },
         {
           location: {
             action: true,
             key: 'ban',
           },
-          name: 'Ban',
+          name: t('permissions.ban'),
         },
       ],
     };
 
     const roomOverviewGroup: PermissionGroup = {
-      name: 'Space Overview',
+      name: t('permissions.spaceOverview'),
       items: [
         {
           location: {
             state: true,
             key: StateEvent.RoomAvatar,
           },
-          name: 'Space Avatar',
+          name: t('permissions.spaceAvatar'),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomName,
           },
-          name: 'Space Name',
+          name: t('permissions.spaceName'),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomTopic,
           },
-          name: 'Space Topic',
+          name: t('permissions.spaceTopic'),
         },
       ],
     };
 
     const roomSettingsGroup: PermissionGroup = {
-      name: 'Settings',
+      name: t('permissions.settings'),
       items: [
         {
           location: {
             state: true,
             key: StateEvent.RoomJoinRules,
           },
-          name: 'Change Space Access',
+          name: t('permissions.changeSpaceAccess'),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomCanonicalAlias,
           },
-          name: 'Publish Address',
+          name: t('permissions.publishAddress'),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomPowerLevels,
           },
-          name: 'Change All Permission',
+          name: t('permissions.changeAllPermission'),
         },
         {
           location: {
             state: true,
             key: StateEvent.PowerLevelTags,
           },
-          name: 'Edit Power Levels',
+          name: t('permissions.editPowerLevels'),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomTombstone,
           },
-          name: 'Upgrade Space',
+          name: t('permissions.upgradeSpace'),
         },
         {
           location: {
             state: true,
           },
-          name: 'Other Settings',
+          name: t('permissions.otherSettings'),
         },
       ],
     };
 
     const otherSettingsGroup: PermissionGroup = {
-      name: 'Other',
+      name: t('permissions.other'),
       items: [
         {
           location: {
             state: true,
             key: StateEvent.PoniesRoomEmotes,
           },
-          name: 'Manage Emojis & Stickers',
+          name: t('permissions.manageEmojisStickers'),
         },
         {
           location: {
             state: true,
             key: StateEvent.RoomServerAcl,
           },
-          name: 'Change Server ACLs',
+          name: t('permissions.changeServerAcls'),
         },
       ],
     };
@@ -149,7 +151,7 @@ export const usePermissionGroups = (): PermissionGroup[] => {
       roomSettingsGroup,
       otherSettingsGroup,
     ];
-  }, []);
+  }, [t]);
 
   return groups;
 };

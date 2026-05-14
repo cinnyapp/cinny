@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { Menu, Box, Text, Chip } from 'folds';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import * as css from './styles.css';
 import { PickerColumn } from './PickerColumn';
@@ -15,6 +16,7 @@ type TimePickerProps = {
 };
 export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
   ({ min, max, value, onChange }, ref) => {
+    const { t } = useTranslation();
     const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
 
     const hour24 = dayjs(value).hour();
@@ -62,7 +64,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
     return (
       <Menu className={css.PickerMenu} ref={ref}>
         <Box direction="Row" gap="200" className={css.PickerContainer}>
-          <PickerColumn title="Hour">
+          <PickerColumn title={t('datePicker.hour')}>
             {hour24Clock
               ? Array.from(Array(24).keys()).map((hour) => (
                   <Chip
@@ -101,7 +103,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
                     </Chip>
                   ))}
           </PickerColumn>
-          <PickerColumn title="Minutes">
+          <PickerColumn title={t('datePicker.minutes')}>
             {Array.from(Array(60).keys()).map((minute) => (
               <Chip
                 key={minute}
@@ -121,7 +123,7 @@ export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
             ))}
           </PickerColumn>
           {!hour24Clock && (
-            <PickerColumn title="Period">
+            <PickerColumn title={t('datePicker.period')}>
               <Chip
                 size="500"
                 variant={!selectedPM ? 'Primary' : 'SurfaceVariant'}

@@ -1,5 +1,6 @@
 import { Box, config, Icon, Menu, MenuItem, PopOut, RectCords, Text } from 'folds';
 import React, { MouseEventHandler, ReactNode, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import FocusTrap from 'focus-trap-react';
 import { stopPropagation } from '../utils/keyboard';
 import {
@@ -20,16 +21,18 @@ const useRoomNotificationModes = (): RoomNotificationMode[] =>
     []
   );
 
-const useRoomNotificationModeStr = (): Record<RoomNotificationMode, string> =>
-  useMemo(
+const useRoomNotificationModeStr = (): Record<RoomNotificationMode, string> => {
+  const { t } = useTranslation();
+  return useMemo(
     () => ({
-      [RoomNotificationMode.Unset]: 'Default',
-      [RoomNotificationMode.AllMessages]: 'All Messages',
-      [RoomNotificationMode.SpecialMessages]: 'Mention & Keywords',
-      [RoomNotificationMode.Mute]: 'Mute',
+      [RoomNotificationMode.Unset]: t('room.notifDefault'),
+      [RoomNotificationMode.AllMessages]: t('room.notifAllMessages'),
+      [RoomNotificationMode.SpecialMessages]: t('room.notifMentionKeywords'),
+      [RoomNotificationMode.Mute]: t('room.notifMute'),
     }),
-    []
+    [t]
   );
+};
 
 type NotificationModeSwitcherProps = {
   roomId: string;

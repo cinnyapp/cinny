@@ -22,6 +22,7 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import FileSaver from 'file-saver';
+import { useTranslation } from 'react-i18next';
 import * as css from './PdfViewer.css';
 import { AsyncStatus } from '../../hooks/useAsyncCallback';
 import { useZoom } from '../../hooks/useZoom';
@@ -36,6 +37,7 @@ export type PdfViewerProps = {
 
 export const PdfViewer = as<'div', PdfViewerProps>(
   ({ className, name, src, requestClose, ...props }, ref) => {
+    const { t } = useTranslation();
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const { zoom, zoomIn, zoomOut, setZoom } = useZoom(0.2);
@@ -122,7 +124,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               size="300"
               radii="Pill"
               onClick={zoomOut}
-              aria-label="Zoom Out"
+              aria-label={t('viewer.zoomOut')}
             >
               <Icon size="50" src={Icons.Minus} />
             </IconButton>
@@ -135,7 +137,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               size="300"
               radii="Pill"
               onClick={zoomIn}
-              aria-label="Zoom In"
+              aria-label={t('viewer.zoomIn')}
             >
               <Icon size="50" src={Icons.Plus} />
             </IconButton>
@@ -145,7 +147,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               radii="300"
               before={<Icon size="50" src={Icons.Download} />}
             >
-              <Text size="B300">Download</Text>
+              <Text size="B300">{t('viewer.download')}</Text>
             </Chip>
           </Box>
         </Header>
@@ -153,7 +155,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
           {isLoading && <Spinner variant="Secondary" size="600" />}
           {isError && (
             <>
-              <Text>Failed to load PDF</Text>
+              <Text>{t('viewer.failedLoadPdf')}</Text>
               <Button
                 variant="Critical"
                 fill="Soft"
@@ -162,7 +164,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
                 before={<Icon src={Icons.Warning} size="50" />}
                 onClick={loadPdfJS}
               >
-                <Text size="B300">Retry</Text>
+                <Text size="B300">{t('common.retry')}</Text>
               </Button>
             </>
           )}
@@ -189,7 +191,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               onClick={handlePrevPage}
               aria-disabled={pageNo <= 1}
             >
-              <Text size="B300">Previous</Text>
+              <Text size="B300">{t('viewer.previous')}</Text>
             </Chip>
             <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
               <PopOut
@@ -224,10 +226,10 @@ export const PdfViewer = as<'div', PdfViewerProps>(
                           outlined
                           type="number"
                           radii="300"
-                          aria-label="Page Number"
+                          aria-label={t('viewer.jumpToPage')}
                         />
                         <Button type="submit" size="300" variant="Primary" radii="300">
-                          <Text size="B300">Jump To Page</Text>
+                          <Text size="B300">{t('viewer.jumpToPage')}</Text>
                         </Button>
                       </Box>
                     </Menu>
@@ -251,7 +253,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               onClick={handleNextPage}
               aria-disabled={pageNo >= docState.data.numPages}
             >
-              <Text size="B300">Next</Text>
+              <Text size="B300">{t('viewer.next')}</Text>
             </Chip>
           </Header>
         )}

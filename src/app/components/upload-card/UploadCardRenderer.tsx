@@ -1,4 +1,5 @@
 import React, { ReactNode, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Chip, Icon, IconButton, Icons, Text, color, config, toRem } from 'folds';
 import { UploadCard, UploadCardError, UploadCardProgress } from './UploadCard';
 import { UploadStatus, UploadSuccess, useBindUploadAtom } from '../../state/upload';
@@ -61,6 +62,7 @@ type MediaPreviewProps = {
   children: ReactNode;
 };
 function MediaPreview({ fileItem, onSpoiler, children }: MediaPreviewProps) {
+  const { t } = useTranslation();
   const { originalFile, metadata } = fileItem;
   const fileUrl = useObjectURL(originalFile);
 
@@ -91,7 +93,7 @@ function MediaPreview({ fileItem, onSpoiler, children }: MediaPreviewProps) {
           before={<Icon src={Icons.EyeBlind} size="50" />}
           onClick={() => onSpoiler(!metadata.markedAsSpoiler)}
         >
-          <Text size="B300">Spoiler</Text>
+          <Text size="B300">{t('upload.spoiler')}</Text>
         </Chip>
       </Box>
     </Box>
@@ -113,6 +115,7 @@ export function UploadCardRenderer({
   onComplete,
 }: UploadCardRendererProps) {
   const mx = useMatrixClient();
+  const { t } = useTranslation();
   const mediaConfig = useMediaConfig();
   const allowSize = mediaConfig['m.upload.size'] || Infinity;
 
@@ -151,17 +154,17 @@ export function UploadCardRenderer({
             <Chip
               as="button"
               onClick={startUpload}
-              aria-label="Retry Upload"
+              aria-label={t('upload.retry')}
               variant="Critical"
               radii="Pill"
               outlined
             >
-              <Text size="B300">Retry</Text>
+              <Text size="B300">{t('common.retry')}</Text>
             </Chip>
           )}
           <IconButton
             onClick={removeUpload}
-            aria-label="Cancel Upload"
+            aria-label={t('upload.cancel')}
             variant="SurfaceVariant"
             radii="Pill"
             size="300"
@@ -196,9 +199,7 @@ export function UploadCardRenderer({
           {upload.status === UploadStatus.Idle && fileSizeExceeded && (
             <UploadCardError>
               <Text size="T200">
-                The file size exceeds the limit. Maximum allowed size is{' '}
-                <b>{bytesToSize(allowSize)}</b>, but the uploaded file is{' '}
-                <b>{bytesToSize(file.size)}</b>.
+                {t('upload.fileSizeExceeded', { maxSize: bytesToSize(allowSize), fileSize: bytesToSize(file.size) })}
               </Text>
             </UploadCardError>
           )}

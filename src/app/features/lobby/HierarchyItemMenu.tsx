@@ -1,5 +1,6 @@
 import React, { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   IconButton,
@@ -42,6 +43,7 @@ function SuggestMenuItem({
   item: HierarchyItemWithParent;
   requestClose: () => void;
 }) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const { roomId, parentId, content } = item;
 
@@ -67,7 +69,7 @@ function SuggestMenuItem({
       disabled={toggleState.status === AsyncStatus.Loading}
     >
       <Text as="span" size="T300" truncate>
-        {content.suggested ? 'Unset Suggested' : 'Set Suggested'}
+        {content.suggested ? t('lobby.unsetSuggested') : t('lobby.setSuggested')}
       </Text>
     </MenuItem>
   );
@@ -80,6 +82,7 @@ function RemoveMenuItem({
   item: HierarchyItemWithParent;
   requestClose: () => void;
 }) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const { roomId, parentId } = item;
 
@@ -111,7 +114,7 @@ function RemoveMenuItem({
       disabled={removeState.status === AsyncStatus.Loading}
     >
       <Text as="span" size="T300" truncate>
-        Remove
+        {t('lobby.remove')}
       </Text>
     </MenuItem>
   );
@@ -126,6 +129,7 @@ function InviteMenuItem({
   requestClose: () => void;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation();
   const mx = useMatrixClient();
   const room = mx.getRoom(item.roomId);
   const [invitePrompt, setInvitePrompt] = useState(false);
@@ -146,7 +150,7 @@ function InviteMenuItem({
         disabled={disabled || !room}
       >
         <Text as="span" size="T300" truncate>
-          Invite
+          {t('lobby.invite')}
         </Text>
       </MenuItem>
       {invitePrompt && room && (
@@ -171,6 +175,7 @@ function SettingsMenuItem({
   requestClose: () => void;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation();
   const openRoomSettings = useOpenRoomSettings();
   const openSpaceSettings = useOpenSpaceSettings();
   const space = useSpaceOptionally();
@@ -187,7 +192,7 @@ function SettingsMenuItem({
   return (
     <MenuItem onClick={handleSettings} size="300" radii="300" disabled={disabled}>
       <Text as="span" size="T300" truncate>
-        Settings
+        {t('lobby.settings')}
       </Text>
     </MenuItem>
   );
@@ -212,6 +217,7 @@ export function HierarchyItemMenu({
   onTogglePin,
 }: HierarchyItemMenuProps) {
   const mx = useMatrixClient();
+  const { t } = useTranslation();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const canInvite = (): boolean => {
@@ -274,7 +280,7 @@ export function HierarchyItemMenu({
                         }}
                       >
                         <Text as="span" size="T300" truncate>
-                          {pinned ? 'Unpin from Sidebar' : 'Pin to Sidebar'}
+                          {pinned ? t('lobby.unpinFromSidebar') : t('lobby.pinToSidebar')}
                         </Text>
                       </MenuItem>
                     )}
@@ -297,7 +303,7 @@ export function HierarchyItemMenu({
                             aria-pressed={promptLeave}
                           >
                             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                              Leave
+                              {t('lobby.leave')}
                             </Text>
                           </MenuItem>
                           {promptLeave &&
