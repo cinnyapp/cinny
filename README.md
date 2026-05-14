@@ -11,7 +11,7 @@
     <a href="https://cinny.in/#sponsor">
         <img alt="Sponsor Cinny" src="https://img.shields.io/opencollective/all/cinny?logo=opencollective&style=social"></a>
 </p>
-
+ 
 A Matrix client focusing primarily on simple, elegant and secure interface. The main goal is to have an instant messaging application that is easy on people and has a modern touch.
 - [Roadmap](https://github.com/orgs/cinnyapp/projects/1)
 - [Contributing](./CONTRIBUTING.md)
