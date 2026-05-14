@@ -24,6 +24,7 @@ export const RoomCardTopic = style({
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
   cursor: 'pointer',
+  unicodeBidi: 'plaintext',
 
   ':hover': {
     textDecoration: 'underline',

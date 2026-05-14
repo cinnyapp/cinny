@@ -20,4 +20,5 @@ export const ModalContent = style({
 export const ModalTopic = style({
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
+  unicodeBidi: 'plaintext',
 });

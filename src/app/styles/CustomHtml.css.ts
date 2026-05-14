@@ -35,8 +35,8 @@ export const BlockQuote = style([
   DefaultReset,
   MarginSpaced,
   {
-    paddingLeft: config.space.S200,
-    borderLeft: `${config.borderWidth.B700} solid ${color.SurfaceVariant.ContainerLine}`,
+    paddingInlineStart: config.space.S200,
+    borderInlineStart: `${config.borderWidth.B700} solid ${color.SurfaceVariant.ContainerLine}`,
     fontStyle: 'italic',
   },
 ]);
@@ -125,7 +125,7 @@ export const List = style([
   MarginSpaced,
   {
     padding: `0 ${config.space.S100}`,
-    paddingLeft: config.space.S600,
+    paddingInlineStart: config.space.S600,
   },
 ]);
 

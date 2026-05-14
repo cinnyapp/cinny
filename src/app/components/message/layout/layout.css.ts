@@ -1,4 +1,4 @@
-import { createVar, keyframes, style, styleVariants } from '@vanilla-extract/css';
+import { createVar, globalStyle, keyframes, style, styleVariants } from '@vanilla-extract/css';
 import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { DefaultReset, color, config, toRem } from 'folds';
 
@@ -179,9 +179,25 @@ export const UsernameBold = style({
   fontWeight: 550,
 });
 
+export const MessageTextBodyBidi = style({
+  unicodeBidi: 'plaintext',
+});
+
+globalStyle(`${MessageTextBodyBidi} p`, { unicodeBidi: 'plaintext' });
+globalStyle(`${MessageTextBodyBidi} li`, { unicodeBidi: 'plaintext' });
+globalStyle(`${MessageTextBodyBidi} blockquote`, { unicodeBidi: 'plaintext' });
+globalStyle(`${MessageTextBodyBidi} pre`, { unicodeBidi: 'plaintext' });
+globalStyle(`${MessageTextBodyBidi} h1`, { unicodeBidi: 'plaintext' });
+globalStyle(`${MessageTextBodyBidi} h2`, { unicodeBidi: 'plaintext' });
+globalStyle(`${MessageTextBodyBidi} h3`, { unicodeBidi: 'plaintext' });
+globalStyle(`${MessageTextBodyBidi} h4`, { unicodeBidi: 'plaintext' });
+globalStyle(`${MessageTextBodyBidi} h5`, { unicodeBidi: 'plaintext' });
+globalStyle(`${MessageTextBodyBidi} h6`, { unicodeBidi: 'plaintext' });
+
 export const MessageTextBody = recipe({
   base: {
     wordBreak: 'break-word',
+    unicodeBidi: 'plaintext',
   },
   variants: {
     preWrap: {
