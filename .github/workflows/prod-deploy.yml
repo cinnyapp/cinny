@@ -24,7 +24,7 @@ jobs:
       - name: Run semantic release
         run: npm run semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.CLA_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: ${{ secrets.GIT_AUTHOR_NAME }}
           GIT_AUTHOR_EMAIL: ${{ secrets.GIT_AUTHOR_EMAIL }}
           GIT_COMMITTER_NAME: ${{ secrets.GIT_AUTHOR_NAME }}
