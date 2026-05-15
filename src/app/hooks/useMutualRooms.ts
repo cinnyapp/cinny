@@ -4,13 +4,23 @@ import { useMatrixClient } from './useMatrixClient';
 import { AsyncState, useAsyncCallbackValue } from './useAsyncCallback';
 import { useSpecVersions } from './useSpecVersions';
 
-const useUnstableMutualRoomsSupport = (): boolean => {
+export const useUnstableMutualRoomsSupport = (): boolean => {
   const { unstable_features: unstableFeatures } = useSpecVersions();
 
   const supported =
     unstableFeatures?.['uk.half-shot.msc2666'] ||
     unstableFeatures?.['uk.half-shot.msc2666.mutual_rooms'] ||
     unstableFeatures?.['uk.half-shot.msc2666.query_mutual_rooms'];
+
+  return !!supported;
+};
+
+export const useMutualRoomsSupport = (): boolean => {
+  const { unstable_features: unstableFeatures, versions } = useSpecVersions();
+
+  const supported =
+    versions.includes('v1.19') ||
+    unstableFeatures?.['uk.half-shot.msc2666.query_mutual_rooms.stable'];
 
   return !!supported;
 };
@@ -50,13 +60,14 @@ export const useMutualRooms = (userId: string): AsyncState<string[], unknown> =>
   const mx = useMatrixClient();
 
   const unstableSupport = useUnstableMutualRoomsSupport();
+  const support = useMutualRoomsSupport();
 
   const [mutualRoomsState] = useAsyncCallbackValue(
-    useCallback(
-      () =>
-        unstableSupport ? mx._unstable_getSharedRooms(userId) : fetchAllMutualRooms(mx, userId),
-      [mx, userId, unstableSupport]
-    )
+    useCallback(() => {
+      if (support) return fetchAllMutualRooms(mx, userId);
+      if (unstableSupport) return mx._unstable_getSharedRooms(userId);
+      return Promise.resolve([]);
+    }, [mx, userId, unstableSupport, support])
   );
 
   return mutualRoomsState;

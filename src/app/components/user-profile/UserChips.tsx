@@ -28,7 +28,11 @@ import { copyToClipboard } from '../../utils/dom';
 import { getExploreServerPath } from '../../pages/pathUtils';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { factoryRoomIdByAtoZ } from '../../utils/sort';
-import { useMutualRooms } from '../../hooks/useMutualRooms';
+import {
+  useMutualRooms,
+  useMutualRoomsSupport,
+  useUnstableMutualRoomsSupport,
+} from '../../hooks/useMutualRooms';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useDirectRooms } from '../../pages/client/direct/useDirectRooms';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
@@ -232,8 +236,10 @@ type MutualRoomsData = {
 
 export function MutualRoomsChip({ userId }: { userId: string }) {
   const mx = useMatrixClient();
+  const mutualRoomSupported = useMutualRoomsSupport();
+  const mutualRoomUnstable = useUnstableMutualRoomsSupport();
   const mutualRoomsState = useMutualRooms(userId);
-
+  console.log(mutualRoomSupported, mutualRoomsState);
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const closeUserRoomProfile = useCloseUserRoomProfile();
   const directs = useDirectRooms();
@@ -277,7 +283,11 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
     return data;
   }, [mutualRoomsState, getRoom, directs, mx]);
 
-  if (userId === mx.getSafeUserId() || mutualRoomsState.status === AsyncStatus.Error) {
+  if (
+    userId === mx.getSafeUserId() ||
+    (!mutualRoomSupported && !mutualRoomUnstable) ||
+    mutualRoomsState.status === AsyncStatus.Error
+  ) {
     return null;
   }
 
