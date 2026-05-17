@@ -16,16 +16,22 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download pr number
-        uses: dawidd6/action-download-artifact@2536c51d3d126276eb39f74d6bc9c72ac6ef30d3 # v16
+        uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
           name: pr
-      - name: Output pr number
+      - name: Validate and output pr number
         id: pr
-        run: echo "id=$(<pr.txt)" >> $GITHUB_OUTPUT
+        run: |
+          PR_ID=$(<pr.txt)
+          if ! [[ "${PR_ID}" =~ ^[0-9]+$ ]]; then
+            echo "::error::pr.txt contains non-numeric content: ${PR_ID}"
+            exit 1
+          fi
+          echo "id=${PR_ID}" >> "${GITHUB_OUTPUT}"
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@2536c51d3d126276eb39f74d6bc9c72ac6ef30d3 # v16
+        uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
@@ -42,7 +48,7 @@ jobs:
           enable-pull-request-comment: false
           enable-commit-comment: false
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN_PR }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_PR_CINNY }}
         timeout-minutes: 1
       - name: Comment preview on PR

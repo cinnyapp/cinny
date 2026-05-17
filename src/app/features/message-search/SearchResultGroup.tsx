@@ -203,7 +203,12 @@ export function SearchResultGroup({
               src={getRoomAvatarUrl(mx, room, 96, useAuthentication)}
               alt={room.name}
               renderFallback={() => (
-                <RoomIcon size="50" joinRule={room.getJoinRule() ?? JoinRule.Restricted} filled />
+                <RoomIcon
+                  size="50"
+                  roomType={room.getType()}
+                  joinRule={room.getJoinRule() ?? JoinRule.Restricted}
+                  filled
+                />
               )}
             />
           </Avatar>

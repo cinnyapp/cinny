@@ -161,7 +161,8 @@ export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): 
 
 export const isMutedRule = (rule: IPushRule) =>
   // Check for empty actions (new spec) or dont_notify (deprecated)
-  (rule.actions.length === 0 || rule.actions[0] === 'dont_notify') && rule.conditions?.[0]?.kind === 'event_match';
+  (rule.actions.length === 0 || rule.actions[0] === 'dont_notify') &&
+  rule.conditions?.[0]?.kind === 'event_match';
 
 export const findMutedRule = (overrideRules: IPushRule[], roomId: string) =>
   overrideRules.find((rule) => rule.rule_id === roomId && isMutedRule(rule));
@@ -257,24 +258,44 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
   return unreadInfos;
 };
 
-export const joinRuleToIconSrc = (
+export const getRoomIconSrc = (
   icons: Record<IconName, IconSrc>,
-  joinRule: JoinRule,
-  space: boolean
-): IconSrc | undefined => {
-  if (joinRule === JoinRule.Restricted) {
-    return space ? icons.Space : icons.Hash;
+  roomType?: string,
+  joinRule?: JoinRule
+): IconSrc => {
+  if (roomType === RoomType.Space) {
+    if (joinRule === JoinRule.Public) return icons.SpaceGlobe;
+    if (
+      joinRule === JoinRule.Invite ||
+      joinRule === JoinRule.Knock ||
+      joinRule === JoinRule.Private
+    ) {
+      return icons.SpaceLock;
+    }
+    return icons.Space;
   }
-  if (joinRule === JoinRule.Knock) {
-    return space ? icons.SpaceLock : icons.HashLock;
+
+  if (roomType === RoomType.Call) {
+    if (joinRule === JoinRule.Public) return icons.VolumeHighGlobe;
+    if (
+      joinRule === JoinRule.Invite ||
+      joinRule === JoinRule.Knock ||
+      joinRule === JoinRule.Private
+    ) {
+      return icons.VolumeHighLock;
+    }
+    return icons.VolumeHigh;
   }
-  if (joinRule === JoinRule.Invite) {
-    return space ? icons.SpaceLock : icons.HashLock;
+
+  if (joinRule === JoinRule.Public) return icons.HashGlobe;
+  if (
+    joinRule === JoinRule.Invite ||
+    joinRule === JoinRule.Knock ||
+    joinRule === JoinRule.Private
+  ) {
+    return icons.HashLock;
   }
-  if (joinRule === JoinRule.Public) {
-    return space ? icons.SpaceGlobe : icons.HashGlobe;
-  }
-  return undefined;
+  return icons.Hash;
 };
 
 export const getRoomAvatarUrl = (

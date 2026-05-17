@@ -31,6 +31,7 @@ export const APPLICATION_MIME_TYPES = [
   'application/javascript',
   'application/xhtml+xml',
   'application/xml',
+  'application/ogg',
 ];
 
 export const TEXT_MIME_TYPE = [
@@ -114,6 +115,10 @@ export const getBlobSafeMimeType = (mimeType: string) => {
   // Required for Chromium browsers
   if (type === 'video/quicktime') {
     return 'video/mp4';
+  }
+  // Fixes missing playback for Ogg audio
+  if (type === 'application/ogg') {
+    return 'audio/ogg';
   }
   return type;
 };

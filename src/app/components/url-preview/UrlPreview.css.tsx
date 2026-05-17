@@ -23,6 +23,11 @@ export const UrlPreviewImg = style([
     objectPosition: 'center',
     flexShrink: 0,
     overflow: 'hidden',
+    cursor: 'pointer',
+
+    ':hover': {
+      filter: 'brightness(0.8)',
+    },
   },
 ]);
 

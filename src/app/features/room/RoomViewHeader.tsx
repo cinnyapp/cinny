@@ -21,11 +21,10 @@ import {
   RectCords,
   Badge,
   Spinner,
+  Button,
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
-import { JoinRule, Room } from 'matrix-js-sdk';
-import { useAtomValue } from 'jotai';
-
+import { Room } from 'matrix-js-sdk';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { PageHeader } from '../../components/page';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -33,7 +32,7 @@ import { UseStateProvider } from '../../components/UseStateProvider';
 import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import { StateEvent } from '../../../types/matrix/room';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoom } from '../../hooks/useRoom';
+import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
@@ -48,7 +47,6 @@ import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { copyToClipboard } from '../../utils/dom';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
-import { mDirectAtom } from '../../state/mDirectList';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { stopPropagation } from '../../utils/keyboard';
 import { getMatrixToRoom } from '../../plugins/matrix-to';
@@ -69,6 +67,11 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { ContainerColor } from '../../styles/ContainerColor.css';
+import { RoomSettingsPage } from '../../state/roomSettings';
+import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
+import { useLivekitSupport } from '../../hooks/useLivekitSupport';
+import { webRTCSupported } from '../../utils/rtc';
 
 type RoomMenuProps = {
   room: Room;
@@ -254,21 +257,158 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
   );
 });
 
-export function RoomViewHeader() {
+type CallMenuProps = {
+  onVoiceCall: () => void;
+  onVideoCall: () => void;
+  requestClose: () => void;
+};
+const CallMenu = forwardRef<HTMLDivElement, CallMenuProps>(
+  ({ requestClose, onVoiceCall, onVideoCall }, ref) => {
+    const handleVoice = () => {
+      onVoiceCall();
+      requestClose();
+    };
+    const handleVideo = () => {
+      onVideoCall();
+      requestClose();
+    };
+
+    return (
+      <Menu ref={ref} style={{ padding: config.space.S200, minWidth: toRem(150) }}>
+        <Box direction="Column" gap="200">
+          <Text size="L400">Start Call</Text>
+          <Box direction="Column" gap="200">
+            <Button
+              size="300"
+              variant="Success"
+              fill="Soft"
+              outlined
+              radii="300"
+              before={<Icon size="100" src={Icons.Phone} filled />}
+              onClick={handleVoice}
+            >
+              <Text size="B300">Voice</Text>
+            </Button>
+            <Button
+              size="300"
+              variant="Success"
+              radii="300"
+              before={<Icon size="100" src={Icons.VideoCamera} filled />}
+              onClick={handleVideo}
+            >
+              <Text size="B300">Video</Text>
+            </Button>
+          </Box>
+        </Box>
+      </Menu>
+    );
+  }
+);
+
+function CallButton() {
+  const room = useRoom();
+  const direct = useIsDirectRoom();
+
+  const callEmbed = useCallEmbed();
+  const startCall = useCallStart(direct);
+  const callStarted = callEmbed && callEmbed.roomId === room.roomId;
+  const inAnotherCall = callEmbed && !callStarted;
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  return (
+    <>
+      <TooltipProvider
+        position="Bottom"
+        offset={4}
+        tooltip={
+          <Tooltip>
+            {inAnotherCall ? (
+              <Text size="L400">Already in another call — End the current call to join!</Text>
+            ) : (
+              <Text>Call</Text>
+            )}
+          </Tooltip>
+        }
+      >
+        {(triggerRef) => (
+          <IconButton
+            variant="Surface"
+            fill="None"
+            ref={triggerRef}
+            onClick={handleOpenMenu}
+            onContextMenu={(evt) => {
+              evt.preventDefault();
+              startCall(room, {
+                microphone: true,
+                video: true,
+                sound: true,
+              });
+            }}
+            disabled={inAnotherCall || callStarted}
+            aria-pressed={!!menuAnchor}
+          >
+            <Icon size="400" src={Icons.VideoCamera} filled={!!menuAnchor} />
+          </IconButton>
+        )}
+      </TooltipProvider>
+      <PopOut
+        anchor={menuAnchor}
+        position="Bottom"
+        align="Center"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              returnFocusOnDeactivate: false,
+              onDeactivate: () => setMenuAnchor(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <CallMenu
+              onVideoCall={() => startCall(room, { microphone: true, video: true, sound: true })}
+              onVoiceCall={() => startCall(room, { microphone: true, video: false, sound: true })}
+              requestClose={() => setMenuAnchor(undefined)}
+            />
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
+
+export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const navigate = useNavigate();
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const screenSize = useScreenSizeContext();
   const room = useRoom();
   const space = useSpaceOptionally();
+  const powerLevels = usePowerLevelsContext();
+  const creators = useRoomCreators(room);
+  const permissions = useRoomPermissions(creators, powerLevels);
+
+  const hasCallPermission = permissions.stateEvent(
+    StateEvent.GroupCallMemberPrefix,
+    mx.getSafeUserId()
+  );
+  const livekitSupported = useLivekitSupport();
+  const rtcSupported = webRTCSupported();
+
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
-  const mDirects = useAtomValue(mDirectAtom);
+  const direct = useIsDirectRoom();
 
   const pinnedEvents = useRoomPinnedEvents(room);
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
-  const ecryptedRoom = !!encryptionEvent;
-  const avatarMxc = useRoomAvatar(room, mDirects.has(room.roomId));
+  const encryptedRoom = !!encryptionEvent;
+  const avatarMxc = useRoomAvatar(room, direct);
   const name = useRoomName(room);
   const topic = useRoomTopic(room);
   const avatarUrl = avatarMxc
@@ -295,14 +435,27 @@ export function RoomViewHeader() {
     setPinMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
+  const openSettings = useOpenRoomSettings();
+  const parentSpace = useSpaceOptionally();
+  const handleMemberToggle = () => {
+    if (callView) {
+      openSettings(room.roomId, parentSpace?.roomId, RoomSettingsPage.MembersPage);
+      return;
+    }
+    setPeopleDrawer(!peopleDrawer);
+  };
+
   return (
-    <PageHeader balance={screenSize === ScreenSize.Mobile}>
+    <PageHeader
+      className={ContainerColor({ variant: 'Surface' })}
+      balance={screenSize === ScreenSize.Mobile}
+    >
       <Box grow="Yes" gap="300">
         {screenSize === ScreenSize.Mobile && (
           <BackRouteHandler>
             {(onBack) => (
               <Box shrink="No" alignItems="Center">
-                <IconButton onClick={onBack}>
+                <IconButton fill="None" onClick={onBack}>
                   <Icon src={Icons.ArrowLeft} />
                 </IconButton>
               </Box>
@@ -317,11 +470,7 @@ export function RoomViewHeader() {
                 src={avatarUrl}
                 alt={name}
                 renderFallback={() => (
-                  <RoomIcon
-                    size="200"
-                    joinRule={room.getJoinRule() ?? JoinRule.Restricted}
-                    filled
-                  />
+                  <RoomIcon size="200" joinRule={room.getJoinRule()} roomType={room.getType()} />
                 )}
               />
             </Avatar>
@@ -369,8 +518,9 @@ export function RoomViewHeader() {
             )}
           </Box>
         </Box>
+
         <Box shrink="No">
-          {!ecryptedRoom && (
+          {!encryptedRoom && (
             <TooltipProvider
               position="Bottom"
               offset={4}
@@ -381,7 +531,7 @@ export function RoomViewHeader() {
               }
             >
               {(triggerRef) => (
-                <IconButton ref={triggerRef} onClick={handleSearchClick}>
+                <IconButton fill="None" ref={triggerRef} onClick={handleSearchClick}>
                   <Icon size="400" src={Icons.Search} />
                 </IconButton>
               )}
@@ -398,6 +548,7 @@ export function RoomViewHeader() {
           >
             {(triggerRef) => (
               <IconButton
+                fill="None"
                 style={{ position: 'relative' }}
                 onClick={handleOpenPinMenu}
                 ref={triggerRef}
@@ -443,23 +594,31 @@ export function RoomViewHeader() {
               </FocusTrap>
             }
           />
+          {!room.isCallRoom() && livekitSupported && rtcSupported && hasCallPermission && (
+            <CallButton />
+          )}
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"
               offset={4}
               tooltip={
                 <Tooltip>
-                  <Text>{peopleDrawer ? 'Hide Members' : 'Show Members'}</Text>
+                  {callView ? (
+                    <Text>Members</Text>
+                  ) : (
+                    <Text>{peopleDrawer ? 'Hide Members' : 'Show Members'}</Text>
+                  )}
                 </Tooltip>
               }
             >
               {(triggerRef) => (
-                <IconButton ref={triggerRef} onClick={() => setPeopleDrawer((drawer) => !drawer)}>
+                <IconButton fill="None" ref={triggerRef} onClick={handleMemberToggle}>
                   <Icon size="400" src={Icons.User} />
                 </IconButton>
               )}
             </TooltipProvider>
           )}
+
           <TooltipProvider
             position="Bottom"
             align="End"
@@ -471,7 +630,12 @@ export function RoomViewHeader() {
             }
           >
             {(triggerRef) => (
-              <IconButton onClick={handleOpenMenu} ref={triggerRef} aria-pressed={!!menuAnchor}>
+              <IconButton
+                fill="None"
+                onClick={handleOpenMenu}
+                ref={triggerRef}
+                aria-pressed={!!menuAnchor}
+              >
                 <Icon size="400" src={Icons.VerticalDots} filled={!!menuAnchor} />
               </IconButton>
             )}
