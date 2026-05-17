@@ -1,10 +1,22 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":dependencyDashboardApproval"],
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboardApproval",
+    ":semanticCommits",
+    "group:monorepos"
+  ],
   "labels": ["Dependencies"],
+  "rebaseWhen": "conflicted",
   "packageRules": [
     {
       "matchUpdateTypes": ["lockFileMaintenance"]
+    },
+    {
+      "matchPackageNames": ["slate", "slate-dom", "slate-history", "slate-react"]
+    },
+    {
+      "matchPackageNames": ["linkifyjs", "linkify-react"]
     }
   ],
   "lockFileMaintenance": {

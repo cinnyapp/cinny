@@ -46,6 +46,19 @@ export const usePermissionGroups = (): PermissionGroup[] => {
       ],
     };
 
+    const callSettingsGroup: PermissionGroup = {
+      name: 'Calls',
+      items: [
+        {
+          location: {
+            state: true,
+            key: StateEvent.GroupCallMemberPrefix,
+          },
+          name: 'Start or Join Call',
+        },
+      ],
+    };
+
     const moderationGroup: PermissionGroup = {
       name: 'Moderation',
       items: [
@@ -203,6 +216,7 @@ export const usePermissionGroups = (): PermissionGroup[] => {
 
     return [
       messagesGroup,
+      callSettingsGroup,
       moderationGroup,
       roomOverviewGroup,
       roomSettingsGroup,

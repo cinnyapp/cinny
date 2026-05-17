@@ -1,6 +1,6 @@
 {
   "name": "cinny",
-  "version": "4.10.5",
+  "version": "4.12.1",
   "description": "Yet another matrix client",
   "main": "index.js",
   "type": "module",
@@ -10,11 +10,53 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "lint": "yarn check:eslint && yarn check:prettier",
+    "preview": "vite preview",
+    "lint": "npm run check:eslint && npm run check:prettier",
     "check:eslint": "eslint src/*",
     "check:prettier": "prettier --check .",
     "fix:prettier": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky install",
+    "commit": "git-cz",
+    "semantic-release": "semantic-release"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": "eslint",
+    "*": "prettier --ignore-unknown --write"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "release": {
+    "branches": [
+      "dev"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "node scripts/update-version.js ${nextRelease.version}"
+        }
+      ],
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "package.json",
+            "package-lock.json",
+            "src/app/features/settings/about/About.tsx",
+            "src/app/pages/auth/AuthFooter.tsx",
+            "src/app/pages/client/WelcomePage.tsx"
+          ],
+          "message": "chore(release): ${nextRelease.version} [skip ci]"
+        }
+      ],
+      "@semantic-release/github"
+    ]
   },
   "keywords": [],
   "author": "Ajay Bura",
@@ -43,7 +85,7 @@
     "emojibase-data": "15.3.2",
     "file-saver": "2.0.5",
     "focus-trap-react": "10.0.2",
-    "folds": "2.6.1",
+    "folds": "2.6.2",
     "html-dom-parser": "4.0.0",
     "html-react-parser": "4.2.0",
     "i18next": "23.12.2",
@@ -55,6 +97,7 @@
     "linkify-react": "4.3.2",
     "linkifyjs": "4.3.2",
     "matrix-js-sdk": "38.2.0",
+    "matrix-widget-api": "1.16.1",
     "millify": "6.1.0",
     "pdfjs-dist": "4.2.67",
     "prismjs": "1.30.0",
@@ -68,17 +111,20 @@
     "react-i18next": "15.0.0",
     "react-range": "1.8.14",
     "react-router-dom": "6.30.3",
-    "sanitize-html": "2.12.1",
-    "slate": "0.112.0",
-    "slate-dom": "0.112.2",
-    "slate-history": "0.110.3",
-    "slate-react": "0.112.1",
+    "sanitize-html": "2.17.4",
+    "slate": "0.123.0",
+    "slate-dom": "0.123.0",
+    "slate-history": "0.113.1",
+    "slate-react": "0.123.0",
     "ua-parser-js": "1.0.35"
   },
   "devDependencies": {
+    "@element-hq/element-call-embedded": "0.19.1",
     "@esbuild-plugins/node-globals-polyfill": "0.2.3",
     "@rollup/plugin-inject": "5.0.3",
     "@rollup/plugin-wasm": "6.1.1",
+    "@semantic-release/exec": "7.1.0",
+    "@semantic-release/git": "10.0.1",
     "@types/chroma-js": "3.1.1",
     "@types/file-saver": "2.0.5",
     "@types/is-hotkey": "0.1.10",
@@ -87,12 +133,13 @@
     "@types/react": "18.2.39",
     "@types/react-dom": "18.2.17",
     "@types/react-google-recaptcha": "2.1.8",
-    "@types/sanitize-html": "2.9.0",
+    "@types/sanitize-html": "2.16.1",
     "@types/ua-parser-js": "0.7.36",
     "@typescript-eslint/eslint-plugin": "5.46.1",
     "@typescript-eslint/parser": "5.46.1",
     "@vitejs/plugin-react": "4.2.0",
     "buffer": "6.0.3",
+    "cz-conventional-changelog": "3.3.0",
     "eslint": "8.29.0",
     "eslint-config-airbnb": "19.0.4",
     "eslint-config-prettier": "8.5.0",
@@ -100,7 +147,10 @@
     "eslint-plugin-jsx-a11y": "6.6.1",
     "eslint-plugin-react": "7.31.11",
     "eslint-plugin-react-hooks": "4.6.0",
+    "husky": "9.1.7",
+    "lint-staged": "16.3.2",
     "prettier": "2.8.1",
+    "semantic-release": "25.0.3",
     "typescript": "4.9.4",
     "vite": "5.4.19",
     "vite-plugin-pwa": "0.20.5",
