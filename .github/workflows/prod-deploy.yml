@@ -1,7 +1,8 @@
 name: Production deploy
 
-release:
-  types: [published]
+on:
+  release:
+    types: [published]
 
 jobs:
   deploy-and-tarball:
