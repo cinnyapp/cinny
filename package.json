@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "prepare": "husky install",
     "commit": "git-cz",
-    "semantic-release": "semantic-release"
+    "bump": "node scripts/update-version.js"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint",
@@ -28,35 +28,6 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
-  },
-  "release": {
-    "branches": [
-      "dev"
-    ],
-    "plugins": [
-      "@semantic-release/commit-analyzer",
-      "@semantic-release/release-notes-generator",
-      [
-        "@semantic-release/exec",
-        {
-          "prepareCmd": "node scripts/update-version.js ${nextRelease.version}"
-        }
-      ],
-      [
-        "@semantic-release/git",
-        {
-          "assets": [
-            "package.json",
-            "package-lock.json",
-            "src/app/features/settings/about/About.tsx",
-            "src/app/pages/auth/AuthFooter.tsx",
-            "src/app/pages/client/WelcomePage.tsx"
-          ],
-          "message": "chore(release): ${nextRelease.version} [skip ci]"
-        }
-      ],
-      "@semantic-release/github"
-    ]
   },
   "keywords": [],
   "author": "Ajay Bura",
@@ -123,8 +94,6 @@
     "@esbuild-plugins/node-globals-polyfill": "0.2.3",
     "@rollup/plugin-inject": "5.0.3",
     "@rollup/plugin-wasm": "6.1.1",
-    "@semantic-release/exec": "7.1.0",
-    "@semantic-release/git": "10.0.1",
     "@types/chroma-js": "3.1.1",
     "@types/file-saver": "2.0.5",
     "@types/is-hotkey": "0.1.10",
@@ -150,7 +119,6 @@
     "husky": "9.1.7",
     "lint-staged": "16.3.2",
     "prettier": "2.8.1",
-    "semantic-release": "25.0.3",
     "typescript": "4.9.4",
     "vite": "5.4.19",
     "vite-plugin-pwa": "0.20.5",
