@@ -27,7 +27,6 @@ import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
-import { SessionMembershipData } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import to from 'await-to-js';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -1475,7 +1474,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-        const content = mEvent.getContent<SessionMembershipData>();
+        const content = mEvent.getContent();
         const prevContent = mEvent.getPrevContent();
 
         const callJoined = content.application;

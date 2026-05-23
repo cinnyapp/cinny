@@ -8,7 +8,6 @@ import {
   type IWidgetApiErrorResponseDataDetails,
   type ISearchUserDirectoryResult,
   type IGetMediaConfigResult,
-  type UpdateDelayedEventAction,
   OpenIDRequestState,
   SimpleObservable,
   IOpenIDUpdate,
@@ -53,14 +52,11 @@ export class CallWidgetDriver extends WidgetDriver {
     stateKey: string | null = null,
     targetRoomId: string | null = null
   ): Promise<ISendEventDetails> {
-    const client = this.mx;
     const roomId = targetRoomId || this.inRoomId;
-
-    if (!client || !roomId) throw new Error('Not in a room or not attached to a client');
 
     let r: { event_id: string } | null;
     if (typeof stateKey === 'string') {
-      r = await client.sendStateEvent(
+      r = await this.mx.sendStateEvent(
         roomId,
         eventType as keyof StateEvents,
         content as StateEvents[keyof StateEvents],
@@ -68,9 +64,9 @@ export class CallWidgetDriver extends WidgetDriver {
       );
     } else if (eventType === EventType.RoomRedaction) {
       // special case: extract the `redacts` property and call redact
-      r = await client.redactEvent(roomId, content.redacts);
+      r = await this.mx.redactEvent(roomId, content.redacts);
     } else {
-      r = await client.sendEvent(
+      r = await this.mx.sendEvent(
         roomId,
         eventType as keyof TimelineEvents,
         content as TimelineEvents[keyof TimelineEvents]
@@ -88,10 +84,7 @@ export class CallWidgetDriver extends WidgetDriver {
     stateKey: string | null = null,
     targetRoomId: string | null = null
   ): Promise<ISendDelayedEventDetails> {
-    const client = this.mx;
     const roomId = targetRoomId || this.inRoomId;
-
-    if (!client || !roomId) throw new Error('Not in a room or not attached to a client');
 
     let delayOpts;
     if (delay !== null) {
@@ -110,7 +103,7 @@ export class CallWidgetDriver extends WidgetDriver {
     let r: SendDelayedEventResponse | null;
     if (stateKey !== null) {
       // state event
-      r = await client._unstable_sendDelayedStateEvent(
+      r = await this.mx._unstable_sendDelayedStateEvent(
         roomId,
         delayOpts,
         eventType as keyof StateEvents,
@@ -119,7 +112,7 @@ export class CallWidgetDriver extends WidgetDriver {
       );
     } else {
       // message event
-      r = await client._unstable_sendDelayedEvent(
+      r = await this.mx._unstable_sendDelayedEvent(
         roomId,
         delayOpts,
         null,
@@ -134,15 +127,16 @@ export class CallWidgetDriver extends WidgetDriver {
     };
   }
 
-  public async updateDelayedEvent(
-    delayId: string,
-    action: UpdateDelayedEventAction
-  ): Promise<void> {
-    const client = this.mx;
+  public async cancelScheduledDelayedEvent(delayId: string): Promise<void> {
+    await this.mx._unstable_cancelScheduledDelayedEvent(delayId);
+  }
 
-    if (!client) throw new Error('Not in a room or not attached to a client');
+  public async restartScheduledDelayedEvent(delayId: string): Promise<void> {
+    await this.mx._unstable_restartScheduledDelayedEvent(delayId);
+  }
 
-    await client._unstable_updateDelayedEvent(delayId, action);
+  public async sendScheduledDelayedEvent(delayId: string): Promise<void> {
+    await this.mx._unstable_sendScheduledDelayedEvent(delayId);
   }
 
   public async sendToDevice(
@@ -150,10 +144,8 @@ export class CallWidgetDriver extends WidgetDriver {
     encrypted: boolean,
     contentMap: { [userId: string]: { [deviceId: string]: object } }
   ): Promise<void> {
-    const client = this.mx;
-
     if (encrypted) {
-      const crypto = client.getCrypto();
+      const crypto = this.mx.getCrypto();
       if (!crypto) throw new Error('E2EE not enabled');
 
       // attempt to re-batch these up into a single request
@@ -179,11 +171,11 @@ export class CallWidgetDriver extends WidgetDriver {
             JSON.parse(stringifiedContent)
           );
 
-          await client.queueToDevice(batch);
+          await this.mx.queueToDevice(batch);
         })
       );
     } else {
-      await client.queueToDevice({
+      await this.mx.queueToDevice({
         eventType,
         batch: Object.entries(contentMap).flatMap(([userId, userContentMap]) =>
           Object.entries(userContentMap).map(([deviceId, content]) => ({
@@ -263,7 +255,6 @@ export class CallWidgetDriver extends WidgetDriver {
     limit?: number,
     direction?: 'f' | 'b'
   ): Promise<IReadEventRelationsResult> {
-    const client = this.mx;
     const dir = direction as Direction;
     const targetRoomId = roomId ?? this.inRoomId ?? undefined;
 
@@ -271,7 +262,7 @@ export class CallWidgetDriver extends WidgetDriver {
       throw new Error('Error while reading the current room');
     }
 
-    const { events, nextBatch, prevBatch } = await client.relations(
+    const { events, nextBatch, prevBatch } = await this.mx.relations(
       targetRoomId,
       eventId,
       relationType ?? null,
@@ -290,9 +281,7 @@ export class CallWidgetDriver extends WidgetDriver {
     searchTerm: string,
     limit?: number
   ): Promise<ISearchUserDirectoryResult> {
-    const client = this.mx;
-
-    const { limited, results } = await client.searchUserDirectory({ term: searchTerm, limit });
+    const { limited, results } = await this.mx.searchUserDirectory({ term: searchTerm, limit });
 
     return {
       limited,
@@ -305,15 +294,11 @@ export class CallWidgetDriver extends WidgetDriver {
   }
 
   public async getMediaConfig(): Promise<IGetMediaConfigResult> {
-    const client = this.mx;
-
-    return client.getMediaConfig();
+    return this.mx.getMediaConfig();
   }
 
   public async uploadFile(file: XMLHttpRequestBodyInit): Promise<{ contentUri: string }> {
-    const client = this.mx;
-
-    const uploadResult = await client.uploadContent(file);
+    const uploadResult = await this.mx.uploadContent(file);
 
     return { contentUri: uploadResult.content_uri };
   }

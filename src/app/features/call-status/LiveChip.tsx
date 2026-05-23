@@ -82,7 +82,7 @@ export function LiveChip({ count, room, members }: LiveChipProps) {
 
                     return (
                       <MenuItem
-                        key={callMember.membershipID}
+                        key={callMember.memberId}
                         size="400"
                         variant="Surface"
                         radii="300"

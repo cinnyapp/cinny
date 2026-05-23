@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import FocusTrap from 'focus-trap-react';
 import {
   Avatar,
@@ -93,12 +92,14 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
   const session = useCallSession(room);
   useCallMembersChange(
     session,
-    useCallback(() => {
-      const members = MatrixRTCSession.sessionMembershipsForRoom(room, session.sessionDescription);
-      if (members.length === 0) {
-        onIgnore();
-      }
-    }, [room, session, onIgnore])
+    useCallback(
+      (members) => {
+        if (members.length === 0) {
+          onIgnore();
+        }
+      },
+      [onIgnore]
+    )
   );
 
   const playSound = useCallback(() => {
@@ -264,7 +265,8 @@ function IncomingCallListener({ callEmbed, joined }: IncomingCallListenerProps) 
       const refEventId = relation?.event_id;
 
       const mention =
-        content['m.mentions'].room || content['m.mentions'].user_ids?.includes(mx.getSafeUserId());
+        content['m.mentions']?.room ||
+        content['m.mentions']?.user_ids?.includes(mx.getSafeUserId());
       if (!sender || !refEventId || !mention || Date.now() >= senderTs + lifetime) {
         return;
       }

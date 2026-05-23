@@ -2,6 +2,7 @@ import { Room } from 'matrix-js-sdk';
 import {
   MatrixRTCSession,
   MatrixRTCSessionEvent,
+  MatrixRTCSessionEventHandlerMap,
 } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import { useEffect, useState } from 'react';
@@ -33,32 +34,27 @@ export const useCallSession = (room: Room): MatrixRTCSession => {
   return session;
 };
 
-export const useCallMembers = (room: Room, session: MatrixRTCSession): CallMembership[] => {
-  const [memberships, setMemberships] = useState<CallMembership[]>(
-    MatrixRTCSession.sessionMembershipsForRoom(room, session.sessionDescription)
-  );
-
+export const useCallMembersChange = (
+  session: MatrixRTCSession,
+  callback: (members: CallMembership[]) => void
+): void => {
   useEffect(() => {
-    const updateMemberships = () => {
-      setMemberships(MatrixRTCSession.sessionMembershipsForRoom(room, session.sessionDescription));
-    };
+    const handleMembershipsChange: MatrixRTCSessionEventHandlerMap[MatrixRTCSessionEvent.MembershipsChanged] =
+      (oldestMembership, newMemberships) => {
+        callback(newMemberships);
+      };
 
-    updateMemberships();
-
-    session.on(MatrixRTCSessionEvent.MembershipsChanged, updateMemberships);
+    session.on(MatrixRTCSessionEvent.MembershipsChanged, handleMembershipsChange);
     return () => {
-      session.removeListener(MatrixRTCSessionEvent.MembershipsChanged, updateMemberships);
-    };
-  }, [session, room]);
-
-  return memberships;
-};
-
-export const useCallMembersChange = (session: MatrixRTCSession, callback: () => void): void => {
-  useEffect(() => {
-    session.on(MatrixRTCSessionEvent.MembershipsChanged, callback);
-    return () => {
-      session.removeListener(MatrixRTCSessionEvent.MembershipsChanged, callback);
+      session.removeListener(MatrixRTCSessionEvent.MembershipsChanged, handleMembershipsChange);
     };
   }, [session, callback]);
+};
+
+export const useCallMembers = (room: Room, session: MatrixRTCSession): CallMembership[] => {
+  const [memberships, setMemberships] = useState<CallMembership[]>(session.memberships);
+
+  useCallMembersChange(session, setMemberships);
+
+  return memberships;
 };
