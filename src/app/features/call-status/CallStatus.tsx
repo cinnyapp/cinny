@@ -22,7 +22,7 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
   const { room } = callEmbed;
 
   const callSession = useCallSession(room);
-  const callMembers = useCallMembers(room, callSession);
+  const callMembers = useCallMembers(callSession);
   const screenSize = useScreenSize();
   const callJoined = useCallJoined(callEmbed);
   const speakers = useCallSpeakers(callEmbed);

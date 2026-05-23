@@ -51,7 +51,7 @@ export const useCallMembersChange = (
   }, [session, callback]);
 };
 
-export const useCallMembers = (room: Room, session: MatrixRTCSession): CallMembership[] => {
+export const useCallMembers = (session: MatrixRTCSession): CallMembership[] => {
   const [memberships, setMemberships] = useState<CallMembership[]>(session.memberships);
 
   useCallMembersChange(session, setMemberships);

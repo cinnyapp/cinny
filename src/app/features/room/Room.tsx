@@ -27,7 +27,7 @@ export function Room() {
   const mx = useMatrixClient();
 
   const callSession = useCallSession(room);
-  const callMembers = useCallMembers(room, callSession);
+  const callMembers = useCallMembers(callSession);
   const callEmbed = useCallEmbed();
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');

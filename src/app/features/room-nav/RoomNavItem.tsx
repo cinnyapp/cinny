@@ -282,7 +282,7 @@ export function RoomNavItem({
 
   const optionsVisible = hover || !!menuAnchor;
   const callSession = useCallSession(room);
-  const callMembers = useCallMembers(room, callSession);
+  const callMembers = useCallMembers(callSession);
   const startCall = useCallStart(direct);
   const callEmbed = useCallEmbed();
   const callPref = useAtomValue(useCallPreferencesAtom());

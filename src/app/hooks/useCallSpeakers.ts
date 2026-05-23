@@ -8,7 +8,7 @@ import { useCallJoined } from './useCallEmbed';
 export const useCallSpeakers = (callEmbed: CallEmbed): Set<string> => {
   const [speakers, setSpeakers] = useState(new Set<string>());
   const callSession = useCallSession(callEmbed.room);
-  const callMembers = useCallMembers(callEmbed.room, callSession);
+  const callMembers = useCallMembers(callSession);
   const joined = useCallJoined(callEmbed);
 
   const videoContainers = useMemo(() => {
