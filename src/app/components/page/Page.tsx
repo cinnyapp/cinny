@@ -147,10 +147,10 @@ export function PageHero({
         {icon}
       </Box>
       <Box as="h2" direction="Column" gap="200" alignItems="Center">
-        <Text align="Center" size="H2">
+        <Text align="Center" size="H2" className={css.PageHeroText}>
           {title}
         </Text>
-        <Text align="Center" priority="400">
+        <Text align="Center" priority="400" className={css.PageHeroText}>
           {subTitle}
         </Text>
       </Box>

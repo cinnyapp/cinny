@@ -2,10 +2,14 @@ import { style } from '@vanilla-extract/css';
 import { config } from 'folds';
 
 export const LobbyHeroTopic = style({
-  display: '-webkit-box',
-  WebkitLineClamp: 3,
-  WebkitBoxOrient: 'vertical',
+  display: 'block',
   overflow: 'hidden',
+  minWidth: 0,
+  width: '100%',
+  whiteSpace: 'normal',
+  overflowWrap: 'anywhere',
+  wordBreak: 'break-word',
+  hyphens: 'auto',
 
   ':hover': {
     cursor: 'pointer',

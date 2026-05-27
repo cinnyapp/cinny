@@ -111,6 +111,13 @@ export const PageHeroSection = style([
   },
 ]);
 
+export const PageHeroText = style({
+  minWidth: 0,
+  maxWidth: '100%',
+  overflowWrap: 'anywhere',
+  wordBreak: 'break-word',
+});
+
 export const PageContentCenter = style([
   DefaultReset,
   {
