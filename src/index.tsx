@@ -35,6 +35,8 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
   navigator.serviceWorker.ready.then(sendSessionToSW);
 
+  navigator.serviceWorker.addEventListener('controllerchange', sendSessionToSW);
+
   navigator.serviceWorker.addEventListener('message', (ev) => {
     const { type } = ev.data ?? {};
 
