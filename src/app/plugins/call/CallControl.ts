@@ -28,6 +28,12 @@ export class CallControl extends EventEmitter implements CallControlState {
     return screenshareBtn ?? undefined;
   }
 
+  private get leaveButton(): Element | undefined {
+    const leaveBtn = this.document?.querySelector('[data-testid="incall_leave"]');
+
+    return leaveBtn ?? undefined;
+  }
+
   private get settingsButton(): HTMLElement | undefined {
     const leaveBtn = this.document?.querySelector('[data-testid="incall_leave"]');
 
@@ -37,7 +43,7 @@ export class CallControl extends EventEmitter implements CallControlState {
   }
 
   private get reactionsButton(): HTMLElement | undefined {
-    const reactionsButton = this.settingsButton?.previousElementSibling as HTMLElement | null;
+    const reactionsButton = this.leaveButton?.previousElementSibling as HTMLElement | null;
 
     return reactionsButton ?? undefined;
   }
