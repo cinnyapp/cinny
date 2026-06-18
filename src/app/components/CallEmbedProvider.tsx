@@ -148,11 +148,13 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
                       />
                     </Avatar>
                   </Box>
-                  <Box grow="Yes" direction="Column" gap="100">
+                  <Box grow="Yes" direction="Column" gap="100" alignItems="Center">
                     <Text size="H3" align="Center" truncate>
                       {roomName}
                     </Text>
-                    <Text size="T300">Incoming Call</Text>
+                    <Text size="T300" align="Center">
+                      Incoming Call
+                    </Text>
                   </Box>
                 </Box>
                 {!livekitSupported && (
