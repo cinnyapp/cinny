@@ -35,11 +35,14 @@ export class CallControl extends EventEmitter implements CallControlState {
   }
 
   private get settingsButton(): HTMLElement | undefined {
-    const leaveBtn = this.document?.querySelector('[data-testid="incall_leave"]');
+    const settingsButtonLeft = this.document?.querySelector(
+      '[data-testid="settings-bottom-left"]'
+    ) as HTMLButtonElement | undefined;
+    const settingsButtonCenter = this.document?.querySelector(
+      '[data-testid="settings-bottom-center"]'
+    ) as HTMLButtonElement | undefined;
 
-    const settingsButton = leaveBtn?.previousElementSibling as HTMLElement | null;
-
-    return settingsButton ?? undefined;
+    return settingsButtonLeft ?? settingsButtonCenter ?? undefined;
   }
 
   private get reactionsButton(): HTMLElement | undefined {
