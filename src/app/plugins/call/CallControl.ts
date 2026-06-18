@@ -14,6 +14,8 @@ export class CallControl extends EventEmitter implements CallControlState {
 
   private iframe: HTMLIFrameElement;
 
+  private bodyMutationObserver: MutationObserver;
+
   private controlMutationObserver: MutationObserver;
 
   private get document(): Document | undefined {
@@ -74,6 +76,7 @@ export class CallControl extends EventEmitter implements CallControlState {
     this.call = call;
     this.iframe = iframe;
 
+    this.bodyMutationObserver = new MutationObserver(this.onBodyMutation.bind(this));
     this.controlMutationObserver = new MutationObserver(this.onControlMutation.bind(this));
   }
 
@@ -111,6 +114,30 @@ export class CallControl extends EventEmitter implements CallControlState {
   }
 
   public startObserving() {
+    if (!this.document) return;
+
+    this.bodyMutationObserver.observe(this.document.body, {
+      childList: true,
+      subtree: false, // only direct children of body
+    });
+    this.onBodyMutation();
+  }
+  
+  private onBodyMutation() {
+    if (!this.document) return;
+
+    this.document.body.style.setProperty('background', 'none', 'important');
+
+    const controls = this.leaveButton?.parentElement?.parentElement;
+    if (controls) {
+      controls.style.setProperty('position', 'absolute');
+      controls.style.setProperty('visibility', 'hidden');
+    }
+
+    this.observeControls();
+  }
+
+  private observeControls() {
     this.controlMutationObserver.disconnect();
 
     const screenshareBtn = this.screenshareButton;
@@ -168,7 +195,7 @@ export class CallControl extends EventEmitter implements CallControlState {
     }
   }
 
-  public onControlMutation() {
+  private onControlMutation() {
     const screenshare: boolean = this.screenshareButton?.getAttribute('data-kind') === 'primary';
     const spotlight: boolean = this.spotlightButton?.checked ?? false;
 
@@ -239,6 +266,7 @@ export class CallControl extends EventEmitter implements CallControlState {
   }
 
   public dispose() {
+    this.bodyMutationObserver.disconnect();
     this.controlMutationObserver.disconnect();
   }
 

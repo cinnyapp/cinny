@@ -172,6 +172,10 @@ export class CallEmbed {
 
     const controlState = initialControlState ?? new CallControlState(true, false, true);
     this.control = new CallControl(controlState, call, iframe);
+    this.control.startObserving();
+    iframe.onload = () => {
+      this.control.startObserving();
+    };
 
     let initialMediaEvent = true;
     this.disposables.push(
@@ -272,21 +276,6 @@ export class CallEmbed {
 
   private onCallJoined(): void {
     this.joined = true;
-    this.applyStyles();
-    this.control.startObserving();
-  }
-
-  private applyStyles(): void {
-    const doc = this.document;
-    if (!doc) return;
-
-    doc.body.style.setProperty('background', 'none', 'important');
-    const controls = doc.body.querySelector('[data-testid="incall_leave"]')?.parentElement
-      ?.parentElement;
-    if (controls) {
-      controls.style.setProperty('position', 'absolute');
-      controls.style.setProperty('visibility', 'hidden');
-    }
   }
 
   private onEvent(ev: MatrixEvent): void {
