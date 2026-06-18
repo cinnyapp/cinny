@@ -18,6 +18,8 @@ export class CallControl extends EventEmitter implements CallControlState {
 
   private controlMutationObserver: MutationObserver;
 
+  private mediaStatePromiseResolver: undefined | (() => void);
+
   private get document(): Document | undefined {
     return this.iframe.contentDocument ?? this.iframe.contentWindow?.document;
   }
@@ -161,8 +163,14 @@ export class CallControl extends EventEmitter implements CallControlState {
     this.setSound(this.sound);
   }
 
-  private setMediaState(state: ElementMediaStatePayload) {
-    return this.call.transport.send(ElementWidgetActions.DeviceMute, state);
+  private async setMediaState(state: ElementMediaStatePayload) {
+    const data = await this.call.transport.send(ElementWidgetActions.DeviceMute, state);
+    return new Promise<typeof data>(resolve => {
+      if (this.mediaStatePromiseResolver) {
+        this.mediaStatePromiseResolver();
+      }
+      this.mediaStatePromiseResolver = () => resolve(data);
+    });
   }
 
   private setSound(sound: boolean): void {
@@ -192,6 +200,11 @@ export class CallControl extends EventEmitter implements CallControlState {
 
     if (this.microphone && !this.sound) {
       this.toggleSound();
+    }
+
+    if (this.mediaStatePromiseResolver) {
+      this.mediaStatePromiseResolver();
+      this.mediaStatePromiseResolver = undefined;
     }
   }
 

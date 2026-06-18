@@ -12,6 +12,9 @@ type MicrophoneButtonProps = {
   disabled?: boolean;
 };
 function MicrophoneButton({ enabled, onToggle, disabled }: MicrophoneButtonProps) {
+  const [micState, toggleMic] = useAsyncCallback(onToggle);
+  const loading = micState.status === AsyncStatus.Loading;
+  
   return (
     <TooltipProvider
       position="Top"
@@ -28,9 +31,9 @@ function MicrophoneButton({ enabled, onToggle, disabled }: MicrophoneButtonProps
           fill="Soft"
           radii="300"
           size="300"
-          onClick={() => onToggle()}
+          onClick={toggleMic}
           outlined
-          disabled={disabled}
+          disabled={disabled || loading}
         >
           <Icon size="100" src={enabled ? Icons.Mic : Icons.MicMute} filled={!enabled} />
         </IconButton>
@@ -82,6 +85,9 @@ type VideoButtonProps = {
   disabled?: boolean;
 };
 function VideoButton({ enabled, onToggle, disabled }: VideoButtonProps) {
+  const [videoState, toggleVideo] = useAsyncCallback(onToggle);
+  const loading = videoState.status === AsyncStatus.Loading;
+
   return (
     <TooltipProvider
       position="Top"
@@ -98,9 +104,9 @@ function VideoButton({ enabled, onToggle, disabled }: VideoButtonProps) {
           fill="Soft"
           radii="300"
           size="300"
-          onClick={() => onToggle()}
+          onClick={toggleVideo}
           outlined
-          disabled={disabled}
+          disabled={disabled || loading}
         >
           <Icon
             size="100"
@@ -158,6 +164,9 @@ export function CallControl({
   const { microphone, video, sound, screenshare } = useCallControlState(callEmbed.control);
   const setCallEmbed = useSetAtom(callEmbedAtom);
 
+  const handleMicrophoneToggle = useCallback(() => callEmbed.control.toggleMicrophone(), [callEmbed]);
+  const handleVideoToggle = useCallback(() => callEmbed.control.toggleVideo(), [callEmbed]);
+
   const [hangupState, hangup] = useAsyncCallback(
     useCallback(() => callEmbed.hangup(), [callEmbed])
   );
@@ -177,7 +186,7 @@ export function CallControl({
       <Box alignItems="Inherit" gap="200">
         <MicrophoneButton
           enabled={microphone}
-          onToggle={() => callEmbed.control.toggleMicrophone()}
+          onToggle={handleMicrophoneToggle}
           disabled={!callJoined}
         />
         <SoundButton
@@ -188,7 +197,7 @@ export function CallControl({
         {!compact && <StatusDivider />}
         <VideoButton
           enabled={video}
-          onToggle={() => callEmbed.control.toggleVideo()}
+          onToggle={handleVideoToggle}
           disabled={!callJoined}
         />
         {!compact && (

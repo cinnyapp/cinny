@@ -3,6 +3,7 @@ import { Icon, IconButton, Icons, Line, Text, Tooltip, TooltipProvider } from 'f
 import { useAtom } from 'jotai';
 import * as css from './styles.css';
 import { callChatAtom } from '../../state/callEmbed';
+import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 
 export function ControlDivider() {
   return (
@@ -12,9 +13,12 @@ export function ControlDivider() {
 
 type MicrophoneButtonProps = {
   enabled: boolean;
-  onToggle: () => void;
+  onToggle: () => Promise<unknown>;
 };
 export function MicrophoneButton({ enabled, onToggle }: MicrophoneButtonProps) {
+  const [micState, toggleMic] = useAsyncCallback(onToggle);
+  const loading = micState.status === AsyncStatus.Loading;
+  
   return (
     <TooltipProvider
       position="Top"
@@ -32,8 +36,9 @@ export function MicrophoneButton({ enabled, onToggle }: MicrophoneButtonProps) {
           fill="Soft"
           radii="400"
           size="400"
-          onClick={() => onToggle()}
+          onClick={toggleMic}
           outlined
+          disabled={loading}
         >
           <Icon size="400" src={enabled ? Icons.Mic : Icons.MicMute} filled={!enabled} />
         </IconButton>
@@ -80,9 +85,12 @@ export function SoundButton({ enabled, onToggle }: SoundButtonProps) {
 
 type VideoButtonProps = {
   enabled: boolean;
-  onToggle: () => void;
+  onToggle: () => Promise<unknown>;
 };
 export function VideoButton({ enabled, onToggle }: VideoButtonProps) {
+  const [videoState, toggleVideo] = useAsyncCallback(onToggle);
+  const loading = videoState.status === AsyncStatus.Loading;
+
   return (
     <TooltipProvider
       position="Top"
@@ -100,8 +108,9 @@ export function VideoButton({ enabled, onToggle }: VideoButtonProps) {
           fill="Soft"
           radii="400"
           size="400"
-          onClick={() => onToggle()}
+          onClick={toggleVideo}
           outlined
+          disabled={loading}
         >
           <Icon
             size="400"
