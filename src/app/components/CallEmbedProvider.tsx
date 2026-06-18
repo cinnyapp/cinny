@@ -239,6 +239,7 @@ function IncomingCallListener({ callEmbed, joined }: IncomingCallListenerProps) 
       // only process rtc notification reference events.
       // we do not want to wait to decrypt all events.
       if (event.getRelation()?.rel_type !== RelationType.Reference) return;
+      if (room?.isCallRoom()) return;
 
       if (event.isEncrypted()) {
         if (!event.isBeingDecrypted()) {
