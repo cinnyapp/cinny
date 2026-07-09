@@ -39,6 +39,18 @@ export function EmojiBoardTabs({
           Emoji
         </Text>
       </Badge>
+      <Badge
+        style={styles}
+        as="button"
+        variant="Secondary"
+        fill={tab === EmojiBoardTab.Gif ? 'Solid' : 'None'}
+        size="500"
+        onClick={() => onTabChange(EmojiBoardTab.Gif)}
+      >
+        <Text as="span" size="L400">
+          GIF
+        </Text>
+      </Badge>
     </Box>
   );
 }

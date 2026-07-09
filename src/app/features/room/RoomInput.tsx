@@ -623,6 +623,20 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         onEmojiSelect={handleEmoticonSelect}
                         onCustomEmojiSelect={handleEmoticonSelect}
                         onStickerSelect={handleStickerSelect}
+                        onGifSelect={(url, title) => {
+                          const id = mx.makeTxnId();
+                          room.addPendingEvent({
+                            type: 'm.room.message',
+                            txn_id: id,
+                            event_id: `~$${id}`,
+                            content: {
+                              body: title || 'GIF',
+                              msgtype: 'm.image',
+                              url,
+                            },
+                          }, id);
+                          setEmojiBoardTab(undefined);
+                        }}
                         requestClose={() => {
                           setEmojiBoardTab((t) => {
                             if (t) {
@@ -634,6 +648,20 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         }}
                       />
                     }
+                    contentEditable={false}
+                    open={!!emojiBoardTab}
+                    onInteractionOutside={(evt) => {
+                      if (emojiBtnRef.current?.contains(evt.target as Node)) {
+                        return;
+                      }
+                      setEmojiBoardTab((t) => {
+                        if (t) {
+                          evt.stopPropagation();
+                          return undefined;
+                        }
+                        return t;
+                      });
+                    }}
                   >
                     {!hideStickerBtn && (
                       <IconButton
@@ -649,6 +677,27 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         />
                       </IconButton>
                     )}
+                    <IconButton
+                      aria-pressed={emojiBoardTab === EmojiBoardTab.Gif}
+                      onClick={() => setEmojiBoardTab(EmojiBoardTab.Gif)}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                    >
+                      <Box
+                        style={{
+                          width: 20,
+                          height: 14,
+                          borderRadius: 3,
+                          border: '2px solid currentColor',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text size="B400" style={{ fontSize: 9, fontWeight: 800 }}>GIF</Text>
+                      </Box>
+                    </IconButton>
                     <IconButton
                       ref={emojiBtnRef}
                       aria-pressed={

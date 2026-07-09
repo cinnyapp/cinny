@@ -47,6 +47,7 @@ export interface Settings {
   dateFormatString: string;
 
   developerTools: boolean;
+  klipyApiKey?: string;
 }
 
 const defaultSettings: Settings = {
@@ -81,6 +82,7 @@ const defaultSettings: Settings = {
   dateFormatString: 'D MMM YYYY',
 
   developerTools: false,
+  klipyApiKey: 'DPZfd1JYHjUe84twiXKjOYs9ziCLIVyg8QaDtdqbnnRXmydDiLptRIsWWHU5JPNo',
 };
 
 export const getSettings = () => {

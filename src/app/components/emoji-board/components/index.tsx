@@ -6,3 +6,4 @@ export * from './Preview';
 export * from './Item';
 export * from './Group';
 export * from './Layout';
+export * from './GifBoard';

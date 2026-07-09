@@ -8,6 +8,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import { Box, config, Icons, Scroll } from 'folds';
 import FocusTrap from 'focus-trap-react';
@@ -49,6 +50,7 @@ import {
   getEmojiItemInfo,
   EmojiGroup,
   EmojiBoardLayout,
+  GifBoard,
 } from './components';
 import { EmojiBoardTab, EmojiType } from './types';
 import { VirtualTile } from '../virtualizer';
@@ -360,6 +362,7 @@ type EmojiBoardProps = {
   onEmojiSelect?: (unicode: string, shortcode: string) => void;
   onCustomEmojiSelect?: (mxc: string, shortcode: string) => void;
   onStickerSelect?: (mxc: string, shortcode: string, label: string) => void;
+  onGifSelect?: (url: string, title: string) => void;
   allowTextCustomEmoji?: boolean;
   addToRecentEmoji?: boolean;
 };
@@ -373,6 +376,7 @@ export function EmojiBoard({
   onEmojiSelect,
   onCustomEmojiSelect,
   onStickerSelect,
+  onGifSelect,
   allowTextCustomEmoji,
   addToRecentEmoji = true,
 }: EmojiBoardProps) {
@@ -389,6 +393,7 @@ export function EmojiBoard({
   const setActiveGroupId = useSetAtom(activeGroupIdAtom);
   const imagePacks = useRelevantImagePacks(usage, imagePackRooms);
   const [emojiGroupItems, stickerGroupItems] = useGroups(tab, imagePacks);
+  const [rawQuery, setRawQuery] = useState('');
   const groups = emojiTab ? emojiGroupItems : stickerGroupItems;
   const renderItem = useItemRenderer(tab);
 
@@ -411,6 +416,7 @@ export function EmojiBoard({
     useCallback(
       (evt) => {
         const term = evt.target.value;
+        setRawQuery(term);
         if (term) search(term);
         else resetSearch();
       },
@@ -532,15 +538,18 @@ export function EmojiBoard({
         }
       >
         <Box grow="Yes">
-          <EmojiGroupHolder
-            key={tab}
-            contentScrollRef={contentScrollRef}
-            previewAtom={previewAtom}
-            onGroupItemClick={handleGroupItemClick}
-          >
-            {searchedItems && (
-              <EmojiGroup
-                id={SEARCH_GROUP_ID}
+          {tab === EmojiBoardTab.Gif ? (
+            <GifBoard query={rawQuery} onGifSelect={onGifSelect} />
+          ) : (
+            <EmojiGroupHolder
+              key={tab}
+              contentScrollRef={contentScrollRef}
+              previewAtom={previewAtom}
+              onGroupItemClick={handleGroupItemClick}
+            >
+              {searchedItems && (
+                <EmojiGroup
+                  id={SEARCH_GROUP_ID}
                 label={searchedItems.length ? 'Search Results' : 'No Results found'}
               >
                 {searchedItems.map(renderItem)}
@@ -571,7 +580,8 @@ export function EmojiBoard({
               })}
             </div>
             {tab === EmojiBoardTab.Sticker && groups.length === 0 && <NoStickerPacks />}
-          </EmojiGroupHolder>
+            </EmojiGroupHolder>
+          )}
         </Box>
         <Preview previewAtom={previewAtom} />
       </EmojiBoardLayout>
