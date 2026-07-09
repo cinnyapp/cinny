@@ -236,3 +236,95 @@ export const butterTheme = createTheme(color, {
     OnContainer: '#F2EED3',
   },
 });
+
+export const draculaTheme = createTheme(color, {
+  ...darkThemeData,
+  Background: {
+    Container: '#191A21',
+    ContainerHover: '#272935',
+    ContainerActive: '#343746',
+    ContainerLine: '#343746',
+    OnContainer: '#F8F8F2',
+  },
+
+  Surface: {
+    Container: '#282A36',
+    ContainerHover: '#424450',
+    ContainerActive: '#191A21',
+    ContainerLine: '#44475A',
+    OnContainer: '#F8F8F2',
+  },
+
+  SurfaceVariant: {
+    Container: '#21222C',
+    ContainerHover: '#BD93F9',
+    ContainerActive: '#BD93F9',
+    ContainerLine: '#44475A',
+    OnContainer: '#F8F8F2',
+  },
+
+  Primary: {
+    Main: '#BD93F9',
+    MainHover: '#8f69c4',
+    MainActive: '#8f69c4',
+    MainLine: '#343746',
+    OnMain: '#2C2843',
+    Container: '#413C65',
+    ContainerHover: '#494370',
+    ContainerActive: '#50497B',
+    ContainerLine: '#575086',
+    OnContainer: '#E3E1F7',
+  },
+
+  Secondary: {
+    Main: '#BD93F9',
+    MainHover: '#8f69c4',
+    MainActive: '#8f69c4',
+    MainLine: '#343746',
+    OnMain: '#191A21',
+    Container: '#424450',
+    ContainerHover: '#343746',
+    ContainerActive: '#272935',
+    ContainerLine: '#343746',
+    OnContainer: '#F8F8F2',
+  },
+
+  Success: {
+    Main: '#50FA7B',
+    MainHover: '#41df68',
+    MainActive: '#41df68',
+    MainLine: '#41df68',
+    OnMain: '#282A36',
+    Container: '#50FA7B',
+    ContainerHover: '#41df68',
+    ContainerActive: '#41df68',
+    ContainerLine: '#41df68',
+    OnContainer: '#282A36',
+  },
+
+  Warning: {
+    Main: '#FFB86C',
+    MainHover: '#da9955',
+    MainActive: '#da9955',
+    MainLine: '#da9955',
+    OnMain: '#282A36',
+    Container: '#FFB86C',
+    ContainerHover: '#da9955',
+    ContainerActive: '#da9955',
+    ContainerLine: '#da9955',
+    OnContainer: '#282A36',
+  },
+
+  Critical: {
+    Main: '#F8F8F2',
+    MainHover: '#E28D8D',
+    MainActive: '#E08585',
+    MainLine: '#DE7D7D',
+    OnMain: '#df4343',
+    Container: '#df4343',
+    ContainerHover: '#c23333',
+    ContainerActive: '#c23333',
+    ContainerLine: '#c23333',
+    OnContainer: '#F8F8F2',
+  },
+});
