@@ -5,7 +5,10 @@ export const useFilePasteHandler = (onPaste: (file: File[]) => void): ClipboardE
   useCallback(
     (evt) => {
       const files = getDataTransferFiles(evt.clipboardData);
-      if (files) onPaste(files);
+      if (files) {
+        evt.preventDefault();
+        onPaste(files);
+      }
     },
     [onPaste]
   );

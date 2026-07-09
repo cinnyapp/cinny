@@ -43,12 +43,13 @@ export const canFitInScrollView = (
 
 export type FilesOrFile<T extends boolean | undefined = undefined> = T extends true ? File[] : File;
 
-export const getFilesFromFileList = (fileList: FileList): File[] => {
+export const getFilesFromFileList = (fileList: FileList | null | undefined): File[] => {
   const files: File[] = [];
+  if (!fileList) return files;
 
   for (let i = 0; i < fileList.length; i += 1) {
     const file: File | undefined = fileList[i];
-    if (file instanceof File) files.push(file);
+    if (file) files.push(file);
   }
 
   return files;
@@ -82,6 +83,17 @@ export const selectFile = <M extends boolean | undefined = undefined>(
 export const getDataTransferFiles = (dataTransfer: DataTransfer): File[] | undefined => {
   const fileList = dataTransfer.files;
   const files: File[] = getFilesFromFileList(fileList);
+
+  if (files.length === 0 && dataTransfer.items) {
+    for (let i = 0; i < dataTransfer.items.length; i += 1) {
+      const item = dataTransfer.items[i];
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+  }
+
   if (files.length === 0) return undefined;
   return files;
 };
