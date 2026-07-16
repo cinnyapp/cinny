@@ -50,6 +50,7 @@ import { useMessageLayoutItems } from '../../../hooks/useMessageLayout';
 import { useMessageSpacingItems } from '../../../hooks/useMessageSpacing';
 import { useDateFormatItems } from '../../../hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
+import { TranscriptionSettings } from '../../transcription/TranscriptionSettings';
 
 type ThemeSelectorProps = {
   themeNames: Record<string, string>;
@@ -1006,6 +1007,7 @@ export function General({ requestClose }: GeneralProps) {
               <DateAndTime />
               <Editor />
               <Messages />
+              <TranscriptionSettings />
             </Box>
           </PageContent>
         </Scroll>

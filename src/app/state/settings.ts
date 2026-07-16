@@ -48,6 +48,14 @@ export interface Settings {
   dateFormatString: string;
 
   developerTools: boolean;
+
+  // Local Whisper transcription (see features/transcription).
+  // transcribeLanguage: ISO-639-1 code, '' = auto-detect.
+  transcribeLanguage: string;
+  // Optional overrides for the transcription backend; empty => use the
+  // VITE_TRANSCRIBE_API_BASE / VITE_TRANSCRIBE_API_SECRET env vars / defaults.
+  transcribeApiBase: string;
+  transcribeApiSecret: string;
 }
 
 const defaultSettings: Settings = {
@@ -83,6 +91,10 @@ const defaultSettings: Settings = {
   dateFormatString: 'D MMM YYYY',
 
   developerTools: false,
+
+  transcribeLanguage: '',
+  transcribeApiBase: '',
+  transcribeApiSecret: '',
 };
 
 export const getSettings = () => {
