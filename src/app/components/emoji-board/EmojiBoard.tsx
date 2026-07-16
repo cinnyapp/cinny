@@ -349,7 +349,36 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   },
 };
 
-const VIRTUAL_OVER_SCAN = 2;
+// Overscan is kept low: each "group" here is a whole emoji category (hundreds
+// of buttons), so every extra overscanned group is a large mount cost. 1 is
+// enough to keep scrolling smooth without eagerly building an off-screen 500+
+// item group on open.
+const VIRTUAL_OVER_SCAN = 1;
+
+// Geometry used to estimate a group's rendered height BEFORE it is measured.
+// Each emoji/custom-emoji button is 48px, stickers are 112px (see styles.css.ts).
+// Giving the virtualizer a realistic estimate is critical: with a flat 40px
+// estimate it believes every group fits in the ~400px viewport on the first
+// paint and eagerly mounts ALL groups (~1900 emoji buttons) before it can
+// measure them, which is what made opening the board slow. A real estimate
+// lets it mount only the groups that actually fit on the first render.
+const EMOJI_ITEM_SIZE = 48;
+const STICKER_ITEM_SIZE = 112;
+// Header/label + vertical padding around each group (label pill row + S300 padding).
+const GROUP_CHROME_SIZE = 40;
+// Conservative content width -> items per row. Board content is ~378px wide
+// (432px board - 54px sidebar), which fits ~7 emoji buttons / ~3 sticker tiles.
+// We under-count items-per-row on purpose so the estimate never *under*-shoots
+// a group's real height (which is what triggers over-mounting).
+const EMOJI_ITEMS_PER_ROW = 6;
+const STICKER_ITEMS_PER_ROW = 3;
+
+const estimateGroupSize = (itemCount: number, isSticker: boolean): number => {
+  const itemSize = isSticker ? STICKER_ITEM_SIZE : EMOJI_ITEM_SIZE;
+  const perRow = isSticker ? STICKER_ITEMS_PER_ROW : EMOJI_ITEMS_PER_ROW;
+  const rows = Math.ceil(itemCount / perRow);
+  return GROUP_CHROME_SIZE + rows * itemSize;
+};
 
 type EmojiBoardProps = {
   tab?: EmojiBoardTab;
@@ -421,10 +450,14 @@ export function EmojiBoard({
 
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const virtualBaseRef = useRef<HTMLDivElement>(null);
+  const estimateSize = useCallback(
+    (index: number) => estimateGroupSize(groups[index]?.items.length ?? 0, !emojiTab),
+    [groups, emojiTab]
+  );
   const virtualizer = useVirtualizer({
     count: groups.length,
     getScrollElement: () => contentScrollRef.current,
-    estimateSize: () => 40,
+    estimateSize,
     overscan: VIRTUAL_OVER_SCAN,
   });
   const vItems = virtualizer.getVirtualItems();
