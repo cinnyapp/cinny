@@ -1107,6 +1107,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 htmlReactParserOptions={htmlReactParserOptions}
                 linkifyOpts={linkifyOpts}
                 outlineAttachment={messageLayout === MessageLayout.Bubble}
+                roomId={room.roomId}
+                eventId={mEvent.getId()}
               />
             )}
           </Message>
@@ -1213,6 +1215,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                       htmlReactParserOptions={htmlReactParserOptions}
                       linkifyOpts={linkifyOpts}
                       outlineAttachment={messageLayout === MessageLayout.Bubble}
+                      roomId={room.roomId}
+                      eventId={mEvent.getId()}
                     />
                   );
                 }

@@ -23,6 +23,7 @@ import {
   mxcUrlToHttp,
 } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { TranscribeButton } from '../../../features/transcription/TranscribeButton';
 
 const PLAY_TIME_THROTTLE_OPS = {
   wait: 500,
@@ -41,6 +42,10 @@ export type AudioContentProps = {
   info: IAudioInfo;
   encInfo?: EncryptedAttachmentInfo;
   renderMediaControl: (props: RenderMediaControlProps) => ReactNode;
+  // Identifiers for the local transcription action (app-only overlay). When
+  // both are present a mic/transcribe button is shown next to the audio player.
+  roomId?: string;
+  eventId?: string;
 };
 export function AudioContent({
   mimeType,
@@ -48,6 +53,8 @@ export function AudioContent({
   info,
   encInfo,
   renderMediaControl,
+  roomId,
+  eventId,
 }: AudioContentProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -155,6 +162,7 @@ export function AudioContent({
     ),
     rightControl: (
       <>
+        {roomId && eventId && <TranscribeButton roomId={roomId} eventId={eventId} mxc={url} />}
         <IconButton
           variant="SurfaceVariant"
           size="300"
