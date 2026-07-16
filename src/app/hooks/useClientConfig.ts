@@ -18,6 +18,20 @@ export type ClientConfig = {
   };
 
   hashRouter?: HashRouterConfig;
+
+  /**
+   * In-app message translation (offline "Libre"/argos backend on Chagai's server).
+   * Configured in public/config.json so the URL/token can change without a rebuild.
+   * - endpoint: base URL of the translate API (e.g. "https://mx.chagai.website/translate-api").
+   *   If unset, the translation feature is hidden entirely.
+   * - token: shared bearer secret the API requires (sent as Authorization: Bearer <token>).
+   * - defaultTargetLang: fallback target language when none is chosen (default "en").
+   */
+  translation?: {
+    endpoint?: string;
+    token?: string;
+    defaultTargetLang?: string;
+  };
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

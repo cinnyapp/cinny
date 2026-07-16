@@ -28,5 +28,11 @@
   "hashRouter": {
     "enabled": false,
     "basename": "/"
+  },
+
+  "translation": {
+    "endpoint": "https://mx.chagai.website/translate-api",
+    "token": "",
+    "defaultTargetLang": "en"
   }
 }
