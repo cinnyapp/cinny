@@ -32,7 +32,12 @@
 
   "translation": {
     "endpoint": "https://mx.chagai.website/translate-api",
-    "token": "",
+    "token": "oMBdfX9qUcwBl2TZMTNjYkC9YHuSdI2Cfne-57h8Pks",
     "defaultTargetLang": "en"
+  },
+
+  "transcription": {
+    "endpoint": "https://mx.chagai.website/apptranscribe",
+    "token": "UwTuImsqajz9PTXg7dMQb839PEPMKsaTWMRmde4V1NQ"
   }
 }

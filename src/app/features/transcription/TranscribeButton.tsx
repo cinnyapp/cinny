@@ -16,6 +16,7 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
+import { useClientConfig } from '../../hooks/useClientConfig';
 import { copyToClipboard } from '../../utils/dom';
 import { stopPropagation } from '../../utils/keyboard';
 import { getTranscribeLanguageName } from './languages';
@@ -39,8 +40,15 @@ type TranscribeButtonProps = {
  */
 export function TranscribeButton({ roomId, eventId, mxc }: TranscribeButtonProps) {
   const [defaultLanguage] = useSetting(settingsAtom, 'transcribeLanguage');
-  const [apiBase] = useSetting(settingsAtom, 'transcribeApiBase');
-  const [apiSecret] = useSetting(settingsAtom, 'transcribeApiSecret');
+  const [apiBaseSetting] = useSetting(settingsAtom, 'transcribeApiBase');
+  const [apiSecretSetting] = useSetting(settingsAtom, 'transcribeApiSecret');
+
+  // Precedence: per-user Settings override > public/config.json > built-in default.
+  // config.json lets the endpoint/token ship with the static site so transcription
+  // works out of the box without each user re-entering the secret in Settings.
+  const { transcription: configTranscription } = useClientConfig();
+  const apiBase = apiBaseSetting?.trim() || configTranscription?.endpoint || '';
+  const apiSecret = apiSecretSetting?.trim() || configTranscription?.token || '';
 
   const [anchor, setAnchor] = useState<RectCords>();
   const [loading, setLoading] = useState(false);

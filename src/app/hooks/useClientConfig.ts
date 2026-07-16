@@ -32,6 +32,20 @@ export type ClientConfig = {
     token?: string;
     defaultTargetLang?: string;
   };
+
+  /**
+   * In-app local Whisper transcription (on-box backend on Chagai's server).
+   * Configured in public/config.json so the URL/token can change without a rebuild.
+   * These are used as a fallback when the per-user Settings overrides
+   * (transcribeApiBase / transcribeApiSecret) are empty.
+   * - endpoint: base URL of the transcription API
+   *   (e.g. "https://mx.chagai.website/apptranscribe"); "/transcribe" is appended.
+   * - token: shared bearer secret the API requires (sent as Authorization: Bearer <token>).
+   */
+  transcription?: {
+    endpoint?: string;
+    token?: string;
+  };
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);
