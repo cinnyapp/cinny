@@ -57,7 +57,7 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: Environement
+      label: Environment
       description: |
         Please provide information about your environment. Include the following:
         - OS:
