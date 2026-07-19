@@ -65,11 +65,7 @@ export function CustomEmojiItem({ url, image }: CustomEmojiItemProps) {
         loading="lazy"
         className={css.CustomEmojiImg}
         alt={image.body || image.shortcode}
-<<<<<<< HEAD
         src={url ?? image.url}
-=======
-        src={mxcUrlToHttp(mx, image.url, useAuthentication) ?? ''}
->>>>>>> dev
       />
     </Box>
   );
@@ -98,11 +94,7 @@ export function StickerItem({ url, image }: StickerItemProps) {
         loading="lazy"
         className={css.StickerImg}
         alt={image.body || image.shortcode}
-<<<<<<< HEAD
         src={url ?? image.url}
-=======
-        src={mxcUrlToHttp(mx, image.url, useAuthentication) ?? ''}
->>>>>>> dev
       />
     </Box>
   );
