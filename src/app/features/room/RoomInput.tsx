@@ -144,7 +144,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const sendUploads = useSendUploadMessage(dropUploads, threadId);
 
     useElementSizeObserver(
-      useCallback(() => document.body, []),
+      useCallback(() => fileDropContainerRef.current, [fileDropContainerRef]),
       useCallback((width) => setHideStickerBtn(width < 500), [])
     );
 

@@ -11,7 +11,7 @@ export const SequenceCard = recipe({
     },
     borderStyle: 'solid',
     borderWidth: outlinedWidth,
-    borderBottomWidth: 0,
+
     selectors: {
       '&:first-child, :not(&) + &': {
         borderTopLeftRadius: [radii],
@@ -20,7 +20,6 @@ export const SequenceCard = recipe({
       '&:last-child, &:not(:has(+&))': {
         borderBottomLeftRadius: [radii],
         borderBottomRightRadius: [radii],
-        borderBottomWidth: outlinedWidth,
       },
       [`&[data-first-child="true"]`]: {
         borderTopLeftRadius: [radii],
@@ -71,6 +70,16 @@ export const SequenceCard = recipe({
       true: {
         vars: {
           [outlinedWidth]: config.borderWidth.B300,
+        },
+      },
+    },
+    mergeBorder: {
+      true: {
+        borderBottomWidth: 0,
+        selectors: {
+          '&:last-child, &:not(:has(+&))': {
+            borderBottomWidth: outlinedWidth,
+          },
         },
       },
     },

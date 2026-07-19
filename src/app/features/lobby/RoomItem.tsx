@@ -175,6 +175,7 @@ function RoomProfileError({ roomId, suggested, inaccessibleRoom, via }: RoomProf
 
 type RoomProfileProps = {
   roomId: string;
+  roomType?: string;
   name: string;
   topic?: string;
   avatarUrl?: string;
@@ -185,6 +186,7 @@ type RoomProfileProps = {
 };
 function RoomProfile({
   roomId,
+  roomType,
   name,
   topic,
   avatarUrl,
@@ -200,9 +202,7 @@ function RoomProfile({
           roomId={roomId}
           src={avatarUrl}
           alt={name}
-          renderFallback={() => (
-            <RoomIcon size="300" joinRule={joinRule ?? JoinRule.Restricted} filled />
-          )}
+          renderFallback={() => <RoomIcon size="300" joinRule={joinRule} roomType={roomType} />}
         />
       </Avatar>
       <Box grow="Yes" direction="Column">
@@ -338,6 +338,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
               {(localSummary) => (
                 <RoomProfile
                   roomId={roomId}
+                  roomType={localSummary.roomType}
                   name={localSummary.name}
                   topic={localSummary.topic}
                   avatarUrl={
@@ -396,6 +397,7 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
               {summary && (
                 <RoomProfile
                   roomId={roomId}
+                  roomType={summary.room_type}
                   name={summary.name || summary.canonical_alias || roomId}
                   topic={summary.topic}
                   avatarUrl={

@@ -129,3 +129,9 @@ textarea {
 audio:not([controls]) {
   display: none !important;
 }
+
+/* Fix Firefox rendering lists that have empty items with those items collapsed in on eachother */
+li p::before {
+  content: '';
+  display: inline-block;
+}

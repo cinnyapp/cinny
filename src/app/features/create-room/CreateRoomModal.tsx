@@ -23,12 +23,13 @@ import {
 } from '../../state/hooks/createRoomModal';
 import { CreateRoomModalState } from '../../state/createRoomModal';
 import { stopPropagation } from '../../utils/keyboard';
+import { CreateRoomType } from '../../components/create-room/types';
 
 type CreateRoomModalProps = {
   state: CreateRoomModalState;
 };
 function CreateRoomModal({ state }: CreateRoomModalProps) {
-  const { spaceId } = state;
+  const { spaceId, type } = state;
   const closeDialog = useCloseCreateRoomModal();
 
   const allJoinedRooms = useAllJoinedRoomsSet();
@@ -57,7 +58,9 @@ function CreateRoomModal({ state }: CreateRoomModalProps) {
                   }}
                 >
                   <Box grow="Yes">
-                    <Text size="H4">New Room</Text>
+                    <Text size="H4">
+                      {type === CreateRoomType.VoiceRoom ? 'New Voice Room' : 'New Chat Room'}
+                    </Text>
                   </Box>
                   <Box shrink="No">
                     <IconButton size="300" radii="300" onClick={closeDialog}>
@@ -74,7 +77,7 @@ function CreateRoomModal({ state }: CreateRoomModalProps) {
                     direction="Column"
                     gap="500"
                   >
-                    <CreateRoomForm space={space} onCreate={closeDialog} />
+                    <CreateRoomForm space={space} onCreate={closeDialog} defaultType={type} />
                   </Box>
                 </Scroll>
               </Box>

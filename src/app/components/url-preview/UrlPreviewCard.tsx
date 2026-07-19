@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
 import { getPreviewUrl, GetPreviewUrlOK } from 'neurone/lib/api/matrix/client/v1/media';
 import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
+import { ObjectReader } from 'neurone/lib/utils';
+import { ImageOverlay } from '../ImageOverlay';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
 import {
@@ -13,6 +15,8 @@ import { tryDecodeURIComponent } from '../../utils/dom';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useClient } from '../../hooks/useClient';
 import { mxcToHttp } from '../../../client/mxcToHttp';
+import { ImageViewer } from '../image-viewer';
+import { onEnterOrSpace } from '../../utils/keyboard';
 
 const linkStyles = { color: color.Success.Main };
 
@@ -20,6 +24,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
   ({ url, ts, ...props }, ref) => {
     const ct = useClient();
     const useAuthentication = useMediaAuthentication();
+    const [viewer, setViewer] = useState(false);
     const [previewStatus, loadPreview] = useAsyncCallback(
       useCallback(async () => {
         const resp = await ct.requestAuthJSON(
@@ -45,28 +50,45 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
     if (previewStatus.status === AsyncStatus.Error) return null;
 
     const renderContent = (prev: GetPreviewUrlOK) => {
-      const imgUrl =
-        'og:image' in prev &&
-        typeof prev['og:image'] === 'string' &&
-        mxcToHttp(ct.session.baseUrl, prev['og:image'], useAuthentication).thumbnail({
+      const ogImage = ObjectReader.string(prev, 'og:image');
+
+      const thumbUrl =
+        ogImage &&
+        mxcToHttp(ct.session.baseUrl, ogImage, useAuthentication).thumbnail({
           width: 256,
           height: 256,
           method: 'scale',
         });
-      const title =
-        'og:title' in prev && typeof prev['og:title'] === 'string' ? prev['og:title'] : undefined;
-      const description =
-        'og:description' in prev && typeof prev['og:description'] === 'string'
-          ? prev['og:description']
-          : undefined;
-      const siteName =
-        'og:site_name' in prev && typeof prev['og:site_name'] === 'string'
-          ? prev['og:site_name']
-          : undefined;
+
+      const imgUrl = ogImage && mxcToHttp(ct.session.baseUrl, ogImage, useAuthentication).url();
+
+      const title = ObjectReader.string(prev, 'og:title');
+      const description = ObjectReader.string(prev, 'og:description');
+      const siteName = ObjectReader.string(prev, 'og:site_name');
 
       return (
         <>
-          {imgUrl && <UrlPreviewImg src={imgUrl} alt={title} title={title} />}
+          {thumbUrl && (
+            <UrlPreviewImg
+              src={thumbUrl}
+              alt={title}
+              title={title}
+              tabIndex={0}
+              onKeyDown={(evt) => onEnterOrSpace(() => setViewer(true))(evt)}
+              onClick={() => setViewer(true)}
+            />
+          )}
+          {imgUrl && (
+            <ImageOverlay
+              src={imgUrl}
+              alt={title ?? imgUrl}
+              viewer={viewer}
+              requestClose={() => {
+                setViewer(false);
+              }}
+              renderViewer={(p) => <ImageViewer {...p} />}
+            />
+          )}
           <UrlPreviewContent>
             <Text
               style={linkStyles}
@@ -74,7 +96,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
               as="a"
               href={url}
               target="_blank"
-              rel="no-referrer"
+              rel="noreferrer"
               size="T200"
               priority="300"
             >

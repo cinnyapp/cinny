@@ -21,7 +21,6 @@ import { useGetRoomName } from '../../../hooks/storage/useGetRoomName';
 import { useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
 import { mxcToHttp } from '../../../../client/mxcToHttp';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { nameInitials } from '../../../utils/common';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 
@@ -187,17 +186,11 @@ export function RoomMentionAutocomplete({
                       src={avatar}
                       alt={name}
                       renderFallback={() => (
-                        <Text as="span" size="H6">
-                          {nameInitials(name)}
-                        </Text>
+                        <RoomIcon size="50" joinRule={ct.roomToJoinRule.read.get(rId)} filled />
                       )}
                     />
                   ) : (
-                    <RoomIcon
-                      size="100"
-                      joinRule={ct.roomToJoinRule.read.get(rId)}
-                      space={ct.spaceRooms.read.has(rId)}
-                    />
+                    <RoomIcon size="100" joinRule={ct.roomToJoinRule.read.get(rId)} />
                   )}
                 </Avatar>
               }

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { createRoomModalAtom, CreateRoomModalState } from '../createRoomModal';
+import { CreateRoomType } from '../../components/create-room/types';
 
 export const useCreateRoomModalState = (): CreateRoomModalState | undefined => {
   const data = useAtomValue(createRoomModalAtom);
@@ -19,13 +20,13 @@ export const useCloseCreateRoomModal = (): CloseCallback => {
   return close;
 };
 
-type OpenCallback = (space?: string) => void;
+type OpenCallback = (space?: string, type?: CreateRoomType) => void;
 export const useOpenCreateRoomModal = (): OpenCallback => {
   const setSettings = useSetAtom(createRoomModalAtom);
 
   const open: OpenCallback = useCallback(
-    (spaceId) => {
-      setSettings({ spaceId });
+    (spaceId, type) => {
+      setSettings({ spaceId, type });
     },
     [setSettings]
   );

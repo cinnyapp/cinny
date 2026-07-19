@@ -151,6 +151,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const permissions = useRoomPermissions(creators, powerLevels);
 
   const canRedact = permissions.action('redact', ct.session.userId);
+  const canDeleteOwn = permissions.event(MessageEvent.RoomRedaction, ct.session.userId);
   const canSendReaction = permissions.event(MessageEvent.Reaction, ct.session.userId);
   const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, ct.session.userId);
   const [editId, setEditId] = useState<string>();
@@ -423,7 +424,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         highlight={highlighted}
         selected={replyDraft?.eventId === event.event_id}
         edit={editId === event.event_id}
-        canDelete={canRedact || event.sender === ct.session.userId}
+        canDelete={canRedact || (canDeleteOwn && event.sender === ct.session.userId)}
         canSendReaction={canSendReaction}
         canPinEvent={canPinEvent}
         imagePackRooms={imagePackRooms}

@@ -2,7 +2,7 @@ import { AvatarFallback, AvatarImage, Icon, Icons, color } from 'folds';
 import React, { ComponentProps, ReactEventHandler, ReactNode, forwardRef, useState } from 'react';
 import classNames from 'classnames';
 import * as css from './RoomAvatar.css';
-import { joinRuleToIconSrc } from '../../utils/room';
+import { getRoomIconSrc } from '../../utils/room';
 import colorMXID from '../../../util/colorMXID';
 import { JoinRule } from '../../../types/matrix/room';
 
@@ -46,15 +46,8 @@ export const RoomIcon = forwardRef<
   SVGSVGElement,
   Omit<ComponentProps<typeof Icon>, 'src'> & {
     joinRule?: JoinRule;
-    space?: boolean;
+    roomType?: string;
   }
->(({ joinRule, space, ...props }, ref) => (
-  <Icon
-    src={
-      joinRuleToIconSrc(Icons, joinRule ?? 'invite', space || false) ??
-      (space ? Icons.Space : Icons.Hash)
-    }
-    {...props}
-    ref={ref}
-  />
+>(({ joinRule, roomType, ...props }, ref) => (
+  <Icon src={getRoomIconSrc(Icons, roomType, joinRule)} {...props} ref={ref} />
 ));

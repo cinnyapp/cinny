@@ -20,6 +20,8 @@ export const useRoomName = (room: Room): string => {
   const [name, setName] = useState(room.name);
 
   useEffect(() => {
+    setName(room.name);
+
     const handleRoomNameChange: RoomEventHandlerMap[RoomEvent.Name] = () => {
       setName(room.name);
     };

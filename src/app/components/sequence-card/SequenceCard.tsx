@@ -17,6 +17,7 @@ export const SequenceCard = as<
       firstChild,
       lastChild,
       outlined,
+      mergeBorder,
       ...props
     },
     ref
@@ -24,7 +25,7 @@ export const SequenceCard = as<
     <Box
       as={AsSequenceCard}
       className={classNames(
-        css.SequenceCard({ radii, outlined }),
+        css.SequenceCard({ radii, outlined, mergeBorder }),
         ContainerColor({ variant }),
         className
       )}

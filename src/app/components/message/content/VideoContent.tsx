@@ -69,7 +69,7 @@ export const VideoContent = as<'div', VideoContentProps>(
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(async () => {
-        const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
+        const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url();
         const fileContent = encInfo
           ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
               decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)

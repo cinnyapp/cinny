@@ -2,6 +2,7 @@ import { createClient, MatrixClient, IndexedDBStore, IndexedDBCryptoStore } from
 
 import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '../app/state/navToActivePath';
+import { pushSessionToSW } from '../sw-session';
 
 type Session = {
   baseUrl: string;
@@ -53,6 +54,7 @@ export const clearCacheAndReload = async (mx: MatrixClient) => {
 };
 
 export const logoutClient = async (mx: MatrixClient) => {
+  pushSessionToSW();
   mx.stopClient();
   try {
     await mx.logout();

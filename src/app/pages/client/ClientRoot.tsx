@@ -13,12 +13,13 @@ import { initializeClient } from '../../../client/initialize';
 import { ClientContext } from '../../../client/context';
 import { ClientContextProvider } from '../../hooks/useClient';
 import { InitialSyncSplashScreen } from './InitialSyncSplashScreen';
+import { AutoDiscovery } from './AutoDiscovery';
 
 type ClientRootProps = {
   children: ReactNode;
 };
 export function ClientRoot({ children }: ClientRootProps) {
-  const { baseUrl } = getFallbackSession() ?? {};
+  const { baseUrl, userId } = getFallbackSession() ?? {};
 
   const [initState, initialize] = useAsyncCallback<ClientContext, Error, []>(
     useCallback(() => {
@@ -44,66 +45,74 @@ export function ClientRoot({ children }: ClientRootProps) {
   }, [initState]);
 
   return (
-    <SpecVersions baseUrl={baseUrl!}>
-      {initState.status === AsyncStatus.Error && (
-        <SplashScreen>
-          <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">
-            <Dialog>
-              <Box direction="Column" gap="400" style={{ padding: config.space.S400 }}>
-                <Text>{`Failed to load. ${initState.error.message}`}</Text>
-                <Button variant="Critical" onClick={initialize}>
-                  <Text as="span" size="B400">
-                    Retry
-                  </Text>
-                </Button>
-              </Box>
-            </Dialog>
-          </Box>
-        </SplashScreen>
-      )}
-      {(initState.status === AsyncStatus.Idle || initState.status === AsyncStatus.Loading) && (
-        <SplashScreen
-          footer={
+    <AutoDiscovery userId={userId!} baseUrl={baseUrl!}>
+      <SpecVersions baseUrl={baseUrl!}>
+        {initState.status === AsyncStatus.Error && (
+          <SplashScreen>
             <Box
-              style={{ maxWidth: toRem(280) }}
               direction="Column"
               grow="Yes"
               alignItems="Center"
-              gap="200"
+              justifyContent="Center"
+              gap="400"
             >
-              <Text size="T200" align="Center">
-                Initializing...
-              </Text>
-              <ProgressBar
-                style={{ width: '100%' }}
-                variant="Secondary"
-                size="300"
-                radii="Pill"
-                value={0}
-                outlined
-              />
+              <Dialog>
+                <Box direction="Column" gap="400" style={{ padding: config.space.S400 }}>
+                  <Text>{`Failed to load. ${initState.error.message}`}</Text>
+                  <Button variant="Critical" onClick={initialize}>
+                    <Text as="span" size="B400">
+                      Retry
+                    </Text>
+                  </Button>
+                </Box>
+              </Dialog>
             </Box>
-          }
-        />
-      )}
-      {initState.status === AsyncStatus.Success && (
-        <ClientContextProvider value={initState.data}>
-          <InitialSyncSplashScreen sync={initState.data.sync}>
-            <SyncStatus />
-            <ServerConfigsLoader>
-              {(serverConfigs) => (
-                <CapabilitiesProvider value={serverConfigs.capabilities ?? {}}>
-                  <MediaConfigProvider value={serverConfigs.mediaConfig ?? {}}>
-                    <AuthMetadataProvider value={serverConfigs.authMetadata}>
-                      {children}
-                    </AuthMetadataProvider>
-                  </MediaConfigProvider>
-                </CapabilitiesProvider>
-              )}
-            </ServerConfigsLoader>
-          </InitialSyncSplashScreen>
-        </ClientContextProvider>
-      )}
-    </SpecVersions>
+          </SplashScreen>
+        )}
+        {(initState.status === AsyncStatus.Idle || initState.status === AsyncStatus.Loading) && (
+          <SplashScreen
+            footer={
+              <Box
+                style={{ maxWidth: toRem(280) }}
+                direction="Column"
+                grow="Yes"
+                alignItems="Center"
+                gap="200"
+              >
+                <Text size="T200" align="Center">
+                  Initializing...
+                </Text>
+                <ProgressBar
+                  style={{ width: '100%' }}
+                  variant="Secondary"
+                  size="300"
+                  radii="Pill"
+                  value={0}
+                  outlined
+                />
+              </Box>
+            }
+          />
+        )}
+        {initState.status === AsyncStatus.Success && (
+          <ClientContextProvider value={initState.data}>
+            <InitialSyncSplashScreen sync={initState.data.sync}>
+              <SyncStatus />
+              <ServerConfigsLoader>
+                {(serverConfigs) => (
+                  <CapabilitiesProvider value={serverConfigs.capabilities ?? {}}>
+                    <MediaConfigProvider value={serverConfigs.mediaConfig ?? {}}>
+                      <AuthMetadataProvider value={serverConfigs.authMetadata}>
+                        {children}
+                      </AuthMetadataProvider>
+                    </MediaConfigProvider>
+                  </CapabilitiesProvider>
+                )}
+              </ServerConfigsLoader>
+            </InitialSyncSplashScreen>
+          </ClientContextProvider>
+        )}
+      </SpecVersions>
+    </AutoDiscovery>
   );
 }

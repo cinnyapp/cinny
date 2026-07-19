@@ -72,7 +72,7 @@ export const ImageContent = as<'div', ImageContentProps>(
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(async () => {
-        const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
+        const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url();
         if (encInfo) {
           const fileContent = await downloadEncryptedMedia(mediaUrl, (encBuf) =>
             decryptFile(encBuf, mimeType ?? FALLBACK_MIMETYPE, encInfo as EncryptedAttachmentInfo)

@@ -27,8 +27,7 @@ export function ThumbnailContent({ info }: ThumbnailContentProps) {
         throw new Error('Failed to load thumbnail');
       }
 
-      const mediaUrl =
-        mxcToHttp(ct.session.baseUrl, thumbMxcUrl, useAuthentication).url() ?? thumbMxcUrl;
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, thumbMxcUrl, useAuthentication).url();
       if (encInfo) {
         const fileContent = await downloadEncryptedMedia(mediaUrl, (encBuf) =>
           decryptFile(encBuf, mimeType ?? FALLBACK_MIMETYPE, encInfo as EncryptedAttachmentInfo)

@@ -88,6 +88,7 @@ export function EmoticonAutocomplete({
       {autoCompleteEmoticon.map((emoticon) => {
         const isCustomEmoji = 'url' in emoticon;
         const key = isCustomEmoji ? emoticon.url : emoticon.unicode;
+
         return (
           <MenuItem
             key={emoticon.shortcode + key}

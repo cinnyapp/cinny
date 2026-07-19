@@ -10,7 +10,6 @@ import { RoomTombstone } from './RoomTombstone';
 import { RoomInput } from './RoomInput';
 import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
 import { Page } from '../../components/page';
-import { RoomViewHeader } from './RoomViewHeader';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { editableActiveElement } from '../../utils/dom';
 import { settingsAtom } from '../../state/settings';
@@ -21,7 +20,6 @@ import { useRoom } from '../../hooks/useRoom';
 import { useObservableValue } from '../../hooks/useObservableValue';
 import { useClient } from '../../hooks/useClient';
 import { MessageEvent } from '../../../types/matrix/room';
-import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
 import { Timeline } from '../../../client/room';
 
 const FN_KEYS_REGEX = /^F\d+$/;
@@ -31,10 +29,8 @@ const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
     return false;
   }
 
-  // do not focus on F keys
   if (FN_KEYS_REGEX.test(code)) return false;
 
-  // do not focus on numlock/scroll lock
   if (
     code.startsWith('OS') ||
     code.startsWith('Meta') ||
@@ -66,7 +62,6 @@ export function RoomView({ eventId, timeline }: { eventId?: string; timeline: Ti
   const roomId = useRoom();
   const editor = useEditor();
   const ct = useClient();
-  const { memberEventsResult } = useRoomMembersAPI();
 
   const roomToReplacement = useObservableValue(ct.roomToReplacement);
   const replacementRoom = roomToReplacement.get(roomId);
@@ -96,7 +91,6 @@ export function RoomView({ eventId, timeline }: { eventId?: string; timeline: Ti
 
   return (
     <Page ref={roomViewRef}>
-      <RoomViewHeader />
       <Box grow="Yes" direction="Column">
         {timeline && (
           <RoomTimeline

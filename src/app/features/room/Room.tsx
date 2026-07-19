@@ -14,7 +14,6 @@ import {
 } from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
 import { useKeyDown } from '../../hooks/useKeyDown';
-import { markAsRead } from '../../utils/notifications';
 import { RoomMembersAPIProvider, useCreateRoomMembersAPI } from '../../hooks/useRoomMembers';
 import {
   PowerLevelTagsContextProvider,

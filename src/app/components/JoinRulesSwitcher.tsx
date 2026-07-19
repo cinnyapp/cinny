@@ -16,34 +16,24 @@ import {
 import { JoinRule } from 'matrix-js-sdk';
 import FocusTrap from 'focus-trap-react';
 import { stopPropagation } from '../utils/keyboard';
+import { getRoomIconSrc } from '../utils/room';
 
 export type ExtraJoinRules = 'knock_restricted';
 export type ExtendedJoinRules = JoinRule | ExtraJoinRules;
 
 type JoinRuleIcons = Record<ExtendedJoinRules, IconSrc>;
-export const useRoomJoinRuleIcon = (): JoinRuleIcons =>
+
+export const useJoinRuleIcons = (roomType?: string): JoinRuleIcons =>
   useMemo(
     () => ({
-      [JoinRule.Invite]: Icons.HashLock,
-      [JoinRule.Knock]: Icons.HashLock,
-      knock_restricted: Icons.Hash,
-      [JoinRule.Restricted]: Icons.Hash,
-      [JoinRule.Public]: Icons.HashGlobe,
-      [JoinRule.Private]: Icons.HashLock,
+      [JoinRule.Invite]: getRoomIconSrc(Icons, roomType, JoinRule.Invite),
+      [JoinRule.Knock]: getRoomIconSrc(Icons, roomType, JoinRule.Knock),
+      knock_restricted: getRoomIconSrc(Icons, roomType, JoinRule.Restricted),
+      [JoinRule.Restricted]: getRoomIconSrc(Icons, roomType, JoinRule.Restricted),
+      [JoinRule.Public]: getRoomIconSrc(Icons, roomType, JoinRule.Public),
+      [JoinRule.Private]: getRoomIconSrc(Icons, roomType, JoinRule.Private),
     }),
-    []
-  );
-export const useSpaceJoinRuleIcon = (): JoinRuleIcons =>
-  useMemo(
-    () => ({
-      [JoinRule.Invite]: Icons.SpaceLock,
-      [JoinRule.Knock]: Icons.SpaceLock,
-      knock_restricted: Icons.Space,
-      [JoinRule.Restricted]: Icons.Space,
-      [JoinRule.Public]: Icons.SpaceGlobe,
-      [JoinRule.Private]: Icons.SpaceLock,
-    }),
-    []
+    [roomType]
   );
 
 type JoinRuleLabels = Record<ExtendedJoinRules, string>;

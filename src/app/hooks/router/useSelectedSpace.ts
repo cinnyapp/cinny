@@ -24,7 +24,7 @@ export const useSelectedSpace = (): string | undefined => {
 
 export const useSpaceLobbySelected = (spaceIdOrAlias: string): boolean => {
   const match = useMatch({
-    path: getSpaceLobbyPath(spaceIdOrAlias),
+    path: decodeURIComponent(getSpaceLobbyPath(spaceIdOrAlias)),
     caseSensitive: true,
     end: false,
   });
@@ -34,7 +34,7 @@ export const useSpaceLobbySelected = (spaceIdOrAlias: string): boolean => {
 
 export const useSpaceSearchSelected = (spaceIdOrAlias: string): boolean => {
   const match = useMatch({
-    path: getSpaceSearchPath(spaceIdOrAlias),
+    path: decodeURIComponent(getSpaceSearchPath(spaceIdOrAlias)),
     caseSensitive: true,
     end: false,
   });

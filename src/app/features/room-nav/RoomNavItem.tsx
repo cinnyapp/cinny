@@ -18,6 +18,7 @@ import {
 } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
 import FocusTrap from 'focus-trap-react';
+import { useAtom } from 'jotai';
 import { NavItem, NavItemContent, NavItemOptions, NavLink } from '../../components/nav';
 import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -48,6 +49,7 @@ import { JoinRule } from '../../../types/matrix/room';
 import { useClient } from '../../hooks/useClient';
 import { mxcToHttp } from '../../../client/mxcToHttp';
 import { TotalNotifications } from '../../state/hooks/roomNotifications';
+import { callChatAtom } from '../../state/callEmbed';
 
 type RoomNavItemMenuProps = {
   roomId: string;
@@ -67,7 +69,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     const permissions = useRoomPermissions(creators, powerLevels);
     const canInvite = permissions.action('invite', userId);
     const openRoomSettings = useOpenRoomSettings();
-    const space = useSpaceOptionally();
+    const spaceId = useSpaceOptionally();
 
     const [invitePrompt, setInvitePrompt] = useState(false);
 
@@ -88,7 +90,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     };
 
     const handleRoomSettings = () => {
-      openRoomSettings(roomId, space?.roomId);
+      openRoomSettings(roomId, spaceId);
       requestClose();
     };
 
@@ -208,6 +210,24 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
   }
 );
 
+function CallChatToggle() {
+  const [chat, setChat] = useAtom(callChatAtom);
+
+  return (
+    <IconButton
+      onClick={() => setChat(!chat)}
+      aria-pressed={chat}
+      aria-label="Toggle Chat"
+      variant="Background"
+      fill="None"
+      size="300"
+      radii="300"
+    >
+      <Icon size="50" src={Icons.Message} filled={chat} />
+    </IconButton>
+  );
+}
+
 type RoomNavItemProps = {
   roomId: string;
   roomName: string;
@@ -325,7 +345,11 @@ export function RoomNavItem({
               </UnreadBadgeCenter>
             )}
             {!optionsVisible && notificationMode !== RoomNotificationMode.Unset && (
-              <Icon size="50" src={getRoomNotificationModeIcon(notificationMode)} />
+              <Icon
+                size="50"
+                src={getRoomNotificationModeIcon(notificationMode)}
+                aria-label={notificationMode}
+              />
             )}
           </Box>
         </NavItemContent>
@@ -333,6 +357,8 @@ export function RoomNavItem({
       {optionsVisible && (
         <NavItemOptions>
           <PopOut
+            id={`menu-${roomId}`}
+            aria-expanded={!!menuAnchor}
             anchor={menuAnchor}
             offset={menuAnchor?.width === 0 ? 0 : undefined}
             alignOffset={menuAnchor?.width === 0 ? 0 : -5}
@@ -362,6 +388,8 @@ export function RoomNavItem({
             <IconButton
               onClick={handleOpenMenu}
               aria-pressed={!!menuAnchor}
+              aria-controls={`menu-${roomId}`}
+              aria-label="More Options"
               variant="Background"
               fill="None"
               size="300"

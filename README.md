@@ -16,6 +16,10 @@ A Matrix client focusing primarily on simple, elegant and secure interface. The 
 - [Roadmap](https://github.com/orgs/cinnyapp/projects/1)
 - [Contributing](./CONTRIBUTING.md)
 
+> [!IMPORTANT] 
+We are currently in the [process of replacing the matrix-js-sdk](https://github.com/cinnyapp/cinny/issues/257#issuecomment-3714406704) with our own SDK. As a result, we will not be accepting any pull requests until further notice.
+Thank you for your understanding.
+
 <img align="center" src="https://raw.githubusercontent.com/cinnyapp/cinny-site/main/assets/preview2-light.png" height="380">
 
 ## Getting started
@@ -83,7 +87,7 @@ mxFo+ioe/ABCufSmyqFye0psX3Sp
 
 ## Local development
 > [!TIP]
-> We recommend using a version manager as versions change very quickly. You will likely need to switch between multiple Node.js versions based on the needs of different projects you're working on. [NVM on windows](https://github.com/coreybutler/nvm-windows#installation--upgrades) on Windows and [nvm](https://github.com/nvm-sh/nvm) on Linux/macOS are pretty good choices. Recommended nodejs version is Iron LTS (v20).
+> We recommend using a version manager as versions change very quickly. You will likely need to switch between multiple Node.js versions based on the needs of different projects you're working on. [NVM on windows](https://github.com/coreybutler/nvm-windows#installation--upgrades) on Windows and [nvm](https://github.com/nvm-sh/nvm) on Linux/macOS are pretty good choices. Recommended nodejs version is Krypton LTS (v24.13.1).
 
 Execute the following commands to start a development server:
 ```sh

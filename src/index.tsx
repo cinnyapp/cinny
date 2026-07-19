@@ -15,6 +15,8 @@ import App from './app/pages/App';
 
 // import i18n (needs to be bundled ;))
 import './app/i18n';
+import { pushSessionToSW } from './sw-session';
+import { getFallbackSession } from './app/state/sessions';
 
 document.body.classList.add(configClass, varsClass);
 
@@ -25,15 +27,19 @@ if ('serviceWorker' in navigator) {
       ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
       : `/dev-sw.js?dev-sw`;
 
-  navigator.serviceWorker.register(swUrl);
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    if (event.data?.type === 'token' && event.data?.responseKey) {
-      // Get the token for SW.
-      const token = localStorage.getItem('cinny_access_token') ?? undefined;
-      event.source!.postMessage({
-        responseKey: event.data.responseKey,
-        token,
-      });
+  const sendSessionToSW = () => {
+    const session = getFallbackSession();
+    pushSessionToSW(session?.baseUrl, session?.accessToken);
+  };
+
+  navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
+  navigator.serviceWorker.ready.then(sendSessionToSW);
+
+  navigator.serviceWorker.addEventListener('message', (ev) => {
+    const { type } = ev.data ?? {};
+
+    if (type === 'requestSession') {
+      sendSessionToSW();
     }
   });
 }

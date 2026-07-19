@@ -76,7 +76,7 @@ export function ReadTextFile({ body, mimeType, url, encInfo }: ReadTextFileProps
 
   const [textState, loadText] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url();
       const fileContent = encInfo
         ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
             decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)
@@ -164,7 +164,7 @@ export function ReadPdfFile({ body, mimeType, url, encInfo }: ReadPdfFileProps) 
 
   const [pdfState, loadPdf] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url();
       const fileContent = encInfo
         ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
             decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)
@@ -243,7 +243,7 @@ export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFil
 
   const [downloadState, download] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url();
       const fileContent = encInfo
         ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
             decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)

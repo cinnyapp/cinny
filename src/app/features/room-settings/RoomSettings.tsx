@@ -104,6 +104,7 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
                     renderFallback={() => (
                       <RoomIcon
                         size="50"
+                        roomType={room.getType()}
                         joinRule={joinRuleContent?.join_rule ?? JoinRule.Invite}
                         filled
                       />

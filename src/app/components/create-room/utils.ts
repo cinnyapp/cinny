@@ -6,12 +6,12 @@ import {
 } from 'neurone/lib/api/matrix/client/v3/createRoom';
 import { MatrixResponseResult, parseMatrixResp } from 'neurone/lib/matrix-request';
 import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
-import { CreateRoomKind } from './CreateRoomKindSelector';
 import { JoinRulesContent, RoomType, StateEvent, StateEventType } from '../../../types/matrix/room';
 import { getMxIdServer } from '../../utils/matrix';
 import { ClientContext } from '../../../client/context';
 import { getViaServers } from '../../plugins/via-servers';
 import { getJoinRoomStateId } from '../../../client/storage/collections';
+import { CreateRoomAccess } from './types';
 
 const createRoomCreationContent = (
   type: RoomType | undefined,
@@ -33,7 +33,7 @@ const createRoomCreationContent = (
 };
 
 const createRoomJoinRulesState = (
-  kind: CreateRoomKind,
+  access: CreateRoomAccess,
   parentId: string | undefined,
   knock: boolean
 ) => {
@@ -41,13 +41,13 @@ const createRoomJoinRulesState = (
     join_rule: knock ? 'knock' : 'invite',
   };
 
-  if (kind === CreateRoomKind.Public) {
+  if (access === CreateRoomAccess.Public) {
     content = {
       join_rule: 'public',
     };
   }
 
-  if (kind === CreateRoomKind.Restricted && parentId) {
+  if (access === CreateRoomAccess.Restricted && parentId) {
     content = {
       join_rule: knock ? 'knock_restricted' : 'restricted',
       allow: [
@@ -75,6 +75,10 @@ const createRoomParentState = (parentId: string, via: string[]) => ({
   },
 });
 
+const createSpacePowerLevelsOverride = () => ({
+  events_default: 50,
+});
+
 export const createRoomEncryptionState = () => ({
   type: 'm.room.encryption',
   state_key: '',
@@ -83,11 +87,23 @@ export const createRoomEncryptionState = () => ({
   },
 });
 
+export const createRoomCallState = () => ({
+  type: 'org.matrix.msc3401.call',
+  state_key: '',
+  content: {},
+});
+
+export const createVoiceRoomPowerLevelsOverride = () => ({
+  events: {
+    [StateEvent.GroupCallMemberPrefix]: 0,
+  },
+});
+
 export type CreateRoomData = {
   version: string;
   type?: RoomType;
   parentId?: string;
-  kind: CreateRoomKind;
+  access: CreateRoomAccess;
   name: string;
   topic?: string;
   aliasLocalPart?: string;
@@ -116,7 +132,11 @@ export const createRoom = async (
     initialState.push(createRoomParentState(data.parentId, via));
   }
 
-  initialState.push(createRoomJoinRulesState(data.kind, data.parentId, data.knock));
+  if (data.type === RoomType.Call) {
+    initialState.push(createRoomCallState());
+  }
+
+  initialState.push(createRoomJoinRulesState(data.access, data.parentId, data.knock));
 
   const body: PostCreateRoomBody = {
     room_version: data.version,
@@ -128,8 +148,14 @@ export const createRoom = async (
       data.allowFederation,
       data.additionalCreators
     ),
+    power_level_content_override:
+      data.type === RoomType.Call ? createVoiceRoomPowerLevelsOverride() : undefined,
     initial_state: initialState,
   };
+
+  if (data.type === RoomType.Space) {
+    body.power_level_content_override = createSpacePowerLevelsOverride();
+  }
 
   const response = await ct.requestAuthJSON(postCreateRoom({ body }));
 

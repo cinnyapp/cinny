@@ -23,7 +23,7 @@ export function FileDownloadButton({ filename, url, mimeType, encInfo }: FileDow
 
   const [downloadState, download] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url();
       const fileContent = encInfo
         ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
             decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)

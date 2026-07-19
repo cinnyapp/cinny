@@ -68,6 +68,8 @@ import { Create } from './client/create';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
+import { CallStatusRenderer } from './CallStatusRenderer';
+import { CallEmbedProvider } from '../components/CallEmbedProvider';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -106,7 +108,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
 
       <Route
         loader={() => {
-          if (!getFallbackSession()) {
+          const session = getFallbackSession();
+          if (!session) {
             const afterLoginPath = getAppPathFromHref(
               getOriginBaseUrl(hashRouter),
               window.location.href

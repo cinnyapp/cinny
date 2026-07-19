@@ -46,6 +46,19 @@ export const usePermissionGroups = (): PermissionGroup[] => {
       ],
     };
 
+    const callSettingsGroup: PermissionGroup = {
+      name: 'Calls',
+      items: [
+        {
+          location: {
+            state: true,
+            key: StateEvent.GroupCallMemberPrefix,
+          },
+          name: 'Start or Join Call',
+        },
+      ],
+    };
+
     const moderationGroup: PermissionGroup = {
       name: 'Moderation',
       items: [
@@ -180,6 +193,13 @@ export const usePermissionGroups = (): PermissionGroup[] => {
         {
           location: {
             state: true,
+            key: StateEvent.PoniesRoomEmotes,
+          },
+          name: 'Manage Emojis & Stickers',
+        },
+        {
+          location: {
+            state: true,
             key: StateEvent.RoomServerAcl,
           },
           name: 'Change Server ACLs',
@@ -196,6 +216,7 @@ export const usePermissionGroups = (): PermissionGroup[] => {
 
     return [
       messagesGroup,
+      callSettingsGroup,
       moderationGroup,
       roomOverviewGroup,
       roomSettingsGroup,

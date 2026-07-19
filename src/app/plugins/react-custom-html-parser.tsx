@@ -228,8 +228,9 @@ export function CodeBlock({
   opts: HTMLReactParserOptions;
 }) {
   const code = children[0];
-  const languageClass =
-    code instanceof Element && code.name === 'code' ? code.attribs.class : undefined;
+  const attribs = code instanceof Element && code.name === 'code' ? code.attribs : undefined;
+  const languageClass = attribs?.class;
+  const customLabel = attribs?.['data-label'];
   const language =
     languageClass && languageClass.startsWith('language-')
       ? languageClass.replace('language-', '')
@@ -258,7 +259,7 @@ export function CodeBlock({
       <Header variant="Surface" size="400" className={css.CodeBlockHeader}>
         <Box grow="Yes">
           <Text size="L400" truncate>
-            {language ?? 'Code'}
+            {customLabel ?? language ?? 'Code'}
           </Text>
         </Box>
         <Box shrink="No" gap="200">
