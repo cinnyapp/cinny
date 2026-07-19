@@ -1,5 +1,4 @@
 import React, { ReactNode, useCallback, useRef, useState } from 'react';
-import { MatrixError, Room } from 'matrix-js-sdk';
 import {
   Avatar,
   Badge,
@@ -19,20 +18,22 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
+import { postJoin, PostJoinOK } from 'neurone/lib/api/matrix/client/v3/join';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
 import * as css from './style.css';
 import { RoomAvatar } from '../room-avatar';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
+import { getMxIdLocalPart } from '../../utils/matrix';
 import { nameInitials } from '../../utils/common';
 import { millify } from '../../plugins/millify';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
-import { RoomType, StateEvent } from '../../../types/matrix/room';
+import { RoomType } from '../../../types/matrix/room';
 import { useJoinedRoomId } from '../../hooks/useJoinedRoomId';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
-import { getRoomAvatarUrl, getStateEvent } from '../../utils/room';
-import { useStateEventCallback } from '../../hooks/useStateEventCallback';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { useLocalRoomSummary } from '../../hooks/useLocalRoomSummary';
+import { mxcToHttp } from '../../../client/mxcToHttp';
+import { useClient } from '../../hooks/useClient';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {
@@ -161,44 +162,40 @@ export const RoomCard = as<'div', RoomCardProps>(
     },
     ref
   ) => {
-    const mx = useMatrixClient();
+    const ct = useClient();
+    const { baseUrl } = ct.session;
     const useAuthentication = useMediaAuthentication();
     const joinedRoomId = useJoinedRoomId(allRooms, roomIdOrAlias);
-    const joinedRoom = mx.getRoom(joinedRoomId);
-    const [topicEvent, setTopicEvent] = useState(() =>
-      joinedRoom ? getStateEvent(joinedRoom, StateEvent.RoomTopic) : undefined
-    );
+    const localSummary = useLocalRoomSummary(joinedRoomId ?? '');
 
     const fallbackName = getMxIdLocalPart(roomIdOrAlias) ?? roomIdOrAlias;
     const fallbackTopic = roomIdOrAlias;
 
-    const avatar = joinedRoom
-      ? getRoomAvatarUrl(mx, joinedRoom, 96, useAuthentication)
-      : avatarUrl && mxcUrlToHttp(mx, avatarUrl, useAuthentication, 96, 96, 'crop');
+    const avatarMxc = localSummary.avatarUrl ?? avatarUrl;
+    const avatarHttpUrl =
+      avatarMxc &&
+      mxcToHttp(baseUrl, avatarMxc, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      });
 
-    const roomName = joinedRoom?.name || name || fallbackName;
-    const roomTopic =
-      (topicEvent?.getContent().topic as string) || undefined || topic || fallbackTopic;
-    const joinedMemberCount = joinedRoom?.getJoinedMemberCount() ?? memberCount;
+    const roomName = localSummary?.name || name || fallbackName;
+    const roomTopic = localSummary.topic || topic || fallbackTopic;
+    const joinedMemberCount = localSummary.memberCount ?? memberCount;
 
-    useStateEventCallback(
-      mx,
-      useCallback(
-        (event) => {
-          if (
-            joinedRoom &&
-            event.getRoomId() === joinedRoom.roomId &&
-            event.getType() === StateEvent.RoomTopic
-          ) {
-            setTopicEvent(getStateEvent(joinedRoom, StateEvent.RoomTopic));
-          }
-        },
-        [joinedRoom]
-      )
-    );
-
-    const [joinState, join] = useAsyncCallback<Room, MatrixError, []>(
-      useCallback(() => mx.joinRoom(roomIdOrAlias, { viaServers }), [mx, roomIdOrAlias, viaServers])
+    const [joinState, join] = useAsyncCallback<PostJoinOK, Error, []>(
+      useCallback(async () => {
+        const response = await ct.requestAuthJSON(
+          postJoin({
+            pathParams: { roomIdOrAlias },
+            searchParams: { server_name: viaServers, via: viaServers },
+          })
+        );
+        const [err, result] = await parseMatrixResp<PostJoinOK>(response);
+        if (err) throw new Error(printMatrixError(err));
+        return result;
+      }, [ct, roomIdOrAlias, viaServers])
     );
     const joining =
       joinState.status === AsyncStatus.Loading || joinState.status === AsyncStatus.Success;
@@ -213,7 +210,7 @@ export const RoomCard = as<'div', RoomCardProps>(
           <Avatar size="500">
             <RoomAvatar
               roomId={roomIdOrAlias}
-              src={avatar ?? undefined}
+              src={avatarHttpUrl}
               alt={roomIdOrAlias}
               renderFallback={() => (
                 <Text as="span" size="H3">
@@ -222,7 +219,7 @@ export const RoomCard = as<'div', RoomCardProps>(
               )}
             />
           </Avatar>
-          {(roomType === RoomType.Space || joinedRoom?.isSpaceRoom()) && (
+          {(roomType === RoomType.Space || localSummary.space) && (
             <Badge variant="Secondary" fill="Soft" outlined>
               <Text size="L400">Space</Text>
             </Badge>

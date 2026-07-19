@@ -1,15 +1,22 @@
 import React, { useCallback, useEffect } from 'react';
 import { Box, Text, Chip } from 'folds';
+import { get3pid, Get3pidOK } from 'neurone/lib/api/matrix/client/v3/account';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { useClient } from '../../../hooks/useClient';
 
 export function ContactInformation() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const [threePIdsState, loadThreePIds] = useAsyncCallback(
-    useCallback(() => mx.getThreePids(), [mx])
+    useCallback(async () => {
+      const response = await ct.requestAuthJSON(get3pid({}));
+      const [err, result] = await parseMatrixResp<Get3pidOK>(response);
+      if (err) throw new Error(printMatrixError(err));
+      return result;
+    }, [ct])
   );
   const threePIds =
     threePIdsState.status === AsyncStatus.Success ? threePIdsState.data.threepids : undefined;

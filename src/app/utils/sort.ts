@@ -15,10 +15,10 @@ export const factoryRoomIdByActivity =
   };
 
 export const factoryRoomIdByAtoZ =
-  (mx: MatrixClient): SortFunc<string> =>
+  (getRoomName: (roomId: string) => string | undefined): SortFunc<string> =>
   (a, b) => {
-    let aName = mx.getRoom(a)?.name ?? '';
-    let bName = mx.getRoom(b)?.name ?? '';
+    let aName = getRoomName(a) ?? '';
+    let bName = getRoomName(b) ?? '';
 
     // remove "#" from the room name
     // To ignore it in sorting

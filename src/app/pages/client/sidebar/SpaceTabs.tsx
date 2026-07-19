@@ -25,7 +25,8 @@ import {
   toRem,
 } from 'folds';
 import { useAtom, useAtomValue } from 'jotai';
-import { Room } from 'matrix-js-sdk';
+import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
+import { AccountDataEvent } from 'neurone/lib/api/types';
 import {
   draggable,
   dropTargetForElements,
@@ -43,8 +44,8 @@ import {
   useOrphanSpaces,
   useRecursiveChildScopeFactory,
   useSpaceChildren,
+  useSpacesChildren,
 } from '../../../state/hooks/roomList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { getSpaceLobbyPath, getSpacePath, joinPathComponent } from '../../pathUtils';
@@ -58,34 +59,31 @@ import {
   SidebarFolder,
   SidebarFolderDropTarget,
 } from '../../../components/sidebar';
-import { RoomUnreadProvider, RoomsUnreadProvider } from '../../../components/RoomUnreadProvider';
 import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
 import { UnreadBadge } from '../../../components/unread-badge';
-import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../../utils/matrix';
 import { RoomAvatar } from '../../../components/room-avatar';
 import { nameInitials, randomStr } from '../../../utils/common';
 import {
   ISidebarFolder,
+  InCinnySpacesContent,
   SidebarItems,
   TSidebarItem,
   makeCinnySpacesContent,
   parseSidebar,
   sidebarItemWithout,
   useSidebarItems,
+  useSidebarRooms,
 } from '../../../hooks/useSidebarItems';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
+import { AccountDataType } from '../../../../types/matrix/accountData';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useOpenedSidebarFolderAtom } from '../../../state/hooks/openedSidebarFolder';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { useRoomsUnread } from '../../../state/hooks/unread';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
+import { usePowerLevels, usePowerLevelsState } from '../../../hooks/usePowerLevels';
 import { markAsRead } from '../../../utils/notifications';
 import { copyToClipboard } from '../../../utils/dom';
 import { stopPropagation } from '../../../utils/keyboard';
 import { getMatrixToRoom } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
-import { getRoomAvatarUrl } from '../../../utils/room';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
@@ -93,47 +91,53 @@ import { useOpenSpaceSettings } from '../../../state/hooks/spaceSettings';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
+import { useClient } from '../../../hooks/useClient';
+import { useAccountData } from '../../../hooks/storage/useAccountData';
+import { GetRoomNameCallback, useGetRoomName } from '../../../hooks/storage/useGetRoomName';
+import {
+  TotalNotifications,
+  useRoomsNotifications,
+  useRoomsTotalNotifications,
+} from '../../../state/hooks/roomNotifications';
+import { roomToNotificationsAtom } from '../../../state/room/roomToNotifications';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { useRoomHeroes } from '../../../hooks/storage/useRoomHeros';
+import { GetRoomAvatarCallback, useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
 
 type SpaceMenuProps = {
-  room: Room;
+  spaceId: string;
   requestClose: () => void;
   onUnpin?: (roomId: string) => void;
+  notifications?: TotalNotifications;
 };
 const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
-  ({ room, requestClose, onUnpin }, ref) => {
-    const mx = useMatrixClient();
+  ({ spaceId, requestClose, onUnpin, notifications }, ref) => {
+    const ct = useClient();
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-    const roomToParents = useAtomValue(roomToParentsAtom);
-    const powerLevels = usePowerLevels(room);
-    const creators = useRoomCreators(room);
+    const powerLevelState = usePowerLevelsState(spaceId);
+    const powerLevels = usePowerLevels(powerLevelState.value);
+    const creators = useRoomCreators(spaceId);
 
     const permissions = useRoomPermissions(creators, powerLevels);
-    const canInvite = permissions.action('invite', mx.getSafeUserId());
+    const canInvite = permissions.action('invite', ct.session.userId);
     const openSpaceSettings = useOpenSpaceSettings();
 
     const [invitePrompt, setInvitePrompt] = useState(false);
 
-    const allChild = useSpaceChildren(
-      allRoomsAtom,
-      room.roomId,
-      useRecursiveChildScopeFactory(mx, roomToParents)
-    );
-    const unread = useRoomsUnread(allChild, roomToUnreadAtom);
-
     const handleMarkAsRead = () => {
-      allChild.forEach((childRoomId) => markAsRead(mx, childRoomId, hideActivity));
+      // allChild.forEach((childRoomId) => markAsRead(mx, childRoomId, hideActivity));
       requestClose();
     };
 
     const handleUnpin = () => {
-      onUnpin?.(room.roomId);
+      onUnpin?.(spaceId);
       requestClose();
     };
 
     const handleCopyLink = () => {
-      const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
-      const viaServers = isRoomAlias(roomIdOrAlias) ? undefined : getViaServers(room);
-      copyToClipboard(getMatrixToRoom(roomIdOrAlias, viaServers));
+      const alias = ct.roomToAlias.read.get(spaceId);
+      const viaServers = alias ? undefined : getViaServers(creators, powerLevels);
+      copyToClipboard(getMatrixToRoom(alias ?? spaceId, viaServers));
       requestClose();
     };
 
@@ -142,15 +146,15 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
     };
 
     const handleRoomSettings = () => {
-      openSpaceSettings(room.roomId);
+      openSpaceSettings(spaceId);
       requestClose();
     };
 
     return (
       <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
-        {invitePrompt && room && (
+        {invitePrompt && (
           <InviteUserPrompt
-            room={room}
+            roomId={spaceId}
             requestClose={() => {
               setInvitePrompt(false);
               requestClose();
@@ -163,7 +167,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
             size="300"
             after={<Icon size="100" src={Icons.CheckTwice} />}
             radii="300"
-            disabled={!unread}
+            disabled={!notifications || notifications.count === 0}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
               Mark as Read
@@ -383,25 +387,47 @@ const useDnDMonitor = (
 };
 
 type SpaceTabProps = {
-  space: Room;
+  spaceId: string;
   selected: boolean;
   onClick: MouseEventHandler<HTMLButtonElement>;
+  getName: GetRoomNameCallback;
+  getAvatar: GetRoomAvatarCallback;
   folder?: ISidebarFolder;
   onDragging: (dragItem?: SidebarDraggable) => void;
   disabled?: boolean;
   onUnpin?: (roomId: string) => void;
 };
 function SpaceTab({
-  space,
+  spaceId,
   selected,
+  getName,
+  getAvatar,
   onClick,
   folder,
   onDragging,
   disabled,
   onUnpin,
 }: SpaceTabProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
+
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const childRooms = useSpaceChildren(
+    allRoomsAtom,
+    spaceId,
+    useRecursiveChildScopeFactory(ct, roomToParents)
+  );
+  const roomsNotifications = useRoomsNotifications(childRooms, roomToNotificationsAtom);
+  const notifications = useRoomsTotalNotifications(roomsNotifications);
+
+  const spaceName = getName(spaceId) ?? spaceId;
+  const avatarMxc = getAvatar(spaceId);
+  const avatarUrl =
+    avatarMxc &&
+    mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).thumbnail({
+      height: 96,
+      width: 96,
+    });
   const targetRef = useRef<HTMLDivElement>(null);
 
   const spaceDraggable: SidebarDraggable = useMemo(
@@ -409,10 +435,10 @@ function SpaceTab({
       folder
         ? {
             folder,
-            spaceId: space.roomId,
+            spaceId,
           }
-        : space.roomId,
-    [folder, space]
+        : spaceId,
+    [folder, spaceId]
   );
 
   useDraggableItem(spaceDraggable, targetRef, onDragging);
@@ -431,72 +457,69 @@ function SpaceTab({
   };
 
   return (
-    <RoomUnreadProvider roomId={space.roomId}>
-      {(unread) => (
-        <SidebarItem
-          active={selected}
-          ref={targetRef}
-          aria-disabled={disabled}
-          data-drop-child={dropType === 'make-child'}
-          data-drop-above={dropType === 'reorder-above'}
-          data-drop-below={dropType === 'reorder-below'}
-          data-inside-folder={!!folder}
-        >
-          <SidebarItemTooltip tooltip={disabled ? undefined : space.name}>
-            {(triggerRef) => (
-              <SidebarAvatar
-                as="button"
-                data-id={space.roomId}
-                ref={triggerRef}
-                size={folder ? '300' : '400'}
-                onClick={onClick}
-                onContextMenu={handleContextMenu}
-              >
-                <RoomAvatar
-                  roomId={space.roomId}
-                  src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
-                  alt={space.name}
-                  renderFallback={() => (
-                    <Text size={folder ? 'H6' : 'H4'}>{nameInitials(space.name, 2)}</Text>
-                  )}
-                />
-              </SidebarAvatar>
-            )}
-          </SidebarItemTooltip>
-          {unread && (
-            <SidebarItemBadge hasCount={unread.total > 0}>
-              <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
-            </SidebarItemBadge>
-          )}
-          {menuAnchor && (
-            <PopOut
-              anchor={menuAnchor}
-              position="Right"
-              align="Start"
-              content={
-                <FocusTrap
-                  focusTrapOptions={{
-                    initialFocus: false,
-                    returnFocusOnDeactivate: false,
-                    onDeactivate: () => setMenuAnchor(undefined),
-                    clickOutsideDeactivates: true,
-                    isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                    isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                    escapeDeactivates: stopPropagation,
-                  }}
-                >
-                  <SpaceMenu
-                    room={space}
-                    requestClose={() => setMenuAnchor(undefined)}
-                    onUnpin={onUnpin}
-                  />
-                </FocusTrap>
-              }
+    <SidebarItem
+      active={selected}
+      ref={targetRef}
+      aria-disabled={disabled}
+      data-drop-child={dropType === 'make-child'}
+      data-drop-above={dropType === 'reorder-above'}
+      data-drop-below={dropType === 'reorder-below'}
+      data-inside-folder={!!folder}
+    >
+      <SidebarItemTooltip tooltip={disabled ? undefined : spaceName}>
+        {(triggerRef) => (
+          <SidebarAvatar
+            as="button"
+            data-id={spaceId}
+            ref={triggerRef}
+            size={folder ? '300' : '400'}
+            onClick={onClick}
+            onContextMenu={handleContextMenu}
+          >
+            <RoomAvatar
+              roomId={spaceId}
+              src={avatarUrl}
+              alt={spaceName}
+              renderFallback={() => (
+                <Text size={folder ? 'H6' : 'H4'}>{nameInitials(spaceName, 2)}</Text>
+              )}
             />
-          )}
-        </SidebarItem>
+          </SidebarAvatar>
+        )}
+      </SidebarItemTooltip>
+      {notifications.count > 0 && (
+        <SidebarItemBadge hasCount={notifications.count > 0}>
+          <UnreadBadge highlight={notifications.highlight} count={notifications.count} />
+        </SidebarItemBadge>
       )}
-    </RoomUnreadProvider>
+      {menuAnchor && (
+        <PopOut
+          anchor={menuAnchor}
+          position="Right"
+          align="Start"
+          content={
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                returnFocusOnDeactivate: false,
+                onDeactivate: () => setMenuAnchor(undefined),
+                clickOutsideDeactivates: true,
+                isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                escapeDeactivates: stopPropagation,
+              }}
+            >
+              <SpaceMenu
+                spaceId={spaceId}
+                requestClose={() => setMenuAnchor(undefined)}
+                onUnpin={onUnpin}
+                notifications={notifications}
+              />
+            </FocusTrap>
+          }
+        />
+      )}
+    </SidebarItem>
   );
 }
 
@@ -535,6 +558,8 @@ function OpenedSpaceFolder({ folder, onClose, children }: OpenedSpaceFolderProps
 type ClosedSpaceFolderProps = {
   folder: ISidebarFolder;
   selected: boolean;
+  getName: GetRoomNameCallback;
+  getAvatar: GetRoomAvatarCallback;
   onOpen: MouseEventHandler<HTMLButtonElement>;
   onDragging: (dragItem?: SidebarDraggable) => void;
   disabled?: boolean;
@@ -542,12 +567,24 @@ type ClosedSpaceFolderProps = {
 function ClosedSpaceFolder({
   folder,
   selected,
+  getName,
+  getAvatar,
   onOpen,
   onDragging,
   disabled,
 }: ClosedSpaceFolderProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
+
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const childRooms = useSpacesChildren(
+    allRoomsAtom,
+    folder.content,
+    useRecursiveChildScopeFactory(ct, roomToParents)
+  );
+  const roomsNotifications = useRoomsNotifications(childRooms, roomToNotificationsAtom);
+  const notifications = useRoomsTotalNotifications(roomsNotifications);
+
   const handlerRef = useRef<HTMLDivElement>(null);
 
   const spaceDraggable: FolderDraggable = useMemo(() => ({ folder }), [folder]);
@@ -555,53 +592,54 @@ function ClosedSpaceFolder({
   const dropState = useDropTarget(spaceDraggable, handlerRef);
   const dropType = dropState?.type;
 
-  const tooltipName =
-    folder.name ?? folder.content.map((i) => mx.getRoom(i)?.name ?? '').join(', ') ?? 'Unnamed';
+  const tooltipName = folder.name ?? folder.content.map((i) => getName(i) ?? i).join(', ');
 
   return (
-    <RoomsUnreadProvider rooms={folder.content}>
-      {(unread) => (
-        <SidebarItem
-          active={selected}
-          ref={handlerRef}
-          aria-disabled={disabled}
-          data-drop-child={dropType === 'make-child'}
-          data-drop-above={dropType === 'reorder-above'}
-          data-drop-below={dropType === 'reorder-below'}
-        >
-          <SidebarItemTooltip tooltip={disabled ? undefined : tooltipName}>
-            {(tooltipRef) => (
-              <SidebarFolder data-id={folder.id} as="button" ref={tooltipRef} onClick={onOpen}>
-                {folder.content.map((sId) => {
-                  const space = mx.getRoom(sId);
-                  if (!space) return null;
+    <SidebarItem
+      active={selected}
+      ref={handlerRef}
+      aria-disabled={disabled}
+      data-drop-child={dropType === 'make-child'}
+      data-drop-above={dropType === 'reorder-above'}
+      data-drop-below={dropType === 'reorder-below'}
+    >
+      <SidebarItemTooltip tooltip={disabled ? undefined : tooltipName}>
+        {(tooltipRef) => (
+          <SidebarFolder data-id={folder.id} as="button" ref={tooltipRef} onClick={onOpen}>
+            {folder.content.map((spaceId) => {
+              const spaceName = getName(spaceId) ?? spaceId;
+              const avatarMxc = getAvatar(spaceId);
+              const avatarUrl =
+                avatarMxc &&
+                mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).thumbnail({
+                  height: 96,
+                  width: 96,
+                });
 
-                  return (
-                    <SidebarAvatar key={sId} size="200" radii="300">
-                      <RoomAvatar
-                        roomId={space.roomId}
-                        src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
-                        alt={space.name}
-                        renderFallback={() => (
-                          <Text size="Inherit">
-                            <b>{nameInitials(space.name, 2)}</b>
-                          </Text>
-                        )}
-                      />
-                    </SidebarAvatar>
-                  );
-                })}
-              </SidebarFolder>
-            )}
-          </SidebarItemTooltip>
-          {unread && (
-            <SidebarItemBadge hasCount={unread.total > 0}>
-              <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
-            </SidebarItemBadge>
-          )}
-        </SidebarItem>
+              return (
+                <SidebarAvatar key={spaceId} size="200" radii="300">
+                  <RoomAvatar
+                    roomId={spaceId}
+                    src={avatarUrl}
+                    alt={spaceName}
+                    renderFallback={() => (
+                      <Text size="Inherit">
+                        <b>{nameInitials(spaceName, 2)}</b>
+                      </Text>
+                    )}
+                  />
+                </SidebarAvatar>
+              );
+            })}
+          </SidebarFolder>
+        )}
+      </SidebarItemTooltip>
+      {notifications.count > 0 && (
+        <SidebarItemBadge hasCount={notifications.count > 0}>
+          <UnreadBadge highlight={notifications.highlight} count={notifications.count} />
+        </SidebarItemBadge>
       )}
-    </RoomsUnreadProvider>
+    </SidebarItem>
   );
 }
 
@@ -610,14 +648,29 @@ type SpaceTabsProps = {
 };
 export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
   const navigate = useNavigate();
-  const mx = useMatrixClient();
+  const ct = useClient();
   const screenSize = useScreenSizeContext();
+
   const roomToParents = useAtomValue(roomToParentsAtom);
-  const orphanSpaces = useOrphanSpaces(mx, allRoomsAtom, roomToParents);
-  const [sidebarItems, localEchoSidebarItem] = useSidebarItems(orphanSpaces);
+  const orphanSpaces = useOrphanSpaces(ct, allRoomsAtom, roomToParents);
+  const { value: cinnySpacesEvent } = useAccountData<AccountDataEvent<InCinnySpacesContent>>(
+    AccountDataType.CinnySpaces
+  );
+  const originalSidebarItems = useSidebarItems(orphanSpaces, cinnySpacesEvent);
+  const [sidebarItems, localEchoSidebarItem] = useState(originalSidebarItems);
   const navToActivePath = useAtomValue(useNavToActivePathAtom());
   const [openedFolder, setOpenedFolder] = useAtom(useOpenedSidebarFolderAtom());
   const [draggingItem, setDraggingItem] = useState<SidebarDraggable>();
+
+  const sidebarRooms = useSidebarRooms(originalSidebarItems);
+  const [getRoomHeroes, roomToHeroResult] = useRoomHeroes(sidebarRooms);
+  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroResult.value);
+
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroResult.value);
+
+  useEffect(() => {
+    localEchoSidebarItem(originalSidebarItems);
+  }, [originalSidebarItems]);
 
   useDnDMonitor(
     scrollRef,
@@ -744,11 +797,19 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
           newItems.push(i);
         });
 
-        const newSpacesContent = makeCinnySpacesContent(mx, newItems);
-        localEchoSidebarItem(parseSidebar(mx, orphanSpaces, newSpacesContent));
-        mx.setAccountData(AccountDataEvent.CinnySpaces, newSpacesContent);
+        const newSpacesContent = makeCinnySpacesContent(newItems, cinnySpacesEvent);
+        localEchoSidebarItem(parseSidebar(ct, orphanSpaces, newSpacesContent));
+        ct.requestAuthJSON(
+          putAccountData({
+            pathParams: {
+              userId: ct.session.userId,
+              type: AccountDataType.CinnySpaces,
+            },
+            body: newSpacesContent,
+          })
+        );
       },
-      [mx, sidebarItems, setOpenedFolder, localEchoSidebarItem, orphanSpaces]
+      [ct, sidebarItems, cinnySpacesEvent, setOpenedFolder, localEchoSidebarItem, orphanSpaces]
     )
   );
 
@@ -758,8 +819,9 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
     const target = evt.currentTarget;
     const targetSpaceId = target.getAttribute('data-id');
     if (!targetSpaceId) return;
+    const targetSpaceAlias = ct.roomToAlias.read.get(targetSpaceId);
 
-    const spacePath = getSpacePath(getCanonicalAliasOrRoomId(mx, targetSpaceId));
+    const spacePath = getSpacePath(targetSpaceAlias ?? targetSpaceId);
     if (screenSize === ScreenSize.Mobile) {
       navigate(spacePath);
       return;
@@ -771,7 +833,7 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
       return;
     }
 
-    navigate(getSpaceLobbyPath(getCanonicalAliasOrRoomId(mx, targetSpaceId)));
+    navigate(getSpaceLobbyPath(targetSpaceAlias ?? targetSpaceId));
   };
 
   const handleFolderToggle: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -790,11 +852,19 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
       if (orphanSpaces.includes(roomId)) return;
       const newItems = sidebarItemWithout(sidebarItems, roomId);
 
-      const newSpacesContent = makeCinnySpacesContent(mx, newItems);
-      localEchoSidebarItem(parseSidebar(mx, orphanSpaces, newSpacesContent));
-      mx.setAccountData(AccountDataEvent.CinnySpaces, newSpacesContent);
+      const newSpacesContent = makeCinnySpacesContent(newItems, cinnySpacesEvent);
+      localEchoSidebarItem(parseSidebar(ct, orphanSpaces, newSpacesContent));
+      ct.requestAuthJSON(
+        putAccountData({
+          pathParams: {
+            userId: ct.session.userId,
+            type: AccountDataType.CinnySpaces,
+          },
+          body: newSpacesContent,
+        })
+      );
     },
-    [mx, sidebarItems, orphanSpaces, localEchoSidebarItem]
+    [ct, sidebarItems, orphanSpaces, cinnySpacesEvent, localEchoSidebarItem]
   );
 
   if (sidebarItems.length === 0) return null;
@@ -807,26 +877,22 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
             if (openedFolder.has(item.id)) {
               return (
                 <OpenedSpaceFolder key={item.id} folder={item} onClose={handleFolderToggle}>
-                  {item.content.map((sId) => {
-                    const space = mx.getRoom(sId);
-                    if (!space) return null;
-                    return (
-                      <SpaceTab
-                        key={space.roomId}
-                        space={space}
-                        selected={space.roomId === selectedSpaceId}
-                        onClick={handleSpaceClick}
-                        folder={item}
-                        onDragging={setDraggingItem}
-                        disabled={
-                          typeof draggingItem === 'object'
-                            ? draggingItem.spaceId === space.roomId
-                            : false
-                        }
-                        onUnpin={orphanSpaces.includes(space.roomId) ? undefined : handleUnpin}
-                      />
-                    );
-                  })}
+                  {item.content.map((spaceId) => (
+                    <SpaceTab
+                      key={spaceId}
+                      spaceId={spaceId}
+                      getName={getRoomName}
+                      getAvatar={getRoomAvatar}
+                      selected={spaceId === selectedSpaceId}
+                      onClick={handleSpaceClick}
+                      folder={item}
+                      onDragging={setDraggingItem}
+                      disabled={
+                        typeof draggingItem === 'object' ? draggingItem.spaceId === spaceId : false
+                      }
+                      onUnpin={orphanSpaces.includes(spaceId) ? undefined : handleUnpin}
+                    />
+                  ))}
                 </OpenedSpaceFolder>
               );
             }
@@ -835,6 +901,8 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
               <ClosedSpaceFolder
                 key={item.id}
                 folder={item}
+                getName={getRoomName}
+                getAvatar={getRoomAvatar}
                 selected={!!selectedSpaceId && item.content.includes(selectedSpaceId)}
                 onOpen={handleFolderToggle}
                 onDragging={setDraggingItem}
@@ -845,18 +913,17 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
             );
           }
 
-          const space = mx.getRoom(item);
-          if (!space) return null;
-
           return (
             <SpaceTab
-              key={space.roomId}
-              space={space}
-              selected={space.roomId === selectedSpaceId}
+              key={item}
+              spaceId={item}
+              getName={getRoomName}
+              getAvatar={getRoomAvatar}
+              selected={item === selectedSpaceId}
               onClick={handleSpaceClick}
               onDragging={setDraggingItem}
-              disabled={typeof draggingItem === 'string' ? draggingItem === space.roomId : false}
-              onUnpin={orphanSpaces.includes(space.roomId) ? undefined : handleUnpin}
+              disabled={typeof draggingItem === 'string' ? draggingItem === item : false}
+              onUnpin={orphanSpaces.includes(item) ? undefined : handleUnpin}
             />
           );
         })}

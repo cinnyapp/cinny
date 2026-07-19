@@ -1,10 +1,7 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
-import { MatrixClient } from 'matrix-js-sdk';
-import { AccountDataEvent } from '../../types/matrix/accountData';
-import { useMatrixClient } from './useMatrixClient';
-import { getAccountData, isSpace } from '../utils/room';
-import { Membership } from '../../types/matrix/room';
-import { useAccountDataCallback } from './useAccountDataCallback';
+import { useMemo } from 'react';
+import { AccountDataEvent } from 'neurone/lib/api/types';
+import { useClient } from './useClient';
+import { ClientContext } from '../../client/context';
 
 export type ISidebarFolder = {
   name?: string;
@@ -20,7 +17,7 @@ export type InCinnySpacesContent = {
 };
 
 export const parseSidebar = (
-  mx: MatrixClient,
+  ct: ClientContext,
   orphanSpaces: string[],
   content?: InCinnySpacesContent
 ) => {
@@ -31,9 +28,8 @@ export const parseSidebar = (
 
   const safeToAdd = (spaceId: string): boolean => {
     if (typeof spaceId !== 'string') return false;
-    const space = mx.getRoom(spaceId);
-    if (space?.getMyMembership() !== Membership.Join) return false;
-    return isSpace(space);
+    if (!ct.rooms.join.read.includes(spaceId)) return false;
+    return ct.spaceRooms.read.has(spaceId);
   };
 
   sidebar.forEach((item) => {
@@ -64,40 +60,17 @@ export const parseSidebar = (
 };
 
 export const useSidebarItems = (
-  orphanSpaces: string[]
-): [SidebarItems, Dispatch<SetStateAction<SidebarItems>>] => {
-  const mx = useMatrixClient();
+  orphanSpaces: string[],
+  cinnySpacesEvent?: AccountDataEvent<InCinnySpacesContent>
+): SidebarItems => {
+  const ct = useClient();
 
-  const [sidebarItems, setSidebarItems] = useState(() => {
-    const inCinnySpacesContent = getAccountData(
-      mx,
-      AccountDataEvent.CinnySpaces
-    )?.getContent<InCinnySpacesContent>();
-    return parseSidebar(mx, orphanSpaces, inCinnySpacesContent);
-  });
+  const sidebarItems: SidebarItems = useMemo(() => {
+    const content = cinnySpacesEvent?.content;
+    return parseSidebar(ct, orphanSpaces, content);
+  }, [ct, cinnySpacesEvent, orphanSpaces]);
 
-  useEffect(() => {
-    const inCinnySpacesContent = getAccountData(
-      mx,
-      AccountDataEvent.CinnySpaces
-    )?.getContent<InCinnySpacesContent>();
-    setSidebarItems(parseSidebar(mx, orphanSpaces, inCinnySpacesContent));
-  }, [mx, orphanSpaces]);
-
-  useAccountDataCallback(
-    mx,
-    useCallback(
-      (mEvent) => {
-        if (mEvent.getType() === AccountDataEvent.CinnySpaces) {
-          const newContent = mEvent.getContent<InCinnySpacesContent>();
-          setSidebarItems(parseSidebar(mx, orphanSpaces, newContent));
-        }
-      },
-      [mx, orphanSpaces]
-    )
-  );
-
-  return [sidebarItems, setSidebarItems];
+  return sidebarItems;
 };
 
 export const sidebarItemWithout = (items: SidebarItems, roomId: string) => {
@@ -123,16 +96,24 @@ export const sidebarItemWithout = (items: SidebarItems, roomId: string) => {
 };
 
 export const makeCinnySpacesContent = (
-  mx: MatrixClient,
-  items: SidebarItems
+  items: SidebarItems,
+  cinnySpacesEvent?: AccountDataEvent<InCinnySpacesContent>
 ): InCinnySpacesContent => {
-  const currentInSpaces =
-    getAccountData(mx, AccountDataEvent.CinnySpaces)?.getContent<InCinnySpacesContent>() ?? {};
+  const content = cinnySpacesEvent?.content ?? {};
 
   const newSpacesContent: InCinnySpacesContent = {
-    ...currentInSpaces,
+    ...content,
     sidebar: items,
   };
 
   return newSpacesContent;
+};
+
+export const useSidebarRooms = (sidebarItems: SidebarItems): string[] => {
+  const rooms = useMemo(() => {
+    const ids = sidebarItems.flatMap((item) => (typeof item === 'string' ? [item] : item.content));
+    return Array.from(new Set(ids));
+  }, [sidebarItems]);
+
+  return rooms;
 };

@@ -1,15 +1,15 @@
 import { useCallback } from 'react';
 import { useMatrixClient } from './useMatrixClient';
 import { AsyncState, useAsyncCallbackValue } from './useAsyncCallback';
-import { useSpecVersions } from './useSpecVersions';
+import { useUnstableFeatureSupport } from './useSpecVersions';
 
 export const useMutualRoomsSupport = (): boolean => {
-  const { unstable_features: unstableFeatures } = useSpecVersions();
+  const checkSupport = useUnstableFeatureSupport();
 
   const supported =
-    unstableFeatures?.['uk.half-shot.msc2666'] ||
-    unstableFeatures?.['uk.half-shot.msc2666.mutual_rooms'] ||
-    unstableFeatures?.['uk.half-shot.msc2666.query_mutual_rooms'];
+    checkSupport('uk.half-shot.msc2666') ||
+    checkSupport('uk.half-shot.msc2666.mutual_rooms') ||
+    checkSupport('uk.half-shot.msc2666.query_mutual_rooms');
 
   return !!supported;
 };

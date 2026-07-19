@@ -18,7 +18,7 @@ export function EventContent({ messageLayout, time, iconSrc, content }: EventCon
         alignItems="Center"
         justifyContent="Center"
       >
-        <Icon style={{ opacity: 0.6 }} size="50" src={iconSrc} />
+        <Icon size="50" src={iconSrc} />
       </Box>
     </Box>
   );

@@ -21,7 +21,7 @@ import {
 } from 'folds';
 import { Editor, Transforms } from 'slate';
 import { ReactEditor } from 'slate-react';
-import { IContent, IMentions, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { isKeyHotkey } from 'is-hotkey';
 import {
   AUTOCOMPLETE_PREFIXES,
@@ -50,21 +50,21 @@ import { settingsAtom } from '../../../state/settings';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getEditedEvent, getMentionContent, trimReplyFromFormattedBody } from '../../../utils/room';
 import { mobileOrTablet } from '../../../utils/user-agent';
 import { useComposingCheck } from '../../../hooks/useComposingCheck';
+import { useClient } from '../../../hooks/useClient';
+import { MentionsContent, MessageContent, RelationType } from '../../../../types/matrix/common';
 
 type MessageEditorProps = {
   roomId: string;
-  room: Room;
-  mEvent: MatrixEvent;
-  imagePackRooms?: Room[];
+  event: MessageEventWithoutRoomId;
+  imagePackRooms?: string[];
   onCancel: () => void;
 };
 export const MessageEditor = as<'div', MessageEditorProps>(
-  ({ room, roomId, mEvent, imagePackRooms, onCancel, ...props }, ref) => {
-    const mx = useMatrixClient();
+  ({ roomId, event, imagePackRooms, onCancel, ...props }, ref) => {
+    const ct = useClient();
     const editor = useEditor();
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [globalToolbar] = useSetting(settingsAtom, 'editorToolbar');
@@ -78,9 +78,9 @@ export const MessageEditor = as<'div', MessageEditorProps>(
     const getPrevBodyAndFormattedBody = useCallback((): [
       string | undefined,
       string | undefined,
-      IMentions | undefined
+      MentionsContent | undefined
     ] => {
-      const evtId = mEvent.getId()!;
+      const evtId = event.event_id;
       const evtTimeline = room.getTimelineForEvent(evtId);
       const editedEvent =
         evtTimeline && getEditedEvent(evtId, mEvent, evtTimeline.getTimelineSet());
@@ -95,7 +95,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         typeof customHtml === 'string' ? customHtml : undefined,
         mMentions,
       ];
-    }, [room, mEvent]);
+    }, [roomId, event]);
 
     const [saveState, save] = useAsyncCallback(
       useCallback(async () => {
@@ -124,12 +124,13 @@ export const MessageEditor = as<'div', MessageEditorProps>(
           }
         }
 
-        const newContent: IContent = {
-          msgtype: mEvent.getContent().msgtype,
+        const prevContent = event.content as MessageContent;
+        const newContent: MessageContent = {
+          msgtype: prevContent.msgtype,
           body: plainText,
         };
 
-        const mentionData = getMentions(mx, roomId, editor);
+        const mentionData = getMentions(ct, editor);
 
         prevMentions?.user_ids?.forEach((prevMentionId) => {
           mentionData.users.add(prevMentionId);
@@ -143,18 +144,20 @@ export const MessageEditor = as<'div', MessageEditorProps>(
           newContent.formatted_body = customHtml;
         }
 
-        const content: IContent = {
+        const content: MessageContent = {
           ...newContent,
           body: `* ${plainText}`,
           'm.new_content': newContent,
           'm.relates_to': {
-            event_id: mEvent.getId(),
+            event_id: event.event_id,
             rel_type: RelationType.Replace,
           },
         };
 
-        return mx.sendMessage(roomId, content);
-      }, [mx, editor, roomId, mEvent, isMarkdown, getPrevBodyAndFormattedBody])
+        // TODO: send message
+        // return mx.sendMessage(roomId, content);
+        return Promise.resolve();
+      }, [ct, editor, event, isMarkdown, getPrevBodyAndFormattedBody])
     );
 
     const handleSave = useCallback(() => {
@@ -241,7 +244,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
           <UserMentionAutocomplete
-            room={room}
+            roomId={roomId}
             editor={editor}
             query={autocompleteQuery}
             requestClose={handleCloseAutocomplete}

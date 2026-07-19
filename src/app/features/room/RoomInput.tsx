@@ -7,34 +7,15 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
-import { EventType, IContent, MsgType, RelationType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
-import {
-  Box,
-  Dialog,
-  Icon,
-  IconButton,
-  Icons,
-  Line,
-  Overlay,
-  OverlayBackdrop,
-  OverlayCenter,
-  PopOut,
-  Scroll,
-  Text,
-  config,
-  toRem,
-} from 'folds';
+import { Box, Checkbox, Icon, IconButton, Icons, Line, PopOut, Scroll, Text, config } from 'folds';
 
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   CustomEditor,
   Toolbar,
-  toMatrixCustomHTML,
-  toPlainText,
   AUTOCOMPLETE_PREFIXES,
   AutocompletePrefix,
   AutocompleteQuery,
@@ -47,33 +28,15 @@ import {
   createEmoticonElement,
   moveCursor,
   resetEditorHistory,
-  customHtmlEqualsPlainText,
-  trimCustomHtml,
   isEmptyEditor,
-  getBeginCommand,
-  trimCommand,
-  getMentions,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
-import {
-  TUploadContent,
-  encryptFile,
-  getImageInfo,
-  getMxIdLocalPart,
-  mxcUrlToHttp,
-} from '../../utils/matrix';
 import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
-import { useFilePicker } from '../../hooks/useFilePicker';
-import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
-import { useFileDropZone } from '../../hooks/useFileDrop';
 import {
-  TUploadItem,
-  TUploadMetadata,
-  roomIdToMsgDraftAtomFamily,
-  roomIdToReplyDraftAtomFamily,
-  roomIdToUploadItemsAtomFamily,
-  roomUploadAtomFamily,
+  composerToDraftAtom,
+  getComposerId,
+  composerToReplyDraftAtom,
 } from '../../state/room/roomInputDrafts';
 import { UploadCardRenderer } from '../../components/upload-card';
 import {
@@ -82,70 +45,62 @@ import {
   UploadBoardHeader,
   UploadBoardImperativeHandlers,
 } from '../../components/upload-board';
-import {
-  Upload,
-  UploadStatus,
-  UploadSuccess,
-  createUploadFamilyObserverAtom,
-} from '../../state/upload';
-import { getImageUrlBlob, loadImageElement } from '../../utils/dom';
-import { safeFile } from '../../utils/mimeTypes';
-import { fulfilledPromiseSettledResult } from '../../utils/common';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-import {
-  getAudioMsgContent,
-  getFileMsgContent,
-  getImageMsgContent,
-  getVideoMsgContent,
-} from './msgContent';
-import { getMemberDisplayName, getMentionContent, trimReplyFromBody } from '../../utils/room';
 import { CommandAutocomplete } from './CommandAutocomplete';
-import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '../../hooks/useCommands';
+import { useCommands } from '../../hooks/useCommands';
 import { mobileOrTablet } from '../../utils/user-agent';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
-import { ReplyLayout, ThreadIndicator } from '../../components/message';
-import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useImagePackRooms } from '../../hooks/useImagePackRooms';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import colorMXID from '../../../util/colorMXID';
-import { useIsDirectRoom } from '../../hooks/useRoom';
+import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
 import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
-import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { usePowerLevelTagsContext } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
+import {
+  useSendMessage,
+  useSendStickerMessage,
+  useSendUploadMessage,
+} from './hooks/useSendMessage';
+import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
+import { FileDropDialog } from './FileDropDialog';
+import { useUploadItemPicker } from './hooks/useUploadItemPicker';
+import { useUploadItems } from './hooks/useUploadItems';
+import { useUploadsAtom } from './hooks/useUploadsAtom';
 
 interface RoomInputProps {
   editor: Editor;
   fileDropContainerRef: RefObject<HTMLElement>;
-  roomId: string;
-  room: Room;
+  threadId?: string;
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
-  ({ editor, fileDropContainerRef, roomId, room }, ref) => {
-    const mx = useMatrixClient();
-    const useAuthentication = useMediaAuthentication();
+  ({ editor, fileDropContainerRef, threadId }, ref) => {
+    const roomId = useRoom();
+
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
-    const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
-    const direct = useIsDirectRoom();
-    const commands = useCommands(mx, room);
-    const emojiBtnRef = useRef<HTMLButtonElement>(null);
-    const roomToParents = useAtomValue(roomToParentsAtom);
-    const powerLevels = usePowerLevelsContext();
-    const creators = useRoomCreators(room);
+    const [ping, setPing] = useState(true);
 
-    const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
-    const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
+    const direct = useIsDirectRoom();
+    const commands = useCommands();
+    const emojiBtnRef = useRef<HTMLButtonElement>(null);
+    const powerLevels = usePowerLevelsContext();
+    const creators = useRoomCreators(roomId);
+    const memberAPI = useRoomMembersAPI();
+
+    const composerId = getComposerId(roomId, threadId);
+    const [draft, setDraft] = useAtom(composerToDraftAtom(composerId));
+    const [replyDraft, setReplyDraft] = useAtom(composerToReplyDraftAtom(composerId));
     const replyUserID = replyDraft?.userId;
 
-    const powerLevelTags = usePowerLevelTags(room, powerLevels);
+    const powerLevelTags = usePowerLevelTagsContext();
     const creatorsTag = useRoomCreatorsTag();
-    const getMemberPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
+    const getMemberPowerTag = useGetMemberPowerTag(creators, powerLevels);
     const theme = useTheme();
     const accessibleTagColors = useAccessiblePowerTagColors(
       theme.kind,
@@ -161,64 +116,32 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       legacyUsernameColor || direct ? colorMXID(replyUserID ?? '') : replyPowerColor;
 
     const [uploadBoard, setUploadBoard] = useState(true);
-    const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
-    const uploadFamilyObserverAtom = createUploadFamilyObserverAtom(
-      roomUploadAtomFamily,
-      selectedFiles.map((f) => f.file)
+    const { uploadItems, addUploadItems, removeUploadItem, updateUploadMetadata, dropUploads } =
+      useUploadItems();
+    useEffect(() => setUploadBoard(true), [uploadItems]); // open upload board so items start uploading in UploadCard
+    const { pickFile, handlePaste, dropZoneVisible } = useUploadItemPicker(
+      fileDropContainerRef,
+      addUploadItems
     );
+
+    const uploadsAtom = useUploadsAtom(uploadItems);
     const uploadBoardHandlers = useRef<UploadBoardImperativeHandlers>();
 
-    const imagePackRooms: Room[] = useImagePackRooms(roomId, roomToParents);
+    const imagePackRooms: string[] = useImagePackRooms(roomId);
 
     const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
 
-    const sendTypingStatus = useTypingStatusUpdater(mx, roomId);
+    const sendTypingStatus = useTypingStatusUpdater(roomId);
 
-    const handleFiles = useCallback(
-      async (files: File[]) => {
-        setUploadBoard(true);
-        const safeFiles = files.map(safeFile);
-        const fileItems: TUploadItem[] = [];
-
-        if (room.hasEncryptionStateEvent()) {
-          const encryptFiles = fulfilledPromiseSettledResult(
-            await Promise.allSettled(safeFiles.map((f) => encryptFile(f)))
-          );
-          encryptFiles.forEach((ef) =>
-            fileItems.push({
-              ...ef,
-              metadata: {
-                markedAsSpoiler: false,
-              },
-            })
-          );
-        } else {
-          safeFiles.forEach((f) =>
-            fileItems.push({
-              file: f,
-              originalFile: f,
-              encInfo: undefined,
-              metadata: {
-                markedAsSpoiler: false,
-              },
-            })
-          );
-        }
-        setSelectedFiles({
-          type: 'PUT',
-          item: fileItems,
-        });
-      },
-      [setSelectedFiles, room]
-    );
-    const pickFile = useFilePicker(handleFiles, true);
-    const handlePaste = useFilePasteHandler(handleFiles);
-    const dropZoneVisible = useFileDropZone(fileDropContainerRef, handleFiles);
     const [hideStickerBtn, setHideStickerBtn] = useState(document.body.clientWidth < 500);
 
     const isComposing = useComposingCheck();
+
+    const sendMessage = useSendMessage(editor, commands, threadId);
+    const sendSticker = useSendStickerMessage(threadId);
+    const sendUploads = useSendUploadMessage(dropUploads, threadId);
 
     useElementSizeObserver(
       useCallback(() => document.body, []),
@@ -226,158 +149,41 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
 
     useEffect(() => {
-      Transforms.insertFragment(editor, msgDraft);
-    }, [editor, msgDraft]);
+      Transforms.insertFragment(editor, draft);
+    }, [editor, draft]);
 
     useEffect(
       () => () => {
         if (!isEmptyEditor(editor)) {
           const parsedDraft = JSON.parse(JSON.stringify(editor.children));
-          setMsgDraft(parsedDraft);
+          setDraft(parsedDraft);
         } else {
-          setMsgDraft([]);
+          setDraft([]);
         }
         resetEditor(editor);
         resetEditorHistory(editor);
       },
-      [roomId, editor, setMsgDraft]
+      [roomId, editor, setDraft]
     );
-
-    const handleFileMetadata = useCallback(
-      (fileItem: TUploadItem, metadata: TUploadMetadata) => {
-        setSelectedFiles({
-          type: 'REPLACE',
-          item: fileItem,
-          replacement: { ...fileItem, metadata },
-        });
-      },
-      [setSelectedFiles]
-    );
-
-    const handleRemoveUpload = useCallback(
-      (upload: TUploadContent | TUploadContent[]) => {
-        const uploads = Array.isArray(upload) ? upload : [upload];
-        setSelectedFiles({
-          type: 'DELETE',
-          item: selectedFiles.filter((f) => uploads.find((u) => u === f.file)),
-        });
-        uploads.forEach((u) => roomUploadAtomFamily.remove(u));
-      },
-      [setSelectedFiles, selectedFiles]
-    );
-
-    const handleCancelUpload = (uploads: Upload[]) => {
-      uploads.forEach((upload) => {
-        if (upload.status === UploadStatus.Loading) {
-          mx.cancelUpload(upload.promise);
-        }
-      });
-      handleRemoveUpload(uploads.map((upload) => upload.file));
-    };
-
-    const handleSendUpload = async (uploads: UploadSuccess[]) => {
-      const contentsPromises = uploads.map(async (upload) => {
-        const fileItem = selectedFiles.find((f) => f.file === upload.file);
-        if (!fileItem) throw new Error('Broken upload');
-
-        if (fileItem.file.type.startsWith('image')) {
-          return getImageMsgContent(mx, fileItem, upload.mxc);
-        }
-        if (fileItem.file.type.startsWith('video')) {
-          return getVideoMsgContent(mx, fileItem, upload.mxc);
-        }
-        if (fileItem.file.type.startsWith('audio')) {
-          return getAudioMsgContent(fileItem, upload.mxc);
-        }
-        return getFileMsgContent(fileItem, upload.mxc);
-      });
-      handleCancelUpload(uploads);
-      const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
-      contents.forEach((content) => mx.sendMessage(roomId, content as any));
-    };
 
     const submit = useCallback(() => {
       uploadBoardHandlers.current?.handleSend();
 
-      const commandName = getBeginCommand(editor);
-      let plainText = toPlainText(editor.children, isMarkdown).trim();
-      let customHtml = trimCustomHtml(
-        toMatrixCustomHTML(editor.children, {
-          allowTextFormatting: true,
-          allowBlockMarkdown: isMarkdown,
-          allowInlineMarkdown: isMarkdown,
-        })
+      sendMessage(
+        replyDraft
+          ? {
+              userId: replyDraft.userId,
+              eventId: replyDraft.eventId,
+              ping,
+            }
+          : undefined
       );
-      let msgType = MsgType.Text;
 
-      if (commandName) {
-        plainText = trimCommand(commandName, plainText);
-        customHtml = trimCommand(commandName, customHtml);
-      }
-      if (commandName === Command.Me) {
-        msgType = MsgType.Emote;
-      } else if (commandName === Command.Notice) {
-        msgType = MsgType.Notice;
-      } else if (commandName === Command.Shrug) {
-        plainText = `${SHRUG} ${plainText}`;
-        customHtml = `${SHRUG} ${customHtml}`;
-      } else if (commandName === Command.TableFlip) {
-        plainText = `${TABLEFLIP} ${plainText}`;
-        customHtml = `${TABLEFLIP} ${customHtml}`;
-      } else if (commandName === Command.UnFlip) {
-        plainText = `${UNFLIP} ${plainText}`;
-        customHtml = `${UNFLIP} ${customHtml}`;
-      } else if (commandName) {
-        const commandContent = commands[commandName as Command];
-        if (commandContent) {
-          commandContent.exe(plainText);
-        }
-        resetEditor(editor);
-        resetEditorHistory(editor);
-        sendTypingStatus(false);
-        return;
-      }
-
-      if (plainText === '') return;
-
-      const body = plainText;
-      const formattedBody = customHtml;
-      const mentionData = getMentions(mx, roomId, editor);
-
-      const content: IContent = {
-        msgtype: msgType,
-        body,
-      };
-
-      if (replyDraft && replyDraft.userId !== mx.getUserId()) {
-        mentionData.users.add(replyDraft.userId);
-      }
-
-      const mMentions = getMentionContent(Array.from(mentionData.users), mentionData.room);
-      content['m.mentions'] = mMentions;
-
-      if (replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
-        content.format = 'org.matrix.custom.html';
-        content.formatted_body = formattedBody;
-      }
-      if (replyDraft) {
-        content['m.relates_to'] = {
-          'm.in_reply_to': {
-            event_id: replyDraft.eventId,
-          },
-        };
-        if (replyDraft.relation?.rel_type === RelationType.Thread) {
-          content['m.relates_to'].event_id = replyDraft.relation.event_id;
-          content['m.relates_to'].rel_type = RelationType.Thread;
-          content['m.relates_to'].is_falling_back = false;
-        }
-      }
-      mx.sendMessage(roomId, content as any);
       resetEditor(editor);
       resetEditorHistory(editor);
       setReplyDraft(undefined);
       sendTypingStatus(false);
-    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
+    }, [editor, replyDraft, ping, sendTypingStatus, setReplyDraft, sendMessage]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -430,41 +236,26 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       moveCursor(editor);
     };
 
-    const handleStickerSelect = async (mxc: string, shortcode: string, label: string) => {
-      const stickerUrl = mxcUrlToHttp(mx, mxc, useAuthentication);
-      if (!stickerUrl) return;
-
-      const info = await getImageInfo(
-        await loadImageElement(stickerUrl),
-        await getImageUrlBlob(stickerUrl)
-      );
-
-      mx.sendEvent(roomId, EventType.Sticker, {
-        body: label,
-        url: mxc,
-        info,
-      });
-    };
-
     return (
       <div ref={ref}>
-        {selectedFiles.length > 0 && (
+        {uploadItems.length > 0 && (
           <UploadBoard
             header={
               <UploadBoardHeader
                 open={uploadBoard}
                 onToggle={() => setUploadBoard(!uploadBoard)}
-                uploadFamilyObserverAtom={uploadFamilyObserverAtom}
-                onSend={handleSendUpload}
+                uploadItems={uploadItems}
+                uploadsAtom={uploadsAtom}
+                onSend={sendUploads}
                 imperativeHandlerRef={uploadBoardHandlers}
-                onCancel={handleCancelUpload}
+                onCancel={dropUploads}
               />
             }
           >
             {uploadBoard && (
               <Scroll size="300" hideTrack visibility="Hover">
                 <UploadBoardContent>
-                  {Array.from(selectedFiles)
+                  {Array.from(uploadItems)
                     .reverse()
                     .map((fileItem, index) => (
                       <UploadCardRenderer
@@ -472,8 +263,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         key={index}
                         isEncrypted={!!fileItem.encInfo}
                         fileItem={fileItem}
-                        setMetadata={handleFileMetadata}
-                        onRemove={handleRemoveUpload}
+                        setMetadata={updateUploadMetadata}
+                        onRemove={removeUploadItem}
                       />
                     ))}
                 </UploadBoardContent>
@@ -481,29 +272,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             )}
           </UploadBoard>
         )}
-        <Overlay
-          open={dropZoneVisible}
-          backdrop={<OverlayBackdrop />}
-          style={{ pointerEvents: 'none' }}
-        >
-          <OverlayCenter>
-            <Dialog variant="Primary">
-              <Box
-                direction="Column"
-                justifyContent="Center"
-                alignItems="Center"
-                gap="500"
-                style={{ padding: toRem(60) }}
-              >
-                <Icon size="600" src={Icons.File} />
-                <Text size="H4" align="Center">
-                  {`Drop Files in "${room?.name || 'Room'}"`}
-                </Text>
-                <Text align="Center">Drag and drop files here or click for selection dialog</Text>
-              </Box>
-            </Dialog>
-          </OverlayCenter>
-        </Overlay>
+        <FileDropDialog visible={dropZoneVisible} />
         {autocompleteQuery?.prefix === AutocompletePrefix.RoomMention && (
           <RoomMentionAutocomplete
             roomId={roomId}
@@ -514,7 +283,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
           <UserMentionAutocomplete
-            room={room}
+            roomId={roomId}
             editor={editor}
             query={autocompleteQuery}
             requestClose={handleCloseAutocomplete}
@@ -530,7 +299,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.Command && (
           <CommandAutocomplete
-            room={room}
+            commands={commands}
             editor={editor}
             query={autocompleteQuery}
             requestClose={handleCloseAutocomplete}
@@ -559,24 +328,24 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   >
                     <Icon src={Icons.Cross} size="50" />
                   </IconButton>
-                  <Box direction="Row" gap="200" alignItems="Center">
-                    {replyDraft.relation?.rel_type === RelationType.Thread && <ThreadIndicator />}
-                    <ReplyLayout
-                      userColor={replyUsernameColor}
-                      username={
-                        <Text size="T300" truncate>
-                          <b>
-                            {getMemberDisplayName(room, replyDraft.userId) ??
-                              getMxIdLocalPart(replyDraft.userId) ??
-                              replyDraft.userId}
-                          </b>
-                        </Text>
-                      }
-                    >
-                      <Text size="T300" truncate>
-                        {trimReplyFromBody(replyDraft.body)}
-                      </Text>
-                    </ReplyLayout>
+                  <Box grow="Yes" direction="Row" gap="200" alignItems="Center">
+                    <Text size="T300" truncate>
+                      Quote{' '}
+                      <strong style={{ color: replyUsernameColor }}>
+                        @{memberAPI.getName(replyDraft.userId)}
+                      </strong>
+                    </Text>
+                  </Box>
+                  <Box alignItems="Center" shrink="No" gap="100">
+                    <Text as="label" size="T200">
+                      Ping:
+                    </Text>
+                    <Checkbox
+                      checked={ping}
+                      onClick={() => setPing(!ping)}
+                      variant="Success"
+                      size="100"
+                    />
                   </Box>
                 </Box>
               </div>
@@ -622,7 +391,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         returnFocusOnDeactivate={false}
                         onEmojiSelect={handleEmoticonSelect}
                         onCustomEmojiSelect={handleEmoticonSelect}
-                        onStickerSelect={handleStickerSelect}
+                        onStickerSelect={sendSticker}
                         requestClose={() => {
                           setEmojiBoardTab((t) => {
                             if (t) {

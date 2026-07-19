@@ -1,22 +1,20 @@
-import { Room } from 'matrix-js-sdk';
+import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 import { getAllParents } from '../utils/room';
-import { useMatrixClient } from './useMatrixClient';
+import { useAllJoinedRoomsSet } from './useGetRoom';
+import { roomToParentsAtom } from '../state/room/roomToParents';
 
-export const useImagePackRooms = (
-  roomId: string,
-  roomToParents: Map<string, Set<string>>
-): Room[] => {
-  const mx = useMatrixClient();
+export const useImagePackRooms = (roomId: string): string[] => {
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const allJoinedRooms = useAllJoinedRoomsSet();
 
-  const imagePackRooms: Room[] = useMemo(() => {
+  const imagePackRooms: string[] = useMemo(() => {
     const allParentSpaces = [roomId].concat(Array.from(getAllParents(roomToParents, roomId)));
-    return allParentSpaces.reduce<Room[]>((list, rId) => {
-      const r = mx.getRoom(rId);
-      if (r) list.push(r);
+    return allParentSpaces.reduce<string[]>((list, rId) => {
+      if (allJoinedRooms.has(rId)) list.push(rId);
       return list;
     }, []);
-  }, [mx, roomId, roomToParents]);
+  }, [roomId, roomToParents, allJoinedRooms]);
 
   return imagePackRooms;
 };

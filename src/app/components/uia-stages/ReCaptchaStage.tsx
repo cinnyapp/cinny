@@ -1,8 +1,8 @@
 import React from 'react';
 import { Dialog, Text, Box, Button, config } from 'folds';
-import { AuthType } from 'matrix-js-sdk';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { StageComponentProps } from './types';
+import { AuthType } from '../../utils/matrix-uia';
 
 function ReCaptchaErrorDialog({
   title,

@@ -1,51 +1,37 @@
-import { useEffect, useState } from 'react';
-import { UserEvent, UserEventHandlerMap } from 'matrix-js-sdk';
-import { useMatrixClient } from './useMatrixClient';
+import { useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getProfile, GetProfileOK } from 'neurone/lib/api/matrix/client/v3/profile';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { useClient } from './useClient';
 
 export type UserProfile = {
   avatarUrl?: string;
   displayName?: string;
 };
-export const useUserProfile = (userId: string): UserProfile => {
-  const mx = useMatrixClient();
+export const useUserProfile = (userId: string): UserProfile | undefined => {
+  const ct = useClient();
 
-  const [profile, setProfile] = useState<UserProfile>(() => {
-    const user = mx.getUser(userId);
-    return {
-      avatarUrl: user?.avatarUrl,
-      displayName: user?.displayName,
-    };
-  });
-
-  useEffect(() => {
-    const user = mx.getUser(userId);
-    const onAvatarChange: UserEventHandlerMap[UserEvent.AvatarUrl] = (event, myUser) => {
-      setProfile((cp) => ({
-        ...cp,
-        avatarUrl: myUser.avatarUrl,
-      }));
-    };
-    const onDisplayNameChange: UserEventHandlerMap[UserEvent.DisplayName] = (event, myUser) => {
-      setProfile((cp) => ({
-        ...cp,
-        displayName: myUser.displayName,
-      }));
-    };
-
-    mx.getProfileInfo(userId).then((info) =>
-      setProfile({
-        avatarUrl: info.avatar_url,
-        displayName: info.displayname,
+  const fetchProfile = useCallback(async (): Promise<UserProfile> => {
+    const response = await ct.requestAuthJSON(
+      getProfile({
+        pathParams: { userId },
       })
     );
 
-    user?.on(UserEvent.AvatarUrl, onAvatarChange);
-    user?.on(UserEvent.DisplayName, onDisplayNameChange);
-    return () => {
-      user?.removeListener(UserEvent.AvatarUrl, onAvatarChange);
-      user?.removeListener(UserEvent.DisplayName, onDisplayNameChange);
+    const [, profile] = await parseMatrixResp<GetProfileOK>(response);
+    return {
+      avatarUrl: profile?.avatar_url || undefined,
+      displayName: profile?.displayname || undefined,
     };
-  }, [mx, userId]);
+  }, [ct, userId]);
 
-  return profile;
+  const { data } = useQuery({
+    queryKey: ['profile', userId],
+    queryFn: fetchProfile,
+    staleTime: 0,
+    gcTime: Infinity,
+    refetchOnMount: 'always',
+  });
+
+  return data;
 };

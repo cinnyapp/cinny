@@ -36,7 +36,7 @@ const DropTargetLine = style({
 
       borderBottom: `${toRem(LineHeight)} solid currentColor`,
     },
-    '&[data-hover=true]:after': {
+    '&[data-hover=true]::after': {
       content: '',
       display: 'block',
       width: toRem(LineHeight * 3),

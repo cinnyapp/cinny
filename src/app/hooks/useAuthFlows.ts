@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
-import { IAuthData, MatrixError } from 'matrix-js-sdk';
-import { ILoginFlowsResponse } from 'matrix-js-sdk/lib/@types/auth';
+import { MatrixError, MatrixErrorData } from 'neurone/lib/matrix-request';
+import { GetLoginOK } from 'neurone/lib/api/matrix/client/v3/login';
+import { AuthResponse } from '../utils/matrix-uia';
 
 export enum RegisterFlowStatus {
   FlowRequired = 401,
@@ -12,14 +13,16 @@ export enum RegisterFlowStatus {
 export type RegisterFlowsResponse =
   | {
       status: RegisterFlowStatus.FlowRequired;
-      data: IAuthData;
+      data: AuthResponse;
     }
   | {
       status: Exclude<RegisterFlowStatus, RegisterFlowStatus.FlowRequired>;
     };
 
-export const parseRegisterErrResp = (matrixError: MatrixError): RegisterFlowsResponse => {
-  switch (matrixError.httpStatus) {
+export const parseRegisterErrResp = (
+  matrixError: MatrixError<AuthResponse | MatrixErrorData>
+): RegisterFlowsResponse => {
+  switch (matrixError.status) {
     case RegisterFlowStatus.InvalidRequest: {
       return { status: RegisterFlowStatus.InvalidRequest };
     }
@@ -32,7 +35,7 @@ export const parseRegisterErrResp = (matrixError: MatrixError): RegisterFlowsRes
     case RegisterFlowStatus.FlowRequired: {
       return {
         status: RegisterFlowStatus.FlowRequired,
-        data: matrixError.data as IAuthData,
+        data: matrixError.data as AuthResponse,
       };
     }
     default: {
@@ -42,7 +45,7 @@ export const parseRegisterErrResp = (matrixError: MatrixError): RegisterFlowsRes
 };
 
 export type AuthFlows = {
-  loginFlows: ILoginFlowsResponse;
+  loginFlows: GetLoginOK;
   registerFlows: RegisterFlowsResponse;
 };
 

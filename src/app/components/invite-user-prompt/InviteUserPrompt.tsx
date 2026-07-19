@@ -3,7 +3,6 @@ import React, {
   FormEventHandler,
   KeyboardEventHandler,
   useCallback,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -29,19 +28,18 @@ import {
   Scroll,
   MenuItem,
 } from 'folds';
-import { Room } from 'matrix-js-sdk';
 import { isKeyHotkey } from 'is-hotkey';
 import FocusTrap from 'focus-trap-react';
+import { postInvite } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { stopPropagation } from '../../utils/keyboard';
 import { useDirectUsers } from '../../hooks/useDirectUsers';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
-import { Membership } from '../../../types/matrix/room';
 import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';
 import { highlightText, makeHighlightRegex } from '../../plugins/react-custom-html-parser';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { BreakWord } from '../../styles/Text.css';
 import { useAlive } from '../../hooks/useAlive';
+import { useClient } from '../../hooks/useClient';
 
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 1000,
@@ -52,27 +50,19 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
 const getUserIdString = (userId: string) => getMxIdLocalPart(userId) ?? userId;
 
 type InviteUserProps = {
-  room: Room;
+  roomId: string;
   requestClose: () => void;
 };
-export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
-  const mx = useMatrixClient();
+export function InviteUserPrompt({ roomId, requestClose }: InviteUserProps) {
+  const ct = useClient();
   const alive = useAlive();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const directUsers = useDirectUsers();
   const [validUserId, setValidUserId] = useState<string>();
 
-  const filteredUsers = useMemo(
-    () =>
-      directUsers.filter((userId) => {
-        const membership = room.getMember(userId)?.membership;
-        return membership !== Membership.Join;
-      }),
-    [directUsers, room]
-  );
   const [result, search, resetSearch] = useAsyncSearch(
-    filteredUsers,
+    directUsers,
     getUserIdString,
     SEARCH_OPTIONS
   );
@@ -83,9 +73,17 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
   const [inviteState, invite] = useAsyncCallback<void, Error, [string, string | undefined]>(
     useCallback(
       async (userId, reason) => {
-        await mx.invite(room.roomId, userId, reason);
+        await ct.requestAuthJSON(
+          postInvite({
+            pathParams: { roomId },
+            body: {
+              user_id: userId,
+              reason,
+            },
+          })
+        );
       },
-      [mx, room]
+      [ct, roomId]
     )
   );
 

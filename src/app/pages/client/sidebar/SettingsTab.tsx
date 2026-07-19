@@ -2,25 +2,30 @@ import React, { useState } from 'react';
 import { Text } from 'folds';
 import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '../../../components/sidebar';
 import { UserAvatar } from '../../../components/user-avatar';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
+import { getMxIdLocalPart } from '../../../utils/matrix';
 import { nameInitials } from '../../../utils/common';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { Settings } from '../../../features/settings';
 import { useUserProfile } from '../../../hooks/useUserProfile';
 import { Modal500 } from '../../../components/Modal500';
+import { useClient } from '../../../hooks/useClient';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
 
 export function SettingsTab() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const userId = mx.getUserId()!;
+  const { userId, baseUrl } = ct.session;
   const profile = useUserProfile(userId);
 
   const [settings, setSettings] = useState(false);
 
-  const displayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
-  const avatarUrl = profile.avatarUrl
-    ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
+  const displayName = profile?.displayName ?? getMxIdLocalPart(userId) ?? userId;
+  const avatarUrl = profile?.avatarUrl
+    ? mxcToHttp(baseUrl, profile.avatarUrl, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
     : undefined;
 
   const openSettings = () => setSettings(true);

@@ -1,48 +1,48 @@
 import { ReactNode, useCallback, useMemo } from 'react';
-import { Capabilities, validateAuthMetadata, ValidatedAuthMetadata } from 'matrix-js-sdk';
+import { getCapabilities, GetCapabilitiesOK } from 'neurone/lib/api/matrix/client/v3/capabilities';
+import { getConfig, GetConfigOK } from 'neurone/lib/api/matrix/client/v1/media';
+import { getAuthMetadata, GetAuthMetadataOK } from 'neurone/lib/api/matrix/client/v1/authMetadata';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { AsyncStatus, useAsyncCallbackValue } from '../hooks/useAsyncCallback';
-import { useMatrixClient } from '../hooks/useMatrixClient';
-import { MediaConfig } from '../hooks/useMediaConfig';
 import { promiseFulfilledResult } from '../utils/common';
+import { useClient } from '../hooks/useClient';
+import { MediaConfig } from '../hooks/useMediaConfig';
+import { Capabilities } from '../hooks/useCapabilities';
+import { getJSONRequest } from '../../client/request';
 
 export type ServerConfigs = {
   capabilities?: Capabilities;
   mediaConfig?: MediaConfig;
-  authMetadata?: ValidatedAuthMetadata;
+  authMetadata?: GetAuthMetadataOK;
 };
 
 type ServerConfigsLoaderProps = {
   children: (configs: ServerConfigs) => ReactNode;
 };
 export function ServerConfigsLoader({ children }: ServerConfigsLoaderProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const fallbackConfigs = useMemo(() => ({}), []);
 
   const [configsState] = useAsyncCallbackValue<ServerConfigs, unknown>(
     useCallback(async () => {
       const result = await Promise.allSettled([
-        mx.getCapabilities(),
-        mx.getMediaConfig(),
-        mx.getAuthMetadata(),
+        ct.requestAuthJSON(getCapabilities({})).then(parseMatrixResp<GetCapabilitiesOK>),
+        ct.requestAuthJSON(getConfig({})).then(parseMatrixResp<GetConfigOK>),
+        getJSONRequest(ct.session.baseUrl)(getAuthMetadata({})).then(
+          parseMatrixResp<GetAuthMetadataOK>
+        ),
       ]);
 
-      const capabilities = promiseFulfilledResult(result[0]);
-      const mediaConfig = promiseFulfilledResult(result[1]);
-      const authMetadata = promiseFulfilledResult(result[2]);
-      let validatedAuthMetadata: ValidatedAuthMetadata | undefined;
-
-      try {
-        validatedAuthMetadata = validateAuthMetadata(authMetadata);
-      } catch (e) {
-        console.error(e);
-      }
+      const [, capResult] = promiseFulfilledResult(result[0]) ?? [];
+      const [, mediaConfig] = promiseFulfilledResult(result[1]) ?? [];
+      const [, authMetadata] = promiseFulfilledResult(result[2]) ?? [];
 
       return {
-        capabilities,
+        capabilities: capResult?.capabilities,
         mediaConfig,
-        authMetadata: validatedAuthMetadata,
+        authMetadata,
       };
-    }, [mx])
+    }, [ct])
   );
 
   const configs: ServerConfigs =

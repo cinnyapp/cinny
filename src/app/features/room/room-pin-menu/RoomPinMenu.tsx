@@ -49,7 +49,12 @@ import {
   getMemberDisplayName,
   getStateEvent,
 } from '../../../utils/room';
-import { GetContentCallback, MessageEvent, StateEvent } from '../../../../types/matrix/room';
+import {
+  GetContentCallback,
+  MessageEvent,
+  StateEvent,
+  StateEventType,
+} from '../../../../types/matrix/room';
 import { useMentionClickHandler } from '../../../hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '../../../hooks/useSpoilerClickHandler';
 import {
@@ -76,7 +81,7 @@ import { usePowerLevelTags } from '../../../hooks/usePowerLevelTags';
 import { useTheme } from '../../../hooks/useTheme';
 import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
-import { useIsDirectRoom } from '../../../hooks/useRoom';
+import { useIsDirectRoom, useRoom } from '../../../hooks/useRoom';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
 import {
@@ -86,6 +91,7 @@ import {
   useGetMemberPowerTag,
 } from '../../../hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
+import { useClient } from '../../../hooks/useClient';
 
 type PinnedMessageProps = {
   room: Room;
@@ -244,302 +250,292 @@ function PinnedMessage({
 }
 
 type RoomPinMenuProps = {
-  room: Room;
   requestClose: () => void;
 };
-export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
-  ({ room, requestClose }, ref) => {
-    const mx = useMatrixClient();
-    const userId = mx.getUserId()!;
-    const powerLevels = usePowerLevelsContext();
-    const creators = useRoomCreators(room);
+export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(({ requestClose }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
+  const { userId } = ct.session;
+  const powerLevels = usePowerLevelsContext();
+  const creators = useRoomCreators(roomId);
 
-    const permissions = useRoomPermissions(creators, powerLevels);
-    const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, userId);
+  const permissions = useRoomPermissions(creators, powerLevels);
+  const canPinEvent = permissions.stateEvent(StateEventType.RoomPinnedEvents, userId);
 
-    const creatorsTag = useRoomCreatorsTag();
-    const powerLevelTags = usePowerLevelTags(room, powerLevels);
-    const getMemberPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
+  const creatorsTag = useRoomCreatorsTag();
+  const powerLevelTags = usePowerLevelTags(room, powerLevels);
+  const getMemberPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
 
-    const theme = useTheme();
-    const accessibleTagColors = useAccessiblePowerTagColors(
-      theme.kind,
-      creatorsTag,
-      powerLevelTags
-    );
+  const theme = useTheme();
+  const accessibleTagColors = useAccessiblePowerTagColors(theme.kind, creatorsTag, powerLevelTags);
 
-    const pinnedEvents = useRoomPinnedEvents(room);
-    const sortedPinnedEvent = useMemo(() => Array.from(pinnedEvents).reverse(), [pinnedEvents]);
-    const useAuthentication = useMediaAuthentication();
-    const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
-    const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
+  const pinnedEvents = useRoomPinnedEvents(roomId);
+  const sortedPinnedEvent = useMemo(() => Array.from(pinnedEvents).reverse(), [pinnedEvents]);
+  const useAuthentication = useMediaAuthentication();
+  const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
+  const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
 
-    const direct = useIsDirectRoom();
-    const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
+  const direct = useIsDirectRoom();
+  const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
 
-    const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-    const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
 
-    const { navigateRoom } = useRoomNavigate();
-    const scrollRef = useRef<HTMLDivElement>(null);
+  const { navigateRoom } = useRoomNavigate();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-    const virtualizer = useVirtualizer({
-      count: sortedPinnedEvent.length,
-      getScrollElement: () => scrollRef.current,
-      estimateSize: () => 75,
-      overscan: 4,
-    });
+  const virtualizer = useVirtualizer({
+    count: sortedPinnedEvent.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 75,
+    overscan: 4,
+  });
 
-    const mentionClickHandler = useMentionClickHandler(room.roomId);
-    const spoilerClickHandler = useSpoilerClickHandler();
+  const mentionClickHandler = useMentionClickHandler(roomId);
+  const spoilerClickHandler = useSpoilerClickHandler();
 
-    const linkifyOpts = useMemo<LinkifyOpts>(
-      () => ({
-        ...LINKIFY_OPTS,
-        render: factoryRenderLinkifyWithMention((href) =>
-          renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
-        ),
+  const linkifyOpts = useMemo<LinkifyOpts>(
+    () => ({
+      ...LINKIFY_OPTS,
+      render: factoryRenderLinkifyWithMention((href) =>
+        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+      ),
+    }),
+    [mx, room, mentionClickHandler]
+  );
+  const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
+    () =>
+      getReactCustomHtmlParser(mx, room.roomId, {
+        linkifyOpts,
+        useAuthentication,
+        handleSpoilerClick: spoilerClickHandler,
+        handleMentionClick: mentionClickHandler,
       }),
-      [mx, room, mentionClickHandler]
-    );
-    const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
-      () =>
-        getReactCustomHtmlParser(mx, room.roomId, {
-          linkifyOpts,
-          useAuthentication,
-          handleSpoilerClick: spoilerClickHandler,
-          handleMentionClick: mentionClickHandler,
-        }),
-      [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication]
-    );
+    [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication]
+  );
 
-    const renderMatrixEvent = useMatrixEventRenderer<[MatrixEvent, string, GetContentCallback]>(
-      {
-        [MessageEvent.RoomMessage]: (event, displayName, getContent) => {
-          if (event.isRedacted()) {
-            return (
-              <RedactedContent reason={event.getUnsigned().redacted_because?.content.reason} />
-            );
-          }
+  const renderMatrixEvent = useMatrixEventRenderer<[MatrixEvent, string, GetContentCallback]>(
+    {
+      [MessageEvent.RoomMessage]: (event, displayName, getContent) => {
+        if (event.isRedacted()) {
+          return <RedactedContent reason={event.getUnsigned().redacted_because?.content.reason} />;
+        }
 
+        return (
+          <RenderMessageContent
+            displayName={displayName}
+            msgType={event.getContent().msgtype ?? ''}
+            ts={event.getTs()}
+            getContent={getContent}
+            edited={!!event.replacingEvent()}
+            mediaAutoLoad={mediaAutoLoad}
+            urlPreview={urlPreview}
+            htmlReactParserOptions={htmlReactParserOptions}
+            linkifyOpts={linkifyOpts}
+            outlineAttachment
+          />
+        );
+      },
+      [MessageEvent.RoomMessageEncrypted]: (event, displayName) => {
+        const eventId = event.getId()!;
+        const evtTimeline = room.getTimelineForEvent(eventId);
+
+        const mEvent = evtTimeline?.getEvents().find((e) => e.getId() === eventId);
+
+        if (!mEvent || !evtTimeline) {
           return (
-            <RenderMessageContent
-              displayName={displayName}
-              msgType={event.getContent().msgtype ?? ''}
-              ts={event.getTs()}
-              getContent={getContent}
-              edited={!!event.replacingEvent()}
-              mediaAutoLoad={mediaAutoLoad}
-              urlPreview={urlPreview}
-              htmlReactParserOptions={htmlReactParserOptions}
-              linkifyOpts={linkifyOpts}
-              outlineAttachment
-            />
+            <Box grow="Yes" direction="Column">
+              <Text size="T400" priority="300">
+                <code className={customHtmlCss.Code}>{event.getType()}</code>
+                {' event'}
+              </Text>
+            </Box>
           );
-        },
-        [MessageEvent.RoomMessageEncrypted]: (event, displayName) => {
-          const eventId = event.getId()!;
-          const evtTimeline = room.getTimelineForEvent(eventId);
+        }
 
-          const mEvent = evtTimeline?.getEvents().find((e) => e.getId() === eventId);
+        return (
+          <EncryptedContent mEvent={mEvent}>
+            {() => {
+              if (mEvent.isRedacted()) return <RedactedContent />;
+              if (mEvent.getType() === MessageEvent.Sticker)
+                return (
+                  <MSticker
+                    content={mEvent.getContent()}
+                    renderImageContent={(props) => (
+                      <ImageContent
+                        {...props}
+                        autoPlay={mediaAutoLoad}
+                        renderImage={(p) => <Image {...p} loading="lazy" />}
+                        renderViewer={(p) => <ImageViewer {...p} />}
+                      />
+                    )}
+                  />
+                );
+              if (mEvent.getType() === MessageEvent.RoomMessage) {
+                const editedEvent = getEditedEvent(eventId, mEvent, evtTimeline.getTimelineSet());
+                const getContent = (() =>
+                  editedEvent?.getContent()['m.new_content'] ??
+                  mEvent.getContent()) as GetContentCallback;
 
-          if (!mEvent || !evtTimeline) {
-            return (
-              <Box grow="Yes" direction="Column">
-                <Text size="T400" priority="300">
-                  <code className={customHtmlCss.Code}>{event.getType()}</code>
-                  {' event'}
-                </Text>
-              </Box>
-            );
-          }
-
-          return (
-            <EncryptedContent mEvent={mEvent}>
-              {() => {
-                if (mEvent.isRedacted()) return <RedactedContent />;
-                if (mEvent.getType() === MessageEvent.Sticker)
-                  return (
-                    <MSticker
-                      content={mEvent.getContent()}
-                      renderImageContent={(props) => (
-                        <ImageContent
-                          {...props}
-                          autoPlay={mediaAutoLoad}
-                          renderImage={(p) => <Image {...p} loading="lazy" />}
-                          renderViewer={(p) => <ImageViewer {...p} />}
-                        />
-                      )}
-                    />
-                  );
-                if (mEvent.getType() === MessageEvent.RoomMessage) {
-                  const editedEvent = getEditedEvent(eventId, mEvent, evtTimeline.getTimelineSet());
-                  const getContent = (() =>
-                    editedEvent?.getContent()['m.new_content'] ??
-                    mEvent.getContent()) as GetContentCallback;
-
-                  return (
-                    <RenderMessageContent
-                      displayName={displayName}
-                      msgType={mEvent.getContent().msgtype ?? ''}
-                      ts={mEvent.getTs()}
-                      edited={!!editedEvent || !!mEvent.replacingEvent()}
-                      getContent={getContent}
-                      mediaAutoLoad={mediaAutoLoad}
-                      urlPreview={urlPreview}
-                      htmlReactParserOptions={htmlReactParserOptions}
-                      linkifyOpts={linkifyOpts}
-                    />
-                  );
-                }
-                if (mEvent.getType() === MessageEvent.RoomMessageEncrypted)
-                  return (
-                    <Text>
-                      <MessageNotDecryptedContent />
-                    </Text>
-                  );
+                return (
+                  <RenderMessageContent
+                    displayName={displayName}
+                    msgType={mEvent.getContent().msgtype ?? ''}
+                    ts={mEvent.getTs()}
+                    edited={!!editedEvent || !!mEvent.replacingEvent()}
+                    getContent={getContent}
+                    mediaAutoLoad={mediaAutoLoad}
+                    urlPreview={urlPreview}
+                    htmlReactParserOptions={htmlReactParserOptions}
+                    linkifyOpts={linkifyOpts}
+                  />
+                );
+              }
+              if (mEvent.getType() === MessageEvent.RoomMessageEncrypted)
                 return (
                   <Text>
-                    <MessageUnsupportedContent />
+                    <MessageNotDecryptedContent />
                   </Text>
                 );
-              }}
-            </EncryptedContent>
-          );
-        },
-        [MessageEvent.Sticker]: (event, displayName, getContent) => {
-          if (event.isRedacted()) {
-            return (
-              <RedactedContent reason={event.getUnsigned().redacted_because?.content.reason} />
-            );
-          }
-          return (
-            <MSticker
-              content={getContent()}
-              renderImageContent={(props) => (
-                <ImageContent
-                  {...props}
-                  autoPlay={mediaAutoLoad}
-                  renderImage={(p) => <Image {...p} loading="lazy" />}
-                  renderViewer={(p) => <ImageViewer {...p} />}
-                />
-              )}
-            />
-          );
-        },
+              return (
+                <Text>
+                  <MessageUnsupportedContent />
+                </Text>
+              );
+            }}
+          </EncryptedContent>
+        );
       },
-      undefined,
-      (event) => {
+      [MessageEvent.Sticker]: (event, displayName, getContent) => {
         if (event.isRedacted()) {
           return <RedactedContent reason={event.getUnsigned().redacted_because?.content.reason} />;
         }
         return (
-          <Box grow="Yes" direction="Column">
-            <Text size="T400" priority="300">
-              <code className={customHtmlCss.Code}>{event.getType()}</code>
-              {' event'}
-            </Text>
-          </Box>
+          <MSticker
+            content={getContent()}
+            renderImageContent={(props) => (
+              <ImageContent
+                {...props}
+                autoPlay={mediaAutoLoad}
+                renderImage={(p) => <Image {...p} loading="lazy" />}
+                renderViewer={(p) => <ImageViewer {...p} />}
+              />
+            )}
+          />
         );
+      },
+    },
+    undefined,
+    (event) => {
+      if (event.isRedacted()) {
+        return <RedactedContent reason={event.getUnsigned().redacted_because?.content.reason} />;
       }
-    );
-
-    const handleOpen = (roomId: string, eventId: string) => {
-      navigateRoom(roomId, eventId);
-      requestClose();
-    };
-
-    return (
-      <Menu ref={ref} className={css.PinMenu}>
+      return (
         <Box grow="Yes" direction="Column">
-          <Header className={css.PinMenuHeader} size="500">
-            <Box grow="Yes">
-              <Text size="H5">Pinned Messages</Text>
-            </Box>
-            <Box shrink="No">
-              <IconButton size="300" onClick={requestClose} radii="300">
-                <Icon src={Icons.Cross} size="400" />
-              </IconButton>
-            </Box>
-          </Header>
-          <Box grow="Yes">
-            <Scroll ref={scrollRef} size="300" hideTrack visibility="Hover">
-              <Box className={css.PinMenuContent} direction="Column" gap="100">
-                {sortedPinnedEvent.length > 0 ? (
-                  <div
-                    style={{
-                      position: 'relative',
-                      height: virtualizer.getTotalSize(),
-                    }}
-                  >
-                    {virtualizer.getVirtualItems().map((vItem) => {
-                      const eventId = sortedPinnedEvent[vItem.index];
-                      if (!eventId) return null;
+          <Text size="T400" priority="300">
+            <code className={customHtmlCss.Code}>{event.getType()}</code>
+            {' event'}
+          </Text>
+        </Box>
+      );
+    }
+  );
 
-                      return (
-                        <VirtualTile
-                          virtualItem={vItem}
-                          style={{ paddingBottom: config.space.S200 }}
-                          ref={virtualizer.measureElement}
-                          key={vItem.index}
+  const handleOpen = (roomId: string, eventId: string) => {
+    navigateRoom(roomId, eventId);
+    requestClose();
+  };
+
+  return (
+    <Menu ref={ref} className={css.PinMenu}>
+      <Box grow="Yes" direction="Column">
+        <Header className={css.PinMenuHeader} size="500">
+          <Box grow="Yes">
+            <Text size="H5">Pinned Messages</Text>
+          </Box>
+          <Box shrink="No">
+            <IconButton size="300" onClick={requestClose} radii="300">
+              <Icon src={Icons.Cross} size="400" />
+            </IconButton>
+          </Box>
+        </Header>
+        <Box grow="Yes">
+          <Scroll ref={scrollRef} size="300" hideTrack visibility="Hover">
+            <Box className={css.PinMenuContent} direction="Column" gap="100">
+              {sortedPinnedEvent.length > 0 ? (
+                <div
+                  style={{
+                    position: 'relative',
+                    height: virtualizer.getTotalSize(),
+                  }}
+                >
+                  {virtualizer.getVirtualItems().map((vItem) => {
+                    const eventId = sortedPinnedEvent[vItem.index];
+                    if (!eventId) return null;
+
+                    return (
+                      <VirtualTile
+                        virtualItem={vItem}
+                        style={{ paddingBottom: config.space.S200 }}
+                        ref={virtualizer.measureElement}
+                        key={vItem.index}
+                      >
+                        <SequenceCard
+                          style={{ padding: config.space.S400, borderRadius: config.radii.R300 }}
+                          variant="SurfaceVariant"
+                          direction="Column"
                         >
-                          <SequenceCard
-                            style={{ padding: config.space.S400, borderRadius: config.radii.R300 }}
-                            variant="SurfaceVariant"
-                            direction="Column"
-                          >
-                            <PinnedMessage
-                              room={room}
-                              eventId={eventId}
-                              renderContent={renderMatrixEvent}
-                              onOpen={handleOpen}
-                              canPinEvent={canPinEvent}
-                              getMemberPowerTag={getMemberPowerTag}
-                              accessibleTagColors={accessibleTagColors}
-                              legacyUsernameColor={legacyUsernameColor || direct}
-                              hour24Clock={hour24Clock}
-                              dateFormatString={dateFormatString}
-                            />
-                          </SequenceCard>
-                        </VirtualTile>
-                      );
-                    })}
-                  </div>
-                ) : (
+                          <PinnedMessage
+                            room={room}
+                            eventId={eventId}
+                            renderContent={renderMatrixEvent}
+                            onOpen={handleOpen}
+                            canPinEvent={canPinEvent}
+                            getMemberPowerTag={getMemberPowerTag}
+                            accessibleTagColors={accessibleTagColors}
+                            legacyUsernameColor={legacyUsernameColor || direct}
+                            hour24Clock={hour24Clock}
+                            dateFormatString={dateFormatString}
+                          />
+                        </SequenceCard>
+                      </VirtualTile>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Box
+                  className={ContainerColor({ variant: 'SurfaceVariant' })}
+                  style={{
+                    marginBottom: config.space.S200,
+                    padding: `${config.space.S700} ${config.space.S400} ${toRem(60)}`,
+                    borderRadius: config.radii.R300,
+                  }}
+                  grow="Yes"
+                  direction="Column"
+                  gap="400"
+                  justifyContent="Center"
+                  alignItems="Center"
+                >
+                  <Icon src={Icons.Pin} size="600" />
                   <Box
-                    className={ContainerColor({ variant: 'SurfaceVariant' })}
-                    style={{
-                      marginBottom: config.space.S200,
-                      padding: `${config.space.S700} ${config.space.S400} ${toRem(60)}`,
-                      borderRadius: config.radii.R300,
-                    }}
-                    grow="Yes"
+                    style={{ maxWidth: toRem(300) }}
                     direction="Column"
-                    gap="400"
-                    justifyContent="Center"
+                    gap="200"
                     alignItems="Center"
                   >
-                    <Icon src={Icons.Pin} size="600" />
-                    <Box
-                      style={{ maxWidth: toRem(300) }}
-                      direction="Column"
-                      gap="200"
-                      alignItems="Center"
-                    >
-                      <Text size="H4" align="Center">
-                        No Pinned Messages
-                      </Text>
-                      <Text size="T400" align="Center">
-                        Users with sufficient power level can pin a messages from its context menu.
-                      </Text>
-                    </Box>
+                    <Text size="H4" align="Center">
+                      No Pinned Messages
+                    </Text>
+                    <Text size="T400" align="Center">
+                      Users with sufficient power level can pin a messages from its context menu.
+                    </Text>
                   </Box>
-                )}
-              </Box>
-            </Scroll>
-          </Box>
+                </Box>
+              )}
+            </Box>
+          </Scroll>
         </Box>
-      </Menu>
-    );
-  }
-);
+      </Box>
+    </Menu>
+  );
+});

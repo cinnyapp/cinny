@@ -1,4 +1,4 @@
-import { PushRuleAction, PushRuleActionName, TweakName } from 'matrix-js-sdk';
+import { PushRuleAction } from 'neurone/lib/api/types';
 import { useCallback, useMemo } from 'react';
 
 export enum NotificationMode {
@@ -7,9 +7,20 @@ export enum NotificationMode {
   NotifyLoud = 'NotifyLoud',
 }
 
+export enum PushRuleActionName {
+  DontNotify = 'dont_notify',
+  Notify = 'notify',
+}
+
+export enum TweakName {
+  Highlight = 'highlight',
+  Sound = 'sound',
+}
+
 export const getNotificationMode = (actions: PushRuleAction[]): NotificationMode => {
   const soundTweak = actions.find(
-    (action) => typeof action === 'object' && action.set_tweak === TweakName.Sound
+    (action) =>
+      typeof action === 'object' && 'set_tweak' in action && action.set_tweak === TweakName.Sound
   );
   const notify = actions.find(
     (action) => typeof action === 'string' && action === PushRuleActionName.Notify

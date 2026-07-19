@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Box,
   Button,
@@ -12,14 +12,12 @@ import {
   Text,
   Tooltip,
   TooltipProvider,
-  as,
 } from 'folds';
 import FileSaver from 'file-saver';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import FocusTrap from 'focus-trap-react';
 import { IFileInfo } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { bytesToSize } from '../../../utils/common';
 import {
   READABLE_EXT_TO_MIME_TYPE,
@@ -28,14 +26,13 @@ import {
   mimeTypeToExt,
 } from '../../../utils/mimeTypes';
 import { stopPropagation } from '../../../utils/keyboard';
-import {
-  decryptFile,
-  downloadEncryptedMedia,
-  downloadMedia,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
+import { decryptFile, downloadEncryptedMedia, downloadMedia } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { ModalWide } from '../../../styles/Modal.css';
+import { useClient } from '../../../hooks/useClient';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { TextViewer } from '../../text-viewer';
+import { PdfViewer } from '../../Pdf-viewer';
 
 const renderErrorButton = (retry: () => void, text: string) => (
   <TooltipProvider
@@ -66,35 +63,30 @@ const renderErrorButton = (retry: () => void, text: string) => (
   </TooltipProvider>
 );
 
-type RenderTextViewerProps = {
-  name: string;
-  text: string;
-  langName: string;
-  requestClose: () => void;
-};
 type ReadTextFileProps = {
   body: string;
   mimeType: string;
   url: string;
-  encInfo?: EncryptedAttachmentInfo;
-  renderViewer: (props: RenderTextViewerProps) => ReactNode;
+  encInfo?: object;
 };
-export function ReadTextFile({ body, mimeType, url, encInfo, renderViewer }: ReadTextFileProps) {
-  const mx = useMatrixClient();
+export function ReadTextFile({ body, mimeType, url, encInfo }: ReadTextFileProps) {
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const [textViewer, setTextViewer] = useState(false);
 
   const [textState, loadText] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
       const fileContent = encInfo
-        ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
+        ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
+            decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)
+          )
         : await downloadMedia(mediaUrl);
 
       const text = fileContent.text();
       setTextViewer(true);
       return text;
-    }, [mx, useAuthentication, mimeType, encInfo, url])
+    }, [ct, useAuthentication, mimeType, encInfo, url])
   );
 
   return (
@@ -115,14 +107,16 @@ export function ReadTextFile({ body, mimeType, url, encInfo, renderViewer }: Rea
                 size="500"
                 onContextMenu={(evt: any) => evt.stopPropagation()}
               >
-                {renderViewer({
-                  name: body,
-                  text: textState.data,
-                  langName: READABLE_TEXT_MIME_TYPES.includes(mimeType)
-                    ? mimeTypeToExt(mimeType)
-                    : mimeTypeToExt(READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)] ?? mimeType),
-                  requestClose: () => setTextViewer(false),
-                })}
+                <TextViewer
+                  name={body}
+                  text={textState.data}
+                  langName={
+                    READABLE_TEXT_MIME_TYPES.includes(mimeType)
+                      ? mimeTypeToExt(mimeType)
+                      : mimeTypeToExt(READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)] ?? mimeType)
+                  }
+                  requestClose={() => setTextViewer(false)}
+                />
               </Modal>
             </FocusTrap>
           </OverlayCenter>
@@ -157,32 +151,28 @@ export function ReadTextFile({ body, mimeType, url, encInfo, renderViewer }: Rea
   );
 }
 
-type RenderPdfViewerProps = {
-  name: string;
-  src: string;
-  requestClose: () => void;
-};
 export type ReadPdfFileProps = {
   body: string;
   mimeType: string;
   url: string;
-  encInfo?: EncryptedAttachmentInfo;
-  renderViewer: (props: RenderPdfViewerProps) => ReactNode;
+  encInfo?: object;
 };
-export function ReadPdfFile({ body, mimeType, url, encInfo, renderViewer }: ReadPdfFileProps) {
-  const mx = useMatrixClient();
+export function ReadPdfFile({ body, mimeType, url, encInfo }: ReadPdfFileProps) {
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const [pdfViewer, setPdfViewer] = useState(false);
 
   const [pdfState, loadPdf] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
       const fileContent = encInfo
-        ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
+        ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
+            decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)
+          )
         : await downloadMedia(mediaUrl);
       setPdfViewer(true);
       return URL.createObjectURL(fileContent);
-    }, [mx, url, useAuthentication, mimeType, encInfo])
+    }, [ct, url, useAuthentication, mimeType, encInfo])
   );
 
   return (
@@ -203,11 +193,11 @@ export function ReadPdfFile({ body, mimeType, url, encInfo, renderViewer }: Read
                 size="500"
                 onContextMenu={(evt: any) => evt.stopPropagation()}
               >
-                {renderViewer({
-                  name: body,
-                  src: pdfState.data,
-                  requestClose: () => setPdfViewer(false),
-                })}
+                <PdfViewer
+                  name={body}
+                  src={pdfState.data}
+                  requestClose={() => setPdfViewer(false)}
+                />
               </Modal>
             </FocusTrap>
           </OverlayCenter>
@@ -245,23 +235,25 @@ export type DownloadFileProps = {
   mimeType: string;
   url: string;
   info: IFileInfo;
-  encInfo?: EncryptedAttachmentInfo;
+  encInfo?: object;
 };
 export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFileProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
   const [downloadState, download] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
       const fileContent = encInfo
-        ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
+        ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
+            decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)
+          )
         : await downloadMedia(mediaUrl);
 
       const fileURL = URL.createObjectURL(fileContent);
       FileSaver.saveAs(fileURL, body);
       return fileURL;
-    }, [mx, url, useAuthentication, mimeType, encInfo, body])
+    }, [ct, url, useAuthentication, mimeType, encInfo, body])
   );
 
   return downloadState.status === AsyncStatus.Error ? (
@@ -294,17 +286,21 @@ export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFil
 type FileContentProps = {
   body: string;
   mimeType: string;
-  renderAsTextFile: () => ReactNode;
-  renderAsPdfFile: () => ReactNode;
+  info: object;
+  url: string;
+  encInfo?: object;
 };
-export const FileContent = as<'div', FileContentProps>(
-  ({ body, mimeType, renderAsTextFile, renderAsPdfFile, children, ...props }, ref) => (
-    <Box direction="Column" gap="300" {...props} ref={ref}>
+export function FileContent({ body, mimeType, info, url, encInfo }: FileContentProps) {
+  return (
+    <Box direction="Column" gap="300">
       {(READABLE_TEXT_MIME_TYPES.includes(mimeType) ||
-        READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)]) &&
-        renderAsTextFile()}
-      {mimeType === 'application/pdf' && renderAsPdfFile()}
-      {children}
+        READABLE_EXT_TO_MIME_TYPE[getFileNameExt(body)]) && (
+        <ReadTextFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} />
+      )}
+      {mimeType === 'application/pdf' && (
+        <ReadPdfFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} />
+      )}
+      <DownloadFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} info={info} />
     </Box>
-  )
-);
+  );
+}

@@ -31,7 +31,7 @@ export function UserAvatar({ className, userId, src, alt, renderFallback }: User
 
   return (
     <AvatarImage
-      className={classNames(css.UserAvatar, className)}
+      className={classNames(css.UserAvatar, css.UserAvatarImg, className)}
       src={src}
       alt={alt}
       onError={() => setError(true)}

@@ -20,8 +20,7 @@ import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../componen
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { Account } from './account';
 import { useUserProfile } from '../../hooks/useUserProfile';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
+import { getMxIdLocalPart } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { UserAvatar } from '../../components/user-avatar';
 import { nameInitials } from '../../utils/common';
@@ -33,6 +32,8 @@ import { About } from './about';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { stopPropagation } from '../../utils/keyboard';
 import { LogoutDialog } from '../../components/LogoutDialog';
+import { useClient } from '../../hooks/useClient';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 export enum SettingsPages {
   GeneralPage,
@@ -97,13 +98,17 @@ type SettingsProps = {
   requestClose: () => void;
 };
 export function Settings({ initialPage, requestClose }: SettingsProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const userId = mx.getUserId()!;
+  const { userId } = ct.session;
   const profile = useUserProfile(userId);
-  const displayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
-  const avatarUrl = profile.avatarUrl
-    ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
+  const displayName = profile?.displayName ?? getMxIdLocalPart(userId) ?? userId;
+  const avatarUrl = profile?.avatarUrl
+    ? mxcToHttp(ct.session.baseUrl, profile.avatarUrl, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
     : undefined;
 
   const screenSize = useScreenSizeContext();

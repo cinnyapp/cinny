@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import classNames from 'classnames';
 import {
   Avatar,
@@ -13,33 +13,46 @@ import {
   as,
   config,
 } from 'folds';
-import { Room } from 'matrix-js-sdk';
-import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
 import * as css from './EventReaders.css';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { UserAvatar } from '../user-avatar';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { getMouseEventCords } from '../../utils/dom';
+import { useClient } from '../../hooks/useClient';
+import { useObservableValuePromise } from '../../hooks/useObservableValue';
+import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
+import { mxcToHttp } from '../../../client/mxcToHttp';
+import { useRoom } from '../../hooks/useRoom';
 
 export type EventReadersProps = {
-  room: Room;
   eventId: string;
   requestClose: () => void;
 };
 export const EventReaders = as<'div', EventReadersProps>(
-  ({ className, room, eventId, requestClose, ...props }, ref) => {
-    const mx = useMatrixClient();
-    const useAuthentication = useMediaAuthentication();
-    const latestEventReaders = useRoomEventReaders(room, eventId);
-    const openProfile = useOpenUserRoomProfile();
-    const space = useSpaceOptionally();
+  ({ className, eventId, requestClose, ...props }, ref) => {
+    const ct = useClient();
+    const roomId = useRoom();
+    const membersAPI = useRoomMembersAPI();
 
-    const getName = (userId: string) =>
-      getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
+    const eventReceipt = useObservableValuePromise(
+      useMemo(
+        () => ct.storage.readReceipt.observableRead.queryIndex('eventId', eventId),
+        [ct, eventId]
+      )
+    );
+
+    const users: string[] = useMemo(() => {
+      const u = new Set<string>();
+      eventReceipt.value?.forEach((r) => {
+        u.add(r.userId);
+      });
+      return Array.from(u);
+    }, [eventReceipt]);
+
+    const useAuthentication = useMediaAuthentication();
+    const openProfile = useOpenUserRoomProfile();
+    const spaceId = useSpaceOptionally();
 
     return (
       <Box
@@ -59,19 +72,15 @@ export const EventReaders = as<'div', EventReadersProps>(
         <Box grow="Yes">
           <Scroll visibility="Hover" hideTrack size="300">
             <Box className={css.Content} direction="Column">
-              {latestEventReaders.map((readerId) => {
-                const name = getName(readerId);
-                const avatarMxcUrl = room.getMember(readerId)?.getMxcAvatarUrl();
+              {users.map((readerId) => {
+                const name = membersAPI.getName(readerId);
+                const avatarMxcUrl = membersAPI.getAvatar(readerId);
                 const avatarUrl = avatarMxcUrl
-                  ? mx.mxcUrlToHttp(
-                      avatarMxcUrl,
-                      100,
-                      100,
-                      'crop',
-                      undefined,
-                      false,
-                      useAuthentication
-                    )
+                  ? mxcToHttp(ct.session.baseUrl, avatarMxcUrl, useAuthentication).thumbnail({
+                      width: 96,
+                      height: 96,
+                      method: 'crop',
+                    })
                   : undefined;
 
                 return (
@@ -81,8 +90,8 @@ export const EventReaders = as<'div', EventReadersProps>(
                     radii="400"
                     onClick={(event) => {
                       openProfile(
-                        room.roomId,
-                        space?.roomId,
+                        roomId,
+                        spaceId,
                         readerId,
                         getMouseEventCords(event.nativeEvent),
                         'Bottom'

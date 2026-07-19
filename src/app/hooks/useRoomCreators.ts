@@ -1,9 +1,9 @@
-import { MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
-import { useMemo } from 'react';
-import { useStateEvent } from './useStateEvent';
+import { MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import { IRoomCreateContent, StateEvent } from '../../types/matrix/room';
 import { creatorsSupported } from '../utils/matrix';
 import { getStateEvent } from '../utils/room';
+import { useObservableValue } from './useObservableValue';
+import { useClient } from './useClient';
 
 export const getRoomCreators = (createEvent: MatrixEvent): Set<string> => {
   const createContent = createEvent.getContent<IRoomCreateContent>();
@@ -27,15 +27,15 @@ export const getRoomCreators = (createEvent: MatrixEvent): Set<string> => {
   return creators;
 };
 
-export const useRoomCreators = (room: Room): Set<string> => {
-  const createEvent = useStateEvent(room, StateEvent.RoomCreate);
+export const useRoomCreators = (roomId: string): Set<string> | undefined => {
+  const ct = useClient();
+  const roomToCreators = useObservableValue(ct.roomToCreators);
 
-  const creators = useMemo(
-    () => (createEvent ? getRoomCreators(createEvent) : new Set<string>()),
-    [createEvent]
-  );
+  if (!creatorsSupported(ct.roomToVersion.read.get(roomId) ?? '1')) {
+    return undefined;
+  }
 
-  return creators;
+  return roomToCreators.get(roomId);
 };
 
 export const getRoomCreatorsForRoomId = (mx: MatrixClient, roomId: string): Set<string> => {

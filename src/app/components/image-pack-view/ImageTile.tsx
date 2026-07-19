@@ -7,7 +7,7 @@ import { ImageUsage, imageUsageEqual, PackImageReader } from '../../plugins/cust
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { SettingTile } from '../setting-tile';
 import { useObjectURL } from '../../hooks/useObjectURL';
-import { createUploadAtom, TUploadAtom } from '../../state/upload';
+import { createUploadAtom, UploadAtom } from '../../state/upload';
 import { replaceSpaceWithDash } from '../../utils/common';
 
 type ImageTileProps = {
@@ -91,7 +91,7 @@ export function ImageTile({
 
 type ImageTileUploadProps = {
   file: File;
-  children: (uploadAtom: TUploadAtom) => ReactNode;
+  children: (uploadAtom: UploadAtom) => ReactNode;
 };
 export function ImageTileUpload({ file, children }: ImageTileUploadProps) {
   const url = useObjectURL(file);

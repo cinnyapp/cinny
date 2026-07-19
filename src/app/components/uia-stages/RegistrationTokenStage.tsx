@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, FormEventHandler } from 'react';
 import { Dialog, Text, Box, Button, config, Input } from 'folds';
-import { AuthType } from 'matrix-js-sdk';
 import { StageComponentProps } from './types';
+import { AuthType } from '../../utils/matrix-uia';
 
 function RegistrationTokenErrorDialog({
   title,

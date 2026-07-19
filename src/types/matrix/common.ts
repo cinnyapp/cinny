@@ -1,9 +1,55 @@
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
-import { MsgType } from 'matrix-js-sdk';
 
 export const MATRIX_BLUR_HASH_PROPERTY_NAME = 'xyz.amorgan.blurhash';
 export const MATRIX_SPOILER_PROPERTY_NAME = 'page.codeberg.everypizza.msc4193.spoiler';
-export const MATRIX_SPOILER_REASON_PROPERTY_NAME = 'page.codeberg.everypizza.msc4193.spoiler.reason';
+export const MATRIX_SPOILER_REASON_PROPERTY_NAME =
+  'page.codeberg.everypizza.msc4193.spoiler.reason';
+
+export enum MsgType {
+  Text = 'm.text',
+  Emote = 'm.emote',
+  Notice = 'm.notice',
+  Image = 'm.image',
+  File = 'm.file',
+  Audio = 'm.audio',
+  Location = 'm.location',
+  Video = 'm.video',
+  KeyVerificationRequest = 'm.key.verification.request',
+}
+
+export type MentionsContent = {
+  user_ids?: string[];
+  room?: boolean;
+};
+
+export enum RelationType {
+  Annotation = 'm.annotation',
+  Replace = 'm.replace',
+  Reference = 'm.reference',
+  Thread = 'm.thread',
+}
+
+export type Relation<T = RelationType> = {
+  'm.relates_to': {
+    event_id: string;
+    rel_type: T;
+  };
+};
+
+export type RelationContent = {
+  rel_type?: RelationType | string;
+  event_id?: string;
+  is_falling_back?: boolean;
+  'm.in_reply_to'?: {
+    event_id?: string;
+  };
+  key?: string;
+};
+
+export type BaseContent = {
+  'm.mentions'?: MentionsContent;
+  'm.relates_to'?: RelationContent;
+};
 
 export type IImageInfo = {
   w?: number;
@@ -51,7 +97,7 @@ export type IImageContent = {
   file?: IEncryptedFile;
   [MATRIX_SPOILER_PROPERTY_NAME]?: boolean;
   [MATRIX_SPOILER_REASON_PROPERTY_NAME]?: string;
-};
+} & BaseContent;
 
 export type IVideoContent = {
   msgtype: MsgType.Video;
@@ -62,7 +108,7 @@ export type IVideoContent = {
   file?: IEncryptedFile;
   [MATRIX_SPOILER_PROPERTY_NAME]?: boolean;
   [MATRIX_SPOILER_REASON_PROPERTY_NAME]?: string;
-};
+} & BaseContent;
 
 export type IAudioContent = {
   msgtype: MsgType.Audio;
@@ -71,7 +117,7 @@ export type IAudioContent = {
   url?: string;
   info?: IAudioInfo;
   file?: IEncryptedFile;
-};
+} & BaseContent;
 
 export type IFileContent = {
   msgtype: MsgType.File;
@@ -80,11 +126,33 @@ export type IFileContent = {
   url?: string;
   info?: IFileInfo & IThumbnailContent;
   file?: IEncryptedFile;
-};
+} & BaseContent;
 
 export type ILocationContent = {
   msgtype: MsgType.Location;
   body?: string;
   geo_uri?: string;
   info?: IThumbnailContent;
+} & BaseContent;
+
+export type MessageContent = {
+  msgtype: MsgType;
+  body: string;
+  format?: 'org.matrix.custom.html';
+  formatted_body?: string;
+} & BaseContent;
+
+export type StickerContent = {
+  body: string;
+  info: IImageInfo;
+  url: string;
+} & BaseContent;
+
+export type ReactionContent = {
+  'm.relates_to': {
+    event_id: string;
+    key: string;
+    rel_type: RelationType.Annotation;
+  };
+  shortcode?: string;
 };

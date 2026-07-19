@@ -1,9 +1,10 @@
-import { JoinRule } from 'matrix-js-sdk';
 import { AvatarFallback, AvatarImage, Icon, Icons, color } from 'folds';
 import React, { ComponentProps, ReactEventHandler, ReactNode, forwardRef, useState } from 'react';
+import classNames from 'classnames';
 import * as css from './RoomAvatar.css';
 import { joinRuleToIconSrc } from '../../utils/room';
 import colorMXID from '../../../util/colorMXID';
+import { JoinRule } from '../../../types/matrix/room';
 
 type RoomAvatarProps = {
   roomId: string;
@@ -31,7 +32,7 @@ export function RoomAvatar({ roomId, src, alt, renderFallback }: RoomAvatarProps
 
   return (
     <AvatarImage
-      className={css.RoomAvatar}
+      className={classNames(css.RoomAvatar, css.RoomAvatarImg)}
       src={src}
       alt={alt}
       onError={() => setError(true)}
@@ -44,12 +45,15 @@ export function RoomAvatar({ roomId, src, alt, renderFallback }: RoomAvatarProps
 export const RoomIcon = forwardRef<
   SVGSVGElement,
   Omit<ComponentProps<typeof Icon>, 'src'> & {
-    joinRule: JoinRule;
+    joinRule?: JoinRule;
     space?: boolean;
   }
 >(({ joinRule, space, ...props }, ref) => (
   <Icon
-    src={joinRuleToIconSrc(Icons, joinRule, space || false) ?? Icons.Hash}
+    src={
+      joinRuleToIconSrc(Icons, joinRule ?? 'invite', space || false) ??
+      (space ? Icons.Space : Icons.Hash)
+    }
     {...props}
     ref={ref}
   />

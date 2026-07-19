@@ -11,13 +11,13 @@ import {
   joinPathComponent,
 } from '../../pathUtils';
 import { useClientConfig } from '../../../hooks/useClientConfig';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getMxIdServer } from '../../../utils/matrix';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
+import { useClient } from '../../../hooks/useClient';
 
 export function ExploreTab() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const screenSize = useScreenSizeContext();
   const clientConfig = useClientConfig();
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ export function ExploreTab() {
       navigate(getExploreFeaturedPath());
       return;
     }
-    const userId = mx.getUserId();
+    const { userId } = ct.session;
     const userServer = userId ? getMxIdServer(userId) : undefined;
     if (userServer) {
       navigate(getExploreServerPath(userServer));

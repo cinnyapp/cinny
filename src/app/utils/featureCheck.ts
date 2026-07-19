@@ -1,21 +1,28 @@
 export const checkIndexedDBSupport = async (): Promise<boolean> => {
-  const ts = new Date().getTime();
-  const dbName = `checkIndexedDBSupport-${ts}`;
+  const dbName = `checkIndexedDBSupport-${Date.now()}`;
+
   return new Promise((resolve) => {
-    let db;
+    let request: IDBOpenDBRequest;
+
     try {
-      db = indexedDB.open(dbName);
+      request = indexedDB.open(dbName);
     } catch {
       resolve(false);
       return;
     }
-    db.onsuccess = () => {
+
+    request.onsuccess = () => {
+      const db = request.result;
+
+      db.close();
+
+      indexedDB.deleteDatabase(dbName);
+
       resolve(true);
-      indexedDB.deleteDatabase(dbName);
     };
-    db.onerror = () => {
+
+    request.onerror = () => {
       resolve(false);
-      indexedDB.deleteDatabase(dbName);
     };
   });
 };

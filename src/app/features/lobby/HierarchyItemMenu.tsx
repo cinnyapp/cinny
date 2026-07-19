@@ -17,7 +17,7 @@ import {
 } from 'folds';
 import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { MSpaceChildContent, StateEvent } from '../../../types/matrix/room';
+import { SpaceChildContent, StateEvent } from '../../../types/matrix/room';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveSpacePrompt } from '../../components/leave-space-prompt';
@@ -47,7 +47,7 @@ function SuggestMenuItem({
 
   const [toggleState, handleToggleSuggested] = useAsyncCallback(
     useCallback(() => {
-      const newContent: MSpaceChildContent = { ...content, suggested: !content.suggested };
+      const newContent: SpaceChildContent = { ...content, suggested: !content.suggested };
       return mx.sendStateEvent(parentId, StateEvent.SpaceChild as any, newContent, roomId);
     }, [mx, parentId, roomId, content])
   );

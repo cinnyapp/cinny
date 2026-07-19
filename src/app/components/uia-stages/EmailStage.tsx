@@ -1,9 +1,10 @@
 import React, { useEffect, useCallback, FormEventHandler } from 'react';
 import { Dialog, Text, Box, Button, config, Input, color, Spinner } from 'folds';
-import { AuthType, MatrixError } from 'matrix-js-sdk';
+import { printMatrixError } from 'neurone/lib/matrix-request';
 import { StageComponentProps } from './types';
 import { AsyncState, AsyncStatus } from '../../hooks/useAsyncCallback';
-import { RequestEmailTokenCallback, RequestEmailTokenResponse } from '../../hooks/types';
+import { RequestEmailTokenCallback, RequestEmailTokenResult } from '../../hooks/types';
+import { AuthType } from '../../utils/matrix-uia';
 
 function EmailErrorDialog({
   title,
@@ -77,10 +78,14 @@ export function EmailStageDialog({
 }: StageComponentProps & {
   email?: string;
   clientSecret: string;
-  emailTokenState: AsyncState<RequestEmailTokenResponse, MatrixError>;
+  emailTokenState: AsyncState<RequestEmailTokenResult, Error>;
   requestEmailToken: RequestEmailTokenCallback;
 }) {
   const { errorCode, error, session } = stageData;
+  const [matrixError, result] =
+    emailTokenState.status === AsyncStatus.Success ? emailTokenState.data : [];
+  const requestError =
+    emailTokenState.status === AsyncStatus.Error ? emailTokenState.error : undefined;
 
   const handleSubmit = useCallback(
     (sessionId: string) => {
@@ -120,14 +125,23 @@ export function EmailStageDialog({
     );
   }
 
-  if (emailTokenState.status === AsyncStatus.Error) {
+  if (requestError) {
     return (
       <EmailErrorDialog
-        title={emailTokenState.error.errcode ?? 'Verify Email'}
+        title={requestError.name ?? 'Verify Email'}
+        message={requestError.message ?? 'Failed to send verification Email request.'}
+        onRetry={handleEmailSubmit}
+        onCancel={onCancel}
+      />
+    );
+  }
+
+  if (matrixError) {
+    return (
+      <EmailErrorDialog
+        title={matrixError?.data.errcode ?? 'Verify Email'}
         message={
-          emailTokenState.error?.data?.error ??
-          emailTokenState.error.message ??
-          'Failed to send verification Email request.'
+          matrixError ? printMatrixError(matrixError) : 'Failed to send verification Email request.'
         }
         onRetry={handleEmailSubmit}
         onCancel={onCancel}
@@ -135,19 +149,19 @@ export function EmailStageDialog({
     );
   }
 
-  if (emailTokenState.status === AsyncStatus.Success) {
+  if (result) {
     return (
       <Dialog>
         <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
           <Box direction="Column" gap="100">
             <Text size="H4">Verification Request Sent</Text>
-            <Text>{`Please check your email "${emailTokenState.data.email}" and validate before continuing further.`}</Text>
+            <Text>{`Please check your email "${result.email}" and validate before continuing further.`}</Text>
 
             {errorCode && (
               <Text style={{ color: color.Critical.Main }}>{`${errorCode}: ${error}`}</Text>
             )}
           </Box>
-          <Button variant="Primary" onClick={() => handleSubmit(emailTokenState.data.result.sid)}>
+          <Button variant="Primary" onClick={() => handleSubmit(result.result.sid)}>
             <Text as="span" size="B400">
               Continue
             </Text>

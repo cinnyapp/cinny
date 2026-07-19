@@ -1,25 +1,26 @@
 import { useCallback, useMemo } from 'react';
-import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
-import { getPowerLevelTag, PowerLevelTags, usePowerLevelTags } from './usePowerLevelTags';
+import { getPowerLevelTag, PowerLevelTags, usePowerLevelTagsContext } from './usePowerLevelTags';
 import { IPowerLevels, readPowerLevel } from './usePowerLevels';
 import { MemberPowerTag, MemberPowerTagIcon } from '../../types/matrix/room';
 import { useRoomCreatorsTag } from './useRoomCreatorsTag';
 import { ThemeKind } from './useTheme';
 import { accessibleColor } from '../plugins/color';
+import { ClientContext } from '../../client/context';
+import { mxcToHttp } from '../../client/mxcToHttp';
+import { JoinRoomMemberObject } from '../../client/storage/collections';
 
 export type GetMemberPowerTag = (userId: string) => MemberPowerTag;
 
 export const useGetMemberPowerTag = (
-  room: Room,
-  creators: Set<string>,
+  creators: Set<string> | undefined,
   powerLevels: IPowerLevels
 ) => {
   const creatorsTag = useRoomCreatorsTag();
-  const powerLevelTags = usePowerLevelTags(room, powerLevels);
+  const powerLevelTags = usePowerLevelTagsContext();
 
   const getMemberPowerTag: GetMemberPowerTag = useCallback(
     (userId) => {
-      if (creators.has(userId)) {
+      if (creators?.has(userId)) {
         return creatorsTag;
       }
 
@@ -33,12 +34,16 @@ export const useGetMemberPowerTag = (
 };
 
 export const getPowerTagIconSrc = (
-  mx: MatrixClient,
+  ct: ClientContext,
   useAuthentication: boolean,
   icon: MemberPowerTagIcon
 ): string | undefined =>
   icon?.key?.startsWith('mxc://')
-    ? mx.mxcUrlToHttp(icon.key, 96, 96, 'scale', undefined, undefined, useAuthentication) ?? '🌻'
+    ? mxcToHttp(ct.session.baseUrl, icon.key, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'scale',
+      }) ?? '🌻'
     : icon?.key;
 
 export const useAccessiblePowerTagColors = (
@@ -66,12 +71,12 @@ export const useAccessiblePowerTagColors = (
 };
 
 export const useFlattenPowerTagMembers = (
-  members: RoomMember[],
+  members: JoinRoomMemberObject[],
   getTag: GetMemberPowerTag
-): Array<MemberPowerTag | RoomMember> => {
+): Array<MemberPowerTag | JoinRoomMemberObject> => {
   const PLTagOrRoomMember = useMemo(() => {
     let prevTag: MemberPowerTag | undefined;
-    const tagOrMember: Array<MemberPowerTag | RoomMember> = [];
+    const tagOrMember: Array<MemberPowerTag | JoinRoomMemberObject> = [];
     members.forEach((member) => {
       const tag = getTag(member.userId);
       if (tag !== prevTag) {

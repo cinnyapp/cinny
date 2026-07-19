@@ -3,9 +3,6 @@ import { Box, Chip, Icon, IconButton, Icons, Line, Scroll, Spinner, Text, config
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { JoinRule, RestrictedAllowType, Room } from 'matrix-js-sdk';
-import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
-import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
 import produce from 'immer';
 import { useSpace } from '../../hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '../../components/page';
@@ -33,7 +30,6 @@ import {
 import { mDirectAtom } from '../../state/mDirectList';
 import { makeLobbyCategoryId } from '../../state/closedLobbyCategories';
 import { useCategoryHandler } from '../../hooks/useCategoryHandler';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { getCanonicalAliasOrRoomId, rateLimitedActions } from '../../utils/matrix';
 import { getSpaceRoomPath } from '../../pages/pathUtils';

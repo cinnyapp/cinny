@@ -1,11 +1,9 @@
 import React from 'react';
 import { Box } from 'folds';
-import { MatrixClient } from 'matrix-js-sdk';
 import { EmojiItemInfo, EmojiType } from '../types';
 import * as css from './styles.css';
 import { PackImageReader } from '../../../plugins/custom-emoji';
 import { IEmoji } from '../../../plugins/emoji';
-import { mxcUrlToHttp } from '../../../utils/matrix';
 
 export const getEmojiItemInfo = (element: Element): EmojiItemInfo | undefined => {
   const label = element.getAttribute('title');
@@ -46,11 +44,10 @@ export function EmojiItem({ emoji }: EmojiItemProps) {
 }
 
 type CustomEmojiItemProps = {
-  mx: MatrixClient;
-  useAuthentication?: boolean;
+  url?: string;
   image: PackImageReader;
 };
-export function CustomEmojiItem({ mx, useAuthentication, image }: CustomEmojiItemProps) {
+export function CustomEmojiItem({ url, image }: CustomEmojiItemProps) {
   return (
     <Box
       as="button"
@@ -68,19 +65,18 @@ export function CustomEmojiItem({ mx, useAuthentication, image }: CustomEmojiIte
         loading="lazy"
         className={css.CustomEmojiImg}
         alt={image.body || image.shortcode}
-        src={mxcUrlToHttp(mx, image.url, useAuthentication) ?? image.url}
+        src={url ?? image.url}
       />
     </Box>
   );
 }
 
 type StickerItemProps = {
-  mx: MatrixClient;
-  useAuthentication?: boolean;
+  url?: string;
   image: PackImageReader;
 };
 
-export function StickerItem({ mx, useAuthentication, image }: StickerItemProps) {
+export function StickerItem({ url, image }: StickerItemProps) {
   return (
     <Box
       as="button"
@@ -98,7 +94,7 @@ export function StickerItem({ mx, useAuthentication, image }: StickerItemProps) 
         loading="lazy"
         className={css.StickerImg}
         alt={image.body || image.shortcode}
-        src={mxcUrlToHttp(mx, image.url, useAuthentication) ?? image.url}
+        src={url ?? image.url}
       />
     </Box>
   );

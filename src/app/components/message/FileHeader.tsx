@@ -3,15 +3,11 @@ import React, { ReactNode, useCallback } from 'react';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import FileSaver from 'file-saver';
 import { mimeTypeToExt } from '../../utils/mimeTypes';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import {
-  decryptFile,
-  downloadEncryptedMedia,
-  downloadMedia,
-  mxcUrlToHttp,
-} from '../../utils/matrix';
+import { decryptFile, downloadEncryptedMedia, downloadMedia } from '../../utils/matrix';
+import { useClient } from '../../hooks/useClient';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 const badgeStyles = { maxWidth: toRem(100) };
 
@@ -19,23 +15,25 @@ type FileDownloadButtonProps = {
   filename: string;
   url: string;
   mimeType: string;
-  encInfo?: EncryptedAttachmentInfo;
+  encInfo?: object;
 };
 export function FileDownloadButton({ filename, url, mimeType, encInfo }: FileDownloadButtonProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
   const [downloadState, download] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
       const fileContent = encInfo
-        ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
+        ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
+            decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)
+          )
         : await downloadMedia(mediaUrl);
 
       const fileURL = URL.createObjectURL(fileContent);
       FileSaver.saveAs(fileURL, filename);
       return fileURL;
-    }, [mx, url, useAuthentication, mimeType, encInfo, filename])
+    }, [ct, url, useAuthentication, mimeType, encInfo, filename])
   );
 
   const downloading = downloadState.status === AsyncStatus.Loading;

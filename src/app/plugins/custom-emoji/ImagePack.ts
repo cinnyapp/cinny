@@ -1,4 +1,4 @@
-import { MatrixEvent } from 'matrix-js-sdk';
+import { AccountDataEvent, StateEventWithoutRoomId } from 'neurone/lib/api/types';
 import { PackAddress } from './PackAddress';
 import { PackImageReader } from './PackImageReader';
 import { PackImagesReader } from './PackImagesReader';
@@ -31,16 +31,15 @@ export class ImagePack {
     this.images = new PackImagesReader(content.images ?? {});
   }
 
-  static fromMatrixEvent(id: string, matrixEvent: MatrixEvent) {
-    const roomId = matrixEvent.getRoomId();
-    const stateKey = matrixEvent.getStateKey();
+  static fromAccountData(userId: string, accountDataEvent: AccountDataEvent) {
+    const imagePack: ImagePack = new ImagePack(userId, accountDataEvent.content, undefined);
 
-    const address =
-      roomId && typeof stateKey === 'string' ? new PackAddress(roomId, stateKey) : undefined;
+    return imagePack;
+  }
 
-    const content = matrixEvent.getContent<PackContent>();
-
-    const imagePack: ImagePack = new ImagePack(id, content, address);
+  static fromStateEvent(roomId: string, stateEvent: StateEventWithoutRoomId) {
+    const address = new PackAddress(roomId, stateEvent.state_key);
+    const imagePack: ImagePack = new ImagePack(stateEvent.event_id, stateEvent.content, address);
 
     return imagePack;
   }

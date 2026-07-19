@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Badge,
   Box,
@@ -15,43 +15,28 @@ import {
 import classNames from 'classnames';
 import { BlurhashCanvas } from 'react-blurhash';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
-import {
-  IThumbnailContent,
-  IVideoInfo,
-  MATRIX_BLUR_HASH_PROPERTY_NAME,
-} from '../../../../types/matrix/common';
 import * as css from './style.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { bytesToSize, millisecondsToMinutesAndSeconds } from '../../../utils/common';
-import {
-  decryptFile,
-  downloadEncryptedMedia,
-  downloadMedia,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
+import { decryptFile, downloadEncryptedMedia, downloadMedia } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { validBlurHash } from '../../../utils/blurHash';
+import { useClient } from '../../../hooks/useClient';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { Video } from '../../media';
+import { rInfo, rThumbnailInfo } from '../../../../client/reader';
+import { ThumbnailContent } from './ThumbnailContent';
 
-type RenderVideoProps = {
-  title: string;
-  src: string;
-  onLoadedMetadata: () => void;
-  onError: () => void;
-  autoPlay: boolean;
-  controls: boolean;
-};
 type VideoContentProps = {
   body: string;
   mimeType: string;
   url: string;
-  info: IVideoInfo & IThumbnailContent;
-  encInfo?: EncryptedAttachmentInfo;
+  info: object;
+  encInfo?: object;
   autoPlay?: boolean;
+  mediaAutoLoad?: boolean;
   markedAsSpoiler?: boolean;
   spoilerReason?: string;
-  renderThumbnail?: () => ReactNode;
-  renderVideo: (props: RenderVideoProps) => ReactNode;
 };
 export const VideoContent = as<'div', VideoContentProps>(
   (
@@ -63,17 +48,20 @@ export const VideoContent = as<'div', VideoContentProps>(
       info,
       encInfo,
       autoPlay,
+      mediaAutoLoad,
       markedAsSpoiler,
       spoilerReason,
-      renderThumbnail,
-      renderVideo,
       ...props
     },
     ref
   ) => {
-    const mx = useMatrixClient();
+    const ct = useClient();
     const useAuthentication = useMediaAuthentication();
-    const blurHash = validBlurHash(info.thumbnail_info?.[MATRIX_BLUR_HASH_PROPERTY_NAME]);
+    const thumbnailInfo = rInfo.thumbnailInfo(info);
+    const blurHash = validBlurHash(rThumbnailInfo.blurhash(thumbnailInfo));
+
+    const size = rInfo.size(info);
+    const duration = rInfo.duration(info);
 
     const [load, setLoad] = useState(false);
     const [error, setError] = useState(false);
@@ -81,14 +69,14 @@ export const VideoContent = as<'div', VideoContentProps>(
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(async () => {
-        const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication) ?? url;
+        const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url() ?? url;
         const fileContent = encInfo
           ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
-              decryptFile(encBuf, mimeType, encInfo)
+              decryptFile(encBuf, mimeType, encInfo as EncryptedAttachmentInfo)
             )
           : await downloadMedia(mediaUrl);
         return URL.createObjectURL(fileContent);
-      }, [mx, url, useAuthentication, mimeType, encInfo])
+      }, [ct, url, useAuthentication, mimeType, encInfo])
     );
 
     const handleLoad = () => {
@@ -119,13 +107,13 @@ export const VideoContent = as<'div', VideoContentProps>(
             punch={1}
           />
         )}
-        {renderThumbnail && !load && (
+        {mediaAutoLoad && !load && (
           <Box
             className={classNames(css.AbsoluteContainer, blurred && css.Blur)}
             alignItems="Center"
             justifyContent="Center"
           >
-            {renderThumbnail()}
+            <ThumbnailContent info={info} />
           </Box>
         )}
         {!autoPlay && !blurred && srcState.status === AsyncStatus.Idle && (
@@ -144,14 +132,14 @@ export const VideoContent = as<'div', VideoContentProps>(
         )}
         {srcState.status === AsyncStatus.Success && (
           <Box className={classNames(css.AbsoluteContainer, blurred && css.Blur)}>
-            {renderVideo({
-              title: body,
-              src: srcState.data,
-              onLoadedMetadata: handleLoad,
-              onError: handleError,
-              autoPlay: true,
-              controls: true,
-            })}
+            <Video
+              title={body}
+              src={srcState.data}
+              onLoadedMetadata={handleLoad}
+              onError={handleError}
+              autoPlay
+              controls
+            />
           </Box>
         )}
         {blurred && !error && srcState.status !== AsyncStatus.Error && (
@@ -219,7 +207,7 @@ export const VideoContent = as<'div', VideoContentProps>(
             </TooltipProvider>
           </Box>
         )}
-        {!load && typeof info.size === 'number' && (
+        {!load && typeof size === 'number' && (
           <Box
             className={css.AbsoluteFooter}
             justifyContent="SpaceBetween"
@@ -227,10 +215,10 @@ export const VideoContent = as<'div', VideoContentProps>(
             gap="200"
           >
             <Badge variant="Secondary" fill="Soft">
-              <Text size="L400">{millisecondsToMinutesAndSeconds(info.duration ?? 0)}</Text>
+              <Text size="L400">{millisecondsToMinutesAndSeconds(duration ?? 0)}</Text>
             </Badge>
             <Badge variant="Secondary" fill="Soft">
-              <Text size="L400">{bytesToSize(info.size)}</Text>
+              <Text size="L400">{bytesToSize(size)}</Text>
             </Badge>
           </Box>
         )}

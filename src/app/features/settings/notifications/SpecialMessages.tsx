@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
-import { ConditionKind, IPushRules, PushRuleKind, RuleId } from 'matrix-js-sdk';
 import { Box, Text, Badge } from 'folds';
-import { useAccountData } from '../../../hooks/useAccountData';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
+import { PushRules } from 'neurone/lib/api/types';
+import { putPushRuleActions } from 'neurone/lib/api/matrix/client/v3/pushrules';
+import { useAccountData } from '../../../hooks/storage/useAccountData';
+import { AccountDataType, ConditionKind, PushRuleId } from '../../../../types/matrix/accountData';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useUserProfile } from '../../../hooks/useUserProfile';
 import { getMxIdLocalPart } from '../../../utils/matrix';
 import { makePushRuleData, PushRuleData, usePushRule } from '../../../hooks/usePushRule';
@@ -17,14 +17,15 @@ import {
   useNotificationModeActions,
 } from '../../../hooks/useNotificationMode';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
+import { useClient } from '../../../hooks/useClient';
 
 const NOTIFY_MODE_OPS: NotificationModeOptions = {
   highlight: true,
 };
 const getDefaultIsUserMention = (userId: string): PushRuleData =>
   makePushRuleData(
-    PushRuleKind.Override,
-    RuleId.IsUserMention,
+    'override',
+    PushRuleId.IsUserMention,
     getNotificationModeActions(NotificationMode.NotifyLoud, { highlight: true }),
     [
       {
@@ -36,8 +37,8 @@ const getDefaultIsUserMention = (userId: string): PushRuleData =>
   );
 
 const DefaultContainsDisplayName = makePushRuleData(
-  PushRuleKind.Override,
-  RuleId.ContainsDisplayName,
+  'override',
+  PushRuleId.ContainsDisplayName,
   getNotificationModeActions(NotificationMode.NotifyLoud, { highlight: true }),
   [
     {
@@ -48,16 +49,16 @@ const DefaultContainsDisplayName = makePushRuleData(
 
 const getDefaultContainsUsername = (username: string) =>
   makePushRuleData(
-    PushRuleKind.ContentSpecific,
-    RuleId.ContainsUserName,
+    'content',
+    PushRuleId.ContainsUserName,
     getNotificationModeActions(NotificationMode.NotifyLoud, { highlight: true }),
     undefined,
     username
   );
 
 const DefaultIsRoomMention = makePushRuleData(
-  PushRuleKind.Override,
-  RuleId.IsRoomMention,
+  'override',
+  PushRuleId.IsRoomMention,
   getNotificationModeActions(NotificationMode.Notify, { highlight: true }),
   [
     {
@@ -73,8 +74,8 @@ const DefaultIsRoomMention = makePushRuleData(
 );
 
 const DefaultAtRoomNotification = makePushRuleData(
-  PushRuleKind.Override,
-  RuleId.AtRoomNotification,
+  'override',
+  PushRuleId.AtRoomNotification,
   getNotificationModeActions(NotificationMode.Notify, { highlight: true }),
   [
     {
@@ -90,12 +91,12 @@ const DefaultAtRoomNotification = makePushRuleData(
 );
 
 type PushRulesProps = {
-  ruleId: RuleId;
-  pushRules: IPushRules;
+  ruleId: PushRuleId;
+  pushRules: PushRules;
   defaultPushRuleData: PushRuleData;
 };
 function MentionModeSwitcher({ ruleId, pushRules, defaultPushRuleData }: PushRulesProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
   const { kind, pushRule } = usePushRule(pushRules, ruleId) ?? defaultPushRuleData;
   const getModeActions = useNotificationModeActions(NOTIFY_MODE_OPS);
@@ -103,23 +104,30 @@ function MentionModeSwitcher({ ruleId, pushRules, defaultPushRuleData }: PushRul
   const handleChange = useCallback(
     async (mode: NotificationMode) => {
       const actions = getModeActions(mode);
-      await mx.setPushRuleActions('global', kind, ruleId, actions);
+      await ct.requestAuthJSON(
+        putPushRuleActions({
+          pathParams: { scope: 'global', kind, ruleId },
+          body: { actions },
+        })
+      );
     },
-    [mx, getModeActions, kind, ruleId]
+    [ct, getModeActions, kind, ruleId]
   );
 
   return <NotificationModeSwitcher pushRule={pushRule} onChange={handleChange} />;
 }
 
 export function SpecialMessagesNotifications() {
-  const mx = useMatrixClient();
-  const userId = mx.getUserId()!;
-  const { displayName } = useUserProfile(userId);
-  const pushRulesEvt = useAccountData(AccountDataEvent.PushRules);
-  const pushRules = useMemo(
-    () => pushRulesEvt?.getContent<IPushRules>() ?? { global: {} },
-    [pushRulesEvt]
-  );
+  const ct = useClient();
+  const { userId } = ct.session;
+  const { displayName } = useUserProfile(userId) ?? {};
+
+  const pushRuleEventResult = useAccountData(AccountDataType.PushRules);
+  const pushRules: PushRules | undefined = useMemo(() => {
+    if (pushRuleEventResult.pending) return undefined;
+    const content = pushRuleEventResult.value?.content as PushRules;
+    return content ?? { global: {} };
+  }, [pushRuleEventResult]);
 
   return (
     <Box direction="Column" gap="100">
@@ -141,11 +149,13 @@ export function SpecialMessagesNotifications() {
         <SettingTile
           title={`Mention User ID ("${userId}")`}
           after={
-            <MentionModeSwitcher
-              pushRules={pushRules}
-              ruleId={RuleId.IsUserMention}
-              defaultPushRuleData={getDefaultIsUserMention(userId)}
-            />
+            pushRules && (
+              <MentionModeSwitcher
+                pushRules={pushRules}
+                ruleId={PushRuleId.IsUserMention}
+                defaultPushRuleData={getDefaultIsUserMention(userId)}
+              />
+            )
           }
         />
       </SequenceCard>
@@ -158,11 +168,13 @@ export function SpecialMessagesNotifications() {
         <SettingTile
           title={`Contains Displayname ${displayName ? `("${displayName}")` : ''}`}
           after={
-            <MentionModeSwitcher
-              pushRules={pushRules}
-              ruleId={RuleId.ContainsDisplayName}
-              defaultPushRuleData={DefaultContainsDisplayName}
-            />
+            pushRules && (
+              <MentionModeSwitcher
+                pushRules={pushRules}
+                ruleId={PushRuleId.ContainsDisplayName}
+                defaultPushRuleData={DefaultContainsDisplayName}
+              />
+            )
           }
         />
       </SequenceCard>
@@ -175,11 +187,13 @@ export function SpecialMessagesNotifications() {
         <SettingTile
           title={`Contains Username ("${getMxIdLocalPart(userId)}")`}
           after={
-            <MentionModeSwitcher
-              pushRules={pushRules}
-              ruleId={RuleId.ContainsUserName}
-              defaultPushRuleData={getDefaultContainsUsername(getMxIdLocalPart(userId) ?? userId)}
-            />
+            pushRules && (
+              <MentionModeSwitcher
+                pushRules={pushRules}
+                ruleId={PushRuleId.ContainsUserName}
+                defaultPushRuleData={getDefaultContainsUsername(getMxIdLocalPart(userId) ?? userId)}
+              />
+            )
           }
         />
       </SequenceCard>
@@ -192,11 +206,13 @@ export function SpecialMessagesNotifications() {
         <SettingTile
           title="Mention @room"
           after={
-            <MentionModeSwitcher
-              pushRules={pushRules}
-              ruleId={RuleId.IsRoomMention}
-              defaultPushRuleData={DefaultIsRoomMention}
-            />
+            pushRules && (
+              <MentionModeSwitcher
+                pushRules={pushRules}
+                ruleId={PushRuleId.IsRoomMention}
+                defaultPushRuleData={DefaultIsRoomMention}
+              />
+            )
           }
         />
       </SequenceCard>
@@ -209,11 +225,13 @@ export function SpecialMessagesNotifications() {
         <SettingTile
           title="Contains @room"
           after={
-            <MentionModeSwitcher
-              pushRules={pushRules}
-              ruleId={RuleId.AtRoomNotification}
-              defaultPushRuleData={DefaultAtRoomNotification}
-            />
+            pushRules && (
+              <MentionModeSwitcher
+                pushRules={pushRules}
+                ruleId={PushRuleId.AtRoomNotification}
+                defaultPushRuleData={DefaultAtRoomNotification}
+              />
+            )
           }
         />
       </SequenceCard>

@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Text, color } from 'folds';
 import { Link, useSearchParams } from 'react-router-dom';
-import { SSOAction } from 'matrix-js-sdk';
 import { useAuthFlows } from '../../../hooks/useAuthFlows';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
@@ -52,7 +51,7 @@ export function Login() {
     );
   }
 
-  const parsedFlows = useParsedLoginFlows(loginFlows.flows);
+  const parsedFlows = useParsedLoginFlows(loginFlows.flows ?? []);
 
   return (
     <Box direction="Column" gap="500">
@@ -77,7 +76,7 @@ export function Login() {
           <SSOLogin
             providers={parsedFlows.sso.identity_providers}
             redirectUrl={ssoRedirectUrl}
-            action={SSOAction.LOGIN}
+            action="login"
             saveScreenSpace={parsedFlows.password !== undefined}
           />
           <span data-spacing-node />

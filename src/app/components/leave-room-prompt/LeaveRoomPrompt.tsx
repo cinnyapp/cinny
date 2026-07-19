@@ -16,10 +16,16 @@ import {
   Button,
   Spinner,
 } from 'folds';
-import { MatrixError } from 'matrix-js-sdk';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { postLeave } from 'neurone/lib/api/matrix/client/v3/rooms';
+import {
+  MatrixResponseResult,
+  parseMatrixResp,
+  printMatrixError,
+} from 'neurone/lib/matrix-request';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../utils/keyboard';
+import { useClient } from '../../hooks/useClient';
+import { deleteJoinRooms } from '../../../client/syncWriter/utils';
 
 type LeaveRoomPromptProps = {
   roomId: string;
@@ -27,23 +33,31 @@ type LeaveRoomPromptProps = {
   onCancel: () => void;
 };
 export function LeaveRoomPrompt({ roomId, onDone, onCancel }: LeaveRoomPromptProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
-  const [leaveState, leaveRoom] = useAsyncCallback<undefined, MatrixError, []>(
+  const [leaveState, leaveRoom] = useAsyncCallback<MatrixResponseResult<unknown>, Error, []>(
     useCallback(async () => {
-      mx.leave(roomId);
-    }, [mx, roomId])
+      const response = await ct.requestAuthJSON(postLeave({ pathParams: { roomId } }));
+      deleteJoinRooms(ct, [roomId])
+        .then(() => console.log('=====> deleted'))
+        .catch((e) => {
+          console.error(e);
+        });
+      return parseMatrixResp(response);
+    }, [ct, roomId])
   );
+  const success = leaveState.status === AsyncStatus.Success;
+  const [requestError] = success ? leaveState.data : [];
 
   const handleLeave = () => {
     leaveRoom();
   };
 
   useEffect(() => {
-    if (leaveState.status === AsyncStatus.Success) {
+    if (success) {
       onDone();
     }
-  }, [leaveState, onDone]);
+  }, [success, onDone]);
 
   return (
     <Overlay open backdrop={<OverlayBackdrop />}>
@@ -78,6 +92,11 @@ export function LeaveRoomPrompt({ roomId, onDone, onCancel }: LeaveRoomPromptPro
                 {leaveState.status === AsyncStatus.Error && (
                   <Text style={{ color: color.Critical.Main }} size="T300">
                     Failed to leave room! {leaveState.error.message}
+                  </Text>
+                )}
+                {requestError && (
+                  <Text style={{ color: color.Critical.Main }} size="T300">
+                    Failed to leave room! {printMatrixError(requestError)}
                   </Text>
                 )}
               </Box>

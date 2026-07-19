@@ -14,7 +14,6 @@ import {
   attributesToProps,
   domToReact,
 } from 'html-react-parser';
-import { MatrixClient } from 'matrix-js-sdk';
 import classNames from 'classnames';
 import { Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem } from 'folds';
 import { IntermediateRepresentation, Opts as LinkifyOpts, OptFn } from 'linkifyjs';
@@ -22,13 +21,7 @@ import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ChildNode } from 'domhandler';
 import * as css from '../styles/CustomHtml.css';
-import {
-  getMxIdLocalPart,
-  getCanonicalAliasRoomId,
-  isRoomAlias,
-  mxcUrlToHttp,
-} from '../utils/matrix';
-import { getMemberDisplayName } from '../utils/room';
+import { isRoomAlias } from '../utils/matrix';
 import { EMOJI_PATTERN, sanitizeForRegex, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
 import { findAndReplace } from '../utils/findAndReplace';
@@ -41,6 +34,10 @@ import {
 import { onEnterOrSpace } from '../utils/keyboard';
 import { copyToClipboard, tryDecodeURIComponent } from '../utils/dom';
 import { useTimeoutToggle } from '../hooks/useTimeoutToggle';
+import { ClientContext } from '../../client/context';
+import { GetRoomMemberNameCallback } from '../hooks/useRoomMembers';
+import { GetRoomNameCallback } from '../hooks/storage/useGetRoomName';
+import { mxcToHttp } from '../../client/mxcToHttp';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
@@ -72,25 +69,23 @@ export const makeMentionCustomProps = (
 });
 
 export const renderMatrixMention = (
-  mx: MatrixClient,
+  ct: ClientContext,
   currentRoomId: string | undefined,
   href: string,
-  customProps: ComponentPropsWithoutRef<'a'>
+  customProps: ComponentPropsWithoutRef<'a'>,
+  getMemberName: GetRoomMemberNameCallback,
+  getRoomName: GetRoomNameCallback
 ) => {
   const userId = parseMatrixToUser(href);
   if (userId) {
-    const currentRoom = mx.getRoom(currentRoomId);
-
     return (
       <a
         href={href}
         {...customProps}
-        className={css.Mention({ highlight: mx.getUserId() === userId })}
+        className={css.Mention({ highlight: ct.session.userId === userId })}
         data-mention-id={userId}
       >
-        {`@${
-          (currentRoom && getMemberDisplayName(currentRoom, userId)) ?? getMxIdLocalPart(userId)
-        }`}
+        {`@${getMemberName(userId)}`}
       </a>
     );
   }
@@ -98,20 +93,21 @@ export const renderMatrixMention = (
   const matrixToRoom = parseMatrixToRoom(href);
   if (matrixToRoom) {
     const { roomIdOrAlias, viaServers } = matrixToRoom;
-    const mentionRoom = mx.getRoom(
-      isRoomAlias(roomIdOrAlias) ? getCanonicalAliasRoomId(mx, roomIdOrAlias) : roomIdOrAlias
-    );
 
-    const fallbackContent = mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias;
+    const mentionRoomId = isRoomAlias(roomIdOrAlias)
+      ? ct.rooms.join.read.find((roomId) => ct.roomToAlias.read.get(roomId) === roomIdOrAlias)
+      : undefined;
+
+    const fallbackContent = mentionRoomId ? `#${getRoomName(mentionRoomId)}` : roomIdOrAlias;
 
     return (
       <a
         href={href}
         {...customProps}
         className={css.Mention({
-          highlight: currentRoomId === (mentionRoom?.roomId ?? roomIdOrAlias),
+          highlight: currentRoomId === (mentionRoomId ?? roomIdOrAlias),
         })}
-        data-mention-id={mentionRoom?.roomId ?? roomIdOrAlias}
+        data-mention-id={mentionRoomId ?? roomIdOrAlias}
         data-mention-via={viaServers?.join(',')}
       >
         {customProps.children ? customProps.children : fallbackContent}
@@ -122,24 +118,24 @@ export const renderMatrixMention = (
   const matrixToRoomEvent = parseMatrixToRoomEvent(href);
   if (matrixToRoomEvent) {
     const { roomIdOrAlias, eventId, viaServers } = matrixToRoomEvent;
-    const mentionRoom = mx.getRoom(
-      isRoomAlias(roomIdOrAlias) ? getCanonicalAliasRoomId(mx, roomIdOrAlias) : roomIdOrAlias
-    );
+    const mentionRoomId = isRoomAlias(roomIdOrAlias)
+      ? ct.rooms.join.read.find((roomId) => ct.roomToAlias.read.get(roomId) === roomIdOrAlias)
+      : undefined;
 
     return (
       <a
         href={href}
         {...customProps}
         className={css.Mention({
-          highlight: currentRoomId === (mentionRoom?.roomId ?? roomIdOrAlias),
+          highlight: currentRoomId === (mentionRoomId ?? roomIdOrAlias),
         })}
-        data-mention-id={mentionRoom?.roomId ?? roomIdOrAlias}
+        data-mention-id={mentionRoomId ?? roomIdOrAlias}
         data-mention-event-id={eventId}
         data-mention-via={viaServers?.join(',')}
       >
         {customProps.children
           ? customProps.children
-          : `Message: ${mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias}`}
+          : `Message: ${mentionRoomId ? `#${getRoomName(mentionRoomId)}` : roomIdOrAlias}`}
       </a>
     );
   }
@@ -310,7 +306,7 @@ export function CodeBlock({
 }
 
 export const getReactCustomHtmlParser = (
-  mx: MatrixClient,
+  ct: ClientContext,
   roomId: string | undefined,
   params: {
     linkifyOpts: LinkifyOpts;
@@ -318,6 +314,8 @@ export const getReactCustomHtmlParser = (
     handleSpoilerClick?: ReactEventHandler<HTMLElement>;
     handleMentionClick?: ReactEventHandler<HTMLElement>;
     useAuthentication?: boolean;
+    getMemberName: GetRoomMemberNameCallback;
+    getRoomName: GetRoomNameCallback;
   }
 ): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
@@ -446,10 +444,12 @@ export const getReactCustomHtmlParser = (
             : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
 
           const mention = renderMatrixMention(
-            mx,
+            ct,
             roomId,
             tryDecodeURIComponent(props.href),
-            makeMentionCustomProps(params.handleMentionClick, content)
+            makeMentionCustomProps(params.handleMentionClick, content),
+            params.getMemberName,
+            params.getRoomName
           );
 
           if (mention) return mention;
@@ -473,7 +473,7 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'img') {
-          const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication);
+          const htmlSrc = mxcToHttp(ct.session.baseUrl, props.src, params.useAuthentication).url();
           if (htmlSrc && props.src.startsWith('mxc://') === false) {
             return (
               <a href={htmlSrc} target="_blank" rel="noreferrer noopener">

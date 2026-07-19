@@ -2,9 +2,9 @@ import { Box, Text } from 'folds';
 import React from 'react';
 import { Atom, atom, useAtomValue } from 'jotai';
 import * as css from './styles.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { mxcUrlToHttp } from '../../../utils/matrix';
+import { useClient } from '../../../hooks/useClient';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
 
 export type PreviewData = {
   key: string;
@@ -18,7 +18,7 @@ type PreviewProps = {
   previewAtom: Atom<PreviewData | undefined>;
 };
 export function Preview({ previewAtom }: PreviewProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
   const { key, shortcode } = useAtomValue(previewAtom) ?? {};
@@ -37,7 +37,7 @@ export function Preview({ previewAtom }: PreviewProps) {
           {key.startsWith('mxc://') ? (
             <img
               className={css.PreviewImg}
-              src={mxcUrlToHttp(mx, key, useAuthentication) ?? key}
+              src={mxcToHttp(ct.session.baseUrl, key, useAuthentication).url() ?? key}
               alt={shortcode}
             />
           ) : (

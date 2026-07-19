@@ -12,3 +12,7 @@ export const RoomAvatar = style({
     },
   },
 });
+
+export const RoomAvatarImg = style({
+  fontSize: 1,
+});

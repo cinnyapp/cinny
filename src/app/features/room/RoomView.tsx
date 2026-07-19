@@ -1,16 +1,11 @@
 import React, { useCallback, useRef } from 'react';
 import { Box, Text, config } from 'folds';
-import { EventType, Room } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { isKeyHotkey } from 'is-hotkey';
-import { useStateEvent } from '../../hooks/useStateEvent';
-import { StateEvent } from '../../../types/matrix/room';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useEditor } from '../../components/editor';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
-import { RoomViewTyping } from './RoomViewTyping';
 import { RoomTombstone } from './RoomTombstone';
 import { RoomInput } from './RoomInput';
 import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
@@ -22,6 +17,12 @@ import { settingsAtom } from '../../state/settings';
 import { useSetting } from '../../state/hooks/settings';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
+import { useRoom } from '../../hooks/useRoom';
+import { useObservableValue } from '../../hooks/useObservableValue';
+import { useClient } from '../../hooks/useClient';
+import { MessageEvent } from '../../../types/matrix/room';
+import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
+import { Timeline } from '../../../client/room';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
@@ -56,23 +57,25 @@ const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
   return true;
 };
 
-export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
+export function RoomView({ eventId, timeline }: { eventId?: string; timeline: Timeline }) {
   const roomInputRef = useRef<HTMLDivElement>(null);
   const roomViewRef = useRef<HTMLDivElement>(null);
 
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
 
-  const { roomId } = room;
+  const roomId = useRoom();
   const editor = useEditor();
+  const ct = useClient();
+  const { memberEventsResult } = useRoomMembersAPI();
 
-  const mx = useMatrixClient();
+  const roomToReplacement = useObservableValue(ct.roomToReplacement);
+  const replacementRoom = roomToReplacement.get(roomId);
 
-  const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
+  const creators = useRoomCreators(roomId);
   const powerLevels = usePowerLevelsContext();
-  const creators = useRoomCreators(room);
 
   const permissions = useRoomPermissions(creators, powerLevels);
-  const canMessage = permissions.event(EventType.RoomMessage, mx.getSafeUserId());
+  const canMessage = permissions.event(MessageEvent.RoomMessage, ct.session.userId);
 
   useKeyDown(
     window,
@@ -95,33 +98,24 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
     <Page ref={roomViewRef}>
       <RoomViewHeader />
       <Box grow="Yes" direction="Column">
-        <RoomTimeline
-          key={roomId}
-          room={room}
-          eventId={eventId}
-          roomInputRef={roomInputRef}
-          editor={editor}
-        />
-        <RoomViewTyping room={room} />
+        {timeline && (
+          <RoomTimeline
+            key={roomId}
+            eventId={eventId}
+            roomInputRef={roomInputRef}
+            editor={editor}
+            timeline={timeline}
+          />
+        )}
       </Box>
       <Box shrink="No" direction="Column">
         <div style={{ padding: `0 ${config.space.S400}` }}>
-          {tombstoneEvent ? (
-            <RoomTombstone
-              roomId={roomId}
-              body={tombstoneEvent.getContent().body}
-              replacementRoomId={tombstoneEvent.getContent().replacement_room}
-            />
+          {replacementRoom ? (
+            <RoomTombstone roomId={roomId} replacementRoomId={replacementRoom} />
           ) : (
             <>
               {canMessage && (
-                <RoomInput
-                  room={room}
-                  editor={editor}
-                  roomId={roomId}
-                  fileDropContainerRef={roomViewRef}
-                  ref={roomInputRef}
-                />
+                <RoomInput editor={editor} fileDropContainerRef={roomViewRef} ref={roomInputRef} />
               )}
               {!canMessage && (
                 <RoomInputPlaceholder
@@ -135,7 +129,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
             </>
           )}
         </div>
-        {hideActivity ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing room={room} />}
+        {hideActivity ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing />}
       </Box>
     </Page>
   );

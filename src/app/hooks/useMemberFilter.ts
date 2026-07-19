@@ -1,52 +1,55 @@
 import { useMemo } from 'react';
-import { RoomMember } from 'matrix-js-sdk';
-import { Membership } from '../../types/matrix/room';
+import { GetRoomMemberMembershipCallback } from './useRoomMembers';
+import { JoinRoomMemberObject } from '../../client/storage/collections';
 
-export const MembershipFilter = {
-  filterJoined: (m: RoomMember) => m.membership === Membership.Join,
-  filterInvited: (m: RoomMember) => m.membership === Membership.Invite,
-  filterLeaved: (m: RoomMember) =>
-    m.membership === Membership.Leave &&
-    m.events.member?.getStateKey() === m.events.member?.getSender(),
-  filterKicked: (m: RoomMember) =>
-    m.membership === Membership.Leave &&
-    m.events.member?.getStateKey() !== m.events.member?.getSender(),
-  filterBanned: (m: RoomMember) => m.membership === Membership.Ban,
-};
+export const getMembershipFilter = (getMembership: GetRoomMemberMembershipCallback) => ({
+  filterJoined: (m: JoinRoomMemberObject) => getMembership(m.userId) === 'join',
+  filterInvited: (m: JoinRoomMemberObject) => getMembership(m.userId) === 'invite',
+  filterLeaved: (m: JoinRoomMemberObject) =>
+    getMembership(m.userId) === 'leave' && m.event.state_key === m.event.sender,
+  filterKicked: (m: JoinRoomMemberObject) =>
+    getMembership(m.userId) === 'leave' && m.event.state_key !== m.event.sender,
+  filterBanned: (m: JoinRoomMemberObject) => getMembership(m.userId) === 'ban',
+});
 
-export type MembershipFilterFn = (m: RoomMember) => boolean;
+export type MembershipFilterFn = (m: JoinRoomMemberObject) => boolean;
 
 export type MembershipFilterItem = {
   name: string;
   filterFn: MembershipFilterFn;
 };
 
-export const useMembershipFilterMenu = (): MembershipFilterItem[] =>
-  useMemo(
+export const useMembershipFilterMenu = (
+  getMembership: GetRoomMemberMembershipCallback
+): MembershipFilterItem[] => {
+  const filterFn = useMemo(() => getMembershipFilter(getMembership), [getMembership]);
+
+  return useMemo(
     () => [
       {
         name: 'Joined',
-        filterFn: MembershipFilter.filterJoined,
+        filterFn: filterFn.filterJoined,
       },
       {
         name: 'Invited',
-        filterFn: MembershipFilter.filterInvited,
+        filterFn: filterFn.filterInvited,
       },
       {
         name: 'Left',
-        filterFn: MembershipFilter.filterLeaved,
+        filterFn: filterFn.filterLeaved,
       },
       {
         name: 'Kicked',
-        filterFn: MembershipFilter.filterKicked,
+        filterFn: filterFn.filterKicked,
       },
       {
         name: 'Banned',
-        filterFn: MembershipFilter.filterBanned,
+        filterFn: filterFn.filterBanned,
       },
     ],
-    []
+    [filterFn]
   );
+};
 
 export const useMembershipFilter = (
   index: number,

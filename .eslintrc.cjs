@@ -31,12 +31,15 @@ module.exports = {
     'linebreak-style': 0,
     'no-underscore-dangle': 0,
     "no-shadow": "off",
+    "max-classes-per-file": "off",
+    "no-useless-constructor": "off",
+    "no-empty-function": "off",
 
     "import/prefer-default-export": "off",
     "import/extensions": "off",
     "import/no-unresolved": "off",
     "import/no-extraneous-dependencies": [
-      "error",
+      "off",
       {
         devDependencies: true,
       },
@@ -58,8 +61,10 @@ module.exports = {
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "error",
 
+    "@typescript-eslint/no-useless-constructor": "error",
+    "@typescript-eslint/no-empty-function": "error",
     "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/no-shadow": "error"
+    "@typescript-eslint/no-shadow": "error",
   },
   overrides: [
     {

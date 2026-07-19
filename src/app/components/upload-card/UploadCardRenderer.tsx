@@ -1,20 +1,20 @@
 import React, { ReactNode, useEffect } from 'react';
+import { printMatrixError } from 'neurone/lib/matrix-request';
 import { Box, Chip, Icon, IconButton, Icons, Text, color, config, toRem } from 'folds';
 import { UploadCard, UploadCardError, UploadCardProgress } from './UploadCard';
 import { UploadStatus, UploadSuccess, useBindUploadAtom } from '../../state/upload';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { TUploadContent } from '../../utils/matrix';
+import { UploadContent } from '../../utils/matrix';
 import { bytesToSize, getFileTypeIcon } from '../../utils/common';
 import {
-  roomUploadAtomFamily,
-  TUploadItem,
-  TUploadMetadata,
+  roomUploadContentToUploadAtom,
+  UploadItem,
+  UploadMetadata,
 } from '../../state/room/roomInputDrafts';
 import { useObjectURL } from '../../hooks/useObjectURL';
 import { useMediaConfig } from '../../hooks/useMediaConfig';
 
 type PreviewImageProps = {
-  fileItem: TUploadItem;
+  fileItem: UploadItem;
 };
 function PreviewImage({ fileItem }: PreviewImageProps) {
   const { originalFile, metadata } = fileItem;
@@ -35,7 +35,7 @@ function PreviewImage({ fileItem }: PreviewImageProps) {
 }
 
 type PreviewVideoProps = {
-  fileItem: TUploadItem;
+  fileItem: UploadItem;
 };
 function PreviewVideo({ fileItem }: PreviewVideoProps) {
   const { originalFile, metadata } = fileItem;
@@ -56,7 +56,7 @@ function PreviewVideo({ fileItem }: PreviewVideoProps) {
 }
 
 type MediaPreviewProps = {
-  fileItem: TUploadItem;
+  fileItem: UploadItem;
   onSpoiler: (marked: boolean) => void;
   children: ReactNode;
 };
@@ -100,9 +100,9 @@ function MediaPreview({ fileItem, onSpoiler, children }: MediaPreviewProps) {
 
 type UploadCardRendererProps = {
   isEncrypted?: boolean;
-  fileItem: TUploadItem;
-  setMetadata: (fileItem: TUploadItem, metadata: TUploadMetadata) => void;
-  onRemove: (file: TUploadContent) => void;
+  fileItem: UploadItem;
+  setMetadata: (fileItem: UploadItem, metadata: UploadMetadata) => void;
+  onRemove: (file: UploadContent) => void;
   onComplete?: (upload: UploadSuccess) => void;
 };
 export function UploadCardRenderer({
@@ -112,13 +112,12 @@ export function UploadCardRenderer({
   onRemove,
   onComplete,
 }: UploadCardRendererProps) {
-  const mx = useMatrixClient();
   const mediaConfig = useMediaConfig();
   const allowSize = mediaConfig['m.upload.size'] || Infinity;
 
-  const uploadAtom = roomUploadAtomFamily(fileItem.file);
+  const uploadAtom = roomUploadContentToUploadAtom(fileItem.file);
   const { metadata } = fileItem;
-  const { upload, startUpload, cancelUpload } = useBindUploadAtom(mx, uploadAtom, isEncrypted);
+  const { upload, startUpload, cancelUpload } = useBindUploadAtom(uploadAtom, isEncrypted);
   const { file } = upload;
   const fileSizeExceeded = file.size >= allowSize;
 
@@ -190,7 +189,11 @@ export function UploadCardRenderer({
           )}
           {upload.status === UploadStatus.Error && (
             <UploadCardError>
-              <Text size="T200">{upload.error.message}</Text>
+              <Text size="T200">
+                {upload.error instanceof Error
+                  ? upload.error.message
+                  : printMatrixError(upload.error)}
+              </Text>
             </UploadCardError>
           )}
           {upload.status === UploadStatus.Idle && fileSizeExceeded && (

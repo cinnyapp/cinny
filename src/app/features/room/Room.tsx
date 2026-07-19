@@ -7,47 +7,91 @@ import { MembersDrawer } from './MembersDrawer';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePowerLevels';
+import {
+  PowerLevelsContextProvider,
+  usePowerLevels,
+  usePowerLevelsState,
+} from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { markAsRead } from '../../utils/notifications';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoomMembers } from '../../hooks/useRoomMembers';
+import { RoomMembersAPIProvider, useCreateRoomMembersAPI } from '../../hooks/useRoomMembers';
+import {
+  PowerLevelTagsContextProvider,
+  usePowerLevelTags,
+  usePowerLevelTagsState,
+} from '../../hooks/usePowerLevelTags';
+import { usePendingMemberLoader, usePendingMembers } from '../../hooks/usePendingMembers';
+import { useObservableValue, useObservableValueOptionally } from '../../hooks/useObservableValue';
+import { useClient } from '../../hooks/useClient';
+import { ThreadView } from './thread-view';
+import { TimelineViewProvider } from './hooks/useTimeline';
 
 export function Room() {
   const { eventId } = useParams();
-  const room = useRoom();
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const roomId = useRoom();
+  const roomToTimeline = useObservableValue(ct.roomToTimeline);
+
+  const timeline = roomToTimeline.get(roomId);
+  const activeThreadId = useObservableValueOptionally(timeline?.activeThread);
+  const threads = useObservableValueOptionally(timeline?.threads);
+  const threadTimeline = activeThreadId ? threads?.get(activeThreadId) : undefined;
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const screenSize = useScreenSizeContext();
-  const powerLevels = usePowerLevels(room);
-  const members = useRoomMembers(mx, room.roomId);
+  const powerLevelStateResult = usePowerLevelsState(roomId);
+  const powerLevels = usePowerLevels(powerLevelStateResult.value);
+  const powerLevelTagsStateResult = usePowerLevelTagsState(roomId);
+  const powerLevelTags = usePowerLevelTags(powerLevels, powerLevelTagsStateResult.value);
+  const membersAPI = useCreateRoomMembersAPI(roomId);
+  const membersPending = usePendingMembers(roomId);
+  usePendingMemberLoader(roomId, membersPending);
 
   useKeyDown(
     window,
     useCallback(
       (evt) => {
         if (isKeyHotkey('escape', evt)) {
-          markAsRead(mx, room.roomId, hideActivity);
+          // markAsRead(mx, roomId, hideActivity);
         }
       },
-      [mx, room.roomId, hideActivity]
+      [roomId, hideActivity]
     )
   );
 
   return (
-    <PowerLevelsContextProvider value={powerLevels}>
-      <Box grow="Yes">
-        <RoomView room={room} eventId={eventId} />
-        {screenSize === ScreenSize.Desktop && isDrawer && (
-          <>
-            <Line variant="Background" direction="Vertical" size="300" />
-            <MembersDrawer key={room.roomId} room={room} members={members} />
-          </>
-        )}
-      </Box>
-    </PowerLevelsContextProvider>
+    <RoomMembersAPIProvider value={membersAPI}>
+      <PowerLevelsContextProvider value={powerLevels}>
+        <PowerLevelTagsContextProvider value={powerLevelTags}>
+          {timeline && (
+            <Box grow="Yes">
+              <TimelineViewProvider value={timeline}>
+                <RoomView key={roomId} timeline={timeline} eventId={eventId} />
+              </TimelineViewProvider>
+
+              {threadTimeline ? (
+                <TimelineViewProvider value={threadTimeline}>
+                  <Line variant="Surface" direction="Vertical" size="300" />
+                  <ThreadView
+                    threadTimeline={threadTimeline}
+                    requestClose={() => timeline.closeThread()}
+                  />
+                </TimelineViewProvider>
+              ) : (
+                screenSize === ScreenSize.Desktop &&
+                isDrawer && (
+                  <>
+                    <Line variant="Background" direction="Vertical" size="300" />
+                    <MembersDrawer key={roomId} />
+                  </>
+                )
+              )}
+            </Box>
+          )}
+        </PowerLevelTagsContextProvider>
+      </PowerLevelsContextProvider>
+    </RoomMembersAPIProvider>
   );
 }

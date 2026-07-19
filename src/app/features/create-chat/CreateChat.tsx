@@ -1,53 +1,76 @@
 import { Box, Button, color, config, Icon, Icons, Input, Spinner, Switch, Text } from 'folds';
 import React, { FormEventHandler, useCallback, useState } from 'react';
-import { ICreateRoomStateEvent, MatrixError, Preset, Visibility } from 'matrix-js-sdk';
 import { useNavigate } from 'react-router-dom';
+import {
+  MatrixResponseResult,
+  parseMatrixResp,
+  printMatrixError,
+} from 'neurone/lib/matrix-request';
+import {
+  CreateRoomStateEvent,
+  postCreateRoom,
+  PostCreateRoomOK,
+} from 'neurone/lib/api/matrix/client/v3/createRoom';
 import { SettingTile } from '../../components/setting-tile';
 import { SequenceCard } from '../../components/sequence-card';
 import { addRoomIdToMDirect, isUserId } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { ErrorCode } from '../../cs-errorcode';
 import { millisecondsToMinutes } from '../../utils/common';
 import { createRoomEncryptionState } from '../../components/create-room';
 import { useAlive } from '../../hooks/useAlive';
 import { getDirectRoomPath } from '../../pages/pathUtils';
+import { useClient } from '../../hooks/useClient';
+import { rError } from '../../../client/reader';
 
 type CreateChatProps = {
   defaultUserId?: string;
 };
 export function CreateChat({ defaultUserId }: CreateChatProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const alive = useAlive();
   const navigate = useNavigate();
 
   const [encryption, setEncryption] = useState(true);
   const [invalidUserId, setInvalidUserId] = useState(false);
 
-  const [createState, create] = useAsyncCallback<string, Error | MatrixError, [string, boolean]>(
+  const [createState, create] = useAsyncCallback<
+    MatrixResponseResult<string>,
+    Error,
+    [string, boolean]
+  >(
     useCallback(
       async (userId, encrypted) => {
-        const initialState: ICreateRoomStateEvent[] = [];
+        const initialState: CreateRoomStateEvent[] = [];
 
         if (encrypted) initialState.push(createRoomEncryptionState());
 
-        const result = await mx.createRoom({
-          is_direct: true,
-          invite: [userId],
-          visibility: Visibility.Private,
-          preset: Preset.TrustedPrivateChat,
-          initial_state: initialState,
-        });
+        const response = await ct.requestAuthJSON(
+          postCreateRoom({
+            body: {
+              is_direct: true,
+              invite: [userId],
+              visibility: 'private',
+              preset: 'trusted_private_chat',
+              initial_state: initialState,
+            },
+          })
+        );
+        const [err, result] = await parseMatrixResp<PostCreateRoomOK>(response);
+        if (err) return [err, undefined];
 
-        addRoomIdToMDirect(mx, result.room_id, userId);
+        const roomId = result.room_id;
 
-        return result.room_id;
+        addRoomIdToMDirect(ct, roomId, userId);
+
+        return [undefined, roomId];
       },
-      [mx]
+      [ct]
     )
   );
   const loading = createState.status === AsyncStatus.Loading;
   const error = createState.status === AsyncStatus.Error ? createState.error : undefined;
+  const [respError] = createState.status === AsyncStatus.Success ? createState.data : [];
   const disabled = createState.status === AsyncStatus.Loading;
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
@@ -64,8 +87,8 @@ export function CreateChat({ defaultUserId }: CreateChatProps) {
       return;
     }
 
-    create(userId, encryption).then((roomId) => {
-      if (alive()) {
+    create(userId, encryption).then(([, roomId]) => {
+      if (alive() && roomId) {
         userIdInput.value = '';
         navigate(getDirectRoomPath(roomId));
       }
@@ -123,13 +146,16 @@ export function CreateChat({ defaultUserId }: CreateChatProps) {
         <Box style={{ color: color.Critical.Main }} alignItems="Center" gap="200">
           <Icon src={Icons.Warning} filled size="100" />
           <Text size="T300" style={{ color: color.Critical.Main }}>
-            <b>
-              {error instanceof MatrixError && error.name === ErrorCode.M_LIMIT_EXCEEDED
-                ? `Server rate-limited your request for ${millisecondsToMinutes(
-                    (error.data.retry_after_ms as number | undefined) ?? 0
-                  )} minutes!`
-                : error.message}
-            </b>
+            {error && <b>error.message</b>}
+            {respError &&
+              (respError.data.errcode === ErrorCode.M_LIMIT_EXCEEDED ? (
+                <b>
+                  Server rate-limited your request for{' '}
+                  {millisecondsToMinutes(rError.retryAfterMs(respError.data) ?? 0)} minutes!
+                </b>
+              ) : (
+                <b>{printMatrixError(respError)}</b>
+              ))}
           </Text>
         </Box>
       )}

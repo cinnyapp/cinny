@@ -1,32 +1,19 @@
-import { atom, WritableAtom } from 'jotai';
-import { MatrixClient } from 'matrix-js-sdk';
-import { useMemo } from 'react';
-import { Membership } from '../../../types/matrix/room';
-import { RoomsAction, useBindRoomsWithMembershipsAtom } from './utils';
+import { atom, useSetAtom } from 'jotai';
+import { useEffect } from 'react';
+import { ClientContext } from '../../../client/context';
 
-const baseRoomsAtom = atom<string[]>([]);
-export const allInvitesAtom = atom<string[], [RoomsAction], undefined>(
-  (get) => get(baseRoomsAtom),
-  (get, set, action) => {
-    if (action.type === 'INITIALIZE') {
-      set(baseRoomsAtom, action.rooms);
-      return;
-    }
-    set(baseRoomsAtom, (ids) => {
-      const newIds = ids.filter((id) => id !== action.roomId);
-      if (action.type === 'PUT') newIds.push(action.roomId);
-      return newIds;
+export const allInvitesAtom = atom<string[]>([]);
+
+export const useBindAllInvitesAtom = (ct: ClientContext, allRooms: typeof allInvitesAtom) => {
+  const setRoomsAtom = useSetAtom(allRooms);
+
+  useEffect(() => {
+    setRoomsAtom(ct.rooms.invite.read);
+
+    const unsubscribe = ct.rooms.invite.subscribe((rooms) => {
+      setRoomsAtom(rooms);
     });
-  }
-);
 
-export const useBindAllInvitesAtom = (
-  mx: MatrixClient,
-  allRooms: WritableAtom<string[], [RoomsAction], undefined>
-) => {
-  useBindRoomsWithMembershipsAtom(
-    mx,
-    allRooms,
-    useMemo(() => [Membership.Invite], [])
-  );
+    return unsubscribe;
+  }, [ct, setRoomsAtom]);
 };

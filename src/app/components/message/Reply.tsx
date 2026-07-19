@@ -1,138 +1,175 @@
-import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
-import { EventTimelineSet, Room } from 'matrix-js-sdk';
+import { Box, Text, color, toRem } from 'folds';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
-import classNames from 'classnames';
-import { getMemberDisplayName, trimReplyFromBody } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { HTMLReactParserOptions } from 'html-react-parser';
+import { Opts } from 'linkifyjs';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
 import * as css from './Reply.css';
-import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
-import { scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
+import { MessageBadEncryptedContent } from './content';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
 import colorMXID from '../../../util/colorMXID';
 import { GetMemberPowerTag } from '../../hooks/useMemberPowerTag';
+import { GetRoomMemberNameCallback } from '../../hooks/useRoomMembers';
+import { rUnsigned } from '../../../client/reader';
+import { TimelineView } from '../../../client/room';
+import { RenderMessageContent } from '../RenderMessageContent';
+import { Time } from './Time';
+import { BubbleLayout, CompactLayout, MessageBase, ModernLayout } from './layout';
+import { MessageLayout, MessageSpacing } from '../../state/settings';
 
-type ReplyLayoutProps = {
-  userColor?: string;
+type ReplyMessageProps = {
   username?: ReactNode;
+  time?: ReactNode;
+  messageLayout: MessageLayout;
+  children: ReactNode;
 };
-export const ReplyLayout = as<'div', ReplyLayoutProps>(
-  ({ username, userColor, className, children, ...props }, ref) => (
-    <Box
-      className={classNames(css.Reply, className)}
-      alignItems="Center"
-      gap="100"
-      {...props}
-      ref={ref}
-    >
-      <Box style={{ color: userColor, maxWidth: toRem(200) }} alignItems="Center" shrink="No">
-        <Icon size="100" src={Icons.ReplyArrow} />
-        {username}
-      </Box>
-      <Box grow="Yes" className={css.ReplyContent}>
-        {children}
-      </Box>
-    </Box>
-  )
-);
+export function ReplyMessage({ username, time, messageLayout, children }: ReplyMessageProps) {
+  const msgBarJSX = <div className={css.ReplyBar} />;
 
-export const ThreadIndicator = as<'div'>(({ ...props }, ref) => (
-  <Box
-    shrink="No"
-    className={css.ThreadIndicator}
-    alignItems="Center"
-    gap="100"
-    {...props}
-    ref={ref}
-  >
-    <Icon size="50" src={Icons.Thread} />
-    <Text size="L400">Thread</Text>
-  </Box>
-));
+  if (messageLayout === MessageLayout.Compact) {
+    return (
+      <CompactLayout before={msgBarJSX}>
+        <Box grow="Yes" direction="Column">
+          <Box alignItems="Baseline" shrink="No" gap="200">
+            {username}
+            {time}
+          </Box>
+          {children}
+        </Box>
+      </CompactLayout>
+    );
+  }
+
+  if (messageLayout === MessageLayout.Bubble) {
+    return (
+      <BubbleLayout
+        hideBubble
+        before={msgBarJSX}
+        header={
+          <Box alignItems="Baseline" shrink="No" gap="200">
+            {username}
+            {time}
+          </Box>
+        }
+      >
+        {children}
+      </BubbleLayout>
+    );
+  }
+
+  return (
+    <ModernLayout before={msgBarJSX}>
+      <Box alignItems="Baseline" shrink="No" gap="200">
+        {username}
+        {time}
+      </Box>
+      {children}
+    </ModernLayout>
+  );
+}
 
 type ReplyProps = {
-  room: Room;
-  timelineSet?: EventTimelineSet | undefined;
-  replyEventId: string;
-  threadRootId?: string | undefined;
+  roomId: string;
+  eventId: string;
   onClick?: MouseEventHandler | undefined;
   getMemberPowerTag?: GetMemberPowerTag;
   accessibleTagColors?: Map<string, string>;
   legacyUsernameColor?: boolean;
+  getMemberName: GetRoomMemberNameCallback;
+  redacted: boolean;
+  timeline?: TimelineView;
+  htmlReactParserOptions: HTMLReactParserOptions;
+  linkifyOpts: Opts;
+  hour24Clock: boolean;
+  messageLayout: MessageLayout;
+  dateFormatString: string;
+  messageSpacing: MessageSpacing;
+  mediaAutoLoad?: boolean;
 };
 
-export const Reply = as<'div', ReplyProps>(
-  (
-    {
-      room,
-      timelineSet,
-      replyEventId,
-      threadRootId,
-      onClick,
-      getMemberPowerTag,
-      accessibleTagColors,
-      legacyUsernameColor,
-      ...props
-    },
-    ref
-  ) => {
-    const placeholderWidth = useMemo(() => randomNumberBetween(40, 400), []);
-    const getFromLocalTimeline = useCallback(
-      () => timelineSet?.findEventById(replyEventId),
-      [timelineSet, replyEventId]
-    );
-    const replyEvent = useRoomEvent(room, replyEventId, getFromLocalTimeline);
+export function Reply({
+  roomId,
+  eventId,
+  onClick,
+  getMemberPowerTag,
+  accessibleTagColors,
+  legacyUsernameColor,
+  getMemberName,
+  redacted,
+  timeline,
+  htmlReactParserOptions,
+  linkifyOpts,
+  hour24Clock,
+  dateFormatString,
+  messageLayout,
+  messageSpacing,
+  mediaAutoLoad,
+}: ReplyProps) {
+  const placeholderWidth = useMemo(() => randomNumberBetween(40, 400), []);
+  const replyEvent = useRoomEvent(
+    roomId,
+    eventId,
+    useCallback(() => timeline?.findEvent(eventId), [timeline, eventId])
+  );
 
-    const { body } = replyEvent?.getContent() ?? {};
-    const sender = replyEvent?.getSender();
-    const powerTag = sender ? getMemberPowerTag?.(sender) : undefined;
-    const tagColor = powerTag?.color ? accessibleTagColors?.get(powerTag.color) : undefined;
+  const sender = replyEvent?.sender;
+  const powerTag = sender ? getMemberPowerTag?.(sender) : undefined;
+  const tagColor = powerTag?.color ? accessibleTagColors?.get(powerTag.color) : undefined;
 
-    const usernameColor = legacyUsernameColor ? colorMXID(sender ?? replyEventId) : tagColor;
+  const usernameColor = legacyUsernameColor ? colorMXID(sender ?? eventId) : tagColor;
 
-    const fallbackBody = replyEvent?.isRedacted() ? (
-      <MessageDeletedContent />
-    ) : (
-      <MessageFailedContent />
-    );
-
-    const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
-    const bodyJSX = body ? scaleSystemEmoji(trimReplyFromBody(body)) : fallbackBody;
-
-    return (
-      <Box direction="Row" gap="200" alignItems="Center" {...props} ref={ref}>
-        {threadRootId && (
-          <ThreadIndicator as="button" data-event-id={threadRootId} onClick={onClick} />
-        )}
-        <ReplyLayout
-          as="button"
-          userColor={usernameColor}
-          username={
-            sender && (
-              <Text size="T300" truncate>
-                <b>{getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)}</b>
-              </Text>
-            )
-          }
-          data-event-id={replyEventId}
-          onClick={onClick}
-        >
-          {replyEvent !== undefined ? (
-            <Text size="T300" truncate>
-              {badEncryption ? <MessageBadEncryptedContent /> : bodyJSX}
+  return (
+    <MessageBase space={messageSpacing}>
+      <ReplyMessage
+        messageLayout={messageLayout}
+        username={
+          sender && (
+            <Text style={{ color: usernameColor }} size="T300" truncate>
+              <b>{getMemberName(sender)}</b>
             </Text>
-          ) : (
-            <LinePlaceholder
-              style={{
-                backgroundColor: color.SurfaceVariant.ContainerActive,
-                width: toRem(placeholderWidth),
-                maxWidth: '100%',
-              }}
+          )
+        }
+        time={
+          replyEvent && (
+            <Time
+              ts={replyEvent.origin_server_ts}
+              dateFormatString={dateFormatString}
+              hour24Clock={hour24Clock}
             />
-          )}
-        </ReplyLayout>
-      </Box>
-    );
-  }
-);
+          )
+        }
+        data-event-id={eventId}
+      >
+        {replyEvent !== undefined ? (
+          <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }} as="div">
+            {replyEvent === null ? (
+              <Text>
+                <MessageBadEncryptedContent />
+              </Text>
+            ) : (
+              <RenderMessageContent
+                displayName={getMemberName(replyEvent.sender)}
+                eventType={replyEvent.type}
+                ts={replyEvent.origin_server_ts}
+                edited={false}
+                content={replyEvent.content}
+                mediaAutoLoad={mediaAutoLoad}
+                htmlReactParserOptions={htmlReactParserOptions}
+                linkifyOpts={linkifyOpts}
+                redacted={redacted || !!rUnsigned.redactedBecause(replyEvent.unsigned)}
+              />
+            )}
+          </Box>
+        ) : (
+          <LinePlaceholder
+            style={{
+              backgroundColor: color.SurfaceVariant.ContainerActive,
+              width: toRem(placeholderWidth),
+              maxWidth: '100%',
+            }}
+          />
+        )}
+      </ReplyMessage>
+    </MessageBase>
+  );
+}

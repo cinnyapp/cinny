@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import classNames from 'classnames';
 import {
   Avatar,
@@ -14,13 +14,8 @@ import {
   as,
   config,
 } from 'folds';
-import { MatrixEvent, Room, RoomMember } from 'matrix-js-sdk';
-import { Relations } from 'matrix-js-sdk/lib/models/relations';
-import { getMemberDisplayName } from '../../../utils/room';
-import { eventWithShortcode, getMxIdLocalPart } from '../../../utils/matrix';
+import { ReactionGroup } from '../../../utils/room';
 import * as css from './ReactionViewer.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useRelations } from '../../../hooks/useRelations';
 import { Reaction } from '../../../components/message';
 import { getHexcodeForEmoji, getShortcodeFor } from '../../../plugins/emoji';
 import { UserAvatar } from '../../../components/user-avatar';
@@ -28,44 +23,28 @@ import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../../hooks/useSpace';
 import { getMouseEventCords } from '../../../utils/dom';
+import { useClient } from '../../../hooks/useClient';
+import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { useRoom } from '../../../hooks/useRoom';
 
 export type ReactionViewerProps = {
-  room: Room;
   initialKey?: string;
-  relations: Relations;
+  reactions: ReactionGroup[];
   requestClose: () => void;
 };
 export const ReactionViewer = as<'div', ReactionViewerProps>(
-  ({ className, room, initialKey, relations, requestClose, ...props }, ref) => {
-    const mx = useMatrixClient();
+  ({ className, initialKey, reactions, requestClose, ...props }, ref) => {
+    const ct = useClient();
     const useAuthentication = useMediaAuthentication();
-    const reactions = useRelations(
-      relations,
-      useCallback((rel) => [...(rel.getSortedAnnotationsByKey() ?? [])], [])
-    );
-    const space = useSpaceOptionally();
+    const roomId = useRoom();
+    const spaceId = useSpaceOptionally();
     const openProfile = useOpenUserRoomProfile();
+    const membersAPI = useRoomMembersAPI();
 
-    const [selectedKey, setSelectedKey] = useState<string>(() => {
-      if (initialKey) return initialKey;
-      const defaultReaction = reactions.find((reaction) => typeof reaction[0] === 'string');
-      return defaultReaction ? defaultReaction[0] : '';
-    });
-
-    const getName = (member: RoomMember) =>
-      getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
-
-    const getReactionsForKey = (key: string): MatrixEvent[] => {
-      const reactSet = reactions.find(([k]) => k === key)?.[1];
-      if (!reactSet) return [];
-      return Array.from(reactSet);
-    };
-
-    const selectedReactions = getReactionsForKey(selectedKey);
-    const selectedShortcode =
-      selectedReactions.find(eventWithShortcode)?.getContent().shortcode ??
-      getShortcodeFor(getHexcodeForEmoji(selectedKey)) ??
-      selectedKey;
+    const [selectedReaction, setSelectedReaction] = useState<ReactionGroup | undefined>(() =>
+      reactions.find((r) => (initialKey ? r.key === initialKey : r))
+    );
 
     return (
       <Box
@@ -77,20 +56,17 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
         <Box shrink="No" className={css.Sidebar}>
           <Scroll visibility="Hover" hideTrack size="300">
             <Box className={css.SidebarContent} direction="Column" gap="200">
-              {reactions.map(([key, evts]) => {
-                if (typeof key !== 'string') return null;
-                return (
-                  <Reaction
-                    key={key}
-                    mx={mx}
-                    reaction={key}
-                    count={evts.size}
-                    aria-selected={key === selectedKey}
-                    onClick={() => setSelectedKey(key)}
-                    useAuthentication={useAuthentication}
-                  />
-                );
-              })}
+              {reactions.map((reaction) => (
+                <Reaction
+                  key={reaction.key}
+                  ct={ct}
+                  reaction={reaction.key}
+                  count={reaction.users.size}
+                  aria-selected={reaction.key === selectedReaction?.key}
+                  onClick={() => setSelectedReaction(reaction)}
+                  useAuthentication={useAuthentication}
+                />
+              ))}
             </Box>
           </Scroll>
         </Box>
@@ -98,7 +74,17 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
         <Box grow="Yes" direction="Column">
           <Header className={css.Header} variant="Surface" size="600">
             <Box grow="Yes">
-              <Text size="H3" truncate>{`Reacted with :${selectedShortcode}:`}</Text>
+              {selectedReaction ? (
+                <Text size="H3" truncate>{`Reacted with :${
+                  selectedReaction.shortcode ??
+                  getShortcodeFor(getHexcodeForEmoji(selectedReaction.key)) ??
+                  selectedReaction.key
+                }:`}</Text>
+              ) : (
+                <Text size="H3" truncate>
+                  Reactions
+                </Text>
+              )}
             </Box>
             <IconButton size="300" onClick={requestClose}>
               <Icon src={Icons.Cross} />
@@ -108,58 +94,51 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
           <Box grow="Yes">
             <Scroll visibility="Hover" hideTrack size="300">
               <Box className={css.Content} direction="Column">
-                {selectedReactions.map((mEvent) => {
-                  const senderId = mEvent.getSender();
-                  if (!senderId) return null;
-                  const member = room.getMember(senderId);
-                  const name = (member ? getName(member) : getMxIdLocalPart(senderId)) ?? senderId;
+                {selectedReaction &&
+                  Array.from(selectedReaction.users).map((userId) => {
+                    const name = membersAPI.getName(userId);
+                    const avatarMxcUrl = membersAPI.getAvatar(userId);
+                    const avatarUrl = avatarMxcUrl
+                      ? mxcToHttp(ct.session.baseUrl, avatarMxcUrl, useAuthentication).thumbnail({
+                          width: 96,
+                          height: 96,
+                          method: 'crop',
+                        })
+                      : undefined;
 
-                  const avatarMxcUrl = member?.getMxcAvatarUrl();
-                  const avatarUrl = avatarMxcUrl
-                    ? mx.mxcUrlToHttp(
-                        avatarMxcUrl,
-                        100,
-                        100,
-                        'crop',
-                        undefined,
-                        false,
-                        useAuthentication
-                      )
-                    : undefined;
-
-                  return (
-                    <MenuItem
-                      key={senderId}
-                      style={{ padding: `0 ${config.space.S200}` }}
-                      radii="400"
-                      onClick={(event) => {
-                        openProfile(
-                          room.roomId,
-                          space?.roomId,
-                          senderId,
-                          getMouseEventCords(event.nativeEvent),
-                          'Bottom'
-                        );
-                      }}
-                      before={
-                        <Avatar size="200">
-                          <UserAvatar
-                            userId={senderId}
-                            src={avatarUrl ?? undefined}
-                            alt={name}
-                            renderFallback={() => <Icon size="50" src={Icons.User} filled />}
-                          />
-                        </Avatar>
-                      }
-                    >
-                      <Box grow="Yes">
-                        <Text size="T400" truncate>
-                          {name}
-                        </Text>
-                      </Box>
-                    </MenuItem>
-                  );
-                })}
+                    return (
+                      <MenuItem
+                        key={userId}
+                        style={{ padding: `0 ${config.space.S200}` }}
+                        radii="400"
+                        onClick={(event) => {
+                          openProfile(
+                            roomId,
+                            spaceId,
+                            userId,
+                            getMouseEventCords(event.nativeEvent),
+                            'Bottom'
+                          );
+                        }}
+                        before={
+                          <Avatar size="200">
+                            <UserAvatar
+                              userId={userId}
+                              src={avatarUrl ?? undefined}
+                              alt={name}
+                              renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                            />
+                          </Avatar>
+                        }
+                      >
+                        <Box grow="Yes">
+                          <Text size="T400" truncate>
+                            {name}
+                          </Text>
+                        </Box>
+                      </MenuItem>
+                    );
+                  })}
               </Box>
             </Scroll>
           </Box>

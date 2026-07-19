@@ -30,7 +30,7 @@ type SpaceRoomsAction =
       roomIds: string[];
     };
 
-export const spaceRoomsAtom = atom<Set<string>, [SpaceRoomsAction], undefined>(
+export const spaceRoomsAtom = atom<Set<string>, [SpaceRoomsAction], void>(
   (get) => get(baseSpaceRoomsAtom),
   (get, set, action) => {
     const current = get(baseSpaceRoomsAtom);

@@ -12,7 +12,6 @@ import React, {
 import { Box, config, Icons, Scroll } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
-import { Room } from 'matrix-js-sdk';
 import { atom, PrimitiveAtom, useAtom, useSetAtom } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { IEmoji, emojiGroups, emojis } from '../../plugins/emoji';
@@ -20,9 +19,8 @@ import { useEmojiGroupLabels } from './useEmojiGroupLabels';
 import { useEmojiGroupIcons } from './useEmojiGroupIcons';
 import { preventScrollWithArrowKey, stopPropagation } from '../../utils/keyboard';
 import { useRelevantImagePacks } from '../../hooks/useImagePacks';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../hooks/useRecentEmoji';
-import { isUserId, mxcUrlToHttp } from '../../utils/matrix';
+import { isUserId } from '../../utils/matrix';
 import { editableActiveElement, targetFromEvent } from '../../utils/dom';
 import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -52,6 +50,10 @@ import {
 } from './components';
 import { EmojiBoardTab, EmojiType } from './types';
 import { VirtualTile } from '../virtualizer';
+import { useClient } from '../../hooks/useClient';
+import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
+import { GetRoomNameCallback, useGetRoomName } from '../../hooks/storage/useGetRoomName';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 const RECENT_GROUP_ID = 'recent_group';
 const SEARCH_GROUP_ID = 'search_group';
@@ -69,11 +71,10 @@ type StickerGroupItem = {
 
 const useGroups = (
   tab: EmojiBoardTab,
-  imagePacks: ImagePack[]
+  imagePacks: ImagePack[],
+  getRoomName: GetRoomNameCallback
 ): [EmojiGroupItem[], StickerGroupItem[]] => {
-  const mx = useMatrixClient();
-
-  const recentEmojis = useRecentEmoji(mx, 21);
+  const recentEmojisResult = useRecentEmoji(21);
   const labels = useEmojiGroupLabels();
 
   const emojiGroupItems = useMemo(() => {
@@ -83,12 +84,12 @@ const useGroups = (
     g.push({
       id: RECENT_GROUP_ID,
       name: 'Recent',
-      items: recentEmojis,
+      items: recentEmojisResult.value ?? [],
     });
 
     imagePacks.forEach((pack) => {
       let label = pack.meta.name;
-      if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+      if (!label) label = isUserId(pack.id) ? 'Personal Pack' : getRoomName(pack.id);
 
       g.push({
         id: pack.id,
@@ -108,7 +109,7 @@ const useGroups = (
     });
 
     return g;
-  }, [mx, recentEmojis, labels, imagePacks, tab]);
+  }, [getRoomName, recentEmojisResult, labels, imagePacks, tab]);
 
   const stickerGroupItems = useMemo(() => {
     const g: StickerGroupItem[] = [];
@@ -116,7 +117,7 @@ const useGroups = (
 
     imagePacks.forEach((pack) => {
       let label = pack.meta.name;
-      if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+      if (!label) label = isUserId(pack.id) ? 'Personal Pack' : getRoomName(pack.id);
 
       g.push({
         id: pack.id,
@@ -128,37 +129,24 @@ const useGroups = (
     });
 
     return g;
-  }, [mx, imagePacks, tab]);
+  }, [getRoomName, imagePacks, tab]);
 
   return [emojiGroupItems, stickerGroupItems];
 };
 
 const useItemRenderer = (tab: EmojiBoardTab) => {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
   const renderItem = (emoji: IEmoji | PackImageReader, index: number) => {
     if ('unicode' in emoji) {
       return <EmojiItem key={emoji.unicode + index} emoji={emoji} />;
     }
+    const url = mxcToHttp(ct.session.baseUrl, emoji.url, useAuthentication).url();
     if (tab === EmojiBoardTab.Sticker) {
-      return (
-        <StickerItem
-          key={emoji.shortcode + index}
-          mx={mx}
-          useAuthentication={useAuthentication}
-          image={emoji}
-        />
-      );
+      return <StickerItem key={emoji.shortcode + index} url={url} image={emoji} />;
     }
-    return (
-      <CustomEmojiItem
-        key={emoji.shortcode + index}
-        mx={mx}
-        useAuthentication={useAuthentication}
-        image={emoji}
-      />
-    );
+    return <CustomEmojiItem key={emoji.shortcode + index} url={url} image={emoji} />;
   };
 
   return renderItem;
@@ -168,9 +156,10 @@ type EmojiSidebarProps = {
   activeGroupAtom: PrimitiveAtom<string | undefined>;
   packs: ImagePack[];
   onScrollToGroup: (groupId: string) => void;
+  getRoomName: GetRoomNameCallback;
 };
-function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarProps) {
-  const mx = useMatrixClient();
+function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup, getRoomName }: EmojiSidebarProps) {
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
   const [activeGroupId, setActiveGroupId] = useAtom(activeGroupAtom);
@@ -199,11 +188,12 @@ function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarP
           <SidebarDivider />
           {packs.map((pack) => {
             let label = pack.meta.name;
-            if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+            if (!label) label = isUserId(pack.id) ? 'Personal Pack' : getRoomName(pack.id);
 
-            const url =
-              mxcUrlToHttp(mx, pack.getAvatarUrl(usage) ?? '', useAuthentication) ||
-              pack.meta.avatar;
+            const avatarMxc = pack.getAvatarUrl(usage);
+            const url = avatarMxc
+              ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).url()
+              : undefined;
 
             return (
               <ImageGroupIcon
@@ -245,9 +235,15 @@ type StickerSidebarProps = {
   activeGroupAtom: PrimitiveAtom<string | undefined>;
   packs: ImagePack[];
   onScrollToGroup: (groupId: string) => void;
+  getRoomName: GetRoomNameCallback;
 };
-function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: StickerSidebarProps) {
-  const mx = useMatrixClient();
+function StickerSidebar({
+  activeGroupAtom,
+  packs,
+  onScrollToGroup,
+  getRoomName,
+}: StickerSidebarProps) {
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
   const [activeGroupId, setActiveGroupId] = useAtom(activeGroupAtom);
@@ -263,10 +259,12 @@ function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: StickerSide
       <SidebarStack>
         {packs.map((pack) => {
           let label = pack.meta.name;
-          if (!label) label = isUserId(pack.id) ? 'Personal Pack' : mx.getRoom(pack.id)?.name;
+          if (!label) label = isUserId(pack.id) ? 'Personal Pack' : getRoomName(pack.id);
 
-          const url =
-            mxcUrlToHttp(mx, pack.getAvatarUrl(usage) ?? '', useAuthentication) || pack.meta.avatar;
+          const avatarMxc = pack.getAvatarUrl(usage);
+          const url = avatarMxc
+            ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).url()
+            : undefined;
 
           return (
             <ImageGroupIcon
@@ -355,7 +353,7 @@ const VIRTUAL_OVER_SCAN = 2;
 type EmojiBoardProps = {
   tab?: EmojiBoardTab;
   onTabChange?: (tab: EmojiBoardTab) => void;
-  imagePackRooms: Room[];
+  imagePackRooms: string[];
   requestClose: () => void;
   returnFocusOnDeactivate?: boolean;
   onEmojiSelect?: (unicode: string, shortcode: string) => void;
@@ -377,7 +375,9 @@ export function EmojiBoard({
   allowTextCustomEmoji,
   addToRecentEmoji = true,
 }: EmojiBoardProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(imagePackRooms);
+  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
 
   const emojiTab = tab === EmojiBoardTab.Emoji;
   const usage = emojiTab ? ImageUsage.Emoticon : ImageUsage.Sticker;
@@ -388,8 +388,8 @@ export function EmojiBoard({
   );
   const activeGroupIdAtom = useMemo(() => atom<string | undefined>(undefined), []);
   const setActiveGroupId = useSetAtom(activeGroupIdAtom);
-  const imagePacks = useRelevantImagePacks(usage, imagePackRooms);
-  const [emojiGroupItems, stickerGroupItems] = useGroups(tab, imagePacks);
+  const [imagePacks, loading] = useRelevantImagePacks(usage, imagePackRooms);
+  const [emojiGroupItems, stickerGroupItems] = useGroups(tab, imagePacks, getRoomName);
   const groups = emojiTab ? emojiGroupItems : stickerGroupItems;
   const renderItem = useItemRenderer(tab);
 
@@ -438,7 +438,7 @@ export function EmojiBoard({
     if (emojiInfo.type === EmojiType.Emoji) {
       onEmojiSelect?.(emojiInfo.data, emojiInfo.shortcode);
       if (!evt.altKey && !evt.shiftKey && addToRecentEmoji) {
-        addRecentEmoji(mx, emojiInfo.data);
+        addRecentEmoji(ct, emojiInfo.data);
       }
     }
     if (emojiInfo.type === EmojiType.CustomEmoji) {
@@ -522,57 +522,61 @@ export function EmojiBoard({
               activeGroupAtom={activeGroupIdAtom}
               packs={imagePacks}
               onScrollToGroup={handleScrollToGroup}
+              getRoomName={getRoomName}
             />
           ) : (
             <StickerSidebar
               activeGroupAtom={activeGroupIdAtom}
               packs={imagePacks}
               onScrollToGroup={handleScrollToGroup}
+              getRoomName={getRoomName}
             />
           )
         }
       >
         <Box grow="Yes">
-          <EmojiGroupHolder
-            key={tab}
-            contentScrollRef={contentScrollRef}
-            previewAtom={previewAtom}
-            onGroupItemClick={handleGroupItemClick}
-          >
-            {searchedItems && (
-              <EmojiGroup
-                id={SEARCH_GROUP_ID}
-                label={searchedItems.length ? 'Search Results' : 'No Results found'}
-              >
-                {searchedItems.map(renderItem)}
-              </EmojiGroup>
-            )}
-            <div
-              ref={virtualBaseRef}
-              style={{
-                position: 'relative',
-                height: virtualizer.getTotalSize(),
-              }}
+          {!loading && (
+            <EmojiGroupHolder
+              key={tab}
+              contentScrollRef={contentScrollRef}
+              previewAtom={previewAtom}
+              onGroupItemClick={handleGroupItemClick}
             >
-              {vItems.map((vItem) => {
-                const group = groups[vItem.index];
+              {searchedItems && (
+                <EmojiGroup
+                  id={SEARCH_GROUP_ID}
+                  label={searchedItems.length ? 'Search Results' : 'No Results found'}
+                >
+                  {searchedItems.map(renderItem)}
+                </EmojiGroup>
+              )}
+              <div
+                ref={virtualBaseRef}
+                style={{
+                  position: 'relative',
+                  height: virtualizer.getTotalSize(),
+                }}
+              >
+                {vItems.map((vItem) => {
+                  const group = groups[vItem.index];
 
-                return (
-                  <VirtualTile
-                    virtualItem={vItem}
-                    style={{ paddingTop: config.space.S200 }}
-                    ref={virtualizer.measureElement}
-                    key={vItem.index}
-                  >
-                    <EmojiGroup key={group.id} id={group.id} label={group.name}>
-                      {group.items.map(renderItem)}
-                    </EmojiGroup>
-                  </VirtualTile>
-                );
-              })}
-            </div>
-            {tab === EmojiBoardTab.Sticker && groups.length === 0 && <NoStickerPacks />}
-          </EmojiGroupHolder>
+                  return (
+                    <VirtualTile
+                      virtualItem={vItem}
+                      style={{ paddingTop: config.space.S200 }}
+                      ref={virtualizer.measureElement}
+                      key={vItem.index}
+                    >
+                      <EmojiGroup key={group.id} id={group.id} label={group.name}>
+                        {group.items.map(renderItem)}
+                      </EmojiGroup>
+                    </VirtualTile>
+                  );
+                })}
+              </div>
+              {tab === EmojiBoardTab.Sticker && groups.length === 0 && <NoStickerPacks />}
+            </EmojiGroupHolder>
+          )}
         </Box>
         <Preview previewAtom={previewAtom} />
       </EmojiBoardLayout>

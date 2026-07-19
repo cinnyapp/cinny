@@ -1,33 +1,19 @@
 import React, { forwardRef, useCallback } from 'react';
 import { Dialog, Header, config, Box, Text, Button, Spinner, color } from 'folds';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
-import { logoutClient } from '../../client/initMatrix';
-import { useMatrixClient } from '../hooks/useMatrixClient';
-import { useCrossSigningActive } from '../hooks/useCrossSigning';
-import { InfoCard } from './info-card';
-import {
-  useDeviceVerificationStatus,
-  VerificationStatus,
-} from '../hooks/useDeviceVerificationStatus';
+import { useClient } from '../hooks/useClient';
 
 type LogoutDialogProps = {
   handleClose: () => void;
 };
 export const LogoutDialog = forwardRef<HTMLDivElement, LogoutDialogProps>(
   ({ handleClose }, ref) => {
-    const mx = useMatrixClient();
-    const hasEncryptedRoom = !!mx.getRooms().find((room) => room.hasEncryptionStateEvent());
-    const crossSigningActive = useCrossSigningActive();
-    const verificationStatus = useDeviceVerificationStatus(
-      mx.getCrypto(),
-      mx.getSafeUserId(),
-      mx.getDeviceId() ?? undefined
-    );
+    const ct = useClient();
 
     const [logoutState, logout] = useAsyncCallback<void, Error, []>(
       useCallback(async () => {
-        await logoutClient(mx);
-      }, [mx])
+        await ct.logout();
+      }, [ct])
     );
 
     const ongoingLogout = logoutState.status === AsyncStatus.Loading;
@@ -47,7 +33,7 @@ export const LogoutDialog = forwardRef<HTMLDivElement, LogoutDialogProps>(
           </Box>
         </Header>
         <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
-          {hasEncryptedRoom &&
+          {/* {hasEncryptedRoom &&
             (crossSigningActive ? (
               verificationStatus === VerificationStatus.Unverified && (
                 <InfoCard
@@ -62,7 +48,7 @@ export const LogoutDialog = forwardRef<HTMLDivElement, LogoutDialogProps>(
                 title="Alert"
                 description="Enable device verification or export your encrypted data from settings to avoid losing access to your messages."
               />
-            ))}
+            ))} */}
           <Text priority="400">You’re about to log out. Are you sure?</Text>
           {logoutState.status === AsyncStatus.Error && (
             <Text style={{ color: color.Critical.Main }} size="T300">

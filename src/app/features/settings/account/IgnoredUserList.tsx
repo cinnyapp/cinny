@@ -1,25 +1,31 @@
 import React, { ChangeEventHandler, FormEventHandler, useCallback, useState } from 'react';
 import { Box, Button, Chip, Icon, IconButton, Icons, Input, Spinner, Text, config } from 'folds';
+import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { isUserId } from '../../../utils/matrix';
-import { useIgnoredUsers } from '../../../hooks/useIgnoredUsers';
+import { getIgnoredUsersContent, useIgnoredUsers } from '../../../hooks/useIgnoredUsers';
 import { useAlive } from '../../../hooks/useAlive';
+import { useClient } from '../../../hooks/useClient';
+import { AccountDataType } from '../../../../types/matrix/accountData';
 
 function IgnoreUserInput({ userList }: { userList: string[] }) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const [userId, setUserId] = useState<string>('');
   const alive = useAlive();
 
   const [ignoreState, ignore] = useAsyncCallback(
     useCallback(
-      async (uId: string) => {
-        await mx.setIgnoredUsers([...userList, uId]);
-      },
-      [mx, userList]
+      (uId: string) =>
+        ct.requestAuthJSON(
+          putAccountData({
+            pathParams: { userId: ct.session.userId, type: AccountDataType.IgnoredUserList },
+            body: getIgnoredUsersContent(userList.filter((id) => id !== uId).concat([uId])),
+          })
+        ),
+      [ct, userList]
     )
   );
   const ignoring = ignoreState.status === AsyncStatus.Loading;
@@ -96,11 +102,17 @@ function IgnoreUserInput({ userList }: { userList: string[] }) {
 }
 
 function IgnoredUserChip({ userId, userList }: { userId: string; userList: string[] }) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const [unignoreState, unignore] = useAsyncCallback(
     useCallback(
-      () => mx.setIgnoredUsers(userList.filter((uId) => uId !== userId)),
-      [mx, userId, userList]
+      async () =>
+        ct.requestAuthJSON(
+          putAccountData({
+            pathParams: { userId: ct.session.userId, type: AccountDataType.IgnoredUserList },
+            body: getIgnoredUsersContent(userList.filter((u) => u !== userId)),
+          })
+        ),
+      [ct, userList, userId]
     )
   );
 

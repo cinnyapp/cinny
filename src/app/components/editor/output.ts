@@ -1,5 +1,4 @@
 import { Descendant, Editor, Text } from 'slate';
-import { MatrixClient } from 'matrix-js-sdk';
 import { sanitizeText } from '../../utils/sanitize';
 import { BlockType } from './types';
 import { CustomElement } from './slate';
@@ -11,7 +10,8 @@ import {
 } from '../../plugins/markdown';
 import { findAndReplace } from '../../utils/findAndReplace';
 import { sanitizeForRegex } from '../../utils/regex';
-import { getCanonicalAliasOrRoomId, isUserId } from '../../utils/matrix';
+import { isUserId } from '../../utils/matrix';
+import { ClientContext } from '../../../client/context';
 
 export type OutputOptions = {
   allowTextFormatting?: boolean;
@@ -201,7 +201,7 @@ export type MentionsData = {
   room: boolean;
   users: Set<string>;
 };
-export const getMentions = (mx: MatrixClient, roomId: string, editor: Editor): MentionsData => {
+export const getMentions = (ct: ClientContext, editor: Editor): MentionsData => {
   const mentionData: MentionsData = {
     room: false,
     users: new Set(),
@@ -212,10 +212,10 @@ export const getMentions = (mx: MatrixClient, roomId: string, editor: Editor): M
     if (node.type === BlockType.CodeBlock) return;
 
     if (node.type === BlockType.Mention) {
-      if (node.id === getCanonicalAliasOrRoomId(mx, roomId)) {
+      if (node.name === '@room') {
         mentionData.room = true;
       }
-      if (isUserId(node.id) && node.id !== mx.getUserId()) {
+      if (isUserId(node.id) && node.id !== ct.session.userId) {
         mentionData.users.add(node.id);
       }
 

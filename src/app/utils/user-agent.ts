@@ -11,3 +11,20 @@ export const mobileOrTablet = (): boolean => {
   if (os.name === 'Android' || os.name === 'iOS') return true;
   return false;
 };
+
+export const getInitialDeviceDisplayName = (): string => {
+  const browserName = ua().browser.name;
+  const osName = ua().os.name;
+
+  if (browserName && osName) {
+    return `Cinny Web - ${ua().browser.name} (${ua().os.name})`;
+  }
+  if (browserName) {
+    return `Cinny Web - ${ua().browser.name}`;
+  }
+  if (osName) {
+    return `Cinny Web (${ua().os.name})`;
+  }
+
+  return 'Cinny Web';
+};

@@ -1,85 +1,130 @@
-import { MatrixClient, SyncState } from 'matrix-js-sdk';
-import React, { useCallback, useState } from 'react';
-import { Box, config, Line, Text } from 'folds';
-import { useSyncState } from '../../hooks/useSyncState';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import { Box, config, ContainerColor as ContainerColorType, Line, Text } from 'folds';
 import { ContainerColor } from '../../styles/ContainerColor.css';
+import { SyncValue } from '../../../client/sync';
+import { useClient } from '../../hooks/useClient';
+import { getAttemptDelaySec, useRecoveryAttempt } from '../../hooks/useRecoveryAttempt';
+import { useSecondsCountdown } from '../../hooks/useSecondsCountdown';
+import { useNetworkOnlineCallback } from '../../hooks/useNetwork';
 
+type StatusBarProps = {
+  variant: ContainerColorType;
+  children: ReactNode;
+};
+function StatusBar({ variant, children }: StatusBarProps) {
+  return (
+    <Box direction="Column" shrink="No">
+      <Box className={ContainerColor({ variant })} style={{ padding: `${config.space.S100} 0` }}>
+        {children}
+      </Box>
+      <Line variant={variant} size="300" />
+    </Box>
+  );
+}
+
+function RecoverCountdownMessage({
+  afterSeconds,
+  onEnd,
+}: {
+  afterSeconds: number;
+  onEnd: () => void;
+}) {
+  const countdownSec = useSecondsCountdown(afterSeconds, onEnd);
+
+  return <span>Reconnecting after {countdownSec} seconds...</span>;
+}
+
+// undefined | OK        | undefined | Error     | undefined | OK        | undefined | OK
+// undefined | undefined | OK        | undefined | Error     | undefined | OK        | undefined
 type StateData = {
-  current: SyncState | null;
-  previous: SyncState | null | undefined;
+  current: SyncValue;
+  previous: SyncValue;
 };
 
-type SyncStatusProps = {
-  mx: MatrixClient;
-};
-export function SyncStatus({ mx }: SyncStatusProps) {
+export function SyncStatus() {
+  const ct = useClient();
+
   const [stateData, setStateData] = useState<StateData>({
-    current: null,
+    current: ct.sync.observable.read,
     previous: undefined,
   });
 
-  useSyncState(
-    mx,
-    useCallback((current, previous) => {
-      setStateData((s) => {
-        if (s.current === current && s.previous === previous) {
-          return s;
-        }
-        return { current, previous };
-      });
-    }, [])
-  );
+  useEffect(() => {
+    const unsubscribe = ct.sync.observable.subscribe((syncValue) => {
+      setStateData((data) => ({
+        current: syncValue,
+        previous: data.current,
+      }));
+    });
 
-  if (
-    (stateData.current === SyncState.Prepared ||
-      stateData.current === SyncState.Syncing ||
-      stateData.current === SyncState.Catchup) &&
-    stateData.previous !== SyncState.Syncing
-  ) {
+    return () => {
+      unsubscribe();
+    };
+  }, [ct]);
+
+  const [previousError] = stateData.previous ?? [];
+  const [currentError, currentResult] = stateData.current ?? [];
+  if (currentError) {
+    console.error(currentError);
+  }
+
+  const connecting = stateData.previous === undefined && stateData.current === undefined;
+  const recovering = previousError && stateData.current === undefined;
+
+  const recoverAttempt = useRecoveryAttempt(!!currentError, !!currentResult);
+
+  const handleRecover = useCallback(() => ct.sync.controller.recover(), [ct]);
+
+  useNetworkOnlineCallback(handleRecover);
+
+  if (connecting) {
     return (
-      <Box direction="Column" shrink="No">
-        <Box
-          className={ContainerColor({ variant: 'Success' })}
-          style={{ padding: `${config.space.S100} 0` }}
-          alignItems="Center"
-          justifyContent="Center"
-        >
-          <Text size="L400">Connecting...</Text>
+      <StatusBar variant="Success">
+        <Box grow="Yes" alignItems="Center" justifyContent="Center">
+          <Text size="T200">
+            <b>Connecting...</b>
+          </Text>
         </Box>
-        <Line variant="Success" size="300" />
-      </Box>
+      </StatusBar>
     );
   }
 
-  if (stateData.current === SyncState.Reconnecting) {
+  if (recovering) {
     return (
-      <Box direction="Column" shrink="No">
-        <Box
-          className={ContainerColor({ variant: 'Warning' })}
-          style={{ padding: `${config.space.S100} 0` }}
-          alignItems="Center"
-          justifyContent="Center"
-        >
-          <Text size="L400">Connection Lost! Reconnecting...</Text>
+      <StatusBar variant="Warning">
+        <Box grow="Yes" alignItems="Center" justifyContent="Center">
+          <Text size="T200">
+            <b>Connection Lost! Reconnecting...</b>
+          </Text>
         </Box>
-        <Line variant="Warning" size="300" />
-      </Box>
+      </StatusBar>
     );
   }
 
-  if (stateData.current === SyncState.Error) {
+  if (currentError) {
     return (
-      <Box direction="Column" shrink="No">
-        <Box
-          className={ContainerColor({ variant: 'Critical' })}
-          style={{ padding: `${config.space.S100} 0` }}
-          alignItems="Center"
-          justifyContent="Center"
-        >
-          <Text size="L400">Connection Lost!</Text>
+      <StatusBar variant="Critical">
+        <Box grow="Yes" alignItems="Center" justifyContent="Center" gap="400">
+          <Text size="T200">
+            Connection Lost!{' '}
+            <RecoverCountdownMessage
+              afterSeconds={getAttemptDelaySec(recoverAttempt)}
+              onEnd={handleRecover}
+            />
+          </Text>
+          <Box
+            style={{ cursor: 'pointer' }}
+            as="button"
+            type="button"
+            gap="100"
+            onClick={() => handleRecover()}
+          >
+            <Text as="a" size="B300">
+              Retry
+            </Text>
+          </Box>
         </Box>
-        <Line variant="Critical" size="300" />
-      </Box>
+      </StatusBar>
     );
   }
 

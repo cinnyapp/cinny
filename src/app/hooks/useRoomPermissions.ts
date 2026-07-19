@@ -14,30 +14,30 @@ export type RoomPermissionsAPI = {
 };
 
 export const getRoomPermissionsAPI = (
-  creators: Set<string>,
+  creators: Set<string> | undefined,
   powerLevels: IPowerLevels
 ): RoomPermissionsAPI => {
   const api: RoomPermissionsAPI = {
     event: (type, userId) => {
-      if (creators.has(userId)) return true;
+      if (creators?.has(userId)) return true;
       const userPower = readPowerLevel.user(powerLevels, userId);
       const requiredPL = readPowerLevel.event(powerLevels, type);
       return userPower >= requiredPL;
     },
     stateEvent: (type, userId) => {
-      if (creators.has(userId)) return true;
+      if (creators?.has(userId)) return true;
       const userPower = readPowerLevel.user(powerLevels, userId);
       const requiredPL = readPowerLevel.state(powerLevels, type);
       return userPower >= requiredPL;
     },
     action: (action, userId) => {
-      if (creators.has(userId)) return true;
+      if (creators?.has(userId)) return true;
       const userPower = readPowerLevel.user(powerLevels, userId);
       const requiredPL = readPowerLevel.action(powerLevels, action);
       return userPower >= requiredPL;
     },
     notificationAction: (action, userId) => {
-      if (creators.has(userId)) return true;
+      if (creators?.has(userId)) return true;
       const userPower = readPowerLevel.user(powerLevels, userId);
       const requiredPL = readPowerLevel.notification(powerLevels, action);
       return userPower >= requiredPL;
@@ -48,7 +48,7 @@ export const getRoomPermissionsAPI = (
 };
 
 export const useRoomPermissions = (
-  creators: Set<string>,
+  creators: Set<string> | undefined,
   powerLevels: IPowerLevels
 ): RoomPermissionsAPI => {
   const api: RoomPermissionsAPI = useMemo(

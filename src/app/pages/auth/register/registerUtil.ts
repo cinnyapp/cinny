@@ -1,11 +1,9 @@
-import to from 'await-to-js';
 import {
-  IAuthData,
-  MatrixClient,
-  MatrixError,
-  RegisterRequest,
-  RegisterResponse,
-} from 'matrix-js-sdk';
+  postRegister,
+  PostRegisterBody,
+  PostRegisterOK,
+} from 'neurone/lib/api/matrix/client/v3/register';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginPathSearchParams } from '../../paths';
@@ -17,6 +15,8 @@ import {
 import { getHomePath, getLoginPath, withSearchParam } from '../../pathUtils';
 import { getMxIdLocalPart, getMxIdServer } from '../../../utils/matrix';
 import { setFallbackSession } from '../../../state/sessions';
+import { AuthResponse } from '../../../utils/matrix-uia';
+import { getJSONRequest } from '../../../../client/request';
 
 export enum RegisterError {
   UserTaken = 'UserTaken',
@@ -32,77 +32,106 @@ export enum RegisterError {
 
 export type CustomRegisterResponse = {
   baseUrl: string;
-  response: RegisterResponse;
+  response: PostRegisterOK;
 };
-export type RegisterResult = [IAuthData, undefined] | [undefined, CustomRegisterResponse];
+
+export type RegisterErrorData = {
+  error: RegisterError;
+  message?: string;
+};
+
+export type RegisterResult =
+  | [AuthResponse, undefined, undefined]
+  | [undefined, RegisterErrorData, undefined]
+  | [undefined, undefined, CustomRegisterResponse];
+
 export const register = async (
-  mx: MatrixClient,
-  requestData: RegisterRequest
+  baseUrl: string,
+  requestData: PostRegisterBody
 ): Promise<RegisterResult> => {
-  const [err, res] = await to<RegisterResponse, MatrixError>(mx.registerRequest(requestData));
+  const requestJSON = getJSONRequest(baseUrl);
+  const response = await requestJSON(postRegister({ body: requestData }));
+  const [registerError, registerResult] = await parseMatrixResp<PostRegisterOK>(response);
 
-  if (err) {
-    if (err.httpStatus === 401) {
-      const authData = err.data as IAuthData;
-      return [authData, undefined];
-    }
-
-    if (err.errcode === ErrorCode.M_USER_IN_USE) {
-      throw new MatrixError({
-        errcode: RegisterError.UserTaken,
-      });
-    }
-    if (err.errcode === ErrorCode.M_INVALID_USERNAME) {
-      throw new MatrixError({
-        errcode: RegisterError.UserInvalid,
-      });
-    }
-    if (err.errcode === ErrorCode.M_EXCLUSIVE) {
-      throw new MatrixError({
-        errcode: RegisterError.UserExclusive,
-      });
-    }
-    if (err.errcode === ErrorCode.M_WEAK_PASSWORD) {
-      throw new MatrixError({
-        errcode: RegisterError.PasswordWeak,
-        error: err.data.error,
-      });
-    }
-    if (err.errcode === ErrorCode.M_PASSWORD_TOO_SHORT) {
-      throw new MatrixError({
-        errcode: RegisterError.PasswordShort,
-        error: err.data.error,
-      });
+  if (registerError) {
+    if (registerError.status === 401) {
+      const authData = registerError.data as AuthResponse;
+      return [authData, undefined, undefined];
     }
 
-    if (err.httpStatus === 429) {
-      throw new MatrixError({
-        errcode: RegisterError.RateLimited,
-      });
+    if (registerError.data.errcode === ErrorCode.M_USER_IN_USE) {
+      return [
+        undefined,
+        { error: RegisterError.UserTaken, message: registerError.data.error },
+        undefined,
+      ];
+    }
+    if (registerError.data.errcode === ErrorCode.M_INVALID_USERNAME) {
+      return [
+        undefined,
+        { error: RegisterError.UserInvalid, message: registerError.data.error },
+        undefined,
+      ];
+    }
+    if (registerError.data.errcode === ErrorCode.M_EXCLUSIVE) {
+      return [
+        undefined,
+        { error: RegisterError.UserExclusive, message: registerError.data.error },
+        undefined,
+      ];
+    }
+    if (registerError.data.errcode === ErrorCode.M_WEAK_PASSWORD) {
+      return [
+        undefined,
+        { error: RegisterError.PasswordWeak, message: registerError.data.error },
+        undefined,
+      ];
+    }
+    if (registerError.data.errcode === ErrorCode.M_PASSWORD_TOO_SHORT) {
+      return [
+        undefined,
+        { error: RegisterError.PasswordShort, message: registerError.data.error },
+        undefined,
+      ];
     }
 
-    if (err.httpStatus === 400) {
-      throw new MatrixError({
-        errcode: RegisterError.InvalidRequest,
-      });
+    if (registerError.status === 429) {
+      return [
+        undefined,
+        { error: RegisterError.RateLimited, message: registerError.data.error },
+        undefined,
+      ];
     }
 
-    if (err.httpStatus === 403) {
-      throw new MatrixError({
-        errcode: RegisterError.Forbidden,
-      });
+    if (registerError.status === 400) {
+      return [
+        undefined,
+        { error: RegisterError.InvalidRequest, message: registerError.data.error },
+        undefined,
+      ];
     }
 
-    throw new MatrixError({
-      errcode: RegisterError.Unknown,
-      error: err.data.error,
-    });
+    if (registerError.status === 403) {
+      return [
+        undefined,
+        { error: RegisterError.Forbidden, message: registerError.data.error },
+        undefined,
+      ];
+    }
+
+    return [
+      undefined,
+      { error: RegisterError.Unknown, message: registerError.data.error },
+      undefined,
+    ];
   }
+
   return [
     undefined,
+    undefined,
     {
-      baseUrl: mx.baseUrl,
-      response: res,
+      baseUrl,
+      response: registerResult,
     },
   ];
 };

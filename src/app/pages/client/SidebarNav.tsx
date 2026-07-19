@@ -44,7 +44,7 @@ export function SidebarNav() {
             <SidebarStackSeparator />
             <SidebarStack>
               <SearchTab />
-              <UnverifiedTab />
+              {/* <UnverifiedTab /> */}
               <InboxTab />
               <SettingsTab />
             </SidebarStack>

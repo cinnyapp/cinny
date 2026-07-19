@@ -1,4 +1,5 @@
-import React, { MouseEventHandler, useCallback, useState } from 'react';
+import React, { MouseEventHandler, useMemo, useState } from 'react';
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import {
   Box,
   Modal,
@@ -12,35 +13,27 @@ import {
   toRem,
 } from 'folds';
 import classNames from 'classnames';
-import { Room } from 'matrix-js-sdk';
-import { type Relations } from 'matrix-js-sdk/lib/models/relations';
 import FocusTrap from 'focus-trap-react';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { factoryEventSentBy } from '../../../utils/matrix';
 import { Reaction, ReactionTooltipMsg } from '../../../components/message';
-import { useRelations } from '../../../hooks/useRelations';
 import * as css from './styles.css';
 import { ReactionViewer } from '../reaction-viewer';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { ReactionContent } from '../../../../types/matrix/common';
+import { useClient } from '../../../hooks/useClient';
+import { getReactionGroups } from '../../../utils/room';
 
 export type ReactionsProps = {
-  room: Room;
-  mEventId: string;
+  eventId: string;
   canSendReaction?: boolean;
-  relations: Relations;
+  reactions: MessageEventWithoutRoomId<ReactionContent>[];
   onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
 };
 export const Reactions = as<'div', ReactionsProps>(
-  ({ className, room, relations, mEventId, canSendReaction, onReactionToggle, ...props }, ref) => {
-    const mx = useMatrixClient();
+  ({ className, reactions, eventId, canSendReaction, onReactionToggle, ...props }, ref) => {
+    const ct = useClient();
     const useAuthentication = useMediaAuthentication();
     const [viewer, setViewer] = useState<boolean | string>(false);
-    const myUserId = mx.getUserId();
-    const reactions = useRelations(
-      relations,
-      useCallback((rel) => [...(rel.getSortedAnnotationsByKey() ?? [])], [])
-    );
 
     const handleViewReaction: MouseEventHandler<HTMLButtonElement> = (evt) => {
       evt.stopPropagation();
@@ -50,6 +43,8 @@ export const Reactions = as<'div', ReactionsProps>(
       else setViewer(key);
     };
 
+    const reactionGroups = useMemo(() => getReactionGroups(reactions), [reactions]);
+
     return (
       <Box
         className={classNames(css.ReactionsContainer, className)}
@@ -58,20 +53,21 @@ export const Reactions = as<'div', ReactionsProps>(
         {...props}
         ref={ref}
       >
-        {reactions.map(([key, events]) => {
-          const rEvents = Array.from(events);
-          if (rEvents.length === 0 || typeof key !== 'string') return null;
-          const myREvent = myUserId ? rEvents.find(factoryEventSentBy(myUserId)) : undefined;
-          const isPressed = !!myREvent?.getRelation();
+        {reactionGroups.map((reaction) => {
+          const isPressed = reaction.users.has(ct.session.userId);
 
           return (
             <TooltipProvider
-              key={key}
+              key={reaction.key}
               position="Top"
               tooltip={
                 <Tooltip style={{ maxWidth: toRem(200) }}>
                   <Text className={css.ReactionsTooltipText} size="T300">
-                    <ReactionTooltipMsg room={room} reaction={key} events={rEvents} />
+                    <ReactionTooltipMsg
+                      shortcode={reaction.shortcode}
+                      reaction={reaction.key}
+                      users={Array.from(reaction.users)}
+                    />
                   </Text>
                 </Tooltip>
               }
@@ -79,13 +75,15 @@ export const Reactions = as<'div', ReactionsProps>(
               {(targetRef) => (
                 <Reaction
                   ref={targetRef}
-                  data-reaction-key={key}
+                  data-reaction-key={reaction.key}
                   aria-pressed={isPressed}
-                  key={key}
-                  mx={mx}
-                  reaction={key}
-                  count={events.size}
-                  onClick={canSendReaction ? () => onReactionToggle(mEventId, key) : undefined}
+                  key={reaction.key}
+                  ct={ct}
+                  reaction={reaction.key}
+                  count={reaction.users.size}
+                  onClick={
+                    canSendReaction ? () => onReactionToggle(eventId, reaction.key) : undefined
+                  }
                   onContextMenu={handleViewReaction}
                   aria-disabled={!canSendReaction}
                   useAuthentication={useAuthentication}
@@ -114,9 +112,8 @@ export const Reactions = as<'div', ReactionsProps>(
               >
                 <Modal variant="Surface" size="300">
                   <ReactionViewer
-                    room={room}
                     initialKey={typeof viewer === 'string' ? viewer : undefined}
-                    relations={relations}
+                    reactions={reactionGroups}
                     requestClose={() => setViewer(false)}
                   />
                 </Modal>

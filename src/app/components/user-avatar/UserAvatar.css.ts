@@ -12,3 +12,7 @@ export const UserAvatar = style({
     },
   },
 });
+
+export const UserAvatarImg = style({
+  fontSize: 1,
+});

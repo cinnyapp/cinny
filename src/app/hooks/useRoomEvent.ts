@@ -1,29 +1,23 @@
-import { IEvent, MatrixEvent, Room } from 'matrix-js-sdk';
 import { useCallback, useMemo } from 'react';
-import to from 'await-to-js';
-import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
+import { getEvent, GetEventOK } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { useQuery } from '@tanstack/react-query';
-import { useMatrixClient } from './useMatrixClient';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
+import { ClientEvent, MessageEventWithoutRoomId } from 'neurone/lib/api/types';
+import { useClient } from './useClient';
 
-const useFetchEvent = (room: Room, eventId: string) => {
-  const mx = useMatrixClient();
+const useFetchEvent = (roomId: string, eventId: string) => {
+  const ct = useClient();
 
-  const fetchEventCallback = useCallback(async () => {
-    const evt = await mx.fetchRoomEvent(room.roomId, eventId);
-    const mEvent = new MatrixEvent(evt);
+  const fetchEventCallback = useCallback(async (): Promise<ClientEvent> => {
+    const resp = await ct.requestAuthJSON(getEvent({ pathParams: { roomId, eventId } }));
 
-    if (evt.unsigned?.['m.relations'] && evt.unsigned?.['m.relations']['m.replace']) {
-      const replaceEvt = evt.unsigned?.['m.relations']['m.replace'] as IEvent;
-      const replaceEvent = new MatrixEvent(replaceEvt);
-      mEvent.makeReplaced(replaceEvent);
+    const [err, result] = await parseMatrixResp<GetEventOK>(resp);
+    if (err) {
+      throw new Error(printMatrixError(err));
     }
 
-    if (mEvent.isEncrypted() && mx.getCrypto()) {
-      await to(mEvent.attemptDecryption(mx.getCrypto() as CryptoBackend));
-    }
-
-    return mEvent;
-  }, [mx, room.roomId, eventId]);
+    return result;
+  }, [ct, roomId, eventId]);
 
   return fetchEventCallback;
 };
@@ -35,20 +29,20 @@ const useFetchEvent = (room: Room, eventId: string) => {
  * @returns `MatrixEvent`, `undefined` means loading, `null` means failure
  */
 export const useRoomEvent = (
-  room: Room,
+  roomId: string,
   eventId: string,
-  getLocally?: () => MatrixEvent | undefined
+  getLocally?: () => MessageEventWithoutRoomId | undefined
 ) => {
   const event = useMemo(() => {
     if (getLocally) return getLocally();
-    return room.findEventById(eventId);
-  }, [room, eventId, getLocally]);
+    return undefined;
+  }, [getLocally]);
 
-  const fetchEvent = useFetchEvent(room, eventId);
+  const fetchEvent = useFetchEvent(roomId, eventId);
 
   const { data, error } = useQuery({
     enabled: event === undefined,
-    queryKey: [room.roomId, eventId],
+    queryKey: [roomId, eventId],
     queryFn: fetchEvent,
     staleTime: Infinity,
     gcTime: 60 * 60 * 1000, // 1hour

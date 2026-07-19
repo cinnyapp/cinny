@@ -6,17 +6,18 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { MatrixError } from 'matrix-js-sdk';
 import { Box, color, Icon, Icons, Input, Spinner, Text, toRem } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
+import { getRoom, GetRoomOK } from 'neurone/lib/api/matrix/client/v3/directory';
 import { getMxIdServer } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { replaceSpaceWithDash } from '../../utils/common';
 import { AsyncState, AsyncStatus, useAsync } from '../../hooks/useAsyncCallback';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useClient } from '../../hooks/useClient';
 
 export function CreateRoomAliasInput({ disabled }: { disabled?: boolean }) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const aliasInputRef = useRef<HTMLInputElement>(null);
   const [aliasAvail, setAliasAvail] = useState<AsyncState<boolean, Error>>({
     status: AsyncStatus.Idle,
@@ -31,18 +32,20 @@ export function CreateRoomAliasInput({ disabled }: { disabled?: boolean }) {
   const checkAliasAvail = useAsync(
     useCallback(
       async (aliasLocalPart: string) => {
-        const roomAlias = `#${aliasLocalPart}:${getMxIdServer(mx.getSafeUserId())}`;
-        try {
-          const result = await mx.getRoomIdForAlias(roomAlias);
-          return typeof result.room_id !== 'string';
-        } catch (e) {
-          if (e instanceof MatrixError && e.httpStatus === 404) {
-            return true;
-          }
-          throw e;
+        const roomAlias = `#${aliasLocalPart}:${getMxIdServer(ct.session.userId)}`;
+        const response = await ct.requestAuthJSON(
+          getRoom({
+            pathParams: { roomAlias },
+          })
+        );
+        const [err, result] = await parseMatrixResp<GetRoomOK>(response);
+        if (err) {
+          if (err.status === 404) return true;
+          throw new Error(printMatrixError(err));
         }
+        return typeof result.room_id !== 'string';
       },
-      [mx]
+      [ct]
     ),
     setAliasAvail
   );
@@ -94,7 +97,7 @@ export function CreateRoomAliasInput({ disabled }: { disabled?: boolean }) {
         }
         after={
           <Text style={{ maxWidth: toRem(150) }} truncate>
-            :{getMxIdServer(mx.getSafeUserId())}
+            :{getMxIdServer(ct.session.userId)}
           </Text>
         }
         onKeyDown={handleAliasKeyDown}

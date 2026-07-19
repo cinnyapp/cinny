@@ -1,19 +1,19 @@
 import { ReactEventHandler, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRoomNavigate } from './useRoomNavigate';
-import { useMatrixClient } from './useMatrixClient';
 import { isRoomId, isUserId } from '../utils/matrix';
 import { getHomeRoomPath, withSearchParam } from '../pages/pathUtils';
 import { _RoomSearchParams } from '../pages/paths';
 import { useOpenUserRoomProfile } from '../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from './useSpace';
+import { useClient } from './useClient';
 
 export const useMentionClickHandler = (roomId: string): ReactEventHandler<HTMLElement> => {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const navigate = useNavigate();
   const openProfile = useOpenUserRoomProfile();
-  const space = useSpaceOptionally();
+  const spaceId = useSpaceOptionally();
 
   const handleClick: ReactEventHandler<HTMLElement> = useCallback(
     (evt) => {
@@ -24,13 +24,13 @@ export const useMentionClickHandler = (roomId: string): ReactEventHandler<HTMLEl
       if (typeof mentionId !== 'string') return;
 
       if (isUserId(mentionId)) {
-        openProfile(roomId, space?.roomId, mentionId, target.getBoundingClientRect());
+        openProfile(roomId, spaceId, mentionId, target.getBoundingClientRect());
         return;
       }
 
       const eventId = target.getAttribute('data-mention-event-id') || undefined;
-      if (isRoomId(mentionId) && mx.getRoom(mentionId)) {
-        if (mx.getRoom(mentionId)?.isSpaceRoom()) navigateSpace(mentionId);
+      if (isRoomId(mentionId) && ct.rooms.join.read.includes(mentionId)) {
+        if (ct.spaceRooms.read.has(mentionId)) navigateSpace(mentionId);
         else navigateRoom(mentionId, eventId);
         return;
       }
@@ -40,7 +40,7 @@ export const useMentionClickHandler = (roomId: string): ReactEventHandler<HTMLEl
 
       navigate(viaServers ? withSearchParam<_RoomSearchParams>(path, { viaServers }) : path);
     },
-    [mx, navigate, navigateRoom, navigateSpace, roomId, space, openProfile]
+    [ct, navigate, navigateRoom, navigateSpace, roomId, spaceId, openProfile]
   );
 
   return handleClick;

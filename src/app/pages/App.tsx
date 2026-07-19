@@ -7,7 +7,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { ClientConfigLoader } from '../components/ClientConfigLoader';
 import { ClientConfigProvider } from '../hooks/useClientConfig';
-import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
+import { ClientConfigError, ClientConfigLoading } from './ClientConfig';
 import { FeatureCheck } from './FeatureCheck';
 import { createRouter } from './Router';
 import { ScreenSizeProvider, useScreenSize } from '../hooks/useScreenSize';
@@ -28,9 +28,9 @@ function App() {
           <ScreenSizeProvider value={screenSize}>
             <FeatureCheck>
               <ClientConfigLoader
-                fallback={() => <ConfigConfigLoading />}
+                fallback={() => <ClientConfigLoading />}
                 error={(err, retry, ignore) => (
-                  <ConfigConfigError error={err} retry={retry} ignore={ignore} />
+                  <ClientConfigError error={err} retry={retry} ignore={ignore} />
                 )}
               >
                 {(clientConfig) => (

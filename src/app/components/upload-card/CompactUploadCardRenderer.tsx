@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react';
 import { Chip, Icon, IconButton, Icons, Text, color } from 'folds';
+import { printMatrixError } from 'neurone/lib/matrix-request';
 import { UploadCard, UploadCardError, CompactUploadCardProgress } from './UploadCard';
-import { TUploadAtom, UploadStatus, UploadSuccess, useBindUploadAtom } from '../../state/upload';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { TUploadContent } from '../../utils/matrix';
+import { UploadAtom, UploadStatus, UploadSuccess, useBindUploadAtom } from '../../state/upload';
+import { UploadContent } from '../../utils/matrix';
 import { bytesToSize, getFileTypeIcon } from '../../utils/common';
 import { useMediaConfig } from '../../hooks/useMediaConfig';
 
 type CompactUploadCardRendererProps = {
   isEncrypted?: boolean;
-  uploadAtom: TUploadAtom;
-  onRemove: (file: TUploadContent) => void;
+  uploadAtom: UploadAtom;
+  onRemove: (file: UploadContent) => void;
   onComplete?: (upload: UploadSuccess) => void;
 };
 export function CompactUploadCardRenderer({
@@ -19,11 +19,10 @@ export function CompactUploadCardRenderer({
   onRemove,
   onComplete,
 }: CompactUploadCardRendererProps) {
-  const mx = useMatrixClient();
   const mediaConfig = useMediaConfig();
   const allowSize = mediaConfig['m.upload.size'] || Infinity;
 
-  const { upload, startUpload, cancelUpload } = useBindUploadAtom(mx, uploadAtom, isEncrypted);
+  const { upload, startUpload, cancelUpload } = useBindUploadAtom(uploadAtom, isEncrypted);
   const { file } = upload;
   const fileSizeExceeded = file.size >= allowSize;
 
@@ -91,7 +90,11 @@ export function CompactUploadCardRenderer({
           )}
           {upload.status === UploadStatus.Error && (
             <UploadCardError>
-              <Text size="T200">{upload.error.message}</Text>
+              <Text size="T200">
+                {upload.error instanceof Error
+                  ? upload.error.message
+                  : printMatrixError(upload.error)}
+              </Text>
             </UploadCardError>
           )}
           {upload.status === UploadStatus.Idle && fileSizeExceeded && (

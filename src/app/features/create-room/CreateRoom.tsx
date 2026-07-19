@@ -1,5 +1,4 @@
 import React, { FormEventHandler, useCallback, useEffect, useState } from 'react';
-import { MatrixError, Room } from 'matrix-js-sdk';
 import {
   Box,
   Button,
@@ -14,6 +13,7 @@ import {
   Text,
   TextArea,
 } from 'folds';
+import { MatrixResponseResult, printMatrixError } from 'neurone/lib/matrix-request';
 import { SettingTile } from '../../components/setting-tile';
 import { SequenceCard } from '../../components/sequence-card';
 import {
@@ -22,7 +22,6 @@ import {
   knockSupported,
   restrictedSupported,
 } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { millisecondsToMinutes, replaceSpaceWithDash } from '../../utils/common';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useCapabilities } from '../../hooks/useCapabilities';
@@ -38,6 +37,8 @@ import {
   RoomVersionSelector,
   useAdditionalCreators,
 } from '../../components/create-room';
+import { useClient } from '../../hooks/useClient';
+import { rError } from '../../../client/reader';
 
 const getCreateRoomKindToIcon = (kind: CreateRoomKind) => {
   if (kind === CreateRoomKind.Private) return Icons.HashLock;
@@ -47,11 +48,11 @@ const getCreateRoomKindToIcon = (kind: CreateRoomKind) => {
 
 type CreateRoomFormProps = {
   defaultKind?: CreateRoomKind;
-  space?: Room;
+  spaceId?: string;
   onCreate?: (roomId: string) => void;
 };
-export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormProps) {
-  const mx = useMatrixClient();
+export function CreateRoomForm({ defaultKind, spaceId, onCreate }: CreateRoomFormProps) {
+  const ct = useClient();
   const alive = useAlive();
 
   const capabilities = useCapabilities();
@@ -62,7 +63,7 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
     selectRoomVersion(roomVersions?.default ?? '1');
   }, [roomVersions?.default]);
 
-  const allowRestricted = space && restrictedSupported(selectedRoomVersion);
+  const allowRestricted = spaceId ? restrictedSupported(selectedRoomVersion) : false;
 
   const [kind, setKind] = useState(
     defaultKind ?? allowRestricted ? CreateRoomKind.Restricted : CreateRoomKind.Private
@@ -86,11 +87,14 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
     selectRoomVersion(version);
   };
 
-  const [createState, create] = useAsyncCallback<string, Error | MatrixError, [CreateRoomData]>(
-    useCallback((data) => createRoom(mx, data), [mx])
-  );
+  const [createState, create] = useAsyncCallback<
+    MatrixResponseResult<string>,
+    Error,
+    [CreateRoomData]
+  >(useCallback((data) => createRoom(ct, data), [ct]));
   const loading = createState.status === AsyncStatus.Loading;
   const error = createState.status === AsyncStatus.Error ? createState.error : undefined;
+  const [respError] = createState.status === AsyncStatus.Success ? createState.data : [];
   const disabled = createState.status === AsyncStatus.Loading;
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
@@ -118,7 +122,7 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
 
     create({
       version: selectedRoomVersion,
-      parent: space,
+      parentId: spaceId,
       kind,
       name: roomName,
       topic: roomTopic || undefined,
@@ -127,8 +131,8 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
       knock: roomKnock,
       allowFederation: federation,
       additionalCreators: allowAdditionalCreators ? additionalCreators : undefined,
-    }).then((roomId) => {
-      if (alive()) {
+    }).then(([, roomId]) => {
+      if (roomId && alive()) {
         onCreate?.(roomId);
       }
     });
@@ -279,13 +283,16 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
         <Box style={{ color: color.Critical.Main }} alignItems="Center" gap="200">
           <Icon src={Icons.Warning} filled size="100" />
           <Text size="T300" style={{ color: color.Critical.Main }}>
-            <b>
-              {error instanceof MatrixError && error.name === ErrorCode.M_LIMIT_EXCEEDED
-                ? `Server rate-limited your request for ${millisecondsToMinutes(
-                    (error.data.retry_after_ms as number | undefined) ?? 0
-                  )} minutes!`
-                : error.message}
-            </b>
+            {error && <b>error.message</b>}
+            {respError &&
+              (respError.data.errcode === ErrorCode.M_LIMIT_EXCEEDED ? (
+                <b>
+                  Server rate-limited your request for{' '}
+                  {millisecondsToMinutes(rError.retryAfterMs(respError.data) ?? 0)} minutes!
+                </b>
+              ) : (
+                <b>{printMatrixError(respError)}</b>
+              ))}
           </Text>
         </Box>
       )}

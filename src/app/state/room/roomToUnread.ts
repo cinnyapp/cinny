@@ -1,282 +1,42 @@
-import produce from 'immer';
 import { atom, useSetAtom } from 'jotai';
-import {
-  IRoomTimelineData,
-  MatrixClient,
-  MatrixEvent,
-  Room,
-  RoomEvent,
-  SyncState,
-} from 'matrix-js-sdk';
-import { ReceiptContent, ReceiptType } from 'matrix-js-sdk/lib/@types/read_receipts';
-import { useCallback, useEffect } from 'react';
-import {
-  Membership,
-  NotificationType,
-  RoomToUnread,
-  UnreadInfo,
-  Unread,
-  StateEvent,
-} from '../../../types/matrix/room';
-import {
-  getAllParents,
-  getNotificationType,
-  getUnreadInfo,
-  getUnreadInfos,
-  isNotificationEvent,
-} from '../../utils/room';
-import { roomToParentsAtom } from './roomToParents';
-import { useStateEventCallback } from '../../hooks/useStateEventCallback';
-import { useSyncState } from '../../hooks/useSyncState';
-import { useRoomsNotificationPreferencesContext } from '../../hooks/useRoomsNotificationPreferences';
+import { useEffect, useMemo } from 'react';
+import { ThreadId } from '../../../types/matrix/room';
+import { useObservableValue, useObservableValuePromise } from '../../hooks/useObservableValue';
+import { getReadReceiptId } from '../../../client/storage/collections';
+import { ClientContext } from '../../../client/context';
 
-export type RoomToUnreadAction =
-  | {
-      type: 'RESET';
-      unreadInfos: UnreadInfo[];
-    }
-  | {
-      type: 'PUT';
-      unreadInfo: UnreadInfo;
-    }
-  | {
-      type: 'DELETE';
-      roomId: string;
-    };
+export const roomToUnreadAtom = atom(new Map());
 
-export const unreadInfoToUnread = (unreadInfo: UnreadInfo): Unread => ({
-  highlight: unreadInfo.highlight,
-  total: unreadInfo.total,
-  from: null,
-});
+export const unreadRoomsAtom = atom<Set<string>>(new Set<string>());
 
-const putUnreadInfo = (
-  roomToUnread: RoomToUnread,
-  allParents: Set<string>,
-  unreadInfo: UnreadInfo
-) => {
-  const oldUnread = roomToUnread.get(unreadInfo.roomId) ?? { highlight: 0, total: 0, from: null };
-  roomToUnread.set(unreadInfo.roomId, unreadInfoToUnread(unreadInfo));
+export const useBindUnreadRoomsAtom = (ct: ClientContext, unreadRooms: typeof unreadRoomsAtom) => {
+  const setUnreadRooms = useSetAtom(unreadRooms);
+  const roomToLatestEvent = useObservableValue(ct.roomToLatestEvent);
 
-  const newH = unreadInfo.highlight - oldUnread.highlight;
-  const newT = unreadInfo.total - oldUnread.total;
-
-  allParents.forEach((parentId) => {
-    const oldParentUnread = roomToUnread.get(parentId) ?? { highlight: 0, total: 0, from: null };
-    roomToUnread.set(parentId, {
-      highlight: (oldParentUnread.highlight += newH),
-      total: (oldParentUnread.total += newT),
-      from: new Set([...(oldParentUnread.from ?? []), unreadInfo.roomId]),
+  const receiptKeys: string[] = useMemo(() => {
+    const keys: string[] = [];
+    roomToLatestEvent.forEach((_, roomId) => {
+      keys.push(getReadReceiptId(roomId, ct.session.userId, ThreadId.Main));
     });
-  });
-};
 
-const deleteUnreadInfo = (roomToUnread: RoomToUnread, allParents: Set<string>, roomId: string) => {
-  const oldUnread = roomToUnread.get(roomId);
-  if (!oldUnread) return;
-  roomToUnread.delete(roomId);
+    return keys;
+  }, [roomToLatestEvent, ct]);
 
-  allParents.forEach((parentId) => {
-    const oldParentUnread = roomToUnread.get(parentId);
-    if (!oldParentUnread) return;
-    const newFrom = new Set([...(oldParentUnread.from ?? roomId)]);
-    newFrom.delete(roomId);
-    if (newFrom.size === 0) {
-      roomToUnread.delete(parentId);
-      return;
-    }
-    roomToUnread.set(parentId, {
-      highlight: oldParentUnread.highlight - oldUnread.highlight,
-      total: oldParentUnread.total - oldUnread.total,
-      from: newFrom,
-    });
-  });
-};
+  const receiptsResult = useObservableValuePromise(
+    useMemo(() => ct.storage.readReceipt.observableRead.getMultiple(receiptKeys), [ct, receiptKeys])
+  );
 
-export const unreadEqual = (u1: Unread, u2: Unread): boolean => {
-  const countEqual = u1.highlight === u2.highlight && u1.total === u2.total;
-
-  if (!countEqual) return false;
-
-  const f1 = u1.from;
-  const f2 = u2.from;
-  if (f1 === null && f2 === null) return true;
-  if (f1 === null || f2 === null) return false;
-
-  if (f1.size !== f2.size) return false;
-
-  let fromEqual = true;
-  f1?.forEach((item) => {
-    if (!f2?.has(item)) {
-      fromEqual = false;
-    }
-  });
-
-  return fromEqual;
-};
-
-const baseRoomToUnread = atom<RoomToUnread>(new Map());
-export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefined>(
-  (get) => get(baseRoomToUnread),
-  (get, set, action) => {
-    if (action.type === 'RESET') {
-      const draftRoomToUnread: RoomToUnread = new Map();
-      action.unreadInfos.forEach((unreadInfo) => {
-        putUnreadInfo(
-          draftRoomToUnread,
-          getAllParents(get(roomToParentsAtom), unreadInfo.roomId),
-          unreadInfo
-        );
+  useEffect(() => {
+    const receipts = receiptsResult.value;
+    if (receipts) {
+      const rooms: string[] = [];
+      Array.from(roomToLatestEvent.entries()).forEach(([roomId, event], index) => {
+        const receipt = receipts[index];
+        if (!receipt || receipt.ts > event.origin_server_ts) return;
+        rooms.push(roomId);
       });
-      set(baseRoomToUnread, draftRoomToUnread);
-      return;
+
+      setUnreadRooms(new Set(rooms));
     }
-    if (action.type === 'PUT') {
-      const { unreadInfo } = action;
-      const currentUnread = get(baseRoomToUnread).get(unreadInfo.roomId);
-      if (currentUnread && unreadEqual(currentUnread, unreadInfoToUnread(unreadInfo))) {
-        // Do not update if unread data has not changes
-        // like total & highlight
-        return;
-      }
-      set(
-        baseRoomToUnread,
-        produce(get(baseRoomToUnread), (draftRoomToUnread) =>
-          putUnreadInfo(
-            draftRoomToUnread,
-            getAllParents(get(roomToParentsAtom), unreadInfo.roomId),
-            unreadInfo
-          )
-        )
-      );
-      return;
-    }
-    if (action.type === 'DELETE' && get(baseRoomToUnread).has(action.roomId)) {
-      set(
-        baseRoomToUnread,
-        produce(get(baseRoomToUnread), (draftRoomToUnread) =>
-          deleteUnreadInfo(
-            draftRoomToUnread,
-            getAllParents(get(roomToParentsAtom), action.roomId),
-            action.roomId
-          )
-        )
-      );
-    }
-  }
-);
-
-export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roomToUnreadAtom) => {
-  const setUnreadAtom = useSetAtom(unreadAtom);
-  const roomsNotificationPreferences = useRoomsNotificationPreferencesContext();
-
-  useEffect(() => {
-    setUnreadAtom({
-      type: 'RESET',
-      unreadInfos: getUnreadInfos(mx),
-    });
-  }, [mx, setUnreadAtom]);
-
-  useSyncState(
-    mx,
-    useCallback(
-      (state, prevState) => {
-        if (
-          (state === SyncState.Prepared && prevState === null) ||
-          (state === SyncState.Syncing && prevState !== SyncState.Syncing)
-        ) {
-          setUnreadAtom({
-            type: 'RESET',
-            unreadInfos: getUnreadInfos(mx),
-          });
-        }
-      },
-      [mx, setUnreadAtom]
-    )
-  );
-
-  useEffect(() => {
-    const handleTimelineEvent = (
-      mEvent: MatrixEvent,
-      room: Room | undefined,
-      toStartOfTimeline: boolean | undefined,
-      removed: boolean,
-      data: IRoomTimelineData
-    ) => {
-      if (!room || !data.liveEvent || room.isSpaceRoom() || !isNotificationEvent(mEvent)) return;
-      if (getNotificationType(mx, room.roomId) === NotificationType.Mute) {
-        setUnreadAtom({
-          type: 'DELETE',
-          roomId: room.roomId,
-        });
-        return;
-      }
-
-      if (mEvent.getSender() === mx.getUserId()) return;
-      setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(room) });
-    };
-    mx.on(RoomEvent.Timeline, handleTimelineEvent);
-    return () => {
-      mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
-    };
-  }, [mx, setUnreadAtom]);
-
-  useEffect(() => {
-    const handleReceipt = (mEvent: MatrixEvent, room: Room) => {
-      const myUserId = mx.getUserId();
-      if (!myUserId) return;
-      if (room.isSpaceRoom()) return;
-      const content = mEvent.getContent<ReceiptContent>();
-
-      const isMyReceipt = Object.keys(content).find((eventId) =>
-        (Object.keys(content[eventId]) as ReceiptType[]).find(
-          (receiptType) => content[eventId][receiptType][myUserId]
-        )
-      );
-      if (isMyReceipt) {
-        setUnreadAtom({ type: 'DELETE', roomId: room.roomId });
-      }
-    };
-    mx.on(RoomEvent.Receipt, handleReceipt);
-    return () => {
-      mx.removeListener(RoomEvent.Receipt, handleReceipt);
-    };
-  }, [mx, setUnreadAtom]);
-
-  useEffect(() => {
-    setUnreadAtom({
-      type: 'RESET',
-      unreadInfos: getUnreadInfos(mx),
-    });
-  }, [mx, setUnreadAtom, roomsNotificationPreferences]);
-
-  useEffect(() => {
-    const handleMembershipChange = (room: Room, membership: string) => {
-      if (membership !== Membership.Join) {
-        setUnreadAtom({
-          type: 'DELETE',
-          roomId: room.roomId,
-        });
-      }
-    };
-    mx.on(RoomEvent.MyMembership, handleMembershipChange);
-    return () => {
-      mx.removeListener(RoomEvent.MyMembership, handleMembershipChange);
-    };
-  }, [mx, setUnreadAtom]);
-
-  useStateEventCallback(
-    mx,
-    useCallback(
-      (mEvent) => {
-        if (mEvent.getType() === StateEvent.SpaceChild) {
-          setUnreadAtom({
-            type: 'RESET',
-            unreadInfos: getUnreadInfos(mx),
-          });
-        }
-      },
-      [mx, setUnreadAtom]
-    )
-  );
+  }, [setUnreadRooms, receiptsResult, roomToLatestEvent]);
 };

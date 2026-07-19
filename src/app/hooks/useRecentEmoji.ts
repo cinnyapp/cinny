@@ -1,23 +1,28 @@
-import { useEffect, useState } from 'react';
-import { ClientEvent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
+import { useCallback, useMemo } from 'react';
+import { PendingObservableResult } from 'neurone/lib/utils/observable';
 import { getRecentEmojis } from '../plugins/recent-emoji';
-import { AccountDataEvent } from '../../types/matrix/accountData';
+import { AccountDataType } from '../../types/matrix/accountData';
 import { IEmoji } from '../plugins/emoji';
+import {
+  useComputedPendingObservableResult,
+  useObservableValuePromise,
+} from './useObservableValue';
+import { useClient } from './useClient';
 
-export const useRecentEmoji = (mx: MatrixClient, limit?: number): IEmoji[] => {
-  const [recentEmoji, setRecentEmoji] = useState(() => getRecentEmojis(mx, limit));
+export const useRecentEmoji = (limit?: number): PendingObservableResult<IEmoji[]> => {
+  const ct = useClient();
+  const recentEmojiObjResult = useObservableValuePromise(
+    useMemo(
+      () => ct.storage.accountData.observableRead.get(AccountDataType.ElementRecentEmoji),
+      [ct]
+    )
+  );
 
-  useEffect(() => {
-    const handleAccountData = (event: MatrixEvent) => {
-      if (event.getType() !== AccountDataEvent.ElementRecentEmoji) return;
-      setRecentEmoji(getRecentEmojis(mx, limit));
-    };
-
-    mx.on(ClientEvent.AccountData, handleAccountData);
-    return () => {
-      mx.removeListener(ClientEvent.AccountData, handleAccountData);
-    };
-  }, [mx, limit]);
-
-  return recentEmoji;
+  return useComputedPendingObservableResult(
+    recentEmojiObjResult,
+    useCallback(
+      (recentEmojiObj) => (recentEmojiObj ? getRecentEmojis(recentEmojiObj.event, limit) : []),
+      [limit]
+    )
+  );
 };

@@ -1,4 +1,4 @@
-import React, { FormEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FormEventHandler, useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -12,9 +12,10 @@ import {
   color,
   config,
 } from 'folds';
+import { printMatrixError } from 'neurone/lib/matrix-request';
+import { PostPasswordBody } from 'neurone/lib/api/matrix/client/v3/account';
 import { useNavigate } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
-import { AuthDict, AuthType, MatrixError, createClient } from 'matrix-js-sdk';
 import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAuthServer } from '../../../hooks/useAuthServer';
@@ -27,7 +28,8 @@ import { EmailStageDialog } from '../../../components/uia-stages';
 import { ResetPasswordResult, resetPassword } from './resetPasswordUtil';
 import { getLoginPath, withSearchParam } from '../../pathUtils';
 import { LoginPathSearchParams } from '../../paths';
-import { getUIAError, getUIAErrorCode } from '../../../utils/matrix-uia';
+import { AuthType, getUIAError, getUIAErrorCode } from '../../../utils/matrix-uia';
+import { generateClientSecret } from '../../../utils/randomString';
 
 type FormData = {
   email: string;
@@ -79,21 +81,24 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
 
   const serverDiscovery = useAutoDiscoveryInfo();
   const baseUrl = serverDiscovery['m.homeserver'].base_url;
-  const mx = useMemo(() => createClient({ baseUrl }), [baseUrl]);
 
   const [formData, setFormData] = useState<FormData>();
 
-  const [passwordEmailState, passwordEmail] = usePasswordEmail(mx);
+  const [passwordEmailState, passwordEmail] = usePasswordEmail(baseUrl);
+  const [passwordEmailError] =
+    passwordEmailState.status === AsyncStatus.Success ? passwordEmailState.data : [];
+  const passwordEmailRequestError =
+    passwordEmailState.status === AsyncStatus.Error ? passwordEmailState.error : undefined;
 
   const [resetPasswordState, handleResetPassword] = useAsyncCallback<
     ResetPasswordResult,
-    MatrixError,
-    [AuthDict, string]
-  >(useCallback(async (authDict, newPassword) => resetPassword(mx, authDict, newPassword), [mx]));
+    Error,
+    [PostPasswordBody]
+  >(useCallback(async (requestData) => resetPassword(baseUrl, requestData), [baseUrl]));
 
-  const [ongoingAuthData, resetPasswordResult] =
+  const [ongoingAuthData, resetPasswordError, resetPasswordResult] =
     resetPasswordState.status === AsyncStatus.Success ? resetPasswordState.data : [];
-  const resetPasswordError =
+  const resetPasswordRequestError =
     resetPasswordState.status === AsyncStatus.Error ? resetPasswordState.error : undefined;
 
   const flowErrorCode = ongoingAuthData && getUIAErrorCode(ongoingAuthData);
@@ -102,7 +107,7 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
   let waitingToVerifyEmail = true;
   if (resetPasswordResult) waitingToVerifyEmail = false;
   if (ongoingAuthData && flowErrorCode === undefined) waitingToVerifyEmail = false;
-  if (resetPasswordError) waitingToVerifyEmail = false;
+  if (resetPasswordError || resetPasswordRequestError) waitingToVerifyEmail = false;
   if (resetPasswordState.status === AsyncStatus.Loading) waitingToVerifyEmail = false;
 
   // We only support UIA m.login.password stage for reset password
@@ -110,18 +115,18 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
   // we have 401 with no error on initial request.
   useEffect(() => {
     if (formData && ongoingAuthData && !flowErrorCode) {
-      handleResetPassword(
-        {
+      handleResetPassword({
+        auth: {
           type: AuthType.Password,
           identifier: {
             type: 'm.id.thirdparty',
             medium: 'email',
             address: formData.email,
           },
-          password: formData.password,
         },
-        formData.password
-      );
+        new_password: formData.password,
+        logout_devices: false,
+      });
     }
   }, [ongoingAuthData, flowErrorCode, formData, handleResetPassword]);
 
@@ -142,7 +147,7 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
     }
     if (password !== confirmPassword) return;
 
-    const clientSecret = mx.generateClientSecret();
+    const clientSecret = generateClientSecret();
     passwordEmail(email, clientSecret);
     setFormData({
       email,
@@ -156,10 +161,14 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
   };
 
   const handleSubmitRequest = useCallback(
-    (authDict: AuthDict) => {
+    (authDict: object) => {
       if (!formData) return;
       const { password } = formData;
-      handleResetPassword(authDict, password);
+      handleResetPassword({
+        auth: authDict,
+        new_password: password,
+        logout_devices: false,
+      });
     },
     [formData, handleResetPassword]
   );
@@ -182,11 +191,8 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
           required
           outlined
         />
-        {passwordEmailState.status === AsyncStatus.Error && (
-          <FieldError
-            message={`${passwordEmailState.error.errcode}: ${passwordEmailState.error.data?.error}`}
-          />
-        )}
+        {passwordEmailRequestError && <FieldError message={passwordEmailRequestError.message} />}
+        {passwordEmailError && <FieldError message={printMatrixError(passwordEmailError)} />}
       </Box>
       <ConfirmPasswordMatch initialValue>
         {(match, doMatch, passRef, confPassRef) => (
@@ -223,12 +229,9 @@ export function PasswordResetForm({ defaultEmail }: PasswordResetFormProps) {
           </>
         )}
       </ConfirmPasswordMatch>
-      {resetPasswordError && (
-        <FieldError
-          message={`${resetPasswordError.errcode}: ${
-            resetPasswordError.data?.error ?? 'Failed to reset password.'
-          }`}
-        />
+      {resetPasswordError && <FieldError message={printMatrixError(resetPasswordError)} />}
+      {resetPasswordRequestError && (
+        <FieldError message={resetPasswordRequestError.message ?? 'Failed to reset password.'} />
       )}
       <span data-spacing-node />
       <Button type="submit" variant="Primary" size="500">

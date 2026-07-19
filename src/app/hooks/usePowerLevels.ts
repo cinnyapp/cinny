@@ -1,11 +1,14 @@
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import produce from 'immer';
-import { useStateEvent } from './useStateEvent';
-import { StateEvent } from '../../types/matrix/room';
+import { PendingObservableResult } from 'neurone/lib/utils/observable';
+import { StateEvent, StateEventType } from '../../types/matrix/room';
 import { useStateEventCallback } from './useStateEventCallback';
 import { useMatrixClient } from './useMatrixClient';
 import { getStateEvent } from '../utils/room';
+import { getJoinRoomStateId, JoinRoomStateObject } from '../../client/storage/collections';
+import { useClient } from './useClient';
+import { useObservableValuePromise } from './useObservableValue';
 
 export type PowerLevelActions = 'invite' | 'redact' | 'kick' | 'ban' | 'historical';
 export type PowerLevelNotificationsAction = 'room';
@@ -65,17 +68,33 @@ const getPowersLevelFromMatrixEvent = (mEvent?: MatrixEvent): IPowerLevels => {
   return powerLevels;
 };
 
-export function usePowerLevels(room: Room): IPowerLevels {
-  const powerLevelsEvent = useStateEvent(room, StateEvent.RoomPowerLevels);
-  const powerLevels: IPowerLevels = useMemo(
-    () => getPowersLevelFromMatrixEvent(powerLevelsEvent),
-    [powerLevelsEvent]
+export function usePowerLevelsState(
+  roomId: string
+): PendingObservableResult<JoinRoomStateObject | undefined> {
+  const ct = useClient();
+
+  const eventObservablePromise = useMemo(
+    () =>
+      ct.storage.joinRoomState.observableRead.get(
+        getJoinRoomStateId(roomId, StateEventType.RoomPowerLevels, '')
+      ),
+    [ct, roomId]
   );
+
+  return useObservableValuePromise(eventObservablePromise);
+}
+
+export function usePowerLevels(eventObj: JoinRoomStateObject | undefined): IPowerLevels {
+  const powerLevels: IPowerLevels = useMemo(() => {
+    const content: IPowerLevels | undefined = eventObj?.event.content;
+
+    return !content ? DEFAULT_POWER_LEVELS : fillMissingPowers(content);
+  }, [eventObj]);
 
   return powerLevels;
 }
 
-export const PowerLevelsContext = createContext<IPowerLevels | null>(null);
+const PowerLevelsContext = createContext<IPowerLevels | null>(null);
 
 export const PowerLevelsContextProvider = PowerLevelsContext.Provider;
 

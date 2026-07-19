@@ -1,8 +1,10 @@
-import { Room } from 'matrix-js-sdk';
-import { useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
+import { PendingObservableResult } from 'neurone/lib/utils/observable';
 import { IPowerLevels } from './usePowerLevels';
-import { useStateEvent } from './useStateEvent';
-import { MemberPowerTag, StateEvent } from '../../types/matrix/room';
+import { MemberPowerTag, StateEventType } from '../../types/matrix/room';
+import { getJoinRoomStateId, JoinRoomStateObject } from '../../client/storage/collections';
+import { useClient } from './useClient';
+import { useObservableValuePromise } from './useObservableValue';
 
 export type PowerLevelTags = Record<number, MemberPowerTag>;
 
@@ -87,11 +89,38 @@ const generateFallbackTag = (powerLevelTags: PowerLevelTags, power: number): Mem
   };
 };
 
-export const usePowerLevelTags = (room: Room, powerLevels: IPowerLevels): PowerLevelTags => {
-  const tagsEvent = useStateEvent(room, StateEvent.PowerLevelTags);
+export function usePowerLevelTagsState(
+  roomId: string
+): PendingObservableResult<JoinRoomStateObject | undefined> {
+  const ct = useClient();
 
+  const eventObservablePromise = useMemo(
+    () =>
+      ct.storage.joinRoomState.observableRead.get(
+        getJoinRoomStateId(roomId, StateEventType.PowerLevelTags, '')
+      ),
+    [ct, roomId]
+  );
+
+  return useObservableValuePromise(eventObservablePromise);
+}
+
+const PowerLevelTagsContext = createContext<PowerLevelTags | null>(null);
+
+export const PowerLevelTagsContextProvider = PowerLevelTagsContext.Provider;
+
+export const usePowerLevelTagsContext = (): PowerLevelTags => {
+  const tags = useContext(PowerLevelTagsContext);
+  if (!tags) throw new Error('PowerLevelTagsContext is not initialized!');
+  return tags;
+};
+
+export const usePowerLevelTags = (
+  powerLevels: IPowerLevels,
+  eventObj: JoinRoomStateObject | undefined
+): PowerLevelTags => {
   const powerLevelTags: PowerLevelTags = useMemo(() => {
-    const content = tagsEvent?.getContent<PowerLevelTags>();
+    const { content } = eventObj?.event ?? {};
     const powerToTags: PowerLevelTags = { ...content };
 
     const powers = getUsedPowers(powerLevels);
@@ -102,7 +131,7 @@ export const usePowerLevelTags = (room: Room, powerLevels: IPowerLevels): PowerL
     });
 
     return powerToTags;
-  }, [powerLevels, tagsEvent]);
+  }, [powerLevels, eventObj]);
 
   return powerLevelTags;
 };

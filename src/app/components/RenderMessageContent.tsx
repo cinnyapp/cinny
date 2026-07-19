@@ -1,147 +1,101 @@
 import React from 'react';
-import { MsgType } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
 import { config } from 'folds';
 import {
-  AudioContent,
-  DownloadFile,
-  FileContent,
-  ImageContent,
   MAudio,
-  MBadEncrypted,
   MEmote,
   MFile,
   MImage,
   MLocation,
   MNotice,
+  MSticker,
   MText,
   MVideo,
-  ReadPdfFile,
-  ReadTextFile,
-  RenderBody,
-  ThumbnailContent,
+  RedactedContent,
   UnsupportedContent,
-  VideoContent,
 } from './message';
-import { UrlPreviewCard, UrlPreviewHolder } from './url-preview';
-import { Image, MediaControl, Video } from './media';
-import { ImageViewer } from './image-viewer';
-import { PdfViewer } from './Pdf-viewer';
-import { TextViewer } from './text-viewer';
-import { testMatrixTo } from '../plugins/matrix-to';
-import { IImageContent } from '../../types/matrix/common';
+import { MsgType } from '../../types/matrix/common';
+import { rContent } from '../../client/reader';
+import { MessageEvent } from '../../types/matrix/room';
 
 type RenderMessageContentProps = {
   displayName: string;
-  msgType: string;
+  eventType: string;
   ts: number;
   edited?: boolean;
-  getContent: <T>() => T;
+  content: object;
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
   highlightRegex?: RegExp;
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
   outlineAttachment?: boolean;
+  redacted?: boolean;
 };
 export function RenderMessageContent({
   displayName,
-  msgType,
+  eventType,
   ts,
   edited,
-  getContent,
+  content,
   mediaAutoLoad,
   urlPreview,
   highlightRegex,
   htmlReactParserOptions,
   linkifyOpts,
   outlineAttachment,
+  redacted,
 }: RenderMessageContentProps) {
-  const renderUrlsPreview = (urls: string[]) => {
-    const filteredUrls = urls.filter((url) => !testMatrixTo(url));
-    if (filteredUrls.length === 0) return undefined;
+  if (redacted) return <RedactedContent />;
+
+  if (eventType === MessageEvent.Sticker) {
     return (
-      <UrlPreviewHolder>
-        {filteredUrls.map((url) => (
-          <UrlPreviewCard key={url} url={url} ts={ts} />
-        ))}
-      </UrlPreviewHolder>
+      <MSticker
+        content={content}
+        mediaAutoLoad={mediaAutoLoad}
+        outlineAttachment={outlineAttachment}
+      />
     );
-  };
+  }
+
+  if (eventType !== MessageEvent.RoomMessage) {
+    return <UnsupportedContent />;
+  }
+
   const renderCaption = () => {
-    const content: IImageContent = getContent();
-    if (content.filename && content.filename !== content.body) {
+    const filename = rContent.filename(content);
+    const body = rContent.body(content);
+
+    if (filename && filename !== body && body) {
       return (
         <MText
-          style={{ marginTop: config.space.S200 }}
+          style={{ marginTop: config.space.S100 }}
           edited={edited}
           content={content}
-          renderBody={(props) => (
-            <RenderBody
-              {...props}
-              highlightRegex={highlightRegex}
-              htmlReactParserOptions={htmlReactParserOptions}
-              linkifyOpts={linkifyOpts}
-            />
-          )}
-          renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
+          urlPreview={urlPreview}
+          ts={ts}
+          highlightRegex={highlightRegex}
+          htmlReactParserOptions={htmlReactParserOptions}
+          linkifyOpts={linkifyOpts}
         />
       );
     }
     return null;
   };
 
-  const renderFile = () => (
-    <>
-      <MFile
-        content={getContent()}
-        renderFileContent={({ body, mimeType, info, encInfo, url }) => (
-          <FileContent
-            body={body}
-            mimeType={mimeType}
-            renderAsPdfFile={() => (
-              <ReadPdfFile
-                body={body}
-                mimeType={mimeType}
-                url={url}
-                encInfo={encInfo}
-                renderViewer={(p) => <PdfViewer {...p} />}
-              />
-            )}
-            renderAsTextFile={() => (
-              <ReadTextFile
-                body={body}
-                mimeType={mimeType}
-                url={url}
-                encInfo={encInfo}
-                renderViewer={(p) => <TextViewer {...p} />}
-              />
-            )}
-          >
-            <DownloadFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} info={info} />
-          </FileContent>
-        )}
-        outlined={outlineAttachment}
-      />
-      {renderCaption()}
-    </>
-  );
+  const msgType = rContent.msgtype(content);
 
   if (msgType === MsgType.Text) {
     return (
       <MText
         edited={edited}
-        content={getContent()}
-        renderBody={(props) => (
-          <RenderBody
-            {...props}
-            highlightRegex={highlightRegex}
-            htmlReactParserOptions={htmlReactParserOptions}
-            linkifyOpts={linkifyOpts}
-          />
-        )}
-        renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
+        content={content}
+        urlPreview={urlPreview}
+        ts={ts}
+        highlightRegex={highlightRegex}
+        htmlReactParserOptions={htmlReactParserOptions}
+        linkifyOpts={linkifyOpts}
       />
     );
   }
@@ -151,16 +105,12 @@ export function RenderMessageContent({
       <MEmote
         displayName={displayName}
         edited={edited}
-        content={getContent()}
-        renderBody={(props) => (
-          <RenderBody
-            {...props}
-            highlightRegex={highlightRegex}
-            htmlReactParserOptions={htmlReactParserOptions}
-            linkifyOpts={linkifyOpts}
-          />
-        )}
-        renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
+        content={content}
+        urlPreview={urlPreview}
+        ts={ts}
+        highlightRegex={highlightRegex}
+        htmlReactParserOptions={htmlReactParserOptions}
+        linkifyOpts={linkifyOpts}
       />
     );
   }
@@ -169,16 +119,12 @@ export function RenderMessageContent({
     return (
       <MNotice
         edited={edited}
-        content={getContent()}
-        renderBody={(props) => (
-          <RenderBody
-            {...props}
-            highlightRegex={highlightRegex}
-            htmlReactParserOptions={htmlReactParserOptions}
-            linkifyOpts={linkifyOpts}
-          />
-        )}
-        renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
+        content={content}
+        urlPreview={urlPreview}
+        ts={ts}
+        highlightRegex={highlightRegex}
+        htmlReactParserOptions={htmlReactParserOptions}
+        linkifyOpts={linkifyOpts}
       />
     );
   }
@@ -186,18 +132,7 @@ export function RenderMessageContent({
   if (msgType === MsgType.Image) {
     return (
       <>
-        <MImage
-          content={getContent()}
-          renderImageContent={(props) => (
-            <ImageContent
-              {...props}
-              autoPlay={mediaAutoLoad}
-              renderImage={(p) => <Image {...p} loading="lazy" />}
-              renderViewer={(p) => <ImageViewer {...p} />}
-            />
-          )}
-          outlined={outlineAttachment}
-        />
+        <MImage content={content} mediaAutoLoad={mediaAutoLoad} outlined={outlineAttachment} />
         {renderCaption()}
       </>
     );
@@ -206,31 +141,7 @@ export function RenderMessageContent({
   if (msgType === MsgType.Video) {
     return (
       <>
-        <MVideo
-          content={getContent()}
-          renderAsFile={renderFile}
-          renderVideoContent={({ body, info, ...props }) => (
-            <VideoContent
-              body={body}
-              info={info}
-              {...props}
-              renderThumbnail={
-                mediaAutoLoad
-                  ? () => (
-                      <ThumbnailContent
-                        info={info}
-                        renderImage={(src) => (
-                          <Image alt={body} title={body} src={src} loading="lazy" />
-                        )}
-                      />
-                    )
-                  : undefined
-              }
-              renderVideo={(p) => <Video {...p} />}
-            />
-          )}
-          outlined={outlineAttachment}
-        />
+        <MVideo content={content} mediaAutoLoad={mediaAutoLoad} outlined={outlineAttachment} />
         {renderCaption()}
       </>
     );
@@ -239,30 +150,34 @@ export function RenderMessageContent({
   if (msgType === MsgType.Audio) {
     return (
       <>
-        <MAudio
-          content={getContent()}
-          renderAsFile={renderFile}
-          renderAudioContent={(props) => (
-            <AudioContent {...props} renderMediaControl={(p) => <MediaControl {...p} />} />
-          )}
-          outlined={outlineAttachment}
-        />
+        <MAudio content={content} outlined={outlineAttachment} />
         {renderCaption()}
       </>
     );
   }
 
   if (msgType === MsgType.File) {
-    return renderFile();
+    return (
+      <>
+        <MFile content={content} outlined={outlineAttachment} />
+        {renderCaption()}
+      </>
+    );
   }
 
   if (msgType === MsgType.Location) {
-    return <MLocation content={getContent()} />;
+    return <MLocation content={content} />;
   }
 
-  if (msgType === 'm.bad.encrypted') {
-    return <MBadEncrypted />;
-  }
-
-  return <UnsupportedContent />;
+  return (
+    <MText
+      edited={edited}
+      content={content}
+      urlPreview={urlPreview}
+      ts={ts}
+      highlightRegex={highlightRegex}
+      htmlReactParserOptions={htmlReactParserOptions}
+      linkifyOpts={linkifyOpts}
+    />
+  );
 }

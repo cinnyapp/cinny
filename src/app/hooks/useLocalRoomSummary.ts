@@ -1,44 +1,40 @@
-import { GuestAccess, HistoryVisibility, JoinRule, Room } from 'matrix-js-sdk';
-import { getStateEvent } from '../utils/room';
-import { StateEvent } from '../../types/matrix/room';
+import { JoinRule } from '../../types/matrix/room';
+import { useRoomHeroes } from './storage/useRoomHeros';
+import { useGetRoomName } from './storage/useGetRoomName';
+import { useGetRoomAvatar } from './storage/useGetRoomAvatar';
+import { useRoomTopic } from './storage/useRoomTopic';
+import { useObservableValue } from './useObservableValue';
+import { useClient } from './useClient';
 
 export type LocalRoomSummary = {
   roomId: string;
-  name: string;
+  name?: string;
   topic?: string;
   avatarUrl?: string;
   canonicalAlias?: string;
-  worldReadable?: boolean;
-  guestCanJoin?: boolean;
   memberCount?: number;
-  roomType?: string;
+  space?: boolean;
   joinRule?: JoinRule;
 };
-export const useLocalRoomSummary = (room: Room): LocalRoomSummary => {
-  const topicEvent = getStateEvent(room, StateEvent.RoomTopic);
-  const topicContent = topicEvent?.getContent();
-  const topic =
-    topicContent && typeof topicContent.topic === 'string' ? topicContent.topic : undefined;
-
-  const historyEvent = getStateEvent(room, StateEvent.RoomHistoryVisibility);
-  const historyContent = historyEvent?.getContent();
-  const worldReadable =
-    historyContent && typeof historyContent.history_visibility === 'string'
-      ? historyContent.history_visibility === HistoryVisibility.WorldReadable
-      : undefined;
-
-  const guestCanJoin = room.getGuestAccess() === GuestAccess.CanJoin;
+export const useLocalRoomSummary = (roomId: string): LocalRoomSummary => {
+  const ct = useClient();
+  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(roomId);
+  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+  const roomTopic = useRoomTopic(roomId);
+  const roomToAlias = useObservableValue(ct.roomToAlias);
+  const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
+  const roomToSummary = useObservableValue(ct.roomToSummary);
+  const spaceRooms = useObservableValue(ct.spaceRooms);
 
   return {
-    roomId: room.roomId,
-    name: room.name,
-    topic,
-    avatarUrl: room.getMxcAvatarUrl() ?? undefined,
-    canonicalAlias: room.getCanonicalAlias() ?? undefined,
-    worldReadable,
-    guestCanJoin,
-    memberCount: room.getJoinedMemberCount(),
-    roomType: room.getType(),
-    joinRule: room.getJoinRule(),
+    roomId,
+    name: getRoomName(roomId),
+    topic: roomTopic,
+    avatarUrl: getRoomAvatar(roomId),
+    canonicalAlias: roomToAlias.get(roomId),
+    memberCount: roomToSummary.get(roomId)?.['m.joined_member_count'],
+    space: spaceRooms.has(roomId),
+    joinRule: roomToJoinRule.get(roomId),
   };
 };

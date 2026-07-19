@@ -1,161 +1,188 @@
-import { Room } from 'matrix-js-sdk';
-import { useCallback, useMemo, useState } from 'react';
-import { AccountDataEvent } from '../../types/matrix/accountData';
-import { StateEvent } from '../../types/matrix/room';
+import { useCallback, useMemo } from 'react';
+import { ObservableValue, PendingObservableResult } from 'neurone/lib/utils/observable';
+import { AccountDataType } from '../../types/matrix/accountData';
+import { StateEventType } from '../../types/matrix/room';
+import { getGlobalPackRoomToStateKey, ImagePack, ImageUsage } from '../plugins/custom-emoji';
+import { useClient } from './useClient';
 import {
-  getGlobalImagePacks,
-  getRoomImagePack,
-  getRoomImagePacks,
-  getUserImagePack,
-  ImagePack,
-  ImageUsage,
-} from '../plugins/custom-emoji';
-import { useMatrixClient } from './useMatrixClient';
-import { useAccountDataCallback } from './useAccountDataCallback';
-import { useStateEventCallback } from './useStateEventCallback';
+  useComputedPendingObservableResult,
+  useObservableValuePromise,
+} from './useObservableValue';
+import { getJoinRoomStateId, JoinRoomStateObject } from '../../client/storage/collections';
+import { useRoomStateEvent, useRoomStateEvents } from './storage/useRoomStateEvent';
 
-export const useUserImagePack = (): ImagePack | undefined => {
-  const mx = useMatrixClient();
-  const [userPack, setUserPack] = useState(() => getUserImagePack(mx));
-
-  useAccountDataCallback(
-    mx,
-    useCallback(
-      (mEvent) => {
-        if (mEvent.getType() === AccountDataEvent.PoniesUserEmotes) {
-          setUserPack(getUserImagePack(mx));
-        }
-      },
-      [mx]
-    )
+export const useUserImagePack = (): PendingObservableResult<ImagePack | undefined> => {
+  const ct = useClient();
+  const userPackObjPromise = useMemo(
+    () => ct.storage.accountData.observableRead.get(AccountDataType.PoniesUserEmotes),
+    [ct]
   );
 
-  return userPack;
+  const userPackObjResult = useObservableValuePromise(userPackObjPromise);
+
+  return useComputedPendingObservableResult(
+    userPackObjResult,
+    useCallback(
+      (userPackObj) => {
+        if (!userPackObj) return undefined;
+        return ImagePack.fromAccountData(ct.session.userId, userPackObj.event);
+      },
+      [ct]
+    )
+  );
 };
 
-export const useGlobalImagePacks = (): ImagePack[] => {
-  const mx = useMatrixClient();
-  const [globalPacks, setGlobalPacks] = useState(() => getGlobalImagePacks(mx));
+export const useGlobalImagePacks = (): PendingObservableResult<ImagePack[]> => {
+  const ct = useClient();
+  const emoteRoomsObjPromise = useMemo(
+    () => ct.storage.accountData.observableRead.get(AccountDataType.PoniesEmoteRooms),
+    [ct]
+  );
+  const emoteRoomsObjResult = useObservableValuePromise(emoteRoomsObjPromise);
 
-  useAccountDataCallback(
-    mx,
+  const roomToStateKeysResult = useComputedPendingObservableResult(
+    emoteRoomsObjResult,
+    useCallback((emoteRoomsObj) => getGlobalPackRoomToStateKey(emoteRoomsObj?.event.content), [])
+  );
+  const roomToStateKeys = roomToStateKeysResult.value;
+
+  const roomPackEventsPromise = useMemo(() => {
+    const keys = roomToStateKeys
+      ? Object.keys(roomToStateKeys).flatMap((roomId) =>
+          roomToStateKeys[roomId].map((stateKey) =>
+            getJoinRoomStateId(roomId, StateEventType.PoniesRoomEmotes, stateKey)
+          )
+        )
+      : [];
+
+    return ct.storage.joinRoomState.observableRead.getMultiple(keys);
+  }, [ct, roomToStateKeys]);
+
+  const roomPackEventsResult = useObservableValuePromise(roomPackEventsPromise);
+
+  return useComputedPendingObservableResult(
+    roomPackEventsResult,
     useCallback(
-      (mEvent) => {
-        if (mEvent.getType() === AccountDataEvent.PoniesEmoteRooms) {
-          setGlobalPacks(getGlobalImagePacks(mx));
-        }
-      },
-      [mx]
+      (roomPackEvents) =>
+        roomPackEvents
+          .filter((p) => !!p)
+          .map((packEvent) => ImagePack.fromStateEvent(packEvent.roomId, packEvent.event)),
+      []
     )
   );
-
-  useStateEventCallback(
-    mx,
-    useCallback(
-      (mEvent) => {
-        const eventType = mEvent.getType();
-        const roomId = mEvent.getRoomId();
-        const stateKey = mEvent.getStateKey();
-        if (eventType === StateEvent.PoniesRoomEmotes && roomId && typeof stateKey === 'string') {
-          const global = !!globalPacks.find(
-            (pack) =>
-              pack.address && pack.address.roomId === roomId && pack.address.stateKey === stateKey
-          );
-          if (global) {
-            setGlobalPacks(getGlobalImagePacks(mx));
-          }
-        }
-      },
-      [mx, globalPacks]
-    )
-  );
-
-  return globalPacks;
 };
 
-export const useRoomImagePack = (room: Room, stateKey: string): ImagePack | undefined => {
-  const mx = useMatrixClient();
-  const [roomPack, setRoomPack] = useState(() => getRoomImagePack(room, stateKey));
+export const useRoomImagePack = (
+  roomId: string,
+  stateKey: string
+): PendingObservableResult<ImagePack | undefined> => {
+  const roomPackEventResult = useRoomStateEvent(roomId, StateEventType.PoniesRoomEmotes, stateKey);
 
-  useStateEventCallback(
-    mx,
+  return useComputedPendingObservableResult(
+    roomPackEventResult,
     useCallback(
-      (mEvent) => {
-        if (
-          mEvent.getRoomId() === room.roomId &&
-          mEvent.getType() === StateEvent.PoniesRoomEmotes &&
-          mEvent.getStateKey() === stateKey
-        ) {
-          setRoomPack(getRoomImagePack(room, stateKey));
-        }
-      },
-      [room, stateKey]
+      (roomPackEvent) =>
+        roomPackEvent
+          ? ImagePack.fromStateEvent(roomPackEvent.roomId, roomPackEvent.event)
+          : undefined,
+      []
     )
   );
-
-  return roomPack;
 };
 
-export const useRoomImagePacks = (room: Room): ImagePack[] => {
-  const mx = useMatrixClient();
-  const [roomPacks, setRoomPacks] = useState(() => getRoomImagePacks(room));
+export const useRoomImagePacks = (roomId: string): PendingObservableResult<ImagePack[]> => {
+  const roomPackEventsResult = useRoomStateEvents(roomId, StateEventType.PoniesRoomEmotes);
 
-  useStateEventCallback(
-    mx,
+  return useComputedPendingObservableResult(
+    roomPackEventsResult,
     useCallback(
-      (mEvent) => {
-        if (
-          mEvent.getRoomId() === room.roomId &&
-          mEvent.getType() === StateEvent.PoniesRoomEmotes
-        ) {
-          setRoomPacks(getRoomImagePacks(room));
-        }
-      },
-      [room]
+      (roomPackEvents) =>
+        roomPackEvents.map((roomPackEvent) =>
+          ImagePack.fromStateEvent(roomPackEvent.roomId, roomPackEvent.event)
+        ),
+      []
     )
   );
-
-  return roomPacks;
 };
 
-export const useRoomsImagePacks = (rooms: Room[]) => {
-  const mx = useMatrixClient();
-  const [roomPacks, setRoomPacks] = useState(() => rooms.flatMap(getRoomImagePacks));
+export const useRoomsImagePacks = (rooms: string[]): PendingObservableResult<ImagePack[]> => {
+  const ct = useClient();
+  const idsPromise = useMemo(
+    () =>
+      ct.storage.joinRoomState.observableRead.queryIndexKeys(
+        'type',
+        StateEventType.PoniesRoomEmotes
+      ),
+    [ct]
+  );
+  const idsResult = useObservableValuePromise(idsPromise);
 
-  useStateEventCallback(
-    mx,
+  const packKeysResult = useComputedPendingObservableResult(
+    idsResult,
     useCallback(
-      (mEvent) => {
-        if (
-          rooms.find((room) => room.roomId === mEvent.getRoomId()) &&
-          mEvent.getType() === StateEvent.PoniesRoomEmotes
-        ) {
-          setRoomPacks(rooms.flatMap(getRoomImagePacks));
-        }
-      },
+      (ids) =>
+        ids.filter((id) =>
+          rooms.find((roomId) =>
+            id.startsWith(getJoinRoomStateId(roomId, StateEventType.PoniesRoomEmotes, ''))
+          )
+        ),
       [rooms]
     )
   );
 
-  return roomPacks;
+  const roomPackEventsResult = useObservableValuePromise(
+    useMemo(() => {
+      if (!packKeysResult.value) {
+        return new Promise<ObservableValue<[JoinRoomStateObject | undefined]>>(
+          (resolve, reject) => {
+            if (packKeysResult.error) {
+              reject(packKeysResult.error);
+            }
+          }
+        );
+      }
+      return ct.storage.joinRoomState.observableRead.getMultiple(packKeysResult.value);
+    }, [ct, packKeysResult])
+  );
+
+  return useComputedPendingObservableResult(
+    roomPackEventsResult,
+    useCallback(
+      (roomPackEvents) =>
+        roomPackEvents
+          .filter((p) => !!p)
+          .map((roomPackEvent) =>
+            ImagePack.fromStateEvent(roomPackEvent.roomId, roomPackEvent.event)
+          ),
+      []
+    )
+  );
 };
 
-export const useRelevantImagePacks = (usage: ImageUsage, rooms: Room[]): ImagePack[] => {
-  const userPack = useUserImagePack();
-  const globalPacks = useGlobalImagePacks();
-  const roomsPacks = useRoomsImagePacks(rooms);
+export const useRelevantImagePacks = (
+  usage: ImageUsage,
+  rooms: string[]
+): [ImagePack[], boolean | undefined, Error | undefined] => {
+  const userPackResult = useUserImagePack();
+  const globalPacksResult = useGlobalImagePacks();
+
+  const roomsPacksResult = useRoomsImagePacks(rooms);
+  const loading: boolean | undefined =
+    userPackResult.pending || globalPacksResult.pending || roomsPacksResult.pending;
+  const error: Error | undefined =
+    userPackResult.error || globalPacksResult.error || roomsPacksResult.error;
 
   const relevantPacks = useMemo(() => {
-    const packs = userPack ? [userPack] : [];
-    const globalPackIds = new Set(globalPacks.map((pack) => pack.id));
+    const packs = userPackResult.value ? [userPackResult.value] : [];
+    const globalPackIds = new Set(globalPacksResult.value?.map((pack) => pack.id));
 
     const relPacks = packs.concat(
-      globalPacks,
-      roomsPacks.filter((pack) => !globalPackIds.has(pack.id))
+      globalPacksResult.value ?? [],
+      roomsPacksResult.value?.filter((pack) => !globalPackIds.has(pack.id)) ?? []
     );
 
     return relPacks.filter((pack) => pack.getImages(usage).length > 0);
-  }, [userPack, globalPacks, roomsPacks, usage]);
+  }, [userPackResult, globalPacksResult, roomsPacksResult, usage]);
 
-  return relevantPacks;
+  return [relevantPacks, loading, error];
 };

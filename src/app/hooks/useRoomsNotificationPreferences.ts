@@ -1,8 +1,7 @@
 import { createContext, useCallback, useContext, useMemo } from 'react';
-import { ConditionKind, IPushRules, MatrixClient, PushRuleKind } from 'matrix-js-sdk';
+import { AccountDataEvent, PushRules } from 'neurone/lib/api/types';
+import { deletePushRule, putPushRule } from 'neurone/lib/api/matrix/client/v3/pushrules';
 import { Icons, IconSrc } from 'folds';
-import { AccountDataEvent } from '../../types/matrix/accountData';
-import { useAccountData } from './useAccountData';
 import { isRoomId } from '../utils/matrix';
 import {
   getNotificationMode,
@@ -10,7 +9,10 @@ import {
   NotificationMode,
 } from './useNotificationMode';
 import { useAsyncCallback } from './useAsyncCallback';
-import { useMatrixClient } from './useMatrixClient';
+import { useAccountData } from './storage/useAccountData';
+import { ClientContext } from '../../client/context';
+import { useClient } from './useClient';
+import { AccountDataType, ConditionKind } from '../../types/matrix/accountData';
 
 export type RoomsNotificationPreferences = {
   mute: Set<string>;
@@ -34,7 +36,10 @@ export const useRoomsNotificationPreferencesContext = (): RoomsNotificationPrefe
 };
 
 export const useRoomsNotificationPreferences = (): RoomsNotificationPreferences => {
-  const pushRules = useAccountData(AccountDataEvent.PushRules)?.getContent<IPushRules>();
+  const { value: pushRulesEvent } = useAccountData<AccountDataEvent<PushRules>>(
+    AccountDataType.PushRules
+  );
+  const pushRules = pushRulesEvent?.content;
 
   const preferences: RoomsNotificationPreferences = useMemo(() => {
     const global = pushRules?.global;
@@ -108,7 +113,7 @@ export const getRoomNotificationModeIcon = (mode?: RoomNotificationMode): IconSr
 };
 
 export const setRoomNotificationPreference = async (
-  mx: MatrixClient,
+  ct: ClientContext,
   roomId: string,
   mode: RoomNotificationMode,
   previousMode: RoomNotificationMode
@@ -118,10 +123,26 @@ export const setRoomNotificationPreference = async (
     previousMode === RoomNotificationMode.AllMessages ||
     previousMode === RoomNotificationMode.SpecialMessages
   ) {
-    await mx.deletePushRule('global', PushRuleKind.RoomSpecific, roomId);
+    await ct.requestAuthJSON(
+      deletePushRule({
+        pathParams: {
+          scope: 'global',
+          kind: 'room',
+          ruleId: roomId,
+        },
+      })
+    );
   }
   if (previousMode === RoomNotificationMode.Mute) {
-    await mx.deletePushRule('global', PushRuleKind.Override, roomId);
+    await ct.requestAuthJSON(
+      deletePushRule({
+        pathParams: {
+          scope: 'global',
+          kind: 'override',
+          ruleId: roomId,
+        },
+      })
+    );
   }
 
   // set new preference
@@ -130,35 +151,53 @@ export const setRoomNotificationPreference = async (
   }
 
   if (mode === RoomNotificationMode.Mute) {
-    await mx.addPushRule('global', PushRuleKind.Override, roomId, {
-      conditions: [
-        {
-          kind: ConditionKind.EventMatch,
-          key: 'room_id',
-          pattern: roomId,
+    await ct.requestAuthJSON(
+      putPushRule({
+        pathParams: {
+          scope: 'global',
+          kind: 'override',
+          ruleId: roomId,
         },
-      ],
-      actions: getNotificationModeActions(NotificationMode.OFF),
-    });
+        body: {
+          conditions: [
+            {
+              kind: ConditionKind.EventMatch,
+              key: 'room_id',
+              pattern: roomId,
+            },
+          ],
+          actions: getNotificationModeActions(NotificationMode.OFF),
+        },
+      })
+    );
     return;
   }
 
-  await mx.addPushRule('global', PushRuleKind.RoomSpecific, roomId, {
-    actions:
-      mode === RoomNotificationMode.AllMessages
-        ? getNotificationModeActions(NotificationMode.NotifyLoud)
-        : getNotificationModeActions(NotificationMode.OFF),
-  });
+  await ct.requestAuthJSON(
+    putPushRule({
+      pathParams: {
+        scope: 'global',
+        kind: 'room',
+        ruleId: roomId,
+      },
+      body: {
+        actions:
+          mode === RoomNotificationMode.AllMessages
+            ? getNotificationModeActions(NotificationMode.NotifyLoud)
+            : getNotificationModeActions(NotificationMode.OFF),
+      },
+    })
+  );
 };
 
 export const useSetRoomNotificationPreference = (roomId: string) => {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
   const [modeState, setMode] = useAsyncCallback(
     useCallback(
       (mode: RoomNotificationMode, previousMode: RoomNotificationMode) =>
-        setRoomNotificationPreference(mx, roomId, mode, previousMode),
-      [mx, roomId]
+        setRoomNotificationPreference(ct, roomId, mode, previousMode),
+      [ct, roomId]
     )
   );
 

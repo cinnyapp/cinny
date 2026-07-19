@@ -1,14 +1,18 @@
 import { ReactNode, useCallback, useEffect, useMemo } from 'react';
-import { MatrixError, createClient } from 'matrix-js-sdk';
+import { getLogin, GetLoginOK } from 'neurone/lib/api/matrix/client/v3/login';
+import { postRegister } from 'neurone/lib/api/matrix/client/v3/register';
+import { MatrixErrorData, parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { useAutoDiscoveryInfo } from '../hooks/useAutoDiscoveryInfo';
-import { promiseFulfilledResult, promiseRejectedResult } from '../utils/common';
+import { promiseFulfilledResult } from '../utils/common';
 import {
   AuthFlows,
   RegisterFlowStatus,
   RegisterFlowsResponse,
   parseRegisterErrResp,
 } from '../hooks/useAuthFlows';
+import { getJSONRequest } from '../../client/request';
+import { AuthResponse } from '../utils/matrix-uia';
 
 type AuthFlowsLoaderProps = {
   fallback?: () => ReactNode;
@@ -19,24 +23,33 @@ export function AuthFlowsLoader({ fallback, error, children }: AuthFlowsLoaderPr
   const autoDiscoveryInfo = useAutoDiscoveryInfo();
   const baseUrl = autoDiscoveryInfo['m.homeserver'].base_url;
 
-  const mx = useMemo(() => createClient({ baseUrl }), [baseUrl]);
+  const requestJSON = useMemo(() => getJSONRequest(baseUrl), [baseUrl]);
 
   const [state, load] = useAsyncCallback(
     useCallback(async () => {
-      const result = await Promise.allSettled([mx.loginFlows(), mx.registerRequest({})]);
-      const loginFlows = promiseFulfilledResult(result[0]);
-      const registerResp = promiseRejectedResult(result[1]) as MatrixError | undefined;
-      let registerFlows: RegisterFlowsResponse = { status: RegisterFlowStatus.InvalidRequest };
+      const loginEndpoint = getLogin({});
+      const registerEndpoint = postRegister({});
 
-      if (typeof registerResp === 'object' && registerResp.httpStatus) {
-        registerFlows = parseRegisterErrResp(registerResp);
+      const [loginResponse, registerResponse] = (
+        await Promise.allSettled([requestJSON(loginEndpoint), requestJSON(registerEndpoint)])
+      ).map(promiseFulfilledResult);
+
+      let registerFlows: RegisterFlowsResponse = { status: RegisterFlowStatus.InvalidRequest };
+      const [registerError] =
+        typeof registerResponse === 'object'
+          ? await parseMatrixResp<undefined, AuthResponse | MatrixErrorData>(registerResponse)
+          : [];
+
+      if (registerError) {
+        registerFlows = parseRegisterErrResp(registerError);
       }
 
-      if (!loginFlows) {
+      if (!loginResponse) {
         throw new Error('Missing auth flow!');
       }
-      if ('errcode' in loginFlows) {
-        throw new Error('Failed to load auth flow!');
+      const [loginError, loginFlows] = await parseMatrixResp<GetLoginOK>(loginResponse);
+      if (loginError) {
+        throw new Error(`Failed to load auth flow! ${printMatrixError(loginError)}`);
       }
 
       const authFlows: AuthFlows = {
@@ -45,7 +58,7 @@ export function AuthFlowsLoader({ fallback, error, children }: AuthFlowsLoaderPr
       };
 
       return authFlows;
-    }, [mx])
+    }, [requestJSON])
   );
 
   useEffect(() => {

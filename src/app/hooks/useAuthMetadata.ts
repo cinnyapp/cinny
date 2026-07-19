@@ -1,11 +1,11 @@
-import { ValidatedAuthMetadata } from 'matrix-js-sdk';
+import { GetAuthMetadataOK } from 'neurone/lib/api/matrix/client/v1/authMetadata';
 import { createContext, useContext } from 'react';
 
-const AuthMetadataContext = createContext<ValidatedAuthMetadata | undefined>(undefined);
+const AuthMetadataContext = createContext<GetAuthMetadataOK | undefined>(undefined);
 
 export const AuthMetadataProvider = AuthMetadataContext.Provider;
 
-export const useAuthMetadata = (): ValidatedAuthMetadata | undefined => {
+export const useAuthMetadata = (): GetAuthMetadataOK | undefined => {
   const metadata = useContext(AuthMetadataContext);
 
   return metadata;

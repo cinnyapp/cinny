@@ -1,27 +1,18 @@
 import { useMemo } from 'react';
-import { AccountDataEvent, MDirectContent } from '../../types/matrix/accountData';
-import { useAccountData } from './useAccountData';
-import { useAllJoinedRoomsSet, useGetRoom } from './useGetRoom';
+import { useClient } from './useClient';
+import { useObservableValue } from './useObservableValue';
 
 export const useDirectUsers = (): string[] => {
-  const directEvent = useAccountData(AccountDataEvent.Direct);
-  const content = directEvent?.getContent<MDirectContent>();
-
-  const allJoinedRooms = useAllJoinedRoomsSet();
-  const getRoom = useGetRoom(allJoinedRooms);
+  const ct = useClient();
+  const roomToSummary = useObservableValue(ct.roomToSummary);
 
   const users = useMemo(() => {
-    if (typeof content !== 'object') return [];
+    const heroes = Array.from(roomToSummary.values()).flatMap(
+      (summary) => summary['m.heroes'] ?? []
+    );
 
-    const u = Object.keys(content).filter((userId) => {
-      const rooms = content[userId];
-      if (!Array.isArray(rooms)) return false;
-      const hasDM = rooms.some((roomId) => typeof roomId === 'string' && !!getRoom(roomId));
-      return hasDM;
-    });
-
-    return u;
-  }, [content, getRoom]);
+    return Array.from(new Set(heroes));
+  }, [roomToSummary]);
 
   return users;
 };

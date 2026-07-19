@@ -1,114 +1,132 @@
 import { Atom, useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';
-import { MatrixClient } from 'matrix-js-sdk';
 import { useCallback, useMemo } from 'react';
-import { getAllParents, isRoom, isSpace, isUnsupportedRoom } from '../../utils/room';
+import { getAllParents } from '../../utils/room';
 import { compareRoomsEqual } from '../room-list/utils';
 import { RoomToParents } from '../../../types/matrix/room';
+import { ClientContext } from '../../../client/context';
+import { useObservableValue } from '../../hooks/useObservableValue';
 
-export type RoomsAtom = Atom<string[]>;
-export type RoomSelector = (roomId: string) => boolean | undefined;
+type RoomsAtom = Atom<string[]>;
+type RoomSelector = (roomId: string) => boolean | undefined;
 
-export const selectedRoomsAtom = (
+const selectedRoomsAtom = (
   roomsAtom: RoomsAtom,
   selector: (roomId: string) => boolean | undefined
 ) => selectAtom(roomsAtom, (rooms) => rooms.filter(selector), compareRoomsEqual);
 
-export const useSelectedRooms = (roomsAtom: RoomsAtom, selector: RoomSelector) => {
+const useSelectedRooms = (roomsAtom: RoomsAtom, selector: RoomSelector) => {
   const anAtom = useMemo(() => selectedRoomsAtom(roomsAtom, selector), [roomsAtom, selector]);
 
   return useAtomValue(anAtom);
 };
 
-export type SpaceChildSelectorFactory = (parentId: string) => RoomSelector;
+type SpaceChildSelectorFactory = (parentId: string) => RoomSelector;
 
 export const useRecursiveChildScopeFactory = (
-  mx: MatrixClient,
+  ct: ClientContext,
   roomToParents: RoomToParents
-): SpaceChildSelectorFactory =>
-  useCallback(
+): SpaceChildSelectorFactory => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
+  return useCallback(
     (parentId: string) => (roomId) =>
-      isRoom(mx.getRoom(roomId)) &&
+      !spaceRooms.has(roomId) &&
       roomToParents.has(roomId) &&
       getAllParents(roomToParents, roomId).has(parentId),
-    [mx, roomToParents]
+    [spaceRooms, roomToParents]
   );
+};
 
 export const useChildSpaceScopeFactory = (
-  mx: MatrixClient,
+  ct: ClientContext,
   roomToParents: RoomToParents
-): SpaceChildSelectorFactory =>
-  useCallback(
+): SpaceChildSelectorFactory => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
+  return useCallback(
     (parentId: string) => (roomId) =>
-      isSpace(mx.getRoom(roomId)) && roomToParents.get(roomId)?.has(parentId),
-    [mx, roomToParents]
+      spaceRooms.has(roomId) && roomToParents.get(roomId)?.has(parentId),
+    [spaceRooms, roomToParents]
   );
+};
 
 export const useRecursiveChildSpaceScopeFactory = (
-  mx: MatrixClient,
+  ct: ClientContext,
   roomToParents: RoomToParents
-): SpaceChildSelectorFactory =>
-  useCallback(
+): SpaceChildSelectorFactory => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
+  return useCallback(
     (parentId: string) => (roomId) =>
-      isSpace(mx.getRoom(roomId)) &&
+      spaceRooms.has(roomId) &&
       roomToParents.has(roomId) &&
       getAllParents(roomToParents, roomId).has(parentId),
-    [mx, roomToParents]
+    [spaceRooms, roomToParents]
   );
+};
 
 export const useChildRoomScopeFactory = (
-  mx: MatrixClient,
+  ct: ClientContext,
   mDirects: Set<string>,
   roomToParents: RoomToParents
-): SpaceChildSelectorFactory =>
-  useCallback(
+): SpaceChildSelectorFactory => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
+  return useCallback(
     (parentId: string) => (roomId) =>
-      isRoom(mx.getRoom(roomId)) &&
-      !mDirects.has(roomId) &&
-      roomToParents.get(roomId)?.has(parentId),
-    [mx, mDirects, roomToParents]
+      !spaceRooms.has(roomId) && !mDirects.has(roomId) && roomToParents.get(roomId)?.has(parentId),
+    [spaceRooms, mDirects, roomToParents]
   );
+};
 
 export const useRecursiveChildRoomScopeFactory = (
-  mx: MatrixClient,
+  ct: ClientContext,
   mDirects: Set<string>,
   roomToParents: RoomToParents
-): SpaceChildSelectorFactory =>
-  useCallback(
+): SpaceChildSelectorFactory => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
+  return useCallback(
     (parentId: string) => (roomId) =>
-      isRoom(mx.getRoom(roomId)) &&
+      !spaceRooms.has(roomId) &&
       !mDirects.has(roomId) &&
       roomToParents.has(roomId) &&
       getAllParents(roomToParents, roomId).has(parentId),
-    [mx, mDirects, roomToParents]
+    [spaceRooms, mDirects, roomToParents]
   );
+};
 
 export const useChildDirectScopeFactory = (
-  mx: MatrixClient,
+  ct: ClientContext,
   mDirects: Set<string>,
   roomToParents: RoomToParents
-): SpaceChildSelectorFactory =>
-  useCallback(
+): SpaceChildSelectorFactory => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
+  return useCallback(
     (parentId: string) => (roomId) =>
-      isRoom(mx.getRoom(roomId)) &&
-      mDirects.has(roomId) &&
-      roomToParents.get(roomId)?.has(parentId),
-    [mx, mDirects, roomToParents]
+      !spaceRooms.has(roomId) && mDirects.has(roomId) && roomToParents.get(roomId)?.has(parentId),
+    [spaceRooms, mDirects, roomToParents]
   );
+};
 
 export const useRecursiveChildDirectScopeFactory = (
-  mx: MatrixClient,
+  ct: ClientContext,
   mDirects: Set<string>,
   roomToParents: RoomToParents
-): SpaceChildSelectorFactory =>
-  useCallback(
+): SpaceChildSelectorFactory => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
+  return useCallback(
     (parentId: string) => (roomId) =>
-      isRoom(mx.getRoom(roomId)) &&
+      !spaceRooms.has(roomId) &&
       mDirects.has(roomId) &&
       roomToParents.has(roomId) &&
       getAllParents(roomToParents, roomId).has(parentId),
-    [mx, mDirects, roomToParents]
+    [spaceRooms, mDirects, roomToParents]
   );
+};
 
 export const useSpaceChildren = (
   roomsAtom: RoomsAtom,
@@ -122,56 +140,71 @@ export const useSpaceChildren = (
   return useSelectedRooms(roomsAtom, recursiveChildRoomSelector);
 };
 
-export const useSpaces = (mx: MatrixClient, roomsAtom: RoomsAtom) => {
-  const selector: RoomSelector = useCallback((roomId) => isSpace(mx.getRoom(roomId)), [mx]);
+export const useSpacesChildren = (
+  roomsAtom: RoomsAtom,
+  spaces: string[],
+  selectorFactory: SpaceChildSelectorFactory
+) => {
+  const recursiveChildRoomSelector = useMemo(() => {
+    const selector: RoomSelector = (roomId) =>
+      spaces.some((spaceId) => selectorFactory(spaceId)(roomId));
+    return selector;
+  }, [selectorFactory, spaces]);
+  return useSelectedRooms(roomsAtom, recursiveChildRoomSelector);
+};
+
+export const useSpaces = (ct: ClientContext, roomsAtom: RoomsAtom) => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
+  const selector: RoomSelector = useCallback((roomId) => spaceRooms.has(roomId), [spaceRooms]);
   return useSelectedRooms(roomsAtom, selector);
 };
 
 export const useOrphanSpaces = (
-  mx: MatrixClient,
+  ct: ClientContext,
   roomsAtom: RoomsAtom,
   roomToParents: RoomToParents
 ) => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
   const selector: RoomSelector = useCallback(
-    (roomId) => isSpace(mx.getRoom(roomId)) && !roomToParents.has(roomId),
-    [mx, roomToParents]
+    (roomId) => spaceRooms.has(roomId) && !roomToParents.has(roomId),
+    [spaceRooms, roomToParents]
   );
   return useSelectedRooms(roomsAtom, selector);
 };
 
-export const useRooms = (mx: MatrixClient, roomsAtom: RoomsAtom, mDirects: Set<string>) => {
+export const useRooms = (ct: ClientContext, roomsAtom: RoomsAtom, mDirects: Set<string>) => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
   const selector: RoomSelector = useCallback(
-    (roomId: string) => isRoom(mx.getRoom(roomId)) && !mDirects.has(roomId),
-    [mx, mDirects]
+    (roomId: string) => !spaceRooms.has(roomId) && !mDirects.has(roomId),
+    [spaceRooms, mDirects]
   );
   return useSelectedRooms(roomsAtom, selector);
 };
 
 export const useOrphanRooms = (
-  mx: MatrixClient,
+  ct: ClientContext,
   roomsAtom: RoomsAtom,
   mDirects: Set<string>,
   roomToParents: RoomToParents
 ) => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
+
   const selector: RoomSelector = useCallback(
-    (roomId) => isRoom(mx.getRoom(roomId)) && !mDirects.has(roomId) && !roomToParents.has(roomId),
-    [mx, mDirects, roomToParents]
+    (roomId) => !spaceRooms.has(roomId) && !mDirects.has(roomId) && !roomToParents.has(roomId),
+    [spaceRooms, mDirects, roomToParents]
   );
   return useSelectedRooms(roomsAtom, selector);
 };
 
-export const useDirects = (mx: MatrixClient, roomsAtom: RoomsAtom, mDirects: Set<string>) => {
-  const selector: RoomSelector = useCallback(
-    (roomId) => isRoom(mx.getRoom(roomId)) && mDirects.has(roomId),
-    [mx, mDirects]
-  );
-  return useSelectedRooms(roomsAtom, selector);
-};
+export const useDirects = (ct: ClientContext, roomsAtom: RoomsAtom, mDirects: Set<string>) => {
+  const spaceRooms = useObservableValue(ct.spaceRooms);
 
-export const useUnsupportedRooms = (mx: MatrixClient, roomsAtom: RoomsAtom) => {
   const selector: RoomSelector = useCallback(
-    (roomId) => isUnsupportedRoom(mx.getRoom(roomId)),
-    [mx]
+    (roomId) => !spaceRooms.has(roomId) && mDirects.has(roomId),
+    [mDirects, spaceRooms]
   );
   return useSelectedRooms(roomsAtom, selector);
 };

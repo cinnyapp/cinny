@@ -4,7 +4,8 @@ import classNames from 'classnames';
 import { useAtomValue } from 'jotai';
 
 import * as css from './UploadBoard.css';
-import { TUploadFamilyObserverAtom, Upload, UploadStatus, UploadSuccess } from '../../state/upload';
+import { UploadsAtom, Upload, UploadStatus, UploadSuccess } from '../../state/upload';
+import { UploadItem } from '../../state/room/roomInputDrafts';
 
 type UploadBoardProps = {
   header: ReactNode;
@@ -29,22 +30,24 @@ export type UploadBoardImperativeHandlers = { handleSend: () => Promise<void> };
 type UploadBoardHeaderProps = {
   open: boolean;
   onToggle: () => void;
-  uploadFamilyObserverAtom: TUploadFamilyObserverAtom;
+  uploadsAtom: UploadsAtom;
+  uploadItems: UploadItem[];
   onCancel: (uploads: Upload[]) => void;
-  onSend: (uploads: UploadSuccess[]) => Promise<void>;
+  onSend: (uploadItems: UploadItem[], uploads: UploadSuccess[]) => Promise<void>;
   imperativeHandlerRef: MutableRefObject<UploadBoardImperativeHandlers | undefined>;
 };
 
 export function UploadBoardHeader({
   open,
   onToggle,
-  uploadFamilyObserverAtom,
+  uploadsAtom,
+  uploadItems,
   onCancel,
   onSend,
   imperativeHandlerRef,
 }: UploadBoardHeaderProps) {
   const sendingRef = useRef(false);
-  const uploads = useAtomValue(uploadFamilyObserverAtom);
+  const uploads = useAtomValue(uploadsAtom);
 
   const isSuccess = uploads.every((upload) => upload.status === UploadStatus.Success);
   const isError = uploads.some((upload) => upload.status === UploadStatus.Error);
@@ -66,6 +69,7 @@ export function UploadBoardHeader({
     if (sendingRef.current) return;
     sendingRef.current = true;
     await onSend(
+      uploadItems,
       uploads.filter((upload) => upload.status === UploadStatus.Success) as UploadSuccess[]
     );
     sendingRef.current = false;

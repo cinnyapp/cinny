@@ -1,24 +1,25 @@
 import { useCallback } from 'react';
 import { NavigateOptions, useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { getCanonicalAliasOrRoomId } from '../utils/matrix';
 import {
   getDirectRoomPath,
   getHomeRoomPath,
   getSpacePath,
   getSpaceRoomPath,
 } from '../pages/pathUtils';
-import { useMatrixClient } from './useMatrixClient';
 import { getOrphanParents, guessPerfectParent } from '../utils/room';
 import { roomToParentsAtom } from '../state/room/roomToParents';
 import { mDirectAtom } from '../state/mDirectList';
 import { useSelectedSpace } from './router/useSelectedSpace';
 import { settingsAtom } from '../state/settings';
 import { useSetting } from '../state/hooks/settings';
+import { useClient } from './useClient';
+import { getJoinRoomStateId } from '../../client/storage/collections';
+import { StateEventType } from '../../types/matrix/room';
 
 export const useRoomNavigate = () => {
+  const ct = useClient();
   const navigate = useNavigate();
-  const mx = useMatrixClient();
   const roomToParents = useAtomValue(roomToParentsAtom);
   const mDirects = useAtomValue(mDirectAtom);
   const spaceSelectedId = useSelectedSpace();
@@ -26,16 +27,17 @@ export const useRoomNavigate = () => {
 
   const navigateSpace = useCallback(
     (roomId: string) => {
-      const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, roomId);
+      const roomIdOrAlias = ct.roomToAlias.read.get(roomId) ?? roomId;
       navigate(getSpacePath(roomIdOrAlias));
     },
-    [mx, navigate]
+    [ct, navigate]
   );
 
   const navigateRoom = useCallback(
-    (roomId: string, eventId?: string, opts?: NavigateOptions) => {
-      const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, roomId);
-      const openSpaceTimeline = developerTools && spaceSelectedId === roomId;
+    async (roomId: string, eventId?: string, opts?: NavigateOptions) => {
+      const roomIdOrAlias = ct.roomToAlias.read.get(roomId) ?? roomId;
+      const openSpaceTimeline =
+        developerTools && ct.spaceRooms.read.has(roomId) && spaceSelectedId === roomId;
 
       const orphanParents = openSpaceTimeline ? [roomId] : getOrphanParents(roomToParents, roomId);
       if (orphanParents.length > 0) {
@@ -43,10 +45,22 @@ export const useRoomNavigate = () => {
         if (spaceSelectedId && orphanParents.includes(spaceSelectedId)) {
           parentSpace = spaceSelectedId;
         } else {
-          parentSpace = guessPerfectParent(mx, roomId, orphanParents) ?? orphanParents[0];
+          const powerEventIds = [roomId]
+            .concat(orphanParents)
+            .map((rId) => getJoinRoomStateId(rId, StateEventType.RoomPowerLevels, ''));
+          const powerLevelEventObjs = await ct.storage.joinRoomState.read.getMultiple(
+            powerEventIds
+          );
+          parentSpace =
+            guessPerfectParent(
+              roomId,
+              orphanParents,
+              (rId) => ct.roomToCreators.read.get(rId),
+              (rId) => powerLevelEventObjs.find((obj) => obj?.roomId === rId)?.event.content
+            ) ?? orphanParents[0];
         }
 
-        const pSpaceIdOrAlias = getCanonicalAliasOrRoomId(mx, parentSpace);
+        const pSpaceIdOrAlias = ct.roomToAlias.read.get(parentSpace) ?? parentSpace;
 
         navigate(
           getSpaceRoomPath(pSpaceIdOrAlias, openSpaceTimeline ? roomId : roomIdOrAlias, eventId),
@@ -62,7 +76,7 @@ export const useRoomNavigate = () => {
 
       navigate(getHomeRoomPath(roomIdOrAlias, eventId), opts);
     },
-    [mx, navigate, spaceSelectedId, roomToParents, mDirects, developerTools]
+    [ct, navigate, spaceSelectedId, roomToParents, mDirects, developerTools]
   );
 
   return {

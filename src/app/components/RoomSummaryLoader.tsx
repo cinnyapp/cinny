@@ -1,22 +1,36 @@
 import { ReactNode, useCallback, useState } from 'react';
-import { MatrixClient, Room } from 'matrix-js-sdk';
 import { useQuery } from '@tanstack/react-query';
-import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
-import { useMatrixClient } from '../hooks/useMatrixClient';
-import { LocalRoomSummary, useLocalRoomSummary } from '../hooks/useLocalRoomSummary';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
+import { getRoomSummary, GetRoomSummaryOK } from 'neurone/lib/api/matrix/client/v1/roomSummary';
+import { getHierarchy, GetHierarchyOK } from 'neurone/lib/api/matrix/client/v1/rooms';
+import { SpaceHierarchyRoomChunk } from 'neurone/lib/api/types';
 import { AsyncState, AsyncStatus } from '../hooks/useAsyncCallback';
-
-export type IRoomSummary = Awaited<ReturnType<MatrixClient['getRoomSummary']>>;
+import { useClient } from '../hooks/useClient';
+import { useSpecVersionSupport } from '../hooks/useSpecVersions';
 
 type RoomSummaryLoaderProps = {
   roomIdOrAlias: string;
-  children: (roomSummary?: IRoomSummary) => ReactNode;
+  children: (roomSummary?: GetRoomSummaryOK) => ReactNode;
 };
 
 export function RoomSummaryLoader({ roomIdOrAlias, children }: RoomSummaryLoaderProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const roomSummarySupported = useSpecVersionSupport('v1.15');
 
-  const fetchSummary = useCallback(() => mx.getRoomSummary(roomIdOrAlias), [mx, roomIdOrAlias]);
+  const fetchSummary = useCallback(async (): Promise<GetRoomSummaryOK> => {
+    const endpoint = getRoomSummary({ pathParams: { roomIdOrAlias } });
+    if (!roomSummarySupported) {
+      endpoint.path = `/_matrix/client/unstable/im.nheko.summary/summary/${encodeURIComponent(
+        roomIdOrAlias
+      )}`;
+    }
+    const response = await ct.requestAuthJSON(endpoint);
+    const [err, result] = await parseMatrixResp<GetRoomSummaryOK>(response);
+    if (err) {
+      throw new Error(printMatrixError(err));
+    }
+    return result;
+  }, [ct, roomIdOrAlias, roomSummarySupported]);
 
   const { data } = useQuery({
     queryKey: [roomIdOrAlias, `summary`],
@@ -26,28 +40,35 @@ export function RoomSummaryLoader({ roomIdOrAlias, children }: RoomSummaryLoader
   return children(data);
 }
 
-export function LocalRoomSummaryLoader({
-  room,
-  children,
-}: {
-  room: Room;
-  children: (roomSummary: LocalRoomSummary) => ReactNode;
-}) {
-  const summary = useLocalRoomSummary(room);
-
-  return children(summary);
+export function LocalRoomSummaryLoader({ children }: { children: () => ReactNode }) {
+  return children();
 }
-
 export function HierarchyRoomSummaryLoader({
   roomId,
   children,
 }: {
   roomId: string;
-  children: (state: AsyncState<IHierarchyRoom, Error>) => ReactNode;
+  children: (state: AsyncState<SpaceHierarchyRoomChunk, Error>) => ReactNode;
 }) {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
-  const fetchSummary = useCallback(() => mx.getRoomHierarchy(roomId, 1, 1), [mx, roomId]);
+  const fetchSummary = useCallback(async (): Promise<GetHierarchyOK> => {
+    const response = await ct.requestAuthJSON(
+      getHierarchy({
+        pathParams: { roomId },
+        searchParams: {
+          limit: 1,
+          max_depth: 1,
+        },
+      })
+    );
+
+    const [err, result] = await parseMatrixResp<GetHierarchyOK>(response);
+    if (err) {
+      throw new Error(printMatrixError(err));
+    }
+    return result;
+  }, [ct, roomId]);
   const [errorMemo, setError] = useState<Error>();
 
   const { data, error } = useQuery({
@@ -62,7 +83,7 @@ export function HierarchyRoomSummaryLoader({
     },
   });
 
-  let state: AsyncState<IHierarchyRoom, Error> = {
+  let state: AsyncState<SpaceHierarchyRoomChunk, Error> = {
     status: AsyncStatus.Loading,
   };
   if (error) {
@@ -78,7 +99,7 @@ export function HierarchyRoomSummaryLoader({
     };
   }
 
-  const summary = data?.rooms[0] ?? undefined;
+  const summary = data?.rooms[0];
   if (summary) {
     state = {
       status: AsyncStatus.Success,

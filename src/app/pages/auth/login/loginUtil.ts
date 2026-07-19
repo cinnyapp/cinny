@@ -1,7 +1,8 @@
 import to from 'await-to-js';
-import { LoginRequest, LoginResponse, MatrixError, createClient } from 'matrix-js-sdk';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { postLogin, PostLoginBody, PostLoginOK } from 'neurone/lib/api/matrix/client/v3/login';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { ClientConfig, clientAllowedServer } from '../../../hooks/useClientConfig';
 import { autoDiscovery, specVersions } from '../../../cs-api';
 import { ErrorCode } from '../../../cs-errorcode';
@@ -11,6 +12,7 @@ import {
 } from '../../afterLoginRedirectPath';
 import { getHomePath } from '../../pathUtils';
 import { setFallbackSession } from '../../../state/sessions';
+import { getJSONRequest } from '../../../../client/request';
 
 export enum GetBaseUrlError {
   NotAllow = 'NotAllow',
@@ -55,57 +57,53 @@ export enum LoginError {
 
 export type CustomLoginResponse = {
   baseUrl: string;
-  response: LoginResponse;
+  response: PostLoginOK;
 };
 export const login = async (
   serverBaseUrl: string | (() => Promise<string>),
-  data: LoginRequest
-): Promise<CustomLoginResponse> => {
+  body: PostLoginBody
+): Promise<[LoginError, undefined] | [undefined, CustomLoginResponse]> => {
   const [urlError, url] =
     typeof serverBaseUrl === 'function' ? await to(serverBaseUrl()) : [undefined, serverBaseUrl];
+
   if (urlError) {
-    throw new MatrixError({
-      errcode:
-        urlError.message === GetBaseUrlError.NotAllow
-          ? LoginError.ServerNotAllowed
-          : LoginError.InvalidServer,
-    });
+    return [
+      urlError.message === GetBaseUrlError.NotAllow
+        ? LoginError.ServerNotAllowed
+        : LoginError.InvalidServer,
+      undefined,
+    ];
   }
 
-  const mx = createClient({ baseUrl: url });
-  const [err, res] = await to<LoginResponse, MatrixError>(mx.loginRequest(data));
+  const requestJSON = getJSONRequest(url);
+  const postLoginEndpoint = postLogin({ body });
+  const response = await requestJSON(postLoginEndpoint);
+  const [loginError, loginResult] = await parseMatrixResp<PostLoginOK>(response);
 
-  if (err) {
-    if (err.httpStatus === 400) {
-      throw new MatrixError({
-        errcode: LoginError.InvalidRequest,
-      });
+  if (loginError) {
+    if (loginError.status === 400) {
+      return [LoginError.InvalidRequest, undefined];
     }
-    if (err.httpStatus === 429) {
-      throw new MatrixError({
-        errcode: LoginError.RateLimited,
-      });
+    if (loginError.status === 429) {
+      return [LoginError.RateLimited, undefined];
     }
-    if (err.errcode === ErrorCode.M_USER_DEACTIVATED) {
-      throw new MatrixError({
-        errcode: LoginError.UserDeactivated,
-      });
+    if (loginError.data.errcode === ErrorCode.M_USER_DEACTIVATED) {
+      return [LoginError.UserDeactivated, undefined];
     }
 
-    if (err.httpStatus === 403) {
-      throw new MatrixError({
-        errcode: LoginError.Forbidden,
-      });
+    if (loginError.status === 403) {
+      return [LoginError.Forbidden, undefined];
     }
 
-    throw new MatrixError({
-      errcode: LoginError.Unknown,
-    });
+    return [LoginError.Unknown, undefined];
   }
-  return {
-    baseUrl: url,
-    response: res,
-  };
+  return [
+    undefined,
+    {
+      baseUrl: url,
+      response: loginResult,
+    },
+  ];
 };
 
 export const useLoginComplete = (data?: CustomLoginResponse) => {

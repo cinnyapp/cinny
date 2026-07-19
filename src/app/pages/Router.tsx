@@ -121,27 +121,25 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             <ClientRoot>
               <ClientInitStorageAtom>
                 <ClientRoomsNotificationPreferences>
-                  <ClientBindAtoms>
-                    <ClientNonUIFeatures>
-                      <ClientLayout
-                        nav={
-                          <MobileFriendlyClientNav>
-                            <SidebarNav />
-                          </MobileFriendlyClientNav>
-                        }
-                      >
-                        <Outlet />
-                      </ClientLayout>
-                      <SearchModalRenderer />
-                      <UserRoomProfileRenderer />
-                      <CreateRoomModalRenderer />
-                      <CreateSpaceModalRenderer />
-                      <RoomSettingsRenderer />
-                      <SpaceSettingsRenderer />
-                      <ReceiveSelfDeviceVerification />
-                      <AutoRestoreBackupOnVerification />
-                    </ClientNonUIFeatures>
-                  </ClientBindAtoms>
+                  <ClientBindAtoms />
+                  <ClientNonUIFeatures />
+                  <ClientLayout
+                    nav={
+                      <MobileFriendlyClientNav>
+                        <SidebarNav />
+                      </MobileFriendlyClientNav>
+                    }
+                  >
+                    <Outlet />
+                  </ClientLayout>
+                  {/* <SearchModalRenderer />
+                  <UserRoomProfileRenderer />
+                  <CreateRoomModalRenderer />
+                  <CreateSpaceModalRenderer />
+                  <RoomSettingsRenderer />
+                  <SpaceSettingsRenderer />
+                  <ReceiveSelfDeviceVerification />
+                  <AutoRestoreBackupOnVerification /> */}
                 </ClientRoomsNotificationPreferences>
               </ClientInitStorageAtom>
             </ClientRoot>
@@ -165,7 +163,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           {mobile ? null : <Route index element={<WelcomePage />} />}
           <Route path={_CREATE_PATH} element={<HomeCreateRoom />} />
           <Route path={_JOIN_PATH} element={<p>join</p>} />
-          <Route path={_SEARCH_PATH} element={<HomeSearch />} />
+          {/* <Route path={_SEARCH_PATH} element={<HomeSearch />} /> */}
           <Route
             path={_ROOM_PATH}
             element={
@@ -229,8 +227,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
               element={<WelcomePage />}
             />
           )}
-          <Route path={_LOBBY_PATH} element={<Lobby />} />
-          <Route path={_SEARCH_PATH} element={<SpaceSearch />} />
+          {/* <Route path={_LOBBY_PATH} element={<Lobby />} />
+          <Route path={_SEARCH_PATH} element={<SpaceSearch />} /> */}
           <Route
             path={_ROOM_PATH}
             element={
@@ -250,7 +248,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                 </MobileFriendlyPageNav>
               }
             >
-              <Outlet />
+              <span>hello</span>
+              {/* <Outlet /> */}
             </PageRoot>
           }
         >
@@ -275,7 +274,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                 </MobileFriendlyPageNav>
               }
             >
-              <Outlet />
+              <span>hello</span>
+              {/* <Outlet /> */}
             </PageRoot>
           }
         >

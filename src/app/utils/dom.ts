@@ -173,16 +173,16 @@ export type ScrollInfo = {
   scrollable: boolean;
 };
 export const getScrollInfo = (target: HTMLElement): ScrollInfo => ({
-  offsetTop: Math.round(target.offsetTop),
-  top: Math.round(target.scrollTop),
-  height: Math.round(target.scrollHeight),
-  viewHeight: Math.round(target.offsetHeight),
+  offsetTop: target.offsetTop,
+  top: target.scrollTop,
+  height: target.scrollHeight,
+  viewHeight: target.offsetHeight,
   scrollable: target.scrollHeight > target.offsetHeight,
 });
 
 export const scrollToBottom = (scrollEl: HTMLElement, behavior?: 'auto' | 'instant' | 'smooth') => {
   scrollEl.scrollTo({
-    top: Math.round(scrollEl.scrollHeight - scrollEl.offsetHeight),
+    top: scrollEl.scrollHeight - scrollEl.offsetHeight,
     behavior,
   });
 };

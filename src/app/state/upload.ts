@@ -1,9 +1,12 @@
 import { atom, useAtom } from 'jotai';
 import { atomFamily } from 'jotai/utils';
-import { MatrixClient, UploadResponse, UploadProgress, MatrixError } from 'matrix-js-sdk';
+import { MatrixError } from 'neurone/lib/matrix-request';
+import { postUpload, PostUploadOK } from 'neurone/lib/api/matrix/media/v3/upload';
 import { useCallback } from 'react';
 import { useThrottle } from '../hooks/useThrottle';
-import { uploadContent, TUploadContent } from '../utils/matrix';
+import { UploadContent } from '../utils/matrix';
+import { getAuthUploadRequest, UploadProgress } from '../../client/request';
+import { useClient } from '../hooks/useClient';
 
 export enum UploadStatus {
   Idle = 'idle',
@@ -13,34 +16,34 @@ export enum UploadStatus {
 }
 
 export type UploadIdle = {
-  file: TUploadContent;
+  file: UploadContent;
   status: UploadStatus.Idle;
 };
 
 export type UploadLoading = {
-  file: TUploadContent;
+  file: UploadContent;
   status: UploadStatus.Loading;
-  promise: Promise<UploadResponse>;
+  abortController: AbortController;
   progress: UploadProgress;
 };
 
 export type UploadSuccess = {
-  file: TUploadContent;
+  file: UploadContent;
   status: UploadStatus.Success;
   mxc: string;
 };
 
 export type UploadError = {
-  file: TUploadContent;
+  file: UploadContent;
   status: UploadStatus.Error;
-  error: MatrixError;
+  error: MatrixError | Error;
 };
 
 export type Upload = UploadIdle | UploadLoading | UploadSuccess | UploadError;
 
 export type UploadAtomAction =
   | {
-      promise: Promise<UploadResponse>;
+      abortController: AbortController;
     }
   | {
       progress: UploadProgress;
@@ -49,10 +52,10 @@ export type UploadAtomAction =
       mxc: string;
     }
   | {
-      error: MatrixError;
+      error: MatrixError | Error;
     };
 
-export const createUploadAtom = (file: TUploadContent) => {
+export const createUploadAtom = (file: UploadContent) => {
   const baseUploadAtom = atom<Upload>({
     file,
     status: UploadStatus.Idle,
@@ -61,11 +64,11 @@ export const createUploadAtom = (file: TUploadContent) => {
     (get) => get(baseUploadAtom),
     (get, set, update) => {
       const uploadState = get(baseUploadAtom);
-      if ('promise' in update) {
+      if ('abortController' in update) {
         set(baseUploadAtom, {
           status: UploadStatus.Loading,
           file,
-          promise: update.promise,
+          abortController: update.abortController,
           progress: { loaded: 0, total: file.size },
         });
         return;
@@ -95,13 +98,10 @@ export const createUploadAtom = (file: TUploadContent) => {
     }
   );
 };
-export type TUploadAtom = ReturnType<typeof createUploadAtom>;
+export type UploadAtom = ReturnType<typeof createUploadAtom>;
 
-export const useBindUploadAtom = (
-  mx: MatrixClient,
-  uploadAtom: TUploadAtom,
-  hideFilename?: boolean
-) => {
+export const useBindUploadAtom = (uploadAtom: UploadAtom, hideFilename?: boolean) => {
+  const ct = useClient();
   const [upload, setUpload] = useAtom(uploadAtom);
   const { file } = upload;
 
@@ -110,23 +110,46 @@ export const useBindUploadAtom = (
     { immediate: true, wait: 200 }
   );
 
-  const startUpload = useCallback(
-    () =>
-      uploadContent(mx, file, {
-        hideFilename,
-        onPromise: (promise: Promise<UploadResponse>) => setUpload({ promise }),
-        onProgress: handleProgress,
-        onSuccess: (mxc) => setUpload({ mxc }),
-        onError: (error) => setUpload({ error }),
+  const startUpload = useCallback(() => {
+    const request = getAuthUploadRequest<PostUploadOK>(
+      ct.session.baseUrl,
+      ct.session.accessToken,
+      handleProgress
+    );
+    const abortController = new AbortController();
+
+    request(
+      postUpload({
+        searchParams: {
+          filename: hideFilename ? undefined : file.name,
+        },
+        body: file,
       }),
-    [mx, file, hideFilename, setUpload, handleProgress]
-  );
+      abortController.signal
+    )
+      .then(([error, data]) => {
+        if (error) {
+          setUpload({ error });
+          return;
+        }
+        setUpload({ mxc: data.content_uri });
+      })
+      .catch((anyError) => {
+        if (anyError instanceof Error) {
+          setUpload({ error: anyError });
+          return;
+        }
+        setUpload({ error: new Error('Unknown Error') });
+      });
+
+    setUpload({ abortController });
+  }, [ct, file, hideFilename, setUpload, handleProgress]);
 
   const cancelUpload = useCallback(async () => {
     if (upload.status === UploadStatus.Loading) {
-      await mx.cancelUpload(upload.promise);
+      upload.abortController.abort();
     }
-  }, [mx, upload]);
+  }, [upload]);
 
   return {
     upload,
@@ -135,12 +158,11 @@ export const useBindUploadAtom = (
   };
 };
 
-export const createUploadAtomFamily = () =>
-  atomFamily<TUploadContent, TUploadAtom>(createUploadAtom);
-export type TUploadAtomFamily = ReturnType<typeof createUploadAtomFamily>;
+export const createUploadContentToUploadAtom = () =>
+  atomFamily<UploadContent, UploadAtom>(createUploadAtom);
 
-export const createUploadFamilyObserverAtom = (
-  uploadFamily: TUploadAtomFamily,
-  uploads: TUploadContent[]
+export const createUploadsAtom = (
+  uploadFamily: ReturnType<typeof createUploadContentToUploadAtom>,
+  uploads: UploadContent[]
 ) => atom<Upload[]>((get) => uploads.map((upload) => get(uploadFamily(upload))));
-export type TUploadFamilyObserverAtom = ReturnType<typeof createUploadFamilyObserverAtom>;
+export type UploadsAtom = ReturnType<typeof createUploadsAtom>;

@@ -25,12 +25,12 @@ import {
   Spinner,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { putAvatarUrl, putDisplayname } from 'neurone/lib/api/matrix/client/v3/profile';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { UserProfile, useUserProfile } from '../../../hooks/useUserProfile';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
+import { getMxIdLocalPart } from '../../../utils/matrix';
 import { UserAvatar } from '../../../components/user-avatar';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { nameInitials } from '../../../utils/common';
@@ -43,21 +43,27 @@ import { ModalWide } from '../../../styles/Modal.css';
 import { createUploadAtom, UploadSuccess } from '../../../state/upload';
 import { CompactUploadCardRenderer } from '../../../components/upload-card';
 import { useCapabilities } from '../../../hooks/useCapabilities';
+import { useClient } from '../../../hooks/useClient';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
 
 type ProfileProps = {
-  profile: UserProfile;
+  profile?: UserProfile;
   userId: string;
 };
 function ProfileAvatar({ profile, userId }: ProfileProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const capabilities = useCapabilities();
   const [alertRemove, setAlertRemove] = useState(false);
   const disableSetAvatar = capabilities['m.set_avatar_url']?.enabled === false;
 
-  const defaultDisplayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
-  const avatarUrl = profile.avatarUrl
-    ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
+  const defaultDisplayName = profile?.displayName ?? getMxIdLocalPart(userId) ?? userId;
+  const avatarUrl = profile?.avatarUrl
+    ? mxcToHttp(ct.session.baseUrl, profile.avatarUrl, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
     : undefined;
 
   const [imageFile, setImageFile] = useState<File>();
@@ -76,14 +82,14 @@ function ProfileAvatar({ profile, userId }: ProfileProps) {
   const handleUploaded = useCallback(
     (upload: UploadSuccess) => {
       const { mxc } = upload;
-      mx.setAvatarUrl(mxc);
+      ct.requestAuthJSON(putAvatarUrl({ pathParams: { userId }, body: { avatar_url: mxc } }));
       handleRemoveUpload();
     },
-    [mx, handleRemoveUpload]
+    [ct, userId, handleRemoveUpload]
   );
 
   const handleRemoveAvatar = () => {
-    mx.setAvatarUrl('');
+    ct.requestAuthJSON(putAvatarUrl({ pathParams: { userId }, body: { avatar_url: '' } }));
     setAlertRemove(false);
   };
 
@@ -206,15 +212,19 @@ function ProfileAvatar({ profile, userId }: ProfileProps) {
 }
 
 function ProfileDisplayName({ profile, userId }: ProfileProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const capabilities = useCapabilities();
   const disableSetDisplayname = capabilities['m.set_displayname']?.enabled === false;
 
-  const defaultDisplayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
+  const defaultDisplayName = profile?.displayName ?? getMxIdLocalPart(userId) ?? userId;
   const [displayName, setDisplayName] = useState<string>(defaultDisplayName);
 
   const [changeState, changeDisplayName] = useAsyncCallback(
-    useCallback((name: string) => mx.setDisplayName(name), [mx])
+    useCallback(
+      (name: string) =>
+        ct.requestAuthJSON(putDisplayname({ pathParams: { userId }, body: { displayname: name } })),
+      [ct, userId]
+    )
   );
   const changingDisplayName = changeState.status === AsyncStatus.Loading;
 
@@ -304,8 +314,8 @@ function ProfileDisplayName({ profile, userId }: ProfileProps) {
 }
 
 export function Profile() {
-  const mx = useMatrixClient();
-  const userId = mx.getUserId()!;
+  const ct = useClient();
+  const { userId } = ct.session;
   const profile = useUserProfile(userId);
 
   return (

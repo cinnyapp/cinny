@@ -209,13 +209,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       let scrollTo = element.offsetTop;
       if (opts?.align === 'center' && canFitInScrollView(scrollElement, element)) {
         const scrollInfo = getScrollInfo(scrollElement);
-        scrollTo =
-          element.offsetTop -
-          Math.round(scrollInfo.viewHeight / 2) +
-          Math.round(element.clientHeight / 2);
+        scrollTo = element.offsetTop - scrollInfo.viewHeight / 2 + element.clientHeight / 2;
       } else if (opts?.align === 'end' && canFitInScrollView(scrollElement, element)) {
         const scrollInfo = getScrollInfo(scrollElement);
-        scrollTo = element.offsetTop - Math.round(scrollInfo.viewHeight) + element.clientHeight;
+        scrollTo = element.offsetTop - scrollInfo.viewHeight + element.clientHeight;
       }
 
       scrollElement.scrollTo({
@@ -366,7 +363,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
     scrollEl.scrollTo({
       top: restoreTop,
-      behavior: 'instant',
+      behavior: 'auto',
     });
     restoreScrollRef.current = undefined;
   }, [range, getScrollElement, getItemElement]);
@@ -378,7 +375,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     const { index, opts } = scrollToItemRef.current;
     scrollToItem(index, {
       ...opts,
-      behavior: 'instant',
+      behavior: 'auto',
     });
     scrollToItemRef.current = undefined;
   }, [range, scrollToItem]);

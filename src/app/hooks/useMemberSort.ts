@@ -1,46 +1,50 @@
-import { RoomMember } from 'matrix-js-sdk';
 import { useCallback, useMemo } from 'react';
+import { JoinRoomMemberObject } from '../../client/storage/collections';
+import { GetRoomMemberNameCallback } from './useRoomMembers';
 
-export const MemberSort = {
-  Ascending: (a: RoomMember, b: RoomMember) =>
-    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
-  Descending: (a: RoomMember, b: RoomMember) =>
-    a.name.toLowerCase() > b.name.toLowerCase() ? -1 : 1,
-  NewestFirst: (a: RoomMember, b: RoomMember) =>
-    (b.events.member?.getTs() ?? 0) - (a.events.member?.getTs() ?? 0),
-  Oldest: (a: RoomMember, b: RoomMember) =>
-    (a.events.member?.getTs() ?? 0) - (b.events.member?.getTs() ?? 0),
-};
+export const getMemberSort = (getName: GetRoomMemberNameCallback) => ({
+  Ascending: (a: JoinRoomMemberObject, b: JoinRoomMemberObject) =>
+    getName(a.userId).toLowerCase() < getName(b.userId).toLowerCase() ? -1 : 1,
+  Descending: (a: JoinRoomMemberObject, b: JoinRoomMemberObject) =>
+    getName(a.userId).toLowerCase() > getName(b.userId).toLowerCase() ? -1 : 1,
+  NewestFirst: (a: JoinRoomMemberObject, b: JoinRoomMemberObject) =>
+    b.event.origin_server_ts - a.event.origin_server_ts,
+  Oldest: (a: JoinRoomMemberObject, b: JoinRoomMemberObject) =>
+    a.event.origin_server_ts - b.event.origin_server_ts,
+});
 
-export type MemberSortFn = (a: RoomMember, b: RoomMember) => number;
+export type MemberSortFn = (a: JoinRoomMemberObject, b: JoinRoomMemberObject) => number;
 
 export type MemberSortItem = {
   name: string;
   sortFn: MemberSortFn;
 };
 
-export const useMemberSortMenu = (): MemberSortItem[] =>
-  useMemo(
+export const useMemberSortMenu = (getName: GetRoomMemberNameCallback): MemberSortItem[] => {
+  const sortFun = useMemo(() => getMemberSort(getName), [getName]);
+
+  return useMemo(
     () => [
       {
         name: 'A to Z',
-        sortFn: MemberSort.Ascending,
+        sortFn: sortFun.Ascending,
       },
       {
         name: 'Z to A',
-        sortFn: MemberSort.Descending,
+        sortFn: sortFun.Descending,
       },
       {
         name: 'Newest',
-        sortFn: MemberSort.NewestFirst,
+        sortFn: sortFun.NewestFirst,
       },
       {
         name: 'Oldest',
-        sortFn: MemberSort.Oldest,
+        sortFn: sortFun.Oldest,
       },
     ],
-    []
+    [sortFun]
   );
+};
 
 export const useMemberSort = (index: number, memberSort: MemberSortItem[]): MemberSortItem => {
   const item = memberSort[index] ?? memberSort[0];
@@ -48,20 +52,20 @@ export const useMemberSort = (index: number, memberSort: MemberSortItem[]): Memb
 };
 
 export const useMemberPowerSort = (
-  creators: Set<string>,
+  creators: Set<string> | undefined,
   getPowerLevel: (userId: string) => number
 ): MemberSortFn => {
   const sort: MemberSortFn = useCallback(
     (a, b) => {
-      if (creators.has(a.userId) && creators.has(b.userId)) {
+      if (creators?.has(a.userId) && creators?.has(b.userId)) {
         return 0;
       }
-      if (creators.has(a.userId)) return -1;
-      if (creators.has(b.userId)) return 1;
+      if (creators?.has(a.userId)) return -1;
+      if (creators?.has(b.userId)) return 1;
 
       return getPowerLevel(b.userId) - getPowerLevel(a.userId);
     },
-    [creators]
+    [creators, getPowerLevel]
   );
 
   return sort;

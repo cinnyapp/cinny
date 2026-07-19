@@ -1,18 +1,19 @@
 import {
-  ICreateRoomOpts,
-  ICreateRoomStateEvent,
-  JoinRule,
-  MatrixClient,
-  RestrictedAllowType,
-  Room,
-} from 'matrix-js-sdk';
-import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
+  CreateRoomStateEvent,
+  postCreateRoom,
+  PostCreateRoomBody,
+  PostCreateRoomOK,
+} from 'neurone/lib/api/matrix/client/v3/createRoom';
+import { MatrixResponseResult, parseMatrixResp } from 'neurone/lib/matrix-request';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { CreateRoomKind } from './CreateRoomKindSelector';
-import { RoomType, StateEvent } from '../../../types/matrix/room';
-import { getViaServers } from '../../plugins/via-servers';
+import { JoinRulesContent, RoomType, StateEvent, StateEventType } from '../../../types/matrix/room';
 import { getMxIdServer } from '../../utils/matrix';
+import { ClientContext } from '../../../client/context';
+import { getViaServers } from '../../plugins/via-servers';
+import { getJoinRoomStateId } from '../../../client/storage/collections';
 
-export const createRoomCreationContent = (
+const createRoomCreationContent = (
   type: RoomType | undefined,
   allowFederation: boolean,
   additionalCreators: string[] | undefined
@@ -31,28 +32,28 @@ export const createRoomCreationContent = (
   return content;
 };
 
-export const createRoomJoinRulesState = (
+const createRoomJoinRulesState = (
   kind: CreateRoomKind,
-  parent: Room | undefined,
+  parentId: string | undefined,
   knock: boolean
 ) => {
-  let content: RoomJoinRulesEventContent = {
-    join_rule: knock ? JoinRule.Knock : JoinRule.Invite,
+  let content: JoinRulesContent = {
+    join_rule: knock ? 'knock' : 'invite',
   };
 
   if (kind === CreateRoomKind.Public) {
     content = {
-      join_rule: JoinRule.Public,
+      join_rule: 'public',
     };
   }
 
-  if (kind === CreateRoomKind.Restricted && parent) {
+  if (kind === CreateRoomKind.Restricted && parentId) {
     content = {
-      join_rule: knock ? ('knock_restricted' as JoinRule) : JoinRule.Restricted,
+      join_rule: knock ? 'knock_restricted' : 'restricted',
       allow: [
         {
-          type: RestrictedAllowType.RoomMembership,
-          room_id: parent.roomId,
+          type: [StateEventType.RoomMember],
+          room_id: parentId,
         },
       ],
     };
@@ -65,12 +66,12 @@ export const createRoomJoinRulesState = (
   };
 };
 
-export const createRoomParentState = (parent: Room) => ({
+const createRoomParentState = (parentId: string, via: string[]) => ({
   type: StateEvent.SpaceParent,
-  state_key: parent.roomId,
+  state_key: parentId,
   content: {
     canonical: true,
-    via: getViaServers(parent),
+    via,
   },
 });
 
@@ -85,7 +86,7 @@ export const createRoomEncryptionState = () => ({
 export type CreateRoomData = {
   version: string;
   type?: RoomType;
-  parent?: Room;
+  parentId?: string;
   kind: CreateRoomKind;
   name: string;
   topic?: string;
@@ -95,20 +96,29 @@ export type CreateRoomData = {
   allowFederation: boolean;
   additionalCreators?: string[];
 };
-export const createRoom = async (mx: MatrixClient, data: CreateRoomData): Promise<string> => {
-  const initialState: ICreateRoomStateEvent[] = [];
+export const createRoom = async (
+  ct: ClientContext,
+  data: CreateRoomData
+): Promise<MatrixResponseResult<string>> => {
+  const initialState: CreateRoomStateEvent[] = [];
 
   if (data.encryption) {
     initialState.push(createRoomEncryptionState());
   }
 
-  if (data.parent) {
-    initialState.push(createRoomParentState(data.parent));
+  if (data.parentId) {
+    const creators = ct.roomToCreators.read.get(data.parentId);
+    const powerLevelsObj = await ct.storage.joinRoomState.read.get(
+      getJoinRoomStateId(data.parentId, StateEventType.RoomPowerLevels, '')
+    );
+    const powerLevelsContent = powerLevelsObj?.event.content;
+    const via = getViaServers(creators, powerLevelsContent);
+    initialState.push(createRoomParentState(data.parentId, via));
   }
 
-  initialState.push(createRoomJoinRulesState(data.kind, data.parent, data.knock));
+  initialState.push(createRoomJoinRulesState(data.kind, data.parentId, data.knock));
 
-  const options: ICreateRoomOpts = {
+  const body: PostCreateRoomBody = {
     room_version: data.version,
     name: data.name,
     topic: data.topic,
@@ -121,20 +131,31 @@ export const createRoom = async (mx: MatrixClient, data: CreateRoomData): Promis
     initial_state: initialState,
   };
 
-  const result = await mx.createRoom(options);
+  const response = await ct.requestAuthJSON(postCreateRoom({ body }));
 
-  if (data.parent) {
-    await mx.sendStateEvent(
-      data.parent.roomId,
-      StateEvent.SpaceChild as any,
-      {
-        auto_join: false,
-        suggested: false,
-        via: [getMxIdServer(mx.getUserId() ?? '') ?? ''],
-      },
-      result.room_id
-    );
+  const [err, result] = await parseMatrixResp<PostCreateRoomOK>(response);
+
+  if (err) {
+    return [err, undefined];
   }
 
-  return result.room_id;
+  if (data.parentId) {
+    const resp = await ct.requestAuthJSON(
+      putStateEvent({
+        pathParams: {
+          roomId: data.parentId,
+          eventType: StateEventType.SpaceChild,
+          stateKey: result.room_id,
+        },
+        body: {
+          auto_join: false,
+          suggested: false,
+          via: [getMxIdServer(ct.session.userId) ?? ''],
+        },
+      })
+    );
+    await parseMatrixResp(resp);
+  }
+
+  return [undefined, result.room_id];
 };

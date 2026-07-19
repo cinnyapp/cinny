@@ -2,6 +2,7 @@ import {
   Avatar,
   Box,
   Button,
+  Chip,
   Dialog,
   Header,
   Icon,
@@ -32,14 +33,19 @@ import React, {
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
-import { MatrixEvent, Room } from 'matrix-js-sdk';
-import { Relations } from 'matrix-js-sdk/lib/models/relations';
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
+import {
+  postReportEventId,
+  putRedact,
+  putStateEvent,
+} from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
 import classNames from 'classnames';
-import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
 import {
   AvatarBase,
   BubbleLayout,
   CompactLayout,
+  EventContent,
   MessageBase,
   ModernLayout,
   Time,
@@ -48,18 +54,12 @@ import {
 } from '../../../components/message';
 import {
   canEditEvent,
-  getEventEdits,
-  getMemberAvatarMxc,
-  getMemberDisplayName,
+  fallbackReply,
+  getReactionGroups,
+  getReplyId,
+  getThreadId,
 } from '../../../utils/room';
-import {
-  getCanonicalAliasOrRoomId,
-  getMxIdLocalPart,
-  isRoomAlias,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';
 import { EventReaders } from '../../../components/event-readers';
@@ -75,10 +75,17 @@ import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useRoomPinnedEvents } from '../../../hooks/useRoomPinnedEvents';
-import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
+import { MemberPowerTag, StateEventType } from '../../../../types/matrix/room';
 import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
+import { useClient } from '../../../hooks/useClient';
+import { useRoom } from '../../../hooks/useRoom';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { ReactionContent } from '../../../../types/matrix/common';
+import { RoomMembersAPI } from '../../../hooks/useRoomMembers';
+import { useRoomCreators } from '../../../hooks/useRoomCreators';
+import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -87,10 +94,10 @@ type MessageQuickReactionsProps = {
 };
 export const MessageQuickReactions = as<'div', MessageQuickReactionsProps>(
   ({ onReaction, ...props }, ref) => {
-    const mx = useMatrixClient();
-    const recentEmojis = useRecentEmoji(mx, 4);
+    const recentEmojisResult = useRecentEmoji(4);
+    const recentEmojis = recentEmojisResult.value;
 
-    if (recentEmojis.length === 0) return <span />;
+    if (recentEmojis && recentEmojis.length === 0) return <span />;
     return (
       <>
         <Box
@@ -101,7 +108,7 @@ export const MessageQuickReactions = as<'div', MessageQuickReactionsProps>(
           {...props}
           ref={ref}
         >
-          {recentEmojis.map((emoji) => (
+          {recentEmojis?.map((emoji) => (
             <IconButton
               key={emoji.unicode}
               className={css.MessageQuickReaction}
@@ -125,11 +132,10 @@ export const MessageQuickReactions = as<'div', MessageQuickReactionsProps>(
 export const MessageAllReactionItem = as<
   'button',
   {
-    room: Room;
-    relations: Relations;
+    reactionEvents: MessageEventWithoutRoomId<ReactionContent>[];
     onClose?: () => void;
   }
->(({ room, relations, onClose, ...props }, ref) => {
+>(({ reactionEvents, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
@@ -158,8 +164,7 @@ export const MessageAllReactionItem = as<
           >
             <Modal variant="Surface" size="300">
               <ReactionViewer
-                room={room}
-                relations={relations}
+                reactions={getReactionGroups(reactionEvents)}
                 requestClose={() => setOpen(false)}
               />
             </Modal>
@@ -186,11 +191,10 @@ export const MessageAllReactionItem = as<
 export const MessageReadReceiptItem = as<
   'button',
   {
-    room: Room;
     eventId: string;
     onClose?: () => void;
   }
->(({ room, eventId, onClose, ...props }, ref) => {
+>(({ eventId, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
@@ -211,7 +215,7 @@ export const MessageReadReceiptItem = as<
             }}
           >
             <Modal variant="Surface" size="300">
-              <EventReaders room={room} eventId={eventId} requestClose={handleClose} />
+              <EventReaders eventId={eventId} requestClose={handleClose} />
             </Modal>
           </FocusTrap>
         </OverlayCenter>
@@ -236,36 +240,26 @@ export const MessageReadReceiptItem = as<
 export const MessageSourceCodeItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    event: MessageEventWithoutRoomId;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
+>(({ event, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
   const [open, setOpen] = useState(false);
 
-  const getContent = (evt: MatrixEvent) =>
-    evt.isEncrypted()
-      ? {
-          [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
-          [`<== ORIGINAL_EVENT ==>`]: evt.event,
-        }
-      : evt.event;
-
   const getText = (): string => {
-    const evtId = mEvent.getId()!;
-    const evtTimeline = room.getTimelineForEvent(evtId);
-    const edits =
-      evtTimeline &&
-      getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
+    const timeline = ct.roomToTimeline.read.get(roomId);
+    const editEvents = timeline?.relations.edits.eventToRelations.read.get(event.event_id);
 
-    if (!edits) return JSON.stringify(getContent(mEvent), null, 2);
+    if (!editEvents) return JSON.stringify(event, null, 2);
 
     const content: Record<string, unknown> = {
-      '<== MAIN_EVENT ==>': getContent(mEvent),
+      '<== MAIN_EVENT ==>': event,
     };
 
-    edits.forEach((editEvt, index) => {
-      content[`<== REPLACEMENT_EVENT_${index + 1} ==>`] = getContent(editEvt);
+    editEvents?.forEach((evt, index) => {
+      content[`<== REPLACEMENT_EVENT_${index + 1} ==>`] = evt;
     });
 
     return JSON.stringify(content, null, 2);
@@ -319,19 +313,20 @@ export const MessageSourceCodeItem = as<
 export const MessageCopyLinkItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    eventId: string;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
+>(({ eventId, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
+  const creators = useRoomCreators(roomId);
+  const powerLevels = usePowerLevelsContext();
 
   const handleCopy = () => {
-    const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
-    const eventId = mEvent.getId();
-    const viaServers = isRoomAlias(roomIdOrAlias) ? undefined : getViaServers(room);
+    const alias = ct.roomToAlias.read.get(roomId);
+    const viaServers = alias ? undefined : getViaServers(creators, powerLevels);
     if (!eventId) return;
-    copyToClipboard(getMatrixToRoomEvent(roomIdOrAlias, eventId, viaServers));
+    copyToClipboard(getMatrixToRoomEvent(alias ?? roomId, eventId, viaServers));
     onClose?.();
   };
 
@@ -354,24 +349,28 @@ export const MessageCopyLinkItem = as<
 export const MessagePinItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    eventId: string;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
-  const pinnedEvents = useRoomPinnedEvents(room);
-  const isPinned = pinnedEvents.includes(mEvent.getId() ?? '');
+>(({ eventId, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
+  const pinnedEvents = useRoomPinnedEvents(roomId);
+  const isPinned = pinnedEvents.includes(eventId);
 
   const handlePin = () => {
-    const eventId = mEvent.getId();
-    const pinContent: RoomPinnedEventsEventContent = {
+    const pinContent = {
       pinned: Array.from(pinnedEvents).filter((id) => id !== eventId),
     };
     if (!isPinned && eventId) {
       pinContent.pinned.push(eventId);
     }
-    mx.sendStateEvent(room.roomId, StateEvent.RoomPinnedEvents as any, pinContent);
+    ct.requestAuthJSON(
+      putStateEvent({
+        pathParams: { roomId, eventType: StateEventType.RoomPinnedEvents, stateKey: '' },
+        body: pinContent,
+      })
+    );
     onClose?.();
   };
 
@@ -394,25 +393,37 @@ export const MessagePinItem = as<
 export const MessageDeleteItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    eventId: string;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
+>(({ eventId, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
   const [open, setOpen] = useState(false);
 
   const [deleteState, deleteMessage] = useAsyncCallback(
     useCallback(
-      (eventId: string, reason?: string) =>
-        mx.redactEvent(room.roomId, eventId, undefined, reason ? { reason } : undefined),
-      [mx, room]
+      async (reason?: string) => {
+        const resp = await ct.requestAuthJSON(
+          putRedact({
+            pathParams: { roomId, eventId, txnId: ct.getTxnId() },
+            body: {
+              reason,
+            },
+          })
+        );
+
+        const [err] = await parseMatrixResp(resp);
+        if (err) {
+          throw new Error(printMatrixError(err));
+        }
+      },
+      [ct, roomId, eventId]
     )
   );
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
-    const eventId = mEvent.getId();
     if (
       !eventId ||
       deleteState.status === AsyncStatus.Loading ||
@@ -422,7 +433,7 @@ export const MessageDeleteItem = as<
     const target = evt.target as HTMLFormElement | undefined;
     const reasonInput = target?.reasonInput as HTMLInputElement | undefined;
     const reason = reasonInput && reasonInput.value.trim();
-    deleteMessage(eventId, reason);
+    deleteMessage(reason);
   };
 
   const handleClose = () => {
@@ -523,25 +534,37 @@ export const MessageDeleteItem = as<
 export const MessageReportItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    eventId: string;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
+>(({ eventId, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
   const [open, setOpen] = useState(false);
 
   const [reportState, reportMessage] = useAsyncCallback(
     useCallback(
-      (eventId: string, score: number, reason: string) =>
-        mx.reportEvent(room.roomId, eventId, score, reason),
-      [mx, room]
+      async (score: number, reason: string) => {
+        const resp = await ct.requestAuthJSON(
+          postReportEventId({
+            pathParams: { roomId, eventId },
+            body: {
+              reason,
+              score,
+            },
+          })
+        );
+        const [err] = await parseMatrixResp(resp);
+        if (err) {
+          throw new Error(printMatrixError(err));
+        }
+      },
+      [ct, roomId, eventId]
     )
   );
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
-    const eventId = mEvent.getId();
     if (
       !eventId ||
       reportState.status === AsyncStatus.Loading ||
@@ -552,7 +575,7 @@ export const MessageReportItem = as<
     const reasonInput = target?.reasonInput as HTMLInputElement | undefined;
     const reason = reasonInput && reasonInput.value.trim();
     if (reasonInput) reasonInput.value = '';
-    reportMessage(eventId, reason ? -100 : -50, reason || 'No reason provided');
+    reportMessage(reason ? -100 : -50, reason || 'No reason provided');
   };
 
   const handleClose = () => {
@@ -654,19 +677,169 @@ export const MessageReportItem = as<
   );
 });
 
+export function MessageAvatar({
+  userId,
+  displayName,
+  avatarUrl,
+  onUserClick,
+  bubbleLayout,
+}: {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  onUserClick?: MouseEventHandler<HTMLButtonElement>;
+  bubbleLayout?: boolean;
+}) {
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
+
+  return (
+    <AvatarBase className={bubbleLayout ? css.BubbleAvatarBase : undefined}>
+      <Avatar
+        className={css.MessageAvatar}
+        as="button"
+        size="300"
+        data-user-id={userId}
+        onClick={onUserClick}
+      >
+        <UserAvatar
+          userId={userId}
+          src={
+            avatarUrl
+              ? mxcToHttp(ct.session.baseUrl, avatarUrl, useAuthentication).thumbnail({
+                  width: 48,
+                  height: 48,
+                  method: 'crop',
+                })
+              : undefined
+          }
+          alt={displayName}
+          renderFallback={() => <Icon size="200" src={Icons.User} filled />}
+        />
+      </Avatar>
+    </AvatarBase>
+  );
+}
+
+export function MessageUsername({
+  userId,
+  displayName,
+  onUserClick,
+  onUsernameClick,
+  messageLayout,
+  memberPowerTag,
+  accessibleTagColors,
+  legacyUsernameColor,
+}: {
+  userId: string;
+  displayName: string;
+  onUserClick?: MouseEventHandler<HTMLButtonElement>;
+  onUsernameClick?: MouseEventHandler<HTMLButtonElement>;
+  messageLayout: MessageLayout;
+  memberPowerTag?: MemberPowerTag;
+  accessibleTagColors?: Map<string, string>;
+  legacyUsernameColor?: boolean;
+}) {
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
+
+  const tagColor = memberPowerTag?.color
+    ? accessibleTagColors?.get(memberPowerTag.color)
+    : undefined;
+
+  const tagIconSrc = memberPowerTag?.icon
+    ? getPowerTagIconSrc(ct, useAuthentication, memberPowerTag.icon)
+    : undefined;
+
+  const usernameColor = legacyUsernameColor ? colorMXID(userId) : tagColor;
+
+  return (
+    <Box alignItems="Center" gap="200">
+      <Username
+        as="button"
+        style={{ color: usernameColor }}
+        data-user-id={userId}
+        onContextMenu={onUserClick}
+        onClick={onUsernameClick}
+      >
+        <Text as="span" size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'} truncate>
+          <UsernameBold>{displayName}</UsernameBold>
+        </Text>
+      </Username>
+      {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
+    </Box>
+  );
+}
+
+type MessageLayoutProps = {
+  avatar?: ReactNode;
+  username?: ReactNode;
+  time?: ReactNode;
+  collapse: boolean;
+  messageLayout: MessageLayout;
+  onContextMenu?: MouseEventHandler<HTMLDivElement>;
+  children: ReactNode;
+};
+export function RenderMessageLayout({
+  collapse,
+  messageLayout,
+  avatar,
+  username,
+  time,
+  onContextMenu,
+  children,
+}: MessageLayoutProps) {
+  const headerJSX = !collapse && (
+    <Box
+      gap="300"
+      direction={messageLayout === MessageLayout.Compact ? 'RowReverse' : 'Row'}
+      justifyContent="SpaceBetween"
+      alignItems="Baseline"
+      grow="Yes"
+    >
+      {username}
+      <Box shrink="No" gap="100">
+        {time}
+      </Box>
+    </Box>
+  );
+
+  return (
+    <>
+      {messageLayout === MessageLayout.Compact && (
+        <CompactLayout before={headerJSX} onContextMenu={onContextMenu}>
+          {children}
+        </CompactLayout>
+      )}
+      {messageLayout === MessageLayout.Bubble && (
+        <BubbleLayout before={avatar} header={headerJSX} onContextMenu={onContextMenu}>
+          {children}
+        </BubbleLayout>
+      )}
+      {messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
+        <ModernLayout before={avatar} onContextMenu={onContextMenu}>
+          {headerJSX}
+          {children}
+        </ModernLayout>
+      )}
+    </>
+  );
+}
+
 export type MessageProps = {
-  room: Room;
-  mEvent: MatrixEvent;
+  event: MessageEventWithoutRoomId;
   collapse: boolean;
   highlight: boolean;
+  selected?: boolean;
   edit?: boolean;
   canDelete?: boolean;
   canSendReaction?: boolean;
   canPinEvent?: boolean;
-  imagePackRooms?: Room[];
-  relations?: Relations;
+  imagePackRooms?: string[];
+  reactionEvents?: MessageEventWithoutRoomId<ReactionContent>[];
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
+  membersAPI: RoomMembersAPI;
   onUserClick: MouseEventHandler<HTMLButtonElement>;
   onUsernameClick: MouseEventHandler<HTMLButtonElement>;
   onReplyClick: (
@@ -676,7 +849,7 @@ export type MessageProps = {
   onEditId?: (eventId?: string) => void;
   onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
   reply?: ReactNode;
-  reactions?: ReactNode;
+  redacted?: boolean;
   hideReadReceipts?: boolean;
   showDeveloperTools?: boolean;
   memberPowerTag?: MemberPowerTag;
@@ -689,25 +862,26 @@ export const Message = as<'div', MessageProps>(
   (
     {
       className,
-      room,
-      mEvent,
+      event,
       collapse,
       highlight,
+      selected,
       edit,
       canDelete,
       canSendReaction,
       canPinEvent,
       imagePackRooms,
-      relations,
+      reactionEvents,
       messageLayout,
       messageSpacing,
+      membersAPI,
       onUserClick,
       onUsernameClick,
       onReplyClick,
       onReactionToggle,
       onEditId,
       reply,
-      reactions,
+      redacted,
       hideReadReceipts,
       showDeveloperTools,
       memberPowerTag,
@@ -720,9 +894,9 @@ export const Message = as<'div', MessageProps>(
     },
     ref
   ) => {
-    const mx = useMatrixClient();
-    const useAuthentication = useMediaAuthentication();
-    const senderId = mEvent.getSender() ?? '';
+    const ct = useClient();
+    const roomId = useRoom();
+    const senderId = event.sender;
 
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
@@ -730,110 +904,25 @@ export const Message = as<'div', MessageProps>(
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
 
-    const senderDisplayName =
-      getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
-    const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
-
-    const tagColor = memberPowerTag?.color
-      ? accessibleTagColors?.get(memberPowerTag.color)
-      : undefined;
-    const tagIconSrc = memberPowerTag?.icon
-      ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
-      : undefined;
-
-    const usernameColor = legacyUsernameColor ? colorMXID(senderId) : tagColor;
-
-    const headerJSX = !collapse && (
-      <Box
-        gap="300"
-        direction={messageLayout === MessageLayout.Compact ? 'RowReverse' : 'Row'}
-        justifyContent="SpaceBetween"
-        alignItems="Baseline"
-        grow="Yes"
-      >
-        <Box alignItems="Center" gap="200">
-          <Username
-            as="button"
-            style={{ color: usernameColor }}
-            data-user-id={senderId}
-            onContextMenu={onUserClick}
-            onClick={onUsernameClick}
-          >
-            <Text
-              as="span"
-              size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'}
-              truncate
-            >
-              <UsernameBold>{senderDisplayName}</UsernameBold>
-            </Text>
-          </Username>
-          {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
-        </Box>
-        <Box shrink="No" gap="100">
-          {messageLayout === MessageLayout.Modern && hover && (
-            <>
-              <Text as="span" size="T200" priority="300">
-                {senderId}
-              </Text>
-              <Text as="span" size="T200" priority="300">
-                |
-              </Text>
-            </>
-          )}
-          <Time
-            ts={mEvent.getTs()}
-            compact={messageLayout === MessageLayout.Compact}
-            hour24Clock={hour24Clock}
-            dateFormatString={dateFormatString}
-          />
-        </Box>
-      </Box>
-    );
-
-    const avatarJSX = !collapse && messageLayout !== MessageLayout.Compact && (
-      <AvatarBase
-        className={messageLayout === MessageLayout.Bubble ? css.BubbleAvatarBase : undefined}
-      >
-        <Avatar
-          className={css.MessageAvatar}
-          as="button"
-          size="300"
-          data-user-id={senderId}
-          onClick={onUserClick}
-        >
-          <UserAvatar
-            userId={senderId}
-            src={
-              senderAvatarMxc
-                ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ?? undefined
-                : undefined
-            }
-            alt={senderDisplayName}
-            renderFallback={() => <Icon size="200" src={Icons.User} filled />}
-          />
-        </Avatar>
-      </AvatarBase>
-    );
+    const senderDisplayName = membersAPI.getName(senderId);
+    const senderAvatarMxc = membersAPI.getAvatar(senderId);
 
     const msgContentJSX = (
       <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
-        {reply}
         {edit && onEditId ? (
           <MessageEditor
             style={{
               maxWidth: '100%',
               width: '100vw',
             }}
-            roomId={room.roomId}
-            room={room}
-            mEvent={mEvent}
+            roomId={roomId}
+            event={event}
             imagePackRooms={imagePackRooms}
             onCancel={() => onEditId()}
           />
         ) : (
           children
         )}
-        {reactions}
       </Box>
     );
 
@@ -874,8 +963,6 @@ export const Message = as<'div', MessageProps>(
       }, 100);
     };
 
-    const isThreadedMessage = mEvent.threadRootId !== undefined;
-
     return (
       <MessageBase
         className={classNames(css.MessageBase, className, {
@@ -883,9 +970,9 @@ export const Message = as<'div', MessageProps>(
         })}
         tabIndex={0}
         space={messageSpacing}
-        collapse={collapse}
+        collapse={collapse || (!!getReplyId(event.content) && !fallbackReply(event.content))}
         highlight={highlight}
-        selected={!!menuAnchor || !!emojiBoardAnchor}
+        selected={!!selected || !!menuAnchor || !!emojiBoardAnchor}
         {...props}
         {...hoverProps}
         {...focusWithinProps}
@@ -907,11 +994,11 @@ export const Message = as<'div', MessageProps>(
                         returnFocusOnDeactivate={false}
                         allowTextCustomEmoji
                         onEmojiSelect={(key) => {
-                          onReactionToggle(mEvent.getId()!, key);
+                          onReactionToggle(event.event_id, key);
                           setEmojiBoardAnchor(undefined);
                         }}
                         onCustomEmojiSelect={(mxc, shortcode) => {
-                          onReactionToggle(mEvent.getId()!, mxc, shortcode);
+                          onReactionToggle(event.event_id, mxc, shortcode);
                           setEmojiBoardAnchor(undefined);
                         }}
                         requestClose={() => {
@@ -933,17 +1020,17 @@ export const Message = as<'div', MessageProps>(
                 )}
                 <IconButton
                   onClick={onReplyClick}
-                  data-event-id={mEvent.getId()}
+                  data-event-id={event.event_id}
                   variant="SurfaceVariant"
                   size="300"
                   radii="300"
                 >
-                  <Icon src={Icons.ReplyArrow} size="100" />
+                  <Icon src={Icons.BlockQuote} size="100" />
                 </IconButton>
-                {!isThreadedMessage && (
+                {!getThreadId(event) && (
                   <IconButton
                     onClick={(ev) => onReplyClick(ev, true)}
-                    data-event-id={mEvent.getId()}
+                    data-event-id={event.event_id}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
@@ -951,9 +1038,9 @@ export const Message = as<'div', MessageProps>(
                     <Icon src={Icons.ThreadPlus} size="100" />
                   </IconButton>
                 )}
-                {canEditEvent(mx, mEvent) && onEditId && (
+                {canEditEvent(ct, event) && onEditId && (
                   <IconButton
-                    onClick={() => onEditId(mEvent.getId())}
+                    onClick={() => onEditId(event.event_id)}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
@@ -981,7 +1068,7 @@ export const Message = as<'div', MessageProps>(
                         {canSendReaction && (
                           <MessageQuickReactions
                             onReaction={(key, shortcode) => {
-                              onReactionToggle(mEvent.getId()!, key, shortcode);
+                              onReactionToggle(event.event_id, key, shortcode);
                               closeMenu();
                             }}
                           />
@@ -1004,18 +1091,17 @@ export const Message = as<'div', MessageProps>(
                               </Text>
                             </MenuItem>
                           )}
-                          {relations && (
+                          {reactionEvents && (
                             <MessageAllReactionItem
-                              room={room}
-                              relations={relations}
+                              reactionEvents={reactionEvents}
                               onClose={closeMenu}
                             />
                           )}
                           <MenuItem
                             size="300"
-                            after={<Icon size="100" src={Icons.ReplyArrow} />}
+                            after={<Icon size="100" src={Icons.BlockQuote} />}
                             radii="300"
-                            data-event-id={mEvent.getId()}
+                            data-event-id={event.event_id}
                             onClick={(evt: any) => {
                               onReplyClick(evt);
                               closeMenu();
@@ -1027,15 +1113,15 @@ export const Message = as<'div', MessageProps>(
                               size="T300"
                               truncate
                             >
-                              Reply
+                              Quote
                             </Text>
                           </MenuItem>
-                          {!isThreadedMessage && (
+                          {!getThreadId(event) && (
                             <MenuItem
                               size="300"
                               after={<Icon src={Icons.ThreadPlus} size="100" />}
                               radii="300"
-                              data-event-id={mEvent.getId()}
+                              data-event-id={event.event_id}
                               onClick={(evt: any) => {
                                 onReplyClick(evt, true);
                                 closeMenu();
@@ -1051,14 +1137,14 @@ export const Message = as<'div', MessageProps>(
                               </Text>
                             </MenuItem>
                           )}
-                          {canEditEvent(mx, mEvent) && onEditId && (
+                          {canEditEvent(ct, event) && onEditId && (
                             <MenuItem
                               size="300"
                               after={<Icon size="100" src={Icons.Pencil} />}
                               radii="300"
-                              data-event-id={mEvent.getId()}
+                              data-event-id={event.event_id}
                               onClick={() => {
-                                onEditId(mEvent.getId());
+                                onEditId(event.event_id);
                                 closeMenu();
                               }}
                             >
@@ -1073,42 +1159,25 @@ export const Message = as<'div', MessageProps>(
                             </MenuItem>
                           )}
                           {!hideReadReceipts && (
-                            <MessageReadReceiptItem
-                              room={room}
-                              eventId={mEvent.getId() ?? ''}
-                              onClose={closeMenu}
-                            />
+                            <MessageReadReceiptItem eventId={event.event_id} onClose={closeMenu} />
                           )}
                           {showDeveloperTools && (
-                            <MessageSourceCodeItem
-                              room={room}
-                              mEvent={mEvent}
-                              onClose={closeMenu}
-                            />
+                            <MessageSourceCodeItem event={event} onClose={closeMenu} />
                           )}
-                          <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                          <MessageCopyLinkItem eventId={event.event_id} onClose={closeMenu} />
                           {canPinEvent && (
-                            <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                            <MessagePinItem eventId={event.event_id} onClose={closeMenu} />
                           )}
                         </Box>
-                        {((!mEvent.isRedacted() && canDelete) ||
-                          mEvent.getSender() !== mx.getUserId()) && (
+                        {((!redacted && canDelete) || event.sender !== ct.session.userId) && (
                           <>
                             <Line size="300" />
                             <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                              {!mEvent.isRedacted() && canDelete && (
-                                <MessageDeleteItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
+                              {!redacted && canDelete && (
+                                <MessageDeleteItem eventId={event.event_id} onClose={closeMenu} />
                               )}
-                              {mEvent.getSender() !== mx.getUserId() && (
-                                <MessageReportItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
+                              {event.sender !== ct.session.userId && (
+                                <MessageReportItem eventId={event.event_id} onClose={closeMenu} />
                               )}
                             </Box>
                           </>
@@ -1131,32 +1200,60 @@ export const Message = as<'div', MessageProps>(
             </Menu>
           </div>
         )}
-        {messageLayout === MessageLayout.Compact && (
-          <CompactLayout before={headerJSX} onContextMenu={handleContextMenu}>
-            {msgContentJSX}
-          </CompactLayout>
-        )}
-        {messageLayout === MessageLayout.Bubble && (
-          <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
-            {msgContentJSX}
-          </BubbleLayout>
-        )}
-        {messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
-          <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
-            {headerJSX}
-            {msgContentJSX}
-          </ModernLayout>
-        )}
+
+        {reply}
+
+        <RenderMessageLayout
+          avatar={
+            !collapse &&
+            messageLayout !== MessageLayout.Compact && (
+              <MessageAvatar
+                userId={senderId}
+                displayName={senderDisplayName}
+                avatarUrl={senderAvatarMxc}
+                onUserClick={onUserClick}
+                bubbleLayout={messageLayout === MessageLayout.Bubble}
+              />
+            )
+          }
+          username={
+            !collapse && (
+              <MessageUsername
+                userId={senderId}
+                displayName={senderDisplayName}
+                onUserClick={onUserClick}
+                onUsernameClick={onUsernameClick}
+                messageLayout={messageLayout}
+                memberPowerTag={memberPowerTag}
+                accessibleTagColors={accessibleTagColors}
+                legacyUsernameColor={legacyUsernameColor}
+              />
+            )
+          }
+          time={
+            <Time
+              ts={event.origin_server_ts}
+              compact={messageLayout === MessageLayout.Compact}
+              hour24Clock={hour24Clock}
+              dateFormatString={dateFormatString}
+            />
+          }
+          collapse={collapse}
+          messageLayout={messageLayout}
+          onContextMenu={handleContextMenu}
+        >
+          {msgContentJSX}
+        </RenderMessageLayout>
       </MessageBase>
     );
   }
 );
 
 export type EventProps = {
-  room: Room;
-  mEvent: MatrixEvent;
+  event: MessageEventWithoutRoomId;
   highlight: boolean;
   canDelete?: boolean;
+  redacted?: boolean;
   messageSpacing: MessageSpacing;
   hideReadReceipts?: boolean;
   showDeveloperTools?: boolean;
@@ -1165,10 +1262,10 @@ export const Event = as<'div', EventProps>(
   (
     {
       className,
-      room,
-      mEvent,
+      event,
       highlight,
       canDelete,
+      redacted,
       messageSpacing,
       hideReadReceipts,
       showDeveloperTools,
@@ -1177,12 +1274,11 @@ export const Event = as<'div', EventProps>(
     },
     ref
   ) => {
-    const mx = useMatrixClient();
+    const ct = useClient();
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
     const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
-    const stateEvent = typeof mEvent.getStateKey() === 'string';
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (evt.altKey || !window.getSelection()?.isCollapsed) return;
@@ -1242,39 +1338,22 @@ export const Event = as<'div', EventProps>(
                       <Menu {...props} ref={ref}>
                         <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
                           {!hideReadReceipts && (
-                            <MessageReadReceiptItem
-                              room={room}
-                              eventId={mEvent.getId() ?? ''}
-                              onClose={closeMenu}
-                            />
+                            <MessageReadReceiptItem eventId={event.event_id} onClose={closeMenu} />
                           )}
                           {showDeveloperTools && (
-                            <MessageSourceCodeItem
-                              room={room}
-                              mEvent={mEvent}
-                              onClose={closeMenu}
-                            />
+                            <MessageSourceCodeItem event={event} onClose={closeMenu} />
                           )}
-                          <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                          <MessageCopyLinkItem eventId={event.event_id} onClose={closeMenu} />
                         </Box>
-                        {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
-                          (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
+                        {((!redacted && canDelete) || event.sender !== ct.session.userId) && (
                           <>
                             <Line size="300" />
                             <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                              {!mEvent.isRedacted() && canDelete && (
-                                <MessageDeleteItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
+                              {!redacted && canDelete && (
+                                <MessageDeleteItem eventId={event.event_id} onClose={closeMenu} />
                               )}
-                              {mEvent.getSender() !== mx.getUserId() && (
-                                <MessageReportItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
+                              {event.sender !== ct.session.userId && (
+                                <MessageReportItem eventId={event.event_id} onClose={closeMenu} />
                               )}
                             </Box>
                           </>
@@ -1302,3 +1381,67 @@ export const Event = as<'div', EventProps>(
     );
   }
 );
+
+export function ThreadEvents({
+  users,
+  ts,
+  messageLayout,
+  hour24Clock,
+  dateFormatString,
+  messageSpacing,
+  count,
+  onClick,
+}: {
+  users: string[];
+  ts: number;
+  messageLayout: MessageLayout;
+  hour24Clock: boolean;
+  dateFormatString: string;
+  messageSpacing: MessageSpacing;
+  count: number;
+  onClick?: () => void;
+}) {
+  return (
+    <MessageBase className={css.MessageBase} space={messageSpacing} autoCollapse>
+      <EventContent
+        messageLayout={messageLayout}
+        time={
+          <Time
+            ts={ts}
+            compact={messageLayout === MessageLayout.Compact}
+            hour24Clock={hour24Clock}
+            dateFormatString={dateFormatString}
+          />
+        }
+        iconSrc={Icons.Thread}
+        content={
+          <Text size="T300" priority="400">
+            {users.length === 1 && <b>{users[0]}</b>}
+            {users.length === 2 && (
+              <>
+                <b>{users[0]}</b>, <b>{users[1]}</b>
+              </>
+            )}
+            {users.length > 2 && (
+              <>
+                <b>{users[0]}</b>, <b>{users[1]}</b>, <b>+{users.length - 2} others</b>
+              </>
+            )}{' '}
+            replied in thread.{' '}
+            <Chip
+              onClick={() => onClick?.()}
+              style={{ flexShrink: 0 }}
+              radii="Pill"
+              variant="Primary"
+              fill="None"
+            >
+              <Text as="span" size="L400">
+                {count} {count === 1 ? 'Reply' : 'Replies'}
+              </Text>
+            </Chip>
+          </Text>
+        }
+      />
+    </MessageBase>
+  );
+}

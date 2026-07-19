@@ -112,8 +112,7 @@ export const CompactHeader = style([
   DefaultReset,
   StickySection,
   {
-    maxWidth: toRem(170),
-    width: '100%',
+    width: toRem(170),
   },
 ]);
 
@@ -182,6 +181,7 @@ export const UsernameBold = style({
 export const MessageTextBody = recipe({
   base: {
     wordBreak: 'break-word',
+    position: 'relative',
   },
   variants: {
     preWrap: {
@@ -199,6 +199,27 @@ export const MessageTextBody = recipe({
       true: {
         color: color.Success.Main,
         fontStyle: 'italic',
+      },
+    },
+    truncate: {
+      true: {
+        maxHeight: '15em',
+        overflow: 'hidden',
+
+        selectors: {
+          '&::before': {
+            content: '',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            pointerEvents: 'none',
+
+            height: config.space.S400,
+            background: `linear-gradient(to top, ${color.Primary.Container}, #00000000)`,
+            borderBottom: `${config.borderWidth.B400} solid ${color.Primary.ContainerLine}`,
+          },
+        },
       },
     },
   },

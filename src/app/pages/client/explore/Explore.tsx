@@ -18,6 +18,8 @@ import {
   color,
   config,
 } from 'folds';
+import { getPublicRooms } from 'neurone/lib/api/matrix/client/v3/publicRooms';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
 import {
   NavCategory,
   NavCategoryHeader,
@@ -31,21 +33,38 @@ import {
   useExploreFeaturedSelected,
   useExploreServer,
 } from '../../../hooks/router/useExploreSelected';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getMxIdServer } from '../../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
 import { stopPropagation } from '../../../utils/keyboard';
+import { useClient } from '../../../hooks/useClient';
 
 export function AddServer() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const navigate = useNavigate();
   const [dialog, setDialog] = useState(false);
   const serverInputRef = useRef<HTMLInputElement>(null);
 
   const [exploreState] = useAsyncCallback(
-    useCallback((server: string) => mx.publicRooms({ server, limit: 1 }), [mx])
+    useCallback(
+      async (server: string) => {
+        const response = await ct.requestAuthJSON(
+          getPublicRooms({
+            searchParams: {
+              server,
+              limit: 1,
+            },
+          })
+        );
+        const [err, result] = await parseMatrixResp(response);
+        if (err) {
+          throw new Error(printMatrixError(err));
+        }
+        return result;
+      },
+      [ct]
+    )
   );
 
   const getInputServer = (): string | undefined => {
@@ -156,9 +175,9 @@ export function AddServer() {
 }
 
 export function Explore() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   useNavToActivePathMapper('explore');
-  const userId = mx.getUserId();
+  const { userId } = ct.session;
   const clientConfig = useClientConfig();
   const userServer = userId ? getMxIdServer(userId) : undefined;
   const servers =

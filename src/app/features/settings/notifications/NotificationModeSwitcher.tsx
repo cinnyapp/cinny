@@ -11,9 +11,9 @@ import {
   Spinner,
   Text,
 } from 'folds';
-import { IPushRule } from 'matrix-js-sdk';
 import React, { MouseEventHandler, useMemo, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { PushRule } from 'neurone/lib/api/types';
 import { NotificationMode, useNotificationActionsMode } from '../../../hooks/useNotificationMode';
 import { stopPropagation } from '../../../utils/keyboard';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
@@ -32,7 +32,7 @@ const useNotificationModeStr = (): Record<NotificationMode, string> =>
   );
 
 type NotificationModeSwitcherProps = {
-  pushRule: IPushRule;
+  pushRule: PushRule;
   onChange: (mode: NotificationMode) => Promise<void>;
 };
 export function NotificationModeSwitcher({ pushRule, onChange }: NotificationModeSwitcherProps) {
