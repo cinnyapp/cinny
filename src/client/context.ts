@@ -32,6 +32,7 @@ export type StateContext = {
     spaceChild: ObservableValue<JoinRoomStateObject[]>;
     canonicalAlias: ObservableValue<JoinRoomStateObject[]>;
     name: ObservableValue<JoinRoomStateObject[]>;
+    topic: ObservableValue<JoinRoomStateObject[]>;
     avatar: ObservableValue<JoinRoomStateObject[]>;
     joinRules: ObservableValue<JoinRoomStateObject[]>;
     historyVisibility: ObservableValue<JoinRoomStateObject[]>;
@@ -41,6 +42,7 @@ export type StateContext = {
     encryption: ObservableValue<InviteRoomStateObject[]>;
     canonicalAlias: ObservableValue<InviteRoomStateObject[]>;
     name: ObservableValue<InviteRoomStateObject[]>;
+    topic: ObservableValue<InviteRoomStateObject[]>;
     avatar: ObservableValue<InviteRoomStateObject[]>;
     joinRules: ObservableValue<InviteRoomStateObject[]>;
   };
@@ -49,6 +51,7 @@ export type StateContext = {
     encryption: ObservableValue<KnockRoomStateObject[]>;
     canonicalAlias: ObservableValue<KnockRoomStateObject[]>;
     name: ObservableValue<KnockRoomStateObject[]>;
+    topic: ObservableValue<KnockRoomStateObject[]>;
     avatar: ObservableValue<KnockRoomStateObject[]>;
     joinRules: ObservableValue<KnockRoomStateObject[]>;
   };
@@ -57,6 +60,7 @@ export type StateContext = {
     encryption: ObservableValue<LeaveRoomStateObject[]>;
     canonicalAlias: ObservableValue<LeaveRoomStateObject[]>;
     name: ObservableValue<LeaveRoomStateObject[]>;
+    topic: ObservableValue<LeaveRoomStateObject[]>;
     avatar: ObservableValue<LeaveRoomStateObject[]>;
     joinRules: ObservableValue<LeaveRoomStateObject[]>;
   };
@@ -86,6 +90,7 @@ export type ClientContext = {
   roomToSummary: ObservableValue<Map<string, RoomSummary>>;
   roomToAlias: ObservableValue<Map<string, string>>;
   roomToName: ObservableValue<Map<string, string>>;
+  roomToTopic: ObservableValue<Map<string, string>>;
   roomToAvatar: ObservableValue<Map<string, string>>;
   roomToHistoryVisibility: ObservableValue<Map<string, HistoryVisibility>>;
   roomToJoinRule: ObservableValue<Map<string, JoinRule>>;
@@ -205,6 +210,24 @@ export async function createStateContext(
   );
   disposer.collect(joinName, inviteName, knockName, leaveName);
 
+  const joinTopic = await storage.joinRoomState.observableRead.queryIndex(
+    'type',
+    StateEventType.RoomTopic
+  );
+  const inviteTopic = await storage.inviteRoomState.observableRead.queryIndex(
+    'type',
+    StateEventType.RoomTopic
+  );
+  const knockTopic = await storage.knockRoomState.observableRead.queryIndex(
+    'type',
+    StateEventType.RoomTopic
+  );
+  const leaveTopic = await storage.leaveRoomState.observableRead.queryIndex(
+    'type',
+    StateEventType.RoomTopic
+  );
+  disposer.collect(joinTopic, inviteTopic, knockTopic, leaveTopic);
+
   const joinAvatar = await storage.joinRoomState.observableRead.queryIndex(
     'type',
     StateEventType.RoomAvatar
@@ -255,6 +278,7 @@ export async function createStateContext(
       spaceChild: joinSpaceChild,
       canonicalAlias: joinCanonicalAlias,
       name: joinName,
+      topic: joinTopic,
       avatar: joinAvatar,
       joinRules: joinJoinRules,
       historyVisibility: joinHistoryVisibility,
@@ -264,6 +288,7 @@ export async function createStateContext(
       encryption: inviteEncryption,
       canonicalAlias: inviteCanonicalAlias,
       name: inviteName,
+      topic: inviteTopic,
       avatar: inviteAvatar,
       joinRules: inviteJoinRules,
     },
@@ -272,6 +297,7 @@ export async function createStateContext(
       encryption: knockEncryption,
       canonicalAlias: knockCanonicalAlias,
       name: knockName,
+      topic: knockTopic,
       avatar: knockAvatar,
       joinRules: knockJoinRules,
     },
@@ -280,6 +306,7 @@ export async function createStateContext(
       encryption: leaveEncryption,
       canonicalAlias: leaveCanonicalAlias,
       name: leaveName,
+      topic: leaveTopic,
       avatar: leaveAvatar,
       joinRules: leaveJoinRules,
     },
@@ -602,6 +629,33 @@ export const createRoomToNameObservable = (
   return roomToNameObservable;
 };
 
+export const createRoomToTopicObservable = (
+  state: StateContext,
+  disposer: Disposer
+): ObservableValue<Map<string, string>> => {
+  const roomToTopicObservable: ObservableValue<Map<string, string>> =
+    new ComputedObservableValue(() => {
+      const roomToTopic = new Map<string, string>();
+
+      const addName = (obj: RoomStateObject) => {
+        const { content, state_key: stateKey } = obj.event;
+        const topic = ObjectReader.string(content, 'topic');
+        if (topic && stateKey === '') {
+          roomToTopic.set(obj.roomId, topic);
+        }
+      };
+      state.join.topic.read.forEach(addName);
+      state.invite.topic.read.forEach(addName);
+      state.knock.topic.read.forEach(addName);
+      state.leave.topic.read.forEach(addName);
+
+      return roomToTopic;
+    }, [state.join.topic, state.invite.topic, state.knock.topic, state.leave.topic]);
+
+  disposer.collect(roomToTopicObservable);
+  return roomToTopicObservable;
+};
+
 export const createRoomToAvatarObservable = (
   state: StateContext,
   disposer: Disposer
@@ -701,7 +755,9 @@ export const createRoomToTypeObservable = (
       const addType = (obj: RoomStateObject) => {
         const { content } = obj.event;
         const type = ObjectReader.string(content, 'type');
-        roomToJoinRule.set(obj.roomId, type);
+        if (type) {
+          roomToJoinRule.set(obj.roomId, type);
+        }
       };
 
       state.join.create.read.forEach(addType);

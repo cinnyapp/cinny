@@ -19,6 +19,7 @@ import {
   createRoomToNameObservable,
   createRoomToReplacementObservable,
   createRoomToSummaryObservable,
+  createRoomToTopicObservable,
   createRoomToTypeObservable,
   createSpaceMapping,
   createStateContext,
@@ -89,6 +90,7 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
   const roomToSummary = await createRoomToSummaryObservable(storage, disposer);
   const roomToAlias = createRoomToAliasObservable(state, disposer);
   const roomToName = createRoomToNameObservable(state, disposer);
+  const roomToTopic = createRoomToTopicObservable(state, disposer);
   const roomToAvatar = createRoomToAvatarObservable(state, disposer);
   const roomToHistoryVisibility = createRoomToHistoryVisibilityObservable(state, disposer);
   const roomToJoinRule = createRoomToJoinRuleObservable(state, disposer);
@@ -136,6 +138,7 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     roomToSummary,
     roomToAlias,
     roomToName,
+    roomToTopic,
     roomToAvatar,
     roomToHistoryVisibility,
     roomToJoinRule,
