@@ -1,7 +1,6 @@
 import React, { forwardRef, MouseEventHandler, useEffect, useMemo } from 'react';
-import { MatrixError, Room } from 'matrix-js-sdk';
-import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
 import { Box, config, Text } from 'folds';
+import { SpaceHierarchyRoomChunk } from 'neurone/lib/api/types';
 import {
   HierarchyItem,
   HierarchyItemRoom,
@@ -9,22 +8,22 @@ import {
   useFetchSpaceHierarchyLevel,
 } from '../../hooks/useSpaceHierarchy';
 import { IPowerLevels } from '../../hooks/usePowerLevels';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { SpaceItemCard } from './SpaceItem';
 import { AfterItemDropTarget, CanDropCallback } from './DnD';
 import { HierarchyItemMenu } from './HierarchyItemMenu';
 import { RoomItemCard } from './RoomItem';
 import { RoomType, StateEvent } from '../../../types/matrix/room';
 import { SequenceCard } from '../../components/sequence-card';
-import { getRoomCreatorsForRoomId } from '../../hooks/useRoomCreators';
 import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
+import { useClient } from '../../hooks/useClient';
+import { rError } from '../../../client/reader';
+import { ErrorCode } from '../../cs-errorcode';
 
 type SpaceHierarchyProps = {
-  summary: IHierarchyRoom | undefined;
+  summary: SpaceHierarchyRoomChunk | undefined;
   spaceItem: HierarchyItemSpace;
   roomItems?: HierarchyItemRoom[];
   allJoinedRooms: Set<string>;
-  mDirects: Set<string>;
   roomsPowerLevels: Map<string, IPowerLevels>;
   categoryId: string;
   closed: boolean;
@@ -34,10 +33,9 @@ type SpaceHierarchyProps = {
   canDrop: CanDropCallback;
   disabledReorder?: boolean;
   nextSpaceId?: string;
-  getRoom: (roomId: string) => Room | undefined;
   pinned: boolean;
   togglePinToSidebar: (roomId: string) => void;
-  onSpacesFound: (spaceItems: IHierarchyRoom[]) => void;
+  onSpacesFound: (spaceItems: SpaceHierarchyRoomChunk[]) => void;
   onOpenRoom: MouseEventHandler<HTMLButtonElement>;
 };
 export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
@@ -47,7 +45,6 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
       spaceItem,
       roomItems,
       allJoinedRooms,
-      mDirects,
       roomsPowerLevels,
       categoryId,
       closed,
@@ -57,7 +54,6 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
       canDrop,
       disabledReorder,
       nextSpaceId,
-      getRoom,
       pinned,
       togglePinToSidebar,
       onOpenRoom,
@@ -65,12 +61,11 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
     },
     ref
   ) => {
-    const mx = useMatrixClient();
-
+    const ct = useClient();
     const { fetching, error, rooms } = useFetchSpaceHierarchyLevel(spaceItem.roomId, true);
 
     const subspaces = useMemo(() => {
-      const s: Map<string, IHierarchyRoom> = new Map();
+      const s: Map<string, SpaceHierarchyRoomChunk> = new Map();
       rooms.forEach((r) => {
         if (r.room_type === RoomType.Space) {
           s.set(r.room_id, r);
@@ -80,7 +75,7 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
     }, [rooms]);
 
     const spacePowerLevels = roomsPowerLevels.get(spaceItem.roomId);
-    const spaceCreators = getRoomCreatorsForRoomId(mx, spaceItem.roomId);
+    const spaceCreators = ct.roomToCreators.read.get(spaceItem.roomId);
     const spacePermissions =
       spacePowerLevels && getRoomPermissionsAPI(spaceCreators, spacePowerLevels);
 
@@ -89,21 +84,19 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
 
     const { parentId } = spaceItem;
     const parentPowerLevels = parentId ? roomsPowerLevels.get(parentId) : undefined;
-    const parentCreators = parentId ? getRoomCreatorsForRoomId(mx, parentId) : undefined;
+    const parentCreators = parentId ? ct.roomToCreators.read.get(parentId) : undefined;
     const parentPermissions =
-      parentCreators &&
-      parentPowerLevels &&
-      getRoomPermissionsAPI(parentCreators, parentPowerLevels);
+      parentPowerLevels && getRoomPermissionsAPI(parentCreators, parentPowerLevels);
 
     useEffect(() => {
       onSpacesFound(Array.from(subspaces.values()));
     }, [subspaces, onSpacesFound]);
 
     let childItems = roomItems?.filter((i) => !subspaces.has(i.roomId));
-    if (!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())) {
+    if (!spacePermissions?.stateEvent(StateEvent.SpaceChild, ct.session.userId)) {
       // hide unknown rooms for normal user
       childItems = childItems?.filter((i) => {
-        const forbidden = error instanceof MatrixError ? error.errcode === 'M_FORBIDDEN' : false;
+        const forbidden = rError.errcode(error) === ErrorCode.M_FORBIDDEN;
         const inaccessibleRoom = !rooms.get(i.roomId) && !fetching && (error ? forbidden : true);
         return !inaccessibleRoom;
       });
@@ -119,11 +112,10 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
           categoryId={categoryId}
           closed={closed}
           handleClose={handleClose}
-          getRoom={getRoom}
-          canEditChild={!!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())}
+          canEditChild={!!spacePermissions?.stateEvent(StateEvent.SpaceChild, ct.session.userId)}
           canReorder={
-            parentPowerLevels && !disabledReorder && parentPermissions
-              ? parentPermissions.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())
+            !disabledReorder && parentPermissions
+              ? parentPermissions.stateEvent(StateEvent.SpaceChild, ct.session.userId)
               : false
           }
           options={
@@ -134,7 +126,7 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
                 powerLevels={spacePowerLevels}
                 joined={allJoinedRooms.has(spaceItem.roomId)}
                 canEditChild={
-                  !!parentPermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())
+                  !!parentPermissions?.stateEvent(StateEvent.SpaceChild, ct.session.userId)
                 }
                 pinned={pinned}
                 onTogglePin={togglePinToSidebar}
@@ -159,8 +151,8 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
 
               const roomPowerLevels = roomsPowerLevels.get(roomItem.roomId) ?? {};
 
-              const lastItem = index === childItems.length;
-              const nextRoomId = lastItem ? nextSpaceId : childItems[index + 1]?.roomId;
+              const lastItem = index === childItems?.length;
+              const nextRoomId = lastItem ? nextSpaceId : childItems?.[index + 1]?.roomId;
 
               const roomDragging =
                 draggingItem?.roomId === roomItem.roomId &&
@@ -173,11 +165,10 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
                   loading={fetching}
                   error={error}
                   summary={roomSummary}
-                  dm={mDirects.has(roomItem.roomId)}
                   onOpen={onOpenRoom}
-                  getRoom={getRoom}
+                  joined={allJoinedRooms.has(roomItem.roomId)}
                   canReorder={
-                    !!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId()) &&
+                    !!spacePermissions?.stateEvent(StateEvent.SpaceChild, ct.session.userId) &&
                     !disabledReorder
                   }
                   options={
@@ -186,7 +177,7 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
                       powerLevels={roomPowerLevels}
                       joined={allJoinedRooms.has(roomItem.roomId)}
                       canEditChild={
-                        !!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())
+                        !!spacePermissions?.stateEvent(StateEvent.SpaceChild, ct.session.userId)
                       }
                     />
                   }

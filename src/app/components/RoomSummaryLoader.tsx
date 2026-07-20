@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactElement, useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
 import { getRoomSummary, GetRoomSummaryOK } from 'neurone/lib/api/matrix/client/v1/roomSummary';
@@ -7,10 +7,11 @@ import { SpaceHierarchyRoomChunk } from 'neurone/lib/api/types';
 import { AsyncState, AsyncStatus } from '../hooks/useAsyncCallback';
 import { useClient } from '../hooks/useClient';
 import { useSpecVersionSupport } from '../hooks/useSpecVersions';
+import { LocalRoomSummary, useLocalRoomSummary } from '../hooks/useLocalRoomSummary';
 
 type RoomSummaryLoaderProps = {
   roomIdOrAlias: string;
-  children: (roomSummary?: GetRoomSummaryOK) => ReactNode;
+  children: (roomSummary?: GetRoomSummaryOK) => ReactElement;
 };
 
 export function RoomSummaryLoader({ roomIdOrAlias, children }: RoomSummaryLoaderProps) {
@@ -40,15 +41,23 @@ export function RoomSummaryLoader({ roomIdOrAlias, children }: RoomSummaryLoader
   return children(data);
 }
 
-export function LocalRoomSummaryLoader({ children }: { children: () => ReactNode }) {
-  return children();
+export function LocalRoomSummaryLoader({
+  roomId,
+  children,
+}: {
+  roomId: string;
+  children: (summary: LocalRoomSummary) => ReactElement;
+}) {
+  const summary = useLocalRoomSummary(roomId);
+
+  return children(summary);
 }
 export function HierarchyRoomSummaryLoader({
   roomId,
   children,
 }: {
   roomId: string;
-  children: (state: AsyncState<SpaceHierarchyRoomChunk, Error>) => ReactNode;
+  children: (state: AsyncState<SpaceHierarchyRoomChunk, Error>) => ReactElement;
 }) {
   const ct = useClient();
 

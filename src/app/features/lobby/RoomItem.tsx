@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, ReactNode, useCallback, useRef } from 'react';
+import React, { MouseEventHandler, ReactNode, useCallback, useRef, useState } from 'react';
 import {
   Avatar,
   Badge,
@@ -13,72 +13,90 @@ import {
   Spinner,
   Text,
   Tooltip,
-  TooltipProvider,
   as,
   color,
   toRem,
+  PopOut,
+  RectCords,
+  IconButton,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { JoinRule, MatrixError, Room } from 'matrix-js-sdk';
-import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
+import { SpaceHierarchyRoomChunk } from 'neurone/lib/api/types';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
+import { postJoin } from 'neurone/lib/api/matrix/client/v3/join';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { SequenceCard } from '../../components/sequence-card';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
 import { millify } from '../../plugins/millify';
 import { LocalRoomSummaryLoader } from '../../components/RoomSummaryLoader';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
-import { Membership } from '../../../types/matrix/room';
+import { JoinRule } from '../../../types/matrix/room';
 import * as css from './RoomItem.css';
 import * as styleCss from './style.css';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
 import { ItemDraggableTarget, useDraggableItem } from './DnD';
-import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { useClient } from '../../hooks/useClient';
+import { BreakWord } from '../../styles/Text.css';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 type RoomJoinButtonProps = {
   roomId: string;
   via?: string[];
 };
 function RoomJoinButton({ roomId, via }: RoomJoinButtonProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
-  const [joinState, join] = useAsyncCallback<Room, MatrixError, []>(
-    useCallback(() => mx.joinRoom(roomId, { viaServers: via }), [mx, roomId, via])
+  const [joinState, join] = useAsyncCallback(
+    useCallback(async () => {
+      const resp = await ct.requestAuthJSON(
+        postJoin({
+          pathParams: { roomIdOrAlias: roomId },
+          searchParams: { via, server_name: via },
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(printMatrixError(err));
+    }, [ct, roomId, via])
   );
 
   const canJoin = joinState.status === AsyncStatus.Idle || joinState.status === AsyncStatus.Error;
 
+  const [cords, setCords] = useState<RectCords>();
+  const handleErrorMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setCords(evt.currentTarget.getBoundingClientRect());
+  };
+
   return (
     <Box shrink="No" gap="200" alignItems="Center">
       {joinState.status === AsyncStatus.Error && (
-        <TooltipProvider
-          tooltip={
+        <PopOut
+          anchor={cords}
+          content={
             <Tooltip variant="Critical" style={{ maxWidth: toRem(200) }}>
               <Box direction="Column" gap="100">
-                <Text style={{ wordBreak: 'break-word' }} size="T400">
-                  {joinState.error.data?.error || joinState.error.message}
+                <Text className={BreakWord} size="T400">
+                  {typeof joinState.error === 'object' && joinState.error instanceof Error
+                    ? joinState.error.message
+                    : 'Unknown error'}
                 </Text>
-                <Text size="T200">{joinState.error.name}</Text>
               </Box>
             </Tooltip>
           }
         >
-          {(triggerRef) => (
+          <IconButton variant="SurfaceVariant" radii="300" size="300" onClick={handleErrorMenu}>
             <Icon
-              ref={triggerRef}
               style={{ color: color.Critical.Main, cursor: 'pointer' }}
               src={Icons.Warning}
-              size="400"
+              size="200"
               filled
               tabIndex={0}
-              aria-label={joinState.error.data?.error || joinState.error.message}
+              aria-label="Join room error message"
             />
-          )}
-        </TooltipProvider>
+          </IconButton>
+        </PopOut>
       )}
       <Chip
         variant="Secondary"
@@ -135,11 +153,7 @@ function RoomProfileError({ roomId, suggested, inaccessibleRoom, via }: RoomProf
           src={undefined}
           alt={roomId}
           renderFallback={() => (
-            <RoomIcon
-              size="300"
-              joinRule={inaccessibleRoom ? JoinRule.Invite : JoinRule.Restricted}
-              filled
-            />
+            <RoomIcon size="300" joinRule={inaccessibleRoom ? 'invite' : 'restricted'} filled />
           )}
         />
       </Avatar>
@@ -279,18 +293,17 @@ function RoomProfile({
 type RoomItemCardProps = {
   item: HierarchyItem;
   loading: boolean;
-  error: Error | null;
-  summary: IHierarchyRoom | undefined;
-  dm?: boolean;
+  error: unknown;
+  summary: SpaceHierarchyRoomChunk | undefined;
   firstChild?: boolean;
   lastChild?: boolean;
   onOpen: MouseEventHandler<HTMLButtonElement>;
+  joined?: boolean;
   options?: ReactNode;
   before?: ReactNode;
   after?: ReactNode;
   onDragging: (item?: HierarchyItem) => void;
   canReorder: boolean;
-  getRoom: (roomId: string) => Room | undefined;
 };
 export const RoomItemCard = as<'div', RoomItemCardProps>(
   (
@@ -299,27 +312,23 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
       loading,
       error,
       summary,
-      dm,
       onOpen,
+      joined,
       options,
       before,
       after,
       onDragging,
       canReorder,
-      getRoom,
       ...props
     },
     ref
   ) => {
-    const mx = useMatrixClient();
+    const ct = useClient();
     const useAuthentication = useMediaAuthentication();
     const { roomId, content } = item;
-    const room = getRoom(roomId);
     const targetRef = useRef<HTMLDivElement>(null);
     const targetHandleRef = useRef<HTMLDivElement>(null);
     useDraggableItem(item, targetRef, onDragging, targetHandleRef);
-
-    const joined = room?.getMyMembership() === Membership.Join;
 
     return (
       <SequenceCard
@@ -333,18 +342,26 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
         {before}
         <Box ref={canReorder ? targetRef : null} grow="Yes">
           {canReorder && <ItemDraggableTarget ref={targetHandleRef} />}
-          {room ? (
-            <LocalRoomSummaryLoader room={room}>
+          {joined ? (
+            <LocalRoomSummaryLoader roomId={roomId}>
               {(localSummary) => (
                 <RoomProfile
                   roomId={roomId}
                   roomType={localSummary.roomType}
-                  name={localSummary.name}
+                  name={localSummary.name ?? 'Unknown'}
                   topic={localSummary.topic}
                   avatarUrl={
-                    dm
-                      ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)
-                      : getRoomAvatarUrl(mx, room, 96, useAuthentication)
+                    localSummary.avatarUrl
+                      ? mxcToHttp(
+                          ct.session.baseUrl,
+                          localSummary.avatarUrl,
+                          useAuthentication
+                        ).thumbnail({
+                          width: 96,
+                          height: 96,
+                          method: 'crop',
+                        })
+                      : undefined
                   }
                   memberCount={localSummary.memberCount}
                   suggested={content.suggested}
@@ -402,13 +419,20 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                   topic={summary.topic}
                   avatarUrl={
                     summary?.avatar_url
-                      ? mxcUrlToHttp(mx, summary.avatar_url, useAuthentication, 96, 96, 'crop') ??
-                        undefined
+                      ? mxcToHttp(
+                          ct.session.baseUrl,
+                          summary.avatar_url,
+                          useAuthentication
+                        ).thumbnail({
+                          width: 96,
+                          height: 96,
+                          method: 'crop',
+                        })
                       : undefined
                   }
                   memberCount={summary.num_joined_members}
                   suggested={content.suggested}
-                  joinRule={summary.join_rule}
+                  joinRule={summary.join_rule as JoinRule}
                   options={<RoomJoinButton roomId={roomId} via={content.via} />}
                 />
               )}

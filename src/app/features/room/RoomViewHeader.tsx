@@ -341,7 +341,12 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
                 src={avatarUrl}
                 alt={name}
                 renderFallback={() => (
-                  <RoomIcon size="200" joinRule={roomToJoinRule.get(roomId)} filled />
+                  <RoomIcon
+                    size="200"
+                    joinRule={roomToJoinRule.get(roomId)}
+                    roomType={ct.roomToType.read.get(roomId)}
+                    filled
+                  />
                 )}
               />
             </Avatar>

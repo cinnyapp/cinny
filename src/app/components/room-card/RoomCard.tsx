@@ -219,7 +219,7 @@ export const RoomCard = as<'div', RoomCardProps>(
               )}
             />
           </Avatar>
-          {(roomType === RoomType.Space || localSummary.space) && (
+          {(roomType === RoomType.Space || localSummary.roomType === RoomType.Space) && (
             <Badge variant="Secondary" fill="Soft" outlined>
               <Text size="L400">Space</Text>
             </Badge>

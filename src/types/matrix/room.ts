@@ -92,9 +92,11 @@ export type JoinRule =
   | 'restricted'
   | 'knock_restricted';
 
+export type AllowConditionType = 'm.room_membership';
+
 export type AllowCondition = {
   room_id: string;
-  type: string[];
+  type: AllowConditionType;
 };
 export type JoinRulesContent = {
   allow?: AllowCondition[];

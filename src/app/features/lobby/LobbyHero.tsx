@@ -1,9 +1,7 @@
 import React from 'react';
 import { Avatar, Overlay, OverlayBackdrop, OverlayCenter, Text } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
 import { useSpace } from '../../hooks/useSpace';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { RoomAvatar } from '../../components/room-avatar';
 import { nameInitials } from '../../utils/common';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -11,25 +9,41 @@ import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import * as css from './LobbyHero.css';
 import { PageHero } from '../../components/page';
 import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
-import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { useClient } from '../../hooks/useClient';
+import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
+import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
+import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
+import { useRoomTopic } from '../../hooks/storage/useRoomTopic';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 export function LobbyHero() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const space = useSpace();
+  const spaceId = useSpace();
 
-  const name = useRoomName(space);
-  const topic = useRoomTopic(space);
-  const avatarMxc = useRoomAvatar(space);
-  const avatarUrl = avatarMxc ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined : undefined;
+  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(spaceId);
+  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+  const topic = useRoomTopic(spaceId);
+
+  const avatarMxc = getRoomAvatar(spaceId);
+  const avatarUrl = avatarMxc
+    ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
+    : undefined;
+
+  const name = getRoomName(spaceId) ?? 'Unknown';
 
   return (
     <PageHero
       icon={
         <Avatar size="500">
           <RoomAvatar
-            roomId={space.roomId}
+            roomId={spaceId}
             src={avatarUrl}
             alt={name}
             renderFallback={() => <Text size="H4">{nameInitials(name)}</Text>}

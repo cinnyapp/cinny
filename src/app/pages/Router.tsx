@@ -230,8 +230,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
               element={<WelcomePage />}
             />
           )}
-          {/* <Route path={_LOBBY_PATH} element={<Lobby />} />
-          <Route path={_SEARCH_PATH} element={<SpaceSearch />} /> */}
+          <Route path={_LOBBY_PATH} element={<Lobby />} />
+          {/*<Route path={_SEARCH_PATH} element={<SpaceSearch />} /> */}
           <Route
             path={_ROOM_PATH}
             element={

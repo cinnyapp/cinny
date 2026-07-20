@@ -186,11 +186,20 @@ export function RoomMentionAutocomplete({
                       src={avatar}
                       alt={name}
                       renderFallback={() => (
-                        <RoomIcon size="50" joinRule={ct.roomToJoinRule.read.get(rId)} filled />
+                        <RoomIcon
+                          size="50"
+                          joinRule={ct.roomToJoinRule.read.get(rId)}
+                          roomType={ct.roomToType.read.get(rId)}
+                          filled
+                        />
                       )}
                     />
                   ) : (
-                    <RoomIcon size="100" joinRule={ct.roomToJoinRule.read.get(rId)} />
+                    <RoomIcon
+                      size="100"
+                      joinRule={ct.roomToJoinRule.read.get(rId)}
+                      roomType={ct.roomToType.read.get(rId)}
+                    />
                   )}
                 </Avatar>
               }

@@ -1,11 +1,8 @@
-import { MatrixEvent, Room } from 'matrix-js-sdk';
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { MatrixEvent } from 'matrix-js-sdk';
+import { createContext, useCallback, useContext, useMemo } from 'react';
 import produce from 'immer';
 import { PendingObservableResult } from 'neurone/lib/utils/observable';
 import { StateEvent, StateEventType } from '../../types/matrix/room';
-import { useStateEventCallback } from './useStateEventCallback';
-import { useMatrixClient } from './useMatrixClient';
-import { getStateEvent } from '../utils/room';
 import { getJoinRoomStateId, JoinRoomStateObject } from '../../client/storage/collections';
 import { useClient } from './useClient';
 import { useObservableValuePromise } from './useObservableValue';
@@ -84,12 +81,14 @@ export function usePowerLevelsState(
   return useObservableValuePromise(eventObservablePromise);
 }
 
-export function usePowerLevels(eventObj: JoinRoomStateObject | undefined): IPowerLevels {
-  const powerLevels: IPowerLevels = useMemo(() => {
-    const content: IPowerLevels | undefined = eventObj?.event.content;
+function parsePowerLevels(eventObj?: JoinRoomStateObject): IPowerLevels {
+  const content: IPowerLevels | undefined = eventObj?.event.content;
 
-    return !content ? DEFAULT_POWER_LEVELS : fillMissingPowers(content);
-  }, [eventObj]);
+  return !content ? DEFAULT_POWER_LEVELS : fillMissingPowers(content);
+}
+
+export function usePowerLevels(eventObj: JoinRoomStateObject | undefined): IPowerLevels {
+  const powerLevels: IPowerLevels = useMemo(() => parsePowerLevels(eventObj), [eventObj]);
 
   return powerLevels;
 }
@@ -104,38 +103,27 @@ export const usePowerLevelsContext = (): IPowerLevels => {
   return pl;
 };
 
-export const useRoomsPowerLevels = (rooms: Room[]): Map<string, IPowerLevels> => {
-  const mx = useMatrixClient();
-  const getRoomsPowerLevels = useCallback(() => {
-    const rToPl = new Map<string, IPowerLevels>();
+export const useRoomsPowerLevels = (rooms: string[]): Map<string, IPowerLevels> => {
+  const ct = useClient();
+  const powerLevelEventsPromise = useMemo(
+    () => ct.storage.joinRoomState.observableRead.queryIndex('type', StateEvent.RoomPowerLevels),
+    [ct]
+  );
+  const plEventsResult = useObservableValuePromise(powerLevelEventsPromise);
 
-    rooms.forEach((room) => {
-      const mEvent = getStateEvent(room, StateEvent.RoomPowerLevels, '');
-      rToPl.set(room.roomId, getPowersLevelFromMatrixEvent(mEvent));
+  const roomToPowerLevels: Map<string, IPowerLevels> = useMemo(() => {
+    const rToP = new Map<string, IPowerLevels>();
+
+    console.log(plEventsResult.value?.find((v) => v.roomId === '!KqyBSJuhpIHbWaROMB:kde.org'));
+    rooms.forEach((roomId) => {
+      const evtObj = plEventsResult.value?.find(
+        (o) => o.roomId === roomId && o.event.state_key === ''
+      );
+      rToP.set(roomId, parsePowerLevels(evtObj));
     });
 
-    return rToPl;
-  }, [rooms]);
-
-  const [roomToPowerLevels, setRoomToPowerLevels] = useState(() => getRoomsPowerLevels());
-
-  useStateEventCallback(
-    mx,
-    useCallback(
-      (event) => {
-        const roomId = event.getRoomId();
-        if (
-          roomId &&
-          event.getType() === StateEvent.RoomPowerLevels &&
-          event.getStateKey() === '' &&
-          rooms.find((r) => r.roomId === roomId)
-        ) {
-          setRoomToPowerLevels(getRoomsPowerLevels());
-        }
-      },
-      [rooms, getRoomsPowerLevels]
-    )
-  );
+    return rToP;
+  }, [plEventsResult, rooms]);
 
   return roomToPowerLevels;
 };

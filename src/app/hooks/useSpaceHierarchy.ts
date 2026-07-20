@@ -95,7 +95,8 @@ const getSpaceHierarchy = (
   rootSpaceId: string,
   roomToChildEvents: Map<string, StateEventWithoutRoomId<SpaceChildContent>[]>,
   spaceRooms: Set<string>,
-  spaceRoomsCache: Set<string>
+  spaceRoomsCache: Set<string>,
+  closedCategory: (spaceId: string) => boolean
 ): SpaceHierarchy[] => {
   const spaceItems: HierarchyItemSpace[] = getHierarchySpaces(
     rootSpaceId,
@@ -106,6 +107,9 @@ const getSpaceHierarchy = (
 
   const hierarchy: SpaceHierarchy[] = spaceItems.map((spaceItem) => {
     const childEvents = roomToChildEvents.get(spaceItem.roomId);
+    if (!spaceRooms.has(spaceItem.roomId) || closedCategory(spaceItem.roomId)) {
+      return { space: spaceItem };
+    }
 
     const childItems: HierarchyItemRoom[] = [];
     childEvents?.forEach((childEvent) => {
@@ -131,15 +135,19 @@ const getSpaceHierarchy = (
   return hierarchy;
 };
 
-export const useSpaceHierarchy = (spaceId: string): SpaceHierarchy[] => {
+export const useSpaceHierarchy = (
+  spaceId: string,
+  closedCategory: (spaceId: string) => boolean
+): SpaceHierarchy[] => {
   const ct = useClient();
   const roomToChildEvents = useObservableValue(ct.roomToChildEvents);
   const spaceRooms = useObservableValue(ct.spaceRooms);
   const spaceRoomsCache = useAtomValue(spaceRoomsAtom);
 
   const hierarchy = useMemo(
-    () => getSpaceHierarchy(spaceId, roomToChildEvents, spaceRooms, spaceRoomsCache),
-    [spaceId, roomToChildEvents, spaceRooms, spaceRoomsCache]
+    () =>
+      getSpaceHierarchy(spaceId, roomToChildEvents, spaceRooms, spaceRoomsCache, closedCategory),
+    [spaceId, roomToChildEvents, spaceRooms, spaceRoomsCache, closedCategory]
   );
 
   return hierarchy;
@@ -216,7 +224,7 @@ const PER_PAGE_COUNT = 100;
 const MAX_AUTO_PAGE_COUNT = 50;
 export type FetchSpaceHierarchyLevelData = {
   fetching: boolean;
-  error: Error | null;
+  error: unknown;
   rooms: Map<string, SpaceHierarchyRoomChunk>;
 };
 export const useFetchSpaceHierarchyLevel = (

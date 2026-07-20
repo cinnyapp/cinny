@@ -318,6 +318,7 @@ export function RoomNavItem({
                   filled={selected}
                   size="100"
                   joinRule={joinRule}
+                  roomType={ct.roomToType.read.get(roomId)}
                 />
               )}
             </Avatar>

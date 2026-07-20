@@ -19,6 +19,7 @@ import {
   createRoomToNameObservable,
   createRoomToReplacementObservable,
   createRoomToSummaryObservable,
+  createRoomToTypeObservable,
   createSpaceMapping,
   createStateContext,
   createSyncTokenObservable,
@@ -81,17 +82,18 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     state,
     disposer
   );
-  const encryptedRooms = await createEncryptedRoomsObservable(state, disposer);
+  const encryptedRooms = createEncryptedRoomsObservable(state, disposer);
   const directRooms = await createDirectRoomsObservable(storage, disposer);
-  const { roomToParents, roomToChildEvents } = await createSpaceMapping(state, disposer);
+  const { roomToParents, roomToChildEvents } = createSpaceMapping(state, disposer);
 
   const roomToSummary = await createRoomToSummaryObservable(storage, disposer);
-  const roomToAlias = await createRoomToAliasObservable(state, disposer);
-  const roomToName = await createRoomToNameObservable(state, disposer);
-  const roomToAvatar = await createRoomToAvatarObservable(state, disposer);
-  const roomToHistoryVisibility = await createRoomToHistoryVisibilityObservable(state, disposer);
-  const roomToJoinRule = await createRoomToJoinRuleObservable(state, disposer);
-  const roomToReplacement = await createRoomToReplacementObservable(state, disposer);
+  const roomToAlias = createRoomToAliasObservable(state, disposer);
+  const roomToName = createRoomToNameObservable(state, disposer);
+  const roomToAvatar = createRoomToAvatarObservable(state, disposer);
+  const roomToHistoryVisibility = createRoomToHistoryVisibilityObservable(state, disposer);
+  const roomToJoinRule = createRoomToJoinRuleObservable(state, disposer);
+  const roomToType = createRoomToTypeObservable(state, disposer);
+  const roomToReplacement = createRoomToReplacementObservable(state, disposer);
   const roomToLatestEvent = await createRoomToLatestEventObservable(storage, disposer);
 
   const syncTokenObservable = await createSyncTokenObservable(storage, disposer);
@@ -137,6 +139,7 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     roomToAvatar,
     roomToHistoryVisibility,
     roomToJoinRule,
+    roomToType,
     roomToReplacement,
     roomToLatestEvent,
     roomToCreators,

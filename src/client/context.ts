@@ -1,6 +1,7 @@
 import { ComputedObservableValue, ObservableValue } from 'neurone/lib/utils/observable';
 import { MatrixRequest } from 'neurone/lib/matrix-request';
 import { HistoryVisibility, Machine } from 'neurone/lib/crypto/machine';
+import { ObjectReader } from 'neurone/lib/utils';
 import { Disposer } from 'neurone/lib/utils/disposable';
 import {
   MessageEventWithoutRoomId,
@@ -22,7 +23,6 @@ import { GetTxnId } from './txn';
 import { Timeline } from './room';
 import { AccountDataType } from '../types/matrix/accountData';
 import { DecryptionManager } from './decryption';
-import { ObjectReader } from 'neurone/lib/utils';
 
 export type StateContext = {
   join: {
@@ -89,6 +89,7 @@ export type ClientContext = {
   roomToAvatar: ObservableValue<Map<string, string>>;
   roomToHistoryVisibility: ObservableValue<Map<string, HistoryVisibility>>;
   roomToJoinRule: ObservableValue<Map<string, JoinRule>>;
+  roomToType: ObservableValue<Map<string, string | undefined>>;
   roomToReplacement: ObservableValue<Map<string, string>>;
   roomToCreators: ObservableValue<Map<string, Set<string>>>;
   roomToVersion: ObservableValue<Map<string, string>>;
@@ -389,10 +390,10 @@ export const createRoomContext = async (
   };
 };
 
-export const createEncryptedRoomsObservable = async (
+export const createEncryptedRoomsObservable = (
   state: StateContext,
   disposer: Disposer
-): Promise<ObservableValue<Set<string>>> => {
+): ObservableValue<Set<string>> => {
   const encryptedRoomsObservable: ObservableValue<Set<string>> = new ComputedObservableValue(() => {
     const encryptedRooms = new Set<string>();
 
@@ -440,10 +441,10 @@ export const createDirectRoomsObservable = async (
   return directRoomsObservable;
 };
 
-export const createRoomToReplacementObservable = async (
+export const createRoomToReplacementObservable = (
   state: StateContext,
   disposer: Disposer
-): Promise<ObservableValue<Map<string, string>>> => {
+): ObservableValue<Map<string, string>> => {
   const roomToReplacementObservable: ObservableValue<Map<string, string>> =
     new ComputedObservableValue(() => {
       const roomToReplacement = new Map<string, string>();
@@ -463,13 +464,13 @@ export const createRoomToReplacementObservable = async (
   return roomToReplacementObservable;
 };
 
-export const createSpaceMapping = async (
+export const createSpaceMapping = (
   state: StateContext,
   disposer: Disposer
-): Promise<{
+): {
   roomToParents: ObservableValue<Map<string, Set<string>>>;
   roomToChildEvents: ObservableValue<Map<string, StateEventWithoutRoomId<SpaceChildContent>[]>>;
-}> => {
+} => {
   const roomToParentsObservable: ObservableValue<Map<string, Set<string>>> =
     new ComputedObservableValue(() => {
       const roomToParents = new Map<string, Set<string>>();
@@ -533,10 +534,10 @@ export const createRoomToSummaryObservable = async (
   return roomToSummaryObservable;
 };
 
-export const createRoomToAliasObservable = async (
+export const createRoomToAliasObservable = (
   state: StateContext,
   disposer: Disposer
-): Promise<ObservableValue<Map<string, string>>> => {
+): ObservableValue<Map<string, string>> => {
   const roomToAliasObservable: ObservableValue<Map<string, string>> =
     new ComputedObservableValue(() => {
       const roomToAlias = new Map<string, string>();
@@ -570,10 +571,10 @@ export const createRoomToAliasObservable = async (
   return roomToAliasObservable;
 };
 
-export const createRoomToNameObservable = async (
+export const createRoomToNameObservable = (
   state: StateContext,
   disposer: Disposer
-): Promise<ObservableValue<Map<string, string>>> => {
+): ObservableValue<Map<string, string>> => {
   const roomToNameObservable: ObservableValue<Map<string, string>> =
     new ComputedObservableValue(() => {
       const roomToName = new Map<string, string>();
@@ -601,10 +602,10 @@ export const createRoomToNameObservable = async (
   return roomToNameObservable;
 };
 
-export const createRoomToAvatarObservable = async (
+export const createRoomToAvatarObservable = (
   state: StateContext,
   disposer: Disposer
-): Promise<ObservableValue<Map<string, string>>> => {
+): ObservableValue<Map<string, string>> => {
   const roomToAvatarObservable: ObservableValue<Map<string, string>> =
     new ComputedObservableValue(() => {
       const roomToAvatar = new Map<string, string>();
@@ -631,10 +632,10 @@ export const createRoomToAvatarObservable = async (
   return roomToAvatarObservable;
 };
 
-export const createRoomToHistoryVisibilityObservable = async (
+export const createRoomToHistoryVisibilityObservable = (
   state: StateContext,
   disposer: Disposer
-): Promise<ObservableValue<Map<string, HistoryVisibility>>> => {
+): ObservableValue<Map<string, HistoryVisibility>> => {
   const roomToHistoryVisibilityObservable: ObservableValue<Map<string, HistoryVisibility>> =
     new ComputedObservableValue(() => {
       const roomToHistoryVisibility = new Map<string, HistoryVisibility>();
@@ -657,10 +658,10 @@ export const createRoomToHistoryVisibilityObservable = async (
   return roomToHistoryVisibilityObservable;
 };
 
-export const createRoomToJoinRuleObservable = async (
+export const createRoomToJoinRuleObservable = (
   state: StateContext,
   disposer: Disposer
-): Promise<ObservableValue<Map<string, JoinRule>>> => {
+): ObservableValue<Map<string, JoinRule>> => {
   const roomToJoinRuleObservable: ObservableValue<Map<string, JoinRule>> =
     new ComputedObservableValue(() => {
       const roomToJoinRule = new Map<string, JoinRule>();
@@ -687,6 +688,32 @@ export const createRoomToJoinRuleObservable = async (
 
   disposer.collect(roomToJoinRuleObservable);
   return roomToJoinRuleObservable;
+};
+
+export const createRoomToTypeObservable = (
+  state: StateContext,
+  disposer: Disposer
+): ObservableValue<Map<string, string | undefined>> => {
+  const roomToTypeObservable: ObservableValue<Map<string, string | undefined>> =
+    new ComputedObservableValue(() => {
+      const roomToJoinRule = new Map<string, string | undefined>();
+
+      const addType = (obj: RoomStateObject) => {
+        const { content } = obj.event;
+        const type = ObjectReader.string(content, 'type');
+        roomToJoinRule.set(obj.roomId, type);
+      };
+
+      state.join.create.read.forEach(addType);
+      state.invite.create.read.forEach(addType);
+      state.knock.create.read.forEach(addType);
+      state.leave.create.read.forEach(addType);
+
+      return roomToJoinRule;
+    }, [state.join.create, state.invite.create, state.knock.create, state.leave.create]);
+
+  disposer.collect(roomToTypeObservable);
+  return roomToTypeObservable;
 };
 
 export const createRoomToLatestEventObservable = async (

@@ -13,7 +13,7 @@ export type LocalRoomSummary = {
   avatarUrl?: string;
   canonicalAlias?: string;
   memberCount?: number;
-  space?: boolean;
+  roomType?: string;
   joinRule?: JoinRule;
 };
 export const useLocalRoomSummary = (roomId: string): LocalRoomSummary => {
@@ -25,7 +25,7 @@ export const useLocalRoomSummary = (roomId: string): LocalRoomSummary => {
   const roomToAlias = useObservableValue(ct.roomToAlias);
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
   const roomToSummary = useObservableValue(ct.roomToSummary);
-  const spaceRooms = useObservableValue(ct.spaceRooms);
+  const roomToType = useObservableValue(ct.roomToType);
 
   return {
     roomId,
@@ -34,7 +34,7 @@ export const useLocalRoomSummary = (roomId: string): LocalRoomSummary => {
     avatarUrl: getRoomAvatar(roomId),
     canonicalAlias: roomToAlias.get(roomId),
     memberCount: roomToSummary.get(roomId)?.['m.joined_member_count'],
-    space: spaceRooms.has(roomId),
+    roomType: roomToType.get(roomId),
     joinRule: roomToJoinRule.get(roomId),
   };
 };
