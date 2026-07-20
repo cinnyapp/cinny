@@ -380,6 +380,8 @@ export const createRoomContext = async (
             }
           });
         }
+
+        roomToCreators.set(obj.roomId, creators);
       });
 
       return roomToCreators;
@@ -706,7 +708,7 @@ export const createRoomToHistoryVisibilityObservable = (
       state.join.historyVisibility.read.forEach(addHistoryVisibility);
 
       return roomToHistoryVisibility;
-    }, [state.join.joinRules]);
+    }, [state.join.historyVisibility]);
 
   disposer.collect(roomToHistoryVisibilityObservable);
   return roomToHistoryVisibilityObservable;
