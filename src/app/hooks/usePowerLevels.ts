@@ -6,6 +6,7 @@ import { StateEvent, StateEventType } from '../../types/matrix/room';
 import { getJoinRoomStateId, JoinRoomStateObject } from '../../client/storage/collections';
 import { useClient } from './useClient';
 import { useObservableValuePromise } from './useObservableValue';
+import { ClientContext } from '../../client/context';
 
 export type PowerLevelActions = 'invite' | 'redact' | 'kick' | 'ban' | 'historical';
 export type PowerLevelNotificationsAction = 'room';
@@ -81,14 +82,14 @@ export function usePowerLevelsState(
   return useObservableValuePromise(eventObservablePromise);
 }
 
-function parsePowerLevels(eventObj?: JoinRoomStateObject): IPowerLevels {
+export function getPowerLevels(eventObj?: JoinRoomStateObject): IPowerLevels {
   const content: IPowerLevels | undefined = eventObj?.event.content;
 
   return !content ? DEFAULT_POWER_LEVELS : fillMissingPowers(content);
 }
 
 export function usePowerLevels(eventObj: JoinRoomStateObject | undefined): IPowerLevels {
-  const powerLevels: IPowerLevels = useMemo(() => parsePowerLevels(eventObj), [eventObj]);
+  const powerLevels: IPowerLevels = useMemo(() => getPowerLevels(eventObj), [eventObj]);
 
   return powerLevels;
 }
@@ -114,12 +115,11 @@ export const useRoomsPowerLevels = (rooms: string[]): Map<string, IPowerLevels> 
   const roomToPowerLevels: Map<string, IPowerLevels> = useMemo(() => {
     const rToP = new Map<string, IPowerLevels>();
 
-    console.log(plEventsResult.value?.find((v) => v.roomId === '!KqyBSJuhpIHbWaROMB:kde.org'));
     rooms.forEach((roomId) => {
       const evtObj = plEventsResult.value?.find(
         (o) => o.roomId === roomId && o.event.state_key === ''
       );
-      rToP.set(roomId, parsePowerLevels(evtObj));
+      rToP.set(roomId, getPowerLevels(evtObj));
     });
 
     return rToP;

@@ -29,16 +29,14 @@ import React, {
 } from 'react';
 import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Room } from 'matrix-js-sdk';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { stopPropagation } from '../../utils/keyboard';
 import { useDirects, useRooms, useSpaces } from '../../state/hooks/roomList';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { mDirectAtom } from '../../state/mDirectList';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
 import { VirtualTile } from '../../components/virtualizer';
-import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { nameInitials } from '../../utils/common';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
@@ -54,6 +52,13 @@ import { StateEvent } from '../../../types/matrix/room';
 import { getViaServers } from '../../plugins/via-servers';
 import { rateLimitedActions } from '../../utils/matrix';
 import { useAlive } from '../../hooks/useAlive';
+import { useClient } from '../../hooks/useClient';
+import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
+import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
+import { getJoinRoomStateId } from '../../../client/storage/collections';
+import { getPowerLevels } from '../../hooks/usePowerLevels';
+import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 const SEARCH_OPTS: UseAsyncSearchOptions = {
   limit: 500,
@@ -71,33 +76,34 @@ type AddExistingModalProps = {
   requestClose: () => void;
 };
 export function AddExistingModal({ parentId, space, requestClose }: AddExistingModalProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const alive = useAlive();
 
   const mDirects = useAtomValue(mDirectAtom);
-  const spaces = useSpaces(mx, allRoomsAtom);
-  const rooms = useRooms(mx, allRoomsAtom, mDirects);
-  const directs = useDirects(mx, allRoomsAtom, mDirects);
+  const spaces = useSpaces(ct, allRoomsAtom);
+  const rooms = useRooms(ct, allRoomsAtom, mDirects);
+  const directs = useDirects(ct, allRoomsAtom, mDirects);
   const roomIdToParents = useAtomValue(roomToParentsAtom);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [selected, setSelected] = useState<string[]>([]);
+  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(ct.rooms.join.read);
+  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
 
-  const allRoomsSet = useAllJoinedRoomsSet();
-  const getRoom = useGetRoom(allRoomsSet);
+  const [selected, setSelected] = useState<string[]>([]);
 
   const allItems: string[] = useMemo(() => {
     const rIds = space ? [...spaces] : [...rooms, ...directs];
 
     return rIds
       .filter((rId) => rId !== parentId && !roomIdToParents.get(rId)?.has(parentId))
-      .sort(factoryRoomIdByAtoZ(mx));
-  }, [spaces, rooms, directs, space, parentId, roomIdToParents, mx]);
+      .sort(factoryRoomIdByAtoZ(getRoomName));
+  }, [spaces, rooms, directs, space, parentId, roomIdToParents, getRoomName]);
 
   const getRoomNameStr: SearchItemStrGetter<string> = useCallback(
-    (rId) => getRoom(rId)?.name ?? rId,
-    [getRoom]
+    (rId) => getRoomName(rId) ?? rId,
+    [getRoomName]
   );
 
   const [searchResult, searchRoom, resetSearch] = useAsyncSearch(
@@ -128,25 +134,36 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
     searchRoom(value);
   };
 
-  const [applyState, applyChanges] = useAsyncCallback<undefined, Error, [Room[]]>(
+  const [applyState, applyChanges] = useAsyncCallback<void, Error, [string[]]>(
     useCallback(
       async (selectedRooms) => {
-        await rateLimitedActions(selectedRooms, async (room) => {
-          const via = getViaServers(room);
-
-          await mx.sendStateEvent(
-            parentId,
-            StateEvent.SpaceChild as any,
-            {
-              auto_join: false,
-              suggested: false,
-              via,
-            },
-            room.roomId
+        await rateLimitedActions(selectedRooms, async (roomId) => {
+          const creators = ct.roomToCreators.read.get(roomId);
+          const powerLevelsStateObj = await ct.storage.joinRoomState.read.get(
+            getJoinRoomStateId(roomId, StateEvent.RoomPowerLevels, '')
           );
+          const powerLevels = getPowerLevels(powerLevelsStateObj);
+          const users = (await ct.storage.joinRoomMember.read.queryIndex('roomId', roomId)).map(
+            (m) => m.userId
+          );
+          const via = getViaServers(creators, powerLevels, users);
+
+          const resp = await ct.requestAuthJSON(
+            putStateEvent({
+              pathParams: { roomId: parentId, eventType: StateEvent.SpaceChild, stateKey: roomId },
+              body: {
+                auto_join: false,
+                suggested: false,
+                via,
+              },
+            })
+          );
+
+          const [err] = await parseMatrixResp(resp);
+          return err;
         });
       },
-      [mx, parentId]
+      [ct, parentId]
     )
   );
   const applyingChanges = applyState.status === AsyncStatus.Loading;
@@ -164,8 +181,7 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
   };
 
   const handleApplyChanges = () => {
-    const selectedRooms = selected.map((rId) => getRoom(rId)).filter((room) => room !== undefined);
-    applyChanges(selectedRooms).then(() => {
+    applyChanges([...selected]).then(() => {
       if (alive()) {
         setSelected([]);
         requestClose();
@@ -253,10 +269,11 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
                     >
                       {vItems.map((vItem) => {
                         const roomId = items[vItem.index];
-                        const room = getRoom(roomId);
-                        if (!room) return null;
                         const selectedItem = selected?.includes(roomId);
-                        const dm = mDirects.has(room.roomId);
+                        const dm = mDirects.has(roomId);
+
+                        const roomName = getRoomName(roomId) ?? 'Unknown';
+                        const roomAvatar = getRoomAvatar(roomId);
 
                         return (
                           <VirtualTile
@@ -275,26 +292,30 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
                               aria-pressed={selectedItem}
                               before={
                                 <Avatar size="200" radii={dm ? '400' : '300'}>
-                                  {dm || room.isSpaceRoom() ? (
+                                  {dm || ct.spaceRooms.read.has(roomId) ? (
                                     <RoomAvatar
-                                      roomId={room.roomId}
+                                      roomId={roomId}
                                       src={
-                                        dm
-                                          ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)
-                                          : getRoomAvatarUrl(mx, room, 96, useAuthentication)
+                                        roomAvatar
+                                          ? mxcToHttp(
+                                              ct.session.baseUrl,
+                                              roomAvatar,
+                                              useAuthentication
+                                            ).thumbnail({ width: 96, height: 96, method: 'crop' })
+                                          : undefined
                                       }
-                                      alt={room.name}
+                                      alt={roomName}
                                       renderFallback={() => (
                                         <Text as="span" size="H6">
-                                          {nameInitials(room.name)}
+                                          {nameInitials(roomName)}
                                         </Text>
                                       )}
                                     />
                                   ) : (
                                     <RoomIcon
                                       size="200"
-                                      joinRule={room.getJoinRule()}
-                                      roomType={room.getType()}
+                                      joinRule={ct.roomToJoinRule.read.get(roomId)}
+                                      roomType={ct.roomToType.read.get(roomId)}
                                     />
                                   )}
                                 </Avatar>
@@ -304,8 +325,8 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
                               <Box grow="Yes">
                                 <Text truncate size="T400">
                                   {queryHighlighRegex
-                                    ? highlightText(queryHighlighRegex, [room.name])
-                                    : room.name}
+                                    ? highlightText(queryHighlighRegex, [roomName])
+                                    : roomName}
                                 </Text>
                               </Box>
                             </MenuItem>

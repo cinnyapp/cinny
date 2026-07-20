@@ -14,7 +14,6 @@ import {
   Text,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
 import { SpaceProvider } from '../../hooks/useSpace';
 import { CreateRoomForm } from './CreateRoom';
 import {
@@ -32,12 +31,8 @@ function CreateRoomModal({ state }: CreateRoomModalProps) {
   const { spaceId, type } = state;
   const closeDialog = useCloseCreateRoomModal();
 
-  const allJoinedRooms = useAllJoinedRoomsSet();
-  const getRoom = useGetRoom(allJoinedRooms);
-  const space = spaceId ? getRoom(spaceId) : undefined;
-
   return (
-    <SpaceProvider value={space ?? null}>
+    <SpaceProvider value={spaceId ?? null}>
       <Overlay open backdrop={<OverlayBackdrop />}>
         <OverlayCenter>
           <FocusTrap
@@ -77,7 +72,7 @@ function CreateRoomModal({ state }: CreateRoomModalProps) {
                     direction="Column"
                     gap="500"
                   >
-                    <CreateRoomForm space={space} onCreate={closeDialog} defaultType={type} />
+                    <CreateRoomForm spaceId={spaceId} onCreate={closeDialog} defaultType={type} />
                   </Box>
                 </Scroll>
               </Box>
