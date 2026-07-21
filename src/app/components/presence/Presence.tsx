@@ -23,10 +23,9 @@ const PresenceToColor: Record<Presence, MainColor> = {
 
 type PresenceBadgeProps = {
   presence: Presence;
-  status?: string;
   size?: '200' | '300' | '400' | '500';
 };
-export function PresenceBadge({ presence, status, size }: PresenceBadgeProps) {
+export function PresenceBadge({ presence, size }: PresenceBadgeProps) {
   const label = usePresenceLabel();
   const badgeLabelId = useId();
 
@@ -40,8 +39,6 @@ export function PresenceBadge({ presence, status, size }: PresenceBadgeProps) {
         <Tooltip id={badgeLabelId}>
           <Box style={{ maxWidth: toRem(250) }} alignItems="Baseline" gap="100">
             <Text size="L400">{label[presence]}</Text>
-            {status && <Text size="T200">•</Text>}
-            {status && <Text size="T200">{status}</Text>}
           </Box>
         </Tooltip>
       }

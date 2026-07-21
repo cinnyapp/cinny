@@ -30,6 +30,8 @@ type UserHeroProps = {
 export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
   const [viewAvatar, setViewAvatar] = useState<string>();
 
+  const { status } = presence ?? {};
+
   return (
     <Box direction="Column" className={css.UserHero}>
       <div
@@ -46,9 +48,7 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
       <div className={css.UserHeroAvatarContainer}>
         <AvatarPresence
           className={css.UserAvatarContainer}
-          badge={
-            presence && <PresenceBadge presence={presence.presence} status={presence.status} />
-          }
+          badge={presence && <PresenceBadge presence={presence.presence} />}
         >
           <Avatar
             as={avatarUrl ? 'button' : 'div'}
@@ -65,6 +65,15 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
             />
           </Avatar>
         </AvatarPresence>
+        {status && (
+          <div className={css.UserHeroStatus}>
+            <div className={css.UserHeroStatusContent}>
+              <Text className={classNames(BreakWord, LineClamp3)} size="T200">
+                {status}
+              </Text>
+            </div>
+          </div>
+        )}
         {viewAvatar && (
           <Overlay open backdrop={<OverlayBackdrop />}>
             <OverlayCenter>

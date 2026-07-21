@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css';
+import { keyframes, style } from '@vanilla-extract/css';
 import { color, config, toRem } from 'folds';
 
 export const UserHeader = style({
@@ -51,4 +51,54 @@ export const UserHeroAvatarImg = style({
       filter: 'brightness(0.5)',
     },
   },
+});
+
+const StatusAnime = keyframes({
+  '0%': {
+    transform: 'translateY(2px)',
+  },
+  '100%': {
+    transform: 'translateY(0)',
+  },
+});
+
+export const UserHeroStatus = style({
+  position: 'absolute',
+  left: toRem(78),
+  bottom: toRem(58),
+  marginRight: config.space.S100,
+
+  animation: `${StatusAnime} 100ms`,
+
+  selectors: {
+    '&::before, &::after': {
+      content: '',
+      position: 'absolute',
+      left: toRem(5),
+      bottom: toRem(-4),
+
+      width: toRem(10),
+      height: toRem(10),
+
+      background: color.Surface.Container,
+      borderRadius: 999,
+      transform: 'rotate(45deg)',
+    },
+    '&::after': {
+      left: toRem(5),
+      bottom: toRem(-10),
+
+      width: toRem(5),
+      height: toRem(5),
+    },
+  },
+});
+
+export const UserHeroStatusContent = style({
+  position: 'relative',
+  zIndex: 1,
+  padding: `${config.space.S100} ${config.space.S200}`,
+  backgroundColor: color.Surface.Container,
+  color: color.Surface.OnContainer,
+  borderRadius: config.radii.R500,
 });
