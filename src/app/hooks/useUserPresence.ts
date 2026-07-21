@@ -11,11 +11,11 @@ export type UserPresence = {
   lastActiveTs?: number;
 };
 
-const getUserPresence = (user?: PresenceObject): UserPresence => ({
-  presence: user?.presence ?? 'offline',
-  status: user?.content.status_msg ?? undefined,
-  active: user?.content.currently_active ?? false,
-  lastActiveTs: user?.content.last_active_ago,
+const getUserPresence = (user: PresenceObject): UserPresence => ({
+  presence: user.presence ?? 'offline',
+  status: user.content.status_msg ?? undefined,
+  active: user.content.currently_active ?? false,
+  lastActiveTs: user.content.last_active_ago,
 });
 
 export const useUserPresence = (userId: string): UserPresence | undefined => {
@@ -27,7 +27,7 @@ export const useUserPresence = (userId: string): UserPresence | undefined => {
   const presenceResult = useObservableValuePromise(presencePromise);
   const presenceObj = presenceResult.value;
 
-  return getUserPresence(presenceObj);
+  return presenceObj ? getUserPresence(presenceObj) : undefined;
 };
 
 export const usePresenceLabel = (): Record<Presence, string> =>
