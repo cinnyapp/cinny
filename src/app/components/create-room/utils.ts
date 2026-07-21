@@ -52,7 +52,7 @@ const createRoomJoinRulesState = (
       join_rule: knock ? 'knock_restricted' : 'restricted',
       allow: [
         {
-          type: [StateEventType.RoomMember],
+          type: 'm.room_membership',
           room_id: parentId,
         },
       ],
