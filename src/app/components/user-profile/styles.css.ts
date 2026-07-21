@@ -35,7 +35,6 @@ export const UserAvatarContainer = style({
   left: config.space.S400,
   top: 0,
   transform: 'translateY(-50%)',
-  backgroundColor: color.Surface.Container,
 });
 export const UserHeroAvatar = style({
   outline: `${config.borderWidth.B600} solid ${color.Surface.Container}`,

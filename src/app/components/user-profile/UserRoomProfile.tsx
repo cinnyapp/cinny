@@ -83,8 +83,6 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
     navigate(withSearchParam(getDirectCreatePath(), directSearchParam));
   };
 
-  ct.storage.presence.read.getAll().then((a) => console.log(a.filter((p) => p.content.status_msg)));
-
   return (
     <PowerLevelsContextProvider value={powerLevels}>
       <PowerLevelTagsContextProvider value={powerLevelTags}>
