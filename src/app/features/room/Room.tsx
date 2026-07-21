@@ -25,6 +25,7 @@ import { useObservableValue, useObservableValueOptionally } from '../../hooks/us
 import { useClient } from '../../hooks/useClient';
 import { ThreadView } from './thread-view';
 import { TimelineViewProvider } from './hooks/useTimeline';
+import { RoomViewHeader } from './RoomViewHeader';
 
 export function Room() {
   const { eventId } = useParams();
@@ -67,7 +68,12 @@ export function Room() {
           {timeline && (
             <Box grow="Yes">
               <TimelineViewProvider value={timeline}>
-                <RoomView key={roomId} timeline={timeline} eventId={eventId} />
+                <Box grow="Yes" direction="Column">
+                  <RoomViewHeader />
+                  <Box grow="Yes">
+                    <RoomView key={roomId} timeline={timeline} eventId={eventId} />
+                  </Box>
+                </Box>
               </TimelineViewProvider>
 
               {threadTimeline ? (
