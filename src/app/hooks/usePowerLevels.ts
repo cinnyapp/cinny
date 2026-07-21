@@ -6,7 +6,6 @@ import { StateEvent, StateEventType } from '../../types/matrix/room';
 import { getJoinRoomStateId, JoinRoomStateObject } from '../../client/storage/collections';
 import { useClient } from './useClient';
 import { useObservableValuePromise } from './useObservableValue';
-import { ClientContext } from '../../client/context';
 
 export type PowerLevelActions = 'invite' | 'redact' | 'kick' | 'ban' | 'historical';
 export type PowerLevelNotificationsAction = 'room';
@@ -243,8 +242,13 @@ export const applyPermissionPower = (
     if (typeof location.key === 'string') {
       const users = powerLevels.users ?? {};
       users[location.key] = power;
+
+      if (powerLevels.users_default === power) {
+        delete users[location.key];
+      }
       // eslint-disable-next-line no-param-reassign
       powerLevels.users = users;
+
       return powerLevels;
     }
     // eslint-disable-next-line no-param-reassign

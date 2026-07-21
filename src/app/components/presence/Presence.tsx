@@ -11,13 +11,14 @@ import {
   toRem,
 } from 'folds';
 import React, { ReactNode, useId } from 'react';
+import { Presence } from 'neurone/lib/api/types';
 import * as css from './styles.css';
-import { Presence, usePresenceLabel } from '../../hooks/useUserPresence';
+import { usePresenceLabel } from '../../hooks/useUserPresence';
 
 const PresenceToColor: Record<Presence, MainColor> = {
-  [Presence.Online]: 'Success',
-  [Presence.Unavailable]: 'Warning',
-  [Presence.Offline]: 'Secondary',
+  online: 'Success',
+  unavailable: 'Warning',
+  offline: 'Secondary',
 };
 
 type PresenceBadgeProps = {
@@ -51,7 +52,7 @@ export function PresenceBadge({ presence, status, size }: PresenceBadgeProps) {
           ref={triggerRef}
           size={size}
           variant={PresenceToColor[presence]}
-          fill={presence === Presence.Offline ? 'Soft' : 'Solid'}
+          fill={presence === 'offline' ? 'Soft' : 'Solid'}
           radii="Pill"
         />
       )}

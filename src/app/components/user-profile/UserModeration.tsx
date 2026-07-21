@@ -1,14 +1,16 @@
 import { Box, Button, color, config, Icon, Icons, Spinner, Text, Input } from 'folds';
 import React, { useCallback, useRef } from 'react';
+import { postBan, postInvite, postKick, postUnban } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { useRoom } from '../../hooks/useRoom';
 import { CutoutCard } from '../cutout-card';
 import { SettingTile } from '../setting-tile';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { BreakWord } from '../../styles/Text.css';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { timeDayMonYear, timeHourMinute } from '../../utils/time';
+import { useClient } from '../../hooks/useClient';
 
 type UserKickAlertProps = {
   reason?: string;
@@ -64,18 +66,28 @@ type UserBanAlertProps = {
   ts?: number;
 };
 export function UserBanAlert({ userId, reason, canUnban, bannedBy, ts }: UserBanAlertProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
   const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
 
   const time = ts ? timeHourMinute(ts, hour24Clock) : undefined;
   const date = ts ? timeDayMonYear(ts, dateFormatString) : undefined;
 
-  const [unbanState, unban] = useAsyncCallback<undefined, Error, []>(
+  const [unbanState, unban] = useAsyncCallback<void, Error, []>(
     useCallback(async () => {
-      await mx.unban(room.roomId, userId);
-    }, [mx, room, userId])
+      const resp = await ct.requestAuthJSON(
+        postUnban({
+          pathParams: { roomId },
+          body: { user_id: userId },
+        })
+      );
+
+      const [err] = await parseMatrixResp(resp);
+      if (err) {
+        throw new Error(err.data.error ?? 'Unknown error.');
+      }
+    }, [ct, roomId, userId])
   );
   const banning = unbanState.status === AsyncStatus.Loading;
   const error = unbanState.status === AsyncStatus.Error;
@@ -139,18 +151,25 @@ type UserInviteAlertProps = {
   ts?: number;
 };
 export function UserInviteAlert({ userId, reason, canKick, invitedBy, ts }: UserInviteAlertProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
   const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
 
   const time = ts ? timeHourMinute(ts, hour24Clock) : undefined;
   const date = ts ? timeDayMonYear(ts, dateFormatString) : undefined;
 
-  const [kickState, kick] = useAsyncCallback<undefined, Error, []>(
+  const [kickState, kick] = useAsyncCallback<void, Error, []>(
     useCallback(async () => {
-      await mx.kick(room.roomId, userId);
-    }, [mx, room, userId])
+      const resp = await ct.requestAuthJSON(
+        postKick({
+          pathParams: { roomId },
+          body: { user_id: userId },
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error);
+    }, [ct, roomId, userId])
   );
   const kicking = kickState.status === AsyncStatus.Loading;
   const error = kickState.status === AsyncStatus.Error;
@@ -215,8 +234,8 @@ type UserModerationProps = {
   canInvite: boolean;
 };
 export function UserModeration({ userId, canKick, canBan, canInvite }: UserModerationProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
   const reasonInputRef = useRef<HTMLInputElement>(null);
 
   const getReason = useCallback((): string | undefined => {
@@ -227,22 +246,43 @@ export function UserModeration({ userId, canKick, canBan, canInvite }: UserModer
     return reason;
   }, []);
 
-  const [kickState, kick] = useAsyncCallback<undefined, Error, []>(
+  const [kickState, kick] = useAsyncCallback<void, Error, []>(
     useCallback(async () => {
-      await mx.kick(room.roomId, userId, getReason());
-    }, [mx, room, userId, getReason])
+      const resp = await ct.requestAuthJSON(
+        postKick({
+          pathParams: { roomId },
+          body: { user_id: userId, reason: getReason() },
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error);
+    }, [ct, roomId, userId, getReason])
   );
 
-  const [banState, ban] = useAsyncCallback<undefined, Error, []>(
+  const [banState, ban] = useAsyncCallback<void, Error, []>(
     useCallback(async () => {
-      await mx.ban(room.roomId, userId, getReason());
-    }, [mx, room, userId, getReason])
+      const resp = await ct.requestAuthJSON(
+        postBan({
+          pathParams: { roomId },
+          body: { user_id: userId, reason: getReason() },
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error);
+    }, [ct, roomId, userId, getReason])
   );
 
-  const [inviteState, invite] = useAsyncCallback<undefined, Error, []>(
+  const [inviteState, invite] = useAsyncCallback<void, Error, []>(
     useCallback(async () => {
-      await mx.invite(room.roomId, userId, getReason());
-    }, [mx, room, userId, getReason])
+      const resp = await ct.requestAuthJSON(
+        postInvite({
+          pathParams: { roomId },
+          body: { user_id: userId, reason: getReason() },
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error);
+    }, [ct, roomId, userId, getReason])
   );
 
   const disabled =

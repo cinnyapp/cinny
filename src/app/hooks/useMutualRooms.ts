@@ -1,16 +1,15 @@
 import { useCallback } from 'react';
-import { MatrixClient, Method } from 'matrix-js-sdk';
-import { useMatrixClient } from './useMatrixClient';
+import { withSearchParams } from 'neurone/lib/api/utils';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
+import { ClientContext } from '../../client/context';
 import { AsyncState, useAsyncCallbackValue } from './useAsyncCallback';
 import { useUnstableFeatureSupport, useSpecVersions } from './useSpecVersions';
+import { useClient } from './useClient';
 
 export const useUnstableMutualRoomsSupport = (): boolean => {
   const checkSupport = useUnstableFeatureSupport();
 
-  const supported =
-    checkSupport('uk.half-shot.msc2666') ||
-    checkSupport('uk.half-shot.msc2666.mutual_rooms') ||
-    checkSupport('uk.half-shot.msc2666.query_mutual_rooms');
+  const supported = checkSupport('uk.half-shot.msc2666.query_mutual_rooms');
 
   return !!supported;
 };
@@ -31,24 +30,33 @@ type MutualRoomsOK = {
   count: number;
 };
 
-const fetchAllMutualRooms = async (mx: MatrixClient, userId: string): Promise<string[]> => {
+const fetchAllMutualRooms = async (
+  ct: ClientContext,
+  userId: string,
+  unstable?: boolean
+): Promise<string[]> => {
   const mutualRooms: Set<string> = new Set();
 
   let nextBatch: string | undefined;
   do {
     // eslint-disable-next-line no-await-in-loop
-    const result = await mx.http.authedRequest<MutualRoomsOK>(
-      Method.Get,
-      '/mutual_rooms',
-      {
-        user_id: userId,
-        from: nextBatch,
-      },
-      undefined,
-      {
-        prefix: '/_matrix/client/v1',
-      }
-    );
+    const resp = await ct.requestAuthJSON({
+      method: 'GET',
+      path: withSearchParams(
+        unstable
+          ? '/_matrix/client/unstable/uk.half-shot.msc2666/user/mutual_rooms'
+          : '/_matrix/client/v1/mutual_rooms',
+        {
+          user_id: userId,
+          from: nextBatch,
+        }
+      ),
+      requireAuthentication: true,
+    });
+    // eslint-disable-next-line no-await-in-loop
+    const [err, result] = await parseMatrixResp<MutualRoomsOK>(resp);
+    if (err) throw new Error(printMatrixError(err));
+
     result.joined.forEach((r) => mutualRooms.add(r));
     nextBatch = result.next_batch;
   } while (typeof nextBatch === 'string');
@@ -57,17 +65,19 @@ const fetchAllMutualRooms = async (mx: MatrixClient, userId: string): Promise<st
 };
 
 export const useMutualRooms = (userId: string): AsyncState<string[], unknown> => {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
   const unstableSupport = useUnstableMutualRoomsSupport();
   const support = useMutualRoomsSupport();
 
   const [mutualRoomsState] = useAsyncCallbackValue(
-    useCallback(() => {
-      if (support) return fetchAllMutualRooms(mx, userId);
-      if (unstableSupport) return mx._unstable_getSharedRooms(userId);
-      return Promise.resolve([]);
-    }, [mx, userId, unstableSupport, support])
+    useCallback(async () => {
+      if (support) return fetchAllMutualRooms(ct, userId);
+      if (unstableSupport) return fetchAllMutualRooms(ct, userId, true);
+
+      const memberships = await ct.storage.joinRoomMember.read.queryIndex('userId', userId);
+      return memberships.map((membership) => membership.roomId);
+    }, [ct, userId, unstableSupport, support])
   );
 
   return mutualRoomsState;

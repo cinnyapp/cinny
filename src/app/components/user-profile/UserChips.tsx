@@ -2,7 +2,6 @@ import React, { MouseEventHandler, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
-import { Room } from 'matrix-js-sdk';
 import {
   PopOut,
   Menu,
@@ -20,7 +19,7 @@ import {
   Scroll,
   Avatar,
 } from 'folds';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
 import { getMxIdServer } from '../../utils/matrix';
 import { useCloseUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { stopPropagation } from '../../utils/keyboard';
@@ -28,27 +27,27 @@ import { copyToClipboard } from '../../utils/dom';
 import { getExploreServerPath } from '../../pages/pathUtils';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { factoryRoomIdByAtoZ } from '../../utils/sort';
-import {
-  useMutualRooms,
-  useMutualRoomsSupport,
-  useUnstableMutualRoomsSupport,
-} from '../../hooks/useMutualRooms';
+import { useMutualRooms } from '../../hooks/useMutualRooms';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useDirectRooms } from '../../pages/client/direct/useDirectRooms';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
 import { RoomAvatar, RoomIcon } from '../room-avatar';
-import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
 import { nameInitials } from '../../utils/common';
 import { getMatrixToUser } from '../../plugins/matrix-to';
 import { useTimeoutToggle } from '../../hooks/useTimeoutToggle';
-import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
+import { getIgnoredUsersContent, useIgnoredUsers } from '../../hooks/useIgnoredUsers';
 import { CutoutCard } from '../cutout-card';
 import { SettingTile } from '../setting-tile';
+import { useClient } from '../../hooks/useClient';
+import { AccountDataType } from '../../../types/matrix/accountData';
+import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
+import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
+import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 export function ServerChip({ server }: { server: string }) {
-  const mx = useMatrixClient();
-  const myServer = getMxIdServer(mx.getSafeUserId());
+  const ct = useClient();
+  const myServer = getMxIdServer(ct.session.userId);
   const navigate = useNavigate();
   const closeProfile = useCloseUserRoomProfile();
   const [copied, setCopied] = useTimeoutToggle();
@@ -229,24 +228,26 @@ export function ShareChip({ userId }: { userId: string }) {
 }
 
 type MutualRoomsData = {
-  rooms: Room[];
-  spaces: Room[];
-  directs: Room[];
+  rooms: string[];
+  spaces: string[];
+  directs: string[];
 };
 
+const EMPTY_LIST: string[] = [];
 export function MutualRoomsChip({ userId }: { userId: string }) {
-  const mx = useMatrixClient();
-  const mutualRoomSupported = useMutualRoomsSupport();
-  const mutualRoomUnstable = useUnstableMutualRoomsSupport();
+  const ct = useClient();
   const mutualRoomsState = useMutualRooms(userId);
-  console.log(mutualRoomSupported, mutualRoomsState);
+
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const closeUserRoomProfile = useCloseUserRoomProfile();
   const directs = useDirectRooms();
   const useAuthentication = useMediaAuthentication();
 
-  const allJoinedRooms = useAllJoinedRoomsSet();
-  const getRoom = useGetRoom(allJoinedRooms);
+  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(
+    mutualRoomsState.status === AsyncStatus.Success ? mutualRoomsState.data : EMPTY_LIST
+  );
+  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
 
   const [cords, setCords] = useState<RectCords>();
 
@@ -264,36 +265,33 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
     };
 
     if (mutualRoomsState.status === AsyncStatus.Success) {
-      const mutualRooms = mutualRoomsState.data
-        .sort(factoryRoomIdByAtoZ(mx))
-        .map(getRoom)
-        .filter((room) => !!room);
-      mutualRooms.forEach((room) => {
-        if (room.isSpaceRoom()) {
-          data.spaces.push(room);
+      const mutualRooms = mutualRoomsState.data.sort(factoryRoomIdByAtoZ(getRoomName));
+
+      mutualRooms.forEach((roomId) => {
+        if (ct.spaceRooms.read.has(roomId)) {
+          data.spaces.push(roomId);
           return;
         }
-        if (directs.includes(room.roomId)) {
-          data.directs.push(room);
+        if (directs.includes(roomId)) {
+          data.directs.push(roomId);
           return;
         }
-        data.rooms.push(room);
+        data.rooms.push(roomId);
       });
     }
     return data;
-  }, [mutualRoomsState, getRoom, directs, mx]);
+  }, [mutualRoomsState, getRoomName, directs, ct]);
 
-  if (
-    userId === mx.getSafeUserId() ||
-    (!mutualRoomSupported && !mutualRoomUnstable) ||
-    mutualRoomsState.status === AsyncStatus.Error
-  ) {
+  if (userId === ct.session.userId || mutualRoomsState.status === AsyncStatus.Error) {
     return null;
   }
 
-  const renderItem = (room: Room) => {
-    const { roomId } = room;
+  const renderItem = (roomId: string) => {
     const dm = directs.includes(roomId);
+    const space = ct.spaceRooms.read.has(roomId);
+
+    const avatarUrl = getRoomAvatar(roomId);
+    const roomName = getRoomName(roomId) ?? 'Unknown';
 
     return (
       <MenuItem
@@ -304,7 +302,7 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
         radii="300"
         style={{ paddingLeft: config.space.S100 }}
         onClick={() => {
-          if (room.isSpaceRoom()) {
+          if (space) {
             navigateSpace(roomId);
           } else {
             navigateRoom(roomId);
@@ -313,29 +311,37 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
         }}
         before={
           <Avatar size="200" radii={dm ? '400' : '300'}>
-            {dm || room.isSpaceRoom() ? (
+            {dm || space ? (
               <RoomAvatar
-                roomId={room.roomId}
+                roomId={roomId}
                 src={
-                  dm
-                    ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)
-                    : getRoomAvatarUrl(mx, room, 96, useAuthentication)
+                  avatarUrl
+                    ? mxcToHttp(ct.session.baseUrl, avatarUrl, useAuthentication).thumbnail({
+                        width: 96,
+                        height: 96,
+                        method: 'crop',
+                      })
+                    : undefined
                 }
-                alt={room.name}
+                alt={roomName}
                 renderFallback={() => (
                   <Text as="span" size="H6">
-                    {nameInitials(room.name)}
+                    {nameInitials(roomName)}
                   </Text>
                 )}
               />
             ) : (
-              <RoomIcon size="100" joinRule={room.getJoinRule()} roomType={room.getType()} />
+              <RoomIcon
+                size="100"
+                joinRule={ct.roomToJoinRule.read.get(roomId)}
+                roomType={ct.roomToType.read.get(roomId)}
+              />
             )}
           </Avatar>
         }
       >
         <Text size="B300" truncate>
-          {room.name}
+          {roomName}
         </Text>
       </MenuItem>
     );
@@ -443,7 +449,7 @@ export function IgnoredUserAlert() {
 }
 
 export function OptionsChip({ userId }: { userId: string }) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const [cords, setCords] = useState<RectCords>();
 
   const open: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -459,8 +465,14 @@ export function OptionsChip({ userId }: { userId: string }) {
     useCallback(async () => {
       const users = ignoredUsers.filter((u) => u !== userId);
       if (!ignored) users.push(userId);
-      await mx.setIgnoredUsers(users);
-    }, [mx, ignoredUsers, userId, ignored])
+
+      return ct.requestAuthJSON(
+        putAccountData({
+          pathParams: { userId: ct.session.userId, type: AccountDataType.IgnoredUserList },
+          body: getIgnoredUsersContent(users),
+        })
+      );
+    }, [ct, ignoredUsers, userId, ignored])
   );
   const ignoring = ignoreState.status === AsyncStatus.Loading;
 

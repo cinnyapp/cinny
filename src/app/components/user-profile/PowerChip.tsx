@@ -23,13 +23,20 @@ import {
 import React, { MouseEventHandler, useCallback, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import produce from 'immer';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { PowerColorBadge, PowerIcon } from '../power';
-import { useGetMemberPowerLevel, usePowerLevels } from '../../hooks/usePowerLevels';
-import { getPowers, usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import {
+  applyPermissionPower,
+  PermissionLocation,
+  useGetMemberPowerLevel,
+  usePowerLevelsContext,
+} from '../../hooks/usePowerLevels';
+import { getPowers, usePowerLevelTagsContext } from '../../hooks/usePowerLevelTags';
 import { stopPropagation } from '../../utils/keyboard';
-import { StateEvent } from '../../../types/matrix/room';
+import { StateEvent, StateEventType } from '../../../types/matrix/room';
 import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
 import { RoomSettingsPage } from '../../state/roomSettings';
 import { useRoom } from '../../hooks/useRoom';
@@ -40,9 +47,10 @@ import { SpaceSettingsPage } from '../../state/spaceSettings';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { BreakWord } from '../../styles/Text.css';
 import { getPowerTagIconSrc, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
+import { useClient } from '../../hooks/useClient';
+import { useRoomCreators } from '../../hooks/useRoomCreators';
 
 type SelfDemoteAlertProps = {
   power: number;
@@ -145,30 +153,29 @@ function SharedPowerAlert({ power, onCancel, onChange }: SharedPowerAlertProps) 
 }
 
 export function PowerChip({ userId }: { userId: string }) {
-  const mx = useMatrixClient();
-  const room = useRoom();
-  const space = useSpaceOptionally();
+  const ct = useClient();
+  const roomId = useRoom();
+  const spaceId = useSpaceOptionally();
   const useAuthentication = useMediaAuthentication();
   const openRoomSettings = useOpenRoomSettings();
   const openSpaceSettings = useOpenSpaceSettings();
 
-  const powerLevels = usePowerLevels(room);
-  const creators = useRoomCreators(room);
-
+  const creators = useRoomCreators(roomId);
+  const powerLevels = usePowerLevelsContext();
   const permissions = useRoomPermissions(creators, powerLevels);
   const getMemberPowerLevel = useGetMemberPowerLevel(powerLevels);
   const { hasMorePower } = useMemberPowerCompare(creators, powerLevels);
 
-  const powerLevelTags = usePowerLevelTags(room, powerLevels);
-  const getMemberPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
+  const powerLevelTags = usePowerLevelTagsContext();
+  const getMemberPowerTag = useGetMemberPowerTag(creators, powerLevels);
 
-  const myUserId = mx.getSafeUserId();
+  const myUserId = ct.session.userId;
   const canChangePowers =
     permissions.stateEvent(StateEvent.RoomPowerLevels, myUserId) &&
     (myUserId === userId ? true : hasMorePower(myUserId, userId));
 
   const tag = getMemberPowerTag(userId);
-  const tagIconSrc = tag.icon && getPowerTagIconSrc(mx, useAuthentication, tag.icon);
+  const tagIconSrc = tag.icon && getPowerTagIconSrc(ct, useAuthentication, tag.icon);
 
   const [cords, setCords] = useState<RectCords>();
 
@@ -178,12 +185,28 @@ export function PowerChip({ userId }: { userId: string }) {
 
   const close = () => setCords(undefined);
 
-  const [powerState, changePower] = useAsyncCallback<undefined, Error, [number]>(
+  const [powerState, changePower] = useAsyncCallback<void, Error, [number]>(
     useCallback(
       async (power: number) => {
-        await mx.setPowerLevel(room.roomId, userId, power);
+        const editedPowerLevels = produce(powerLevels, (draftPowerLevels) => {
+          const location: PermissionLocation = {
+            user: true,
+            key: userId,
+          };
+          applyPermissionPower(draftPowerLevels, location, power);
+
+          return draftPowerLevels;
+        });
+        const resp = await ct.requestAuthJSON(
+          putStateEvent({
+            pathParams: { roomId, eventType: StateEventType.RoomPowerLevels, stateKey: '' },
+            body: editedPowerLevels,
+          })
+        );
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(printMatrixError(err));
       },
-      [mx, userId, room]
+      [ct, userId, roomId, powerLevels]
     )
   );
   const changing = powerState.status === AsyncStatus.Loading;
@@ -196,11 +219,11 @@ export function PowerChip({ userId }: { userId: string }) {
     if (!canChangePowers) return;
     if (power === getMemberPowerLevel(userId)) return;
 
-    if (userId === mx.getSafeUserId()) {
+    if (userId === myUserId) {
       setSelfDemote(power);
       return;
     }
-    if (!creators.has(myUserId) && power === getMemberPowerLevel(myUserId)) {
+    if (!creators?.has(myUserId) && power === getMemberPowerLevel(myUserId)) {
       setSharedPower(power);
       return;
     }
@@ -252,10 +275,10 @@ export function PowerChip({ userId }: { userId: string }) {
                 {getPowers(powerLevelTags).map((power) => {
                   const powerTag = powerLevelTags[power];
                   const powerTagIconSrc =
-                    powerTag.icon && getPowerTagIconSrc(mx, useAuthentication, powerTag.icon);
+                    powerTag.icon && getPowerTagIconSrc(ct, useAuthentication, powerTag.icon);
 
                   const selected = getMemberPowerLevel(userId) === power;
-                  const canAssignPower = creators.has(myUserId)
+                  const canAssignPower = creators?.has(myUserId)
                     ? true
                     : power <= getMemberPowerLevel(myUserId);
 
@@ -293,18 +316,10 @@ export function PowerChip({ userId }: { userId: string }) {
                   size="300"
                   radii="300"
                   onClick={() => {
-                    if (room.isSpaceRoom()) {
-                      openSpaceSettings(
-                        room.roomId,
-                        space?.roomId,
-                        SpaceSettingsPage.PermissionsPage
-                      );
+                    if (ct.spaceRooms.read.has(roomId)) {
+                      openSpaceSettings(roomId, spaceId, SpaceSettingsPage.PermissionsPage);
                     } else {
-                      openRoomSettings(
-                        room.roomId,
-                        space?.roomId,
-                        RoomSettingsPage.PermissionsPage
-                      );
+                      openRoomSettings(roomId, spaceId, RoomSettingsPage.PermissionsPage);
                     }
                     close();
                   }}

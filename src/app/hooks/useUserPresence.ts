@@ -1,12 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { User, UserEvent, UserEventHandlerMap } from 'matrix-js-sdk';
-import { useMatrixClient } from './useMatrixClient';
-
-export enum Presence {
-  Online = 'online',
-  Unavailable = 'unavailable',
-  Offline = 'offline',
-}
+import { useMemo } from 'react';
+import { Presence } from 'neurone/lib/api/types';
+import { useClient } from './useClient';
+import { useObservableValuePromise } from './useObservableValue';
+import { PresenceObject } from '../../client/storage/collections';
 
 export type UserPresence = {
   presence: Presence;
@@ -15,44 +11,31 @@ export type UserPresence = {
   lastActiveTs?: number;
 };
 
-const getUserPresence = (user: User): UserPresence => ({
-  presence: user.presence as Presence,
-  status: user.presenceStatusMsg,
-  active: user.currentlyActive,
-  lastActiveTs: user.getLastActiveTs(),
+const getUserPresence = (user?: PresenceObject): UserPresence => ({
+  presence: user?.presence ?? 'offline',
+  status: user?.content.status_msg ?? undefined,
+  active: user?.content.currently_active ?? false,
+  lastActiveTs: user?.content.last_active_ago,
 });
 
 export const useUserPresence = (userId: string): UserPresence | undefined => {
-  const mx = useMatrixClient();
-  const user = mx.getUser(userId);
+  const ct = useClient();
+  const presencePromise = useMemo(
+    () => ct.storage.presence.observableRead.get(userId),
+    [ct, userId]
+  );
+  const presenceResult = useObservableValuePromise(presencePromise);
+  const presenceObj = presenceResult.value;
 
-  const [presence, setPresence] = useState(() => (user ? getUserPresence(user) : undefined));
-
-  useEffect(() => {
-    const updatePresence: UserEventHandlerMap[UserEvent.Presence] = (event, u) => {
-      if (u.userId === user?.userId) {
-        setPresence(getUserPresence(user));
-      }
-    };
-    user?.on(UserEvent.Presence, updatePresence);
-    user?.on(UserEvent.CurrentlyActive, updatePresence);
-    user?.on(UserEvent.LastPresenceTs, updatePresence);
-    return () => {
-      user?.removeListener(UserEvent.Presence, updatePresence);
-      user?.removeListener(UserEvent.CurrentlyActive, updatePresence);
-      user?.removeListener(UserEvent.LastPresenceTs, updatePresence);
-    };
-  }, [user]);
-
-  return presence;
+  return getUserPresence(presenceObj);
 };
 
 export const usePresenceLabel = (): Record<Presence, string> =>
   useMemo(
     () => ({
-      [Presence.Online]: 'Active',
-      [Presence.Unavailable]: 'Busy',
-      [Presence.Offline]: 'Away',
+      online: 'Active',
+      unavailable: 'Busy',
+      offline: 'Away',
     }),
     []
   );
