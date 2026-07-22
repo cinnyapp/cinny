@@ -70,7 +70,7 @@ export const UserHeroStatus = style({
   position: 'absolute',
   left: toRem(78),
   bottom: toRem(58),
-  marginRight: config.space.S100,
+  marginRight: config.space.S400,
 
   animation: `${StatusAnime} 100ms`,
 
@@ -105,4 +105,12 @@ export const UserHeroStatusContent = style({
   backgroundColor: color.Surface.Container,
   color: color.Surface.OnContainer,
   borderRadius: config.radii.R500,
+});
+
+export const UserActionButton = style({
+  position: 'absolute',
+  right: config.space.S400,
+  zIndex: 1,
+  transform: 'translateY(-10%)',
+  outline: `${config.borderWidth.B600} solid ${color.Surface.Container}`,
 });

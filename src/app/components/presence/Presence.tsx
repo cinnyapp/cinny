@@ -17,7 +17,7 @@ import { usePresenceLabel } from '../../hooks/useUserPresence';
 
 const PresenceToColor: Record<Presence, MainColor> = {
   online: 'Success',
-  unavailable: 'Warning',
+  unavailable: 'Critical',
   offline: 'Secondary',
 };
 

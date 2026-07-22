@@ -2,7 +2,7 @@ import { Box, Button, config, Icon, Icons, Text } from 'folds';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ObjectReader } from 'neurone/lib/utils';
-import { UserHero, UserHeroName } from './UserHero';
+import { UserHero, UserHeroAvatar, UserHeroCover, UserHeroName } from './UserHero';
 import { getMxIdServer } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import {
@@ -33,6 +33,7 @@ import {
   usePowerLevelTagsState,
 } from '../../hooks/usePowerLevelTags';
 import { useUserProfile } from '../../hooks/useUserProfile';
+import { UserActionButton } from './styles.css';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -93,35 +94,41 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
     <PowerLevelsContextProvider value={powerLevels}>
       <PowerLevelTagsContextProvider value={powerLevelTags}>
         <Box direction="Column">
-          <UserHero
-            userId={userId}
-            avatarUrl={avatarUrl}
-            bannerUrl={bannerUrl}
-            presence={presence && presence.lastActiveTs !== 0 ? presence : undefined}
-          />
+          <UserHero>
+            <UserHeroCover
+              userId={userId}
+              avatarUrl={avatarUrl}
+              bannerUrl={bannerUrl}
+              hasStatus={!!presence?.status}
+            />
+            {userId !== myUserId && (
+              <Box grow="Yes" style={{ position: 'relative' }}>
+                <Button
+                  className={UserActionButton}
+                  size="300"
+                  variant="Primary"
+                  fill="Solid"
+                  radii="300"
+                  before={<Icon size="50" src={Icons.Message} filled />}
+                  onClick={handleMessage}
+                >
+                  <Text size="B300">Message</Text>
+                </Button>
+              </Box>
+            )}
+            <UserHeroAvatar
+              userId={userId}
+              avatarUrl={avatarUrl}
+              presence={presence && presence.lastActiveTs !== 0 ? presence : undefined}
+            />
+          </UserHero>
           <Box direction="Column" gap="500" style={{ padding: config.space.S400 }}>
             <Box direction="Column" gap="400">
-              <Box gap="400" alignItems="Start">
-                <UserHeroName
-                  displayName={displayName}
-                  userId={userId}
-                  timezone={profile?.timezone}
-                />
-                {userId !== myUserId && (
-                  <Box shrink="No">
-                    <Button
-                      size="300"
-                      variant="Primary"
-                      fill="Solid"
-                      radii="300"
-                      before={<Icon size="50" src={Icons.Message} filled />}
-                      onClick={handleMessage}
-                    >
-                      <Text size="B300">Message</Text>
-                    </Button>
-                  </Box>
-                )}
-              </Box>
+              <UserHeroName
+                displayName={displayName}
+                userId={userId}
+                timezone={profile?.timezone}
+              />
               <Box alignItems="Center" gap="200" wrap="Wrap">
                 {server && <ServerChip server={server} />}
                 <ShareChip userId={userId} />
