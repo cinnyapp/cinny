@@ -35,6 +35,9 @@ export const UserAvatarContainer = style({
   left: config.space.S400,
   top: 0,
   transform: 'translateY(-50%)',
+  // backgroundcolor for transparent image
+  backgroundColor: color.Surface.Container,
+  borderRadius: config.radii.R400,
 });
 export const UserHeroAvatar = style({
   outline: `${config.borderWidth.B600} solid ${color.Surface.Container}`,
