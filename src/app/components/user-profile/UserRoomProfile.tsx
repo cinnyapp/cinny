@@ -102,7 +102,11 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
           <Box direction="Column" gap="500" style={{ padding: config.space.S400 }}>
             <Box direction="Column" gap="400">
               <Box gap="400" alignItems="Start">
-                <UserHeroName displayName={displayName} userId={userId} />
+                <UserHeroName
+                  displayName={displayName}
+                  userId={userId}
+                  timezone={profile?.timezone}
+                />
                 {userId !== myUserId && (
                   <Box shrink="No">
                     <Button
