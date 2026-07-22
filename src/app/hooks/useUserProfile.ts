@@ -7,6 +7,8 @@ import { useClient } from './useClient';
 export type UserProfile = {
   avatarUrl?: string;
   displayName?: string;
+  bannerUrl?: string;
+  timezone?: string;
 };
 export const useUserProfile = (userId: string): UserProfile | undefined => {
   const ct = useClient();
@@ -18,10 +20,19 @@ export const useUserProfile = (userId: string): UserProfile | undefined => {
       })
     );
 
-    const [, profile] = await parseMatrixResp<GetProfileOK>(response);
+    const [, profile] = await parseMatrixResp<
+      GetProfileOK & {
+        'chat.commet.profile_banner'?: string;
+        'm.banner_url'?: string;
+        'm.tz'?: string;
+      }
+    >(response);
+
     return {
       avatarUrl: profile?.avatar_url || undefined,
       displayName: profile?.displayname || undefined,
+      bannerUrl: profile?.['m.banner_url'] ?? profile?.['chat.commet.profile_banner'] ?? undefined,
+      timezone: profile?.['m.tz'] ?? undefined,
     };
   }, [ct, userId]);
 

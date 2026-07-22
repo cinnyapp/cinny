@@ -32,6 +32,7 @@ import {
   usePowerLevelTags,
   usePowerLevelTagsState,
 } from '../../hooks/usePowerLevelTags';
+import { useUserProfile } from '../../hooks/useUserProfile';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -74,6 +75,11 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
     : undefined;
 
   const presence = useUserPresence(userId);
+  const profile = useUserProfile(userId);
+
+  const bannerUrl = profile?.bannerUrl
+    ? mxcToHttp(ct.session.baseUrl, profile.bannerUrl, useAuthentication).url()
+    : avatarUrl;
 
   const handleMessage = () => {
     closeUserRoomProfile();
@@ -90,6 +96,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
           <UserHero
             userId={userId}
             avatarUrl={avatarUrl}
+            bannerUrl={bannerUrl}
             presence={presence && presence.lastActiveTs !== 0 ? presence : undefined}
           />
           <Box direction="Column" gap="500" style={{ padding: config.space.S400 }}>

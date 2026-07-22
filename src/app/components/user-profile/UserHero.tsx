@@ -27,9 +27,10 @@ import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
 type UserHeroProps = {
   userId: string;
   avatarUrl?: string;
+  bannerUrl?: string;
   presence?: UserPresence;
 };
-export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
+export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroProps) {
   const [viewAvatar, setViewAvatar] = useState<string>();
 
   const { status } = presence ?? {};
@@ -40,11 +41,19 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
         className={css.UserHeroCoverContainer}
         style={{
           backgroundColor: colorMXID(userId),
-          filter: avatarUrl ? undefined : 'brightness(50%)',
+          filter: bannerUrl && !status ? undefined : 'brightness(50%)',
         }}
       >
-        {avatarUrl && (
-          <img className={css.UserHeroCover} src={avatarUrl} alt={userId} draggable="false" />
+        {bannerUrl && (
+          <img
+            className={classNames(
+              css.UserHeroCover,
+              avatarUrl === bannerUrl && css.UserHeroCoverBlurred
+            )}
+            src={bannerUrl}
+            alt={userId}
+            draggable="false"
+          />
         )}
       </div>
       <div className={css.UserHeroAvatarContainer}>

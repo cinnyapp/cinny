@@ -15,13 +15,15 @@ export const UserHero = style({
 });
 
 export const UserHeroCoverContainer = style({
-  height: toRem(96),
+  height: toRem(113),
   overflow: 'hidden',
 });
 export const UserHeroCover = style({
   height: '100%',
   width: '100%',
   objectFit: 'cover',
+});
+export const UserHeroCoverBlurred = style({
   filter: 'blur(16px)',
   transform: 'scale(2)',
 });
