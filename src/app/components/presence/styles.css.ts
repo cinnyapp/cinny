@@ -15,7 +15,7 @@ export const AvatarPresenceBadge = style({
   zIndex: 1,
 
   display: 'flex',
-  padding: config.borderWidth.B600,
+  padding: '5%',
   backgroundColor: 'inherit',
   borderRadius: config.radii.Pill,
   overflow: 'hidden',

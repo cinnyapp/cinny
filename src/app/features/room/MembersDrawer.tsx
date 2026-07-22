@@ -62,6 +62,8 @@ import { JoinRoomMemberObject } from '../../../client/storage/collections';
 import { ClientContext } from '../../../client/context';
 import { mxcToHttp } from '../../../client/mxcToHttp';
 import { usePendingMembers } from '../../hooks/usePendingMembers';
+import { useUserPresence } from '../../hooks/useUserPresence';
+import { AvatarPresence, PresenceBadge } from '../../components/presence';
 
 type MemberDrawerHeaderProps = {
   joinedMemberCount: number;
@@ -124,6 +126,8 @@ function MemberItem({
   pressed,
   typing,
 }: MemberItemProps) {
+  const presence = useUserPresence(member.userId);
+
   const name = getName(member.userId);
   const avatarMxcUrl = getAvatar(member.userId);
   const avatarUrl = avatarMxcUrl
@@ -143,14 +147,19 @@ function MemberItem({
       radii="400"
       onClick={onClick}
       before={
-        <Avatar size="200">
-          <UserAvatar
-            userId={member.userId}
-            src={avatarUrl ?? undefined}
-            alt={name}
-            renderFallback={() => <Icon size="50" src={Icons.User} filled />}
-          />
-        </Avatar>
+        <AvatarPresence
+          variant="Background"
+          badge={presence && <PresenceBadge size="200" presence={presence.presence} />}
+        >
+          <Avatar size="200">
+            <UserAvatar
+              userId={member.userId}
+              src={avatarUrl ?? undefined}
+              alt={name}
+              renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+            />
+          </Avatar>
+        </AvatarPresence>
       }
       after={
         typing && (
@@ -160,10 +169,15 @@ function MemberItem({
         )
       }
     >
-      <Box grow="Yes">
-        <Text size="T400" truncate>
+      <Box grow="Yes" direction="Column">
+        <Text size="T300" truncate>
           {name}
         </Text>
+        {presence?.status && (
+          <Text size="T200" priority="300" truncate>
+            {presence.status}
+          </Text>
+        )}
       </Box>
     </MenuItem>
   );
