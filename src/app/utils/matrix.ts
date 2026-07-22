@@ -14,6 +14,7 @@ import {
   UploadResponse,
 } from 'matrix-js-sdk';
 import to from 'await-to-js';
+import { type Relations } from 'matrix-js-sdk/lib/models/relations';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import { getStateEvent } from './room';
@@ -172,6 +173,24 @@ export const uploadContent = async (
 };
 
 export const matrixEventByRecency = (m1: MatrixEvent, m2: MatrixEvent) => m2.getTs() - m1.getTs();
+
+/**
+ * matrix-js-sdk's `Relations.getSortedAnnotationsByKey` re-sorts reaction
+ * groups by descending event count on every add/remove, so a pill's position
+ * shifts whenever its count changes. This instead orders groups by the
+ * timestamp of their first reaction, so a reaction keeps its position once
+ * it first appears regardless of later count changes.
+ */
+export const getReactionsByFirstOccurrence = (
+  relations: Relations
+): [string | null, Set<MatrixEvent>][] => {
+  const annotations = [...(relations.getSortedAnnotationsByKey() ?? [])];
+  return annotations.sort((a, b) => {
+    const aFirstTs = Math.min(...Array.from(a[1], (ev) => ev.getTs()));
+    const bFirstTs = Math.min(...Array.from(b[1], (ev) => ev.getTs()));
+    return aFirstTs - bFirstTs;
+  });
+};
 
 export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
   ev.getSender() === senderId;
