@@ -12,6 +12,7 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
+import Linkify from 'linkify-react';
 import * as css from './styles.css';
 import { UserAvatar } from '../user-avatar';
 import colorMXID from '../../../util/colorMXID';
@@ -21,6 +22,7 @@ import { UserPresence } from '../../hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../presence';
 import { ImageViewer } from '../image-viewer';
 import { stopPropagation } from '../../utils/keyboard';
+import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
 
 type UserHeroProps = {
   userId: string;
@@ -69,7 +71,7 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
           <div className={css.UserHeroStatus}>
             <div className={css.UserHeroStatusContent}>
               <Text className={classNames(BreakWord, LineClamp3)} size="T200">
-                {status}
+                <Linkify options={LINKIFY_OPTS}>{status}</Linkify>
               </Text>
             </div>
           </div>
