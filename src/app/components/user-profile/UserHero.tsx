@@ -1,7 +1,9 @@
 import React, { ReactNode, useState } from 'react';
 import {
   Avatar,
+  Badge,
   Box,
+  config,
   Icon,
   Icons,
   Modal,
@@ -9,8 +11,6 @@ import {
   OverlayBackdrop,
   OverlayCenter,
   Text,
-  Tooltip,
-  TooltipProvider,
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
@@ -19,7 +19,7 @@ import * as css from './styles.css';
 import { UserAvatar } from '../user-avatar';
 import colorMXID from '../../../util/colorMXID';
 import { getMxIdLocalPart } from '../../utils/matrix';
-import { BreakWord, DotDivider, HoverUnderline, LineClamp3 } from '../../styles/Text.css';
+import { BreakWord, LineClamp3 } from '../../styles/Text.css';
 import { UserPresence } from '../../hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../presence';
 import { ImageViewer } from '../image-viewer';
@@ -27,6 +27,7 @@ import { stopPropagation } from '../../utils/keyboard';
 import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
+import { UserPronoun } from '../../hooks/useUserProfile';
 
 export function UserHero({ children }: { children: ReactNode }) {
   return (
@@ -139,47 +140,49 @@ export function UserTimezone({ timezone }: { timezone: string }) {
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
 
   let time: string | undefined;
+  let offset: string | undefined;
+
   try {
-    time = new Intl.DateTimeFormat('en-US', {
+    const parts = new Intl.DateTimeFormat('en-US', {
       timeZone: timezone,
       hour: '2-digit',
       minute: '2-digit',
       hour12: !hour24Clock,
-    }).format(new Date());
+      timeZoneName: 'shortOffset',
+    }).formatToParts(new Date());
+
+    time = parts
+      .filter((p) => (p.type !== 'timeZoneName' && p.type !== 'literal') || p.type === 'literal')
+      .map((p) => p.value)
+      .join('')
+      .trim();
+
+    offset = parts.find((p) => p.type === 'timeZoneName')?.value; // e.g. "GMT+5:30"
   } catch (e) {
     console.error(e);
   }
 
   return (
-    <TooltipProvider
-      position="Top"
-      offset={0}
-      tooltip={
-        <Tooltip>
-          <Text size="L400">{timezone}</Text>
-        </Tooltip>
-      }
-    >
-      {(triggerRef) => (
-        <Text as="span" ref={triggerRef} className={HoverUnderline} size="T200" priority="300">
-          {time}
-        </Text>
-      )}
-    </TooltipProvider>
+    <Box as="span" alignItems="Center" gap="100">
+      <Icon style={{ opacity: config.opacity.P300 }} size="50" src={Icons.Clock} />
+      <Text as="span" size="T200" priority="300">
+        {time} local time{offset ? ` · ${offset}` : ` · ${timezone}`}
+      </Text>
+    </Box>
   );
 }
 
 type UserHeroNameProps = {
   displayName?: string;
   userId: string;
-  timezone?: string;
+  pronouns?: UserPronoun[];
 };
-export function UserHeroName({ displayName, userId, timezone }: UserHeroNameProps) {
+export function UserHeroName({ displayName, userId, pronouns }: UserHeroNameProps) {
   const username = getMxIdLocalPart(userId);
 
   return (
     <Box grow="Yes" direction="Column" gap="100">
-      <Box alignItems="Baseline" gap="100" wrap="Wrap">
+      <Box alignItems="Center" gap="100" wrap="Wrap">
         <Text
           size="H4"
           className={classNames(BreakWord, LineClamp3)}
@@ -188,12 +191,17 @@ export function UserHeroName({ displayName, userId, timezone }: UserHeroNameProp
           {displayName ?? username ?? userId}
         </Text>
       </Box>
-      <Box alignItems="Center" gap="100" wrap="Wrap">
+      <Box alignItems="Center" gap="200" wrap="Wrap">
         <Text size="T200" className={classNames(BreakWord, LineClamp3)} title={username}>
           @{username}
         </Text>
-        {timezone && <span className={DotDivider} />}
-        {timezone && <UserTimezone timezone={timezone} />}
+        {pronouns?.map((pronoun) =>
+          pronoun.summary ? (
+            <Badge key={pronoun.summary} variant="Primary" fill="Soft" size="400">
+              <Text size="L400">{pronoun.summary}</Text>
+            </Badge>
+          ) : undefined
+        )}
       </Box>
     </Box>
   );

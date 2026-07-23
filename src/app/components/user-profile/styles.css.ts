@@ -106,11 +106,3 @@ export const UserHeroStatusContent = style({
   color: color.Surface.OnContainer,
   borderRadius: config.radii.R500,
 });
-
-export const UserActionButton = style({
-  position: 'absolute',
-  right: config.space.S400,
-  zIndex: 1,
-  transform: 'translateY(-10%)',
-  outline: `${config.borderWidth.B600} solid ${color.Surface.Container}`,
-});

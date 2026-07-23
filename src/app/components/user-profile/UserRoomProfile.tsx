@@ -2,7 +2,7 @@ import { Box, Button, config, Icon, Icons, Text } from 'folds';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ObjectReader } from 'neurone/lib/utils';
-import { UserHero, UserHeroAvatar, UserHeroCover, UserHeroName } from './UserHero';
+import { UserHero, UserHeroAvatar, UserHeroCover, UserHeroName, UserTimezone } from './UserHero';
 import { getMxIdServer } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import {
@@ -12,10 +12,10 @@ import {
 } from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
 import { useUserPresence } from '../../hooks/useUserPresence';
-import { IgnoredUserAlert, MutualRoomsChip, OptionsChip, ServerChip, ShareChip } from './UserChips';
+import { IgnoredUserAlert, MutualRoomsChip, ServerChip, ShareChip } from './UserChips';
 import { useCloseUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { PowerChip } from './PowerChip';
-import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
+import { UserInviteAlert, UserBanAlert, UserKickAlert, OptionsButton } from './UserModeration';
 import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
 import { Membership } from '../../../types/matrix/room';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
@@ -33,7 +33,6 @@ import {
   usePowerLevelTagsState,
 } from '../../hooks/usePowerLevelTags';
 import { useUserProfile } from '../../hooks/useUserProfile';
-import { UserActionButton } from './styles.css';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -101,21 +100,6 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
               bannerUrl={bannerUrl}
               hasStatus={!!presence?.status}
             />
-            {userId !== myUserId && (
-              <Box grow="Yes" style={{ position: 'relative' }}>
-                <Button
-                  className={UserActionButton}
-                  size="300"
-                  variant="Primary"
-                  fill="Solid"
-                  radii="300"
-                  before={<Icon size="50" src={Icons.Message} filled />}
-                  onClick={handleMessage}
-                >
-                  <Text size="B300">Message</Text>
-                </Button>
-              </Box>
-            )}
             <UserHeroAvatar
               userId={userId}
               avatarUrl={avatarUrl}
@@ -124,17 +108,31 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
           </UserHero>
           <Box direction="Column" gap="500" style={{ padding: config.space.S400 }}>
             <Box direction="Column" gap="400">
-              <UserHeroName
-                displayName={displayName}
-                userId={userId}
-                timezone={profile?.timezone}
-              />
+              <Box alignItems="Start" gap="200" grow="Yes">
+                <UserHeroName
+                  displayName={displayName}
+                  userId={userId}
+                  pronouns={profile?.pronouns}
+                />
+                {userId !== myUserId && (
+                  <OptionsButton
+                    userId={userId}
+                    canInvite={canInvite && membership === 'leave'}
+                    canKick={canKickUser && membership === 'join'}
+                    canBan={canBanUser && membership !== 'ban'}
+                  />
+                )}
+              </Box>
+              {profile?.timezone && <UserTimezone timezone={profile.timezone} />}
+              <Text size="T200">
+                now hierarchy does not have room summary info we need to load it when we will be
+                rendering it
+              </Text>
               <Box alignItems="Center" gap="200" wrap="Wrap">
                 {server && <ServerChip server={server} />}
                 <ShareChip userId={userId} />
                 {creator ? <CreatorChip /> : <PowerChip userId={userId} />}
                 {userId !== myUserId && <MutualRoomsChip userId={userId} />}
-                {userId !== myUserId && <OptionsChip userId={userId} />}
               </Box>
             </Box>
             {ignored && <IgnoredUserAlert />}
@@ -165,12 +163,21 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
                 ts={memberEventResult.value.event.origin_server_ts}
               />
             )}
-            <UserModeration
-              userId={userId}
-              canInvite={canInvite && membership === Membership.Leave}
-              canKick={canKickUser && membership === Membership.Join}
-              canBan={canBanUser && membership !== Membership.Ban}
-            />
+            {userId !== myUserId && (
+              <Box direction="Row" gap="200">
+                <Button
+                  style={{ flexGrow: 1 }}
+                  size="300"
+                  variant="Primary"
+                  fill="Solid"
+                  radii="300"
+                  before={<Icon size="50" src={Icons.Message} />}
+                  onClick={handleMessage}
+                >
+                  <Text size="B300">Message</Text>
+                </Button>
+              </Box>
+            )}
           </Box>
         </Box>
       </PowerLevelTagsContextProvider>
