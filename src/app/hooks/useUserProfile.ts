@@ -60,7 +60,7 @@ export const useUserProfile = (userId: string): UserProfile | undefined => {
       bannerUrl:
         ObjectReader.string(profile, 'm.banner_url') ??
         ObjectReader.string(profile, 'chat.commet.profile_banner'),
-      timezone: ObjectReader.string(profile, 'm.tz'),
+      timezone: ObjectReader.string(profile, 'm.tz')?.replace(/"/g, ''), // some client add quotes in timezone
       pronouns: Array.isArray(pronouns)
         ? pronouns?.map((p) => ({
             grammaticalGender: ObjectReader.string(p, 'grammatical_gender'),

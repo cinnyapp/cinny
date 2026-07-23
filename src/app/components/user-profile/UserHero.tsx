@@ -166,7 +166,8 @@ export function UserTimezone({ timezone }: { timezone: string }) {
     <Box as="span" alignItems="Center" gap="100">
       <Icon style={{ opacity: config.opacity.P300 }} size="50" src={Icons.Clock} />
       <Text as="span" size="T200" priority="300" truncate>
-        {time} local time{offset ? ` · ${offset}` : ` · ${timezone}`}
+        {time} local time · {timezone}
+        {offset ? ` (${offset})` : ''}
       </Text>
     </Box>
   );
