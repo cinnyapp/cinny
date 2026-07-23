@@ -12,55 +12,46 @@ import {
   Spinner,
   Text,
 } from 'folds';
-import { HistoryVisibility, MatrixError } from 'matrix-js-sdk';
-import { RoomHistoryVisibilityEventContent } from 'matrix-js-sdk/lib/types';
 import FocusTrap from 'focus-trap-react';
+import { HistoryVisibility } from 'neurone/lib/crypto/machine';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRoom } from '../../../hooks/useRoom';
-import { StateEvent } from '../../../../types/matrix/room';
+import { RoomHistoryVisibilityContent, StateEventType } from '../../../../types/matrix/room';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useStateEvent } from '../../../hooks/useStateEvent';
 import { stopPropagation } from '../../../utils/keyboard';
 import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
+import { useClient } from '../../../hooks/useClient';
+import { useObservableValue } from '../../../hooks/useObservableValue';
 
-const useVisibilityStr = () =>
+const useVisibilityStr = (): Record<HistoryVisibility, string> =>
   useMemo(
     () => ({
-      [HistoryVisibility.Invited]: 'After Invite',
-      [HistoryVisibility.Joined]: 'After Join',
-      [HistoryVisibility.Shared]: 'All Messages',
-      [HistoryVisibility.WorldReadable]: 'All Messages (Guests)',
+      invited: 'After Invite',
+      joined: 'After Join',
+      shared: 'All Messages',
+      world_readable: 'All Messages (Guests)',
     }),
     []
   );
 
-const useVisibilityMenu = () =>
-  useMemo(
-    () => [
-      HistoryVisibility.Shared,
-      HistoryVisibility.Invited,
-      HistoryVisibility.Joined,
-      HistoryVisibility.WorldReadable,
-    ],
-    []
-  );
+const useVisibilityMenu = (): HistoryVisibility[] =>
+  useMemo(() => ['invited', 'joined', 'shared', 'world_readable'], []);
 
 type RoomHistoryVisibilityProps = {
   permissions: RoomPermissionsAPI;
 };
 export function RoomHistoryVisibility({ permissions }: RoomHistoryVisibilityProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
 
-  const canEdit = permissions.stateEvent(StateEvent.RoomHistoryVisibility, mx.getSafeUserId());
+  const canEdit = permissions.stateEvent(StateEventType.RoomHistoryVisibility, ct.session.userId);
+  const roomToHistoryVisibility = useObservableValue(ct.roomToHistoryVisibility);
 
-  const visibilityEvent = useStateEvent(room, StateEvent.RoomHistoryVisibility);
-  const historyVisibility: HistoryVisibility =
-    visibilityEvent?.getContent<RoomHistoryVisibilityEventContent>().history_visibility ??
-    HistoryVisibility.Shared;
+  const historyVisibility: HistoryVisibility = roomToHistoryVisibility.get(roomId) ?? 'shared';
   const visibilityMenu = useVisibilityMenu();
   const visibilityStr = useVisibilityStr();
 
@@ -73,12 +64,20 @@ export function RoomHistoryVisibility({ permissions }: RoomHistoryVisibilityProp
   const [submitState, submit] = useAsyncCallback(
     useCallback(
       async (visibility: HistoryVisibility) => {
-        const content: RoomHistoryVisibilityEventContent = {
+        const content: RoomHistoryVisibilityContent = {
           history_visibility: visibility,
         };
-        await mx.sendStateEvent(room.roomId, StateEvent.RoomHistoryVisibility as any, content);
+
+        const resp = await ct.requestAuthJSON(
+          putStateEvent({
+            pathParams: { roomId, eventType: StateEventType.RoomHistoryVisibility, stateKey: '' },
+            body: content,
+          })
+        );
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
       },
-      [mx, room.roomId]
+      [ct, roomId]
     )
   );
   const submitting = submitState.status === AsyncStatus.Loading;
@@ -156,7 +155,7 @@ export function RoomHistoryVisibility({ permissions }: RoomHistoryVisibilityProp
       >
         {submitState.status === AsyncStatus.Error && (
           <Text style={{ color: color.Critical.Main }} size="T200">
-            {(submitState.error as MatrixError).message}
+            {submitState.error instanceof Error ? submitState.error.message : 'Unknown Error'}
           </Text>
         )}
       </SettingTile>

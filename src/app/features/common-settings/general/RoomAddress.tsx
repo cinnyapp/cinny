@@ -14,11 +14,9 @@ import {
   Text,
   toRem,
 } from 'folds';
-import { MatrixError } from 'matrix-js-sdk';
 import { SettingTile } from '../../../components/setting-tile';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRoom } from '../../../hooks/useRoom';
 import {
   useLocalAliases,
@@ -30,25 +28,26 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { CutoutCard } from '../../../components/cutout-card';
 import { replaceSpaceWithDash } from '../../../utils/common';
 import { useAlive } from '../../../hooks/useAlive';
-import { StateEvent } from '../../../../types/matrix/room';
+import { StateEventType } from '../../../../types/matrix/room';
 import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
 import { getMxIdServer } from '../../../utils/matrix';
+import { useClient } from '../../../hooks/useClient';
 
 type RoomPublishedAddressesProps = {
   permissions: RoomPermissionsAPI;
 };
 
 export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
 
   const canEditCanonical = permissions.stateEvent(
-    StateEvent.RoomCanonicalAlias,
-    mx.getSafeUserId()
+    StateEventType.RoomCanonicalAlias,
+    ct.session.userId
   );
 
-  const [canonicalAlias, publishedAliases] = usePublishedAliases(room);
-  const setMainAlias = useSetMainAlias(room);
+  const [canonicalAlias, publishedAliases] = usePublishedAliases(roomId);
+  const setMainAlias = useSetMainAlias(roomId, publishedAliases);
 
   const [mainState, setMain] = useAsyncCallback(setMainAlias);
   const loading = mainState.status === AsyncStatus.Loading;
@@ -120,7 +119,7 @@ export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesPr
 
             {mainState.status === AsyncStatus.Error && (
               <Text size="T200" style={{ color: color.Critical.Main }}>
-                {(mainState.error as MatrixError).message}
+                {mainState.error instanceof Error ? mainState.error.message : 'Unknown Error'}
               </Text>
             )}
           </Box>
@@ -131,8 +130,8 @@ export function RoomPublishedAddresses({ permissions }: RoomPublishedAddressesPr
 }
 
 function LocalAddressInput({ addLocalAlias }: { addLocalAlias: (alias: string) => Promise<void> }) {
-  const mx = useMatrixClient();
-  const userId = mx.getSafeUserId();
+  const ct = useClient();
+  const { userId } = ct.session;
   const server = getMxIdServer(userId);
   const alive = useAlive();
 
@@ -189,9 +188,7 @@ function LocalAddressInput({ addLocalAlias }: { addLocalAlias: (alias: string) =
       </Box>
       {addState.status === AsyncStatus.Error && (
         <Text style={{ color: color.Critical.Main }} size="T200">
-          {(addState.error as MatrixError).httpStatus === 409
-            ? 'Address is already in use!'
-            : (addState.error as MatrixError).message}
+          {addState.error instanceof Error ? addState.error.message : 'Unknown Error'}
         </Text>
       )}
     </Box>
@@ -207,11 +204,15 @@ function LocalAddressesList({
   removeLocalAlias: (alias: string) => Promise<void>;
   canEditCanonical?: boolean;
 }) {
-  const room = useRoom();
+  const roomId = useRoom();
   const alive = useAlive();
 
-  const [, publishedAliases] = usePublishedAliases(room);
-  const { publishAliases, unpublishAliases } = usePublishUnpublishAliases(room);
+  const [canonicalAlias, publishedAliases] = usePublishedAliases(roomId);
+  const { publishAliases, unpublishAliases } = usePublishUnpublishAliases(
+    roomId,
+    publishedAliases,
+    canonicalAlias
+  );
 
   const [selectedAliases, setSelectedAliases] = useState<string[]>([]);
   const selectHasPublished = selectedAliases.find((alias) => publishedAliases.includes(alias));
@@ -261,10 +262,10 @@ function LocalAddressesList({
     deleteState.status === AsyncStatus.Loading ||
     publishState.status === AsyncStatus.Loading ||
     unpublishState.status === AsyncStatus.Loading;
-  let error: MatrixError | undefined;
-  if (deleteState.status === AsyncStatus.Error) error = deleteState.error as MatrixError;
-  if (publishState.status === AsyncStatus.Error) error = publishState.error as MatrixError;
-  if (unpublishState.status === AsyncStatus.Error) error = unpublishState.error as MatrixError;
+  let error: unknown;
+  if (deleteState.status === AsyncStatus.Error) error = deleteState.error;
+  if (publishState.status === AsyncStatus.Error) error = publishState.error;
+  if (unpublishState.status === AsyncStatus.Error) error = unpublishState.error;
 
   return (
     <Box direction="Column" gap="300">
@@ -352,7 +353,7 @@ function LocalAddressesList({
       })}
       {error && (
         <Text size="T200" style={{ color: color.Critical.Main }}>
-          {error.message}
+          {error instanceof Error ? error.message : 'Unknown Error'}
         </Text>
       )}
     </Box>
@@ -360,17 +361,17 @@ function LocalAddressesList({
 }
 
 export function RoomLocalAddresses({ permissions }: { permissions: RoomPermissionsAPI }) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
 
   const canEditCanonical = permissions.stateEvent(
-    StateEvent.RoomCanonicalAlias,
-    mx.getSafeUserId()
+    StateEventType.RoomCanonicalAlias,
+    ct.session.userId
   );
 
   const [expand, setExpand] = useState(false);
 
-  const { localAliasesState, addLocalAlias, removeLocalAlias } = useLocalAliases(room.roomId);
+  const { localAliasesState, addLocalAlias, removeLocalAlias } = useLocalAliases(roomId);
 
   return (
     <SequenceCard
@@ -424,7 +425,9 @@ export function RoomLocalAddresses({ permissions }: { permissions: RoomPermissio
           {localAliasesState.status === AsyncStatus.Error && (
             <Box gap="100">
               <Text size="T200" style={{ color: color.Critical.Main }}>
-                {localAliasesState.error.message}
+                {localAliasesState.error instanceof Error
+                  ? localAliasesState.error.message
+                  : 'Unkonw Error'}
               </Text>
             </Box>
           )}

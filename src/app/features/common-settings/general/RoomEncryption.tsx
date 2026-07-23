@@ -16,18 +16,19 @@ import {
   Text,
 } from 'folds';
 import React, { useCallback, useState } from 'react';
-import { MatrixError } from 'matrix-js-sdk';
 import FocusTrap from 'focus-trap-react';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { StateEvent } from '../../../../types/matrix/room';
+import { StateEventType } from '../../../../types/matrix/room';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useRoom } from '../../../hooks/useRoom';
-import { useStateEvent } from '../../../hooks/useStateEvent';
 import { stopPropagation } from '../../../utils/keyboard';
 import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
+import { useClient } from '../../../hooks/useClient';
+import { useObservableValue } from '../../../hooks/useObservableValue';
 
 const ROOM_ENC_ALGO = 'm.megolm.v1.aes-sha2';
 
@@ -35,21 +36,26 @@ type RoomEncryptionProps = {
   permissions: RoomPermissionsAPI;
 };
 export function RoomEncryption({ permissions }: RoomEncryptionProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
 
-  const canEnable = permissions.stateEvent(StateEvent.RoomEncryption, mx.getSafeUserId());
-  const content = useStateEvent(room, StateEvent.RoomEncryption)?.getContent<{
-    algorithm: string;
-  }>();
-  const enabled = content?.algorithm === ROOM_ENC_ALGO;
+  const canEnable = permissions.stateEvent(StateEventType.RoomEncryption, ct.session.userId);
+  const encryptedRooms = useObservableValue(ct.encryptedRooms);
+  const enabled = encryptedRooms.has(roomId);
 
   const [enableState, enable] = useAsyncCallback(
     useCallback(async () => {
-      await mx.sendStateEvent(room.roomId, StateEvent.RoomEncryption as any, {
-        algorithm: ROOM_ENC_ALGO,
-      });
-    }, [mx, room.roomId])
+      const resp = await ct.requestAuthJSON(
+        putStateEvent({
+          pathParams: { roomId, eventType: StateEventType.RoomEncryption, stateKey: '' },
+          body: {
+            algorithm: ROOM_ENC_ALGO,
+          },
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
+    }, [ct, roomId])
   );
 
   const enabling = enableState.status === AsyncStatus.Loading;
@@ -97,7 +103,7 @@ export function RoomEncryption({ permissions }: RoomEncryptionProps) {
       >
         {enableState.status === AsyncStatus.Error && (
           <Text style={{ color: color.Critical.Main }} size="T200">
-            {(enableState.error as MatrixError).message}
+            {enableState.error instanceof Error ? enableState.error.message : 'Unknown Error'}
           </Text>
         )}
         {prompt && (

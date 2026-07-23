@@ -60,7 +60,7 @@ export const createUploadAtom = (file: UploadContent) => {
     file,
     status: UploadStatus.Idle,
   });
-  return atom<Upload, [UploadAtomAction], undefined>(
+  return atom<Upload, [UploadAtomAction], void>(
     (get) => get(baseUploadAtom),
     (get, set, update) => {
       const uploadState = get(baseUploadAtom);

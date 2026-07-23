@@ -1,10 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { color, Text } from 'folds';
-import { JoinRule, MatrixError, RestrictedAllowType } from 'matrix-js-sdk';
-import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
 import { useAtomValue } from 'jotai';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import {
-  ExtendedJoinRules,
   JoinRulesSwitcher,
   useJoinRuleIcons,
   useRoomJoinRuleLabel,
@@ -12,13 +11,15 @@ import {
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRoom } from '../../../hooks/useRoom';
-import { StateEvent } from '../../../../types/matrix/room';
-import { useStateEvent } from '../../../hooks/useStateEvent';
+import {
+  JoinRule,
+  StateEventType,
+  AllowCondition,
+  JoinRulesContent,
+} from '../../../../types/matrix/room';
 import { useSpaceOptionally } from '../../../hooks/useSpace';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { getStateEvents } from '../../../utils/room';
 import {
   useRecursiveChildSpaceScopeFactory,
   useSpaceChildren,
@@ -31,89 +32,98 @@ import {
   restrictedSupported,
 } from '../../../utils/matrix';
 import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
-
-type RestrictedRoomAllowContent = {
-  room_id: string;
-  type: RestrictedAllowType;
-};
+import { useClient } from '../../../hooks/useClient';
+import { useObservableValue } from '../../../hooks/useObservableValue';
+import { getRoomStateEventsQuery } from '../../../hooks/storage/useRoomStateEvent';
 
 type RoomJoinRulesProps = {
   permissions: RoomPermissionsAPI;
 };
 export function RoomJoinRules({ permissions }: RoomJoinRulesProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
-  const allowKnockRestricted = knockRestrictedSupported(room.getVersion());
-  const allowRestricted = restrictedSupported(room.getVersion());
-  const allowKnock = knockSupported(room.getVersion());
+  const ct = useClient();
+  const roomId = useRoom();
+
+  const roomVersion = ct.roomToVersion.read.get(roomId) ?? '1';
+
+  const allowKnockRestricted = knockRestrictedSupported(roomVersion);
+  const allowRestricted = restrictedSupported(roomVersion);
+  const allowKnock = knockSupported(roomVersion);
 
   const roomIdToParents = useAtomValue(roomToParentsAtom);
-  const space = useSpaceOptionally();
-  const subspacesScope = useRecursiveChildSpaceScopeFactory(mx, roomIdToParents);
-  const subspaces = useSpaceChildren(allRoomsAtom, space?.roomId ?? '', subspacesScope);
+  const spaceId = useSpaceOptionally();
+  const subspacesScope = useRecursiveChildSpaceScopeFactory(ct, roomIdToParents);
+  const subspaces = useSpaceChildren(allRoomsAtom, spaceId ?? '', subspacesScope);
 
-  const canEdit = permissions.stateEvent(StateEvent.RoomHistoryVisibility, mx.getSafeUserId());
+  const canEdit = permissions.stateEvent(StateEventType.RoomHistoryVisibility, ct.session.userId);
 
-  const joinRuleEvent = useStateEvent(room, StateEvent.RoomJoinRules);
-  const content = joinRuleEvent?.getContent<RoomJoinRulesEventContent>();
-  const rule: JoinRule = content?.join_rule ?? JoinRule.Invite;
+  const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
+  const rule: JoinRule = roomToJoinRule.get(roomId) ?? 'invite';
 
-  const joinRules: Array<ExtendedJoinRules> = useMemo(() => {
-    const r: ExtendedJoinRules[] = [JoinRule.Invite];
+  const joinRules: Array<JoinRule> = useMemo(() => {
+    const r: JoinRule[] = ['invite'];
     if (allowKnock) {
-      r.push(JoinRule.Knock);
+      r.push('knock');
     }
-    if (allowRestricted && space) {
-      r.push(JoinRule.Restricted);
+    if (allowRestricted && spaceId) {
+      r.push('restricted');
     }
-    if (allowKnockRestricted && space) {
+    if (allowKnockRestricted && spaceId) {
       r.push('knock_restricted');
     }
-    r.push(JoinRule.Public);
+    r.push('public');
 
     return r;
-  }, [allowKnockRestricted, allowRestricted, allowKnock, space]);
+  }, [allowKnockRestricted, allowRestricted, allowKnock, spaceId]);
 
-  const icons = useJoinRuleIcons(room.getType());
+  const icons = useJoinRuleIcons(ct.roomToType.read.get(roomId));
   const labels = useRoomJoinRuleLabel();
 
   const [submitState, submit] = useAsyncCallback(
     useCallback(
-      async (joinRule: ExtendedJoinRules) => {
-        const allow: RestrictedRoomAllowContent[] = [];
-        if (joinRule === JoinRule.Restricted || joinRule === 'knock_restricted') {
-          const roomParents = roomIdToParents.get(room.roomId);
+      async (joinRule: JoinRule) => {
+        const allow: AllowCondition[] = [];
+        if (joinRule === 'restricted' || joinRule === 'knock_restricted') {
+          const roomParents = roomIdToParents.get(roomId);
 
-          const parents = getStateEvents(room, StateEvent.SpaceParent)
-            .map((event) => event.getStateKey())
-            .filter((parentId) => typeof parentId === 'string')
+          const parentEvents = await ct.storage.joinRoomState.read.query(
+            getRoomStateEventsQuery(roomId, StateEventType.SpaceParent)
+          );
+          const parents = parentEvents
+            .map((event) => event.event.state_key)
             .filter((parentId) => roomParents?.has(parentId));
 
-          if (parents.length === 0 && space && roomParents) {
+          if (parents.length === 0 && spaceId && roomParents) {
             // if no m.space.parent found
             // find parent in current space
             const selectedParents = subspaces.filter((rId) => roomParents.has(rId));
-            if (roomParents.has(space.roomId)) {
-              selectedParents.push(space.roomId);
+            if (roomParents.has(spaceId)) {
+              selectedParents.push(spaceId);
             }
             selectedParents.forEach((pId) => parents.push(pId));
           }
           parents.forEach((parentRoomId) => {
             if (!parentRoomId) return;
             allow.push({
-              type: RestrictedAllowType.RoomMembership,
+              type: 'm.room_membership',
               room_id: parentRoomId,
             });
           });
         }
 
-        const c: RoomJoinRulesEventContent = {
-          join_rule: joinRule as JoinRule,
+        const c: JoinRulesContent = {
+          join_rule: joinRule,
         };
         if (allow.length > 0) c.allow = allow;
-        await mx.sendStateEvent(room.roomId, StateEvent.RoomJoinRules as any, c);
+        const resp = await ct.requestAuthJSON(
+          putStateEvent({
+            pathParams: { roomId, eventType: StateEventType.RoomJoinRules, stateKey: '' },
+            body: c,
+          })
+        );
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
       },
-      [mx, room, space, subspaces, roomIdToParents]
+      [ct, roomId, spaceId, subspaces, roomIdToParents]
     )
   );
 
@@ -127,9 +137,9 @@ export function RoomJoinRules({ permissions }: RoomJoinRulesProps) {
       gap="400"
     >
       <SettingTile
-        title={room.isSpaceRoom() ? 'Space Access' : 'Room Access'}
+        title={ct.spaceRooms.read.has(roomId) ? 'Space Access' : 'Room Access'}
         description={
-          room.isSpaceRoom()
+          ct.spaceRooms.read.has(roomId)
             ? 'Change how people can join the space.'
             : 'Change how people can join the room.'
         }
@@ -147,7 +157,7 @@ export function RoomJoinRules({ permissions }: RoomJoinRulesProps) {
       >
         {submitState.status === AsyncStatus.Error && (
           <Text style={{ color: color.Critical.Main }} size="T200">
-            {(submitState.error as MatrixError).message}
+            {submitState.error instanceof Error ? submitState.error.message : 'Unknown Error'}
           </Text>
         )}
       </SettingTile>

@@ -5,6 +5,10 @@ export const BreakWord = style({
   wordBreak: 'break-word',
 });
 
+export const PreWrap = style({
+  whiteSpace: 'pre-wrap',
+});
+
 export const LineClamp2 = style({
   display: '-webkit-box',
   WebkitLineClamp: 2,

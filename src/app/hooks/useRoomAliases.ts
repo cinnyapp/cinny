@@ -1,83 +1,75 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { MatrixError, Room } from 'matrix-js-sdk';
-import { RoomCanonicalAliasEventContent } from 'matrix-js-sdk/lib/types';
+import { ObjectReader } from 'neurone/lib/utils';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { getAliases, putStateEvent, GetAliasesOK } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { deleteRoom, putRoom } from 'neurone/lib/api/matrix/client/v3/directory';
 import { AsyncState, useAsyncCallback } from './useAsyncCallback';
-import { useMatrixClient } from './useMatrixClient';
 import { useAlive } from './useAlive';
-import { useStateEvent } from './useStateEvent';
-import { StateEvent } from '../../types/matrix/room';
-import { getStateEvent } from '../utils/room';
+import { useClient } from './useClient';
+import { useObservableValue } from './useObservableValue';
+import { RoomCanonicalAliasContent, StateEventType } from '../../types/matrix/room';
 
-export const usePublishedAliases = (room: Room): [string | undefined, string[]] => {
-  const aliasContent = useStateEvent(
-    room,
-    StateEvent.RoomCanonicalAlias
-  )?.getContent<RoomCanonicalAliasEventContent>();
+export const usePublishedAliases = (roomId: string): [string | undefined, string[]] => {
+  const ct = useClient();
+  const canonicalAliasEvents = useObservableValue(ct.state.join.canonicalAlias);
+  const content = canonicalAliasEvents.find((state) => state.roomId === roomId)?.event.content;
 
-  const canonicalAlias = aliasContent?.alias;
+  const alias = ObjectReader.string(content, 'alias');
+  const altAliases = ObjectReader.array(content, 'alt_aliases')?.filter(
+    (a): a is string => typeof a === 'string'
+  );
 
   const publishedAliases = useMemo(() => {
     const aliases: string[] = [];
-    if (typeof aliasContent?.alias === 'string') {
-      aliases.push(aliasContent.alias);
-    }
-    aliasContent?.alt_aliases?.forEach((alias) => {
-      if (typeof alias === 'string') {
-        aliases.push(alias);
-      }
-    });
+    if (alias) aliases.push(alias);
+    if (altAliases) aliases.push(...altAliases);
     return aliases;
-  }, [aliasContent]);
+  }, [alias, altAliases]);
 
-  return [canonicalAlias, publishedAliases];
+  return [alias, publishedAliases];
 };
 
-export const useSetMainAlias = (room: Room): ((alias: string | undefined) => Promise<void>) => {
-  const mx = useMatrixClient();
+export const useSetMainAlias = (
+  roomId: string,
+  publishedAliases: string[]
+): ((alias: string | undefined) => Promise<void>) => {
+  const ct = useClient();
+
   const mainAlias = useCallback(
     async (alias: string | undefined) => {
-      const content = getStateEvent(
-        room,
-        StateEvent.RoomCanonicalAlias
-      )?.getContent<RoomCanonicalAliasEventContent>();
-
-      const altAliases: string[] = [];
-      if (content?.alias && content.alias !== alias) {
-        altAliases.push(content.alias);
-      }
-      content?.alt_aliases?.forEach((a) => {
-        if (a !== alias) {
-          altAliases.push(a);
-        }
-      });
-
-      const newContent: RoomCanonicalAliasEventContent = {
+      const content: RoomCanonicalAliasContent = {
         alias,
-        alt_aliases: altAliases,
+        alt_aliases: publishedAliases.filter((a) => a !== alias),
       };
 
-      await mx.sendStateEvent(room.roomId, StateEvent.RoomCanonicalAlias as any, newContent);
+      const resp = await ct.requestAuthJSON(
+        putStateEvent({
+          pathParams: { roomId, eventType: StateEventType.RoomCanonicalAlias, stateKey: '' },
+          body: content,
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
-    [mx, room]
+    [ct, roomId, publishedAliases]
   );
 
   return mainAlias;
 };
 
 export const usePublishUnpublishAliases = (
-  room: Room
+  roomId: string,
+  publishedAliases: string[],
+  canonicalAlias?: string
 ): {
   publishAliases: (aliases: string[]) => Promise<void>;
   unpublishAliases: (aliases: string[]) => Promise<void>;
 } => {
-  const mx = useMatrixClient();
+  const ct = useClient();
+
   const publishAliases = useCallback(
     async (aliases: string[]) => {
-      const content = getStateEvent(
-        room,
-        StateEvent.RoomCanonicalAlias
-      )?.getContent<RoomCanonicalAliasEventContent>();
-      const altAliases = content?.alt_aliases ?? [];
+      const altAliases = publishedAliases.filter((a) => a !== canonicalAlias);
 
       aliases.forEach((alias) => {
         if (!altAliases.includes(alias)) {
@@ -85,38 +77,42 @@ export const usePublishUnpublishAliases = (
         }
       });
 
-      const newContent: RoomCanonicalAliasEventContent = {
-        alias: content?.alias,
+      const content: RoomCanonicalAliasContent = {
+        alias: canonicalAlias,
         alt_aliases: altAliases,
       };
 
-      await mx.sendStateEvent(room.roomId, StateEvent.RoomCanonicalAlias as any, newContent);
+      const resp = await ct.requestAuthJSON(
+        putStateEvent({
+          pathParams: { roomId, eventType: StateEventType.RoomCanonicalAlias, stateKey: '' },
+          body: content,
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
-    [mx, room]
+    [ct, roomId, publishedAliases, canonicalAlias]
   );
 
   const unpublishAliases = useCallback(
     async (aliases: string[]) => {
-      const content = getStateEvent(
-        room,
-        StateEvent.RoomCanonicalAlias
-      )?.getContent<RoomCanonicalAliasEventContent>();
-      const altAliases: string[] = [];
+      const altAliases: string[] = publishedAliases.filter((alias) => !aliases.includes(alias));
 
-      content?.alt_aliases?.forEach((alias) => {
-        if (!aliases.includes(alias)) {
-          altAliases.push(alias);
-        }
-      });
-
-      const newContent: RoomCanonicalAliasEventContent = {
-        alias: content?.alias,
+      const content: RoomCanonicalAliasContent = {
+        alias: canonicalAlias,
         alt_aliases: altAliases,
       };
 
-      await mx.sendStateEvent(room.roomId, StateEvent.RoomCanonicalAlias as any, newContent);
+      const resp = await ct.requestAuthJSON(
+        putStateEvent({
+          pathParams: { roomId, eventType: StateEventType.RoomCanonicalAlias, stateKey: '' },
+          body: content,
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
-    [mx, room]
+    [ct, roomId, publishedAliases, canonicalAlias]
   );
 
   return {
@@ -128,18 +124,20 @@ export const usePublishUnpublishAliases = (
 export const useLocalAliases = (
   roomId: string
 ): {
-  localAliasesState: AsyncState<string[], MatrixError>;
+  localAliasesState: AsyncState<string[], unknown>;
   addLocalAlias: (alias: string) => Promise<void>;
   removeLocalAlias: (alias: string) => Promise<void>;
 } => {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const alive = useAlive();
 
-  const [aliasesState, loadAliases] = useAsyncCallback<string[], MatrixError, []>(
+  const [aliasesState, loadAliases] = useAsyncCallback<string[], unknown, []>(
     useCallback(async () => {
-      const content = await mx.getLocalAliases(roomId);
-      return content.aliases;
-    }, [mx, roomId])
+      const resp = await ct.requestAuthJSON(getAliases({ pathParams: { roomId } }));
+      const [err, result] = await parseMatrixResp<GetAliasesOK>(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
+      return result.aliases;
+    }, [ct, roomId])
   );
 
   useEffect(() => {
@@ -148,18 +146,36 @@ export const useLocalAliases = (
 
   const addLocalAlias = useCallback(
     async (alias: string) => {
-      await mx.createAlias(alias, roomId);
+      const resp = await ct.requestAuthJSON(
+        putRoom({
+          pathParams: { roomAlias: alias },
+          body: { room_id: roomId },
+        })
+      );
+
+      const [err] = await parseMatrixResp(resp);
+      if (err) {
+        if (err.status === 409) {
+          throw new Error('Address is already in use!');
+        }
+        throw new Error(err.data.error ?? err.data.errcode);
+      }
+
       if (alive()) await loadAliases();
     },
-    [mx, roomId, loadAliases, alive]
+    [ct, roomId, loadAliases, alive]
   );
 
   const removeLocalAlias = useCallback(
     async (alias: string) => {
-      await mx.deleteAlias(alias);
+      const resp = await ct.requestAuthJSON(deleteRoom({ pathParams: { roomAlias: alias } }));
+
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
+
       if (alive()) await loadAliases();
     },
-    [mx, loadAliases, alive]
+    [ct, loadAliases, alive]
   );
 
   return {

@@ -1,4 +1,5 @@
 import { RoomMembership } from 'neurone/lib/api/types';
+import { HistoryVisibility } from 'neurone/lib/crypto/machine';
 import { IImageInfo } from './common';
 
 export enum Membership {
@@ -179,4 +180,12 @@ export type RoomServerAclContent = {
   allow?: string[];
   allow_ip_literals?: boolean;
   deny?: string[];
+};
+
+export type RoomHistoryVisibilityContent = {
+  history_visibility: HistoryVisibility;
+};
+export type RoomCanonicalAliasContent = {
+  alias?: string;
+  alt_aliases?: string[];
 };

@@ -2,10 +2,11 @@ import React from 'react';
 import { RoomSettings } from './RoomSettings';
 import { Modal500 } from '../../components/Modal500';
 import { useCloseRoomSettings, useRoomSettingsState } from '../../state/hooks/roomSettings';
-import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
 import { RoomSettingsState } from '../../state/roomSettings';
 import { RoomProvider } from '../../hooks/useRoom';
 import { SpaceProvider } from '../../hooks/useSpace';
+import { useClient } from '../../hooks/useClient';
+import { useObservableValue } from '../../hooks/useObservableValue';
 
 type RenderSettingsProps = {
   state: RoomSettingsState;
@@ -13,17 +14,15 @@ type RenderSettingsProps = {
 function RenderSettings({ state }: RenderSettingsProps) {
   const { roomId, spaceId, page } = state;
   const closeSettings = useCloseRoomSettings();
-  const allJoinedRooms = useAllJoinedRoomsSet();
-  const getRoom = useGetRoom(allJoinedRooms);
-  const room = getRoom(roomId);
-  const space = spaceId ? getRoom(spaceId) : undefined;
+  const ct = useClient();
+  const rooms = useObservableValue(ct.rooms.join);
 
-  if (!room) return null;
+  if (!rooms.includes(roomId)) return null;
 
   return (
     <Modal500 requestClose={closeSettings}>
-      <SpaceProvider value={space ?? null}>
-        <RoomProvider value={room}>
+      <SpaceProvider value={spaceId ?? null}>
+        <RoomProvider value={roomId}>
           <RoomSettings initialPage={page} requestClose={closeSettings} />
         </RoomProvider>
       </SpaceProvider>

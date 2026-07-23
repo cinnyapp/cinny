@@ -16,16 +16,15 @@ import {
   Icons,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { MatrixError, Method } from 'matrix-js-sdk';
-import { RoomTombstoneEventContent } from 'matrix-js-sdk/lib/types';
+import { ObjectReader } from 'neurone/lib/utils';
+import { postUpgrade } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { useRoom } from '../../../hooks/useRoom';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { IRoomCreateContent, StateEvent } from '../../../../types/matrix/room';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useStateEvent } from '../../../hooks/useStateEvent';
+import { StateEventType } from '../../../../types/matrix/room';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
 import { useCapabilities } from '../../../hooks/useCapabilities';
 import { stopPropagation } from '../../../utils/keyboard';
@@ -39,12 +38,14 @@ import { useAlive } from '../../../hooks/useAlive';
 import { creatorsSupported } from '../../../utils/matrix';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { BreakWord } from '../../../styles/Text.css';
+import { useClient } from '../../../hooks/useClient';
 
+const EMPTY_CREATORS = new Set<string>();
 function RoomUpgradeDialog({ requestClose }: { requestClose: () => void }) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
   const alive = useAlive();
-  const creators = useRoomCreators(room);
+  const creators = useRoomCreators(roomId) ?? EMPTY_CREATORS;
 
   const capabilities = useCapabilities();
   const roomVersions = capabilities['m.room_versions'];
@@ -61,12 +62,20 @@ function RoomUpgradeDialog({ requestClose }: { requestClose: () => void }) {
   const [upgradeState, upgrade] = useAsyncCallback(
     useCallback(
       async (version: string, newAdditionalCreators?: string[]) => {
-        await mx.http.authedRequest(Method.Post, `/rooms/${room.roomId}/upgrade`, undefined, {
-          new_version: version,
-          additional_creators: newAdditionalCreators,
-        });
+        const resp = await ct.requestAuthJSON(
+          postUpgrade({
+            pathParams: { roomId },
+            body: {
+              new_version: version,
+              additional_creators: newAdditionalCreators,
+            },
+          })
+        );
+
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
       },
-      [mx, room]
+      [ct, roomId]
     )
   );
 
@@ -103,7 +112,9 @@ function RoomUpgradeDialog({ requestClose }: { requestClose: () => void }) {
               size="500"
             >
               <Box grow="Yes">
-                <Text size="H4">{room.isSpaceRoom() ? 'Space Upgrade' : 'Room Upgrade'}</Text>
+                <Text size="H4">
+                  {ct.spaceRooms.read.has(roomId) ? 'Space Upgrade' : 'Room Upgrade'}
+                </Text>
               </Box>
               <IconButton size="300" onClick={requestClose} radii="300">
                 <Icon src={Icons.Cross} />
@@ -139,7 +150,9 @@ function RoomUpgradeDialog({ requestClose }: { requestClose: () => void }) {
               </Box>
               {upgradeState.status === AsyncStatus.Error && (
                 <Text className={BreakWord} style={{ color: color.Critical.Main }} size="T200">
-                  {(upgradeState.error as MatrixError).message}
+                  {upgradeState.error instanceof Error
+                    ? upgradeState.error.message
+                    : 'Unknown Error'}
                 </Text>
               )}
               <Button
@@ -148,7 +161,9 @@ function RoomUpgradeDialog({ requestClose }: { requestClose: () => void }) {
                 disabled={upgrading}
                 before={upgrading && <Spinner size="200" variant="Secondary" fill="Solid" />}
               >
-                <Text size="B400">{room.isSpaceRoom() ? 'Upgrade Space' : 'Upgrade Room'}</Text>
+                <Text size="B400">
+                  {ct.spaceRooms.read.has(roomId) ? 'Upgrade Space' : 'Upgrade Room'}
+                </Text>
               </Button>
             </Box>
           </Dialog>
@@ -163,28 +178,30 @@ type RoomUpgradeProps = {
   requestClose: () => void;
 };
 export function RoomUpgrade({ permissions, requestClose }: RoomUpgradeProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
   const { navigateRoom, navigateSpace } = useRoomNavigate();
-  const createContent = useStateEvent(
-    room,
-    StateEvent.RoomCreate
-  )?.getContent<IRoomCreateContent>();
-  const roomVersion = createContent?.room_version ?? '1';
-  const predecessorRoomId = createContent?.predecessor?.room_id;
 
-  const tombstoneContent = useStateEvent(
-    room,
-    StateEvent.RoomTombstone
-  )?.getContent<RoomTombstoneEventContent>();
-  const replacementRoom = tombstoneContent?.replacement_room;
+  const createContent = ct.state.join.create.read.find((event) => event.roomId === roomId)?.event
+    .content;
+  const tombstoneContent = ct.state.join.tombstone.read.find((event) => event.roomId === roomId)
+    ?.event.content;
 
-  const canUpgrade = permissions.stateEvent(StateEvent.RoomTombstone, mx.getSafeUserId());
+  const roomVersion = ObjectReader.string(createContent, 'room_version') ?? '1';
+  const predecessorRoomId = ObjectReader.string(
+    ObjectReader.object(createContent, 'predecessor'),
+    'room_id'
+  );
+
+  const replacementRoom = ObjectReader.string(tombstoneContent, 'replacement_room');
+  const tombstoneBody = ObjectReader.string(tombstoneContent, 'body');
+
+  const canUpgrade = permissions.stateEvent(StateEventType.RoomTombstone, ct.session.userId);
 
   const handleOpenRoom = () => {
     if (replacementRoom) {
       requestClose();
-      if (room.isSpaceRoom()) {
+      if (ct.spaceRooms.read.has(roomId)) {
         navigateSpace(replacementRoom);
       } else {
         navigateRoom(replacementRoom);
@@ -195,10 +212,14 @@ export function RoomUpgrade({ permissions, requestClose }: RoomUpgradeProps) {
   const handleOpenOldRoom = () => {
     if (predecessorRoomId) {
       requestClose();
-      if (room.isSpaceRoom()) {
+      if (ct.spaceRooms.read.has(roomId)) {
         navigateSpace(predecessorRoomId);
       } else {
-        navigateRoom(predecessorRoomId, createContent.predecessor?.event_id);
+        const preEventId = ObjectReader.string(
+          ObjectReader.object(createContent, 'predecessor'),
+          'event_id'
+        );
+        navigateRoom(predecessorRoomId, preEventId);
       }
     }
   };
@@ -213,11 +234,11 @@ export function RoomUpgrade({ permissions, requestClose }: RoomUpgradeProps) {
       gap="400"
     >
       <SettingTile
-        title={room.isSpaceRoom() ? 'Upgrade Space' : 'Upgrade Room'}
+        title={ct.spaceRooms.read.has(roomId) ? 'Upgrade Space' : 'Upgrade Room'}
         description={
           replacementRoom
-            ? tombstoneContent.body ||
-              `This ${room.isSpaceRoom() ? 'space' : 'room'} has been replaced!`
+            ? tombstoneBody ||
+              `This ${ct.spaceRooms.read.has(roomId) ? 'space' : 'room'} has been replaced!`
             : `Current version: ${roomVersion}.`
         }
         after={
@@ -231,7 +252,7 @@ export function RoomUpgrade({ permissions, requestClose }: RoomUpgradeProps) {
                 radii="300"
                 onClick={handleOpenOldRoom}
               >
-                <Text size="B300">{room.isSpaceRoom() ? 'Old Space' : 'Old Room'}</Text>
+                <Text size="B300">{ct.spaceRooms.read.has(roomId) ? 'Old Space' : 'Old Room'}</Text>
               </Button>
             )}
             {replacementRoom ? (
@@ -242,7 +263,9 @@ export function RoomUpgrade({ permissions, requestClose }: RoomUpgradeProps) {
                 radii="300"
                 onClick={handleOpenRoom}
               >
-                <Text size="B300">{room.isSpaceRoom() ? 'Open New Space' : 'Open New Room'}</Text>
+                <Text size="B300">
+                  {ct.spaceRooms.read.has(roomId) ? 'Open New Space' : 'Open New Room'}
+                </Text>
               </Button>
             ) : (
               <Button

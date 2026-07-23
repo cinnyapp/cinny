@@ -23,19 +23,19 @@ export const useRoomStateEvent = (
   return stateEventResult;
 };
 
+export const getRoomStateEventsQuery = (roomId: string, eventType: string) =>
+  new QueryRange(
+    getJoinRoomStateId(roomId, eventType, ''),
+    getJoinRoomStateId(roomId, eventType, MAX_UNICODE)
+  );
+
 export const useRoomStateEvents = (
   roomId: string,
   eventType: string
 ): PendingObservableResult<JoinRoomStateObject[]> => {
   const ct = useClient();
   const stateEventPromise = useMemo(
-    () =>
-      ct.storage.joinRoomState.observableRead.query(
-        new QueryRange(
-          getJoinRoomStateId(roomId, eventType, ''),
-          getJoinRoomStateId(roomId, eventType, MAX_UNICODE)
-        )
-      ),
+    () => ct.storage.joinRoomState.observableRead.query(getRoomStateEventsQuery(roomId, eventType)),
     [ct, roomId, eventType]
   );
 

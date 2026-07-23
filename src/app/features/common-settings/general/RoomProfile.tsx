@@ -12,27 +12,18 @@ import {
   TextArea,
 } from 'folds';
 import React, { FormEventHandler, useCallback, useMemo, useState } from 'react';
-import { useAtomValue } from 'jotai';
 import Linkify from 'linkify-react';
 import classNames from 'classnames';
-import { JoinRule, MatrixError } from 'matrix-js-sdk';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../../room-settings/styles.css';
 import { useRoom } from '../../../hooks/useRoom';
-import {
-  useRoomAvatar,
-  useRoomJoinRule,
-  useRoomName,
-  useRoomTopic,
-} from '../../../hooks/useRoomMeta';
-import { mDirectAtom } from '../../../state/mDirectList';
 import { BreakWord, LineClamp3 } from '../../../styles/Text.css';
 import { LINKIFY_OPTS } from '../../../plugins/react-custom-html-parser';
 import { RoomAvatar, RoomIcon } from '../../../components/room-avatar';
-import { mxcUrlToHttp } from '../../../utils/matrix';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { StateEvent } from '../../../../types/matrix/room';
+import { JoinRule, StateEvent, StateEventType } from '../../../../types/matrix/room';
 import { CompactUploadCardRenderer } from '../../../components/upload-card';
 import { useObjectURL } from '../../../hooks/useObjectURL';
 import { createUploadAtom, UploadSuccess } from '../../../state/upload';
@@ -40,6 +31,9 @@ import { useFilePicker } from '../../../hooks/useFilePicker';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAlive } from '../../../hooks/useAlive';
 import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
+import { useClient } from '../../../hooks/useClient';
+import { useObservableValue } from '../../../hooks/useObservableValue';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
 
 type RoomProfileEditProps = {
   canEditAvatar: boolean;
@@ -48,6 +42,7 @@ type RoomProfileEditProps = {
   avatar?: string;
   name: string;
   topic: string;
+  joinRule?: JoinRule;
   onClose: () => void;
 };
 export function RoomProfileEdit({
@@ -57,17 +52,22 @@ export function RoomProfileEdit({
   avatar,
   name,
   topic,
+  joinRule,
   onClose,
 }: RoomProfileEditProps) {
-  const room = useRoom();
-  const mx = useMatrixClient();
-  const alive = useAlive();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const joinRule = useRoomJoinRule(room);
+  const roomId = useRoom();
+  const alive = useAlive();
+
   const [roomAvatar, setRoomAvatar] = useState(avatar);
 
   const avatarUrl = roomAvatar
-    ? mxcUrlToHttp(mx, roomAvatar, useAuthentication) ?? undefined
+    ? mxcToHttp(ct.session.baseUrl, roomAvatar, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
     : undefined;
 
   const [imageFile, setImageFile] = useState<File>();
@@ -93,18 +93,37 @@ export function RoomProfileEdit({
     useCallback(
       async (roomAvatarMxc?: string | null, roomName?: string, roomTopic?: string) => {
         if (roomAvatarMxc !== undefined) {
-          await mx.sendStateEvent(room.roomId, StateEvent.RoomAvatar as any, {
-            url: roomAvatarMxc,
-          });
+          const resp = await ct.requestAuthJSON(
+            putStateEvent({
+              pathParams: { roomId, eventType: StateEventType.RoomAvatar, stateKey: '' },
+              body: { url: roomAvatarMxc },
+            })
+          );
+          const [err] = await parseMatrixResp(resp);
+          if (err) throw new Error(err.data.error ?? err.data.errcode);
         }
         if (roomName !== undefined) {
-          await mx.sendStateEvent(room.roomId, StateEvent.RoomName as any, { name: roomName });
+          const resp = await ct.requestAuthJSON(
+            putStateEvent({
+              pathParams: { roomId, eventType: StateEventType.RoomName, stateKey: '' },
+              body: { name: roomName },
+            })
+          );
+          const [err] = await parseMatrixResp(resp);
+          if (err) throw new Error(err.data.error ?? err.data.errcode);
         }
         if (roomTopic !== undefined) {
-          await mx.sendStateEvent(room.roomId, StateEvent.RoomTopic as any, { topic: roomTopic });
+          const resp = await ct.requestAuthJSON(
+            putStateEvent({
+              pathParams: { roomId, eventType: StateEventType.RoomTopic, stateKey: '' },
+              body: { topic: roomTopic },
+            })
+          );
+          const [err] = await parseMatrixResp(resp);
+          if (err) throw new Error(err.data.error ?? err.data.errcode);
         }
       },
-      [mx, room.roomId]
+      [ct, roomId]
     )
   );
   const submitting = submitState.status === AsyncStatus.Loading;
@@ -194,14 +213,14 @@ export function RoomProfileEdit({
         <Box shrink="No">
           <Avatar size="500" radii="300">
             <RoomAvatar
-              roomId={room.roomId}
+              roomId={roomId}
               src={avatarUrl}
               alt={name}
               renderFallback={() => (
                 <RoomIcon
-                  roomType={room.getType()}
+                  roomType={ct.roomToType.read.get(roomId)}
                   size="400"
-                  joinRule={joinRule?.join_rule ?? JoinRule.Invite}
+                  joinRule={joinRule}
                   filled
                 />
               )}
@@ -231,7 +250,7 @@ export function RoomProfileEdit({
       </Box>
       {submitState.status === AsyncStatus.Error && (
         <Text size="T200" style={{ color: color.Critical.Main }}>
-          {(submitState.error as MatrixError).message}
+          {submitState.error instanceof Error ? submitState.error.message : 'Unknown Error'}
         </Text>
       )}
       <Box gap="300">
@@ -264,23 +283,32 @@ type RoomProfileProps = {
   permissions: RoomPermissionsAPI;
 };
 export function RoomProfile({ permissions }: RoomProfileProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const myUserId = ct.session.userId;
   const useAuthentication = useMediaAuthentication();
-  const room = useRoom();
-  const directs = useAtomValue(mDirectAtom);
+  const roomId = useRoom();
 
-  const avatar = useRoomAvatar(room, directs.has(room.roomId));
-  const name = useRoomName(room);
-  const topic = useRoomTopic(room);
-  const joinRule = useRoomJoinRule(room);
+  const roomToAvatar = useObservableValue(ct.roomToAvatar);
+  const roomToName = useObservableValue(ct.roomToName);
+  const roomToTopic = useObservableValue(ct.roomToTopic);
+  const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
 
-  const canEditAvatar = permissions.stateEvent(StateEvent.RoomAvatar, mx.getSafeUserId());
-  const canEditName = permissions.stateEvent(StateEvent.RoomName, mx.getSafeUserId());
-  const canEditTopic = permissions.stateEvent(StateEvent.RoomTopic, mx.getSafeUserId());
+  const avatar = roomToAvatar.get(roomId);
+  const name = roomToName.get(roomId);
+  const topic = roomToTopic.get(roomId);
+  const joinRule = roomToJoinRule.get(roomId);
+
+  const canEditAvatar = permissions.stateEvent(StateEvent.RoomAvatar, myUserId);
+  const canEditName = permissions.stateEvent(StateEvent.RoomName, myUserId);
+  const canEditTopic = permissions.stateEvent(StateEvent.RoomTopic, myUserId);
   const canEdit = canEditAvatar || canEditName || canEditTopic;
 
   const avatarUrl = avatar
-    ? mxcUrlToHttp(mx, avatar, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? mxcToHttp(ct.session.baseUrl, avatar, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
     : undefined;
 
   const [edit, setEdit] = useState(false);
@@ -304,6 +332,7 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
             avatar={avatar}
             name={name ?? ''}
             topic={topic ?? ''}
+            joinRule={joinRule}
             onClose={handleCloseEdit}
           />
         ) : (
@@ -337,14 +366,14 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
             <Box shrink="No">
               <Avatar size="500" radii="300">
                 <RoomAvatar
-                  roomId={room.roomId}
+                  roomId={roomId}
                   src={avatarUrl}
                   alt={name}
                   renderFallback={() => (
                     <RoomIcon
-                      roomType={room.getType()}
+                      roomType={ct.roomToType.read.get(roomId)}
                       size="400"
-                      joinRule={joinRule?.join_rule ?? JoinRule.Invite}
+                      joinRule={joinRule}
                       filled
                     />
                   )}
