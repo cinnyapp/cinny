@@ -19,7 +19,7 @@ import * as css from './styles.css';
 import { UserAvatar } from '../user-avatar';
 import colorMXID from '../../../util/colorMXID';
 import { getMxIdLocalPart } from '../../utils/matrix';
-import { BreakWord, LineClamp3 } from '../../styles/Text.css';
+import { BreakWord, HoverUnderline, LineClamp3, PreWrap } from '../../styles/Text.css';
 import { UserPresence } from '../../hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../presence';
 import { ImageViewer } from '../image-viewer';
@@ -28,6 +28,7 @@ import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { UserBiography, UserPronoun } from '../../hooks/useUserProfile';
+import { RoomTopicViewer } from '../room-topic-viewer';
 
 export function UserHero({ children }: { children: ReactNode }) {
   return (
@@ -214,9 +215,34 @@ export function UserHeroName({ displayName, userId, pronouns }: UserHeroNameProp
 }
 
 export function UserHeroBiography({ bio }: { bio: UserBiography }) {
+  const [view, setView] = useState(false);
+
   return (
-    <Text className={classNames(BreakWord, LineClamp3)} size="T200">
-      <Linkify options={LINKIFY_OPTS}>{bio.body}</Linkify>
-    </Text>
+    <>
+      <Text
+        as="button"
+        type="button"
+        onClick={() => setView(true)}
+        className={classNames(BreakWord, PreWrap, LineClamp3, HoverUnderline)}
+        size="T200"
+      >
+        {bio.body}
+      </Text>
+      <Overlay open={view} backdrop={<OverlayBackdrop />}>
+        <OverlayCenter>
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              clickOutsideDeactivates: true,
+              onDeactivate: () => setView(false),
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            {/* TODO: create new component to render formatted body */}
+            <RoomTopicViewer name="Bio" topic={bio.body} requestClose={() => setView(false)} />
+          </FocusTrap>
+        </OverlayCenter>
+      </Overlay>
+    </>
   );
 }

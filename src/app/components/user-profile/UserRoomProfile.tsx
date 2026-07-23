@@ -86,7 +86,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
 
   const bannerUrl = profile?.bannerUrl
     ? mxcToHttp(ct.session.baseUrl, profile.bannerUrl, useAuthentication).url()
-    : avatarUrl;
+    : profile && avatarUrl;
 
   const handleMessage = () => {
     closeUserRoomProfile();
