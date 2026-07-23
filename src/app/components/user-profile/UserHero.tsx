@@ -27,7 +27,7 @@ import { stopPropagation } from '../../utils/keyboard';
 import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-import { UserPronoun } from '../../hooks/useUserProfile';
+import { UserBiography, UserPronoun } from '../../hooks/useUserProfile';
 
 export function UserHero({ children }: { children: ReactNode }) {
   return (
@@ -165,7 +165,7 @@ export function UserTimezone({ timezone }: { timezone: string }) {
   return (
     <Box as="span" alignItems="Center" gap="100">
       <Icon style={{ opacity: config.opacity.P300 }} size="50" src={Icons.Clock} />
-      <Text as="span" size="T200" priority="300">
+      <Text as="span" size="T200" priority="300" truncate>
         {time} local time{offset ? ` · ${offset}` : ` · ${timezone}`}
       </Text>
     </Box>
@@ -198,11 +198,21 @@ export function UserHeroName({ displayName, userId, pronouns }: UserHeroNameProp
         {pronouns?.map((pronoun) =>
           pronoun.summary ? (
             <Badge key={pronoun.summary} variant="Primary" fill="Soft" size="400">
-              <Text size="L400">{pronoun.summary}</Text>
+              <Text size="L400" truncate>
+                {pronoun.summary}
+              </Text>
             </Badge>
           ) : undefined
         )}
       </Box>
     </Box>
+  );
+}
+
+export function UserHeroBiography({ bio }: { bio: UserBiography }) {
+  return (
+    <Text className={classNames(BreakWord, LineClamp3)} size="T200">
+      <Linkify options={LINKIFY_OPTS}>{bio.body}</Linkify>
+    </Text>
   );
 }

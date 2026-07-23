@@ -2,7 +2,14 @@ import { Box, Button, config, Icon, Icons, Text } from 'folds';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ObjectReader } from 'neurone/lib/utils';
-import { UserHero, UserHeroAvatar, UserHeroCover, UserHeroName, UserTimezone } from './UserHero';
+import {
+  UserHero,
+  UserHeroAvatar,
+  UserHeroBiography,
+  UserHeroCover,
+  UserHeroName,
+  UserTimezone,
+} from './UserHero';
 import { getMxIdServer } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import {
@@ -123,11 +130,8 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
                   />
                 )}
               </Box>
+              {profile?.biography ? <UserHeroBiography bio={profile.biography} /> : null}
               {profile?.timezone && <UserTimezone timezone={profile.timezone} />}
-              <Text size="T200">
-                now hierarchy does not have room summary info we need to load it when we will be
-                rendering it
-              </Text>
               <Box alignItems="Center" gap="200" wrap="Wrap">
                 {server && <ServerChip server={server} />}
                 <ShareChip userId={userId} />

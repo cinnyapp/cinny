@@ -5,16 +5,15 @@ import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { ObjectReader } from 'neurone/lib/utils';
 import { useClient } from './useClient';
 
-type PronounResponse = {
-  grammatical_gender?: string;
-  language?: string;
-  summary?: string;
-};
-
 export type UserPronoun = {
   grammaticalGender?: string;
   language?: string;
   summary?: string;
+};
+
+export type UserBiography = {
+  body: string;
+  formattedBody?: string;
 };
 
 export type UserProfile = {
@@ -23,6 +22,7 @@ export type UserProfile = {
   bannerUrl?: string;
   timezone?: string;
   pronouns?: UserPronoun[];
+  biography?: UserBiography;
 };
 export const useUserProfile = (userId: string): UserProfile | undefined => {
   const ct = useClient();
@@ -36,15 +36,23 @@ export const useUserProfile = (userId: string): UserProfile | undefined => {
 
     const [, profile] = await parseMatrixResp<
       GetProfileOK & {
-        'chat.commet.profile_banner'?: string;
-        'm.banner_url'?: string;
-        'm.tz'?: string;
-        'io.fsky.nyx.pronouns': PronounResponse[];
-        'm.pronouns': PronounResponse[];
+        'chat.commet.profile_banner'?: unknown;
+        'm.banner_url'?: unknown;
+        'm.tz'?: unknown;
+        'io.fsky.nyx.pronouns': unknown;
+        'm.pronouns': unknown;
+        'm.biography': unknown;
+        'gay.fomx.biography': unknown;
       }
     >(response);
 
     const pronouns = profile?.['m.pronouns'] ?? profile?.['io.fsky.nyx.pronouns'];
+    const bio = profile?.['m.biography'] ?? profile?.['gay.fomx.biography'];
+    const bioText = ObjectReader.array(bio, 'm.text');
+
+    const plainBio = bioText?.find((i) => ObjectReader.string(i, 'mimetype') !== 'text/html');
+    const htmlBio = bioText?.find((i) => ObjectReader.string(i, 'mimetype') === 'text/html');
+    const bioBody = ObjectReader.string(plainBio, 'body') ?? ObjectReader.string(htmlBio, 'body');
 
     return {
       avatarUrl: profile?.avatar_url || undefined,
@@ -53,11 +61,19 @@ export const useUserProfile = (userId: string): UserProfile | undefined => {
         ObjectReader.string(profile, 'm.banner_url') ??
         ObjectReader.string(profile, 'chat.commet.profile_banner'),
       timezone: ObjectReader.string(profile, 'm.tz'),
-      pronouns: pronouns?.map((p) => ({
-        grammaticalGender: ObjectReader.string(p, 'grammatical_gender'),
-        language: ObjectReader.string(p, 'language'),
-        summary: ObjectReader.string(p, 'summary'),
-      })),
+      pronouns: Array.isArray(pronouns)
+        ? pronouns?.map((p) => ({
+            grammaticalGender: ObjectReader.string(p, 'grammatical_gender'),
+            language: ObjectReader.string(p, 'language'),
+            summary: ObjectReader.string(p, 'summary'),
+          }))
+        : undefined,
+      biography: bioBody
+        ? {
+            body: bioBody,
+            formattedBody: ObjectReader.string(htmlBio, 'body'),
+          }
+        : undefined,
     };
   }, [ct, userId]);
 
