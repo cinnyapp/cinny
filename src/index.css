@@ -81,6 +81,10 @@ a:hover {
   pointer-events: none;
 }
 
+img {
+  dynamic-range-limit: standard;
+}
+
 b {
   font-weight: 500;
 }
