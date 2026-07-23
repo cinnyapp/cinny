@@ -48,6 +48,8 @@ export function UserHeroCover({
   bannerUrl?: string;
   hasStatus: boolean;
 }) {
+  const [err, setError] = useState(false);
+
   return (
     <div
       className={css.UserHeroCoverContainer}
@@ -56,15 +58,16 @@ export function UserHeroCover({
         filter: bannerUrl && !hasStatus ? undefined : 'brightness(50%)',
       }}
     >
-      {bannerUrl && (
+      {!err && bannerUrl && (
         <img
           className={classNames(
             css.UserHeroCover,
             avatarUrl === bannerUrl && css.UserHeroCoverBlurred
           )}
           src={bannerUrl}
-          alt={userId}
+          alt="{userId}"
           draggable="false"
+          onError={() => setError(true)}
         />
       )}
     </div>
