@@ -22,24 +22,16 @@ import {
   toRem,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { RoomMember } from 'matrix-js-sdk';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { useRoom } from '../../../hooks/useRoom';
-import { useRoomMembers } from '../../../hooks/useRoomMembers';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useGetMemberPowerLevel, usePowerLevels } from '../../../hooks/usePowerLevels';
+import { useGetMemberPowerLevel, usePowerLevelsContext } from '../../../hooks/usePowerLevels';
 import { VirtualTile } from '../../../components/virtualizer';
 import { MemberTile } from '../../../components/member-tile';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { getMxIdLocalPart, getMxIdServer } from '../../../utils/matrix';
+import { getMxIdServer } from '../../../utils/matrix';
 import { ServerBadge } from '../../../components/server-badge';
 import { useDebounce } from '../../../hooks/useDebounce';
-import {
-  SearchItemStrGetter,
-  useAsyncSearch,
-  UseAsyncSearchOptions,
-} from '../../../hooks/useAsyncSearch';
-import { getMemberSearchStr } from '../../../utils/room';
+import { useAsyncSearch, UseAsyncSearchOptions } from '../../../hooks/useAsyncSearch';
 import { useMembershipFilter, useMembershipFilterMenu } from '../../../hooks/useMemberFilter';
 import { useMemberPowerSort, useMemberSort, useMemberSortMenu } from '../../../hooks/useMemberSort';
 import { settingsAtom } from '../../../state/settings';
@@ -56,6 +48,11 @@ import { useSpaceOptionally } from '../../../hooks/useSpace';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { getMouseEventCords } from '../../../utils/dom';
+import { useClient } from '../../../hooks/useClient';
+import { usePendingMembers } from '../../../hooks/usePendingMembers';
+import { JoinRoomMemberObject } from '../../../../client/storage/collections';
+import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
+import { getMemberSearchStr } from '../../../utils/room';
 
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 1000,
@@ -67,58 +64,65 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   },
 };
 
-const mxIdToName = (mxId: string) => getMxIdLocalPart(mxId) ?? mxId;
-const getRoomMemberStr: SearchItemStrGetter<RoomMember> = (m, query) =>
-  getMemberSearchStr(m, query, mxIdToName);
-
 type MembersProps = {
   requestClose: () => void;
 };
+const EMPTY_MEMBER_LIST: JoinRoomMemberObject[] = [];
 export function Members({ requestClose }: MembersProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const roomId = useRoom();
   const useAuthentication = useMediaAuthentication();
-  const room = useRoom();
-  const members = useRoomMembers(mx, room.roomId);
-  const fetchingMembers = members.length < room.getJoinedMemberCount();
-  const openProfile = useOpenUserRoomProfile();
-  const profileUser = useUserRoomProfileState();
-  const space = useSpaceOptionally();
 
-  const powerLevels = usePowerLevels(room);
-  const creators = useRoomCreators(room);
-  const getPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
+  const powerLevels = usePowerLevelsContext();
+  const creators = useRoomCreators(roomId);
+  const getPowerTag = useGetMemberPowerTag(creators, powerLevels);
   const getPowerLevel = useGetMemberPowerLevel(powerLevels);
 
-  const [membershipFilterIndex, setMembershipFilterIndex] = useState(0);
+  const membersAPI = useRoomMembersAPI();
+  const members = membersAPI.memberEventsResult.value ?? EMPTY_MEMBER_LIST;
+  const loadingFromMemory = membersAPI.memberEventsResult.pending;
+
+  const fetchingMembers = usePendingMembers(roomId);
+
+  const openProfile = useOpenUserRoomProfile();
+  const spaceId = useSpaceOptionally();
+  const profileUser = useUserRoomProfileState();
+
+  const membershipFilterMenu = useMembershipFilterMenu(membersAPI.getMembership);
+  const sortFilterMenu = useMemberSortMenu(membersAPI.getName);
   const [sortFilterIndex, setSortFilterIndex] = useSetting(settingsAtom, 'memberSortFilterIndex');
-  const membershipFilter = useMembershipFilter(membershipFilterIndex, useMembershipFilterMenu());
-  const memberSort = useMemberSort(sortFilterIndex, useMemberSortMenu());
+  const [membershipFilterIndex, setMembershipFilterIndex] = useState(0);
+
+  const membershipFilter = useMembershipFilter(membershipFilterIndex, membershipFilterMenu);
+  const memberSort = useMemberSort(sortFilterIndex, sortFilterMenu);
   const memberPowerSort = useMemberPowerSort(creators, getPowerLevel);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
 
-  const sortedMembers = useMemo(
-    () =>
-      Array.from(members)
-        .filter(membershipFilter.filterFn)
-        .sort(memberSort.sortFn)
-        .sort(memberPowerSort),
+  const filteredMembers = useMemo(
+    () => members.filter(membershipFilter.filterFn).sort(memberSort.sortFn).sort(memberPowerSort),
     [members, membershipFilter, memberSort, memberPowerSort]
   );
+  const memberCount = filteredMembers.length ?? 0;
 
   const [result, search, resetSearch] = useAsyncSearch(
-    sortedMembers,
-    getRoomMemberStr,
+    filteredMembers,
+    useCallback(
+      (m, query) => getMemberSearchStr(m, query, membersAPI.getName),
+      [membersAPI.getName]
+    ),
     SEARCH_OPTIONS
   );
   if (!result && searchInputRef.current?.value) search(searchInputRef.current.value);
 
-  const flattenTagMembers = useFlattenPowerTagMembers(result?.items ?? sortedMembers, getPowerTag);
+  const processMembers = result ? result.items : filteredMembers;
+
+  const PLTagOrRoomMember = useFlattenPowerTagMembers(processMembers, getPowerTag);
 
   const virtualizer = useVirtualizer({
-    count: flattenTagMembers.length,
+    count: PLTagOrRoomMember.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 40,
     overscan: 10,
@@ -147,7 +151,7 @@ export function Members({ requestClose }: MembersProps) {
     const btn = evt.currentTarget as HTMLButtonElement;
     const userId = btn.getAttribute('data-user-id');
     if (userId) {
-      openProfile(room.roomId, space?.roomId, userId, getMouseEventCords(evt.nativeEvent));
+      openProfile(roomId, spaceId, userId, getMouseEventCords(evt.nativeEvent));
     }
   };
 
@@ -157,7 +161,7 @@ export function Members({ requestClose }: MembersProps) {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              {room.getJoinedMemberCount()} Members
+              {memberCount} Members
             </Text>
           </Box>
           <Box shrink="No">
@@ -287,13 +291,13 @@ export function Members({ requestClose }: MembersProps) {
                   <Icon src={Icons.ChevronTop} size="300" />
                 </IconButton>
               </ScrollTopContainer>
-              {fetchingMembers && (
+              {(fetchingMembers || loadingFromMemory) && (
                 <Box justifyContent="Center">
                   <Spinner />
                 </Box>
               )}
 
-              {!fetchingMembers && !result && flattenTagMembers.length === 0 && (
+              {!loadingFromMemory && !fetchingMembers && !result && processMembers.length === 0 && (
                 <Text style={{ padding: config.space.S300 }} align="Center">
                   {`No "${membershipFilter.name}" Members`}
                 </Text>
@@ -308,7 +312,7 @@ export function Members({ requestClose }: MembersProps) {
                 gap="100"
               >
                 {virtualizer.getVirtualItems().map((vItem) => {
-                  const tagOrMember = flattenTagMembers[vItem.index];
+                  const tagOrMember = PLTagOrRoomMember[vItem.index];
 
                   if ('userId' in tagOrMember) {
                     const server = getMxIdServer(tagOrMember.userId);
@@ -323,9 +327,10 @@ export function Members({ requestClose }: MembersProps) {
                             data-user-id={tagOrMember.userId}
                             onClick={handleMemberClick}
                             aria-pressed={profileUser?.userId === tagOrMember.userId}
-                            mx={mx}
-                            room={room}
+                            ct={ct}
                             member={tagOrMember}
+                            getName={membersAPI.getName}
+                            getAvatar={membersAPI.getAvatar}
                             useAuthentication={useAuthentication}
                             after={
                               server && (

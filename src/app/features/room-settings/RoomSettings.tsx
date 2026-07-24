@@ -27,6 +27,8 @@ import {
   usePowerLevelTags,
   usePowerLevelTagsState,
 } from '../../hooks/usePowerLevelTags';
+import { RoomMembersAPIProvider, useCreateRoomMembersAPI } from '../../hooks/useRoomMembers';
+import { usePendingMemberLoader, usePendingMembers } from '../../hooks/usePendingMembers';
 
 type RoomSettingsMenuItem = {
   page: RoomSettingsPage;
@@ -86,6 +88,10 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
   const powerLevelTagsResult = usePowerLevelTagsState(roomId);
   const powerLevelTags = usePowerLevelTags(powerLevels, powerLevelTagsResult.value);
 
+  const membersAPI = useCreateRoomMembersAPI(roomId);
+  const membersPending = usePendingMembers(roomId);
+  usePendingMemberLoader(roomId, membersPending);
+
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
 
   const avatarUrl = roomAvatar
@@ -112,91 +118,93 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
   };
 
   return (
-    <PowerLevelsContextProvider value={powerLevels}>
-      <PowerLevelTagsContextProvider value={powerLevelTags}>
-        <PageRoot
-          nav={
-            screenSize === ScreenSize.Mobile && activePage !== undefined ? undefined : (
-              <PageNav size="300">
-                <PageNavHeader outlined={false}>
-                  <Box grow="Yes" gap="200">
-                    <Avatar size="200" radii="300">
-                      <RoomAvatar
-                        roomId={roomId}
-                        src={avatarUrl}
-                        alt={roomName}
-                        renderFallback={() => (
-                          <RoomIcon
-                            size="50"
-                            roomType={ct.roomToType.read.get(roomId)}
-                            joinRule={roomToJoinRule.get(roomId)}
-                            filled
-                          />
-                        )}
-                      />
-                    </Avatar>
-                    <Text size="H4" truncate>
-                      {roomName}
-                    </Text>
-                  </Box>
-                  <Box shrink="No">
-                    {screenSize === ScreenSize.Mobile && (
-                      <IconButton onClick={requestClose} variant="Background">
-                        <Icon src={Icons.Cross} />
-                      </IconButton>
-                    )}
-                  </Box>
-                </PageNavHeader>
-                <Box grow="Yes" direction="Column">
-                  <PageNavContent>
-                    <div style={{ flexGrow: 1 }}>
-                      {menuItems.map((item) => (
-                        <MenuItem
-                          key={item.name}
-                          variant="Background"
-                          radii="400"
-                          aria-pressed={activePage === item.page}
-                          before={
-                            <Icon src={item.icon} size="100" filled={activePage === item.page} />
-                          }
-                          onClick={() => setActivePage(item.page)}
-                        >
-                          <Text
-                            style={{
-                              fontWeight:
-                                activePage === item.page ? config.fontWeight.W600 : undefined,
-                            }}
-                            size="T300"
-                            truncate
+    <RoomMembersAPIProvider value={membersAPI}>
+      <PowerLevelsContextProvider value={powerLevels}>
+        <PowerLevelTagsContextProvider value={powerLevelTags}>
+          <PageRoot
+            nav={
+              screenSize === ScreenSize.Mobile && activePage !== undefined ? undefined : (
+                <PageNav size="300">
+                  <PageNavHeader outlined={false}>
+                    <Box grow="Yes" gap="200">
+                      <Avatar size="200" radii="300">
+                        <RoomAvatar
+                          roomId={roomId}
+                          src={avatarUrl}
+                          alt={roomName}
+                          renderFallback={() => (
+                            <RoomIcon
+                              size="50"
+                              roomType={ct.roomToType.read.get(roomId)}
+                              joinRule={roomToJoinRule.get(roomId)}
+                              filled
+                            />
+                          )}
+                        />
+                      </Avatar>
+                      <Text size="H4" truncate>
+                        {roomName}
+                      </Text>
+                    </Box>
+                    <Box shrink="No">
+                      {screenSize === ScreenSize.Mobile && (
+                        <IconButton onClick={requestClose} variant="Background">
+                          <Icon src={Icons.Cross} />
+                        </IconButton>
+                      )}
+                    </Box>
+                  </PageNavHeader>
+                  <Box grow="Yes" direction="Column">
+                    <PageNavContent>
+                      <div style={{ flexGrow: 1 }}>
+                        {menuItems.map((item) => (
+                          <MenuItem
+                            key={item.name}
+                            variant="Background"
+                            radii="400"
+                            aria-pressed={activePage === item.page}
+                            before={
+                              <Icon src={item.icon} size="100" filled={activePage === item.page} />
+                            }
+                            onClick={() => setActivePage(item.page)}
                           >
-                            {item.name}
-                          </Text>
-                        </MenuItem>
-                      ))}
-                    </div>
-                  </PageNavContent>
-                </Box>
-              </PageNav>
-            )
-          }
-        >
-          {activePage === RoomSettingsPage.GeneralPage && (
-            <General requestClose={handlePageRequestClose} />
-          )}
-          {activePage === RoomSettingsPage.MembersPage && (
-            <Members requestClose={handlePageRequestClose} />
-          )}
-          {activePage === RoomSettingsPage.PermissionsPage && (
-            <Permissions requestClose={handlePageRequestClose} />
-          )}
-          {activePage === RoomSettingsPage.EmojisStickersPage && (
-            <EmojisStickers requestClose={handlePageRequestClose} />
-          )}
-          {activePage === RoomSettingsPage.DeveloperToolsPage && (
-            <DeveloperTools requestClose={handlePageRequestClose} />
-          )}
-        </PageRoot>
-      </PowerLevelTagsContextProvider>
-    </PowerLevelsContextProvider>
+                            <Text
+                              style={{
+                                fontWeight:
+                                  activePage === item.page ? config.fontWeight.W600 : undefined,
+                              }}
+                              size="T300"
+                              truncate
+                            >
+                              {item.name}
+                            </Text>
+                          </MenuItem>
+                        ))}
+                      </div>
+                    </PageNavContent>
+                  </Box>
+                </PageNav>
+              )
+            }
+          >
+            {activePage === RoomSettingsPage.GeneralPage && (
+              <General requestClose={handlePageRequestClose} />
+            )}
+            {activePage === RoomSettingsPage.MembersPage && (
+              <Members requestClose={handlePageRequestClose} />
+            )}
+            {activePage === RoomSettingsPage.PermissionsPage && (
+              <Permissions requestClose={handlePageRequestClose} />
+            )}
+            {activePage === RoomSettingsPage.EmojisStickersPage && (
+              <EmojisStickers requestClose={handlePageRequestClose} />
+            )}
+            {activePage === RoomSettingsPage.DeveloperToolsPage && (
+              <DeveloperTools requestClose={handlePageRequestClose} />
+            )}
+          </PageRoot>
+        </PowerLevelTagsContextProvider>
+      </PowerLevelsContextProvider>
+    </RoomMembersAPIProvider>
   );
 }

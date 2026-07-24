@@ -66,17 +66,17 @@ import { useUserPresence } from '../../hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../../components/presence';
 
 type MemberDrawerHeaderProps = {
-  joinedMemberCount: number;
+  memberCount: number;
 };
-function MemberDrawerHeader({ joinedMemberCount }: MemberDrawerHeaderProps) {
+function MemberDrawerHeader({ memberCount }: MemberDrawerHeaderProps) {
   const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
 
   return (
     <Header className={css.MembersDrawerHeader} variant="Background" size="600">
       <Box grow="Yes" alignItems="Center" gap="200">
         <Box grow="Yes" alignItems="Center" gap="200">
-          <Text title={`${joinedMemberCount} Members`} size="H5" truncate>
-            {joinedMemberCount > 0 ? `${millify(joinedMemberCount)} Members` : 'Members'}
+          <Text title={`${memberCount} Members`} size="H5" truncate>
+            {memberCount > 0 ? `${millify(memberCount)} Members` : 'Members'}
           </Text>
         </Box>
         <Box shrink="No" alignItems="Center">
@@ -229,7 +229,7 @@ export function MembersDrawer() {
     () => members.filter(membershipFilter.filterFn).sort(memberSort.sortFn).sort(memberPowerSort),
     [members, membershipFilter, memberSort, memberPowerSort]
   );
-  const joinedMemberCount = filteredMembers.length ?? 0;
+  const memberCount = filteredMembers.length ?? 0;
 
   const [result, search, resetSearch] = useAsyncSearch(
     filteredMembers,
@@ -276,7 +276,7 @@ export function MembersDrawer() {
       shrink="No"
       direction="Column"
     >
-      <MemberDrawerHeader joinedMemberCount={joinedMemberCount} />
+      <MemberDrawerHeader memberCount={memberCount} />
       <Box className={css.MemberDrawerContentBase} grow="Yes">
         <Scroll ref={scrollRef} variant="Background" size="300" visibility="Hover" hideTrack>
           <Box className={css.MemberDrawerContent} direction="Column" gap="200">

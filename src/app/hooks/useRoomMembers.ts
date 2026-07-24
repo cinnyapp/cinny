@@ -23,9 +23,6 @@ export type RoomMembersAPI = {
   memberEventsResult: PendingObservableResult<JoinRoomMemberObject[]>;
 };
 
-// FIXME: remove after usage over
-export const useRoomMembers = () => undefined;
-
 export const useCreateRoomMembersAPI = (roomId: string): RoomMembersAPI => {
   const ct = useClient();
   const memberEventsPromise = useMemo(
