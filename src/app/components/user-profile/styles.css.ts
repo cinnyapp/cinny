@@ -22,6 +22,7 @@ export const UserHeroCover = style({
   height: '100%',
   width: '100%',
   objectFit: 'cover',
+  fontSize: 1,
 });
 export const UserHeroCoverBlurred = style({
   filter: 'blur(16px)',

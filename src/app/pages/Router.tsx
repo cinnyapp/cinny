@@ -140,8 +140,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                   <CreateRoomModalRenderer />
                   <CreateSpaceModalRenderer />
                   <RoomSettingsRenderer />
-                  {/*<SpaceSettingsRenderer />
-                  <ReceiveSelfDeviceVerification />
+                  <SpaceSettingsRenderer />
+                  {/*<ReceiveSelfDeviceVerification />
                   <AutoRestoreBackupOnVerification /> */}
                 </ClientRoomsNotificationPreferences>
               </ClientInitStorageAtom>

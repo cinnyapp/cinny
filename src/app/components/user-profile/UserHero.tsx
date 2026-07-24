@@ -66,7 +66,7 @@ export function UserHeroCover({
             avatarUrl === bannerUrl && css.UserHeroCoverBlurred
           )}
           src={bannerUrl}
-          alt="{userId}"
+          alt={userId}
           draggable="false"
           onError={() => setError(true)}
         />
