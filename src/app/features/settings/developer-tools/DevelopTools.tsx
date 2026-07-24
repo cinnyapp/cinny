@@ -1,42 +1,52 @@
 import React, { useCallback, useState } from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll, Switch, Button } from 'folds';
+import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { AccountDataEvent } from 'neurone/lib/api/types';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import {
   AccountDataEditor,
   AccountDataSubmitCallback,
 } from '../../../components/AccountDataEditor';
 import { copyToClipboard } from '../../../utils/dom';
+import { useClient } from '../../../hooks/useClient';
 import { AccountData } from './AccountData';
 
 type DeveloperToolsProps = {
   requestClose: () => void;
 };
 export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const [developerTools, setDeveloperTools] = useSetting(settingsAtom, 'developerTools');
+
   const [expand, setExpend] = useState(false);
-  const [accountDataType, setAccountDataType] = useState<string | null>();
+  const [editAccountData, setEditAccountData] = useState<AccountDataEvent | null>();
 
   const submitAccountData: AccountDataSubmitCallback = useCallback(
     async (type, content) => {
-      await mx.setAccountData(type, content);
+      const resp = await ct.requestAuthJSON(
+        putAccountData({
+          pathParams: { type, userId: ct.session.userId },
+          body: content,
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
-    [mx]
+    [ct]
   );
 
-  if (accountDataType !== undefined) {
+  if (editAccountData !== undefined) {
     return (
       <AccountDataEditor
-        type={accountDataType ?? undefined}
-        content={accountDataType ? mx.getAccountData(accountDataType)?.getContent() : undefined}
+        event={editAccountData ?? undefined}
         submitChange={submitAccountData}
-        requestClose={() => setAccountDataType(undefined)}
+        requestClose={() => setEditAccountData(undefined)}
       />
     );
   }
@@ -92,9 +102,7 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
                       description="Copy access token to clipboard."
                       after={
                         <Button
-                          onClick={() =>
-                            copyToClipboard(mx.getAccessToken() ?? '<NO_ACCESS_TOKEN_FOUND>')
-                          }
+                          onClick={() => copyToClipboard(ct.session.accessToken)}
                           variant="Secondary"
                           fill="Soft"
                           size="300"
@@ -112,7 +120,7 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
                 <AccountData
                   expand={expand}
                   onExpandToggle={setExpend}
-                  onSelect={setAccountDataType}
+                  onSelect={setEditAccountData}
                 />
               )}
             </Box>

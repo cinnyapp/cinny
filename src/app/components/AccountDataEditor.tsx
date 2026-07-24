@@ -14,6 +14,7 @@ import {
   Scroll,
   config,
 } from 'folds';
+import { AccountDataEvent } from 'neurone/lib/api/types';
 import { Cursor } from '../plugins/text-area';
 import { syntaxErrorPosition } from '../utils/dom';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
@@ -27,17 +28,12 @@ const EDITOR_INTENT_SPACE_COUNT = 2;
 
 export type AccountDataSubmitCallback = (type: string, content: object) => Promise<void>;
 
-type AccountDataInfo = {
-  type: string;
-  content: object;
-};
-
 type AccountDataEditProps = {
   type: string;
   defaultContent: string;
   submitChange: AccountDataSubmitCallback;
   onCancel: () => void;
-  onSave: (info: AccountDataInfo) => void;
+  onSave: (info: AccountDataEvent) => void;
 };
 function AccountDataEdit({
   type,
@@ -243,34 +239,30 @@ function AccountDataView({ type, defaultContent, onEdit }: AccountDataViewProps)
 }
 
 export type AccountDataEditorProps = {
-  type?: string;
-  content?: object;
+  event?: AccountDataEvent;
   submitChange: AccountDataSubmitCallback;
   requestClose: () => void;
 };
 
-export function AccountDataEditor({
-  type,
-  content,
-  submitChange,
-  requestClose,
-}: AccountDataEditorProps) {
-  const [data, setData] = useState<AccountDataInfo>({
-    type: type ?? '',
-    content: content ?? {},
-  });
+export function AccountDataEditor({ event, submitChange, requestClose }: AccountDataEditorProps) {
+  const [data, setData] = useState<AccountDataEvent>(
+    event ?? {
+      type: '',
+      content: {},
+    }
+  );
 
-  const [edit, setEdit] = useState(!type);
+  const [edit, setEdit] = useState(!data.type);
 
   const closeEdit = useCallback(() => {
-    if (!type) {
+    if (!event) {
       requestClose();
       return;
     }
     setEdit(false);
-  }, [type, requestClose]);
+  }, [event, requestClose]);
 
-  const handleSave = useCallback((info: AccountDataInfo) => {
+  const handleSave = useCallback((info: AccountDataEvent) => {
     setData(info);
     setEdit(false);
   }, []);
