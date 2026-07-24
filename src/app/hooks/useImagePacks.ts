@@ -65,7 +65,7 @@ export const useGlobalImagePacks = (): PendingObservableResult<ImagePack[]> => {
     useCallback(
       (roomPackEvents) =>
         roomPackEvents
-          .filter((p) => !!p)
+          .filter((p): p is JoinRoomStateObject => !!p)
           .map((packEvent) => ImagePack.fromStateEvent(packEvent.roomId, packEvent.event)),
       []
     )
@@ -150,7 +150,7 @@ export const useRoomsImagePacks = (rooms: string[]): PendingObservableResult<Ima
     useCallback(
       (roomPackEvents) =>
         roomPackEvents
-          .filter((p) => !!p)
+          .filter((p): p is JoinRoomStateObject => !!p)
           .map((roomPackEvent) =>
             ImagePack.fromStateEvent(roomPackEvent.roomId, roomPackEvent.event)
           ),

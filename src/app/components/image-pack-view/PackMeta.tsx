@@ -13,8 +13,6 @@ import {
   Chip,
 } from 'folds';
 import Linkify from 'linkify-react';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { nameInitials } from '../../utils/common';
 import { BreakWord } from '../../styles/Text.css';
 import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
@@ -25,6 +23,8 @@ import { createUploadAtom, UploadSuccess } from '../../state/upload';
 import { CompactUploadCardRenderer } from '../upload-card';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { PackMetaReader } from '../../plugins/custom-emoji';
+import { useClient } from '../../hooks/useClient';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 type ImagePackAvatarProps = {
   url?: string;
@@ -50,10 +50,10 @@ type ImagePackProfileProps = {
   onEdit?: () => void;
 };
 export function ImagePackProfile({ meta, canEdit, onEdit }: ImagePackProfileProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const avatarUrl = meta.avatar
-    ? mxcUrlToHttp(mx, meta.avatar, useAuthentication) ?? undefined
+    ? mxcToHttp(ct.session.baseUrl, meta.avatar, useAuthentication).url()
     : undefined;
 
   return (
@@ -97,11 +97,13 @@ type ImagePackProfileEditProps = {
   onSave: (meta: PackMetaReader) => void;
 };
 export function ImagePackProfileEdit({ meta, onCancel, onSave }: ImagePackProfileEditProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const [avatar, setAvatar] = useState(meta.avatar);
 
-  const avatarUrl = avatar ? mxcUrlToHttp(mx, avatar, useAuthentication) ?? undefined : undefined;
+  const avatarUrl = avatar
+    ? mxcToHttp(ct.session.baseUrl, avatar, useAuthentication).url()
+    : undefined;
 
   const [imageFile, setImageFile] = useState<File>();
   const avatarFileUrl = useObjectURL(imageFile);

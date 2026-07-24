@@ -2,17 +2,16 @@ import React from 'react';
 import { Box, IconButton, Text, Icon, Icons, Scroll, Chip } from 'folds';
 import { PackAddress } from '../../plugins/custom-emoji';
 import { Page, PageHeader, PageContent } from '../page';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { RoomImagePack } from './RoomImagePack';
 import { UserImagePack } from './UserImagePack';
+import { useClient } from '../../hooks/useClient';
 
 type ImagePackViewProps = {
   address: PackAddress | undefined;
   requestClose: () => void;
 };
 export function ImagePackView({ address, requestClose }: ImagePackViewProps) {
-  const mx = useMatrixClient();
-  const room = address && mx.getRoom(address.roomId);
+  const ct = useClient();
 
   return (
     <Page>
@@ -38,8 +37,8 @@ export function ImagePackView({ address, requestClose }: ImagePackViewProps) {
       <Box grow="Yes">
         <Scroll hideTrack visibility="Hover">
           <PageContent>
-            {room && address ? (
-              <RoomImagePack room={room} stateKey={address.stateKey} />
+            {address && ct.rooms.join.read.includes(address.roomId) ? (
+              <RoomImagePack roomId={address.roomId} stateKey={address.stateKey} />
             ) : (
               <UserImagePack />
             )}

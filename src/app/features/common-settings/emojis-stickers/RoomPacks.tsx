@@ -16,7 +16,8 @@ import {
   IconButton,
   Menu,
 } from 'folds';
-import { MatrixError } from 'matrix-js-sdk';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SequenceCard } from '../../../components/sequence-card';
 import {
   ImagePack,
@@ -30,26 +31,26 @@ import { useRoomImagePacks } from '../../../hooks/useImagePacks';
 import { LineClamp2 } from '../../../styles/Text.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { SequenceCardStyle } from '../styles.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { mxcUrlToHttp } from '../../../utils/matrix';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { StateEvent } from '../../../../types/matrix/room';
+import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
+import { StateEventType } from '../../../../types/matrix/room';
 import { suffixRename } from '../../../utils/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAlive } from '../../../hooks/useAlive';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+import { useClient } from '../../../hooks/useClient';
 
 type CreatePackTileProps = {
   packs: ImagePack[];
   roomId: string;
 };
 function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const alive = useAlive();
 
-  const [addState, addPack] = useAsyncCallback<void, MatrixError, [string, string]>(
+  const [addState, addPack] = useAsyncCallback<void, unknown, [string, string]>(
     useCallback(
       async (stateKey, name) => {
         const content: PackContent = {
@@ -57,9 +58,17 @@ function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
             display_name: name,
           },
         };
-        await mx.sendStateEvent(roomId, StateEvent.PoniesRoomEmotes as any, content, stateKey);
+
+        const resp = await ct.requestAuthJSON(
+          putStateEvent({
+            pathParams: { roomId, eventType: StateEventType.PoniesRoomEmotes, stateKey },
+            body: content,
+          })
+        );
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
       },
-      [mx, roomId]
+      [ct, roomId]
     )
   );
 
@@ -119,7 +128,7 @@ function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
             />
             {addState.status === AsyncStatus.Error && (
               <Text style={{ color: color.Critical.Main }} size="T300">
-                {addState.error.message}
+                {addState.error instanceof Error ? addState.error.message : 'Unknown Error'}
               </Text>
             )}
           </Box>
@@ -141,19 +150,21 @@ function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
 type RoomPacksProps = {
   onViewPack: (imagePack: ImagePack) => void;
 };
+const EMPTY_PACKS: ImagePack[] = [];
 export function RoomPacks({ onViewPack }: RoomPacksProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const room = useRoom();
+  const roomId = useRoom();
   const alive = useAlive();
 
-  const powerLevels = usePowerLevels(room);
-  const creators = useRoomCreators(room);
+  const powerLevels = usePowerLevelsContext();
+  const creators = useRoomCreators(roomId);
 
   const permissions = useRoomPermissions(creators, powerLevels);
-  const canEdit = permissions.stateEvent(StateEvent.PoniesRoomEmotes, mx.getSafeUserId());
+  const canEdit = permissions.stateEvent(StateEventType.PoniesRoomEmotes, ct.session.userId);
 
-  const unfilteredPacks = useRoomImagePacks(room);
+  const unfilteredPacksResult = useRoomImagePacks(roomId);
+  const unfilteredPacks = unfilteredPacksResult.value ?? EMPTY_PACKS;
   const packs = useMemo(() => unfilteredPacks.filter((pack) => !pack.deleted), [unfilteredPacks]);
 
   const [removedPacks, setRemovedPacks] = useState<PackAddress[]>([]);
@@ -164,9 +175,21 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
       for (let i = 0; i < removedPacks.length; i += 1) {
         const addr = removedPacks[i];
         // eslint-disable-next-line no-await-in-loop
-        await mx.sendStateEvent(room.roomId, StateEvent.PoniesRoomEmotes as any, {}, addr.stateKey);
+        const resp = await ct.requestAuthJSON(
+          putStateEvent({
+            pathParams: {
+              roomId,
+              eventType: StateEventType.PoniesRoomEmotes,
+              stateKey: addr.stateKey,
+            },
+            body: {},
+          })
+        );
+        // eslint-disable-next-line no-await-in-loop
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
       }
-    }, [mx, room, removedPacks])
+    }, [ct, roomId, removedPacks])
   );
   const applyingChanges = applyState.status === AsyncStatus.Loading;
 
@@ -190,7 +213,9 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
 
   const renderPack = (pack: ImagePack) => {
     const avatarMxc = pack.getAvatarUrl(ImageUsage.Emoticon);
-    const avatarUrl = avatarMxc ? mxcUrlToHttp(mx, avatarMxc, useAuthentication) : undefined;
+    const avatarUrl = avatarMxc
+      ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).url()
+      : undefined;
     const { address } = pack;
     if (!address) return null;
     const removed = !!removedPacks.find((addr) => packAddressEqual(addr, address));
@@ -268,7 +293,7 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
     <>
       <Box direction="Column" gap="100">
         <Text size="L400">Packs</Text>
-        {canEdit && <CreatePackTile roomId={room.roomId} packs={packs} />}
+        {canEdit && <CreatePackTile roomId={roomId} packs={packs} />}
         {packs.map(renderPack)}
         {packs.length === 0 && (
           <SequenceCard
