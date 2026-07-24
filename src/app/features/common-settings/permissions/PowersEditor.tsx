@@ -19,9 +19,9 @@ import {
   Tooltip,
 } from 'folds';
 import { HexColorPicker } from 'react-colorful';
-import { useAtomValue } from 'jotai';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { Page, PageContent, PageHeader } from '../../../components/page';
-import { IPowerLevels } from '../../../hooks/usePowerLevels';
+import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
@@ -29,7 +29,7 @@ import {
   getPowers,
   getUsedPowers,
   PowerLevelTags,
-  usePowerLevelTags,
+  usePowerLevelTagsContext,
 } from '../../../hooks/usePowerLevelTags';
 import { useRoom } from '../../../hooks/useRoom';
 import { HexColorPickerPopOut } from '../../../components/HexColorPickerPopOut';
@@ -37,18 +37,17 @@ import { PowerColorBadge, PowerIcon } from '../../../components/power';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { useImagePackRooms } from '../../../hooks/useImagePackRooms';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useFilePicker } from '../../../hooks/useFilePicker';
 import { CompactUploadCardRenderer } from '../../../components/upload-card';
 import { createUploadAtom, UploadSuccess } from '../../../state/upload';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { MemberPowerTag, MemberPowerTagIcon, StateEvent } from '../../../../types/matrix/room';
+import { MemberPowerTag, MemberPowerTagIcon, StateEventType } from '../../../../types/matrix/room';
 import { useAlive } from '../../../hooks/useAlive';
 import { BetaNoticeBadge } from '../../../components/BetaNoticeBadge';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
 import { creatorsSupported } from '../../../utils/matrix';
+import { useClient } from '../../../hooks/useClient';
 
 type EditPowerProps = {
   maxPower: number;
@@ -58,13 +57,12 @@ type EditPowerProps = {
   onClose: () => void;
 };
 function EditPower({ maxPower, power, tag, onSave, onClose }: EditPowerProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
-  const roomToParents = useAtomValue(roomToParentsAtom);
+  const ct = useClient();
+  const roomId = useRoom();
   const useAuthentication = useMediaAuthentication();
-  const supportCreators = creatorsSupported(room.getVersion());
+  const supportCreators = creatorsSupported(ct.roomToVersion.read.get(roomId) ?? '1');
 
-  const imagePackRooms = useImagePackRooms(room.roomId, roomToParents);
+  const imagePackRooms = useImagePackRooms(roomId);
 
   const [iconFile, setIconFile] = useState<File>();
   const pickFile = useFilePicker(setIconFile, false);
@@ -72,7 +70,7 @@ function EditPower({ maxPower, power, tag, onSave, onClose }: EditPowerProps) {
   const [tagColor, setTagColor] = useState<string | undefined>(tag?.color);
   const [tagIcon, setTagIcon] = useState<MemberPowerTagIcon | undefined>(tag?.icon);
   const uploadingIcon = iconFile && !tagIcon;
-  const tagIconSrc = tagIcon && getPowerTagIconSrc(mx, useAuthentication, tagIcon);
+  const tagIconSrc = tagIcon && getPowerTagIconSrc(ct, useAuthentication, tagIcon);
 
   const iconUploadAtom = useMemo(() => {
     if (iconFile) return createUploadAtom(iconFile);
@@ -285,20 +283,22 @@ function EditPower({ maxPower, power, tag, onSave, onClose }: EditPowerProps) {
 }
 
 type PowersEditorProps = {
-  powerLevels: IPowerLevels;
   requestClose: () => void;
 };
-export function PowersEditor({ powerLevels, requestClose }: PowersEditorProps) {
-  const mx = useMatrixClient();
+export function PowersEditor({ requestClose }: PowersEditorProps) {
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const room = useRoom();
+  const roomId = useRoom();
   const alive = useAlive();
+
+  const powerLevels = usePowerLevelsContext();
+
   const [usedPowers, maxPower] = useMemo(() => {
     const up = getUsedPowers(powerLevels);
     return [up, Math.max(...Array.from(up))];
   }, [powerLevels]);
 
-  const powerLevelTags = usePowerLevelTags(room, powerLevels);
+  const powerLevelTags = usePowerLevelTagsContext();
   const [editedPowerTags, setEditedPowerTags] = useState<PowerLevelTags>();
   const [deleted, setDeleted] = useState<Set<number>>(new Set());
 
@@ -333,8 +333,13 @@ export function PowersEditor({ powerLevels, requestClose }: PowersEditorProps) {
       deleted.forEach((power) => {
         delete content[power];
       });
-      await mx.sendStateEvent(room.roomId, StateEvent.PowerLevelTags as any, content);
-    }, [mx, room, powerLevelTags, editedPowerTags, deleted])
+      await ct.requestAuthJSON(
+        putStateEvent({
+          pathParams: { roomId, eventType: StateEventType.PowerLevelTags, stateKey: '' },
+          body: content,
+        })
+      );
+    }, [ct, roomId, powerLevelTags, editedPowerTags, deleted])
   );
 
   const resetChanges = useCallback(() => {
@@ -420,7 +425,7 @@ export function PowersEditor({ powerLevels, requestClose }: PowersEditorProps) {
                 {getPowers(powerTags).map((power) => {
                   const tag = powerTags[power];
                   const tagIconSrc =
-                    tag.icon && getPowerTagIconSrc(mx, useAuthentication, tag.icon);
+                    tag.icon && getPowerTagIconSrc(ct, useAuthentication, tag.icon);
 
                   return (
                     <SequenceCard

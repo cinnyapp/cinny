@@ -2,23 +2,28 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge, Box, Button, Chip, config, Icon, Icons, Menu, Spinner, Text } from 'folds';
 import produce from 'immer';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import {
   applyPermissionPower,
   getPermissionPower,
-  IPowerLevels,
   PermissionLocation,
+  usePowerLevelsContext,
 } from '../../../hooks/usePowerLevels';
 import { PermissionGroup } from './types';
-import { getPowerLevelTag, getPowers, usePowerLevelTags } from '../../../hooks/usePowerLevelTags';
+import {
+  usePowerLevelTagsContext,
+  getPowers,
+  getPowerLevelTag,
+} from '../../../hooks/usePowerLevelTags';
 import { useRoom } from '../../../hooks/useRoom';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { StateEvent } from '../../../../types/matrix/room';
+import { StateEventType } from '../../../../types/matrix/room';
 import { PowerSwitcher } from '../../../components/power';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAlive } from '../../../hooks/useAlive';
+import { useClient } from '../../../hooks/useClient';
 
 const USER_DEFAULT_LOCATION: PermissionLocation = {
   user: true,
@@ -26,19 +31,15 @@ const USER_DEFAULT_LOCATION: PermissionLocation = {
 
 type PermissionGroupsProps = {
   canEdit: boolean;
-  powerLevels: IPowerLevels;
   permissionGroups: PermissionGroup[];
 };
-export function PermissionGroups({
-  powerLevels,
-  permissionGroups,
-  canEdit,
-}: PermissionGroupsProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+export function PermissionGroups({ permissionGroups, canEdit }: PermissionGroupsProps) {
+  const ct = useClient();
+  const roomId = useRoom();
   const alive = useAlive();
 
-  const powerLevelTags = usePowerLevelTags(room, powerLevels);
+  const powerLevels = usePowerLevelsContext();
+  const powerLevelTags = usePowerLevelTagsContext();
   const maxPower = useMemo(() => Math.max(...getPowers(powerLevelTags)), [powerLevelTags]);
 
   const [permissionUpdate, setPermissionUpdate] = useState<Map<PermissionLocation, number>>(
@@ -85,8 +86,13 @@ export function PermissionGroups({
 
         return draftPowerLevels;
       });
-      await mx.sendStateEvent(room.roomId, StateEvent.RoomPowerLevels as any, editedPowerLevels);
-    }, [mx, room, powerLevels, permissionUpdate, permissionGroups])
+      await ct.requestAuthJSON(
+        putStateEvent({
+          pathParams: { roomId, eventType: StateEventType.RoomPowerLevels, stateKey: '' },
+          body: editedPowerLevels,
+        })
+      );
+    }, [ct, roomId, powerLevels, permissionUpdate, permissionGroups])
   );
 
   const resetChanges = useCallback(() => {
