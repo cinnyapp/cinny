@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge, Box, Button, Chip, config, Icon, Icons, Menu, Spinner, Text } from 'folds';
 import produce from 'immer';
 import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
@@ -86,12 +87,14 @@ export function PermissionGroups({ permissionGroups, canEdit }: PermissionGroups
 
         return draftPowerLevels;
       });
-      await ct.requestAuthJSON(
+      const resp = await ct.requestAuthJSON(
         putStateEvent({
           pathParams: { roomId, eventType: StateEventType.RoomPowerLevels, stateKey: '' },
           body: editedPowerLevels,
         })
       );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     }, [ct, roomId, powerLevels, permissionUpdate, permissionGroups])
   );
 

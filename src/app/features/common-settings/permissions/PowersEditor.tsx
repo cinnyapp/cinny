@@ -20,6 +20,7 @@ import {
 } from 'folds';
 import { HexColorPicker } from 'react-colorful';
 import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
 import { SequenceCard } from '../../../components/sequence-card';
@@ -333,12 +334,14 @@ export function PowersEditor({ requestClose }: PowersEditorProps) {
       deleted.forEach((power) => {
         delete content[power];
       });
-      await ct.requestAuthJSON(
+      const resp = await ct.requestAuthJSON(
         putStateEvent({
           pathParams: { roomId, eventType: StateEventType.PowerLevelTags, stateKey: '' },
           body: content,
         })
       );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     }, [ct, roomId, powerLevelTags, editedPowerTags, deleted])
   );
 

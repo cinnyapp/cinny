@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { Badge, Box, Text } from 'folds';
 import { PushRuleCondition, PushRules } from 'neurone/lib/api/types';
 import { putPushRuleActions } from 'neurone/lib/api/matrix/client/v3/pushrules';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { AccountDataType, ConditionKind, PushRuleId } from '../../../../types/matrix/accountData';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
 import { SequenceCard } from '../../../components/sequence-card';
@@ -65,12 +66,14 @@ function AllMessagesModeSwitcher({
   const handleChange = useCallback(
     async (mode: NotificationMode) => {
       const actions = getModeActions(mode);
-      await ct.requestAuthJSON(
+      const resp = await ct.requestAuthJSON(
         putPushRuleActions({
           pathParams: { scope: 'global', kind, ruleId },
           body: { actions },
         })
       );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
     [ct, getModeActions, kind, ruleId]
   );

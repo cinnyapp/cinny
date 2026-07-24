@@ -31,6 +31,7 @@ import {
 import { isKeyHotkey } from 'is-hotkey';
 import FocusTrap from 'focus-trap-react';
 import { postInvite } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { stopPropagation } from '../../utils/keyboard';
 import { useDirectUsers } from '../../hooks/useDirectUsers';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
@@ -73,7 +74,7 @@ export function InviteUserPrompt({ roomId, requestClose }: InviteUserProps) {
   const [inviteState, invite] = useAsyncCallback<void, Error, [string, string | undefined]>(
     useCallback(
       async (userId, reason) => {
-        await ct.requestAuthJSON(
+        const resp = await ct.requestAuthJSON(
           postInvite({
             pathParams: { roomId },
             body: {
@@ -82,6 +83,8 @@ export function InviteUserPrompt({ roomId, requestClose }: InviteUserProps) {
             },
           })
         );
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
       },
       [ct, roomId]
     )

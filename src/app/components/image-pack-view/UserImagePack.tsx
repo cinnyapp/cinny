@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { ImagePackContent } from './ImagePackContent';
 import { ImagePack, PackContent } from '../../plugins/custom-emoji';
 import { AccountDataType } from '../../../types/matrix/accountData';
@@ -15,12 +16,14 @@ export function UserImagePack() {
 
   const handleUpdate = useCallback(
     async (packContent: PackContent) => {
-      await ct.requestAuthJSON(
+      const resp = await ct.requestAuthJSON(
         putAccountData({
           pathParams: { type: AccountDataType.PoniesUserEmotes, userId: ct.session.userId },
           body: packContent,
         })
       );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
     [ct]
   );

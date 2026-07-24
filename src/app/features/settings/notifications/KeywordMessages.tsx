@@ -5,6 +5,7 @@ import {
   putPushRule,
   putPushRuleActions,
 } from 'neurone/lib/api/matrix/client/v3/pushrules';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { PushRule, PushRules } from 'neurone/lib/api/types';
 import { useAccountData } from '../../../hooks/storage/useAccountData';
 import { AccountDataType } from '../../../../types/matrix/accountData';
@@ -32,7 +33,7 @@ function KeywordInput() {
   const [keywordState, addKeyword] = useAsyncCallback(
     useCallback(
       async (k: string) => {
-        await ct.requestAuthJSON(
+        const resp = await ct.requestAuthJSON(
           putPushRule({
             pathParams: { scope: 'global', kind: 'content', ruleId: k },
             body: {
@@ -41,6 +42,9 @@ function KeywordInput() {
             },
           })
         );
+
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
         setKeyword('');
       },
       [ct]
@@ -147,7 +151,7 @@ function KeywordModeSwitcher({ pushRule }: PushRulesProps) {
   const handleChange = useCallback(
     async (mode: NotificationMode) => {
       const actions = getModeActions(mode);
-      await ct.requestAuthJSON(
+      const resp = await ct.requestAuthJSON(
         putPushRuleActions({
           pathParams: { scope: 'global', kind: 'content', ruleId: pushRule.rule_id },
           body: {
@@ -155,6 +159,9 @@ function KeywordModeSwitcher({ pushRule }: PushRulesProps) {
           },
         })
       );
+
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
     [ct, getModeActions, pushRule]
   );

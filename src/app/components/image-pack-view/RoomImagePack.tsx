@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { ImagePackContent } from './ImagePackContent';
 import { ImagePack, PackContent } from '../../plugins/custom-emoji';
@@ -43,7 +44,7 @@ export function RoomImagePack({ roomId, stateKey }: RoomImagePackProps) {
       const { address } = imagePack;
       if (!address) return;
 
-      await ct.requestAuthJSON(
+      const resp = await ct.requestAuthJSON(
         putStateEvent({
           pathParams: {
             roomId: address.roomId,
@@ -53,6 +54,8 @@ export function RoomImagePack({ roomId, stateKey }: RoomImagePackProps) {
           body: packContent,
         })
       );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
     [ct, imagePack]
   );
