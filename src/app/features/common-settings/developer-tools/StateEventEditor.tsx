@@ -13,24 +13,24 @@ import {
   Spinner,
   Button,
 } from 'folds';
-import { MatrixError } from 'matrix-js-sdk';
+import { StateEventWithoutRoomId } from 'neurone/lib/api/types';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { Page, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { TextViewerContent } from '../../../components/text-viewer';
-import { useStateEvent } from '../../../hooks/useStateEvent';
 import { useRoom } from '../../../hooks/useRoom';
-import { StateEvent } from '../../../../types/matrix/room';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useAlive } from '../../../hooks/useAlive';
 import { Cursor } from '../../../plugins/text-area';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { syntaxErrorPosition } from '../../../utils/dom';
 import { SettingTile } from '../../../components/setting-tile';
 import { SequenceCardStyle } from '../styles.css';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
+import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
 import { useTextAreaCodeEditor } from '../../../hooks/useTextAreaCodeEditor';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+import { useClient } from '../../../hooks/useClient';
 
 const EDITOR_INTENT_SPACE_COUNT = 2;
 
@@ -41,8 +41,8 @@ type StateEventEditProps = {
   requestClose: () => void;
 };
 function StateEventEdit({ type, stateKey, content, requestClose }: StateEventEditProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
   const alive = useAlive();
 
   const defaultContentStr = useMemo(
@@ -57,10 +57,20 @@ function StateEventEdit({ type, stateKey, content, requestClose }: StateEventEdi
     EDITOR_INTENT_SPACE_COUNT
   );
 
-  const [submitState, submit] = useAsyncCallback<object, MatrixError, [object]>(
+  const [submitState, submit] = useAsyncCallback<void, unknown, [object]>(
     useCallback(
-      (c) => mx.sendStateEvent(room.roomId, type as any, c, stateKey),
-      [mx, room, type, stateKey]
+      async (c) => {
+        const resp = await ct.requestAuthJSON(
+          putStateEvent({
+            pathParams: { roomId, eventType: type, stateKey },
+            body: c,
+          })
+        );
+
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
+      },
+      [ct, roomId, type, stateKey]
     )
   );
   const submitting = submitState.status === AsyncStatus.Loading;
@@ -157,7 +167,9 @@ function StateEventEdit({ type, stateKey, content, requestClose }: StateEventEdi
 
         {submitState.status === AsyncStatus.Error && (
           <Text size="T200" style={{ color: color.Critical.Main }}>
-            <b>{submitState.error.message}</b>
+            <b>
+              {submitState.error instanceof Error ? submitState.error.message : 'Unknown Error'}
+            </b>
           </Text>
         )}
       </Box>
@@ -232,29 +244,26 @@ function StateEventView({ content, eventJSONStr, onEditContent }: StateEventView
   );
 }
 
-export type StateEventInfo = {
-  type: string;
-  stateKey: string;
-};
-export type StateEventEditorProps = StateEventInfo & {
+export type StateEventEditorProps = {
+  event: StateEventWithoutRoomId;
   requestClose: () => void;
 };
 
-export function StateEventEditor({ type, stateKey, requestClose }: StateEventEditorProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
-  const stateEvent = useStateEvent(room, type as unknown as StateEvent, stateKey);
+export function StateEventEditor({ event, requestClose }: StateEventEditorProps) {
+  const ct = useClient();
+  const roomId = useRoom();
+
   const [editContent, setEditContent] = useState<object>();
-  const powerLevels = usePowerLevels(room);
-  const creators = useRoomCreators(room);
+  const powerLevels = usePowerLevelsContext();
+  const creators = useRoomCreators(roomId);
 
   const permissions = useRoomPermissions(creators, powerLevels);
-  const canEdit = permissions.stateEvent(type, mx.getSafeUserId());
+  const canEdit = permissions.stateEvent(event.type, ct.session.userId);
 
-  const eventJSONStr = useMemo(() => {
-    if (!stateEvent) return '';
-    return JSON.stringify(stateEvent.event, null, EDITOR_INTENT_SPACE_COUNT);
-  }, [stateEvent]);
+  const eventJSONStr = useMemo(
+    () => JSON.stringify(event, null, EDITOR_INTENT_SPACE_COUNT),
+    [event]
+  );
 
   const handleCloseEdit = useCallback(() => {
     setEditContent(undefined);
@@ -284,14 +293,14 @@ export function StateEventEditor({ type, stateKey, requestClose }: StateEventEdi
       <Box grow="Yes" direction="Column">
         {editContent ? (
           <StateEventEdit
-            type={type}
-            stateKey={stateKey}
+            type={event.type}
+            stateKey={event.state_key}
             content={editContent}
             requestClose={handleCloseEdit}
           />
         ) : (
           <StateEventView
-            content={stateEvent?.getContent() ?? {}}
+            content={event.content}
             onEditContent={canEdit ? setEditContent : undefined}
             eventJSONStr={eventJSONStr}
           />

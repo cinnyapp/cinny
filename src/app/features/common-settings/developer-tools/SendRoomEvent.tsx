@@ -1,5 +1,4 @@
 import React, { useCallback, useRef, useState, FormEventHandler, useEffect } from 'react';
-import { MatrixError } from 'matrix-js-sdk';
 import {
   Box,
   Chip,
@@ -14,25 +13,30 @@ import {
   TextArea as TextAreaComponent,
   Input,
 } from 'folds';
+import { putSend, putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { Page, PageHeader } from '../../../components/page';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRoom } from '../../../hooks/useRoom';
 import { useAlive } from '../../../hooks/useAlive';
 import { useTextAreaCodeEditor } from '../../../hooks/useTextAreaCodeEditor';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { syntaxErrorPosition } from '../../../utils/dom';
 import { Cursor } from '../../../plugins/text-area';
+import { useClient } from '../../../hooks/useClient';
 
 const EDITOR_INTENT_SPACE_COUNT = 2;
 
-export type SendRoomEventProps = {
+export type EventLocation = {
   type?: string;
   stateKey?: string;
+};
+
+export type SendRoomEventProps = EventLocation & {
   requestClose: () => void;
 };
 export function SendRoomEvent({ type, stateKey, requestClose }: SendRoomEventProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
   const alive = useAlive();
   const composeStateEvent = typeof stateKey === 'string';
 
@@ -44,18 +48,28 @@ export function SendRoomEvent({ type, stateKey, requestClose }: SendRoomEventPro
   );
 
   const [submitState, submit] = useAsyncCallback<
-    object,
-    MatrixError,
+    void,
+    unknown,
     [string, string | undefined, object]
   >(
     useCallback(
-      (evtType, evtStateKey, evtContent) => {
-        if (typeof evtStateKey === 'string') {
-          return mx.sendStateEvent(room.roomId, evtType as any, evtContent, evtStateKey);
-        }
-        return mx.sendEvent(room.roomId, evtType as any, evtContent);
+      async (evtType, evtStateKey, evtContent) => {
+        const resp = await ct.requestAuthJSON(
+          typeof evtStateKey === 'string'
+            ? putStateEvent({
+                pathParams: { roomId, eventType: evtType, stateKey: evtStateKey },
+                body: evtContent,
+              })
+            : putSend({
+                pathParams: { roomId, eventType: evtType, txnId: ct.getTxnId() },
+                body: evtContent,
+              })
+        );
+
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
       },
-      [mx, room]
+      [ct, roomId]
     )
   );
   const submitting = submitState.status === AsyncStatus.Loading;
@@ -162,7 +176,9 @@ export function SendRoomEvent({ type, stateKey, requestClose }: SendRoomEventPro
 
             {submitState.status === AsyncStatus.Error && (
               <Text size="T200" style={{ color: color.Critical.Main }}>
-                <b>{submitState.error.message}</b>
+                <b>
+                  {submitState.error instanceof Error ? submitState.error.message : 'Unknown Error'}
+                </b>
               </Text>
             )}
           </Box>

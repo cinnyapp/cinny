@@ -43,3 +43,15 @@ export const useRoomStateEvents = (
 
   return stateEventResult;
 };
+
+export const useRoomState = (roomId: string): PendingObservableResult<JoinRoomStateObject[]> => {
+  const ct = useClient();
+  const eventsPromise = useMemo(
+    () => ct.storage.joinRoomState.observableRead.queryIndex('roomId', roomId),
+    [ct, roomId]
+  );
+
+  const eventsResult = useObservableValuePromise(eventsPromise);
+
+  return eventsResult;
+};
