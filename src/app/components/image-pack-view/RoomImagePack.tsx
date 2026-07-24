@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { parseMatrixResp } from 'neurone/lib/matrix-request';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
+import { usePowerLevels, usePowerLevelsState } from '../../hooks/usePowerLevels';
 import { ImagePackContent } from './ImagePackContent';
 import { ImagePack, PackContent } from '../../plugins/custom-emoji';
 import { StateEventType } from '../../../types/matrix/room';
@@ -19,7 +19,8 @@ type RoomImagePackProps = {
 export function RoomImagePack({ roomId, stateKey }: RoomImagePackProps) {
   const ct = useClient();
   const { userId } = ct.session;
-  const powerLevels = usePowerLevelsContext();
+  const powerLevelsStateResult = usePowerLevelsState(roomId);
+  const powerLevels = usePowerLevels(powerLevelsStateResult.value);
   const creators = useRoomCreators(roomId);
 
   const permissions = useRoomPermissions(creators, powerLevels);

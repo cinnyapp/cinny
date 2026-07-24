@@ -5,26 +5,29 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { ImagePack, ImageUsage } from '../../../plugins/custom-emoji';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { mxcUrlToHttp } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { useClient } from '../../../hooks/useClient';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
 
 type UserPackProps = {
   onViewPack: (imagePack: ImagePack) => void;
 };
 export function UserPack({ onViewPack }: UserPackProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
-  const userPack = useUserImagePack();
+  const userPackResult = useUserImagePack();
+  const userPack = userPackResult.value;
   const avatarMxc = userPack?.getAvatarUrl(ImageUsage.Emoticon);
-  const avatarUrl = avatarMxc ? mxcUrlToHttp(mx, avatarMxc, useAuthentication) : undefined;
+  const avatarUrl = avatarMxc
+    ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).url()
+    : undefined;
 
   const handleView = () => {
     if (userPack) {
       onViewPack(userPack);
     } else {
-      const defaultPack = new ImagePack(mx.getUserId() ?? '', {}, undefined);
+      const defaultPack = new ImagePack(ct.session.userId, {}, undefined);
       onViewPack(defaultPack);
     }
   };
