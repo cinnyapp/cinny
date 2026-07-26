@@ -106,6 +106,7 @@ export type ClientContext = {
   requestAuthJSON: MatrixRequest;
   getTxnId: GetTxnId;
   logout: () => Promise<void>;
+  clearCacheAndReload: () => Promise<void>;
 };
 
 type RoomStateObject =

@@ -5,14 +5,19 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import CinnySVG from '../../../../../public/res/svg/cinny.svg';
-import { clearCacheAndReload } from '../../../../client/initMatrix';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { clearNavToActivePathStore } from '../../../state/navToActivePath';
+import { useClient } from '../../../hooks/useClient';
 
 type AboutProps = {
   requestClose: () => void;
 };
 export function About({ requestClose }: AboutProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+
+  const handleClearCache = () => {
+    clearNavToActivePathStore(ct.session.userId);
+    ct.clearCacheAndReload();
+  };
 
   return (
     <Page>
@@ -94,7 +99,7 @@ export function About({ requestClose }: AboutProps) {
                     description="Clear all your locally stored data and reload from server."
                     after={
                       <Button
-                        onClick={() => clearCacheAndReload(mx)}
+                        onClick={handleClearCache}
                         variant="Secondary"
                         fill="Soft"
                         size="300"

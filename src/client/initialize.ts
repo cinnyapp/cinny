@@ -121,6 +121,12 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     await deleteStorage();
   });
 
+  const clearCacheAndReload = async () => {
+    disposer.run();
+    await deleteStorage();
+    window.location.reload();
+  };
+
   const ct: ClientContext = {
     session,
     storage,
@@ -157,6 +163,7 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     requestAuthJSON,
     getTxnId,
     logout: () => logoutManager.logout(),
+    clearCacheAndReload,
   };
 
   const machineManager = new MachineManager(ct);

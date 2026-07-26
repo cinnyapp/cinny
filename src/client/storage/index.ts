@@ -78,6 +78,8 @@ export interface Storage {
   presence: PresenceCollection;
 }
 
+const createDBName = (storageName: string, userId: string): string => `${storageName}${userId}`;
+
 export const createStorage = async (
   storageName: string,
   userId: string
@@ -85,7 +87,7 @@ export const createStorage = async (
   storage: Storage;
   deleteStorage: () => Promise<void>;
 }> => {
-  const dbName = `${storageName}${userId}`;
+  const dbName = createDBName(storageName, userId);
 
   // TODO: handle all openDB callbacks.
   const idb = await openDB(dbName, DATABASE_VERSION, {
@@ -150,4 +152,9 @@ export const createStorage = async (
   };
 
   return { storage, deleteStorage };
+};
+
+export const deleteClientStorage = async (storageName: string, userId: string) => {
+  const dbName = createDBName(storageName, userId);
+  await deleteDB(dbName);
 };

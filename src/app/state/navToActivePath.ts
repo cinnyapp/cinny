@@ -24,7 +24,7 @@ type NavToActivePathAction =
       navId: string;
     };
 
-export type NavToActivePathAtom = WritableAtom<NavToActivePath, [NavToActivePathAction], undefined>;
+export type NavToActivePathAtom = WritableAtom<NavToActivePath, [NavToActivePathAction], void>;
 
 export const makeNavToActivePathAtom = (userId: string): NavToActivePathAtom => {
   const storeKey = getStoreKey(userId);
@@ -41,7 +41,7 @@ export const makeNavToActivePathAtom = (userId: string): NavToActivePathAtom => 
     }
   );
 
-  const navToActivePathAtom = atom<NavToActivePath, [NavToActivePathAction], undefined>(
+  const navToActivePathAtom = atom<NavToActivePath, [NavToActivePathAction], void>(
     (get) => get(baseNavToActivePathAtom),
     (get, set, action) => {
       if (action.type === 'DELETE') {
