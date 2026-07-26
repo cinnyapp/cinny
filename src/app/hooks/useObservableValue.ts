@@ -75,10 +75,10 @@ export const useComputedPendingObservableResult = <T, U>(
   compute: (value: T) => U
 ): PendingObservableResult<U> => {
   const computedResult: PendingObservableResult<U> = useMemo(() => {
-    const { value, error } = result;
-    if (value) return { value: compute(value) };
+    const { value, error, pending } = result;
+    if (pending) return { pending: true };
     if (error) return { error };
-    return { pending: true };
+    return { value: compute(value) };
   }, [result, compute]);
 
   return computedResult;
