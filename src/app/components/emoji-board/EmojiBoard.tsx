@@ -81,11 +81,14 @@ const useGroups = (
     const g: EmojiGroupItem[] = [];
     if (tab !== EmojiBoardTab.Emoji) return g;
 
-    g.push({
-      id: RECENT_GROUP_ID,
-      name: 'Recent',
-      items: recentEmojisResult.value ?? [],
-    });
+    const recentEmojis = recentEmojisResult.value;
+    if (recentEmojis && recentEmojis.length > 0) {
+      g.push({
+        id: RECENT_GROUP_ID,
+        name: 'Recent',
+        items: recentEmojis,
+      });
+    }
 
     imagePacks.forEach((pack) => {
       let label = pack.meta.name;
