@@ -30,10 +30,11 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
+import { postPublicRooms, PostPublicRoomsOK } from 'neurone/lib/api/matrix/client/v3/publicRooms';
+import { getProtocols, GetProtocolsOK } from 'neurone/lib/api/matrix/client/v3/thirdparty';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { useQuery } from '@tanstack/react-query';
-import { MatrixClient, Method, RoomType } from 'matrix-js-sdk';
 import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { RoomTopicViewer } from '../../../components/room-topic-viewer';
 import { RoomCard, RoomCardBase, RoomCardGrid } from '../../../components/room-card';
 import { ExploreServerPathSearchParams } from '../../paths';
@@ -45,6 +46,10 @@ import { getMxIdServer } from '../../../utils/matrix';
 import { stopPropagation } from '../../../utils/keyboard';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { useClient } from '../../../hooks/useClient';
+import { rError } from '../../../../client/reader';
+import { ErrorCode } from '../../../cs-errorcode';
+import { RoomType } from '../../../../types/matrix/room';
 
 const useServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams =>
   useMemo(
@@ -153,12 +158,17 @@ function ThirdPartyProtocolsSelector({
   instanceId?: string;
   onChange: (instanceId?: string) => void;
 }) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const { data } = useQuery({
     queryKey: ['thirdparty', 'protocols'],
-    queryFn: () => mx.getThirdpartyProtocols(),
+    queryFn: async () => {
+      const resp = await ct.requestAuthJSON(getProtocols({}));
+      const [err, result] = await parseMatrixResp<GetProtocolsOK>(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
+      return result;
+    },
   });
 
   const handleInstanceSelect: MouseEventHandler<HTMLButtonElement> = (evt): void => {
@@ -342,8 +352,8 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
 
 export function PublicRooms() {
   const { server } = useParams();
-  const mx = useMatrixClient();
-  const userId = mx.getUserId();
+  const ct = useClient();
+  const { userId } = ct.session;
   const userServer = userId && getMxIdServer(userId);
   const allRooms = useAtomValue(allRoomsAtom);
   const { navigateSpace, navigateRoom } = useRoomNavigate();
@@ -368,7 +378,7 @@ export function PublicRooms() {
     if (scroll) scroll.scrollTop = 0;
   }, []);
 
-  const fetchPublicRooms = useCallback(() => {
+  const fetchPublicRooms = useCallback(async () => {
     const limit =
       typeof serverSearchParams.limit === 'string'
         ? parseInt(serverSearchParams.limit, 10)
@@ -376,23 +386,26 @@ export function PublicRooms() {
     const roomType: string | null | undefined =
       serverSearchParams.type === 'null' ? null : serverSearchParams.type;
 
-    return mx.http.authedRequest<Awaited<ReturnType<MatrixClient['publicRooms']>>>(
-      Method.Post,
-      '/publicRooms',
-      {
-        server,
-      },
-      {
-        limit,
-        since: serverSearchParams.since,
-        filter: {
-          generic_search_term: serverSearchParams.term,
-          room_types: roomType !== undefined ? [roomType] : undefined,
+    const resp = await ct.requestAuthJSON(
+      postPublicRooms({
+        searchParams: { server },
+        body: {
+          limit,
+          since: serverSearchParams.since,
+          filter: {
+            generic_search_term: serverSearchParams.term,
+            room_types: roomType !== undefined ? [roomType] : undefined,
+          },
+          third_party_instance_id: serverSearchParams.instance,
         },
-        third_party_instance_id: serverSearchParams.instance,
-      }
+      })
     );
-  }, [mx, server, serverSearchParams]);
+
+    const [err, result] = await parseMatrixResp<PostPublicRoomsOK>(resp);
+    if (err) throw err.data;
+
+    return result;
+  }, [ct, server, serverSearchParams]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: [
@@ -405,6 +418,15 @@ export function PublicRooms() {
       serverSearchParams.instance,
     ],
     queryFn: fetchPublicRooms,
+    retry: (failureCount, err) => {
+      console.log(err, rError.errcode(err) === ErrorCode.M_FORBIDDEN);
+      if (rError.errcode(err) === ErrorCode.M_FORBIDDEN) {
+        return false;
+      }
+
+      // Retry other errors up to 3 times
+      return failureCount < 3;
+    },
   });
 
   useEffect(() => {
@@ -581,8 +603,8 @@ export function PublicRooms() {
                   )}
                   {error && (
                     <Box direction="Column" className={css.PublicRoomsError} gap="200">
-                      <Text size="L400">{error.name}</Text>
-                      <Text size="T300">{error.message}</Text>
+                      <Text size="L400">{rError.errcode(error) ?? error.name}</Text>
+                      <Text size="T300">{rError.error(error) ?? error.message}</Text>
                     </Box>
                   )}
                   {data &&

@@ -251,8 +251,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                 </MobileFriendlyPageNav>
               }
             >
-              <span>hello</span>
-              {/* <Outlet /> */}
+              <Outlet />
             </PageRoot>
           }
         >
