@@ -97,7 +97,7 @@ export const MessageQuickReactions = as<'div', MessageQuickReactionsProps>(
     const recentEmojisResult = useRecentEmoji(4);
     const recentEmojis = recentEmojisResult.value;
 
-    if (recentEmojis && recentEmojis.length === 0) return <span />;
+    if (!recentEmojis || recentEmojis.length === 0) return <span />;
     return (
       <>
         <Box
