@@ -78,16 +78,20 @@ export interface Storage {
   presence: PresenceCollection;
 }
 
-const createDBName = (storageName: string, userId: string): string => `${storageName}${userId}`;
+const getDBName = (userId: string): string => `client${userId}`;
+
+// create a reference to opened database close callback.
+// used in clearing cache if client failed to initilize.
+let disconnectStorageRef: (() => void) | undefined;
 
 export const createStorage = async (
-  storageName: string,
   userId: string
 ): Promise<{
   storage: Storage;
   deleteStorage: () => Promise<void>;
+  disconnectStorage: () => void;
 }> => {
-  const dbName = createDBName(storageName, userId);
+  const dbName = getDBName(userId);
 
   // TODO: handle all openDB callbacks.
   const idb = await openDB(dbName, DATABASE_VERSION, {
@@ -118,6 +122,13 @@ export const createStorage = async (
     },
   });
 
+  const disconnectStorage = () => {
+    idb.close();
+    disconnectStorageRef = undefined;
+  };
+
+  disconnectStorageRef = disconnectStorage;
+
   const driver = new IndexedDBStorageDriver(unwrap(idb));
 
   const storage: Storage = {
@@ -147,14 +158,15 @@ export const createStorage = async (
   };
 
   const deleteStorage = async () => {
-    idb.close();
+    disconnectStorage();
     await deleteDB(dbName);
   };
 
-  return { storage, deleteStorage };
+  return { storage, deleteStorage, disconnectStorage };
 };
 
-export const deleteClientStorage = async (storageName: string, userId: string) => {
-  const dbName = createDBName(storageName, userId);
+export const deleteClientStorage = async (userId: string) => {
+  disconnectStorageRef?.();
+  const dbName = getDBName(userId);
   await deleteDB(dbName);
 };

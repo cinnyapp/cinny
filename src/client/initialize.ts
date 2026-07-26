@@ -1,8 +1,5 @@
-import { Machine, OutgoingRequestSender } from 'neurone/lib/crypto/machine';
-import { MatrixRequestRetrier, sleep } from 'neurone/lib/utils';
 import { MatrixRequest } from 'neurone/lib/matrix-request';
 import { Disposer } from 'neurone/lib/utils/disposable';
-import { deleteDB } from 'idb';
 import { Session } from '../app/state/sessions';
 import {
   ClientContext,
@@ -34,43 +31,12 @@ import { SyncResponseManager } from './SyncResponseManager';
 import { LogoutManager } from './LogoutManager';
 import { MachineManager } from './MachineManager';
 import { DecryptionManager } from './decryption';
-
-const initializeCrypto = async (
-  session: Session,
-  request: MatrixRequest
-): Promise<{
-  machine: Machine;
-  deleteCryptoStorage: () => Promise<void>;
-}> => {
-  const storeName = `crypto${session.userId}`;
-
-  const { olmMachine, closeMachine } = await Machine.init(
-    session.userId,
-    session.deviceId,
-    storeName
-  );
-
-  const outgoingSenderAbortCont = new AbortController();
-  const outgoingRequestRetrier = new MatrixRequestRetrier(sleep);
-  const outgoingSender = new OutgoingRequestSender(request, outgoingSenderAbortCont.signal);
-
-  const machine = new Machine(olmMachine, outgoingSender, outgoingRequestRetrier);
-
-  const deleteCryptoStorage = async () => {
-    closeMachine();
-
-    // the matrix-crypto-sdk add postfix to storeName
-    const realStoreName = `${storeName}::matrix-sdk-crypto`;
-    await deleteDB(realStoreName);
-  };
-
-  return { machine, deleteCryptoStorage };
-};
+import { initializeCrypto } from './crypto';
 
 export const initializeClient = async (session: Session): Promise<ClientContext> => {
   const disposer = new Disposer();
 
-  const { storage, deleteStorage } = await createStorage('client', session.userId);
+  const { storage, deleteStorage } = await createStorage(session.userId);
 
   const requestAuthJSON: MatrixRequest = getAuthJSONRequest(session.baseUrl, session.accessToken);
 

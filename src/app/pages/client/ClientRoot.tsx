@@ -14,6 +14,7 @@ import { ClientContext } from '../../../client/context';
 import { ClientContextProvider } from '../../hooks/useClient';
 import { InitialSyncSplashScreen } from './InitialSyncSplashScreen';
 import { AutoDiscovery } from './AutoDiscovery';
+import { ClientRootOptions } from './ClientRootOptions';
 
 type ClientRootProps = {
   children: ReactNode;
@@ -46,6 +47,7 @@ export function ClientRoot({ children }: ClientRootProps) {
 
   return (
     <AutoDiscovery userId={userId!} baseUrl={baseUrl!}>
+      {initState.status !== AsyncStatus.Success && <ClientRootOptions userId={userId!} />}
       <SpecVersions baseUrl={baseUrl!}>
         {initState.status === AsyncStatus.Error && (
           <SplashScreen>
@@ -96,7 +98,7 @@ export function ClientRoot({ children }: ClientRootProps) {
         )}
         {initState.status === AsyncStatus.Success && (
           <ClientContextProvider value={initState.data}>
-            <InitialSyncSplashScreen sync={initState.data.sync}>
+            <InitialSyncSplashScreen>
               <SyncStatus />
               <ServerConfigsLoader>
                 {(serverConfigs) => (

@@ -7,6 +7,8 @@ import { useObservableValue } from '../../hooks/useObservableValue';
 import { createFakeProgress } from '../../../client/responseProgress';
 import { bytesToSize } from '../../utils/common';
 import { SyncContext, SyncProgress } from '../../../client/sync';
+import { ClientRootOptions } from './ClientRootOptions';
+import { useClient } from '../../hooks/useClient';
 
 function InitialSyncProgressScreen({
   sync,
@@ -112,17 +114,17 @@ function InitialSyncProgressScreen({
   );
 }
 
-export function InitialSyncSplashScreen({
-  sync,
-  children,
-}: {
-  sync: SyncContext;
-  children: ReactNode;
-}) {
-  const initialSync = useObservableValue(sync.controller.initialSync);
+export function InitialSyncSplashScreen({ children }: { children: ReactNode }) {
+  const ct = useClient();
+  const initialSync = useObservableValue(ct.sync.controller.initialSync);
 
   if (initialSync) {
-    return <InitialSyncProgressScreen sync={sync} progressObservable={initialSync.progress} />;
+    return (
+      <>
+        <ClientRootOptions userId={ct.session.userId} />
+        <InitialSyncProgressScreen sync={ct.sync} progressObservable={initialSync.progress} />;
+      </>
+    );
   }
 
   return children;
