@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Dialog,
@@ -16,10 +16,13 @@ import {
   Button,
   Spinner,
 } from 'folds';
-import { MatrixError } from 'matrix-js-sdk';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { postLeave } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../utils/keyboard';
+import { useClient } from '../../hooks/useClient';
+import { deleteJoinRooms } from '../../../client/syncWriter/utils';
+import { useAlive } from '../../hooks/useAlive';
 
 type LeaveSpacePromptProps = {
   roomId: string;
@@ -27,23 +30,25 @@ type LeaveSpacePromptProps = {
   onCancel: () => void;
 };
 export function LeaveSpacePrompt({ roomId, onDone, onCancel }: LeaveSpacePromptProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const alive = useAlive();
 
-  const [leaveState, leaveRoom] = useAsyncCallback<undefined, MatrixError, []>(
+  const [leaveState, leaveRoom] = useAsyncCallback<void, Error, []>(
     useCallback(async () => {
-      mx.leave(roomId);
-    }, [mx, roomId])
+      const response = await ct.requestAuthJSON(postLeave({ pathParams: { roomId } }));
+      deleteJoinRooms(ct, [roomId]);
+      const [err] = await parseMatrixResp(response);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
+    }, [ct, roomId])
   );
 
   const handleLeave = () => {
-    leaveRoom();
+    leaveRoom().then(() => {
+      if (alive()) {
+        onDone();
+      }
+    });
   };
-
-  useEffect(() => {
-    if (leaveState.status === AsyncStatus.Success) {
-      onDone();
-    }
-  }, [leaveState, onDone]);
 
   return (
     <Overlay open backdrop={<OverlayBackdrop />}>

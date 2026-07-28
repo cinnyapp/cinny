@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Dialog,
@@ -17,15 +17,12 @@ import {
   Spinner,
 } from 'folds';
 import { postLeave } from 'neurone/lib/api/matrix/client/v3/rooms';
-import {
-  MatrixResponseResult,
-  parseMatrixResp,
-  printMatrixError,
-} from 'neurone/lib/matrix-request';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../utils/keyboard';
 import { useClient } from '../../hooks/useClient';
 import { deleteJoinRooms } from '../../../client/syncWriter/utils';
+import { useAlive } from '../../hooks/useAlive';
 
 type LeaveRoomPromptProps = {
   roomId: string;
@@ -34,30 +31,24 @@ type LeaveRoomPromptProps = {
 };
 export function LeaveRoomPrompt({ roomId, onDone, onCancel }: LeaveRoomPromptProps) {
   const ct = useClient();
+  const alive = useAlive();
 
-  const [leaveState, leaveRoom] = useAsyncCallback<MatrixResponseResult<unknown>, Error, []>(
+  const [leaveState, leaveRoom] = useAsyncCallback<void, Error, []>(
     useCallback(async () => {
       const response = await ct.requestAuthJSON(postLeave({ pathParams: { roomId } }));
-      deleteJoinRooms(ct, [roomId])
-        .then(() => console.log('=====> deleted'))
-        .catch((e) => {
-          console.error(e);
-        });
-      return parseMatrixResp(response);
+      deleteJoinRooms(ct, [roomId]);
+      const [err] = await parseMatrixResp(response);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     }, [ct, roomId])
   );
-  const success = leaveState.status === AsyncStatus.Success;
-  const [requestError] = success ? leaveState.data : [];
 
   const handleLeave = () => {
-    leaveRoom();
+    leaveRoom().then(() => {
+      if (alive()) {
+        onDone();
+      }
+    });
   };
-
-  useEffect(() => {
-    if (success) {
-      onDone();
-    }
-  }, [success, onDone]);
 
   return (
     <Overlay open backdrop={<OverlayBackdrop />}>
@@ -92,11 +83,6 @@ export function LeaveRoomPrompt({ roomId, onDone, onCancel }: LeaveRoomPromptPro
                 {leaveState.status === AsyncStatus.Error && (
                   <Text style={{ color: color.Critical.Main }} size="T300">
                     Failed to leave room! {leaveState.error.message}
-                  </Text>
-                )}
-                {requestError && (
-                  <Text style={{ color: color.Critical.Main }} size="T300">
-                    Failed to leave room! {printMatrixError(requestError)}
                   </Text>
                 )}
               </Box>
