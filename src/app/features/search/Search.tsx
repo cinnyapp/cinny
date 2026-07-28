@@ -158,8 +158,16 @@ export function Search({ requestClose }: SearchProps) {
   const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
 
   const getTargetStr: SearchItemStrGetter<string> = useCallback(
-    (roomId: string) => getRoomName(roomId) ?? 'Unknown',
-    [getRoomName]
+    (roomId: string) => {
+      const roomName = getRoomName(roomId) ?? 'Unknown';
+      if (mDirects.has(roomId)) {
+        const dmUser = directRoomToUser.get(roomId);
+        const targetUsername = dmUser && getMxIdLocalPart(dmUser);
+        if (targetUsername) return [roomName, targetUsername];
+      }
+      return roomName;
+    },
+    [directRoomToUser, getRoomName, mDirects]
   );
 
   const [result, search, resetSearch] = useAsyncSearch(targetRooms, getTargetStr, SEARCH_OPTIONS);
