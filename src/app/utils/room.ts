@@ -63,14 +63,6 @@ export const getMDirects = (mDirectEvent: MatrixEvent): Set<string> => {
   return roomIds;
 };
 
-export const isDirectInvite = (room: Room | null, myUserId: string | null): boolean => {
-  if (!room || !myUserId) return false;
-  const me = room.getMember(myUserId);
-  const memberEvent = me?.events?.member;
-  const content = memberEvent?.getContent();
-  return content?.is_direct === true;
-};
-
 export const isSpace = (room: Room | null): boolean => {
   if (!room) return false;
   const event = getStateEvent(room, StateEvent.RoomCreate);
@@ -575,35 +567,6 @@ export const getMentionContent = (userIds: string[], room: boolean): MentionsCon
 
   return mMentions;
 };
-
-export const getCommonRooms = (
-  mx: MatrixClient,
-  rooms: string[],
-  otherUserId: string
-): string[] => {
-  const commonRooms: string[] = [];
-
-  rooms.forEach((roomId) => {
-    const room = mx.getRoom(roomId);
-    if (!room || room.getMyMembership() !== Membership.Join) return;
-
-    const common = room.hasMembershipState(otherUserId, Membership.Join);
-    if (common) {
-      commonRooms.push(roomId);
-    }
-  });
-
-  return commonRooms;
-};
-
-export const bannedInRooms = (mx: MatrixClient, rooms: string[], otherUserId: string): boolean =>
-  rooms.some((roomId) => {
-    const room = mx.getRoom(roomId);
-    if (!room || room.getMyMembership() !== Membership.Join) return false;
-
-    const banned = room.hasMembershipState(otherUserId, Membership.Ban);
-    return banned;
-  });
 
 export const guessPerfectParent = (
   roomId: string,
