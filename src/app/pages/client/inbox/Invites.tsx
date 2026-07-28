@@ -672,8 +672,7 @@ export function Invites() {
     const known: InviteData[] = [];
     const unknown: InviteData[] = [];
     const spam: InviteData[] = [];
-    const senderMembers =
-      senderMemberResult.value?.filter((m): m is JoinRoomMemberObject => !!m) ?? [];
+    const senderMembers = senderMemberResult.value?.filter((m) => !!m) ?? [];
 
     invitesData?.forEach((invite) => {
       const senderMemberEvents = senderMembers.filter((m) => m.userId === invite.senderId);

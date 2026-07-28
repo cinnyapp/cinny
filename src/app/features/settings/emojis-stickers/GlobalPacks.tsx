@@ -59,10 +59,7 @@ function GlobalPackSelector({
   const ct = useClient();
 
   const imagePackRooms = useMemo(
-    () =>
-      packs
-        .map((pack) => pack.address?.roomId)
-        .filter((rId): rId is string => typeof rId === 'string'),
+    () => packs.map((pack) => pack.address?.roomId).filter((rId) => typeof rId === 'string'),
     [packs]
   );
   const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(imagePackRooms);
@@ -153,7 +150,7 @@ function GlobalPackSelector({
 
               const roomPackAddresses = roomPacks
                 .map((pack) => pack.address)
-                .filter((addr): addr is PackAddress => addr !== undefined);
+                .filter((addr) => addr !== undefined);
 
               const allSelected = roomPackAddresses.every((addr) =>
                 selected.find((address) => packAddressEqual(addr, address))

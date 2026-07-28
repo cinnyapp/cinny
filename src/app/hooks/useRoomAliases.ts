@@ -16,7 +16,7 @@ export const usePublishedAliases = (roomId: string): [string | undefined, string
 
   const alias = ObjectReader.string(content, 'alias');
   const altAliases = ObjectReader.array(content, 'alt_aliases')?.filter(
-    (a): a is string => typeof a === 'string'
+    (a) => typeof a === 'string'
   );
 
   const publishedAliases = useMemo(() => {

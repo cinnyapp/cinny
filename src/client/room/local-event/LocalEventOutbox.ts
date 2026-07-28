@@ -48,6 +48,6 @@ export class LocalEventOutbox {
   public getSentEventIds(): string[] {
     return this.items
       .map((s) => (s.state.read instanceof EventSenderSuccess ? s.state.read.eventId : undefined))
-      .filter<string>((eId): eId is string => typeof eId === 'string');
+      .filter<string>((eId) => typeof eId === 'string');
   }
 }
