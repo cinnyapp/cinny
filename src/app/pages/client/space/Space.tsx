@@ -100,7 +100,6 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ requestClose }, 
   const { userId } = ct.session;
   const spaceId = useSpace();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-  const [developerTools] = useSetting(settingsAtom, 'developerTools');
   const roomToParents = useAtomValue(roomToParentsAtom);
   const powerLevelsStateResult = usePowerLevelsState(spaceId);
   const powerLevels = usePowerLevels(powerLevelsStateResult.value);
@@ -109,7 +108,6 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ requestClose }, 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canInvite = permissions.action('invite', userId);
   const openSpaceSettings = useOpenSpaceSettings();
-  const { navigateRoom } = useRoomNavigate();
 
   const [invitePrompt, setInvitePrompt] = useState(false);
 
@@ -139,11 +137,6 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ requestClose }, 
 
   const handleRoomSettings = () => {
     openSpaceSettings(spaceId);
-    requestClose();
-  };
-
-  const handleOpenTimeline = () => {
-    navigateRoom(spaceId);
     requestClose();
   };
 
@@ -207,18 +200,6 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ requestClose }, 
             Space Settings
           </Text>
         </MenuItem>
-        {developerTools && (
-          <MenuItem
-            onClick={handleOpenTimeline}
-            size="300"
-            after={<Icon size="100" src={Icons.Terminal} />}
-            radii="300"
-          >
-            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Event Timeline
-            </Text>
-          </MenuItem>
-        )}
       </Box>
       <Line variant="Surface" size="300" />
       <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
