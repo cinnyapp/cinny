@@ -40,8 +40,13 @@ export const useFileDropZone = (
       }
     };
     const handleDragLeave = (evt: DragEvent) => {
-      // relatedTarget is the element being entered, null when leaving the window.
-      const enteredNode = evt.relatedTarget as Node | null;
+      // relatedTarget is the node being entered. It is absent when leaving the window,
+      // when the drag is cancelled (Esc / source abort), and on every dragleave in
+      // WebKit (https://bugs.webkit.org/show_bug.cgi?id=66547) — all treated as leaving.
+      const enteredNode = evt.relatedTarget instanceof Node ? evt.relatedTarget : null;
+      // Overlays and PopOuts render into #portalContainer, a sibling of #root, so they
+      // are never contained by the zone. The drop overlay avoids deactivating itself
+      // here only because it sets pointerEvents: 'none' (see RoomInput.tsx).
       if (!enteredNode || !target?.contains(enteredNode)) setActive(false);
     };
     const handleDragOver = (evt: DragEvent) => {
