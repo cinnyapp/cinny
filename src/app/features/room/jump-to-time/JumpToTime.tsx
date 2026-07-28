@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useCallback, useMemo, useState } from 'react';
+import React, { MouseEventHandler, useCallback, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Dialog,
@@ -19,32 +19,31 @@ import {
   PopOut,
   RectCords,
 } from 'folds';
-import { Direction, MatrixError } from 'matrix-js-sdk';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { getTimestampToEvent, GetTimestampToEventOK } from 'neurone/lib/api/matrix/client/v1/rooms';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useAlive } from '../../../hooks/useAlive';
-import { useStateEvent } from '../../../hooks/useStateEvent';
 import { useRoom } from '../../../hooks/useRoom';
-import { StateEvent } from '../../../../types/matrix/room';
 import { getToday, getYesterday, timeDayMonthYear, timeHourMinute } from '../../../utils/time';
 import { DatePicker, TimePicker } from '../../../components/time-date';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import { useClient } from '../../../hooks/useClient';
 
 type JumpToTimeProps = {
   onCancel: () => void;
   onSubmit: (eventId: string) => void;
 };
 export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
   const alive = useAlive();
-  const createStateEvent = useStateEvent(room, StateEvent.RoomCreate);
 
   const todayTs = getToday();
   const yesterdayTs = getYesterday();
-  const createTs = useMemo(() => createStateEvent?.getTs() ?? 0, [createStateEvent]);
+  const createTs =
+    ct.state.join.create.read.find((e) => e.roomId === roomId)?.event.origin_server_ts ?? 0;
   const [ts, setTs] = useState(() => Date.now());
 
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
@@ -67,13 +66,20 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
   };
   const handleBeginning = () => setTs(createTs);
 
-  const [timestampState, timestampToEvent] = useAsyncCallback<string, MatrixError, [number]>(
+  const [timestampState, timestampToEvent] = useAsyncCallback<string, unknown, [number]>(
     useCallback(
       async (newTs) => {
-        const result = await mx.timestampToEvent(room.roomId, newTs, Direction.Forward);
+        const resp = await ct.requestAuthJSON(
+          getTimestampToEvent({
+            pathParams: { roomId },
+            searchParams: { ts: newTs, dir: 'f' },
+          })
+        );
+        const [err, result] = await parseMatrixResp<GetTimestampToEventOK>(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
         return result.event_id;
       },
-      [mx, room]
+      [ct, roomId]
     )
   );
 
@@ -232,7 +238,9 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
               </Box>
               {timestampState.status === AsyncStatus.Error && (
                 <Text style={{ color: color.Critical.Main }} size="T300">
-                  {timestampState.error.message}
+                  {timestampState.error instanceof Error
+                    ? timestampState.error.message
+                    : 'Unknown Error'}
                 </Text>
               )}
               <Button
