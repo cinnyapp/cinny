@@ -1,18 +1,10 @@
-import { MatrixClient } from 'matrix-js-sdk';
-
 export type SortFunc<T> = (a: T, b: T) => number;
 
 export const factoryRoomIdByActivity =
-  (mx: MatrixClient): SortFunc<string> =>
-  (a, b) => {
-    const room1 = mx.getRoom(a);
-    const room2 = mx.getRoom(b);
-
-    return (
-      (room2?.getLastActiveTimestamp() ?? Number.MIN_SAFE_INTEGER) -
-      (room1?.getLastActiveTimestamp() ?? Number.MIN_SAFE_INTEGER)
-    );
-  };
+  (getLatestEventTs: (roomId: string) => number | undefined): SortFunc<string> =>
+  (a, b) =>
+    (getLatestEventTs(b) ?? Number.MIN_SAFE_INTEGER) -
+    (getLatestEventTs(a) ?? Number.MIN_SAFE_INTEGER);
 
 export const factoryRoomIdByAtoZ =
   (getRoomName: (roomId: string) => string | undefined): SortFunc<string> =>

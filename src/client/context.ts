@@ -81,6 +81,7 @@ export type ClientContext = {
   rooms: RoomsContext;
   decryption: DecryptionManager;
 
+  directRoomToUser: ObservableValue<Map<string, string>>;
   directRooms: ObservableValue<Set<string>>;
   spaceRooms: ObservableValue<Set<string>>;
   encryptedRooms: ObservableValue<Set<string>>;
@@ -445,28 +446,48 @@ export const createEncryptedRoomsObservable = (
   return encryptedRoomsObservable;
 };
 
-export const createDirectRoomsObservable = async (
+export const createDirectRoomToUserObservable = async (
   storage: Storage,
   disposer: Disposer
-): Promise<ObservableValue<Set<string>>> => {
+): Promise<ObservableValue<Map<string, string>>> => {
   const mDirectObj = await storage.accountData.observableRead.get(AccountDataType.Direct);
-  const directRoomsObservable = new ComputedObservableValue(() => {
-    const rooms = new Set<string>();
+
+  const roomToUserObservable = new ComputedObservableValue(() => {
+    const roomToUser = new Map<string, string>();
     const userIdToRooms = mDirectObj.read?.event.content;
 
-    if (typeof userIdToRooms !== 'object') return rooms;
+    if (typeof userIdToRooms !== 'object' || userIdToRooms === null) {
+      return roomToUser;
+    }
 
-    Object.values(userIdToRooms).forEach((roomIds) => {
+    Object.entries(userIdToRooms).forEach(([userId, roomIds]) => {
       if (!Array.isArray(roomIds)) return;
-      roomIds.forEach((id) => {
-        if (typeof id === 'string') rooms.add(id);
+
+      roomIds.forEach((roomId) => {
+        if (typeof roomId === 'string') {
+          roomToUser.set(roomId, userId);
+        }
       });
     });
 
-    return rooms;
+    return roomToUser;
   }, [mDirectObj]);
 
-  disposer.collect(mDirectObj, directRoomsObservable);
+  disposer.collect(mDirectObj, roomToUserObservable);
+
+  return roomToUserObservable;
+};
+
+export const createDirectRoomsObservable = (
+  roomToUserObservable: ObservableValue<Map<string, string>>,
+  disposer: Disposer
+): ObservableValue<Set<string>> => {
+  const directRoomsObservable = new ComputedObservableValue(
+    () => new Set(roomToUserObservable.read?.keys() ?? []),
+    [roomToUserObservable]
+  );
+
+  disposer.collect(directRoomsObservable);
 
   return directRoomsObservable;
 };

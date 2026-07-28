@@ -4,6 +4,7 @@ import { Session } from '../app/state/sessions';
 import {
   ClientContext,
   createDirectRoomsObservable,
+  createDirectRoomToUserObservable,
   createEncryptedRoomsObservable,
   createLogoutObservable,
   createPendingMemberRoomObservable,
@@ -50,7 +51,8 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     disposer
   );
   const encryptedRooms = createEncryptedRoomsObservable(state, disposer);
-  const directRooms = await createDirectRoomsObservable(storage, disposer);
+  const directRoomToUser = await createDirectRoomToUserObservable(storage, disposer);
+  const directRooms = createDirectRoomsObservable(directRoomToUser, disposer);
   const { roomToParents, roomToChildEvents } = createSpaceMapping(state, disposer);
 
   const roomToSummary = await createRoomToSummaryObservable(storage, disposer);
@@ -101,6 +103,7 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     rooms,
     decryption,
 
+    directRoomToUser,
     directRooms,
     spaceRooms,
     encryptedRooms,

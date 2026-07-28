@@ -135,7 +135,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                   >
                     <Outlet />
                   </ClientLayout>
-                  {/*<SearchModalRenderer />*/}
+                  <SearchModalRenderer />
                   <UserRoomProfileRenderer />
                   <CreateRoomModalRenderer />
                   <CreateSpaceModalRenderer />

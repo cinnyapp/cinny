@@ -27,9 +27,7 @@ import React, {
 } from 'react';
 import { isKeyHotkey } from 'is-hotkey';
 import { useAtom, useAtomValue } from 'jotai';
-import { Room } from 'matrix-js-sdk';
 import { useDirects, useOrphanSpaces, useRooms, useSpaces } from '../../state/hooks/roomList';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { mDirectAtom } from '../../state/mDirectList';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import {
@@ -37,28 +35,31 @@ import {
   useAsyncSearch,
   UseAsyncSearchOptions,
 } from '../../hooks/useAsyncSearch';
-import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
-import {
-  getAllParents,
-  getDirectRoomAvatarUrl,
-  getRoomAvatarUrl,
-  guessPerfectParent,
-} from '../../utils/room';
+import { getAllParents, guessPerfectParent } from '../../utils/room';
 import { highlightText, makeHighlightRegex } from '../../plugins/react-custom-html-parser';
 import { factoryRoomIdByActivity } from '../../utils/sort';
 import { nameInitials } from '../../utils/common';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useListFocusIndex } from '../../hooks/useListFocusIndex';
-import { getMxIdLocalPart, getMxIdServer, guessDmRoomUserId } from '../../utils/matrix';
+import { getMxIdLocalPart, getMxIdServer } from '../../utils/matrix';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { roomToUnreadAtom } from '../../state/room/roomToUnread';
+import { unreadRoomsAtom } from '../../state/room/roomToUnread';
 import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { searchModalAtom } from '../../state/searchModal';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { KeySymbol } from '../../utils/key-symbol';
 import { isMacOS } from '../../utils/user-agent';
+import { useClient } from '../../hooks/useClient';
+import { useObservableValue } from '../../hooks/useObservableValue';
+import { roomToNotificationsAtom } from '../../state/room/roomToNotifications';
+import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
+import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
+import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
+import { getRoomTotalNotifications } from '../../state/hooks/roomNotifications';
+import { mxcToHttp } from '../../../client/mxcToHttp';
+import { useRoomsPowerLevels } from '../../hooks/usePowerLevels';
 
 enum SearchRoomType {
   Rooms = '#',
@@ -79,30 +80,23 @@ const useTopActiveRooms = (
   directs: string[],
   spaces: string[]
 ) => {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const roomToLatestEvent = useObservableValue(ct.roomToLatestEvent);
 
   return useMemo(() => {
+    const getTimestamp = (rId: string) => roomToLatestEvent.get(rId)?.origin_server_ts;
+
     if (searchRoomType === SearchRoomType.Spaces) {
       return spaces;
     }
     if (searchRoomType === SearchRoomType.Directs) {
-      return [...directs].sort(factoryRoomIdByActivity(mx)).slice(0, 20);
+      return [...directs].sort(factoryRoomIdByActivity(getTimestamp)).slice(0, 20);
     }
     if (searchRoomType === SearchRoomType.Rooms) {
-      return [...rooms].sort(factoryRoomIdByActivity(mx)).slice(0, 20);
+      return [...rooms].sort(factoryRoomIdByActivity(getTimestamp)).slice(0, 20);
     }
-    return [...rooms, ...directs].sort(factoryRoomIdByActivity(mx)).slice(0, 20);
-  }, [mx, rooms, directs, spaces, searchRoomType]);
-};
-
-const getDmUserId = (
-  roomId: string,
-  getRoom: (roomId: string) => Room | undefined,
-  myUserId: string
-): string | undefined => {
-  const room = getRoom(roomId);
-  const targetUserId = room && guessDmRoomUserId(room, myUserId);
-  return targetUserId;
+    return [...rooms, ...directs].sort(factoryRoomIdByActivity(getTimestamp)).slice(0, 20);
+  }, [roomToLatestEvent, rooms, directs, spaces, searchRoomType]);
 };
 
 const useSearchTargetRooms = (
@@ -135,39 +129,37 @@ type SearchProps = {
   requestClose: () => void;
 };
 export function Search({ requestClose }: SearchProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { navigateRoom, navigateSpace } = useRoomNavigate();
-  const roomToUnread = useAtomValue(roomToUnreadAtom);
+  const unreadRooms = useAtomValue(unreadRoomsAtom);
+  const roomToNotifications = useAtomValue(roomToNotificationsAtom);
 
   const [searchRoomType, setSearchRoomType] = useState<SearchRoomType>();
 
-  const allRoomsSet = useAllJoinedRoomsSet();
-  const getRoom = useGetRoom(allRoomsSet);
-
   const roomToParents = useAtomValue(roomToParentsAtom);
-  const orphanSpaces = useOrphanSpaces(mx, allRoomsAtom, roomToParents);
+  const orphanSpaces = useOrphanSpaces(ct, allRoomsAtom, roomToParents);
   const mDirects = useAtomValue(mDirectAtom);
-  const rooms = useRooms(mx, allRoomsAtom, mDirects);
-  const spaces = useSpaces(mx, allRoomsAtom);
-  const directs = useDirects(mx, allRoomsAtom, mDirects);
+  const rooms = useRooms(ct, allRoomsAtom, mDirects);
+  const spaces = useSpaces(ct, allRoomsAtom);
+  const directs = useDirects(ct, allRoomsAtom, mDirects);
+  const directRoomToUser = useObservableValue(ct.directRoomToUser);
+  const roomToPowerLevels = useRoomsPowerLevels(ct.rooms.join.read);
+
+  const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
 
   const topActiveRooms = useTopActiveRooms(searchRoomType, rooms, directs, spaces);
   const targetRooms = useSearchTargetRooms(searchRoomType, rooms, directs, spaces);
 
+  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(directs);
+  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+
   const getTargetStr: SearchItemStrGetter<string> = useCallback(
-    (roomId: string) => {
-      const roomName = getRoom(roomId)?.name ?? roomId;
-      if (mDirects.has(roomId)) {
-        const targetUserId = getDmUserId(roomId, getRoom, mx.getSafeUserId());
-        const targetUsername = targetUserId && getMxIdLocalPart(targetUserId);
-        if (targetUsername) return [roomName, targetUsername];
-      }
-      return roomName;
-    },
-    [getRoom, mDirects, mx]
+    (roomId: string) => getRoomName(roomId) ?? 'Unknown',
+    [getRoomName]
   );
 
   const [result, search, resetSearch] = useAsyncSearch(targetRooms, getTargetStr, SEARCH_OPTIONS);
@@ -299,25 +291,42 @@ export function Search({ requestClose }: SearchProps) {
                 <Scroll ref={scrollRef} size="300" hideTrack>
                   <div style={{ padding: config.space.S400, paddingRight: config.space.S200 }}>
                     {roomsToRender.map((roomId, index) => {
-                      const room = getRoom(roomId);
-                      if (!room) return null;
-
                       const dm = mDirects.has(roomId);
-                      const dmUserId = dm && getDmUserId(roomId, getRoom, mx.getSafeUserId());
+                      const dmUserId = dm && directRoomToUser.get(roomId);
                       const dmUsername = dmUserId && getMxIdLocalPart(dmUserId);
                       const dmUserServer = dmUserId && getMxIdServer(dmUserId);
+                      const isSpace = ct.spaceRooms.read.has(roomId);
 
                       const allParents = getAllParents(roomToParents, roomId);
                       const orphanParents =
                         allParents && orphanSpaces.filter((o) => allParents.has(o));
                       const perfectOrphanParent =
-                        orphanParents && guessPerfectParent(mx, roomId, orphanParents);
+                        orphanParents &&
+                        guessPerfectParent(
+                          roomId,
+                          orphanParents,
+                          (rId) => ct.roomToCreators.read.get(rId),
+                          (rId) => roomToPowerLevels.get(rId)
+                        );
 
                       const exactParents = roomToParents.get(roomId);
                       const perfectParent =
-                        exactParents && guessPerfectParent(mx, roomId, Array.from(exactParents));
+                        exactParents &&
+                        guessPerfectParent(
+                          roomId,
+                          Array.from(exactParents),
+                          (rId) => ct.roomToCreators.read.get(rId),
+                          (rId) => roomToPowerLevels.get(rId)
+                        );
 
-                      const unread = roomToUnread.get(roomId);
+                      const unread = unreadRooms.has(roomId);
+                      const n = roomToNotifications.get(roomId);
+                      const notifications = n && getRoomTotalNotifications(n);
+                      const unreadOrNotification =
+                        (notifications && notifications.count > 0) || unread;
+
+                      const avatarMxc = getRoomAvatar(roomId);
+                      const roomName: string = getRoomName(roomId) ?? 'Unknown';
 
                       return (
                         <MenuItem
@@ -325,7 +334,7 @@ export function Search({ requestClose }: SearchProps) {
                           as="button"
                           data-focus-index={index}
                           data-room-id={roomId}
-                          data-space={room.isSpaceRoom()}
+                          data-space={isSpace}
                           onClick={handleRoomClick}
                           variant={listFocus.index === index ? 'Primary' : 'Surface'}
                           aria-pressed={listFocus.index === index}
@@ -339,14 +348,14 @@ export function Search({ requestClose }: SearchProps) {
                               )}
                               {!dm && perfectOrphanParent && (
                                 <Text size="T200" priority="300" truncate>
-                                  <b>{getRoom(perfectOrphanParent)?.name ?? perfectOrphanParent}</b>
+                                  <b>{getRoomName(perfectOrphanParent) ?? perfectOrphanParent}</b>
                                 </Text>
                               )}
-                              {unread && (
+                              {unreadOrNotification && (
                                 <UnreadBadgeCenter>
                                   <UnreadBadge
-                                    highlight={unread.highlight > 0}
-                                    count={unread.total}
+                                    highlight={notifications?.highlight}
+                                    count={notifications?.count ?? 0}
                                   />
                                 </UnreadBadgeCenter>
                               )}
@@ -354,26 +363,29 @@ export function Search({ requestClose }: SearchProps) {
                           }
                           before={
                             <Avatar size="200" radii={dm ? '400' : '300'}>
-                              {dm || room.isSpaceRoom() ? (
+                              {dm || isSpace ? (
                                 <RoomAvatar
-                                  roomId={room.roomId}
+                                  roomId={roomId}
                                   src={
-                                    dm
-                                      ? getDirectRoomAvatarUrl(mx, room, 32, useAuthentication)
-                                      : getRoomAvatarUrl(mx, room, 32, useAuthentication)
+                                    avatarMxc &&
+                                    mxcToHttp(
+                                      ct.session.baseUrl,
+                                      avatarMxc,
+                                      useAuthentication
+                                    ).thumbnail({ width: 32, height: 32, method: 'crop' })
                                   }
-                                  alt={room.name}
+                                  alt={roomName}
                                   renderFallback={() => (
                                     <Text as="span" size="H6">
-                                      {nameInitials(room.name)}
+                                      {nameInitials(roomName)}
                                     </Text>
                                   )}
                                 />
                               ) : (
                                 <RoomIcon
                                   size="100"
-                                  joinRule={room.getJoinRule()}
-                                  roomType={room.getType()}
+                                  joinRule={roomToJoinRule.get(roomId)}
+                                  roomType={ct.roomToType.read.get(roomId)}
                                 />
                               )}
                             </Avatar>
@@ -382,8 +394,8 @@ export function Search({ requestClose }: SearchProps) {
                           <Box grow="Yes" alignItems="Center" gap="100">
                             <Text size="T400" truncate>
                               {queryHighlighRegex
-                                ? highlightText(queryHighlighRegex, [room.name])
-                                : room.name}
+                                ? highlightText(queryHighlighRegex, [roomName])
+                                : roomName}
                             </Text>
                             {dmUsername && (
                               <Text as="span" size="T200" priority="300" truncate>
@@ -395,7 +407,7 @@ export function Search({ requestClose }: SearchProps) {
                             )}
                             {!dm && perfectParent && perfectParent !== perfectOrphanParent && (
                               <Text size="T200" priority="300" truncate>
-                                — {getRoom(perfectParent)?.name ?? perfectParent}
+                                — {getRoomName(perfectParent) ?? perfectParent}
                               </Text>
                             )}
                           </Box>
@@ -445,5 +457,5 @@ export function SearchModalRenderer() {
     )
   );
 
-  return opened && <Search requestClose={() => setOpen(false)} />;
+  return opened ? <Search requestClose={() => setOpen(false)} /> : null;
 }
