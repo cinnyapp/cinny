@@ -203,7 +203,7 @@ export const useSendStickerMessage = (threadId?: string) => {
     const stickerUrl = mxcToHttp(ct.session.baseUrl, mxc, useAuthentication).url();
     if (!stickerUrl) return;
 
-    const info = await getImageInfo(
+    const info = getImageInfo(
       await loadImageElement(stickerUrl),
       await getImageUrlBlob(stickerUrl)
     );

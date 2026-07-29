@@ -10,7 +10,7 @@ import React, {
 import { useAtom } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
 import { ReactEditor } from 'slate-react';
-import { Transforms, Editor } from 'slate';
+import { Editor } from 'slate';
 import { Box, Checkbox, Icon, IconButton, Icons, Line, PopOut, Scroll, Text, config } from 'folds';
 
 import {
@@ -148,17 +148,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       useCallback((width) => setHideStickerBtn(width < 500), [])
     );
 
-    useEffect(() => {
-      Transforms.insertFragment(editor, draft);
-    }, [editor, draft]);
-
     useEffect(
       () => () => {
         if (!isEmptyEditor(editor)) {
           const parsedDraft = JSON.parse(JSON.stringify(editor.children));
           setDraft(parsedDraft);
         } else {
-          setDraft([]);
+          setDraft(undefined);
         }
         resetEditor(editor);
         resetEditorHistory(editor);
@@ -306,8 +302,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           />
         )}
         <CustomEditor
-          editableName="RoomInput"
           editor={editor}
+          initialValue={draft}
           placeholder="Send a message..."
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}

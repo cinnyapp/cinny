@@ -63,7 +63,6 @@ export function ThreadSelector({
                 hour24Clock={hour24Clock}
                 dateFormatString={dateFormatString}
                 ts={latestEvent.origin_server_ts}
-                inheritPriority
               />
             </Text>
             <Icon size="100" src={Icons.ChevronRight} />

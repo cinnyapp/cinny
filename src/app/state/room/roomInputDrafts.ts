@@ -34,7 +34,7 @@ export type RoomIdToMsgAction =
       roomId: string;
     };
 
-const createDraftAtom = () => atom<Descendant[]>([]);
+const createDraftAtom = () => atom<Descendant[] | undefined>(undefined);
 export type DraftAtom = ReturnType<typeof createDraftAtom>;
 export const composerToDraftAtom = atomFamily<string, DraftAtom>(() => createDraftAtom());
 
