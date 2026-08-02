@@ -1,8 +1,9 @@
-import { ComputedObservableValue, ObservableValue } from 'neurone/lib/utils/observable';
+import { ComputedObservableValue, Observable, ObservableValue } from 'neurone/lib/utils/observable';
 import { MatrixRequest } from 'neurone/lib/matrix-request';
 import { HistoryVisibility, Machine } from 'neurone/lib/crypto/machine';
 import { ObjectReader } from 'neurone/lib/utils';
 import { Disposer } from 'neurone/lib/utils/disposable';
+import { InboundVerification, OutboundVerification } from 'neurone/lib/crypto/machine/verification';
 import {
   MessageEventWithoutRoomId,
   RoomSummary,
@@ -103,6 +104,7 @@ export type ClientContext = {
   roomToTimeline: ObservableValue<Map<string, Timeline>>;
 
   pendingMemberRooms: ObservableValue<string[]>;
+  verificationRequest: Observable<InboundVerification | OutboundVerification>;
   sync: SyncContext;
   requestAuthJSON: MatrixRequest;
   getTxnId: GetTxnId;
@@ -877,4 +879,19 @@ export const createPendingMemberRoomObservable = async (
 
   disposer.collect(pendingMemberRoomsObj, pendingMemberRoomsObservable);
   return pendingMemberRoomsObservable;
+};
+
+export const createVerificationRequestObservable = () => {
+  const publishKey = crypto.randomUUID();
+  const verificationRequest = new Observable<InboundVerification | OutboundVerification>(
+    publishKey
+  );
+  const onVerificationRequest = (v: InboundVerification | OutboundVerification) => {
+    verificationRequest.publish(publishKey, v);
+  };
+
+  return {
+    verificationRequest,
+    onVerificationRequest,
+  };
 };

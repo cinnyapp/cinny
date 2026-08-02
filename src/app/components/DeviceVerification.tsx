@@ -1,11 +1,4 @@
-import {
-  ShowSasCallbacks,
-  VerificationPhase,
-  VerificationRequest,
-  Verifier,
-} from 'matrix-js-sdk/lib/crypto-api';
 import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
-import { VerificationMethod } from 'matrix-js-sdk/lib/types';
 import {
   Box,
   Button,
@@ -23,13 +16,24 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import {
-  useVerificationRequestPhase,
-  useVerificationRequestReceived,
-  useVerifierCancel,
-  useVerifierShowSas,
-} from '../hooks/useVerificationRequest';
+  CancelableVerificationStage,
+  CancelVerificationStage,
+  DoneVerificationStage,
+  InboundRequestStage,
+  InboundVerification,
+  OutboundRequestStage,
+  OutboundVerification,
+  ReadyVerificationStage,
+  SasAcceptStage,
+  SasCancelState,
+  SasMethod,
+  SasStartStage,
+  StartVerificationStage,
+} from 'neurone/lib/crypto/machine/verification';
+import { useVerificationRequestReceived } from '../hooks/useVerificationRequest';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { ContainerColor } from '../styles/ContainerColor.css';
+import { useObservableValue } from '../hooks/useObservableValue';
 
 const DialogHeaderStyles: CSSProperties = {
   padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
@@ -70,10 +74,12 @@ function VerificationWaitAccept() {
 }
 
 type VerificationAcceptProps = {
-  onAccept: () => Promise<void>;
+  stage: InboundRequestStage;
 };
-function VerificationAccept({ onAccept }: VerificationAcceptProps) {
-  const [acceptState, accept] = useAsyncCallback(onAccept);
+function VerificationAccept({ stage }: VerificationAcceptProps) {
+  const [acceptState, accept] = useAsyncCallback(
+    useCallback(() => stage.ready(['m.sas.v1']), [stage])
+  );
 
   const accepting = acceptState.status === AsyncStatus.Loading;
   return (
@@ -102,12 +108,12 @@ function VerificationWaitStart() {
 }
 
 type VerificationStartProps = {
-  onStart: () => Promise<void>;
+  stage: ReadyVerificationStage;
 };
-function AutoVerificationStart({ onStart }: VerificationStartProps) {
+function AutoVerificationStart({ stage }: VerificationStartProps) {
   useEffect(() => {
-    onStart();
-  }, [onStart]);
+    stage.startSas();
+  }, [stage]);
 
   return (
     <Box direction="Column" gap="400">
@@ -116,8 +122,8 @@ function AutoVerificationStart({ onStart }: VerificationStartProps) {
   );
 }
 
-function CompareEmoji({ sasData }: { sasData: ShowSasCallbacks }) {
-  const [confirmState, confirm] = useAsyncCallback(useCallback(() => sasData.confirm(), [sasData]));
+function CompareEmoji({ stage }: { stage: SasAcceptStage }) {
+  const [confirmState, confirm] = useAsyncCallback(useCallback(() => stage.match(), [stage]));
 
   const confirming =
     confirmState.status === AsyncStatus.Loading || confirmState.status === AsyncStatus.Success;
@@ -135,17 +141,17 @@ function CompareEmoji({ sasData }: { sasData: ShowSasCallbacks }) {
         wrap="Wrap"
         justifyContent="Center"
       >
-        {sasData.sas.emoji?.map(([emoji, name], index) => (
+        {stage.emoji?.map((emoji, index) => (
           <Box
             // eslint-disable-next-line react/no-array-index-key
-            key={`${emoji}${name}${index}`}
+            key={`${emoji.description}${index}`}
             direction="Column"
             gap="100"
             justifyContent="Center"
             alignItems="Center"
           >
-            <Text size="H1">{emoji}</Text>
-            <Text size="T200">{name}</Text>
+            <Text size="H1">{emoji.emoji}</Text>
+            <Text size="T200">{emoji.description}</Text>
           </Box>
         ))}
       </Box>
@@ -162,7 +168,7 @@ function CompareEmoji({ sasData }: { sasData: ShowSasCallbacks }) {
         <Button
           variant="Primary"
           fill="Soft"
-          onClick={() => sasData.mismatch()}
+          onClick={() => stage.mismatch()}
           disabled={confirming}
         >
           <Text size="B400">Do not Match</Text>
@@ -173,21 +179,23 @@ function CompareEmoji({ sasData }: { sasData: ShowSasCallbacks }) {
 }
 
 type SasVerificationProps = {
-  verifier: Verifier;
+  sas: SasMethod;
   onCancel: () => void;
 };
-function SasVerification({ verifier, onCancel }: SasVerificationProps) {
-  const [sasData, setSasData] = useState<ShowSasCallbacks>();
-
-  useVerifierShowSas(verifier, setSasData);
-  useVerifierCancel(verifier, onCancel);
+function SasVerification({ sas, onCancel }: SasVerificationProps) {
+  const stage = useObservableValue(sas.stage);
 
   useEffect(() => {
-    verifier.verify();
-  }, [verifier]);
+    if (stage instanceof SasStartStage) {
+      stage.accept();
+    }
+    if (stage instanceof SasCancelState) {
+      onCancel();
+    }
+  }, [stage, onCancel]);
 
-  if (sasData) {
-    return <CompareEmoji sasData={sasData} />;
+  if (stage instanceof SasAcceptStage && stage.emoji) {
+    return <CompareEmoji stage={stage} />;
   }
 
   return (
@@ -214,12 +222,13 @@ function VerificationDone({ onExit }: VerificationDoneProps) {
 }
 
 type VerificationCanceledProps = {
+  stage: CancelVerificationStage;
   onClose: () => void;
 };
-function VerificationCanceled({ onClose }: VerificationCanceledProps) {
+function VerificationCanceled({ stage, onClose }: VerificationCanceledProps) {
   return (
     <Box direction="Column" gap="400">
-      <Text>Verification has been canceled.</Text>
+      <Text>Verification has been canceled. {stage.reason}</Text>
       <Button variant="Secondary" fill="Soft" onClick={onClose}>
         <Text size="B400">Close</Text>
       </Button>
@@ -228,23 +237,18 @@ function VerificationCanceled({ onClose }: VerificationCanceledProps) {
 }
 
 type DeviceVerificationProps = {
-  request: VerificationRequest;
+  request: InboundVerification | OutboundVerification;
   onExit: () => void;
 };
 export function DeviceVerification({ request, onExit }: DeviceVerificationProps) {
-  const phase = useVerificationRequestPhase(request);
+  const stage = useObservableValue(request.stage);
 
   const handleCancel = useCallback(() => {
-    if (request.phase !== VerificationPhase.Done && request.phase !== VerificationPhase.Cancelled) {
-      request.cancel();
+    if (stage instanceof CancelableVerificationStage) {
+      stage.cancel();
     }
     onExit();
-  }, [request, onExit]);
-
-  const handleAccept = useCallback(() => request.accept(), [request]);
-  const handleStart = useCallback(async () => {
-    await request.startVerification(VerificationMethod.Sas);
-  }, [request]);
+  }, [stage, onExit]);
 
   return (
     <Overlay open backdrop={<OverlayBackdrop />}>
@@ -266,30 +270,27 @@ export function DeviceVerification({ request, onExit }: DeviceVerificationProps)
               </IconButton>
             </Header>
             <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
-              {phase === VerificationPhase.Requested &&
-                (request.initiatedByMe ? (
-                  <VerificationWaitAccept />
-                ) : (
-                  <VerificationAccept onAccept={handleAccept} />
-                ))}
-              {phase === VerificationPhase.Ready &&
-                (request.initiatedByMe ? (
-                  <AutoVerificationStart onStart={handleStart} />
+              {stage instanceof InboundRequestStage && <VerificationAccept stage={stage} />}
+              {stage instanceof OutboundRequestStage && <VerificationWaitAccept />}
+              {stage instanceof ReadyVerificationStage &&
+                (request instanceof OutboundRequestStage ? (
+                  <AutoVerificationStart stage={stage} />
                 ) : (
                   <VerificationWaitStart />
                 ))}
-              {phase === VerificationPhase.Started &&
-                (request.verifier ? (
-                  <SasVerification verifier={request.verifier} onCancel={handleCancel} />
+              {stage instanceof StartVerificationStage &&
+                (stage.method ? (
+                  <SasVerification sas={stage.method} onCancel={handleCancel} />
                 ) : (
                   <VerificationUnexpected
                     message="Unexpected Error! Verification is started but verifier is missing."
                     onClose={handleCancel}
                   />
                 ))}
-              {phase === VerificationPhase.Done && <VerificationDone onExit={onExit} />}
-              {phase === VerificationPhase.Cancelled && (
-                <VerificationCanceled onClose={handleCancel} />
+
+              {stage instanceof DoneVerificationStage && <VerificationDone onExit={onExit} />}
+              {stage instanceof CancelVerificationStage && (
+                <VerificationCanceled stage={stage} onClose={handleCancel} />
               )}
             </Box>
           </Dialog>
@@ -300,7 +301,7 @@ export function DeviceVerification({ request, onExit }: DeviceVerificationProps)
 }
 
 export function ReceiveSelfDeviceVerification() {
-  const [request, setRequest] = useState<VerificationRequest>();
+  const [request, setRequest] = useState<InboundVerification | OutboundVerification>();
 
   useVerificationRequestReceived(setRequest);
 
@@ -310,7 +311,7 @@ export function ReceiveSelfDeviceVerification() {
 
   if (!request) return null;
 
-  if (!request.isSelfVerification) {
+  if (!request.selfVerification) {
     return null;
   }
 

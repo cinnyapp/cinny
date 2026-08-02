@@ -2,14 +2,22 @@ import { GetSyncOK, JoinRoom } from 'neurone/lib/api/matrix/client/v3/sync';
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import { EncryptionSyncChanges } from 'neurone/lib/crypto/machine';
 import { Disposable, Disposer } from 'neurone/lib/utils/disposable';
+import { ToDeviceDecrypted, ToDevicePlainText } from 'neurone/lib/crypto/machine/events';
 import { roomState } from 'neurone/lib/utils/sync/v3/join';
 import { ObjectReader } from 'neurone/lib/utils';
+import { InboundVerification, OutboundVerification } from 'neurone/lib/crypto/machine/verification';
 import to from 'await-to-js';
 import { ClientContext } from './context';
 import { writeSync } from './syncWriter';
 import { sessionValue } from './storage/collections';
 import { syncLatestEvent } from './syncLatestEvent';
 import { SyncValue } from './sync';
+
+export type SyncResponseManagerCallbacks = {
+  onWriteComplete: () => void;
+  onSyncToken: (token: string) => void;
+  onVerificationRequest: (verificationFlow: OutboundVerification | InboundVerification) => void;
+};
 
 export class SyncResponseManager implements Disposable {
   private firstSync = true;
@@ -18,22 +26,18 @@ export class SyncResponseManager implements Disposable {
 
   private readonly syncTokenObservable: ObservableValue<string | undefined>;
 
-  private readonly onWriteComplete: () => void;
-
-  private readonly onSyncToken: (token: string) => void;
+  private readonly callbacks: SyncResponseManagerCallbacks;
 
   private readonly disposer = new Disposer();
 
   constructor(
     ct: ClientContext,
     syncTokenObservable: ObservableValue<string | undefined>,
-    onWriteComplete: () => void,
-    onSyncToken: (token: string) => void
+    callbacks: SyncResponseManagerCallbacks
   ) {
     this.ct = ct;
     this.syncTokenObservable = syncTokenObservable;
-    this.onWriteComplete = onWriteComplete;
-    this.onSyncToken = onSyncToken;
+    this.callbacks = callbacks;
 
     this.disposer.collect(
       this.syncTokenObservable.subscribe(this.handleSyncToken.bind(this)),
@@ -48,7 +52,7 @@ export class SyncResponseManager implements Disposable {
       // after syncLatestEvent completes to prevent race
       return;
     }
-    this.onSyncToken(sinceToken);
+    this.callbacks.onSyncToken(sinceToken);
   };
 
   private async handleSync(syncValue: SyncValue) {
@@ -70,7 +74,14 @@ export class SyncResponseManager implements Disposable {
       unusedFallbackKeys: data.device_unused_fallback_key_types,
     };
 
-    await this.ct.machine.syncChanges.receive(encryptionChanges);
+    const proccessedToDeviceEvents = await this.ct.machine.syncChanges.receive(encryptionChanges);
+    proccessedToDeviceEvents
+      .filter((e) => e instanceof ToDeviceDecrypted || e instanceof ToDevicePlainText)
+      .forEach((proccessedEvent) => {
+        this.ct.machine.verificationManager.receiveToDeviceEvent(proccessedEvent.event, (v) =>
+          this.callbacks.onVerificationRequest(v)
+        );
+      });
     // TODO: room key bundle detection from to device events;
 
     const encryptedRooms = this.filterEncryptedRoomResponse(data.rooms?.join ?? {});
@@ -81,7 +92,7 @@ export class SyncResponseManager implements Disposable {
   }
 
   private async afterWrite(nextBatch: string) {
-    this.onWriteComplete();
+    this.callbacks.onWriteComplete();
 
     await this.ct.machine.outgoingRequests.processAll();
 
@@ -95,7 +106,7 @@ export class SyncResponseManager implements Disposable {
       const [err] = await to(syncLatestEvent(this.ct, currentSyncToken));
       if (err) console.error(err);
       this.firstSync = false;
-      this.onSyncToken(nextBatch);
+      this.callbacks.onSyncToken(nextBatch);
     }
   }
 

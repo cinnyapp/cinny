@@ -1,87 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import {
-  CryptoEvent,
-  CryptoEventHandlerMap,
-  VerificationPhase,
-  VerificationRequest,
-  VerificationRequestEvent,
-  VerificationRequestEventHandlerMap,
-  Verifier,
-  VerifierEvent,
-  VerifierEventHandlerMap,
-} from 'matrix-js-sdk/lib/crypto-api';
-import { useMatrixClient } from './useMatrixClient';
+import { useEffect } from 'react';
+import { InboundVerification, OutboundVerification } from 'neurone/lib/crypto/machine/verification';
+import { useClient } from './useClient';
 
 export const useVerificationRequestReceived = (
-  onRequest: CryptoEventHandlerMap[CryptoEvent.VerificationRequestReceived]
+  onRequest: (request: OutboundVerification | InboundVerification) => void
 ) => {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
-  useEffect(() => {
-    mx.on(CryptoEvent.VerificationRequestReceived, onRequest);
-    return () => {
-      mx.removeListener(CryptoEvent.VerificationRequestReceived, onRequest);
-    };
-  }, [mx, onRequest]);
-};
-
-export const useVerificationRequestChange = (
-  request: VerificationRequest,
-  onChange: VerificationRequestEventHandlerMap[VerificationRequestEvent.Change]
-) => {
-  useEffect(() => {
-    request.on(VerificationRequestEvent.Change, onChange);
-    return () => {
-      request.removeListener(VerificationRequestEvent.Change, onChange);
-    };
-  }, [request, onChange]);
-};
-
-export const useVerificationRequestPhase = (request: VerificationRequest): VerificationPhase => {
-  const [phase, setPhase] = useState(() => request.phase);
-
-  useVerificationRequestChange(
-    request,
-    useCallback(() => {
-      setPhase(request.phase);
-    }, [request])
-  );
-
-  return phase;
-};
-
-export const useVerifierCancel = (
-  verifier: Verifier,
-  onCallback: VerifierEventHandlerMap[VerifierEvent.Cancel]
-) => {
-  useEffect(() => {
-    verifier.on(VerifierEvent.Cancel, onCallback);
-    return () => {
-      verifier.removeListener(VerifierEvent.Cancel, onCallback);
-    };
-  }, [verifier, onCallback]);
-};
-
-export const useVerifierShowSas = (
-  verifier: Verifier,
-  onCallback: VerifierEventHandlerMap[VerifierEvent.ShowSas]
-) => {
-  useEffect(() => {
-    verifier.on(VerifierEvent.ShowSas, onCallback);
-    return () => {
-      verifier.removeListener(VerifierEvent.ShowSas, onCallback);
-    };
-  }, [verifier, onCallback]);
-};
-
-export const useVerifierShowReciprocateQr = (
-  verifier: Verifier,
-  onCallback: VerifierEventHandlerMap[VerifierEvent.ShowReciprocateQr]
-) => {
-  useEffect(() => {
-    verifier.on(VerifierEvent.ShowReciprocateQr, onCallback);
-    return () => {
-      verifier.removeListener(VerifierEvent.ShowReciprocateQr, onCallback);
-    };
-  }, [verifier, onCallback]);
+  useEffect(() => ct.verificationRequest.subscribe(onRequest), [ct, onRequest]);
 };

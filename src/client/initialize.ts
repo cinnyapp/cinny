@@ -22,6 +22,7 @@ import {
   createSpaceMapping,
   createStateContext,
   createSyncTokenObservable,
+  createVerificationRequestObservable,
 } from './context';
 import { createStorage } from './storage';
 import { getAuthJSONRequest } from './request';
@@ -68,6 +69,8 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
 
   const syncTokenObservable = await createSyncTokenObservable(storage, disposer);
   const pendingMemberRooms = await createPendingMemberRoomObservable(storage, disposer);
+
+  const { verificationRequest, onVerificationRequest } = createVerificationRequestObservable();
 
   const getTxnId: GetTxnId = getTxnIdFunc();
 
@@ -125,6 +128,7 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     roomToTimeline,
 
     pendingMemberRooms,
+    verificationRequest,
     sync: {
       observable: syncObservable,
       controller: syncController,
@@ -137,12 +141,11 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
 
   const machineManager = new MachineManager(ct);
 
-  const syncResponseManager = new SyncResponseManager(
-    ct,
-    syncTokenObservable,
+  const syncResponseManager = new SyncResponseManager(ct, syncTokenObservable, {
     onWriteComplete,
-    onSyncToken
-  );
+    onSyncToken,
+    onVerificationRequest,
+  });
 
   disposer.collect(
     decryption,
@@ -152,6 +155,7 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     logoutObservable,
     logoutManager,
     machineManager,
+    verificationRequest,
     syncResponseManager
   );
 
