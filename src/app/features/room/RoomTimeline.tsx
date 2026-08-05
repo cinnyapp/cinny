@@ -714,7 +714,19 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       return;
     }
     const evtTimeline = getEventTimeline(room, readUptoEventId);
-    const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
+    if (!evtTimeline) {
+      // The server-side read-up-to event is too old to be found in any loaded
+      // timeline (e.g. the receipt was pinned far behind by a bridge or a bot
+      // posting as us). If the user is viewing the live timeline at its end,
+      // advance the receipt to the latest event instead of silently doing
+      // nothing — otherwise the room's badge can never be cleared by reading
+      // it (stuck-unread bug).
+      if (atLiveEndRef.current) {
+        requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
+      }
+      return;
+    }
+    const latestTimeline = getFirstLinkedTimeline(evtTimeline, Direction.Forward);
     if (latestTimeline === room.getLiveTimeline()) {
       requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
     }
