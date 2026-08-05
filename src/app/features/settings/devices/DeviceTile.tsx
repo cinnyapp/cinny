@@ -145,7 +145,6 @@ function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceR
 
   return (
     <Box as="form" onSubmit={handleSubmit} direction="Column" gap="100">
-      <Text size="L400">Device Name</Text>
       <Box gap="200">
         <Box grow="Yes" direction="Column">
           <Input
@@ -171,7 +170,7 @@ function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceR
           >
             <Text size="B300">Save</Text>
           </Button>
-          <Button
+          <IconButton
             type="button"
             size="300"
             variant="Secondary"
@@ -179,17 +178,16 @@ function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceR
             fill="Soft"
             onClick={onCancel}
             disabled={renaming}
+            aria-label="Cancel"
           >
-            <Text size="B300">Cancel</Text>
-          </Button>
+            <Icon size="400" src={Icons.Cross} />
+          </IconButton>
         </Box>
       </Box>
-      {renameState.status === AsyncStatus.Error ? (
+      {renameState.status === AsyncStatus.Error && (
         <Text size="T200" style={{ color: color.Critical.Main }}>
           {renameState.error instanceof Error ? renameState.error.message : 'Unknown Error'}
         </Text>
-      ) : (
-        <Text size="T200">Device names are visible to public.</Text>
       )}
     </Box>
   );
@@ -284,55 +282,54 @@ export function DeviceTile({
   }, []);
 
   return (
-    <>
-      <SettingTile
-        before={
-          <IconButton
-            variant={deleted ? 'Critical' : 'Secondary'}
-            outlined={deleted}
-            radii="300"
-            onClick={() => setDetails(!details)}
-          >
-            <Icon size="50" src={details ? Icons.ChevronBottom : Icons.ChevronRight} />
-          </IconButton>
-        }
-        after={
-          !edit && (
-            <Box shrink="No" alignItems="Center" gap="200">
-              {options}
-              {!deleted && (
-                <Chip
-                  variant="Secondary"
-                  radii="Pill"
-                  onClick={() => setEdit(true)}
-                  disabled={disabled}
-                >
-                  <Text size="B300">Edit</Text>
-                </Chip>
-              )}
-            </Box>
-          )
-        }
-      >
-        <Text size="T300">{device.display_name ?? device.device_id}</Text>
-        <Box direction="Column">
-          {typeof activeTs === 'number' && <DeviceActiveTime ts={activeTs} />}
-          {details && (
-            <>
-              <DeviceDetails device={device} />
-              {children}
-            </>
-          )}
-        </Box>
-      </SettingTile>
-      {edit && (
+    <SettingTile
+      before={
+        <IconButton
+          variant={deleted ? 'Critical' : 'Secondary'}
+          outlined={deleted}
+          radii="300"
+          onClick={() => setDetails(!details)}
+        >
+          <Icon size="50" src={details ? Icons.ChevronBottom : Icons.ChevronRight} />
+        </IconButton>
+      }
+      after={
+        !edit && (
+          <Box shrink="No" alignItems="Center" gap="200">
+            {options}
+            {!deleted && (
+              <Chip
+                variant="Secondary"
+                radii="Pill"
+                onClick={() => setEdit(true)}
+                disabled={disabled}
+              >
+                <Text size="B300">Edit</Text>
+              </Chip>
+            )}
+          </Box>
+        )
+      }
+    >
+      {edit ? (
         <DeviceRename
           device={device}
           onCancel={() => setEdit(false)}
           onRename={handleRename}
           refreshDeviceList={refreshDeviceList}
         />
+      ) : (
+        <Text size="T300">{device.display_name?.trim() || device.device_id}</Text>
       )}
-    </>
+      <Box direction="Column">
+        {typeof activeTs === 'number' && <DeviceActiveTime ts={activeTs} />}
+        {details && (
+          <>
+            <DeviceDetails device={device} />
+            {children}
+          </>
+        )}
+      </Box>
+    </SettingTile>
   );
 }
