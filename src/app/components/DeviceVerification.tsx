@@ -273,7 +273,7 @@ export function DeviceVerification({ request, onExit }: DeviceVerificationProps)
               {stage instanceof InboundRequestStage && <VerificationAccept stage={stage} />}
               {stage instanceof OutboundRequestStage && <VerificationWaitAccept />}
               {stage instanceof ReadyVerificationStage &&
-                (request instanceof OutboundRequestStage ? (
+                (request instanceof OutboundVerification ? (
                   <AutoVerificationStart stage={stage} />
                 ) : (
                   <VerificationWaitStart />
