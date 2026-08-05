@@ -1,36 +1,44 @@
 import React, { FormEventHandler, useCallback, useEffect, useState } from 'react';
 import { Box, Button, color, Icon, Icons, Spinner, Text, toRem } from 'folds';
 import FileSaver from 'file-saver';
+import { RoomKeys } from 'neurone/lib/crypto/machine';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SettingTile } from '../../../components/setting-tile';
 import { SequenceCardStyle } from '../styles.css';
 import { PasswordInput } from '../../../components/password-input';
 import { ConfirmPasswordMatch } from '../../../components/ConfirmPasswordMatch';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { decryptMegolmKeyFile, encryptMegolmKeyFile } from '../../../../util/cryptE2ERoomKeys';
 import { useAlive } from '../../../hooks/useAlive';
 import { useFilePicker } from '../../../hooks/useFilePicker';
+import { useClient } from '../../../hooks/useClient';
+import { getMxIdLocalPart, getMxIdServer } from '../../../utils/matrix';
+import { formatFileTimestamp } from '../../../utils/time';
 
 function ExportKeys() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const alive = useAlive();
 
   const [exportState, exportKeys] = useAsyncCallback<void, Error, [string]>(
     useCallback(
       async (password) => {
-        const crypto = mx.getCrypto();
-        if (!crypto) throw new Error('Unexpected Error! Crypto module not found!');
-        const keysJSON = await crypto.exportRoomKeysAsJson();
+        const keysJSON = await ct.machine.roomKeys.exportRoomKeysToJson();
 
-        const encKeys = await encryptMegolmKeyFile(keysJSON, password);
+        const encKeys = RoomKeys.encryptExportedRoomKeys(keysJSON, password, 500000);
 
         const blob = new Blob([encKeys], {
           type: 'text/plain;charset=us-ascii',
         });
-        FileSaver.saveAs(blob, 'cinny-keys.txt');
+
+        const now = new Date();
+
+        const username = getMxIdLocalPart(ct.session.userId);
+        const server = getMxIdServer(ct.session.userId);
+        FileSaver.saveAs(
+          blob,
+          `Keys Bakup - ${username} (${server}) - ${formatFileTimestamp(now)}.txt`
+        );
       },
-      [mx]
+      [ct]
     )
   );
 
@@ -160,21 +168,18 @@ type ImportKeysProps = {
   onDone?: () => void;
 };
 function ImportKeys({ file, onDone }: ImportKeysProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const alive = useAlive();
 
   const [decryptState, decryptFile] = useAsyncCallback<void, Error, [string]>(
     useCallback(
       async (password) => {
-        const crypto = mx.getCrypto();
-        if (!crypto) throw new Error('Unexpected Error! Crypto module not found!');
+        const encKeys = await file.text();
+        const keysJson = RoomKeys.decryptExportedRoomKeys(encKeys, password);
 
-        const arrayBuffer = await file.arrayBuffer();
-        const keys = await decryptMegolmKeyFile(arrayBuffer, password);
-
-        await crypto.importRoomKeysAsJson(keys);
+        await ct.machine.roomKeys.importRoomKeysFromJson(keysJson, () => undefined);
       },
-      [file, mx]
+      [file, ct]
     )
   );
 
