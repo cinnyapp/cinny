@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { CryptoApi } from 'matrix-js-sdk/lib/crypto-api';
-import { verifiedDevice } from '../utils/matrix-crypto';
 import { useAlive } from './useAlive';
 import { fulfilledPromiseSettledResult } from '../utils/common';
-import { useMatrixClient } from './useMatrixClient';
 import { useDeviceListChange } from './useDeviceList';
+import { useClient } from './useClient';
 
 export enum VerificationStatus {
   Unknown,
@@ -13,30 +11,32 @@ export enum VerificationStatus {
   Unsupported,
 }
 
-export const useDeviceVerificationDetect = (
-  crypto: CryptoApi | undefined,
+export const useDeviceVerificationStatus = (
   userId: string,
-  deviceId: string | undefined,
-  callback: (status: VerificationStatus) => void
-): void => {
-  const mx = useMatrixClient();
+  deviceId: string | undefined
+): VerificationStatus => {
+  const [verificationStatus, setVerificationStatus] = useState(VerificationStatus.Unknown);
+  const ct = useClient();
 
   const updateStatus = useCallback(async () => {
     if (crypto && deviceId) {
-      const data = await verifiedDevice(crypto, userId, deviceId);
-      if (data === null) {
-        callback(VerificationStatus.Unsupported);
+      const device = await ct.machine.userTracker.getDevice(userId, deviceId);
+      if (!device) {
+        setVerificationStatus(VerificationStatus.Unsupported);
         return;
       }
-      callback(data ? VerificationStatus.Verified : VerificationStatus.Unverified);
+
+      setVerificationStatus(
+        device.crossSigningTrusted ? VerificationStatus.Verified : VerificationStatus.Unverified
+      );
       return;
     }
-    callback(VerificationStatus.Unknown);
-  }, [crypto, deviceId, userId, callback]);
+    setVerificationStatus(VerificationStatus.Unknown);
+  }, [ct, deviceId, userId]);
 
   useEffect(() => {
     updateStatus();
-  }, [mx, updateStatus, userId]);
+  }, [ct, userId, updateStatus]);
 
   useDeviceListChange(
     useCallback(
@@ -48,36 +48,25 @@ export const useDeviceVerificationDetect = (
       [userId, updateStatus]
     )
   );
-};
-
-export const useDeviceVerificationStatus = (
-  crypto: CryptoApi | undefined,
-  userId: string,
-  deviceId: string | undefined
-): VerificationStatus => {
-  const [verificationStatus, setVerificationStatus] = useState(VerificationStatus.Unknown);
-
-  useDeviceVerificationDetect(crypto, userId, deviceId, setVerificationStatus);
 
   return verificationStatus;
 };
 
-export const useUnverifiedDeviceCount = (
-  crypto: CryptoApi | undefined,
-  userId: string,
-  devices: string[]
-): number | undefined => {
+export const useUnverifiedDeviceCount = (userId: string, devices: string[]): number | undefined => {
+  const ct = useClient();
   const [unverifiedCount, setUnverifiedCount] = useState<number>();
   const alive = useAlive();
 
   const updateCount = useCallback(async () => {
     let count = 0;
     if (crypto) {
-      const promises = devices.map((deviceId) => verifiedDevice(crypto, userId, deviceId));
+      const promises = devices.map((deviceId) =>
+        ct.machine.userTracker.getDevice(userId, deviceId)
+      );
       const result = await Promise.allSettled(promises);
       const settledResult = fulfilledPromiseSettledResult(result);
-      settledResult.forEach((status) => {
-        if (status === false) {
+      settledResult.forEach((device) => {
+        if (device && !device.verified) {
           count += 1;
         }
       });
@@ -85,7 +74,7 @@ export const useUnverifiedDeviceCount = (
     if (alive()) {
       setUnverifiedCount(count);
     }
-  }, [crypto, userId, devices, alive]);
+  }, [ct, userId, devices, alive]);
 
   useDeviceListChange(
     useCallback(

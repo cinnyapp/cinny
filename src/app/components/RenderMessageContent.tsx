@@ -12,7 +12,6 @@ import {
   MSticker,
   MText,
   MVideo,
-  RedactedContent,
   UnsupportedContent,
 } from './message';
 import { MsgType } from '../../types/matrix/common';
@@ -31,7 +30,6 @@ type RenderMessageContentProps = {
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
   outlineAttachment?: boolean;
-  redacted?: boolean;
 };
 export function RenderMessageContent({
   displayName,
@@ -45,10 +43,7 @@ export function RenderMessageContent({
   htmlReactParserOptions,
   linkifyOpts,
   outlineAttachment,
-  redacted,
 }: RenderMessageContentProps) {
-  if (redacted) return <RedactedContent />;
-
   if (eventType === MessageEvent.Sticker) {
     return (
       <MSticker

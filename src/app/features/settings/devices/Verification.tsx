@@ -19,13 +19,12 @@ import {
   MenuItem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { CryptoApi, VerificationRequest } from 'matrix-js-sdk/lib/crypto-api';
+import { InboundVerification, OutboundVerification } from 'neurone/lib/crypto/machine/verification';
+import { AesHmacSha2KeyDescription } from 'neurone/lib/crypto/ssss';
 import { VerificationStatus } from '../../../hooks/useDeviceVerificationStatus';
 import { InfoCard } from '../../../components/info-card';
 import { ManualVerificationTile } from '../../../components/ManualVerification';
-import { SecretStorageKeyContent } from '../../../../types/matrix/accountData';
 import { AsyncState, AsyncStatus, useAsync } from '../../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { DeviceVerification } from '../../../components/DeviceVerification';
 import {
   DeviceVerificationReset,
@@ -35,6 +34,7 @@ import { stopPropagation } from '../../../utils/keyboard';
 import { useAuthMetadata } from '../../../hooks/useAuthMetadata';
 import { withSearchParam } from '../../../pages/pathUtils';
 import { useAccountManagementActions } from '../../../hooks/useAccountManagement';
+import { useClient } from '../../../hooks/useClient';
 
 type VerificationStatusBadgeProps = {
   verificationStatus: VerificationStatus;
@@ -98,7 +98,7 @@ function LearnStartVerificationFromOtherDevice() {
 
 type VerifyCurrentDeviceTileProps = {
   secretStorageKeyId: string;
-  secretStorageKeyContent: SecretStorageKeyContent;
+  secretStorageKeyContent: AesHmacSha2KeyDescription;
 };
 export function VerifyCurrentDeviceTile({
   secretStorageKeyId,
@@ -163,20 +163,25 @@ export function VerifyCurrentDeviceTile({
 }
 
 type VerifyOtherDeviceTileProps = {
-  crypto: CryptoApi;
   deviceId: string;
 };
-export function VerifyOtherDeviceTile({ crypto, deviceId }: VerifyOtherDeviceTileProps) {
-  const mx = useMatrixClient();
-  const [requestState, setRequestState] = useState<AsyncState<VerificationRequest, Error>>({
+export function VerifyOtherDeviceTile({ deviceId }: VerifyOtherDeviceTileProps) {
+  const ct = useClient();
+  const [requestState, setRequestState] = useState<
+    AsyncState<InboundVerification | OutboundVerification, Error>
+  >({
     status: AsyncStatus.Idle,
   });
 
-  const requestVerification = useAsync<VerificationRequest, Error, []>(
-    useCallback(() => {
-      const requestPromise = crypto.requestDeviceVerification(mx.getSafeUserId(), deviceId);
-      return requestPromise;
-    }, [mx, crypto, deviceId]),
+  const requestVerification = useAsync(
+    useCallback(async () => {
+      const r = await ct.machine.verificationManager.requestDeviceVerification(
+        ct.session.userId,
+        deviceId,
+        ['m.sas.v1']
+      );
+      return r;
+    }, [ct, deviceId]),
     setRequestState
   );
 
@@ -217,23 +222,18 @@ export function VerifyOtherDeviceTile({ crypto, deviceId }: VerifyOtherDeviceTil
   );
 }
 
-type EnableVerificationProps = {
-  visible: boolean;
-};
-export function EnableVerification({ visible }: EnableVerificationProps) {
+export function EnableVerification() {
   const [open, setOpen] = useState(false);
 
   const handleCancel = useCallback(() => setOpen(false), []);
 
   return (
     <>
-      {visible && (
-        <Button size="300" radii="300" onClick={() => setOpen(true)}>
-          <Text as="span" size="B300">
-            Enable
-          </Text>
-        </Button>
-      )}
+      <Button size="300" radii="300" onClick={() => setOpen(true)}>
+        <Text as="span" size="B300">
+          Enable
+        </Text>
+      </Button>
       {open && (
         <Overlay open backdrop={<OverlayBackdrop />}>
           <OverlayCenter>

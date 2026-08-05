@@ -24,6 +24,7 @@ import {
   CompactPlaceholder,
   MessageBase,
   Reply,
+  RedactedContent,
 } from '../../components/message';
 import {
   factoryRenderLinkifyWithMention,
@@ -443,47 +444,47 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         hour24Clock={hour24Clock}
         dateFormatString={dateFormatString}
       >
-        {(editedEvent ?? event).type === MessageEvent.RoomMessageEncrypted ? (
-          <EncryptedMessageEvent
-            roomId={roomId}
-            decryptionManager={ct.decryption}
-            event={editedEvent ?? event}
-          >
-            {(decryptedEvent) => (
-              <RenderMessageContent
-                displayName={membersAPI.getName(event.sender)}
-                eventType={decryptedEvent.type}
-                ts={event.origin_server_ts}
-                edited={!!editedEvent}
-                content={rContent.newContent(decryptedEvent.content) ?? decryptedEvent.content}
-                mediaAutoLoad={mediaAutoLoad}
-                urlPreview={showUrlPreview}
-                htmlReactParserOptions={htmlReactParserOptions}
-                linkifyOpts={linkifyOpts}
-                outlineAttachment={messageLayout === MessageLayout.Bubble}
-                redacted={redacted.has(event.event_id)}
-              />
-            )}
-          </EncryptedMessageEvent>
-        ) : (
-          <RenderMessageContent
-            displayName={membersAPI.getName(event.sender)}
-            eventType={event.type}
-            ts={event.origin_server_ts}
-            edited={!!editedEvent}
-            content={
-              editedEvent
-                ? rContent.newContent(editedEvent.content) ?? editedEvent.content
-                : event.content
-            }
-            mediaAutoLoad={mediaAutoLoad}
-            urlPreview={showUrlPreview}
-            htmlReactParserOptions={htmlReactParserOptions}
-            linkifyOpts={linkifyOpts}
-            outlineAttachment={messageLayout === MessageLayout.Bubble}
-            redacted={redacted.has(event.event_id)}
-          />
-        )}
+        {redacted.has(event.event_id) && <RedactedContent />}
+        {!redacted.has(event.event_id) &&
+          ((editedEvent ?? event).type === MessageEvent.RoomMessageEncrypted ? (
+            <EncryptedMessageEvent
+              roomId={roomId}
+              decryptionManager={ct.decryption}
+              event={editedEvent ?? event}
+            >
+              {(decryptedEvent) => (
+                <RenderMessageContent
+                  displayName={membersAPI.getName(event.sender)}
+                  eventType={decryptedEvent.type}
+                  ts={event.origin_server_ts}
+                  edited={!!editedEvent}
+                  content={rContent.newContent(decryptedEvent.content) ?? decryptedEvent.content}
+                  mediaAutoLoad={mediaAutoLoad}
+                  urlPreview={showUrlPreview}
+                  htmlReactParserOptions={htmlReactParserOptions}
+                  linkifyOpts={linkifyOpts}
+                  outlineAttachment={messageLayout === MessageLayout.Bubble}
+                />
+              )}
+            </EncryptedMessageEvent>
+          ) : (
+            <RenderMessageContent
+              displayName={membersAPI.getName(event.sender)}
+              eventType={event.type}
+              ts={event.origin_server_ts}
+              edited={!!editedEvent}
+              content={
+                editedEvent
+                  ? rContent.newContent(editedEvent.content) ?? editedEvent.content
+                  : event.content
+              }
+              mediaAutoLoad={mediaAutoLoad}
+              urlPreview={showUrlPreview}
+              htmlReactParserOptions={htmlReactParserOptions}
+              linkifyOpts={linkifyOpts}
+              outlineAttachment={messageLayout === MessageLayout.Bubble}
+            />
+          ))}
         {reactionJSX}
         {threadTimeline && (
           <ThreadSelectorContainer>

@@ -1,33 +1,33 @@
 import React, { ReactNode } from 'react';
-import { AuthDict, AuthType, IAuthData, UIAFlow } from 'matrix-js-sdk';
-import { getUIAFlowForStages } from '../utils/matrix-uia';
+import { AuthResponse, AuthType, UIAFlow } from '../utils/matrix-uia';
 import { useSupportedUIAFlows, useUIACompleted, useUIAFlow } from '../hooks/useUIAFlows';
 import { UIAFlowOverlay } from './UIAFlowOverlay';
 import { PasswordStage, SSOStage } from './uia-stages';
-import { useMatrixClient } from '../hooks/useMatrixClient';
+import { useClient } from '../hooks/useClient';
 
 export const SUPPORTED_IN_APP_UIA_STAGES = [AuthType.Password, AuthType.Sso];
 
-export const pickUIAFlow = (uiaFlows: UIAFlow[]): UIAFlow | undefined => {
-  const passwordFlow = getUIAFlowForStages(uiaFlows, [AuthType.Password]);
-  if (passwordFlow) return passwordFlow;
-  return getUIAFlowForStages(uiaFlows, [AuthType.Sso]);
-};
-
 type ActionUIAProps = {
-  authData: IAuthData;
+  authData: AuthResponse;
   ongoingFlow: UIAFlow;
-  action: (authDict: AuthDict) => void;
+  action: (authDict: object) => void;
   onCancel: () => void;
 };
 export function ActionUIA({ authData, ongoingFlow, action, onCancel }: ActionUIAProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const completed = useUIACompleted(authData);
   const { getStageToComplete } = useUIAFlow(authData, ongoingFlow);
 
   const stageToComplete = getStageToComplete();
 
   if (!stageToComplete) return null;
+
+  const ssoRedirectURL = new URL(`/auth/${AuthType.Sso}/fallback/web`, ct.session.baseUrl);
+
+  if (stageToComplete.session) {
+    ssoRedirectURL.searchParams.set('session', stageToComplete.session);
+  }
+
   return (
     <UIAFlowOverlay
       currentStep={completed.length + 1}
@@ -36,7 +36,7 @@ export function ActionUIA({ authData, ongoingFlow, action, onCancel }: ActionUIA
     >
       {stageToComplete.type === AuthType.Password && (
         <PasswordStage
-          userId={mx.getUserId()!}
+          userId={ct.session.userId}
           stageData={stageToComplete}
           onCancel={onCancel}
           submitAuthDict={action}
@@ -44,7 +44,7 @@ export function ActionUIA({ authData, ongoingFlow, action, onCancel }: ActionUIA
       )}
       {stageToComplete.type === AuthType.Sso && stageToComplete.session && (
         <SSOStage
-          ssoRedirectURL={mx.getFallbackAuthUrl(AuthType.Sso, stageToComplete.session)}
+          ssoRedirectURL={ssoRedirectURL.toString()}
           stageData={stageToComplete}
           onCancel={onCancel}
           submitAuthDict={action}
@@ -55,7 +55,7 @@ export function ActionUIA({ authData, ongoingFlow, action, onCancel }: ActionUIA
 }
 
 type ActionUIAFlowsLoaderProps = {
-  authData: IAuthData;
+  authData: AuthResponse;
   unsupported: () => ReactNode;
   children: (ongoingFlow: UIAFlow) => ReactNode;
 };

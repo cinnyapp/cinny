@@ -1,53 +1,51 @@
 import React, { FormEventHandler, useCallback } from 'react';
 import { Box, Text, Button, Spinner, color } from 'folds';
-import { decodeRecoveryKey, deriveRecoveryKeyFromPassphrase } from 'matrix-js-sdk/lib/crypto-api';
-import { PasswordInput } from './password-input';
+import { decodeRecoveryKey } from 'matrix-js-sdk/lib/crypto-api';
 import {
-  SecretStorageKeyContent,
-  SecretStoragePassphraseContent,
-} from '../../types/matrix/accountData';
+  AesHmacSha2,
+  AesHmacSha2KeyDescription,
+  Passphrase,
+  PassphraseInfo,
+} from 'neurone/lib/crypto/ssss';
+import { PasswordInput } from './password-input';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
-import { useMatrixClient } from '../hooks/useMatrixClient';
 import { useAlive } from '../hooks/useAlive';
 
 type SecretStorageRecoveryPassphraseProps = {
   processing?: boolean;
-  keyContent: SecretStorageKeyContent;
-  passphraseContent: SecretStoragePassphraseContent;
-  onDecodedRecoveryKey: (recoveryKey: Uint8Array) => void;
+  keyDescription: AesHmacSha2KeyDescription;
+  passphraseInfo: PassphraseInfo;
+  onDecodedRecoveryKey: (recoveryKey: Uint8Array<ArrayBuffer>) => void;
 };
 export function SecretStorageRecoveryPassphrase({
   processing,
-  keyContent,
-  passphraseContent,
+  keyDescription,
+  passphraseInfo,
   onDecodedRecoveryKey,
 }: SecretStorageRecoveryPassphraseProps) {
-  const mx = useMatrixClient();
   const alive = useAlive();
 
   const [driveKeyState, submitPassphrase] = useAsyncCallback<
-    Uint8Array,
+    Uint8Array<ArrayBuffer>,
     Error,
-    Parameters<typeof deriveRecoveryKeyFromPassphrase>
+    [passphrase: string]
   >(
     useCallback(
-      async (passphrase, salt, iterations, bits) => {
-        const decodedRecoveryKey = await deriveRecoveryKeyFromPassphrase(
-          passphrase,
-          salt,
-          iterations,
-          bits
+      async (passphrase) => {
+        const decodedRecoveryKey = await Passphrase.derive(passphrase, passphraseInfo);
+
+        const { mac: regeneratedMac } = await AesHmacSha2.driveKeyMetaData(
+          decodedRecoveryKey,
+          keyDescription.iv
         );
 
-        const match = await mx.secretStorage.checkKey(decodedRecoveryKey, keyContent as any);
-
-        if (!match) {
+        if (regeneratedMac !== keyDescription.mac) {
           throw new Error('Invalid recovery passphrase.');
         }
 
         return decodedRecoveryKey;
       },
-      [mx, keyContent]
+      [keyDescription, passphraseInfo]
     )
   );
 
@@ -64,8 +62,7 @@ export function SecretStorageRecoveryPassphrase({
     const recoveryPassphrase = recoveryPassphraseInput.value.trim();
     if (!recoveryPassphrase) return;
 
-    const { salt, iterations, bits } = passphraseContent;
-    submitPassphrase(recoveryPassphrase, salt, iterations, bits).then((decodedRecoveryKey) => {
+    submitPassphrase(recoveryPassphrase).then((decodedRecoveryKey) => {
       if (alive()) {
         recoveryPassphraseInput.value = '';
         onDecodedRecoveryKey(decodedRecoveryKey);
@@ -115,31 +112,37 @@ export function SecretStorageRecoveryPassphrase({
 
 type SecretStorageRecoveryKeyProps = {
   processing?: boolean;
-  keyContent: SecretStorageKeyContent;
-  onDecodedRecoveryKey: (recoveryKey: Uint8Array) => void;
+  keyDescription: AesHmacSha2KeyDescription;
+  onDecodedRecoveryKey: (recoveryKey: Uint8Array<ArrayBuffer>) => void;
 };
 export function SecretStorageRecoveryKey({
   processing,
-  keyContent,
+  keyDescription,
   onDecodedRecoveryKey,
 }: SecretStorageRecoveryKeyProps) {
-  const mx = useMatrixClient();
   const alive = useAlive();
 
-  const [driveKeyState, submitRecoveryKey] = useAsyncCallback<Uint8Array, Error, [string]>(
+  const [driveKeyState, submitRecoveryKey] = useAsyncCallback<
+    Uint8Array<ArrayBuffer>,
+    Error,
+    [string]
+  >(
     useCallback(
       async (recoveryKey) => {
         const decodedRecoveryKey = decodeRecoveryKey(recoveryKey);
 
-        const match = await mx.secretStorage.checkKey(decodedRecoveryKey, keyContent as any);
+        const { mac: regeneratedMac } = await AesHmacSha2.driveKeyMetaData(
+          decodedRecoveryKey,
+          keyDescription.iv
+        );
 
-        if (!match) {
+        if (regeneratedMac !== keyDescription.mac) {
           throw new Error('Invalid recovery key.');
         }
 
         return decodedRecoveryKey;
       },
-      [mx, keyContent]
+      [keyDescription]
     )
   );
 

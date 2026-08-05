@@ -1,14 +1,18 @@
 import { ComputedObservableValue, Observable, ObservableValue } from 'neurone/lib/utils/observable';
-import { MatrixRequest } from 'neurone/lib/matrix-request';
+import { getVersion, GetVersionOK } from 'neurone/lib/api/matrix/client/v3/roomKeys';
+import { MatrixRequest, parseMatrixResp } from 'neurone/lib/matrix-request';
 import { HistoryVisibility, Machine } from 'neurone/lib/crypto/machine';
 import { ObjectReader } from 'neurone/lib/utils';
 import { Disposer } from 'neurone/lib/utils/disposable';
 import { InboundVerification, OutboundVerification } from 'neurone/lib/crypto/machine/verification';
 import {
+  AccountDataEvent,
+  BackupVersionInfo,
   MessageEventWithoutRoomId,
   RoomSummary,
   StateEventWithoutRoomId,
 } from 'neurone/lib/api/types';
+import { AesHmacSha2EncryptedData, SecretStorage } from 'neurone/lib/crypto/ssss';
 import {
   InviteRoomStateObject,
   JoinRoomStateObject,
@@ -24,6 +28,7 @@ import { GetTxnId } from './txn';
 import { Timeline } from './room';
 import { AccountDataType } from '../types/matrix/accountData';
 import { DecryptionManager } from './decryption';
+import { MegolmBackup } from './MegolmBackup';
 
 export type StateContext = {
   join: {
@@ -74,6 +79,17 @@ export type RoomsContext = {
   leave: ObservableValue<string[]>;
 };
 
+export type CrossSigningSecrets = {
+  master: Map<string, AesHmacSha2EncryptedData>;
+  self: Map<string, AesHmacSha2EncryptedData>;
+  user: Map<string, AesHmacSha2EncryptedData>;
+};
+
+export type Secrets = {
+  crossSigning: ObservableValue<CrossSigningSecrets | undefined>;
+  megolmBackup: ObservableValue<Map<string, AesHmacSha2EncryptedData> | undefined>;
+};
+
 export type ClientContext = {
   session: Session;
   storage: Storage;
@@ -105,6 +121,10 @@ export type ClientContext = {
 
   pendingMemberRooms: ObservableValue<string[]>;
   verificationRequest: Observable<InboundVerification | OutboundVerification>;
+  secrets: Secrets;
+  backupInfo: ObservableValue<BackupVersionInfo | undefined>;
+  megolmBackup: MegolmBackup;
+
   sync: SyncContext;
   requestAuthJSON: MatrixRequest;
   getTxnId: GetTxnId;
@@ -894,4 +914,104 @@ export const createVerificationRequestObservable = () => {
     verificationRequest,
     onVerificationRequest,
   };
+};
+
+export const createSecretsObservable = async (
+  storage: Storage,
+  disposer: Disposer
+): Promise<Secrets> => {
+  const masterObservable = await storage.accountData.observableRead.get(
+    AccountDataType.CrossSigningMaster
+  );
+  const selfObservable = await storage.accountData.observableRead.get(
+    AccountDataType.CrossSigningSelf
+  );
+  const userObservable = await storage.accountData.observableRead.get(
+    AccountDataType.CrossSigningUser
+  );
+
+  const backupObservable = await storage.accountData.observableRead.get(
+    AccountDataType.MegolmBackupV1
+  );
+
+  const getData = (event: AccountDataEvent) => {
+    const kToD = new Map<string, AesHmacSha2EncryptedData>();
+
+    SecretStorage.getAllKeyId(event.content).forEach((keyId) => {
+      const d = SecretStorage.getEncryptedData(keyId, event.content);
+      if (!d) return;
+      kToD.set(keyId, d);
+    });
+
+    if (kToD.size === 0) return undefined;
+
+    return kToD;
+  };
+
+  const crossSigning: ObservableValue<CrossSigningSecrets | undefined> =
+    new ComputedObservableValue(() => {
+      const masterEvent = masterObservable.read?.event;
+      const selfEvent = selfObservable.read?.event;
+      const userEvent = userObservable.read?.event;
+
+      const master = masterEvent && getData(masterEvent);
+      const self = selfEvent && getData(selfEvent);
+      const user = userEvent && getData(userEvent);
+
+      if (!master || !self || !user) return undefined;
+
+      return {
+        master,
+        self,
+        user,
+      };
+    }, [masterObservable, selfObservable, userObservable]);
+
+  const megolmBackup: ObservableValue<Map<string, AesHmacSha2EncryptedData> | undefined> =
+    new ComputedObservableValue(() => {
+      const event = backupObservable.read?.event;
+      if (!event) return undefined;
+
+      return getData(event);
+    }, [backupObservable]);
+
+  disposer.collect(
+    masterObservable,
+    selfObservable,
+    userObservable,
+    backupObservable,
+    crossSigning,
+    megolmBackup
+  );
+
+  return {
+    crossSigning,
+    megolmBackup,
+  };
+};
+
+export const createBackupInfoObservable = async (
+  request: MatrixRequest,
+  secrets: Secrets,
+  disposer: Disposer
+): Promise<ObservableValue<BackupVersionInfo | undefined>> => {
+  const publishKey = crypto.randomUUID();
+  const backupInfo = new ObservableValue<BackupVersionInfo | undefined>(undefined, publishKey);
+
+  const update = async () => {
+    const resp = await request(getVersion({}));
+    const [, result] = await parseMatrixResp<GetVersionOK>(resp);
+    backupInfo.publish(publishKey, result);
+  };
+
+  update();
+
+  disposer.collect(
+    backupInfo,
+    secrets.megolmBackup.subscribe(() => {
+      update();
+    })
+  );
+
+  return backupInfo;
 };

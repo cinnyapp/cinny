@@ -1,4 +1,4 @@
-import React, { FormEventHandler, ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { FormEventHandler, ReactNode, useCallback, useState } from 'react';
 import {
   Box,
   Text,
@@ -15,11 +15,11 @@ import {
   OverlayBackdrop,
   OverlayCenter,
 } from 'folds';
-import { CryptoApi } from 'matrix-js-sdk/lib/crypto-api';
 import FocusTrap from 'focus-trap-react';
-import { IMyDevice, MatrixError } from 'matrix-js-sdk';
+import { Device } from 'neurone/lib/api/types';
+import { putDevice } from 'neurone/lib/api/matrix/client/v3/devices';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../../utils/time';
 import { BreakWord } from '../../../styles/Text.css';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
@@ -29,6 +29,8 @@ import { LogoutDialog } from '../../../components/LogoutDialog';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
+import { useClient } from '../../../hooks/useClient';
+import { useAlive } from '../../../hooks/useAlive';
 
 export function DeviceTilePlaceholder() {
   return (
@@ -61,7 +63,7 @@ function DeviceActiveTime({ ts }: { ts: number }) {
   );
 }
 
-function DeviceDetails({ device }: { device: IMyDevice }) {
+function DeviceDetails({ device }: { device: Device }) {
   return (
     <>
       {typeof device.device_id === 'string' && (
@@ -78,57 +80,51 @@ function DeviceDetails({ device }: { device: IMyDevice }) {
   );
 }
 
-type DeviceKeyDetailsProps = {
-  crypto: CryptoApi;
-};
-export function DeviceKeyDetails({ crypto }: DeviceKeyDetailsProps) {
-  const [keysState, loadKeys] = useAsyncCallback(
-    useCallback(() => {
-      const keys = crypto.getOwnDeviceKeys();
-      return keys;
-    }, [crypto])
-  );
-
-  useEffect(() => {
-    loadKeys();
-  }, [loadKeys]);
-
-  if (keysState.status === AsyncStatus.Error) return null;
+export function DeviceKeyDetails() {
+  const ct = useClient();
 
   return (
-    <Text className={BreakWord} size="T200" priority="300">
-      Device Key:{' '}
-      <i>{keysState.status === AsyncStatus.Success ? keysState.data.ed25519 : 'loading...'}</i>
-    </Text>
+    <>
+      <Text className={BreakWord} size="T200" priority="300">
+        Encryption Key: <i>{ct.machine.getEncryptionKey()}</i>
+      </Text>
+      <Text className={BreakWord} size="T200" priority="300">
+        Singing Key: <i>{ct.machine.getSigningKey()}</i>
+      </Text>
+    </>
   );
 }
 
 type DeviceRenameProps = {
-  device: IMyDevice;
+  device: Device;
   onCancel: () => void;
   onRename: () => void;
   refreshDeviceList: () => Promise<void>;
 };
 function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceRenameProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const alive = useAlive();
 
-  const [renameState, rename] = useAsyncCallback<void, MatrixError, [string]>(
+  const [renameState, rename] = useAsyncCallback<void, unknown, [string]>(
     useCallback(
       async (name: string) => {
-        await mx.setDeviceDetails(device.device_id, { display_name: name });
+        const resp = await ct.requestAuthJSON(
+          putDevice({
+            pathParams: { deviceId: device.device_id },
+            body: {
+              display_name: name,
+            },
+          })
+        );
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
         await refreshDeviceList();
       },
-      [mx, device.device_id, refreshDeviceList]
+      [ct, device.device_id, refreshDeviceList]
     )
   );
 
   const renaming = renameState.status === AsyncStatus.Loading;
-
-  useEffect(() => {
-    if (renameState.status === AsyncStatus.Success) {
-      onRename();
-    }
-  }, [renameState, onRename]);
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
@@ -140,7 +136,11 @@ function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceR
     const deviceName = nameInput.value.trim();
     if (!deviceName || deviceName === device.display_name) return;
 
-    rename(deviceName);
+    rename(deviceName).then(() => {
+      if (alive()) {
+        onRename();
+      }
+    });
   };
 
   return (
@@ -186,7 +186,7 @@ function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceR
       </Box>
       {renameState.status === AsyncStatus.Error ? (
         <Text size="T200" style={{ color: color.Critical.Main }}>
-          {renameState.error.message}
+          {renameState.error instanceof Error ? renameState.error.message : 'Unknown Error'}
         </Text>
       ) : (
         <Text size="T200">Device names are visible to public.</Text>
@@ -260,7 +260,7 @@ export function DeviceDeleteBtn({
 }
 
 type DeviceTileProps = {
-  device: IMyDevice;
+  device: Device;
   deleted?: boolean;
   refreshDeviceList: () => Promise<void>;
   disabled?: boolean;

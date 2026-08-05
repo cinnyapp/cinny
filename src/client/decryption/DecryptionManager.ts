@@ -51,16 +51,16 @@ export class DecryptionManager implements Disposable {
     const { content } = event;
     const sessionId = ObjectReader.string(content, 'session_id');
 
-    if (!sessionId) {
-      throw new Error('Malformed event! Missing session_id');
+    if (sessionId) {
+      const existingEvent = eventIndex.get(roomId, sessionId, event.event_id);
+      if (existingEvent) return existingEvent;
     }
-
-    const existingEvent = eventIndex.get(roomId, sessionId, event.event_id);
-    if (existingEvent) return existingEvent;
 
     const encryptedEvent = new EncryptedEvent(this.machine.roomEncryption, roomId, event);
 
-    eventIndex.store(roomId, sessionId, encryptedEvent);
+    if (sessionId) {
+      eventIndex.store(roomId, sessionId, encryptedEvent);
+    }
 
     return encryptedEvent;
   }

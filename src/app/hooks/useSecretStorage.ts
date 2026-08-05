@@ -1,22 +1,23 @@
-import {
-  AccountDataEvent,
-  SecretStorageDefaultKeyContent,
-  SecretStorageKeyContent,
-} from '../../types/matrix/accountData';
-import { useAccountData } from './useAccountData';
-
-export const getSecretStorageKeyEventType = (key: string): string => `m.secret_storage.key.${key}`;
+import { ObjectReader } from 'neurone/lib/utils';
+import { AesHmacSha2KeyDescription, KeyStorage } from 'neurone/lib/crypto/ssss';
+import { useAccountData } from './storage/useAccountData';
 
 export const useSecretStorageDefaultKeyId = (): string | undefined => {
-  const defaultKeyEvent = useAccountData(AccountDataEvent.SecretStorageDefaultKey);
-  const defaultKeyId = defaultKeyEvent?.getContent<SecretStorageDefaultKeyContent>().key;
+  const defaultKeyResult = useAccountData(KeyStorage.defaultKeyIdentifier());
+  const defaultKeyEvent = defaultKeyResult.value;
+  const defaultKeyId = ObjectReader.string(defaultKeyEvent?.content, 'key');
 
   return defaultKeyId;
 };
 
-export const useSecretStorageKeyContent = (keyId: string): SecretStorageKeyContent | undefined => {
-  const keyEvent = useAccountData(getSecretStorageKeyEventType(keyId));
-  const secretStorageKey = keyEvent?.getContent<SecretStorageKeyContent>();
+export const useSecretStorageKeyContent = (
+  keyId: string
+): AesHmacSha2KeyDescription | undefined => {
+  const keyResult = useAccountData(KeyStorage.keyIdentifier(keyId));
+  const keyEvent = keyResult.value;
+  const secretStorageKey = keyEvent?.content
+    ? KeyStorage.getKeyDescription(keyEvent.content)
+    : undefined;
 
   return secretStorageKey;
 };

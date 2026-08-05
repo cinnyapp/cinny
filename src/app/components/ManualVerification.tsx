@@ -13,13 +13,15 @@ import {
   color,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { AesHmacSha2, AesHmacSha2KeyDescription } from 'neurone/lib/crypto/ssss';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { stopPropagation } from '../utils/keyboard';
 import { SettingTile } from './setting-tile';
-import { SecretStorageKeyContent } from '../../types/matrix/accountData';
 import { SecretStorageRecoveryKey, SecretStorageRecoveryPassphrase } from './SecretStorage';
-import { useMatrixClient } from '../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
-import { storePrivateKey } from '../../client/secretStorageKeys';
+import { useClient } from '../hooks/useClient';
+import { getCrossSigningPrivateKeys, useCrossSigningSecretData } from '../hooks/useCrossSigning';
+import { AccountDataType } from '../../types/matrix/accountData';
 
 export enum ManualVerificationMethod {
   RecoveryPassphrase = 'passphrase',
@@ -112,7 +114,7 @@ export function ManualVerificationMethodSwitcher({
 
 type ManualVerificationTileProps = {
   secretStorageKeyId: string;
-  secretStorageKeyContent: SecretStorageKeyContent;
+  secretStorageKeyContent: AesHmacSha2KeyDescription;
   options?: ReactNode;
 };
 export function ManualVerificationTile({
@@ -120,7 +122,8 @@ export function ManualVerificationTile({
   secretStorageKeyContent,
   options,
 }: ManualVerificationTileProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const csSecretData = useCrossSigningSecretData(secretStorageKeyId);
 
   const hasPassphrase = !!secretStorageKeyContent.passphrase;
   const [method, setMethod] = useState(
@@ -130,25 +133,53 @@ export function ManualVerificationTile({
   );
 
   const verifyAndRestoreBackup = useCallback(
-    async (recoveryKey: Uint8Array) => {
-      const crypto = mx.getCrypto();
-      if (!crypto) {
-        throw new Error('Unexpected Error! Crypto object not found.');
+    async (recoveryKey: Uint8Array<ArrayBuffer>) => {
+      const status = await ct.machine.crossSigning.getStatus();
+      const machineHasKeys = status.master && status.self && status.user;
+
+      if (!machineHasKeys && csSecretData) {
+        const crossSigningKeys = await getCrossSigningPrivateKeys(recoveryKey, csSecretData);
+
+        const s = await ct.machine.crossSigning.importKeys(crossSigningKeys);
+        if (!s.master || !s.self || !s.user) {
+          throw new Error('Failed to import to CrossSigningSecrets keys!');
+        }
       }
 
-      storePrivateKey(secretStorageKeyId, recoveryKey);
+      const { userId, deviceId } = ct.session;
+      const device = await ct.machine.userTracker.getDevice(userId, deviceId);
+      if (device && !device.crossSigningTrusted) {
+        const resp = await device.verify();
+        const [err] = await parseMatrixResp(resp);
+        if (err) {
+          throw new Error(err.data.error ?? 'Failed to verify. Signature upload request failed.');
+        }
 
-      await crypto.bootstrapCrossSigning({});
-      await crypto.bootstrapSecretStorage({});
+        // device.verify uploads signatures to mark device as verifed
+        // query keys to receive signs now instead of update via /sync
+        // if we don't do that device remains unverified until next sync device_list change
+        await ct.machine.outgoingRequests.queryKeys([ct.session.userId]);
+      }
 
-      await crypto.loadSessionBackupPrivateKeyFromSecretStorage();
+      const backupKeyEncryptedData = ct.secrets.megolmBackup.read?.get(secretStorageKeyId);
+      if (!backupKeyEncryptedData) {
+        return;
+      }
+      const backupKey = await AesHmacSha2.decrypt(
+        recoveryKey,
+        AccountDataType.MegolmBackupV1,
+        backupKeyEncryptedData
+      );
+      await ct.megolmBackup.saveDecryptionKey(backupKey);
     },
-    [mx, secretStorageKeyId]
+    [ct, secretStorageKeyId, csSecretData]
   );
 
-  const [verifyState, handleDecodedRecoveryKey] = useAsyncCallback<void, Error, [Uint8Array]>(
-    verifyAndRestoreBackup
-  );
+  const [verifyState, handleDecodedRecoveryKey] = useAsyncCallback<
+    void,
+    Error,
+    [Uint8Array<ArrayBuffer>]
+  >(verifyAndRestoreBackup);
   const verifying = verifyState.status === AsyncStatus.Loading;
 
   return (
@@ -174,7 +205,7 @@ export function ManualVerificationTile({
           {method === ManualVerificationMethod.RecoveryKey && (
             <SecretStorageRecoveryKey
               processing={verifying}
-              keyContent={secretStorageKeyContent}
+              keyDescription={secretStorageKeyContent}
               onDecodedRecoveryKey={handleDecodedRecoveryKey}
             />
           )}
@@ -182,8 +213,8 @@ export function ManualVerificationTile({
             secretStorageKeyContent.passphrase && (
               <SecretStorageRecoveryPassphrase
                 processing={verifying}
-                keyContent={secretStorageKeyContent}
-                passphraseContent={secretStorageKeyContent.passphrase}
+                keyDescription={secretStorageKeyContent}
+                passphraseInfo={secretStorageKeyContent.passphrase}
                 onDecodedRecoveryKey={handleDecodedRecoveryKey}
               />
             )}

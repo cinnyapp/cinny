@@ -2,6 +2,12 @@ import React, { forwardRef, useCallback } from 'react';
 import { Dialog, Header, config, Box, Text, Button, Spinner, color } from 'folds';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { useClient } from '../hooks/useClient';
+import { InfoCard } from './info-card';
+import { useCrossSigning } from '../hooks/useCrossSigning';
+import {
+  useDeviceVerificationStatus,
+  VerificationStatus,
+} from '../hooks/useDeviceVerificationStatus';
 
 type LogoutDialogProps = {
   handleClose: () => void;
@@ -9,6 +15,10 @@ type LogoutDialogProps = {
 export const LogoutDialog = forwardRef<HTMLDivElement, LogoutDialogProps>(
   ({ handleClose }, ref) => {
     const ct = useClient();
+    const hasEncryptedRoom = ct.encryptedRooms.read.size > 0;
+    const crossSigning = useCrossSigning();
+
+    const verificationStatus = useDeviceVerificationStatus(ct.session.userId, ct.session.deviceId);
 
     const [logoutState, logout] = useAsyncCallback<void, Error, []>(
       useCallback(async () => {
@@ -33,8 +43,8 @@ export const LogoutDialog = forwardRef<HTMLDivElement, LogoutDialogProps>(
           </Box>
         </Header>
         <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
-          {/* {hasEncryptedRoom &&
-            (crossSigningActive ? (
+          {hasEncryptedRoom &&
+            (crossSigning ? (
               verificationStatus === VerificationStatus.Unverified && (
                 <InfoCard
                   variant="Critical"
@@ -48,7 +58,7 @@ export const LogoutDialog = forwardRef<HTMLDivElement, LogoutDialogProps>(
                 title="Alert"
                 description="Enable device verification or export your encrypted data from settings to avoid losing access to your messages."
               />
-            ))} */}
+            ))}
           <Text priority="400">You’re about to log out. Are you sure?</Text>
           {logoutState.status === AsyncStatus.Error && (
             <Text style={{ color: color.Critical.Main }} size="T300">

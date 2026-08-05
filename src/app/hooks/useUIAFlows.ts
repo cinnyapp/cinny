@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { MatrixError } from 'matrix-js-sdk';
+import { MatrixError } from 'neurone/lib/matrix-request';
 import {
   AuthResponse,
   AuthType,
@@ -102,7 +102,7 @@ export const useUIAMatrixError = (
   error?: MatrixError
 ): [undefined, undefined] | [AuthResponse, undefined] | [undefined, MatrixError] => {
   if (!error) return [undefined, undefined];
-  if (error.httpStatus === 401) return [error.data as AuthResponse, undefined];
+  if (error.status === 401) return [error.data as AuthResponse, undefined];
 
   return [undefined, error];
 };

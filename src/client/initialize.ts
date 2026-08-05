@@ -3,6 +3,7 @@ import { Disposer } from 'neurone/lib/utils/disposable';
 import { Session } from '../app/state/sessions';
 import {
   ClientContext,
+  createSecretsObservable,
   createDirectRoomsObservable,
   createDirectRoomToUserObservable,
   createEncryptedRoomsObservable,
@@ -23,6 +24,7 @@ import {
   createStateContext,
   createSyncTokenObservable,
   createVerificationRequestObservable,
+  createBackupInfoObservable,
 } from './context';
 import { createStorage } from './storage';
 import { getAuthJSONRequest } from './request';
@@ -34,6 +36,7 @@ import { LogoutManager } from './LogoutManager';
 import { MachineManager } from './MachineManager';
 import { DecryptionManager } from './decryption';
 import { initializeCrypto } from './crypto';
+import { MegolmBackup } from './MegolmBackup';
 
 export const initializeClient = async (session: Session): Promise<ClientContext> => {
   const disposer = new Disposer();
@@ -71,6 +74,9 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
   const pendingMemberRooms = await createPendingMemberRoomObservable(storage, disposer);
 
   const { verificationRequest, onVerificationRequest } = createVerificationRequestObservable();
+  const secrets = await createSecretsObservable(storage, disposer);
+  const backupInfo = await createBackupInfoObservable(requestAuthJSON, secrets, disposer);
+  const megolmBackup = new MegolmBackup(machine, requestAuthJSON, backupInfo);
 
   const getTxnId: GetTxnId = getTxnIdFunc();
 
@@ -129,6 +135,9 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
 
     pendingMemberRooms,
     verificationRequest,
+    secrets,
+    backupInfo,
+    megolmBackup,
     sync: {
       observable: syncObservable,
       controller: syncController,
@@ -148,6 +157,7 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
   });
 
   disposer.collect(
+    megolmBackup,
     decryption,
     syncObservable,
     syncController,

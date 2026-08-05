@@ -16,6 +16,7 @@ import { RenderMessageContent } from '../RenderMessageContent';
 import { Time } from './Time';
 import { BubbleLayout, CompactLayout, MessageBase, ModernLayout } from './layout';
 import { MessageLayout, MessageSpacing } from '../../state/settings';
+import { RedactedContent } from './MsgTypeRenderers';
 
 type ReplyMessageProps = {
   username?: ReactNode;
@@ -118,6 +119,8 @@ export function Reply({
 
   const usernameColor = legacyUsernameColor ? colorMXID(sender ?? eventId) : tagColor;
 
+  const redactedEvent = redacted || !!rUnsigned.redactedBecause(replyEvent?.unsigned);
+
   return (
     <MessageBase space={messageSpacing}>
       <ReplyMessage
@@ -142,23 +145,24 @@ export function Reply({
       >
         {replyEvent !== undefined ? (
           <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }} as="div">
-            {replyEvent === null ? (
-              <Text>
-                <MessageBadEncryptedContent />
-              </Text>
-            ) : (
-              <RenderMessageContent
-                displayName={getMemberName(replyEvent.sender)}
-                eventType={replyEvent.type}
-                ts={replyEvent.origin_server_ts}
-                edited={false}
-                content={replyEvent.content}
-                mediaAutoLoad={mediaAutoLoad}
-                htmlReactParserOptions={htmlReactParserOptions}
-                linkifyOpts={linkifyOpts}
-                redacted={redacted || !!rUnsigned.redactedBecause(replyEvent.unsigned)}
-              />
-            )}
+            {redactedEvent && <RedactedContent />}
+            {!redactedEvent &&
+              (replyEvent === null ? (
+                <Text>
+                  <MessageBadEncryptedContent />
+                </Text>
+              ) : (
+                <RenderMessageContent
+                  displayName={getMemberName(replyEvent.sender)}
+                  eventType={replyEvent.type}
+                  ts={replyEvent.origin_server_ts}
+                  edited={false}
+                  content={replyEvent.content}
+                  mediaAutoLoad={mediaAutoLoad}
+                  htmlReactParserOptions={htmlReactParserOptions}
+                  linkifyOpts={linkifyOpts}
+                />
+              ))}
           </Box>
         ) : (
           <LinePlaceholder
