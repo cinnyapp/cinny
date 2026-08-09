@@ -1,5 +1,5 @@
 diff --git a/node_modules/slate-react/dist/index.es.js b/node_modules/slate-react/dist/index.es.js
-index 69f81ce..4a73b14 100644
+index 69f81ce..bbac815 100644
 --- a/node_modules/slate-react/dist/index.es.js
 +++ b/node_modules/slate-react/dist/index.es.js
 @@ -118,6 +118,21 @@ function createAndroidInputManager(_ref) {
@@ -24,7 +24,7 @@ index 69f81ce..4a73b14 100644
    var idCounter = 0;
    var insertPositionHint = false;
    var applyPendingSelection = () => {
-@@ -160,6 +175,25 @@ function createAndroidInputManager(_ref) {
+@@ -160,6 +175,27 @@ function createAndroidInputManager(_ref) {
        clearTimeout(actionTimeoutId);
        actionTimeoutId = null;
      }
@@ -43,14 +43,16 @@ index 69f81ce..4a73b14 100644
 +      }
 +    });
 +      if (__composingIntoEmptyLeaf) {
-+        flushTimeoutId = setTimeout(flush, FLUSH_DELAY);
++        // 50ms, not FLUSH_DELAY: this only bounds how quickly the value catches
++        // up with a composition that ended without firing compositionend.
++        flushTimeoutId = setTimeout(flush, 50);
 +        return;
 +      }
 +    }
      if (!hasPendingDiffs() && !hasPendingAction()) {
        applyPendingSelection();
        return;
-@@ -246,6 +280,26 @@ function createAndroidInputManager(_ref) {
+@@ -246,6 +282,26 @@ function createAndroidInputManager(_ref) {
      if (compositionEndTimeoutId) {
        clearTimeout(compositionEndTimeoutId);
      }
@@ -77,7 +79,7 @@ index 69f81ce..4a73b14 100644
      compositionEndTimeoutId = setTimeout(() => {
        IS_COMPOSING.set(editor, false);
        flush();
-@@ -253,6 +307,7 @@ function createAndroidInputManager(_ref) {
+@@ -253,6 +309,7 @@ function createAndroidInputManager(_ref) {
    };
    var handleCompositionStart = _event => {
      IS_COMPOSING.set(editor, true);
@@ -85,7 +87,7 @@ index 69f81ce..4a73b14 100644
      if (compositionEndTimeoutId) {
        clearTimeout(compositionEndTimeoutId);
        compositionEndTimeoutId = null;
-@@ -330,6 +385,9 @@ function createAndroidInputManager(_ref) {
+@@ -330,6 +387,9 @@ function createAndroidInputManager(_ref) {
      var {
        inputType: type
      } = event;
@@ -95,29 +97,7 @@ index 69f81ce..4a73b14 100644
      var targetRange = null;
      var data = event.dataTransfer || event.data || undefined;
      if (insertPositionHint !== false && type !== 'insertText' && type !== 'insertCompositionText') {
-@@ -640,13 +698,14 @@ function createAndroidInputManager(_ref) {
-                   path: _start.path,
-                   offset: _start.offset + _text.length
-                 };
--                scheduleAction(() => {
--                  Transforms.select(editor, {
--                    anchor: newPoint,
--                    focus: newPoint
--                  });
--                }, {
--                  at: newPoint
-+                // [cinny patch 1/6] Defer the caret update to the next flush
-+                // instead of scheduling an action: scheduleAction forces a
-+                // flush on the next task, which re-renders mid-composition and
-+                // cancels IME composition on the first character of an empty
-+                // leaf (slate PR #5901 introduced this, see slate issue #5883).
-+                EDITOR_TO_PENDING_SELECTION.set(editor, {
-+                  anchor: newPoint,
-+                  focus: newPoint
-                 });
-               }
-               return;
-@@ -862,6 +921,7 @@ var TextString = props => {
+@@ -862,6 +922,7 @@ var TextString = props => {
      text,
      isTrailing = false
    } = props;
@@ -125,7 +105,7 @@ index 69f81ce..4a73b14 100644
    var ref = useRef(null);
    var getTextContent = () => {
      return "".concat(text !== null && text !== void 0 ? text : '').concat(isTrailing ? '\n' : '');
-@@ -879,6 +939,21 @@ var TextString = props => {
+@@ -879,6 +940,21 @@ var TextString = props => {
      // null coalescing text to make sure we're not outputing "null" as a string in the extreme case it is nullish at runtime
      var textWithTrailing = getTextContent();
      if (ref.current && ref.current.textContent !== textWithTrailing) {
@@ -147,7 +127,7 @@ index 69f81ce..4a73b14 100644
        ref.current.textContent = textWithTrailing;
      }
      // intentionally not specifying dependencies, so that this effect runs on every render
-@@ -2391,12 +2466,44 @@ var createRestoreDomManager = (editor, receivedUserInput) => {
+@@ -2391,12 +2467,44 @@ var createRestoreDomManager = (editor, receivedUserInput) => {
    };
    function restoreDOM() {
      if (bufferedMutations.length > 0) {
