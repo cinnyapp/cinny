@@ -66,7 +66,7 @@ export const useUIAFlow = (authData: AuthResponse, uiaFlow: UIAFlow): UIAFlowInt
     const nextStage = stages.find((stage) => !completed.includes(stage));
     if (!nextStage) return undefined;
 
-    const info = params[nextStage];
+    const info = params[nextStage] as Record<string, unknown>;
 
     return {
       type: nextStage,
@@ -86,7 +86,7 @@ export const useUIAFlow = (authData: AuthResponse, uiaFlow: UIAFlow): UIAFlowInt
     (stageType: string): StageInfo | undefined => {
       if (!hasStage(stageType)) return undefined;
 
-      return params[stageType];
+      return params[stageType] as Record<string, unknown>;
     },
     [hasStage, params]
   );

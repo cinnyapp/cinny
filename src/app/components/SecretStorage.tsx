@@ -1,11 +1,11 @@
 import React, { FormEventHandler, useCallback } from 'react';
 import { Box, Text, Button, Spinner, color } from 'folds';
-import { decodeRecoveryKey } from 'matrix-js-sdk/lib/crypto-api';
 import {
   AesHmacSha2,
   AesHmacSha2KeyDescription,
   Passphrase,
   PassphraseInfo,
+  RecoveryKey,
 } from 'neurone/lib/crypto/ssss';
 import { PasswordInput } from './password-input';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
@@ -129,7 +129,7 @@ export function SecretStorageRecoveryKey({
   >(
     useCallback(
       async (recoveryKey) => {
-        const decodedRecoveryKey = decodeRecoveryKey(recoveryKey);
+        const decodedRecoveryKey = RecoveryKey.decode(recoveryKey);
 
         const { mac: regeneratedMac } = await AesHmacSha2.driveKeyMetaData(
           decodedRecoveryKey,

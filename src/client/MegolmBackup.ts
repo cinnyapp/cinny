@@ -51,6 +51,8 @@ export class MegolmBackup implements Disposable {
 
   public readonly backupInProgress: ObservableValue<boolean>;
 
+  private cachedDecryptionKey?: string;
+
   constructor(
     private readonly machine: Machine,
     private readonly request: MatrixRequest,
@@ -93,10 +95,23 @@ export class MegolmBackup implements Disposable {
 
     const versionChanged = prevBackup && prevBackup.version !== backupInfo.version;
     if (versionChanged && this.keyBackup.read) {
-      this.machine.backupManager.disableBackup();
+      await this.machine.backupManager.disableBackup();
+      this.keyBackup.publish(this.publishKey, undefined);
+      await this.start(backupInfo);
+      return;
     }
 
-    this.start(backupInfo);
+    if (this.keyBackup.read) return;
+    await this.start(backupInfo);
+  }
+
+  /**
+   * cache the decryption key when you are expecting a BackupVersionInfo update.
+   *
+   * @param secret backup private key
+   */
+  public async cacheDecryptionKey(secret: string): Promise<void> {
+    this.cachedDecryptionKey = secret;
   }
 
   public async saveDecryptionKey(secret: string): Promise<void> {
@@ -126,6 +141,14 @@ export class MegolmBackup implements Disposable {
     this.keyBackup.publish(this.publishKey, keyBackup);
 
     this.backup(keyBackup);
+
+    if (this.cachedDecryptionKey) {
+      this.machine.backupManager.saveDecryptionKey(
+        Base64.decode(this.cachedDecryptionKey),
+        backupInfo
+      );
+      this.cachedDecryptionKey = undefined;
+    }
 
     return keyBackup;
   }

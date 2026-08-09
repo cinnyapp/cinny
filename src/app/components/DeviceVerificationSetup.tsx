@@ -1,4 +1,11 @@
-import React, { FormEventHandler, forwardRef, useCallback, useState } from 'react';
+import React, {
+  FormEventHandler,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Dialog,
   Header,
@@ -12,154 +19,236 @@ import {
   Chip,
   color,
   Spinner,
+  ProgressBar,
 } from 'folds';
 import FileSaver from 'file-saver';
-import to from 'await-to-js';
-import { AuthDict, IAuthData, MatrixError, UIAuthCallback } from 'matrix-js-sdk';
+import { BackupManager } from 'neurone/lib/crypto/machine/backup';
+import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
+import {
+  AesHmacSha2,
+  AesHmacSha2KeyDescription,
+  DefaultKey,
+  KeyStorage,
+  Passphrase,
+  RecoveryKey,
+  Secret,
+  SECRET_STORAGE_ALGORITHM_V1_AES_HMAC_SHA2,
+} from 'neurone/lib/crypto/ssss';
+import {
+  MatrixRequestRetrier,
+  MatrixUIAData,
+  MatrixUIAHandler,
+  randomString,
+  sleep,
+} from 'neurone/lib/utils';
+import { postVersion, PostVersionBody } from 'neurone/lib/api/matrix/client/v3/roomKeys';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { postDeviceSigningUpload } from 'neurone/lib/api/matrix/client/v3/keys';
 import { PasswordInput } from './password-input';
 import { ContainerColor } from '../styles/ContainerColor.css';
 import { copyToClipboard } from '../utils/dom';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
-import { clearSecretStorageKeys } from '../../client/secretStorageKeys';
 import { ActionUIA, ActionUIAFlowsLoader } from './ActionUIA';
-import { useMatrixClient } from '../hooks/useMatrixClient';
-import { useAlive } from '../hooks/useAlive';
 import { UseStateProvider } from './UseStateProvider';
+import { useClient } from '../hooks/useClient';
+import { getMxIdLocalPart, getMxIdServer } from '../utils/matrix';
+import { AccountDataType } from '../../types/matrix/accountData';
+import { useAlive } from '../hooks/useAlive';
 
-type UIACallback<T> = (
-  authDict: AuthDict | null
-) => Promise<[IAuthData, undefined] | [undefined, T]>;
-
-type PerformAction<T> = (authDict: AuthDict | null) => Promise<T>;
-
-type UIAAction<T> = {
-  authData: IAuthData;
-  callback: UIACallback<T>;
-  cancelCallback: () => void;
+type SetupProgressChecklist = {
+  bootstrapCrossSinging?: boolean;
+  putMasterAccountData?: boolean;
+  putSelfAccountData?: boolean;
+  putUserAcountData?: boolean;
+  verfiyOwnDevice?: boolean;
+  postBackupVersion?: boolean;
+  putBackupAccountData?: boolean;
+  putRecoveryKeyAccountData?: boolean;
+  putDefaultKeyAccountData?: boolean;
 };
-
-function makeUIAAction<T>(
-  authData: IAuthData,
-  performAction: PerformAction<T>,
-  resolve: (data: T) => void,
-  reject: (error?: any) => void
-): UIAAction<T> {
-  const action: UIAAction<T> = {
-    authData,
-    callback: async (authDict) => {
-      const [error, data] = await to<T, MatrixError | Error>(performAction(authDict));
-
-      if (error instanceof MatrixError && error.httpStatus === 401) {
-        return [error.data as IAuthData, undefined];
-      }
-
-      if (error) {
-        reject(error);
-        throw error;
-      }
-
-      resolve(data);
-      return [undefined, data];
-    },
-    cancelCallback: reject,
-  };
-
-  return action;
-}
 
 type SetupVerificationProps = {
   onComplete: (recoveryKey: string) => void;
 };
 function SetupVerification({ onComplete }: SetupVerificationProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const uia = useMemo(() => new MatrixUIAHandler(), []);
+  const [uiaData, setUIAData] = useState<MatrixUIAData>();
+  const [setupProgress, setSetupProgress] = useState<SetupProgressChecklist>();
   const alive = useAlive();
 
-  const [uiaAction, setUIAAction] = useState<UIAAction<void>>();
-  const [nextAuthData, setNextAuthData] = useState<IAuthData | null>(); // null means no next action.
+  useEffect(() => uia.onUIA.subscribe(setUIAData), [uia]);
 
   const handleAction = useCallback(
-    async (authDict: AuthDict) => {
-      if (!uiaAction) {
-        throw new Error('Unexpected Error! UIA action is perform without data.');
-      }
-      if (alive()) {
-        setNextAuthData(null);
-      }
-      const [authData] = await uiaAction.callback(authDict);
-
-      if (alive() && authData) {
-        setNextAuthData(authData);
-      }
+    (authDict: object) => {
+      setUIAData(undefined);
+      uia.retry(authDict);
     },
-    [uiaAction, alive]
+    [uia]
   );
 
-  const resetUIA = useCallback(() => {
-    if (!alive()) return;
-    setUIAAction(undefined);
-    setNextAuthData(undefined);
-  }, [alive]);
-
-  const authUploadDeviceSigningKeys: UIAuthCallback<void> = useCallback(
-    (makeRequest) =>
-      new Promise<void>((resolve, reject) => {
-        makeRequest(null)
-          .then(() => {
-            resolve();
-            resetUIA();
-          })
-          .catch((error) => {
-            if (error instanceof MatrixError && error.httpStatus === 401) {
-              const authData = error.data as IAuthData;
-              const action = makeUIAAction(
-                authData,
-                makeRequest as PerformAction<void>,
-                resolve,
-                (err) => {
-                  resetUIA();
-                  reject(err);
-                }
-              );
-              if (alive()) {
-                setUIAAction(action);
-              } else {
-                reject(new Error('Authentication failed! Failed to setup device verification.'));
-              }
-              return;
-            }
-            reject(error);
-          });
-      }),
-    [alive, resetUIA]
-  );
+  const handleCancel = useCallback(() => {
+    setUIAData(undefined);
+    uia.clear();
+  }, [uia]);
 
   const [setupState, setup] = useAsyncCallback<void, Error, [string | undefined]>(
     useCallback(
       async (passphrase) => {
-        const crypto = mx.getCrypto();
-        if (!crypto) throw new Error('Unexpected Error! Crypto module not found!');
+        setSetupProgress({});
+        const retrier = new MatrixRequestRetrier(sleep);
 
-        const recoveryKeyData = await crypto.createRecoveryKeyFromPassphrase(passphrase);
-        if (!recoveryKeyData.encodedPrivateKey) {
-          throw new Error('Unexpected Error! Failed to create recovery key.');
+        const defaultKeyId = randomString(16);
+
+        const passData = passphrase ? await Passphrase.create(passphrase) : undefined;
+        const recoveryKey = passData?.key ?? AesHmacSha2.generateRawKey();
+
+        const uploadDeviceSigningKeys = async (bodyStr: string) => {
+          const body = JSON.parse(bodyStr);
+          const resp = await retrier.execute(() =>
+            uia.execute((authData) =>
+              ct.requestAuthJSON(postDeviceSigningUpload({ body: { ...body, auth: authData } }))
+            )
+          );
+          const [err] = await parseMatrixResp(resp);
+          if (err) throw new Error(err.data.error ?? err.data.errcode);
+        };
+
+        await ct.machine.crossSigning.bootstrapCrossSigning(uploadDeviceSigningKeys);
+        const crossSigning = await ct.machine.crossSigning.exportKeys();
+        if (!crossSigning || !crossSigning.master || !crossSigning.self || !crossSigning.user) {
+          throw new Error('Failed to reset cross signing. No cross signing keys available.');
         }
-        clearSecretStorageKeys();
+        if (alive()) setSetupProgress((v) => ({ ...v, bootstrapCrossSinging: true }));
 
-        await crypto.bootstrapSecretStorage({
-          createSecretStorageKey: async () => recoveryKeyData,
-          setupNewSecretStorage: true,
-        });
+        const masterEnc = await AesHmacSha2.encrypt(
+          recoveryKey,
+          AccountDataType.CrossSigningMaster,
+          crossSigning.master
+        );
+        const selfEnc = await AesHmacSha2.encrypt(
+          recoveryKey,
+          AccountDataType.CrossSigningSelf,
+          crossSigning.self
+        );
+        const userEnc = await AesHmacSha2.encrypt(
+          recoveryKey,
+          AccountDataType.CrossSigningUser,
+          crossSigning.user
+        );
 
-        await crypto.bootstrapCrossSigning({
-          authUploadDeviceSigningKeys,
-          setupNewCrossSigning: true,
-        });
+        const { userId } = ct.session;
+        const masterSecret: Secret = { encrypted: { [defaultKeyId]: masterEnc } };
+        const selfSecret: Secret = { encrypted: { [defaultKeyId]: selfEnc } };
+        const userSecret: Secret = { encrypted: { [defaultKeyId]: userEnc } };
+        await retrier.execute(() =>
+          ct.requestAuthJSON(
+            putAccountData({
+              pathParams: { userId, type: AccountDataType.CrossSigningMaster },
+              body: masterSecret,
+            })
+          )
+        );
+        if (alive()) setSetupProgress((v) => ({ ...v, putMasterAccountData: true }));
+        await retrier.execute(() =>
+          ct.requestAuthJSON(
+            putAccountData({
+              pathParams: { userId, type: AccountDataType.CrossSigningSelf },
+              body: selfSecret,
+            })
+          )
+        );
+        if (alive()) setSetupProgress((v) => ({ ...v, putSelfAccountData: true }));
+        await retrier.execute(() =>
+          ct.requestAuthJSON(
+            putAccountData({
+              pathParams: { userId, type: AccountDataType.CrossSigningUser },
+              body: userSecret,
+            })
+          )
+        );
+        if (alive()) setSetupProgress((v) => ({ ...v, putUserAcountData: true }));
 
-        await crypto.resetKeyBackup();
+        const device = await ct.machine.userTracker.getDevice(
+          ct.session.userId,
+          ct.session.deviceId
+        );
+        if (device && !device.crossSigningTrusted) {
+          const resp = await device.verify();
+          const [err] = await parseMatrixResp(resp);
+          if (err) {
+            throw new Error(err.data.error ?? 'Failed to verify. Signature upload request failed.');
+          }
+          await ct.machine.outgoingRequests.queryKeys([ct.session.userId]);
+        }
+        if (alive()) setSetupProgress((v) => ({ ...v, verfiyOwnDevice: true }));
 
-        onComplete(recoveryKeyData.encodedPrivateKey);
+        const backupKey = BackupManager.createBackupKey();
+        await ct.megolmBackup.cacheDecryptionKey(backupKey.privateKey);
+
+        const backupEnc = await AesHmacSha2.encrypt(
+          recoveryKey,
+          AccountDataType.MegolmBackupV1,
+          backupKey.privateKey
+        );
+
+        const backupAuthData = {
+          public_key: backupKey.publicKey,
+        };
+        await ct.machine.sign(backupAuthData);
+
+        const backupVersion: PostVersionBody = {
+          algorithm: backupKey.algorithm,
+          auth_data: backupAuthData,
+        };
+        await retrier.execute(() => ct.requestAuthJSON(postVersion({ body: backupVersion })));
+        if (alive()) setSetupProgress((v) => ({ ...v, postBackupVersion: true }));
+
+        const backupSecret: Secret = { encrypted: { [defaultKeyId]: backupEnc } };
+
+        await retrier.execute(() =>
+          ct.requestAuthJSON(
+            putAccountData({
+              pathParams: { userId, type: AccountDataType.MegolmBackupV1 },
+              body: backupSecret,
+            })
+          )
+        );
+        if (alive()) setSetupProgress((v) => ({ ...v, putBackupAccountData: true }));
+
+        const { iv, mac } = await AesHmacSha2.driveKeyMetaData(recoveryKey);
+
+        const keyDescription: AesHmacSha2KeyDescription = {
+          algorithm: SECRET_STORAGE_ALGORITHM_V1_AES_HMAC_SHA2,
+          passphrase: passData?.passphrase,
+          iv,
+          mac,
+        };
+        await retrier.execute(() =>
+          ct.requestAuthJSON(
+            putAccountData({
+              pathParams: { userId, type: KeyStorage.keyIdentifier(defaultKeyId) },
+              body: keyDescription,
+            })
+          )
+        );
+        if (alive()) setSetupProgress((v) => ({ ...v, putRecoveryKeyAccountData: true }));
+        const defaultKey: DefaultKey = {
+          key: defaultKeyId,
+        };
+        await retrier.execute(() =>
+          ct.requestAuthJSON(
+            putAccountData({
+              pathParams: { userId, type: KeyStorage.defaultKeyIdentifier() },
+              body: defaultKey,
+            })
+          )
+        );
+        if (alive()) setSetupProgress((v) => ({ ...v, putDefaultKeyAccountData: true }));
+
+        onComplete(RecoveryKey.encode(recoveryKey));
       },
-      [mx, onComplete, authUploadDeviceSigningKeys]
+      [ct, uia, onComplete, alive]
     )
   );
 
@@ -179,43 +268,79 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
     setup(passphrase);
   };
 
+  const setupSteps: {
+    key: keyof SetupProgressChecklist;
+    label: string;
+  }[] = useMemo(
+    () => [
+      { key: 'bootstrapCrossSinging', label: 'Setting up cross-signing' },
+      { key: 'putMasterAccountData', label: 'Securing your master signing key' },
+      { key: 'putSelfAccountData', label: 'Securing your self signing key' },
+      { key: 'putUserAcountData', label: 'Securing your user signing key' },
+      { key: 'verfiyOwnDevice', label: 'Verifying this device' },
+      { key: 'postBackupVersion', label: 'Creating your secure backup' },
+      { key: 'putBackupAccountData', label: 'Securing your backup key' },
+      { key: 'putRecoveryKeyAccountData', label: 'Saving your recovery key information' },
+      { key: 'putDefaultKeyAccountData', label: 'Setting up your recovery key' },
+    ],
+    []
+  );
+
+  const completedSteps = setupSteps.filter(({ key }) => setupProgress?.[key] === true).length;
+
   return (
     <Box as="form" onSubmit={handleSubmit} direction="Column" gap="400">
-      <Text size="T300">
-        Generate a <b>Recovery Key</b> for verifying identity if you do not have access to other
-        devices. Additionally, setup a passphrase as a memorable alternative.
-      </Text>
-      <Box direction="Column" gap="100">
-        <Text size="L400">Passphrase (Optional)</Text>
-        <PasswordInput name="passphraseInput" size="400" readOnly={loading} />
-      </Box>
-      <Button
-        type="submit"
-        disabled={loading}
-        before={loading && <Spinner size="200" variant="Primary" fill="Solid" />}
-      >
-        <Text size="B400">Continue</Text>
-      </Button>
+      {setupProgress ? (
+        <Box direction="Column" gap="400">
+          <Text size="L400">Setup progress</Text>
+          <Box style={{ paddingLeft: config.space.S200 }} direction="Column" gap="100">
+            {setupSteps.map(({ key, label }) => (
+              <Text size="T200" key={key}>
+                {setupProgress[key] ? '✅' : '⏳'} {label}
+              </Text>
+            ))}
+          </Box>
+          <ProgressBar variant="Secondary" size="300" min={0} value={completedSteps} />
+        </Box>
+      ) : (
+        <>
+          <Text size="T300">
+            Generate a <b>Recovery Key</b> for verifying identity if you do not have access to other
+            devices. Additionally, setup a passphrase as a memorable alternative.
+          </Text>
+          <Box direction="Column" gap="100">
+            <Text size="L400">Passphrase (Optional)</Text>
+            <PasswordInput name="passphraseInput" size="400" readOnly={loading} />
+          </Box>
+          <Button
+            type="submit"
+            disabled={loading}
+            before={loading && <Spinner size="200" variant="Primary" fill="Solid" />}
+          >
+            <Text size="B400">Continue</Text>
+          </Button>
+        </>
+      )}
       {setupState.status === AsyncStatus.Error && (
         <Text size="T200" style={{ color: color.Critical.Main }}>
           <b>{setupState.error ? setupState.error.message : 'Unexpected Error!'}</b>
         </Text>
       )}
-      {nextAuthData !== null && uiaAction && (
+      {uiaData && (
         <ActionUIAFlowsLoader
-          authData={nextAuthData ?? uiaAction.authData}
+          authData={uiaData}
           unsupported={() => (
-            <Text size="T200">
+            <Text size="T200" style={{ color: color.Critical.Main }}>
               Authentication steps to perform this action are not supported by client.
             </Text>
           )}
         >
           {(ongoingFlow) => (
             <ActionUIA
-              authData={nextAuthData ?? uiaAction.authData}
+              authData={uiaData}
               ongoingFlow={ongoingFlow}
               action={handleAction}
-              onCancel={uiaAction.cancelCallback}
+              onCancel={handleCancel}
             />
           )}
         </ActionUIAFlowsLoader>
@@ -228,6 +353,7 @@ type RecoveryKeyDisplayProps = {
   recoveryKey: string;
 };
 function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
+  const ct = useClient();
   const [show, setShow] = useState(false);
 
   const handleCopy = () => {
@@ -235,10 +361,13 @@ function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
   };
 
   const handleDownload = () => {
+    const username = getMxIdLocalPart(ct.session.userId);
+    const servername = getMxIdServer(ct.session.userId);
+
     const blob = new Blob([recoveryKey], {
       type: 'text/plain;charset=us-ascii',
     });
-    FileSaver.saveAs(blob, 'recovery-key.txt');
+    FileSaver.saveAs(blob, `Recovery Key - ${username} (${servername}).txt`);
   };
 
   const safeToDisplayKey = show ? recoveryKey : recoveryKey.replace(/[^\s]/g, '*');
@@ -270,11 +399,11 @@ function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
         </Box>
       </Box>
       <Box direction="Column" gap="200">
-        <Button onClick={handleCopy}>
-          <Text size="B400">Copy</Text>
-        </Button>
-        <Button onClick={handleDownload} fill="Soft">
+        <Button onClick={handleDownload}>
           <Text size="B400">Download</Text>
+        </Button>
+        <Button onClick={handleCopy} fill="Soft">
+          <Text size="B400">Copy</Text>
         </Button>
       </Box>
     </Box>

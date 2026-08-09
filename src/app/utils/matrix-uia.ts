@@ -8,17 +8,20 @@ export enum AuthType {
   SsoUnstable = 'org.matrix.login.sso',
   Dummy = 'm.login.dummy',
   RegistrationToken = 'm.login.registration_token',
+  OAuth = 'm.oauth',
 }
 
 export type UIAFlow = {
   stages: Array<string>;
 };
 
+export type UIAParams = Record<string, unknown>;
+
 export type AuthResponse = {
   session?: string;
   completed?: string[];
   flows?: UIAFlow[];
-  params?: Record<string, Record<string, any>>;
+  params?: UIAParams;
 };
 
 export const getSupportedUIAFlows = (uiaFlows: UIAFlow[], supportedStages: string[]): UIAFlow[] => {
@@ -34,7 +37,6 @@ export const getUIACompleted = (authData: AuthResponse): string[] => {
   return completed;
 };
 
-export type UIAParams = Record<string, Record<string, unknown>>;
 export const getUIAParams = (authData: AuthResponse): UIAParams => {
   const params = authData.params ?? {};
   return params;
@@ -89,7 +91,12 @@ export const requiredStageInFlows = (uiaFlows: UIAFlow[], stage: string) =>
 
 export const getLoginTermUrl = (params: UIAParams): string | undefined => {
   const terms = params[AuthType.Terms];
-  if (terms && 'policies' in terms && typeof terms.policies === 'object') {
+  if (
+    typeof terms === 'object' &&
+    terms &&
+    'policies' in terms &&
+    typeof terms.policies === 'object'
+  ) {
     if (terms.policies === null) return undefined;
     if ('privacy_policy' in terms.policies && typeof terms.policies.privacy_policy === 'object') {
       if (terms.policies.privacy_policy === null) return undefined;

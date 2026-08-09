@@ -31,9 +31,6 @@ import {
   DeviceVerificationSetup,
 } from '../../../components/DeviceVerificationSetup';
 import { stopPropagation } from '../../../utils/keyboard';
-import { useAuthMetadata } from '../../../hooks/useAuthMetadata';
-import { withSearchParam } from '../../../pages/pathUtils';
-import { useAccountManagementActions } from '../../../hooks/useAccountManagement';
 import { useClient } from '../../../hooks/useClient';
 
 type VerificationStatusBadgeProps = {
@@ -222,46 +219,15 @@ export function VerifyOtherDeviceTile({ deviceId }: VerifyOtherDeviceTileProps) 
   );
 }
 
-export function EnableVerification() {
-  const [open, setOpen] = useState(false);
-
-  const handleCancel = useCallback(() => setOpen(false), []);
-
-  return (
-    <>
-      <Button size="300" radii="300" onClick={() => setOpen(true)}>
-        <Text as="span" size="B300">
-          Enable
-        </Text>
-      </Button>
-      {open && (
-        <Overlay open backdrop={<OverlayBackdrop />}>
-          <OverlayCenter>
-            <FocusTrap
-              focusTrapOptions={{
-                initialFocus: false,
-                clickOutsideDeactivates: false,
-                escapeDeactivates: false,
-              }}
-            >
-              <DeviceVerificationSetup onCancel={handleCancel} />
-            </FocusTrap>
-          </OverlayCenter>
-        </Overlay>
-      )}
-    </>
-  );
-}
-
-export function DeviceVerificationOptions() {
+export function DeviceVerificationOptions({ enabled }: { enabled: boolean }) {
   const [menuCords, setMenuCords] = useState<RectCords>();
-  const authMetadata = useAuthMetadata();
-  const accountManagementActions = useAccountManagementActions();
 
   const [reset, setReset] = useState(false);
+  const [setup, setSetup] = useState(false);
 
-  const handleCancelReset = useCallback(() => {
+  const handleCancel = useCallback(() => {
     setReset(false);
+    setSetup(false);
   }, []);
 
   const handleMenu: MouseEventHandler<HTMLButtonElement> = (event) => {
@@ -270,32 +236,31 @@ export function DeviceVerificationOptions() {
 
   const handleReset = () => {
     setMenuCords(undefined);
-
-    if (authMetadata) {
-      const authUrl = authMetadata.account_management_uri ?? authMetadata.issuer;
-      window.open(
-        withSearchParam(authUrl, {
-          action: accountManagementActions.crossSigningReset,
-        }),
-        '_blank'
-      );
-      return;
-    }
-
     setReset(true);
+  };
+  const handleEnable = () => {
+    setSetup(true);
   };
 
   return (
     <>
-      <IconButton
-        aria-pressed={!!menuCords}
-        variant="SurfaceVariant"
-        size="300"
-        radii="300"
-        onClick={handleMenu}
-      >
-        <Icon size="100" src={Icons.VerticalDots} />
-      </IconButton>
+      {enabled ? (
+        <IconButton
+          aria-pressed={!!menuCords}
+          variant="SurfaceVariant"
+          size="300"
+          radii="300"
+          onClick={handleMenu}
+        >
+          <Icon size="100" src={Icons.VerticalDots} />
+        </IconButton>
+      ) : (
+        <Button size="300" radii="300" onClick={handleEnable}>
+          <Text as="span" size="B300">
+            Enable
+          </Text>
+        </Button>
+      )}
       <PopOut
         anchor={menuCords}
         offset={5}
@@ -332,6 +297,21 @@ export function DeviceVerificationOptions() {
           </FocusTrap>
         }
       />
+      {setup && (
+        <Overlay open backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                clickOutsideDeactivates: false,
+                escapeDeactivates: false,
+              }}
+            >
+              <DeviceVerificationSetup onCancel={handleCancel} />
+            </FocusTrap>
+          </OverlayCenter>
+        </Overlay>
+      )}
       {reset && (
         <Overlay open backdrop={<OverlayBackdrop />}>
           <OverlayCenter>
@@ -342,7 +322,7 @@ export function DeviceVerificationOptions() {
                 escapeDeactivates: false,
               }}
             >
-              <DeviceVerificationReset onCancel={handleCancelReset} />
+              <DeviceVerificationReset onCancel={handleCancel} />
             </FocusTrap>
           </OverlayCenter>
         </Overlay>

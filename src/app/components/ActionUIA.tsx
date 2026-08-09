@@ -2,10 +2,10 @@ import React, { ReactNode } from 'react';
 import { AuthResponse, AuthType, UIAFlow } from '../utils/matrix-uia';
 import { useSupportedUIAFlows, useUIACompleted, useUIAFlow } from '../hooks/useUIAFlows';
 import { UIAFlowOverlay } from './UIAFlowOverlay';
-import { PasswordStage, SSOStage } from './uia-stages';
+import { OAuthStage, PasswordStage, SSOStage } from './uia-stages';
 import { useClient } from '../hooks/useClient';
 
-export const SUPPORTED_IN_APP_UIA_STAGES = [AuthType.Password, AuthType.Sso];
+export const SUPPORTED_IN_APP_UIA_STAGES = [AuthType.Password, AuthType.Sso, AuthType.OAuth];
 
 type ActionUIAProps = {
   authData: AuthResponse;
@@ -49,6 +49,9 @@ export function ActionUIA({ authData, ongoingFlow, action, onCancel }: ActionUIA
           onCancel={onCancel}
           submitAuthDict={action}
         />
+      )}
+      {stageToComplete.type === AuthType.OAuth && (
+        <OAuthStage stageData={stageToComplete} onCancel={onCancel} submitAuthDict={action} />
       )}
     </UIAFlowOverlay>
   );

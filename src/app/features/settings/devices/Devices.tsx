@@ -9,7 +9,6 @@ import { LocalBackup } from './LocalBackup';
 import { DeviceLogoutBtn, DeviceKeyDetails, DeviceTile, DeviceTilePlaceholder } from './DeviceTile';
 import {
   DeviceVerificationOptions,
-  EnableVerification,
   VerificationStatusBadge,
   VerifyCurrentDeviceTile,
 } from './Verification';
@@ -93,17 +92,15 @@ export function Devices({ requestClose }: DevicesProps) {
                     title="Device Verification"
                     description="To verify device identity and grant access to encrypted messages."
                     after={
-                      crossSigning ? (
-                        <Box gap="200" alignItems="Center">
+                      <Box gap="200" alignItems="Center">
+                        {crossSigning && (
                           <VerificationStatusBadge
                             verificationStatus={verificationStatus}
                             otherUnverifiedCount={unverifiedDeviceCount}
                           />
-                          <DeviceVerificationOptions />
-                        </Box>
-                      ) : (
-                        <EnableVerification />
-                      )
+                        )}
+                        <DeviceVerificationOptions enabled={!!crossSigning} />
+                      </Box>
                     }
                   />
                 </SequenceCard>
