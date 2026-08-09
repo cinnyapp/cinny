@@ -1,17 +1,18 @@
 diff --git a/node_modules/slate-react/dist/index.es.js b/node_modules/slate-react/dist/index.es.js
-index 69f81ce..bbac815 100644
+index 69f81ce..c4f1584 100644
 --- a/node_modules/slate-react/dist/index.es.js
 +++ b/node_modules/slate-react/dist/index.es.js
-@@ -118,6 +118,21 @@ function createAndroidInputManager(_ref) {
+@@ -118,6 +118,22 @@ function createAndroidInputManager(_ref) {
    var compositionEndTimeoutId = null;
    var flushTimeoutId = null;
    var actionTimeoutId = null;
 +  var __lastCompositionActivity = 0;
++  var __compositionCleared = false;
 +  // [cinny patch 6/6] compositionend is not fired reliably in every browser.
 +  // A composition that has gone quiet, or that has lost focus, is treated as
 +  // stale so that deferred diffs still reach the value.
 +  var __isCompositionLive = () => {
-+    if (!IS_COMPOSING.get(editor)) return false;
++    if (!IS_COMPOSING.get(editor) || __compositionCleared) return false;
 +    try {
 +      var __editable = ReactEditor.toDOMNode(editor, editor);
 +      var __active = ReactEditor.getWindow(editor).document.activeElement;
@@ -24,7 +25,7 @@ index 69f81ce..bbac815 100644
    var idCounter = 0;
    var insertPositionHint = false;
    var applyPendingSelection = () => {
-@@ -160,6 +175,27 @@ function createAndroidInputManager(_ref) {
+@@ -160,6 +176,27 @@ function createAndroidInputManager(_ref) {
        clearTimeout(actionTimeoutId);
        actionTimeoutId = null;
      }
@@ -52,7 +53,7 @@ index 69f81ce..bbac815 100644
      if (!hasPendingDiffs() && !hasPendingAction()) {
        applyPendingSelection();
        return;
-@@ -246,6 +282,26 @@ function createAndroidInputManager(_ref) {
+@@ -246,13 +283,44 @@ function createAndroidInputManager(_ref) {
      if (compositionEndTimeoutId) {
        clearTimeout(compositionEndTimeoutId);
      }
@@ -74,30 +75,59 @@ index 69f81ce..bbac815 100644
 +        IS_COMPOSING.set(editor, false);
 +        flush();
 +      });
++      updatePlaceholderVisibility();
 +      return;
 +    }
      compositionEndTimeoutId = setTimeout(() => {
        IS_COMPOSING.set(editor, false);
        flush();
-@@ -253,6 +309,7 @@ function createAndroidInputManager(_ref) {
++      if (typeof __compositionCleared !== 'undefined' && __compositionCleared) {
++        // A cancelled composition can take the empty leaf's text node with it.
++        // A forced render lets RestoreDOM put the leaf's DOM back, so the next
++        // composition starts from a clean state instead of a bare <br>.
++        var __forceRender = EDITOR_TO_FORCE_RENDER.get(editor);
++        if (__forceRender) __forceRender();
++      }
++      updatePlaceholderVisibility();
+     }, RESOLVE_DELAY);
    };
    var handleCompositionStart = _event => {
      IS_COMPOSING.set(editor, true);
 +    __lastCompositionActivity = Date.now();
++    __compositionCleared = false;
      if (compositionEndTimeoutId) {
        clearTimeout(compositionEndTimeoutId);
        compositionEndTimeoutId = null;
-@@ -330,6 +387,9 @@ function createAndroidInputManager(_ref) {
+@@ -330,6 +398,28 @@ function createAndroidInputManager(_ref) {
      var {
        inputType: type
      } = event;
 +    if (type === 'insertCompositionText' || type === 'deleteCompositionText') {
 +      __lastCompositionActivity = Date.now();
++      if (event.data) {
++        __compositionCleared = false;
++      } else {
++        __compositionCleared = true;
++        var __deferredDiffs = EDITOR_TO_PENDING_DIFFS.get(editor);
++        if (__deferredDiffs && __deferredDiffs.length) {
++          var __allEmptyLeaves = __deferredDiffs.every(__d => {
++            try {
++              return Node.leaf(editor, __d.path).text.length === 0;
++            } catch (__e) {
++              return false;
++            }
++          });
++          if (__allEmptyLeaves) {
++            EDITOR_TO_PENDING_DIFFS.set(editor, []);
++            EDITOR_TO_PENDING_SELECTION.delete(editor);
++          }
++        }
++      }
 +    }
      var targetRange = null;
      var data = event.dataTransfer || event.data || undefined;
      if (insertPositionHint !== false && type !== 'insertText' && type !== 'insertCompositionText') {
-@@ -862,6 +922,7 @@ var TextString = props => {
+@@ -862,6 +952,7 @@ var TextString = props => {
      text,
      isTrailing = false
    } = props;
@@ -105,7 +135,7 @@ index 69f81ce..bbac815 100644
    var ref = useRef(null);
    var getTextContent = () => {
      return "".concat(text !== null && text !== void 0 ? text : '').concat(isTrailing ? '\n' : '');
-@@ -879,6 +940,21 @@ var TextString = props => {
+@@ -879,6 +970,21 @@ var TextString = props => {
      // null coalescing text to make sure we're not outputing "null" as a string in the extreme case it is nullish at runtime
      var textWithTrailing = getTextContent();
      if (ref.current && ref.current.textContent !== textWithTrailing) {
@@ -127,48 +157,12 @@ index 69f81ce..bbac815 100644
        ref.current.textContent = textWithTrailing;
      }
      // intentionally not specifying dependencies, so that this effect runs on every render
-@@ -2391,12 +2467,44 @@ var createRestoreDomManager = (editor, receivedUserInput) => {
-   };
-   function restoreDOM() {
-     if (bufferedMutations.length > 0) {
-+      // [cinny patch 4/6] While the IME is composing, undoing childList mutations around
-+      // the composition point cancels the composition. This happens when the
-+      // first character is typed into an empty leaf: the browser replaces the
-+      // leaf's <br> with a new text node, and restoring that turns e.g. Hangul
-+      // input into separated jamo. characterData mutations are already skipped
-+      // below for the same reason.
-+      var composingNode = null;
-+      if (IS_COMPOSING.get(editor)) {
-+        try {
-+          var domSelection = ReactEditor.getWindow(editor).getSelection();
-+          composingNode = domSelection ? domSelection.anchorNode : null;
-+        } catch (e) {
-+          composingNode = null;
-+        }
-+      }
-+      var touchesComposition = mutation => {
-+        if (!composingNode) return false;
-+        var target = mutation.target;
-+        if (target === composingNode || target.contains && target.contains(composingNode)) {
-+          return true;
-+        }
-+        for (var i = 0; i < mutation.addedNodes.length; i++) {
-+          var added = mutation.addedNodes[i];
-+          if (added === composingNode || added.contains && added.contains(composingNode)) {
-+            return true;
-+          }
-+        }
-+        return false;
-+      };
-       bufferedMutations.reverse().forEach(mutation => {
-         if (mutation.type === 'characterData') {
-           // We don't want to restore the DOM for characterData mutations
-           // because this interrupts the composition.
-           return;
-         }
-+        if (touchesComposition(mutation)) {
-+          return;
-+        }
-         mutation.removedNodes.forEach(node => {
-           mutation.target.insertBefore(node, mutation.nextSibling);
-         });
+@@ -920,7 +1026,7 @@ var ZeroWidthString = props => {
+   // be because accepting an IME suggestion when at the start of a block (no
+   // preceding \uFEFF) removes one or more DOM elements that `toSlateRange`
+   // depends on. (https://github.com/ianstormtaylor/slate/issues/5703)
+-  return /*#__PURE__*/React.createElement("span", _objectSpread$6({}, attributes), !IS_ANDROID || !isLineBreak ? '\uFEFF' : null, isLineBreak ? /*#__PURE__*/React.createElement("br", null) : null);
++  return /*#__PURE__*/React.createElement("span", _objectSpread$6({}, attributes), '\uFEFF', isLineBreak ? /*#__PURE__*/React.createElement("br", null) : null);
+ };
+ 
+ function ownKeys$5(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
