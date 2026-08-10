@@ -329,6 +329,7 @@ function SetupVerification({ onComplete }: SetupVerificationProps) {
       {uiaData && (
         <ActionUIAFlowsLoader
           authData={uiaData}
+          onCancel={handleCancel}
           unsupported={() => (
             <Text size="T200" style={{ color: color.Critical.Main }}>
               Authentication steps to perform this action are not supported by client.

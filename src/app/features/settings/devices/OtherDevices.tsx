@@ -219,6 +219,7 @@ export function OtherDevices({ devices, refreshDeviceList, showVerification }: O
               {authData && (
                 <ActionUIAFlowsLoader
                   authData={authData}
+                  onCancel={handleCancelAuth}
                   unsupported={() => (
                     <Text size="T200">
                       Authentication steps to perform this action are not supported by client.
