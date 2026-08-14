@@ -135,7 +135,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const sendTypingStatus = useTypingStatusUpdater(roomId);
 
-    const [hideStickerBtn, setHideStickerBtn] = useState(document.body.clientWidth < 500);
+    const [hideStickerBtn, setHideStickerBtn] = useState(
+      threadId || document.body.clientWidth < 500
+    );
 
     const isComposing = useComposingCheck();
 
@@ -145,7 +147,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     useElementSizeObserver(
       useCallback(() => fileDropContainerRef.current, [fileDropContainerRef]),
-      useCallback((width) => setHideStickerBtn(width < 500), [])
+      useCallback((width) => setHideStickerBtn(threadId || width < 500), [threadId])
     );
 
     useEffect(

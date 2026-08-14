@@ -172,6 +172,7 @@ export const writeJoinRoomLatestEvent = async (
     const { events } = joinRoom.timeline ?? {};
     if (!events) return;
 
+    // TODO: filter events that are supported by timeline.
     for (let i = events.length - 1; i >= 0; i -= 1) {
       const event = events[i];
       if (!('state_key' in event)) {

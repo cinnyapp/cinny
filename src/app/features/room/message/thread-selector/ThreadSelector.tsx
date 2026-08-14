@@ -1,15 +1,20 @@
-import { Box, Icon, Icons, Line, Text } from 'folds';
-import React, { ReactNode } from 'react';
+import React from 'react';
+import { Box, config, Icon, Icons, Line, Text } from 'folds';
 import classNames from 'classnames';
 import * as css from './styles.css';
 import { Time } from '../../../../components/message';
 import { ThreadTimeline } from '../../../../../client/room/ThreadTimeline';
 import { useObservableValue } from '../../../../hooks/useObservableValue';
-import { GetRoomMemberNameCallback } from '../../../../hooks/useRoomMembers';
-
-export function ThreadSelectorContainer({ children }: { children: ReactNode }) {
-  return <Box className={css.ThreadSelectorContainer}>{children}</Box>;
-}
+import {
+  GetRoomMemberAvatarCallback,
+  GetRoomMemberNameCallback,
+} from '../../../../hooks/useRoomMembers';
+import { useThreadParticipants } from '../../../../hooks/useThreadParticipant';
+import { StackedAvatar } from '../../../../components/stacked-avatar';
+import { UserAvatar } from '../../../../components/user-avatar';
+import { useMediaAuthentication } from '../../../../hooks/useMediaAuthentication';
+import { mxcToHttp } from '../../../../../client/mxcToHttp';
+import { useClient } from '../../../../hooks/useClient';
 
 type ThreadSelectorProps = {
   thread: ThreadTimeline;
@@ -17,6 +22,7 @@ type ThreadSelectorProps = {
   hour24Clock: boolean;
   dateFormatString: string;
   getMemberName: GetRoomMemberNameCallback;
+  getMemberAvatar: GetRoomMemberAvatarCallback;
   onClick?: (threadId: string) => void;
 };
 
@@ -26,10 +32,23 @@ export function ThreadSelector({
   hour24Clock,
   dateFormatString,
   getMemberName,
+  getMemberAvatar,
   onClick,
 }: ThreadSelectorProps) {
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
+
   const meta = useObservableValue(thread.meta);
-  const latestEvent = meta?.latestEvent;
+  const latestReplyEvent = meta?.latestReplyEvent;
+  const participants = useThreadParticipants(thread);
+
+  if (!meta || !latestReplyEvent) {
+    return null;
+  }
+
+  const max = 5;
+  const visibleMembers = participants.slice(0, max);
+  const remainingCount = max && participants.length > max ? participants.length - max : 0;
 
   return (
     <Box
@@ -40,35 +59,63 @@ export function ThreadSelector({
       gap="300"
       onClick={() => onClick?.(thread.threadId)}
     >
-      <Box className={css.ThreadRepliesCount} shrink="No" alignItems="Center" gap="200">
-        <Icon size="100" src={Icons.Thread} filled />
+      {visibleMembers.length > 0 && (
+        <Box shrink="No" alignItems="Center">
+          {visibleMembers.map((userId) => {
+            const name = getMemberName(userId);
+            const avatarMxc = getMemberAvatar(userId);
+
+            return (
+              <StackedAvatar
+                key={userId}
+                title={name}
+                variant="SurfaceVariant"
+                size="200"
+                radii="Pill"
+              >
+                <UserAvatar
+                  userId={userId}
+                  src={
+                    avatarMxc
+                      ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).thumbnail({
+                          width: 48,
+                          height: 48,
+                          method: 'crop',
+                        })
+                      : undefined
+                  }
+                  alt={name}
+                  renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                />
+              </StackedAvatar>
+            );
+          })}
+          {remainingCount > 0 && (
+            <Text size="L400" style={{ paddingLeft: config.space.S100 }}>
+              +{remainingCount}
+            </Text>
+          )}
+        </Box>
+      )}
+      <Box shrink="No" alignItems="Center" gap="200">
         <Text size="L400">
-          {meta?.count ?? `+${thread.liveMessages.read.size || 1}`}{' '}
-          {meta?.count === 1 ? 'Reply' : 'Replies'}
+          {meta.replyCount} {meta.replyCount === 1 ? 'Reply' : 'Replies'}
         </Text>
       </Box>
-      {latestEvent && (
-        <>
-          <Line
-            className={css.ThreadSelectorDivider}
-            direction="Vertical"
-            variant="SurfaceVariant"
+      <Line className={css.ThreadSelectorDivider} direction="Vertical" variant="SurfaceVariant" />
+      <Box gap="200" alignItems="Inherit">
+        <Text size="T200" truncate>
+          <span>Last reply by </span>
+          <b>{getMemberName(latestReplyEvent.sender)}</b>
+          <span> at </span>
+          <Time
+            hour24Clock={hour24Clock}
+            dateFormatString={dateFormatString}
+            ts={latestReplyEvent.origin_server_ts}
           />
-          <Box gap="200" alignItems="Inherit">
-            <Text size="T200" truncate>
-              <span>Last reply by </span>
-              <b>{getMemberName(latestEvent.sender)}</b>
-              <span> — </span>
-              <Time
-                hour24Clock={hour24Clock}
-                dateFormatString={dateFormatString}
-                ts={latestEvent.origin_server_ts}
-              />
-            </Text>
-            <Icon size="100" src={Icons.ChevronRight} />
-          </Box>
-        </>
-      )}
+        </Text>
+        <Icon size="100" src={Icons.ChevronRight} />
+      </Box>
     </Box>
   );
 }

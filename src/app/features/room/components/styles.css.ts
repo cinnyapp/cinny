@@ -1,5 +1,17 @@
+import { style } from '@vanilla-extract/css';
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes';
-import { DefaultReset, config } from 'folds';
+import { DefaultReset, color, config } from 'folds';
+
+export const TimelineDivider = style({
+  position: 'relative',
+});
+export const TimelineDividerCenterChild = style({
+  position: 'absolute',
+  left: '50%',
+  transform: 'translateX(-50%)',
+
+  backgroundColor: color.Surface.Container,
+});
 
 export const TimelineFloat = recipe({
   base: [

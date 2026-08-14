@@ -1,44 +1,72 @@
-import React from 'react';
-import { as, Badge, Box, color, ContainerColor, Line, Text } from 'folds';
-import { MessageBase } from '../../../components/message';
-import { timeDayMonthYear, today, yesterday } from '../../../utils/time';
+import React, { ReactNode } from 'react';
+import { as, Badge, Box, ContainerColor, Line, Text } from 'folds';
+import classNames from 'classnames';
+import { DividerTime, MessageBase } from '../../../components/message';
 import { MessageSpacing } from '../../../state/settings';
+import * as css from './styles.css';
 
-export const TimelineDivider = as<'div', { variant?: ContainerColor | 'Inherit' }>(
-  ({ variant, children, ...props }, ref) => (
-    <Box gap="100" justifyContent="Center" alignItems="Center" {...props} ref={ref}>
-      <Line style={{ flexGrow: 1 }} variant={variant} size="300" />
-      {children}
-      <Line style={{ flexGrow: 1 }} variant={variant} size="300" />
-    </Box>
-  )
-);
+export const TimelineDivider = as<
+  'div',
+  { variant?: ContainerColor | 'Inherit'; before?: ReactNode; after?: ReactNode }
+>(({ className, variant, before, after, children, ...props }, ref) => (
+  <Box
+    className={classNames(css.TimelineDivider, className)}
+    gap="100"
+    justifyContent="Center"
+    alignItems="Center"
+    {...props}
+    ref={ref}
+  >
+    {before}
+    <Line style={{ flexGrow: 1 }} variant={variant} size="300" />
+    <Box className={css.TimelineDividerCenterChild}>{children}</Box>
+    {after}
+  </Box>
+));
 
-export function DayDivider({ messageSpacing, ts }: { messageSpacing: MessageSpacing; ts: number }) {
+type ComboDividerProps = {
+  messageSpacing: MessageSpacing;
+  ts?: number;
+  replyCount?: number;
+  unread?: boolean;
+};
+export function ComboDivider({ messageSpacing, ts, replyCount, unread }: ComboDividerProps) {
   return (
     <MessageBase space={messageSpacing}>
-      <TimelineDivider variant="Surface">
-        <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
-          <Text size="L400">
-            {(() => {
-              if (today(ts)) return 'Today';
-              if (yesterday(ts)) return 'Yesterday';
-              return timeDayMonthYear(ts);
-            })()}
-          </Text>
-        </Badge>
-      </TimelineDivider>
-    </MessageBase>
-  );
-}
-
-export function NewMessageDivider({ messageSpacing }: { messageSpacing: MessageSpacing }) {
-  return (
-    <MessageBase space={messageSpacing}>
-      <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
-        <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
-          <Text size="L400">New Messages</Text>
-        </Badge>
+      <TimelineDivider
+        variant={unread ? 'Success' : 'Surface'}
+        before={
+          replyCount &&
+          replyCount > 0 && (
+            <Badge
+              style={{ paddingLeft: 0 }}
+              as="span"
+              size="500"
+              variant="Secondary"
+              fill="None"
+              radii="0"
+            >
+              <Text size="L400">
+                {replyCount === 1 ? `${replyCount} Reply` : `${replyCount} Replies`}
+              </Text>
+            </Badge>
+          )
+        }
+        after={
+          unread && (
+            <Badge as="span" size="500" variant="Success" fill="Solid" radii="Pill">
+              <Text size="L400">New</Text>
+            </Badge>
+          )
+        }
+      >
+        {typeof ts === 'number' && (
+          <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
+            <Text size="L400">
+              <DividerTime ts={ts} />
+            </Text>
+          </Badge>
+        )}
       </TimelineDivider>
     </MessageBase>
   );

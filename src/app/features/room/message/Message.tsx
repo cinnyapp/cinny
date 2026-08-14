@@ -842,10 +842,8 @@ export type MessageProps = {
   membersAPI: RoomMembersAPI;
   onUserClick: MouseEventHandler<HTMLButtonElement>;
   onUsernameClick: MouseEventHandler<HTMLButtonElement>;
-  onReplyClick: (
-    ev: Parameters<MouseEventHandler<HTMLButtonElement>>[0],
-    startThread?: boolean
-  ) => void;
+  onReplyClick: MouseEventHandler<HTMLButtonElement>;
+  onThreadClick?: MouseEventHandler<HTMLButtonElement>;
   onEditId?: (eventId?: string) => void;
   onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
   reply?: ReactNode;
@@ -878,6 +876,7 @@ export const Message = as<'div', MessageProps>(
       onUserClick,
       onUsernameClick,
       onReplyClick,
+      onThreadClick,
       onReactionToggle,
       onEditId,
       reply,
@@ -963,6 +962,8 @@ export const Message = as<'div', MessageProps>(
       }, 100);
     };
 
+    // hide margin-top space between message and reply
+    const hasReply = !!getReplyId(event.content) && !fallbackReply(event.content);
     return (
       <MessageBase
         className={classNames(css.MessageBase, className, {
@@ -970,7 +971,7 @@ export const Message = as<'div', MessageProps>(
         })}
         tabIndex={0}
         space={messageSpacing}
-        collapse={collapse || (!!getReplyId(event.content) && !fallbackReply(event.content))}
+        collapse={collapse || hasReply}
         highlight={highlight}
         selected={!!selected || !!menuAnchor || !!emojiBoardAnchor}
         {...props}
@@ -1029,7 +1030,7 @@ export const Message = as<'div', MessageProps>(
                 </IconButton>
                 {!getThreadId(event) && (
                   <IconButton
-                    onClick={(ev) => onReplyClick(ev, true)}
+                    onClick={onThreadClick}
                     data-event-id={event.event_id}
                     variant="SurfaceVariant"
                     size="300"
@@ -1123,7 +1124,7 @@ export const Message = as<'div', MessageProps>(
                               radii="300"
                               data-event-id={event.event_id}
                               onClick={(evt: any) => {
-                                onReplyClick(evt, true);
+                                onThreadClick?.(evt);
                                 closeMenu();
                               }}
                             >
@@ -1432,7 +1433,7 @@ export function ThreadEvents({
               onClick={() => onClick?.()}
               style={{ flexShrink: 0 }}
               radii="Pill"
-              variant="Primary"
+              variant="Secondary"
               fill="None"
             >
               <Text as="span" size="L400">

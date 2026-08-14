@@ -13,6 +13,7 @@ import {
 import { useAtom } from 'jotai';
 import { Editor } from 'slate';
 import { ReactEditor } from 'slate-react';
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { scrollToBottom } from '../../../utils/dom';
 import { MessageBatch } from '../../../../client/room/messages';
 import { getResizeObserverEntry, useResizeObserver } from '../../../hooks/useResizeObserver';
@@ -33,6 +34,8 @@ import { useSpaceOptionally } from '../../../hooks/useSpace';
 import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
 import { useClient } from '../../../hooks/useClient';
 import { createMentionElement, moveCursor } from '../../../components/editor';
+import { inSameDay, minuteDifference } from '../../../utils/time';
+import { fallbackReply, getReplyId } from '../../../utils/room';
 
 const TimelineViewContext = createContext<TimelineView | null>(null);
 export const TimelineViewProvider = TimelineViewContext.Provider;
@@ -281,4 +284,86 @@ export const useUsernameClickHandler = (editor: Editor) => {
   );
 
   return handleUsernameClick;
+};
+
+export const useEventDivider = (readUptoEventId?: string) => {
+  let prevEvent: MessageEventWithoutRoomId | undefined;
+
+  let dayDivider = false;
+  let newDivider = false;
+
+  const getDayDivider = (event: MessageEventWithoutRoomId) => {
+    if (!dayDivider) {
+      dayDivider = prevEvent
+        ? !inSameDay(prevEvent.origin_server_ts, event.origin_server_ts)
+        : false;
+    }
+
+    return dayDivider;
+  };
+
+  const getNewDivider = () => {
+    if (!newDivider && readUptoEventId) {
+      newDivider = prevEvent?.event_id === readUptoEventId;
+    }
+
+    return newDivider;
+  };
+
+  const getThreadRootDivider = (rootEvent: MessageEventWithoutRoomId) =>
+    prevEvent?.event_id === rootEvent.event_id;
+
+  const updateDivider = (event: MessageEventWithoutRoomId) => {
+    prevEvent = event;
+  };
+
+  const clearDayDivider = () => {
+    dayDivider = false;
+  };
+
+  const clearNewDivider = () => {
+    newDivider = false;
+  };
+
+  return {
+    getDayDivider,
+    getNewDivider,
+    getThreadRootDivider,
+    updateDivider,
+    clearDayDivider,
+    clearNewDivider,
+  };
+};
+
+export const useEventCollapse = () => {
+  const ct = useClient();
+  let prevEvent: MessageEventWithoutRoomId | undefined;
+  let isPrevRendered = false;
+
+  const getCollapsed = (
+    event: MessageEventWithoutRoomId,
+    newDivider: boolean,
+    dayDivider: boolean
+  ) => {
+    const replyEventId = fallbackReply(event.content) ? undefined : getReplyId(event.content);
+
+    const collapsed =
+      isPrevRendered &&
+      !dayDivider &&
+      (!newDivider || event.sender === ct.session.userId) &&
+      prevEvent !== undefined &&
+      prevEvent.sender === event.sender &&
+      prevEvent.type === event.type &&
+      minuteDifference(prevEvent.origin_server_ts, event.origin_server_ts) < 2 &&
+      !replyEventId;
+
+    return collapsed;
+  };
+
+  const updateCollapse = (prevEvt: MessageEventWithoutRoomId, rendered: boolean) => {
+    prevEvent = prevEvt;
+    isPrevRendered = rendered;
+  };
+
+  return { getCollapsed, updateCollapse };
 };

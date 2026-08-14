@@ -43,6 +43,8 @@ export class ThreadTimeline implements TimelineView, Disposable {
 
   public readonly onSync: Observable<ThreadSyncData>;
 
+  public readonly meta: ObservableValue<ThreadMeta | undefined>;
+
   public readonly relations: RelationsProcessor;
 
   public readonly batch: ObservableValue<MessageBatch>;
@@ -52,10 +54,6 @@ export class ThreadTimeline implements TimelineView, Disposable {
   public readonly range: MessageRange;
 
   public readonly outbox = new LocalEventOutbox();
-
-  public meta: ObservableValue<ThreadMeta | undefined>;
-
-  public rootEvent: ObservableValue<MessageEventWithoutRoomId | undefined>;
 
   private utils: TimelineUtils;
 
@@ -75,7 +73,7 @@ export class ThreadTimeline implements TimelineView, Disposable {
     this.threadId = threadId;
     this.request = request;
     // NOTE: we don't have dedicated set of relations,
-    //  because we do not want to recurse relations to put them in thread.
+    // because we do not want to recurse relations to put them in thread.
     this.relations = relations;
 
     this.batch = new ObservableValue(MessageBatch.emptyAtForwardEnd(), this.publishKey);
@@ -83,7 +81,6 @@ export class ThreadTimeline implements TimelineView, Disposable {
     this.range = new MessageRange(this.batch);
 
     this.meta = new ObservableValue(undefined, this.publishKey);
-    this.rootEvent = new ObservableValue(undefined, this.publishKey);
     this.onSync = new Observable(publishKey);
     this.utils = new TimelineUtils(roomId, request);
 
@@ -96,40 +93,60 @@ export class ThreadTimeline implements TimelineView, Disposable {
     );
 
     if (rootEvent) {
-      this.processRootEvent(rootEvent);
+      this.processTheadMeta(rootEvent);
     } else {
-      this.fetchRootEvent();
+      this.refreshThreadMeta();
     }
   }
 
-  private processRootEvent(event: MessageEventWithoutRoomId): void {
-    const relations = rUnsigned.relations(event.unsigned);
+  private processTheadMeta(rootEvent: MessageEventWithoutRoomId): void {
+    const relations = rUnsigned.relations(rootEvent.unsigned);
     const threadRelation = rRelations.thread(relations);
-    const latestEvent = rThread.latestEvent(threadRelation);
-    const count = rThread.count(threadRelation) ?? 0;
+    const latestReply = rThread.latestEvent(threadRelation) as
+      | MessageEventWithoutRoomId
+      | undefined;
+    const replyCount = rThread.count(threadRelation) ?? 0;
     const currentUserParticipated = rThread.currentUserParticipated(threadRelation) ?? false;
 
-    if (latestEvent) {
-      this.meta.publish(
-        this.publishKey,
-        new ThreadMeta(latestEvent as MessageEventWithoutRoomId, count, currentUserParticipated)
-      );
+    this.meta.publish(
+      this.publishKey,
+      new ThreadMeta(rootEvent, latestReply, replyCount, currentUserParticipated)
+    );
+
+    if (!latestReply) {
+      this.batchManager.markTimelineStart();
     }
-    this.rootEvent.publish(this.publishKey, event);
   }
 
-  private async fetchRootEvent(): Promise<void> {
-    const resp = await this.request(
-      getEvent({
-        pathParams: { roomId: this.roomId, eventId: this.threadId },
-      })
-    );
-    const [err, event] = await parseMatrixResp<GetEventOK>(resp);
-    if (err) {
-      console.error(printMatrixError(err));
-      return;
+  private async refreshThreadMeta(): Promise<void> {
+    try {
+      const resp = await this.request(
+        getEvent({ pathParams: { roomId: this.roomId, eventId: this.threadId } })
+      );
+      const [err, event] = await parseMatrixResp<GetEventOK>(resp);
+      if (err) {
+        console.error(printMatrixError(err));
+        return;
+      }
+      this.processTheadMeta(event);
+    } catch (err) {
+      console.error(err);
     }
-    this.processRootEvent(event);
+  }
+
+  private syncThreadMeta(events: MessageEventWithoutRoomId[]) {
+    const meta = this.meta.read;
+    const latestEvent = events.at(-1);
+    if (!meta || !latestEvent) return;
+
+    // TODO: need session userId to find current user participation;
+    const newMeta = new ThreadMeta(
+      meta.rootEvent,
+      latestEvent,
+      meta.replyCount + events.length,
+      meta.currentUserParticipated
+    );
+    this.meta.publish(this.publishKey, newMeta);
   }
 
   private onSyncListener(data: ThreadSyncData): void {
@@ -137,6 +154,11 @@ export class ThreadTimeline implements TimelineView, Disposable {
 
     // NOTE: relations are already picked & filtered in main timeline.
     this.batchManager.handleSync(events, limited, prevToken);
+    if (limited) {
+      this.refreshThreadMeta();
+    } else {
+      this.syncThreadMeta(events);
+    }
 
     const eventsWithRemoteEcho = this.outbox.getSentEventIds().filter((e) => this.findEvent(e));
     this.outbox.removeByEventIds(eventsWithRemoteEcho);

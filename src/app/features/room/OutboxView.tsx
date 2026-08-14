@@ -39,7 +39,7 @@ import { RenderMessageContent } from '../../components/RenderMessageContent';
 import { InfoCard } from '../../components/info-card';
 import { LocalEventOutbox } from '../../../client/room/local-event/LocalEventOutbox';
 import { MessageBatch } from '../../../client/room/messages';
-import { DayDivider } from './components';
+import { ComboDivider } from './components';
 import { GetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 
 function MessageSendingError({
@@ -141,7 +141,6 @@ function MessageSending({
   const ct = useClient();
   const { userId } = ct.session;
   const senderState = useObservableValue(sender.state);
-  const { original } = sender.localEvent;
 
   const senderDisplayName = membersAPI.getName(userId);
   const senderAvatarMxc = membersAPI.getAvatar(userId);
@@ -153,7 +152,7 @@ function MessageSending({
       })}
       tabIndex={0}
       space={messageSpacing}
-      collapse={collapse || (!!getReplyId(original.content) && !fallbackReply(original.content))}
+      collapse={collapse}
     >
       <RenderMessageLayout
         avatar={
@@ -270,15 +269,18 @@ export function OutboxView({
     <>
       {senders.map((sender) => {
         const dayDivider = prevMsg ? !inSameDay(prevMsg.ts, sender.localEvent.ts) : false;
+        const replyEventId = fallbackReply(sender.localEvent.original.content)
+          ? undefined
+          : getReplyId(sender.localEvent.original.content);
 
         const collapse =
           !!prevMsg &&
           !dayDivider &&
           prevMsg.original.type === sender.localEvent.original.type &&
-          minuteDifference(prevMsg.ts, sender.localEvent.ts) < 2;
-        prevMsg = sender.localEvent;
+          minuteDifference(prevMsg.ts, sender.localEvent.ts) < 2 &&
+          !replyEventId;
 
-        const replyEventId = getReplyId(sender.localEvent.original.content);
+        prevMsg = sender.localEvent;
 
         const replyJSX = replyEventId && (
           <Reply
@@ -303,7 +305,9 @@ export function OutboxView({
 
         return (
           <Fragment key={sender.localEvent.txnId}>
-            {dayDivider && <DayDivider ts={sender.localEvent.ts} messageSpacing={messageSpacing} />}
+            {dayDivider && (
+              <ComboDivider ts={sender.localEvent.ts} messageSpacing={messageSpacing} />
+            )}
             {replyJSX}
             <MessageSending
               key={sender.localEvent.txnId}

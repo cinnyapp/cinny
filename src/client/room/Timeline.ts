@@ -20,8 +20,7 @@ import { TimelineBatchManager } from './TimelineBatchManager';
 import { RelationsProcessor } from './relations';
 import { ThreadTimeline } from './ThreadTimeline';
 import { getMessagesFilter } from '../filter';
-import { rContent, rRelatesTo, rRelations, rUnsigned } from '../reader';
-import { RelationType } from '../../types/matrix/common';
+import { rRelations, rUnsigned } from '../reader';
 import { getThreadId } from '../../app/utils/room';
 import { TimelineUtils } from './TimelineUtils';
 import { EventSenderIdle, LocalEvent, LocalEventSender, LocalMessage } from './local-event';
@@ -115,11 +114,7 @@ export class Timeline implements TimelineView, Disposable {
     const threadIdToEvents = new Map<string, MessageEventWithoutRoomId[]>();
 
     messageEvents.forEach((event) => {
-      const relatesTo = rContent.relatesTo(event.content);
-      const threadId =
-        rRelatesTo.relType(relatesTo) === RelationType.Thread
-          ? rRelatesTo.eventId(relatesTo)
-          : undefined;
+      const threadId = getThreadId(event);
 
       if (threadId) {
         const threadEvents = threadIdToEvents.get(threadId) ?? [];
@@ -134,6 +129,7 @@ export class Timeline implements TimelineView, Disposable {
         new ThreadTimeline(this.roomId, threadId, this.publishKey, this.request, this.relations);
 
       thread.onSync.publish(this.publishKey, { events, limited, prevToken });
+      thread.paginateBackward(20);
 
       if (!this.threads.read.has(threadId)) {
         this.addThread(thread);
@@ -175,6 +171,7 @@ export class Timeline implements TimelineView, Disposable {
         this.relations,
         event
       );
+      thread.paginateBackward(20);
       this.addThread(thread);
     });
   }
@@ -292,6 +289,8 @@ export class Timeline implements TimelineView, Disposable {
 
     const { end: prevToken, start: endToken, chunk } = result;
     const messageEvents: MessageEventWithoutRoomId[] = this.relations.pickAndFilter(chunk);
+
+    this.pickThreads(messageEvents);
     this.batchManager.loadEvents(messageEvents, prevToken, endToken);
   }
 
@@ -336,6 +335,20 @@ export class Timeline implements TimelineView, Disposable {
   }
 
   public openThread(threadId: string): void {
+    const threadRoot = this.findEvent(threadId);
+    if (!this.threads.read.has(threadId) && threadRoot) {
+      this.addThread(
+        new ThreadTimeline(
+          this.roomId,
+          threadId,
+          this.publishKey,
+          this.request,
+          this.relations,
+          threadRoot
+        )
+      );
+    }
+
     this.activeThread.publish(this.publishKey, threadId);
   }
 

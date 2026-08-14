@@ -1,6 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
 import React, {
-  forwardRef,
   MouseEventHandler,
   RefObject,
   useCallback,
@@ -22,7 +21,6 @@ import { scrollToBottom } from '../../utils/dom';
 import {
   DefaultPlaceholder,
   CompactPlaceholder,
-  MessageBase,
   Reply,
   RedactedContent,
 } from '../../components/message';
@@ -38,7 +36,6 @@ import { useSetting } from '../../state/hooks/settings';
 import { MessageLayout, settingsAtom } from '../../state/settings';
 import { Reactions, Message, ThreadEvents } from './message';
 import { RoomIntro } from '../../components/room-intro';
-import { inSameDay, minuteDifference } from '../../utils/time';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { MessageEvent, StateEvent } from '../../../types/matrix/room';
 import { RenderMessageContent } from '../../components/RenderMessageContent';
@@ -65,6 +62,8 @@ import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
 import {
   useAtBottomToggle,
   useEditorResizeStickBottom,
+  useEventCollapse,
+  useEventDivider,
   useReplyClickHandler,
   useRestoreScrollToBottom,
   useTimelinePaginate,
@@ -75,27 +74,10 @@ import {
 } from './hooks/useTimeline';
 import { RoomViewTyping } from './RoomViewTyping';
 import { rContent } from '../../../client/reader';
-import { ThreadSelector, ThreadSelectorContainer } from './message/thread-selector';
-import { TimelineFloat, JumpToLatestButton, NewMessageDivider, DayDivider } from './components';
+import { ThreadSelector } from './message/thread-selector';
+import { TimelineFloat, JumpToLatestButton, ComboDivider, PlaceholderList } from './components';
 import { OutboxView } from './OutboxView';
 import { EncryptedMessageEvent } from '../../components/encrypted-event';
-
-type PlaceholderListProps = {
-  count: number;
-  Placeholder: React.ComponentType;
-};
-const PlaceholderList = forwardRef<HTMLDivElement, PlaceholderListProps>(
-  ({ count, Placeholder }, ref) => (
-    <div ref={ref}>
-      {Array.from({ length: count }).map((_, i) => (
-        // eslint-disable-next-line react/no-array-index-key
-        <MessageBase key={i}>
-          <Placeholder />
-        </MessageBase>
-      ))}
-    </div>
-  )
-);
 
 type RoomTimelineProps = {
   eventId?: string;
@@ -360,6 +342,17 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     timeline.openThread(threadId);
   };
 
+  const handleThreadClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (evt) => {
+      const targetId = evt.currentTarget.getAttribute('data-event-id');
+      if (!targetId) return;
+      console.log(targetId);
+
+      timeline.openThread(targetId);
+    },
+    [timeline]
+  );
+
   console.log('========> RoomTimeline');
   console.log(range, events.length);
 
@@ -433,6 +426,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         onUserClick={handleUserClick}
         onUsernameClick={handleUsernameClick}
         onReplyClick={handleReplyClick}
+        onThreadClick={handleThreadClick}
         onReactionToggle={handleReactionToggle}
         onEditId={handleEdit}
         redacted={redacted.has(event.event_id)}
@@ -487,25 +481,24 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
           ))}
         {reactionJSX}
         {threadTimeline && (
-          <ThreadSelectorContainer>
-            <ThreadSelector
-              thread={threadTimeline}
-              hour24Clock={hour24Clock}
-              dateFormatString={dateFormatString}
-              outlined={messageLayout === MessageLayout.Bubble}
-              getMemberName={membersAPI.getName}
-              onClick={handleOpenThread}
-            />
-          </ThreadSelectorContainer>
+          <ThreadSelector
+            thread={threadTimeline}
+            hour24Clock={hour24Clock}
+            dateFormatString={dateFormatString}
+            outlined={messageLayout === MessageLayout.Bubble}
+            getMemberName={membersAPI.getName}
+            getMemberAvatar={membersAPI.getAvatar}
+            onClick={handleOpenThread}
+          />
         )}
       </Message>
     );
   };
 
-  let prevEvent: MessageEventWithoutRoomId | undefined;
-  let isPrevRendered = false;
-  let newDivider = false;
-  let dayDivider = false;
+  const { getDayDivider, getNewDivider, updateDivider, clearDayDivider, clearNewDivider } =
+    useEventDivider(readUptoEventIdRef.current);
+  const { getCollapsed, updateCollapse } = useEventCollapse();
+
   const eventRenderer = (item: number) => {
     const event = events[item];
 
@@ -518,44 +511,33 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
       return null;
     }
 
-    if (!newDivider && readUptoEventIdRef.current) {
-      newDivider = prevEvent?.event_id === readUptoEventIdRef.current;
-    }
-    if (!dayDivider) {
-      dayDivider = prevEvent
-        ? !inSameDay(prevEvent.origin_server_ts, event.origin_server_ts)
-        : false;
-    }
+    const newDivider = getNewDivider() && event.sender !== ct.session.userId;
+    const dayDivider = getDayDivider(event);
 
-    const collapsed =
-      isPrevRendered &&
-      !dayDivider &&
-      (!newDivider || event.sender === ct.session.userId) &&
-      prevEvent !== undefined &&
-      prevEvent.sender === event.sender &&
-      prevEvent.type === event.type &&
-      minuteDifference(prevEvent.origin_server_ts, event.origin_server_ts) < 2 &&
-      !getThreadId(prevEvent) &&
-      !getReplyId(event.content);
+    const collapsed = getCollapsed(event, newDivider, dayDivider);
 
     const eventJSX = renderMatrixEvent(event, item, collapsed);
-    prevEvent = event;
-    isPrevRendered = !!eventJSX;
+    updateCollapse(event, !!eventJSX);
+    updateDivider(event);
 
-    const newDividerJSX =
-      newDivider && eventJSX && event.sender !== ct.session.userId ? (
-        <NewMessageDivider messageSpacing={messageSpacing} />
+    if (!eventJSX) return null;
+
+    const dividerJSX =
+      dayDivider || newDivider ? (
+        <ComboDivider
+          messageSpacing={messageSpacing}
+          ts={dayDivider ? event.origin_server_ts : undefined}
+          unread={newDivider}
+        />
       ) : null;
 
-    const dayDividerJSX =
-      dayDivider && eventJSX ? (
-        <DayDivider ts={event.origin_server_ts} messageSpacing={messageSpacing} />
-      ) : null;
+    if (newDivider && dividerJSX) clearNewDivider();
+    if (dayDivider && dividerJSX) clearDayDivider();
 
     const replyEventId = getReplyId(event.content);
 
     const replyJSX =
-      replyEventId && !getThreadId(event) ? (
+      !getThreadId(event) && replyEventId ? (
         <Reply
           roomId={roomId}
           eventId={replyEventId}
@@ -576,30 +558,13 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         />
       ) : null;
 
-    if (eventJSX && (newDividerJSX || dayDividerJSX)) {
-      if (newDividerJSX) newDivider = false;
-      if (dayDividerJSX) dayDivider = false;
-
-      return (
-        <React.Fragment key={event.event_id}>
-          {newDividerJSX}
-          {dayDividerJSX}
-          {replyJSX}
-          {eventJSX}
-        </React.Fragment>
-      );
-    }
-
-    if (replyJSX) {
-      return (
-        <React.Fragment key={event.event_id}>
-          {replyJSX}
-          {eventJSX}
-        </React.Fragment>
-      );
-    }
-
-    return eventJSX;
+    return (
+      <React.Fragment key={event.event_id}>
+        {dividerJSX}
+        {replyJSX}
+        {eventJSX}
+      </React.Fragment>
+    );
   };
 
   return (

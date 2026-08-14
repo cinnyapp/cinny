@@ -2,16 +2,14 @@ import { style } from '@vanilla-extract/css';
 import { color, config, FocusOutline, toRem } from 'folds';
 import { ContainerColor } from '../../../../styles/ContainerColor.css';
 
-export const ThreadSelectorContainer = style({
-  marginTop: config.space.S200,
-});
-
 export const ThreadSelector = style([
   ContainerColor({ variant: 'SurfaceVariant' }),
   {
     padding: config.space.S200,
     borderRadius: config.radii.R400,
     cursor: 'pointer',
+    marginTop: config.space.S200,
+    alignSelf: 'start',
 
     selectors: {
       '&:hover, &:focus-visible': {
@@ -31,8 +29,4 @@ export const ThreadSectorOutlined = style({
 
 export const ThreadSelectorDivider = style({
   height: toRem(16),
-});
-
-export const ThreadRepliesCount = style({
-  color: color.Primary.Main,
 });
