@@ -321,7 +321,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
 
   const handleUserClick = useUserClickHandler();
   const handleUsernameClick = useUsernameClickHandler(editor);
-  const [replyDraft, handleReplyClick] = useReplyClickHandler(timeline, editor);
+  const [replyDraft, handleReplyClick] = useReplyClickHandler(editor);
 
   const handleReactionToggle = useCallback((targetEventId: string) => {
     console.log(targetEventId);
@@ -421,6 +421,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         canDelete={canRedact || (canDeleteOwn && event.sender === ct.session.userId)}
         canSendReaction={canSendReaction}
         canPinEvent={canPinEvent}
+        canThread
         imagePackRooms={imagePackRooms}
         reactionEvents={reactionEvents && reactionEvents.length > 0 ? reactionEvents : undefined}
         onUserClick={handleUserClick}

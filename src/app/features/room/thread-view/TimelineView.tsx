@@ -302,11 +302,7 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
 
   const handleUserClick = useUserClickHandler();
   const handleUsernameClick = useUsernameClickHandler(editor);
-  const [replyDraft, handleReplyClick] = useReplyClickHandler(
-    threadTimeline,
-    editor,
-    threadTimeline.threadId
-  );
+  const [replyDraft, handleReplyClick] = useReplyClickHandler(editor, threadTimeline.threadId);
 
   const handleReactionToggle = useCallback((targetEventId: string) => {
     console.log(targetEventId);

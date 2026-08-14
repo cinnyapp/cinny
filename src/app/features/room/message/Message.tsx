@@ -52,13 +52,7 @@ import {
   Username,
   UsernameBold,
 } from '../../../components/message';
-import {
-  canEditEvent,
-  fallbackReply,
-  getReactionGroups,
-  getReplyId,
-  getThreadId,
-} from '../../../utils/room';
+import { canEditEvent, fallbackReply, getReactionGroups, getReplyId } from '../../../utils/room';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';
@@ -835,6 +829,7 @@ export type MessageProps = {
   canDelete?: boolean;
   canSendReaction?: boolean;
   canPinEvent?: boolean;
+  canThread?: boolean;
   imagePackRooms?: string[];
   reactionEvents?: MessageEventWithoutRoomId<ReactionContent>[];
   messageLayout: MessageLayout;
@@ -868,6 +863,7 @@ export const Message = as<'div', MessageProps>(
       canDelete,
       canSendReaction,
       canPinEvent,
+      canThread,
       imagePackRooms,
       reactionEvents,
       messageLayout,
@@ -1022,13 +1018,14 @@ export const Message = as<'div', MessageProps>(
                 <IconButton
                   onClick={onReplyClick}
                   data-event-id={event.event_id}
+                  data-sender-id={event.sender}
                   variant="SurfaceVariant"
                   size="300"
                   radii="300"
                 >
                   <Icon src={Icons.BlockQuote} size="100" />
                 </IconButton>
-                {!getThreadId(event) && (
+                {canThread && (
                   <IconButton
                     onClick={onThreadClick}
                     data-event-id={event.event_id}
@@ -1103,6 +1100,7 @@ export const Message = as<'div', MessageProps>(
                             after={<Icon size="100" src={Icons.BlockQuote} />}
                             radii="300"
                             data-event-id={event.event_id}
+                            data-sender-id={event.sender}
                             onClick={(evt: any) => {
                               onReplyClick(evt);
                               closeMenu();
@@ -1117,7 +1115,7 @@ export const Message = as<'div', MessageProps>(
                               Quote
                             </Text>
                           </MenuItem>
-                          {!getThreadId(event) && (
+                          {canThread && (
                             <MenuItem
                               size="300"
                               after={<Icon src={Icons.ThreadPlus} size="100" />}

@@ -201,7 +201,6 @@ export const useAtBottomToggle = (
 };
 
 export const useReplyClickHandler = (
-  timeline: TimelineView,
   editor: Editor,
   threadId?: string
 ): [ReplyDraft | undefined, MouseEventHandler<HTMLButtonElement>] => {
@@ -213,12 +212,11 @@ export const useReplyClickHandler = (
   const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
       const replyId = evt.currentTarget.getAttribute('data-event-id');
-      if (!replyId) {
-        console.warn('Button should have "data-event-id" attribute!');
+      const senderId = evt.currentTarget.getAttribute('data-sender-id');
+      if (!replyId || !senderId) {
+        console.warn('Button should have "data-event-id" or "data-sender-id" attribute!');
         return;
       }
-      const senderId = timeline.batch.read.messages.get(replyId)?.sender;
-      if (!senderId) return;
 
       if (senderId) {
         setReplyDraft({
@@ -228,7 +226,7 @@ export const useReplyClickHandler = (
         setTimeout(() => ReactEditor.focus(editor), 100);
       }
     },
-    [setReplyDraft, editor, timeline]
+    [setReplyDraft, editor]
   );
 
   return [replyDraft, handleReplyClick];
