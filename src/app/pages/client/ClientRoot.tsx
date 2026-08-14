@@ -82,7 +82,7 @@ export function ClientRoot({ children }: ClientRootProps) {
                 gap="200"
               >
                 <Text size="T200" align="Center">
-                  Initializing...
+                  Sparking...
                 </Text>
                 <ProgressBar
                   style={{ width: '100%' }}
