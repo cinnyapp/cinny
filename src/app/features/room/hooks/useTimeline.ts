@@ -35,7 +35,7 @@ import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
 import { useClient } from '../../../hooks/useClient';
 import { createMentionElement, moveCursor } from '../../../components/editor';
 import { inSameDay, minuteDifference } from '../../../utils/time';
-import { fallbackReply, getReplyId } from '../../../utils/room';
+import { fallbackReply, getReplyId, getThreadId } from '../../../utils/room';
 
 const TimelineViewContext = createContext<TimelineView | null>(null);
 export const TimelineViewProvider = TimelineViewContext.Provider;
@@ -333,7 +333,7 @@ export const useEventDivider = (readUptoTs?: number) => {
   };
 };
 
-export const useEventCollapse = () => {
+export const useEventCollapse = (threadId?: string) => {
   const ct = useClient();
   let prevEvent: MessageEventWithoutRoomId | undefined;
   let isPrevRendered = false;
@@ -352,6 +352,7 @@ export const useEventCollapse = () => {
       prevEvent !== undefined &&
       prevEvent.sender === event.sender &&
       prevEvent.type === event.type &&
+      (threadId ? prevEvent.event_id !== threadId : !getThreadId(prevEvent)) &&
       minuteDifference(prevEvent.origin_server_ts, event.origin_server_ts) < 2 &&
       !replyEventId;
 

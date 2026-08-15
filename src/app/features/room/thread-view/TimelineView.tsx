@@ -404,7 +404,7 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
     clearDayDivider,
     clearNewDivider,
   } = useEventDivider(readReceipt?.ts);
-  const { getCollapsed, updateCollapse } = useEventCollapse();
+  const { getCollapsed, updateCollapse } = useEventCollapse(threadTimeline.threadId);
   const eventRenderer = (event: MessageEventWithoutRoomId, item: number) => {
     if (event.sender && ignoredUsersSet.has(event.sender)) {
       return null;
@@ -418,7 +418,7 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
     const dayDivider = getDayDivider(event);
     const replyCount =
       threadMeta && getThreadRootDivider(threadMeta.rootEvent) ? threadMeta.replyCount : undefined;
-    const collapsed = getCollapsed(event, false, dayDivider);
+    const collapsed = getCollapsed(event, newDivider, dayDivider);
 
     const eventJSX = renderMatrixEvent(event, item, collapsed);
     updateCollapse(event, !!eventJSX);
