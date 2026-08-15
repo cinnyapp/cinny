@@ -103,6 +103,8 @@ import { roomToNotificationsAtom } from '../../../state/room/roomToNotifications
 import { mxcToHttp } from '../../../../client/mxcToHttp';
 import { useRoomHeroes } from '../../../hooks/storage/useRoomHeros';
 import { GetRoomAvatarCallback, useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
+import { useRoomsUnread } from '../../../state/hooks/unread';
+import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 
 type SpaceMenuProps = {
   spaceId: string;
@@ -419,6 +421,8 @@ function SpaceTab({
   );
   const roomsNotifications = useRoomsNotifications(childRooms, roomToNotificationsAtom);
   const notifications = useRoomsTotalNotifications(roomsNotifications);
+  const unreadRooms = useRoomsUnread(childRooms, unreadRoomsAtom);
+  const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
 
   const spaceName = getName(spaceId) ?? spaceId;
   const avatarMxc = getAvatar(spaceId);
@@ -487,7 +491,7 @@ function SpaceTab({
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
-      {notifications.count > 0 && (
+      {unreadOrNotification && (
         <SidebarItemBadge hasCount={notifications.count > 0}>
           <UnreadBadge highlight={notifications.highlight} count={notifications.count} />
         </SidebarItemBadge>
@@ -584,6 +588,8 @@ function ClosedSpaceFolder({
   );
   const roomsNotifications = useRoomsNotifications(childRooms, roomToNotificationsAtom);
   const notifications = useRoomsTotalNotifications(roomsNotifications);
+  const unreadRooms = useRoomsUnread(childRooms, unreadRoomsAtom);
+  const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
 
   const handlerRef = useRef<HTMLDivElement>(null);
 
@@ -634,7 +640,7 @@ function ClosedSpaceFolder({
           </SidebarFolder>
         )}
       </SidebarItemTooltip>
-      {notifications.count > 0 && (
+      {unreadOrNotification && (
         <SidebarItemBadge hasCount={notifications.count > 0}>
           <UnreadBadge highlight={notifications.highlight} count={notifications.count} />
         </SidebarItemBadge>

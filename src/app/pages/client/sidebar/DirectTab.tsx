@@ -28,6 +28,8 @@ import {
   RoomToNotifications,
   roomToNotificationsAtom,
 } from '../../../state/room/roomToNotifications';
+import { useRoomsUnread } from '../../../state/hooks/unread';
+import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 
 type DirectMenuProps = {
   directRooms: string[];
@@ -77,6 +79,9 @@ export function DirectTab() {
   const directRooms = useDirectRooms();
   const roomsNotifications = useRoomsNotifications(directRooms, roomToNotificationsAtom);
   const notifications = useRoomsTotalNotifications(roomsNotifications);
+  const unreadRooms = useRoomsUnread(directRooms, unreadRoomsAtom);
+  const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
+
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const directSelected = useDirectSelected();
@@ -114,7 +119,7 @@ export function DirectTab() {
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
-      {notifications.count > 0 && (
+      {unreadOrNotification && (
         <SidebarItemBadge hasCount={notifications.count > 0}>
           <UnreadBadge highlight={notifications.highlight} count={notifications.count} />
         </SidebarItemBadge>

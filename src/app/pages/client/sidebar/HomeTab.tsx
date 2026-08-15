@@ -28,6 +28,8 @@ import {
   RoomToNotifications,
   roomToNotificationsAtom,
 } from '../../../state/room/roomToNotifications';
+import { useRoomsUnread } from '../../../state/hooks/unread';
+import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 
 type HomeMenuProps = {
   homeRooms: string[];
@@ -77,6 +79,9 @@ export function HomeTab() {
   const homeRooms = useHomeRooms();
   const roomsNotifications = useRoomsNotifications(homeRooms, roomToNotificationsAtom);
   const notifications = useRoomsTotalNotifications(roomsNotifications);
+  const unreadRooms = useRoomsUnread(homeRooms, unreadRoomsAtom);
+  const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
+
   const homeSelected = useHomeSelected();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
@@ -114,7 +119,7 @@ export function HomeTab() {
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
-      {notifications.count > 0 && (
+      {unreadOrNotification && (
         <SidebarItemBadge hasCount={notifications.count > 0}>
           <UnreadBadge highlight={notifications.highlight} count={notifications.count} />
         </SidebarItemBadge>
