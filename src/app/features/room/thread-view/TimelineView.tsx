@@ -128,6 +128,7 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
   const permissions = useRoomPermissions(creators, powerLevels);
 
   const canRedact = permissions.action('redact', ct.session.userId);
+  const canDeleteOwn = permissions.event(MessageEvent.RoomRedaction, ct.session.userId);
   const canSendReaction = permissions.event(MessageEvent.Reaction, ct.session.userId);
   const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, ct.session.userId);
   const [editId, setEditId] = useState<string>();
@@ -357,7 +358,7 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
         highlight={highlighted}
         selected={replyDraft?.eventId === event.event_id}
         edit={editId === event.event_id}
-        canDelete={canRedact || event.sender === ct.session.userId}
+        canDelete={canRedact || (canDeleteOwn && event.sender === ct.session.userId)}
         canSendReaction={canSendReaction}
         canPinEvent={canPinEvent}
         imagePackRooms={imagePackRooms}
@@ -478,7 +479,7 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
               <Text size="H1">✦</Text>
               <Text size="L400">A Thread Begins</Text>
             </Box>
-            <Text size="T200">
+            <Text size="T200" align="Center">
               <DividerTime ts={threadMeta?.rootEvent.origin_server_ts ?? Date.now()} />
             </Text>
           </Box>

@@ -1033,7 +1033,7 @@ export const Message = as<'div', MessageProps>(
                     size="300"
                     radii="300"
                   >
-                    <Icon src={Icons.ThreadPlus} size="100" />
+                    <Icon src={Icons.Thread} size="100" />
                   </IconButton>
                 )}
                 {canEditEvent(ct, event) && onEditId && (
@@ -1118,7 +1118,7 @@ export const Message = as<'div', MessageProps>(
                           {canThread && (
                             <MenuItem
                               size="300"
-                              after={<Icon src={Icons.ThreadPlus} size="100" />}
+                              after={<Icon src={Icons.Thread} size="100" />}
                               radii="300"
                               data-event-id={event.event_id}
                               onClick={(evt: any) => {
