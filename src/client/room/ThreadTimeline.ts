@@ -140,6 +140,7 @@ export class ThreadTimeline implements TimelineView, Disposable {
     if (!meta || !latestEvent) return;
 
     // TODO: need session userId to find current user participation;
+    // we do not use that flag yet.
     const newMeta = new ThreadMeta(
       meta.rootEvent,
       latestEvent,

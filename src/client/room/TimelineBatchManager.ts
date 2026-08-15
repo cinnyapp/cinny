@@ -41,7 +41,9 @@ export class TimelineBatchManager {
     }
 
     const newPrev =
-      !prev.token && messages.events.length === 0 ? new BatchInfo(prevToken, !prevToken) : prev;
+      !prev.end && !prev.token && messages.events.length === 0
+        ? new BatchInfo(prevToken, !prevToken)
+        : prev;
 
     const newBatch = new MessageBatch(
       id,
