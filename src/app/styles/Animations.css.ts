@@ -45,3 +45,19 @@ export const CallAvatarAnimation = style({
   animation: `${wobble} 2000ms ease-in-out, ${glowPulse} 2000ms ease-out`,
   animationIterationCount: 'infinite',
 });
+
+const flicker = keyframes({
+  '0%, 90%, 100%': {
+    opacity: 1,
+  },
+  '92%, 94%, 96%': {
+    opacity: 0,
+  },
+  '93%, 95%, 97%': {
+    opacity: 1,
+  },
+});
+
+export const FlickerText = style({
+  animation: `${flicker} 2s infinite`,
+});

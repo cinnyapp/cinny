@@ -15,6 +15,7 @@ import { ClientContextProvider } from '../../hooks/useClient';
 import { InitialSyncSplashScreen } from './InitialSyncSplashScreen';
 import { AutoDiscovery } from './AutoDiscovery';
 import { ClientRootOptions } from './ClientRootOptions';
+import { FlickerText } from '../../styles/Animations.css';
 
 type ClientRootProps = {
   children: ReactNode;
@@ -81,7 +82,7 @@ export function ClientRoot({ children }: ClientRootProps) {
                 alignItems="Center"
                 gap="200"
               >
-                <Text size="T200" align="Center">
+                <Text className={FlickerText} size="T200" align="Center">
                   Sparking...
                 </Text>
                 <ProgressBar
