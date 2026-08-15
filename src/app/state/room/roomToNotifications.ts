@@ -35,7 +35,6 @@ export const useBindRoomToNotificationsAtom = (
   const unread = unreadState.status === AsyncStatus.Success ? unreadState.data : undefined;
 
   const processNotifications = useCallback(() => {
-    console.log('roomToNotifications');
     const notifications = unread?.notifications.read ?? [];
     const threadNotifications = unread?.threadNotifications.read ?? [];
     const { mute } = roomsNotificationPreferences;

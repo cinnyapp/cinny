@@ -50,7 +50,7 @@ import {
 
 export * from './utils';
 
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 
 export interface Storage {
   sessionValue: SessionValueCollection;
@@ -95,7 +95,7 @@ export const createStorage = async (
 
   // TODO: handle all openDB callbacks.
   const idb = await openDB(dbName, DATABASE_VERSION, {
-    upgrade(db, oldVersion) {
+    upgrade(db, oldVersion, newVersion, transaction) {
       prepareSessionValueStore(db, oldVersion);
 
       prepareAccountDataStore(db, oldVersion);
@@ -109,7 +109,7 @@ export const createStorage = async (
       prepareUnreadNotificationsStore(db, oldVersion);
       prepareUnreadThreadNotificationsStore(db, oldVersion);
 
-      prepareReadReceiptStore(db, oldVersion);
+      prepareReadReceiptStore(db, oldVersion, transaction);
 
       prepareInviteRoomStateStore(db, oldVersion);
 

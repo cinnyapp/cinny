@@ -18,6 +18,7 @@ import {
   JoinRoomStateObject,
   KnockRoomStateObject,
   LeaveRoomStateObject,
+  ReadReceiptObject,
   sessionValue,
 } from './storage/collections';
 import { Storage } from './storage';
@@ -117,6 +118,7 @@ export type ClientContext = {
   roomToCreators: ObservableValue<Map<string, Set<string>>>;
   roomToVersion: ObservableValue<Map<string, string>>;
   roomToLatestEvent: ObservableValue<Map<string, MessageEventWithoutRoomId>>;
+  userReadReceipt: ObservableValue<ReadReceiptObject[]>;
   roomToTimeline: ObservableValue<Map<string, Timeline>>;
 
   pendingMemberRooms: ObservableValue<string[]>;
@@ -834,6 +836,21 @@ export const createRoomToLatestEventObservable = async (
   disposer.collect(roomLatestEventObjects, roomToLatestEventObservable);
 
   return roomToLatestEventObservable;
+};
+
+export const createUserReceiptObservable = async (
+  session: Session,
+  storage: Storage,
+  disposer: Disposer
+): Promise<ObservableValue<ReadReceiptObject[]>> => {
+  const receiptObservable = await storage.readReceipt.observableRead.queryIndex(
+    'userId',
+    session.userId
+  );
+
+  disposer.collect(receiptObservable);
+
+  return receiptObservable;
 };
 
 export const createLogoutObservable = (

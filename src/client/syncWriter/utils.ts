@@ -39,6 +39,7 @@ import {
   UnreadThreadNotificationsObject,
 } from '../storage/collections';
 import { ThreadId } from '../../types/matrix/room';
+import { getLatestEventSyncFilter } from '../filter';
 
 export const writeAccountData = async (
   ct: ClientContext,
@@ -167,15 +168,17 @@ export const writeJoinRoomLatestEvent = async (
 ): Promise<void> => {
   const roomLatestEventObjects: JoinRoomLatestEventObject[] = [];
 
+  const latestEventFilter = getLatestEventSyncFilter();
+  const supportedTypes = latestEventFilter.room?.timeline?.types ?? [];
+
   joinRooms.forEach((roomId) => {
     const joinRoom = join[roomId];
     const { events } = joinRoom.timeline ?? {};
     if (!events) return;
 
-    // TODO: filter events that are supported by timeline.
     for (let i = events.length - 1; i >= 0; i -= 1) {
       const event = events[i];
-      if (!('state_key' in event)) {
+      if (!('state_key' in event) && supportedTypes.includes(event.type)) {
         roomLatestEventObjects.push({
           id: roomId,
           event,

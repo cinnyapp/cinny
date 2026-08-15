@@ -59,6 +59,8 @@ import { useGetRoomName } from '../../../hooks/storage/useGetRoomName';
 import { useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
 import { useObservableValue } from '../../../hooks/useObservableValue';
 import { useClient } from '../../../hooks/useClient';
+import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
+import { useRoomsUnread } from '../../../state/hooks/unread';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -187,6 +189,7 @@ export function Direct() {
   const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
   const roomToNotifications = useRoomsNotifications(directs, roomToNotificationsAtom);
+  const unreadRooms = useRoomsUnread(directs, unreadRoomsAtom);
 
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const navigate = useNavigate();
@@ -288,6 +291,7 @@ export function Direct() {
                         linkPath={getDirectRoomPath(ct.roomToAlias.read.get(roomId) ?? roomId)}
                         notificationMode={getRoomNotificationMode(notificationPreferences, roomId)}
                         notifications={notifications}
+                        unread={unreadRooms.has(roomId)}
                       />
                     </VirtualTile>
                   );

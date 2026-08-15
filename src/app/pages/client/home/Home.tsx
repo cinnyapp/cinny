@@ -72,6 +72,7 @@ import {
 import { roomToNotificationsAtom } from '../../../state/room/roomToNotifications';
 import { useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
+import { useRoomsUnread } from '../../../state/hooks/unread';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -212,7 +213,7 @@ export function Home() {
   const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
   const roomToNotifications = useRoomsNotifications(rooms, roomToNotificationsAtom);
-  const unreadRooms = useAtomValue(unreadRoomsAtom);
+  const unreadRooms = useRoomsUnread(rooms, unreadRoomsAtom);
 
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const navigate = useNavigate();

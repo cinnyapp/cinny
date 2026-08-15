@@ -71,8 +71,6 @@ import { GetContentCallback, MessageEvent, StateEvent } from '../../../../types/
 import { useMatrixEventRenderer } from '../../../hooks/useMatrixEventRenderer';
 import * as customHtmlCss from '../../../styles/CustomHtml.css';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
-import { useRoomUnread } from '../../../state/hooks/unread';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { markAsRead } from '../../../utils/notifications';
 import { ContainerColor } from '../../../styles/ContainerColor.css';
 import { VirtualTile } from '../../../components/virtualizer';
@@ -224,7 +222,7 @@ function RoomNotificationsGroupComp({
 }: RoomNotificationsGroupProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
-  const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  // const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
 
   const powerLevels = usePowerLevels(room);
   const creators = useRoomCreators(room);

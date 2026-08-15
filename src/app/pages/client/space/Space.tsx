@@ -91,6 +91,8 @@ import {
 } from '../../../state/hooks/roomNotifications';
 import { getJoinRoomStateId } from '../../../../client/storage/collections';
 import { useAllJoinedRoomsSet } from '../../../hooks/useGetRoom';
+import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
+import { useRoomsUnread } from '../../../state/hooks/unread';
 
 type SpaceMenuProps = {
   requestClose: () => void;
@@ -405,6 +407,7 @@ export function Space() {
   const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
   const roomToNotifications = useRoomsNotifications(rooms, roomToNotificationsAtom);
+  const unreadRooms = useRoomsUnread(rooms, unreadRoomsAtom);
 
   const virtualizer = useVirtualizer({
     count: hierarchy.length,
@@ -512,6 +515,7 @@ export function Space() {
                     linkPath={getToLink(roomId)}
                     notificationMode={getRoomNotificationMode(notificationPreferences, roomId)}
                     notifications={notifications}
+                    unread={unreadRooms.has(roomId)}
                   />
                 </VirtualTile>
               );

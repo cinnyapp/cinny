@@ -1,4 +1,4 @@
-import { IDBPDatabase } from 'idb';
+import { IDBPDatabase, IDBPTransaction } from 'idb';
 import { StorageDriver } from 'neurone/lib/storage';
 import { Collection, Entry } from 'neurone/lib/storage/collection';
 import { ReceiptType } from 'neurone/lib/api/types';
@@ -13,7 +13,11 @@ export const getReadReceiptId = (
   threadId: string | ThreadId
 ): string => encodeKey(roomId, userId, threadId);
 
-export const prepareReadReceiptStore = (idb: IDBPDatabase, oldVersion: number) => {
+export const prepareReadReceiptStore = (
+  idb: IDBPDatabase,
+  oldVersion: number,
+  transaction: IDBPTransaction<any, any, 'versionchange'>
+) => {
   if (oldVersion < 1) {
     const store = idb.createObjectStore(READ_RECEIPT_STORE_NAME, {
       keyPath: 'id',
@@ -22,11 +26,17 @@ export const prepareReadReceiptStore = (idb: IDBPDatabase, oldVersion: number) =
     store.createIndex('roomId', 'roomId', { unique: false });
     store.createIndex('eventId', 'eventId', { unique: false });
   }
+
+  if (oldVersion < 2) {
+    const store = transaction.objectStore(READ_RECEIPT_STORE_NAME);
+
+    store.createIndex('userId', 'userId', { unique: false });
+  }
 };
 
 export type ReadReceiptObject = Entry<
   'id',
-  'eventId' | 'roomId',
+  'userId' | 'eventId' | 'roomId',
   {
     id: string;
     roomId: string;
@@ -38,7 +48,11 @@ export type ReadReceiptObject = Entry<
   }
 >;
 
-export type ReadReceiptCollection = Collection<'id', 'eventId' | 'roomId', ReadReceiptObject>;
+export type ReadReceiptCollection = Collection<
+  'id',
+  'eventId' | 'roomId' | 'userId',
+  ReadReceiptObject
+>;
 
 export const createReadReceiptCollection = (driver: StorageDriver): ReadReceiptCollection =>
   new Collection(READ_RECEIPT_STORE_NAME, 'id', driver);
