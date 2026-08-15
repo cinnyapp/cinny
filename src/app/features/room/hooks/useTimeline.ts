@@ -284,7 +284,7 @@ export const useUsernameClickHandler = (editor: Editor) => {
   return handleUsernameClick;
 };
 
-export const useEventDivider = (readUptoEventId?: string) => {
+export const useEventDivider = (readUptoTs?: number) => {
   let prevEvent: MessageEventWithoutRoomId | undefined;
 
   let dayDivider = false;
@@ -300,9 +300,9 @@ export const useEventDivider = (readUptoEventId?: string) => {
     return dayDivider;
   };
 
-  const getNewDivider = () => {
-    if (!newDivider && readUptoEventId) {
-      newDivider = prevEvent?.event_id === readUptoEventId;
+  const getNewDivider = (event: MessageEventWithoutRoomId) => {
+    if (!newDivider && readUptoTs && prevEvent) {
+      newDivider = prevEvent.origin_server_ts < readUptoTs && readUptoTs <= event.origin_server_ts;
     }
 
     return newDivider;

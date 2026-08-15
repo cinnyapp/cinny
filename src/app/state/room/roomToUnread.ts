@@ -19,7 +19,9 @@ export const useBindUnreadRoomsAtom = (ct: ClientContext, unreadRooms: typeof un
       const receipt = userReadReceipts.find(
         (r) => getReadReceiptId(roomId, ct.session.userId, ThreadId.Main) === r.id
       );
-      if (!receipt || receipt.ts > event.origin_server_ts) return;
+      if (!receipt || receipt.ts > event.origin_server_ts || event.sender === ct.session.userId) {
+        return;
+      }
       unreads.add(roomId);
     });
 

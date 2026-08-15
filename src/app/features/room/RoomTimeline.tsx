@@ -78,6 +78,7 @@ import { ThreadSelector } from './message/thread-selector';
 import { TimelineFloat, JumpToLatestButton, ComboDivider, PlaceholderList } from './components';
 import { OutboxView } from './OutboxView';
 import { EncryptedMessageEvent } from '../../components/encrypted-event';
+import { useUserReadReceipt } from '../../hooks/useReadReceipt';
 
 type RoomTimelineProps = {
   eventId?: string;
@@ -496,8 +497,10 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     );
   };
 
+  const readReceipt = useUserReadReceipt();
+  console.log(readReceipt, ct.roomToLatestEvent.read.get(roomId));
   const { getDayDivider, getNewDivider, updateDivider, clearDayDivider, clearNewDivider } =
-    useEventDivider(readUptoEventIdRef.current);
+    useEventDivider(readReceipt?.ts);
   const { getCollapsed, updateCollapse } = useEventCollapse();
 
   const eventRenderer = (item: number) => {
@@ -512,7 +515,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
       return null;
     }
 
-    const newDivider = getNewDivider() && event.sender !== ct.session.userId;
+    const newDivider = getNewDivider(event) && event.sender !== ct.session.userId;
     const dayDivider = getDayDivider(event);
 
     const collapsed = getCollapsed(event, newDivider, dayDivider);

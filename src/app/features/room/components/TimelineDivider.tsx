@@ -11,7 +11,7 @@ export const TimelineDivider = as<
 >(({ className, variant, before, after, children, ...props }, ref) => (
   <Box
     className={classNames(css.TimelineDivider, className)}
-    gap="100"
+    gap="0"
     justifyContent="Center"
     alignItems="Center"
     {...props}
@@ -34,7 +34,7 @@ export function ComboDivider({ messageSpacing, ts, replyCount, unread }: ComboDi
   return (
     <MessageBase space={messageSpacing}>
       <TimelineDivider
-        variant={unread ? 'Success' : 'Surface'}
+        variant={unread ? 'Critical' : 'Surface'}
         before={
           replyCount &&
           replyCount > 0 && (
@@ -54,14 +54,20 @@ export function ComboDivider({ messageSpacing, ts, replyCount, unread }: ComboDi
         }
         after={
           unread && (
-            <Badge as="span" size="500" variant="Success" fill="Solid" radii="Pill">
+            <Badge as="span" size="500" variant="Critical" fill="Solid" radii="Pill">
               <Text size="L400">New</Text>
             </Badge>
           )
         }
       >
         {typeof ts === 'number' && (
-          <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
+          <Badge
+            as="span"
+            size="500"
+            variant={unread ? 'Critical' : 'Secondary'}
+            fill="None"
+            radii="300"
+          >
             <Text size="L400">
               <DividerTime ts={ts} />
             </Text>

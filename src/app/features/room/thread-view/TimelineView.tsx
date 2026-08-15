@@ -74,6 +74,7 @@ import { rContent } from '../../../../client/reader';
 import { useEditor } from '../../../components/editor';
 import { TimelineFloat, JumpToLatestButton, ComboDivider, PlaceholderList } from '../components';
 import { OutboxView } from '../OutboxView';
+import { useUserReadReceipt } from '../../../hooks/useReadReceipt';
 
 type TimelineViewProps = {
   threadTimeline: ThreadTimeline;
@@ -394,7 +395,15 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
     );
   };
 
-  const { getDayDivider, getThreadRootDivider, updateDivider, clearDayDivider } = useEventDivider();
+  const readReceipt = useUserReadReceipt(threadTimeline.threadId);
+  const {
+    getDayDivider,
+    getThreadRootDivider,
+    getNewDivider,
+    updateDivider,
+    clearDayDivider,
+    clearNewDivider,
+  } = useEventDivider(readReceipt?.ts);
   const { getCollapsed, updateCollapse } = useEventCollapse();
   const eventRenderer = (event: MessageEventWithoutRoomId, item: number) => {
     if (event.sender && ignoredUsersSet.has(event.sender)) {
@@ -405,6 +414,7 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
       return null;
     }
 
+    const newDivider = getNewDivider(event) && event.sender !== ct.session.userId;
     const dayDivider = getDayDivider(event);
     const replyCount =
       threadMeta && getThreadRootDivider(threadMeta.rootEvent) ? threadMeta.replyCount : undefined;
@@ -424,6 +434,8 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
           replyCount={replyCount}
         />
       ) : null;
+
+    if (newDivider && dividerJSX) clearNewDivider();
     if (dayDivider && dividerJSX) clearDayDivider();
 
     const replyEventId = fallbackReply(event.content) ? undefined : getReplyId(event.content);
