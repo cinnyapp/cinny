@@ -83,7 +83,7 @@ export function Room() {
               </TimelineViewProvider>
 
               {threadTimeline ? (
-                <TimelineViewProvider value={threadTimeline}>
+                <TimelineViewProvider key={threadTimeline.threadId} value={threadTimeline}>
                   <Line variant="Surface" direction="Vertical" size="300" />
                   <ThreadView
                     threadTimeline={threadTimeline}

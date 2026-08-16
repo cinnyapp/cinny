@@ -25,7 +25,7 @@ export function ThreadView({ threadTimeline, threadFocusRef, requestClose }: Thr
   const threadInputRef = useRef<HTMLDivElement>(null);
   const threadViewRef = useRef<HTMLDivElement>(null);
 
-  useThreadFocus(threadFocusRef, threadViewRef);
+  useThreadFocus(threadTimeline.threadId, threadFocusRef, threadViewRef);
   useEditorAutoFocus(editor, threadFocusRef, true);
 
   return (

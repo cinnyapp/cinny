@@ -70,6 +70,7 @@ export const useEditorAutoFocus = (
 };
 
 export const useThreadFocus = (
+  threadId: string,
   threadFocusRef: MutableRefObject<boolean>,
   viewElementRef: RefObject<HTMLElement>
 ) => {
@@ -86,7 +87,7 @@ export const useThreadFocus = (
     };
 
     // eslint-disable-next-line no-param-reassign
-    threadFocusRef.current = true;
+    threadFocusRef.current = !!threadId; // detect thread-change
     window.addEventListener('pointerdown', handlePointerDown);
 
     return () => {
@@ -94,7 +95,7 @@ export const useThreadFocus = (
       threadFocusRef.current = true;
       window.removeEventListener('pointerdown', handlePointerDown);
     };
-  }, [threadFocusRef, viewElementRef]);
+  }, [threadFocusRef, viewElementRef, threadId]);
 
   return threadFocusRef;
 };
