@@ -92,7 +92,7 @@ export const useThreadFocus = (
 
     return () => {
       // eslint-disable-next-line no-param-reassign
-      threadFocusRef.current = true;
+      threadFocusRef.current = false;
       window.removeEventListener('pointerdown', handlePointerDown);
     };
   }, [threadFocusRef, viewElementRef, threadId]);
