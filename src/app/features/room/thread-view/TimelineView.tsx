@@ -392,6 +392,8 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
         roomId={roomId}
         eventId={replyEventId}
         onClick={handleOpenReply}
+        onUserClick={handleUserClick}
+        onUsernameClick={handleUsernameClick}
         getMemberPowerTag={getMemberPowerTag}
         accessibleTagColors={accessiblePowerTagColors}
         legacyUsernameColor={legacyUsernameColor || direct}

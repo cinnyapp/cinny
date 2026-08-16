@@ -1,5 +1,6 @@
 import { Box, Icon, Icons, Text, as, color, config } from 'folds';
 import React from 'react';
+import { Code } from '../../../styles/CustomHtml.css';
 
 const warningStyle = { color: color.Warning.Main, opacity: config.opacity.P300 };
 const criticalStyle = { color: color.Critical.Main, opacity: config.opacity.P300 };
@@ -23,6 +24,15 @@ export const MessageUnsupportedContent = as<'div', { children?: never }>(({ ...p
     <i>Unsupported message</i>
   </Box>
 ));
+
+export const UnsupportedMessageEventType = as<'div', { eventType: string; children?: never }>(
+  ({ eventType, ...props }, ref) => (
+    <Box as="span" alignItems="Center" gap="100" {...props} ref={ref}>
+      <Icon size="50" src={Icons.Code} />
+      Unsupported <code className={Code}>{eventType}</code> event
+    </Box>
+  )
+);
 
 export const MessageFailedContent = as<'div', { children?: never }>(({ ...props }, ref) => (
   <Box as="span" alignItems="Center" gap="100" style={criticalStyle} {...props} ref={ref}>

@@ -57,13 +57,15 @@ export function ReplyMessage({
 
   if (messageLayout === MessageLayout.Compact) {
     return (
-      <CompactLayout before={msgBarJSX} {...commonProps}>
+      <CompactLayout before={msgBarJSX}>
         <Box grow="Yes" direction="Column">
           <Box alignItems="Center" shrink="No" gap="200">
-            <Box shrink="No" style={{ maxWidth: toRem(200) }}>
+            <Box shrink="No" style={{ maxWidth: toRem(100) }}>
               {username}
             </Box>
-            {children}
+            <Box shrink="Yes" {...commonProps}>
+              {children}
+            </Box>
             {time}
           </Box>
         </Box>
@@ -73,12 +75,14 @@ export function ReplyMessage({
 
   if (messageLayout === MessageLayout.Bubble) {
     return (
-      <BubbleLayout hideBubble before={msgBarJSX} {...commonProps}>
+      <BubbleLayout hideBubble before={msgBarJSX}>
         <Box alignItems="Center" shrink="No" gap="200">
-          <Box shrink="No" style={{ maxWidth: toRem(200) }}>
+          <Box shrink="No" style={{ maxWidth: toRem(100) }}>
             {username}
           </Box>
-          {children}
+          <Box shrink="Yes" {...commonProps}>
+            {children}
+          </Box>
           {time}
         </Box>
       </BubbleLayout>
@@ -86,12 +90,14 @@ export function ReplyMessage({
   }
 
   return (
-    <ModernLayout before={msgBarJSX} {...commonProps}>
+    <ModernLayout before={msgBarJSX}>
       <Box alignItems="Center" shrink="No" gap="200">
-        <Box shrink="No" style={{ maxWidth: toRem(200) }}>
+        <Box shrink="No" style={{ maxWidth: toRem(100) }}>
           {username}
         </Box>
-        {children}
+        <Box shrink="Yes" {...commonProps}>
+          {children}
+        </Box>
         {time}
       </Box>
     </ModernLayout>
@@ -102,6 +108,8 @@ type ReplyProps = {
   roomId: string;
   eventId: string;
   onClick?: (replyId: string) => void;
+  onUserClick?: MouseEventHandler<HTMLButtonElement>;
+  onUsernameClick?: MouseEventHandler<HTMLButtonElement>;
   getMemberPowerTag?: GetMemberPowerTag;
   accessibleTagColors?: Map<string, string>;
   legacyUsernameColor?: boolean;
@@ -114,13 +122,14 @@ type ReplyProps = {
   messageLayout: MessageLayout;
   dateFormatString: string;
   messageSpacing: MessageSpacing;
-  mediaAutoLoad?: boolean;
 };
 
 export function Reply({
   roomId,
   eventId,
   onClick,
+  onUserClick,
+  onUsernameClick,
   getMemberPowerTag,
   accessibleTagColors,
   legacyUsernameColor,
@@ -133,7 +142,6 @@ export function Reply({
   dateFormatString,
   messageLayout,
   messageSpacing,
-  mediaAutoLoad,
 }: ReplyProps) {
   const placeholderWidth = useMemo(() => randomNumberBetween(40, 400), []);
   const replyEvent = useRoomEvent(
@@ -158,7 +166,16 @@ export function Reply({
         messageLayout={messageLayout}
         username={
           sender && (
-            <Text style={{ color: usernameColor }} size="T300" truncate>
+            <Text
+              as="button"
+              onClick={onUsernameClick}
+              onContextMenu={onUserClick}
+              className={HoverUnderline}
+              style={{ color: usernameColor, cursor: 'pointer' }}
+              data-user-id={sender}
+              size="T300"
+              truncate
+            >
               <b>{getMemberName(sender)}</b>
             </Text>
           )

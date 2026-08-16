@@ -46,7 +46,7 @@ export function RenderReplyContent({
   }
 
   if (eventType !== MessageEvent.RoomMessage) {
-    return <UnsupportedContent size="T300" />;
+    return <UnsupportedContent size="T300" eventType={eventType} />;
   }
 
   const msgType = rContent.msgtype(content);

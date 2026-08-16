@@ -496,6 +496,8 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
           roomId={roomId}
           eventId={replyEventId}
           onClick={handleOpenReply}
+          onUserClick={handleUserClick}
+          onUsernameClick={handleUsernameClick}
           getMemberPowerTag={getMemberPowerTag}
           accessibleTagColors={accessiblePowerTagColors}
           legacyUsernameColor={legacyUsernameColor || direct}
@@ -508,7 +510,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
           dateFormatString={dateFormatString}
           messageLayout={messageLayout}
           messageSpacing={messageSpacing}
-          mediaAutoLoad={mediaAutoLoad}
         />
       ) : null;
 

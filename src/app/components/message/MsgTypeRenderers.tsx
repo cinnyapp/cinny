@@ -13,6 +13,7 @@ import {
   MessageBrokenContent,
   MessageDeletedContent,
   MessageEditedContent,
+  UnsupportedMessageEventType,
   MessageUnsupportedContent,
   VideoContent,
 } from './content';
@@ -49,10 +50,14 @@ export function RedactedContent({ size, reason }: RedactedContentProps) {
   );
 }
 
-export function UnsupportedContent({ size }: TextProps) {
+export function UnsupportedContent({ size, eventType }: TextProps & { eventType?: string }) {
   return (
     <Text size={size}>
-      <MessageUnsupportedContent />
+      {eventType ? (
+        <UnsupportedMessageEventType eventType={eventType} />
+      ) : (
+        <MessageUnsupportedContent />
+      )}
     </Text>
   );
 }
