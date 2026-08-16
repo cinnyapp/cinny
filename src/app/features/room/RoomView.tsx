@@ -6,7 +6,7 @@ import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
 import { RoomTombstone } from './RoomTombstone';
 import { RoomInput } from './RoomInput';
-import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
+import { RoomViewFollowing } from './RoomViewFollowing';
 import { Page } from '../../components/page';
 import { settingsAtom } from '../../state/settings';
 import { useSetting } from '../../state/hooks/settings';
@@ -18,6 +18,7 @@ import { useClient } from '../../hooks/useClient';
 import { MessageEvent } from '../../../types/matrix/room';
 import { Timeline } from '../../../client/room';
 import { useEditorAutoFocus } from './hooks/useEditorAutoFocus';
+import { FollowingMembersPlaceholder } from './components';
 
 type RoomViewProps = {
   eventId?: string;
@@ -79,7 +80,7 @@ export function RoomView({ eventId, timeline, threadFocusRef }: RoomViewProps) {
             </>
           )}
         </div>
-        {hideActivity ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing />}
+        {hideActivity ? <FollowingMembersPlaceholder /> : <RoomViewFollowing />}
       </Box>
     </Page>
   );

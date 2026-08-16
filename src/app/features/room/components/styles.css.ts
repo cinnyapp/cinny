@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css';
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes';
-import { DefaultReset, color, config } from 'folds';
+import { DefaultReset, color, config, toRem } from 'folds';
 
 export const TimelineDivider = style({
   position: 'relative',
@@ -40,3 +40,39 @@ export const TimelineFloat = recipe({
 });
 
 export type TimelineFloatVariants = RecipeVariants<typeof TimelineFloat>;
+
+export const FollowingMembersPlaceholder = style([
+  DefaultReset,
+  {
+    height: toRem(28),
+  },
+]);
+
+export const FollowingMembers = recipe({
+  base: [
+    DefaultReset,
+    {
+      minHeight: toRem(28),
+      padding: `0 ${config.space.S400}`,
+      width: '100%',
+      backgroundColor: color.Surface.Container,
+      color: color.Surface.OnContainer,
+      outline: 'none',
+    },
+  ],
+  variants: {
+    clickable: {
+      true: {
+        cursor: 'pointer',
+        selectors: {
+          '&:hover, &:focus-visible': {
+            color: color.Primary.Main,
+          },
+          '&:active': {
+            color: color.Primary.Main,
+          },
+        },
+      },
+    },
+  },
+});

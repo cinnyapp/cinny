@@ -8,9 +8,12 @@ import { Page, PageHeader } from '../../../components/page';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useEditor } from '../../../components/editor';
 import { RoomInput } from '../RoomInput';
-import { RoomViewFollowingPlaceholder } from '../RoomViewFollowing';
 import { TimelineView } from './TimelineView';
 import { useEditorAutoFocus, useThreadFocus } from '../hooks/useEditorAutoFocus';
+import { settingsAtom } from '../../../state/settings';
+import { useSetting } from '../../../state/hooks/settings';
+import { FollowingMembersPlaceholder } from '../components';
+import { ThreadViewFollowing } from './ThreadViewFollowing';
 
 type ThreadViewProps = {
   threadTimeline: ThreadTimeline;
@@ -24,6 +27,7 @@ export function ThreadView({ threadTimeline, threadFocusRef, requestClose }: Thr
   const editor = useEditor();
   const threadInputRef = useRef<HTMLDivElement>(null);
   const threadViewRef = useRef<HTMLDivElement>(null);
+  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
 
   useThreadFocus(threadTimeline.threadId, threadFocusRef, threadViewRef);
   useEditorAutoFocus(editor, threadFocusRef, true);
@@ -81,7 +85,11 @@ export function ThreadView({ threadTimeline, threadFocusRef, requestClose }: Thr
               threadId={threadTimeline.threadId}
             />
           </div>
-          <RoomViewFollowingPlaceholder />
+          {hideActivity ? (
+            <FollowingMembersPlaceholder />
+          ) : (
+            <ThreadViewFollowing threadTimeline={threadTimeline} />
+          )}
         </Box>
       </Page>
     </FocusTrap>
