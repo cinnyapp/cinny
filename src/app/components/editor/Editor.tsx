@@ -5,10 +5,11 @@ import React, {
   ReactNode,
   forwardRef,
   useCallback,
+  useEffect,
   useState,
 } from 'react';
 import { Box, Scroll, Text } from 'folds';
-import { Descendant, Editor, createEditor } from 'slate';
+import { Descendant, Editor, Transforms, createEditor } from 'slate';
 import {
   Slate,
   Editable,
@@ -88,6 +89,12 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
         children: [{ text: '' }],
       },
     ]);
+
+    useEffect(() => {
+      if (!initialValue?.length) return;
+
+      Transforms.select(editor, Editor.end(editor, []));
+    }, [editor, initialValue]);
 
     const renderElement = useCallback(
       (props: RenderElementProps) => <RenderElement {...props} />,
