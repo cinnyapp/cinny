@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Box, Line } from 'folds';
 import { useParams } from 'react-router-dom';
 import { isKeyHotkey } from 'is-hotkey';
@@ -37,6 +37,7 @@ export function Room() {
   const activeThreadId = useObservableValueOptionally(timeline?.activeThread);
   const threads = useObservableValueOptionally(timeline?.threads);
   const threadTimeline = activeThreadId ? threads?.get(activeThreadId) : undefined;
+  const threadFocusRef = useRef<boolean>(false);
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
@@ -71,7 +72,12 @@ export function Room() {
                 <Box grow="Yes" direction="Column">
                   <RoomViewHeader />
                   <Box grow="Yes">
-                    <RoomView key={roomId} timeline={timeline} eventId={eventId} />
+                    <RoomView
+                      key={roomId}
+                      threadFocusRef={threadFocusRef}
+                      timeline={timeline}
+                      eventId={eventId}
+                    />
                   </Box>
                 </Box>
               </TimelineViewProvider>
@@ -81,6 +87,7 @@ export function Room() {
                   <Line variant="Surface" direction="Vertical" size="300" />
                   <ThreadView
                     threadTimeline={threadTimeline}
+                    threadFocusRef={threadFocusRef}
                     requestClose={() => timeline.closeThread()}
                   />
                 </TimelineViewProvider>

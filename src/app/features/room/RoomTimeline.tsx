@@ -498,7 +498,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   };
 
   const readReceipt = useUserReadReceipt();
-  console.log(readReceipt, ct.roomToLatestEvent.read.get(roomId));
   const { getDayDivider, getNewDivider, updateDivider, clearDayDivider, clearNewDivider } =
     useEventDivider(readReceipt?.ts);
   const { getCollapsed, updateCollapse } = useEventCollapse();

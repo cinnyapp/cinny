@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { MutableRefObject, useRef } from 'react';
 import classNames from 'classnames';
 import { Box, config, Icon, IconButton, Icons, Text, Tooltip, TooltipProvider } from 'folds';
 import FocusTrap from 'focus-trap-react';
@@ -10,18 +10,23 @@ import { useEditor } from '../../../components/editor';
 import { RoomInput } from '../RoomInput';
 import { RoomViewFollowingPlaceholder } from '../RoomViewFollowing';
 import { TimelineView } from './TimelineView';
+import { useEditorAutoFocus, useThreadFocus } from '../hooks/useEditorAutoFocus';
 
 type ThreadViewProps = {
   threadTimeline: ThreadTimeline;
+  threadFocusRef: MutableRefObject<boolean>;
   requestClose: () => void;
 };
 
-export function ThreadView({ threadTimeline, requestClose }: ThreadViewProps) {
+export function ThreadView({ threadTimeline, threadFocusRef, requestClose }: ThreadViewProps) {
   const screenSize = useScreenSizeContext();
   const floating = screenSize !== ScreenSize.Desktop;
   const editor = useEditor();
   const threadInputRef = useRef<HTMLDivElement>(null);
   const threadViewRef = useRef<HTMLDivElement>(null);
+
+  useThreadFocus(threadFocusRef, threadViewRef);
+  useEditorAutoFocus(editor, threadFocusRef, true);
 
   return (
     <FocusTrap
