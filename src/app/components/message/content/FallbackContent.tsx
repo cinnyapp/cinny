@@ -29,7 +29,7 @@ export const UnsupportedMessageEventType = as<'div', { eventType: string; childr
   ({ eventType, ...props }, ref) => (
     <Box as="span" alignItems="Center" gap="100" {...props} ref={ref}>
       <Icon size="50" src={Icons.Code} />
-      Unsupported <code className={Code}>{eventType}</code> event
+      Sent <code className={Code}>{eventType}</code> event
     </Box>
   )
 );

@@ -44,11 +44,22 @@ export function ReplyMessage({
     }
   };
 
+  const handleClick: MouseEventHandler = (evt) => {
+    const target = evt.target as HTMLElement;
+
+    if (target.closest('a')) {
+      evt.stopPropagation();
+      return;
+    }
+
+    onClick?.();
+  };
+
   const commonProps = onClick
     ? {
         role: 'button' as const,
         tabIndex: 0,
-        onClick,
+        onClick: handleClick,
         onKeyDown: handleKeyDown,
         className: HoverUnderline,
         style: { cursor: 'pointer' },
