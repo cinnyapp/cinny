@@ -54,7 +54,11 @@ export const useEditorAutoFocus = (
           return;
         }
 
-        if (!shouldFocusMessageField(evt) && !isKeyHotkey('mod+v', evt)) {
+        if (
+          !shouldFocusMessageField(evt) &&
+          !isKeyHotkey('mod+v', evt) &&
+          !isKeyHotkey('mod+a', evt)
+        ) {
           return;
         }
 
