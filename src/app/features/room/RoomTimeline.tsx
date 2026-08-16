@@ -204,6 +204,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     ]
   );
 
+  const activeThread = useObservableValue(timeline.activeThread);
   const threads = useObservableValue(timeline.threads);
   const redacted = useObservableValue(timeline.relations.redacted);
   const reactions = useObservableValue(timeline.relations.reactions.eventToRelations);
@@ -484,6 +485,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         {reactionJSX}
         {threadTimeline && (
           <ThreadSelector
+            active={threadTimeline.threadId === activeThread}
             thread={threadTimeline}
             hour24Clock={hour24Clock}
             dateFormatString={dateFormatString}
