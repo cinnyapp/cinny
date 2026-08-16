@@ -7,7 +7,7 @@ export const ReplyBar = style({
   marginLeft: 'auto',
 
   width: toRem(19),
-  height: `calc(100% - ${toRem(8)})`,
+  height: `calc(100% - ${toRem(4)})`,
 
   borderLeft: `${config.borderWidth.B500} solid ${color.Surface.ContainerLine}`,
   borderTop: `${config.borderWidth.B500} solid ${color.Surface.ContainerLine}`,

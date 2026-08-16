@@ -474,14 +474,15 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'img') {
-          const htmlSrc = mxcToHttp(ct.session.baseUrl, props.src, params.useAuthentication).url();
-          if (htmlSrc && props.src.startsWith('mxc://') === false) {
+          if (props.src && props.src.startsWith('mxc://') === false) {
             return (
-              <a href={htmlSrc} target="_blank" rel="noreferrer noopener">
-                {props.alt || props.title || htmlSrc}
+              <a href={props.src} target="_blank" rel="noreferrer noopener">
+                {props.alt || props.title || props.src}
               </a>
             );
           }
+
+          const htmlSrc = mxcToHttp(ct.session.baseUrl, props.src, params.useAuthentication).url();
           if (htmlSrc && 'data-mx-emoticon' in props) {
             return (
               <span className={css.EmoticonBase}>
@@ -511,6 +512,146 @@ export const getReactCustomHtmlParser = (
         }
         return jsx;
       }
+      return undefined;
+    },
+  };
+  return opts;
+};
+
+export const getReactCustomHtmlInlineParser = (
+  ct: ClientContext,
+  roomId: string | undefined,
+  params: {
+    linkifyOpts: LinkifyOpts;
+    highlightRegex?: RegExp;
+    useAuthentication?: boolean;
+    handleMentionClick?: ReactEventHandler<HTMLElement>;
+    getMemberName: GetRoomMemberNameCallback;
+    getRoomName: GetRoomNameCallback;
+  }
+): HTMLReactParserOptions => {
+  const opts: HTMLReactParserOptions = {
+    replace: (domNode) => {
+      if (domNode instanceof Element && 'name' in domNode) {
+        const { name, attribs, children, parent } = domNode;
+        const props = attributesToProps(attribs);
+
+        if (
+          name === 'h1' ||
+          name === 'h2' ||
+          name === 'h3' ||
+          name === 'h4' ||
+          name === 'h5' ||
+          name === 'h6'
+        ) {
+          return <strong>{domToReact(children, opts)} </strong>;
+        }
+
+        if (name === 'br') {
+          return <span> </span>;
+        }
+
+        if (name === 'p') {
+          return <span>{domToReact(children, opts)} </span>;
+        }
+
+        if (name === 'pre') {
+          return <span>{domToReact(children, opts)} </span>;
+        }
+
+        if (name === 'blockquote') {
+          return <em>{domToReact(children, opts)} </em>;
+        }
+
+        if (name === 'ul') {
+          return <span>{domToReact(children, opts)} </span>;
+        }
+        if (name === 'ol') {
+          return <span>{domToReact(children, opts)} </span>;
+        }
+
+        if (name === 'code') {
+          if (parent && 'name' in parent && parent.name === 'pre') {
+            const codeReact = domToReact(children, opts);
+            if (typeof codeReact === 'string') {
+              return <code className={css.CodeFont}>{codeReact}</code>;
+            }
+          } else {
+            return (
+              <Text as="code" size="T300" className={css.Code} {...props}>
+                {domToReact(children, opts)}
+              </Text>
+            );
+          }
+        }
+
+        if (name === 'a' && testMatrixTo(tryDecodeURIComponent(props.href))) {
+          const content = children.find((child) => !(child instanceof DOMText))
+            ? undefined
+            : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
+
+          const mention = renderMatrixMention(
+            ct,
+            roomId,
+            tryDecodeURIComponent(props.href),
+            makeMentionCustomProps(params.handleMentionClick, content),
+            params.getMemberName,
+            params.getRoomName
+          );
+
+          if (mention) return mention;
+        }
+
+        if (name === 'span' && 'data-mx-spoiler' in props) {
+          return (
+            <span {...props} className={css.Spoiler()} aria-pressed style={{ cursor: 'pointer' }}>
+              {domToReact(children, opts)}
+            </span>
+          );
+        }
+
+        if (name === 'img') {
+          if (props.src && props.src.startsWith('mxc://') === false) {
+            return (
+              <a href={props.src} target="_blank" rel="noreferrer noopener">
+                {props.alt || props.title || props.src}
+              </a>
+            );
+          }
+
+          const htmlSrc = mxcToHttp(ct.session.baseUrl, props.src, params.useAuthentication).url();
+          if (htmlSrc && 'data-mx-emoticon' in props) {
+            return (
+              <span className={css.EmoticonBase}>
+                <span className={css.Emoticon()}>
+                  <img {...props} className={css.EmoticonImg} src={htmlSrc} />
+                </span>
+              </span>
+            );
+          }
+          if (htmlSrc) return <em>Click to see image</em>;
+        }
+
+        return <span>{domToReact(children, opts)} </span>;
+      }
+
+      if (domNode instanceof DOMText) {
+        const linkify =
+          !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'code') &&
+          !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'a');
+
+        let jsx = scaleSystemEmoji(domNode.data);
+
+        if (params.highlightRegex) {
+          jsx = highlightText(params.highlightRegex, jsx);
+        }
+
+        if (linkify) {
+          return <Linkify options={params.linkifyOpts}>{jsx}</Linkify>;
+        }
+        return jsx;
+      }
+
       return undefined;
     },
   };

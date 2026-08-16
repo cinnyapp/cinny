@@ -55,10 +55,14 @@ export function Room() {
     useCallback(
       (evt) => {
         if (isKeyHotkey('escape', evt)) {
+          // TODO: check overlay's
+          if (activeThreadId && threadFocusRef.current) {
+            timeline?.closeThread();
+          }
           // markAsRead(mx, roomId, hideActivity);
         }
       },
-      [roomId, hideActivity]
+      [activeThreadId, timeline]
     )
   );
 

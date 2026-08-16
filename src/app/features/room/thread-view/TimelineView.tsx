@@ -7,10 +7,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { HTMLReactParserOptions } from 'html-react-parser';
 import { ReactEditor } from 'slate-react';
 import { Box, Scroll, Text, config } from 'folds';
-import { Opts as LinkifyOpts } from 'linkifyjs';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { useVirtualPaginator } from '../../../hooks/useVirtualPaginator';
 import { useAlive } from '../../../hooks/useAlive';
@@ -21,13 +19,6 @@ import {
   Reply,
   DividerTime,
 } from '../../../components/message';
-import {
-  factoryRenderLinkifyWithMention,
-  getReactCustomHtmlParser,
-  LINKIFY_OPTS,
-  makeMentionCustomProps,
-  renderMatrixMention,
-} from '../../../plugins/react-custom-html-parser';
 import { fallbackReply, getLatestEditEvent, getReplyId } from '../../../utils/room';
 import { useSetting } from '../../../state/hooks/settings';
 import { MessageLayout, settingsAtom } from '../../../state/settings';
@@ -36,9 +27,6 @@ import * as css from './styles.css';
 import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
 import { MessageEvent, StateEvent } from '../../../../types/matrix/room';
 import { RenderMessageContent } from '../../../components/RenderMessageContent';
-import { useMentionClickHandler } from '../../../hooks/useMentionClickHandler';
-import { useSpoilerClickHandler } from '../../../hooks/useSpoilerClickHandler';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useIgnoredUsers } from '../../../hooks/useIgnoredUsers';
 import { useImagePackRooms } from '../../../hooks/useImagePackRooms';
 import { useIsDirectRoom, useRoom } from '../../../hooks/useRoom';
@@ -75,6 +63,7 @@ import { useEditor } from '../../../components/editor';
 import { TimelineFloat, JumpToLatestButton, ComboDivider, PlaceholderList } from '../components';
 import { OutboxView } from '../OutboxView';
 import { useUserReadReceipt } from '../../../hooks/useReadReceipt';
+import { useMessageParserOptions } from '../../../hooks/useMessageParserOptions';
 
 type TimelineViewProps = {
   threadTimeline: ThreadTimeline;
@@ -85,7 +74,6 @@ const PAGINATION_LIMIT = 80;
 export function TimelineView({ threadTimeline }: TimelineViewProps) {
   const ct = useClient();
   const roomId = useRoom();
-  const useAuthentication = useMediaAuthentication();
   const encryptedRooms = useObservableValue(ct.encryptedRooms);
   const editor = useEditor();
   const roomInputRef = useRef<HTMLDivElement>(null);
@@ -134,8 +122,6 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
   const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, ct.session.userId);
   const [editId, setEditId] = useState<string>();
 
-  const mentionClickHandler = useMentionClickHandler(roomId);
-  const spoilerClickHandler = useSpoilerClickHandler();
   const imagePackRooms = useImagePackRooms(roomId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -154,44 +140,8 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
   >();
   const alive = useAlive();
 
-  const linkifyOpts = useMemo<LinkifyOpts>(
-    () => ({
-      ...LINKIFY_OPTS,
-      render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(
-          ct,
-          roomId,
-          href,
-          makeMentionCustomProps(mentionClickHandler),
-          membersAPI.getName,
-          getRoomName
-        )
-      ),
-    }),
-    [ct, roomId, mentionClickHandler, membersAPI.getName, getRoomName]
-  );
-
-  const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
-    () =>
-      getReactCustomHtmlParser(ct, roomId, {
-        linkifyOpts,
-        useAuthentication,
-        handleSpoilerClick: spoilerClickHandler,
-        handleMentionClick: mentionClickHandler,
-        getMemberName: membersAPI.getName,
-        getRoomName,
-      }),
-    [
-      ct,
-      roomId,
-      linkifyOpts,
-      spoilerClickHandler,
-      mentionClickHandler,
-      useAuthentication,
-      membersAPI.getName,
-      getRoomName,
-    ]
-  );
+  const { linkifyOpts, htmlReactParserOptions, htmlReactParserInlineOptions } =
+    useMessageParserOptions(roomId, getRoomName, membersAPI.getName);
 
   const redacted = useObservableValue(threadTimeline.relations.redacted);
   const reactions = useObservableValue(threadTimeline.relations.reactions.eventToRelations);
@@ -296,10 +246,8 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
     }
   }, [scrollToElement, editId]);
 
-  const handleOpenReply: MouseEventHandler = useCallback(async (evt) => {
-    const targetId = evt.currentTarget.getAttribute('data-event-id');
-    if (!targetId) return;
-    console.log(targetId);
+  const handleOpenReply = useCallback((replyId: string) => {
+    console.log(replyId);
   }, []);
 
   const handleUserClick = useUserClickHandler();
@@ -450,7 +398,7 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
         redacted={redacted.has(replyEventId)}
         getMemberName={membersAPI.getName}
         timeline={threadTimeline}
-        htmlReactParserOptions={htmlReactParserOptions}
+        htmlReactParserOptions={htmlReactParserInlineOptions}
         linkifyOpts={linkifyOpts}
         hour24Clock={hour24Clock}
         dateFormatString={dateFormatString}

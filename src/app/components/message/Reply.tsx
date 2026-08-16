@@ -1,4 +1,4 @@
-import { Box, Text, color, toRem } from 'folds';
+import { Box, Text, color, config, toRem } from 'folds';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
@@ -12,30 +12,60 @@ import { GetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { GetRoomMemberNameCallback } from '../../hooks/useRoomMembers';
 import { rUnsigned } from '../../../client/reader';
 import { TimelineView } from '../../../client/room';
-import { RenderMessageContent } from '../RenderMessageContent';
+import { RenderReplyContent } from '../RenderReplyContent';
 import { Time } from './Time';
 import { BubbleLayout, CompactLayout, MessageBase, ModernLayout } from './layout';
 import { MessageLayout, MessageSpacing } from '../../state/settings';
 import { RedactedContent } from './MsgTypeRenderers';
+import { HoverUnderline } from '../../styles/Text.css';
 
 type ReplyMessageProps = {
   username?: ReactNode;
   time?: ReactNode;
   messageLayout: MessageLayout;
   children: ReactNode;
+  onClick?: () => void;
 };
-export function ReplyMessage({ username, time, messageLayout, children }: ReplyMessageProps) {
+export function ReplyMessage({
+  username,
+  time,
+  messageLayout,
+  onClick,
+  children,
+}: ReplyMessageProps) {
   const msgBarJSX = <div className={css.ReplyBar} />;
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) return;
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
+  const commonProps = onClick
+    ? {
+        role: 'button' as const,
+        tabIndex: 0,
+        onClick,
+        onKeyDown: handleKeyDown,
+        className: HoverUnderline,
+        style: { cursor: 'pointer' },
+      }
+    : {};
 
   if (messageLayout === MessageLayout.Compact) {
     return (
-      <CompactLayout before={msgBarJSX}>
+      <CompactLayout before={msgBarJSX} {...commonProps}>
         <Box grow="Yes" direction="Column">
-          <Box alignItems="Baseline" shrink="No" gap="200">
-            {username}
+          <Box alignItems="Center" shrink="No" gap="200">
+            <Box shrink="No" style={{ maxWidth: toRem(200) }}>
+              {username}
+            </Box>
+            {children}
             {time}
           </Box>
-          {children}
         </Box>
       </CompactLayout>
     );
@@ -43,28 +73,27 @@ export function ReplyMessage({ username, time, messageLayout, children }: ReplyM
 
   if (messageLayout === MessageLayout.Bubble) {
     return (
-      <BubbleLayout
-        hideBubble
-        before={msgBarJSX}
-        header={
-          <Box alignItems="Baseline" shrink="No" gap="200">
+      <BubbleLayout hideBubble before={msgBarJSX} {...commonProps}>
+        <Box alignItems="Center" shrink="No" gap="200">
+          <Box shrink="No" style={{ maxWidth: toRem(200) }}>
             {username}
-            {time}
           </Box>
-        }
-      >
-        {children}
+          {children}
+          {time}
+        </Box>
       </BubbleLayout>
     );
   }
 
   return (
-    <ModernLayout before={msgBarJSX}>
-      <Box alignItems="Baseline" shrink="No" gap="200">
-        {username}
+    <ModernLayout before={msgBarJSX} {...commonProps}>
+      <Box alignItems="Center" shrink="No" gap="200">
+        <Box shrink="No" style={{ maxWidth: toRem(200) }}>
+          {username}
+        </Box>
+        {children}
         {time}
       </Box>
-      {children}
     </ModernLayout>
   );
 }
@@ -72,7 +101,7 @@ export function ReplyMessage({ username, time, messageLayout, children }: ReplyM
 type ReplyProps = {
   roomId: string;
   eventId: string;
-  onClick?: MouseEventHandler | undefined;
+  onClick?: (replyId: string) => void;
   getMemberPowerTag?: GetMemberPowerTag;
   accessibleTagColors?: Map<string, string>;
   legacyUsernameColor?: boolean;
@@ -121,9 +150,11 @@ export function Reply({
 
   const redactedEvent = redacted || !!rUnsigned.redactedBecause(replyEvent?.unsigned);
 
+  // TODO: make edit message appear in reply
   return (
     <MessageBase space={messageSpacing}>
       <ReplyMessage
+        onClick={onClick ? () => onClick(eventId) : undefined}
         messageLayout={messageLayout}
         username={
           sender && (
@@ -145,20 +176,18 @@ export function Reply({
       >
         {replyEvent !== undefined ? (
           <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }} as="div">
-            {redactedEvent && <RedactedContent />}
+            {redactedEvent && <RedactedContent size="T300" />}
             {!redactedEvent &&
               (replyEvent === null ? (
-                <Text>
+                <Text size="B300">
                   <MessageBadEncryptedContent />
                 </Text>
               ) : (
-                <RenderMessageContent
+                <RenderReplyContent
                   displayName={getMemberName(replyEvent.sender)}
                   eventType={replyEvent.type}
-                  ts={replyEvent.origin_server_ts}
-                  edited={false}
+                  edited={false} // TODO:
                   content={replyEvent.content}
-                  mediaAutoLoad={mediaAutoLoad}
                   htmlReactParserOptions={htmlReactParserOptions}
                   linkifyOpts={linkifyOpts}
                 />
@@ -170,6 +199,7 @@ export function Reply({
               backgroundColor: color.SurfaceVariant.ContainerActive,
               width: toRem(placeholderWidth),
               maxWidth: '100%',
+              height: config.lineHeight.T300,
             }}
           />
         )}

@@ -64,3 +64,38 @@ export const MessageEditedContent = as<'span', { children?: never }>(({ ...props
     {' (edited)'}
   </Text>
 ));
+
+export const MessageStickerContent = as<'div', { children?: never }>(({ ...props }, ref) => (
+  <Box as="span" alignItems="Center" gap="100" {...props} ref={ref}>
+    <Icon size="50" src={Icons.Sticker} filled />
+    <i>Sticker</i>
+  </Box>
+));
+
+export const MessageImageContent = as<'div', { children?: never }>(({ ...props }, ref) => (
+  <Box as="span" alignItems="Center" gap="100" {...props} ref={ref}>
+    <Icon size="50" src={Icons.Photo} filled />
+    <i>Image</i>
+  </Box>
+));
+
+export const MessageVideoContent = as<'div', { children?: never }>(({ ...props }, ref) => (
+  <Box as="span" alignItems="Center" gap="100" {...props} ref={ref}>
+    <Icon size="50" src={Icons.Vlc} filled />
+    <i>Video</i>
+  </Box>
+));
+
+export const MessageAudioContent = as<'div', { children?: never }>(({ ...props }, ref) => (
+  <Box as="span" alignItems="Center" gap="100" {...props} ref={ref}>
+    <Icon size="50" src={Icons.Play} filled />
+    <i>Audio</i>
+  </Box>
+));
+
+export const MessageFileContent = as<'div', { children?: never }>(({ ...props }, ref) => (
+  <Box as="span" alignItems="Center" gap="100" {...props} ref={ref}>
+    <Icon size="50" src={Icons.File} filled />
+    <i>File</i>
+  </Box>
+));

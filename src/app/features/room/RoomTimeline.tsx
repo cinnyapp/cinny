@@ -9,11 +9,9 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { HTMLReactParserOptions } from 'html-react-parser';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
 import { Box, Scroll, config, toRem } from 'folds';
-import { Opts as LinkifyOpts } from 'linkifyjs';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { useVirtualPaginator } from '../../hooks/useVirtualPaginator';
 import { useAlive } from '../../hooks/useAlive';
@@ -24,13 +22,6 @@ import {
   Reply,
   RedactedContent,
 } from '../../components/message';
-import {
-  factoryRenderLinkifyWithMention,
-  getReactCustomHtmlParser,
-  LINKIFY_OPTS,
-  makeMentionCustomProps,
-  renderMatrixMention,
-} from '../../plugins/react-custom-html-parser';
 import { getLatestEditEvent, getReplyId, getThreadId } from '../../utils/room';
 import { useSetting } from '../../state/hooks/settings';
 import { MessageLayout, settingsAtom } from '../../state/settings';
@@ -39,10 +30,7 @@ import { RoomIntro } from '../../components/room-intro';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { MessageEvent, StateEvent } from '../../../types/matrix/room';
 import { RenderMessageContent } from '../../components/RenderMessageContent';
-import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
-import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
 import { useImagePackRooms } from '../../hooks/useImagePackRooms';
 import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
@@ -79,6 +67,7 @@ import { TimelineFloat, JumpToLatestButton, ComboDivider, PlaceholderList } from
 import { OutboxView } from './OutboxView';
 import { EncryptedMessageEvent } from '../../components/encrypted-event';
 import { useUserReadReceipt } from '../../hooks/useReadReceipt';
+import { useMessageParserOptions } from '../../hooks/useMessageParserOptions';
 
 type RoomTimelineProps = {
   eventId?: string;
@@ -92,7 +81,6 @@ const PAGINATION_LIMIT = 80;
 export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTimelineProps) {
   const ct = useClient();
   const roomId = useRoom();
-  const useAuthentication = useMediaAuthentication();
   const encryptedRooms = useObservableValue(ct.encryptedRooms);
 
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
@@ -143,8 +131,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   // const roomToParents = useAtomValue(roomToParentsAtom);
   // const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
   const { navigateRoom } = useRoomNavigate();
-  const mentionClickHandler = useMentionClickHandler(roomId);
-  const spoilerClickHandler = useSpoilerClickHandler();
 
   const imagePackRooms = useImagePackRooms(roomId);
 
@@ -166,43 +152,8 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   >();
   const alive = useAlive();
 
-  const linkifyOpts = useMemo<LinkifyOpts>(
-    () => ({
-      ...LINKIFY_OPTS,
-      render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(
-          ct,
-          roomId,
-          href,
-          makeMentionCustomProps(mentionClickHandler),
-          membersAPI.getName,
-          getRoomName
-        )
-      ),
-    }),
-    [ct, roomId, mentionClickHandler, membersAPI.getName, getRoomName]
-  );
-  const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
-    () =>
-      getReactCustomHtmlParser(ct, roomId, {
-        linkifyOpts,
-        useAuthentication,
-        handleSpoilerClick: spoilerClickHandler,
-        handleMentionClick: mentionClickHandler,
-        getMemberName: membersAPI.getName,
-        getRoomName,
-      }),
-    [
-      ct,
-      roomId,
-      linkifyOpts,
-      spoilerClickHandler,
-      mentionClickHandler,
-      useAuthentication,
-      membersAPI.getName,
-      getRoomName,
-    ]
-  );
+  const { linkifyOpts, htmlReactParserOptions, htmlReactParserInlineOptions } =
+    useMessageParserOptions(roomId, getRoomName, membersAPI.getName);
 
   const activeThread = useObservableValue(timeline.activeThread);
   const threads = useObservableValue(timeline.threads);
@@ -315,10 +266,8 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   useObservableValueListener(timeline.outbox.senders, stickToBottom);
   useObservableValueListener(timeline.range.info, stickToBottom);
 
-  const handleOpenReply: MouseEventHandler = useCallback(async (evt) => {
-    const targetId = evt.currentTarget.getAttribute('data-event-id');
-    if (!targetId) return;
-    console.log(targetId);
+  const handleOpenReply = useCallback((replyId: string) => {
+    console.log(replyId);
   }, []);
 
   const handleUserClick = useUserClickHandler();
@@ -553,7 +502,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
           redacted={redacted.has(replyEventId)}
           getMemberName={membersAPI.getName}
           timeline={timeline}
-          htmlReactParserOptions={htmlReactParserOptions}
+          htmlReactParserOptions={htmlReactParserInlineOptions}
           linkifyOpts={linkifyOpts}
           hour24Clock={hour24Clock}
           dateFormatString={dateFormatString}

@@ -47,7 +47,7 @@ const BaseCode = style({
   border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
   borderRadius: config.radii.R300,
 });
-const CodeFont = style({
+export const CodeFont = style({
   fontFamily: 'monospace',
 });
 

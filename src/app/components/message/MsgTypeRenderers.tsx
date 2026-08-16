@@ -25,36 +25,41 @@ import { rContent, rEncryptedFile, rInfo } from '../../../client/reader';
 import { UrlPreviewCard, UrlPreviewHolder } from '../url-preview';
 import { testMatrixTo } from '../../plugins/matrix-to';
 
-export function MBadEncrypted() {
+type TextProps = {
+  size?: 'T400' | 'T300';
+};
+
+export function MBadEncrypted({ size }: TextProps) {
   return (
-    <Text>
+    <Text size={size}>
       <MessageBadEncryptedContent />
     </Text>
   );
 }
 
-type RedactedContentProps = {
+type RedactedContentProps = TextProps & {
   reason?: string;
 };
-export function RedactedContent({ reason }: RedactedContentProps) {
+
+export function RedactedContent({ size, reason }: RedactedContentProps) {
   return (
-    <Text>
+    <Text size={size}>
       <MessageDeletedContent reason={reason} />
     </Text>
   );
 }
 
-export function UnsupportedContent() {
+export function UnsupportedContent({ size }: TextProps) {
   return (
-    <Text>
+    <Text size={size}>
       <MessageUnsupportedContent />
     </Text>
   );
 }
 
-export function BrokenContent() {
+export function BrokenContent({ size }: TextProps) {
   return (
-    <Text>
+    <Text size={size}>
       <MessageBrokenContent />
     </Text>
   );

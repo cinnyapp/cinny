@@ -201,27 +201,6 @@ export const MessageTextBody = recipe({
         fontStyle: 'italic',
       },
     },
-    truncate: {
-      true: {
-        maxHeight: '15em',
-        overflow: 'hidden',
-
-        selectors: {
-          '&::before': {
-            content: '',
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            pointerEvents: 'none',
-
-            height: config.space.S400,
-            background: `linear-gradient(to top, ${color.Primary.Container}, #00000000)`,
-            borderBottom: `${config.borderWidth.B400} solid ${color.Primary.ContainerLine}`,
-          },
-        },
-      },
-    },
   },
 });
 

@@ -4,6 +4,7 @@ import { DefaultReset, color, config, toRem } from 'folds';
 
 export const TimelineDivider = style({
   position: 'relative',
+  minHeight: toRem(20),
 });
 export const TimelineDividerCenterChild = style({
   position: 'absolute',
