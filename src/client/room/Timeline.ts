@@ -262,7 +262,7 @@ export class Timeline implements TimelineView, Disposable {
     if (err) {
       throw new Error(printMatrixError(err));
     }
-    const { event, events_after: before, events_after: after, start, end } = result;
+    const { event, events_before: before, events_after: after, start, end } = result;
     if (!event) {
       throw new Error(
         `Failed to jump to event! No event found for ${eventId} in room ${this.roomId}`
