@@ -177,21 +177,13 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     opts?: ScrollToOptions;
   }>();
 
-  const propRef = useRef({
-    range,
-    limit,
-    count,
-  });
+  const propRef = useRef({ range, limit, count });
   if (propRef.current.count !== count) {
     // Clear restoreScrollRef on count change
     // As restoreScrollRef.current.anchorItem might changes
     restoreScrollRef.current = undefined;
   }
-  propRef.current = {
-    range,
-    count,
-    limit,
-  };
+  propRef.current = { range, count, limit };
 
   const getItems = useMemo(() => {
     const items = generateItems(range);
