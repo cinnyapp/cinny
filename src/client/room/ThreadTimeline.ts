@@ -288,15 +288,8 @@ export class ThreadTimeline implements TimelineView, Disposable {
       this.range.setRange(MessageRange.atLiveEnd(this.batch.read.size));
       return;
     }
-    const [err, result] = await this.getMessages(undefined, 'b', 80);
 
-    if (err) {
-      throw new Error(printMatrixError(err));
-    }
-
-    const { next_batch: prevToken, prev_batch: endToken, chunk } = result;
-    const messageEvents: MessageEventWithoutRoomId[] = this.relations.pickAndFilter(chunk);
-    this.batchManager.loadEvents(messageEvents, prevToken, endToken);
+    this.batchManager.reload(MessageBatch.emptyAtForwardEnd());
   }
 
   public findEvent(eventId: string): MessageEventWithoutRoomId | undefined {

@@ -126,4 +126,8 @@ export class TimelineBatchManager {
 
     this.batch.publish(this.publishKey, newBatch);
   }
+
+  public reload(batch: MessageBatch) {
+    this.batch.publish(this.publishKey, batch);
+  }
 }
