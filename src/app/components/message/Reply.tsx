@@ -76,7 +76,7 @@ export function ReplyMessage({
     return (
       <CompactLayout before={msgBarJSX}>
         <Box grow="Yes" direction="Column">
-          <Box alignItems="Center" shrink="No" gap="200">
+          <Box alignItems="Baseline" shrink="No" gap="200">
             <Box shrink="No" style={{ maxWidth: toRem(100) }}>
               {username}
             </Box>
@@ -93,7 +93,7 @@ export function ReplyMessage({
   if (messageLayout === MessageLayout.Bubble) {
     return (
       <BubbleLayout hideBubble before={msgBarJSX}>
-        <Box alignItems="Center" shrink="No" gap="200">
+        <Box alignItems="Baseline" shrink="No" gap="200">
           <Box shrink="No" style={{ maxWidth: toRem(100) }}>
             {username}
           </Box>
@@ -108,7 +108,7 @@ export function ReplyMessage({
 
   return (
     <ModernLayout before={msgBarJSX}>
-      <Box alignItems="Center" shrink="No" gap="200">
+      <Box alignItems="Baseline" shrink="No" gap="200">
         <Box shrink="No" style={{ maxWidth: toRem(100) }}>
           {username}
         </Box>
