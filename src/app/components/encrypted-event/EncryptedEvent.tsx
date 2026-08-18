@@ -43,12 +43,14 @@ type EncryptedMessageEventProps = {
   decryptionManager: DecryptionManager;
   roomId: string;
   event: MessageEventWithoutRoomId;
+  reply?: boolean;
   children: (decryptedEvent: MessageEventWithoutRoomId) => ReactNode;
 };
 export function EncryptedMessageEvent({
   decryptionManager,
   roomId,
   event,
+  reply,
   children,
 }: EncryptedMessageEventProps) {
   const encryptedEvent = decryptionManager.decryptableMessageEvent(roomId, event);
@@ -59,7 +61,7 @@ export function EncryptedMessageEvent({
 
   if (decryption instanceof EventDecryptionIdle) {
     return (
-      <Text>
+      <Text size={reply ? 'T300' : 'T400'} truncate={reply}>
         <MessageDecryptionIdle />
       </Text>
     );
@@ -67,7 +69,7 @@ export function EncryptedMessageEvent({
 
   if (decryption instanceof EventDecryptionPending) {
     return (
-      <Text>
+      <Text size={reply ? 'T300' : 'T400'} truncate={reply}>
         <MessageDecryptionPending />
       </Text>
     );
@@ -81,7 +83,7 @@ export function EncryptedMessageEvent({
 
   if (cause) {
     return (
-      <Text>
+      <Text size={reply ? 'T300' : 'T400'} truncate={reply}>
         <MessageDecryptionError
           message={
             cause instanceof Error

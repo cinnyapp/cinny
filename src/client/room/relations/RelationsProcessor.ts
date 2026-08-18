@@ -4,7 +4,7 @@ import { Disposable, Disposer } from 'neurone/lib/utils/disposable';
 import { MessageEvent } from '../../../types/matrix/room';
 import { Relations } from './Relations';
 import { RelationType, ReactionContent } from '../../../types/matrix/common';
-import { getRedactedEventId, redacted, reference, relation, replacement } from './utils';
+import { getRedactedEventId, redacted, reference, relation, replaced, replacement } from './utils';
 
 export class RelationsProcessor implements Disposable {
   private readonly publishKey = crypto.randomUUID();
@@ -62,6 +62,12 @@ export class RelationsProcessor implements Disposable {
       // Check if event itself is redacted
       if (redacted(event)) {
         redactedEvents.push(event.event_id);
+      }
+
+      // Check if event itself has replacement
+      const replacedWith = replaced(event);
+      if (replacedWith) {
+        editEvents.push(event);
       }
 
       // Handle relation events

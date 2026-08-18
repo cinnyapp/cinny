@@ -1,5 +1,5 @@
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
-import { rContent, rUnsigned, rEvent, rRelatesTo } from '../../reader';
+import { rContent, rUnsigned, rEvent, rRelatesTo, rRelations } from '../../reader';
 import { RelationType } from '../../../types/matrix/common';
 
 export const getRedactedEventId = (event: MessageEventWithoutRoomId): string | undefined => {
@@ -12,6 +12,17 @@ export const redacted = (event: MessageEventWithoutRoomId): boolean => {
   const { unsigned } = event;
 
   return rUnsigned.redactedBecause(unsigned) !== undefined;
+};
+
+export const replaced = (
+  event: MessageEventWithoutRoomId
+): MessageEventWithoutRoomId | undefined => {
+  const { unsigned } = event;
+
+  const relations = rUnsigned.relations(unsigned);
+  const replacementEvent = rRelations.replace(relations);
+
+  return replacementEvent as MessageEventWithoutRoomId | undefined;
 };
 
 export const relation = (event: MessageEventWithoutRoomId): boolean =>

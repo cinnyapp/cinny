@@ -1,16 +1,17 @@
 import { Box, Text, color, config, toRem } from 'folds';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
+import { ClientEventWithoutRoomId } from 'neurone/lib/api/types';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
 import * as css from './Reply.css';
-import { MessageBadEncryptedContent } from './content';
+import { MessageFailedContent } from './content';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
 import colorMXID from '../../../util/colorMXID';
 import { GetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { GetRoomMemberNameCallback } from '../../hooks/useRoomMembers';
-import { rUnsigned } from '../../../client/reader';
+import { rContent, rUnsigned } from '../../../client/reader';
 import { TimelineView } from '../../../client/room';
 import { RenderReplyContent } from '../RenderReplyContent';
 import { Time } from './Time';
@@ -18,6 +19,11 @@ import { BubbleLayout, CompactLayout, MessageBase, ModernLayout } from './layout
 import { MessageLayout, MessageSpacing } from '../../state/settings';
 import { RedactedContent } from './MsgTypeRenderers';
 import { HoverUnderline } from '../../styles/Text.css';
+import { useObservableValueOptionally } from '../../hooks/useObservableValue';
+import { getLatestEditEvent } from '../../utils/room';
+import { replaced } from '../../../client/room/relations';
+import { MessageContent } from '../MessageContent';
+import { useClient } from '../../hooks/useClient';
 
 type ReplyMessageProps = {
   username?: ReactNode;
@@ -125,7 +131,6 @@ type ReplyProps = {
   accessibleTagColors?: Map<string, string>;
   legacyUsernameColor?: boolean;
   getMemberName: GetRoomMemberNameCallback;
-  redacted: boolean;
   timeline?: TimelineView;
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
@@ -145,7 +150,6 @@ export function Reply({
   accessibleTagColors,
   legacyUsernameColor,
   getMemberName,
-  redacted,
   timeline,
   htmlReactParserOptions,
   linkifyOpts,
@@ -154,7 +158,12 @@ export function Reply({
   messageLayout,
   messageSpacing,
 }: ReplyProps) {
+  const ct = useClient();
   const placeholderWidth = useMemo(() => randomNumberBetween(40, 400), []);
+
+  const redactedEvents = useObservableValueOptionally(timeline?.relations.redacted);
+  const edits = useObservableValueOptionally(timeline?.relations.edits.eventToRelations);
+
   const replyEvent = useRoomEvent(
     roomId,
     eventId,
@@ -167,9 +176,50 @@ export function Reply({
 
   const usernameColor = legacyUsernameColor ? colorMXID(sender ?? eventId) : tagColor;
 
-  const redactedEvent = redacted || !!rUnsigned.redactedBecause(replyEvent?.unsigned);
+  const redacted =
+    redactedEvents?.has(eventId) || !!rUnsigned.redactedBecause(replyEvent?.unsigned);
 
-  // TODO: make edit message appear in reply
+  const renderEventContent = (event: ClientEventWithoutRoomId) => {
+    const aggregatedEdit = replaced(event);
+    const editEvents = edits?.get(eventId);
+
+    const editedEvent =
+      editEvents && redactedEvents
+        ? getLatestEditEvent(
+            event.sender,
+            aggregatedEdit ? [aggregatedEdit, ...editEvents] : editEvents,
+            redactedEvents
+          )
+        : undefined;
+
+    return (
+      <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }} as="div">
+        {redacted ? (
+          <RedactedContent size="T300" />
+        ) : (
+          <MessageContent
+            event={event}
+            editedEvent={editedEvent}
+            roomId={roomId}
+            decryptionManager={ct.decryption}
+            reply
+          >
+            {(contentEvent) => (
+              <RenderReplyContent
+                displayName={getMemberName(event.sender)}
+                eventType={event.type}
+                edited={!!editedEvent}
+                content={rContent.newContent(contentEvent.content) ?? contentEvent.content}
+                htmlReactParserOptions={htmlReactParserOptions}
+                linkifyOpts={linkifyOpts}
+              />
+            )}
+          </MessageContent>
+        )}
+      </Box>
+    );
+  };
+
   return (
     <MessageBase space={messageSpacing}>
       <ReplyMessage
@@ -205,26 +255,13 @@ export function Reply({
         }
         data-event-id={eventId}
       >
-        {replyEvent !== undefined ? (
-          <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }} as="div">
-            {redactedEvent && <RedactedContent size="T300" />}
-            {!redactedEvent &&
-              (replyEvent === null ? (
-                <Text size="B300">
-                  <MessageBadEncryptedContent />
-                </Text>
-              ) : (
-                <RenderReplyContent
-                  displayName={getMemberName(replyEvent.sender)}
-                  eventType={replyEvent.type}
-                  edited={false} // TODO:
-                  content={replyEvent.content}
-                  htmlReactParserOptions={htmlReactParserOptions}
-                  linkifyOpts={linkifyOpts}
-                />
-              ))}
-          </Box>
-        ) : (
+        {replyEvent && renderEventContent(replyEvent)}
+        {replyEvent === null && (
+          <Text size="T300">
+            <MessageFailedContent />
+          </Text>
+        )}
+        {replyEvent === undefined && (
           <LinePlaceholder
             style={{
               backgroundColor: color.SurfaceVariant.ContainerActive,

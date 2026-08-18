@@ -1,12 +1,4 @@
-import React, {
-  MouseEventHandler,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ReactEditor } from 'slate-react';
 import { Box, Scroll, Text, config } from 'folds';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
@@ -18,6 +10,7 @@ import {
   CompactPlaceholder,
   Reply,
   DividerTime,
+  RedactedContent,
 } from '../../../components/message';
 import { fallbackReply, getLatestEditEvent, getReplyId } from '../../../utils/room';
 import { useSetting } from '../../../state/hooks/settings';
@@ -70,6 +63,7 @@ import {
 import { OutboxView } from '../OutboxView';
 import { useUserReadReceipt } from '../../../hooks/useReadReceipt';
 import { useMessageParserOptions } from '../../../hooks/useMessageParserOptions';
+import { MessageContent } from '../../../components/MessageContent';
 
 type TimelineViewProps = {
   threadTimeline: ThreadTimeline;
@@ -93,7 +87,6 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const showUrlPreview = encryptedRooms.has(roomId) ? encUrlPreview : urlPreview;
-  const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const [showDeveloperTools] = useSetting(settingsAtom, 'developerTools');
 
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
@@ -294,11 +287,6 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
       />
     );
 
-    const content = editedEvent
-      ? rContent.newContent(editedEvent.content) ?? event.content
-      : event.content;
-
-    // FIXME: Redacted message
     return (
       <Message
         key={event.event_id}
@@ -332,18 +320,31 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
         hour24Clock={hour24Clock}
         dateFormatString={dateFormatString}
       >
-        <RenderMessageContent
-          displayName={membersAPI.getName(event.sender)}
-          eventType={event.type}
-          ts={event.origin_server_ts}
-          edited={!!editedEvent}
-          content={content}
-          mediaAutoLoad={mediaAutoLoad}
-          urlPreview={showUrlPreview}
-          htmlReactParserOptions={htmlReactParserOptions}
-          linkifyOpts={linkifyOpts}
-          outlineAttachment={messageLayout === MessageLayout.Bubble}
-        />
+        {redacted.has(event.event_id) ? (
+          <RedactedContent />
+        ) : (
+          <MessageContent
+            event={event}
+            editedEvent={editedEvent}
+            roomId={roomId}
+            decryptionManager={ct.decryption}
+          >
+            {(contentEvent) => (
+              <RenderMessageContent
+                displayName={membersAPI.getName(event.sender)}
+                eventType={contentEvent.type}
+                ts={event.origin_server_ts}
+                edited={!!editedEvent}
+                content={rContent.newContent(contentEvent.content) ?? contentEvent.content}
+                mediaAutoLoad={mediaAutoLoad}
+                urlPreview={showUrlPreview}
+                htmlReactParserOptions={htmlReactParserOptions}
+                linkifyOpts={linkifyOpts}
+                outlineAttachment={messageLayout === MessageLayout.Bubble}
+              />
+            )}
+          </MessageContent>
+        )}
         {reactionJSX}
       </Message>
     );
@@ -361,10 +362,6 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
   const { getCollapsed, updateCollapse } = useEventCollapse(threadTimeline.threadId);
   const eventRenderer = (event: MessageEventWithoutRoomId, item: number) => {
     if (event.sender && ignoredUsersSet.has(event.sender)) {
-      return null;
-    }
-    // FIXME: dont hide redacted event for threads
-    if (redacted.has(event.event_id) && !showHiddenEvents) {
       return null;
     }
 
@@ -403,7 +400,6 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
         getMemberPowerTag={getMemberPowerTag}
         accessibleTagColors={accessiblePowerTagColors}
         legacyUsernameColor={legacyUsernameColor || direct}
-        redacted={redacted.has(replyEventId)}
         getMemberName={membersAPI.getName}
         timeline={threadTimeline}
         htmlReactParserOptions={htmlReactParserInlineOptions}
@@ -495,7 +491,6 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
                 senders={localEventSenders}
                 messageBatch={messageBatch}
                 membersAPI={membersAPI}
-                redacted={redacted}
                 messageLayout={messageLayout}
                 messageSpacing={messageSpacing}
                 onUserClick={handleUserClick}

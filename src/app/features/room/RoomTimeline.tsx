@@ -71,9 +71,9 @@ import {
   UnreadControls,
 } from './components';
 import { OutboxView } from './OutboxView';
-import { EncryptedMessageEvent } from '../../components/encrypted-event';
 import { useUserReadReceipt } from '../../hooks/useReadReceipt';
 import { useMessageParserOptions } from '../../hooks/useMessageParserOptions';
+import { MessageContent } from '../../components/MessageContent';
 
 type RoomTimelineProps = {
   eventId?: string;
@@ -413,47 +413,31 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         hour24Clock={hour24Clock}
         dateFormatString={dateFormatString}
       >
-        {redacted.has(event.event_id) && <RedactedContent />}
-        {!redacted.has(event.event_id) &&
-          ((editedEvent ?? event).type === MessageEvent.RoomMessageEncrypted ? (
-            <EncryptedMessageEvent
-              roomId={roomId}
-              decryptionManager={ct.decryption}
-              event={editedEvent ?? event}
-            >
-              {(decryptedEvent) => (
-                <RenderMessageContent
-                  displayName={membersAPI.getName(event.sender)}
-                  eventType={decryptedEvent.type}
-                  ts={event.origin_server_ts}
-                  edited={!!editedEvent}
-                  content={rContent.newContent(decryptedEvent.content) ?? decryptedEvent.content}
-                  mediaAutoLoad={mediaAutoLoad}
-                  urlPreview={showUrlPreview}
-                  htmlReactParserOptions={htmlReactParserOptions}
-                  linkifyOpts={linkifyOpts}
-                  outlineAttachment={messageLayout === MessageLayout.Bubble}
-                />
-              )}
-            </EncryptedMessageEvent>
-          ) : (
-            <RenderMessageContent
-              displayName={membersAPI.getName(event.sender)}
-              eventType={event.type}
-              ts={event.origin_server_ts}
-              edited={!!editedEvent}
-              content={
-                editedEvent
-                  ? rContent.newContent(editedEvent.content) ?? editedEvent.content
-                  : event.content
-              }
-              mediaAutoLoad={mediaAutoLoad}
-              urlPreview={showUrlPreview}
-              htmlReactParserOptions={htmlReactParserOptions}
-              linkifyOpts={linkifyOpts}
-              outlineAttachment={messageLayout === MessageLayout.Bubble}
-            />
-          ))}
+        {redacted.has(event.event_id) ? (
+          <RedactedContent />
+        ) : (
+          <MessageContent
+            event={event}
+            editedEvent={editedEvent}
+            roomId={roomId}
+            decryptionManager={ct.decryption}
+          >
+            {(contentEvent) => (
+              <RenderMessageContent
+                displayName={membersAPI.getName(event.sender)}
+                eventType={contentEvent.type}
+                ts={event.origin_server_ts}
+                edited={!!editedEvent}
+                content={rContent.newContent(contentEvent.content) ?? contentEvent.content}
+                mediaAutoLoad={mediaAutoLoad}
+                urlPreview={showUrlPreview}
+                htmlReactParserOptions={htmlReactParserOptions}
+                linkifyOpts={linkifyOpts}
+                outlineAttachment={messageLayout === MessageLayout.Bubble}
+              />
+            )}
+          </MessageContent>
+        )}
         {reactionJSX}
         {threadTimeline && (
           <ThreadSelector
@@ -524,7 +508,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
           getMemberPowerTag={getMemberPowerTag}
           accessibleTagColors={accessiblePowerTagColors}
           legacyUsernameColor={legacyUsernameColor || direct}
-          redacted={redacted.has(replyEventId)}
           getMemberName={membersAPI.getName}
           timeline={timeline}
           htmlReactParserOptions={htmlReactParserInlineOptions}
@@ -596,7 +579,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
                 senders={localEventSenders}
                 messageBatch={messageBatch}
                 membersAPI={membersAPI}
-                redacted={redacted}
                 messageLayout={messageLayout}
                 messageSpacing={messageSpacing}
                 onUserClick={handleUserClick}

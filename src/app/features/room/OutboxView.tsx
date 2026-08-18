@@ -212,7 +212,6 @@ function MessageSending({
 export function OutboxView({
   messageBatch,
   senders,
-  redacted,
   messageLayout,
   messageSpacing,
   membersAPI,
@@ -231,7 +230,6 @@ export function OutboxView({
 }: {
   messageBatch: MessageBatch;
   senders: readonly LocalEventSender[];
-  redacted: Set<string>;
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
   membersAPI: RoomMembersAPI;
@@ -244,7 +242,7 @@ export function OutboxView({
   urlPreview?: boolean;
   hour24Clock: boolean;
   dateFormatString: string;
-  onReplyClick?: MouseEventHandler | undefined;
+  onReplyClick?: () => void;
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
 }) {
@@ -290,7 +288,6 @@ export function OutboxView({
             getMemberPowerTag={getMemberPowerTag}
             accessibleTagColors={accessibleTagColors}
             legacyUsernameColor={legacyUsernameColor || direct}
-            redacted={redacted.has(replyEventId)}
             getMemberName={membersAPI.getName}
             timeline={timeline}
             htmlReactParserOptions={htmlReactParserOptions}
@@ -299,7 +296,6 @@ export function OutboxView({
             dateFormatString={dateFormatString}
             messageLayout={messageLayout}
             messageSpacing={messageSpacing}
-            mediaAutoLoad={mediaAutoLoad}
           />
         );
 
