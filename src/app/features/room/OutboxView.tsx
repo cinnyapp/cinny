@@ -111,6 +111,7 @@ function MessageSendingError({
 type MessageSendingProps = {
   outbox: LocalEventOutbox;
   sender: LocalEventSender;
+  hasReply?: boolean;
   collapse: boolean;
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
@@ -127,6 +128,7 @@ type MessageSendingProps = {
 function MessageSending({
   outbox,
   sender,
+  hasReply,
   collapse,
   messageLayout,
   messageSpacing,
@@ -152,7 +154,7 @@ function MessageSending({
       })}
       tabIndex={0}
       space={messageSpacing}
-      collapse={collapse}
+      collapse={collapse || hasReply}
     >
       <RenderMessageLayout
         avatar={
@@ -312,6 +314,7 @@ export function OutboxView({
               membersAPI={membersAPI}
               messageSpacing={messageSpacing}
               messageLayout={messageLayout}
+              hasReply={!!replyEventId}
               collapse={collapse}
               onUserClick={onUserClick}
               onUsernameClick={onUsernameClick}
