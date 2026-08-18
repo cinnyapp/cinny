@@ -63,7 +63,13 @@ import {
 import { RoomViewTyping } from './RoomViewTyping';
 import { rContent } from '../../../client/reader';
 import { ThreadSelector } from './message/thread-selector';
-import { TimelineFloat, JumpToLatestButton, ComboDivider, PlaceholderList } from './components';
+import {
+  TimelineFloat,
+  JumpToLatestButton,
+  ComboDivider,
+  PlaceholderList,
+  UnreadControls,
+} from './components';
 import { OutboxView } from './OutboxView';
 import { EncryptedMessageEvent } from '../../components/encrypted-event';
 import { useUserReadReceipt } from '../../hooks/useReadReceipt';
@@ -165,8 +171,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const localEventSenders = useObservableValue(timeline.outbox.senders);
   const { events } = messageBatch.messages;
 
-  window.t = timeline;
-
   const range = useObservableValue(timeline.range.info);
   const rangeAtStart = range.start === 0;
   const rangeAtEnd = range.end === messageBatch.size;
@@ -255,20 +259,41 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const stickToBottom = useCallback(() => {
     if (!atBottom) return;
 
-    setTimeout(() => {
-      const scrollEl = getScrollElement();
-      if (scrollEl) {
-        scrollToBottom(scrollEl, 'smooth');
-      }
-    }, 100);
+    // setTimeout(() => {
+    //   const scrollEl = getScrollElement();
+    //   if (scrollEl) {
+    //     scrollToBottom(scrollEl, 'smooth');
+    //   }
+    // }, 100);
   }, [getScrollElement, atBottom]);
 
   useObservableValueListener(timeline.outbox.senders, stickToBottom);
   useObservableValueListener(timeline.range.info, stickToBottom);
 
-  const handleOpenReply = useCallback((replyId: string) => {
-    console.log(replyId);
-  }, []);
+  const handleOpenReply = useCallback(
+    (replyId: string) => {
+      const replyIndex = timeline.batch.read.messages.events.findIndex(
+        (e) => e.event_id === replyId
+      );
+      console.log(replyIndex);
+      if (replyIndex > -1) {
+        scrollToItem(replyIndex, {
+          behavior: 'smooth',
+          align: 'center',
+          stopInView: true,
+        });
+        setFocusItem({
+          index: replyIndex,
+          scrollTo: false,
+          highlight: true,
+        });
+
+        return;
+      }
+      timeline.jumpToEvent(replyId);
+    },
+    [scrollToItem, timeline]
+  );
 
   const handleUserClick = useUserClickHandler();
   const handleUsernameClick = useUsernameClickHandler(editor);
@@ -277,6 +302,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const handleReactionToggle = useCallback((targetEventId: string) => {
     console.log(targetEventId);
   }, []);
+
   const handleEdit = useCallback(
     (editEvtId?: string) => {
       if (editEvtId) {
@@ -303,9 +329,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     },
     [timeline]
   );
-
-  console.log('========> RoomTimeline');
-  console.log(range, events.length);
 
   let threadSeries: MessageEventWithoutRoomId[] = [];
   const renderMatrixEvent = (event: MessageEventWithoutRoomId, item: number, collapse: boolean) => {
@@ -524,29 +547,12 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
-      {/* {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && (
-        <TimelineFloat position="Top">
-          <Chip
-            variant="Primary"
-            radii="Pill"
-            outlined
-            before={<Icon size="50" src={Icons.MessageUnread} />}
-            onClick={handleJumpToUnread}
-          >
-            <Text size="L400">Jump to Unread</Text>
-          </Chip>
-
-          <Chip
-            variant="SurfaceVariant"
-            radii="Pill"
-            outlined
-            before={<Icon size="50" src={Icons.CheckTwice} />}
-            onClick={handleMarkAsRead}
-          >
-            <Text size="L400">Mark as Read</Text>
-          </Chip>
-        </TimelineFloat>
-      )} */}
+      {readReceipt && (
+        <UnreadControls
+          onJumpToUnread={() => timeline.jumpToEvent(readReceipt.eventId)}
+          onMarkAsRead={() => undefined}
+        />
+      )}
       <Scroll ref={scrollRef} visibility="Hover">
         <Box
           direction="Column"

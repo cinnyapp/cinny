@@ -60,7 +60,13 @@ import {
 } from '../hooks/useTimeline';
 import { rContent } from '../../../../client/reader';
 import { useEditor } from '../../../components/editor';
-import { TimelineFloat, JumpToLatestButton, ComboDivider, PlaceholderList } from '../components';
+import {
+  TimelineFloat,
+  JumpToLatestButton,
+  ComboDivider,
+  PlaceholderList,
+  UnreadControls,
+} from '../components';
 import { OutboxView } from '../OutboxView';
 import { useUserReadReceipt } from '../../../hooks/useReadReceipt';
 import { useMessageParserOptions } from '../../../hooks/useMessageParserOptions';
@@ -420,6 +426,12 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
+      {readReceipt && (
+        <UnreadControls
+          onJumpToUnread={() => threadTimeline.jumpToEvent(readReceipt.eventId)}
+          onMarkAsRead={() => undefined}
+        />
+      )}
       <Scroll ref={scrollRef} size="0" visibility="Hover" hideTrack>
         <Box direction="Column" style={{ minHeight: '100%' }}>
           <Box

@@ -194,6 +194,9 @@ export function Reply({
         time={
           replyEvent && (
             <Time
+              as="button"
+              className={HoverUnderline}
+              onClick={onClick ? () => onClick(eventId) : undefined}
               ts={replyEvent.origin_server_ts}
               dateFormatString={dateFormatString}
               hour24Clock={hour24Clock}
