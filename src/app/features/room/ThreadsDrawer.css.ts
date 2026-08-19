@@ -4,19 +4,15 @@ import { color, config, toRem } from 'folds';
 export const ThreadsDrawer = style({
   width: toRem(400),
   minWidth: toRem(360),
-  overflow: 'hidden',
-  // Height comes from flexbox: this column is a stretch child of the drawer
-  // row (which itself stretches to the content-area height inside Room), so we
-  // never set a percentage height here — percentage heights resolve to auto when
-  // an ancestor's height is itself flex-stretched rather than definite, which is
-  // what made the reply composer float with thread length. The drawer fills via
-  // flex grow/stretch and `overflow: hidden` clips any overflow.
-  minHeight: 0,
+  // Mirrors MembersDrawer: width only, no overflow/height/minHeight on the
+  // drawer root. Height comes from flexbox stretch (this column is a stretch
+  // child up the chain from #root); adding overflow:hidden or minHeight here
+  // broke that stretch and made the reply composer float with thread length.
 });
 
 // Column wrapper between the drawer and its scroll area. minHeight: 0 lets it
-// shrink below its content (so a tall message list never pushes the reply
-// composer off the bottom); height comes from flex grow, not a percentage.
+// shrink below its content so a tall message list never pushes the reply
+// composer off the bottom. No height/overflow — height comes from flex grow.
 export const ThreadsDrawerBody = style({
   minHeight: 0,
 });
