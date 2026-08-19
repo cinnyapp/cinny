@@ -268,15 +268,27 @@ export const getUnreadMessageCount = (mx: MatrixClient, room: Room): number => {
 export const getUnreadInfo = (mx: MatrixClient, room: Room): UnreadInfo => {
   const notifTotal = room.getUnreadNotificationCount(NotificationCountType.Total);
   const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
-  // When the SDK notification count is 0 (e.g. notification mode is
-  // "Mentions & Keywords only"), fall back to counting actual unread messages
-  // in the live timeline so the channel list badge shows a real number instead
-  // of an empty dot.
-  const realTotal = notifTotal > 0 ? notifTotal : getUnreadMessageCount(mx, room);
+  // For "Mentions & Keywords only" rooms the SDK notification count is 0 by
+  // design (the room push rule has no notify action). Previously we fell back to
+  // getUnreadMessageCount for every such room, which made Cinny fire desktop
+  // notifications and show a channel badge for EVERY message — defeating the
+  // purpose of the Mentions-only setting. Now we only surface the real count
+  // when there is an actual highlight/mention; otherwise the room stays quiet
+  // (no badge, no notification) exactly as the notification mode promises.
+  // All-Messages and Default rooms still get the real count fallback so their
+  // channel-list badge shows a number instead of an empty dot.
+  const mode = getNotificationType(mx, room.roomId);
+  const realCount = getUnreadMessageCount(mx, room);
+  let total: number;
+  if (mode === NotificationType.MentionsAndKeywords) {
+    total = highlight > 0 ? realCount : 0;
+  } else {
+    total = notifTotal > 0 ? notifTotal : realCount;
+  }
   return {
     roomId: room.roomId,
     highlight,
-    total: highlight > realTotal ? highlight : realTotal,
+    total: highlight > total ? highlight : total,
   };
 };
 
