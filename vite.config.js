@@ -14,6 +14,10 @@ import buildConfig from './build.config';
 const copyFiles = {
   targets: [
     {
+      src: 'node_modules/@matrix-org/matrix-sdk-crypto-wasm/pkg/matrix_sdk_crypto_wasm_bg.js',
+      dest: 'assets',
+    },
+    {
       src: 'node_modules/@element-hq/element-call-embedded/dist/*',
       dest: 'public/element-call',
     },
