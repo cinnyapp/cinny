@@ -416,6 +416,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
     : undefined;
 
   const [peopleDrawer, setPeopleDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const [threadsDrawer, setThreadsDrawer] = useSetting(settingsAtom, 'threadsDrawer');
 
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {
@@ -443,6 +444,12 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
       return;
     }
     setPeopleDrawer(!peopleDrawer);
+    setThreadsDrawer(false);
+  };
+
+  const handleThreadsToggle = () => {
+    setThreadsDrawer(!threadsDrawer);
+    if (!threadsDrawer) setPeopleDrawer(false);
   };
 
   return (
@@ -597,6 +604,24 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
           {!room.isCallRoom() && livekitSupported && rtcSupported && hasCallPermission && (
             <CallButton />
           )}
+          {screenSize === ScreenSize.Desktop && (
+            <TooltipProvider
+              position="Bottom"
+              offset={4}
+              tooltip={
+                <Tooltip>
+                  <Text>{threadsDrawer ? 'Hide Threads' : 'Show Threads'}</Text>
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => (
+                <IconButton fill="None" ref={triggerRef} onClick={handleThreadsToggle}>
+                  <Icon size="400" src={Icons.Thread} />
+                </IconButton>
+              )}
+            </TooltipProvider>
+          )}
+
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"
