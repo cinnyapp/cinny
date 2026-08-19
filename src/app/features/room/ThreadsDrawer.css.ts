@@ -5,6 +5,11 @@ export const ThreadsDrawer = style({
   width: toRem(400),
   minWidth: toRem(360),
   overflow: 'hidden',
+  // Bound the drawer to the available (viewport) height so a tall message list
+  // never pushes the reply composer off the bottom of the window. The drawer is
+  // a stretched flex child, but this makes the column height explicit.
+  height: '100%',
+  maxHeight: '100%',
 });
 
 // Column wrapper between the drawer and its scroll area. Needs minHeight: 0 so

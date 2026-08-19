@@ -7,7 +7,10 @@ import {
   Icon,
   IconButton,
   Icons,
+  Menu,
   MenuItem,
+  PopOut,
+  RectCords,
   Scroll,
   Spinner,
   Text,
@@ -18,8 +21,15 @@ import {
 } from 'folds';
 import { MatrixEvent, Room, RoomEvent, Thread, ThreadEvent } from 'matrix-js-sdk';
 import classNames from 'classnames';
+import FocusTrap from 'focus-trap-react';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
+
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { getMatrixToRoomEvent } from '../../plugins/matrix-to';
+import { getViaServers } from '../../plugins/via-servers';
+import { copyToClipboard } from '../../utils/dom';
+import { stopPropagation } from '../../utils/keyboard';
 
 import * as css from './ThreadsDrawer.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -378,6 +388,88 @@ function ThreadMessages({ room, thread }: { room: Room; thread: Thread }) {
   );
 }
 
+function ThreadMenu({
+  room,
+  thread,
+  onViewInThread,
+}: {
+  room: Room;
+  thread: Thread;
+  onViewInThread: () => void;
+}) {
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+  const rootEventId = thread.rootEvent?.getId();
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleViewInThread = () => {
+    setMenuAnchor(undefined);
+    onViewInThread();
+  };
+
+  const handleCopyLink = () => {
+    if (!rootEventId) return;
+    copyToClipboard(getMatrixToRoomEvent(room.roomId, rootEventId, getViaServers(room)));
+    setMenuAnchor(undefined);
+  };
+
+  return (
+    <>
+      <IconButton
+        variant="Background"
+        aria-pressed={!!menuAnchor}
+        onClick={handleOpenMenu}
+        aria-label="Thread options"
+      >
+        <Icon src={Icons.VerticalDots} />
+      </IconButton>
+      <PopOut
+        anchor={menuAnchor}
+        position="Bottom"
+        align="End"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              clickOutsideDeactivates: true,
+              onDeactivate: () => setMenuAnchor(undefined),
+              returnFocusOnDeactivate: false,
+              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Menu>
+              <MenuItem
+                size="300"
+                radii="300"
+                after={<Icon size="100" src={Icons.External} />}
+                onClick={handleViewInThread}
+              >
+                <Text size="T300" truncate>
+                  View in Thread
+                </Text>
+              </MenuItem>
+              <MenuItem
+                size="300"
+                radii="300"
+                after={<Icon size="100" src={Icons.Link} />}
+                onClick={handleCopyLink}
+              >
+                <Text size="T300" truncate>
+                  Copy link to thread
+                </Text>
+              </MenuItem>
+            </Menu>
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
+
 function ThreadDetail({
   room,
   thread,
@@ -393,6 +485,16 @@ function ThreadDetail({
   const senderId = rootEvent?.getSender() ?? '';
   const title =
     getThreadPreview(rootEvent) || (senderId ? getSenderName(room, senderId) : 'Thread');
+  const { navigateRoom } = useRoomNavigate();
+
+  const handleViewInThread = () => {
+    // Navigate to the room with the root (thread-starting) event focused so the
+    // main timeline scrolls to and highlights the parent message, then close
+    // the panel so the main timeline is visible.
+    const rootEventId = thread.rootEvent?.getId();
+    if (rootEventId) navigateRoom(room.roomId, rootEventId);
+    onClose();
+  };
 
   return (
     <>
@@ -418,6 +520,7 @@ function ThreadDetail({
             {title}
           </Text>
         </Box>
+        <ThreadMenu room={room} thread={thread} onViewInThread={handleViewInThread} />
         <TooltipProvider
           position="Bottom"
           align="End"
