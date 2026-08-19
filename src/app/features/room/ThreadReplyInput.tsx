@@ -1,0 +1,158 @@
+import React, { KeyboardEventHandler, useCallback, useEffect } from 'react';
+import { Box, Icon, IconButton, Icons, Line, config } from 'folds';
+import { isKeyHotkey } from 'is-hotkey';
+import {
+  IContent,
+  MsgType,
+  NotificationCountType,
+  RelationType,
+  Room,
+  Thread,
+} from 'matrix-js-sdk';
+import { useAtom } from 'jotai';
+import { ReactEditor } from 'slate-react';
+import { Transforms } from 'slate';
+
+import { useMatrixClient } from '../../hooks/useMatrixClient';
+import {
+  CustomEditor,
+  Toolbar,
+  toMatrixCustomHTML,
+  toPlainText,
+  resetEditor,
+  resetEditorHistory,
+  useEditor,
+  isEmptyEditor,
+  trimCustomHtml,
+  customHtmlEqualsPlainText,
+  getMentions,
+} from '../../components/editor';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
+import { getMentionContent } from '../../utils/room';
+import { threadIdToMsgDraftAtomFamily } from '../../state/room/roomInputDrafts';
+import { useComposingCheck } from '../../hooks/useComposingCheck';
+
+/**
+ * Reply composer for the thread panel. Persists its draft per-thread (not the
+ * room-wide composer draft) and sends the message as a thread reply via
+ * `m.relates_to { rel_type: m.thread, event_id: <root> }` — the same shape
+ * RoomInput already uses for the thread branch of a reply.
+ */
+function ThreadReplyInput({ room, thread }: { room: Room; thread: Thread }) {
+  const mx = useMatrixClient();
+  const editor = useEditor();
+  const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
+  const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
+  const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
+  const [msgDraft, setMsgDraft] = useAtom(threadIdToMsgDraftAtomFamily(thread.id));
+  const isComposing = useComposingCheck();
+
+  const rootEventId = thread.rootEvent?.getId();
+
+  useEffect(() => {
+    Transforms.insertFragment(editor, msgDraft);
+  }, [editor, msgDraft]);
+
+  useEffect(
+    () => () => {
+      if (!isEmptyEditor(editor)) {
+        const parsedDraft = JSON.parse(JSON.stringify(editor.children));
+        setMsgDraft(parsedDraft);
+      } else {
+        setMsgDraft([]);
+      }
+      resetEditor(editor);
+      resetEditorHistory(editor);
+    },
+    [thread.id, editor, setMsgDraft]
+  );
+
+  const submit = useCallback(() => {
+    if (!rootEventId) return;
+
+    const plainText = toPlainText(editor.children, isMarkdown).trim();
+    const formattedBody = trimCustomHtml(
+      toMatrixCustomHTML(editor.children, {
+        allowTextFormatting: true,
+        allowBlockMarkdown: isMarkdown,
+        allowInlineMarkdown: isMarkdown,
+      })
+    );
+    if (plainText === '') return;
+
+    const mentionData = getMentions(mx, room.roomId, editor);
+    const content: IContent = {
+      msgtype: MsgType.Text,
+      body: plainText,
+    };
+    content['m.mentions'] = getMentionContent(Array.from(mentionData.users), mentionData.room);
+    if (!customHtmlEqualsPlainText(formattedBody, plainText)) {
+      content.format = 'org.matrix.custom.html';
+      content.formatted_body = formattedBody;
+    }
+    content['m.relates_to'] = {
+      rel_type: RelationType.Thread,
+      event_id: rootEventId,
+      is_falling_back: false,
+    };
+
+    mx.sendMessage(room.roomId, content as any).then(() => {
+      // Best-effort thread read marker so the unread indicator clears.
+      room.setThreadUnreadNotificationCount(thread.id, NotificationCountType.Total, 0);
+    });
+    resetEditor(editor);
+    resetEditorHistory(editor);
+    setMsgDraft([]);
+    ReactEditor.focus(editor);
+  }, [editor, isMarkdown, mx, room, rootEventId, setMsgDraft, thread.id]);
+
+  const handleKeyDown: KeyboardEventHandler = useCallback(
+    (evt) => {
+      if (
+        (isKeyHotkey('mod+enter', evt) || (!enterForNewline && isKeyHotkey('enter', evt))) &&
+        !isComposing(evt)
+      ) {
+        evt.preventDefault();
+        submit();
+      }
+    },
+    [submit, enterForNewline, isComposing]
+  );
+
+  return (
+    <Box direction="Column" style={{ padding: `${config.space.S200} ${config.space.S300}` }}>
+      <CustomEditor
+        editableName="ThreadReplyInput"
+        editor={editor}
+        placeholder="Reply to thread..."
+        onKeyDown={handleKeyDown}
+        before={
+          <IconButton onClick={submit} variant="SurfaceVariant" size="300" radii="300">
+            <Icon src={Icons.Send} />
+          </IconButton>
+        }
+        after={
+          <IconButton
+            variant="SurfaceVariant"
+            size="300"
+            radii="300"
+            onClick={() => setToolbar(!toolbar)}
+          >
+            <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
+          </IconButton>
+        }
+        bottom={
+          toolbar && (
+            <div>
+              <Line variant="SurfaceVariant" size="300" />
+              <Toolbar />
+            </div>
+          )
+        }
+      />
+    </Box>
+  );
+}
+
+export default ThreadReplyInput;

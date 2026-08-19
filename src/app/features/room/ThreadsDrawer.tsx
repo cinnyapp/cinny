@@ -1,4 +1,5 @@
 import React, { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
 import {
   Avatar,
   Box,
@@ -13,6 +14,7 @@ import {
   Tooltip,
   TooltipProvider,
   config,
+  toRem,
 } from 'folds';
 import { MatrixEvent, Room, RoomEvent, Thread, ThreadEvent } from 'matrix-js-sdk';
 import classNames from 'classnames';
@@ -23,6 +25,7 @@ import * as css from './ThreadsDrawer.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useSetting, useSetSetting } from '../../state/hooks/settings';
 import { settingsAtom, MessageLayout } from '../../state/settings';
+import { selectedThreadAtom } from '../../state/room/threadSelection';
 import {
   factoryRenderLinkifyWithMention,
   getReactCustomHtmlParser,
@@ -44,6 +47,7 @@ import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useTheme } from '../../hooks/useTheme';
 import { RenderMessageContent } from '../../components/RenderMessageContent';
 import { Message } from './message';
+import ThreadReplyInput from './ThreadReplyInput';
 import { GetContentCallback, MessageEvent } from '../../../types/matrix/room';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 
@@ -366,10 +370,12 @@ function ThreadDetail({
   room,
   thread,
   onBack,
+  onClose,
 }: {
   room: Room;
   thread: Thread;
   onBack: () => void;
+  onClose: () => void;
 }) {
   const { rootEvent } = thread;
   const senderId = rootEvent?.getSender() ?? '';
@@ -399,6 +405,22 @@ function ThreadDetail({
             {title}
           </Text>
         </Box>
+        <TooltipProvider
+          position="Bottom"
+          align="End"
+          offset={4}
+          tooltip={
+            <Tooltip>
+              <Text>Close</Text>
+            </Tooltip>
+          }
+        >
+          {(triggerRef) => (
+            <IconButton ref={triggerRef} variant="Background" onClick={onClose}>
+              <Icon src={Icons.Cross} />
+            </IconButton>
+          )}
+        </TooltipProvider>
       </Box>
       <Box className={css.ThreadDrawerContentBase} grow="Yes">
         <Scroll variant="Background" size="300" visibility="Always" hideTrack={false}>
@@ -407,6 +429,7 @@ function ThreadDetail({
           </Box>
         </Scroll>
       </Box>
+      <ThreadReplyInput room={room} thread={thread} />
     </>
   );
 }
@@ -415,10 +438,79 @@ type ThreadsDrawerProps = {
   room: Room;
 };
 
+const DEFAULT_THREAD_DRAWER_WIDTH = 400;
+const MIN_THREAD_DRAWER_WIDTH = 320;
+const MAX_THREAD_DRAWER_WIDTH = 640;
+const THREAD_DRAWER_WIDTH_KEY = 'cinny.threadsDrawerWidth';
+
+function readStoredWidth(): number {
+  try {
+    const raw = Number.parseInt(localStorage.getItem(THREAD_DRAWER_WIDTH_KEY) ?? '', 10);
+    if (Number.isNaN(raw)) return DEFAULT_THREAD_DRAWER_WIDTH;
+    return Math.min(MAX_THREAD_DRAWER_WIDTH, Math.max(MIN_THREAD_DRAWER_WIDTH, raw));
+  } catch {
+    return DEFAULT_THREAD_DRAWER_WIDTH;
+  }
+}
+
 export function ThreadsDrawer({ room }: ThreadsDrawerProps) {
   const setThreadsDrawer = useSetSetting(settingsAtom, 'threadsDrawer');
+  const bootSelection = useAtomValue(selectedThreadAtom);
+  const setBootSelection = useSetAtom(selectedThreadAtom);
   const [selectedThread, setSelectedThread] = useState<Thread>();
   const [threads, setThreads] = useState<Thread[]>(() => room.getThreads());
+  const [drawerWidth, setDrawerWidth] = useState<number>(readStoredWidth);
+  const [isResizing, setIsResizing] = useState(false);
+
+  // If the timeline's thread summary opened a specific thread, select it here
+  // (and clear the request so a later drawer-open starts at the list).
+  useEffect(() => {
+    if (bootSelection?.roomId === room.roomId && bootSelection.threadId) {
+      const thread = room.getThread(bootSelection.threadId);
+      if (thread) {
+        setSelectedThread(thread);
+        setBootSelection(undefined);
+      }
+    }
+  }, [bootSelection, room, setBootSelection]);
+
+  // Persist the resized width so it survives reloads.
+  useEffect(() => {
+    try {
+      localStorage.setItem(THREAD_DRAWER_WIDTH_KEY, String(drawerWidth));
+    } catch {
+      // ignore storage failures (private mode / quota)
+    }
+  }, [drawerWidth]);
+
+  // Pointer-based resizing: dragging changes the width until the pointer is
+  // released. Listeners attach on the window only while resizing is active.
+  const startResize = useCallback((evt: React.PointerEvent<HTMLElement>) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return undefined;
+    const onMove = (evt: PointerEvent) => {
+      // The drawer's right edge is pinned at the viewport right; dragging left
+      // grows the drawer, dragging right shrinks it.
+      const width = window.innerWidth - evt.clientX;
+      setDrawerWidth(Math.min(MAX_THREAD_DRAWER_WIDTH, Math.max(MIN_THREAD_DRAWER_WIDTH, width)));
+    };
+    const onUp = () => {
+      setIsResizing(false);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    };
+  }, [isResizing]);
 
   useEffect(() => {
     const update = () => setThreads(room.getThreads());
@@ -464,26 +556,41 @@ export function ThreadsDrawer({ room }: ThreadsDrawerProps) {
   }, [threads, selectedThread, room]);
 
   return (
-    <Box
-      className={classNames(css.ThreadsDrawer, ContainerColor({ variant: 'Background' }))}
-      shrink="No"
-      direction="Column"
-    >
-      <Box grow="Yes" direction="Column">
-        {selectedThread ? (
-          <ThreadDetail
-            room={room}
-            thread={selectedThread}
-            onBack={() => setSelectedThread(undefined)}
-          />
-        ) : (
-          <ThreadList
-            room={room}
-            threads={threads}
-            onSelect={setSelectedThread}
-            onClose={() => setThreadsDrawer(false)}
-          />
-        )}
+    <Box shrink="No" direction="Row">
+      <div
+        className={css.ThreadsDrawerResizer}
+        onPointerDown={startResize}
+        style={{ cursor: isResizing ? 'col-resize' : undefined }}
+      />
+      <Box
+        className={classNames(css.ThreadsDrawer, ContainerColor({ variant: 'Background' }))}
+        style={{ width: toRem(drawerWidth) }}
+        shrink="No"
+        direction="Column"
+      >
+        <Box grow="Yes" direction="Column">
+          {selectedThread ? (
+            <ThreadDetail
+              room={room}
+              thread={selectedThread}
+              onClose={() => setThreadsDrawer(false)}
+              onBack={() => {
+                setSelectedThread(undefined);
+                setBootSelection(undefined);
+              }}
+            />
+          ) : (
+            <ThreadList
+              room={room}
+              threads={threads}
+              onSelect={(thread) => {
+                setSelectedThread(thread);
+                setBootSelection({ roomId: room.roomId, threadId: thread.id });
+              }}
+              onClose={() => setThreadsDrawer(false)}
+            />
+          )}
+        </Box>
       </Box>
     </Box>
   );
