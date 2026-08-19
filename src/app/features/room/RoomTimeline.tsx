@@ -22,6 +22,7 @@ import {
   Room,
   RoomEvent,
   RoomEventHandlerMap,
+  ThreadEvent,
 } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
@@ -83,9 +84,11 @@ import {
   isMembershipChanged,
   reactionOrEditEvent,
 } from '../../utils/room';
-import { useSetting } from '../../state/hooks/settings';
+import { useSetting, useSetSetting } from '../../state/hooks/settings';
 import { MessageLayout, settingsAtom } from '../../state/settings';
+import { selectedThreadAtom } from '../../state/room/threadSelection';
 import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
+import { ThreadSummary } from './ThreadSummary';
 import { Reactions, Message, Event, EncryptedContent } from './message';
 import { useMemberEventParser } from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
@@ -446,6 +449,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const showUrlPreview = room.hasEncryptionStateEvent() ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const [showDeveloperTools] = useSetting(settingsAtom, 'developerTools');
+  const [threadsDrawer] = useSetting(settingsAtom, 'threadsDrawer');
 
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
   const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
@@ -456,6 +460,18 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
+  const setThreadsDrawer = useSetSetting(settingsAtom, 'threadsDrawer');
+  const setSelectedThread = useSetAtom(selectedThreadAtom);
+
+  const handleOpenThread = useCallback(
+    (threadId: string) => {
+      // Open the threads drawer and select the given thread so the summary's
+      // click lands on that thread's conversation inside the panel.
+      setThreadsDrawer(true);
+      setSelectedThread({ roomId: room.roomId, threadId });
+    },
+    [room.roomId, setSelectedThread, setThreadsDrawer]
+  );
 
   const creatorsTag = useRoomCreatorsTag();
   const powerLevelTags = usePowerLevelTags(room, powerLevels);
@@ -475,6 +491,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const canSendReaction = permissions.event(MessageEvent.Reaction, mx.getSafeUserId());
   const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, mx.getSafeUserId());
   const [editId, setEditId] = useState<string>();
+  // Bumped when thread data (new reply / update / delete / receipt) changes so
+  // thread summaries under root messages re-render with fresh preview + unread.
+  const [, setThreadRevision] = useState(0);
 
   const roomToParents = useAtomValue(roomToParentsAtom);
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
@@ -1017,6 +1036,52 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   );
   const { t } = useTranslation();
 
+  // Keep thread summaries live: a new reply, thread update/delete, or a read
+  // receipt changes the preview/reply-count/unread shown under root messages,
+  // none of which flow through the main-room timeline events.
+  //
+  // We also listen for RoomEvent.LocalEchoUpdated: when the user sends a thread
+  // reply, the SDK's addLiveEvents() recognises the remote echo by its
+  // transaction_id and routes it through handleRemoteEcho(), which updates an
+  // existing thread but never CREATES one (it skips the addThreadedEvents path
+  // that createThread + ThreadEvent.New live on). So the Thread object for our
+  // own newly-started thread is never created live, and the summary under the
+  // root message never appears until a reload re-runs fetchRoomThreads().
+  // When the confirmed event is a thread reply whose Thread doesn't exist yet,
+  // we manually create it via processThreadRoots([rootEvent]), which calls
+  // createThread() and emits ThreadEvent.New — the onNew handler then bumps
+  // the revision and the ThreadSummary appears live.
+  useEffect(() => {
+    const bump = () => setThreadRevision((r) => r + 1);
+    const onDelete = () => bump();
+    const onNewReply = () => bump();
+    const onUpdate = () => bump();
+    const onNew = () => bump();
+    const onLocalEchoUpdated = (mEvent: MatrixEvent) => {
+      const rootId = mEvent.threadRootId;
+      if (rootId && !room.getThread(rootId)) {
+        const rootEvent = room.findEventById(rootId);
+        if (rootEvent) {
+          room.processThreadRoots([rootEvent], false);
+        }
+      }
+    };
+    room.on(ThreadEvent.New as never, onNew as never);
+    room.on(ThreadEvent.NewReply as never, onNewReply as never);
+    room.on(ThreadEvent.Update as unknown as never, onUpdate as never);
+    room.on(ThreadEvent.Delete as never, onDelete as never);
+    room.on(RoomEvent.Receipt as never, bump as never);
+    room.on(RoomEvent.LocalEchoUpdated as never, onLocalEchoUpdated as never);
+    return () => {
+      room.off(ThreadEvent.New as never, onNew as never);
+      room.off(ThreadEvent.NewReply as never, onNewReply as never);
+      room.off(ThreadEvent.Update as unknown as never, onUpdate as never);
+      room.off(ThreadEvent.Delete as never, onDelete as never);
+      room.off(RoomEvent.Receipt as never, bump as never);
+      room.off(RoomEvent.LocalEchoUpdated as never, onLocalEchoUpdated as never);
+    };
+  }, [room]);
+
   const renderMatrixEvent = useMatrixEventRenderer<
     [string, MatrixEvent, number, EventTimelineSet, boolean]
   >(
@@ -1035,80 +1100,91 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const senderId = mEvent.getSender() ?? '';
         const senderDisplayName =
           getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+        // A message is a thread root if it has a matching Thread object in the room.
+        const threadRoot = room.getThread(mEventId);
 
         return (
-          <Message
-            key={mEvent.getId()}
-            data-message-item={item}
-            data-message-id={mEventId}
-            room={room}
-            mEvent={mEvent}
-            messageSpacing={messageSpacing}
-            messageLayout={messageLayout}
-            collapse={collapse}
-            highlight={highlighted}
-            edit={editId === mEventId}
-            canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
-            canSendReaction={canSendReaction}
-            canPinEvent={canPinEvent}
-            imagePackRooms={imagePackRooms}
-            relations={hasReactions ? reactionRelations : undefined}
-            onUserClick={handleUserClick}
-            onUsernameClick={handleUsernameClick}
-            onReplyClick={handleReplyClick}
-            onReactionToggle={handleReactionToggle}
-            onEditId={handleEdit}
-            reply={
-              replyEventId && (
-                <Reply
-                  room={room}
-                  timelineSet={timelineSet}
-                  replyEventId={replyEventId}
-                  threadRootId={threadRootId}
-                  onClick={handleOpenReply}
-                  getMemberPowerTag={getMemberPowerTag}
-                  accessibleTagColors={accessiblePowerTagColors}
-                  legacyUsernameColor={legacyUsernameColor || direct}
+          <React.Fragment key={mEvent.getId()}>
+            <Message
+              key={mEvent.getId()}
+              data-message-item={item}
+              data-message-id={mEventId}
+              room={room}
+              mEvent={mEvent}
+              messageSpacing={messageSpacing}
+              messageLayout={messageLayout}
+              collapse={collapse}
+              highlight={highlighted}
+              edit={editId === mEventId}
+              canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
+              canSendReaction={canSendReaction}
+              canPinEvent={canPinEvent}
+              imagePackRooms={imagePackRooms}
+              relations={hasReactions ? reactionRelations : undefined}
+              onUserClick={handleUserClick}
+              onUsernameClick={handleUsernameClick}
+              onReplyClick={handleReplyClick}
+              onReactionToggle={handleReactionToggle}
+              onEditId={handleEdit}
+              reply={
+                replyEventId && (
+                  <Reply
+                    room={room}
+                    timelineSet={timelineSet}
+                    replyEventId={replyEventId}
+                    threadRootId={threadRootId}
+                    onClick={handleOpenReply}
+                    getMemberPowerTag={getMemberPowerTag}
+                    accessibleTagColors={accessiblePowerTagColors}
+                    legacyUsernameColor={legacyUsernameColor || direct}
+                  />
+                )
+              }
+              reactions={
+                reactionRelations && (
+                  <Reactions
+                    style={{ marginTop: config.space.S200 }}
+                    room={room}
+                    relations={reactionRelations}
+                    mEventId={mEventId}
+                    canSendReaction={canSendReaction}
+                    onReactionToggle={handleReactionToggle}
+                  />
+                )
+              }
+              hideReadReceipts={hideActivity}
+              showDeveloperTools={showDeveloperTools}
+              memberPowerTag={getMemberPowerTag(senderId)}
+              accessibleTagColors={accessiblePowerTagColors}
+              legacyUsernameColor={legacyUsernameColor || direct}
+              hour24Clock={hour24Clock}
+              dateFormatString={dateFormatString}
+            >
+              {mEvent.isRedacted() ? (
+                <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
+              ) : (
+                <RenderMessageContent
+                  displayName={senderDisplayName}
+                  msgType={mEvent.getContent().msgtype ?? ''}
+                  ts={mEvent.getTs()}
+                  edited={!!editedEvent}
+                  getContent={getContent}
+                  mediaAutoLoad={mediaAutoLoad}
+                  urlPreview={showUrlPreview}
+                  htmlReactParserOptions={htmlReactParserOptions}
+                  linkifyOpts={linkifyOpts}
+                  outlineAttachment={messageLayout === MessageLayout.Bubble}
                 />
-              )
-            }
-            reactions={
-              reactionRelations && (
-                <Reactions
-                  style={{ marginTop: config.space.S200 }}
-                  room={room}
-                  relations={reactionRelations}
-                  mEventId={mEventId}
-                  canSendReaction={canSendReaction}
-                  onReactionToggle={handleReactionToggle}
-                />
-              )
-            }
-            hideReadReceipts={hideActivity}
-            showDeveloperTools={showDeveloperTools}
-            memberPowerTag={getMemberPowerTag(senderId)}
-            accessibleTagColors={accessiblePowerTagColors}
-            legacyUsernameColor={legacyUsernameColor || direct}
-            hour24Clock={hour24Clock}
-            dateFormatString={dateFormatString}
-          >
-            {mEvent.isRedacted() ? (
-              <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
-            ) : (
-              <RenderMessageContent
-                displayName={senderDisplayName}
-                msgType={mEvent.getContent().msgtype ?? ''}
-                ts={mEvent.getTs()}
-                edited={!!editedEvent}
-                getContent={getContent}
-                mediaAutoLoad={mediaAutoLoad}
-                urlPreview={showUrlPreview}
-                htmlReactParserOptions={htmlReactParserOptions}
-                linkifyOpts={linkifyOpts}
-                outlineAttachment={messageLayout === MessageLayout.Bubble}
+              )}
+            </Message>
+            {threadRoot && threadsDrawer && (
+              <ThreadSummary
+                room={room}
+                thread={threadRoot}
+                onOpen={() => handleOpenThread(threadRoot.id)}
               />
             )}
-          </Message>
+          </React.Fragment>
         );
       },
       [MessageEvent.RoomMessageEncrypted]: (mEventId, mEvent, item, timelineSet, collapse) => {

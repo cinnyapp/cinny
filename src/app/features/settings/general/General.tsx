@@ -307,6 +307,7 @@ function Appearance() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+  const [threadsDrawer, setThreadsDrawer] = useSetting(settingsAtom, 'threadsDrawer');
 
   return (
     <Box direction="Column" gap="100">
@@ -344,6 +345,14 @@ function Appearance() {
         <SettingTile
           title="Twitter Emoji"
           after={<Switch variant="Primary" value={twitterEmoji} onChange={setTwitterEmoji} />}
+        />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Threads"
+          description="Show a threads side panel for the open room (desktop)."
+          after={<Switch variant="Primary" value={threadsDrawer} onChange={setThreadsDrawer} />}
         />
       </SequenceCard>
 

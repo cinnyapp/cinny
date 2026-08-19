@@ -5,6 +5,7 @@ import { isKeyHotkey } from 'is-hotkey';
 import { useAtomValue } from 'jotai';
 import { RoomView } from './RoomView';
 import { MembersDrawer } from './MembersDrawer';
+import { ThreadsDrawer } from './ThreadsDrawer';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -31,6 +32,7 @@ export function Room() {
   const callEmbed = useCallEmbed();
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const [threadsDrawer] = useSetting(settingsAtom, 'threadsDrawer');
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const screenSize = useScreenSizeContext();
   const powerLevels = usePowerLevels(room);
@@ -79,10 +81,14 @@ export function Room() {
             <CallChatView />
           </>
         )}
-        {!callView && screenSize === ScreenSize.Desktop && isDrawer && (
+        {!callView && screenSize === ScreenSize.Desktop && (isDrawer || threadsDrawer) && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
-            <MembersDrawer key={room.roomId} room={room} members={members} />
+            {threadsDrawer ? (
+              <ThreadsDrawer key={room.roomId} room={room} />
+            ) : (
+              <MembersDrawer key={room.roomId} room={room} members={members} />
+            )}
           </>
         )}
       </Box>

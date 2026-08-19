@@ -233,9 +233,58 @@ export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   return true;
 };
 
-export const getUnreadInfo = (room: Room): UnreadInfo => {
-  const total = room.getUnreadNotificationCount(NotificationCountType.Total);
+/**
+ * Counts the actual number of unread notification events in the room's live
+ * timeline after the user's read receipt. Unlike
+ * `room.getUnreadNotificationCount(NotificationCountType.Total)` (which only
+ * counts messages matching push rules), this walks the live timeline and counts
+ * every notification event after the read marker — so it returns a real number
+ * even for rooms whose notification mode is "Mentions & Keywords only" where
+ * the SDK notification count stays 0.
+ *
+ * Only considers events currently in the live timeline (what sync has loaded).
+ * Returns 0 if the last event was sent by the user (no unreads).
+ */
+export const getUnreadMessageCount = (mx: MatrixClient, room: Room): number => {
+  const userId = mx.getUserId();
+  if (!userId) return 0;
+  const readUpToId = room.getEventReadUpTo(userId);
+  const liveEvents = room.getLiveTimeline().getEvents();
+
+  if (liveEvents[liveEvents.length - 1]?.getSender() === userId) {
+    return 0;
+  }
+
+  let count = 0;
+  for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
+    const event = liveEvents[i];
+    if (!event) break;
+    if (event.getId() === readUpToId) break;
+    if (isNotificationEvent(event)) count += 1;
+  }
+  return count;
+};
+
+export const getUnreadInfo = (mx: MatrixClient, room: Room): UnreadInfo => {
+  const notifTotal = room.getUnreadNotificationCount(NotificationCountType.Total);
   const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
+  // For "Mentions & Keywords only" rooms the SDK notification count is 0 by
+  // design (the room push rule has no notify action). Previously we fell back to
+  // getUnreadMessageCount for every such room, which made Cinny fire desktop
+  // notifications and show a channel badge for EVERY message — defeating the
+  // purpose of the Mentions-only setting. Now we only surface the real count
+  // when there is an actual highlight/mention; otherwise the room stays quiet
+  // (no badge, no notification) exactly as the notification mode promises.
+  // All-Messages and Default rooms still get the real count fallback so their
+  // channel-list badge shows a number instead of an empty dot.
+  const mode = getNotificationType(mx, room.roomId);
+  const realCount = getUnreadMessageCount(mx, room);
+  let total: number;
+  if (mode === NotificationType.MentionsAndKeywords) {
+    total = highlight > 0 ? realCount : 0;
+  } else {
+    total = notifTotal > 0 ? notifTotal : realCount;
+  }
   return {
     roomId: room.roomId,
     highlight,
@@ -250,7 +299,7 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
     if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
 
     if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
-      unread.push(getUnreadInfo(room));
+      unread.push(getUnreadInfo(mx, room));
     }
 
     return unread;
