@@ -4,6 +4,8 @@ import { Room, RoomEvent, Thread, ThreadEvent } from 'matrix-js-sdk';
 
 import * as css from './ThreadSummary.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useThreadUnreadCount } from '../../hooks/useThreadUnreadCount';
+import { UnreadBadge } from '../../components/unread-badge';
 
 /**
  * Element-style thread summary shown beneath a root message in the main timeline
@@ -61,6 +63,9 @@ export function ThreadSummary({ room, thread, onOpen }: ThreadSummaryProps) {
   const iSentLast = !!lastReply && lastReply.getSender() === myId;
   const hasUnread =
     !!lastReply && !iSentLast && !!myId && !liveThread.hasUserReadEvent(myId, lastReply.getId());
+  // Numeric unread count sourced from the room's thread notification map —
+  // the same data the ThreadsDrawer list pill and the left channel list use.
+  const unreadCount = useThreadUnreadCount(room, liveThread);
 
   if (replyCount <= 0) return null;
 
@@ -77,12 +82,13 @@ export function ThreadSummary({ room, thread, onOpen }: ThreadSummaryProps) {
       onClick={handleClick}
       aria-label={hasUnread ? 'Open thread with unread replies' : 'Open thread'}
     >
-      <Icon size="100" src={Icons.Thread} style={{ flexShrink: 0 }} />
+      <Icon size="100" src={hasUnread ? Icons.ThreadUnread : Icons.Thread} style={{ flexShrink: 0 }} />
       <Text size="T200" priority="300" truncate style={{ flexGrow: 1 }} align="Start">
         {preview
           ? `${replyCount} reply${replyCount === 1 ? '' : 's'} · ${preview}`
           : `${replyCount} reply${replyCount === 1 ? '' : 's'}`}
       </Text>
+      {unreadCount > 0 && <UnreadBadge count={unreadCount} />}
     </button>
   );
 }
