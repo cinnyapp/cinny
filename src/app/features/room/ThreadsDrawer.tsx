@@ -294,13 +294,15 @@ function ThreadMessages({
   useEffect(() => {
     let cancelled = false;
     const timeline = thread.timelineSet.getLiveTimeline();
-    const alreadyLoaded = timeline.getEvents().length > 0;
     const backfill = async () => {
       setLoading(true);
       try {
         // Keep pulling older events until the thread's history is exhausted.
         // Each paginate call advances the thread timeline token, so it must run
-        // sequentially (hence the awaited loop).
+        // sequentially (hence the awaited loop). Always run to exhaustion even
+        // if some events are already loaded from sync — a thread with 73
+        // replies may only have its 8 most-recent events locally, and skipping
+        // backfill here would leave the rest unrendered.
         // eslint-disable-next-line no-constant-condition
         while (!cancelled) {
           // eslint-disable-next-line no-await-in-loop
@@ -316,8 +318,7 @@ function ThreadMessages({
         }
       }
     };
-    if (!alreadyLoaded) backfill();
-    else setLoading(false);
+    backfill();
     return () => {
       cancelled = true;
     };
@@ -777,31 +778,30 @@ export function ThreadsDrawer({ room }: ThreadsDrawerProps) {
         className={classNames(css.ThreadsDrawer, ContainerColor({ variant: 'Background' }))}
         style={{ width: toRem(drawerWidth) }}
         shrink="No"
+        grow="Yes"
         direction="Column"
       >
-        <Box grow="Yes" direction="Column" className={css.ThreadsDrawerBody}>
-          {selectedThread ? (
-            <ThreadDetail
-              room={room}
-              thread={selectedThread}
-              onClose={() => setThreadsDrawer(false)}
-              onBack={() => {
-                setSelectedThread(undefined);
-                setBootSelection(undefined);
-              }}
-            />
-          ) : (
-            <ThreadList
-              room={room}
-              threads={threads}
-              onSelect={(thread) => {
-                setSelectedThread(thread);
-                setBootSelection({ roomId: room.roomId, threadId: thread.id });
-              }}
-              onClose={() => setThreadsDrawer(false)}
-            />
-          )}
-        </Box>
+        {selectedThread ? (
+          <ThreadDetail
+            room={room}
+            thread={selectedThread}
+            onClose={() => setThreadsDrawer(false)}
+            onBack={() => {
+              setSelectedThread(undefined);
+              setBootSelection(undefined);
+            }}
+          />
+        ) : (
+          <ThreadList
+            room={room}
+            threads={threads}
+            onSelect={(thread) => {
+              setSelectedThread(thread);
+              setBootSelection({ roomId: room.roomId, threadId: thread.id });
+            }}
+            onClose={() => setThreadsDrawer(false)}
+          />
+        )}
       </Box>
     </Box>
   );

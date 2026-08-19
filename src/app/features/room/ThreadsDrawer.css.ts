@@ -10,13 +10,6 @@ export const ThreadsDrawer = style({
   // broke that stretch and made the reply composer float with thread length.
 });
 
-// Column wrapper between the drawer and its scroll area. minHeight: 0 lets it
-// shrink below its content so a tall message list never pushes the reply
-// composer off the bottom. No height/overflow — height comes from flex grow.
-export const ThreadsDrawerBody = style({
-  minHeight: 0,
-});
-
 // Thin vertical drag handle on the left edge of the drawer.
 export const ThreadsDrawerResizer = style({
   flexShrink: 0,
