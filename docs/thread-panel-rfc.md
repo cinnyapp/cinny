@@ -147,3 +147,70 @@ Implemented on `feature/threads-panel` (forked from `baseline-v4.12.6` @ `33f4ba
 - `src/app/features/room/Room.tsx` — mounts the drawer (desktop, mutually exclusive with member drawer).
 - `src/app/features/room/RoomViewHeader.tsx` — desktop Threads button toggling the drawer.
 Verified: `npm run build` passes (exit 0); `npm run build` produces a new `dist` bundle; `npx eslint` and `prettier --check` clean on changed files. `tsc --noEmit` fails repo-wide at baseline (798 pre-existing errors from `matrix-js-sdk` ESM type resolution under `moduleResolution: Node`) — not regressions from this change; the shipping gate is `vite build`, which passes.
+
+## 7. Post-deploy bug — threads labeled in timeline but missing from the panel
+
+**Symptom:** messages user replies to carry the `Thread` indicator in the timeline, but the
+panel lists few/no threads (including the one just started).
+
+### 7.1 Root cause (confirmed in matrix-js-sdk 41.7.0 source)
+
+Cinny never enables `client.supportsThreads()`, so the SDK's **entire server-side thread
+aggregation path is dead code**:
+
+1. `client.supportsThreads()` returns `clientOpts.threadSupport || false`. Cinny never sets
+   it (grep of `src/` = zero hits) before this fix.
+2. With it `false`:
+   - `room.createThreadsTimelineSets()` returns `null` immediately
+     (`room.js` `if (this.client.supportsThreads())` gate).
+   - `client.processThreadRoots(...)` early-returns (`if (!this.supportsThreads()) return;`
+     at `client.js:7273`) — so even paginating a thread-list timeline set never registers
+     roots into `room.threads`.
+   - `room.getThreads()` therefore contains only threads whose events arrived in the
+     sync'd timeline window — an incomplete set for an active room.
+3. Meanwhile the `Thread` label still appears in the timeline because Cinny detects
+   `rel_type: 'm.thread'` client-side from `mEvent.threadRootId` (independent of
+   `supportsThreads()`). Hence "labeled but not listed."
+
+### 7.2 The authentic fix — enable SDK thread support at startup
+
+`threadSupport` is an `IStartClientOpts` field (NOT a `createClient` opt). Set it where
+the authenticated client starts:
+
+```ts
+// src/client/initMatrix.ts
+await mx.startClient({ lazyLoadMembers: true, threadSupport: true });
+```
+
+This single flag flips on: server thread-list (`/threads` via `createThreadsTimelineSets`),
+`processThreadRoots` registration, per-thread `EventTimelineSet`s, and thread receipts. The
+panel then consumes the SDK's canonical structures instead of re-implementing layout.
+
+### 7.3 Authentic data flow (mirrors the SDK/Element model — no polling)
+
+- **Client enable:** `threadSupport: true` on `startClient` (see 7.2) un-gates every SDK
+  thread-list primitive.
+- **List source:** `room.fetchRoomThreads()` (public `room.d.ts:845`, *no auto-caller* — the
+  app must invoke it). It fetches `/threads` (All + My), sorts roots by last-reply time,
+  registers each into `room.threads` via `processThreadRoots` (firing `ThreadEvent.New`),
+  and sets `threadsReady`. The panel keeps state fresh from `room.getThreads()` and
+  `ThreadEvent.New/NewReply/Update/Delete`.
+- **List reply counts:** correct on first render because `createThread` → `processRootEvent`
+  reads the bundled `m.thread` relation `count` into `Thread.length` (thread.js:461).
+- **Live updates (list + detail):** subscribe on the ROOM to `RoomEvent.Timeline` /
+  `TimelineRefresh` / `Redaction` (the room re-emits each thread timeline set's events via
+  its re-emitter) and bump a `revision` state the events memo depends on — the same
+  event-driven model `RoomTimeline.tsx` uses (`useLiveEventArrive`, `useLiveTimelineRefresh`).
+  NOT a forced `ticks` loop.
+- **Detail view:** render `thread.rootEvent` + `thread.timelineSet` via the existing message
+  renderers; a thread created from the server list starts with an empty-ish timeline, so
+  backfill it on open with `mx.paginateEventTimeline(thread.timelineSet.getLiveTimeline(),
+  {backwards:true,limit})` (the timeline set's `.thread` drives `/messages` + thread filter).
+
+### 7.4 Defers / known-good discipline
+
+- Per-thread unread computed from read marker — follow-up.
+- Reply-in-panel — follow-up.
+- No `tsc` clean gate exists at baseline (798 pre-existing SDK ESM-type errors); the
+  shipping gate is `vite build` (passes) + `eslint` + `prettier`. Do not widen the
+  `tsc` noise.

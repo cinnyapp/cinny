@@ -43,6 +43,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
 export const startClient = async (mx: MatrixClient) => {
   await mx.startClient({
     lazyLoadMembers: true,
+    threadSupport: true,
   });
 };
 

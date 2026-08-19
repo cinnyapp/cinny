@@ -8,12 +8,13 @@ import {
   Icons,
   MenuItem,
   Scroll,
+  Spinner,
   Text,
   Tooltip,
   TooltipProvider,
   config,
 } from 'folds';
-import { MatrixEvent, Room, Thread, ThreadEvent } from 'matrix-js-sdk';
+import { MatrixEvent, Room, RoomEvent, Thread, ThreadEvent } from 'matrix-js-sdk';
 import classNames from 'classnames';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
@@ -198,12 +199,90 @@ function ThreadMessages({ room, thread }: { room: Room; thread: Thread }) {
     [mx, room, linkifyOpts, spoilerClickHandler, mentionClickHandler, useAuthentication]
   );
 
+  // Authentic thread data model: the room re-emits the thread timeline set's
+  // RoomEvent.Timeline / TimelineRefresh / Redaction (and thread events). React
+  // to those SDK events to re-render — this is the same event-driven model
+  // RoomTimeline uses, not polling. A thread created from the server thread list
+  // starts with few/no events loaded, so backfill by paginating its timeline.
+  const [revision, setRevision] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Only re-render when the event actually belongs to this thread's timeline
+    // set (the room re-emits it with the event as first arg).
+    const inThread = (mEvent?: MatrixEvent | null) =>
+      !!thread.timelineSet &&
+      !!mEvent &&
+      (!!mEvent.getThread() ||
+        thread.timelineSet
+          .getLiveTimeline()
+          .getEvents()
+          .some((e) => e.getId() === mEvent.getId()));
+    const onTimeline: (
+      mEvent: MatrixEvent,
+      eventRoom?: Room | null,
+      toStart?: boolean,
+      removed?: boolean,
+      data?: object
+    ) => void = (mEvent) => {
+      if (inThread(mEvent)) setRevision((r) => r + 1);
+    };
+    const onRefresh: (r: { roomId: string }) => void = ({ roomId }) => {
+      if (roomId === room.roomId) setRevision((r) => r + 1);
+    };
+    const onRedaction: (mEvent: MatrixEvent, eventRoom?: Room | null) => void = (mEvent) => {
+      if (inThread(mEvent)) setRevision((r) => r + 1);
+    };
+
+    room.on(RoomEvent.Timeline as never, onTimeline as never);
+    room.on(RoomEvent.TimelineRefresh as never, onRefresh as never);
+    room.on(RoomEvent.Redaction as never, onRedaction as never);
+    return () => {
+      room.off(RoomEvent.Timeline as never, onTimeline as never);
+      room.off(RoomEvent.TimelineRefresh as never, onRefresh as never);
+      room.off(RoomEvent.Redaction as never, onRedaction as never);
+    };
+  }, [room, thread]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timeline = thread.timelineSet.getLiveTimeline();
+    const alreadyLoaded = timeline.getEvents().length > 0;
+    const backfill = async () => {
+      setLoading(true);
+      try {
+        // Keep pulling older events until the thread's history is exhausted.
+        // Each paginate call advances the thread timeline token, so it must run
+        // sequentially (hence the awaited loop).
+        // eslint-disable-next-line no-constant-condition
+        while (!cancelled) {
+          // eslint-disable-next-line no-await-in-loop
+          const hasMore = await mx.paginateEventTimeline(timeline, { backwards: true, limit: 50 });
+          if (!hasMore) break;
+        }
+      } catch {
+        // ignore pagination errors (e.g. decrypt in progress)
+      } finally {
+        if (!cancelled) {
+          setRevision((r) => r + 1);
+          setLoading(false);
+        }
+      }
+    };
+    if (!alreadyLoaded) backfill();
+    else setLoading(false);
+    return () => {
+      cancelled = true;
+    };
+  }, [mx, thread]);
+
   const events = useMemo(() => {
     const live: MatrixEvent[] = thread.timelineSet.getLiveTimeline().getEvents();
     const root = thread.rootEvent;
     const withRoot = root ? [root, ...live] : live;
     return withRoot.filter((m: MatrixEvent) => m.getType() === MessageEvent.RoomMessage);
-  }, [thread]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread, revision]);
 
   const onUserClick: MouseEventHandler<HTMLButtonElement> = useCallback((evt) => {
     evt.preventDefault();
@@ -213,6 +292,19 @@ function ThreadMessages({ room, thread }: { room: Room; thread: Thread }) {
     evt.preventDefault();
   }, []);
   const onReactionToggle = useCallback(() => undefined, []);
+
+  if (loading) {
+    return (
+      <Box
+        direction="Column"
+        alignItems="Center"
+        justifyContent="Center"
+        style={{ padding: config.space.S400 }}
+      >
+        <Spinner variant="Secondary" size="400" />
+      </Box>
+    );
+  }
 
   if (events.length === 0) {
     return (
@@ -340,15 +432,21 @@ export function ThreadsDrawer({ room }: ThreadsDrawerProps) {
     room.on(ThreadEvent.New as never, handleNewReply as never);
     room.on(ThreadEvent.Delete as never, handleDelete as never);
 
-    // Bootstrap the full server-side thread list for this room if the SDK
-    // supports it. Populates room.getThreads() with threads that may not be
-    // present in the locally-loaded timeline window yet.
+    // Bootstrap the full server-side thread list for this room. room.getThreads()
+    // only reflects threads already in the locally-loaded timeline; the SDK's
+    // fetchRoomThreads() (enabled by threadSupport) pulls the complete /threads
+    // list, registers every root into room.threads (firing ThreadEvent.New), and
+    // sets threadsReady. We keep a local copy and refresh from room.getThreads().
+    let cancelled = false;
     room
-      .createThreadsTimelineSets()
-      .then(update)
-      .catch(() => undefined);
+      .fetchRoomThreads()
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) update();
+      });
 
     return () => {
+      cancelled = true;
       room.off(ThreadEvent.NewReply as never, handleNewReply as never);
       room.off(ThreadEvent.Update as unknown as never, handleUpdate as never);
       room.off(ThreadEvent.New as never, handleNewReply as never);
