@@ -213,7 +213,7 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       }
 
       if (mEvent.getSender() === mx.getUserId()) return;
-      setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(room) });
+      setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(mx, room) });
     };
     mx.on(RoomEvent.Timeline, handleTimelineEvent);
     return () => {

@@ -233,13 +233,50 @@ export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   return true;
 };
 
-export const getUnreadInfo = (room: Room): UnreadInfo => {
-  const total = room.getUnreadNotificationCount(NotificationCountType.Total);
+/**
+ * Counts the actual number of unread notification events in the room's live
+ * timeline after the user's read receipt. Unlike
+ * `room.getUnreadNotificationCount(NotificationCountType.Total)` (which only
+ * counts messages matching push rules), this walks the live timeline and counts
+ * every notification event after the read marker — so it returns a real number
+ * even for rooms whose notification mode is "Mentions & Keywords only" where
+ * the SDK notification count stays 0.
+ *
+ * Only considers events currently in the live timeline (what sync has loaded).
+ * Returns 0 if the last event was sent by the user (no unreads).
+ */
+export const getUnreadMessageCount = (mx: MatrixClient, room: Room): number => {
+  const userId = mx.getUserId();
+  if (!userId) return 0;
+  const readUpToId = room.getEventReadUpTo(userId);
+  const liveEvents = room.getLiveTimeline().getEvents();
+
+  if (liveEvents[liveEvents.length - 1]?.getSender() === userId) {
+    return 0;
+  }
+
+  let count = 0;
+  for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
+    const event = liveEvents[i];
+    if (!event) break;
+    if (event.getId() === readUpToId) break;
+    if (isNotificationEvent(event)) count += 1;
+  }
+  return count;
+};
+
+export const getUnreadInfo = (mx: MatrixClient, room: Room): UnreadInfo => {
+  const notifTotal = room.getUnreadNotificationCount(NotificationCountType.Total);
   const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
+  // When the SDK notification count is 0 (e.g. notification mode is
+  // "Mentions & Keywords only"), fall back to counting actual unread messages
+  // in the live timeline so the channel list badge shows a real number instead
+  // of an empty dot.
+  const realTotal = notifTotal > 0 ? notifTotal : getUnreadMessageCount(mx, room);
   return {
     roomId: room.roomId,
     highlight,
-    total: highlight > total ? highlight : total,
+    total: highlight > realTotal ? highlight : realTotal,
   };
 };
 
@@ -250,7 +287,7 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
     if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
 
     if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
-      unread.push(getUnreadInfo(room));
+      unread.push(getUnreadInfo(mx, room));
     }
 
     return unread;
