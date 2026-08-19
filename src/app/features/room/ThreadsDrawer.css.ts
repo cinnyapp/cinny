@@ -5,20 +5,19 @@ export const ThreadsDrawer = style({
   width: toRem(400),
   minWidth: toRem(360),
   overflow: 'hidden',
-  // Bound the drawer to the available (viewport) height so a tall message list
-  // never pushes the reply composer off the bottom of the window. The drawer is
-  // a stretched flex child, but this makes the column height explicit.
-  height: '100%',
-  maxHeight: '100%',
+  // Height comes from flexbox: this column is a stretch child of the drawer
+  // row (which itself stretches to the content-area height inside Room), so we
+  // never set a percentage height here — percentage heights resolve to auto when
+  // an ancestor's height is itself flex-stretched rather than definite, which is
+  // what made the reply composer float with thread length. The drawer fills via
+  // flex grow/stretch and `overflow: hidden` clips any overflow.
+  minHeight: 0,
 });
 
-// Column wrapper between the drawer and its scroll area. Needs minHeight: 0 so
-// it can shrink below its content instead of pushing the reply composer off the
-// bottom of the window when a thread's messages are tall, and height: 100% so it
-// (and the fragment it holds) fills the drawer rather than growing with content,
-// which is what made the reply composer float with thread length.
+// Column wrapper between the drawer and its scroll area. minHeight: 0 lets it
+// shrink below its content (so a tall message list never pushes the reply
+// composer off the bottom); height comes from flex grow, not a percentage.
 export const ThreadsDrawerBody = style({
-  height: '100%',
   minHeight: 0,
 });
 

@@ -731,7 +731,7 @@ export function ThreadsDrawer({ room }: ThreadsDrawerProps) {
   }, [threads, selectedThread, room]);
 
   return (
-    <Box shrink="No" direction="Row" style={{ height: '100%' }}>
+    <Box shrink="No" direction="Row">
       <div
         className={css.ThreadsDrawerResizer}
         onPointerDown={startResize}
