@@ -22,10 +22,17 @@ import { Transforms } from 'slate';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
+  AutocompletePrefix,
+  AutocompleteQuery,
+  AUTOCOMPLETE_PREFIXES,
   createEmoticonElement,
   CustomEditor,
-  moveCursor,
+  EmoticonAutocomplete,
+  getAutocompleteQuery,
   getMentions,
+  getPrevWorldRange,
+  moveCursor,
+  RoomMentionAutocomplete,
   Toolbar,
   toMatrixCustomHTML,
   toPlainText,
@@ -35,6 +42,7 @@ import {
   isEmptyEditor,
   trimCustomHtml,
   customHtmlEqualsPlainText,
+  UserMentionAutocomplete,
 } from '../../components/editor';
 import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
 import { UseStateProvider } from '../../components/UseStateProvider';
@@ -72,6 +80,8 @@ function ThreadReplyInput({ room, thread }: { room: Room; thread: Thread }) {
   const [hideStickerBtn] = useState(document.body.clientWidth < 500);
 
   const rootEventId = thread.rootEvent?.getId();
+  const [autocompleteQuery, setAutocompleteQuery] =
+    useState<AutocompleteQuery<AutocompletePrefix>>();
 
   useEffect(() => {
     Transforms.insertFragment(editor, msgDraft);
@@ -139,9 +149,41 @@ function ThreadReplyInput({ room, thread }: { room: Room; thread: Thread }) {
         evt.preventDefault();
         submit();
       }
+      if (isKeyHotkey('escape', evt)) {
+        evt.preventDefault();
+        if (autocompleteQuery) {
+          setAutocompleteQuery(undefined);
+        }
+      }
     },
-    [submit, enterForNewline, isComposing]
+    [submit, enterForNewline, isComposing, autocompleteQuery]
   );
+
+  // Detect @mention / #room / :emoji autocomplete triggers as the user types,
+  // mirroring RoomInput so @max becomes a mention pill via the autocomplete UI.
+  const handleKeyUp: KeyboardEventHandler = useCallback(
+    (evt) => {
+      if (isKeyHotkey('escape', evt)) {
+        evt.preventDefault();
+        return;
+      }
+      const prevWordRange = getPrevWorldRange(editor);
+      const query = prevWordRange
+        ? getAutocompleteQuery<AutocompletePrefix>(
+            editor,
+            prevWordRange,
+            AUTOCOMPLETE_PREFIXES
+          )
+        : undefined;
+      setAutocompleteQuery(query);
+    },
+    [editor]
+  );
+
+  const handleCloseAutocomplete = useCallback(() => {
+    setAutocompleteQuery(undefined);
+    ReactEditor.focus(editor);
+  }, [editor]);
 
   const handleEmoticonSelect = (key: string, shortcode: string) => {
     editor.insertNode(createEmoticonElement(key, shortcode));
@@ -173,11 +215,36 @@ function ThreadReplyInput({ room, thread }: { room: Room; thread: Thread }) {
 
   return (
     <Box direction="Column" style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}>
+      {autocompleteQuery?.prefix === AutocompletePrefix.RoomMention && (
+        <RoomMentionAutocomplete
+          roomId={room.roomId}
+          editor={editor}
+          query={autocompleteQuery}
+          requestClose={handleCloseAutocomplete}
+        />
+      )}
+      {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
+        <UserMentionAutocomplete
+          room={room}
+          editor={editor}
+          query={autocompleteQuery}
+          requestClose={handleCloseAutocomplete}
+        />
+      )}
+      {autocompleteQuery?.prefix === AutocompletePrefix.Emoticon && (
+        <EmoticonAutocomplete
+          imagePackRooms={imagePackRooms}
+          editor={editor}
+          query={autocompleteQuery}
+          requestClose={handleCloseAutocomplete}
+        />
+      )}
       <CustomEditor
         editableName="ThreadReplyInput"
         editor={editor}
         placeholder="Reply to thread..."
         onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
         before={
           <IconButton onClick={submit} variant="SurfaceVariant" size="300" radii="300">
             <Icon src={Icons.Send} />

@@ -1,4 +1,11 @@
-import React, { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
   Avatar,
@@ -31,7 +38,7 @@ import { useThreadUnreadCount } from '../../hooks/useThreadUnreadCount';
 import { UnreadBadge } from '../../components/unread-badge';
 import { getMatrixToRoomEvent } from '../../plugins/matrix-to';
 import { getViaServers } from '../../plugins/via-servers';
-import { copyToClipboard } from '../../utils/dom';
+import { copyToClipboard, scrollToBottom } from '../../utils/dom';
 import { stopPropagation } from '../../utils/keyboard';
 
 import * as css from './ThreadsDrawer.css';
@@ -180,7 +187,15 @@ function ThreadList({
   );
 }
 
-function ThreadMessages({ room, thread }: { room: Room; thread: Thread }) {
+function ThreadMessages({
+  room,
+  thread,
+  onEventsCount,
+}: {
+  room: Room;
+  thread: Thread;
+  onEventsCount?: (count: number) => void;
+}) {
   const mx = useMatrixClient();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
@@ -326,6 +341,13 @@ function ThreadMessages({ room, thread }: { room: Room; thread: Thread }) {
     return withRoot.filter((m: MatrixEvent) => m.getType() === MessageEvent.RoomMessage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thread, revision]);
+
+  // Notify the parent (ThreadDetail) whenever the rendered event count changes
+  // so it can scroll the thread view to the bottom on a new reply (local or
+  // remote echo) — mirroring RoomTimeline's auto-scroll-to-latest behavior.
+  useEffect(() => {
+    onEventsCount?.(events.length);
+  }, [events.length, onEventsCount]);
 
   const onUserClick: MouseEventHandler<HTMLButtonElement> = useCallback((evt) => {
     evt.preventDefault();
@@ -545,6 +567,20 @@ function ThreadDetail({
     if (lastEvent) mx.sendReadReceipt(lastEvent);
   }, [mx, thread]);
 
+  // Auto-scroll the thread message view to the bottom whenever a new reply
+  // arrives (the event count grows) so the viewer sees their freshly sent
+  // reply and incoming replies without manual scrolling — mirroring the main
+  // timeline's scroll-to-latest behavior.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const prevEventCountRef = useRef<number>(-1);
+  const handleEventsCount = useCallback((count: number) => {
+    if (count > prevEventCountRef.current) {
+      const el = scrollRef.current;
+      if (el) scrollToBottom(el, 'auto');
+    }
+    prevEventCountRef.current = count;
+  }, []);
+
   const handleViewInThread = () => {
     // Navigate to the room with the root (thread-starting) event focused so the
     // main timeline scrolls to and highlights the parent message, then close
@@ -597,9 +633,9 @@ function ThreadDetail({
         </TooltipProvider>
       </Header>
       <Box className={css.ThreadDrawerContentBase} grow="Yes">
-        <Scroll variant="Background" size="300" visibility="Always" hideTrack={false}>
+        <Scroll ref={scrollRef} variant="Background" size="300" visibility="Always" hideTrack={false}>
           <Box className={css.ThreadDrawerContent} direction="Column" gap="100">
-            <ThreadMessages room={room} thread={thread} />
+            <ThreadMessages room={room} thread={thread} onEventsCount={handleEventsCount} />
           </Box>
         </Scroll>
       </Box>
