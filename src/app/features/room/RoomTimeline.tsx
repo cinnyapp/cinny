@@ -1043,11 +1043,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     const onDelete = () => bump();
     const onNewReply = () => bump();
     const onUpdate = () => bump();
+    const onNew = () => bump();
+    room.on(ThreadEvent.New as never, onNew as never);
     room.on(ThreadEvent.NewReply as never, onNewReply as never);
     room.on(ThreadEvent.Update as unknown as never, onUpdate as never);
     room.on(ThreadEvent.Delete as never, onDelete as never);
     room.on(RoomEvent.Receipt as never, bump as never);
     return () => {
+      room.off(ThreadEvent.New as never, onNew as never);
       room.off(ThreadEvent.NewReply as never, onNewReply as never);
       room.off(ThreadEvent.Update as unknown as never, onUpdate as never);
       room.off(ThreadEvent.Delete as never, onDelete as never);
