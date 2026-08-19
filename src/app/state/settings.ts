@@ -63,7 +63,7 @@ const defaultSettings: Settings = {
   hideActivity: false,
 
   isPeopleDrawer: true,
-  threadsDrawer: false,
+  threadsDrawer: true,
   memberSortFilterIndex: 0,
   enterForNewline: false,
   messageLayout: 0,

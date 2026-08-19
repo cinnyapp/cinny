@@ -449,6 +449,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const showUrlPreview = room.hasEncryptionStateEvent() ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const [showDeveloperTools] = useSetting(settingsAtom, 'developerTools');
+  const [threadsDrawer] = useSetting(settingsAtom, 'threadsDrawer');
 
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
   const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
@@ -1176,7 +1177,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 />
               )}
             </Message>
-            {threadRoot && (
+            {threadRoot && threadsDrawer && (
               <ThreadSummary
                 room={room}
                 thread={threadRoot}
