@@ -778,11 +778,25 @@ export function ThreadsDrawer({ room }: ThreadsDrawerProps) {
     const handleNewReply = () => update();
     const handleUpdate = () => update();
     const handleDelete = () => update();
+    // Same live-new-thread fix as RoomTimeline: handleRemoteEcho() skips thread
+    // creation for our own thread replies, so ThreadEvent.New never fires and
+    // the list would miss the new thread until a reload. Create the Thread
+    // manually on LocalEchoUpdated when it doesn't exist yet.
+    const handleLocalEchoUpdated = (mEvent: MatrixEvent) => {
+      const rootId = mEvent.threadRootId;
+      if (rootId && !room.getThread(rootId)) {
+        const rootEvent = room.findEventById(rootId);
+        if (rootEvent) {
+          room.processThreadRoots([rootEvent], false);
+        }
+      }
+    };
 
     room.on(ThreadEvent.NewReply as never, handleNewReply as never);
     room.on(ThreadEvent.Update as unknown as never, handleUpdate as never);
     room.on(ThreadEvent.New as never, handleNewReply as never);
     room.on(ThreadEvent.Delete as never, handleDelete as never);
+    room.on(RoomEvent.LocalEchoUpdated as never, handleLocalEchoUpdated as never);
 
     // Bootstrap the full server-side thread list for this room. room.getThreads()
     // only reflects threads already in the locally-loaded timeline; the SDK's
@@ -803,6 +817,7 @@ export function ThreadsDrawer({ room }: ThreadsDrawerProps) {
       room.off(ThreadEvent.Update as unknown as never, handleUpdate as never);
       room.off(ThreadEvent.New as never, handleNewReply as never);
       room.off(ThreadEvent.Delete as never, handleDelete as never);
+      room.off(RoomEvent.LocalEchoUpdated as never, handleLocalEchoUpdated as never);
     };
   }, [room]);
 

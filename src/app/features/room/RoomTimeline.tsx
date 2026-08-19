@@ -1038,23 +1038,46 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   // Keep thread summaries live: a new reply, thread update/delete, or a read
   // receipt changes the preview/reply-count/unread shown under root messages,
   // none of which flow through the main-room timeline events.
+  //
+  // We also listen for RoomEvent.LocalEchoUpdated: when the user sends a thread
+  // reply, the SDK's addLiveEvents() recognises the remote echo by its
+  // transaction_id and routes it through handleRemoteEcho(), which updates an
+  // existing thread but never CREATES one (it skips the addThreadedEvents path
+  // that createThread + ThreadEvent.New live on). So the Thread object for our
+  // own newly-started thread is never created live, and the summary under the
+  // root message never appears until a reload re-runs fetchRoomThreads().
+  // When the confirmed event is a thread reply whose Thread doesn't exist yet,
+  // we manually create it via processThreadRoots([rootEvent]), which calls
+  // createThread() and emits ThreadEvent.New — the onNew handler then bumps
+  // the revision and the ThreadSummary appears live.
   useEffect(() => {
     const bump = () => setThreadRevision((r) => r + 1);
     const onDelete = () => bump();
     const onNewReply = () => bump();
     const onUpdate = () => bump();
     const onNew = () => bump();
+    const onLocalEchoUpdated = (mEvent: MatrixEvent) => {
+      const rootId = mEvent.threadRootId;
+      if (rootId && !room.getThread(rootId)) {
+        const rootEvent = room.findEventById(rootId);
+        if (rootEvent) {
+          room.processThreadRoots([rootEvent], false);
+        }
+      }
+    };
     room.on(ThreadEvent.New as never, onNew as never);
     room.on(ThreadEvent.NewReply as never, onNewReply as never);
     room.on(ThreadEvent.Update as unknown as never, onUpdate as never);
     room.on(ThreadEvent.Delete as never, onDelete as never);
     room.on(RoomEvent.Receipt as never, bump as never);
+    room.on(RoomEvent.LocalEchoUpdated as never, onLocalEchoUpdated as never);
     return () => {
       room.off(ThreadEvent.New as never, onNew as never);
       room.off(ThreadEvent.NewReply as never, onNewReply as never);
       room.off(ThreadEvent.Update as unknown as never, onUpdate as never);
       room.off(ThreadEvent.Delete as never, onDelete as never);
       room.off(RoomEvent.Receipt as never, bump as never);
+      room.off(RoomEvent.LocalEchoUpdated as never, onLocalEchoUpdated as never);
     };
   }, [room]);
 
