@@ -48,6 +48,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { RenderMessageContent } from '../../components/RenderMessageContent';
 import { Message } from './message';
 import ThreadReplyInput from './ThreadReplyInput';
+import { RoomViewFollowingPlaceholder } from './RoomViewFollowing';
 import { GetContentCallback, MessageEvent } from '../../../types/matrix/room';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 
@@ -283,7 +284,18 @@ function ThreadMessages({ room, thread }: { room: Room; thread: Thread }) {
   const events = useMemo(() => {
     const live: MatrixEvent[] = thread.timelineSet.getLiveTimeline().getEvents();
     const root = thread.rootEvent;
-    const withRoot = root ? [root, ...live] : live;
+    const rootId = root?.getId();
+    // Some thread timeline sets already contain the root event (e.g. after
+    // backfill via the /messages thread filter) while others do not. Prepend
+    // the root once, but only when it is not already present, to avoid the
+    // root message rendering twice.
+    const alreadyHasRoot = !!rootId && live.some((m) => m.getId() === rootId);
+    let withRoot: MatrixEvent[];
+    if (alreadyHasRoot || !root) {
+      withRoot = live;
+    } else {
+      withRoot = [root, ...live];
+    }
     return withRoot.filter((m: MatrixEvent) => m.getType() === MessageEvent.RoomMessage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thread, revision]);
@@ -431,6 +443,7 @@ function ThreadDetail({
         </Scroll>
       </Box>
       <ThreadReplyInput room={room} thread={thread} />
+      <RoomViewFollowingPlaceholder />
     </>
   );
 }
