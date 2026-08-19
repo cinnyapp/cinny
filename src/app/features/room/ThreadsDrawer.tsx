@@ -53,7 +53,7 @@ import {
   makeMentionCustomProps,
   renderMatrixMention,
 } from '../../plugins/react-custom-html-parser';
-import { getMemberDisplayName } from '../../utils/room';
+import { getMemberDisplayName, getEditedEvent } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
@@ -66,7 +66,12 @@ import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useTheme } from '../../hooks/useTheme';
 import { RenderMessageContent } from '../../components/RenderMessageContent';
-import { Message } from './message';
+import { Message, EncryptedContent } from './message';
+import {
+  MessageNotDecryptedContent,
+  MessageUnsupportedContent,
+} from '../../components/message/content/FallbackContent';
+import { RedactedContent } from '../../components/message/MsgTypeRenderers';
 import ThreadReplyInput from './ThreadReplyInput';
 import { RoomViewFollowingPlaceholder } from './RoomViewFollowing';
 import { GetContentCallback, MessageEvent } from '../../../types/matrix/room';
@@ -339,7 +344,12 @@ function ThreadMessages({
     } else {
       withRoot = [root, ...live];
     }
-    return withRoot.filter((m: MatrixEvent) => m.getType() === MessageEvent.RoomMessage);
+    return withRoot.filter(
+      (m: MatrixEvent) =>
+        m.getType() === MessageEvent.RoomMessage ||
+        m.getType() === MessageEvent.RoomMessageEncrypted ||
+        m.getType() === MessageEvent.Sticker
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thread, revision]);
 
@@ -385,7 +395,11 @@ function ThreadMessages({
       {events.map((mEvent: MatrixEvent) => {
         const senderId = mEvent.getSender() ?? '';
         const senderDisplayName = getSenderName(room, senderId);
-        const getContent = (() => mEvent.getContent()) as unknown as GetContentCallback;
+        const eventId = mEvent.getId();
+        const editedEvent = eventId ? getEditedEvent(eventId, mEvent, thread.timelineSet) : undefined;
+        const getContent = (() =>
+          editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent()) as unknown as GetContentCallback;
+        const eventType = mEvent.getType();
 
         return (
           <Message
@@ -409,18 +423,55 @@ function ThreadMessages({
             hour24Clock={hour24Clock}
             dateFormatString={dateFormatString}
           >
-            <RenderMessageContent
-              displayName={senderDisplayName}
-              msgType={mEvent.getContent().msgtype ?? ''}
-              ts={mEvent.getTs()}
-              edited={false}
-              getContent={getContent}
-              mediaAutoLoad={mediaAutoLoad}
-              urlPreview={showUrlPreview}
-              htmlReactParserOptions={htmlReactParserOptions}
-              linkifyOpts={linkifyOpts}
-              outlineAttachment={messageLayout === MessageLayout.Bubble}
-            />
+            {eventType === MessageEvent.RoomMessageEncrypted ? (
+              <EncryptedContent mEvent={mEvent}>
+                {() => {
+                  if (mEvent.isRedacted()) return <RedactedContent />;
+                  // After decryption the event type may flip to m.room.message —
+                  // render it as a normal message if so.
+                  if (mEvent.getType() === MessageEvent.RoomMessage) {
+                    return (
+                      <RenderMessageContent
+                        displayName={senderDisplayName}
+                        msgType={mEvent.getContent().msgtype ?? ''}
+                        ts={mEvent.getTs()}
+                        edited={!!editedEvent}
+                        getContent={getContent}
+                        mediaAutoLoad={mediaAutoLoad}
+                        urlPreview={showUrlPreview}
+                        htmlReactParserOptions={htmlReactParserOptions}
+                        linkifyOpts={linkifyOpts}
+                        outlineAttachment={messageLayout === MessageLayout.Bubble}
+                      />
+                    );
+                  }
+                  if (mEvent.getType() === MessageEvent.RoomMessageEncrypted)
+                    return (
+                      <Text>
+                        <MessageNotDecryptedContent />
+                      </Text>
+                    );
+                  return (
+                    <Text>
+                      <MessageUnsupportedContent />
+                    </Text>
+                  );
+                }}
+              </EncryptedContent>
+            ) : (
+              <RenderMessageContent
+                displayName={senderDisplayName}
+                msgType={mEvent.getContent().msgtype ?? ''}
+                ts={mEvent.getTs()}
+                edited={!!editedEvent}
+                getContent={getContent}
+                mediaAutoLoad={mediaAutoLoad}
+                urlPreview={showUrlPreview}
+                htmlReactParserOptions={htmlReactParserOptions}
+                linkifyOpts={linkifyOpts}
+                outlineAttachment={messageLayout === MessageLayout.Bubble}
+              />
+            )}
           </Message>
         );
       })}
