@@ -98,9 +98,8 @@ function ThreadListItem({
 }) {
   const unreadCount = useThreadUnreadCount(room, thread);
   const { rootEvent } = thread;
-  const senderId = rootEvent?.getSender() ?? '';
-  const sender = senderId ? getSenderName(room, senderId) : 'Unknown';
   const preview = getThreadPreview(rootEvent);
+  const replyCount = Math.max(0, thread.length);
 
   return (
     <MenuItem
@@ -115,12 +114,12 @@ function ThreadListItem({
       }
     >
       <Box direction="Column" gap="100" grow="Yes">
+        <Text size="B300" truncate>
+          {preview || 'Thread'}
+        </Text>
         <Box alignItems="Center" gap="100">
-          <Text size="B300" truncate>
-            {sender}
-          </Text>
-          <Text size="B300" priority="300" truncate>
-            {preview}
+          <Text size="T200" priority="300">
+            {replyCount} reply{replyCount === 1 ? '' : 's'}
           </Text>
           <Box shrink="No" alignItems="Center" style={{ marginLeft: 'auto' }}>
             {unreadCount > 0 && <UnreadBadge count={unreadCount} />}
