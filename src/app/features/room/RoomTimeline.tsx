@@ -202,6 +202,15 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     console.log('mark as read.');
   }, []);
 
+  const newDividerRef = useRef<HTMLDivElement>(null);
+  // if new divider exist always start form here.
+  useEffect(() => {
+    const newDividerEl = newDividerRef.current;
+    if (newDividerEl) {
+      scrollToElement(newDividerEl, { align: 'center', behavior: 'instant' });
+    }
+  }, [scrollToElement]);
+
   const [atBottom, atBottomAnchorRef] = useAtBottomToggle(
     getScrollElement,
     messageBatch.next.end ?? false,
@@ -259,12 +268,12 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const stickToBottom = useCallback(() => {
     if (!atBottom) return;
 
-    // setTimeout(() => {
-    //   const scrollEl = getScrollElement();
-    //   if (scrollEl) {
-    //     scrollToBottom(scrollEl, 'smooth');
-    //   }
-    // }, 100);
+    setTimeout(() => {
+      const scrollEl = getScrollElement();
+      if (scrollEl) {
+        scrollToBottom(scrollEl, 'smooth');
+      }
+    }, 100);
   }, [getScrollElement, atBottom]);
 
   useObservableValueListener(timeline.outbox.senders, stickToBottom);
@@ -489,6 +498,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
           messageSpacing={messageSpacing}
           ts={dayDivider ? event.origin_server_ts : undefined}
           unread={newDivider}
+          ref={newDivider ? newDividerRef : undefined}
         />
       ) : null;
 

@@ -1,4 +1,12 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  RefObject,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ReactEditor } from 'slate-react';
 import { Box, Scroll, Text, config } from 'folds';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
@@ -67,16 +75,16 @@ import { MessageContent } from '../../../components/MessageContent';
 
 type TimelineViewProps = {
   threadTimeline: ThreadTimeline;
+  threadInputRef: RefObject<HTMLElement>;
 };
 
 const PAGINATION_LIMIT = 80;
 
-export function TimelineView({ threadTimeline }: TimelineViewProps) {
+export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewProps) {
   const ct = useClient();
   const roomId = useRoom();
   const encryptedRooms = useObservableValue(ct.encryptedRooms);
   const editor = useEditor();
-  const roomInputRef = useRef<HTMLDivElement>(null);
 
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
@@ -196,7 +204,7 @@ export function TimelineView({ threadTimeline }: TimelineViewProps) {
 
   useEditorResizeStickBottom(
     getScrollElement,
-    useCallback(() => roomInputRef?.current ?? null, [roomInputRef]),
+    useCallback(() => threadInputRef?.current ?? null, [threadInputRef]),
     atBottom
   );
 

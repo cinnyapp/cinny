@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { forwardRef, ReactNode } from 'react';
 import { as, Badge, Box, ContainerColor, Line, Text } from 'folds';
 import classNames from 'classnames';
 import { DividerTime, MessageBase } from '../../../components/message';
@@ -30,9 +30,9 @@ type ComboDividerProps = {
   replyCount?: number;
   unread?: boolean;
 };
-export function ComboDivider({ messageSpacing, ts, replyCount, unread }: ComboDividerProps) {
-  return (
-    <MessageBase space={messageSpacing}>
+export const ComboDivider = forwardRef<HTMLDivElement, ComboDividerProps>(
+  ({ messageSpacing, ts, replyCount, unread }, ref) => (
+    <MessageBase space={messageSpacing} ref={ref}>
       <TimelineDivider
         variant={unread ? 'Critical' : 'Surface'}
         before={
@@ -75,5 +75,5 @@ export function ComboDivider({ messageSpacing, ts, replyCount, unread }: ComboDi
         )}
       </TimelineDivider>
     </MessageBase>
-  );
-}
+  )
+);

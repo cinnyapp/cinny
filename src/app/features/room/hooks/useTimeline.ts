@@ -15,7 +15,7 @@ import { Editor } from 'slate';
 import { ReactEditor } from 'slate-react';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { scrollToBottom } from '../../../utils/dom';
-import { MessageBatch } from '../../../../client/room/messages';
+import { MessageBatch, RangeInfo } from '../../../../client/room/messages';
 import { getResizeObserverEntry, useResizeObserver } from '../../../hooks/useResizeObserver';
 import {
   getIntersectionObserverEntry,
@@ -50,18 +50,19 @@ export const useTimelineView = (): TimelineView => {
 };
 
 export const useTimelinePrefetch = (timeline: TimelineView, limit: number) => {
-  useEffect(
-    () =>
-      timeline.range.info.subscribe((info) => {
-        if (info.start <= limit) {
-          requestAnimationFrame(() => timeline.paginateBackward(limit));
-        }
-        if (info.end >= Math.max(timeline.batch.read.size - limit, 0)) {
-          requestAnimationFrame(() => timeline.paginateForward(limit));
-        }
-      }),
-    [timeline, limit]
-  );
+  useEffect(() => {
+    const handleInfo = (info: RangeInfo) => {
+      if (info.start <= limit) {
+        requestAnimationFrame(() => timeline.paginateBackward(limit));
+      }
+      if (info.end >= Math.max(timeline.batch.read.size - limit, 0)) {
+        requestAnimationFrame(() => timeline.paginateForward(limit));
+      }
+    };
+
+    handleInfo(timeline.range.info.read);
+    return timeline.range.info.subscribe(handleInfo);
+  }, [timeline, limit]);
 };
 
 export const useTimelinePaginate = (timeline: TimelineView, limit: number) =>
