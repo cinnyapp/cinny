@@ -14,8 +14,11 @@ export const ThreadsDrawer = style({
 
 // Column wrapper between the drawer and its scroll area. Needs minHeight: 0 so
 // it can shrink below its content instead of pushing the reply composer off the
-// bottom of the window when a thread's messages are tall.
+// bottom of the window when a thread's messages are tall, and height: 100% so it
+// (and the fragment it holds) fills the drawer rather than growing with content,
+// which is what made the reply composer float with thread length.
 export const ThreadsDrawerBody = style({
+  height: '100%',
   minHeight: 0,
 });
 

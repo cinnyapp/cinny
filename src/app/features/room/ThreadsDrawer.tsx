@@ -505,7 +505,7 @@ function ThreadMenu({
                   radii="300"
                 >
                   <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-                    Copy link to thread
+                    Copy Link
                   </Text>
                 </MenuItem>
               </Box>
@@ -731,7 +731,7 @@ export function ThreadsDrawer({ room }: ThreadsDrawerProps) {
   }, [threads, selectedThread, room]);
 
   return (
-    <Box shrink="No" direction="Row">
+    <Box shrink="No" direction="Row" style={{ height: '100%' }}>
       <div
         className={css.ThreadsDrawerResizer}
         onPointerDown={startResize}
