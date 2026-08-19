@@ -691,8 +691,10 @@ function ThreadDetail({
           </Box>
         </Scroll>
       </Box>
-      <ThreadReplyInput room={room} thread={thread} />
-      <RoomViewFollowingPlaceholder />
+      <Box shrink="No" direction="Column">
+        <ThreadReplyInput room={room} thread={thread} />
+        <RoomViewFollowingPlaceholder />
+      </Box>
     </>
   );
 }
