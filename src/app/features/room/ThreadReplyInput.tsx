@@ -1,7 +1,14 @@
-import React, { KeyboardEventHandler, useCallback, useEffect } from 'react';
-import { Box, Icon, IconButton, Icons, Line, config } from 'folds';
+import React, {
+  KeyboardEventHandler,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { Box, Icon, IconButton, Icons, Line, PopOut, config } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
 import {
+  EventType,
   IContent,
   MsgType,
   NotificationCountType,
@@ -9,13 +16,16 @@ import {
   Room,
   Thread,
 } from 'matrix-js-sdk';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { ReactEditor } from 'slate-react';
 import { Transforms } from 'slate';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
+  createEmoticonElement,
   CustomEditor,
+  moveCursor,
+  getMentions,
   Toolbar,
   toMatrixCustomHTML,
   toPlainText,
@@ -25,13 +35,20 @@ import {
   isEmptyEditor,
   trimCustomHtml,
   customHtmlEqualsPlainText,
-  getMentions,
 } from '../../components/editor';
+import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
+import { UseStateProvider } from '../../components/UseStateProvider';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { getMentionContent } from '../../utils/room';
 import { threadIdToMsgDraftAtomFamily } from '../../state/room/roomInputDrafts';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { useImagePackRooms } from '../../hooks/useImagePackRooms';
+import { roomToParentsAtom } from '../../state/room/roomToParents';
+import { getImageInfo, mxcUrlToHttp } from '../../utils/matrix';
+import { getImageUrlBlob, loadImageElement } from '../../utils/dom';
+import { mobileOrTablet } from '../../utils/user-agent';
 
 /**
  * Reply composer for the thread panel. Persists its draft per-thread (not the
@@ -47,6 +64,12 @@ function ThreadReplyInput({ room, thread }: { room: Room; thread: Thread }) {
   const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
   const [msgDraft, setMsgDraft] = useAtom(threadIdToMsgDraftAtomFamily(thread.id));
   const isComposing = useComposingCheck();
+
+  const emojiBtnRef = useRef<HTMLButtonElement>(null);
+  const useAuthentication = useMediaAuthentication();
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const imagePackRooms: Room[] = useImagePackRooms(room.roomId, roomToParents);
+  const [hideStickerBtn] = useState(document.body.clientWidth < 500);
 
   const rootEventId = thread.rootEvent?.getId();
 
@@ -120,6 +143,34 @@ function ThreadReplyInput({ room, thread }: { room: Room; thread: Thread }) {
     [submit, enterForNewline, isComposing]
   );
 
+  const handleEmoticonSelect = (key: string, shortcode: string) => {
+    editor.insertNode(createEmoticonElement(key, shortcode));
+    moveCursor(editor);
+  };
+
+  const handleStickerSelect = async (mxc: string, shortcode: string, label: string) => {
+    if (!rootEventId) return;
+    const stickerUrl = mxcUrlToHttp(mx, mxc, useAuthentication);
+    if (!stickerUrl) return;
+
+    const info = await getImageInfo(
+      await loadImageElement(stickerUrl),
+      await getImageUrlBlob(stickerUrl)
+    );
+
+    await mx.sendEvent(room.roomId, EventType.Sticker, {
+      body: label,
+      url: mxc,
+      info,
+      'm.relates_to': {
+        rel_type: RelationType.Thread,
+        event_id: rootEventId,
+        is_falling_back: false,
+      },
+    });
+    room.setThreadUnreadNotificationCount(thread.id, NotificationCountType.Total, 0);
+  };
+
   return (
     <Box direction="Column" style={{ padding: `${config.space.S200} ${config.space.S300}` }}>
       <CustomEditor
@@ -133,14 +184,83 @@ function ThreadReplyInput({ room, thread }: { room: Room; thread: Thread }) {
           </IconButton>
         }
         after={
-          <IconButton
-            variant="SurfaceVariant"
-            size="300"
-            radii="300"
-            onClick={() => setToolbar(!toolbar)}
-          >
-            <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
-          </IconButton>
+          <UseStateProvider initial={undefined}>
+            {(emojiBoardTab: EmojiBoardTab | undefined, setEmojiBoardTab) => (
+              <>
+                <IconButton
+                  variant="SurfaceVariant"
+                  size="300"
+                  radii="300"
+                  onClick={() => setToolbar(!toolbar)}
+                >
+                  <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
+                </IconButton>
+                <PopOut
+                  offset={16}
+                  alignOffset={-44}
+                  position="Top"
+                  align="End"
+                  anchor={
+                    emojiBoardTab === undefined
+                      ? undefined
+                      : emojiBtnRef.current?.getBoundingClientRect() ?? undefined
+                  }
+                  content={
+                    <EmojiBoard
+                      tab={emojiBoardTab}
+                      onTabChange={setEmojiBoardTab}
+                      imagePackRooms={imagePackRooms}
+                      returnFocusOnDeactivate={false}
+                      onEmojiSelect={handleEmoticonSelect}
+                      onCustomEmojiSelect={handleEmoticonSelect}
+                      onStickerSelect={handleStickerSelect}
+                      requestClose={() => {
+                        setEmojiBoardTab((t) => {
+                          if (t) {
+                            if (!mobileOrTablet()) ReactEditor.focus(editor);
+                            return undefined;
+                          }
+                          return t;
+                        });
+                      }}
+                    />
+                  }
+                >
+                  {!hideStickerBtn && (
+                    <IconButton
+                      aria-pressed={emojiBoardTab === EmojiBoardTab.Sticker}
+                      onClick={() => setEmojiBoardTab(EmojiBoardTab.Sticker)}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                    >
+                      <Icon
+                        src={Icons.Sticker}
+                        filled={emojiBoardTab === EmojiBoardTab.Sticker}
+                      />
+                    </IconButton>
+                  )}
+                  <IconButton
+                    ref={emojiBtnRef}
+                    aria-pressed={
+                      hideStickerBtn ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
+                    }
+                    onClick={() => setEmojiBoardTab(EmojiBoardTab.Emoji)}
+                    variant="SurfaceVariant"
+                    size="300"
+                    radii="300"
+                  >
+                    <Icon
+                      src={Icons.Smile}
+                      filled={
+                        hideStickerBtn ? !!emojiBoardTab : emojiBoardTab === EmojiBoardTab.Emoji
+                      }
+                    />
+                  </IconButton>
+                </PopOut>
+              </>
+            )}
+          </UseStateProvider>
         }
         bottom={
           toolbar && (
