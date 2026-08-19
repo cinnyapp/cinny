@@ -117,7 +117,7 @@ function ThreadListItem({
         <Text size="B300" truncate style={{ flexGrow: 1 }}>
           {preview || 'Thread'}
         </Text>
-        <Text size="T200" priority="300" shrink="No">
+        <Text size="T200" priority="300" shrink="No" style={{ whiteSpace: 'nowrap' }}>
           {replyCount} reply{replyCount === 1 ? '' : 's'}
         </Text>
         {unreadCount > 0 && <UnreadBadge count={unreadCount} />}
