@@ -379,7 +379,8 @@ function ThreadDetail({
 }) {
   const { rootEvent } = thread;
   const senderId = rootEvent?.getSender() ?? '';
-  const title = senderId ? getSenderName(room, senderId) : 'Thread';
+  const title =
+    getThreadPreview(rootEvent) || (senderId ? getSenderName(room, senderId) : 'Thread');
 
   return (
     <>
@@ -568,7 +569,7 @@ export function ThreadsDrawer({ room }: ThreadsDrawerProps) {
         shrink="No"
         direction="Column"
       >
-        <Box grow="Yes" direction="Column">
+        <Box grow="Yes" direction="Column" className={css.ThreadsDrawerBody}>
           {selectedThread ? (
             <ThreadDetail
               room={room}
