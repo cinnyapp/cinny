@@ -113,18 +113,14 @@ function ThreadListItem({
         </Avatar>
       }
     >
-      <Box direction="Column" gap="100" grow="Yes">
-        <Text size="B300" truncate>
+      <Box alignItems="Center" gap="200" grow="Yes">
+        <Text size="B300" truncate style={{ flexGrow: 1 }}>
           {preview || 'Thread'}
         </Text>
-        <Box alignItems="Center" gap="100">
-          <Text size="T200" priority="300">
-            {replyCount} reply{replyCount === 1 ? '' : 's'}
-          </Text>
-          <Box shrink="No" alignItems="Center" style={{ marginLeft: 'auto' }}>
-            {unreadCount > 0 && <UnreadBadge count={unreadCount} />}
-          </Box>
-        </Box>
+        <Text size="T200" priority="300" shrink="No">
+          {replyCount} reply{replyCount === 1 ? '' : 's'}
+        </Text>
+        {unreadCount > 0 && <UnreadBadge count={unreadCount} />}
       </Box>
     </MenuItem>
   );
