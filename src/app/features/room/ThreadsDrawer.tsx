@@ -7,6 +7,7 @@ import {
   Icon,
   IconButton,
   Icons,
+  Line,
   Menu,
   MenuItem,
   PopOut,
@@ -26,6 +27,8 @@ import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
 
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { useThreadUnreadCount } from '../../hooks/useThreadUnreadCount';
+import { UnreadBadge } from '../../components/unread-badge';
 import { getMatrixToRoomEvent } from '../../plugins/matrix-to';
 import { getViaServers } from '../../plugins/via-servers';
 import { copyToClipboard } from '../../utils/dom';
@@ -70,6 +73,50 @@ function getThreadPreview(rootEvent: MatrixEvent | undefined): string {
   const body = rootEvent?.getContent().body;
   if (typeof body !== 'string') return '';
   return body;
+}
+
+function ThreadListItem({
+  room,
+  thread,
+  onSelect,
+}: {
+  room: Room;
+  thread: Thread;
+  onSelect: (thread: Thread) => void;
+}) {
+  const unreadCount = useThreadUnreadCount(room, thread);
+  const { rootEvent } = thread;
+  const senderId = rootEvent?.getSender() ?? '';
+  const sender = senderId ? getSenderName(room, senderId) : 'Unknown';
+  const preview = getThreadPreview(rootEvent);
+
+  return (
+    <MenuItem
+      style={{ padding: `0 ${config.space.S100}` }}
+      variant="Background"
+      radii="300"
+      onClick={() => onSelect(thread)}
+      before={
+        <Avatar size="200">
+          <Icon size="100" src={Icons.Thread} />
+        </Avatar>
+      }
+    >
+      <Box direction="Column" gap="100" grow="Yes">
+        <Box alignItems="Center" gap="100">
+          <Text size="B300" truncate>
+            {sender}
+          </Text>
+          <Text size="B300" priority="300" truncate>
+            {preview}
+          </Text>
+          <Box shrink="No" alignItems="Center" style={{ marginLeft: 'auto' }}>
+            {unreadCount > 0 && <UnreadBadge count={unreadCount} />}
+          </Box>
+        </Box>
+      </Box>
+    </MenuItem>
+  );
 }
 
 function ThreadList({
@@ -118,44 +165,14 @@ function ThreadList({
                 No Threads
               </Text>
             )}
-            {threads.map((thread) => {
-              const { rootEvent } = thread;
-              const senderId = rootEvent?.getSender() ?? '';
-              const sender = senderId ? getSenderName(room, senderId) : 'Unknown';
-              const preview = getThreadPreview(rootEvent);
-              const replyCount = Math.max(0, thread.length);
-
-              return (
-                <MenuItem
-                  key={thread.id}
-                  style={{ padding: `0 ${config.space.S100}` }}
-                  variant="Background"
-                  radii="300"
-                  onClick={() => onSelect(thread)}
-                  before={
-                    <Avatar size="200">
-                      <Icon size="100" src={Icons.Thread} />
-                    </Avatar>
-                  }
-                >
-                  <Box direction="Column" gap="100" grow="Yes">
-                    <Box alignItems="Center" gap="100">
-                      <Text size="B300" truncate>
-                        {sender}
-                      </Text>
-                      <Text size="B300" priority="300" truncate>
-                        {preview}
-                      </Text>
-                      {replyCount > 0 && (
-                        <Text size="T200" priority="300">
-                          {replyCount}
-                        </Text>
-                      )}
-                    </Box>
-                  </Box>
-                </MenuItem>
-              );
-            })}
+            {threads.map((thread) => (
+              <ThreadListItem
+                key={thread.id}
+                room={room}
+                thread={thread}
+                onSelect={onSelect}
+              />
+            ))}
           </Box>
         </Scroll>
       </Box>
@@ -397,6 +414,7 @@ function ThreadMenu({
   thread: Thread;
   onViewInThread: () => void;
 }) {
+  const mx = useMatrixClient();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const rootEventId = thread.rootEvent?.getId();
 
@@ -404,15 +422,29 @@ function ThreadMenu({
     setMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
+  const handleClose = () => setMenuAnchor(undefined);
+
+  // Mark all replies in this thread as read by sending a *threaded* read
+  // receipt on the thread's latest event (sendReadReceipt adds thread_id for
+  // thread events while supportsThreads is on). The server echoes the receipt
+  // back, which clears the thread's unread notification count and flips
+  // hasUserReadEvent so the unread indicators (list pill + timeline summary)
+  // clear without a reload.
+  const handleMarkAsRead = () => {
+    handleClose();
+    const lastEvent = thread.replyToEvent ?? thread.lastReply();
+    if (lastEvent) mx.sendReadReceipt(lastEvent);
+  };
+
   const handleViewInThread = () => {
-    setMenuAnchor(undefined);
+    handleClose();
     onViewInThread();
   };
 
   const handleCopyLink = () => {
     if (!rootEventId) return;
     copyToClipboard(getMatrixToRoomEvent(room.roomId, rootEventId, getViaServers(room)));
-    setMenuAnchor(undefined);
+    handleClose();
   };
 
   return (
@@ -423,7 +455,7 @@ function ThreadMenu({
         onClick={handleOpenMenu}
         aria-label="Thread options"
       >
-        <Icon src={Icons.VerticalDots} />
+        <Icon size="400" src={Icons.VerticalDots} filled={!!menuAnchor} />
       </IconButton>
       <PopOut
         anchor={menuAnchor}
@@ -433,35 +465,50 @@ function ThreadMenu({
           <FocusTrap
             focusTrapOptions={{
               initialFocus: false,
-              clickOutsideDeactivates: true,
-              onDeactivate: () => setMenuAnchor(undefined),
               returnFocusOnDeactivate: false,
+              onDeactivate: () => setMenuAnchor(undefined),
+              clickOutsideDeactivates: true,
               isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
               isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
               escapeDeactivates: stopPropagation,
             }}
           >
-            <Menu>
-              <MenuItem
-                size="300"
-                radii="300"
-                after={<Icon size="100" src={Icons.External} />}
-                onClick={handleViewInThread}
-              >
-                <Text size="T300" truncate>
-                  View in Thread
-                </Text>
-              </MenuItem>
-              <MenuItem
-                size="300"
-                radii="300"
-                after={<Icon size="100" src={Icons.Link} />}
-                onClick={handleCopyLink}
-              >
-                <Text size="T300" truncate>
-                  Copy link to thread
-                </Text>
-              </MenuItem>
+            <Menu style={{ maxWidth: toRem(160), width: '100vw' }}>
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                <MenuItem
+                  onClick={handleMarkAsRead}
+                  size="300"
+                  after={<Icon size="100" src={Icons.CheckTwice} />}
+                  radii="300"
+                >
+                  <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                    Mark as Read
+                  </Text>
+                </MenuItem>
+                <MenuItem
+                  onClick={handleViewInThread}
+                  size="300"
+                  after={<Icon size="100" src={Icons.Thread} />}
+                  radii="300"
+                >
+                  <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                    View in Thread
+                  </Text>
+                </MenuItem>
+              </Box>
+              <Line variant="Surface" size="300" />
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                <MenuItem
+                  onClick={handleCopyLink}
+                  size="300"
+                  after={<Icon size="100" src={Icons.Link} />}
+                  radii="300"
+                >
+                  <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                    Copy link to thread
+                  </Text>
+                </MenuItem>
+              </Box>
             </Menu>
           </FocusTrap>
         }
@@ -486,6 +533,17 @@ function ThreadDetail({
   const title =
     getThreadPreview(rootEvent) || (senderId ? getSenderName(room, senderId) : 'Thread');
   const { navigateRoom } = useRoomNavigate();
+  const mx = useMatrixClient();
+
+  // Mark the thread as read when it is opened: send a *threaded* read receipt
+  // on the thread's latest event (sendReadReceipt adds thread_id for thread
+  // events). The echoed receipt clears the thread's unread count and flips
+  // hasUserReadEvent, so the list count-pill and the timeline summary clear
+  // without a reload once the user has caught up.
+  useEffect(() => {
+    const lastEvent = thread.replyToEvent ?? thread.lastReply();
+    if (lastEvent) mx.sendReadReceipt(lastEvent);
+  }, [mx, thread]);
 
   const handleViewInThread = () => {
     // Navigate to the room with the root (thread-starting) event focused so the
@@ -498,7 +556,7 @@ function ThreadDetail({
 
   return (
     <>
-      <Box alignItems="Center" gap="100" className={css.ThreadsDrawerDetailHeader}>
+      <Header className={css.ThreadsDrawerDetailHeader} variant="Background" size="600">
         <TooltipProvider
           position="Bottom"
           align="Start"
@@ -537,7 +595,7 @@ function ThreadDetail({
             </IconButton>
           )}
         </TooltipProvider>
-      </Box>
+      </Header>
       <Box className={css.ThreadDrawerContentBase} grow="Yes">
         <Scroll variant="Background" size="300" visibility="Always" hideTrack={false}>
           <Box className={css.ThreadDrawerContent} direction="Column" gap="100">

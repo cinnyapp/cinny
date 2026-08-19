@@ -25,11 +25,3 @@ export const ThreadSummary = style({
     background: color.Surface.Container,
   },
 });
-
-export const ThreadSummaryUnread = style({
-  color: color.Success.Main,
-  ':hover': {
-    color: color.Success.Main,
-    background: color.Surface.Container,
-  },
-});

@@ -1,7 +1,6 @@
 import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { Icon, Icons, Text } from 'folds';
 import { Room, RoomEvent, Thread, ThreadEvent } from 'matrix-js-sdk';
-import classNames from 'classnames';
 
 import * as css from './ThreadSummary.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -74,15 +73,11 @@ export function ThreadSummary({ room, thread, onOpen }: ThreadSummaryProps) {
   return (
     <button
       type="button"
-      className={classNames(css.ThreadSummary, hasUnread && css.ThreadSummaryUnread)}
+      className={css.ThreadSummary}
       onClick={handleClick}
       aria-label={hasUnread ? 'Open thread with unread replies' : 'Open thread'}
     >
-      <Icon
-        size="100"
-        src={hasUnread ? Icons.ThreadUnread : Icons.Thread}
-        style={{ flexShrink: 0 }}
-      />
+      <Icon size="100" src={Icons.Thread} style={{ flexShrink: 0 }} />
       <Text size="T200" priority="300" truncate style={{ flexGrow: 1 }} align="Start">
         {preview
           ? `${replyCount} reply${replyCount === 1 ? '' : 's'} · ${preview}`

@@ -172,7 +172,7 @@ function ThreadReplyInput({ room, thread }: { room: Room; thread: Thread }) {
   };
 
   return (
-    <Box direction="Column" style={{ padding: `${config.space.S200} ${config.space.S300}` }}>
+    <Box direction="Column" style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}>
       <CustomEditor
         editableName="ThreadReplyInput"
         editor={editor}

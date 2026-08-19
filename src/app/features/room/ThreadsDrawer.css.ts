@@ -47,7 +47,6 @@ export const ThreadsDrawerDetailHeader = style({
   padding: `0 ${config.space.S200} 0 ${config.space.S100}`,
   borderBottomWidth: config.borderWidth.B300,
 });
-
 export const ThreadDrawerContentBase = style({
   position: 'relative',
   overflow: 'hidden',
