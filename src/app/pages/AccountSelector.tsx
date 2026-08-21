@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Avatar, Box, Button, config, Icon, Icons, Text } from 'folds';
 import { Link, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useAtom, useAtomValue } from 'jotai';
@@ -23,12 +23,13 @@ import {
   getAfterLoginRedirectPath,
   setAfterLoginRedirectPath,
 } from './afterLoginRedirectPath';
-import { Session } from '../../client/sessions';
+import { Session, setLastActiveUserId } from '../../client/sessions';
 import { OrDivider } from '../components/OrDivider';
 import { getAuthJSONRequest } from '../../client/request';
 import { useUserProfileRequest } from '../hooks/useUserProfile';
 import { mxcToHttp } from '../../client/mxcToHttp';
 import { useSessionRequest } from '../hooks/sw/useSessionRequest';
+import { useDocumentVisibilityChange } from '../hooks/useDocumentVisibilityChange';
 
 function AccountCard({ session }: { session: Session }) {
   const { userId } = session;
@@ -175,6 +176,23 @@ export function ClientAccountSelector() {
   const session = useMemo(() => sessions.find((s) => userId === s.userId), [userId, sessions]);
 
   useSessionRequest(session ?? sessions[0]);
+
+  useDocumentVisibilityChange(
+    useCallback(
+      (visible) => {
+        if (visible && session) {
+          setLastActiveUserId(session.userId);
+        }
+      },
+      [session]
+    )
+  );
+
+  useEffect(() => {
+    if (session) {
+      setLastActiveUserId(session.userId);
+    }
+  }, [session]);
 
   if (!session) {
     return <AccountSelector />;

@@ -3,6 +3,7 @@ import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
 import {
   CLIENT_SESSIONS_STORE_KEY,
   getFallbackSession,
+  getLastActiveUserId,
   removeFallbackSession,
   Session,
   Sessions,
@@ -66,4 +67,4 @@ export const sessionsAtom = atom<Sessions, [SessionsAction], undefined>(
   }
 );
 
-export const sessionUserIdAtom = atom<string | undefined>(undefined);
+export const sessionUserIdAtom = atom<string | undefined>(getLastActiveUserId());

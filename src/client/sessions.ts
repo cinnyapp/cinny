@@ -2,6 +2,8 @@ import { getLocalStorageItem, setLocalStorageItem } from './localStorage';
 
 export const CLIENT_SESSIONS_STORE_KEY = 'client-sessions';
 
+const LAST_ACTIVE_USERID = 'last-active-userId';
+
 export type Session = {
   baseUrl: string;
   userId: string;
@@ -94,4 +96,13 @@ export const removeSession = (session: Session): void => {
   const newSessions = sessions.filter((s) => s.userId === session.userId);
 
   setLocalStorageItem(CLIENT_SESSIONS_STORE_KEY, newSessions);
+};
+
+export const setLastActiveUserId = (userId: string) => {
+  setLocalStorageItem(LAST_ACTIVE_USERID, userId);
+};
+
+export const getLastActiveUserId = (): string | undefined => {
+  const userId = getLocalStorageItem<string | undefined>(LAST_ACTIVE_USERID, undefined);
+  return userId;
 };
