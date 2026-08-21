@@ -81,7 +81,7 @@ function AccountTile({ session }: AccountTileProps) {
         </Text>
       }
     >
-      <Text style={{ flexGrow: 1 }} as="span" size="B300" truncate>
+      <Text style={{ flexGrow: 1 }} as="span" size="B400" truncate>
         {displayName}
       </Text>
     </MenuItem>
@@ -145,7 +145,7 @@ function AccountSwitcher({ cords, requestClose }: AccountSwitcherProps) {
                 after={<Icon size="100" src={Icons.User} />}
                 onClick={handleManageAccounts}
               >
-                <Text style={{ flexGrow: 1 }} as="span" size="B300" truncate>
+                <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
                   Manage Accounts
                 </Text>
               </MenuItem>
@@ -237,15 +237,15 @@ export function SettingsTab() {
             }}
           >
             <Menu style={{ maxWidth: toRem(200), width: '100vw' }}>
-              <Box direction="Column" gap="0" style={{ padding: config.space.S100 }}>
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
                 <MenuItem
                   size="300"
                   radii="300"
                   onClick={openSettings}
                   after={<Icon size="100" src={Icons.Setting} />}
                 >
-                  <Text style={{ flexGrow: 1 }} as="span" size="B300" truncate>
-                    Settings
+                  <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                    User Settings
                   </Text>
                 </MenuItem>
                 <MenuItem
@@ -255,7 +255,7 @@ export function SettingsTab() {
                   onClick={handleOpenAccountSwitcher}
                   aria-pressed={!!switcherAnchor}
                 >
-                  <Text style={{ flexGrow: 1 }} as="span" size="B300" truncate>
+                  <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
                     Switch Accounts
                   </Text>
                 </MenuItem>
