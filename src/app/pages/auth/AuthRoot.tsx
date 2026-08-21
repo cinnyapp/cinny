@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Spinner, Text, color } from 'folds';
+import { Box, Chip, Icon, Icons, Spinner, Text, color } from 'folds';
 import {
   Outlet,
   generatePath,
