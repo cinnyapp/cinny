@@ -31,6 +31,7 @@ import { mxcToHttp } from '../../client/mxcToHttp';
 import { useSessionRequest } from '../hooks/sw/useSessionRequest';
 import { useDocumentVisibilityChange } from '../hooks/useDocumentVisibilityChange';
 import { useDocumentFocusChange } from '../hooks/useDocumentFocusChange';
+import { useSingleSessionTab } from '../hooks/useSingleSessionTab';
 
 function AccountCard({ session }: { session: Session }) {
   const { userId } = session;
@@ -185,6 +186,7 @@ export function ClientAccountSelector() {
   const session = useMemo(() => sessions.find((s) => userId === s.userId), [userId, sessions]);
 
   useSessionRequest(session ?? sessions[0]);
+  useSingleSessionTab(session?.userId);
 
   const handleVisibility = useCallback(
     (visible: boolean) => {
