@@ -94,12 +94,10 @@ type AccountSwitcherProps = {
 };
 function AccountSwitcher({ cords, requestClose }: AccountSwitcherProps) {
   const navigate = useNavigate();
-  const setSessionUserId = useSetAtom(sessionUserIdAtom);
 
   const sessions = useSessions();
 
   const handleManageAccounts = () => {
-    setSessionUserId(undefined);
     navigate(getRootPath());
   };
 
