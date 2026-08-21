@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Box, Header, Scroll, Text } from 'folds';
+import { Box, Header, Scroll } from 'folds';
 import classNames from 'classnames';
 
 import * as css from './styles.css';
@@ -12,11 +12,11 @@ export function AuthLogo({ large }: { large?: boolean }) {
 }
 
 type AuthLayoutProps = {
-  hideHeader?: boolean;
   center?: boolean;
   children?: ReactNode;
+  header?: ReactNode;
 };
-export function AuthLayout({ hideHeader, center, children }: AuthLayoutProps) {
+export function AuthLayout({ center, header, children }: AuthLayoutProps) {
   return (
     <Scroll variant="Background" visibility="Hover" size="0" hideTrack>
       <Box
@@ -32,14 +32,12 @@ export function AuthLayout({ hideHeader, center, children }: AuthLayoutProps) {
           direction="Column"
         >
           <Box direction="Column" className={css.AuthCard}>
-            {!hideHeader && (
+            {header && (
               <Header className={css.AuthHeader} size="600" variant="Surface">
-                <Box grow="Yes" direction="Row" gap="300" alignItems="Center">
-                  <AuthLogo />
-                  <Text size="H3">Cinny</Text>
-                </Box>
+                {header}
               </Header>
             )}
+
             <Box className={css.AuthCardContent} direction="Column">
               {children}
             </Box>

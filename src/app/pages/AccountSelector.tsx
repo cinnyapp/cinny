@@ -116,7 +116,7 @@ export function AccountSelector() {
   }
 
   return (
-    <AuthLayout hideHeader>
+    <AuthLayout>
       <Box style={{ position: 'relative' }} direction="Column" gap="500">
         <span data-spacing-node />
         <Box direction="Column" gap="400" alignItems="Center">

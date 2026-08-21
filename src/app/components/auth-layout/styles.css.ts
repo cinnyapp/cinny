@@ -44,7 +44,8 @@ export const AuthLogo = recipe({
 });
 
 export const AuthHeader = style({
-  padding: `0 ${config.space.S400}`,
+  paddingLeft: config.space.S400,
+  paddingRight: config.space.S300,
   borderBottomWidth: config.borderWidth.B300,
 });
 

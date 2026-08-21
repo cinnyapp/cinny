@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Box, Spinner, Text, color } from 'folds';
+import { Box, Chip, Icon, IconButton, Icons, Spinner, Text, color } from 'folds';
 import {
   Outlet,
   generatePath,
@@ -25,8 +25,10 @@ import { AuthFlowsLoader } from '../../components/AuthFlowsLoader';
 import { AuthFlowsProvider } from '../../hooks/useAuthFlows';
 import { AuthServerProvider } from '../../hooks/useAuthServer';
 import { tryDecodeURIComponent } from '../../utils/dom';
-import { AuthLayout } from '../../components/auth-layout';
+import { AuthLayout, AuthLogo } from '../../components/auth-layout';
 import { useUnauthThemeManager } from '../ThemeManager';
+import { useSessions } from '../../hooks/useSessions';
+import { getRootPath } from '../pathUtils';
 
 const currentAuthPath = (pathname: string): string => {
   if (matchPath(LOGIN_PATH, pathname)) {
@@ -67,6 +69,7 @@ export function AuthRoot() {
   const navigate = useNavigate();
   const location = useLocation();
   const { server: urlEncodedServer } = useParams();
+  const sessions = useSessions();
 
   const clientConfig = useClientConfig();
 
@@ -121,7 +124,27 @@ export function AuthRoot() {
     discoveryState.status === AsyncStatus.Success ? discoveryState.data.response : [];
 
   return (
-    <AuthLayout>
+    <AuthLayout
+      header={
+        <Box grow="Yes" direction="Row" gap="300" alignItems="Center">
+          <AuthLogo />
+          <Box grow="Yes">
+            <Text size="H3">Cinny</Text>
+          </Box>
+          {sessions.length > 0 && (
+            <Chip
+              variant="Surface"
+              fill="None"
+              radii="Pill"
+              before={<Icon src={Icons.ArrowUpDown} size="50" />}
+              onClick={() => navigate(getRootPath())}
+            >
+              <Text size="L400">Accounts</Text>
+            </Chip>
+          )}
+        </Box>
+      }
+    >
       <Box direction="Column" gap="100">
         <Text as="label" size="L400" priority="300">
           Homeserver
