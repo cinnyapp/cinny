@@ -106,7 +106,7 @@ function AccountSwitcher({ cords, requestClose }: AccountSwitcherProps) {
       anchor={cords}
       position="Right"
       align="End"
-      offset={6}
+      offset={5}
       content={
         <FocusTrap
           focusTrapOptions={{
@@ -223,7 +223,6 @@ export function SettingsTab() {
         anchor={menuAnchor}
         position="Right"
         align="End"
-        offset={6}
         content={
           <FocusTrap
             focusTrapOptions={{
