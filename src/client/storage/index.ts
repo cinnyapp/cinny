@@ -157,7 +157,6 @@ export const createStorage = async (
   };
 
   const deleteStorage = async () => {
-    disconnectStorage();
     await deleteDB(dbName);
   };
 

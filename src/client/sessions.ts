@@ -84,6 +84,15 @@ export const getSessionStoreName = (session: Session): SessionStoreName => {
   };
 };
 
+export const setLastActiveUserId = (userId: string | undefined) => {
+  setLocalStorageItem(LAST_ACTIVE_USERID, userId);
+};
+
+export const getLastActiveUserId = (): string | undefined => {
+  const userId = getLocalStorageItem<string | undefined>(LAST_ACTIVE_USERID, undefined);
+  return userId;
+};
+
 export const userHasSession = (userId: string): boolean => {
   const sessions = getLocalStorageItem<Sessions>(CLIENT_SESSIONS_STORE_KEY, []);
 
@@ -93,16 +102,9 @@ export const userHasSession = (userId: string): boolean => {
 export const removeSession = (session: Session): void => {
   const sessions = getLocalStorageItem<Sessions>(CLIENT_SESSIONS_STORE_KEY, []);
 
-  const newSessions = sessions.filter((s) => s.userId === session.userId);
+  const newSessions = sessions.filter((s) => s.userId !== session.userId);
 
   setLocalStorageItem(CLIENT_SESSIONS_STORE_KEY, newSessions);
-};
 
-export const setLastActiveUserId = (userId: string) => {
-  setLocalStorageItem(LAST_ACTIVE_USERID, userId);
-};
-
-export const getLastActiveUserId = (): string | undefined => {
-  const userId = getLocalStorageItem<string | undefined>(LAST_ACTIVE_USERID, undefined);
-  return userId;
+  setLastActiveUserId(undefined);
 };

@@ -32,15 +32,10 @@ const baseSessionsAtom = atomWithLocalStorage<Sessions>(
   }
 );
 
-export type SessionsAction =
-  | {
-      type: 'PUT';
-      session: Session;
-    }
-  | {
-      type: 'DELETE';
-      session: Session;
-    };
+export type SessionsAction = {
+  type: 'PUT';
+  session: Session;
+};
 
 export const sessionsAtom = atom<Sessions, [SessionsAction], undefined>(
   (get) => get(baseSessionsAtom),
@@ -55,13 +50,6 @@ export const sessionsAtom = atom<Sessions, [SessionsAction], undefined>(
       } else {
         sessions.splice(sessionIndex, 1, action.session);
       }
-      set(baseSessionsAtom, sessions);
-      return;
-    }
-    if (action.type === 'DELETE') {
-      const sessions = get(baseSessionsAtom).filter(
-        (session) => session.userId !== action.session.userId
-      );
       set(baseSessionsAtom, sessions);
     }
   }

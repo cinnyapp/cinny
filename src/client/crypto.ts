@@ -39,7 +39,6 @@ export const initializeCrypto = async (
   const machine = new Machine(olmMachine, outgoingSender, outgoingRequestRetrier);
 
   const deleteCryptoStorage = async () => {
-    closeMachine();
     await deleteDB(getCryptoDBName(storeName));
   };
 

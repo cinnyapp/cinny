@@ -30,6 +30,7 @@ import { useUserProfileRequest } from '../hooks/useUserProfile';
 import { mxcToHttp } from '../../client/mxcToHttp';
 import { useSessionRequest } from '../hooks/sw/useSessionRequest';
 import { useDocumentVisibilityChange } from '../hooks/useDocumentVisibilityChange';
+import { useDocumentFocusChange } from '../hooks/useDocumentFocusChange';
 
 function AccountCard({ session }: { session: Session }) {
   const { userId } = session;
@@ -185,22 +186,23 @@ export function ClientAccountSelector() {
 
   useSessionRequest(session ?? sessions[0]);
 
-  useDocumentVisibilityChange(
-    useCallback(
-      (visible) => {
-        if (visible && session) {
-          setLastActiveUserId(session.userId);
-        }
-      },
-      [session]
-    )
+  const handleVisibility = useCallback(
+    (visible: boolean) => {
+      if (visible && userId) {
+        setLastActiveUserId(userId);
+      }
+    },
+    [userId]
   );
 
+  useDocumentVisibilityChange(handleVisibility);
+  useDocumentFocusChange(handleVisibility);
+
   useEffect(() => {
-    if (session) {
-      setLastActiveUserId(session.userId);
+    if (userId) {
+      setLastActiveUserId(userId);
     }
-  }, [session]);
+  }, [userId]);
 
   if (!session) {
     return <AccountSelector />;
