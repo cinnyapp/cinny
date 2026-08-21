@@ -24,7 +24,7 @@ export type SessionStoreName = {
  * Migration code for old session
  */
 const FALLBACK_CRYPTO_STORE_NAME = 'matrix-js-sdk';
-export const FALLBACK_SYNC_STORE_NAME_FULL = 'matrix-js-sdk::web-sync-store';
+export const FALLBACK_SYNC_STORE_NAME_FULL = 'matrix-js-sdk:web-sync-store';
 
 export function setFallbackSession(
   accessToken: string,
